@@ -10,7 +10,12 @@
 #' @return The full file path to the CmdStan installation.
 #'
 cmdstan_path <- function() {
-  .cmdstanr$PATH
+  path <- .cmdstanr$PATH
+  if (substr(path, nchar(path), nchar(path)) == "/") {
+    # remove training "/" (is this necessary?)
+    path <- substr(path, 1, nchar(path) - 1)
+  }
+  path
 }
 
 #' @rdname cmdstan_path
@@ -27,15 +32,15 @@ set_cmdstan_path <- function(path) {
 # instantiate --------------------------------------------------
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- Sys.getenv("CMDSTAN")
-.cmdstanr$EXTENSION <- if (.Platform$OS.type == "windows") ".exe" else ""
 
 
 # internal ----------------------------------------------------------------
 cmdstan_ext <- function(path = NULL) {
+  ext <- if (os_is_windows()) ".exe" else ""
   if (is.null(path)) {
-    return(.cmdstanr$EXTENSION)
+    return(ext)
   }
-  paste0(path, .cmdstanr$EXTENSION)
+  paste0(path, ext)
 }
 
 add_cmdstan_path <- function(relative_path) {

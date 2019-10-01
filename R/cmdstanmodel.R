@@ -1,11 +1,12 @@
-#' Create a new StanModel object
+#' Create a new CmdStanModel object
 #'
 #' @export
 #' @param stan_file Path to Stan program.
-#' @return An [R6][R6::R6] `StanModel` object. See **Details**.
+#' @return An [R6][R6::R6] `CmdStanModel` object. See **Details**.
 #'
-#' @details A `StanModel` object Stores pathnames to a Stan program as well as a
-#' compiled executable. The following methods are available:
+#' @details A `CmdStanModel` object stores the path to a Stan program as well as a
+#'   path to a compiled executable once created. The following methods are
+#'   available:
 #' \describe{
 #'   \item{`code()`}{
 #'   Returns the Stan program located at `stan_file` as a string.
@@ -20,11 +21,12 @@
 #'   \item{`sample(data = NULL, ...)`}{
 #'   Run the default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to
 #'   produce a set of draws from the posterior distribution of a model
-#'   conditioned on some data.
+#'   conditioned on some data. Arguments:
 #'   * `data`: If not `NULL`, then either a path to a data file compatible with
 #'     CmdStan or a named list of \R objects like for RStan.
 #'   * `...`: Arguments to pass to CmdStan to control sampling.
 #'     TODO: enumerate these instead of `...`.
+#'   Returns a `CmdStanFit` object.
 #'   }
 #' }
 #'
@@ -49,13 +51,13 @@
 #' # stanfit <- rstan::read_stan_csv(fit$output_files)
 #'
 cmdstan_model <- function(stan_file) {
-  StanModel$new(stan_file = stan_file)
+  CmdStanModel$new(stan_file = stan_file)
 }
 
 
-# StanModel -----------------------------------------------------------------
-StanModel <- R6::R6Class(
-  classname = "StanModel",
+# CmdStanModel -----------------------------------------------------------------
+CmdStanModel <- R6::R6Class(
+  classname = "CmdStanModel",
   public = list(
     stan_file = character(),
     exe_file = character(),
@@ -89,13 +91,13 @@ StanModel <- R6::R6Class(
       }
       data_file <- write_data(data)
       output_files <- sample_hmc_nuts(self$exe_file, data_file = data_file, ...)
-      StanFit$new(output_files) # see stanfit.R
+      CmdStanFit$new(output_files) # see stanfit.R
     }
   )
 )
 
 
-# internals for StanModel methods ---------------------------------------------
+# internals for CmdStanModel methods ---------------------------------------------
 
 #' Check for .stan file extension
 #' @noRd
@@ -120,11 +122,24 @@ strip_stan_ext <- function(stan_file) {
 #' @param stan_file Path to Stan program.
 #' @return Path to executable.
 compile_stan_program <- function(stan_file) {
-  prog <- strip_cmdstan_path(stan_file)
+  prog <- strip_cmdstan_path(stan_file) # relative path
   prog <- strip_stan_ext(prog)
-  cmd <- paste0("cd ", cmdstan_path(), " && make ", prog)
-  system(cmd)
-  strip_stan_ext(stan_file)
+
+  # using base::system()
+  # cmd <- paste0("cd ", cmdstan_path(), " && make ", cmdstan_ext(prog))
+  # system(cmd)
+
+  out <- processx::run(
+    command = "make",
+    args = cmdstan_ext(prog),
+    wd = cmdstan_path(),
+    echo_cmd = TRUE,
+    echo = TRUE
+  )
+
+  # return full path to exe
+  exe_file <- strip_stan_ext(stan_file)
+  cmdstan_ext(exe_file)
 }
 
 #' Either return Write data to a temporary `.data.R` file
@@ -192,22 +207,33 @@ sample_hmc_nuts <- function(exe_file,
       " file=", data_file,
     " random",
       " seed=", seed,
-    " id=", ifelse(num_chains > 1, "$i", 1),
+    " id=", make_id(num_chains),
     " output",
-      " file=", paste0(exe_file, "-samples", ifelse(num_chains > 1, "$i.csv", "1.csv")),
+      " file=", paste0(exe_file, "-samples", make_id(num_chains), ".csv"),
       " refresh=", refresh
   )
 
   if (num_chains > 1) {
-    cmd <- paste0("for i in {1..", num_chains, "}\n",
-                  "do\n", cmd, " &\n", "done")
+    if (os_is_windows()) {
+      cmd <- paste0("for /l %x in (1, 1, ", num_chains,")",
+                    "do start /b ", cmd)
+    } else {
+      cmd <- paste0("for i in {1..", num_chains, "}\n",
+                    "do\n", cmd, " &\n", "done")
+    }
   }
 
   ## Run CmdStan
-  system(cmd, wait = TRUE)
+  system(cmd)
 
   output_files <- paste0(exe_file, "-samples", seq_len(num_chains), ".csv")
   invisible(output_files)
 }
 
+make_id <- function(num_chains) {
+  if (num_chains == 1) {
+    return(1)
+  }
+  if (os_is_windows()) "%x" else "$i"
+}
 

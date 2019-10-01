@@ -1,7 +1,7 @@
 
 ## FIXME: currently using some stuff from RStan but don't want to depend on RStan
 
-#' StanFit objects
+#' CmdStanFit objects
 #'
 #' @noRd
 #' @param output_files The path(s) to the csv file(s) containing the output from
@@ -17,8 +17,8 @@
 #'   }
 #' }
 #'
-StanFit <- R6::R6Class(
-  classname = "StanFit",
+CmdStanFit <- R6::R6Class(
+  classname = "CmdStanFit",
   public = list(
     output_files = character(),
     initialize = function(output_files) {
