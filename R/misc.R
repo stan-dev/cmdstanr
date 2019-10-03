@@ -56,8 +56,6 @@ write_rdump <- function(standata) {
 }
 
 
-# internals ---------------------------------------------------------------
-
 #' Do necessary type conversions before data can be dumped
 #' @noRd
 #' @param x A single object from the `standata` list.

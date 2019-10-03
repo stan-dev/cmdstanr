@@ -1,12 +1,21 @@
 #' Create a new CmdStanModel object
 #'
-#' @export
-#' @param stan_file Path to Stan program.
-#' @return An [R6][R6::R6] `CmdStanModel` object. See **Details**.
+#' The `cmdstan_model()` function creates a new `CmdStanModel` object from a
+#' file containing a Stan program.
 #'
-#' @details A `CmdStanModel` object stores the path to a Stan program as well as a
-#'   path to a compiled executable once created. The following methods are
-#'   available:
+#' @name cmdstan_model
+#' @aliases CmdStanModel cmdstanmodel
+#'
+#' @export
+#'
+#' @param stan_file Path to Stan program.
+#' @return An [R6][R6::R6] `CmdStanModel` object. See **Available Methods**.
+#'
+#' @details A `CmdStanModel` object stores the path to a Stan program as well as
+#'   a path to a compiled executable once created. See **Available Methods**.
+#'
+#' @section Available Methods: `CmdStanModel` objects have the following
+#'   associated methods:
 #' \describe{
 #'   \item{`code()`}{
 #'   Returns the Stan program located at `stan_file` as a string.
@@ -26,9 +35,11 @@
 #'     CmdStan or a named list of \R objects like for RStan.
 #'   * `...`: Arguments to pass to CmdStan to control sampling.
 #'     TODO: enumerate these instead of `...`.
-#'   Returns a `CmdStanFit` object.
+#'   Returns a [`CmdStanFit`] object.
 #'   }
 #' }
+#'
+#' @seealso [cmdstan_path()]
 #'
 #' @examples
 #' set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
@@ -56,6 +67,7 @@ cmdstan_model <- function(stan_file) {
 
 
 # CmdStanModel -----------------------------------------------------------------
+
 CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   public = list(

@@ -2,6 +2,8 @@
 % Please edit documentation in R/model.R
 \name{cmdstan_model}
 \alias{cmdstan_model}
+\alias{CmdStanModel}
+\alias{cmdstanmodel}
 \title{Create a new CmdStanModel object}
 \usage{
 cmdstan_model(stan_file)
@@ -10,15 +12,19 @@ cmdstan_model(stan_file)
 \item{stan_file}{Path to Stan program.}
 }
 \value{
-An \link[R6:R6]{R6} \code{CmdStanModel} object. See \strong{Details}.
+An \link[R6:R6]{R6} \code{CmdStanModel} object. See \strong{Available Methods}.
 }
 \description{
-Create a new CmdStanModel object
+The \code{cmdstan_model()} function creates a new \code{CmdStanModel} object from a
+file containing a Stan program.
 }
 \details{
-A \code{CmdStanModel} object stores the path to a Stan program as well as a
-path to a compiled executable once created. The following methods are
-available:
+A \code{CmdStanModel} object stores the path to a Stan program as well as
+a path to a compiled executable once created.
+}
+\section{Available Methods}{
+ \code{CmdStanModel} objects have the following
+associated methods:
 \describe{
 \item{\code{code()}}{
 Returns the Stan program located at \code{stan_file} as a string.
@@ -39,11 +45,12 @@ conditioned on some data. Arguments:
 CmdStan or a named list of \R objects like for RStan.
 \item \code{...}: Arguments to pass to CmdStan to control sampling.
 TODO: enumerate these instead of \code{...}.
-Returns a \code{CmdStanFit} object.
+Returns a \code{\link{CmdStanFit}} object.
 }
 }
 }
 }
+
 \examples{
 set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
 my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
@@ -64,4 +71,7 @@ fit2$summary()
 # can create a stanfit object using rstan package
 # stanfit <- rstan::read_stan_csv(fit$output_files)
 
+}
+\seealso{
+\code{\link[=cmdstan_path]{cmdstan_path()}}
 }

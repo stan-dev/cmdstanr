@@ -3,25 +3,34 @@
 
 #' CmdStanFit objects
 #'
-#' @noRd
-#' @param output_files The path(s) to the csv file(s) containing the output from
-#'   CmdStan.
+#' A `CmdStanFit` object is returned by the `sample()` method of a
+#' [`CmdStanModel`] object.
 #'
-#' The following methods are available:
+#' @name CmdStanFit
+#' @aliases cmdstanfit
+#'
+#' @section Available Methods: `CmdStanFit` objects have the following
+#'   associated methods:
 #' \describe{
 #'   \item{`summary()`}{
-#'   Run CmdStan's `bin/stansummary`` on output csv files.
+#'   Run CmdStan's `bin/stansummary` on output csv files.
 #'   }
 #'   \item{`diagnose()`}{
-#'   Run CmdStan's `bin/diagnose`` on output csv files.
+#'   Run CmdStan's `bin/diagnose` on output csv files.
 #'   }
+#'   \item{More coming soon...}{}
 #' }
 #'
+#' @seealso [`CmdStanModel`]
+#'
+NULL
+
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
     output_files = character(),
     initialize = function(output_files) {
+      checkmate::assert_character(output_files, pattern = ".csv")
       self$output_files <- output_files
     },
     print = function() {
@@ -63,10 +72,18 @@ CmdStanFit <- R6::R6Class(
       if (!all(file.exists(self$output_files))) {
         stop("Can't find output file(s).", call. = FALSE)
       }
+
       # FIXME don't use rstan
-      private$stanfit_ <- rstan::read_stan_csv(self$output_files)
-      private$posterior_sample_ <- as.array(private$stanfit_)
-      private$sampler_params_ <- rstan::get_sampler_params(private$stanfit_)
+      if (!requireNamespace("rstan", quietly = TRUE)) {
+        stop("Please install the 'rstan' package.\n",
+             "This is required for reading the csv files from CmdStan ",
+             "until CmdStanR has its own implementation.",
+             call. = FALSE)
+      }
+      stanfit <- rstan::read_stan_csv(self$output_files)
+      private$posterior_sample_ <- # FIXME get inc_warmup from CmdStanArgs
+        rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
+      private$sampler_params_ <- rstan::get_sampler_params(private$stanfit)
     }
   )
 )
