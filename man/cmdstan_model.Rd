@@ -52,7 +52,7 @@ Returns a \code{\link{CmdStanFit}} object.
 }
 
 \examples{
-set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0/")
+set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
 my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_file = my_stan_program)
 mod$print()
@@ -60,7 +60,7 @@ mod$compile()
 
 # specify data as a named list (like RStan)
 standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-fit <- mod$sample(data = standata, seed = 123)
+fit <- mod$sample(data = standata, seed = 123, num_chains = 1)
 fit$summary()
 
 # specify data as a path to a file (like CmdStan)
