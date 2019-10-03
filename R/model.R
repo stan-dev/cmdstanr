@@ -50,7 +50,7 @@
 #'
 #' # specify data as a named list (like RStan)
 #' standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-#' fit <- mod$sample(data = standata, seed = 123)
+#' fit <- mod$sample(data = standata, seed = 123, num_chains = 1)
 #' fit$summary()
 #'
 #' # specify data as a path to a file (like CmdStan)
@@ -97,8 +97,8 @@ CmdStanModel <- R6::R6Class(
       invisible(self)
     },
     sample = function(data = NULL,
-                      num_chains = NULL,
-                      num_cores = NULL,
+                      num_chains = NULL, # TODO: should this default to 1 or 4?
+                      # num_cores = NULL,
                       num_warmup = NULL,
                       num_samples = NULL,
                       save_warmup = NULL,
@@ -116,6 +116,11 @@ CmdStanModel <- R6::R6Class(
              call. = FALSE)
       }
 
+      num_chains <- num_chains %||% 1
+      chain_ids <- seq_len(num_chains)
+      data_file <- process_data(data)
+      model_name <- strip_ext(basename(self$exe_file))
+
       sample_args <- SampleArgs$new(
         num_warmup = num_warmup,
         num_samples = num_samples,
@@ -127,16 +132,6 @@ CmdStanModel <- R6::R6Class(
         adapt_engaged = adapt_engaged,
         adapt_delta = adapt_delta
       )
-
-      if (is.null(num_chains)) {
-        chain_ids <- NULL
-      } else {
-        chain_ids <- seq_len(num_chains)
-      }
-
-      data_file <- process_data(data)
-      model_name <- strip_ext(basename(self$exe_file))
-
       cmdstan_args <- CmdStanArgs$new(
         method_args = sample_args,
         model_name = model_name,
@@ -149,23 +144,24 @@ CmdStanModel <- R6::R6Class(
         refresh = refresh
       )
 
-      # FIXME: this assumes 1 chain for now
-      csv_file <- paste0(strip_ext(self$exe_file), 1, ".csv")
-      args <- cmdstan_args$compose_all_args(idx = 1, csv_file)
-
+      # FIXME: allow parallelization
       cmd <- basename(self$exe_file)
       if (!os_is_windows()) {
         cmd <- paste0("./", cmd)
       }
-      run_log <- processx::run(
-        command = cmd,
-        args = args,
-        wd = dirname(self$exe_file),
-        echo_cmd = TRUE,
-        echo = TRUE
-      )
+      csv_files <- paste0(strip_ext(self$exe_file), chain_ids, ".csv")
+      for (chain in chain_ids) {
+        args <- cmdstan_args$compose_all_args(idx = chain, csv_file = csv_files[chain])
+        run_log <- processx::run(
+          command = cmd,
+          args = args,
+          wd = dirname(self$exe_file),
+          echo_cmd = TRUE,
+          echo = TRUE
+        )
+      }
 
-      CmdStanFit$new(csv_file) # see fit.R
+      CmdStanFit$new(csv_files) # see fit.R
     },
 
     optimize = function(data = NULL,
@@ -175,6 +171,9 @@ CmdStanModel <- R6::R6Class(
                         algorithm = NULL,
                         init_alpha = NULL,
                         iter = NULL) {
+
+      stop("optimization is not implemented yet.", call. = FALSE)
+
       if (!length(self$exe_file)) {
         stop("Can't find executable. Try running the compile() method first.",
              call. = FALSE)

@@ -49,12 +49,46 @@ CmdStanArgs <- R6::R6Class(
         self$method <- "generate_quantities"
       }
 
-      num_chains <- if (!is.null(chain_ids)) length(chain_ids) else 1
-      self$method_args$validate(num_chains)
-      # self$validate()
+      self$method_args$validate(num_chains = length(chain_ids))
+      self$validate()
     },
 
-    # validate = function() {},
+    validate = function() {
+      # TODO: validate inits (see python implementation)
+      # TODO: validate that can write to output directory
+
+      if (!length(self$exe_file) || !nzchar(self$exe_file)) {
+        stop('Model not compiled. Try running the compile() method first.',
+             call. = FALSE)
+      }
+
+      # at least 1 chain id
+      checkmate::assert_integerish(self$chain_ids,
+                                   lower = 1,
+                                   min.len = 1,
+                                   any.missing = FALSE,
+                                   null.ok = FALSE)
+
+      # either no seed, 1 seed, or num_chains seeds
+      checkmate::assert(
+        combine = "or",
+        checkmate::check_integerish(self$seed,
+                                    lower = -1,
+                                    len = 1,
+                                    null.ok = TRUE),
+        checkmate::check_integerish(self$seed,
+                                    lower = -1,
+                                    len = length(self$chain_ids),
+                                    null.ok = TRUE)
+      )
+      if (is.null(self$seed)) {
+        self$seed <- sample(.Machine$integer.max, length(self$chain_ids))
+      } else if (length(self$seed) == 1 && length(self$chain_ids) > 1) {
+        # if one seed but multiple chains then increment seed by 1 for each chain
+        # TODO: is this ok?
+        self$seed <- c(self$seed, self$seed + 1:(length(self$chain_ids) -1))
+      }
+    },
 
     compose_all_args = function(idx = NULL, csv_file = NULL) {
       args <-
