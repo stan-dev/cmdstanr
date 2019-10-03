@@ -1,4 +1,3 @@
-# Arguments for NUTS
 SampleArgs <- R6::R6Class(
   "SampleArgs",
   lock_objects = FALSE,
@@ -105,14 +104,15 @@ SampleArgs <- R6::R6Class(
       invisible(self)
     },
 
-    # Compose CmdStan command for sampling-specific non-default arguments
+    # Compose arguments to CmdStan command for sampling-specific
+    # non-default arguments
     #
     # @param idx Integer chain id.
-    # @param cmd Optionally, something to prepend to the returned command.
+    # @param args A character vector of arguments to prepend to the returned
+    #   character vector. This will get passed in from CmdStanArgs$compose().
     # @return A character vector of CmdStan arguments for method="sample".
-    compose = function(idx, cmd = NULL) {
-      args <- list(
-        cmd,
+    compose = function(idx, args = NULL) {
+      new_args <- list(
         "method=sample",
         self$make_arg("num_samples"),
         self$make_arg("num_warmup"),
@@ -130,7 +130,8 @@ SampleArgs <- R6::R6Class(
       )
 
       # convert list to character vector
-      do.call(c, args)
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
     }
   )
 )
@@ -150,15 +151,15 @@ OptimizeArgs <- R6::R6Class(
       }
       invisible(self)
     },
-    compose = function(idx, cmd) {
-      args <- list(
-        cmd,
+    compose = function(idx = NULL, args = NULL) {
+      new_args <- list(
         "method=optimize",
         self$make_arg("algorithm"),
         self$make_arg("init_alpha"),
         self$make_arg("iter")
       )
-      do.call(c, args)
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
     },
     validate = function(num_chains) {
       checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
@@ -177,7 +178,7 @@ OptimizeArgs <- R6::R6Class(
 FixedParamArgs <- R6::R6Class(
   "FixedParamArgs",
   public = list(
-    compose = function(idx, cmd) c(cmd, "method=fixed_param"),
+    compose = function(idx, args = NULL) c(args, "method=fixed_param"),
     validate = function(num_chains) invisible(self)
   )
 )
@@ -188,18 +189,18 @@ CmdStanArgs <- R6::R6Class(
   public = list(
     method_args = NULL,
     initialize = function(model_name = NULL,
-                          exe_file = NULL,
+                          model_exe = NULL,
                           chain_ids = NULL,
-                          data = NULL,
+                          data_file = NULL,
                           seed = NULL,
-                          inits = NULL,
+                          inits = NULL, # TODO: CmdStan uses init but CmdStanPy inits
                           output_basename = NULL,
                           refresh = NULL,
                           method_args = NULL) {
       self$model_name <- model_name
-      self$exe_file <- exe_file
+      self$model_exe <- model_exe
       self$chain_ids <- chain_ids
-      self$data <- method_args
+      self$data_file <- data_file
       self$seed <- seed
       self$inits <- inits
       self$output_basename <- output_basename
@@ -218,9 +219,50 @@ CmdStanArgs <- R6::R6Class(
 
       self$method_args$validate(num_chains = length(chain_ids))
       # self$validate()
-    }
+    },
 
-    # validate = function() {}
+    # validate = function() {},
+
+    compose_all_args = function(idx = NULL, csv_file = NULL) {
+      args <-
+        list(
+          id = NULL,
+          seed = NULL,
+          inits = NULL,
+          data = NULL,
+          output = NULL
+        )
+
+      idx <- idx %||% 1
+      if (!is.null(self$chain_ids)) {
+        if (idx < 0 || idx > length(self$chain_ids)) {
+          stop("Index (", idx, ") exceeds number of chains",
+               " (", length(self$chain_ids), ").",
+               call. = FALSE)
+        }
+        args$id <- paste0("id=", self$chain_ids[idx])
+      }
+
+      if (!is.null(self$seed)) {
+        args$seed <- c("random", paste0("seed=", self$seed[idx]))
+      }
+
+      if (!is.null(self$inits)) {
+        args$inits <- paste0("init=", self$inits[idx])
+      }
+
+      if (!is.null(self$data_file)) {
+        args$data <- c("data", paste0("file=", self$data_file))
+      }
+
+      args$ouput <- c("output", paste0("file=", csv_file))
+      if (!is.null(self$refresh)) {
+        args$output <- c(args$output, paste0("refresh=", self$refresh))
+      }
+
+      args <- do.call(c, append(args, list(use.names = FALSE)))
+      self$method_args$compose(idx, args)
+    }
   )
 )
 
