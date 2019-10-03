@@ -28,10 +28,12 @@ NULL
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
+    cmdstan_args = NULL, # TODO: replace this with RunSet like cmdstanpy?
     output_files = character(),
-    initialize = function(output_files) {
+    initialize = function(output_files, cmdstan_args) {
       checkmate::assert_character(output_files, pattern = ".csv")
       self$output_files <- output_files
+      self$cmdstan_args <- cmdstan_args
     },
     print = function() {
       self$summary()
@@ -81,9 +83,10 @@ CmdStanFit <- R6::R6Class(
              call. = FALSE)
       }
       stanfit <- rstan::read_stan_csv(self$output_files)
-      private$posterior_sample_ <- # FIXME get inc_warmup from CmdStanArgs
+      private$posterior_sample_ <- # FIXME get save_warmup from CmdStanArgs
         rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
-      private$sampler_params_ <- rstan::get_sampler_params(private$stanfit)
+      private$sampler_params_ <- rstan::get_sampler_params(private$stanfit,
+                                                           inc_warmup = FALSE)
     }
   )
 )

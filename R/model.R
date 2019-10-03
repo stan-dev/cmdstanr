@@ -101,7 +101,7 @@ CmdStanModel <- R6::R6Class(
                       # num_cores = NULL,
                       num_warmup = NULL,
                       num_samples = NULL,
-                      save_warmup = NULL,
+                      save_warmup = FALSE, # TODO: document this
                       thin = NULL,
                       refresh = NULL,
                       inits = NULL,
@@ -111,10 +111,6 @@ CmdStanModel <- R6::R6Class(
                       stepsize = NULL,
                       adapt_engaged = NULL,
                       adapt_delta = NULL) {
-      if (!length(self$exe_file)) {
-        stop("Can't find executable. Try running the compile() method first.",
-             call. = FALSE)
-      }
 
       num_chains <- num_chains %||% 1
       chain_ids <- seq_len(num_chains)
@@ -161,7 +157,7 @@ CmdStanModel <- R6::R6Class(
         )
       }
 
-      CmdStanFit$new(csv_files) # see fit.R
+      CmdStanFit$new(csv_files, cmdstan_args) # see fit.R
     },
 
     optimize = function(data = NULL,
@@ -174,10 +170,6 @@ CmdStanModel <- R6::R6Class(
 
       stop("optimization is not implemented yet.", call. = FALSE)
 
-      if (!length(self$exe_file)) {
-        stop("Can't find executable. Try running the compile() method first.",
-             call. = FALSE)
-      }
       optimize_args <- OptimizeArgs$new(
         algorithm = algorithm,
         init_alpha = init_alpha,
@@ -263,5 +255,4 @@ process_data <- function(data) {
   }
   path
 }
-
 
