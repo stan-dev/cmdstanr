@@ -58,7 +58,7 @@
 #' fit2 <- mod$sample(data = my_data_file, seed = 123)
 #' fit2$summary()
 #'
-#' # can create a stanfit object using rstan package
+#' # can also create a stanfit object using rstan package
 #' # stanfit <- rstan::read_stan_csv(fit$output_files)
 #'
 cmdstan_model <- function(stan_file) {
@@ -96,14 +96,125 @@ CmdStanModel <- R6::R6Class(
       self$exe_file <- compile_stan_program(self$stan_file)
       invisible(self)
     },
-    sample = function(data = NULL, ...) { # TODO: enumerate args instead of using `...`
+    sample = function(data = NULL,
+                      num_chains = NULL,
+                      num_cores = NULL,
+                      num_warmup = NULL,
+                      num_samples = NULL,
+                      save_warmup = NULL,
+                      thin = NULL,
+                      refresh = NULL,
+                      inits = NULL,
+                      seed = NULL,
+                      max_depth = NULL,
+                      metric = NULL,
+                      stepsize = NULL,
+                      adapt_engaged = NULL,
+                      adapt_delta = NULL) {
       if (!length(self$exe_file)) {
-        stop("Can't find executable. Try running the compile() method before sample().",
+        stop("Can't find executable. Try running the compile() method first.",
              call. = FALSE)
       }
-      data_file <- write_data(data)
-      output_files <- sample_hmc_nuts(self$exe_file, data_file = data_file, ...)
-      CmdStanFit$new(output_files) # see fit.R
+
+      sample_args <- SampleArgs$new(
+        num_warmup = num_warmup,
+        num_samples = num_samples,
+        save_warmup = save_warmup,
+        thin = thin,
+        max_depth = max_depth,
+        metric = metric,
+        stepsize = stepsize,
+        adapt_engaged = adapt_engaged,
+        adapt_delta = adapt_delta
+      )
+
+      if (is.null(num_chains)) {
+        chain_ids <- NULL
+      } else {
+        chain_ids <- seq_len(num_chains)
+      }
+
+      data_file <- process_data(data)
+      model_name <- strip_ext(basename(self$exe_file))
+
+      cmdstan_args <- CmdStanArgs$new(
+        method_args = sample_args,
+        model_name = model_name,
+        exe_file = self$exe_file,
+        chain_ids = chain_ids,
+        data_file = data_file,
+        seed = seed,
+        inits = inits,
+        output_basename = model_name,
+        refresh = refresh
+      )
+
+      # FIXME: this assumes 1 chain for now
+      csv_file <- paste0(strip_ext(self$exe_file), 1, ".csv")
+      args <- cmdstan_args$compose_all_args(idx = 1, csv_file)
+
+      cmd <- basename(self$exe_file)
+      if (!os_is_windows()) {
+        cmd <- paste0("./", cmd)
+      }
+      run_log <- processx::run(
+        command = cmd,
+        args = args,
+        wd = dirname(self$exe_file),
+        echo_cmd = TRUE,
+        echo = TRUE
+      )
+
+      CmdStanFit$new(csv_file) # see fit.R
+    },
+
+    optimize = function(data = NULL,
+                        seed = NULL,
+                        refresh = NULL,
+                        inits = NULL,
+                        algorithm = NULL,
+                        init_alpha = NULL,
+                        iter = NULL) {
+      if (!length(self$exe_file)) {
+        stop("Can't find executable. Try running the compile() method first.",
+             call. = FALSE)
+      }
+      optimize_args <- OptimizeArgs$new(
+        algorithm = algorithm,
+        init_alpha = init_alpha,
+        iter = iter
+      )
+
+      data_file <- process_data(data)
+      model_name <- strip_ext(basename(self$exe_file))
+
+      cmdstan_args <- CmdStanArgs$new(
+        method_args = optimize_args,
+        model_name = model_name,
+        exe_file = self$exe_file,
+        chain_ids = 1,
+        data_file = data_file,
+        seed = seed,
+        inits = inits,
+        output_basename = model_name,
+        refresh = refresh
+      )
+
+      csv_file <- paste0(strip_ext(self$exe_file), 1, ".csv")
+      args <- cmdstan_args$compose_all_args(idx = 1, csv_file)
+
+      cmd <- basename(self$exe_file)
+      if (!os_is_windows()) {
+        cmd <- paste0("./", cmd)
+      }
+      run_log <- processx::run(
+        command = cmd,
+        args = args,
+        wd = dirname(self$exe_file),
+        echo_cmd = TRUE,
+        echo = TRUE
+      )
+      run_log # FIXME: need CmdStanMLE object
     }
   )
 )
@@ -111,31 +222,13 @@ CmdStanModel <- R6::R6Class(
 
 # internals for CmdStanModel methods ---------------------------------------------
 
-#' Check for .stan file extension
-#' @noRd
-#' @param stan_file Path to Stan program.
-#' @return T/F
-has_stan_ext <- function(stan_file) {
-  stopifnot(is.character(stan_file))
-  file <- basename(stan_file)
-  isTRUE(substr(file, nchar(file) - 4, nchar(file)) == ".stan")
-}
-
-#' Strip the .stan file extension from a path
-#' @noRd
-#' @param stan_file Path to Stan program.
-#' @return `stan_file` but without the suffix `.stan`
-strip_stan_ext <- function(stan_file) {
-  substr(stan_file, 1, nchar(stan_file) - 5)
-}
-
 #' Compile Stan program
 #' @noRd
 #' @param stan_file Path to Stan program.
 #' @return Path to executable.
 compile_stan_program <- function(stan_file) {
   prog <- strip_cmdstan_path(stan_file) # relative path
-  prog <- strip_stan_ext(prog)
+  prog <- strip_ext(prog) # strip .stan extension
 
   # using base::system()
   # cmd <- paste0("cd ", cmdstan_path(), " && make ", cmdstan_ext(prog))
@@ -150,7 +243,7 @@ compile_stan_program <- function(stan_file) {
   )
 
   # return full path to exe
-  exe_file <- strip_stan_ext(stan_file)
+  exe_file <- strip_ext(stan_file)
   cmdstan_ext(exe_file)
 }
 
@@ -159,7 +252,7 @@ compile_stan_program <- function(stan_file) {
 #' @param data If not `NULL`, then either a path to a data file compatible with
 #'   CmdStan, or a named list of \R objects in the style that RStan uses.
 #' @return Path to data file.
-write_data <- function(data) {
+process_data <- function(data) {
   if (is.null(data)) {
     path <- ""
   } else if (is.character(data)) {

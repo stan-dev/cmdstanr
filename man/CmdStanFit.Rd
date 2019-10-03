@@ -18,6 +18,7 @@ Run CmdStan's \code{bin/stansummary} on output csv files.
 \item{\code{diagnose()}}{
 Run CmdStan's \code{bin/diagnose} on output csv files.
 }
+\item{More coming soon...}{}
 }
 }
 

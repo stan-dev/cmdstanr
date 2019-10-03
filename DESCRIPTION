@@ -15,6 +15,7 @@ Roxygen: list(markdown = TRUE)
 Imports: 
     checkmate,
     processx,
-    R6
+    R6,
+    tools
 Suggests: 
     rstan

@@ -20,7 +20,7 @@ file containing a Stan program.
 }
 \details{
 A \code{CmdStanModel} object stores the path to a Stan program as well as
-a path to a compiled executable once created.
+a path to a compiled executable once created. See \strong{Available Methods}.
 }
 \section{Available Methods}{
  \code{CmdStanModel} objects have the following
@@ -52,7 +52,7 @@ Returns a \code{\link{CmdStanFit}} object.
 }
 
 \examples{
-set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
+set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0/")
 my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_file = my_stan_program)
 mod$print()
@@ -68,7 +68,7 @@ my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
 fit2 <- mod$sample(data = my_data_file, seed = 123)
 fit2$summary()
 
-# can create a stanfit object using rstan package
+# can also create a stanfit object using rstan package
 # stanfit <- rstan::read_stan_csv(fit$output_files)
 
 }

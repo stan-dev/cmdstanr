@@ -1,3 +1,104 @@
+#' Objects for storing CmdStan arguments
+#'
+#' These objects store arguments for creating the call to CmdStan and provide a
+#' `compose()` method for creating a character vector of arguments that can be
+#' passed to the `args` argument of `processx::run()`.
+#'
+#' @noRd
+#' @details
+#' * `SampleArgs`: stores arguments specific to `method=sample`.
+#' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
+#' * `FixedParamArgs`: stores arguments specific to `method=fixed_param`.
+#' * `GenerateQuantitiesArgs`: not yet implemented.
+#' * `VariationalArgs`: not yet implemented.
+#'
+#' A `CmdStanArgs` object stores arguments _not_ specific to particular methods
+#' as well as one of the above objects containing the method-specific arguments.
+#'
+CmdStanArgs <- R6::R6Class(
+  "CmdStanArgs",
+  lock_objects = FALSE,
+  public = list(
+    method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
+    initialize = function(model_name = NULL,
+                          exe_file = NULL,
+                          chain_ids = NULL,
+                          data_file = NULL,
+                          seed = NULL,
+                          inits = NULL, # TODO: CmdStan uses init but CmdStanPy inits
+                          output_basename = NULL,
+                          refresh = NULL,
+                          method_args = NULL) {
+      self$model_name <- model_name
+      self$exe_file <- exe_file
+      self$chain_ids <- chain_ids
+      self$data_file <- data_file
+      self$seed <- seed
+      self$inits <- inits
+      self$output_basename <- output_basename
+      self$refresh <- refresh
+      self$method_args <- method_args
+
+      if (inherits(method_args, "SampleArgs")) {
+        self$method <- "sample"
+      } else if (inherits(method_args, "OptimizeArgs")) {
+        self$method <- "optimize"
+      } else if (inherits(method_args, "FixedParamArgs")) {
+        self$method <- "fixed_param"
+      } else if (inherits(method_args, "GenerateQuantitiesArgs")) {
+        self$method <- "generate_quantities"
+      }
+
+      num_chains <- if (!is.null(chain_ids)) length(chain_ids) else 1
+      self$method_args$validate(num_chains)
+      # self$validate()
+    },
+
+    # validate = function() {},
+
+    compose_all_args = function(idx = NULL, csv_file = NULL) {
+      args <-
+        list(
+          id = NULL,
+          seed = NULL,
+          inits = NULL,
+          data = NULL,
+          output = NULL
+        )
+
+      idx <- idx %||% 1
+      if (!is.null(self$chain_ids)) {
+        if (idx < 0 || idx > length(self$chain_ids)) {
+          stop("Index (", idx, ") exceeds number of chains",
+               " (", length(self$chain_ids), ").",
+               call. = FALSE)
+        }
+        args$id <- paste0("id=", self$chain_ids[idx])
+      }
+
+      if (!is.null(self$seed)) {
+        args$seed <- c("random", paste0("seed=", self$seed[idx]))
+      }
+
+      if (!is.null(self$inits)) {
+        args$inits <- paste0("init=", self$inits[idx])
+      }
+
+      if (!is.null(self$data_file)) {
+        args$data <- c("data", paste0("file=", self$data_file))
+      }
+
+      args$output <- c("output", paste0("file=", csv_file))
+      if (!is.null(self$refresh)) {
+        args$output <- c(args$output, paste0("refresh=", self$refresh))
+      }
+
+      args <- do.call(c, append(args, list(use.names = FALSE)))
+      self$method_args$compose(idx, args)
+    }
+  )
+)
+
 SampleArgs <- R6::R6Class(
   "SampleArgs",
   lock_objects = FALSE,
@@ -36,9 +137,6 @@ SampleArgs <- R6::R6Class(
         self$save_warmup <- as.integer(self$adapt_engaged)
       }
 
-      self$make_arg <- function(arg_name, idx = NULL) {
-        .make_arg(self, arg_name, idx)
-      }
       invisible(self)
     },
 
@@ -109,24 +207,40 @@ SampleArgs <- R6::R6Class(
     #
     # @param idx Integer chain id.
     # @param args A character vector of arguments to prepend to the returned
-    #   character vector. This will get passed in from CmdStanArgs$compose().
-    # @return A character vector of CmdStan arguments for method="sample".
+    #   character vector. This will get passed in from CmdStanArgs$compose_all_args().
+    # @return A character vector of CmdStan arguments.
     compose = function(idx, args = NULL) {
+
+      # Helper function to make sampler arguments
+      # @param arg_name Name of slot in self containing the argument value
+      # @param idx Chain id if applicable.
+      .make_arg <- function(arg_name, idx = NULL) {
+        val <- self[[arg_name]]
+        if (is.null(val)) {
+          return(NULL)
+        }
+        if (!is.null(idx) && length(val) >= idx) {
+          val <- val[idx]
+        }
+        arg_name <- sub("adapt_", "", arg_name) # e.g. adapt_delta -> delta
+        paste0(arg_name, "=", val)
+      }
+
       new_args <- list(
         "method=sample",
-        self$make_arg("num_samples"),
-        self$make_arg("num_warmup"),
-        self$make_arg("save_warmup"),
-        self$make_arg("thin"),
+        .make_arg("num_samples"),
+        .make_arg("num_warmup"),
+        .make_arg("save_warmup"),
+        .make_arg("thin"),
         "algorithm=hmc",
-        self$make_arg("metric", idx),
-        self$make_arg("stepsize", idx),
+        .make_arg("metric", idx),
+        .make_arg("stepsize", idx),
         "engine=nuts",
-        self$make_arg("max_depth"),
+        .make_arg("max_depth"),
         if (!is.null(self$adapt_delta) || !is.null(self$adapt_engaged))
           "adapt",
-        self$make_arg("adapt_delta"),
-        self$make_arg("adapt_engaged")
+        .make_arg("adapt_delta"),
+        .make_arg("adapt_engaged")
       )
 
       # convert list to character vector
@@ -146,21 +260,9 @@ OptimizeArgs <- R6::R6Class(
       self$algorithm <- algorithm
       self$init_alpha <- init_alpha
       self$iter <- iter
-      self$make_arg <- function(arg_name, idx = NULL) {
-        .make_arg(self, arg_name, idx)
-      }
       invisible(self)
     },
-    compose = function(idx = NULL, args = NULL) {
-      new_args <- list(
-        "method=optimize",
-        self$make_arg("algorithm"),
-        self$make_arg("init_alpha"),
-        self$make_arg("iter")
-      )
-      new_args <- do.call(c, new_args)
-      c(args, new_args)
-    },
+
     validate = function(num_chains) {
       checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
                                choices = c("bfgs", "lbfgs", "newton"))
@@ -171,6 +273,26 @@ OptimizeArgs <- R6::R6Class(
              call. = FALSE)
       }
       invisible(self)
+    },
+
+    # Compose arguments to CmdStan command for optimization-specific
+    # non-default arguments
+    #
+    # @param idx Integer chain id. This is ignored but needed do `compose()`
+    #   has the same signature as for `SampleArgs`.
+    # @param args A character vector of arguments to prepend to the returned
+    #   character vector. This will get passed in from
+    #   CmdStanArgs$compose_all_args().
+    # @return A character vector of CmdStan arguments.
+    compose = function(idx = NULL, args = NULL) {
+      new_args <- list(
+        "method=optimize",
+        if (!is.null(self$algorithm)) paste0("algorithm=", self$algorithm),
+        if (!is.null(self$init_alpha)) paste0("init_alpha=", self$init_alpha),
+        if (!is.null(self$iter)) paste0("iter=", self$iter)
+      )
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
     }
   )
 )
@@ -182,105 +304,5 @@ FixedParamArgs <- R6::R6Class(
     validate = function(num_chains) invisible(self)
   )
 )
-
-CmdStanArgs <- R6::R6Class(
-  "CmdStanArgs",
-  lock_objects = FALSE,
-  public = list(
-    method_args = NULL,
-    initialize = function(model_name = NULL,
-                          model_exe = NULL,
-                          chain_ids = NULL,
-                          data_file = NULL,
-                          seed = NULL,
-                          inits = NULL, # TODO: CmdStan uses init but CmdStanPy inits
-                          output_basename = NULL,
-                          refresh = NULL,
-                          method_args = NULL) {
-      self$model_name <- model_name
-      self$model_exe <- model_exe
-      self$chain_ids <- chain_ids
-      self$data_file <- data_file
-      self$seed <- seed
-      self$inits <- inits
-      self$output_basename <- output_basename
-      self$refresh <- refresh
-      self$method_args <- method_args
-
-      if (inherits(method_args, "SampleArgs")) {
-        self$method <- "sample"
-      } else if (inherits(method_args, "OptimizeArgs")) {
-        self$method <- "optimize"
-      } else if (inherits(method_args, "FixedParamArgs")) {
-        self$method <- "fixed_param"
-      } else if (inherits(method_args, "GenerateQuantitiesArgs")) {
-        self$method <- "generate_quantities"
-      }
-
-      self$method_args$validate(num_chains = length(chain_ids))
-      # self$validate()
-    },
-
-    # validate = function() {},
-
-    compose_all_args = function(idx = NULL, csv_file = NULL) {
-      args <-
-        list(
-          id = NULL,
-          seed = NULL,
-          inits = NULL,
-          data = NULL,
-          output = NULL
-        )
-
-      idx <- idx %||% 1
-      if (!is.null(self$chain_ids)) {
-        if (idx < 0 || idx > length(self$chain_ids)) {
-          stop("Index (", idx, ") exceeds number of chains",
-               " (", length(self$chain_ids), ").",
-               call. = FALSE)
-        }
-        args$id <- paste0("id=", self$chain_ids[idx])
-      }
-
-      if (!is.null(self$seed)) {
-        args$seed <- c("random", paste0("seed=", self$seed[idx]))
-      }
-
-      if (!is.null(self$inits)) {
-        args$inits <- paste0("init=", self$inits[idx])
-      }
-
-      if (!is.null(self$data_file)) {
-        args$data <- c("data", paste0("file=", self$data_file))
-      }
-
-      args$ouput <- c("output", paste0("file=", csv_file))
-      if (!is.null(self$refresh)) {
-        args$output <- c(args$output, paste0("refresh=", self$refresh))
-      }
-
-      args <- do.call(c, append(args, list(use.names = FALSE)))
-      self$method_args$compose(idx, args)
-    }
-  )
-)
-
-
-
-# @param arg_name Name of slot in self containing the argument value
-# @param idx Chain id if applicable.
-.make_arg <- function(self, arg_name, idx = NULL) {
-  val <- self[[arg_name]]
-  if (is.null(val)) {
-    return(NULL)
-  }
-
-  if (!is.null(idx) && length(val) >= idx) {
-    val <- val[idx]
-  }
-  arg_name <- sub("adapt_", "", arg_name) # e.g. adapt_delta -> delta
-  paste0(arg_name, "=", val)
-}
 
 

@@ -33,31 +33,3 @@ set_cmdstan_path <- function(path) {
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- Sys.getenv("CMDSTAN")
 
-
-# internal ----------------------------------------------------------------
-cmdstan_ext <- function(path = NULL) {
-  ext <- if (os_is_windows()) ".exe" else ""
-  if (is.null(path)) {
-    return(ext)
-  }
-  paste0(path, ext)
-}
-
-add_cmdstan_path <- function(relative_path) {
-  if (!nzchar(cmdstan_path())) {
-    stop("Please set the path to CmdStan. See ?set_cmdstan_path.",
-         call. = FALSE)
-  }
-  file.path(cmdstan_path(), relative_path)
-}
-
-strip_cmdstan_path <- function(full_path) {
-  if (!nzchar(cmdstan_path())) {
-    stop("Please set the path to CmdStan. See ?set_cmdstan_path.",
-         call. = FALSE)
-  }
-  relative_path <- sub(cmdstan_path(), "", full_path)
-  if (substr(relative_path, 1, 1) == "/") {
-    relative_path <- sub("/", "", relative_path)
-  }
-}
