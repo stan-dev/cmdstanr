@@ -91,7 +91,7 @@ CmdStanModel <- R6::R6Class(
       }
       data_file <- write_data(data)
       output_files <- sample_hmc_nuts(self$exe_file, data_file = data_file, ...)
-      CmdStanFit$new(output_files) # see stanfit.R
+      CmdStanFit$new(output_files) # see fit.R
     }
   )
 )
