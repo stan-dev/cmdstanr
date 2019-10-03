@@ -142,7 +142,7 @@ compile_stan_program <- function(stan_file) {
   cmdstan_ext(exe_file)
 }
 
-#' Either return Write data to a temporary `.data.R` file
+#' Write data to a temporary `.data.R` file if necessary
 #' @noRd
 #' @param data If not `NULL`, then either a path to a data file compatible with
 #'   CmdStan, or a named list of \R objects in the style that RStan uses.
