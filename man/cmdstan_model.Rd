@@ -34,12 +34,14 @@ Prints a more readable version of the Stan program returned by \code{code()}.
 }
 \item{\code{compile()}}{
 Compiles the Stan program. Translates the Stan code to C++, then calls the
-C++ compiler.
+C++ compiler. The resulting files are placed in the same directory as
+\code{stan_file}.
 }
 \item{\code{sample(data = NULL, ...)}}{
 Run the default MCMC algorithm in CmdStan (\code{algorithm=hmc engine=nuts}), to
 produce a set of draws from the posterior distribution of a model
-conditioned on some data. Arguments:
+conditioned on some data.
+Arguments:
 \itemize{
 \item \code{data}: If not \code{NULL}, then either a path to a data file compatible with
 CmdStan or a named list of \R objects like for RStan.
@@ -47,7 +49,7 @@ CmdStan or a named list of \R objects like for RStan.
 TODO: enumerate these instead of \code{...}.
 }
 
-Returns a \code{\link{CmdStanMCMC}} object created from the csv files written by
+Return: a \code{\link{CmdStanMCMC}} object created from the csv files written by
 CmdStan. Those csv files are written to the same directory as \code{stan_file}.
 }
 }
@@ -62,7 +64,7 @@ mod$compile()
 
 # specify data as a named list (like RStan)
 standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-fit <- mod$sample(data = standata, seed = 123, num_chains = 1)
+fit <- mod$sample(data = standata, seed = 123, num_chains = 2)
 fit$summary()
 
 # specify data as a path to a file (like CmdStan)

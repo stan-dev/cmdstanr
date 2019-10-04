@@ -31,8 +31,10 @@ set_cmdstan_path <- function(path) {
 
 # instantiate --------------------------------------------------
 .cmdstanr <- new.env(parent = emptyenv())
-.cmdstanr$PATH <- Sys.getenv("CMDSTAN")
-.cmdstanr$TEMP_DIR <- tempdir()
+
+# in .onLoad in zzz.R:
+# .cmdstanr$PATH <- Sys.getenv("CMDSTAN")
+# .cmdstanr$TEMP_DIR <- tempdir()
 
 
 # internal ----------------------------------------------------------------

@@ -1,5 +1,4 @@
-
-## FIXME: currently using some stuff from RStan but don't want to depend on RStan
+# CmdStanMCMC -------------------------------------------------------------
 
 #' CmdStanMCMC objects
 #'
@@ -18,9 +17,9 @@
 #'   \item{`diagnose()`}{
 #'   Run CmdStan's `bin/diagnose` on output csv files.
 #'   }
-#'   \item{`save_csvfiles(dir, basename)`} {
+#'   \item{`save_csvfiles(dir, basename = NULL)`}{
 #'   Move csv output files to specified directory using specified basename,
-#'   appending suffix ‘-<id>.csv’ to each. If files with the specified
+#'   appending suffix `'-<id>.csv'` to each. If files with the specified
 #'   names already exist they are overwritten.
 #'   Arguments:
 #'   * `dir`: Path to directory where the files should be saved.
@@ -39,14 +38,15 @@ NULL
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   public = list(
-    cmdstan_args = NULL, # TODO: replace this with RunSet like cmdstanpy?
-    output_files = character(),
-    initialize = function(output_files, cmdstan_args) {
+    args = NULL, # TODO: replace this with RunSet like cmdstanpy?
+    output_files = NULL,
+    initialize = function(output_files, args) {
       checkmate::assert_character(output_files, pattern = ".csv")
+      checkmate::assert_r6(args, classes = "CmdStanArgs")
       self$output_files <- output_files
-      self$cmdstan_args <- cmdstan_args
+      self$args <- args
     },
-    save_csvfiles = function(dir, basename) {
+    save_csvfiles = function(dir, basename = NULL) {
       .save_csvfiles(self, dir, basename)
     },
     print = function() {
@@ -113,35 +113,119 @@ CmdStanMCMC <- R6::R6Class(
   )
 )
 
+
+# CmdStanMLE -------------------------------------------------------------
+
+#' CmdStanMLE objects
+#'
+#' A `CmdStanMLE` object is returned by the `optimize()` method of a
+#' [`CmdStanModel`] object.
+#'
+#' @name CmdStanMLE
+#' @aliases cmdstanmle
+#'
+#' @section Available Methods: `CmdStanMLE` objects have the following
+#'   associated methods:
+#' \describe{
+#'   \item{`print()`}{
+#'   Print the estimates.
+#'   }
+#'   \item{`save_csvfiles(dir, basename = NULL)`}{
+#'   Move csv output files to specified directory using specified basename,
+#'   appending suffix `'-<id>.csv'` to each. If files with the specified
+#'   names already exist they are overwritten.
+#'   Arguments:
+#'   * `dir`: Path to directory where the files should be saved.
+#'   * `basename`: Base filename to use.
+#'
+#'   Return: the output from `base::file.copy()`, which is a logical vector
+#'   indicating if the operation succeeded for each of the files.
+#'   }
+#'   \item{More coming soon...}{}
+#' }
+#'
+#' @seealso [`CmdStanModel`]
+#'
+NULL
+
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
   public = list(
-    cmdstan_args = NULL,
-    output_files = character(),
+    args = NULL,
+    output_files = NULL,
     mle = NULL, # FIXME
-    initialize = function(output_files, cmdstan_args) {
+    initialize = function(output_files, args) {
       checkmate::assert_character(output_files, pattern = ".csv")
+      checkmate::assert_r6(args, classes = "CmdStanArgs")
       self$output_files <- output_files
-      self$cmdstan_args <- cmdstan_args
+      self$args <- args
       self$mle <- read_optim_csv(output_files)
     },
-    save_csvfiles = function(dir, basename) {
+    save_csvfiles = function(dir, basename = NULL) {
       .save_csvfiles(self, dir, basename)
     }
   )
 )
 
+
+
+# RunSet ------------------------------------------------------------------
+
+# Record of CmdStan run for a specified configuration and number of chains.
+RunSet <- R6::R6Class(
+  classname = "RunSet",
+  lock_objects = FALSE,
+  public = list(
+    args = NULL,
+    initialize = function(args, num_chains) {
+      checkmate::assert_r6(args, classes = "CmdStanArgs")
+      checkmate::assert_integerish(num_chains,
+                                   any.missing = FALSE,
+                                   len = 1,
+                                   lower = 1)
+      self$args <- args
+      self$num_chains <- num_chains
+
+      csv_basename <- paste0("stan-", args$model_name, "-", args$method)
+      private$csv_files <-
+        file.path(
+          cmdstan_tempdir(),
+          paste0(csv_basename, "-", 1:num_chains, ".csv")
+        )
+      private$console_files <- change_ext(self$csv_files, ".txt")
+      invisible(file.create(private$csv_files, private$console_files))
+
+      private$commands <- lapply(1:self$num_chains, function(j) {
+        self$args$compose_all_args(idx = j, csv_file = private$csv_files[j])
+      })
+
+      invisible(self)
+    },
+    validate = function() {
+    }
+  ),
+  private = list(
+    csv_files = character(),
+    console_files = character(),
+    commands = list()
+  )
+)
+
+
+# internal ----------------------------------------------------------------
+
 # Moves csvfiles to specified directory using specified basename,
-# appending suffix ‘-<id>.csv’ to each. If files with the specified
+# appending suffix `-<id>.csv` to each. If files with the specified
 # names already exist they are overwritten.
 #
 # @param dir Path to directory where the files should be saved.
 # @param basename Base filename to use.
 # @return The output from `base::file.copy()`, which is a logical vector
 #   indicating if the operation succeeded for each of the files.
-.save_csvfiles <- function(self, dir, basename) {
+.save_csvfiles <- function(self, dir, basename = NULL) {
   checkmate::assert_directory_exists(dir, access = "w")
-  new_names <- paste0(basename, "-", self$cmdstan_args$chain_ids, ".csv")
+  basename <- basename %||% self$args$model_name
+  new_names <- paste0(basename, "-", self$args$chain_ids, ".csv")
   destinations <- file.path(dir, new_names)
   file.copy(from = self$output_files,
             to = destinations,

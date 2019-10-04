@@ -36,6 +36,12 @@ strip_ext <- function(file) {
   tools::file_path_sans_ext(file)
 }
 
+# Change extension from a file path
+change_ext <- function(file, ext) {
+  out <- strip_ext(file)
+  paste0(out, ext)
+}
+
 # Prepend cmdstan_path() to a relative path
 add_cmdstan_path <- function(relative_path) {
   if (!nzchar(cmdstan_path())) {
@@ -87,7 +93,7 @@ read_optim_csv <- function(csv_file) {
 #' @return Path to temporary file containing the data.
 #' @noRd
 write_rdump <- function(standata) {
-  temp_file <- tempfile(fileext = ".data.R", tmpdir = cmdstan_tempdir())
+  temp_file <- tempfile(pattern = "standata-", fileext = ".data.R")
   file <- file(temp_file, open = "w")
   on.exit(close(file), add = TRUE)
 
@@ -139,7 +145,7 @@ preprocess_data <- function(x) {
 
   if (!is.integer(x) &&
       max(abs(x)) < .Machine$integer.max &&
-      real_is_int(x)) {
+      but_actually_int(x)) {
     storage.mode(x) <- "integer"
   }
   x
@@ -173,7 +179,6 @@ write_array <- function(x, x_name, file, width_pattern) {
       file = file, sep = '')
 }
 
-# based on rstan::data_list2array
 list_to_array <- function(x, x_name) {
   if (!length(x))  {
     return(NULL)
@@ -186,8 +191,7 @@ list_to_array <- function(x, x_name) {
   x_dims <- lapply(x, function(a) dim(a) %||% length(a))
   x_ndims <- sapply(x_dims, length)
   if (!all(x_ndims == x_ndims[1]) ||
-      !all(sapply(x_dims, function(d) all(d == x_dims[[1]])))
-  ) {
+      !all(sapply(x_dims, function(d) all(d == x_dims[[1]])))) {
     stop("All elements in list '", x_name, "' must have the same dimensions.",
          call. = FALSE)
   }
@@ -197,8 +201,9 @@ list_to_array <- function(x, x_name) {
   aperm(x, c(x_ndims[1] + 1L, seq_len(x_ndims[1])))
 }
 
-real_is_int <- function(x) {
-  if (length(x) < 1L) return(TRUE)
-  if (any(is.infinite(x)) || any(is.nan(x))) return(FALSE)
+but_actually_int <- function(x) {
+  if (!length(x)) return(TRUE)
+  if (any(is.nan(x))) return(FALSE)
+  if (any(is.infinite(x))) return(FALSE)
   all(floor(x) == x)
 }

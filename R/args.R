@@ -2,33 +2,40 @@
 #'
 #' These objects store arguments for creating the call to CmdStan and provide a
 #' `compose()` method for creating a character vector of arguments that can be
-#' passed to the `args` argument of `processx::run()`.
+#' passed to the `args` argument of [processx::run()].
 #'
 #' @noRd
 #' @details
+#'
+#' A `CmdStanArgs` object stores arguments _not_ specific to particular methods,
+#' as well as one of the following objects containing the method-specific
+#' arguments:
+#'
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
 #' * `FixedParamArgs`: stores arguments specific to `method=fixed_param`.
 #' * `GenerateQuantitiesArgs`: not yet implemented.
 #' * `VariationalArgs`: not yet implemented.
 #'
-#' A `CmdStanArgs` object stores arguments _not_ specific to particular methods
-#' as well as one of the above objects containing the method-specific arguments.
-#'
+NULL
+
+
+# CmdStanArgs -------------------------------------------------------------
+
 CmdStanArgs <- R6::R6Class(
   "CmdStanArgs",
   lock_objects = FALSE,
   public = list(
     method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
-    initialize = function(model_name = NULL,
-                          exe_file = NULL,
-                          chain_ids = NULL,
+    initialize = function(model_name,
+                          exe_file,
+                          chain_ids,
+                          method_args,
                           data_file = NULL,
                           seed = NULL,
                           inits = NULL, # TODO: CmdStan uses init but CmdStanPy inits
                           output_basename = NULL,
-                          refresh = NULL,
-                          method_args = NULL) {
+                          refresh = NULL) {
       self$model_name <- model_name
       self$exe_file <- exe_file
       self$chain_ids <- chain_ids
@@ -39,16 +46,7 @@ CmdStanArgs <- R6::R6Class(
       self$refresh <- refresh
       self$method_args <- method_args
 
-      if (inherits(method_args, "SampleArgs")) {
-        self$method <- "sample"
-      } else if (inherits(method_args, "OptimizeArgs")) {
-        self$method <- "optimize"
-      } else if (inherits(method_args, "FixedParamArgs")) {
-        self$method <- "fixed_param"
-      } else if (inherits(method_args, "GenerateQuantitiesArgs")) {
-        self$method <- "generate_quantities"
-      }
-
+      self$method <- self$method_args$method
       self$method_args$validate(num_chains = length(chain_ids))
       self$validate()
     },
@@ -133,10 +131,15 @@ CmdStanArgs <- R6::R6Class(
   )
 )
 
+
+# SampleArgs -------------------------------------------------------------
+
 SampleArgs <- R6::R6Class(
   "SampleArgs",
   lock_objects = FALSE,
   public = list(
+    method = "sample",
+
     # Initialize object
     # @note Leaving an argument as `NULL` means to use the CmdStan default.
     # @return `self` invisibly.
@@ -284,10 +287,14 @@ SampleArgs <- R6::R6Class(
   )
 )
 
+
+# OptimizeArgs -------------------------------------------------------------
+
 OptimizeArgs <- R6::R6Class(
   "OptimizeArgs",
   lock_objects = FALSE,
   public = list(
+    method = "optimize",
     initialize = function(algorithm = NULL,
                           init_alpha = NULL,
                           iter = NULL) {
@@ -331,9 +338,12 @@ OptimizeArgs <- R6::R6Class(
   )
 )
 
+# FixedParamArgs -------------------------------------------------------------
+
 FixedParamArgs <- R6::R6Class(
   "FixedParamArgs",
   public = list(
+    method = "fixed_param",
     compose = function(idx, args = NULL) c(args, "method=fixed_param"),
     validate = function(num_chains) invisible(self)
   )

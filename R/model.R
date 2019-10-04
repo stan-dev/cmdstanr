@@ -25,7 +25,8 @@
 #'   }
 #'   \item{`compile()`}{
 #'   Compiles the Stan program. Translates the Stan code to C++, then calls the
-#'   C++ compiler.
+#'   C++ compiler. The resulting files are placed in the same directory as
+#'   `stan_file`.
 #'   }
 #'   \item{`sample(data = NULL, ...)`}{
 #'   Run the default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to
@@ -53,7 +54,7 @@
 #'
 #' # specify data as a named list (like RStan)
 #' standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-#' fit <- mod$sample(data = standata, seed = 123, num_chains = 1)
+#' fit <- mod$sample(data = standata, seed = 123, num_chains = 2)
 #' fit$summary()
 #'
 #' # specify data as a path to a file (like CmdStan)
