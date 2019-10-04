@@ -51,11 +51,7 @@ strip_cmdstan_path <- function(full_path) {
     stop("Please set the path to CmdStan. See ?set_cmdstan_path.",
          call. = FALSE)
   }
-  relative_path <- sub(cmdstan_path(), "", full_path)
-  if (substr(relative_path, 1, 1) == "/") {
-    relative_path <- sub("/", "", relative_path)
-  }
-  relative_path
+  sub(cmdstan_path(), "", full_path)
 }
 
 #' Check for .stan file extension
@@ -91,8 +87,8 @@ read_optim_csv <- function(csv_file) {
 #' @return Path to temporary file containing the data.
 #' @noRd
 write_rdump <- function(standata) {
-  temp_data_file <- tempfile(fileext = ".data.R")
-  file <- file(temp_data_file, open = "w")
+  temp_file <- tempfile(fileext = ".data.R", tmpdir = cmdstan_tempdir())
+  file <- file(temp_file, open = "w")
   on.exit(close(file), add = TRUE)
 
   standata_names <- names(standata)
@@ -122,7 +118,7 @@ write_rdump <- function(standata) {
   }
 
   # return path to new temporary file
-  temp_data_file
+  temp_file
 }
 
 
@@ -206,6 +202,3 @@ real_is_int <- function(x) {
   if (any(is.infinite(x)) || any(is.nan(x))) return(FALSE)
   all(floor(x) == x)
 }
-
-
-

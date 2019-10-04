@@ -32,4 +32,11 @@ set_cmdstan_path <- function(path) {
 # instantiate --------------------------------------------------
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- Sys.getenv("CMDSTAN")
+.cmdstanr$TEMP_DIR <- tempdir()
+
+
+# internal ----------------------------------------------------------------
+cmdstan_tempdir <- function() {
+  .cmdstanr$TEMP_DIR
+}
 

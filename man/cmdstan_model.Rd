@@ -47,7 +47,7 @@ CmdStan or a named list of \R objects like for RStan.
 TODO: enumerate these instead of \code{...}.
 }
 
-Returns a \code{\link{CmdStanFit}} object created from the csv files written by
+Returns a \code{\link{CmdStanMCMC}} object created from the csv files written by
 CmdStan. Those csv files are written to the same directory as \code{stan_file}.
 }
 }

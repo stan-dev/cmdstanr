@@ -16,5 +16,10 @@ See \code{\link[=cmdstan_model]{cmdstan_model()}} to get started.
 \author{
 \strong{Maintainer}: Jonah Gabry \email{jsg2201@columbia.edu}
 
+Other contributors:
+\itemize{
+  \item Mitzi Morris [contributor]
+}
+
 }
 \keyword{internal}

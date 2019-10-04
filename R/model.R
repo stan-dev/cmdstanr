@@ -30,13 +30,14 @@
 #'   \item{`sample(data = NULL, ...)`}{
 #'   Run the default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to
 #'   produce a set of draws from the posterior distribution of a model
-#'   conditioned on some data. Arguments:
+#'   conditioned on some data.
+#'   Arguments:
 #'   * `data`: If not `NULL`, then either a path to a data file compatible with
 #'     CmdStan or a named list of \R objects like for RStan.
 #'   * `...`: Arguments to pass to CmdStan to control sampling.
 #'     TODO: enumerate these instead of `...`.
 #'
-#'   Returns a [`CmdStanFit`] object created from the csv files written by
+#'   Return: a [`CmdStanMCMC`] object created from the csv files written by
 #'   CmdStan. Those csv files are written to the same directory as `stan_file`.
 #'   }
 #' }
@@ -76,11 +77,7 @@ CmdStanModel <- R6::R6Class(
     stan_file = character(),
     exe_file = character(),
     initialize = function(stan_file) {
-      if (!file.exists(stan_file)) {
-        stop("'stan_file' does not exist.", call. = FALSE)
-      } else if (!has_stan_ext(stan_file)) {
-        stop("'stan_file' must have '.stan' extension.", call. = FALSE)
-      }
+      checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       self$stan_file <- stan_file
       invisible(self)
     },
@@ -147,7 +144,13 @@ CmdStanModel <- R6::R6Class(
       if (!os_is_windows()) {
         cmd <- paste0("./", cmd)
       }
-      csv_files <- paste0(strip_ext(self$exe_file), chain_ids, ".csv")
+
+      csv_files <- tempfile(
+        pattern = paste0(strip_ext(basename(self$exe_file)), "_"),
+        fileext = paste0("_chain_", chain_ids, ".csv"),
+        tmpdir = cmdstan_tempdir()
+      )
+
       for (chain in chain_ids) {
         args <- cmdstan_args$compose_all_args(idx = chain, csv_file = csv_files[chain])
         run_log <- processx::run(
@@ -159,7 +162,7 @@ CmdStanModel <- R6::R6Class(
         )
       }
 
-      CmdStanFit$new(csv_files, cmdstan_args) # see fit.R
+      CmdStanMCMC$new(csv_files, cmdstan_args) # see fit.R
     },
 
     optimize = function(data = NULL,
@@ -172,15 +175,14 @@ CmdStanModel <- R6::R6Class(
 
       # stop("optimization is not implemented yet.", call. = FALSE)
 
+      data_file <- process_data(data)
+      model_name <- strip_ext(basename(self$exe_file))
+
       optimize_args <- OptimizeArgs$new(
         algorithm = algorithm,
         init_alpha = init_alpha,
         iter = iter
       )
-
-      data_file <- process_data(data)
-      model_name <- strip_ext(basename(self$exe_file))
-
       cmdstan_args <- CmdStanArgs$new(
         method_args = optimize_args,
         model_name = model_name,
@@ -193,9 +195,13 @@ CmdStanModel <- R6::R6Class(
         refresh = refresh
       )
 
-      csv_file <- paste0(strip_ext(self$exe_file), 1, ".csv")
-      args <- cmdstan_args$compose_all_args(idx = 1, csv_file)
+      csv_file <- tempfile(
+        pattern = paste0(strip_ext(basename(self$exe_file)), "_"),
+        fileext = "_optimize.csv",
+        tmpdir = cmdstan_tempdir()
+      )
 
+      args <- cmdstan_args$compose_all_args(idx = 1, csv_file)
       cmd <- basename(self$exe_file)
       if (!os_is_windows()) {
         cmd <- paste0("./", cmd)
@@ -207,8 +213,8 @@ CmdStanModel <- R6::R6Class(
         echo_cmd = TRUE,
         echo = TRUE
       )
-      csv_file <- paste0(strip_ext(self$exe_file), "1.csv")
-      CmdStanFitMLE$new(csv_file, cmdstan_args)
+
+      CmdStanMLE$new(csv_file, cmdstan_args)
     }
   )
 )
@@ -221,24 +227,22 @@ CmdStanModel <- R6::R6Class(
 #' @param stan_file Path to Stan program.
 #' @return Path to executable.
 compile_stan_program <- function(stan_file) {
-  prog <- strip_cmdstan_path(stan_file) # relative path
-  prog <- strip_ext(prog) # strip .stan extension
+  prog <- strip_ext(stan_file)
+  prog <- cmdstan_ext(prog)
 
   # using base::system()
   # cmd <- paste0("cd ", cmdstan_path(), " && make ", cmdstan_ext(prog))
   # system(cmd)
 
-  out <- processx::run(
+  run_log <- processx::run(
     command = "make",
-    args = cmdstan_ext(prog),
+    args = prog,
     wd = cmdstan_path(),
     echo_cmd = TRUE,
     echo = TRUE
   )
 
-  # return full path to exe
-  exe_file <- strip_ext(stan_file)
-  cmdstan_ext(exe_file)
+  prog
 }
 
 #' Write data to a temporary `.data.R` file if necessary
