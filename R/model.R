@@ -35,7 +35,9 @@
 #'     CmdStan or a named list of \R objects like for RStan.
 #'   * `...`: Arguments to pass to CmdStan to control sampling.
 #'     TODO: enumerate these instead of `...`.
-#'   Returns a [`CmdStanFit`] object.
+#'
+#'   Returns a [`CmdStanFit`] object created from the csv files written by
+#'   CmdStan. Those csv files are written to the same directory as `stan_file`.
 #'   }
 #' }
 #'
@@ -168,7 +170,7 @@ CmdStanModel <- R6::R6Class(
                         init_alpha = NULL,
                         iter = NULL) {
 
-      stop("optimization is not implemented yet.", call. = FALSE)
+      # stop("optimization is not implemented yet.", call. = FALSE)
 
       optimize_args <- OptimizeArgs$new(
         algorithm = algorithm,
@@ -205,7 +207,8 @@ CmdStanModel <- R6::R6Class(
         echo_cmd = TRUE,
         echo = TRUE
       )
-      run_log # FIXME: need CmdStanMLE object
+      csv_file <- paste0(strip_ext(self$exe_file), "1.csv")
+      CmdStanFitMLE$new(csv_file, cmdstan_args)
     }
   )
 )

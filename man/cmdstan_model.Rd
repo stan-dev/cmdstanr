@@ -45,8 +45,10 @@ conditioned on some data. Arguments:
 CmdStan or a named list of \R objects like for RStan.
 \item \code{...}: Arguments to pass to CmdStan to control sampling.
 TODO: enumerate these instead of \code{...}.
-Returns a \code{\link{CmdStanFit}} object.
 }
+
+Returns a \code{\link{CmdStanFit}} object created from the csv files written by
+CmdStan. Those csv files are written to the same directory as \code{stan_file}.
 }
 }
 }

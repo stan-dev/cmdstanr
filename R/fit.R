@@ -25,6 +25,21 @@
 #'
 NULL
 
+CmdStanFitMLE <- R6::R6Class(
+  classname = "CmdStanFitMLE",
+  public = list(
+    cmdstan_args = NULL,
+    output_files = character(),
+    mle = NULL, # FIXME
+    initialize = function(output_files, cmdstan_args) {
+      checkmate::assert_character(output_files, pattern = ".csv")
+      self$output_files <- output_files
+      self$cmdstan_args <- cmdstan_args
+      self$mle <- read_optim_csv(output_files)
+    }
+  )
+)
+
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(

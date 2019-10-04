@@ -1,3 +1,23 @@
+# misc --------------------------------------------------------------------
+
+#' Check for Windows
+#' @return `TRUE` if OS is Windows, `FALSE` if not.
+#' @noRd
+os_is_windows <- function() {
+  isTRUE(.Platform$OS.type == "windows")
+}
+
+#' Famous helper for switching on `NULL`
+#' @param x,y Any \R objects.
+#' @return `x` if not `NULL`, otherwise `y` regardless of whether `y` is `NULL`.
+#' @noRd
+`%||%` <- function(x, y) {
+  if (!is.null(x)) x else y
+}
+
+
+# paths and extensions ----------------------------------------------------
+
 #' Get extension for executable depending on OS
 #' @noRd
 #' @param path If not `NULL` then a path to add the extension to.
@@ -47,20 +67,24 @@ has_stan_ext <- function(stan_file) {
   isTRUE(tools::file_ext(stan_file) == "stan")
 }
 
-#' Check for Windows
-#' @return `TRUE` if OS is Windows, `FALSE` if not.
-#' @noRd
-os_is_windows <- function() {
-  isTRUE(.Platform$OS.type == "windows")
+
+
+# read csv output ---------------------------------------------------------
+
+# FIXME: also parse the csv header
+read_optim_csv <- function(csv_file) {
+  full_csv <- readLines(csv_file)
+  mark <- grep("#   refresh", full_csv)
+  col_names <- strsplit(full_csv[mark + 1], split = ",")[[1]]
+
+  header <- full_csv[1:mark]
+  x <- scan(csv_file, skip = mark + 1, sep = ",")
+  list(mle = setNames(x, col_names))
 }
 
-#' Famous helper for switching on `NULL`
-#' @param x,y Any \R objects.
-#' @return `x` if not `NULL`, otherwise `y` regardless of whether `y` is `NULL`.
-#' @noRd
-`%||%` <- function(x, y) {
-  if (!is.null(x)) x else y
-}
+
+
+# write data  -------------------------------------------------------------
 
 #' Dump data to temporary file with `.data.R` extension
 #' @param standata A named list of \R objects.
@@ -182,4 +206,6 @@ real_is_int <- function(x) {
   if (any(is.infinite(x)) || any(is.nan(x))) return(FALSE)
   all(floor(x) == x)
 }
+
+
 
