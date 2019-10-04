@@ -131,3 +131,20 @@ CmdStanMLE <- R6::R6Class(
   )
 )
 
+# Moves csvfiles to specified directory using specified basename,
+# appending suffix ‘-<id>.csv’ to each. If files with the specified
+# names already exist they are overwritten.
+#
+# @param dir Path to directory where the files should be saved.
+# @param basename Base filename to use.
+# @return The output from `base::file.copy()`, which is a logical vector
+#   indicating if the operation succeeded for each of the files.
+.save_csvfiles <- function(self, dir, basename) {
+  checkmate::assert_directory_exists(dir, access = "w")
+  new_names <- paste0(basename, "-", self$cmdstan_args$chain_ids, ".csv")
+  destinations <- file.path(dir, new_names)
+  file.copy(from = self$output_files,
+            to = destinations,
+            overwrite = TRUE)
+}
+
