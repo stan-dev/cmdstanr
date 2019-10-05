@@ -69,7 +69,42 @@ strip_cmdstan_path <- function(full_path) {
 
 
 
-# read csv output ---------------------------------------------------------
+# read, write, and copy files --------------------------------------------
+
+#' Copy temporary files (e.g., output, data) to a different location
+#'
+#' Copies to specified directory using specified basename,
+#' appending suffix `-id.ext` to each. If files with the specified
+#' names already exist they are overwritten.
+#'
+#' @noRd
+#' @param current_paths Paths to current temporary files.
+#' @param new_dir Path to directory where the files should be saved.
+#' @param new_basename Base filename to use.
+#' @param ids Unique identifiers (e.g., `chain_ids`).
+#' @param ext Extension to use for all saved files.
+#' @return The output from `base::file.copy()`, which is a logical vector
+#'   indicating if the operation succeeded for each of the files.
+copy_temp_files <-
+  function(current_paths,
+           new_dir,
+           new_basename,
+           ids = NULL,
+           ext = ".csv",
+           overwrite = TRUE) {
+    checkmate::assert_directory_exists(new_dir, access = "w")
+
+    new_names <- new_basename
+    if (!is.null(ids)) {
+      new_names <- paste0(new_basename, "-", ids)
+    }
+    new_names <- paste0(new_names, ext)
+    destinations <- file.path(new_dir, new_names)
+    file.copy(from = current_paths,
+              to = destinations,
+              overwrite = overwrite)
+  }
+
 
 # FIXME: also parse the csv header
 read_optim_csv <- function(csv_file) {
@@ -82,9 +117,6 @@ read_optim_csv <- function(csv_file) {
   list(mle = setNames(x, col_names))
 }
 
-
-
-# write data  -------------------------------------------------------------
 
 #' Dump data to temporary file in format readable by CmdStan
 #'
