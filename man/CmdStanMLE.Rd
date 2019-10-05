@@ -15,7 +15,7 @@ associated methods:
 \item{\code{print()}}{
 Print the estimates.
 }
-\item{\code{save_csvfiles(dir, basename)}}{
+\item{\code{save_csvfiles(dir, basename = NULL)}}{
 Move csv output files to specified directory using specified basename,
 appending suffix \code{'-<id>.csv'} to each. If files with the specified
 names already exist they are overwritten.

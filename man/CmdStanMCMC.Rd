@@ -18,10 +18,11 @@ Run CmdStan's \code{bin/stansummary} on output csv files.
 \item{\code{diagnose()}}{
 Run CmdStan's \code{bin/diagnose} on output csv files.
 }
-\item{\code{save_csvfiles(dir, basename)}}{
-Move csv output files to specified directory using specified basename,
-appending suffix \code{'-<id>.csv'} to each. If files with the specified
-names already exist they are overwritten.
+\item{\code{save_output_files(dir, basename = NULL)}}{
+Move csv output files from temporary directory to a specified directory
+\code{dir} using the provided file \code{basename}. The suffix \code{'-<chain_id>.csv'}
+is appended each file. If files with the specified names already exist they
+are overwritten.
 Arguments:
 \itemize{
 \item \code{dir}: Path to directory where the files should be saved.
@@ -30,6 +31,10 @@ Arguments:
 
 Return: the output from \code{base::file.copy()}, which is a logical vector
 indicating if the operation succeeded for each of the files.
+}
+\item{\code{save_data_file(dir, basename = NULL)}}{
+Same as \code{save_output_files()} but applies to the temporary file containing
+the data instead of the output csv files.
 }
 \item{More coming soon...}{}
 }

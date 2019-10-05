@@ -17,16 +17,21 @@
 #'   \item{`diagnose()`}{
 #'   Run CmdStan's `bin/diagnose` on output csv files.
 #'   }
-#'   \item{`save_csvfiles(dir, basename = NULL)`}{
-#'   Move csv output files to specified directory using specified basename,
-#'   appending suffix `'-<id>.csv'` to each. If files with the specified
-#'   names already exist they are overwritten.
+#'   \item{`save_output_files(dir, basename = NULL)`}{
+#'   Move csv output files from temporary directory to a specified directory
+#'   `dir` using the provided file `basename`. The suffix `'-<chain_id>.csv'`
+#'   is appended each file. If files with the specified names already exist they
+#'   are overwritten.
 #'   Arguments:
 #'   * `dir`: Path to directory where the files should be saved.
 #'   * `basename`: Base filename to use.
 #'
 #'   Return: the output from `base::file.copy()`, which is a logical vector
 #'   indicating if the operation succeeded for each of the files.
+#'   }
+#'   \item{`save_data_file(dir, basename = NULL)`}{
+#'   Same as `save_output_files()` but applies to the temporary file containing
+#'   the data instead of the output csv files.
 #'   }
 #'   \item{More coming soon...}{}
 #' }
@@ -45,9 +50,6 @@ CmdStanMCMC <- R6::R6Class(
       checkmate::assert_r6(args, classes = "CmdStanArgs")
       self$output_files <- output_files
       self$args <- args
-    },
-    save_csvfiles = function(dir, basename = NULL) {
-      .save_csvfiles(self, dir, basename)
     },
     print = function() {
       self$summary()
@@ -86,6 +88,12 @@ CmdStanMCMC <- R6::R6Class(
       # but this shouldn't use rstan
       if (is.null(private$sampler_params_)) private$read_csv()
       private$sampler_params_
+    },
+    save_output_files = function(dir, basename = NULL) {
+      .save_output_files(self, dir, basename)
+    },
+    save_data_file = function(dir, basename = NULL) {
+      .save_data_file(self, dir, basename)
     }
   ),
   private = list(
@@ -130,16 +138,11 @@ CmdStanMCMC <- R6::R6Class(
 #'   \item{`print()`}{
 #'   Print the estimates.
 #'   }
-#'   \item{`save_csvfiles(dir, basename = NULL)`}{
-#'   Move csv output files to specified directory using specified basename,
-#'   appending suffix `'-<id>.csv'` to each. If files with the specified
-#'   names already exist they are overwritten.
-#'   Arguments:
-#'   * `dir`: Path to directory where the files should be saved.
-#'   * `basename`: Base filename to use.
-#'
-#'   Return: the output from `base::file.copy()`, which is a logical vector
-#'   indicating if the operation succeeded for each of the files.
+#'   \item{`save_output_files(dir, basename = NULL)`}{
+#'   Move output csv file from temporary directory to a specified directory.
+#'   }
+#'   \item{`save_data_file(dir, basename = NULL)`}{
+#'   Move data file from temporary directory to a specified directory.
 #'   }
 #'   \item{More coming soon...}{}
 #' }
@@ -161,8 +164,11 @@ CmdStanMLE <- R6::R6Class(
       self$args <- args
       self$mle <- read_optim_csv(output_files)
     },
-    save_csvfiles = function(dir, basename = NULL) {
-      .save_csvfiles(self, dir, basename)
+    save_output_files = function(dir, basename = NULL) {
+      .save_output_files(self, dir, basename)
+    },
+    save_data_file = function(dir, basename = NULL) {
+      .save_data_file(self, dir, basename)
     }
   )
 )
@@ -214,21 +220,57 @@ RunSet <- R6::R6Class(
 
 # internal ----------------------------------------------------------------
 
-# Moves csvfiles to specified directory using specified basename,
-# appending suffix `-<id>.csv` to each. If files with the specified
-# names already exist they are overwritten.
-#
-# @param dir Path to directory where the files should be saved.
-# @param basename Base filename to use.
-# @return The output from `base::file.copy()`, which is a logical vector
-#   indicating if the operation succeeded for each of the files.
-.save_csvfiles <- function(self, dir, basename = NULL) {
-  checkmate::assert_directory_exists(dir, access = "w")
-  basename <- basename %||% self$args$model_name
-  new_names <- paste0(basename, "-", self$args$chain_ids, ".csv")
-  destinations <- file.path(dir, new_names)
-  file.copy(from = self$output_files,
-            to = destinations,
-            overwrite = TRUE)
+#' Copy temporary files to a different location
+#'
+#' Copies to specified directory using specified basename,
+#' appending suffix `-id.ext` to each. If files with the specified
+#' names already exist they are overwritten.
+#'
+#' @noRd
+#' @param current_paths Paths to current temporary files.
+#' @param new_dir Path to directory where the files should be saved.
+#' @param new_basename Base filename to use.
+#' @param ids Unique identifiers (e.g., `chain_ids`).
+#' @param ext Extension to use for all saved files.
+#' @return The output from `base::file.copy()`, which is a logical vector
+#'   indicating if the operation succeeded for each of the files.
+.copy_files <-
+  function(current_paths,
+           new_dir,
+           new_basename,
+           ids = NULL,
+           ext = ".csv") {
+    checkmate::assert_directory_exists(new_dir, access = "w")
+
+    new_names <- new_basename
+    if (!is.null(ids)) {
+      new_names <- paste0(new_basename, "-", ids)
+    }
+    new_names <- paste0(new_names, ext)
+    destinations <- file.path(new_dir, new_names)
+    file.copy(from = current_paths,
+              to = destinations,
+              overwrite = TRUE)
+  }
+
+.save_output_files <- function(self, dir, basename) {
+  .copy_files(
+    current_paths = self$output_files,
+    new_dir = dir,
+    new_basename = basename %||% self$args$model_name,
+    ids = self$args$chain_ids,
+    ext = ".csv"
+  )
 }
+
+.save_data_file <- function(self, dir, basename) {
+  .copy_files(
+    current_paths = self$args$data_file,
+    new_dir = dir,
+    new_basename = basename %||% self$args$model_name,
+    ids = NULL,
+    ext = ".data.R"
+  )
+}
+
 
