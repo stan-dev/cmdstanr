@@ -67,8 +67,6 @@ strip_cmdstan_path <- function(full_path) {
 }
 
 
-
-
 # read, write, and copy files --------------------------------------------
 
 #' Copy temporary files (e.g., output, data) to a different location
@@ -105,6 +103,15 @@ copy_temp_files <-
               overwrite = overwrite)
   }
 
+
+#' Create default output csv file basename
+#' @noRd
+#' @param model_name,method Strings giving the model name (e.g., `"my_model"`)
+#'   and CmdStan method (e.g. `"sample"`).
+#' @return String default file basename (e.g., `"my_model-stan-sample"`).
+output_csv_basename <- function(model_name, method) {
+  paste0(model_name, "-stan-", method)
+}
 
 # FIXME: also parse the csv header
 read_optim_csv <- function(csv_file) {

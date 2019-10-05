@@ -6,7 +6,6 @@
 #'
 #' @noRd
 #' @details
-#'
 #' A `CmdStanArgs` object stores arguments _not_ specific to particular methods,
 #' as well as one of the following objects containing the method-specific
 #' arguments:
@@ -29,25 +28,24 @@ CmdStanArgs <- R6::R6Class(
     method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
     initialize = function(model_name,
                           exe_file,
-                          chain_ids,
+                          run_ids,
                           method_args,
                           data_file = NULL,
                           seed = NULL,
                           inits = NULL, # TODO: CmdStan uses init but CmdStanPy inits
-                          output_basename = NULL,
                           refresh = NULL) {
+
       self$model_name <- model_name
       self$exe_file <- exe_file
-      self$chain_ids <- chain_ids
+      self$run_ids <- run_ids
       self$data_file <- data_file
       self$seed <- seed
       self$inits <- inits
-      self$output_basename <- output_basename
       self$refresh <- refresh
       self$method_args <- method_args
 
       self$method <- self$method_args$method
-      self$method_args$validate(num_chains = length(chain_ids))
+      self$method_args$validate(num_runs = length(run_ids))
       self$validate()
     },
 
@@ -60,14 +58,14 @@ CmdStanArgs <- R6::R6Class(
              call. = FALSE)
       }
 
-      # at least 1 chain id
-      checkmate::assert_integerish(self$chain_ids,
+      # at least 1 run id (chain id)
+      checkmate::assert_integerish(self$run_ids,
                                    lower = 1,
                                    min.len = 1,
                                    any.missing = FALSE,
                                    null.ok = FALSE)
 
-      # either no seed, 1 seed, or num_chains seeds
+      # either no seed, 1 seed, or num_runs seeds (number of chains)
       checkmate::assert(
         combine = "or",
         checkmate::check_integerish(self$seed,
@@ -76,19 +74,28 @@ CmdStanArgs <- R6::R6Class(
                                     null.ok = TRUE),
         checkmate::check_integerish(self$seed,
                                     lower = -1,
-                                    len = length(self$chain_ids),
+                                    len = length(self$run_ids),
                                     null.ok = TRUE)
       )
       if (is.null(self$seed)) {
-        self$seed <- sample(.Machine$integer.max, length(self$chain_ids))
-      } else if (length(self$seed) == 1 && length(self$chain_ids) > 1) {
+        self$seed <- sample(.Machine$integer.max, length(self$run_ids))
+      } else if (length(self$seed) == 1 && length(self$run_ids) > 1) {
         # if one seed but multiple chains then increment seed by 1 for each chain
         # TODO: is this ok?
-        self$seed <- c(self$seed, self$seed + 1:(length(self$chain_ids) -1))
+        self$seed <- c(self$seed, self$seed + 1:(length(self$run_ids) -1))
       }
     },
 
-    compose_all_args = function(idx = NULL, csv_file = NULL) {
+    # create default basename for csv output file from model name and method
+    csv_basename = function() {
+      output_csv_basename(self$model_name, self$method)
+    },
+
+    # Compose character vector of all arguments to pass to CmdStan
+    # @param idx The run id. For MCMC this is the chain id, for optimization
+    #   this is just 1.
+    # @param output_file File path to csv file where output will be written.
+    compose_all_args = function(idx = NULL, output_file = NULL) {
       args <-
         list(
           id = NULL,
@@ -99,13 +106,13 @@ CmdStanArgs <- R6::R6Class(
         )
 
       idx <- idx %||% 1
-      if (!is.null(self$chain_ids)) {
-        if (idx < 0 || idx > length(self$chain_ids)) {
-          stop("Index (", idx, ") exceeds number of chains",
-               " (", length(self$chain_ids), ").",
+      if (!is.null(self$run_ids)) {
+        if (idx < 0 || idx > length(self$run_ids)) {
+          stop("Index (", idx, ") exceeds number of CmdStan runs",
+               " (", length(self$run_ids), ").",
                call. = FALSE)
         }
-        args$id <- paste0("id=", self$chain_ids[idx])
+        args$id <- paste0("id=", self$run_ids[idx])
       }
 
       if (!is.null(self$seed)) {
@@ -120,13 +127,16 @@ CmdStanArgs <- R6::R6Class(
         args$data <- c("data", paste0("file=", self$data_file))
       }
 
-      args$output <- c("output", paste0("file=", csv_file))
+      args$output <- c("output", paste0("file=", output_file))
       if (!is.null(self$refresh)) {
         args$output <- c(args$output, paste0("refresh=", self$refresh))
       }
 
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
+    },
+    compose_command = function() {
+      paste0(if (!os_is_windows()) "./", basename(self$exe_file))
     }
   )
 )
@@ -178,13 +188,15 @@ SampleArgs <- R6::R6Class(
     },
 
     # Validate cmdstan arguments (if not `NULL`)
-    # @param num_chains Integer number of chains.
+    # @param num_runs Integer number of CmdStan runs. This is the number of
+    #   MCMC chains to run.
     # @return `self` invisibly unless an error is thrown.
-    validate = function(num_chains) {
-      checkmate::assert_integerish(num_chains,
+    validate = function(num_runs) {
+      checkmate::assert_integerish(num_runs,
                                    lower = 1,
                                    len = 1,
-                                   any.missing = FALSE)
+                                   any.missing = FALSE,
+                                   .var.name = "Number of chains")
 
       checkmate::assert_integerish(self$thin,
                                    lower = 1,
@@ -224,13 +236,13 @@ SampleArgs <- R6::R6Class(
                                  null.ok = TRUE),
         checkmate::check_numeric(self$stepsize,
                                  lower = 0,
-                                 len = num_chains,
+                                 len = num_runs,
                                  null.ok = TRUE)
       )
       checkmate::assert(
         combine = "or",
         checkmate::check_string(self$metric, null.ok = TRUE),
-        checkmate::check_character(self$metric, len = num_chains,
+        checkmate::check_character(self$metric, len = num_runs,
                                    null.ok = TRUE)
       )
       # TODO: implement other checks for metric from cmdstanpy:
@@ -304,7 +316,7 @@ OptimizeArgs <- R6::R6Class(
       invisible(self)
     },
 
-    validate = function(num_chains) {
+    validate = function(num_runs) {
       checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
                                choices = c("bfgs", "lbfgs", "newton"))
       checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE)
@@ -345,7 +357,7 @@ FixedParamArgs <- R6::R6Class(
   public = list(
     method = "fixed_param",
     compose = function(idx, args = NULL) c(args, "method=fixed_param"),
-    validate = function(num_chains) invisible(self)
+    validate = function(num_runs) invisible(self)
   )
 )
 

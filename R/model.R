@@ -74,28 +74,34 @@ cmdstan_model <- function(stan_file) {
 
 CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
+  private = list(
+    stan_file_ = character(),
+    exe_file_ = character()
+  ),
   public = list(
-    stan_file = character(),
-    exe_file = character(),
     initialize = function(stan_file) {
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
-      self$stan_file <- stan_file
+      private$stan_file_ <- stan_file
       invisible(self)
     },
+    exe_file = function() private$exe_file_,
+    stan_file = function() private$stan_file_,
     code = function() {
       # Get Stan code as a string
-      readLines(self$stan_file)
+      readLines(self$stan_file())
     },
     print = function() {
       # Print readable version of Stan code
       cat(self$code(), sep = "\n")
       invisible(self)
     },
+
     compile = function() { # TODO: add compiler options?
       # Compile Stan program
-      self$exe_file <- compile_stan_program(self$stan_file)
+      private$exe_file_ <- compile_stan_program(self$stan_file())
       invisible(self)
     },
+
     sample = function(data = NULL,
                       num_chains = NULL, # TODO: should this default to 1 or 4?
                       # num_cores = NULL,
@@ -115,7 +121,7 @@ CmdStanModel <- R6::R6Class(
       num_chains <- num_chains %||% 1
       chain_ids <- seq_len(num_chains)
       data_file <- process_data(data)
-      model_name <- strip_ext(basename(self$exe_file))
+      model_name <- strip_ext(basename(self$exe_file()))
 
       sample_args <- SampleArgs$new(
         num_warmup = num_warmup,
@@ -131,35 +137,25 @@ CmdStanModel <- R6::R6Class(
       cmdstan_args <- CmdStanArgs$new(
         method_args = sample_args,
         model_name = model_name,
-        exe_file = self$exe_file,
-        chain_ids = chain_ids,
+        exe_file = self$exe_file(),
+        run_ids = chain_ids,
         data_file = data_file,
         seed = seed,
         inits = inits,
-        output_basename = model_name,
         refresh = refresh
       )
 
-      runset <- RunSet$new(args=cmdstan_args, num_chains=num_chains)
+      runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
       csv_files <- runset$output_files()
-
-      # FIXME: allow parallelization
-      cmd <- basename(self$exe_file)
-      if (!os_is_windows()) {
-        cmd <- paste0("./", cmd)
-      }
-
-      for (chain in chain_ids) {
-        args <- cmdstan_args$compose_all_args(idx = chain, csv_file = csv_files[chain])
+      for (chain in chain_ids) { # FIXME: allow parallelization
         run_log <- processx::run(
-          command = cmd,
-          args = args,
-          wd = dirname(self$exe_file),
+          command = cmdstan_args$compose_command(),
+          args = cmdstan_args$compose_all_args(chain, csv_files[chain]),
+          wd = dirname(self$exe_file()),
           echo_cmd = TRUE,
           echo = TRUE
         )
       }
-
       CmdStanMCMC$new(runset) # see fit.R
     },
 
@@ -174,7 +170,7 @@ CmdStanModel <- R6::R6Class(
       # stop("optimization is not implemented yet.", call. = FALSE)
 
       data_file <- process_data(data)
-      model_name <- strip_ext(basename(self$exe_file))
+      model_name <- strip_ext(basename(self$exe_file()))
 
       optimize_args <- OptimizeArgs$new(
         algorithm = algorithm,
@@ -184,29 +180,22 @@ CmdStanModel <- R6::R6Class(
       cmdstan_args <- CmdStanArgs$new(
         method_args = optimize_args,
         model_name = model_name,
-        exe_file = self$exe_file,
-        chain_ids = 1,
+        exe_file = self$exe_file(),
+        run_ids = 1,
         data_file = data_file,
         seed = seed,
         inits = inits,
-        output_basename = model_name,
         refresh = refresh
       )
 
-      runset <- RunSet$new(args = cmdstan_args, num_chains = 1)
-      args <- cmdstan_args$compose_all_args(idx = 1, runset$output_files())
-      cmd <- basename(self$exe_file)
-      if (!os_is_windows()) {
-        cmd <- paste0("./", cmd)
-      }
+      runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
       run_log <- processx::run(
-        command = cmd,
-        args = args,
-        wd = dirname(self$exe_file),
+        command = cmdstan_args$compose_command(),
+        args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
+        wd = dirname(self$exe_file()),
         echo_cmd = TRUE,
         echo = TRUE
       )
-
       CmdStanMLE$new(runset)
     }
   )

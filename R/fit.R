@@ -182,33 +182,37 @@ CmdStanMLE <- R6::R6Class(
 RunSet <- R6::R6Class(
   classname = "RunSet",
   public = list(
-    num_chains = NULL,
-    initialize = function(args, num_chains) {
+    # Initialize object
+    # @param args CmdStanArgs object.
+    # @param num_runs The number of CmdStan runs. For MCMC this is the number of
+    #   chains. For optimization this must be set to 1.
+    initialize = function(args, num_runs) {
       checkmate::assert_r6(args, classes = "CmdStanArgs")
-      checkmate::assert_integerish(num_chains,
+      checkmate::assert_integerish(num_runs,
                                    any.missing = FALSE,
+                                   null.ok = FALSE,
                                    len = 1,
                                    lower = 1)
-      self$num_chains <- num_chains
       private$args_ <- args
+      private$num_runs_ <- as.integer(num_runs)
 
-      csv_basename <- paste0("stan-", private$args_$model_name, "-", private$args_$method)
       private$output_files_ <-
         file.path(
           cmdstan_tempdir(),
-          paste0(csv_basename, "-", 1:num_chains, ".csv")
+          paste0(args$csv_basename(), "-", args$run_ids, ".csv")
         )
       private$console_files_ <- change_ext(private$output_files_, ".txt")
-      private$commands_ <- lapply(1:self$num_chains, function(j) {
-        private$args_$compose_all_args(idx = j, csv_file = private$output_files_[j])
+      private$commands_ <- lapply(args$run_ids, function(j) {
+        args$compose_all_args(idx = j, output_file = private$output_files_[j])
       })
-      private$retcodes_ <- rep(-1, self$num_chains)
+      private$retcodes_ <- rep(-1L, num_runs)
 
       invisible(file.create(private$output_files_, private$console_files_))
       invisible(self)
     },
-    chains = function() self$num_chains,
-    chain_ids = function() private$args_$chain_ids,
+    num_runs = function() private$num_runs_,
+    num_chains = function() private$num_runs_,
+    run_ids = function() private$args_$run_ids,
     model_name = function() private$args_$model_name,
     method = function() private$args_$method,
     commands = function() private$commands_,
@@ -230,7 +234,7 @@ RunSet <- R6::R6Class(
         current_paths = self$output_files(),
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
-        ids = self$chain_ids(),
+        ids = self$run_ids(),
         ext = ".csv"
       )
     },
@@ -246,9 +250,10 @@ RunSet <- R6::R6Class(
   ),
   private = list(
     args_ = NULL,
+    num_runs_ = integer(),
     output_files_ = character(),
     console_files_ = character(),
     commands_ = list(),
-    retcodes_ = numeric()
+    retcodes_ = integer()
   )
 )
