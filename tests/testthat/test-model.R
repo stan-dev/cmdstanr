@@ -19,8 +19,8 @@ test_that("compile() method works", {
 test_that("object initializes correctly", {
   skip_on_cran()
   skip_on_travis()
-  expect_equal(mod$exe_file, strip_ext(my_stan_program))
-  expect_equal(mod$stan_file, my_stan_program)
+  expect_equal(mod$exe_file(), strip_ext(my_stan_program))
+  expect_equal(mod$stan_file(), my_stan_program)
 })
 
 test_that("code() and print() methods work", {
@@ -34,14 +34,14 @@ test_that("sample() method doesn't error with data list", {
   skip_on_cran()
   skip_on_travis()
   capture.output(fit <- mod$sample(data = my_data_list, num_chains = 1))
-  expect_is(fit, "CmdStanFit")
+  expect_is(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method doesn't error with data file", {
   skip_on_cran()
   skip_on_travis()
   capture.output(fit <- mod$sample(data = my_data_file, num_chains = 1))
-  expect_is(fit, "CmdStanFit")
+  expect_is(fit, "CmdStanMCMC")
 })
 
 # test_that("sample() method handles arguments correctly", {
