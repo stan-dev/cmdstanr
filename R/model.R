@@ -140,17 +140,14 @@ CmdStanModel <- R6::R6Class(
         refresh = refresh
       )
 
+      runset <- RunSet$new(args=cmdstan_args, num_chains=num_chains)
+      csv_files <- runset$output_files()
+
       # FIXME: allow parallelization
       cmd <- basename(self$exe_file)
       if (!os_is_windows()) {
         cmd <- paste0("./", cmd)
       }
-
-      csv_files <- tempfile(
-        pattern = paste0(strip_ext(basename(self$exe_file)), "_"),
-        fileext = paste0("_chain_", chain_ids, ".csv"),
-        tmpdir = cmdstan_tempdir()
-      )
 
       for (chain in chain_ids) {
         args <- cmdstan_args$compose_all_args(idx = chain, csv_file = csv_files[chain])
@@ -163,7 +160,7 @@ CmdStanModel <- R6::R6Class(
         )
       }
 
-      CmdStanMCMC$new(csv_files, cmdstan_args) # see fit.R
+      CmdStanMCMC$new(runset) # see fit.R
     },
 
     optimize = function(data = NULL,
@@ -196,13 +193,8 @@ CmdStanModel <- R6::R6Class(
         refresh = refresh
       )
 
-      csv_file <- tempfile(
-        pattern = paste0(strip_ext(basename(self$exe_file)), "_"),
-        fileext = "_optimize.csv",
-        tmpdir = cmdstan_tempdir()
-      )
-
-      args <- cmdstan_args$compose_all_args(idx = 1, csv_file)
+      runset <- RunSet$new(args = cmdstan_args, num_chains = 1)
+      args <- cmdstan_args$compose_all_args(idx = 1, runset$output_files())
       cmd <- basename(self$exe_file)
       if (!os_is_windows()) {
         cmd <- paste0("./", cmd)
@@ -215,7 +207,7 @@ CmdStanModel <- R6::R6Class(
         echo = TRUE
       )
 
-      CmdStanMLE$new(csv_file, cmdstan_args)
+      CmdStanMLE$new(runset)
     }
   )
 )

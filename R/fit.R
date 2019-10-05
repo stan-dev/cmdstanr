@@ -43,13 +43,11 @@ NULL
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   public = list(
-    args = NULL, # TODO: replace this with RunSet like cmdstanpy?
-    output_files = NULL,
-    initialize = function(output_files, args) {
-      checkmate::assert_character(output_files, pattern = ".csv")
-      checkmate::assert_r6(args, classes = "CmdStanArgs")
-      self$output_files <- output_files
-      self$args <- args
+    runset =  NULL,
+    initialize = function(runset) {
+      checkmate::assert_r6(runset, classes = "RunSet")
+      self$runset <- runset
+      invisible(self)
     },
     print = function() {
       self$summary()
@@ -58,7 +56,7 @@ CmdStanMCMC <- R6::R6Class(
       # Run cmdstan's bin/stansummary on csv files
       run_log <- processx::run(
         command = file.path("bin", cmdstan_ext("stansummary")),
-        args = self$output_files,
+        args = self$runset$output_files(),
         wd = cmdstan_path(),
         echo_cmd = TRUE,
         echo = TRUE
@@ -68,7 +66,7 @@ CmdStanMCMC <- R6::R6Class(
       # Run cmdstan's bin/diagnose on csv files
       run_log <- processx::run(
         command = file.path("bin", cmdstan_ext("diagnose")),
-        args = self$output_files,
+        args = self$runset$output_files(),
         wd = cmdstan_path(),
         echo_cmd = TRUE,
         echo = TRUE
@@ -89,11 +87,11 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(private$sampler_params_)) private$read_csv()
       private$sampler_params_
     },
-    save_output_files = function(dir, basename = NULL) {
-      .save_output_files(self, dir, basename)
+    save_output_files = function(dir = ".", basename = NULL) {
+      self$runset$save_output_files(dir, basename)
     },
-    save_data_file = function(dir, basename = NULL) {
-      .save_data_file(self, dir, basename)
+    save_data_file = function(dir = ".", basename = NULL) {
+      self$runset$save_data_file(dir, basename)
     }
   ),
   private = list(
@@ -101,7 +99,7 @@ CmdStanMCMC <- R6::R6Class(
     sampler_params_ = NULL,
     stanfit_ = NULL,
     read_csv = function() {
-      if (!all(file.exists(self$output_files))) {
+      if (!all(file.exists(self$runset$output_files()))) {
         stop("Can't find output file(s).", call. = FALSE)
       }
 
@@ -112,11 +110,10 @@ CmdStanMCMC <- R6::R6Class(
              "until CmdStanR has its own implementation.",
              call. = FALSE)
       }
-      stanfit <- rstan::read_stan_csv(self$output_files)
+      stanfit <- rstan::read_stan_csv(self$runset$output_files())
       private$posterior_sample_ <- # FIXME get save_warmup from CmdStanArgs
         rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
-      private$sampler_params_ <- rstan::get_sampler_params(private$stanfit,
-                                                           inc_warmup = FALSE)
+      private$sampler_params_ <- rstan::get_sampler_params(stanfit, inc_warmup = FALSE)
     }
   )
 )
@@ -154,66 +151,105 @@ NULL
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
   public = list(
-    args = NULL,
-    output_files = NULL,
-    mle = NULL, # FIXME
-    initialize = function(output_files, args) {
-      checkmate::assert_character(output_files, pattern = ".csv")
-      checkmate::assert_r6(args, classes = "CmdStanArgs")
-      self$output_files <- output_files
-      self$args <- args
-      self$mle <- read_optim_csv(output_files)
+    runset = NULL,
+    initialize = function(runset) {
+      checkmate::assert_r6(runset, classes = "RunSet")
+      self$runset <- runset
+      invisible(self)
     },
-    save_output_files = function(dir, basename = NULL) {
-      .save_output_files(self, dir, basename)
+    mle = function() {
+      out <- private$mle_ %||% read_optim_csv(self$runset$output_files())
+      private$mle_ <- out
+      out
     },
-    save_data_file = function(dir, basename = NULL) {
-      .save_data_file(self, dir, basename)
+    save_output_files = function(dir = ".", basename = NULL) {
+      self$runset$save_data_file(dir, basename)
+    },
+    save_data_file = function(dir = ".", basename = NULL) {
+      self$runset$save_data_file(dir, basename)
     }
+  ),
+  private = list(
+    mle_ = NULL
   )
 )
 
 
 
-# RunSet ------------------------------------------------------------------
+# CmdStanRun ---------------------------------------------------------------
 
 # Record of CmdStan run for a specified configuration and number of chains.
 RunSet <- R6::R6Class(
   classname = "RunSet",
-  lock_objects = FALSE,
   public = list(
-    args = NULL,
+    num_chains = NULL,
     initialize = function(args, num_chains) {
       checkmate::assert_r6(args, classes = "CmdStanArgs")
       checkmate::assert_integerish(num_chains,
                                    any.missing = FALSE,
                                    len = 1,
                                    lower = 1)
-      self$args <- args
       self$num_chains <- num_chains
+      private$args_ <- args
 
-      csv_basename <- paste0("stan-", args$model_name, "-", args$method)
-      private$csv_files <-
+      csv_basename <- paste0("stan-", private$args_$model_name, "-", private$args_$method)
+      private$output_files_ <-
         file.path(
           cmdstan_tempdir(),
           paste0(csv_basename, "-", 1:num_chains, ".csv")
         )
-      private$console_files <- change_ext(self$csv_files, ".txt")
-      invisible(file.create(private$csv_files, private$console_files))
-
-      private$commands <- lapply(1:self$num_chains, function(j) {
-        self$args$compose_all_args(idx = j, csv_file = private$csv_files[j])
+      private$console_files_ <- change_ext(private$output_files_, ".txt")
+      private$commands_ <- lapply(1:self$num_chains, function(j) {
+        private$args_$compose_all_args(idx = j, csv_file = private$output_files_[j])
       })
+      private$retcodes_ <- rep(-1, self$num_chains)
 
+      invisible(file.create(private$output_files_, private$console_files_))
       invisible(self)
     },
-    validate = function() {
+    chains = function() self$num_chains,
+    chain_ids = function() private$args_$chain_ids,
+    model_name = function() private$args_$model_name,
+    method = function() private$args_$method,
+    commands = function() private$commands_,
+    data_file = function() private$args_$data_file,
+    output_files = function() private$output_files_,
+    console_files = function() private$console_files_,
+    # public but for internal use
+    ._check_retcodes = function() all(private$retcodes_  == 0),
+    ._retcode = function(idx) private$retcodes_[idx],
+    ._set_retcode = function(idx, val) {
+      private$retcodes_[idx] <- val
+      invisible(self)
+    },
+    # ._check_console_msgs = function() {},
+    # validate = function() {},
+
+    save_output_files = function(dir = ".", basename = NULL) {
+      .copy_files(
+        current_paths = self$output_files(),
+        new_dir = dir,
+        new_basename = basename %||% self$model_name(),
+        ids = self$chain_ids(),
+        ext = ".csv"
+      )
+    },
+    save_data_file = function(dir = ".", basename = NULL) {
+      .copy_files(
+        current_paths = self$data_file(),
+        new_dir = dir,
+        new_basename = basename %||% self$model_name(),
+        ids = NULL,
+        ext = ".data.R"
+      )
     }
   ),
   private = list(
-    csv_files = character(),
-    console_files = character(),
-    commands = list()
+    args_ = NULL,
+    output_files_ = character(),
+    console_files_ = character(),
+    commands_ = list(),
+    retcodes_ = numeric()
   )
 )
 
@@ -239,7 +275,8 @@ RunSet <- R6::R6Class(
            new_dir,
            new_basename,
            ids = NULL,
-           ext = ".csv") {
+           ext = ".csv",
+           overwrite = TRUE) {
     checkmate::assert_directory_exists(new_dir, access = "w")
 
     new_names <- new_basename
@@ -250,27 +287,6 @@ RunSet <- R6::R6Class(
     destinations <- file.path(new_dir, new_names)
     file.copy(from = current_paths,
               to = destinations,
-              overwrite = TRUE)
+              overwrite = overwrite)
   }
-
-.save_output_files <- function(self, dir, basename) {
-  .copy_files(
-    current_paths = self$output_files,
-    new_dir = dir,
-    new_basename = basename %||% self$args$model_name,
-    ids = self$args$chain_ids,
-    ext = ".csv"
-  )
-}
-
-.save_data_file <- function(self, dir, basename) {
-  .copy_files(
-    current_paths = self$args$data_file,
-    new_dir = dir,
-    new_basename = basename %||% self$args$model_name,
-    ids = NULL,
-    ext = ".data.R"
-  )
-}
-
 

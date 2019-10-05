@@ -2,12 +2,13 @@ Package: cmdstanr
 Title: R Interface to CmdStan
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
-           email = "jsg2201@columbia.edu")
+    c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
+           email = "jsg2201@columbia.edu"),
+      person(given = "Mitzi", family = "Morris", role = c("ctb")))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org> 
     that provides functionality for compiling a 'Stan' program and fitting the 
     model using 'CmdStan'.
-License: What license it uses
+License: BSD_3_clause + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
@@ -18,4 +19,5 @@ Imports:
     R6,
     tools
 Suggests: 
-    rstan
+    rstan,
+    testthat (>= 2.1.0)

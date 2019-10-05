@@ -15,18 +15,11 @@ associated methods:
 \item{\code{print()}}{
 Print the estimates.
 }
-\item{\code{save_csvfiles(dir, basename = NULL)}}{
-Move csv output files to specified directory using specified basename,
-appending suffix \code{'-<id>.csv'} to each. If files with the specified
-names already exist they are overwritten.
-Arguments:
-\itemize{
-\item \code{dir}: Path to directory where the files should be saved.
-\item \code{basename}: Base filename to use.
+\item{\code{save_output_files(dir, basename = NULL)}}{
+Move output csv file from temporary directory to a specified directory.
 }
-
-Return: the output from \code{base::file.copy()}, which is a logical vector
-indicating if the operation succeeded for each of the files.
+\item{\code{save_data_file(dir, basename = NULL)}}{
+Move data file from temporary directory to a specified directory.
 }
 \item{More coming soon...}{}
 }
