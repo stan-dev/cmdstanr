@@ -42,6 +42,12 @@ change_ext <- function(file, ext) {
   paste0(out, ext)
 }
 
+# Check for .stan file extension
+has_stan_ext <- function(stan_file) {
+  stopifnot(is.character(stan_file))
+  isTRUE(tools::file_ext(stan_file) == "stan")
+}
+
 # Prepend cmdstan_path() to a relative path
 add_cmdstan_path <- function(relative_path) {
   if (!nzchar(cmdstan_path())) {
@@ -60,14 +66,6 @@ strip_cmdstan_path <- function(full_path) {
   sub(cmdstan_path(), "", full_path)
 }
 
-#' Check for .stan file extension
-#' @noRd
-#' @param stan_file Path to Stan program.
-#' @return T/F
-has_stan_ext <- function(stan_file) {
-  stopifnot(is.character(stan_file))
-  isTRUE(tools::file_ext(stan_file) == "stan")
-}
 
 
 
@@ -88,122 +86,22 @@ read_optim_csv <- function(csv_file) {
 
 # write data  -------------------------------------------------------------
 
-#' Dump data to temporary file with `.data.R` extension
-#' @param standata A named list of \R objects.
+#' Dump data to temporary file in format readable by CmdStan
+#'
+#' Currently calls `rstan::stan_rdump()` to create the `.data.R` file.
+#' FIXME:
+#'
+#' @param data A named list of \R objects.
 #' @return Path to temporary file containing the data.
 #' @noRd
-write_rdump <- function(standata) {
+write_rdump <- function(data) {
+  checkmate::assert_names(names(data), type = "unique")
   temp_file <- tempfile(pattern = "standata-", fileext = ".data.R")
-  file <- file(temp_file, open = "w")
-  on.exit(close(file), add = TRUE)
-
-  standata_names <- names(standata)
-  if (is.null(standata_names) || !all(nzchar(standata_names))) {
-    stop("If data is a list all elements must have names.", call. = FALSE)
-  }
-
-  for (data_name in standata_names) {
-    data_object <- preprocess_data(standata[[data_name]])
-
-    if (!is.numeric(data_object))  {
-      warning("Problem writing variable '", data_name,
-              "' to data file for CmdStan.", call. = FALSE)
-    }
-
-    width_pattern <- paste0("(.{1,", getOption("width"), "})(\\s|$)")
-    if (is.vector(data_object)) {
-      write_vector(data_object, data_name, file, width_pattern)
-    } else if (is.matrix(data_object) || is.array(data_object)) {
-      write_array(data_object, data_name, file, width_pattern)
-    } else {
-      warning("Problem writing variable '",
-              data_name,
-              "' to data file for CmdStan.",
-              call. = FALSE)
-    }
-  }
-
-  # return path to new temporary file
+  rstan::stan_rdump(
+    list = names(data),
+    file = temp_file,
+    envir = as.environment(data)
+  )
   temp_file
 }
 
-
-#' Do necessary type conversions before data can be dumped
-#' @noRd
-#' @param x A single object from the `standata` list.
-#' @return Either `x` or `x` converted to a different type.
-preprocess_data <- function(x) {
-  if (is.data.frame(x)) {
-    x <- data.matrix(x)
-  } else if (is.list(x)) {
-    x <- list_to_array(x)
-  } else if (is.logical(x)) {
-    mode(x) <- "integer"
-  } else if (is.factor(x)) {
-    x <- as.integer(x)
-  }
-
-  if (!is.integer(x) &&
-      max(abs(x)) < .Machine$integer.max &&
-      but_actually_int(x)) {
-    storage.mode(x) <- "integer"
-  }
-  x
-}
-
-# use if is.vector(x) is TRUE
-write_vector <- function(x, x_name, file, width_pattern) {
-  if (length(x) == 0) {
-    cat(x_name, " <- integer(0)\n", file = file, sep = '')
-  } else if (length(x) == 1) {
-    cat(x_name, " <- ", as.character(x), "\n", file = file, sep = '')
-  } else {
-    str <- paste0(x_name, " <- \nc(", paste(x, collapse = ', '), ")")
-    str <-  gsub(width_pattern, '\\1\n', str)
-    cat(str, file = file)
-  }
-}
-
-# use if is.matrix(x) or is.array(x) is TRUE
-write_array <- function(x, x_name, file, width_pattern) {
-  xdim <- dim(x)
-  if (length(x) == 0) {
-    str <- paste0("structure(integer(0), ")
-  } else {
-    str <- paste0("structure(c(", paste(as.vector(x), collapse = ', '), "),")
-  }
-  str <- gsub(width_pattern, '\\1\n', str)
-  cat(x_name, " <- \n",
-      file = file, sep = '')
-  cat(str, ".Dim = c(", paste(xdim, collapse = ', '), "))\n",
-      file = file, sep = '')
-}
-
-list_to_array <- function(x, x_name) {
-  if (!length(x))  {
-    return(NULL)
-  }
-  if (!all(sapply(x, is.numeric))) {
-    stop("All elements in list '", x_name, "' must be numeric.",
-         call. = FALSE)
-  }
-
-  x_dims <- lapply(x, function(a) dim(a) %||% length(a))
-  x_ndims <- sapply(x_dims, length)
-  if (!all(x_ndims == x_ndims[1]) ||
-      !all(sapply(x_dims, function(d) all(d == x_dims[[1]])))) {
-    stop("All elements in list '", x_name, "' must have the same dimensions.",
-         call. = FALSE)
-  }
-  x_len <- length(x)
-  x <- do.call(c, x)
-  dim(x) <- c(x_dims[[1]], x_len)
-  aperm(x, c(x_ndims[1] + 1L, seq_len(x_ndims[1])))
-}
-
-but_actually_int <- function(x) {
-  if (!length(x)) return(TRUE)
-  if (any(is.nan(x))) return(FALSE)
-  if (any(is.infinite(x))) return(FALSE)
-  all(floor(x) == x)
-}
