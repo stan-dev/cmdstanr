@@ -3,6 +3,9 @@
 # CmdStanR 
 
 <!-- badges: start -->
+
+<!-- [![Travis build status](https://travis-ci.org/jgabry/cmdstanr.svg?branch=master)](https://travis-ci.org/jgabry/cmdstanr) -->
+
 <!-- badges: end -->
 
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users

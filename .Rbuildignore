@@ -1,3 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 design-questions
+^\.travis\.yml$
+^install_cmdstan\.py$

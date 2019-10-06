@@ -1,0 +1,18 @@
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
+
+language: R
+cache: packages
+cache:
+  directories:
+  - $HOME/.cmdstanr
+
+env:
+  - _R_CHECK_FORCE_SUGGESTS_=false
+  - CMDSTAN='~/.cmdstanr/cmdstan'
+
+install:
+  - sudo apt-get install -y python2.7 python3.6
+  - python inst/install_cmdstan.py -d '~/.cmdstanr'
+
+# before_script:
+#  - export CMDSTAN='~/.cmdstanr/cmdstan'
