@@ -6,9 +6,7 @@
 <!-- badges: end -->
 
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
-(see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python). It provides
-the necessary objects and functions to compile a Stan program and run Stan's
-algorithms from R using [CmdStan](https://github.com/stan-dev/cmdstan).
+(see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).
 
 **WARNINGS:**
 
