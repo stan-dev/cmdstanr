@@ -1,6 +1,12 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 language: R
+addons:
+  apt:
+    packages:
+    - python2.7
+    - python3.6
+
 cache: packages
 cache:
   directories:
@@ -10,7 +16,6 @@ env:
   - _R_CHECK_FORCE_SUGGESTS_=false
 
 install:
-  - sudo apt-get install -y python2.7 python3.6
   - python inst/install_cmdstan.py -d '~/.cmdstanr'
 
 before_script:
