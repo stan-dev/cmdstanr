@@ -8,11 +8,13 @@
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).
 
+CmdStanR is in early stages of development and the following warnings currently apply:
+
 **WARNINGS:**
 
-* Still very early in development
+* Still requires rstan for reading CmdStan output (although doesn’t require that you can compile anything via RStan)
 * Does NOT work on Windows yet
-* Requires a working version of CmdStan (doesn't help install that yet) 
+* Requires an already working installation of CmdStan (doesn't help install that yet) 
 
 ### Goals
 
@@ -26,3 +28,9 @@ releases.
 * Modularity: CmdStanR runs Stan's algorithm and lets downstream modules do the
 analysis.
 
+
+### Contributing 
+
+There is a lot of work still to be done and contributions are very welcome! 
+If you are interested in contributing please comment on an open issue
+or open a new one if none are applicable.  
