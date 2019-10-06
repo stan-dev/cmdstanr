@@ -134,6 +134,13 @@ read_optim_csv <- function(csv_file) {
 #' @return Path to temporary file containing the data.
 #' @noRd
 write_rdump <- function(data) {
+  # FIXME don't use rstan
+  if (!requireNamespace("rstan", quietly = TRUE)) {
+    stop("Please install the 'rstan' package.\n",
+         "This is required for writing the data file for CmdStan ",
+         "until CmdStanR has its own implementation.",
+          call. = FALSE)
+  }
   checkmate::assert_names(names(data), type = "unique")
   temp_file <- tempfile(pattern = "standata-", fileext = ".data.R")
   rstan::stan_rdump(
@@ -143,4 +150,3 @@ write_rdump <- function(data) {
   )
   temp_file
 }
-
