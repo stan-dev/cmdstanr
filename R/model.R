@@ -118,7 +118,7 @@ CmdStanModel <- R6::R6Class(
                       save_warmup = FALSE, # TODO: document this
                       thin = NULL,
                       refresh = NULL,
-                      inits = NULL,
+                      init = NULL,
                       seed = NULL,
                       max_depth = NULL,
                       metric = NULL,
@@ -126,8 +126,14 @@ CmdStanModel <- R6::R6Class(
                       adapt_engaged = NULL,
                       adapt_delta = NULL) {
 
+      if (!is.null(init)) {
+        stop("Initial values are not yet supported.", call. = FALSE)
+      }
+
       num_chains <- num_chains %||% 1
+      checkmate::assert_integerish(num_chains, lower = 1)
       chain_ids <- seq_len(num_chains)
+
       sample_args <- SampleArgs$new(
         num_warmup = num_warmup,
         num_samples = num_samples,
@@ -146,7 +152,7 @@ CmdStanModel <- R6::R6Class(
         run_ids = chain_ids,
         data_file = process_data(data),
         seed = seed,
-        inits = inits,
+        init = init,
         refresh = refresh
       )
 
@@ -167,7 +173,7 @@ CmdStanModel <- R6::R6Class(
     optimize = function(data = NULL,
                         seed = NULL,
                         refresh = NULL,
-                        inits = NULL,
+                        init = NULL,
                         algorithm = NULL,
                         init_alpha = NULL,
                         iter = NULL) {
@@ -186,7 +192,7 @@ CmdStanModel <- R6::R6Class(
         run_ids = 1,
         data_file = process_data(data),
         seed = seed,
-        inits = inits,
+        init = init,
         refresh = refresh
       )
 

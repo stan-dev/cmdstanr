@@ -32,7 +32,7 @@ CmdStanArgs <- R6::R6Class(
                           method_args,
                           data_file = NULL,
                           seed = NULL,
-                          inits = NULL, # TODO: CmdStan uses init but CmdStanPy inits
+                          init = NULL,
                           refresh = NULL) {
 
       self$model_name <- model_name
@@ -40,7 +40,7 @@ CmdStanArgs <- R6::R6Class(
       self$run_ids <- run_ids
       self$data_file <- data_file
       self$seed <- seed
-      self$inits <- inits
+      self$init <- init
       self$refresh <- refresh
       self$method_args <- method_args
 
@@ -50,7 +50,7 @@ CmdStanArgs <- R6::R6Class(
     },
 
     validate = function() {
-      # TODO: validate inits (see python implementation)
+      # TODO: validate init (see python implementation)
       # TODO: validate that can write to output directory
 
       if (!length(self$exe_file) || !nzchar(self$exe_file)) {
@@ -65,6 +65,9 @@ CmdStanArgs <- R6::R6Class(
                                    any.missing = FALSE,
                                    null.ok = FALSE)
 
+      checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
+      checkmate::assert_file_exists(self$data_file)
+
       # either no seed, 1 seed, or num_runs seeds (number of chains)
       checkmate::assert(
         combine = "or",
@@ -77,6 +80,7 @@ CmdStanArgs <- R6::R6Class(
                                     len = length(self$run_ids),
                                     null.ok = TRUE)
       )
+
       if (is.null(self$seed)) {
         self$seed <- sample(.Machine$integer.max, length(self$run_ids))
       } else if (length(self$seed) == 1 && length(self$run_ids) > 1) {
@@ -100,7 +104,7 @@ CmdStanArgs <- R6::R6Class(
         list(
           id = NULL,
           seed = NULL,
-          inits = NULL,
+          init = NULL,
           data = NULL,
           output = NULL
         )
@@ -119,8 +123,8 @@ CmdStanArgs <- R6::R6Class(
         args$seed <- c("random", paste0("seed=", self$seed[idx]))
       }
 
-      if (!is.null(self$inits)) {
-        args$inits <- paste0("init=", self$inits[idx])
+      if (!is.null(self$init)) {
+        args$init <- paste0("init=", self$init[idx])
       }
 
       if (!is.null(self$data_file)) {
@@ -177,13 +181,12 @@ SampleArgs <- R6::R6Class(
       self$adapt_engaged <- adapt_engaged
       self$adapt_delta <- adapt_delta
 
-      if (!is.null(self$save_warmup)) {
+      if (is.logical(self$adapt_engaged)) {
+        self$adapt_engaged <- as.integer(self$adapt_engaged)
+      }
+      if (is.logical(self$save_warmup)) {
         self$save_warmup <- as.integer(self$save_warmup)
       }
-      if (!is.null(self$adapt_engaged)) {
-        self$save_warmup <- as.integer(self$adapt_engaged)
-      }
-
       invisible(self)
     },
 
@@ -210,15 +213,15 @@ SampleArgs <- R6::R6Class(
                                    lower = 0,
                                    len = 1,
                                    null.ok = TRUE)
-      checkmate::assert_integer(self$save_warmup,
-                                lower = 0, upper = 1,
-                                len = 1,
-                                null.ok = TRUE)
+      checkmate::assert_integerish(self$save_warmup,
+                                   lower = 0, upper = 1,
+                                   len = 1,
+                                   null.ok = TRUE)
 
-      checkmate::assert_integer(self$adapt_engaged,
-                                lower = 0, upper = 1,
-                                len = 1,
-                                null.ok = TRUE)
+      checkmate::assert_integerish(self$adapt_engaged,
+                                   lower = 0, upper = 1,
+                                   len = 1,
+                                   null.ok = TRUE)
       checkmate::assert_numeric(self$adapt_delta,
                                 lower = 0, upper = 1,
                                 len = 1,
@@ -228,25 +231,25 @@ SampleArgs <- R6::R6Class(
                                    len = 1,
                                    null.ok = TRUE)
 
-      checkmate::assert(
-        combine = "or",
-        checkmate::check_numeric(self$stepsize,
-                                 lower = 0,
-                                 len = 1,
-                                 null.ok = TRUE),
-        checkmate::check_numeric(self$stepsize,
-                                 lower = 0,
+      if (length(self$stepsize) == 1) {
+        checkmate::assert_number(self$stepsize, lower = .Machine$double.eps)
+      } else {
+        checkmate::assert_numeric(self$stepsize,
+                                 lower = .Machine$double.eps,
                                  len = num_runs,
                                  null.ok = TRUE)
-      )
-      checkmate::assert(
-        combine = "or",
-        checkmate::check_string(self$metric, null.ok = TRUE),
-        checkmate::check_character(self$metric, len = num_runs,
-                                   null.ok = TRUE)
-      )
+      }
+
       # TODO: implement other checks for metric from cmdstanpy:
       # https://github.com/stan-dev/cmdstanpy/blob/master/cmdstanpy/cmdstan_args.py#L130
+      if (length(self$metric) == 1) {
+        checkmate::assert_string(self$metric)
+        checkmate::assert_subset(self$metric,
+                                 empty.ok = FALSE,
+                                 choices = c("unit_e", "diag_e", "dense_e"))
+      } else {
+        checkmate::assert_character(self$metric, len = num_runs, null.ok = TRUE)
+      }
 
       invisible(self)
     },
