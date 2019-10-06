@@ -1,21 +1,54 @@
 #' Create a new CmdStanModel object
 #'
+#' \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
 #' The `cmdstan_model()` function creates a new `CmdStanModel` object from a
 #' file containing a Stan program.
 #'
-#' @name cmdstan_model
-#' @aliases CmdStanModel cmdstanmodel
-#'
 #' @export
-#'
 #' @param stan_file Path to Stan program.
-#' @return An [R6][R6::R6] `CmdStanModel` object. See **Available Methods**.
+#' @return An [R6][R6::R6] [`CmdStanModel`] object.
 #'
-#' @details A `CmdStanModel` object stores the path to a Stan program as well as
-#'   a path to a compiled executable once created. See **Available Methods**.
+#' @seealso [cmdstan_path()]
 #'
-#' @section Available Methods: `CmdStanModel` objects have the following
-#'   associated methods:
+#' @examples
+#' \dontrun{
+#' set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
+#' my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(stan_file = my_stan_program)
+#' mod$print()
+#' mod$compile()
+#'
+#' # specify data as a named list (like RStan)
+#' standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
+#' fit <- mod$sample(data = standata, seed = 123, num_chains = 2)
+#' fit$summary()
+#'
+#' # specify data as a path to a file (like CmdStan)
+#' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
+#' fit2 <- mod$sample(data = my_data_file, seed = 123)
+#' fit2$summary()
+#'
+#' # can also create a stanfit object using rstan package
+#' # stanfit <- rstan::read_stan_csv(fit$output_files)
+#' }
+#'
+cmdstan_model <- function(stan_file) {
+  CmdStanModel$new(stan_file = stan_file)
+}
+
+
+# CmdStanModel -----------------------------------------------------------------
+
+#' CmdStanModel objects
+#'
+#' @name CmdStanModel
+#' @description A `CmdStanModel` object is returned by the [cmdstan_model()]
+#'   function. The object stores the path to a Stan program as well as a path to
+#'   a compiled executable once created, and provides methods for fitting the
+#'   model. See the **Details** section for available methods.
+#'
+#' @details
+#' `CmdStanModel` objects have the following associated methods:
 #' \describe{
 #'   \item{`code()`}{
 #'   Returns the Stan program located at `stan_file` as a string.
@@ -43,34 +76,9 @@
 #'   }
 #' }
 #'
-#' @seealso [cmdstan_path()]
+#' @inherit cmdstan_model examples
 #'
-#' @examples
-#' set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
-#' my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#' mod <- cmdstan_model(stan_file = my_stan_program)
-#' mod$print()
-#' mod$compile()
-#'
-#' # specify data as a named list (like RStan)
-#' standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-#' fit <- mod$sample(data = standata, seed = 123, num_chains = 2)
-#' fit$summary()
-#'
-#' # specify data as a path to a file (like CmdStan)
-#' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
-#' fit2 <- mod$sample(data = my_data_file, seed = 123)
-#' fit2$summary()
-#'
-#' # can also create a stanfit object using rstan package
-#' # stanfit <- rstan::read_stan_csv(fit$output_files)
-#'
-cmdstan_model <- function(stan_file) {
-  CmdStanModel$new(stan_file = stan_file)
-}
-
-
-# CmdStanModel -----------------------------------------------------------------
+NULL
 
 CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
@@ -120,9 +128,6 @@ CmdStanModel <- R6::R6Class(
 
       num_chains <- num_chains %||% 1
       chain_ids <- seq_len(num_chains)
-      data_file <- process_data(data)
-      model_name <- strip_ext(basename(self$exe_file()))
-
       sample_args <- SampleArgs$new(
         num_warmup = num_warmup,
         num_samples = num_samples,
@@ -136,10 +141,10 @@ CmdStanModel <- R6::R6Class(
       )
       cmdstan_args <- CmdStanArgs$new(
         method_args = sample_args,
-        model_name = model_name,
+        model_name = strip_ext(basename(self$exe_file())),
         exe_file = self$exe_file(),
         run_ids = chain_ids,
-        data_file = data_file,
+        data_file = process_data(data),
         seed = seed,
         inits = inits,
         refresh = refresh
@@ -167,10 +172,7 @@ CmdStanModel <- R6::R6Class(
                         init_alpha = NULL,
                         iter = NULL) {
 
-      # stop("optimization is not implemented yet.", call. = FALSE)
-
-      data_file <- process_data(data)
-      model_name <- strip_ext(basename(self$exe_file()))
+      # stop("Optimization not yet enabled.")
 
       optimize_args <- OptimizeArgs$new(
         algorithm = algorithm,
@@ -179,10 +181,10 @@ CmdStanModel <- R6::R6Class(
       )
       cmdstan_args <- CmdStanArgs$new(
         method_args = optimize_args,
-        model_name = model_name,
+        model_name = strip_ext(basename(self$exe_file())),
         exe_file = self$exe_file(),
         run_ids = 1,
-        data_file = data_file,
+        data_file = process_data(data),
         seed = seed,
         inits = inits,
         refresh = refresh
@@ -211,11 +213,6 @@ CmdStanModel <- R6::R6Class(
 compile_stan_program <- function(stan_file) {
   prog <- strip_ext(stan_file)
   prog <- cmdstan_ext(prog)
-
-  # using base::system()
-  # cmd <- paste0("cd ", cmdstan_path(), " && make ", cmdstan_ext(prog))
-  # system(cmd)
-
   run_log <- processx::run(
     command = "make",
     args = prog,
@@ -223,7 +220,6 @@ compile_stan_program <- function(stan_file) {
     echo_cmd = TRUE,
     echo = TRUE
   )
-
   prog
 }
 

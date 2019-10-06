@@ -1,4 +1,4 @@
-#' Objects for storing CmdStan arguments
+#' Internal objects for storing CmdStan arguments
 #'
 #' These objects store arguments for creating the call to CmdStan and provide a
 #' `compose()` method for creating a character vector of arguments that can be
@@ -12,7 +12,7 @@
 #'
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
-#' * `FixedParamArgs`: stores arguments specific to `method=fixed_param`.
+#' * `FixedParamArgs`: not yet implemented.
 #' * `GenerateQuantitiesArgs`: not yet implemented.
 #' * `VariationalArgs`: not yet implemented.
 #'

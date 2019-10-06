@@ -1,4 +1,6 @@
-# CmdStanR
+[<img src="https://raw.githubusercontent.com/stan-dev/logos/master/logo_tm.png" width=100 alt="Stan Logo"/>](https://mc-stan.org)
+
+# CmdStanR 
 
 <!-- badges: start -->
 <!-- badges: end -->

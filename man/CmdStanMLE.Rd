@@ -2,7 +2,6 @@
 % Please edit documentation in R/fit.R
 \name{CmdStanMLE}
 \alias{CmdStanMLE}
-\alias{cmdstanmle}
 \title{CmdStanMLE objects}
 \description{
 A \code{CmdStanMLE} object is returned by the \code{optimize()} method of a

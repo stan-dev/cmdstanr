@@ -1,9 +1,18 @@
-#' @details See [cmdstan_model()] to get started.
-#' @keywords internal
-"_PACKAGE"
-
-# The following block is used by usethis to automatically manage
-# roxygen namespace tags. Modify with care!
-## usethis namespace: start
-## usethis namespace: end
+#' CmdStanR: \R interface to CmdStan
+#'
+#' @docType package
+#' @name cmdstanr-package
+#' @aliases cmdstanr
+#'
+#' @description
+#' \if{html}{
+#'    \figure{logo.png}{options: width="50px" alt="https://mc-stan.org/about/logo/"}
+#'    \emph{Stan Development Team}
+#' }
+#'
+#' CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R
+#' users. It provides the necessary objects and functions to compile a Stan
+#' program and run Stan's algorithms from R via CmdStan, the command line
+#' interface to Stan. To get started see [cmdstan_model()].
+#'
 NULL

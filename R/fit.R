@@ -6,7 +6,6 @@
 #' [`CmdStanModel`] object.
 #'
 #' @name CmdStanMCMC
-#' @aliases cmdstanmcmc
 #'
 #' @section Available Methods: `CmdStanMCMC` objects have the following
 #'   associated methods:
@@ -16,6 +15,10 @@
 #'   }
 #'   \item{`diagnose()`}{
 #'   Run CmdStan's `bin/diagnose` on output csv files.
+#'   }
+#'   \item{`sample()`}{
+#'   Return the posterior sample (post-warmup draws) as a 3-D array with
+#'   dimensions `(iterations, chains, variables)`.
 #'   }
 #'   \item{`save_output_files(dir, basename = NULL)`}{
 #'   Move csv output files from temporary directory to a specified directory
@@ -127,7 +130,6 @@ CmdStanMCMC <- R6::R6Class(
 #' [`CmdStanModel`] object.
 #'
 #' @name CmdStanMLE
-#' @aliases cmdstanmle
 #'
 #' @section Available Methods: `CmdStanMLE` objects have the following
 #'   associated methods:
@@ -176,9 +178,9 @@ CmdStanMLE <- R6::R6Class(
 
 
 
-# CmdStanRun ---------------------------------------------------------------
+# RunSet ---------------------------------------------------------------
 
-# Record of CmdStan run for a specified configuration and number of chains.
+# Record of CmdStan runs for a specified configuration and number of chains.
 RunSet <- R6::R6Class(
   classname = "RunSet",
   public = list(

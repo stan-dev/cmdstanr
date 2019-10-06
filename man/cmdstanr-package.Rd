@@ -2,24 +2,17 @@
 % Please edit documentation in R/cmdstanr-package.R
 \docType{package}
 \name{cmdstanr-package}
-\alias{cmdstanr}
 \alias{cmdstanr-package}
-\title{cmdstanr: R Interface to CmdStan}
+\alias{cmdstanr}
+\title{CmdStanR: \R interface to CmdStan}
 \description{
-A lightweight interface to 'Stan' <https://mc-stan.org> 
-    that provides functionality for compiling a 'Stan' program and fitting the 
-    model using 'CmdStan'.
-}
-\details{
-See \code{\link[=cmdstan_model]{cmdstan_model()}} to get started.
-}
-\author{
-\strong{Maintainer}: Jonah Gabry \email{jsg2201@columbia.edu}
-
-Other contributors:
-\itemize{
-  \item Mitzi Morris [contributor]
+\if{html}{
+   \figure{logo.png}{options: width="50px" alt="https://mc-stan.org/about/logo/"}
+   \emph{Stan Development Team}
 }
 
+CmdStanR is a lightweight interface to \href{https://mc-stan.org}{Stan} for R
+users. It provides the necessary objects and functions to compile a Stan
+program and run Stan's algorithms from R via CmdStan, the command line
+interface to Stan. To get started see \code{\link[=cmdstan_model]{cmdstan_model()}}.
 }
-\keyword{internal}

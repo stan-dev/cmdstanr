@@ -2,7 +2,6 @@
 % Please edit documentation in R/fit.R
 \name{CmdStanMCMC}
 \alias{CmdStanMCMC}
-\alias{cmdstanmcmc}
 \title{CmdStanMCMC objects}
 \description{
 A \code{CmdStanMCMC} object is returned by the \code{sample()} method of a
@@ -17,6 +16,10 @@ Run CmdStan's \code{bin/stansummary} on output csv files.
 }
 \item{\code{diagnose()}}{
 Run CmdStan's \code{bin/diagnose} on output csv files.
+}
+\item{\code{sample()}}{
+Return the posterior sample (post-warmup draws) as a 3-D array with
+dimensions \code{(iterations, chains, variables)}.
 }
 \item{\code{save_output_files(dir, basename = NULL)}}{
 Move csv output files from temporary directory to a specified directory
