@@ -20,7 +20,7 @@ cmdstan_path <- function() {
 
 #' @rdname cmdstan_path
 #' @export
-#' @param full_path The full file path to the CmdStan installation as a string.
+#' @param path The full file path to the CmdStan installation as a string.
 set_cmdstan_path <- function(path) {
   if (!dir.exists(path)) {
     stop("Directory does not exist.", call. = FALSE)

@@ -121,7 +121,7 @@ read_optim_csv <- function(csv_file) {
 
   header <- full_csv[1:mark]
   x <- scan(csv_file, skip = mark + 1, sep = ",")
-  list(mle = setNames(x, col_names))
+  list(mle = stats::setNames(x, col_names))
 }
 
 

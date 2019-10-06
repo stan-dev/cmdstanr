@@ -10,7 +10,7 @@ cmdstan_path()
 set_cmdstan_path(path)
 }
 \arguments{
-\item{full_path}{The full file path to the CmdStan installation as a string.}
+\item{path}{The full file path to the CmdStan installation as a string.}
 }
 \value{
 The full file path to the CmdStan installation.
