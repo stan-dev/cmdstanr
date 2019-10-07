@@ -17,7 +17,7 @@ CmdStanR is in early stages of development and the following warnings currently 
 
 * Still requires RStan for reading CmdStan output (although doesn’t require that you can compile anything via RStan)
 * Does NOT work on Windows yet
-* Requires an already working installation of CmdStan (doesn't help install that yet) 
+* Requires an already working installation of [CmdStan](https://github.com/stan-dev/cmdstan) (doesn't help install that yet) 
 
 ### Goals
 
