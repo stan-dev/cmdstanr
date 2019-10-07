@@ -22,10 +22,10 @@ fi
 if [[ ! -e ${RELDIR} ]]; then
    mkdir ${RELDIR}
 fi
-if [[ ! -d ${RELDIR} ]]; then
-    echo "cannot install cmdstan, ${RELDIR} is not a directory"
-    exit 1
-fi
+# if [[ ! -d ${RELDIR} ]]; then
+#     echo "cannot install cmdstan, ${RELDIR} is not a directory"
+#     exit 1
+# fi
 echo "cmdstan dir: ${RELDIR}"
 
 if [ -z ${VER} ]; then

@@ -1,5 +1,8 @@
 context("CmdStanModel")
 
+if (nzchar(Sys.getenv("TRAVIS"))) {
+  set_cmdstan_path("/home/travis/.cmdstanr/cmdstan")
+}
 if (is.null(.cmdstanr$PATH)) {
   set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
 }
@@ -52,14 +55,14 @@ bad_arg_values_2 <- list(
   metric = c("AA", "BB", "CC")
 )
 
-# mod$compile()
-
 test_that("compile() method works", {
   skip_on_cran()
   # skip_on_travis()
   out <- capture.output(mod$compile())
   expect_output(print(out), "Running make")
 })
+
+mod$compile()
 
 test_that("object initializes correctly", {
   skip_on_cran()

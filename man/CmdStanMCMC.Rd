@@ -4,8 +4,8 @@
 \alias{CmdStanMCMC}
 \title{CmdStanMCMC objects}
 \description{
-A \code{CmdStanMCMC} object is returned by the \code{sample()} method of a
-\code{\link{CmdStanModel}} object.
+A \code{CmdStanMCMC} object is the fitted model object returned by the \code{sample()}
+method of a \code{\link{CmdStanModel}} object.
 }
 \section{Available Methods}{
  \code{CmdStanMCMC} objects have the following

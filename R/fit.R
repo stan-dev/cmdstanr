@@ -2,8 +2,8 @@
 
 #' CmdStanMCMC objects
 #'
-#' A `CmdStanMCMC` object is returned by the `sample()` method of a
-#' [`CmdStanModel`] object.
+#' A `CmdStanMCMC` object is the fitted model object returned by the `sample()`
+#' method of a [`CmdStanModel`] object.
 #'
 #' @name CmdStanMCMC
 #'
@@ -126,8 +126,8 @@ CmdStanMCMC <- R6::R6Class(
 
 #' CmdStanMLE objects
 #'
-#' A `CmdStanMLE` object is returned by the `optimize()` method of a
-#' [`CmdStanModel`] object.
+#' A `CmdStanMLE` object is the fitted model object returned by the `optimize()`
+#' method of a [`CmdStanModel`] object.
 #'
 #' @name CmdStanMLE
 #'
