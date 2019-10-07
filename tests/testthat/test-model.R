@@ -3,6 +3,7 @@ context("CmdStanModel")
 if (!nzchar(cmdstan_path())) {
   set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
 }
+
 my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
 my_data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
@@ -35,13 +36,19 @@ bad_arg_values <- list(
   save_warmup = "NO",
   thin = 0,
   refresh = -10,
-  # init = 17,
+  init = -10,
   seed = -10,
   max_depth = 0,
   metric = "NOT_A_METRIC",
   stepsize = 0,
   adapt_engaged = "NO",
   adapt_delta = 2
+)
+
+bad_arg_values_2 <- list(
+  init = "NOT_A_FILE",
+  seed = 1:10,
+  stepsize = 1:10
 )
 
 # mod$compile()
@@ -88,7 +95,7 @@ test_that("sample() method runs when all arguments specified validly", {
   expect_is(fit, "CmdStanMCMC")
 })
 
-test_that("sample() method throws errors for invalid arguments", {
+test_that("sample() method errors for invalid arguments before calling cmdstan", {
   skip_on_cran()
   # skip_on_travis()
 
@@ -96,6 +103,12 @@ test_that("sample() method throws errors for invalid arguments", {
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
+    expect_error(do.call(mod$sample, args), regexp = nm)
+  }
+
+  for (nm in names(bad_arg_values_2)) {
+    args <- ok_arg_values
+    args[[nm]] <- bad_arg_values_2[[nm]]
     expect_error(do.call(mod$sample, args), regexp = nm)
   }
 })

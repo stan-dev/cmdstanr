@@ -126,10 +126,6 @@ CmdStanModel <- R6::R6Class(
                       adapt_engaged = NULL,
                       adapt_delta = NULL) {
 
-      if (!is.null(init)) {
-        stop("Initial values are not yet supported.", call. = FALSE)
-      }
-
       num_chains <- num_chains %||% 1
       checkmate::assert_integerish(num_chains, lower = 1)
       chain_ids <- seq_len(num_chains)
@@ -218,7 +214,7 @@ CmdStanModel <- R6::R6Class(
 #' @return Path to executable.
 compile_stan_program <- function(stan_file) {
   prog <- strip_ext(stan_file)
-  prog <- cmdstan_ext(prog)
+  prog <- cmdstan_ext(prog) # adds .exe on Windows
   run_log <- processx::run(
     command = "make",
     args = prog,

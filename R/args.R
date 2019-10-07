@@ -50,13 +50,8 @@ CmdStanArgs <- R6::R6Class(
     },
 
     validate = function() {
-      # TODO: validate init (see python implementation)
       # TODO: validate that can write to output directory
-
-      if (!length(self$exe_file) || !nzchar(self$exe_file)) {
-        stop('Model not compiled. Try running the compile() method first.',
-             call. = FALSE)
-      }
+      .validate_exe_file(self$exe_file)
 
       # at least 1 run id (chain id)
       checkmate::assert_integerish(self$run_ids,
@@ -66,28 +61,13 @@ CmdStanArgs <- R6::R6Class(
                                    null.ok = FALSE)
 
       checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
-      checkmate::assert_file_exists(self$data_file)
+      checkmate::assert_file_exists(self$data_file, access = "r")
 
-      # either no seed, 1 seed, or num_runs seeds (number of chains)
-      checkmate::assert(
-        combine = "or",
-        checkmate::check_integerish(self$seed,
-                                    lower = -1,
-                                    len = 1,
-                                    null.ok = TRUE),
-        checkmate::check_integerish(self$seed,
-                                    lower = -1,
-                                    len = length(self$run_ids),
-                                    null.ok = TRUE)
-      )
-
-      if (is.null(self$seed)) {
-        self$seed <- sample(.Machine$integer.max, length(self$run_ids))
-      } else if (length(self$seed) == 1 && length(self$run_ids) > 1) {
-        # if one seed but multiple chains then increment seed by 1 for each chain
-        # TODO: is this ok?
-        self$seed <- c(self$seed, self$seed + 1:(length(self$run_ids) -1))
-      }
+      num_runs <- length(self$run_ids)
+      .validate_init(self$init, num_runs)
+      .validate_seed(self$seed, num_runs)
+      self$init <- .maybe_recycle_init(self$init, num_runs)
+      self$seed <- .maybe_generate_seed(self$seed, num_runs)
     },
 
     # create default basename for csv output file from model name and method
@@ -365,3 +345,100 @@ FixedParamArgs <- R6::R6Class(
 )
 
 
+# Validation helpers ------------------------------------------------------
+
+#' Validate exe file exists
+#' @noRd
+#' @param exe_file Path to executable.
+#' @return Either throws an error or returns `invisible(TRUE)`
+.validate_exe_file <- function(exe_file) {
+  if (!length(exe_file) ||
+      !nzchar(exe_file) ||
+      !file.exists(exe_file)) {
+    stop('Model not compiled. Try running the compile() method first.',
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+#' Validate initial values
+#'
+#' For CmdStan `init` must be `NULL`, a single real number >= 0, or paths to
+#' init files for each chain.
+#'
+#' @noRd
+#' @param init User's `init` argument.
+#' @param num_runs Number of CmdStan runs (number of chains if MCMC)
+#' @return Either throws an error or returns `invisible(TRUE)`.
+.validate_init <- function(init, num_runs) {
+  if (is.null(init)) {
+    return(invisible(TRUE))
+  }
+
+  if (!is.numeric(init) && !is.character(init)) {
+    stop("If specified 'init' must be numeric or a character vector.",
+         call. = FALSE)
+  } else if (is.numeric(init) && (length(init) > 1 || init < 0)) {
+    stop("If 'init' is numeric it must be a single real number >= 0.",
+         call. = FALSE)
+  } else if (is.character(init)) {
+    checkmate::assert_file_exists(init, access = "r")
+    if (length(init) != num_runs) {
+      stop("If 'init' is specified as a character vector ",
+           "it one element per chain.",
+           call. = FALSE)
+    }
+  }
+
+  invisible(TRUE)
+}
+
+#' Validate seed
+#'
+#' `seed` must be `NULL`, a single positive integer, or one positive integer per
+#' chain.
+#'
+#' @noRd
+#' @param seed User's `seed` argument.
+#' @param num_runs Number of CmdStan runs (number of chains if MCMC)
+#' @return Either throws an error or returns `invisible(TRUE)`.
+.validate_seed <- function(seed, num_runs) {
+  if (is.null(seed)) {
+    return(invisible(TRUE))
+  }
+  checkmate::assert_integerish(seed, lower = 1)
+  if (length(seed) > 1 && length(seed) != num_runs) {
+    stop("If 'seed' is specified it must be a single integer or one per chain.",
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+#' Generate seed(s) if missing
+#' @noRd
+#' @param seed Already validated `seed` argument.
+#' @param num_runs Number of CmdStan runs.
+#' @return An integer vector of length `num_runs`.
+.maybe_generate_seed <- function(seed, num_runs) {
+  if (is.null(seed)) {
+    seed <- sample(.Machine$integer.max, num_runs)
+  } else if (length(seed) == 1 && num_runs > 1) {
+    seed <- as.integer(seed)
+    seed <- c(seed, seed + 1:(num_runs -1))
+  }
+  seed
+}
+
+#' Recycle init if numeric and length 1
+#' @noRd
+#' @param init Already validated `init` argument.
+#' @param num_runs Number of CmdStan runs.
+#' @return `init`, unless numeric and length 1, in which case `rep(init, num_runs)`.
+.maybe_recycle_init <- function(init, num_runs) {
+  if (is.null(init) ||
+      is.character(init) ||
+      length(init) == num_runs) {
+    return(init)
+  }
+  rep(init, num_runs)
+}
