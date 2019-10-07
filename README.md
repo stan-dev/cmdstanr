@@ -11,13 +11,11 @@
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).
 
-CmdStanR is in early stages of development and the following warnings currently apply:
-
-**WARNINGS:**
+CmdStanR is in early stages of development and the following caveats currently apply:
 
 * Still requires RStan for reading CmdStan output (although doesn’t require that you can compile anything via RStan)
-* Does NOT work on Windows yet
 * Requires an already working installation of [CmdStan](https://github.com/stan-dev/cmdstan) (doesn't help install that yet) 
+
 
 ### Goals
 
