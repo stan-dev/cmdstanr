@@ -51,7 +51,7 @@ CmdStanArgs <- R6::R6Class(
 
     validate = function() {
       # TODO: validate that can write to output directory
-      .validate_exe_file(self$exe_file)
+      validate_exe_file(self$exe_file)
 
       # at least 1 run id (chain id)
       checkmate::assert_integerish(self$run_ids,
@@ -64,10 +64,11 @@ CmdStanArgs <- R6::R6Class(
       checkmate::assert_file_exists(self$data_file, access = "r")
 
       num_runs <- length(self$run_ids)
-      .validate_init(self$init, num_runs)
-      .validate_seed(self$seed, num_runs)
-      self$init <- .maybe_recycle_init(self$init, num_runs)
-      self$seed <- .maybe_generate_seed(self$seed, num_runs)
+      validate_init(self$init, num_runs)
+      validate_seed(self$seed, num_runs)
+      self$init <- maybe_recycle_init(self$init, num_runs)
+      self$seed <- maybe_generate_seed(self$seed, num_runs)
+      invisible(self)
     },
 
     # create default basename for csv output file from model name and method
@@ -222,14 +223,8 @@ SampleArgs <- R6::R6Class(
 
       # TODO: implement other checks for metric from cmdstanpy:
       # https://github.com/stan-dev/cmdstanpy/blob/master/cmdstanpy/cmdstan_args.py#L130
-      if (length(self$metric) == 1) {
-        checkmate::assert_string(self$metric)
-        checkmate::assert_subset(self$metric,
-                                 empty.ok = FALSE,
-                                 choices = c("unit_e", "diag_e", "dense_e"))
-      } else {
-        checkmate::assert_character(self$metric, len = num_runs, null.ok = TRUE)
-      }
+      validate_metric(self$metric, num_runs)
+      self$metric <- maybe_recycle_metric(self$metric, num_runs)
 
       invisible(self)
     },
@@ -351,7 +346,7 @@ FixedParamArgs <- R6::R6Class(
 #' @noRd
 #' @param exe_file Path to executable.
 #' @return Either throws an error or returns `invisible(TRUE)`
-.validate_exe_file <- function(exe_file) {
+validate_exe_file <- function(exe_file) {
   if (!length(exe_file) ||
       !nzchar(exe_file) ||
       !file.exists(exe_file)) {
@@ -370,7 +365,7 @@ FixedParamArgs <- R6::R6Class(
 #' @param init User's `init` argument.
 #' @param num_runs Number of CmdStan runs (number of chains if MCMC)
 #' @return Either throws an error or returns `invisible(TRUE)`.
-.validate_init <- function(init, num_runs) {
+validate_init <- function(init, num_runs) {
   if (is.null(init)) {
     return(invisible(TRUE))
   }
@@ -384,14 +379,29 @@ FixedParamArgs <- R6::R6Class(
   } else if (is.character(init)) {
     checkmate::assert_file_exists(init, access = "r")
     if (length(init) != num_runs) {
-      stop("If 'init' is specified as a character vector ",
-           "it one element per chain.",
+      stop("If 'init' is specified as a character vector it must have",
+           "one element per chain.",
            call. = FALSE)
     }
   }
 
   invisible(TRUE)
 }
+
+#' Recycle init if numeric and length 1
+#' @noRd
+#' @param init Already validated `init` argument.
+#' @param num_runs Number of CmdStan runs.
+#' @return `init`, unless numeric and length 1, in which case `rep(init, num_runs)`.
+maybe_recycle_init <- function(init, num_runs) {
+  if (is.null(init) ||
+      is.character(init) ||
+      length(init) == num_runs) {
+    return(init)
+  }
+  rep(init, num_runs)
+}
+
 
 #' Validate seed
 #'
@@ -402,7 +412,7 @@ FixedParamArgs <- R6::R6Class(
 #' @param seed User's `seed` argument.
 #' @param num_runs Number of CmdStan runs (number of chains if MCMC)
 #' @return Either throws an error or returns `invisible(TRUE)`.
-.validate_seed <- function(seed, num_runs) {
+validate_seed <- function(seed, num_runs) {
   if (is.null(seed)) {
     return(invisible(TRUE))
   }
@@ -419,7 +429,7 @@ FixedParamArgs <- R6::R6Class(
 #' @param seed Already validated `seed` argument.
 #' @param num_runs Number of CmdStan runs.
 #' @return An integer vector of length `num_runs`.
-.maybe_generate_seed <- function(seed, num_runs) {
+maybe_generate_seed <- function(seed, num_runs) {
   if (is.null(seed)) {
     seed <- sample(.Machine$integer.max, num_runs)
   } else if (length(seed) == 1 && num_runs > 1) {
@@ -429,16 +439,60 @@ FixedParamArgs <- R6::R6Class(
   seed
 }
 
-#' Recycle init if numeric and length 1
+#' Validate metric
 #' @noRd
-#' @param init Already validated `init` argument.
-#' @param num_runs Number of CmdStan runs.
-#' @return `init`, unless numeric and length 1, in which case `rep(init, num_runs)`.
-.maybe_recycle_init <- function(init, num_runs) {
-  if (is.null(init) ||
-      is.character(init) ||
-      length(init) == num_runs) {
-    return(init)
+#' @param metric User's `metric` argument.
+#' @param num_runs Number of CmdStan runs (number of MCMC chains).
+#' @return Either throws an error or returns `invisible(TRUE)`.
+#'
+validate_metric <- function(metric, num_runs) {
+  if (is.null(metric)) {
+    return(invisible(TRUE))
   }
-  rep(init, num_runs)
+
+  checkmate::assert_character(metric, any.missing = FALSE, min.len = 1)
+  if (length(metric) > 1 ||
+      !metric %in% available_metrics()) {
+    stop("'metric' must be one of {'diag_e', 'dense_e', 'unit_e'}.",
+         call. = FALSE)
+  }
+
+  # TODO: allow specifying metric files
+  # need to check if in the right format (see CmdStanPy implementation)
+  # if (length(metric) == 1) {
+  #   must_have_file <- !metric %in% available_metrics()
+  #   if (must_have_file) {
+  #     if (!checkmate::test_file_exists(metric, access = "r")) {
+  #       stop("'metric' is not one of {'diag_e', 'dense_e', 'unit_e'} but ",
+  #            "is also not a path to a readable file.", call. = FALSE)
+  #     }
+  #   }
+  # } else if (length(metric) != num_runs) {
+  #   stop("'metric' must have length equal to one or the number of chains.",
+  #        call. = FALSE)
+  # } else {
+  #   checkmate::assert_file_exists(metric, access = "r")
+  # }
+
+  invisible(TRUE)
 }
+
+#' Recycle metric if not a file (i.e. is one of 'diag_e', 'dense_e', 'unit_e')
+#' @noRd
+#' @param metric Already validated `metric` argument.
+#' @param num_runs Number of CmdStan runs.
+#' @return `metric`, unless a string of length 1 (and not a file path), in which
+#'   case `rep(metric, num_runs)`.
+maybe_recycle_metric <- function(metric, num_runs) {
+  if (is.null(metric) ||
+      length(metric) == num_runs ||
+      !metric %in% available_metrics()) {
+    return(metric)
+  }
+  rep(metric, num_runs)
+}
+
+available_metrics <- function() {
+  c("unit_e", "diag_e", "dense_e")
+}
+

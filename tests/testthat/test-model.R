@@ -48,7 +48,8 @@ bad_arg_values <- list(
 bad_arg_values_2 <- list(
   init = "NOT_A_FILE",
   seed = 1:10,
-  stepsize = 1:10
+  stepsize = 1:10,
+  metric = c("AA", "BB", "CC")
 )
 
 # mod$compile()
