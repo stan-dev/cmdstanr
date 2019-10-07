@@ -11,7 +11,7 @@ env:
   - _R_CHECK_FORCE_SUGGESTS_=false
 
 before_install:
-  - inst/make_cmdstan.sh
+  - sudo inst/make_cmdstan.sh
 
 before_script:
   - export CMDSTAN='~/.cmdstanr/cmdstan'
