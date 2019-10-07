@@ -18,8 +18,8 @@ os_is_windows <- function() {
 
 # paths and extensions ----------------------------------------------------
 
-# replace '\\' with '/' in a path
-# mostly for windows if CmdStan version is < 2.21
+# Replace `\\` with `/` in a path
+# Needed for windows if CmdStan version is < 2.21:
 # https://github.com/stan-dev/cmdstanr/issues/1#issuecomment-539118598
 repair_path <- function(path) {
   if (!length(path) || !is.character(path)) {
@@ -45,6 +45,15 @@ cmdstan_ext <- function(path = NULL) {
 # Strip extension from a file path
 strip_ext <- function(file) {
   tools::file_path_sans_ext(file)
+}
+
+# If a file/dir exists return its absolute path
+# unlike tools::file_path_as_absolute() it doesn't error if can't be found
+absolute_path <- function(x) {
+  if (!file.exists(x)) {
+    return(x)
+  }
+  tools::file_path_as_absolute(x)
 }
 
 # Change extension from a file path

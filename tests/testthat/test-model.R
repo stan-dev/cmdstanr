@@ -1,6 +1,6 @@
 context("CmdStanModel")
 
-if (!nzchar(cmdstan_path())) {
+if (is.null(.cmdstanr$PATH)) {
   set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
 }
 

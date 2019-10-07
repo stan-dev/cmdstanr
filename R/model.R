@@ -174,7 +174,11 @@ CmdStanModel <- R6::R6Class(
                         init_alpha = NULL,
                         iter = NULL) {
 
-      # stop("Optimization not yet enabled.")
+      warning(
+        "Optimization method is experimental and ",
+        "the structure of returned object may change.",
+        call. = FALSE
+      )
 
       optimize_args <- OptimizeArgs$new(
         algorithm = algorithm,
@@ -232,9 +236,9 @@ compile_stan_program <- function(stan_file) {
 #' @return Path to data file.
 process_data <- function(data) {
   if (is.null(data)) {
-    path <- ""
+    path <- absolute_path(".")
   } else if (is.character(data)) {
-    path <- data
+    path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {
     path <- write_rdump(data)
   } else {
