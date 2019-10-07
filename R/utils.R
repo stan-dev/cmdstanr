@@ -18,6 +18,16 @@ os_is_windows <- function() {
 
 # paths and extensions ----------------------------------------------------
 
+# replace '\\' with '/' in a path
+# mostly for windows if CmdStan version is < 2.21
+# https://github.com/stan-dev/cmdstanr/issues/1#issuecomment-539118598
+repair_path <- function(path) {
+  if (!length(path) || !is.character(path)) {
+    return(path)
+  }
+  gsub("\\\\", "/", path)
+}
+
 #' Get extension for executable depending on OS
 #' @noRd
 #' @param path If not `NULL` then a path to add the extension to.
@@ -28,6 +38,7 @@ cmdstan_ext <- function(path = NULL) {
   if (is.null(path)) {
     return(ext)
   }
+  path <- repair_path(path)
   paste0(path, ext)
 }
 
@@ -46,24 +57,6 @@ change_ext <- function(file, ext) {
 has_stan_ext <- function(stan_file) {
   stopifnot(is.character(stan_file))
   isTRUE(tools::file_ext(stan_file) == "stan")
-}
-
-# Prepend cmdstan_path() to a relative path
-add_cmdstan_path <- function(relative_path) {
-  if (!nzchar(cmdstan_path())) {
-    stop("Please set the path to CmdStan. See ?set_cmdstan_path.",
-         call. = FALSE)
-  }
-  file.path(cmdstan_path(), relative_path)
-}
-
-# Strip the cmdstan_path() from a full path
-strip_cmdstan_path <- function(full_path) {
-  if (!nzchar(cmdstan_path())) {
-    stop("Please set the path to CmdStan. See ?set_cmdstan_path.",
-         call. = FALSE)
-  }
-  sub(cmdstan_path(), "", full_path)
 }
 
 

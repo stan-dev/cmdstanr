@@ -10,7 +10,7 @@
 #' @return The full file path to the CmdStan installation.
 #'
 cmdstan_path <- function() {
-  path <- .cmdstanr$PATH
+  path <- repair_path(.cmdstanr$PATH)
   if (substr(path, nchar(path), nchar(path)) == "/") {
     # remove training "/" (is this necessary?)
     path <- substr(path, 1, nchar(path) - 1)

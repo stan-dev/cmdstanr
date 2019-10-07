@@ -89,7 +89,7 @@ CmdStanModel <- R6::R6Class(
   public = list(
     initialize = function(stan_file) {
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
-      private$stan_file_ <- stan_file
+      private$stan_file_ <- repair_path(stan_file)
       invisible(self)
     },
     exe_file = function() private$exe_file_,

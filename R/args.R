@@ -38,9 +38,9 @@ CmdStanArgs <- R6::R6Class(
       self$model_name <- model_name
       self$exe_file <- exe_file
       self$run_ids <- run_ids
-      self$data_file <- data_file
+      self$data_file <- repair_path(data_file)
       self$seed <- seed
-      self$init <- init
+      self$init <- repair_path(init)
       self$refresh <- refresh
       self$method_args <- method_args
 
@@ -156,7 +156,7 @@ SampleArgs <- R6::R6Class(
       self$save_warmup <- save_warmup
       self$thin <- thin
       self$max_depth <- max_depth
-      self$metric <- metric
+      self$metric <- repair_path(metric)
       self$metric_file <- character()
       self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
       self$adapt_engaged <- adapt_engaged
@@ -495,4 +495,3 @@ maybe_recycle_metric <- function(metric, num_runs) {
 available_metrics <- function() {
   c("unit_e", "diag_e", "dense_e")
 }
-
