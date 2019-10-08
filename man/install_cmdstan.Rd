@@ -9,8 +9,10 @@ install_cmdstan(dir = NULL)
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
 to install it in a folder \code{.cmdstanr} in the user's home directory
-(`Sys.getenv("HOME")).}
+(\code{Sys.getenv("HOME")}).}
 }
 \description{
-Install the latest release of CmdStan
+Runs the script \code{make_cmdstan.sh} (\link{source code on GitHub}). Currently
+assumes that the necessary C++ tool chain is available, but in the future
+CmdStanR may help install the requirements.
 }

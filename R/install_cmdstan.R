@@ -1,16 +1,19 @@
 #' Install the latest release of CmdStan
 #'
+#' Runs the script `make_cmdstan.sh` ([source code on GitHub]). Currently
+#' assumes that the necessary C++ tool chain is available, but in the future
+#' CmdStanR may help install the requirements.
+#'
 #' @export
 #' @param dir Path to the directory in which to install CmdStan. The default is
 #'   to install it in a folder `.cmdstanr` in the user's home directory
 #'   (`Sys.getenv("HOME")`).
 #'
 install_cmdstan <- function(dir = NULL) {
-  cmd <- "bash"
   args <- system.file("make_cmdstan.sh", package = "cmdstanr")
   if (!is.null(dir)) {
     checkmate::assert_directory_exists(dir)
     args <- c(args, paste0("-d ", dir))
   }
-  processx::run(cmd, args, echo = TRUE)
+  processx::run("bash", args, echo = TRUE)
 }
