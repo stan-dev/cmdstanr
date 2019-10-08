@@ -15,6 +15,3 @@ r_github_packages:
 
 before_install:
   - sudo bash inst/make_cmdstan.sh
-
-# before_script:
-#  - export CMDSTAN='~/.cmdstanr/cmdstan'
