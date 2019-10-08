@@ -166,7 +166,7 @@ CmdStanMLE <- R6::R6Class(
       out
     },
     save_output_files = function(dir = ".", basename = NULL) {
-      self$runset$save_data_file(dir, basename)
+      self$runset$save_output_files(dir, basename)
     },
     save_data_file = function(dir = ".", basename = NULL) {
       self$runset$save_data_file(dir, basename)
