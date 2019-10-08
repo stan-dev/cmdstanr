@@ -3,7 +3,8 @@
 #' CmdStanMCMC objects
 #'
 #' A `CmdStanMCMC` object is the fitted model object returned by the `sample()`
-#' method of a [`CmdStanModel`] object.
+#' method of a [`CmdStanModel`] object. Like `CmdStanModel` objects,
+#' `CmdStanMCMC` objects are [R6][R6::R6] objects.
 #'
 #' @name CmdStanMCMC
 #'

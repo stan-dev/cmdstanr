@@ -10,11 +10,11 @@ cmdstan_model(stan_file)
 \item{stan_file}{Path to Stan program.}
 }
 \value{
-An \link[R6:R6]{R6} \code{\link{CmdStanModel}} object.
+An \code{\link{CmdStanModel}} object.
 }
 \description{
 \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-The \code{cmdstan_model()} function creates a new \code{CmdStanModel} object from a
+The \code{cmdstan_model()} function creates a new \code{\link{CmdStanModel}} object from a
 file containing a Stan program.
 }
 \examples{
@@ -41,5 +41,5 @@ fit2$summary()
 
 }
 \seealso{
-\code{\link[=cmdstan_path]{cmdstan_path()}}
+\code{\link[=cmdstan_path]{cmdstan_path()}}, \code{\link[=install_cmdstan]{install_cmdstan()}}
 }

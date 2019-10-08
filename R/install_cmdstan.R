@@ -9,7 +9,7 @@
 #'
 #' @export
 #' @param dir Path to the directory in which to install CmdStan. The default is
-#'   to install it in a folder `.cmdstanr` in the user's home directory
+#'   to install it in a folder `".cmdstanr"` in the user's home directory
 #'   (`Sys.getenv("HOME")`).
 #'
 install_cmdstan <- function(dir = NULL) {

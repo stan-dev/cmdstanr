@@ -4,10 +4,11 @@
 \alias{CmdStanModel}
 \title{CmdStanModel objects}
 \description{
-A \code{CmdStanModel} object is returned by the \code{\link[=cmdstan_model]{cmdstan_model()}}
-function. The object stores the path to a Stan program as well as a path to
-a compiled executable once created, and provides methods for fitting the
-model. See the \strong{Details} section for available methods.
+A \code{CmdStanModel} object is an \link[R6:R6]{R6} object returned by
+the \code{\link[=cmdstan_model]{cmdstan_model()}} function. The object stores the path to a Stan
+program as well as a path to a compiled executable once created, and
+provides methods for fitting the model. See the \strong{Details} section for
+available methods.
 }
 \details{
 \code{CmdStanModel} objects have the following associated methods:

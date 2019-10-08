@@ -1,14 +1,14 @@
 #' Create a new CmdStanModel object
 #'
 #' \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-#' The `cmdstan_model()` function creates a new `CmdStanModel` object from a
+#' The `cmdstan_model()` function creates a new [`CmdStanModel`] object from a
 #' file containing a Stan program.
 #'
 #' @export
 #' @param stan_file Path to Stan program.
-#' @return An [R6][R6::R6] [`CmdStanModel`] object.
+#' @return An [`CmdStanModel`] object.
 #'
-#' @seealso [cmdstan_path()]
+#' @seealso [cmdstan_path()], [install_cmdstan()]
 #'
 #' @examples
 #' \dontrun{
@@ -42,10 +42,11 @@ cmdstan_model <- function(stan_file) {
 #' CmdStanModel objects
 #'
 #' @name CmdStanModel
-#' @description A `CmdStanModel` object is returned by the [cmdstan_model()]
-#'   function. The object stores the path to a Stan program as well as a path to
-#'   a compiled executable once created, and provides methods for fitting the
-#'   model. See the **Details** section for available methods.
+#' @description A `CmdStanModel` object is an [R6][R6::R6] object returned by
+#'   the [cmdstan_model()] function. The object stores the path to a Stan
+#'   program as well as a path to a compiled executable once created, and
+#'   provides methods for fitting the model. See the **Details** section for
+#'   available methods.
 #'
 #' @details
 #' `CmdStanModel` objects have the following associated methods:

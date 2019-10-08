@@ -14,5 +14,6 @@
 CmdStanR is a lightweight interface to \href{https://mc-stan.org}{Stan} for R
 users. It provides the necessary objects and functions to compile a Stan
 program and run Stan's algorithms from R via CmdStan, the command line
-interface to Stan. To get started see \code{\link[=cmdstan_model]{cmdstan_model()}}.
+interface to Stan. If you already have CmdStan installed then see
+\code{\link[=cmdstan_model]{cmdstan_model()}} to get started. Otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}}.
 }
