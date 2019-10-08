@@ -1,3 +1,5 @@
+# Setup -------------------------------------------------------------------
+
 TRAVIS <- identical(Sys.getenv("TRAVIS"), "true")
 NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
@@ -8,17 +10,45 @@ if (TRAVIS) {
 }
 
 if (TRAVIS || NOT_CRAN) {
-  my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-  my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
-  my_data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-  mod <- cmdstan_model(stan_file = my_stan_program)
+  stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+  data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
+  data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
+  mod <- cmdstan_model(stan_file = stan_program)
 }
 
-context("CmdStanModel")
 
-# these are all valid
+# Compile -----------------------------------------------------------------
+context("CmdStanModel-compile")
+
+test_that("compile() method works", {
+  skip_on_cran()
+
+  out <- capture.output(mod$compile())
+  expect_output(print(out), "Running make")
+})
+
+test_that("object initializes correctly", {
+  skip_on_cran()
+
+  expect_equal(mod$exe_file(), strip_ext(stan_program))
+  expect_equal(mod$stan_file(), stan_program)
+})
+
+test_that("code() and print() methods work", {
+  skip_on_cran()
+
+  expect_known_output(mod$print(), file = test_path("answers", "model-print-output"))
+  expect_known_output(cat(mod$code()), file = test_path("answers", "model-code-output"))
+})
+
+
+
+# Sample ------------------------------------------------------------------
+context("CmdStanModel-sample")
+
+# these are all valid for sample()
 ok_arg_values <- list(
-  data = my_data_list,
+  data = data_list,
   num_chains = 2,
   num_warmup = 50,
   num_samples = 100,
@@ -34,7 +64,7 @@ ok_arg_values <- list(
   adapt_delta = 0.7
 )
 
-# using any one of these should cause an error
+# using any one of these should cause sample() to error
 bad_arg_values <- list(
   data = "NOT_A_FILE",
   num_chains = -1,
@@ -59,51 +89,36 @@ bad_arg_values_2 <- list(
   metric = c("AA", "BB", "CC")
 )
 
-test_that("compile() method works", {
-  skip_on_cran()
-  # skip_on_travis()
-  out <- capture.output(mod$compile())
-  expect_output(print(out), "Running make")
-})
-
-test_that("object initializes correctly", {
-  skip_on_cran()
-  # skip_on_travis()
-  expect_equal(mod$exe_file(), strip_ext(my_stan_program))
-  expect_equal(mod$stan_file(), my_stan_program)
-})
-
-test_that("code() and print() methods work", {
-  skip_on_cran()
-  # skip_on_travis()
-  expect_known_output(mod$print(), file = test_path("answers", "model-print-output"))
-  expect_known_output(cat(mod$code()), file = test_path("answers", "model-code-output"))
-})
+expect_sample_output <- function(object) {
+  testthat::expect_output(
+    object,
+    regexp = "Gradient evaluation took"
+  )
+}
 
 test_that("sample() method doesn't error with data list", {
   skip_on_cran()
-  # skip_on_travis()
-  capture.output(fit <- mod$sample(data = my_data_list, num_chains = 1))
+
+  expect_sample_output(fit <- mod$sample(data = data_list, num_chains = 1))
   expect_is(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method doesn't error with data file", {
   skip_on_cran()
-  # skip_on_travis()
-  capture.output(fit <- mod$sample(data = my_data_file, num_chains = 1))
+
+  expect_sample_output(fit <- mod$sample(data = data_file, num_chains = 1))
   expect_is(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method runs when all arguments specified validly", {
   skip_on_cran()
-  # skip_on_travis()
-  capture.output(fit <- do.call(mod$sample, ok_arg_values))
+
+  expect_sample_output(fit <- do.call(mod$sample, ok_arg_values))
   expect_is(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method errors for invalid arguments before calling cmdstan", {
   skip_on_cran()
-  # skip_on_travis()
 
   capture.output(mod$compile())
   for (nm in names(bad_arg_values)) {
@@ -119,3 +134,70 @@ test_that("sample() method errors for invalid arguments before calling cmdstan",
   }
 })
 
+
+
+# Optimize ----------------------------------------------------------------
+context("CmdStanModel-optimize")
+
+# these are all valid for optimize()
+ok_arg_values <- list(
+  data = data_list,
+  refresh = 5,
+  init = NULL,
+  seed = 12345,
+  algorithm = "lbfgs",
+  iter = 100,
+  init_alpha = 0.002
+)
+
+# using any of these should cause optimize() to error
+bad_arg_values <- list(
+  data = "NOT_A_FILE",
+  refresh = -20,
+  init = "NOT_A_FILE",
+  seed = "NOT_A_SEED",
+  algorithm = "NOT_AN_ALGORITHM",
+  iter = -20,
+  init_alpha = -20
+)
+
+
+expect_experimental_warning <- function(object) {
+  testthat::expect_warning(
+    object,
+    regexp = "experimental and the structure of returned object may change"
+  )
+}
+expect_optim_output <- function(object) {
+  expect_experimental_warning(
+    expect_output(
+      object,
+      regexp = "Initial log joint probability"
+    )
+  )
+}
+
+test_that("optimize() method runs when all arguments specified validly", {
+  skip_on_cran()
+
+  # specifying all arguments validly
+  expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_values))
+  expect_is(fit1, "CmdStanMLE")
+
+  # leaving all at default (except 'data')
+  expect_optim_output(fit2 <- mod$optimize(data = data_list))
+  expect_is(fit2, "CmdStanMLE")
+})
+
+test_that("optimize() method errors for invalid arguments before calling cmdstan", {
+  skip_on_cran()
+
+  for (nm in names(bad_arg_values)) {
+    args <- ok_arg_values
+    args[[nm]] <- bad_arg_values[[nm]]
+    expect_error(
+      expect_experimental_warning(do.call(mod$optimize, args)),
+      regexp = nm
+    )
+  }
+})

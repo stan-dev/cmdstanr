@@ -4,17 +4,16 @@
 
 <!-- badges: start -->
 [![Travis build status](https://travis-ci.org/stan-dev/cmdstanr.svg?branch=master)](https://travis-ci.org/stan-dev/cmdstanr)
-<!--[![Codecov test coverage](https://codecov.io/gh/jgabry/cmdstanr/branch/master/graph/badge.svg)](https://codecov.io/gh/jgabry/cmdstanr?branch=master)-->
+<!--[![Codecov test coverage](https://codecov.io/gh/stan-dev/cmdstanr/branch/master/graph/badge.svg)](https://codecov.io/gh/stan-dev/cmdstanr?branch=master)-->
 <!-- badges: end -->
 
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).
 
-CmdStanR is in early stages of development and the following caveats currently apply:
-
-* Still requires RStan for reading CmdStan output (although doesn’t require that you can compile anything via RStan)
-* Requires an already working installation of [CmdStan](https://github.com/stan-dev/cmdstan) (doesn't help install that yet) 
-
+CmdStanR is in early stages of development and currently requires RStan to use
+`rstan::stan_rdump()` to write data files and `rstan::read_stan_csv()` to
+reading CmdStan output into R (RStan is not used to compile anything). This
+dependency on RStan will be eventually be removed.
 
 ### Goals
 
