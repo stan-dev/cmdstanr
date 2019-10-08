@@ -48,6 +48,10 @@ cmdstan_tempdir <- function() {
   .cmdstanr$TEMP_DIR
 }
 
+unset_cmdstan_path <- function() {
+  .cmdstanr$PATH <- NULL
+}
+
 # called in .onLoad() in zzz.R:
 cmdstanr_initialize <- function() {
   path <- Sys.getenv("CMDSTAN")
