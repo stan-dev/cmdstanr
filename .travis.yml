@@ -10,8 +10,11 @@ cache:
 env:
   - _R_CHECK_FORCE_SUGGESTS_=false
 
+r_github_packages:
+  - r-lib/covr
+
 before_install:
   - sudo bash inst/make_cmdstan.sh
 
-before_script:
-  - export CMDSTAN='~/.cmdstanr/cmdstan'
+# before_script:
+#  - export CMDSTAN='~/.cmdstanr/cmdstan'

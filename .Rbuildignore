@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 design-questions
 ^\.travis\.yml$
+^codecov\.yml$

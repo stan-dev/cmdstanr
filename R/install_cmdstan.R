@@ -11,10 +11,10 @@
 #'   (`Sys.getenv("HOME")`).
 #'
 install_cmdstan <- function(dir = NULL) {
-  args <- system.file("make_cmdstan.sh", package = "cmdstanr")
+  make_cmdstan <- system.file("make_cmdstan.sh", package = "cmdstanr")
   if (!is.null(dir)) {
     checkmate::assert_directory_exists(dir)
-    args <- c(args, paste0("-d ", dir))
+    make_cmdstan <- c(make_cmdstan, paste0("-d ", dir))
   }
-  processx::run("bash", args, echo = TRUE)
+  processx::run("bash", make_cmdstan, echo = TRUE)
 }
