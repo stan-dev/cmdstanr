@@ -4,16 +4,22 @@
 #  - build binaries, compile example model to build model header
 #  - symlink downloaded version as "cmdstan"
 
-while getopts ":d:v:" opt; do
+while getopts ":d:v:j:" opt; do
   case $opt in
     d) RELDIR="$OPTARG"
     ;;
     v) VER="$OPTARG"
     ;;
+    j) JOBS="$OPTARG"
+    ;;
     \?) echo "Invalid option -$OPTARG" >&2
     ;;
   esac
 done
+
+if [ -z ${JOBS} ]; then
+    JOBS="2"
+fi
 
 if [ -z ${RELDIR} ]; then
     RELDIR="$HOME/.cmdstanr"
@@ -67,10 +73,12 @@ fi
 ln -s ${CS} cmdstan
 pushd cmdstan > /dev/null
 echo "building cmdstan binaries"
-make -j2 build examples/bernoulli/bernoulli
+make -j${JOBS} build examples/bernoulli/bernoulli
 echo "installed ${CS}; symlink: `ls -l ${RELDIR}/cmdstan`"
 
 # cleanup
 pushd -0 > /dev/null
 dirs -c > /dev/null
-echo "all installed versions in ${RELDIR} dir: `ls -Fd ${RELDIR}/* | grep -v @ | grep -v gz`"
+echo ""
+echo "CmdStan installation location: `ls -Fd ${RELDIR}/* | grep -v @ | grep -v gz`"
+echo "Can use symlink: ${RELDIR}/cmdstan"

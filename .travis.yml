@@ -3,10 +3,8 @@
 language: R
 
 cache: packages
-cache:
-  directories:
-  - $HOME/.cmdstanr
 
+warnings_are_errors: true
 env:
   - _R_CHECK_FORCE_SUGGESTS_=false
 
@@ -14,4 +12,7 @@ r_github_packages:
   - r-lib/covr
 
 before_install:
-  - sudo bash inst/make_cmdstan.sh
+  - sudo bash inst/make_cmdstan.sh -j4
+
+after_success:
+    - Rscript -e 'covr::codecov()'

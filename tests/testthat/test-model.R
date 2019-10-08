@@ -1,16 +1,20 @@
-context("CmdStanModel")
+TRAVIS <- identical(Sys.getenv("TRAVIS"), "true")
+NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
-if (nzchar(Sys.getenv("TRAVIS"))) {
+if (TRAVIS) {
   set_cmdstan_path("/home/travis/.cmdstanr/cmdstan")
-}
-if (is.null(.cmdstanr$PATH)) {
-  set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
+} else if (NOT_CRAN) {
+  set_cmdstan_path("/Users/jgabry/.cmdstanr/cmdstan")
 }
 
-my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
-my_data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-mod <- cmdstan_model(stan_file = my_stan_program)
+if (TRAVIS || NOT_CRAN) {
+  my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+  my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
+  my_data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
+  mod <- cmdstan_model(stan_file = my_stan_program)
+}
+
+context("CmdStanModel")
 
 # these are all valid
 ok_arg_values <- list(
@@ -61,8 +65,6 @@ test_that("compile() method works", {
   out <- capture.output(mod$compile())
   expect_output(print(out), "Running make")
 })
-
-mod$compile()
 
 test_that("object initializes correctly", {
   skip_on_cran()
