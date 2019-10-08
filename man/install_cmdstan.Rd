@@ -12,7 +12,8 @@ to install it in a folder \code{.cmdstanr} in the user's home directory
 (\code{Sys.getenv("HOME")}).}
 }
 \description{
-Runs the script \code{make_cmdstan.sh} (\link{source code on GitHub}). Currently
-assumes that the necessary C++ tool chain is available, but in the future
-CmdStanR may help install the requirements.
+Runs the script \code{make_cmdstan.sh} (see \code{inst/make_cmdstan.sh} on
+\href{https://github.com/stan-dev/cmdstanr}{GitHub}). Currently assumes that the
+necessary C++ tool chain is available, but in the future CmdStanR may help
+install the requirements.
 }

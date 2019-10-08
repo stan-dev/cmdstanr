@@ -1,8 +1,9 @@
 #' Install the latest release of CmdStan
 #'
-#' Runs the script `make_cmdstan.sh` ([source code on GitHub]). Currently
-#' assumes that the necessary C++ tool chain is available, but in the future
-#' CmdStanR may help install the requirements.
+#' Runs the script `make_cmdstan.sh` (see `inst/make_cmdstan.sh` on
+#' [GitHub](https://github.com/stan-dev/cmdstanr)). Currently assumes that the
+#' necessary C++ tool chain is available, but in the future CmdStanR may help
+#' install the requirements.
 #'
 #' @export
 #' @param dir Path to the directory in which to install CmdStan. The default is
