@@ -1,14 +1,8 @@
 # Setup -------------------------------------------------------------------
-TRAVIS <- identical(Sys.getenv("TRAVIS"), "true")
 NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
-if (TRAVIS) {
-  set_cmdstan_path("/home/travis/.cmdstanr/cmdstan")
-} else if (NOT_CRAN) {
-  set_cmdstan_path("/Users/jgabry/.cmdstanr/cmdstan")
-}
-
-if (TRAVIS || NOT_CRAN) {
+if (NOT_CRAN) {
+  set_cmdstan_path(file.path(Sys.getenv("HOME"), ".cmdstanr/cmdstan"))
   stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
   data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
   mod <- cmdstan_model(stan_file = stan_program)

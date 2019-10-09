@@ -1,15 +1,8 @@
 # Setup -------------------------------------------------------------------
-
-TRAVIS <- identical(Sys.getenv("TRAVIS"), "true")
 NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
-if (TRAVIS) {
-  set_cmdstan_path("/home/travis/.cmdstanr/cmdstan")
-} else if (NOT_CRAN) {
-  set_cmdstan_path("/Users/jgabry/.cmdstanr/cmdstan")
-}
-
-if (TRAVIS || NOT_CRAN) {
+if (NOT_CRAN) {
+  set_cmdstan_path(file.path(Sys.getenv("HOME"), ".cmdstanr/cmdstan"))
   stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
   data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
   data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
@@ -46,7 +39,7 @@ test_that("code() and print() methods work", {
 # Sample ------------------------------------------------------------------
 context("CmdStanModel-sample")
 
-if (TRAVIS || NOT_CRAN) {
+if (NOT_CRAN) {
   # these are all valid for sample()
   ok_arg_values <- list(
     data = data_list,
@@ -141,7 +134,7 @@ test_that("sample() method errors for invalid arguments before calling cmdstan",
 # Optimize ----------------------------------------------------------------
 context("CmdStanModel-optimize")
 
-if (TRAVIS || NOT_CRAN) {
+if (NOT_CRAN) {
   # these are all valid for optimize()
   ok_arg_values <- list(
     data = data_list,
