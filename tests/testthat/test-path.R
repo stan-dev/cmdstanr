@@ -56,6 +56,14 @@ test_that("CmdStan version number detected first time calling cmdstan_path()", {
   expect_equal(cmdstan_version(), "2.20.0")
 })
 
+test_that("Warning message is thrown if can't detect version number", {
+  path <- testthat::test_path("answers") # valid path but not cmdstan
+  expect_warning(
+    set_cmdstan_path(path),
+    "Can't find CmdStan makefile to detect version number"
+  )
+})
+
 
 # cleanup
 Sys.unsetenv("CMDSTAN")

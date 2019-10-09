@@ -46,7 +46,8 @@ set_cmdstan_path <- function(path) {
 
 # internal ----------------------------------------------------------------
 
-# initialize env and env vars
+# initialize internal environment to store path to cmdstan, cmdstan version
+# number, and path to temp dir
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- NULL
 .cmdstanr$VERSION <- NULL
@@ -94,7 +95,7 @@ read_cmdstan_version <- function(path) {
   makefile_path <- file.path(path, "makefile")
   if (!file.exists(makefile_path)) {
     warning(
-      "Can't find CmdStan makefile. ",
+      "Can't find CmdStan makefile to detect version number. ",
       "Path may not point to valid installation.",
       call. = FALSE
     )
