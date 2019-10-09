@@ -17,7 +17,8 @@
 #'   Stan program and run Stan's algorithms from R via CmdStan, the command line
 #'   interface to Stan.
 #'
-#' @section Getting started: If you already have CmdStan installed then see
-#'   [cmdstan_model()], otherwise see [install_cmdstan()].
+#' @section Getting started: CmdStanR requires a working version of CmdStan. If
+#'   you already have CmdStan installed then see [cmdstan_model()] to get
+#'   started, otherwise see [install_cmdstan()] for help with installation.
 #'
 NULL

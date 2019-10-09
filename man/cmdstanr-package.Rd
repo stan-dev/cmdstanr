@@ -20,7 +20,8 @@ Stan program and run Stan's algorithms from R via CmdStan, the command line
 interface to Stan.
 }
 \section{Getting started}{
- If you already have CmdStan installed then see
-\code{\link[=cmdstan_model]{cmdstan_model()}}, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}}.
+ CmdStanR requires a working version of CmdStan. If
+you already have CmdStan installed then see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
+started, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} for help with installation.
 }
 
