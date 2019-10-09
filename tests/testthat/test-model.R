@@ -46,48 +46,50 @@ test_that("code() and print() methods work", {
 # Sample ------------------------------------------------------------------
 context("CmdStanModel-sample")
 
-# these are all valid for sample()
-ok_arg_values <- list(
-  data = data_list,
-  num_chains = 2,
-  num_warmup = 50,
-  num_samples = 100,
-  save_warmup = FALSE,
-  thin = 2,
-  refresh = 5,
-  init = NULL,
-  seed = 12345,
-  max_depth = 6,
-  metric = "dense_e",
-  stepsize = 1.1,
-  adapt_engaged = TRUE,
-  adapt_delta = 0.7
-)
+if (TRAVIS || NOT_CRAN) {
+  # these are all valid for sample()
+  ok_arg_values <- list(
+    data = data_list,
+    num_chains = 2,
+    num_warmup = 50,
+    num_samples = 100,
+    save_warmup = FALSE,
+    thin = 2,
+    refresh = 5,
+    init = NULL,
+    seed = 12345,
+    max_depth = 6,
+    metric = "dense_e",
+    stepsize = 1.1,
+    adapt_engaged = TRUE,
+    adapt_delta = 0.7
+  )
 
-# using any one of these should cause sample() to error
-bad_arg_values <- list(
-  data = "NOT_A_FILE",
-  num_chains = -1,
-  num_warmup = -1,
-  num_samples = -1,
-  save_warmup = "NO",
-  thin = 0,
-  refresh = -10,
-  init = -10,
-  seed = -10,
-  max_depth = 0,
-  metric = "NOT_A_METRIC",
-  stepsize = 0,
-  adapt_engaged = "NO",
-  adapt_delta = 2
-)
+  # using any one of these should cause sample() to error
+  bad_arg_values <- list(
+    data = "NOT_A_FILE",
+    num_chains = -1,
+    num_warmup = -1,
+    num_samples = -1,
+    save_warmup = "NO",
+    thin = 0,
+    refresh = -10,
+    init = -10,
+    seed = -10,
+    max_depth = 0,
+    metric = "NOT_A_METRIC",
+    stepsize = 0,
+    adapt_engaged = "NO",
+    adapt_delta = 2
+  )
 
-bad_arg_values_2 <- list(
-  init = "NOT_A_FILE",
-  seed = 1:10,
-  stepsize = 1:10,
-  metric = c("AA", "BB", "CC")
-)
+  bad_arg_values_2 <- list(
+    init = "NOT_A_FILE",
+    seed = 1:10,
+    stepsize = 1:10,
+    metric = c("AA", "BB", "CC")
+  )
+}
 
 expect_sample_output <- function(object) {
   testthat::expect_output(
@@ -139,28 +141,29 @@ test_that("sample() method errors for invalid arguments before calling cmdstan",
 # Optimize ----------------------------------------------------------------
 context("CmdStanModel-optimize")
 
-# these are all valid for optimize()
-ok_arg_values <- list(
-  data = data_list,
-  refresh = 5,
-  init = NULL,
-  seed = 12345,
-  algorithm = "lbfgs",
-  iter = 100,
-  init_alpha = 0.002
-)
+if (TRAVIS || NOT_CRAN) {
+  # these are all valid for optimize()
+  ok_arg_values <- list(
+    data = data_list,
+    refresh = 5,
+    init = NULL,
+    seed = 12345,
+    algorithm = "lbfgs",
+    iter = 100,
+    init_alpha = 0.002
+  )
 
-# using any of these should cause optimize() to error
-bad_arg_values <- list(
-  data = "NOT_A_FILE",
-  refresh = -20,
-  init = "NOT_A_FILE",
-  seed = "NOT_A_SEED",
-  algorithm = "NOT_AN_ALGORITHM",
-  iter = -20,
-  init_alpha = -20
-)
-
+  # using any of these should cause optimize() to error
+  bad_arg_values <- list(
+    data = "NOT_A_FILE",
+    refresh = -20,
+    init = "NOT_A_FILE",
+    seed = "NOT_A_SEED",
+    algorithm = "NOT_AN_ALGORITHM",
+    iter = -20,
+    init_alpha = -20
+  )
+}
 
 expect_experimental_warning <- function(object) {
   testthat::expect_warning(

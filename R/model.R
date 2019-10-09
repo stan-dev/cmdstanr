@@ -12,24 +12,38 @@
 #'
 #' @examples
 #' \dontrun{
-#' set_cmdstan_path("/Users/jgabry/Documents/Stan/cmdstan-2.20.0")
-#' my_stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#' mod <- cmdstan_model(stan_file = my_stan_program)
+#' # Set path to cmdstan
+#' # Note: if you used install_cmdstan() with default settings then
+#' # the path below should work. Otherwise change it to wherever you have
+#' # a CmdStan installation.
+#'
+#' set_cmdstan_path(file.path(Sys.getenv("HOME"), ".cmdstanr/cmdstan"))
+#'
+#' # Create a CmdStan model object from a Stan program,
+#' # here using the example model that comes with CmdStan
+#' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(my_stan_program)
 #' mod$print()
+#'
+#' # Compile to create executable
 #' mod$compile()
 #'
-#' # specify data as a named list (like RStan)
+#' # Run MCMC (Stan's dynamic HMC/NUTS),
+#' # specifying data as a named list (like RStan)
 #' standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
 #' fit <- mod$sample(data = standata, seed = 123, num_chains = 2)
 #' fit$summary()
 #'
-#' # specify data as a path to a file (like CmdStan)
+#' # Can also specify data as a path to a file (like CmdStan)
 #' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
 #' fit2 <- mod$sample(data = my_data_file, seed = 123)
 #' fit2$summary()
 #'
-#' # can also create a stanfit object using rstan package
-#' # stanfit <- rstan::read_stan_csv(fit$output_files)
+#' # If you like working with RStan's stanfit objects then you can
+#' # also create a stanfit object with rstan::read_stan_csv()
+#' if (require(rstan, quietly = TRUE)) {
+#'   stanfit <- rstan::read_stan_csv(fit$output_files())
+#' }
 #' }
 #'
 cmdstan_model <- function(stan_file) {
@@ -112,7 +126,7 @@ CmdStanModel <- R6::R6Class(
     },
 
     sample = function(data = NULL,
-                      num_chains = NULL, # TODO: should this default to 1 or 4?
+                      num_chains = NULL, # TODO: CmdStan does 1 chain, but should this default to 4?
                       # num_cores = NULL,
                       num_warmup = NULL,
                       num_samples = NULL,

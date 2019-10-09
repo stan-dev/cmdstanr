@@ -62,6 +62,7 @@ test_that("sample() method returns posterior sample (reading csv works)", {
 context("CmdStanMLE")
 
 test_that("reading in csv optimization output works", {
+  skip_on_cran()
   expect_named(fit_mle$mle(), "mle")
   expect_named(fit_mle$mle()$mle, c("lp__", "theta"))
 })

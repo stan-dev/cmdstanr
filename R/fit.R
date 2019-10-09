@@ -91,6 +91,10 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(private$sampler_params_)) private$read_csv()
       private$sampler_params_
     },
+    output_files = function() {
+      # get the paths to the temporary output csv files
+      self$runset$output_files()
+    },
     save_output_files = function(dir = ".", basename = NULL) {
       self$runset$save_output_files(dir, basename)
     },
@@ -115,9 +119,10 @@ CmdStanMCMC <- R6::R6Class(
              call. = FALSE)
       }
       stanfit <- rstan::read_stan_csv(self$runset$output_files())
-      private$posterior_sample_ <- # FIXME get save_warmup from CmdStanArgs
+      private$posterior_sample_ <-
         rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
-      private$sampler_params_ <- rstan::get_sampler_params(stanfit, inc_warmup = FALSE)
+      private$sampler_params_ <-
+        rstan::get_sampler_params(stanfit, inc_warmup = FALSE)
     }
   )
 )
@@ -164,6 +169,9 @@ CmdStanMLE <- R6::R6Class(
       out <- private$mle_ %||% read_optim_csv(self$runset$output_files())
       private$mle_ <- out
       out
+    },
+    output_files = function() {
+      self$runset$output_files()
     },
     save_output_files = function(dir = ".", basename = NULL) {
       self$runset$save_output_files(dir, basename)
@@ -213,6 +221,7 @@ RunSet <- R6::R6Class(
       invisible(file.create(private$output_files_, private$console_files_))
       invisible(self)
     },
+    args = function() private$args_,
     num_runs = function() private$num_runs_,
     num_chains = function() private$num_runs_,
     run_ids = function() private$args_$run_ids,
