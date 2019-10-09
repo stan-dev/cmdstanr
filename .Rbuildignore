@@ -3,3 +3,4 @@
 design-questions
 ^\.travis\.yml$
 ^codecov\.yml$
+^README\.Rmd$

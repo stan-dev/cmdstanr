@@ -28,6 +28,17 @@ releases.
 analysis.
 
 
+### Installation
+
+CmdStanR is not released yet, but you can install the development
+version from GitHub (but expect frequent changes until an official
+release).
+
+```r
+# install.packages("devtools")
+devtools::install_github("stan-dev/cmdstanr")
+```
+
 ### Contributing 
 
 There is a lot of work still to be done and contributions are very welcome! 
