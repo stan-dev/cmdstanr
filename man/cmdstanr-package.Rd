@@ -4,16 +4,23 @@
 \name{cmdstanr-package}
 \alias{cmdstanr-package}
 \alias{cmdstanr}
-\title{CmdStanR: \R interface to CmdStan}
+\title{CmdStanR: the \R interface to CmdStan}
 \description{
 \if{html}{
    \figure{logo.png}{options: width="50px" alt="https://mc-stan.org/about/logo/"}
    \emph{Stan Development Team}
 }
 
-CmdStanR is a lightweight interface to \href{https://mc-stan.org}{Stan} for R
-users. It provides the necessary objects and functions to compile a Stan
-program and run Stan's algorithms from R via CmdStan, the command line
-interface to Stan. If you already have CmdStan installed then see
-\code{\link[=cmdstan_model]{cmdstan_model()}} to get started. Otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}}.
+The \R interface to \href{https://mc-stan.org/users/interfaces/cmdstan}{CmdStan}.
 }
+\details{
+CmdStanR is a lightweight interface to \href{https://mc-stan.org}{Stan}
+for R users. It provides the necessary objects and functions to compile a
+Stan program and run Stan's algorithms from R via CmdStan, the command line
+interface to Stan.
+}
+\section{Getting started}{
+ If you already have CmdStan installed then see
+\code{\link[=cmdstan_model]{cmdstan_model()}}, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}}.
+}
+

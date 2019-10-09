@@ -1,4 +1,4 @@
-#' CmdStanR: \R interface to CmdStan
+#' CmdStanR: the \R interface to CmdStan
 #'
 #' @docType package
 #' @name cmdstanr-package
@@ -10,10 +10,14 @@
 #'    \emph{Stan Development Team}
 #' }
 #'
-#' CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R
-#' users. It provides the necessary objects and functions to compile a Stan
-#' program and run Stan's algorithms from R via CmdStan, the command line
-#' interface to Stan. If you already have CmdStan installed then see
-#' [cmdstan_model()] to get started. Otherwise see [install_cmdstan()].
+#' The \R interface to [CmdStan](https://mc-stan.org/users/interfaces/cmdstan).
+#'
+#' @details CmdStanR is a lightweight interface to [Stan](https://mc-stan.org)
+#'   for R users. It provides the necessary objects and functions to compile a
+#'   Stan program and run Stan's algorithms from R via CmdStan, the command line
+#'   interface to Stan.
+#'
+#' @section Getting started: If you already have CmdStan installed then see
+#'   [cmdstan_model()], otherwise see [install_cmdstan()].
 #'
 NULL
