@@ -3,12 +3,16 @@ context("CmdStan path")
 Sys.unsetenv("CMDSTAN")
 unset_cmdstan_path()
 
+CMDSTAN_PATH <- file.path(Sys.getenv("HOME"), ".cmdstanr/cmdstan-2.20.0")
+
 test_that("Setting path works and confirms with message", {
+  skip_on_cran()
+
   expect_message(
-    set_cmdstan_path(testthat::test_path("answers")),
-    paste("CmdStan path set to:", testthat::test_path("answers"))
+    set_cmdstan_path(CMDSTAN_PATH),
+    paste("CmdStan path set to:", CMDSTAN_PATH)
   )
-  expect_equal(cmdstan_path(), absolute_path(testthat::test_path("answers")))
+  expect_equal(cmdstan_path(), CMDSTAN_PATH)
 })
 
 test_that("Setting and getting path throws correct warning/error", {
@@ -35,11 +39,23 @@ test_that("Setting path from env var throws correct warning", {
 })
 
 test_that("Setting path from env var is detected", {
+  skip_on_cran()
+
   unset_cmdstan_path()
-  Sys.setenv(CMDSTAN = testthat::test_path("answers"))
+  Sys.setenv(CMDSTAN = CMDSTAN_PATH)
   expect_silent(cmdstanr_initialize())
-  expect_equal(cmdstan_path(), absolute_path(testthat::test_path("answers")))
+  expect_equal(cmdstan_path(), CMDSTAN_PATH)
 })
+
+test_that("CmdStan version number detected first time calling cmdstan_path()", {
+  skip_on_cran()
+
+  unset_cmdstan_path()
+  set_cmdstan_path(CMDSTAN_PATH)
+  expect_equal(cmdstan_path(), CMDSTAN_PATH)
+  expect_equal(cmdstan_version(), "2.20.0")
+})
+
 
 # cleanup
 Sys.unsetenv("CMDSTAN")

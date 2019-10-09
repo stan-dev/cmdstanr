@@ -19,8 +19,13 @@ cmdstan_path <- function() {
     # remove training "/" (is this necessary?)
     path <- substr(path, 1, nchar(path) - 1)
   }
+  path <- repair_path(path)
 
-  repair_path(path)
+  if (is.null(.cmdstanr$VERSION)) {
+    .cmdstanr$VERSION <- read_cmdstan_version(path)
+  }
+
+  path
 }
 
 #' @rdname cmdstan_path
@@ -42,14 +47,23 @@ set_cmdstan_path <- function(path) {
 # initialize env and env vars
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- NULL
+.cmdstanr$VERSION <- NULL
 .cmdstanr$TMP_DIR <- NULL
 
+# path to temp directory
 cmdstan_tempdir <- function() {
   .cmdstanr$TEMP_DIR
 }
 
+# cmdstan version number
+cmdstan_version <- function() {
+  .cmdstanr$VERSION
+}
+
+# unset the path (only used in tests)
 unset_cmdstan_path <- function() {
   .cmdstanr$PATH <- NULL
+  .cmdstanr$VERSION <- NULL
 }
 
 # called in .onLoad() in zzz.R:
@@ -57,7 +71,8 @@ cmdstanr_initialize <- function() {
   path <- Sys.getenv("CMDSTAN")
   if (isTRUE(nzchar(path))) {
     if (dir.exists(path)) {
-      .cmdstanr$PATH <- absolute_path(path)
+      path <- absolute_path(path)
+      .cmdstanr$PATH <- path
     } else {
       warning("Can't find directory specified by environment variable",
               " 'CMDSTAN'. Path not set.", call. = FALSE)
@@ -66,4 +81,24 @@ cmdstanr_initialize <- function() {
   }
 
   .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
+}
+
+
+#' Find the version of cmdstan from makefile
+#' @noRd
+#' @param path Path to installation.
+#' @return Version number as a string.
+read_cmdstan_version <- function(path) {
+  makefile_path <- file.path(path, "makefile")
+  if (!file.exists(makefile_path)) {
+    warning(
+      "Can't find CmdStan makefile. ",
+      "Path may not point to valid installation.",
+      call. = FALSE
+    )
+    return(NULL)
+  }
+  makefile <- readLines(makefile_path)
+  version_line <- grep("^CMDSTAN_VERSION", makefile, value = TRUE)
+  sub("CMDSTAN_VERSION := ", "", version_line)
 }
