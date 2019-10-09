@@ -46,8 +46,11 @@ my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
 fit2 <- mod$sample(data = my_data_file, seed = 123)
 fit2$summary()
 
-# can also create a stanfit object using rstan package
-# stanfit <- rstan::read_stan_csv(fit$output_files())
+# If you like working with RStan's stanfit objects then you can
+# also create a stanfit object with rstan::read_stan_csv()
+if (require(rstan, quietly = TRUE)) {
+  stanfit <- rstan::read_stan_csv(fit$output_files())
+}
 }
 
 }

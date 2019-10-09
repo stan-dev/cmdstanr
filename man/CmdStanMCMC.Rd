@@ -18,9 +18,9 @@ Run CmdStan's \code{bin/stansummary} on output csv files.
 \item{\code{diagnose()}}{
 Run CmdStan's \code{bin/diagnose} on output csv files.
 }
-\item{\code{sample()}}{
+\item{\code{draws()}}{
 Return the posterior sample (post-warmup draws) as a 3-D array with
-dimensions \code{(iterations, chains, variables)}.
+dimensions ordered as \code{(iterations, chains, variables)}.
 }
 \item{\code{save_output_files(dir, basename = NULL)}}{
 Move csv output files from temporary directory to a specified directory

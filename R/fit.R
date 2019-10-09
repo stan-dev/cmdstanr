@@ -17,9 +17,9 @@
 #'   \item{`diagnose()`}{
 #'   Run CmdStan's `bin/diagnose` on output csv files.
 #'   }
-#'   \item{`sample()`}{
+#'   \item{`draws()`}{
 #'   Return the posterior sample (post-warmup draws) as a 3-D array with
-#'   dimensions `(iterations, chains, variables)`.
+#'   dimensions ordered as `(iterations, chains, variables)`.
 #'   }
 #'   \item{`save_output_files(dir, basename = NULL)`}{
 #'   Move csv output files from temporary directory to a specified directory
@@ -84,6 +84,9 @@ CmdStanMCMC <- R6::R6Class(
       # iter x chains x params array
       if (is.null(private$posterior_sample_)) private$read_csv()
       private$posterior_sample_
+    },
+    draws = function() {
+      self$sample()
     },
     sampler_params = function() {
       # currently sampler params list from rstan::get_sampler_params()
