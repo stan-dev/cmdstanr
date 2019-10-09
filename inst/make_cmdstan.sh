@@ -73,8 +73,8 @@ fi
 ln -s ${CS} cmdstan
 pushd cmdstan > /dev/null
 echo "building cmdstan binaries"
-# make -j${JOBS} build examples/bernoulli/bernoulli
-make build -j${JOBS}
+make -j${JOBS} build examples/bernoulli/bernoulli
+# make build -j${JOBS}
 echo "installed ${CS}; symlink: `ls -l ${RELDIR}/cmdstan`"
 
 # cleanup

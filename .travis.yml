@@ -2,7 +2,11 @@
 
 language: R
 
-cache: packages
+cache:
+  directories:
+    - $HOME/.cmdstanr
+  packages: true
+
 
 warnings_are_errors: true
 env:
