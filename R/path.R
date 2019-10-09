@@ -33,7 +33,9 @@ cmdstan_path <- function() {
 #' @param path The full file path to the CmdStan installation as a string.
 set_cmdstan_path <- function(path) {
   if (dir.exists(path)) {
-    .cmdstanr$PATH <- absolute_path(path)
+    path <- absolute_path(path)
+    .cmdstanr$PATH <- path
+    .cmdstanr$VERSION <- read_cmdstan_version(path)
     message("CmdStan path set to: ", path)
   } else {
     warning("Path not set. Can't find directory: ", path, call. = FALSE)
