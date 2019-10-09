@@ -42,9 +42,18 @@ test_that("summary() method succesfully calls bin/stansummary", {
   skip_on_cran()
   expect_output(fit_mcmc$summary(), "Inference for Stan model")
 })
+
 test_that("diagnose() method succesfully calls bin/diagnose", {
   skip_on_cran()
   expect_output(fit_mcmc$diagnose(), "Checking sampler transitions for divergences")
+})
+
+test_that("sample() method returns posterior sample (reading csv works)", {
+  skip_on_cran()
+  draws <- fit_mcmc$sample()
+  expect_type(draws, "double")
+  expect_true(is.array(draws))
+  expect_true(length(dim(draws)) == 3)
 })
 
 
