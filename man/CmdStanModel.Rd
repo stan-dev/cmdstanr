@@ -44,16 +44,16 @@ CmdStan. Those csv files are written to the same directory as \code{stan_file}.
 \examples{
 \dontrun{
 # Set path to cmdstan
-# Note: if you used install_cmdstan() with default settings then
-# the path below should work. Otherwise change it to wherever you have
-# a CmdStan installation.
+# Note: if you installed CmdStan via install_cmdstan() with default settings
+# then default below should work. Otherwise use the `path` argument to
+# specify the location of your CmdStan installation.
 
-set_cmdstan_path(file.path(Sys.getenv("HOME"), ".cmdstanr/cmdstan"))
+set_cmdstan_path(path = NULL)
 
 # Create a CmdStan model object from a Stan program,
 # here using the example model that comes with CmdStan
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-mod <- cmdstan_model(my_stan_program)
+mod <- cmdstan_model(stan_program)
 mod$print()
 
 # Compile to create executable
@@ -65,7 +65,7 @@ standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
 fit <- mod$sample(data = standata, seed = 123, num_chains = 2)
 fit$summary()
 
-# Can also specify data as a path to a file (like CmdStan)
+# Can also specify data as a path to a file readable by CmdStan
 my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
 fit2 <- mod$sample(data = my_data_file, seed = 123)
 fit2$summary()
