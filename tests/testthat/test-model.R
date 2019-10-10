@@ -1,8 +1,10 @@
 # Setup -------------------------------------------------------------------
-NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
+NOT_CRAN <-
+  identical(Sys.getenv("NOT_CRAN"), "true") ||
+  identical(Sys.getenv("TRAVIS"), "true")
 
 if (NOT_CRAN) {
-  set_cmdstan_path(file.path(Sys.getenv("HOME"), ".cmdstanr/cmdstan"))
+  set_cmdstan_path()
   stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
   data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
   data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
@@ -15,7 +17,6 @@ context("CmdStanModel-compile")
 
 test_that("compile() method works", {
   skip_on_cran()
-
   out <- capture.output(mod$compile())
   expect_output(print(out), "Running make")
 })

@@ -7,7 +7,7 @@ Authors@R:
       person(given = "Mitzi", family = "Morris", role = c("ctb")))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org> 
     that provides functionality for compiling a 'Stan' program and fitting the 
-    model using 'CmdStan'.
+    model using the command line interface 'CmdStan'.
 License: BSD_3_clause + file LICENSE
 Encoding: UTF-8
 LazyData: true

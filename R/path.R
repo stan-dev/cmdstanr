@@ -1,13 +1,28 @@
 #' Get or set the file path to the CmdStan installation
 #'
-#' `cmdstan_path()` returns the full path to the CmdStan installation. This can
-#' be set using the `set_cmdstan_path()` function. When the package is loaded,
-#' if the [environment variable][Sys.setenv()] `CMDSTAN` exists its value will
-#' be used as the path to CmdStan unless a different path is set using
-#' `set_cmdstan_path()`.
+#' `cmdstan_path()` returns the full path to the CmdStan installation. The path
+#' can be set using the `set_cmdstan_path()` function. See **Details**.
 #'
 #' @export
 #' @return The full file path to the CmdStan installation.
+#'
+#' @details
+#' Before the package can be used it needs to know where the CmdStan
+#' installation is located. When the package is loaded it tries to help automate
+#' this to avoid having to manually set the path every session:
+#'
+#' * If the [environment variable][Sys.setenv()] `"CMDSTAN"` exists at load time
+#'   then its value will be automatically set as the default path to CmdStan for
+#'   the \R session.
+#' * If no environment variable is found when loaded but the directory
+#'   `".cmdstanr/cmdstan"` exists in the user's home directory
+#'   (`Sys.getenv("HOME")`, *not* the current working directory) then it will
+#'   be set as the path to CmdStan. This is the default directory that
+#'   [install_cmdstan()] uses to install the latest version of CmdStan.
+#'
+#' It is always possible to change the path after loading the package using the
+#' `set_cmdstan_path()` function.
+#'
 #'
 cmdstan_path <- function() {
   path <- .cmdstanr$PATH
@@ -30,8 +45,13 @@ cmdstan_path <- function() {
 
 #' @rdname cmdstan_path
 #' @export
-#' @param path The full file path to the CmdStan installation as a string.
-set_cmdstan_path <- function(path) {
+#' @param path The full file path to the CmdStan installation as a string. If
+#'   `NULL` (the default) then the path is set to the default path used by
+#'   [install_cmdstan()] if it exists.
+set_cmdstan_path <- function(path = NULL) {
+  if (is.null(path)) {
+    path <- cmdstan_default_path()
+  }
   if (dir.exists(path)) {
     path <- absolute_path(path)
     .cmdstanr$PATH <- path
@@ -63,6 +83,13 @@ cmdstan_version <- function() {
   .cmdstanr$VERSION
 }
 
+# default path to symlink to latest cmdstan if installed via
+# install_cmdstan() with default settings
+cmdstan_default_path <- function() {
+  # ".cmdstanr/cmdstan" is a symlink to latest version
+  file.path(Sys.getenv("HOME"), ".cmdstanr/cmdstan")
+}
+
 # unset the path (only used in tests)
 unset_cmdstan_path <- function() {
   .cmdstanr$PATH <- NULL
@@ -71,15 +98,23 @@ unset_cmdstan_path <- function() {
 
 # called in .onLoad() in zzz.R:
 cmdstanr_initialize <- function() {
+  # First check for environment variable CMDSTAN, but if not found
+  # then see if default
   path <- Sys.getenv("CMDSTAN")
-  if (isTRUE(nzchar(path))) {
+  if (isTRUE(nzchar(path))) { # CMDSTAN environment variable found
     if (dir.exists(path)) {
       path <- absolute_path(path)
-      .cmdstanr$PATH <- path
+      suppressMessages(set_cmdstan_path(path))
     } else {
       warning("Can't find directory specified by environment variable",
               " 'CMDSTAN'. Path not set.", call. = FALSE)
       .cmdstanr$PATH <- NULL
+    }
+
+  } else { # environment variable not found
+    path <- cmdstan_default_path()
+    if (dir.exists(path)) {
+      suppressMessages(set_cmdstan_path(path))
     }
   }
 

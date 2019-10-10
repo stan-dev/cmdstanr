@@ -44,6 +44,7 @@
 #' if (require(rstan, quietly = TRUE)) {
 #'   stanfit <- rstan::read_stan_csv(fit$output_files())
 #' }
+#'
 #' }
 #'
 cmdstan_model <- function(stan_file) {

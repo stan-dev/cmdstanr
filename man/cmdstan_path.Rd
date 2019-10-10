@@ -7,18 +7,35 @@
 \usage{
 cmdstan_path()
 
-set_cmdstan_path(path)
+set_cmdstan_path(path = NULL)
 }
 \arguments{
-\item{path}{The full file path to the CmdStan installation as a string.}
+\item{path}{The full file path to the CmdStan installation as a string. If
+\code{NULL} (the default) then the path is set to the default path used by
+\code{\link[=install_cmdstan]{install_cmdstan()}} if it exists.}
 }
 \value{
 The full file path to the CmdStan installation.
 }
 \description{
-\code{cmdstan_path()} returns the full path to the CmdStan installation. This can
-be set using the \code{set_cmdstan_path()} function. When the package is loaded,
-if the \link[=Sys.setenv]{environment variable} \code{CMDSTAN} exists its value will
-be used as the path to CmdStan unless a different path is set using
-\code{set_cmdstan_path()}.
+\code{cmdstan_path()} returns the full path to the CmdStan installation. The path
+can be set using the \code{set_cmdstan_path()} function. See \strong{Details}.
+}
+\details{
+Before the package can be used it needs to know where the CmdStan
+installation is located. When the package is loaded it tries to help automate
+this to avoid having to manually set the path every session:
+\itemize{
+\item If the \link[=Sys.setenv]{environment variable} \code{"CMDSTAN"} exists at load time
+then its value will be automatically set as the default path to CmdStan for
+the \R session.
+\item If no environment variable is found when loaded but the directory
+\code{".cmdstanr/cmdstan"} exists in the user's home directory
+(\code{Sys.getenv("HOME")}, \emph{not} the current working directory) then it will
+be set as the path to CmdStan. This is the default directory that
+\code{\link[=install_cmdstan]{install_cmdstan()}} uses to install the latest version of CmdStan.
+}
+
+It is always possible to change the path after loading the package using the
+\code{set_cmdstan_path()} function.
 }

@@ -75,6 +75,7 @@ fit2$summary()
 if (require(rstan, quietly = TRUE)) {
   stanfit <- rstan::read_stan_csv(fit$output_files())
 }
+
 }
 
 }
