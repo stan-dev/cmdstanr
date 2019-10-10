@@ -15,6 +15,15 @@ if (NOT_CRAN) {
 # Compile -----------------------------------------------------------------
 context("CmdStanModel-compile")
 
+test_that("error if no compile() before sample()", {
+  skip_on_cran()
+  expect_error(
+    mod$sample(),
+    "Model not compiled. Try running the compile() method first.",
+    fixed = TRUE
+  )
+})
+
 test_that("compile() method works", {
   skip_on_cran()
   out <- capture.output(mod$compile())
@@ -50,7 +59,7 @@ if (NOT_CRAN) {
     save_warmup = FALSE,
     thin = 2,
     refresh = 5,
-    init = NULL,
+    init = 1.5,
     seed = 12345,
     max_depth = 6,
     metric = "dense_e",
@@ -86,10 +95,7 @@ if (NOT_CRAN) {
 }
 
 expect_sample_output <- function(object) {
-  testthat::expect_output(
-    object,
-    regexp = "Gradient evaluation took"
-  )
+  testthat::expect_output(object, "Gradient evaluation took")
 }
 
 test_that("sample() method doesn't error with data list", {
@@ -106,14 +112,33 @@ test_that("sample() method doesn't error with data file", {
   expect_is(fit, "CmdStanMCMC")
 })
 
-test_that("sample() method runs when all arguments specified validly", {
+test_that("sample() method works with init file", {
+  skip_on_cran()
+  skip_if_not_installed("rstan")
+
+  init_list <- list(theta = 0.5)
+  init_file <- tempfile(
+    tmpdir = cmdstan_tempdir(),
+    pattern = "testing-inits-",
+    fileext = ".data.R"
+  )
+  rstan::stan_rdump(
+    names(init_list),
+    envir = as.environment(init_list),
+    file = init_file
+  )
+  expect_sample_output(mod$sample(data = data_file, init = init_file))
+})
+
+
+test_that("sample() method runs when all arguments specified", {
   skip_on_cran()
 
   expect_sample_output(fit <- do.call(mod$sample, ok_arg_values))
   expect_is(fit, "CmdStanMCMC")
 })
 
-test_that("sample() method errors for invalid arguments before calling cmdstan", {
+test_that("sample() method errors for any invalid arguments before calling cmdstan", {
   skip_on_cran()
 
   capture.output(mod$compile())
@@ -186,7 +211,7 @@ test_that("optimize() method runs when all arguments specified validly", {
   expect_is(fit2, "CmdStanMLE")
 })
 
-test_that("optimize() method errors for invalid arguments before calling cmdstan", {
+test_that("optimize() method errors for any invalid argument before calling cmdstan", {
   skip_on_cran()
 
   for (nm in names(bad_arg_values)) {
@@ -197,4 +222,14 @@ test_that("optimize() method errors for invalid arguments before calling cmdstan
       regexp = nm
     )
   }
+})
+
+test_that("optimize() errors when combining 'newton' with 'init_alpha'", {
+  skip_on_cran()
+  expect_error(
+    expect_experimental_warning(
+      mod$optimize(data = data_list, algorithm = "newton", init_alpha = 0.1)
+    ),
+    "'init_alpha' can't be used when algorithm is 'newton'"
+  )
 })

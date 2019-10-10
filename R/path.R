@@ -4,7 +4,7 @@
 #' can be set using the `set_cmdstan_path()` function. See **Details**.
 #'
 #' @export
-#' @return The full file path to the CmdStan installation.
+#' @return The file path to the CmdStan installation.
 #'
 #' @details
 #' Before the package can be used it needs to know where the CmdStan
@@ -17,11 +17,12 @@
 #' * If no environment variable is found when loaded but the directory
 #'   `".cmdstanr/cmdstan"` exists in the user's home directory
 #'   (`Sys.getenv("HOME")`, *not* the current working directory) then it will
-#'   be set as the path to CmdStan. This is the default directory that
-#'   [install_cmdstan()] uses to install the latest version of CmdStan.
+#'   be set as the path to CmdStan for the \R session. This is the same as the
+#'   default directory that [install_cmdstan()] would use to install the latest
+#'   version of CmdStan.
 #'
-#' It is always possible to change the path after loading the package using the
-#' `set_cmdstan_path()` function.
+#' It is always possible to change the path after loading the package using
+#' `set_cmdstan_path(path)`.
 #'
 #'
 cmdstan_path <- function() {
@@ -119,6 +120,7 @@ cmdstanr_initialize <- function() {
   }
 
   .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
+  invisible(TRUE)
 }
 
 

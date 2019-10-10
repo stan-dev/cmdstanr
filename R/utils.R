@@ -62,12 +62,6 @@ change_ext <- function(file, ext) {
   paste0(out, ext)
 }
 
-# Check for .stan file extension
-has_stan_ext <- function(stan_file) {
-  stopifnot(is.character(stan_file))
-  isTRUE(tools::file_ext(stan_file) == "stan")
-}
-
 
 # read, write, and copy files --------------------------------------------
 

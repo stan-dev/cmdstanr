@@ -252,7 +252,7 @@ compile_stan_program <- function(stan_file) {
 #' @return Path to data file.
 process_data <- function(data) {
   if (is.null(data)) {
-    path <- absolute_path(".")
+    path <- data
   } else if (is.character(data)) {
     path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {

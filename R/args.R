@@ -61,7 +61,9 @@ CmdStanArgs <- R6::R6Class(
                                    null.ok = FALSE)
 
       checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
-      checkmate::assert_file_exists(self$data_file, access = "r")
+      if (!is.null(self$data_file)) {
+        checkmate::assert_file_exists(self$data_file, access = "r")
+      }
 
       num_runs <- length(self$run_ids)
       validate_init(self$init, num_runs)
@@ -300,7 +302,7 @@ OptimizeArgs <- R6::R6Class(
       checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE)
       checkmate::assert_number(self$init_alpha, lower = 0, null.ok = TRUE)
       if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
-        stop("'init_alpha' must not be set when algorithm is 'newton'.",
+        stop("'init_alpha' can't be used when algorithm is 'newton'.",
              call. = FALSE)
       }
       invisible(self)
@@ -330,14 +332,14 @@ OptimizeArgs <- R6::R6Class(
 
 # FixedParamArgs -------------------------------------------------------------
 
-FixedParamArgs <- R6::R6Class(
-  "FixedParamArgs",
-  public = list(
-    method = "fixed_param",
-    compose = function(idx, args = NULL) c(args, "method=fixed_param"),
-    validate = function(num_runs) invisible(self)
-  )
-)
+# FixedParamArgs <- R6::R6Class(
+#   "FixedParamArgs",
+#   public = list(
+#     method = "fixed_param",
+#     compose = function(idx, args = NULL) c(args, "method=fixed_param"),
+#     validate = function(num_runs) invisible(self)
+#   )
+# )
 
 
 # Validation helpers ------------------------------------------------------

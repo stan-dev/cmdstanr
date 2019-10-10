@@ -48,6 +48,15 @@ test_that("Setting path from env var is detected", {
   Sys.setenv(CMDSTAN = PATH)
   expect_silent(cmdstanr_initialize())
   expect_equal(cmdstan_path(), PATH)
+  Sys.unsetenv("CMDSTAN")
+})
+
+test_that("cmdstanr_initialize() also looks for default path", {
+  skip_on_cran()
+
+  unset_cmdstan_path()
+  cmdstanr_initialize()
+  expect_equal(cmdstan_path(), PATH)
 })
 
 
