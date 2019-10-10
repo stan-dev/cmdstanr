@@ -24,7 +24,7 @@ releases.
   - depend on very few other R packages
   - R code doesn't interface directly with c++, only calls compiled executables 
       
-* Modularity: CmdStanR runs Stan's algorithm and lets downstream modules do the
+* Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
 
 
