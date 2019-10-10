@@ -30,9 +30,9 @@ analysis.
 
 ### Installation
 
-CmdStanR is not released yet, but you can install the development
-version from GitHub (but expect frequent changes until an official
-release).
+CmdStanR is not released yet, but will eventually be released as the
+**cmdstanr** R package. Currently you can install the development version from
+GitHub, but expect frequent changes until an official release.
 
 ```r
 # install.packages("devtools")
