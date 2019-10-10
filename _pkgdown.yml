@@ -45,3 +45,25 @@ home:
   links:
   - text: Ask a question
     href: https://discourse.mc-stan.org/
+
+
+reference:
+  - title: "Package description"
+    contents:
+      - cmdstanr-package
+  - title: "Installing and setting the path to CmdStan"
+    desc: >
+      Install CmdStan, assuming the necessary C++ toolchain.
+    contents:
+      - install_cmdstan
+      - cmdstan_path
+  - title: "Running CmdStan from R"
+    desc: >
+      Run CmdStan from R.
+    contents:
+      - cmdstan_model
+      - CmdStanModel
+  - title: "Fitted model objects"
+    contents:
+      - CmdStanMCMC
+      - CmdStanMLE
