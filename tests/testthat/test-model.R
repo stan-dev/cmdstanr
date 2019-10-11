@@ -11,6 +11,31 @@ if (NOT_CRAN) {
   mod <- cmdstan_model(stan_file = stan_program)
 }
 
+expect_experimental_warning <- function(object) {
+  testthat::expect_warning(
+    object,
+    regexp = "experimental and the structure of returned object may change"
+  )
+}
+expect_sample_output <- function(object) {
+  testthat::expect_output(object, "Gradient evaluation took")
+}
+expect_optim_output <- function(object) {
+  expect_experimental_warning(
+    expect_output(
+      object,
+      regexp = "Initial log joint probability"
+    )
+  )
+}
+expect_vb_output <- function(object) {
+  expect_experimental_warning(
+    expect_output(
+      object,
+      regexp = "Drawing a sample of size"
+    )
+  )
+}
 
 # Compile -----------------------------------------------------------------
 context("CmdStanModel-compile")
@@ -92,10 +117,6 @@ if (NOT_CRAN) {
     stepsize = 1:10,
     metric = c("AA", "BB", "CC")
   )
-}
-
-expect_sample_output <- function(object) {
-  testthat::expect_output(object, "Gradient evaluation took")
 }
 
 test_that("sample() method doesn't error with data list", {
@@ -184,20 +205,6 @@ if (NOT_CRAN) {
   )
 }
 
-expect_experimental_warning <- function(object) {
-  testthat::expect_warning(
-    object,
-    regexp = "experimental and the structure of returned object may change"
-  )
-}
-expect_optim_output <- function(object) {
-  expect_experimental_warning(
-    expect_output(
-      object,
-      regexp = "Initial log joint probability"
-    )
-  )
-}
 
 test_that("optimize() method runs when all arguments specified validly", {
   skip_on_cran()
@@ -232,4 +239,72 @@ test_that("optimize() errors when combining 'newton' with 'init_alpha'", {
     ),
     "'init_alpha' can't be used when algorithm is 'newton'"
   )
+})
+
+
+
+# Variational -------------------------------------------------------------
+context("CmdStanModel-variational")
+
+if (NOT_CRAN) {
+  # these are all valid for variational()
+  ok_arg_values <- list(
+    data = data_list,
+    refresh = 5,
+    init = 1.5,
+    seed = 12345,
+    algorithm = "meanfield",
+    iter = 10000,
+    grad_samples = 2,
+    elbo_samples = 101,
+    eta = 1.5,
+    adapt_engaged = TRUE,
+    adapt_iter = 51,
+    tol_rel_obj = 0.011,
+    eval_elbo = 101,
+    output_samples = 10
+  )
+
+  # using any one of these should cause sample() to error
+  bad_arg_values <- list(
+    data = "NOT_A_FILE",
+    refresh = -10,
+    init = -10,
+    seed = "NOT_A_SEED",
+    algorithm = "NOT_AN_ALGORITHM",
+    iter = -10,
+    grad_samples = -10,
+    elbo_samples = -10,
+    eta = -1.5,
+    adapt_engaged = "NOT_VALID",
+    adapt_iter = -10,
+    tol_rel_obj = -0.5,
+    eval_elbo = -10,
+    output_samples = -10
+  )
+}
+
+test_that("variational() method runs when all arguments specified validly", {
+  skip_on_cran()
+
+  # specifying all arguments validly
+  expect_vb_output(fit1 <- do.call(mod$variational, ok_arg_values))
+  expect_is(fit1, "CmdStanVB")
+
+  # leaving all at default (except 'data')
+  expect_vb_output(fit2 <- mod$variational(data = data_list))
+  expect_is(fit2, "CmdStanVB")
+})
+
+test_that("variational() method errors for any invalid argument before calling cmdstan", {
+  skip_on_cran()
+
+  for (nm in names(bad_arg_values)) {
+    args <- ok_arg_values
+    args[[nm]] <- bad_arg_values[[nm]]
+    expect_error(
+      expect_experimental_warning(do.call(mod$variational, args)),
+      regexp = nm
+    )
+  }
 })
