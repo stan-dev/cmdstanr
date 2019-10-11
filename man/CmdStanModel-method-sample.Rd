@@ -30,8 +30,10 @@ data. Arguments left at \code{NULL} default to the current CmdStan default.
 }
 }
 
-\section{Arguments}{
- The \code{sample} method has the following arguments:
+\section{Arguments shared by all fitting methods}{
+ The following arguments can
+be specified for any of the fitting methods (\code{sample}, \code{optimize},
+\code{variational}):
 \itemize{
 \item \code{data} (multiple options): The data to use:
 \itemize{
@@ -49,12 +51,19 @@ screen updates.
 \item A character vector of data file paths (one per chain) to
 initialization files.
 }
+}
+}
+
+\section{Arguments unique to the \code{sample} method}{
+ In addition to the
+arguments above, the \code{sample} method also has the following arguments:
+\itemize{
 \item \code{num_samples}: (positive integer) The number of sampling iterations.
 \item \code{num_warmup}: (positive integer) The number of warmup iterations.
 \item \code{save_warmup}: (logical) Should warmup iterations also be streamed
 to the output?
 \item \code{thin}: (positive integer) The period between saved samples.
-\item \code{adapt_engaged}: (logical) Do adaptation?
+\item \code{adapt_engaged}: (logical) Do warmup adaptation?
 \item \code{adapt_delta}: (real in \code{(0,1)}) The adaptation target acceptance
 statistic.
 \item \code{stepsize}: (positive real) The initial step size for discrete evolution.
@@ -114,6 +123,7 @@ if (require(rstan, quietly = TRUE)) {
 \link{CmdStanModel}
 
 Other CmdStanModel-methods: \code{\link{CmdStanModel-method-optimize}},
-  \code{\link{CmdStanModel-method-other}}
+  \code{\link{CmdStanModel-method-other}},
+  \code{\link{CmdStanModel-method-variational}}
 }
 \concept{CmdStanModel-methods}

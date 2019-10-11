@@ -67,15 +67,17 @@ cmdstan_model <- function(stan_file) {
 #' `CmdStanModel` objects have the following associated methods:
 #'
 #' \tabular{ll}{
-#'  **Method** \tab **Purpose** \cr
+#'  **Method** \tab **Description** \cr
 #'  [code][CmdStanModel-method-other] \tab Get Stan code as a string \cr
 #'  [print][CmdStanModel-method-other] \tab Print readable version of Stan program \cr
-#'  \tab \cr \tab \cr \tab \cr
 #'  [compile][CmdStanModel-method-other] \tab Compile Stan program  \cr
-#'  \tab \cr \tab \cr \tab \cr
-#'  [sample][CmdStanModel-method-sample] \tab Run MCMC, return [CmdStanMCMC] object  \cr
-#'  [optimize][CmdStanModel-method-optimize] \tab Run optimization, return [CmdStanMLE] object  \cr
-#'  \tab \cr \tab \cr \tab \cr
+#'  Fitting methods \tab Run Stan's algorithms  \cr
+#'  [sample][CmdStanModel-method-sample] \tab
+#'    Run CmdStan's `"sample"` method, return [CmdStanMCMC] object  \cr
+#'  [optimize][CmdStanModel-method-optimize]
+#'    \tab Run CmdStan's `"optimize"` method, return [CmdStanMLE] object  \cr
+#'  [variational][CmdStanModel-method-variational]
+#'    \tab Run CmdStan's `"variational"` method, return [CmdStanVB] object  \cr
 #' }
 #'
 #' @inherit cmdstan_model examples
@@ -311,25 +313,15 @@ NULL
 #'   )
 #'   ```
 #'
-#' @section Arguments: The `sample` method has the following arguments:
-#'   * `data` (multiple options): The data to use:
-#'      - A named list of \R objects like for RStan;
-#'      - A path to a data file compatible with CmdStan.
-#'   * `seed`: (positive integer) A seed for the (P)RNG to pass to CmdStan.
-#'   * `refresh`: (non-negative integer) The number of iterations between
-#'     screen updates.
-#'   * `init`: (multiple options) The initialization method:
-#'      - A real number `x>0` initializes randomly between `[-x,x]` (on the
-#'      *unconstrained* parameter space);
-#'      - `0` initializes to `0`;
-#'      - A character vector of data file paths (one per chain) to
-#'        initialization files.
+#' @template model-common-args
+#' @section Arguments unique to the `sample` method: In addition to the
+#'   arguments above, the `sample` method also has the following arguments:
 #'   * `num_samples`: (positive integer) The number of sampling iterations.
 #'   * `num_warmup`: (positive integer) The number of warmup iterations.
 #'   * `save_warmup`: (logical) Should warmup iterations also be streamed
 #'     to the output?
 #'   * `thin`: (positive integer) The period between saved samples.
-#'   * `adapt_engaged`: (logical) Do adaptation?
+#'   * `adapt_engaged`: (logical) Do warmup adaptation?
 #'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
 #'     statistic.
 #'   * `stepsize`: (positive real) The initial step size for discrete evolution.
@@ -366,22 +358,14 @@ NULL
 #'   )
 #'   ```
 #'
-#' @section Arguments: The `optimize` method has the following arguments:
-#'   * `data` (multiple options): The data to use:
-#'      - A named list of \R objects like for RStan;
-#'      - A path to a data file compatible with CmdStan.
-#'   * `seed`: (positive integer) A seed for the (P)RNG to pass to CmdStan.
-#'   * `refresh`: (non-negative integer) The number of iterations between screen updates.
-#'   * `init`: (multiple options) The initialization method:
-#'      - Real number `x>0` initializes randomly between `[-x,x]` (on the
-#'      *unconstrained* parameter space);
-#'      - `0` initializes to `0`;
-#'      - String, interpreted as a data file.
+#' @template model-common-args
+#' @section Arguments unique to the `optimize` method: In addition to the
+#'   arguments above, the `optimize` method also has the following arguments:
 #'   * `algorithm`: (string) The optimization algorithm. One of
 #'     `"lbfgs"`, `"bfgs"`, or `"newton"`.
-#'   * `init_alpha`: (non-negative real) The line search step size for first iteration
-#'       Not applicable if `algorithm="newton"`.
 #'   * `iter`: (positive integer) The number of iterations.
+#'   * `init_alpha`: (non-negative real) The line search step size for first
+#'      iteration. Not applicable if `algorithm="newton"`.
 #'
 #' @section Value: The `optimize` method returns a [`CmdStanMLE`] object.
 #'

@@ -14,15 +14,17 @@ available methods.
 \code{CmdStanModel} objects have the following associated methods:
 
 \tabular{ll}{
-\strong{Method} \tab \strong{Purpose} \cr
+\strong{Method} \tab \strong{Description} \cr
 \link[=CmdStanModel-method-other]{code} \tab Get Stan code as a string \cr
 \link[=CmdStanModel-method-other]{print} \tab Print readable version of Stan program \cr
-\tab \cr \tab \cr \tab \cr
 \link[=CmdStanModel-method-other]{compile} \tab Compile Stan program  \cr
-\tab \cr \tab \cr \tab \cr
-\link[=CmdStanModel-method-sample]{sample} \tab Run MCMC, return \link{CmdStanMCMC} object  \cr
-\link[=CmdStanModel-method-optimize]{optimize} \tab Run optimization, return \link{CmdStanMLE} object  \cr
-\tab \cr \tab \cr \tab \cr
+Fitting methods \tab Run Stan's algorithms  \cr
+\link[=CmdStanModel-method-sample]{sample} \tab
+Run CmdStan's \code{"sample"} method, return \link{CmdStanMCMC} object  \cr
+\link[=CmdStanModel-method-optimize]{optimize}
+\tab Run CmdStan's \code{"optimize"} method, return \link{CmdStanMLE} object  \cr
+\link[=CmdStanModel-method-variational]{variational}
+\tab Run CmdStan's \code{"variational"} method, return \link{CmdStanVB} object  \cr
 }
 }
 \examples{

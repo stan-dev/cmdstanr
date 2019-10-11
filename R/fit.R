@@ -188,7 +188,15 @@ CmdStanMLE <- R6::R6Class(
   )
 )
 
+# CmdStanVB ---------------------------------------------------------------
+# CmdStanVB<- R6::R6Class(
+#   classname = "CmdStanVB"
+# )
 
+# CmdStanGQ ---------------------------------------------------------------
+# CmdStanGQ <- R6::R6Class(
+#   classname = "CmdStanGQ"
+# )
 
 # RunSet ---------------------------------------------------------------
 
@@ -272,3 +280,5 @@ RunSet <- R6::R6Class(
     retcodes_ = integer()
   )
 )
+
+
