@@ -373,3 +373,60 @@ NULL
 #' @inherit cmdstan_model examples
 #'
 NULL
+
+
+#' Run variational inference
+#'
+#' @name CmdStanModel-method-variational
+#' @family CmdStanModel-methods
+#' @description The `variational` method of a [CmdStanModel] object runs Stan's
+#'   variational Bayes (ADVI) algorithms. Arguments left at `NULL` default to
+#'   the current CmdStan default.
+#'
+#' @section Usage:
+#'   ```
+#'   $variational(
+#'     data = NULL,
+#'     seed = NULL,
+#'     refresh = NULL,
+#'     init = NULL,
+#'     algorithm = NULL,
+#'     iter = NULL,
+#'     grad_samples = NULL,
+#'     elbo_samples = NULL,
+#'     eta = NULL,
+#'     adapt_engaged = NULL,
+#'     adapt_iter = NULL,
+#'     tol_rel_obj = NULL,
+#'     eval_elbo = NULL,
+#'     output_samples = NULL
+#'   )
+#'   ```
+#'
+#' @template model-common-args
+#' @section Arguments unique to the `variational` method: In addition to the
+#'   arguments above, the `variational` method also has the following arguments:
+#'   * `algorithm`: (string) The algorithm. Either `"meanfield"` or `"fullrank"`.
+#'   * `iter`: (positive integer) The _maximum_ number of iterations.
+#'   * `grad_samples`: (positive integer) The number of samples for Monte Carlo
+#'     estimate of gradients.
+#'   * `elbo_samples`: (positive integer) The number of samples for Monte Carlo
+#'     estimate of ELBO (objective function).
+#'   * `eta`: (positive real) The stepsize weighting parameter for adaptive
+#'     stepsize sequence.
+#'   * `adapt_engaged`: (logical) Do warmup adaptation?
+#'   * `adapt_iter`: (positive integer) The _maximum_ number of adaptation
+#'     iterations.
+#'   * `tol_rel_obj`: (positive real) Convergence tolerance on the relative norm
+#'     of the objective.
+#'   * `eval_elbo`: (positive integer) Evaluate ELBO every Nth iteration.
+#'   * `output_samples:` (positive integer) Number of posterior samples to
+#'     draw and save.
+#'
+#' @section Value: The `variational` method returns a [`CmdStanVB`] object.
+#'
+#' @seealso [CmdStanModel]
+#' @inherit cmdstan_model examples
+#'
+NULL
+
