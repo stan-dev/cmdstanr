@@ -71,13 +71,13 @@ cmdstan_model <- function(stan_file) {
 #'  code \tab Return Stan program as a string \cr
 #'  print \tab Print readable version of Stan program \cr
 #'  [compile][CmdStanModel-method-compile]
-#'    \tab Compile Stan program  \cr
+#'    \tab Compile Stan program \cr
 #'  [sample][CmdStanModel-method-sample]
-#'    \tab Run CmdStan's `"sample"` method, return [CmdStanMCMC] object  \cr
+#'    \tab Run CmdStan's `"sample"` method, return [CmdStanMCMC] object \cr
 #'  [optimize][CmdStanModel-method-optimize]
-#'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object  \cr
+#'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object \cr
 #'  [variational][CmdStanModel-method-variational]
-#'    \tab Run CmdStan's `"variational"` method, return `CmdStanVB` object  \cr
+#'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object \cr
 #' }
 #'
 #' @inherit cmdstan_model examples
@@ -391,7 +391,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   * `output_samples:` (positive integer) Number of posterior samples to
 #'     draw and save.
 #'
-#' @section Value: The `variational` method returns a `CmdStanVB` object.
+#' @section Value: The `variational` method returns a [`CmdStanVB`] object.
 #'
 #' @seealso [CmdStanModel]
 #' @inherit cmdstan_model examples
@@ -450,11 +450,7 @@ variational_method <- function(data = NULL,
     echo_cmd = TRUE,
     echo = TRUE
   )
-
-  # FIXME: make CmdStanVB object and return CmdStanVB$new(runset)
-  # right now returning run log and giving it class to temporarily pass tests
-  class(run_log) <- "CmdStanVB"
-  run_log
+  CmdStanVB$new(runset)
 }
 CmdStanModel$set("public", name = "variational", value = variational_method)
 

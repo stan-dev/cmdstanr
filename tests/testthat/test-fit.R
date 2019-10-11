@@ -13,6 +13,9 @@ if (NOT_CRAN) {
   capture.output(suppressWarnings(
     fit_mle <- mod$optimize(data = data_list)
   ))
+  capture.output(suppressWarnings(
+    fit_vb <- mod$variational(data = data_list)
+  ))
 }
 
 
@@ -44,14 +47,13 @@ test_that("diagnose() method succesfully calls bin/diagnose", {
   expect_output(fit_mcmc$diagnose(), "Checking sampler transitions for divergences")
 })
 
-test_that("sample() method returns posterior sample (reading csv works)", {
+test_that("draws() method returns posterior sample (reading csv works)", {
   skip_on_cran()
-  draws <- fit_mcmc$sample()
+  draws <- fit_mcmc$draws()
   expect_type(draws, "double")
   expect_true(is.array(draws))
   expect_true(length(dim(draws)) == 3)
 })
-
 
 
 # CmdStanMLE --------------------------------------------------------------
@@ -77,3 +79,43 @@ test_that("saving data file works", {
   expect_true(file.exists(file.path(tmp, "optim-data-testing.data.R")))
 })
 
+
+# CmdStanVB -------------------------------------------------------------
+context("CmdStanVB")
+
+test_that("saving csv vb output works", {
+  skip_on_cran()
+  tmp <- tempdir()
+  fit_vb$save_output_files(tmp, basename = "vb-output-testing")
+  expect_true(file.exists(file.path(tmp, "vb-output-testing-1.csv")))
+})
+
+test_that("saving data file works", {
+  skip_on_cran()
+  tmp <- tempdir()
+  fit_vb$save_data_file(tmp, basename = "vb-data-testing")
+  expect_true(file.exists(file.path(tmp, "vb-data-testing.data.R")))
+})
+
+test_that("summary() method succesfully calls bin/stansummary", {
+  skip_on_cran()
+  expect_output(fit_vb$summary(), "Inference for Stan model")
+})
+
+test_that("draws() method returns approx posterior sample (reading csv works)", {
+  skip_on_cran()
+  draws <- fit_vb$draws()
+  expect_type(draws, "double")
+  expect_true(is.matrix(draws))
+  expect_equal(colnames(draws), "theta")
+})
+
+test_that("log_p(), log_g() methods return vectors (reading csv works)", {
+  skip_on_cran()
+  lp <- fit_vb$log_p()
+  lg <- fit_vb$log_g()
+  expect_type(lp, "double")
+  expect_type(lg, "double")
+  expect_equal(length(lp), nrow(fit_vb$draws()))
+  expect_equal(length(lg), nrow(fit_vb$draws()))
+})

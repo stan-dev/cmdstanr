@@ -60,7 +60,7 @@ CmdStanMCMC <- R6::R6Class(
       # Run cmdstan's bin/stansummary on csv files
       run_log <- processx::run(
         command = file.path("bin", cmdstan_ext("stansummary")),
-        args = self$runset$output_files(),
+        args = self$output_files(),
         wd = cmdstan_path(),
         echo_cmd = TRUE,
         echo = TRUE
@@ -70,23 +70,16 @@ CmdStanMCMC <- R6::R6Class(
       # Run cmdstan's bin/diagnose on csv files
       run_log <- processx::run(
         command = file.path("bin", cmdstan_ext("diagnose")),
-        args = self$runset$output_files(),
+        args = self$output_files(),
         wd = cmdstan_path(),
         echo_cmd = TRUE,
         echo = TRUE
       )
     },
-    get_drawset = function() {
-      # See cmdstanpy
-      stop("Not implemented yet.")
-    },
-    sample = function() {
-      # iter x chains x params array
-      if (is.null(private$posterior_sample_)) private$read_csv()
-      private$posterior_sample_
-    },
     draws = function() {
-      self$sample()
+      # iter x chains x params array
+      if (is.null(private$draws_)) private$read_csv()
+      private$draws_
     },
     sampler_params = function() {
       # currently sampler params list from rstan::get_sampler_params()
@@ -106,11 +99,11 @@ CmdStanMCMC <- R6::R6Class(
     }
   ),
   private = list(
-    posterior_sample_ = NULL,
+    draws_ = NULL,
     sampler_params_ = NULL,
     stanfit_ = NULL,
     read_csv = function() {
-      if (!all(file.exists(self$runset$output_files()))) {
+      if (!all(file.exists(self$output_files()))) {
         stop("Can't find output file(s).", call. = FALSE)
       }
 
@@ -121,8 +114,8 @@ CmdStanMCMC <- R6::R6Class(
              "until CmdStanR has its own implementation.",
              call. = FALSE)
       }
-      stanfit <- rstan::read_stan_csv(self$runset$output_files())
-      private$posterior_sample_ <-
+      stanfit <- rstan::read_stan_csv(self$output_files())
+      private$draws_ <-
         rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
       private$sampler_params_ <-
         rstan::get_sampler_params(stanfit, inc_warmup = FALSE)
@@ -169,7 +162,7 @@ CmdStanMLE <- R6::R6Class(
       invisible(self)
     },
     mle = function() {
-      out <- private$mle_ %||% read_optim_csv(self$runset$output_files())
+      out <- private$mle_ %||% read_optim_csv(self$output_files())
       private$mle_ <- out
       out
     },
@@ -189,9 +182,100 @@ CmdStanMLE <- R6::R6Class(
 )
 
 # CmdStanVB ---------------------------------------------------------------
-# CmdStanVB<- R6::R6Class(
-#   classname = "CmdStanVB"
-# )
+
+#' CmdStanVB objects
+#'
+#' A `CmdStanVB` object is the fitted model object returned by the
+#' `variational()` method of a [`CmdStanModel`] object.
+#'
+#' @name CmdStanVB
+#'
+#' @section Available Methods: `CmdStanVB` objects have the following
+#'   associated methods:
+#' \describe{
+#'   \item{`print()`}{
+#'   Run CmdStan's `bin/stansummary` on output csv file.
+#'   }
+#'   \item{`summary()`}{
+#'   Run CmdStan's `bin/stansummary` on output csv file.
+#'   }
+#'   \item{`draws()`}{
+#'   Return the draws from the approximate posterior as a matrix with one column
+#'   per variable.
+#'   }
+#'   \item{`save_output_files(dir, basename = NULL)`}{
+#'   Move output csv file from temporary directory to a specified directory.
+#'   }
+#'   \item{`save_data_file(dir, basename = NULL)`}{
+#'   Move data file from temporary directory to a specified directory.
+#'   }
+#'   \item{More coming soon...}{}
+#' }
+#'
+#' @seealso [`CmdStanModel`]
+#'
+NULL
+
+CmdStanVB <- R6::R6Class(
+  classname = "CmdStanVB",
+  public = list(
+    runset = NULL,
+    initialize = function(runset) {
+      checkmate::assert_r6(runset, classes = "RunSet")
+      self$runset <- runset
+      invisible(self)
+    },
+    summary = function() {
+      # Run cmdstan's bin/stansummary on csv files
+      run_log <- processx::run(
+        command = file.path("bin", cmdstan_ext("stansummary")),
+        args = self$output_files(),
+        wd = cmdstan_path(),
+        echo_cmd = TRUE,
+        echo = TRUE
+      )
+    },
+    draws = function() {
+      # iter x params array
+      if (is.null(private$draws_)) private$read_csv()
+      private$draws_
+    },
+    log_p = function() {
+      # iter x params array
+      if (is.null(private$log_p_)) private$read_csv()
+      private$log_p_
+    },
+    log_g = function() {
+      # iter x params array
+      if (is.null(private$log_g_)) private$read_csv()
+      private$log_g_
+    },
+    output_files = function() {
+      self$runset$output_files()
+    },
+    save_output_files = function(dir = ".", basename = NULL) {
+      self$runset$save_output_files(dir, basename)
+    },
+    save_data_file = function(dir = ".", basename = NULL) {
+      self$runset$save_data_file(dir, basename)
+    }
+  ),
+  private = list(
+    draws_ = NULL,
+    log_p_ = NULL,
+    log_g_ = NULL,
+    read_csv = function() {
+      if (!all(file.exists(self$output_files()))) {
+        stop("Can't find output file(s).", call. = FALSE)
+      }
+
+      vb_output <- read_vb_csv(self$output_files())
+      private$draws_ <- vb_output[["draws"]]
+      private$log_p_ <- vb_output[["log_p"]]
+      private$log_g_ <- vb_output[["log_g"]]
+    }
+  )
+)
 
 # CmdStanGQ ---------------------------------------------------------------
 # CmdStanGQ <- R6::R6Class(

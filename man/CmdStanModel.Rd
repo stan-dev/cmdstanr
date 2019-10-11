@@ -18,13 +18,13 @@ available methods.
 code \tab Return Stan program as a string \cr
 print \tab Print readable version of Stan program \cr
 \link[=CmdStanModel-method-compile]{compile}
-\tab Compile Stan program  \cr
+\tab Compile Stan program \cr
 \link[=CmdStanModel-method-sample]{sample}
-\tab Run CmdStan's \code{"sample"} method, return \link{CmdStanMCMC} object  \cr
+\tab Run CmdStan's \code{"sample"} method, return \link{CmdStanMCMC} object \cr
 \link[=CmdStanModel-method-optimize]{optimize}
-\tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object  \cr
+\tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object \cr
 \link[=CmdStanModel-method-variational]{variational}
-\tab Run CmdStan's \code{"variational"} method, return \code{CmdStanVB} object  \cr
+\tab Run CmdStan's \code{"variational"} method, return \code{\link{CmdStanVB}} object \cr
 }
 }
 \examples{

@@ -120,6 +120,20 @@ read_optim_csv <- function(csv_file) {
   list(mle = stats::setNames(x, col_names))
 }
 
+# FIXME: also parse the csv header
+read_vb_csv <- function(csv_file) {
+  csv_no_comments <- read.csv(csv_file, comment.char = "#")
+  out <- list(
+    log_p = csv_no_comments$log_p__,
+    log_g = csv_no_comments$log_g__
+  )
+  csv_no_comments$lp__ <- NULL
+  csv_no_comments$log_p__ <- NULL
+  csv_no_comments$log_g__ <- NULL
+  out$draws <- as.matrix(csv_no_comments)
+  out
+}
+
 
 #' Dump data to temporary file in format readable by CmdStan
 #'

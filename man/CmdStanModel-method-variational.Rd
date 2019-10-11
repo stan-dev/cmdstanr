@@ -76,7 +76,7 @@ draw and save.
 }
 
 \section{Value}{
- The \code{variational} method returns a \code{CmdStanVB} object.
+ The \code{variational} method returns a \code{\link{CmdStanVB}} object.
 }
 
 \examples{
