@@ -60,36 +60,22 @@ cmdstan_model <- function(stan_file) {
 #' @description A `CmdStanModel` object is an [R6][R6::R6] object returned by
 #'   the [cmdstan_model()] function. The object stores the path to a Stan
 #'   program as well as a path to a compiled executable once created, and
-#'   provides methods for fitting the model. See the **Details** section for
+#'   provides methods for fitting the model. See **Details** section for
 #'   available methods.
 #'
 #' @details
 #' `CmdStanModel` objects have the following associated methods:
-#' \describe{
-#'   \item{`code()`}{
-#'   Returns the Stan program located at `stan_file` as a string.
-#'   }
-#'   \item{`print()`}{
-#'   Prints a more readable version of the Stan program returned by `code()`.
-#'   }
-#'   \item{`compile()`}{
-#'   Compiles the Stan program. Translates the Stan code to C++, then calls the
-#'   C++ compiler. The resulting files are placed in the same directory as
-#'   `stan_file`.
-#'   }
-#'   \item{`sample(data = NULL, ...)`}{
-#'   Run the default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to
-#'   produce a set of draws from the posterior distribution of a model
-#'   conditioned on some data.
-#'   Arguments:
-#'   * `data`: If not `NULL`, then either a path to a data file compatible with
-#'     CmdStan or a named list of \R objects like for RStan.
-#'   * `...`: Arguments to pass to CmdStan to control sampling.
-#'     TODO: enumerate these instead of `...`.
 #'
-#'   Return: a [`CmdStanMCMC`] object created from the csv files written by
-#'   CmdStan. Those csv files are written to the same directory as `stan_file`.
-#'   }
+#' \tabular{ll}{
+#'  **Method** \tab **Purpose** \cr
+#'  [code][CmdStanModel-method-other] \tab Get Stan code as a string \cr
+#'  [print][CmdStanModel-method-other] \tab Print readable version of Stan program \cr
+#'  \tab \cr \tab \cr \tab \cr
+#'  [compile][CmdStanModel-method-other] \tab Compile Stan program  \cr
+#'  \tab \cr \tab \cr \tab \cr
+#'  [sample][CmdStanModel-method-sample] \tab Run MCMC, return [CmdStanMCMC] object  \cr
+#'  [optimize][CmdStanModel-method-optimize] \tab Run optimization, return [CmdStanMLE] object  \cr
+#'  \tab \cr \tab \cr \tab \cr
 #' }
 #'
 #' @inherit cmdstan_model examples
@@ -263,3 +249,143 @@ process_data <- function(data) {
   path
 }
 
+
+# Documentation of CmdStanModel methods -----------------------------------
+
+#' Compile a Stan program or get the Stan code
+#'
+#' @name CmdStanModel-method-other
+#' @family CmdStanModel-methods
+#' @description The `compile` method of a [CmdStanModel] object calls CmdStan to
+#'   translate a Stan program to C++ and call the C++ compiler. The resulting
+#'   files are placed in the same directory as the Stan program.
+#'
+#'   The `code` and `print` methods return and print the Stan code,
+#'   respectively.
+#'
+#' @section Usage:
+#'   ```
+#'   $compile()
+#'   $code()
+#'   $print()
+#'   ```
+#'
+#' @section Value:
+#'   * The `code` method returns the Stan code as a string.
+#'   * The `print` method prints a readable version of the Stan code and returns
+#'     the [CmdStanModel] object invisibly.
+#'   * The `compile` method returns the [CmdStanModel] object invisibly.
+#'
+#' @seealso [CmdStanModel]
+#' @inherit cmdstan_model examples
+#'
+NULL
+
+#' Run Stan's default MCMC algorithm
+#'
+#' @name CmdStanModel-method-sample
+#' @family CmdStanModel-methods
+#' @description The `sample` method of a [CmdStanModel] object runs the default
+#'   MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce a set
+#'   of draws from the posterior distribution of a model conditioned on some
+#'   data. Arguments left at `NULL` default to the current CmdStan default.
+#'
+#' @section Usage:
+#'   ```
+#'   $sample(
+#'     num_chains = 1,
+#'   # num_cores = NULL, # not yet available
+#'     data = NULL,
+#'     num_warmup = NULL,
+#'     num_samples = NULL,
+#'     save_warmup = FALSE,
+#'     thin = NULL,
+#'     refresh = NULL,
+#'     init = NULL,
+#'     seed = NULL,
+#'     max_depth = NULL,
+#'     metric = NULL,
+#'     stepsize = NULL,
+#'     adapt_engaged = NULL,
+#'     adapt_delta = NULL
+#'   )
+#'   ```
+#'
+#' @section Arguments: The `sample` method has the following arguments:
+#'   * `data` (multiple options): The data to use:
+#'      - A named list of \R objects like for RStan;
+#'      - A path to a data file compatible with CmdStan.
+#'   * `seed`: (positive integer) A seed for the (P)RNG to pass to CmdStan.
+#'   * `refresh`: (non-negative integer) The number of iterations between
+#'     screen updates.
+#'   * `init`: (multiple options) The initialization method:
+#'      - A real number `x>0` initializes randomly between `[-x,x]` (on the
+#'      *unconstrained* parameter space);
+#'      - `0` initializes to `0`;
+#'      - A character vector of data file paths (one per chain) to
+#'        initialization files.
+#'   * `num_samples`: (positive integer) The number of sampling iterations.
+#'   * `num_warmup`: (positive integer) The number of warmup iterations.
+#'   * `save_warmup`: (logical) Should warmup iterations also be streamed
+#'     to the output?
+#'   * `thin`: (positive integer) The period between saved samples.
+#'   * `adapt_engaged`: (logical) Do adaptation?
+#'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
+#'     statistic.
+#'   * `stepsize`: (positive real) The initial step size for discrete evolution.
+#'   * `metric`: (multiple options) The geometry of the base manifold:
+#'      - A single string from among `"diag_e"`, `"dense_e"`, `"unit_e"`;
+#'      - A character vector containing paths to files (one per chain)
+#'        compatible with CmdStan that contain precomputed metrics.
+#'   * `max_depth`: (positive integer) The maximum allowed tree depth.
+#'
+#' @section Value: The `sample` method returns a [`CmdStanMCMC`] object.
+#'
+#' @seealso [CmdStanModel]
+#' @inherit cmdstan_model examples
+#'
+NULL
+
+#' Run optimization
+#'
+#' @name CmdStanModel-method-optimize
+#' @family CmdStanModel-methods
+#' @description The `optimize` method of a [CmdStanModel] object runs Stan's
+#'   optimizer. Arguments left at `NULL` default to the current CmdStan default.
+#'
+#' @section Usage:
+#'   ```
+#'   $optimize(
+#'     data = NULL,
+#'     seed = NULL,
+#'     refresh = NULL,
+#'     init = NULL,
+#'     algorithm = NULL,
+#'     init_alpha = NULL,
+#'     iter = NULL
+#'   )
+#'   ```
+#'
+#' @section Arguments: The `optimize` method has the following arguments:
+#'   * `data` (multiple options): The data to use:
+#'      - A named list of \R objects like for RStan;
+#'      - A path to a data file compatible with CmdStan.
+#'   * `seed`: (positive integer) A seed for the (P)RNG to pass to CmdStan.
+#'   * `refresh`: (non-negative integer) The number of iterations between screen updates.
+#'   * `init`: (multiple options) The initialization method:
+#'      - Real number `x>0` initializes randomly between `[-x,x]` (on the
+#'      *unconstrained* parameter space);
+#'      - `0` initializes to `0`;
+#'      - String, interpreted as a data file.
+#'   * `algorithm`: (string) The optimization algorithm. One of
+#'     `"lbfgs"`, `"bfgs"`, or `"newton"`.
+#'   * `init_alpha`: (non-negative real) The line search step size for first iteration
+#'       Not applicable if `algorithm="newton"`.
+#'   * `iter`: (positive integer) The number of iterations.
+#'
+#' @section Value: The `optimize` method returns a [`CmdStanMLE`] object.
+#'
+#' @seealso [CmdStanModel]
+#' @inherit cmdstan_model examples
+#'
+NULL
