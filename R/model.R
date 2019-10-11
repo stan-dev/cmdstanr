@@ -209,6 +209,62 @@ CmdStanModel <- R6::R6Class(
         echo = TRUE
       )
       CmdStanMLE$new(runset)
+    },
+
+    variational = function(data = NULL,
+                           seed = NULL,
+                           refresh = NULL,
+                           init = NULL,
+                           algorithm = NULL,
+                           iter = NULL,
+                           grad_samples = NULL,
+                           elbo_samples = NULL,
+                           eta = NULL,
+                           adapt_engaged = NULL,
+                           adapt_iter = NULL,
+                           tol_rel_obj = NULL,
+                           eval_elbo = NULL,
+                           output_samples = NULL) {
+
+      warning(
+        "Variational inference method is experimental and ",
+        "the structure of returned object may change.",
+        call. = FALSE
+      )
+
+      variational_args <- VariationalArgs$new(
+        algorithm = algorithm,
+        iter = iter,
+        grad_samples = grad_samples,
+        elbo_samples = elbo_samples,
+        eta = eta,
+        adapt_engaged = adapt_engaged,
+        adapt_iter = adapt_iter,
+        tol_rel_obj = tol_rel_obj,
+        eval_elbo = eval_elbo,
+        output_samples = output_samples
+      )
+      cmdstan_args <- CmdStanArgs$new(
+        method_args = variational_args,
+        model_name = strip_ext(basename(self$exe_file())),
+        exe_file = self$exe_file(),
+        run_ids = 1,
+        data_file = process_data(data),
+        seed = seed,
+        init = init,
+        refresh = refresh
+      )
+
+      runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
+      run_log <- processx::run(
+        command = cmdstan_args$compose_command(),
+        args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
+        wd = dirname(self$exe_file()),
+        echo_cmd = TRUE,
+        echo = TRUE
+      )
+      print(run_log)
+      # CmdStanVB$new(runset)
     }
   )
 )
