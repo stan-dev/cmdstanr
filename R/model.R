@@ -75,9 +75,9 @@ cmdstan_model <- function(stan_file) {
 #'  [sample][CmdStanModel-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [CmdStanMCMC] object  \cr
 #'  [optimize][CmdStanModel-method-optimize]
-#'    \tab Run CmdStan's `"optimize"` method, return [CmdStanMLE] object  \cr
+#'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object  \cr
 #'  [variational][CmdStanModel-method-variational]
-#'    \tab Run CmdStan's `"variational"` method, return [CmdStanVB] object  \cr
+#'    \tab Run CmdStan's `"variational"` method, return `CmdStanVB` object  \cr
 #' }
 #'
 #' @inherit cmdstan_model examples
@@ -391,7 +391,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   * `output_samples:` (positive integer) Number of posterior samples to
 #'     draw and save.
 #'
-#' @section Value: The `variational` method returns a [`CmdStanVB`] object.
+#' @section Value: The `variational` method returns a `CmdStanVB` object.
 #'
 #' @seealso [CmdStanModel]
 #' @inherit cmdstan_model examples
@@ -478,4 +478,3 @@ process_data <- function(data) {
   }
   path
 }
-
