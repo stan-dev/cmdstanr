@@ -25,13 +25,16 @@ if [ -z ${RELDIR} ]; then
     RELDIR="$HOME/.cmdstanr"
 fi
 
-if [[ ! -e ${RELDIR} ]]; then
-   mkdir ${RELDIR}
-fi
-# if [[ ! -d ${RELDIR} ]]; then
-#     echo "cannot install cmdstan, ${RELDIR} is not a directory"
-#     exit 1
+# if [[ -e ${RELDIR} && ! -d ${RELDIR} ]]; then
+#    echo "line 29"
+#    echo "cannot install cmdstan, ${RELDIR} is not a directory"
+#    exit 1
 # fi
+
+if [[ ! -e ${RELDIR} ]]; then
+   mkdir -p ${RELDIR}
+fi
+
 echo "cmdstan dir: ${RELDIR}"
 
 if [ -z ${VER} ]; then
