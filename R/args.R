@@ -48,31 +48,12 @@ CmdStanArgs <- R6::R6Class(
       self$method_args$validate(num_runs = length(run_ids))
       self$validate()
     },
-
     validate = function() {
-      # TODO: validate that can write to output directory
-      validate_exe_file(self$exe_file)
-
-      # at least 1 run id (chain id)
-      checkmate::assert_integerish(self$run_ids,
-                                   lower = 1,
-                                   min.len = 1,
-                                   any.missing = FALSE,
-                                   null.ok = FALSE)
-
-      checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
-      if (!is.null(self$data_file)) {
-        checkmate::assert_file_exists(self$data_file, access = "r")
-      }
-
-      num_runs <- length(self$run_ids)
-      validate_init(self$init, num_runs)
-      validate_seed(self$seed, num_runs)
-      self$init <- maybe_recycle_init(self$init, num_runs)
-      self$seed <- maybe_generate_seed(self$seed, num_runs)
+      validate_cmdstan_args(self)
+      self$init <- maybe_recycle_init(self$init, length(self$run_ids))
+      self$seed <- maybe_generate_seed(self$seed, length(self$run_ids))
       invisible(self)
     },
-
     # create default basename for csv output file from model name and method
     csv_basename = function() {
       output_csv_basename(self$model_name, self$method)
@@ -136,10 +117,6 @@ SampleArgs <- R6::R6Class(
   lock_objects = FALSE,
   public = list(
     method = "sample",
-
-    # Initialize object
-    # @note Leaving an argument as `NULL` means to use the CmdStan default.
-    # @return `self` invisibly.
     initialize = function(num_warmup = NULL,
                           num_samples = NULL,
                           save_warmup = NULL,
@@ -172,62 +149,9 @@ SampleArgs <- R6::R6Class(
       }
       invisible(self)
     },
-
-    # Validate cmdstan arguments (if not `NULL`)
-    # @param num_runs Integer number of CmdStan runs. This is the number of
-    #   MCMC chains to run.
-    # @return `self` invisibly unless an error is thrown.
     validate = function(num_runs) {
-      checkmate::assert_integerish(num_runs,
-                                   lower = 1,
-                                   len = 1,
-                                   any.missing = FALSE,
-                                   .var.name = "Number of chains")
-
-      checkmate::assert_integerish(self$thin,
-                                   lower = 1,
-                                   len = 1,
-                                   null.ok = TRUE)
-      checkmate::assert_integerish(self$num_samples,
-                                   lower = 0,
-                                   len = 1,
-                                   null.ok = TRUE)
-      checkmate::assert_integerish(self$num_warmup,
-                                   lower = 0,
-                                   len = 1,
-                                   null.ok = TRUE)
-      checkmate::assert_integerish(self$save_warmup,
-                                   lower = 0, upper = 1,
-                                   len = 1,
-                                   null.ok = TRUE)
-
-      checkmate::assert_integerish(self$adapt_engaged,
-                                   lower = 0, upper = 1,
-                                   len = 1,
-                                   null.ok = TRUE)
-      checkmate::assert_numeric(self$adapt_delta,
-                                lower = 0, upper = 1,
-                                len = 1,
-                                null.ok = TRUE)
-      checkmate::assert_integerish(self$max_depth,
-                                   lower = 1,
-                                   len = 1,
-                                   null.ok = TRUE)
-
-      if (length(self$stepsize) == 1) {
-        checkmate::assert_number(self$stepsize, lower = .Machine$double.eps)
-      } else {
-        checkmate::assert_numeric(self$stepsize,
-                                 lower = .Machine$double.eps,
-                                 len = num_runs,
-                                 null.ok = TRUE)
-      }
-
-      # TODO: implement other checks for metric from cmdstanpy:
-      # https://github.com/stan-dev/cmdstanpy/blob/master/cmdstanpy/cmdstan_args.py#L130
-      validate_metric(self$metric, num_runs)
+      validate_sample_args(self, num_runs)
       self$metric <- maybe_recycle_metric(self$metric, num_runs)
-
       invisible(self)
     },
 
@@ -239,22 +163,9 @@ SampleArgs <- R6::R6Class(
     #   character vector. This will get passed in from CmdStanArgs$compose_all_args().
     # @return A character vector of CmdStan arguments.
     compose = function(idx, args = NULL) {
-
-      # Helper function to make sampler arguments
-      # @param arg_name Name of slot in self containing the argument value
-      # @param idx Chain id if applicable.
       .make_arg <- function(arg_name, idx = NULL) {
-        val <- self[[arg_name]]
-        if (is.null(val)) {
-          return(NULL)
-        }
-        if (!is.null(idx) && length(val) >= idx) {
-          val <- val[idx]
-        }
-        arg_name <- sub("adapt_", "", arg_name) # e.g. adapt_delta -> delta
-        paste0(arg_name, "=", val)
+        compose_arg(self, arg_name, idx)
       }
-
       new_args <- list(
         "method=sample",
         .make_arg("num_samples"),
@@ -295,34 +206,91 @@ OptimizeArgs <- R6::R6Class(
       self$iter <- iter
       invisible(self)
     },
-
     validate = function(num_runs) {
-      checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
-                               choices = c("bfgs", "lbfgs", "newton"))
-      checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE)
-      checkmate::assert_number(self$init_alpha, lower = 0, null.ok = TRUE)
-      if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
-        stop("'init_alpha' can't be used when algorithm is 'newton'.",
-             call. = FALSE)
-      }
+      validate_optimize_args(self)
       invisible(self)
     },
 
     # Compose arguments to CmdStan command for optimization-specific
-    # non-default arguments
-    #
-    # @param idx Integer chain id. This is ignored but needed do `compose()`
-    #   has the same signature as for `SampleArgs`.
-    # @param args A character vector of arguments to prepend to the returned
-    #   character vector. This will get passed in from
-    #   CmdStanArgs$compose_all_args().
-    # @return A character vector of CmdStan arguments.
+    # non-default arguments. Works the same way as compose for sampler args,
+    # but `idx` is ignored (no multiple chains for optimize or variational)
     compose = function(idx = NULL, args = NULL) {
+      .make_arg <- function(arg_name) {
+        compose_arg(self, arg_name, idx = NULL)
+      }
       new_args <- list(
         "method=optimize",
-        if (!is.null(self$algorithm)) paste0("algorithm=", self$algorithm),
-        if (!is.null(self$init_alpha)) paste0("init_alpha=", self$init_alpha),
-        if (!is.null(self$iter)) paste0("iter=", self$iter)
+        .make_arg("algorithm"),
+        .make_arg("init_alpha"),
+        .make_arg("iter")
+      )
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
+    }
+  )
+)
+
+
+# VariationalArgs ---------------------------------------------------------
+
+VariationalArgs <- R6::R6Class(
+  "VariationalArgs",
+  lock_objects = FALSE,
+  public = list(
+    method = "variational",
+    initialize = function(algorithm = NULL,
+                          iter = NULL,
+                          grad_samples = NULL,
+                          elbo_samples = NULL,
+                          eta = NULL,
+                          adapt_engaged = NULL,
+                          adapt_iter = NULL,
+                          tol_rel_obj = NULL,
+                          eval_elbo = NULL,
+                          output_samples = NULL) {
+      self$algorithm <- algorithm
+      self$iter <- iter
+      self$grad_samples <- grad_samples
+      self$elbo_samples <- elbo_samples
+      self$eta <- eta
+      self$tol_rel_obj <- tol_rel_obj
+      self$eval_elbo <- eval_elbo
+      self$output_samples <- output_samples
+      self$adapt_iter <- adapt_iter
+      self$adapt_engaged <- adapt_engaged
+
+      if (is.logical(self$adapt_engaged)) {
+        self$adapt_engaged <- as.integer(self$adapt_engaged)
+      }
+
+      invisible(self)
+    },
+
+    validate = function(num_runs) {
+      validate_variational_args(self)
+    },
+
+    # Compose arguments to CmdStan command for variational-specific
+    # non-default arguments. Works the same way as compose for sampler args,
+    # but `idx` is ignored (no multiple chains for optimize or variational)
+    compose = function(idx = NULL, args = NULL) {
+      .make_arg <- function(arg_name) {
+        compose_arg(self, arg_name, idx = NULL)
+      }
+      new_args <- list(
+        "method=variational",
+        .make_arg("algorithm"),
+        .make_arg("iter"),
+        .make_arg("grad_samples"),
+        .make_arg("elbo_samples"),
+        .make_arg("eta"),
+        .make_arg("tol_rel_obj"),
+        .make_arg("eval_elbo"),
+        .make_arg("output_samples"),
+        if (!is.null(self$adapt_engaged) || !is.null(self$adapt_iter))
+          "adapt",
+        .make_arg("adapt_engaged"),
+        .make_arg("adapt_iter")
       )
       new_args <- do.call(c, new_args)
       c(args, new_args)
@@ -340,6 +308,144 @@ OptimizeArgs <- R6::R6Class(
 #     validate = function(num_runs) invisible(self)
 #   )
 # )
+
+
+
+# Validate the 'Args' objects --------------------------------------------
+
+#' Validate common (not method-specific) CmdStan arguments
+#' @noRd
+#' @param self A `CmdStanArgs` object.
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_cmdstan_args = function(self) {
+  # TODO: validate that can write to output directory
+  validate_exe_file(self$exe_file)
+
+  # at least 1 run id (chain id)
+  checkmate::assert_integerish(self$run_ids,
+                               lower = 1,
+                               min.len = 1,
+                               any.missing = FALSE,
+                               null.ok = FALSE)
+
+  checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
+  if (!is.null(self$data_file)) {
+    checkmate::assert_file_exists(self$data_file, access = "r")
+  }
+
+  num_runs <- length(self$run_ids)
+  validate_init(self$init, num_runs)
+  validate_seed(self$seed, num_runs)
+  self$init <- maybe_recycle_init(self$init, num_runs)
+  self$seed <- maybe_generate_seed(self$seed, num_runs)
+
+  invisible(TRUE)
+}
+
+#' Validate arguments for sampling
+#' @noRd
+#' @param self A `SampleArgs` object.
+#' @param num_runs The number of CmdStan runs (number of MCMC chains).
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_sample_args <- function(self, num_runs) {
+  checkmate::assert_integerish(num_runs,
+                               lower = 1,
+                               len = 1,
+                               any.missing = FALSE,
+                               .var.name = "Number of chains")
+
+  checkmate::assert_integerish(self$thin,
+                               lower = 1,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$num_samples,
+                               lower = 0,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$num_warmup,
+                               lower = 0,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$save_warmup,
+                               lower = 0, upper = 1,
+                               len = 1,
+                               null.ok = TRUE)
+
+  checkmate::assert_integerish(self$adapt_engaged,
+                               lower = 0, upper = 1,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_numeric(self$adapt_delta,
+                            lower = 0, upper = 1,
+                            len = 1,
+                            null.ok = TRUE)
+  checkmate::assert_integerish(self$max_depth,
+                               lower = 1,
+                               len = 1,
+                               null.ok = TRUE)
+
+  if (length(self$stepsize) == 1) {
+    checkmate::assert_number(self$stepsize, lower = .Machine$double.eps)
+  } else {
+    checkmate::assert_numeric(self$stepsize,
+                              lower = .Machine$double.eps,
+                              len = num_runs,
+                              null.ok = TRUE)
+  }
+
+  # TODO: implement other checks for metric from cmdstanpy:
+  # https://github.com/stan-dev/cmdstanpy/blob/master/cmdstanpy/cmdstan_args.py#L130
+  validate_metric(self$metric, num_runs)
+
+  invisible(TRUE)
+}
+
+#' Validate arguments for optimization
+#' @noRd
+#' @param self A `OptimizeArgs` object.
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_optimize_args <- function(self) {
+  checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
+                           choices = c("bfgs", "lbfgs", "newton"))
+  checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE, len = 1)
+  checkmate::assert_number(self$init_alpha, lower = 0, null.ok = TRUE)
+  if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
+    stop("'init_alpha' can't be used when algorithm is 'newton'.",
+         call. = FALSE)
+  }
+
+  invisible(TRUE)
+}
+
+#' Validate arguments for variational inference
+#' @noRd
+#' @param self A `VariationalArgs` object.
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_variational_args <- function(self) {
+  checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
+                           choices = c("meanfield", "fullrank"))
+  checkmate::assert_integerish(self$iter, null.ok = TRUE,
+                               lower = 1, len = 1)
+  checkmate::assert_integerish(self$grad_samples, null.ok = TRUE,
+                               lower = 1, len = 1)
+  checkmate::assert_integerish(self$elbo_samples,  null.ok = TRUE,
+                               lower = 1, len = 1)
+  checkmate::assert_integerish(self$eval_elbo, null.ok = TRUE,
+                               lower = 1, len = 1)
+  checkmate::assert_integerish(self$output_samples, null.ok = TRUE,
+                               lower = 1, len = 1)
+  checkmate::assert_integerish(self$adapt_engaged, null.ok = TRUE,
+                               lower = 0, upper = 1, len = 1)
+  checkmate::assert_integerish(self$adapt_iter,
+                               lower = 1, len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_number(self$eta, null.ok = TRUE,
+                           lower = .Machine$double.eps)
+  checkmate::assert_number(self$tol_rel_obj, null.ok = TRUE,
+                           lower = .Machine$double.eps)
+
+  invisible(TRUE)
+}
 
 
 # Validation helpers ------------------------------------------------------
@@ -497,3 +603,25 @@ maybe_recycle_metric <- function(metric, num_runs) {
 available_metrics <- function() {
   c("unit_e", "diag_e", "dense_e")
 }
+
+
+
+# Composition helpers -----------------------------------------------------
+
+#' Helper function to make valid CmdStan arguments
+#' @noRd
+#' @param self An Args object (e.g., `SampleArgs`).
+#' @param arg_name Name of slot in `self` containing the argument value.
+#' @param idx Chain id (only applicable for MCMC).
+compose_arg <- function(self, arg_name, idx = NULL) {
+  val <- self[[arg_name]]
+  if (is.null(val)) {
+    return(NULL)
+  }
+  if (!is.null(idx) && length(val) >= idx) {
+    val <- val[idx]
+  }
+  arg_name <- sub("adapt_", "", arg_name) # e.g. adapt_delta -> delta
+  paste0(arg_name, "=", val)
+}
+
