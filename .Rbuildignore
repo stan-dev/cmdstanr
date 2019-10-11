@@ -7,3 +7,4 @@ design-questions
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+man-roxygen
