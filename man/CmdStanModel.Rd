@@ -22,7 +22,7 @@ print \tab Print readable version of Stan program \cr
 \link[=CmdStanModel-method-sample]{sample}
 \tab Run CmdStan's \code{"sample"} method, return \link{CmdStanMCMC} object  \cr
 \link[=CmdStanModel-method-optimize]{optimize}
-\tab Run CmdStan's \code{"optimize"} method, return \link{CmdStanMLE} object  \cr
+\tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object  \cr
 \link[=CmdStanModel-method-variational]{variational}
 \tab Run CmdStan's \code{"variational"} method, return \code{CmdStanVB} object  \cr
 }
