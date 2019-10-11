@@ -22,3 +22,5 @@
 #'   started, otherwise see [install_cmdstan()] for help with installation.
 #'
 NULL
+
+if(getRversion() >= "2.15.1")  utils::globalVariables(c("self"))

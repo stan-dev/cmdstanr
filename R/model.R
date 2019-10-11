@@ -68,12 +68,12 @@ cmdstan_model <- function(stan_file) {
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  [code][CmdStanModel-method-other] \tab Get Stan code as a string \cr
-#'  [print][CmdStanModel-method-other] \tab Print readable version of Stan program \cr
-#'  [compile][CmdStanModel-method-other] \tab Compile Stan program  \cr
-#'  Fitting methods \tab Run Stan's algorithms  \cr
-#'  [sample][CmdStanModel-method-sample] \tab
-#'    Run CmdStan's `"sample"` method, return [CmdStanMCMC] object  \cr
+#'  code \tab Return Stan program as a string \cr
+#'  print \tab Print readable version of Stan program \cr
+#'  [compile][CmdStanModel-method-compile]
+#'    \tab Compile Stan program  \cr
+#'  [sample][CmdStanModel-method-sample]
+#'    \tab Run CmdStan's `"sample"` method, return [CmdStanMCMC] object  \cr
 #'  [optimize][CmdStanModel-method-optimize]
 #'    \tab Run CmdStan's `"optimize"` method, return [CmdStanMLE] object  \cr
 #'  [variational][CmdStanModel-method-variational]
@@ -96,8 +96,8 @@ CmdStanModel <- R6::R6Class(
       private$stan_file_ <- repair_path(stan_file)
       invisible(self)
     },
-    exe_file = function() private$exe_file_,
     stan_file = function() private$stan_file_,
+    exe_file = function() private$exe_file_,
     code = function() {
       # Get Stan code as a string
       readLines(self$stan_file())
@@ -106,241 +106,50 @@ CmdStanModel <- R6::R6Class(
       # Print readable version of Stan code
       cat(self$code(), sep = "\n")
       invisible(self)
-    },
-
-    compile = function() { # TODO: add compiler options?
-      # Compile Stan program
-      private$exe_file_ <- compile_stan_program(self$stan_file())
-      invisible(self)
-    },
-
-    sample = function(data = NULL,
-                      num_chains = NULL, # TODO: CmdStan does 1 chain, but should this default to 4?
-                      # num_cores = NULL,
-                      num_warmup = NULL,
-                      num_samples = NULL,
-                      save_warmup = FALSE, # TODO: document this
-                      thin = NULL,
-                      refresh = NULL,
-                      init = NULL,
-                      seed = NULL,
-                      max_depth = NULL,
-                      metric = NULL,
-                      stepsize = NULL,
-                      adapt_engaged = NULL,
-                      adapt_delta = NULL) {
-
-      num_chains <- num_chains %||% 1
-      checkmate::assert_integerish(num_chains, lower = 1)
-      chain_ids <- seq_len(num_chains)
-
-      sample_args <- SampleArgs$new(
-        num_warmup = num_warmup,
-        num_samples = num_samples,
-        save_warmup = save_warmup,
-        thin = thin,
-        max_depth = max_depth,
-        metric = metric,
-        stepsize = stepsize,
-        adapt_engaged = adapt_engaged,
-        adapt_delta = adapt_delta
-      )
-      cmdstan_args <- CmdStanArgs$new(
-        method_args = sample_args,
-        model_name = strip_ext(basename(self$exe_file())),
-        exe_file = self$exe_file(),
-        run_ids = chain_ids,
-        data_file = process_data(data),
-        seed = seed,
-        init = init,
-        refresh = refresh
-      )
-
-      runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
-      csv_files <- runset$output_files()
-      for (chain in chain_ids) { # FIXME: allow parallelization
-        run_log <- processx::run(
-          command = cmdstan_args$compose_command(),
-          args = cmdstan_args$compose_all_args(chain, csv_files[chain]),
-          wd = dirname(self$exe_file()),
-          echo_cmd = TRUE,
-          echo = TRUE
-        )
-      }
-      CmdStanMCMC$new(runset) # see fit.R
-    },
-
-    optimize = function(data = NULL,
-                        seed = NULL,
-                        refresh = NULL,
-                        init = NULL,
-                        algorithm = NULL,
-                        init_alpha = NULL,
-                        iter = NULL) {
-
-      warning(
-        "Optimization method is experimental and ",
-        "the structure of returned object may change.",
-        call. = FALSE
-      )
-
-      optimize_args <- OptimizeArgs$new(
-        algorithm = algorithm,
-        init_alpha = init_alpha,
-        iter = iter
-      )
-      cmdstan_args <- CmdStanArgs$new(
-        method_args = optimize_args,
-        model_name = strip_ext(basename(self$exe_file())),
-        exe_file = self$exe_file(),
-        run_ids = 1,
-        data_file = process_data(data),
-        seed = seed,
-        init = init,
-        refresh = refresh
-      )
-
-      runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
-      run_log <- processx::run(
-        command = cmdstan_args$compose_command(),
-        args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
-        wd = dirname(self$exe_file()),
-        echo_cmd = TRUE,
-        echo = TRUE
-      )
-      CmdStanMLE$new(runset)
-    },
-
-    variational = function(data = NULL,
-                           seed = NULL,
-                           refresh = NULL,
-                           init = NULL,
-                           algorithm = NULL,
-                           iter = NULL,
-                           grad_samples = NULL,
-                           elbo_samples = NULL,
-                           eta = NULL,
-                           adapt_engaged = NULL,
-                           adapt_iter = NULL,
-                           tol_rel_obj = NULL,
-                           eval_elbo = NULL,
-                           output_samples = NULL) {
-
-      warning(
-        "Variational inference method is experimental and ",
-        "the structure of returned object may change.",
-        call. = FALSE
-      )
-
-      variational_args <- VariationalArgs$new(
-        algorithm = algorithm,
-        iter = iter,
-        grad_samples = grad_samples,
-        elbo_samples = elbo_samples,
-        eta = eta,
-        adapt_engaged = adapt_engaged,
-        adapt_iter = adapt_iter,
-        tol_rel_obj = tol_rel_obj,
-        eval_elbo = eval_elbo,
-        output_samples = output_samples
-      )
-      cmdstan_args <- CmdStanArgs$new(
-        method_args = variational_args,
-        model_name = strip_ext(basename(self$exe_file())),
-        exe_file = self$exe_file(),
-        run_ids = 1,
-        data_file = process_data(data),
-        seed = seed,
-        init = init,
-        refresh = refresh
-      )
-
-      runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
-      run_log <- processx::run(
-        command = cmdstan_args$compose_command(),
-        args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
-        wd = dirname(self$exe_file()),
-        echo_cmd = TRUE,
-        echo = TRUE
-      )
-
-      # FIXME: make CmdStanVB object and return CmdStanVB$new(runset)
-      # right now returning run log and giving it class to temporarily pass tests
-      class(run_log) <- "CmdStanVB"
-      run_log
     }
   )
 )
 
 
-# internals for CmdStanModel methods ---------------------------------------------
 
-#' Compile Stan program
-#' @noRd
-#' @param stan_file Path to Stan program.
-#' @return Path to executable.
-compile_stan_program <- function(stan_file) {
-  prog <- strip_ext(stan_file)
-  prog <- cmdstan_ext(prog) # adds .exe on Windows
-  run_log <- processx::run(
-    command = "make",
-    args = prog,
-    wd = cmdstan_path(),
-    echo_cmd = TRUE,
-    echo = TRUE
-  )
-  prog
-}
-
-#' Write data to a temporary `.data.R` file if necessary
-#' @noRd
-#' @param data If not `NULL`, then either a path to a data file compatible with
-#'   CmdStan, or a named list of \R objects in the style that RStan uses.
-#' @return Path to data file.
-process_data <- function(data) {
-  if (is.null(data)) {
-    path <- data
-  } else if (is.character(data)) {
-    path <- absolute_path(data)
-  } else if (is.list(data) && !is.data.frame(data)) {
-    path <- write_rdump(data)
-  } else {
-    stop("'data' should be a path or a named list.", call. = FALSE)
-  }
-  path
-}
-
-
-# Documentation of CmdStanModel methods -----------------------------------
+# CmdStanModel methods -----------------------------------
 
 #' Compile a Stan program or get the Stan code
 #'
-#' @name CmdStanModel-method-other
+#' @name CmdStanModel-method-compile
 #' @family CmdStanModel-methods
 #' @description The `compile` method of a [CmdStanModel] object calls CmdStan to
 #'   translate a Stan program to C++ and call the C++ compiler. The resulting
 #'   files are placed in the same directory as the Stan program.
 #'
-#'   The `code` and `print` methods return and print the Stan code,
-#'   respectively.
-#'
 #' @section Usage:
 #'   ```
 #'   $compile()
-#'   $code()
-#'   $print()
 #'   ```
 #'
-#' @section Value:
-#'   * The `code` method returns the Stan code as a string.
-#'   * The `print` method prints a readable version of the Stan code and returns
-#'     the [CmdStanModel] object invisibly.
-#'   * The `compile` method returns the [CmdStanModel] object invisibly.
+#' @section Value: The `compile` method returns the [CmdStanModel] object
+#'   invisibly.
 #'
 #' @seealso [CmdStanModel]
 #' @inherit cmdstan_model examples
 #'
 NULL
+
+compile_method <- function() { # TODO: add compiler options?
+  exe <- strip_ext(self$stan_file())
+  exe <- cmdstan_ext(exe) # adds .exe on Windows
+  run_log <- processx::run(
+    command = "make",
+    args = exe,
+    wd = cmdstan_path(),
+    echo_cmd = TRUE,
+    echo = TRUE
+  )
+  private$exe_file_ <- exe
+  invisible(self)
+}
+CmdStanModel$set("public", name = "compile", value = compile_method)
+
 
 #' Run Stan's default MCMC algorithm
 #'
@@ -397,6 +206,64 @@ NULL
 #'
 NULL
 
+sample_method <- function(data = NULL,
+                          seed = NULL,
+                          refresh = NULL,
+                          init = NULL,
+                          num_chains = NULL, # TODO: CmdStan does 1 chain, but should this default to 4?
+                          # num_cores = NULL,
+                          num_warmup = NULL,
+                          num_samples = NULL,
+                          save_warmup = FALSE, # TODO: document this
+                          thin = NULL,
+                          max_depth = NULL,
+                          metric = NULL,
+                          stepsize = NULL,
+                          adapt_engaged = NULL,
+                          adapt_delta = NULL) {
+
+  num_chains <- num_chains %||% 1
+  checkmate::assert_integerish(num_chains, lower = 1)
+  chain_ids <- seq_len(num_chains)
+
+  sample_args <- SampleArgs$new(
+    num_warmup = num_warmup,
+    num_samples = num_samples,
+    save_warmup = save_warmup,
+    thin = thin,
+    max_depth = max_depth,
+    metric = metric,
+    stepsize = stepsize,
+    adapt_engaged = adapt_engaged,
+    adapt_delta = adapt_delta
+  )
+  cmdstan_args <- CmdStanArgs$new(
+    method_args = sample_args,
+    model_name = strip_ext(basename(self$exe_file())),
+    exe_file = self$exe_file(),
+    run_ids = chain_ids,
+    data_file = process_data(data),
+    seed = seed,
+    init = init,
+    refresh = refresh
+  )
+
+  runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
+  csv_files <- runset$output_files()
+  for (chain in chain_ids) { # FIXME: allow parallelization
+    run_log <- processx::run(
+      command = cmdstan_args$compose_command(),
+      args = cmdstan_args$compose_all_args(chain, csv_files[chain]),
+      wd = dirname(self$exe_file()),
+      echo_cmd = TRUE,
+      echo = TRUE
+    )
+  }
+  CmdStanMCMC$new(runset) # see fit.R
+}
+CmdStanModel$set("public", name = "sample", value = sample_method)
+
+
 #' Run optimization
 #'
 #' @name CmdStanModel-method-optimize
@@ -432,6 +299,48 @@ NULL
 #' @inherit cmdstan_model examples
 #'
 NULL
+
+optimize_method <- function(data = NULL,
+                            seed = NULL,
+                            refresh = NULL,
+                            init = NULL,
+                            algorithm = NULL,
+                            init_alpha = NULL,
+                            iter = NULL) {
+
+  warning(
+    "Optimization method is experimental and ",
+    "the structure of returned object may change.",
+    call. = FALSE
+  )
+
+  optimize_args <- OptimizeArgs$new(
+    algorithm = algorithm,
+    init_alpha = init_alpha,
+    iter = iter
+  )
+  cmdstan_args <- CmdStanArgs$new(
+    method_args = optimize_args,
+    model_name = strip_ext(basename(self$exe_file())),
+    exe_file = self$exe_file(),
+    run_ids = 1,
+    data_file = process_data(data),
+    seed = seed,
+    init = init,
+    refresh = refresh
+  )
+
+  runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
+  run_log <- processx::run(
+    command = cmdstan_args$compose_command(),
+    args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
+    wd = dirname(self$exe_file()),
+    echo_cmd = TRUE,
+    echo = TRUE
+  )
+  CmdStanMLE$new(runset)
+}
+CmdStanModel$set("public", name = "optimize", value = optimize_method)
 
 
 #' Run variational inference
@@ -488,4 +397,85 @@ NULL
 #' @inherit cmdstan_model examples
 #'
 NULL
+
+variational_method <- function(data = NULL,
+                               seed = NULL,
+                               refresh = NULL,
+                               init = NULL,
+                               algorithm = NULL,
+                               iter = NULL,
+                               grad_samples = NULL,
+                               elbo_samples = NULL,
+                               eta = NULL,
+                               adapt_engaged = NULL,
+                               adapt_iter = NULL,
+                               tol_rel_obj = NULL,
+                               eval_elbo = NULL,
+                               output_samples = NULL) {
+
+  warning(
+    "Variational inference method is experimental and ",
+    "the structure of returned object may change.",
+    call. = FALSE
+  )
+
+  variational_args <- VariationalArgs$new(
+    algorithm = algorithm,
+    iter = iter,
+    grad_samples = grad_samples,
+    elbo_samples = elbo_samples,
+    eta = eta,
+    adapt_engaged = adapt_engaged,
+    adapt_iter = adapt_iter,
+    tol_rel_obj = tol_rel_obj,
+    eval_elbo = eval_elbo,
+    output_samples = output_samples
+  )
+  cmdstan_args <- CmdStanArgs$new(
+    method_args = variational_args,
+    model_name = strip_ext(basename(self$exe_file())),
+    exe_file = self$exe_file(),
+    run_ids = 1,
+    data_file = process_data(data),
+    seed = seed,
+    init = init,
+    refresh = refresh
+  )
+
+  runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
+  run_log <- processx::run(
+    command = cmdstan_args$compose_command(),
+    args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
+    wd = dirname(self$exe_file()),
+    echo_cmd = TRUE,
+    echo = TRUE
+  )
+
+  # FIXME: make CmdStanVB object and return CmdStanVB$new(runset)
+  # right now returning run log and giving it class to temporarily pass tests
+  class(run_log) <- "CmdStanVB"
+  run_log
+}
+CmdStanModel$set("public", name = "variational", value = variational_method)
+
+
+# Internals ---------------------------------------------------------------
+
+#' Write data to a temporary `.data.R` file if necessary
+#' @noRd
+#' @param data If not `NULL`, then either a path to a data file compatible with
+#'   CmdStan, or a named list of \R objects in the style that RStan uses.
+#' @return Path to data file.
+process_data <- function(data) {
+  if (is.null(data)) {
+    path <- data
+  } else if (is.character(data)) {
+    path <- absolute_path(data)
+  } else if (is.list(data) && !is.data.frame(data)) {
+    path <- write_rdump(data)
+  } else {
+    stop("'data' should be a path or a named list.", call. = FALSE)
+  }
+  path
+}
 

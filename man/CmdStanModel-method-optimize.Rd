@@ -101,7 +101,7 @@ if (require(rstan, quietly = TRUE)) {
 \seealso{
 \link{CmdStanModel}
 
-Other CmdStanModel-methods: \code{\link{CmdStanModel-method-other}},
+Other CmdStanModel-methods: \code{\link{CmdStanModel-method-compile}},
   \code{\link{CmdStanModel-method-sample}},
   \code{\link{CmdStanModel-method-variational}}
 }

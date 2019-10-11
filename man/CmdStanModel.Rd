@@ -15,12 +15,12 @@ available methods.
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
-\link[=CmdStanModel-method-other]{code} \tab Get Stan code as a string \cr
-\link[=CmdStanModel-method-other]{print} \tab Print readable version of Stan program \cr
-\link[=CmdStanModel-method-other]{compile} \tab Compile Stan program  \cr
-Fitting methods \tab Run Stan's algorithms  \cr
-\link[=CmdStanModel-method-sample]{sample} \tab
-Run CmdStan's \code{"sample"} method, return \link{CmdStanMCMC} object  \cr
+code \tab Return Stan program as a string \cr
+print \tab Print readable version of Stan program \cr
+\link[=CmdStanModel-method-compile]{compile}
+\tab Compile Stan program  \cr
+\link[=CmdStanModel-method-sample]{sample}
+\tab Run CmdStan's \code{"sample"} method, return \link{CmdStanMCMC} object  \cr
 \link[=CmdStanModel-method-optimize]{optimize}
 \tab Run CmdStan's \code{"optimize"} method, return \link{CmdStanMLE} object  \cr
 \link[=CmdStanModel-method-variational]{variational}
