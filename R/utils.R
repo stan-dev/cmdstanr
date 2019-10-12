@@ -102,7 +102,7 @@ copy_temp_files <-
 
 # FIXME: also parse the csv header
 read_optim_csv <- function(csv_file) {
-  csv_no_comments <- read.csv(csv_file, comment.char = "#")
+  csv_no_comments <- utils::read.csv(csv_file, comment.char = "#")
   mat <- as.matrix(csv_no_comments)
   list(
     mle = mat[1, colnames(mat) != "lp__"],
@@ -112,7 +112,7 @@ read_optim_csv <- function(csv_file) {
 
 # FIXME: also parse the csv header
 read_vb_csv <- function(csv_file) {
-  csv_no_comments <- read.csv(csv_file, comment.char = "#")
+  csv_no_comments <- utils::read.csv(csv_file, comment.char = "#")
   # drop first row since according to CmdStan manual it's just the mean
   mat <- as.matrix(csv_no_comments)[-1,, drop=FALSE]
 
