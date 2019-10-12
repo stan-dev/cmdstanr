@@ -167,28 +167,30 @@ CmdStanModel object." />
 
 
 
-    <h2 class="hasAnchor" id="available-methods"><a class="anchor" href="#available-methods"></a>Available Methods</h2>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p><code>CmdStanVB</code> objects have the following
-associated methods:</p><dl class='dl-horizontal'>
-<dt><code><a href='https://rdrr.io/r/base/summary.html'>summary()</a></code></dt><dd><p>Run CmdStan's <code>bin/stansummary</code> on output csv file.</p></dd>
-<dt><code>draws()</code></dt><dd><p>Return the draws from the approximate posterior as a matrix with one
-column per variable.</p></dd>
-<dt><code>save_output_files(dir, basename = NULL)</code></dt><dd><p>Move output csv file from temporary directory to a specified directory.</p></dd>
-<dt><code>save_data_file(dir, basename = NULL)</code></dt><dd><p>Move data file from temporary directory to a specified directory.</p></dd>
-<dt>More coming soon...</dt><dd><p></p></dd>
+    <p><code>CmdStanVB</code> objects have the following associated methods:</p>
+<table class='table'>
+<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
+<tr><td><code>summary</code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
+<tr><td><code>draws</code></td><td>Return approximate posterior draws as matrix with one colunm per
+variable.</td></tr>
+<tr><td><code><a href='CmdStanFit-method-save_output_files.html'>save_output_files</a></code></td><td>Save output csv files to a specified location.</td></tr>
+<tr><td><code><a href='CmdStanFit-method-save_output_files.html'>save_data_file</a></code></td><td>Save R dump or JSON data file to a specified location.</td></tr>
+</table>
 
-</dl>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='CmdStanModel.html'>CmdStanModel</a></code></p></div>
+    <div class='dont-index'><p><code><a href='CmdStanModel.html'>CmdStanModel</a></code></p>
+<p>Other CmdStanFit objects: <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>,
+  <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#available-methods">Available Methods</a></li>
+      <li><a href="#details">Details</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>
 

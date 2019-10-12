@@ -27,7 +27,7 @@ Return post-warmup draws as an \code{iters x chains x variables} array. \cr
 \seealso{
 \code{\link{CmdStanModel}}
 
-Other CmdStanFit: \code{\link{CmdStanMLE}},
+Other CmdStanFit objects: \code{\link{CmdStanMLE}},
   \code{\link{CmdStanVB}}
 }
-\concept{CmdStanFit}
+\concept{CmdStanFit objects}

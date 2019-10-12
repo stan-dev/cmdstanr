@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>CmdStanMLE objects — CmdStanMLE • cmdstanr</title>
+<title>Save output and data files — CmdStanFit-method-save_output_files • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,10 +42,15 @@
 
 
 
-<meta property="og:title" content="CmdStanMLE objects — CmdStanMLE" />
-<meta property="og:description" content="A CmdStanMLE object is the fitted model object returned by the
-optimize() method of a CmdStanModel
-object." />
+<meta property="og:title" content="Save output and data files — CmdStanFit-method-save_output_files" />
+<meta property="og:description" content="All fitted model objects have methods save_output_files() and
+save_data_file(). These methods move csv output files and R dump or json
+data files from the CmdStanR temporary directory to a user-specified
+location. By default the suffix '-&amp;lt;run_id&amp;gt;_&amp;lt;timestamp&amp;gt;' is added to the
+file name(s), where run_id is the chain number if applicable (MCMC only)
+and 1 otherwise. If files with the specified names already exist they are
+overwritten, but this shouldn't occur unless the timestamp argument has
+been intentionally set to FALSE." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -154,43 +159,56 @@ object." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>CmdStanMLE objects</h1>
+    <h1>Save output and data files</h1>
     
-    <div class="hidden name"><code>CmdStanMLE.Rd</code></div>
+    <div class="hidden name"><code>CmdStanFit-method-save_output_files.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>A <code>CmdStanMLE</code> object is the fitted model object returned by the
-<code><a href='CmdStanModel-method-optimize.html'>optimize()</a></code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code>
-object.</p>
+    <p>All fitted model objects have methods <code>save_output_files()</code> and
+<code>save_data_file()</code>. These methods move csv output files and R dump or json
+data files from the CmdStanR temporary directory to a user-specified
+location. By default the suffix <code>'-&lt;run_id&gt;_&lt;timestamp&gt;'</code> is added to the
+file name(s), where <code>run_id</code> is the chain number if applicable (MCMC only)
+and <code>1</code> otherwise. If files with the specified names already exist they are
+overwritten, but this shouldn't occur unless the <code>timestamp</code> argument has
+been intentionally set to <code>FALSE</code>.</p>
     </div>
 
 
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
 
-    <p><code>CmdStanMLE</code> objects have the following associated methods:</p>
-<table class='table'>
-<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code>mle</code></td><td>Return the MLE (or posterior mode) as a named vector.</td></tr>
-<tr><td><code>lp</code></td><td>Return the the total log probability density (up to an additive
-constant) computed in the model block of the Stan program.</td></tr>
-<tr><td><code><a href='CmdStanFit-method-save_output_files.html'>save_output_files</a></code></td><td>Save output csv files to a specified location.</td></tr>
-<tr><td><code><a href='CmdStanFit-method-save_output_files.html'>save_data_file</a></code></td><td>Save R dump or JSON data file to a specified location.</td></tr>
-</table>
+    
+<pre>$save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
+$save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
+</pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
 
+    <p><code>save_output_files()</code> and <code>save_data_file()</code> have the
+same arguments:</p><ul>
+<li><p><code>dir</code>: (string) Path to directory where the files should be saved.</p></li>
+<li><p><code>basename</code>: (string) Base filename to use.</p></li>
+<li><p><code>timestamp</code>: (logical) Should a timestamp be added to the file name(s)?
+Defaults to <code>TRUE</code>.</p></li>
+</ul>
+
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>The paths to the new files or <code>NA</code> for any that couldn't be
+copied.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='CmdStanModel.html'>CmdStanModel</a></code></p>
-<p>Other CmdStanFit objects: <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>,
-  <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#details">Details</a></li>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#value">Value</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>
 

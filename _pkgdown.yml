@@ -65,9 +65,11 @@ reference:
       Run CmdStan from R.
     contents:
       - cmdstan_model
-      - starts_with("CmdStanModel")
-  - title: "Fitted model objects"
+      - CmdStanModel
+      - starts_with("CmdStanModel-method")
+  - title: "Fitted model objects and methods"
     contents:
       - CmdStanMCMC
       - CmdStanMLE
       - CmdStanVB
+      - starts_with("CmdStanFit-method")

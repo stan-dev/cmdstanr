@@ -4,6 +4,9 @@
     <loc>https://mc-stan.org/cmdstanr/index.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanFit-method-save_output_files.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html</loc>
   </url>
   <url>

@@ -25,7 +25,7 @@ variable. \cr
 \seealso{
 \code{\link{CmdStanModel}}
 
-Other CmdStanFit: \code{\link{CmdStanMCMC}},
+Other CmdStanFit objects: \code{\link{CmdStanMCMC}},
   \code{\link{CmdStanMLE}}
 }
-\concept{CmdStanFit}
+\concept{CmdStanFit objects}

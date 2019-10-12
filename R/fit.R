@@ -3,7 +3,7 @@
 #' CmdStanMCMC objects
 #'
 #' @name CmdStanMCMC
-#' @family CmdStanFit
+#' @family CmdStanFit objects
 #'
 #' @description A `CmdStanMCMC` object is the fitted model object returned by
 #'   the [`sample()`][CmdStanModel-method-sample] method of a [`CmdStanModel`]
@@ -103,7 +103,7 @@ CmdStanMCMC <- R6::R6Class(
 #' CmdStanMLE objects
 #'
 #' @name CmdStanMLE
-#' @family CmdStanFit
+#' @family CmdStanFit objects
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`optimize()`][CmdStanModel-method-optimize] method of a [`CmdStanModel`]
@@ -164,7 +164,7 @@ CmdStanMLE <- R6::R6Class(
 #' CmdStanVB objects
 #'
 #' @name CmdStanVB
-#' @family CmdStanFit
+#' @family CmdStanFit objects
 #'
 #' @description A `CmdStanVB` object is the fitted model object returned by the
 #'   [`variational()`][CmdStanModel-method-variational] method of a

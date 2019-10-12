@@ -25,7 +25,7 @@ constant) computed in the model block of the Stan program. \cr
 \seealso{
 \code{\link{CmdStanModel}}
 
-Other CmdStanFit: \code{\link{CmdStanMCMC}},
+Other CmdStanFit objects: \code{\link{CmdStanMCMC}},
   \code{\link{CmdStanVB}}
 }
-\concept{CmdStanFit}
+\concept{CmdStanFit objects}

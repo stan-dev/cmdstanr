@@ -117,7 +117,8 @@ CmdStanModel <- R6::R6Class(
 #' Compile a Stan program or get the Stan code
 #'
 #' @name CmdStanModel-method-compile
-#' @family CmdStanModel-methods
+#' @family CmdStanModel methods
+#'
 #' @description The `compile` method of a [`CmdStanModel`] object calls CmdStan
 #'   to translate a Stan program to C++ and call the C++ compiler. The resulting
 #'   files are placed in the same directory as the Stan program.
@@ -154,7 +155,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' Run Stan's MCMC algorithms
 #'
 #' @name CmdStanModel-method-sample
-#' @family CmdStanModel-methods
+#' @family CmdStanModel methods
 #'
 #' @description The `sample` method of a [`CmdStanModel`] object runs the default
 #'   MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce a set
@@ -268,7 +269,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' Run Stan's optimization algorithms
 #'
 #' @name CmdStanModel-method-optimize
-#' @family CmdStanModel-methods
+#' @family CmdStanModel methods
 #'
 #' @description The `optimize` method of a [`CmdStanModel`] object runs Stan's
 #'   optimizer. Arguments left at `NULL` default to the current CmdStan default.
@@ -357,7 +358,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #' Run Stan's variational approximation algorithms
 #'
 #' @name CmdStanModel-method-variational
-#' @family CmdStanModel-methods
+#' @family CmdStanModel methods
 #'
 #' @description The `variational` method of a [`CmdStanModel`] object runs Stan's
 #'   variational Bayes (ADVI) algorithms. Arguments left at `NULL` default to
