@@ -4,9 +4,9 @@
 #' The `install_cmdstan()` function runs a script
 #' (see `inst/make_cmdstan.sh` on [GitHub](https://github.com/stan-dev/cmdstanr))
 #' that attempts to download and install the latest release of
-#' [CmdStan](https://github.com/stan-dev/cmdstan/releases). Currently the
+#' [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest). Currently the
 #' necessary C++ tool chain is assumed to be available (see Appendix B of the
-#' CmdStan [manual](https://github.com/stan-dev/cmdstan/releases)),
+#' CmdStan [guide](https://github.com/stan-dev/cmdstan/releases/latest)),
 #' but in the future CmdStanR may help install the requirements.
 #'
 #' @export

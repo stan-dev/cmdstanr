@@ -100,38 +100,29 @@ copy_temp_files <-
   }
 
 
-#' Create default output csv file basename
-#' @noRd
-#' @param model_name,method Strings giving the model name (e.g., `"my_model"`)
-#'   and CmdStan method (e.g. `"sample"`).
-#' @return String default file basename (e.g., `"my_model-stan-sample"`).
-output_csv_basename <- function(model_name, method) {
-  paste0(model_name, "-stan-", method)
-}
-
 # FIXME: also parse the csv header
 read_optim_csv <- function(csv_file) {
-  full_csv <- readLines(csv_file)
-  mark <- grep("#   refresh", full_csv)
-  col_names <- strsplit(full_csv[mark + 1], split = ",")[[1]]
-
-  header <- full_csv[1:mark]
-  x <- scan(csv_file, skip = mark + 1, sep = ",", quiet = TRUE)
-  list(mle = stats::setNames(x, col_names))
+  csv_no_comments <- read.csv(csv_file, comment.char = "#")
+  mat <- as.matrix(csv_no_comments)
+  list(
+    mle = mat[1, colnames(mat) != "lp__"],
+    lp = mat[1, colnames(mat) == "lp__"]
+  )
 }
 
 # FIXME: also parse the csv header
 read_vb_csv <- function(csv_file) {
   csv_no_comments <- read.csv(csv_file, comment.char = "#")
-  out <- list(
-    log_p = csv_no_comments$log_p__,
-    log_g = csv_no_comments$log_g__
+  # drop first row since according to CmdStan manual it's just the mean
+  mat <- as.matrix(csv_no_comments)[-1,, drop=FALSE]
+
+  drop_cols <- c("lp__", "log_p__", "log_g__")
+  keep_cols <- setdiff(colnames(mat), drop_cols)
+  list(
+    log_p = mat[, "log_p__"],
+    log_g = mat[, "log_g__"],
+    draws = mat[, keep_cols, drop=FALSE]
   )
-  csv_no_comments$lp__ <- NULL
-  csv_no_comments$log_p__ <- NULL
-  csv_no_comments$log_g__ <- NULL
-  out$draws <- as.matrix(csv_no_comments)
-  out
 }
 
 

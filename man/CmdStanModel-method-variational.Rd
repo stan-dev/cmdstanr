@@ -2,11 +2,21 @@
 % Please edit documentation in R/model.R
 \name{CmdStanModel-method-variational}
 \alias{CmdStanModel-method-variational}
-\title{Run variational inference}
+\title{Run Stan's variational approximation algorithms}
 \description{
 The \code{variational} method of a \link{CmdStanModel} object runs Stan's
 variational Bayes (ADVI) algorithms. Arguments left at \code{NULL} default to
 the current CmdStan default.
+}
+\details{
+From the CmdStan manual: CmdStan can fit a variational approximation to the posterior. The
+approximation is a Gaussian in the unconstrained variable space. Stan
+implements two variational algorithms. The \code{algorithm="meanfield"} option
+uses a fully factorized Gaussian for the approximation. The
+\code{algorithm="fullrank"} option uses a Gaussian with a full-rank covariance
+matrix for the approximation.
+
+-- \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan Interface User's Guide}
 }
 \section{Usage}{
 \preformatted{$variational(

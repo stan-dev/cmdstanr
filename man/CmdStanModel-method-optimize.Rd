@@ -2,10 +2,20 @@
 % Please edit documentation in R/model.R
 \name{CmdStanModel-method-optimize}
 \alias{CmdStanModel-method-optimize}
-\title{Run optimization}
+\title{Run Stan's optimization algorithms}
 \description{
 The \code{optimize} method of a \link{CmdStanModel} object runs Stan's
 optimizer. Arguments left at \code{NULL} default to the current CmdStan default.
+}
+\details{
+CmdStan can find the posterior mode (assuming there is one). If the
+posterior is not convex, there is no guarantee Stan will be able to find
+the global mode as opposed to a local optimum of log probability. For
+optimization, the mode is calculated without the Jacobian adjustment for
+con- strained variables, which shifts the mode due to the change of
+variables. Thus modes correspond to modes of the model as written.
+
+-- \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan Interface User's Guide}
 }
 \section{Usage}{
 \preformatted{$optimize(

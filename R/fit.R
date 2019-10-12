@@ -136,9 +136,13 @@ CmdStanMCMC <- R6::R6Class(
 #' @section Available Methods: `CmdStanMLE` objects have the following
 #'   associated methods:
 #' \describe{
-#'   \item{`print()`}{
-#'   Print the estimates.
-#'   }
+#'   \item{`mle()`}{
+#'   Return the maximum likelihood estimate or estimated posterior mode.
+#'   },
+#'   \item{`lp()`}{
+#'   Return the the total log probability density (up to an additive constant)
+#'   computed in the model block of the Stan program.
+#'   },
 #'   \item{`save_output_files(dir, basename = NULL)`}{
 #'   Move output csv file from temporary directory to a specified directory.
 #'   }
@@ -162,9 +166,12 @@ CmdStanMLE <- R6::R6Class(
       invisible(self)
     },
     mle = function() {
-      out <- private$mle_ %||% read_optim_csv(self$output_files())
-      private$mle_ <- out
-      out
+      if (is.null(private$mle_)) private$read_csv()
+      private$mle_
+    },
+    lp = function() {
+      if (is.null(private$lp_)) private$read_csv()
+      private$lp_
     },
     output_files = function() {
       self$runset$output_files()
@@ -177,7 +184,13 @@ CmdStanMLE <- R6::R6Class(
     }
   ),
   private = list(
-    mle_ = NULL
+    mle_ = NULL,
+    lp_ = NULL,
+    read_csv = function() {
+      optim_output <- read_optim_csv(self$output_files())
+      private$mle_ <- optim_output[["mle"]]
+      private$lp_ <- optim_output[["lp"]]
+    }
   )
 )
 
@@ -193,15 +206,12 @@ CmdStanMLE <- R6::R6Class(
 #' @section Available Methods: `CmdStanVB` objects have the following
 #'   associated methods:
 #' \describe{
-#'   \item{`print()`}{
-#'   Run CmdStan's `bin/stansummary` on output csv file.
-#'   }
 #'   \item{`summary()`}{
 #'   Run CmdStan's `bin/stansummary` on output csv file.
 #'   }
 #'   \item{`draws()`}{
-#'   Return the draws from the approximate posterior as a matrix with one column
-#'   per variable.
+#'   Return the draws from the approximate posterior as a matrix with one
+#'   column per variable.
 #'   }
 #'   \item{`save_output_files(dir, basename = NULL)`}{
 #'   Move output csv file from temporary directory to a specified directory.

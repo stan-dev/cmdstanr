@@ -61,8 +61,8 @@ context("CmdStanMLE")
 
 test_that("reading in csv optimization output works", {
   skip_on_cran()
-  expect_named(fit_mle$mle(), "mle")
-  expect_named(fit_mle$mle()$mle, c("lp__", "theta"))
+  expect_named(fit_mle$mle(), "theta")
+  expect_named(fit_mle$lp(), "lp__")
 })
 
 test_that("saving csv optimzation output works", {

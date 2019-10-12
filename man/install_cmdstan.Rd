@@ -21,8 +21,8 @@ output during the installation process.}
 The \code{install_cmdstan()} function runs a script
 (see \code{inst/make_cmdstan.sh} on \href{https://github.com/stan-dev/cmdstanr}{GitHub})
 that attempts to download and install the latest release of
-\href{https://github.com/stan-dev/cmdstan/releases}{CmdStan}. Currently the
+\href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan}. Currently the
 necessary C++ tool chain is assumed to be available (see Appendix B of the
-CmdStan \href{https://github.com/stan-dev/cmdstan/releases}{manual}),
+CmdStan \href{https://github.com/stan-dev/cmdstan/releases/latest}{guide}),
 but in the future CmdStanR may help install the requirements.
 }

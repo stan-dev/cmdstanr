@@ -2,7 +2,7 @@
 % Please edit documentation in R/model.R
 \name{CmdStanModel-method-sample}
 \alias{CmdStanModel-method-sample}
-\title{Run Stan's default MCMC algorithm}
+\title{Run Stan's MCMC algorithms}
 \description{
 The \code{sample} method of a \link{CmdStanModel} object runs the default
 MCMC algorithm in CmdStan (\code{algorithm=hmc engine=nuts}), to produce a set

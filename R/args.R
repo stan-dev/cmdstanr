@@ -56,7 +56,7 @@ CmdStanArgs <- R6::R6Class(
     },
     # create default basename for csv output file from model name and method
     csv_basename = function() {
-      output_csv_basename(self$model_name, self$method)
+      paste0(self$model_name, "-stan-", self$method)
     },
 
     # Compose character vector of all arguments to pass to CmdStan

@@ -11,9 +11,13 @@ method of a \code{\link{CmdStanModel}} object.
  \code{CmdStanMLE} objects have the following
 associated methods:
 \describe{
-\item{\code{print()}}{
-Print the estimates.
-}
+\item{\code{mle()}}{
+Return the maximum likelihood estimate or estimated posterior mode.
+},
+\item{\code{lp()}}{
+Return the the total log probability density (up to an additive constant)
+computed in the model block of the Stan program.
+},
 \item{\code{save_output_files(dir, basename = NULL)}}{
 Move output csv file from temporary directory to a specified directory.
 }

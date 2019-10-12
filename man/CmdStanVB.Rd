@@ -11,15 +11,12 @@ A \code{CmdStanVB} object is the fitted model object returned by the
  \code{CmdStanVB} objects have the following
 associated methods:
 \describe{
-\item{\code{print()}}{
-Run CmdStan's \code{bin/stansummary} on output csv file.
-}
 \item{\code{summary()}}{
 Run CmdStan's \code{bin/stansummary} on output csv file.
 }
 \item{\code{draws()}}{
-Return the draws from the approximate posterior as a matrix with one column
-per variable.
+Return the draws from the approximate posterior as a matrix with one
+column per variable.
 }
 \item{\code{save_output_files(dir, basename = NULL)}}{
 Move output csv file from temporary directory to a specified directory.

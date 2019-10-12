@@ -151,10 +151,11 @@ compile_method <- function() { # TODO: add compiler options?
 CmdStanModel$set("public", name = "compile", value = compile_method)
 
 
-#' Run Stan's default MCMC algorithm
+#' Run Stan's MCMC algorithms
 #'
 #' @name CmdStanModel-method-sample
 #' @family CmdStanModel-methods
+#'
 #' @description The `sample` method of a [CmdStanModel] object runs the default
 #'   MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce a set
 #'   of draws from the posterior distribution of a model conditioned on some
@@ -264,12 +265,22 @@ sample_method <- function(data = NULL,
 CmdStanModel$set("public", name = "sample", value = sample_method)
 
 
-#' Run optimization
+#' Run Stan's optimization algorithms
 #'
 #' @name CmdStanModel-method-optimize
 #' @family CmdStanModel-methods
+#'
 #' @description The `optimize` method of a [CmdStanModel] object runs Stan's
 #'   optimizer. Arguments left at `NULL` default to the current CmdStan default.
+#'
+#' @details CmdStan can find the posterior mode (assuming there is one). If the
+#'   posterior is not convex, there is no guarantee Stan will be able to find
+#'   the global mode as opposed to a local optimum of log probability. For
+#'   optimization, the mode is calculated without the Jacobian adjustment for
+#'   con- strained variables, which shifts the mode due to the change of
+#'   variables. Thus modes correspond to modes of the model as written.
+#'
+#'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
 #'
 #' @section Usage:
 #'   ```
@@ -343,13 +354,23 @@ optimize_method <- function(data = NULL,
 CmdStanModel$set("public", name = "optimize", value = optimize_method)
 
 
-#' Run variational inference
+#' Run Stan's variational approximation algorithms
 #'
 #' @name CmdStanModel-method-variational
 #' @family CmdStanModel-methods
+#'
 #' @description The `variational` method of a [CmdStanModel] object runs Stan's
 #'   variational Bayes (ADVI) algorithms. Arguments left at `NULL` default to
 #'   the current CmdStan default.
+#'
+#' @details From the CmdStan manual: CmdStan can fit a variational approximation to the posterior. The
+#'   approximation is a Gaussian in the unconstrained variable space. Stan
+#'   implements two variational algorithms. The `algorithm="meanfield"` option
+#'   uses a fully factorized Gaussian for the approximation. The
+#'   `algorithm="fullrank"` option uses a Gaussian with a full-rank covariance
+#'   matrix for the approximation.
+#'
+#'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
 #'
 #' @section Usage:
 #'   ```
