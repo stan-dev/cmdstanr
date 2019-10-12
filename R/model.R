@@ -364,7 +364,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   variational Bayes (ADVI) algorithms. Arguments left at `NULL` default to
 #'   the current CmdStan default.
 #'
-#' @details From the CmdStan manual: CmdStan can fit a variational approximation to the posterior. The
+#' @details CmdStan can fit a variational approximation to the posterior. The
 #'   approximation is a Gaussian in the unconstrained variable space. Stan
 #'   implements two variational algorithms. The `algorithm="meanfield"` option
 #'   uses a fully factorized Gaussian for the approximation. The
