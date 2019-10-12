@@ -68,16 +68,16 @@ cmdstan_model <- function(stan_file) {
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  code \tab Return Stan program as a string \cr
-#'  print \tab Print readable version of Stan program \cr
+#'  code \tab Return Stan program as a string. \cr
+#'  print \tab Print readable version of Stan program. \cr
 #'  [compile][CmdStanModel-method-compile]
-#'    \tab Compile Stan program \cr
+#'    \tab Compile Stan program. \cr
 #'  [sample][CmdStanModel-method-sample]
-#'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object \cr
+#'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
 #'  [optimize][CmdStanModel-method-optimize]
-#'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object \cr
+#'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. \cr
 #'  [variational][CmdStanModel-method-variational]
-#'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object \cr
+#'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. \cr
 #' }
 #'
 #' @inherit cmdstan_model examples

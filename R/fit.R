@@ -2,42 +2,27 @@
 
 #' CmdStanMCMC objects
 #'
-#' A `CmdStanMCMC` object is the fitted model object returned by the
-#' [`sample()`][CmdStanModel-method-sample] method of a [`CmdStanModel`] object.
-#' Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6] objects.
-#'
 #' @name CmdStanMCMC
+#' @family CmdStanFit
 #'
-#' @section Available Methods: `CmdStanMCMC` objects have the following
-#'   associated methods:
-#' \describe{
-#'   \item{`summary()`}{
-#'   Run CmdStan's `bin/stansummary` on output csv files.
-#'   }
-#'   \item{`diagnose()`}{
-#'   Run CmdStan's `bin/diagnose` on output csv files.
-#'   }
-#'   \item{`draws()`}{
-#'   Return the posterior sample (post-warmup draws) as a 3-D array with
-#'   dimensions ordered as `(iterations, chains, variables)`.
-#'   }
-#'   \item{`save_output_files(dir, basename = NULL)`}{
-#'   Move csv output files from temporary directory to a specified directory
-#'   `dir` using the provided file `basename`. The suffix `'-<chain_id>.csv'`
-#'   is appended each file. If files with the specified names already exist they
-#'   are overwritten.
-#'   Arguments:
-#'   * `dir`: Path to directory where the files should be saved.
-#'   * `basename`: Base filename to use.
+#' @description A `CmdStanMCMC` object is the fitted model object returned by
+#'   the [`sample()`][CmdStanModel-method-sample] method of a [`CmdStanModel`]
+#'   object. Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6]
+#'   objects.
 #'
-#'   Return: the output from `base::file.copy()`, which is a logical vector
-#'   indicating if the operation succeeded for each of the files.
-#'   }
-#'   \item{`save_data_file(dir, basename = NULL)`}{
-#'   Same as `save_output_files()` but applies to the temporary file containing
-#'   the data instead of the output csv files.
-#'   }
-#'   \item{More coming soon...}{}
+#' @details
+#' `CmdStanMCMC` objects have the following associated methods:
+#'
+#' \tabular{ll}{
+#'  **Method** \tab **Description** \cr
+#'  `summary` \tab Run and print CmdStan's `bin/stansummary`. \cr
+#'  `diagnose` \tab Run and print CmdStan's `bin/diagnose`. \cr
+#'  `draws` \tab
+#'    Return post-warmup draws as an `iters x chains x variables` array. \cr
+#'  [`save_output_files`][CmdStanFit-method-save_output_files]
+#'    \tab Save output csv files to a specified location. \cr
+#'  [`save_data_file`][CmdStanFit-method-save_data_file]
+#'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
 #'
 #' @seealso [`CmdStanModel`]
@@ -52,9 +37,6 @@ CmdStanMCMC <- R6::R6Class(
       checkmate::assert_r6(runset, classes = "RunSet")
       self$runset <- runset
       invisible(self)
-    },
-    print = function() {
-      self$summary()
     },
     summary = function() {
       # Run cmdstan's bin/stansummary on csv files
@@ -81,21 +63,15 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(private$draws_)) private$read_csv()
       private$draws_
     },
-    sampler_params = function() {
-      # currently sampler params list from rstan::get_sampler_params()
-      # but this shouldn't use rstan
-      if (is.null(private$sampler_params_)) private$read_csv()
-      private$sampler_params_
-    },
+    # sampler_params = function() {
+    #   # currently sampler params list from rstan::get_sampler_params()
+    #   # but this shouldn't use rstan
+    #   if (is.null(private$sampler_params_)) private$read_csv()
+    #   private$sampler_params_
+    # },
     output_files = function() {
       # get the paths to the temporary output csv files
       self$runset$output_files()
-    },
-    save_output_files = function(dir = ".", basename = NULL) {
-      self$runset$save_output_files(dir, basename)
-    },
-    save_data_file = function(dir = ".", basename = NULL) {
-      self$runset$save_data_file(dir, basename)
     }
   ),
   private = list(
@@ -109,10 +85,8 @@ CmdStanMCMC <- R6::R6Class(
 
       # FIXME don't use rstan
       if (!requireNamespace("rstan", quietly = TRUE)) {
-        stop("Please install the 'rstan' package.\n",
-             "This is required for reading the csv files from CmdStan ",
-             "until CmdStanR has its own implementation.",
-             call. = FALSE)
+        stop("Please install the 'rstan' package. This is temporarily required ",
+             "for reading the csv files from CmdStan.", call. = FALSE)
       }
       stanfit <- rstan::read_stan_csv(self$output_files())
       private$draws_ <-
@@ -128,29 +102,25 @@ CmdStanMCMC <- R6::R6Class(
 
 #' CmdStanMLE objects
 #'
-#' A `CmdStanMLE` object is the fitted model object returned by the
-#' [`optimize()`][CmdStanModel-method-optimize] method of a [`CmdStanModel`]
-#' object.
-#'
 #' @name CmdStanMLE
+#' @family CmdStanFit
 #'
-#' @section Available Methods: `CmdStanMLE` objects have the following
-#'   associated methods:
-#' \describe{
-#'   \item{`mle()`}{
-#'   Return the maximum likelihood estimate or estimated posterior mode.
-#'   }
-#'   \item{`lp()`}{
-#'   Return the the total log probability density (up to an additive constant)
-#'   computed in the model block of the Stan program.
-#'   }
-#'   \item{`save_output_files(dir, basename = NULL)`}{
-#'   Move output csv file from temporary directory to a specified directory.
-#'   }
-#'   \item{`save_data_file(dir, basename = NULL)`}{
-#'   Move data file from temporary directory to a specified directory.
-#'   }
-#'   \item{More coming soon...}{}
+#' @description A `CmdStanMLE` object is the fitted model object returned by the
+#'   [`optimize()`][CmdStanModel-method-optimize] method of a [`CmdStanModel`]
+#'   object.
+#'
+#' @details
+#' `CmdStanMLE` objects have the following associated methods:
+#'
+#' \tabular{ll}{
+#'  **Method** \tab **Description** \cr
+#'  `mle` \tab Return the MLE (or posterior mode) as a named vector. \cr
+#'  `lp` \tab Return the the total log probability density (up to an additive
+#'    constant) computed in the model block of the Stan program. \cr
+#'  [`save_output_files`][CmdStanFit-method-save_output_files]
+#'    \tab Save output csv files to a specified location. \cr
+#'  [`save_data_file`][CmdStanFit-method-save_data_file]
+#'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
 #'
 #' @seealso [`CmdStanModel`]
@@ -176,12 +146,6 @@ CmdStanMLE <- R6::R6Class(
     },
     output_files = function() {
       self$runset$output_files()
-    },
-    save_output_files = function(dir = ".", basename = NULL) {
-      self$runset$save_output_files(dir, basename)
-    },
-    save_data_file = function(dir = ".", basename = NULL) {
-      self$runset$save_data_file(dir, basename)
     }
   ),
   private = list(
@@ -199,29 +163,25 @@ CmdStanMLE <- R6::R6Class(
 
 #' CmdStanVB objects
 #'
-#' A `CmdStanVB` object is the fitted model object returned by the
-#' [`variational()`][CmdStanModel-method-variational] method of a
-#' [`CmdStanModel`] object.
-#'
 #' @name CmdStanVB
+#' @family CmdStanFit
 #'
-#' @section Available Methods: `CmdStanVB` objects have the following
-#'   associated methods:
-#' \describe{
-#'   \item{`summary()`}{
-#'   Run CmdStan's `bin/stansummary` on output csv file.
-#'   }
-#'   \item{`draws()`}{
-#'   Return the draws from the approximate posterior as a matrix with one
-#'   column per variable.
-#'   }
-#'   \item{`save_output_files(dir, basename = NULL)`}{
-#'   Move output csv file from temporary directory to a specified directory.
-#'   }
-#'   \item{`save_data_file(dir, basename = NULL)`}{
-#'   Move data file from temporary directory to a specified directory.
-#'   }
-#'   \item{More coming soon...}{}
+#' @description A `CmdStanVB` object is the fitted model object returned by the
+#'   [`variational()`][CmdStanModel-method-variational] method of a
+#'   [`CmdStanModel`] object.
+#'
+#' @details
+#' `CmdStanVB` objects have the following associated methods:
+#'
+#' \tabular{ll}{
+#'  **Method** \tab **Description** \cr
+#'  `summary` \tab Run and print CmdStan's `bin/stansummary`. \cr
+#'  `draws` \tab Return approximate posterior draws as matrix with one colunm per
+#'    variable. \cr
+#'  [`save_output_files`][CmdStanFit-method-save_output_files]
+#'    \tab Save output csv files to a specified location. \cr
+#'  [`save_data_file`][CmdStanFit-method-save_data_file]
+#'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
 #'
 #' @seealso [`CmdStanModel`]
@@ -264,12 +224,6 @@ CmdStanVB <- R6::R6Class(
     },
     output_files = function() {
       self$runset$output_files()
-    },
-    save_output_files = function(dir = ".", basename = NULL) {
-      self$runset$save_output_files(dir, basename)
-    },
-    save_data_file = function(dir = ".", basename = NULL) {
-      self$runset$save_data_file(dir, basename)
     }
   ),
   private = list(
@@ -293,6 +247,56 @@ CmdStanVB <- R6::R6Class(
 # CmdStanGQ <- R6::R6Class(
 #   classname = "CmdStanGQ"
 # )
+
+# Shared methods ----------------------------------------------------------
+
+#' Save output and data files
+#'
+#' @name CmdStanFit-method-save_output_files
+#' @aliases CmdStanFit-method-save_data_file
+#'
+#' @description All fitted model objects have methods `save_output_files()` and
+#'   `save_data_file()`. These methods move csv output files and R dump or json
+#'   data files from the CmdStanR temporary directory to a user-specified
+#'   location. By default the suffix `'-<run_id>_<timestamp>'` is added to the
+#'   file name(s), where `run_id` is the chain number if applicable (MCMC only)
+#'   and `1` otherwise. If files with the specified names already exist they are
+#'   overwritten, but this shouldn't occur unless the `timestamp` argument has
+#'   been intentionally set to `FALSE`.
+#'
+#' @section Usage:
+#'   ```
+#'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
+#'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
+#'   ```
+#'
+#' @section Arguments: `save_output_files()` and `save_data_file()` have the
+#'   same arguments:
+#' * `dir`: (string) Path to directory where the files should be saved.
+#' * `basename`: (string) Base filename to use.
+#' * `timestamp`: (logical) Should a timestamp be added to the file name(s)?
+#'   Defaults to `TRUE`.
+#'
+#' @section Value: The paths to the new files or `NA` for any that couldn't be
+#'   copied.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+NULL
+
+save_output_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE) {
+  self$runset$save_output_files(dir, basename, timestamp)
+}
+save_data_file_method = function(dir = ".", basename = NULL, timestamp = TRUE) {
+  self$runset$save_data_file(dir, basename, timestamp)
+}
+CmdStanMCMC$set("public", "save_output_files", save_output_files_method)
+CmdStanMLE$set("public", "save_output_files", save_output_files_method)
+CmdStanVB$set("public", "save_output_files", save_output_files_method)
+CmdStanMCMC$set("public", "save_data_file", save_data_file_method)
+CmdStanMLE$set("public", "save_data_file", save_data_file_method)
+CmdStanVB$set("public", "save_data_file", save_data_file_method)
+
 
 # RunSet ---------------------------------------------------------------
 
@@ -338,32 +342,38 @@ RunSet <- R6::R6Class(
     data_file = function() private$args_$data_file,
     output_files = function() private$output_files_,
     console_files = function() private$console_files_,
-    # public but for internal use
-    ._check_retcodes = function() all(private$retcodes_  == 0),
-    ._retcode = function(idx) private$retcodes_[idx],
-    ._set_retcode = function(idx, val) {
-      private$retcodes_[idx] <- val
-      invisible(self)
-    },
+
+    # ._check_retcodes = function() all(private$retcodes_  == 0),
+    # ._retcode = function(idx) private$retcodes_[idx],
+    # ._set_retcode = function(idx, val) {
+    #   private$retcodes_[idx] <- val
+    #   invisible(self)
+    # },
     # ._check_console_msgs = function() {},
     # validate = function() {},
 
-    save_output_files = function(dir = ".", basename = NULL) {
+    save_output_files = function(dir = ".",
+                                 basename = NULL,
+                                 timestamp = TRUE) {
       copy_temp_files(
         current_paths = self$output_files(),
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = self$run_ids(),
-        ext = ".csv"
+        ext = ".csv",
+        timestamp = timestamp
       )
     },
-    save_data_file = function(dir = ".", basename = NULL) {
+    save_data_file = function(dir = ".",
+                              basename = NULL,
+                              timestamp = TRUE) {
       copy_temp_files(
         current_paths = self$data_file(),
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = NULL,
-        ext = ".data.R"
+        ext = ".data.R",
+        timestamp = timestamp
       )
     }
   ),
@@ -376,5 +386,3 @@ RunSet <- R6::R6Class(
     retcodes_ = integer()
   )
 )
-
-

@@ -24,17 +24,19 @@ context("CmdStanMCMC")
 
 test_that("saving csv mcmc output works", {
   skip_on_cran()
-  tmp <- tempdir()
-  fit_mcmc$save_output_files(tmp, basename = "output-testing")
-  expect_true(file.exists(file.path(tmp, "output-testing-1.csv")))
-  expect_true(file.exists(file.path(tmp, "output-testing-2.csv")))
+  paths <- fit_mcmc$save_output_files(tempdir(), basename = "testing-mcmc-output")
+  expect_true(all(file.exists(paths)))
+  expect_match(paths[1], "testing-mcmc-output-1")
+  expect_match(paths[2], "testing-mcmc-output-2")
+  expect_match(paths, ".csv$")
 })
 
-test_that("saving data file works", {
+test_that("saving data file after mcmc works", {
   skip_on_cran()
-  tmp <- tempdir()
-  fit_mcmc$save_data_file(tmp, basename = "data-testing")
-  expect_true(file.exists(file.path(tmp, "data-testing.data.R")))
+  path <- fit_mcmc$save_data_file(tempdir(), basename = "testing-mcmc-data")
+  expect_true(file.exists(path))
+  expect_match(path, "testing-mcmc-data_")
+  expect_match(path, ".data.R$")
 })
 
 test_that("summary() method succesfully calls bin/stansummary", {
@@ -59,42 +61,48 @@ test_that("draws() method returns posterior sample (reading csv works)", {
 # CmdStanMLE --------------------------------------------------------------
 context("CmdStanMLE")
 
+test_that("saving csv optimzation output works", {
+  skip_on_cran()
+  path <- fit_mle$save_output_files(tempdir(), basename = "testing-mle-output")
+  expect_length(path, 1)
+  expect_true(file.exists(path))
+  expect_match(path, "testing-mle-output-1")
+  expect_match(path, ".csv$")
+})
+
+test_that("saving data file after optimization works", {
+  skip_on_cran()
+  path <- fit_mle$save_data_file(tempdir(), basename = "testing-mle-data")
+  expect_true(file.exists(path))
+  expect_match(path, "testing-mle-data_")
+  expect_match(path, ".data.R$")
+})
+
 test_that("reading in csv optimization output works", {
   skip_on_cran()
   expect_named(fit_mle$mle(), "theta")
   expect_named(fit_mle$lp(), "lp__")
 })
 
-test_that("saving csv optimzation output works", {
-  skip_on_cran()
-  tmp <- tempdir()
-  fit_mle$save_output_files(tmp, basename = "optim-output-testing")
-  expect_true(file.exists(file.path(tmp, "optim-output-testing-1.csv")))
-})
-
-test_that("saving data file works", {
-  skip_on_cran()
-  tmp <- tempdir()
-  fit_mle$save_data_file(tmp, basename = "optim-data-testing")
-  expect_true(file.exists(file.path(tmp, "optim-data-testing.data.R")))
-})
-
 
 # CmdStanVB -------------------------------------------------------------
 context("CmdStanVB")
 
-test_that("saving csv vb output works", {
+test_that("saving csv variational output works", {
   skip_on_cran()
-  tmp <- tempdir()
-  fit_vb$save_output_files(tmp, basename = "vb-output-testing")
-  expect_true(file.exists(file.path(tmp, "vb-output-testing-1.csv")))
+  path <- fit_vb$save_output_files(tempdir(), basename = "testing-vb-output")
+  expect_length(path, 1)
+  expect_true(file.exists(path))
+  expect_match(path, "testing-vb-output-1")
+  expect_match(path, ".csv$")
 })
 
-test_that("saving data file works", {
+test_that("saving data file after variational works", {
   skip_on_cran()
-  tmp <- tempdir()
-  fit_vb$save_data_file(tmp, basename = "vb-data-testing")
-  expect_true(file.exists(file.path(tmp, "vb-data-testing.data.R")))
+  path <- fit_vb$save_data_file(tempdir(), basename = "testing-vb-data")
+  expect_true(file.exists(path))
+  expect_match(path, "testing-vb-data_")
+  expect_match(path, ".data.R$")
 })
 
 test_that("summary() method succesfully calls bin/stansummary", {

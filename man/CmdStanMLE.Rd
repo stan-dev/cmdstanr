@@ -8,27 +8,24 @@ A \code{CmdStanMLE} object is the fitted model object returned by the
 \code{\link[=CmdStanModel-method-optimize]{optimize()}} method of a \code{\link{CmdStanModel}}
 object.
 }
-\section{Available Methods}{
- \code{CmdStanMLE} objects have the following
-associated methods:
-\describe{
-\item{\code{mle()}}{
-Return the maximum likelihood estimate or estimated posterior mode.
-}
-\item{\code{lp()}}{
-Return the the total log probability density (up to an additive constant)
-computed in the model block of the Stan program.
-}
-\item{\code{save_output_files(dir, basename = NULL)}}{
-Move output csv file from temporary directory to a specified directory.
-}
-\item{\code{save_data_file(dir, basename = NULL)}}{
-Move data file from temporary directory to a specified directory.
-}
-\item{More coming soon...}{}
-}
-}
+\details{
+\code{CmdStanMLE} objects have the following associated methods:
 
+\tabular{ll}{
+\strong{Method} \tab \strong{Description} \cr
+\code{mle} \tab Return the MLE (or posterior mode) as a named vector. \cr
+\code{lp} \tab Return the the total log probability density (up to an additive
+constant) computed in the model block of the Stan program. \cr
+\code{\link[=CmdStanFit-method-save_output_files]{save_output_files}}
+\tab Save output csv files to a specified location. \cr
+\code{\link[=CmdStanFit-method-save_data_file]{save_data_file}}
+\tab Save R dump or JSON data file to a specified location. \cr
+}
+}
 \seealso{
 \code{\link{CmdStanModel}}
+
+Other CmdStanFit: \code{\link{CmdStanMCMC}},
+  \code{\link{CmdStanVB}}
 }
+\concept{CmdStanFit}

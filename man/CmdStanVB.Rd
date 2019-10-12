@@ -8,27 +8,24 @@ A \code{CmdStanVB} object is the fitted model object returned by the
 \code{\link[=CmdStanModel-method-variational]{variational()}} method of a
 \code{\link{CmdStanModel}} object.
 }
-\section{Available Methods}{
- \code{CmdStanVB} objects have the following
-associated methods:
-\describe{
-\item{\code{summary()}}{
-Run CmdStan's \code{bin/stansummary} on output csv file.
-}
-\item{\code{draws()}}{
-Return the draws from the approximate posterior as a matrix with one
-column per variable.
-}
-\item{\code{save_output_files(dir, basename = NULL)}}{
-Move output csv file from temporary directory to a specified directory.
-}
-\item{\code{save_data_file(dir, basename = NULL)}}{
-Move data file from temporary directory to a specified directory.
-}
-\item{More coming soon...}{}
-}
-}
+\details{
+\code{CmdStanVB} objects have the following associated methods:
 
+\tabular{ll}{
+\strong{Method} \tab \strong{Description} \cr
+\code{summary} \tab Run and print CmdStan's \code{bin/stansummary}. \cr
+\code{draws} \tab Return approximate posterior draws as matrix with one colunm per
+variable. \cr
+\code{\link[=CmdStanFit-method-save_output_files]{save_output_files}}
+\tab Save output csv files to a specified location. \cr
+\code{\link[=CmdStanFit-method-save_data_file]{save_data_file}}
+\tab Save R dump or JSON data file to a specified location. \cr
+}
+}
 \seealso{
 \code{\link{CmdStanModel}}
+
+Other CmdStanFit: \code{\link{CmdStanMCMC}},
+  \code{\link{CmdStanMLE}}
 }
+\concept{CmdStanFit}

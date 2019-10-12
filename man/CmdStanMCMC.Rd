@@ -4,46 +4,30 @@
 \alias{CmdStanMCMC}
 \title{CmdStanMCMC objects}
 \description{
-A \code{CmdStanMCMC} object is the fitted model object returned by the
-\code{\link[=CmdStanModel-method-sample]{sample()}} method of a \code{\link{CmdStanModel}} object.
-Like \code{CmdStanModel} objects, \code{CmdStanMCMC} objects are \link[R6:R6]{R6} objects.
+A \code{CmdStanMCMC} object is the fitted model object returned by
+the \code{\link[=CmdStanModel-method-sample]{sample()}} method of a \code{\link{CmdStanModel}}
+object. Like \code{CmdStanModel} objects, \code{CmdStanMCMC} objects are \link[R6:R6]{R6}
+objects.
 }
-\section{Available Methods}{
- \code{CmdStanMCMC} objects have the following
-associated methods:
-\describe{
-\item{\code{summary()}}{
-Run CmdStan's \code{bin/stansummary} on output csv files.
-}
-\item{\code{diagnose()}}{
-Run CmdStan's \code{bin/diagnose} on output csv files.
-}
-\item{\code{draws()}}{
-Return the posterior sample (post-warmup draws) as a 3-D array with
-dimensions ordered as \code{(iterations, chains, variables)}.
-}
-\item{\code{save_output_files(dir, basename = NULL)}}{
-Move csv output files from temporary directory to a specified directory
-\code{dir} using the provided file \code{basename}. The suffix \code{'-<chain_id>.csv'}
-is appended each file. If files with the specified names already exist they
-are overwritten.
-Arguments:
-\itemize{
-\item \code{dir}: Path to directory where the files should be saved.
-\item \code{basename}: Base filename to use.
-}
+\details{
+\code{CmdStanMCMC} objects have the following associated methods:
 
-Return: the output from \code{base::file.copy()}, which is a logical vector
-indicating if the operation succeeded for each of the files.
+\tabular{ll}{
+\strong{Method} \tab \strong{Description} \cr
+\code{summary} \tab Run and print CmdStan's \code{bin/stansummary}. \cr
+\code{diagnose} \tab Run and print CmdStan's \code{bin/diagnose}. \cr
+\code{draws} \tab
+Return post-warmup draws as an \code{iters x chains x variables} array. \cr
+\code{\link[=CmdStanFit-method-save_output_files]{save_output_files}}
+\tab Save output csv files to a specified location. \cr
+\code{\link[=CmdStanFit-method-save_data_file]{save_data_file}}
+\tab Save R dump or JSON data file to a specified location. \cr
 }
-\item{\code{save_data_file(dir, basename = NULL)}}{
-Same as \code{save_output_files()} but applies to the temporary file containing
-the data instead of the output csv files.
 }
-\item{More coming soon...}{}
-}
-}
-
 \seealso{
 \code{\link{CmdStanModel}}
+
+Other CmdStanFit: \code{\link{CmdStanMLE}},
+  \code{\link{CmdStanVB}}
 }
+\concept{CmdStanFit}
