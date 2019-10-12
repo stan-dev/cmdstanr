@@ -127,3 +127,27 @@ test_that("log_p(), log_g() methods return vectors (reading csv works)", {
   expect_equal(length(lp), nrow(fit_vb$draws()))
   expect_equal(length(lg), nrow(fit_vb$draws()))
 })
+
+
+
+# RunSet ------------------------------------------------------------------
+
+test_that("RunSet methods return valid output", {
+  skip_on_cran()
+
+  runset <- fit_mcmc$runset
+  checkmate::expect_r6(runset$args(), "CmdStanArgs")
+  checkmate::expect_list(
+    runset$commands(),
+    types = "character",
+    len = runset$num_runs(),
+    unique = TRUE
+  )
+  checkmate::expect_file_exists(runset$data_file())
+  checkmate::expect_file_exists(runset$output_files())
+  checkmate::expect_file_exists(runset$console_files())
+  expect_equal(runset$run_ids(), seq_len(runset$num_runs()))
+  expect_equal(runset$run_ids(), seq_len(runset$num_chains()))
+  expect_equal(runset$model_name(), "bernoulli")
+})
+
