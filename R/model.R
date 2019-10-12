@@ -73,7 +73,7 @@ cmdstan_model <- function(stan_file) {
 #'  [compile][CmdStanModel-method-compile]
 #'    \tab Compile Stan program \cr
 #'  [sample][CmdStanModel-method-sample]
-#'    \tab Run CmdStan's `"sample"` method, return [CmdStanMCMC] object \cr
+#'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object \cr
 #'  [optimize][CmdStanModel-method-optimize]
 #'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object \cr
 #'  [variational][CmdStanModel-method-variational]
@@ -118,8 +118,8 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @name CmdStanModel-method-compile
 #' @family CmdStanModel-methods
-#' @description The `compile` method of a [CmdStanModel] object calls CmdStan to
-#'   translate a Stan program to C++ and call the C++ compiler. The resulting
+#' @description The `compile` method of a [`CmdStanModel`] object calls CmdStan
+#'   to translate a Stan program to C++ and call the C++ compiler. The resulting
 #'   files are placed in the same directory as the Stan program.
 #'
 #' @section Usage:
@@ -127,10 +127,10 @@ CmdStanModel <- R6::R6Class(
 #'   $compile()
 #'   ```
 #'
-#' @section Value: The `compile` method returns the [CmdStanModel] object
+#' @section Value: The `compile` method returns the [`CmdStanModel`] object
 #'   invisibly.
 #'
-#' @seealso [CmdStanModel]
+#' @seealso [`CmdStanModel`]
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -156,7 +156,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @name CmdStanModel-method-sample
 #' @family CmdStanModel-methods
 #'
-#' @description The `sample` method of a [CmdStanModel] object runs the default
+#' @description The `sample` method of a [`CmdStanModel`] object runs the default
 #'   MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce a set
 #'   of draws from the posterior distribution of a model conditioned on some
 #'   data. Arguments left at `NULL` default to the current CmdStan default.
@@ -202,7 +202,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'
 #' @section Value: The `sample` method returns a [`CmdStanMCMC`] object.
 #'
-#' @seealso [CmdStanModel]
+#' @seealso [`CmdStanModel`]
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -270,7 +270,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' @name CmdStanModel-method-optimize
 #' @family CmdStanModel-methods
 #'
-#' @description The `optimize` method of a [CmdStanModel] object runs Stan's
+#' @description The `optimize` method of a [`CmdStanModel`] object runs Stan's
 #'   optimizer. Arguments left at `NULL` default to the current CmdStan default.
 #'
 #' @details CmdStan can find the posterior mode (assuming there is one). If the
@@ -306,7 +306,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'
 #' @section Value: The `optimize` method returns a [`CmdStanMLE`] object.
 #'
-#' @seealso [CmdStanModel]
+#' @seealso [`CmdStanModel`]
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -359,7 +359,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #' @name CmdStanModel-method-variational
 #' @family CmdStanModel-methods
 #'
-#' @description The `variational` method of a [CmdStanModel] object runs Stan's
+#' @description The `variational` method of a [`CmdStanModel`] object runs Stan's
 #'   variational Bayes (ADVI) algorithms. Arguments left at `NULL` default to
 #'   the current CmdStan default.
 #'
@@ -414,7 +414,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'
 #' @section Value: The `variational` method returns a [`CmdStanVB`] object.
 #'
-#' @seealso [CmdStanModel]
+#' @seealso [`CmdStanModel`]
 #' @inherit cmdstan_model examples
 #'
 NULL

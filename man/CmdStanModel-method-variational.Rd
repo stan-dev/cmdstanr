@@ -4,7 +4,7 @@
 \alias{CmdStanModel-method-variational}
 \title{Run Stan's variational approximation algorithms}
 \description{
-The \code{variational} method of a \link{CmdStanModel} object runs Stan's
+The \code{variational} method of a \code{\link{CmdStanModel}} object runs Stan's
 variational Bayes (ADVI) algorithms. Arguments left at \code{NULL} default to
 the current CmdStan default.
 }
@@ -128,7 +128,7 @@ if (require(rstan, quietly = TRUE)) {
 
 }
 \seealso{
-\link{CmdStanModel}
+\code{\link{CmdStanModel}}
 
 Other CmdStanModel-methods: \code{\link{CmdStanModel-method-compile}},
   \code{\link{CmdStanModel-method-optimize}},

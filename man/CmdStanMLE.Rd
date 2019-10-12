@@ -4,8 +4,9 @@
 \alias{CmdStanMLE}
 \title{CmdStanMLE objects}
 \description{
-A \code{CmdStanMLE} object is the fitted model object returned by the \code{optimize()}
-method of a \code{\link{CmdStanModel}} object.
+A \code{CmdStanMLE} object is the fitted model object returned by the
+\code{\link[=CmdStanModel-method-optimize]{optimize()}} method of a \code{\link{CmdStanModel}}
+object.
 }
 \section{Available Methods}{
  \code{CmdStanMLE} objects have the following

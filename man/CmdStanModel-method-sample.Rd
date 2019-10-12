@@ -4,7 +4,7 @@
 \alias{CmdStanModel-method-sample}
 \title{Run Stan's MCMC algorithms}
 \description{
-The \code{sample} method of a \link{CmdStanModel} object runs the default
+The \code{sample} method of a \code{\link{CmdStanModel}} object runs the default
 MCMC algorithm in CmdStan (\code{algorithm=hmc engine=nuts}), to produce a set
 of draws from the posterior distribution of a model conditioned on some
 data. Arguments left at \code{NULL} default to the current CmdStan default.
@@ -120,7 +120,7 @@ if (require(rstan, quietly = TRUE)) {
 
 }
 \seealso{
-\link{CmdStanModel}
+\code{\link{CmdStanModel}}
 
 Other CmdStanModel-methods: \code{\link{CmdStanModel-method-compile}},
   \code{\link{CmdStanModel-method-optimize}},

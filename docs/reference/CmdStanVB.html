@@ -6,15 +6,15 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Authors • cmdstanr</title>
+<title>CmdStanVB objects — CmdStanVB • cmdstanr</title>
 
 <!-- favicons -->
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png" />
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png" />
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png" />
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -36,13 +36,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
-<link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script>
+<link href="../pkgdown.css" rel="stylesheet">
+<script src="../pkgdown.js"></script>
 
 
 
 
-<meta property="og:title" content="Authors" />
+<meta property="og:title" content="CmdStanVB objects — CmdStanVB" />
+<meta property="og:description" content="A CmdStanVB object is the fitted model object returned by the
+variational() method of a
+CmdStanModel object." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -63,7 +66,7 @@
   </head>
 
   <body>
-    <div class="container template-authors">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -75,7 +78,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="index.html">cmdstanr</a>
+        <a class="navbar-link" href="../index.html">cmdstanr</a>
         <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9000</span>
       </span>
     </div>
@@ -83,7 +86,7 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="reference/index.html">Functions</a>
+  <a href="../reference/index.html">Functions</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -149,26 +152,48 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Authors</h1>
+    <h1>CmdStanVB objects</h1>
+    
+    <div class="hidden name"><code>CmdStanVB.Rd</code></div>
     </div>
 
-    <ul class="list-unstyled">
-      <li>
-        <p><strong>Jonah Gabry</strong>. Author, maintainer. 
-        </p>
-      </li>
-      <li>
-        <p><strong>Mitzi Morris</strong>. Contributor. 
-        </p>
-      </li>
+    <div class="ref-description">
+    <p>A <code>CmdStanVB</code> object is the fitted model object returned by the
+<code><a href='CmdStanModel-method-variational.html'>variational()</a></code> method of a
+<code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.</p>
+    </div>
+
+
+
+    <h2 class="hasAnchor" id="available-methods"><a class="anchor" href="#available-methods"></a>Available Methods</h2>
+
+    <p><code>CmdStanVB</code> objects have the following
+associated methods:</p><dl class='dl-horizontal'>
+<dt><code><a href='https://rdrr.io/r/base/summary.html'>summary()</a></code></dt><dd><p>Run CmdStan's <code>bin/stansummary</code> on output csv file.</p></dd>
+<dt><code>draws()</code></dt><dd><p>Return the draws from the approximate posterior as a matrix with one
+column per variable.</p></dd>
+<dt><code>save_output_files(dir, basename = NULL)</code></dt><dd><p>Move output csv file from temporary directory to a specified directory.</p></dd>
+<dt><code>save_data_file(dir, basename = NULL)</code></dt><dd><p>Move data file from temporary directory to a specified directory.</p></dd>
+<dt>More coming soon...</dt><dd><p></p></dd>
+
+</dl>
+
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='CmdStanModel.html'>CmdStanModel</a></code></p></div>
+
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+    <h2>Contents</h2>
+    <ul class="nav nav-pills nav-stacked">
+      <li><a href="#available-methods">Available Methods</a></li>
+      <li><a href="#see-also">See also</a></li>
     </ul>
 
   </div>
-
 </div>
-
 
 
       <footer>

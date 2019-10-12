@@ -4,8 +4,8 @@
 \alias{CmdStanModel-method-compile}
 \title{Compile a Stan program or get the Stan code}
 \description{
-The \code{compile} method of a \link{CmdStanModel} object calls CmdStan to
-translate a Stan program to C++ and call the C++ compiler. The resulting
+The \code{compile} method of a \code{\link{CmdStanModel}} object calls CmdStan
+to translate a Stan program to C++ and call the C++ compiler. The resulting
 files are placed in the same directory as the Stan program.
 }
 \section{Usage}{
@@ -14,7 +14,7 @@ files are placed in the same directory as the Stan program.
 }
 
 \section{Value}{
- The \code{compile} method returns the \link{CmdStanModel} object
+ The \code{compile} method returns the \code{\link{CmdStanModel}} object
 invisibly.
 }
 
@@ -57,7 +57,7 @@ if (require(rstan, quietly = TRUE)) {
 
 }
 \seealso{
-\link{CmdStanModel}
+\code{\link{CmdStanModel}}
 
 Other CmdStanModel-methods: \code{\link{CmdStanModel-method-optimize}},
   \code{\link{CmdStanModel-method-sample}},

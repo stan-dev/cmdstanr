@@ -4,7 +4,7 @@
 \alias{CmdStanModel-method-optimize}
 \title{Run Stan's optimization algorithms}
 \description{
-The \code{optimize} method of a \link{CmdStanModel} object runs Stan's
+The \code{optimize} method of a \code{\link{CmdStanModel}} object runs Stan's
 optimizer. Arguments left at \code{NULL} default to the current CmdStan default.
 }
 \details{
@@ -109,7 +109,7 @@ if (require(rstan, quietly = TRUE)) {
 
 }
 \seealso{
-\link{CmdStanModel}
+\code{\link{CmdStanModel}}
 
 Other CmdStanModel-methods: \code{\link{CmdStanModel-method-compile}},
   \code{\link{CmdStanModel-method-sample}},

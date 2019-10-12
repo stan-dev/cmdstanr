@@ -43,8 +43,9 @@
 
 
 <meta property="og:title" content="CmdStanMLE objects — CmdStanMLE" />
-<meta property="og:description" content="A CmdStanMLE object is the fitted model object returned by the optimize()
-method of a CmdStanModel object." />
+<meta property="og:description" content="A CmdStanMLE object is the fitted model object returned by the
+optimize() method of a CmdStanModel
+object." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -78,20 +79,14 @@ method of a CmdStanModel object." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9000</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../articles/index.html">Vignettes</a>
-</li>
-<li>
   <a href="../reference/index.html">Functions</a>
-</li>
-<li>
-  <a href="../news/index.html">News</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -165,8 +160,9 @@ method of a CmdStanModel object." />
     </div>
 
     <div class="ref-description">
-    <p>A <code>CmdStanMLE</code> object is the fitted model object returned by the <code><a href='https://rdrr.io/r/stats/optimize.html'>optimize()</a></code>
-method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.</p>
+    <p>A <code>CmdStanMLE</code> object is the fitted model object returned by the
+<code><a href='CmdStanModel-method-optimize.html'>optimize()</a></code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code>
+object.</p>
     </div>
 
 
@@ -175,7 +171,9 @@ method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.</p
 
     <p><code>CmdStanMLE</code> objects have the following
 associated methods:</p><dl class='dl-horizontal'>
-<dt><code><a href='https://rdrr.io/r/base/print.html'>print()</a></code></dt><dd><p>Print the estimates.</p></dd>
+<dt><code>mle()</code></dt><dd><p>Return the maximum likelihood estimate or estimated posterior mode.</p></dd>,
+<dt><code>lp()</code></dt><dd><p>Return the the total log probability density (up to an additive constant)
+computed in the model block of the Stan program.</p></dd>,
 <dt><code>save_output_files(dir, basename = NULL)</code></dt><dd><p>Move output csv file from temporary directory to a specified directory.</p></dd>
 <dt><code>save_data_file(dir, basename = NULL)</code></dt><dd><p>Move data file from temporary directory to a specified directory.</p></dd>
 <dt>More coming soon...</dt><dd><p></p></dd>

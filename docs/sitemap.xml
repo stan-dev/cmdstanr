@@ -10,7 +10,22 @@
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanMLE.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel-method-compile.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel-method-optimize.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel-method-sample.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel-method-variational.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanVB.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_model.html</loc>
