@@ -7,7 +7,8 @@ Authors@R:
       person(given = "Mitzi", family = "Morris", role = c("ctb")))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org> 
     that provides functionality for compiling a 'Stan' program and fitting the 
-    model using the command line interface 'CmdStan'.
+    model using the command line interface 'CmdStan' 
+    <https://mc-stan.org/users/interfaces/cmdstan>.
 License: BSD_3_clause + file LICENSE
 URL: https://mc-stan.org/cmdstanr, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues
@@ -15,7 +16,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
 Roxygen: list(markdown = TRUE)
-SystemRequirements: CmdStan
+SystemRequirements: CmdStan <https://mc-stan.org>
 Imports: 
     checkmate,
     processx,
