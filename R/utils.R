@@ -76,27 +76,39 @@ change_ext <- function(file, ext) {
 #' @param new_dir Path to directory where the files should be saved.
 #' @param new_basename Base filename to use.
 #' @param ids Unique identifiers (e.g., `chain_ids`).
-#' @param ext Extension to use for all saved files.
-#' @return The output from `base::file.copy()`, which is a logical vector
-#'   indicating if the operation succeeded for each of the files.
+#' @param timestamp Add a timestamp to the file names?
+#' @param ext Extension to use for all saved files (default is `ext=".csv"`).
+#' @return The paths to the new files or `NA` for any that couldn't be
+#'   copied.
 copy_temp_files <-
   function(current_paths,
            new_dir,
            new_basename,
            ids = NULL,
-           ext = ".csv",
-           overwrite = TRUE) {
+           timestamp = TRUE,
+           ext = ".csv") {
     checkmate::assert_directory_exists(new_dir, access = "w")
 
     new_names <- new_basename
     if (!is.null(ids)) {
       new_names <- paste0(new_basename, "-", ids)
     }
+    if (timestamp) {
+      stamp <- format(Sys.time(), "%Y%m%d-h%Hm%M")
+      new_names <- paste0(new_names, "_", stamp)
+    }
     new_names <- paste0(new_names, ext)
     destinations <- file.path(new_dir, new_names)
-    file.copy(from = current_paths,
-              to = destinations,
-              overwrite = overwrite)
+
+    copied <- file.copy(
+      from = current_paths,
+      to = destinations,
+      overwrite = TRUE
+    )
+    if (!all(copied)) {
+      destinations[!copied] <- NA_character_
+    }
+    destinations
   }
 
 
