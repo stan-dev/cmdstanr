@@ -139,11 +139,11 @@ CmdStanMCMC <- R6::R6Class(
 #' \describe{
 #'   \item{`mle()`}{
 #'   Return the maximum likelihood estimate or estimated posterior mode.
-#'   },
+#'   }
 #'   \item{`lp()`}{
 #'   Return the the total log probability density (up to an additive constant)
 #'   computed in the model block of the Stan program.
-#'   },
+#'   }
 #'   \item{`save_output_files(dir, basename = NULL)`}{
 #'   Move output csv file from temporary directory to a specified directory.
 #'   }
