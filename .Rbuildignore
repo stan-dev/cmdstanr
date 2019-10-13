@@ -1,10 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-design-questions
 ^\.travis\.yml$
 ^codecov\.yml$
 ^README\.Rmd$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
-man-roxygen
+^man-roxygen$
