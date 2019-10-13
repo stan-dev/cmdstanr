@@ -6,7 +6,7 @@
 #'
 #' @export
 #' @param stan_file Path to Stan program.
-#' @return An [`CmdStanModel`] object.
+#' @return A [`CmdStanModel`] object.
 #'
 #' @template seealso-website
 #' @seealso [install_cmdstan()], [cmdstan_path()]
