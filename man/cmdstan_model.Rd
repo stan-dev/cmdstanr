@@ -54,7 +54,8 @@ fit_vb$summary()
 # For models fit using MCMC, if you like working with RStan's stanfit objects
 # then you can create one with rstan::read_stan_csv()
 if (require(rstan, quietly = TRUE)) {
-  stanfit <- rstan::read_stan_csv(fit$output_files())
+  stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
+  print(stanfit)
 }
 
 }

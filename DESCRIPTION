@@ -6,7 +6,7 @@ Authors@R:
            email = "jsg2201@columbia.edu"),
       person(given = "Mitzi", family = "Morris", role = c("ctb")))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>. 
-    The 'CmdStanR' interface (the 'cmdstanr' R package) calls
+    The 'CmdStanR' interface to 'Stan' (the 'cmdstanr' R package) calls
     'CmdStan' (the shell interface) for compilation, running algorithms, 
     and writing results to files. Methods for accessing the results
     from R are also provided. Unlike the 'rstan' package, which interfaces with 
@@ -19,7 +19,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
 Roxygen: list(markdown = TRUE)
-SystemRequirements: CmdStan <https://mc-stan.org>
+SystemRequirements: CmdStan <https://mc-stan.org/users/interfaces/cmdstan>
 Imports: 
     checkmate,
     processx,
