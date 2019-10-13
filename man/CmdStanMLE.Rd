@@ -23,9 +23,14 @@ constant) computed in the model block of the Stan program. \cr
 }
 }
 \seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
+The CmdStanR website (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr})
+for online documentation and tutorials.
+
+The Stan and CmdStan documentation:
+\itemize{
+\item Stan doc (html or pdf): \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation/}
+\item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
+}
 
 Other CmdStanFit objects: \code{\link{CmdStanMCMC}},
   \code{\link{CmdStanVB}}

@@ -94,7 +94,7 @@ copy_temp_files <-
       new_names <- paste0(new_basename, "-", ids)
     }
     if (timestamp) {
-      stamp <- format(Sys.time(), "%Y%m%d-h%Hm%M")
+      stamp <- format(Sys.time(), "%Y%m%d-%H%M")
       new_names <- paste0(new_names, "_", stamp)
     }
     new_names <- paste0(new_names, ext)

@@ -8,8 +8,8 @@
 #' @param stan_file Path to Stan program.
 #' @return A [`CmdStanModel`] object.
 #'
-#' @template seealso-website
 #' @seealso [install_cmdstan()], [cmdstan_path()]
+#' @template seealso-docs
 #'
 #' @examples
 #' \dontrun{
@@ -29,19 +29,24 @@
 #' # Compile to create executable
 #' mod$compile()
 #'
-#' # Run MCMC (Stan's dynamic HMC/NUTS),
+#' # Run sample method (MCMC via Stan's dynamic HMC/NUTS),
 #' # specifying data as a named list (like RStan)
 #' standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-#' fit <- mod$sample(data = standata, seed = 123, num_chains = 2)
-#' fit$summary()
+#' fit_mcmc <- mod$sample(data = standata, seed = 123, num_chains = 2)
+#' fit_mcmc$summary()
 #'
-#' # Can also specify data as a path to a file readable by CmdStan
+#' # Run optimization method (default is Stan's LBFGS algorithm)
+#' # and also demonstrate specifying data as a path to a file (readable by CmdStan)
 #' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
-#' fit2 <- mod$sample(data = my_data_file, seed = 123)
-#' fit2$summary()
+#' fit_optim <- mod$optimize(data = my_data_file, seed = 123)
+#' fit_optim$summary()
 #'
-#' # If you like working with RStan's stanfit objects then you can
-#' # also create a stanfit object with rstan::read_stan_csv()
+#' # Run variational Bayes method (default is meanfield ADVI)
+#' fit_vb <- mod$variational(data = standata, seed = 123)
+#' fit_vb$summary()
+#'
+#' # For models fit using MCMC, if you like working with RStan's stanfit objects
+#' # then you can create one with rstan::read_stan_csv()
 #' if (require(rstan, quietly = TRUE)) {
 #'   stanfit <- rstan::read_stan_csv(fit$output_files())
 #' }
@@ -81,7 +86,7 @@ cmdstan_model <- function(stan_file) {
 #'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. \cr
 #' }
 #'
-#' @template seealso-website
+#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -133,7 +138,7 @@ CmdStanModel <- R6::R6Class(
 #' @section Value: The `compile` method returns the [`CmdStanModel`] object
 #'   invisibly.
 #'
-#' @template seealso-website
+#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -192,20 +197,26 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `num_warmup`: (positive integer) The number of warmup iterations.
 #'   * `save_warmup`: (logical) Should warmup iterations also be streamed
 #'     to the output?
-#'   * `thin`: (positive integer) The period between saved samples.
+#'   * `thin`: (positive integer) The period between saved samples. This should
+#'     typically be left at its default (no thinning).
 #'   * `adapt_engaged`: (logical) Do warmup adaptation?
 #'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
 #'     statistic.
-#'   * `stepsize`: (positive real) The initial step size for discrete evolution.
+#'   * `stepsize`: (positive real) The _initial_ step size for the discrete
+#'     approximation to continuous Hamiltonian dynamics. This is further tuned
+#'     during warmup.
 #'   * `metric`: (multiple options) The geometry of the base manifold:
 #'      - A single string from among `"diag_e"`, `"dense_e"`, `"unit_e"`;
 #'      - A character vector containing paths to files (one per chain)
 #'        compatible with CmdStan that contain precomputed metrics.
+#'        Each path must be to a JSON or Rdump file that contains an entry
+#'        `inv_metric` whose value is either the diagonal vector or the full
+#'        covariance matrix.
 #'   * `max_depth`: (positive integer) The maximum allowed tree depth.
 #'
 #' @section Value: The `sample` method returns a [`CmdStanMCMC`] object.
 #'
-#' @template seealso-website
+#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -309,7 +320,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'
 #' @section Value: The `optimize` method returns a [`CmdStanMLE`] object.
 #'
-#' @template seealso-website
+#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -417,7 +428,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'
 #' @section Value: The `variational` method returns a [`CmdStanVB`] object.
 #'
-#' @template seealso-website
+#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 NULL

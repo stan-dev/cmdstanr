@@ -45,7 +45,12 @@ with the \code{\link[=install_cmdstan]{install_cmdstan()}} function.
 }
 
 \seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
+The CmdStanR website (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr})
+for online documentation and tutorials.
+
+The Stan and CmdStan documentation:
+\itemize{
+\item Stan doc (html or pdf): \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation/}
+\item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
+}
 }

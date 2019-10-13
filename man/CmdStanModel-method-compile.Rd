@@ -36,19 +36,24 @@ mod$print()
 # Compile to create executable
 mod$compile()
 
-# Run MCMC (Stan's dynamic HMC/NUTS),
+# Run sample method (MCMC via Stan's dynamic HMC/NUTS),
 # specifying data as a named list (like RStan)
 standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-fit <- mod$sample(data = standata, seed = 123, num_chains = 2)
-fit$summary()
+fit_mcmc <- mod$sample(data = standata, seed = 123, num_chains = 2)
+fit_mcmc$summary()
 
-# Can also specify data as a path to a file readable by CmdStan
+# Run optimization method (default is Stan's LBFGS algorithm)
+# and also demonstrate specifying data as a path to a file (readable by CmdStan)
 my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
-fit2 <- mod$sample(data = my_data_file, seed = 123)
-fit2$summary()
+fit_optim <- mod$optimize(data = my_data_file, seed = 123)
+fit_optim$summary()
 
-# If you like working with RStan's stanfit objects then you can
-# also create a stanfit object with rstan::read_stan_csv()
+# Run variational Bayes method (default is meanfield ADVI)
+fit_vb <- mod$variational(data = standata, seed = 123)
+fit_vb$summary()
+
+# For models fit using MCMC, if you like working with RStan's stanfit objects
+# then you can create one with rstan::read_stan_csv()
 if (require(rstan, quietly = TRUE)) {
   stanfit <- rstan::read_stan_csv(fit$output_files())
 }
@@ -57,9 +62,14 @@ if (require(rstan, quietly = TRUE)) {
 
 }
 \seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
+The CmdStanR website (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr})
+for online documentation and tutorials.
+
+The Stan and CmdStan documentation:
+\itemize{
+\item Stan doc (html or pdf): \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation/}
+\item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
+}
 
 Other CmdStanModel methods: \code{\link{CmdStanModel-method-optimize}},
   \code{\link{CmdStanModel-method-sample}},

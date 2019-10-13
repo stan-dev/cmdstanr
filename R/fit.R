@@ -4,7 +4,7 @@
 #'
 #' @name CmdStanMCMC
 #' @family CmdStanFit objects
-#' @template seealso-website
+#' @template seealso-docs
 #'
 #' @description A `CmdStanMCMC` object is the fitted model object returned by
 #'   the [`sample()`][CmdStanModel-method-sample] method of a [`CmdStanModel`]
@@ -103,7 +103,7 @@ CmdStanMCMC <- R6::R6Class(
 #'
 #' @name CmdStanMLE
 #' @family CmdStanFit objects
-#' @template seealso-website
+#' @template seealso-docs
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`optimize()`][CmdStanModel-method-optimize] method of a [`CmdStanModel`]
@@ -134,6 +134,13 @@ CmdStanMLE <- R6::R6Class(
       self$runset <- runset
       invisible(self)
     },
+    summary = function() {
+      # FIXME: what should summary for optimization do?
+      # (bin/stansummary isn't compatible)
+
+      cat("Estimates from optimization:\n")
+      c(self$mle(), self$lp())
+    },
     mle = function() {
       if (is.null(private$mle_)) private$read_csv()
       private$mle_
@@ -163,7 +170,7 @@ CmdStanMLE <- R6::R6Class(
 #'
 #' @name CmdStanVB
 #' @family CmdStanFit objects
-#' @template seealso-website
+#' @template seealso-docs
 #'
 #' @description A `CmdStanVB` object is the fitted model object returned by the
 #'   [`variational()`][CmdStanModel-method-variational] method of a
@@ -272,7 +279,8 @@ CmdStanVB <- R6::R6Class(
 #' * `dir`: (string) Path to directory where the files should be saved.
 #' * `basename`: (string) Base filename to use.
 #' * `timestamp`: (logical) Should a timestamp be added to the file name(s)?
-#'   Defaults to `TRUE`.
+#'   Defaults to `TRUE`. The timestamp is preceeded by an underscore is of
+#'   the form
 #'
 #' @section Value: The paths to the new files or `NA` for any that couldn't be
 #'   copied.

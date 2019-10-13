@@ -37,7 +37,7 @@
 #'   available from \R immediately after updating CmdStan, which can be done
 #'   with the [install_cmdstan()] function.
 #'
-#' @template seealso-website
+#' @template seealso-docs
 #'
 NULL
 

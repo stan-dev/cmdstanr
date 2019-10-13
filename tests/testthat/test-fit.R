@@ -84,6 +84,10 @@ test_that("reading in csv optimization output works", {
   expect_named(fit_mle$lp(), "lp__")
 })
 
+test_that("summary method doesn't error for optimization", {
+  # summary method for optimization isn't fully designed yet
+  expect_output(fit_mle$summary(), "Estimates from optimization")
+})
 
 # CmdStanVB -------------------------------------------------------------
 context("CmdStanVB")
@@ -104,7 +108,7 @@ test_that("saving data file after variational works", {
   expect_match(path, ".data.R$")
 })
 
-test_that("summary() method succesfully calls bin/stansummary", {
+test_that("summary() method after variation succesfully calls bin/stansummary", {
   skip_on_cran()
   expect_output(fit_vb$summary(), "Inference for Stan model")
 })

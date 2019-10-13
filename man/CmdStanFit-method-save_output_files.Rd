@@ -27,7 +27,8 @@ same arguments:
 \item \code{dir}: (string) Path to directory where the files should be saved.
 \item \code{basename}: (string) Base filename to use.
 \item \code{timestamp}: (logical) Should a timestamp be added to the file name(s)?
-Defaults to \code{TRUE}.
+Defaults to \code{TRUE}. The timestamp is preceeded by an underscore is of
+the form
 }
 }
 
