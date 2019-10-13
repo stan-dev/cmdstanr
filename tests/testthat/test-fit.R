@@ -8,12 +8,12 @@ if (NOT_CRAN) {
   stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
   mod <- cmdstan_model(stan_file = stan_program)
-  capture.output(mod$compile())
-  capture.output(fit_mcmc <- mod$sample(data = data_list, num_chains = 2))
-  capture.output(suppressWarnings(
+  utils::capture.output(mod$compile())
+  utils::capture.output(fit_mcmc <- mod$sample(data = data_list, num_chains = 2))
+  utils::capture.output(suppressWarnings(
     fit_mle <- mod$optimize(data = data_list)
   ))
-  capture.output(suppressWarnings(
+  utils::capture.output(suppressWarnings(
     fit_vb <- mod$variational(data = data_list)
   ))
 }
@@ -85,6 +85,7 @@ test_that("reading in csv optimization output works", {
 })
 
 test_that("summary method doesn't error for optimization", {
+  skip_on_cran()
   # summary method for optimization isn't fully designed yet
   expect_output(fit_mle$summary(), "Estimates from optimization")
 })

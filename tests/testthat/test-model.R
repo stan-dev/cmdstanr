@@ -51,7 +51,7 @@ test_that("error if no compile() before sample()", {
 
 test_that("compile() method works", {
   skip_on_cran()
-  out <- capture.output(mod$compile())
+  out <- utils::capture.output(mod$compile())
   expect_output(print(out), "Running make")
 })
 
@@ -162,7 +162,7 @@ test_that("sample() method runs when all arguments specified", {
 test_that("sample() method errors for any invalid arguments before calling cmdstan", {
   skip_on_cran()
 
-  capture.output(mod$compile())
+  utils::capture.output(mod$compile())
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]

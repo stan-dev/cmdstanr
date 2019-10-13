@@ -1,10 +1,22 @@
-context("Installation")
-test_that("test cmdstan installation", {
-  skip_on_cran()
+# Setup -------------------------------------------------------------------
+NOT_CRAN <-
+  identical(Sys.getenv("NOT_CRAN"), "true") ||
+  identical(Sys.getenv("TRAVIS"), "true")
 
+
+context("Installation")
+
+test_that("test cmdstan installation", {
+  skip_if_offline()
+
+  if (NOT_CRAN) {
+    dir <- NULL
+  } else {
+    dir <- tempdir()
+  }
   expect_output(
-    log <- install_cmdstan(dir = NULL, cores = 2, quiet = FALSE),
+    install_log <- install_cmdstan(dir = dir, cores = 2, quiet = FALSE),
     "CmdStan installation location:"
   )
-  expect_equal(log$status, 0)
+  expect_equal(install_log$status, 0)
 })
