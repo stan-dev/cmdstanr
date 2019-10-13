@@ -53,7 +53,8 @@ home:
 reference:
   - title: "Package description"
     desc: >
-      An overview of the package and how it differs from RStan.
+      An overview of the package and how it differs from
+      [RStan](https://mc-stan.org/rstan).
     contents:
       - cmdstanr-package
   - title: "Installing and setting the path to CmdStan"

@@ -45,7 +45,7 @@
 <meta property="og:title" content="CmdStanR: the <span style="R">R</span> interface to CmdStan — cmdstanr-package" />
 <meta property="og:description" content="
    Stan Development Team
-The R interface to CmdStan." />
+CmdStanR: the R interface to CmdStan." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -162,22 +162,44 @@ The R interface to CmdStan." />
     <div class="ref-description">
     <p><img src='figures/logo.png' width="50px" alt="https://mc-stan.org/about/logo/" />
    <em>Stan Development Team</em></p>
-<p>The <span style="R">R</span> interface to <a href='https://mc-stan.org/users/interfaces/cmdstan'>CmdStan</a>.</p>
+<p><span class="pkg">CmdStanR</span>: the <span style="R">R</span> interface to CmdStan.</p>
     </div>
 
 
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>CmdStanR is a lightweight interface to <a href='https://mc-stan.org'>Stan</a>
-for R users. It provides the necessary objects and functions to compile a
-Stan program and run Stan's algorithms from R via CmdStan, the command line
-interface to Stan.</p>
+    <p>CmdStanR (<span class="pkg">cmdstanr</span> package) is a lightweight interface to Stan
+(<a href='https://mc-stan.org'>mc-stan.org</a>) for <span style="R">R</span> users. It provides the
+necessary objects and functions to compile a Stan program and run Stan's
+algorithms from <span style="R">R</span> via CmdStan, the shell interface to Stan
+(<a href='https://mc-stan.org/users/interfaces/cmdstan'>mc-stan.org/users/interfaces/cmdstan</a>).</p>
     <h2 class="hasAnchor" id="getting-started"><a class="anchor" href="#getting-started"></a>Getting started</h2>
 
     <p>CmdStanR requires a working version of CmdStan. If
-you already have CmdStan installed then see <code><a href='cmdstan_model.html'>cmdstan_model()</a></code> to get
+you already have CmdStan installed see <code><a href='cmdstan_model.html'>cmdstan_model()</a></code> to get
 started, otherwise see <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> for help with installation.</p>
+    <h2 class="hasAnchor" id="comparison-with-rstan"><a class="anchor" href="#comparison-with-rstan"></a>Comparison with RStan</h2>
+
+    <p>The RStan interface (<span class="pkg">rstan</span> package) is
+an in-memory interface to Stan and relies on <span style="R">R</span> packages like <span class="pkg">Rcpp</span>
+and <span class="pkg">inline</span> to call C++ code from R. On the other hand, the <span style="R">R</span> code in
+this package does not directly call any C++ code, instead relying on
+CmdStan for compilation, running algorithms, and writing results to output
+files. Both forms of interfacing with Stan have advantages and
+disadvantages. An in-memory interface like RStan is able to offer more
+advanced features than CmdStanR (for example RStan's <code>grad_log_prob</code> and
+<code>unconstrain_pars</code> methods) but keeping up with Stan releases is more
+complicated for RStan, often requiring non-trivial changes to the
+<span class="pkg">rstan</span> package and always requiring new CRAN releases of <span class="pkg">rstan</span>
+and <span class="pkg">StanHeaders</span>. With CmdStanR, the latest features in Stan will be
+available from <span style="R">R</span> immediately after updating CmdStan, which can be done
+with the <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> function.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p>The CmdStanR website
+(<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>) for online
+documentation and tutorials.</p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -185,6 +207,8 @@ started, otherwise see <code><a href='install_cmdstan.html'>install_cmdstan()</a
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#details">Details</a></li>
       <li><a href="#getting-started">Getting started</a></li>
+      <li><a href="#comparison-with-rstan">Comparison with RStan</a></li>
+      <li><a href="#see-also">See also</a></li>
     </ul>
 
   </div>
