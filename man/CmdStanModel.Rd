@@ -65,3 +65,8 @@ if (require(rstan, quietly = TRUE)) {
 }
 
 }
+\seealso{
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
+}

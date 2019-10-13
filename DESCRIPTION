@@ -5,10 +5,13 @@ Authors@R:
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
       person(given = "Mitzi", family = "Morris", role = c("ctb")))
-Description: A lightweight interface to 'Stan' <https://mc-stan.org> 
-    that provides functionality for compiling a 'Stan' program and fitting the 
-    model using the command line interface 'CmdStan' 
-    <https://mc-stan.org/users/interfaces/cmdstan>.
+Description: A lightweight interface to 'Stan' <https://mc-stan.org>. 
+    The 'CmdStanR' interface (the 'cmdstanr' R package) calls
+    'CmdStan' (the shell interface) for compilation, running algorithms, 
+    and writing results to files. Methods for accessing the results
+    from R are also provided. Unlike the 'rstan' package, which interfaces with 
+    'Stan' via 'Rcpp', the R code in this package does not directly call any 
+    C++ code.
 License: BSD_3_clause + file LICENSE
 URL: https://mc-stan.org/cmdstanr, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues

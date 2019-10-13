@@ -23,7 +23,9 @@ variable. \cr
 }
 }
 \seealso{
-\code{\link{CmdStanModel}}
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
 
 Other CmdStanFit objects: \code{\link{CmdStanMCMC}},
   \code{\link{CmdStanMLE}}

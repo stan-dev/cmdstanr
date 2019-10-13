@@ -109,7 +109,9 @@ if (require(rstan, quietly = TRUE)) {
 
 }
 \seealso{
-\code{\link{CmdStanModel}}
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
 
 Other CmdStanModel methods: \code{\link{CmdStanModel-method-compile}},
   \code{\link{CmdStanModel-method-sample}},

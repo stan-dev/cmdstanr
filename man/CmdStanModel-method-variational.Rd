@@ -9,7 +9,7 @@ variational Bayes (ADVI) algorithms. Arguments left at \code{NULL} default to
 the current CmdStan default.
 }
 \details{
-From the CmdStan manual: CmdStan can fit a variational approximation to the posterior. The
+CmdStan can fit a variational approximation to the posterior. The
 approximation is a Gaussian in the unconstrained variable space. Stan
 implements two variational algorithms. The \code{algorithm="meanfield"} option
 uses a fully factorized Gaussian for the approximation. The
@@ -128,7 +128,9 @@ if (require(rstan, quietly = TRUE)) {
 
 }
 \seealso{
-\code{\link{CmdStanModel}}
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
 
 Other CmdStanModel methods: \code{\link{CmdStanModel-method-compile}},
   \code{\link{CmdStanModel-method-optimize}},

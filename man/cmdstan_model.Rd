@@ -56,5 +56,9 @@ if (require(rstan, quietly = TRUE)) {
 
 }
 \seealso{
-\code{\link[=cmdstan_path]{cmdstan_path()}}, \code{\link[=install_cmdstan]{install_cmdstan()}}
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
+
+\code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=cmdstan_path]{cmdstan_path()}}
 }

@@ -8,7 +8,8 @@
 #' @param stan_file Path to Stan program.
 #' @return An [`CmdStanModel`] object.
 #'
-#' @seealso [cmdstan_path()], [install_cmdstan()]
+#' @template seealso-website
+#' @seealso [install_cmdstan()], [cmdstan_path()]
 #'
 #' @examples
 #' \dontrun{
@@ -80,6 +81,7 @@ cmdstan_model <- function(stan_file) {
 #'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. \cr
 #' }
 #'
+#' @template seealso-website
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -131,7 +133,7 @@ CmdStanModel <- R6::R6Class(
 #' @section Value: The `compile` method returns the [`CmdStanModel`] object
 #'   invisibly.
 #'
-#' @seealso [`CmdStanModel`]
+#' @template seealso-website
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -203,7 +205,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'
 #' @section Value: The `sample` method returns a [`CmdStanMCMC`] object.
 #'
-#' @seealso [`CmdStanModel`]
+#' @template seealso-website
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -307,7 +309,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'
 #' @section Value: The `optimize` method returns a [`CmdStanMLE`] object.
 #'
-#' @seealso [`CmdStanModel`]
+#' @template seealso-website
 #' @inherit cmdstan_model examples
 #'
 NULL
@@ -415,7 +417,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'
 #' @section Value: The `variational` method returns a [`CmdStanVB`] object.
 #'
-#' @seealso [`CmdStanModel`]
+#' @template seealso-website
 #' @inherit cmdstan_model examples
 #'
 NULL

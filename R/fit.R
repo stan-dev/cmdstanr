@@ -4,6 +4,7 @@
 #'
 #' @name CmdStanMCMC
 #' @family CmdStanFit objects
+#' @template seealso-website
 #'
 #' @description A `CmdStanMCMC` object is the fitted model object returned by
 #'   the [`sample()`][CmdStanModel-method-sample] method of a [`CmdStanModel`]
@@ -24,8 +25,6 @@
 #'  [`save_data_file`][CmdStanFit-method-save_data_file]
 #'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
-#'
-#' @seealso [`CmdStanModel`]
 #'
 NULL
 
@@ -104,6 +103,7 @@ CmdStanMCMC <- R6::R6Class(
 #'
 #' @name CmdStanMLE
 #' @family CmdStanFit objects
+#' @template seealso-website
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`optimize()`][CmdStanModel-method-optimize] method of a [`CmdStanModel`]
@@ -122,8 +122,6 @@ CmdStanMCMC <- R6::R6Class(
 #'  [`save_data_file`][CmdStanFit-method-save_data_file]
 #'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
-#'
-#' @seealso [`CmdStanModel`]
 #'
 NULL
 
@@ -165,6 +163,7 @@ CmdStanMLE <- R6::R6Class(
 #'
 #' @name CmdStanVB
 #' @family CmdStanFit objects
+#' @template seealso-website
 #'
 #' @description A `CmdStanVB` object is the fitted model object returned by the
 #'   [`variational()`][CmdStanModel-method-variational] method of a
@@ -183,8 +182,6 @@ CmdStanMLE <- R6::R6Class(
 #'  [`save_data_file`][CmdStanFit-method-save_data_file]
 #'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
-#'
-#' @seealso [`CmdStanModel`]
 #'
 NULL
 

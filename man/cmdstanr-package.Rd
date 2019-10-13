@@ -4,6 +4,7 @@
 \name{cmdstanr-package}
 \alias{cmdstanr-package}
 \alias{cmdstanr}
+\alias{CmdStanR}
 \title{CmdStanR: the \R interface to CmdStan}
 \description{
 \if{html}{
@@ -11,17 +12,40 @@
    \emph{Stan Development Team}
 }
 
-The \R interface to \href{https://mc-stan.org/users/interfaces/cmdstan}{CmdStan}.
+\pkg{CmdStanR}: the \R interface to CmdStan.
 }
 \details{
-CmdStanR is a lightweight interface to \href{https://mc-stan.org}{Stan}
-for R users. It provides the necessary objects and functions to compile a
-Stan program and run Stan's algorithms from R via CmdStan, the command line
-interface to Stan.
+CmdStanR (\pkg{cmdstanr} package) is a lightweight interface to Stan
+(\href{https://mc-stan.org}{mc-stan.org}) for \R users. It provides the
+necessary objects and functions to compile a Stan program and run Stan's
+algorithms from \R via CmdStan, the shell interface to Stan
+(\href{https://mc-stan.org/users/interfaces/cmdstan}{mc-stan.org/users/interfaces/cmdstan}).
 }
 \section{Getting started}{
  CmdStanR requires a working version of CmdStan. If
-you already have CmdStan installed then see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
+you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
 started, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} for help with installation.
 }
 
+\section{Comparison with RStan}{
+ The RStan interface (\pkg{rstan} package) is
+an in-memory interface to Stan and relies on \R packages like \pkg{Rcpp}
+and \pkg{inline} to call C++ code from R. On the other hand, the \R code in
+this package does not directly call any C++ code, instead relying on
+CmdStan for compilation, running algorithms, and writing results to output
+files. Both forms of interfacing with Stan have advantages and
+disadvantages. An in-memory interface like RStan is able to offer more
+advanced features than CmdStanR (for example RStan's \code{grad_log_prob} and
+\code{unconstrain_pars} methods) but keeping up with Stan releases is more
+complicated for RStan, often requiring non-trivial changes to the
+\pkg{rstan} package and always requiring new CRAN releases of \pkg{rstan}
+and \pkg{StanHeaders}. With CmdStanR, the latest features in Stan will be
+available from \R immediately after updating CmdStan, which can be done
+with the \code{\link[=install_cmdstan]{install_cmdstan()}} function.
+}
+
+\seealso{
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
+}

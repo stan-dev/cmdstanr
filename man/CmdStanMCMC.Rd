@@ -25,7 +25,9 @@ Return post-warmup draws as an \code{iters x chains x variables} array. \cr
 }
 }
 \seealso{
-\code{\link{CmdStanModel}}
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
 
 Other CmdStanFit objects: \code{\link{CmdStanMLE}},
   \code{\link{CmdStanVB}}
