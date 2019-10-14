@@ -1,4 +1,9 @@
 library(testthat)
 library(cmdstanr)
 
-test_check("cmdstanr")
+NOT_CRAN <- !identical(Sys.getenv("NOT_CRAN"), "true")
+if (NOT_CRAN) {
+  test_check("cmdstanr")
+} else {
+  test_check("cmdstanr", filter = "path|install")
+}

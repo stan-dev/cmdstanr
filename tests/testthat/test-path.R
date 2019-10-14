@@ -8,14 +8,15 @@ Sys.unsetenv("CMDSTAN")
 if (NOT_CRAN) {
   PATH <- set_cmdstan_path()
   VERSION <- cmdstan_version()
-  unset_cmdstan_path()
+} else { # CRAN
+  PATH <- Sys.getenv("HOME") # not actually installed, just a valid path
 }
+
+unset_cmdstan_path()
 
 # Setting paths -----------------------------------------------------------
 context("Paths-setting")
 test_that("Setting path works and confirms with message", {
-  skip_on_cran()
-
   expect_message(
     set_cmdstan_path(PATH),
     paste("CmdStan path set to:", PATH)
