@@ -31,10 +31,6 @@ cmdstan_path <- function() {
     stop("CmdStan path has not been set yet. See ?set_cmdstan_path.",
          call. = FALSE)
   }
-  if (substr(path, nchar(path), nchar(path)) == "/") {
-    # remove training "/" (is this necessary?)
-    path <- substr(path, 1, nchar(path) - 1)
-  }
   path <- repair_path(path)
 
   if (is.null(.cmdstanr$VERSION)) {

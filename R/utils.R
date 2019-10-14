@@ -25,7 +25,14 @@ repair_path <- function(path) {
   if (!length(path) || !is.character(path)) {
     return(path)
   }
-  gsub("\\\\", "/", path)
+  path <- path.expand(path)
+  path <- gsub("\\\\", "/", path)
+  path <- gsub("//", "/", path)
+  if (substr(path, nchar(path), nchar(path)) == "/") {
+    # remove training "/" (is this necessary?)
+    path <- substr(path, 1, nchar(path) - 1)
+  }
+  path
 }
 
 #' Get extension for executable depending on OS
@@ -48,13 +55,18 @@ strip_ext <- function(file) {
 }
 
 # If a file/dir exists return its absolute path
-# unlike tools::file_path_as_absolute() it doesn't error if can't be found
-absolute_path <- function(x) {
-  if (!file.exists(x)) {
-    return(x)
+# doesn't error if not found
+absolute_path <- function(path) {
+  if (!file.exists(path)) {
+    return(path)
   }
-  tools::file_path_as_absolute(x)
+  new_path <- repair_path(path)
+  if (grepl("^~", path) || grepl("^(/+|[A-Za-z]:)", new_path)) {
+    return(new_path)
+  }
+  repair_path(file.path(getwd(), new_path))
 }
+
 
 # Change extension from a file path
 change_ext <- function(file, ext) {
