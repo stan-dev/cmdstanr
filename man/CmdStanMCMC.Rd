@@ -5,7 +5,7 @@
 \title{CmdStanMCMC objects}
 \description{
 A \code{CmdStanMCMC} object is the fitted model object returned by
-the \code{\link[=CmdStanModel-method-sample]{sample()}} method of a \code{\link{CmdStanModel}}
+the \code{\link[=model-method-sample]{sample()}} method of a \code{\link{CmdStanModel}}
 object. Like \code{CmdStanModel} objects, \code{CmdStanMCMC} objects are \link[R6:R6]{R6}
 objects.
 }

@@ -7,7 +7,7 @@
 #' @template seealso-docs
 #'
 #' @description A `CmdStanMCMC` object is the fitted model object returned by
-#'   the [`sample()`][CmdStanModel-method-sample] method of a [`CmdStanModel`]
+#'   the [`sample()`][model-method-sample] method of a [`CmdStanModel`]
 #'   object. Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6]
 #'   objects.
 #'
@@ -106,7 +106,7 @@ CmdStanMCMC <- R6::R6Class(
 #' @template seealso-docs
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
-#'   [`optimize()`][CmdStanModel-method-optimize] method of a [`CmdStanModel`]
+#'   [`optimize()`][model-method-optimize] method of a [`CmdStanModel`]
 #'   object.
 #'
 #' @details
@@ -173,7 +173,7 @@ CmdStanMLE <- R6::R6Class(
 #' @template seealso-docs
 #'
 #' @description A `CmdStanVB` object is the fitted model object returned by the
-#'   [`variational()`][CmdStanModel-method-variational] method of a
+#'   [`variational()`][model-method-variational] method of a
 #'   [`CmdStanModel`] object.
 #'
 #' @details

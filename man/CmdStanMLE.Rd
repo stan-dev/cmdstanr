@@ -5,7 +5,7 @@
 \title{CmdStanMLE objects}
 \description{
 A \code{CmdStanMLE} object is the fitted model object returned by the
-\code{\link[=CmdStanModel-method-optimize]{optimize()}} method of a \code{\link{CmdStanModel}}
+\code{\link[=model-method-optimize]{optimize()}} method of a \code{\link{CmdStanModel}}
 object.
 }
 \details{

@@ -5,7 +5,7 @@
 \title{CmdStanVB objects}
 \description{
 A \code{CmdStanVB} object is the fitted model object returned by the
-\code{\link[=CmdStanModel-method-variational]{variational()}} method of a
+\code{\link[=model-method-variational]{variational()}} method of a
 \code{\link{CmdStanModel}} object.
 }
 \details{
