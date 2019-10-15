@@ -4,9 +4,8 @@
 \alias{CmdStanModel-method-variational}
 \title{Run Stan's variational approximation algorithms}
 \description{
-The \code{variational} method of a \code{\link{CmdStanModel}} object runs Stan's
-variational Bayes (ADVI) algorithms. Arguments left at \code{NULL} default to
-the current CmdStan default.
+The \code{variational} method of a \code{\link{CmdStanModel}} object runs
+Stan's variational Bayes (ADVI) algorithms.
 }
 \details{
 CmdStan can fit a variational approximation to the posterior. The
@@ -64,7 +63,10 @@ initialization files.
 
 \section{Arguments unique to the \code{variational} method}{
  In addition to the
-arguments above, the \code{variational} method also has the following arguments:
+arguments above, the \code{variational} method also has its own set of
+arguments. These arguments are described briefly here and in greater detail
+in the CmdStan manual. Arguments left at \code{NULL} default to the default used
+by the installed version of CmdStan.
 \itemize{
 \item \code{algorithm}: (string) The algorithm. Either \code{"meanfield"} or \code{"fullrank"}.
 \item \code{iter}: (positive integer) The \emph{maximum} number of iterations.

@@ -5,7 +5,7 @@
 \title{Run Stan's optimization algorithms}
 \description{
 The \code{optimize} method of a \code{\link{CmdStanModel}} object runs Stan's
-optimizer. Arguments left at \code{NULL} default to the current CmdStan default.
+optimizer.
 }
 \details{
 CmdStan can find the posterior mode (assuming there is one). If the
@@ -56,7 +56,10 @@ initialization files.
 
 \section{Arguments unique to the \code{optimize} method}{
  In addition to the
-arguments above, the \code{optimize} method also has the following arguments:
+arguments above, the \code{optimize} method also has its own set of arguments.
+These arguments are described briefly here and in greater detail in the
+CmdStan manual. Arguments left at \code{NULL} default to the default used by the
+installed version of CmdStan.
 \itemize{
 \item \code{algorithm}: (string) The optimization algorithm. One of
 \code{"lbfgs"}, \code{"bfgs"}, or \code{"newton"}.

@@ -7,7 +7,7 @@
 The \code{sample} method of a \code{\link{CmdStanModel}} object runs the default
 MCMC algorithm in CmdStan (\code{algorithm=hmc engine=nuts}), to produce a set
 of draws from the posterior distribution of a model conditioned on some
-data. Arguments left at \code{NULL} default to the current CmdStan default.
+data.
 }
 \section{Usage}{
 \preformatted{$sample(
@@ -56,7 +56,10 @@ initialization files.
 
 \section{Arguments unique to the \code{sample} method}{
  In addition to the
-arguments above, the \code{sample} method also has the following arguments:
+arguments above, the \code{sample} method also has its own set of arguments.
+These arguments are described briefly here and in greater detail in the
+CmdStan manual. Arguments left at \code{NULL} default to the default used by the
+installed version of CmdStan.
 \itemize{
 \item \code{num_samples}: (positive integer) The number of sampling iterations.
 \item \code{num_warmup}: (positive integer) The number of warmup iterations.
@@ -70,7 +73,8 @@ statistic.
 \item \code{stepsize}: (positive real) The \emph{initial} step size for the discrete
 approximation to continuous Hamiltonian dynamics. This is further tuned
 during warmup.
-\item \code{metric}: (multiple options) The geometry of the base manifold:
+\item \code{metric}: (character) The geometry of the base manifold. One of the
+following:
 \itemize{
 \item A single string from among \code{"diag_e"}, \code{"dense_e"}, \code{"unit_e"};
 \item A character vector containing paths to files (one per chain)
@@ -79,7 +83,13 @@ Each path must be to a JSON or Rdump file that contains an entry
 \code{inv_metric} whose value is either the diagonal vector or the full
 covariance matrix.
 }
-\item \code{max_depth}: (positive integer) The maximum allowed tree depth.
+
+If you want to turn off adaptation when using a precomuted metric set
+\code{adapt_engaged=FALSE}, otherwise it will use the precomputed metric just
+as an initial guess during adaptation. See the \emph{Euclidean Metric} section
+of the CmdStan manual for more details on these options.
+\item \code{max_depth}: (positive integer) The maximum allowed tree depth. See the
+\emph{Tree Depth} section of the CmdStan manual for more details.
 }
 }
 

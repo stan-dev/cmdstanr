@@ -167,7 +167,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @description The `sample` method of a [`CmdStanModel`] object runs the default
 #'   MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce a set
 #'   of draws from the posterior distribution of a model conditioned on some
-#'   data. Arguments left at `NULL` default to the current CmdStan default.
+#'   data.
 #'
 #' @section Usage:
 #'   ```
@@ -192,7 +192,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'
 #' @template model-common-args
 #' @section Arguments unique to the `sample` method: In addition to the
-#'   arguments above, the `sample` method also has the following arguments:
+#'   arguments above, the `sample` method also has its own set of arguments.
+#'   These arguments are described briefly here and in greater detail in the
+#'   CmdStan manual. Arguments left at `NULL` default to the default used by the
+#'   installed version of CmdStan.
 #'   * `num_samples`: (positive integer) The number of sampling iterations.
 #'   * `num_warmup`: (positive integer) The number of warmup iterations.
 #'   * `save_warmup`: (logical) Should warmup iterations also be streamed
@@ -205,14 +208,22 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `stepsize`: (positive real) The _initial_ step size for the discrete
 #'     approximation to continuous Hamiltonian dynamics. This is further tuned
 #'     during warmup.
-#'   * `metric`: (multiple options) The geometry of the base manifold:
+#'   * `metric`: (character) The geometry of the base manifold. One of the
+#'     following:
 #'      - A single string from among `"diag_e"`, `"dense_e"`, `"unit_e"`;
 #'      - A character vector containing paths to files (one per chain)
 #'        compatible with CmdStan that contain precomputed metrics.
 #'        Each path must be to a JSON or Rdump file that contains an entry
 #'        `inv_metric` whose value is either the diagonal vector or the full
 #'        covariance matrix.
-#'   * `max_depth`: (positive integer) The maximum allowed tree depth.
+#'
+#'     If you want to turn off adaptation when using a precomuted metric set
+#'     `adapt_engaged=FALSE`, otherwise it will use the precomputed metric just
+#'     as an initial guess during adaptation. See the _Euclidean Metric_ section
+#'     of the CmdStan manual for more details on these options.
+#'
+#'   * `max_depth`: (positive integer) The maximum allowed tree depth. See the
+#'     _Tree Depth_ section of the CmdStan manual for more details.
 #'
 #' @section Value: The `sample` method returns a [`CmdStanMCMC`] object.
 #'
@@ -285,7 +296,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' @family CmdStanModel methods
 #'
 #' @description The `optimize` method of a [`CmdStanModel`] object runs Stan's
-#'   optimizer. Arguments left at `NULL` default to the current CmdStan default.
+#'   optimizer.
 #'
 #' @details CmdStan can find the posterior mode (assuming there is one). If the
 #'   posterior is not convex, there is no guarantee Stan will be able to find
@@ -311,7 +322,10 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'
 #' @template model-common-args
 #' @section Arguments unique to the `optimize` method: In addition to the
-#'   arguments above, the `optimize` method also has the following arguments:
+#'   arguments above, the `optimize` method also has its own set of arguments.
+#'   These arguments are described briefly here and in greater detail in the
+#'   CmdStan manual. Arguments left at `NULL` default to the default used by the
+#'   installed version of CmdStan.
 #'   * `algorithm`: (string) The optimization algorithm. One of
 #'     `"lbfgs"`, `"bfgs"`, or `"newton"`.
 #'   * `iter`: (positive integer) The number of iterations.
@@ -373,9 +387,8 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #' @name CmdStanModel-method-variational
 #' @family CmdStanModel methods
 #'
-#' @description The `variational` method of a [`CmdStanModel`] object runs Stan's
-#'   variational Bayes (ADVI) algorithms. Arguments left at `NULL` default to
-#'   the current CmdStan default.
+#' @description The `variational` method of a [`CmdStanModel`] object runs
+#'   Stan's variational Bayes (ADVI) algorithms.
 #'
 #' @details CmdStan can fit a variational approximation to the posterior. The
 #'   approximation is a Gaussian in the unconstrained variable space. Stan
@@ -408,7 +421,10 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'
 #' @template model-common-args
 #' @section Arguments unique to the `variational` method: In addition to the
-#'   arguments above, the `variational` method also has the following arguments:
+#'   arguments above, the `variational` method also has its own set of
+#'   arguments. These arguments are described briefly here and in greater detail
+#'   in the CmdStan manual. Arguments left at `NULL` default to the default used
+#'   by the installed version of CmdStan.
 #'   * `algorithm`: (string) The algorithm. Either `"meanfield"` or `"fullrank"`.
 #'   * `iter`: (positive integer) The _maximum_ number of iterations.
 #'   * `grad_samples`: (positive integer) The number of samples for Monte Carlo
