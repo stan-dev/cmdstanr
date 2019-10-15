@@ -37,6 +37,8 @@ provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
 interface. See the *Comparison with RStan* section later in this vignette
 for more details on how the two inferfaces differ.
 
+**CmdStanR is unreleased and user facing functions are still subject to change**
+
 ## Installing CmdStan
 
 CmdStanR requires a working installation of
@@ -44,8 +46,13 @@ CmdStanR requires a working installation of
 Stan. If you don't have CmdStan installed you can install it yourself or use the
 `install_cmdstan()` function provided by CmdStanR.
 
-```{r install_cmdstan}
-install_cmdstan(quiet = TRUE)
+```{r, include = FALSE}
+if (!dir.exists(cmdstan_default_path())) {
+  install_cmdstan()
+}
+```
+```{r, eval=FALSE}
+install_cmdstan()
 ```
 
 Before CmdStanR can be used it needs to know where the CmdStan installation is
@@ -109,14 +116,24 @@ as a path to a data file compatible with CmdStan (R dump or JSON).
 
 ```{r sample}
 data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-fit_mcmc <- mod$sample(data = data_list, seed = 123, num_chains = 2)
+fit <- mod$sample(data = data_list, seed = 123, num_chains = 2)
 ```
 
 ```{r summary}
 # calls CmdStan's bin/stansummary
-fit_mcmc$summary()
+fit$summary()
 ```
 
+#### Accessing the contents of fitted model objects
+
+CmdStanR is still unreleased and not fully developed. Currently the best way
+to work with the output is to create a stanfit object (RStan) from the 
+csv CmdStan output files:
+
+```{r stanfit}
+stanfit <- rstan::read_stan_csv(fit$output_files())
+print(stanfit)
+```
 
 ## Comparison with RStan
 
