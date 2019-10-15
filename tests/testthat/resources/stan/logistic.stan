@@ -1,16 +1,15 @@
 data {
-  int<lower=0> N;               // number of items
-  int<lower=0> M;               // number of predictors
-  int<lower=0,upper=1> y[N];           // outcomes
-  row_vector[M] x[N];      // predictors
+  int<lower=0> N;
+  int<lower=0> K;
+  int<lower=0,upper=1> y[N];
+  matrix[N, K] X;
 }
 parameters {
-  vector[M] beta;          // coefficients
+  real alpha;
+  vector[K] beta;
 }
 model {
-  for (m in 1:M)
-    beta[m] ~ cauchy(0.0, 2.5);
-  
-  for (n in 1:N)
-    y[n] ~ bernoulli(inv_logit(x[n] * beta));
+  target += normal_lpdf(alpha | 0, 1);
+  target += normal_lpdf(beta | 0, 1);
+  target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
 }

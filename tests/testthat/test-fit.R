@@ -5,17 +5,22 @@ NOT_CRAN <-
 
 if (NOT_CRAN) {
   set_cmdstan_path()
-  stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-  data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+  stan_program <- test_path("resources/stan/logistic.stan")
+  data_file <- test_path("resources/data/logistic.data.R")
   mod <- cmdstan_model(stan_file = stan_program)
   utils::capture.output(mod$compile())
-  utils::capture.output(fit_mcmc <- mod$sample(data = data_list, num_chains = 2))
+  utils::capture.output(fit_mcmc <- mod$sample(data = data_file, num_chains = 2))
   utils::capture.output(suppressWarnings(
-    fit_mle <- mod$optimize(data = data_list)
+    fit_mle <- mod$optimize(data = data_file)
   ))
   utils::capture.output(suppressWarnings(
-    fit_vb <- mod$variational(data = data_list)
+    fit_vb <- mod$variational(data = data_file)
   ))
+
+  PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
+
+  # cleanup
+  file.remove(paste0(mod$exe_file(), c("", ".o",".hpp")))
 }
 
 
@@ -42,7 +47,11 @@ test_that("saving data file after mcmc works", {
 
 test_that("summary() method succesfully calls bin/stansummary", {
   skip_on_cran()
-  expect_output(fit_mcmc$summary(), "Inference for Stan model")
+  expect_output(
+    fit_mcmc$summary(),
+    "Inference for Stan model: logistic_model",
+    fixed = TRUE
+  )
 })
 
 test_that("diagnose() method succesfully calls bin/diagnose", {
@@ -56,6 +65,7 @@ test_that("draws() method returns posterior sample (reading csv works)", {
   expect_type(draws, "double")
   expect_true(is.array(draws))
   expect_true(length(dim(draws)) == 3)
+  expect_equal(dimnames(draws)[[3]], c(PARAM_NAMES, "lp__"))
 })
 
 
@@ -80,7 +90,7 @@ test_that("saving data file after optimization works", {
 
 test_that("reading in csv optimization output works", {
   skip_on_cran()
-  expect_named(fit_mle$mle(), "theta")
+  expect_named(fit_mle$mle(), PARAM_NAMES)
   expect_named(fit_mle$lp(), "lp__")
 })
 
@@ -119,7 +129,7 @@ test_that("draws() method returns approx posterior sample (reading csv works)", 
   draws <- fit_vb$draws()
   expect_type(draws, "double")
   expect_true(is.matrix(draws))
-  expect_equal(colnames(draws), "theta")
+  expect_equal(colnames(draws), PARAM_NAMES)
 })
 
 test_that("log_p(), log_g() methods return vectors (reading csv works)", {
@@ -147,12 +157,12 @@ test_that("RunSet methods return valid output", {
     len = runset$num_runs(),
     unique = TRUE
   )
+  expect_equal(runset$model_name(), "logistic")
+  expect_equal(runset$method(), "sample")
+  expect_equal(runset$run_ids(), seq_len(runset$num_runs()))
+  expect_equal(runset$run_ids(), seq_len(runset$num_chains()))
   checkmate::expect_file_exists(runset$data_file())
   checkmate::expect_file_exists(runset$output_files())
   checkmate::expect_file_exists(runset$console_files())
-  expect_equal(runset$run_ids(), seq_len(runset$num_runs()))
-  expect_equal(runset$run_ids(), seq_len(runset$num_chains()))
-  expect_equal(runset$model_name(), "bernoulli")
-  expect_equal(runset$method(), "sample")
 })
 

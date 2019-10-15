@@ -5,10 +5,17 @@ NOT_CRAN <-
 
 if (NOT_CRAN) {
   set_cmdstan_path()
-  stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-  data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
-  data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
+  stan_program <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   mod <- cmdstan_model(stan_file = stan_program)
+
+  # stan prog outside cmdstan dir
+  stan_program_2 <- test_path("resources", "stan", "bernoulli.stan")
+  mod_2 <- cmdstan_model(stan_file = stan_program_2)
+
+  # valid ways to supply data
+  data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
+  data_file_r <- test_path("resources", "data", "bernoulli.data.R")
+  data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 }
 
 expect_experimental_warning <- function(object) {
@@ -66,9 +73,6 @@ test_that("compile() method works", {
 
 test_that("compilation works when stan program not in cmdstan dir", {
   skip_on_cran()
-
-  stan_program_2 <- test_path("resources", "stan", "bernoulli.stan")
-  mod_2 <- cmdstan_model(stan_program_2)
   out <- utils::capture.output(mod_2$compile())
   expect_output(print(out), "Translating Stan model")
   expect_equal(mod_2$exe_file(), strip_ext(absolute_path(stan_program_2)))
@@ -134,18 +138,21 @@ if (NOT_CRAN) {
   )
 }
 
-test_that("sample() method doesn't error with data list", {
+test_that("sample() method works with data list", {
   skip_on_cran()
 
   expect_sample_output(fit <- mod$sample(data = data_list, num_chains = 1))
   expect_is(fit, "CmdStanMCMC")
 })
 
-test_that("sample() method doesn't error with data file", {
+test_that("sample() method works with data files", {
   skip_on_cran()
 
-  expect_sample_output(fit <- mod$sample(data = data_file, num_chains = 1))
-  expect_is(fit, "CmdStanMCMC")
+  expect_sample_output(fit_r <- mod$sample(data = data_file_r, num_chains = 1))
+  expect_is(fit_r, "CmdStanMCMC")
+
+  expect_sample_output(fit_json <- mod$sample(data = data_file_json, num_chains = 1))
+  expect_is(fit_json, "CmdStanMCMC")
 })
 
 test_that("sample() method works with init file", {
@@ -163,7 +170,7 @@ test_that("sample() method works with init file", {
     envir = as.environment(init_list),
     file = init_file
   )
-  expect_sample_output(mod$sample(data = data_file, init = init_file))
+  expect_sample_output(mod$sample(data = data_file_r, init = init_file))
 })
 
 
@@ -229,7 +236,7 @@ test_that("optimize() method runs when all arguments specified validly", {
   expect_is(fit1, "CmdStanMLE")
 
   # leaving all at default (except 'data')
-  expect_optim_output(fit2 <- mod$optimize(data = data_list))
+  expect_optim_output(fit2 <- mod$optimize(data = data_file_json))
   expect_is(fit2, "CmdStanMLE")
 })
 
