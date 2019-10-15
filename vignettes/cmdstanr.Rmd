@@ -1,0 +1,137 @@
+---
+title: "Getting started with CmdStanR"
+author: "Jonah Gabry"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+vignette: >
+  %\VignetteIndexEntry{Getting started with CmdStanR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r settings-knitr, include=FALSE}
+stopifnot(require(knitr))
+opts_chunk$set(
+  # collapse = TRUE,
+  comment=NA,
+  eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
+)
+```
+
+
+```{r setup, message=FALSE}
+library(cmdstanr)
+```
+
+
+## Introduction
+
+CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
+(see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python) that
+provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
+interface. See the *Comparison with RStan* section later in this vignette
+for more details on how the two inferfaces differ.
+
+## Installing CmdStan
+
+CmdStanR requires a working installation of
+[CmdStan](https://mc-stan.org/users/interfaces/cmdstan), the shell interface to
+Stan. If you don't have CmdStan installed you can install it yourself or use the
+`install_cmdstan()` function provided by CmdStanR.
+
+```{r install_cmdstan}
+install_cmdstan(quiet = TRUE)
+```
+
+Before CmdStanR can be used it needs to know where the CmdStan installation is
+located. When the package is loaded it tries to help automate this to avoid
+having to manually set the path every session:
+
+1. If the environment variable `"CMDSTAN"` exists at load time then its value will be automatically set as the default path to CmdStan for the R session. This is useful
+if your CmdStan installation is not located in the default directory that would
+have been used by `install_cmdstan()` (see #2).
+
+2. If no environment variable is found when loaded but the directory `".cmdstanr/cmdstan"` exists in the user's *home* directory (not working directory) then it will be set as the path to CmdStan for the R session. This is the same as the default directory that `install_cmdstan()` uses to install the latest version of CmdStan, so if that's how you installed CmdStan you shouldn't need to manually 
+set the path to CmdStan when loading CmdStanR.
+
+If neither of these applies (or you want to subsequently change the path) you
+can use the `set_cmdstan_path()` function:
+
+```{r set_cmdstan_path, eval=FALSE}
+set_cmdstan_path(PATH_TO_CMDSTAN)
+```
+
+If you need to check or get the current path to CmdStan use the 
+[`cmdstan_path()`](https://mc-stan.org/cmdstanr/reference/cmdstan_path.html)
+function.
+
+## Compiling and running Stan's algorithms
+
+### Compilation 
+
+The `cmdstan_model()` function creates a new
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
+object from a file containing a Stan program. Here we'll use the example Stan
+program that comes with the CmdStan installation:
+
+```{r cmdstan_model}
+file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+mod <- cmdstan_model(file)
+```
+
+The object `mod` is an [R6](https://r6.r-lib.org/) object, which is similar to 
+R's reference class objects. This design choice was made to make CmdStanR
+and CmdStanPy have similar user interfaces. 
+
+The
+[`compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
+method is used to translate the Stan code to C++ and compile the C++ code:
+
+```{r compile}
+mod$compile()
+mod$print()  # print the Stan program
+```
+
+
+### Model fitting
+
+To run Stan's MCMC algorithm we can use the
+[`sample()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
+method for
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
+objects. Data can be passed in as a named list of R objects (like for RStan) or
+as a path to a data file compatible with CmdStan (R dump or JSON).
+
+```{r sample}
+data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
+fit_mcmc <- mod$sample(data = data_list, seed = 123, num_chains = 2)
+```
+
+```{r summary}
+# calls CmdStan's bin/stansummary
+fit_mcmc$summary()
+```
+
+
+## Comparison with RStan
+
+The RStan interface ([**rstan** package](https://mc-stan.org/rstan) package) is
+an in-memory interface to Stan and relies on R packages like **Rcpp** and
+**inline** call C++ code from R. On the other hand, the CmdStanR interface does
+not directly call any C++ code from R, instead relying on CmdStan for
+compilation, running algorithms, and writing results to output files.
+
+Both forms of interfacing with Stan have advantages and disadvantages. An
+in-memory interface like RStan is able to offer more advanced features than
+CmdStanR (for example RStan's `grad_log_prob` and `unconstrain_pars` methods)
+but keeping up with Stan releases is more complicated for RStan, often requiring
+non-trivial changes to the **rstan** package and requiring new CRAN releases of
+**rstan** and **StanHeaders**. With CmdStanR, the latest features in Stan will
+be available from R immediately after updating CmdStan, without an update to
+the **cmdstanr** package.
+
