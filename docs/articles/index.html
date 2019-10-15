@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get or set the file path to the CmdStan installation — cmdstan_path • cmdstanr</title>
+<title>Articles • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,9 +42,7 @@
 
 
 
-<meta property="og:title" content="Get or set the file path to the CmdStan installation — cmdstan_path" />
-<meta property="og:description" content="cmdstan_path() returns the full path to the CmdStan installation. The path
-can be set using the set_cmdstan_path() function. See Details." />
+<meta property="og:title" content="Articles" />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -65,7 +63,7 @@ can be set using the set_cmdstan_path() function. See Details." />
   </head>
 
   <body>
-    <div class="container template-reference-topic">
+    <div class="container template-article-index">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -156,62 +154,17 @@ can be set using the set_cmdstan_path() function. See Details." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get or set the file path to the CmdStan installation</h1>
-    
-    <div class="hidden name"><code>cmdstan_path.Rd</code></div>
+      <h1>Articles</h1>
     </div>
 
-    <div class="ref-description">
-    <p><code>cmdstan_path()</code> returns the full path to the CmdStan installation. The path
-can be set using the <code>set_cmdstan_path()</code> function. See <strong>Details</strong>.</p>
+    <div class="section ">
+      <h3>All vignettes</h3>
+      <p class="section-desc"></p>
+
+      <ul>
+        <li><a href="cmdstanr.html">Getting started with CmdStanR</a></li>
+      </ul>
     </div>
-
-    <pre class="usage"><span class='fu'>cmdstan_path</span>()
-
-<span class='fu'>set_cmdstan_path</span>(<span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
-
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>path</th>
-      <td><p>The full file path to the CmdStan installation as a string. If
-<code>NULL</code> (the default) then the path is set to the default path used by
-<code><a href='install_cmdstan.html'>install_cmdstan()</a></code> if it exists.</p></td>
-    </tr>
-    </table>
-
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>The file path to the CmdStan installation.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>Before the package can be used it needs to know where the CmdStan
-installation is located. When the package is loaded it tries to help automate
-this to avoid having to manually set the path every session:</p><ul>
-<li><p>If the <a href='https://rdrr.io/r/base/Sys.setenv.html'>environment variable</a> <code>"CMDSTAN"</code> exists at load time
-then its value will be automatically set as the default path to CmdStan for
-the <span style="R">R</span> session.</p></li>
-<li><p>If no environment variable is found when loaded but the directory
-<code>".cmdstanr/cmdstan"</code> exists in the user's home directory
-(<code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("HOME")</a></code>, <em>not</em> the current working directory) then it will
-be set as the path to CmdStan for the <span style="R">R</span> session. This is the same as the
-default directory that <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> would use to install the latest
-version of CmdStan.</p></li>
-</ul>
-
-<p>It is always possible to change the path after loading the package using
-<code>set_cmdstan_path(path)</code>.</p>
-
-  </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
-      <li><a href="#value">Value</a></li>
-      <li><a href="#details">Details</a></li>
-    </ul>
-
   </div>
 </div>
 

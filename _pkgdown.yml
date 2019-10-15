@@ -12,8 +12,8 @@ template:
 navbar:
   title: "cmdstanr"
   left:
-#    - text: "Vignettes"
-#      href: articles/index.html
+    - text: "Vignettes"
+      href: articles/index.html
     - text: "Functions"
       href: reference/index.html
 #    - text: "News"
