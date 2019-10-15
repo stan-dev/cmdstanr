@@ -489,12 +489,12 @@ validate_init <- function(init, num_runs) {
     stop("If 'init' is numeric it must be a single real number >= 0.",
          call. = FALSE)
   } else if (is.character(init)) {
-    checkmate::assert_file_exists(init, access = "r")
     if (length(init) != num_runs) {
       stop("If 'init' is specified as a character vector it must have",
            "one element per chain.",
            call. = FALSE)
     }
+    checkmate::assert_file_exists(init, access = "r")
   }
 
   invisible(TRUE)

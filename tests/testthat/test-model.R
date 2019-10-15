@@ -40,6 +40,12 @@ expect_vb_output <- function(object) {
 # Compile -----------------------------------------------------------------
 context("CmdStanModel-compile")
 
+test_that("object initialized correctly", {
+  skip_on_cran()
+  expect_equal(mod$stan_file(), stan_program)
+  expect_equal(mod$exe_file(), character(0))
+})
+
 test_that("error if no compile() before sample()", {
   skip_on_cran()
   expect_error(
@@ -51,30 +57,34 @@ test_that("error if no compile() before sample()", {
 
 test_that("compile() method works", {
   skip_on_cran()
+  expected <- if (!file.exists(strip_ext(mod$stan_file())))
+    "Translating Stan model" else "is up to date"
   out <- utils::capture.output(mod$compile())
-  expect_output(print(out), "Running make")
-})
-
-test_that("object initializes correctly", {
-  skip_on_cran()
-
+  expect_output(print(out), expected)
   expect_equal(mod$exe_file(), strip_ext(stan_program))
-  expect_equal(mod$stan_file(), stan_program)
 })
 
-test_that("code() and print() methods work", {
+test_that("compilation works when stan program not in cmdstan dir", {
   skip_on_cran()
 
-  expect_known_output(mod$print(), file = test_path("answers", "model-print-output"))
-  expect_known_output(cat(mod$code()), file = test_path("answers", "model-code-output"))
+  stan_program_2 <- test_path("resources", "stan", "bernoulli.stan")
+  mod_2 <- cmdstan_model(stan_program_2)
+  out <- utils::capture.output(mod_2$compile())
+  expect_output(print(out), "Translating Stan model")
+  expect_equal(mod_2$exe_file(), strip_ext(absolute_path(stan_program_2)))
+
+  # cleanup
+  file.remove(paste0(mod_2$exe_file(), c("", ".o",".hpp")))
 })
-
-
 
 # Sample ------------------------------------------------------------------
 context("CmdStanModel-sample")
 
 if (NOT_CRAN) {
+  if (!length(mod$exe_file())) {
+    utils::capture.output(mod$compile())
+  }
+
   # these are all valid for sample()
   ok_arg_values <- list(
     data = data_list,
@@ -115,6 +125,11 @@ if (NOT_CRAN) {
     init = "NOT_A_FILE",
     seed = 1:10,
     stepsize = 1:10,
+    metric = c("AA", "BB")
+  )
+
+  bad_arg_values_3 <- list(
+    init = rep("NOT_A_FILE", 10),
     metric = c("AA", "BB", "CC")
   )
 }
@@ -308,3 +323,15 @@ test_that("variational() method errors for any invalid argument before calling c
     )
   }
 })
+
+
+
+# Other methods -----------------------------------------------------------
+
+context("CmdStanModel-other")
+test_that("code() and print() methods work", {
+  skip_on_cran()
+  expect_known_output(mod$print(), file = test_path("answers", "model-print-output"))
+  expect_known_output(cat(mod$code()), file = test_path("answers", "model-code-output"))
+})
+

@@ -29,7 +29,7 @@ repair_path <- function(path) {
   path <- gsub("\\\\", "/", path)
   path <- gsub("//", "/", path)
   if (substr(path, nchar(path), nchar(path)) == "/") {
-    # remove training "/" (is this necessary?)
+    # remove trailing "/" (is this necessary?)
     path <- substr(path, 1, nchar(path) - 1)
   }
   path
@@ -161,10 +161,8 @@ read_vb_csv <- function(csv_file) {
 write_rdump <- function(data) {
   # FIXME don't use rstan
   if (!requireNamespace("rstan", quietly = TRUE)) {
-    stop("Please install the 'rstan' package.\n",
-         "This is required for writing the data file for CmdStan ",
-         "until CmdStanR has its own implementation.",
-          call. = FALSE)
+    stop("Please install the 'rstan' package. This is temporarily required ",
+         "for writing the data file for CmdStan.", call. = FALSE)
   }
   checkmate::assert_names(names(data), type = "unique")
   temp_file <- tempfile(pattern = "standata-", fileext = ".data.R")

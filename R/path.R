@@ -84,7 +84,7 @@ cmdstan_version <- function() {
 # install_cmdstan() with default settings
 cmdstan_default_path <- function() {
   # ".cmdstanr/cmdstan" is a symlink to latest version
-  file.path(Sys.getenv("HOME"), ".cmdstanr/cmdstan")
+  file.path(Sys.getenv("HOME"), ".cmdstanr", "cmdstan")
 }
 
 # unset the path (only used in tests)

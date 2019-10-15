@@ -98,7 +98,21 @@ test_that("Warning message is thrown if can't detect version number", {
   )
 })
 
+test_that("cmdstan_ext() works", {
+  if (os_is_windows()) {
+    expect_identical(cmdstan_ext(), ".exe")
+    expect_identical(cmdstan_ext("path"), "path.exe")
+  } else {
+    expect_identical(cmdstan_ext(), "")
+    expect_identical(cmdstan_ext("path"), "path")
+  }
+})
 
-# cleanup
+test_that("repair_path() fixes slashes", {
+  # all slashes should be single "/", and no trailing slash
+  expect_equal(repair_path("a//b\\c/"), "a/b/c")
+})
+
+# cleanup -----------------------------------------------------------------
 Sys.unsetenv("CMDSTAN")
 unset_cmdstan_path()

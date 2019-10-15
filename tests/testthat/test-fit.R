@@ -153,5 +153,6 @@ test_that("RunSet methods return valid output", {
   expect_equal(runset$run_ids(), seq_len(runset$num_runs()))
   expect_equal(runset$run_ids(), seq_len(runset$num_chains()))
   expect_equal(runset$model_name(), "bernoulli")
+  expect_equal(runset$method(), "sample")
 })
 
