@@ -126,8 +126,13 @@ copy_temp_files <-
 
 # FIXME: also parse the csv header
 read_optim_csv <- function(csv_file) {
-  csv_no_comments <- utils::read.csv(csv_file, comment.char = "#")
+  csv_no_comments <- utils::read.csv(
+    csv_file,
+    comment.char = "#",
+    colClasses = "numeric"
+  )
   mat <- as.matrix(csv_no_comments)
+  colnames(mat) <- repair_variable_names(colnames(mat))
   list(
     mle = mat[1, colnames(mat) != "lp__"],
     lp = mat[1, colnames(mat) == "lp__"]
@@ -136,10 +141,14 @@ read_optim_csv <- function(csv_file) {
 
 # FIXME: also parse the csv header
 read_vb_csv <- function(csv_file) {
-  csv_no_comments <- utils::read.csv(csv_file, comment.char = "#")
+  csv_no_comments <- utils::read.csv(
+    csv_file,
+    comment.char = "#",
+    colClasses = "numeric"
+  )
   # drop first row since according to CmdStan manual it's just the mean
   mat <- as.matrix(csv_no_comments)[-1,, drop=FALSE]
-
+  colnames(mat) <- repair_variable_names(colnames(mat))
   drop_cols <- c("lp__", "log_p__", "log_g__")
   keep_cols <- setdiff(colnames(mat), drop_cols)
   list(
@@ -148,6 +157,17 @@ read_vb_csv <- function(csv_file) {
     draws = mat[, keep_cols, drop=FALSE]
   )
 }
+
+# convert names like beta.1.1 to beta[1,1]
+repair_variable_names <- function(names) {
+  names <- sub("\\.", "[", names)
+  names <- gsub("\\.", ",", names)
+  names[grep("\\[", names)] <-
+    paste0(names[grep("\\[", names)], "]")
+  names
+}
+
+
 
 
 #' Dump data to temporary file in format readable by CmdStan
