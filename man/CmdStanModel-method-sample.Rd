@@ -33,12 +33,15 @@ data.
 \section{Arguments shared by all fitting methods}{
  The following arguments can
 be specified for any of the fitting methods (\code{sample}, \code{optimize},
-\code{variational}):
+\code{variational}). Arguments left at \code{NULL} default to the default used by the
+installed version of CmdStan.
 \itemize{
 \item \code{data} (multiple options): The data to use:
 \itemize{
 \item A named list of \R objects like for RStan;
-\item A path to a data file compatible with CmdStan.
+\item A path to a data file compatible with CmdStan (\R dump or JSON). See
+the appendices in the CmdStan manual for details on using these
+formats.
 }
 \item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 \item \code{refresh}: (non-negative integer) The number of iterations between

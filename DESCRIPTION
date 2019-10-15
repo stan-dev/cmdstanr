@@ -9,9 +9,7 @@ Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface to 'Stan' (the 'cmdstanr' R package) calls
     'CmdStan' (the shell interface) for compilation, running algorithms, 
     and writing results to files. Methods for accessing the results
-    from R are also provided. Unlike the 'rstan' package, which interfaces with 
-    'Stan' via 'Rcpp', the R code in this package does not directly call any 
-    C++ code.
+    from R are also provided.
 License: BSD_3_clause + file LICENSE
 URL: https://mc-stan.org/cmdstanr, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues
