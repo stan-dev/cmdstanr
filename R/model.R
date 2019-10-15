@@ -33,16 +33,22 @@
 #' # specifying data as a named list (like RStan)
 #' standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
 #' fit_mcmc <- mod$sample(data = standata, seed = 123, num_chains = 2)
+#'
+#' # Call CmdStan's bin/summary
 #' fit_mcmc$summary()
 #'
 #' # Run optimization method (default is Stan's LBFGS algorithm)
 #' # and also demonstrate specifying data as a path to a file (readable by CmdStan)
 #' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
 #' fit_optim <- mod$optimize(data = my_data_file, seed = 123)
+#'
+#' #' Print estimates
 #' fit_optim$summary()
 #'
 #' # Run variational Bayes method (default is meanfield ADVI)
 #' fit_vb <- mod$variational(data = standata, seed = 123)
+#'
+#' # Call CmdStan's bin/summary
 #' fit_vb$summary()
 #'
 #' # For models fit using MCMC, if you like working with RStan's stanfit objects
@@ -281,7 +287,7 @@ sample_method <- function(data = NULL,
       command = cmdstan_args$compose_command(),
       args = cmdstan_args$compose_all_args(chain, csv_files[chain]),
       wd = dirname(self$exe_file()),
-      echo_cmd = TRUE,
+      echo_cmd = FALSE,
       echo = TRUE
     )
   }
@@ -374,7 +380,7 @@ optimize_method <- function(data = NULL,
     command = cmdstan_args$compose_command(),
     args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
     wd = dirname(self$exe_file()),
-    echo_cmd = TRUE,
+    echo_cmd = FALSE,
     echo = TRUE
   )
   CmdStanMLE$new(runset)
@@ -498,7 +504,7 @@ variational_method <- function(data = NULL,
     command = cmdstan_args$compose_command(),
     args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
     wd = dirname(self$exe_file()),
-    echo_cmd = TRUE,
+    echo_cmd = FALSE,
     echo = TRUE
   )
   CmdStanVB$new(runset)

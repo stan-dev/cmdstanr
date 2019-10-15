@@ -116,16 +116,22 @@ mod$compile()
 # specifying data as a named list (like RStan)
 standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
 fit_mcmc <- mod$sample(data = standata, seed = 123, num_chains = 2)
+
+# Call CmdStan's bin/summary
 fit_mcmc$summary()
 
 # Run optimization method (default is Stan's LBFGS algorithm)
 # and also demonstrate specifying data as a path to a file (readable by CmdStan)
 my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
 fit_optim <- mod$optimize(data = my_data_file, seed = 123)
+
+#' Print estimates
 fit_optim$summary()
 
 # Run variational Bayes method (default is meanfield ADVI)
 fit_vb <- mod$variational(data = standata, seed = 123)
+
+# Call CmdStan's bin/summary
 fit_vb$summary()
 
 # For models fit using MCMC, if you like working with RStan's stanfit objects
