@@ -89,7 +89,7 @@ R's reference class objects. This design choice was made to make CmdStanR
 and CmdStanPy have similar user interfaces. 
 
 The
-[`compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
+[`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
 method is used to translate the Stan code to C++ and compile the C++ code:
 
 ```{r compile}
@@ -101,7 +101,7 @@ mod$print()  # print the Stan program
 ### Model fitting
 
 To run Stan's MCMC algorithm we can use the
-[`sample()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
+[`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
 method for
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
 objects. Data can be passed in as a named list of R objects (like for RStan) or
