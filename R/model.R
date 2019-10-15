@@ -83,13 +83,12 @@ cmdstan_model <- function(stan_file) {
 #'  **Method** \tab **Description** \cr
 #'  code \tab Return Stan program as a string. \cr
 #'  print \tab Print readable version of Stan program. \cr
-#'  [compile][CmdStanModel-method-compile]
-#'    \tab Compile Stan program. \cr
-#'  [sample][CmdStanModel-method-sample]
+#'  [compile][model-method-compile] \tab Compile Stan program. \cr
+#'  [sample][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
-#'  [optimize][CmdStanModel-method-optimize]
+#'  [optimize][model-method-optimize]
 #'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. \cr
-#'  [variational][CmdStanModel-method-variational]
+#'  [variational][model-method-variational]
 #'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. \cr
 #' }
 #'
@@ -129,7 +128,7 @@ CmdStanModel <- R6::R6Class(
 
 #' Compile a Stan program or get the Stan code
 #'
-#' @name CmdStanModel-method-compile
+#' @name model-method-compile
 #' @family CmdStanModel methods
 #'
 #' @description The `compile` method of a [`CmdStanModel`] object calls CmdStan
@@ -167,7 +166,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 
 #' Run Stan's MCMC algorithms
 #'
-#' @name CmdStanModel-method-sample
+#' @name model-method-sample
 #' @family CmdStanModel methods
 #'
 #' @description The `sample` method of a [`CmdStanModel`] object runs the default
@@ -298,7 +297,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 
 #' Run Stan's optimization algorithms
 #'
-#' @name CmdStanModel-method-optimize
+#' @name model-method-optimize
 #' @family CmdStanModel methods
 #'
 #' @description The `optimize` method of a [`CmdStanModel`] object runs Stan's
@@ -390,7 +389,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 
 #' Run Stan's variational approximation algorithms
 #'
-#' @name CmdStanModel-method-variational
+#' @name model-method-variational
 #' @family CmdStanModel methods
 #'
 #' @description The `variational` method of a [`CmdStanModel`] object runs

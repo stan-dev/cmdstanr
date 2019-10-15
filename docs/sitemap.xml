@@ -4,25 +4,10 @@
     <loc>https://mc-stan.org/cmdstanr/index.html</loc>
   </url>
   <url>
-    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanFit-method-save_output_files.html</loc>
-  </url>
-  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanMLE.html</loc>
-  </url>
-  <url>
-    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel-method-compile.html</loc>
-  </url>
-  <url>
-    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel-method-optimize.html</loc>
-  </url>
-  <url>
-    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel-method-sample.html</loc>
-  </url>
-  <url>
-    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel-method-variational.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanModel.html</loc>
@@ -40,6 +25,21 @@
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstanr-package.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/install_cmdstan.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-compile.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-optimize.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-sample.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-variational.html</loc>
   </url>
 </urlset>

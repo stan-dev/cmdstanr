@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create a new CmdStanModel object — cmdstan_model • cmdstanr</title>
+<title>Run Stan's variational approximation algorithms — model-method-variational • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,10 +42,9 @@
 
 
 
-<meta property="og:title" content="Create a new CmdStanModel object — cmdstan_model" />
-<meta property="og:description" content="
-The cmdstan_model() function creates a new CmdStanModel object from a
-file containing a Stan program." />
+<meta property="og:title" content="Run Stan's variational approximation algorithms — model-method-variational" />
+<meta property="og:description" content="The variational method of a CmdStanModel object runs
+Stan's variational Bayes (ADVI) algorithms." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -154,41 +153,112 @@ file containing a Stan program." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create a new CmdStanModel object</h1>
+    <h1>Run Stan's variational approximation algorithms</h1>
     
-    <div class="hidden name"><code>cmdstan_model.Rd</code></div>
+    <div class="hidden name"><code>model-method-variational.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><img src='figures/logo.png' width="25px" alt="https://mc-stan.org/about/logo/" />
-The <code>cmdstan_model()</code> function creates a new <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object from a
-file containing a Stan program.</p>
+    <p>The <code>variational</code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object runs
+Stan's variational Bayes (ADVI) algorithms.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>cmdstan_model</span>(<span class='no'>stan_file</span>)</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>stan_file</th>
-      <td><p>Path to Stan program.</p></td>
-    </tr>
-    </table>
+
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>CmdStan can fit a variational approximation to the posterior. The
+approximation is a Gaussian in the unconstrained variable space. Stan
+implements two variational algorithms. The <code>algorithm="meanfield"</code> option
+uses a fully factorized Gaussian for the approximation. The
+<code>algorithm="fullrank"</code> option uses a Gaussian with a full-rank covariance
+matrix for the approximation.</p>
+<p>-- <a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan Interface User's Guide</a></p>
+    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
+
+    
+<pre>$variational(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  algorithm = NULL,
+  iter = NULL,
+  grad_samples = NULL,
+  elbo_samples = NULL,
+  eta = NULL,
+  adapt_engaged = NULL,
+  adapt_iter = NULL,
+  tol_rel_obj = NULL,
+  eval_elbo = NULL,
+  output_samples = NULL
+)
+</pre>
+
+    <h2 class="hasAnchor" id="arguments-shared-by-all-fitting-methods"><a class="anchor" href="#arguments-shared-by-all-fitting-methods"></a>Arguments shared by all fitting methods</h2>
+
+    <p>The following arguments can
+be specified for any of the fitting methods (<code>sample</code>, <code>optimize</code>,
+<code>variational</code>). Arguments left at <code>NULL</code> default to the default used by the
+installed version of CmdStan.</p><ul>
+<li><p><code>data</code> (multiple options): The data to use:</p><ul>
+<li><p>A named list of <span style="R">R</span> objects like for RStan;</p></li>
+<li><p>A path to a data file compatible with CmdStan (<span style="R">R</span> dump or JSON). See
+the appendices in the CmdStan manual for details on using these
+formats.</p></li>
+</ul></li>
+<li><p><code>seed</code>: (positive integer) A seed for the (P)RNG to pass to CmdStan.</p></li>
+<li><p><code>refresh</code>: (non-negative integer) The number of iterations between
+screen updates.</p></li>
+<li><p><code>init</code>: (multiple options) The initialization method:</p><ul>
+<li><p>A real number <code>x&gt;0</code> initializes randomly between <code>[-x,x]</code> (on the
+<em>unconstrained</em> parameter space);</p></li>
+<li><p><code>0</code> initializes to <code>0</code>;</p></li>
+<li><p>A character vector of data file paths (one per chain) to
+initialization files.</p></li>
+</ul></li>
+</ul>
+
+    <h2 class="hasAnchor" id="arguments-unique-to-the-variational-method"><a class="anchor" href="#arguments-unique-to-the-variational-method"></a>Arguments unique to the <code>variational</code> method</h2>
+
+    <p>In addition to the
+arguments above, the <code>variational</code> method also has its own set of
+arguments. These arguments are described briefly here and in greater detail
+in the CmdStan manual. Arguments left at <code>NULL</code> default to the default used
+by the installed version of CmdStan.</p><ul>
+<li><p><code>algorithm</code>: (string) The algorithm. Either <code>"meanfield"</code> or <code>"fullrank"</code>.</p></li>
+<li><p><code>iter</code>: (positive integer) The <em>maximum</em> number of iterations.</p></li>
+<li><p><code>grad_samples</code>: (positive integer) The number of samples for Monte Carlo
+estimate of gradients.</p></li>
+<li><p><code>elbo_samples</code>: (positive integer) The number of samples for Monte Carlo
+estimate of ELBO (objective function).</p></li>
+<li><p><code>eta</code>: (positive real) The stepsize weighting parameter for adaptive
+stepsize sequence.</p></li>
+<li><p><code>adapt_engaged</code>: (logical) Do warmup adaptation?</p></li>
+<li><p><code>adapt_iter</code>: (positive integer) The <em>maximum</em> number of adaptation
+iterations.</p></li>
+<li><p><code>tol_rel_obj</code>: (positive real) Convergence tolerance on the relative norm
+of the objective.</p></li>
+<li><p><code>eval_elbo</code>: (positive integer) Evaluate ELBO every Nth iteration.</p></li>
+<li><p><code>output_samples:</code> (positive integer) Number of posterior samples to
+draw and save.</p></li>
+</ul>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.</p>
+    <p>The <code>variational</code> method returns a <code><a href='CmdStanVB.html'>CmdStanVB</a></code> object.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='install_cmdstan.html'>install_cmdstan()</a></code>, <code><a href='cmdstan_path.html'>cmdstan_path()</a></code></p>
-<p>The CmdStanR website (<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>)
+    <div class='dont-index'><p>The CmdStanR website (<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>)
 for online documentation and tutorials.</p>
 <p>The Stan and CmdStan documentation:</p><ul>
 <li><p>Stan doc (html or pdf): <a href='https://mc-stan.org/users/documentation/'>mc-stan.org/users/documentation/</a></p></li>
 <li><p>CmdStan doc (pdf): (<a href='https://github.com/stan-dev/cmdstan/releases/latest'>github.com/stan-dev/cmdstan/releases/</a>).</p></li>
 </ul>
-</div>
+
+<p>Other CmdStanModel methods: <code><a href='model-method-compile.html'>model-method-compile</a></code>,
+  <code><a href='model-method-optimize.html'>model-method-optimize</a></code>,
+  <code><a href='model-method-sample.html'>model-method-sample</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
@@ -201,7 +271,7 @@ for online documentation and tutorials.</p>
 <span class='co'># Create a CmdStan model object from a Stan program,</span>
 <span class='co'># here using the example model that comes with CmdStan</span>
 <span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
-<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'>cmdstan_model</span>(<span class='no'>stan_program</span>)
+<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>stan_program</span>)
 <span class='no'>mod</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</div><div class='output co'>#&gt; data { 
 #&gt;   int&lt;lower=0&gt; N; 
 #&gt;   int&lt;lower=0,upper=1&gt; y[N];
@@ -246,7 +316,7 @@ for online documentation and tutorials.</p>
 #&gt;         stepsize_jitter = 0 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpu3Awk6/standata-1c4f6635755.data.R
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpu3Awk6/standata-1c4f271ac518.data.R
 #&gt; init = 2 (Default)
 #&gt; random
 #&gt;   seed = 123
@@ -256,8 +326,8 @@ for online documentation and tutorials.</p>
 #&gt;   refresh = 100 (Default)
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 1.8e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
+#&gt; Gradient evaluation took 2e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -284,9 +354,9 @@ for online documentation and tutorials.</p>
 #&gt; Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #&gt; Iteration: 2000 / 2000 [100%]  (Sampling)
 #&gt; 
-#&gt;  Elapsed Time: 0.011495 seconds (Warm-up)
-#&gt;                0.018069 seconds (Sampling)
-#&gt;                0.029564 seconds (Total)
+#&gt;  Elapsed Time: 0.015502 seconds (Warm-up)
+#&gt;                0.02332 seconds (Sampling)
+#&gt;                0.038822 seconds (Total)
 #&gt; 
 #&gt; method = sample (Default)
 #&gt;   sample
@@ -314,7 +384,7 @@ for online documentation and tutorials.</p>
 #&gt;         stepsize_jitter = 0 (Default)
 #&gt; id = 2
 #&gt; data
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpu3Awk6/standata-1c4f6635755.data.R
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpu3Awk6/standata-1c4f271ac518.data.R
 #&gt; init = 2 (Default)
 #&gt; random
 #&gt;   seed = 124
@@ -324,8 +394,8 @@ for online documentation and tutorials.</p>
 #&gt;   refresh = 100 (Default)
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 1.7e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.17 seconds.
+#&gt; Gradient evaluation took 2e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -352,9 +422,9 @@ for online documentation and tutorials.</p>
 #&gt; Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #&gt; Iteration: 2000 / 2000 [100%]  (Sampling)
 #&gt; 
-#&gt;  Elapsed Time: 0.01131 seconds (Warm-up)
-#&gt;                0.020368 seconds (Sampling)
-#&gt;                0.031678 seconds (Total)
+#&gt;  Elapsed Time: 0.016043 seconds (Warm-up)
+#&gt;                0.029265 seconds (Sampling)
+#&gt;                0.045308 seconds (Total)
 #&gt; </div><div class='input'>
 <span class='co'># Call CmdStan's bin/summary</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span>()</div><div class='output co'>#&gt; Running bin/stansummary \
@@ -363,18 +433,18 @@ for online documentation and tutorials.</p>
 #&gt; Inference for Stan model: bernoulli_model
 #&gt; 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.011, 0.011) seconds, 0.023 seconds total
-#&gt; Sampling took (0.018, 0.020) seconds, 0.038 seconds total
+#&gt; Warmup took (0.016, 0.016) seconds, 0.032 seconds total
+#&gt; Sampling took (0.023, 0.029) seconds, 0.053 seconds total
 #&gt; 
 #&gt;                 Mean     MCSE   StdDev     5%   50%   95%  N_Eff  N_Eff/s    R_hat
-#&gt; lp__            -7.3  2.7e-02  7.3e-01   -8.9  -7.0  -6.8    738    19212  1.0e+00
-#&gt; accept_stat__   0.92  3.1e-03  1.3e-01   0.64  0.97   1.0   1670    43436  1.0e+00
-#&gt; stepsize__      0.92  1.7e-03  1.7e-03   0.92  0.92  0.92    1.0       26  1.4e+12
-#&gt; treedepth__      1.3  1.1e-02  4.7e-01    1.0   1.0   2.0   1968    51195  1.0e+00
-#&gt; n_leapfrog__     2.4  2.5e-02  1.0e+00    1.0   3.0   3.0   1640    42671  1.0e+00
-#&gt; divergent__     0.00  0.0e+00  0.0e+00   0.00  0.00  0.00   1000    26017      nan
-#&gt; energy__         7.8  4.0e-02  1.0e+00    6.8   7.5   9.8    647    16827  1.0e+00
-#&gt; theta           0.24  4.6e-03  1.2e-01  0.077  0.22  0.47    720    18735  1.0e+00
+#&gt; lp__            -7.3  2.7e-02  7.3e-01   -8.9  -7.0  -6.8    738    14043  1.0e+00
+#&gt; accept_stat__   0.92  3.1e-03  1.3e-01   0.64  0.97   1.0   1670    31749  1.0e+00
+#&gt; stepsize__      0.92  1.7e-03  1.7e-03   0.92  0.92  0.92    1.0       19  1.4e+12
+#&gt; treedepth__      1.3  1.1e-02  4.7e-01    1.0   1.0   2.0   1968    37421  1.0e+00
+#&gt; n_leapfrog__     2.4  2.5e-02  1.0e+00    1.0   3.0   3.0   1640    31191  1.0e+00
+#&gt; divergent__     0.00  0.0e+00  0.0e+00   0.00  0.00  0.00   1000    19017      nan
+#&gt; energy__         7.8  4.0e-02  1.0e+00    6.8   7.5   9.8    647    12299  1.0e+00
+#&gt; theta           0.24  4.6e-03  1.2e-01  0.077  0.22  0.47    720    13694  1.0e+00
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,
@@ -433,7 +503,7 @@ for online documentation and tutorials.</p>
 #&gt;     output_samples = 1000 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpu3Awk6/standata-1c4f63fa90b9.data.R
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpu3Awk6/standata-1c4f4e81beb6.data.R
 #&gt; init = 2 (Default)
 #&gt; random
 #&gt;   seed = 123
@@ -450,8 +520,8 @@ for online documentation and tutorials.</p>
 #&gt; 
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 2.1e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.21 seconds.
+#&gt; Gradient evaluation took 1.9e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.19 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -518,7 +588,7 @@ for online documentation and tutorials.</p>
 #&gt; theta  0.24    0.00 0.12  0.06  0.14  0.22  0.32  0.52   720    1
 #&gt; lp__  -7.32    0.03 0.73 -9.37 -7.53 -7.05 -6.81 -6.75   737    1
 #&gt; 
-#&gt; Samples were drawn using NUTS(diag_e) at Tue Oct 15 12:37:16 2019.
+#&gt; Samples were drawn using NUTS(diag_e) at Tue Oct 15 12:37:21 2019.
 #&gt; For each parameter, n_eff is a crude measure of effective sample size,
 #&gt; and Rhat is the potential scale reduction factor on split chains (at 
 #&gt; convergence, Rhat=1).</div><div class='input'>
@@ -529,7 +599,10 @@ for online documentation and tutorials.</p>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#details">Details</a></li>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#arguments-shared-by-all-fitting-methods">Arguments shared by all fitting methods</a></li>
+      <li><a href="#arguments-unique-to-the-variational-method">Arguments unique to the <code>variational</code> method</a></li>
       <li><a href="#value">Value</a></li>
       <li><a href="#see-also">See also</a></li>
       <li><a href="#examples">Examples</a></li>

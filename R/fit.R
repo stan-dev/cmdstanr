@@ -3,7 +3,7 @@
 #' CmdStanMCMC objects
 #'
 #' @name CmdStanMCMC
-#' @family CmdStanFit objects
+#' @family fitted model objects
 #' @template seealso-docs
 #'
 #' @description A `CmdStanMCMC` object is the fitted model object returned by
@@ -20,9 +20,9 @@
 #'  `diagnose` \tab Run and print CmdStan's `bin/diagnose`. \cr
 #'  `draws` \tab
 #'    Return post-warmup draws as an `iters x chains x variables` array. \cr
-#'  [`save_output_files`][CmdStanFit-method-save_output_files]
+#'  [`save_output_files`][fit-method-save_output_files]
 #'    \tab Save output csv files to a specified location. \cr
-#'  [`save_data_file`][CmdStanFit-method-save_data_file]
+#'  [`save_data_file`][fit-method-save_data_file]
 #'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
 #'
@@ -102,7 +102,7 @@ CmdStanMCMC <- R6::R6Class(
 #' CmdStanMLE objects
 #'
 #' @name CmdStanMLE
-#' @family CmdStanFit objects
+#' @family fitted model objects
 #' @template seealso-docs
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
@@ -117,9 +117,9 @@ CmdStanMCMC <- R6::R6Class(
 #'  `mle` \tab Return the MLE (or posterior mode) as a named vector. \cr
 #'  `lp` \tab Return the the total log probability density (up to an additive
 #'    constant) computed in the model block of the Stan program. \cr
-#'  [`save_output_files`][CmdStanFit-method-save_output_files]
+#'  [`save_output_files`][fit-method-save_output_files]
 #'    \tab Save output csv files to a specified location. \cr
-#'  [`save_data_file`][CmdStanFit-method-save_data_file]
+#'  [`save_data_file`][fit-method-save_data_file]
 #'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
 #'
@@ -169,7 +169,7 @@ CmdStanMLE <- R6::R6Class(
 #' CmdStanVB objects
 #'
 #' @name CmdStanVB
-#' @family CmdStanFit objects
+#' @family fitted model objects
 #' @template seealso-docs
 #'
 #' @description A `CmdStanVB` object is the fitted model object returned by the
@@ -184,9 +184,9 @@ CmdStanMLE <- R6::R6Class(
 #'  `summary` \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  `draws` \tab Return approximate posterior draws as matrix with one colunm per
 #'    variable. \cr
-#'  [`save_output_files`][CmdStanFit-method-save_output_files]
+#'  [`save_output_files`][fit-method-save_output_files]
 #'    \tab Save output csv files to a specified location. \cr
-#'  [`save_data_file`][CmdStanFit-method-save_data_file]
+#'  [`save_data_file`][fit-method-save_data_file]
 #'    \tab Save R dump or JSON data file to a specified location. \cr
 #' }
 #'
@@ -256,8 +256,8 @@ CmdStanVB <- R6::R6Class(
 
 #' Save output and data files
 #'
-#' @name CmdStanFit-method-save_output_files
-#' @aliases CmdStanFit-method-save_data_file
+#' @name fit-method-save_output_files
+#' @aliases fit-method-save_data_file
 #'
 #' @description All fitted model objects have methods `save_output_files()` and
 #'   `save_data_file()`. These methods move csv output files and R dump or json

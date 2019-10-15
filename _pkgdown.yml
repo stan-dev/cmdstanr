@@ -48,7 +48,8 @@ home:
   links:
   - text: Ask a question
     href: https://discourse.mc-stan.org/
-
+  - text: Browse source code
+    href: https://github.com/stan-dev/cmdstanr
 
 reference:
   - title: "Package description"
@@ -69,9 +70,10 @@ reference:
     contents:
       - cmdstan_model
       - CmdStanModel
-      - starts_with("CmdStanModel-method")
+      - starts_with("model-method")
   - title: "Fitted model objects and methods"
     contents:
       - CmdStanMCMC
       - CmdStanMLE
       - CmdStanVB
+      - starts_with("fit-method")

@@ -16,9 +16,9 @@ object.
 \code{mle} \tab Return the MLE (or posterior mode) as a named vector. \cr
 \code{lp} \tab Return the the total log probability density (up to an additive
 constant) computed in the model block of the Stan program. \cr
-\code{\link[=CmdStanFit-method-save_output_files]{save_output_files}}
+\code{\link[=fit-method-save_output_files]{save_output_files}}
 \tab Save output csv files to a specified location. \cr
-\code{\link[=CmdStanFit-method-save_data_file]{save_data_file}}
+\code{\link[=fit-method-save_data_file]{save_data_file}}
 \tab Save R dump or JSON data file to a specified location. \cr
 }
 }
@@ -32,7 +32,7 @@ The Stan and CmdStan documentation:
 \item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
 }
 
-Other CmdStanFit objects: \code{\link{CmdStanMCMC}},
+Other fitted model objects: \code{\link{CmdStanMCMC}},
   \code{\link{CmdStanVB}}
 }
-\concept{CmdStanFit objects}
+\concept{fitted model objects}
