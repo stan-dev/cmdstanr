@@ -23,5 +23,8 @@ Imports:
     processx,
     R6
 Suggests: 
+    knitr,
+    rmarkdown,
     rstan,
     testthat (>= 2.1.0)
+VignetteBuilder: knitr
