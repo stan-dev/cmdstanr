@@ -33,16 +33,14 @@ install_cmdstan <- function(dir = NULL, cores = 2, quiet = FALSE) {
   )
 
   if (!is.null(dir)) {
-    path <- file.path(dir, "cmdstan")
+    install_path <- file.path(dir, "cmdstan")
   } else {
-    path <- file.path(Sys.getenv("HOME"), ".cmdstanr", "cmdstan")
+    install_path <- cmdstan_default_path()
   }
 
-  if (interactive()) {
-    message(
-      "\nUse set_cmdstan_path('", path, "') ",
-      "to point CmdStanR to the location of the new installation."
-    )
-  }
+  message(
+    "\nUse set_cmdstan_path('", install_path, "') ",
+    "to point CmdStanR to the location of the new installation."
+  )
   invisible(install_log)
 }

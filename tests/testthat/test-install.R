@@ -13,9 +13,13 @@ test_that("test cmdstan installation", {
   } else {
     dir <- tempdir()
   }
-  expect_output(
-    install_log <- install_cmdstan(dir = dir, cores = 2, quiet = FALSE),
-    "CmdStan installation location:"
+  expect_message(
+    expect_output(
+      install_log <- install_cmdstan(dir = dir, cores = 2, quiet = FALSE),
+      "CmdStan installation location"
+    ),
+    paste0("Use set_cmdstan_path('", dir, "/cmdstan", "')"),
+    fixed = TRUE
   )
   expect_equal(install_log$status, 0)
 })
