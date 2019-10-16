@@ -172,24 +172,17 @@ repair_variable_names <- function(names) {
 
 #' Dump data to temporary file in format readable by CmdStan
 #'
-#' Currently calls `rstan::stan_rdump()` to create the `.data.R` file.
-#' FIXME:
-#'
 #' @param data A named list of \R objects.
 #' @return Path to temporary file containing the data.
 #' @noRd
-write_rdump <- function(data) {
-  # FIXME don't use rstan
-  if (!requireNamespace("rstan", quietly = TRUE)) {
-    stop("Please install the 'rstan' package. This is temporarily required ",
-         "for writing the data file for CmdStan.", call. = FALSE)
+write_json <- function(data) {
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("Please install the 'jsonlite' package.", call. = FALSE)
   }
   checkmate::assert_names(names(data), type = "unique")
-  temp_file <- tempfile(pattern = "standata-", fileext = ".data.R")
-  rstan::stan_rdump(
-    list = names(data),
-    file = temp_file,
-    envir = as.environment(data)
-  )
+  temp_file <- tempfile(pattern = "standata-", fileext = ".json")
+  # write the data in the JSON file with full precision
+  json_data <- jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA)
+  write(json_data, file = temp_file)
   temp_file
 }

@@ -163,13 +163,10 @@ test_that("sample() method works with init file", {
   init_file <- tempfile(
     tmpdir = cmdstan_tempdir(),
     pattern = "testing-inits-",
-    fileext = ".data.R"
+    fileext = ".json"
   )
-  rstan::stan_rdump(
-    names(init_list),
-    envir = as.environment(init_list),
-    file = init_file
-  )
+  json_init_data <- jsonlite::toJSON(init_list, auto_unbox = TRUE, digits = NA)
+  write(json_init_data, file = init_file)
   expect_sample_output(mod$sample(data = data_file_r, init = init_file))
 })
 

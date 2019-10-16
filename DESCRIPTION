@@ -21,7 +21,8 @@ SystemRequirements: CmdStan <https://mc-stan.org/users/interfaces/cmdstan>
 Imports: 
     checkmate,
     processx,
-    R6
+    R6,
+    jsonlite
 Suggests: 
     knitr,
     rmarkdown,
