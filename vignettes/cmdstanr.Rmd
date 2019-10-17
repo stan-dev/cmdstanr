@@ -91,9 +91,13 @@ file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
 mod <- cmdstan_model(file)
 ```
 
-The object `mod` is an [R6](https://r6.r-lib.org/) object, which is similar to 
-R's reference class objects. This design choice was made to make CmdStanR
-and CmdStanPy have similar user interfaces. 
+The object `mod` is an [R6](https://r6.r-lib.org/) reference object of class
+`CmdStanModel` and behaves similarly to
+to R's reference class objects and those in object oriented
+programming languages. Methods are accessed using the `$` operator. 
+Aside from the other features of R6 This design choice allows for CmdStanR and
+[CmdStanPy](https://github.com/stan-dev/cmdstanpy) to provide a similar user 
+experience and share many implementation details, which also helps facilitate collaboration between the developers.
 
 The
 [`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
@@ -107,7 +111,9 @@ mod$print()  # print the Stan program
 
 ### Model fitting
 
-To run Stan's MCMC algorithm we can use the
+#### MCMC
+
+To run Stan's default MCMC algorithm we can use the
 [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
 method for
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
@@ -118,6 +124,10 @@ as a path to a data file compatible with CmdStan (R dump or JSON).
 data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
 fit <- mod$sample(data = data_list, seed = 123, num_chains = 2)
 ```
+
+The `$sample()` method creates [R6](https://r6.r-lib.org/) `CmdStanMCMC`
+objects.
+
 
 ```{r summary}
 # calls CmdStan's bin/stansummary
@@ -134,6 +144,17 @@ csv CmdStan output files:
 stanfit <- rstan::read_stan_csv(fit$output_files())
 print(stanfit)
 ```
+
+#### Optimization and variational inference
+
+CmdStanR also supports running Stan's optimization and variational algorithms.
+These are run via the `$optimize()` and `$variational()` methods, which are
+called in a similar way to the `$sample()` method demonstrated above. 
+For more details see the individual documentation pages:
+
+* [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
+* [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
+
 
 ## Comparison with RStan
 
