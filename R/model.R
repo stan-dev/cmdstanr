@@ -150,13 +150,18 @@ NULL
 
 compile_method <- function(opencl = FALSE,
                            opencl_platform_id = 0,
-                           opencl_device_id = 0) {
+                           opencl_device_id = 0,
+                           compiler_flags = NULL) {
 
   make_local_path <- paste(cmdstan_path(), "make", "local", sep = "/")
   old_make_local_content <- ""
   if(file.exists(make_local_path)) {
     # read the contents of make/local to restore it after compilation
     old_make_local_content <- paste(readLines(make_local_path), collapse = "\n")
+  }
+  if(!is.null(compiler_flags)) {
+    custom_compiler_flags <- paste(compiler_flags, collapse = "\n")
+    write(file = make_local_path, custom_compiler_flags, append = TRUE)
   }
   if(opencl) {
     stan_opencl <- "STAN_OPENCL = true"
