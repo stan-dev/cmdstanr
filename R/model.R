@@ -152,6 +152,7 @@ CmdStanModel <- R6::R6Class(
 #'     OpenCL platform on which to run the compiled model.
 #'   * `compiler_flags`: (vector of strings) Vector of strings representing custom compiler
 #'     flags to be used when compiling the model.
+#'   * `threads`: (logical) Should the model be compiled with threading support?
 #'
 #' @section Value: The `compile` method returns the [`CmdStanModel`] object
 #'   invisibly.
@@ -169,19 +170,29 @@ compile_method <- function(opencl = FALSE,
   make_local_path <- paste(cmdstan_path(), "make", "local", sep = "/")
   old_make_local_content <- ""
   if(file.exists(make_local_path)) {
-    # read the contents of make/local to restore it after compilation
+    # read the contents of make/local to compare with the new contents
     old_make_local_content <- paste(readLines(make_local_path), collapse = "\n")
-  }
-  if(!is.null(compiler_flags)) {
-    custom_compiler_flags <- paste(compiler_flags, collapse = "\n")
-    write(file = make_local_path, custom_compiler_flags, append = TRUE)
   }
   if(opencl) {
     stan_opencl <- "STAN_OPENCL = true"
     platform_id <- paste("OPENCL_PLATFORM_ID", opencl_platform_id, sep = " = ")
     device_id <- paste("OPENCL_DEVICE_ID", opencl_device_id, sep = " = ")
-    opencl_make_local_content <- paste(stan_opencl, platform_id, device_id, sep = "\n")
-    write(file = make_local_path, opencl_make_local_content, append = TRUE)
+    compiler_flags <- c(compiler_flags, stan_opencl, platform_id, device)
+  }
+  if(threads) {
+    stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
+    compiler_flags <- c(compiler_flags, stan_threads)
+  }
+  new_make_local_content <- paste(compiler_flags, collapse = "\n")
+  # dont rewrite make/local if there was no change
+  if(old_make_local_content != new_make_local_content) {
+    #remove the main.o file if there are changes to the make/local file
+    main_o_file <- paste(cmdstan_path(), "src", "cmdstan", "main.o", sep = "/")
+    if(file.exists(main_o_file)) {
+      file.remove(main_o_file)
+    }
+    file.remove(paste(cmdstan_path(), "make", "local", sep = "/"))
+    write(new_make_local_content, file = make_local_path)
   }
   exe <- strip_ext(self$stan_file())
   exe <- cmdstan_ext(exe) # adds .exe on Windows
@@ -193,8 +204,6 @@ compile_method <- function(opencl = FALSE,
     echo = TRUE
   )
   private$exe_file_ <- exe
-  #restore the contents of make/local
-  write(file = make_local_path, old_make_local_content, append = FALSE)
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile_method)
