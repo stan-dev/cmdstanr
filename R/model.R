@@ -123,7 +123,6 @@ CmdStanModel <- R6::R6Class(
   )
 )
 
-
 # CmdStanModel methods -----------------------------------
 
 #' Compile a Stan program or get the Stan code
@@ -162,39 +161,23 @@ CmdStanModel <- R6::R6Class(
 #'
 NULL
 
-compile_method <- function(opencl = FALSE,
+compile_method <- function(threads = FALSE,
+                           opencl = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
                            compiler_flags = NULL) {
-
-  make_local_path <- paste(cmdstan_path(), "make", "local", sep = "/")
-  old_make_local_content <- ""
-  if(file.exists(make_local_path)) {
-    # read the contents of make/local to compare with the new contents
-    old_make_local_content <- paste(readLines(make_local_path), collapse = "\n")
-  }
-  if(opencl) {
-    stan_opencl <- "STAN_OPENCL = true"
-    platform_id <- paste("OPENCL_PLATFORM_ID", opencl_platform_id, sep = " = ")
-    device_id <- paste("OPENCL_DEVICE_ID", opencl_device_id, sep = " = ")
-    compiler_flags <- c(compiler_flags, stan_opencl, platform_id, device)
-  }
-  if(threads) {
-    stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
-    compiler_flags <- c(compiler_flags, stan_threads)
-  }
-  new_make_local_content <- paste(compiler_flags, collapse = "\n")
-  # dont rewrite make/local if there was no change
-  if(old_make_local_content != new_make_local_content) {
-    #remove the main.o file if there are changes to the make/local file
-    main_o_file <- paste(cmdstan_path(), "src", "cmdstan", "main.o", sep = "/")
-    if(file.exists(main_o_file)) {
-      file.remove(main_o_file)
-    }
-    file.remove(paste(cmdstan_path(), "make", "local", sep = "/"))
-    write(new_make_local_content, file = make_local_path)
-  }
   exe <- strip_ext(self$stan_file())
+  make_local_changed <- set_make_local(threads,
+                                       opencl,
+                                       opencl_platform_id,
+                                       opencl_device_id,
+                                       compiler_flags)
+  # rebuild main.o and the model if there was a change in make/local
+  if(make_local_changed) {
+    print("A change in the compile flags was found. Recompiling the model...\n")
+    build_cleanup(exe,
+                  remove_main = TRUE)
+  }
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
     command = "make",

@@ -193,3 +193,84 @@ write_rdump <- function(data) {
   )
   temp_file
 }
+
+#' Cleanup build files of a Stan model
+#'
+#' deletese the model_name.o, model_name.hpp and the executable.
+#'
+#' @param model_path (string) The absolute path to the model
+#' @param remove_main (logical) Set TRUE to also remove the cmdstan main.o
+#' @noRd
+build_cleanup <- function(model_path,
+                          remove_main = FALSE) {
+  model_hpp_file = paste(model_path, ".hpp", sep = "")
+  model_o_file = paste(model_path, ".o", sep = "")
+  if(file.exists(model_hpp_file)) {
+    file.remove(model_hpp_file)
+  }
+  if(file.exists(model_o_file)) {
+    file.remove(model_o_file)
+  }
+  if(file.exists(model_path)) {
+    file.remove(model_path)
+  }
+  if(remove_main) {
+    main_o_file <- paste(cmdstan_path(), "src", "cmdstan", "main.o", sep = "/")
+    if(file.exists(main_o_file)) {
+      file.remove(main_o_file)
+    }
+  }
+}
+
+set_make_local <- function(threads = FALSE,
+                           opencl = FALSE,
+                           opencl_platform_id = 0,
+                           opencl_device_id = 0,
+                           compiler_flags = NULL) {
+  make_local_path <- paste(cmdstan_path(), "make", "local", sep = "/")
+  old_make_local_content <- ""
+  if(file.exists(make_local_path)) {
+    # read the contents of make/local to compare with the new contents
+    old_make_local_content <- paste(readLines(make_local_path), collapse = "\n")
+  }
+  if(opencl) {
+    stan_opencl <- "STAN_OPENCL = true"
+    platform_id <- paste("OPENCL_PLATFORM_ID", opencl_platform_id, sep = " = ")
+    device_id <- paste("OPENCL_DEVICE_ID", opencl_device_id, sep = " = ")
+    compiler_flags <- c(compiler_flags, stan_opencl, platform_id, device)
+  }
+  if(threads) {
+    stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
+    compiler_flags <- c(compiler_flags, stan_threads)
+  }
+  new_make_local_content <- paste(compiler_flags, collapse = "\n")
+  # dont rewrite make/local if there are no changes
+  if(new_make_local_content != old_make_local_content) {
+    write(new_make_local_content, file = make_local_path, append = FALSE)
+    return(TRUE)
+  }
+  return(FALSE)
+}
+
+#' Returns the number of threads used to execute Stan models.
+#'
+#' @return Returns the value of environment variable of STAN_NUM_THREADS
+#' @noRd
+get_num_threads <- function() {
+  num_threads <- Sys.getenv("STAN_NUM_THREADS")
+  return(num_threads)
+}
+
+#' Set the number of threads used in Stan models.
+#'
+#' Sets the environment variable STAN_NUM_THREADS to the provided value
+#'
+#' @param num_threads (non-zero positive integer) the number of threads to set
+#' @noRd
+set_num_threads <- function(num_threads) {
+  if(is.integer(num_threads) && num_threads > 0) {
+    Sys.setenv("STAN_NUM_THREADS" = num_threads)
+  } else {
+    stop("Please set a valid number of threads. Valid values are integers > 0.", call. = FALSE)
+  }
+}
