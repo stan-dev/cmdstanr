@@ -148,7 +148,23 @@ CmdStanModel <- R6::R6Class(
 #'
 NULL
 
-compile_method <- function() { # TODO: add compiler options?
+compile_method <- function(opencl = FALSE,
+                           opencl_platform_id = 0,
+                           opencl_device_id = 0) {
+
+  make_local_path <- paste(cmdstan_path(), "make", "local", sep = "/")
+  old_make_local_content <- ""
+  if(file.exists(make_local_path)) {
+    # read the contents of make/local to restore it after compilation
+    old_make_local_content <- paste(readLines(make_local_path), collapse = "\n")
+  }
+  if(opencl) {
+    stan_opencl <- "STAN_OPENCL = true"
+    platform_id <- paste("OPENCL_PLATFORM_ID", opencl_platform_id, sep = " = ")
+    device_id <- paste("OPENCL_DEVICE_ID", opencl_device_id, sep = " = ")
+    opencl_make_local_content <- paste(stan_opencl, platform_id, device_id, sep = "\n")
+    write(file = make_local_path, opencl_make_local_content, append = TRUE)
+  }
   exe <- strip_ext(self$stan_file())
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
@@ -159,6 +175,8 @@ compile_method <- function() { # TODO: add compiler options?
     echo = TRUE
   )
   private$exe_file_ <- exe
+  #restore the contents of make/local
+  write(file = make_local_path, old_make_local_content, append = FALSE)
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile_method)
