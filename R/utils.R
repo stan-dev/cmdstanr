@@ -258,7 +258,7 @@ set_make_local <- function(threads = FALSE,
 #' @noRd
 get_num_threads <- function() {
   num_threads <- Sys.getenv("STAN_NUM_THREADS")
-  return(num_threads)
+  return(as.numeric(num_threads))
 }
 
 #' Set the number of threads used in Stan models.
@@ -268,7 +268,7 @@ get_num_threads <- function() {
 #' @param num_threads (non-zero positive integer) the number of threads to set
 #' @noRd
 set_num_threads <- function(num_threads) {
-  if(is.integer(num_threads) && num_threads > 0) {
+  if(is.numeric(num_threads) && num_threads%%1==0 && num_threads > 0) {
     Sys.setenv("STAN_NUM_THREADS" = num_threads)
   } else {
     stop("Please set a valid number of threads. Valid values are integers > 0.", call. = FALSE)
