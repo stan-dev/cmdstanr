@@ -13,33 +13,6 @@ files are placed in the same directory as the Stan program.
 }
 }
 
-\section{Arguments shared by all fitting methods}{
- The following arguments can
-be specified for any of the fitting methods (\code{sample}, \code{optimize},
-\code{variational}). Arguments left at \code{NULL} default to the default used by the
-installed version of CmdStan.
-\itemize{
-\item \code{data} (multiple options): The data to use:
-\itemize{
-\item A named list of \R objects like for RStan;
-\item A path to a data file compatible with CmdStan (\R dump or JSON). See
-the appendices in the CmdStan manual for details on using these
-formats.
-}
-\item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
-\item \code{refresh}: (non-negative integer) The number of iterations between
-screen updates.
-\item \code{init}: (multiple options) The initialization method:
-\itemize{
-\item A real number \code{x>0} initializes randomly between \code{[-x,x]} (on the
-\emph{unconstrained} parameter space);
-\item \code{0} initializes to \code{0};
-\item A character vector of data file paths (one per chain) to
-initialization files.
-}
-}
-}
-
 \section{Arguments unique to the \code{compile} method}{
 
 These arguments are described briefly here and in greater detail in the
@@ -47,11 +20,11 @@ CmdStan manual. Arguments left at \code{NULL} default to the default used by the
 installed version of CmdStan.
 \itemize{
 \item \code{opencl}: (logical) Should the model be compiled with OpenCL support enabled?
-\item \code{opencl_platform_id}: (positive integer) The ID of the OpenCL platform on which
+\item \code{opencl_platform_id}: (nonnegative integer) The ID of the OpenCL platform on which
 to run the compiled model.
-\item \code{opencl_device_id}: (positive integer) The ID of the OpenCL device on the selected
+\item \code{opencl_device_id}: (nonnegative integer) The ID of the OpenCL device on the selected
 OpenCL platform on which to run the compiled model.
-\item \code{compiler_flags}: (vector of strings) Vector of strings representing custom compiler
+\item \code{compiler_flags}: (character vector) Vector of characters representing custom compiler
 flags to be used when compiling the model.
 \item \code{threads}: (logical) Should the model be compiled with threading support?
 }

@@ -215,7 +215,7 @@ build_cleanup <- function(model_path,
     file.remove(model_path)
   }
   if(remove_main) {
-    main_o_file <- paste(cmdstan_path(), "src", "cmdstan", "main.o", sep = "/")
+    main_o_file <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
     if(file.exists(main_o_file)) {
       file.remove(main_o_file)
     }
@@ -227,7 +227,7 @@ set_make_local <- function(threads = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
                            compiler_flags = NULL) {
-  make_local_path <- paste(cmdstan_path(), "make", "local", sep = "/")
+  make_local_path <- file.path(cmdstan_path(), "make", "local")
   old_make_local_content <- ""
   if(file.exists(make_local_path)) {
     # read the contents of make/local to compare with the new contents
@@ -237,7 +237,7 @@ set_make_local <- function(threads = FALSE,
     stan_opencl <- "STAN_OPENCL = true"
     platform_id <- paste("OPENCL_PLATFORM_ID", opencl_platform_id, sep = " = ")
     device_id <- paste("OPENCL_DEVICE_ID", opencl_device_id, sep = " = ")
-    compiler_flags <- c(compiler_flags, stan_opencl, platform_id, device)
+    compiler_flags <- c(compiler_flags, stan_opencl, platform_id, device_id)
   }
   if(threads) {
     stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
@@ -256,17 +256,17 @@ set_make_local <- function(threads = FALSE,
 #'
 #' @return Returns the value of environment variable of STAN_NUM_THREADS
 #' @noRd
+#' @export
 get_num_threads <- function() {
   num_threads <- Sys.getenv("STAN_NUM_THREADS")
   return(as.numeric(num_threads))
 }
 
-#' Set the number of threads used in Stan models.
-#'
+
 #' Sets the environment variable STAN_NUM_THREADS to the provided value
-#'
 #' @param num_threads (non-zero positive integer) the number of threads to set
 #' @noRd
+#' @export
 set_num_threads <- function(num_threads) {
   if(is.numeric(num_threads) && num_threads%%1==0 && num_threads > 0) {
     Sys.setenv("STAN_NUM_THREADS" = num_threads)

@@ -139,17 +139,16 @@ CmdStanModel <- R6::R6Class(
 #'   $compile()
 #'   ```
 #'
-#' @template model-common-args
 #' @section Arguments unique to the `compile` method:
 #'   These arguments are described briefly here and in greater detail in the
 #'   CmdStan manual. Arguments left at `NULL` default to the default used by the
 #'   installed version of CmdStan.
 #'   * `opencl`: (logical) Should the model be compiled with OpenCL support enabled?
-#'   * `opencl_platform_id`: (positive integer) The ID of the OpenCL platform on which
+#'   * `opencl_platform_id`: (nonnegative integer) The ID of the OpenCL platform on which
 #'     to run the compiled model.
-#'   * `opencl_device_id`: (positive integer) The ID of the OpenCL device on the selected
+#'   * `opencl_device_id`: (nonnegative integer) The ID of the OpenCL device on the selected
 #'     OpenCL platform on which to run the compiled model.
-#'   * `compiler_flags`: (vector of strings) Vector of strings representing custom compiler
+#'   * `compiler_flags`: (character vector) Vector of characters representing custom compiler
 #'     flags to be used when compiling the model.
 #'   * `threads`: (logical) Should the model be compiled with threading support?
 #'
