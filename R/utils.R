@@ -252,20 +252,19 @@ set_make_local <- function(threads = FALSE,
   return(FALSE)
 }
 
+#' @rdname stan_threads
 #' Returns the number of threads used to execute Stan models.
 #'
 #' @return Returns the value of environment variable of STAN_NUM_THREADS
-#' @noRd
 #' @export
 get_num_threads <- function() {
   num_threads <- Sys.getenv("STAN_NUM_THREADS")
   return(as.numeric(num_threads))
 }
 
-
+#' @rdname stan_threads
 #' Sets the environment variable STAN_NUM_THREADS to the provided value
 #' @param num_threads (non-zero positive integer) the number of threads to set
-#' @noRd
 #' @export
 set_num_threads <- function(num_threads) {
   if(is.numeric(num_threads) && num_threads%%1==0 && num_threads > 0) {
