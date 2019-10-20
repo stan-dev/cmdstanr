@@ -123,7 +123,6 @@ CmdStanModel <- R6::R6Class(
   )
 )
 
-
 # CmdStanModel methods -----------------------------------
 
 #' Compile a Stan program or get the Stan code
@@ -137,8 +136,26 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @section Usage:
 #'   ```
-#'   $compile()
+#'   $compile(
+#'     threads = FALSE,
+#'     opencl = FALSE,
+#'     opencl_platform_id = 0,
+#'     opencl_device_id = 0,
+#'     compiler_flags = NULL
+#'   )
 #'   ```
+#'
+#' @section Arguments for the `compile` method:
+#'   These arguments are described briefly here and in greater detail in the
+#'   CmdStan manual.
+#'   * `threads`: (logical) Should the model be compiled with threading support?
+#'   * `opencl`: (logical) Should the model be compiled with OpenCL support enabled?
+#'   * `opencl_platform_id`: (nonnegative integer) The ID of the OpenCL platform on which
+#'     to run the compiled model.
+#'   * `opencl_device_id`: (nonnegative integer) The ID of the OpenCL device on the selected
+#'     OpenCL platform on which to run the compiled model.
+#'   * `compiler_flags`: (character vector) Any additional compiler flags to be
+#'     used when compiling the model.
 #'
 #' @section Value: The `compile` method returns the [`CmdStanModel`] object
 #'   invisibly.
@@ -148,8 +165,23 @@ CmdStanModel <- R6::R6Class(
 #'
 NULL
 
-compile_method <- function() { # TODO: add compiler options?
+compile_method <- function(threads = FALSE,
+                           opencl = FALSE,
+                           opencl_platform_id = 0,
+                           opencl_device_id = 0,
+                           compiler_flags = NULL) {
   exe <- strip_ext(self$stan_file())
+  make_local_changed <- set_make_local(threads,
+                                       opencl,
+                                       opencl_platform_id,
+                                       opencl_device_id,
+                                       compiler_flags)
+  # rebuild main.o and the model if there was a change in make/local
+  if(make_local_changed) {
+    print("A change in the compile flags was found. Recompiling the model...\n")
+    build_cleanup(exe,
+                  remove_main = TRUE)
+  }
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
     command = "make",
