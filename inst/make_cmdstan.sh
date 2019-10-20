@@ -84,5 +84,5 @@ echo "installed ${CS}; symlink: `ls -l ${RELDIR}/cmdstan`"
 pushd -0 > /dev/null
 dirs -c > /dev/null
 echo ""
-echo "CmdStan installation location: `ls -Fd ${RELDIR}/* | grep -v @ | grep -v gz`"
+echo "CmdStan installation location: `ls -Fd ${RELDIR}/${CS}`"
 echo "Can use symlink: ${RELDIR}/cmdstan"

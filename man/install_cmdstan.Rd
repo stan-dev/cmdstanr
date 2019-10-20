@@ -11,7 +11,8 @@ install_cmdstan(dir = NULL, cores = 2, quiet = FALSE)
 to install it in a folder \code{".cmdstanr"} in the user's home directory
 (\code{Sys.getenv("HOME")}).}
 
-\item{cores}{The number of CPU cores to use to parallelize building CmdStan.}
+\item{cores}{The number of CPU cores to use to parallelize building CmdStan
+and speed up installation.}
 
 \item{quiet}{Defaults to \code{FALSE}, but if \code{TRUE} will suppress the verbose
 output during the installation process.}
