@@ -194,17 +194,21 @@ write_rdump <- function(data) {
   temp_file
 }
 
+
+
+# compilation, build files, threading -------------------------------------
+
 #' Cleanup build files of a Stan model
 #'
-#' deletese the model_name.o, model_name.hpp and the executable.
+#' deletes the model_name.o, model_name.hpp and the executable.
 #'
 #' @param model_path (string) The absolute path to the model
 #' @param remove_main (logical) Set TRUE to also remove the cmdstan main.o
 #' @noRd
 build_cleanup <- function(model_path,
                           remove_main = FALSE) {
-  model_hpp_file = paste(model_path, ".hpp", sep = "")
-  model_o_file = paste(model_path, ".o", sep = "")
+  model_hpp_file <- paste(model_path, ".hpp", sep = "")
+  model_o_file <- paste(model_path, ".o", sep = "")
   if(file.exists(model_hpp_file)) {
     file.remove(model_hpp_file)
   }
@@ -252,20 +256,26 @@ set_make_local <- function(threads = FALSE,
   return(FALSE)
 }
 
-#' @rdname stan_threads
-#' Returns the number of threads used to execute Stan models.
+
+#' Set or get the number of threads used to execute Stan models
 #'
-#' @return Returns the value of environment variable of STAN_NUM_THREADS
+#' @name stan_threads
+#' @description These functions set or get the `STAN_NUM_THREADS` environment
+#'   variable.
+#'
+NULL
+
+#' @rdname stan_threads
 #' @export
-get_num_threads <- function() {
+#' @return The value of the environment variable `STAN_NUM_THREADS`.
+num_threads <- function() {
   num_threads <- Sys.getenv("STAN_NUM_THREADS")
-  return(as.numeric(num_threads))
+  as.integer(num_threads)
 }
 
 #' @rdname stan_threads
-#' Sets the environment variable STAN_NUM_THREADS to the provided value
-#' @param num_threads (non-zero positive integer) the number of threads to set
 #' @export
+#' @param num_threads (positive integer) The number of threads to set.
 set_num_threads <- function(num_threads) {
   if(is.numeric(num_threads) && num_threads%%1==0 && num_threads > 0) {
     Sys.setenv("STAN_NUM_THREADS" = num_threads)
