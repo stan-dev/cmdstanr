@@ -524,7 +524,7 @@ process_data <- function(data) {
   } else if (is.character(data)) {
     path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {
-    path <- write_json(data)
+    path <- write_json_file(data)
   } else {
     stop("'data' should be a path or a named list.", call. = FALSE)
   }

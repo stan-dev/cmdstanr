@@ -22,7 +22,7 @@ Imports:
     checkmate,
     processx,
     R6,
-    jsonlite
+    jsonlite (>= 1.2)
 Suggests: 
     knitr,
     rmarkdown,
