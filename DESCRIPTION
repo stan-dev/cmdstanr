@@ -4,6 +4,7 @@ Version: 0.0.0.9000
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
+      person(given = "Rok", family = "Češnovar", role = c("aut")),     
       person(given = "Mitzi", family = "Morris", role = c("ctb")))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>. 
     The 'CmdStanR' interface to 'Stan' (the 'cmdstanr' R package) calls
