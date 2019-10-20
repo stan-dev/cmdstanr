@@ -9,24 +9,29 @@ to translate a Stan program to C++ and call the C++ compiler. The resulting
 files are placed in the same directory as the Stan program.
 }
 \section{Usage}{
-\preformatted{$compile()
+\preformatted{$compile(
+  threads = FALSE,
+  opencl = FALSE,
+  opencl_platform_id = 0,
+  opencl_device_id = 0,
+  compiler_flags = NULL
+)
 }
 }
 
-\section{Arguments unique to the \code{compile} method}{
+\section{Arguments for the \code{compile} method}{
 
 These arguments are described briefly here and in greater detail in the
-CmdStan manual. Arguments left at \code{NULL} default to the default used by the
-installed version of CmdStan.
+CmdStan manual.
 \itemize{
+\item \code{threads}: (logical) Should the model be compiled with threading support?
 \item \code{opencl}: (logical) Should the model be compiled with OpenCL support enabled?
 \item \code{opencl_platform_id}: (nonnegative integer) The ID of the OpenCL platform on which
 to run the compiled model.
 \item \code{opencl_device_id}: (nonnegative integer) The ID of the OpenCL device on the selected
 OpenCL platform on which to run the compiled model.
-\item \code{compiler_flags}: (character vector) Vector of characters representing custom compiler
-flags to be used when compiling the model.
-\item \code{threads}: (logical) Should the model be compiled with threading support?
+\item \code{compiler_flags}: (character vector) Any additional compiler flags to be
+used when compiling the model.
 }
 }
 
