@@ -148,7 +148,7 @@ CmdStanModel <- R6::R6Class(
 #'   )
 #'   ```
 #'
-#' @section Arguments for the `compile` method:
+#' @section Arguments:
 #'   Leaving all arguments at their defaults should be fine for most users, but
 #'   optional arguments are provided to enable new features in CmdStan (and the
 #'   Stan Math library). See the CmdStan manual for more details.

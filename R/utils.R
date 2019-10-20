@@ -263,8 +263,9 @@ set_make_local <- function(threads = FALSE,
 #' @description These functions set or get the `STAN_NUM_THREADS` environment
 #'   variable, which will be read by CmdStan at run-time if threading support
 #'   was enabled when [compiled][model-method-compile]. For details on how this
-#'   is used see GitHub wiki
-#'   [Threading Support](https://github.com/stan-dev/math/wiki/Threading-Support).
+#'   is used by CmdStan see the
+#'   [Threading Support](https://github.com/stan-dev/math/wiki/Threading-Support)
+#'   wiki on GitHub.
 #'
 NULL
 

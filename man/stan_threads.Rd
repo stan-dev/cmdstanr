@@ -20,6 +20,7 @@ The value of the environment variable \code{STAN_NUM_THREADS}.
 These functions set or get the \code{STAN_NUM_THREADS} environment
 variable, which will be read by CmdStan at run-time if threading support
 was enabled when \link[=model-method-compile]{compiled}. For details on how this
-is used see GitHub wiki
-\href{https://github.com/stan-dev/math/wiki/Threading-Support}{Threading Support}.
+is used by CmdStan see the
+\href{https://github.com/stan-dev/math/wiki/Threading-Support}{Threading Support}
+wiki on GitHub.
 }

@@ -20,7 +20,7 @@ associated with the \code{CmdStanModel} object.
 }
 }
 
-\section{Arguments for the \code{compile} method}{
+\section{Arguments}{
 
 Leaving all arguments at their defaults should be fine for most users, but
 optional arguments are provided to enable new features in CmdStan (and the
