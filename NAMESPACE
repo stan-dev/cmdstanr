@@ -3,6 +3,6 @@
 export(cmdstan_default_path)
 export(cmdstan_model)
 export(cmdstan_path)
+export(cmdstanr_jsondump)
 export(install_cmdstan)
 export(set_cmdstan_path)
-export(write_json_file)

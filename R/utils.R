@@ -170,16 +170,65 @@ repair_variable_names <- function(names) {
 #' Dump data to temporary file in format readable by CmdStan
 #'
 #' @param data A named list of \R objects.
-#' @export
 #' @return Path to temporary file containing the data.
 #' @noRd
-write_json_file <- function(data) {
+write_json <- function(data) {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the 'jsonlite' package.", call. = FALSE)
   }
   checkmate::assert_names(names(data), type = "unique")
   temp_file <- tempfile(pattern = "standata-", fileext = ".json")
-  # write the data in the JSON file with full precision
-  json_data <- jsonlite::write_json(data, auto_unbox = TRUE, digits = NA, path = temp_file)
+  cmdstanr_jsondump(
+    list = names(data),
+    file = temp_file,
+    envir = as.environment(data)
+  )
   temp_file
+}
+
+#' Dump data to temporary file in format readable by CmdStan
+#'
+#' @param list A vector of character string: the names of one or more R objects to be dumped.
+#' @param file A character string represeneting the path to the output file
+#' @param envir The environment to search for the listed objects.
+#' @export
+#' @return Path to temporary file containing the data.
+#' @noRd
+cmdstanr_jsondump <- function(list,
+                          file,
+                          envir = parent.frame()) {
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("Please install the 'jsonlite' package.", call. = FALSE)
+  }
+  temp_file <- tempfile(pattern = "standata-", fileext = ".json")
+  # check filename is valid(vector of characters) and of nonzero length
+  if (!is.character(file) || !nzchar(file)) {
+    warning("The supplied filename is invalid!")
+    return(invisible(character()))
+  }
+  # check if all variables in list exist
+  variable_exists <- sapply(list, exists, envir = envir)
+  if(!all(variable_exists)) {
+    warning(paste("The following object were not found: ", list[!variable_exists]))
+    return(invisible(character()))
+  }
+  data = list()
+  for (var_name in list) {
+    var <- get(var_name, envir)
+    if(!(is.numeric(var) || is.factor(var) || is.logical(var) || is.data.frame(var)  || is.list(var))) {
+      warning(paste("Variable ", var_name, " is of invalid type."))
+      return(invisible(character()))
+    }
+    # convert TRUE/FALSE to 1/0
+    if(is.logical(var)) {
+      mode(var) <- "integer"
+    } else if(is.data.frame(var)) {
+      var <- data.matrix(var)
+    }
+    data[[var_name]] <- var
+  }
+  # call to write JSON with
+  # unboxing variables (N = 10 is stored as N : 10, not N: [10])
+  # handling factors as integers
+  jsonlite::write_json(data, auto_unbox = TRUE, factor = "integer", path = file)
 }
