@@ -13,7 +13,8 @@
 #' @param dir Path to the directory in which to install CmdStan. The default is
 #'   to install it in a folder `".cmdstanr"` in the user's home directory
 #'   (`Sys.getenv("HOME")`).
-#' @param cores The number of CPU cores to use to parallelize building CmdStan.
+#' @param cores The number of CPU cores to use to parallelize building CmdStan
+#'   and speed up installation.
 #' @param quiet Defaults to `FALSE`, but if `TRUE` will suppress the verbose
 #'   output during the installation process.
 #'
