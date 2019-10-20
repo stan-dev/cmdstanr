@@ -193,7 +193,6 @@ write_json <- function(data) {
 #' @param envir The environment to search for the listed objects.
 #' @export
 #' @return Path to temporary file containing the data.
-#' @noRd
 cmdstanr_jsondump <- function(list,
                           file,
                           envir = parent.frame()) {
