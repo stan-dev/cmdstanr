@@ -208,7 +208,7 @@ cmdstanr_jsondump <- function(list,
   # check if all variables in list exist
   variable_exists <- sapply(list, exists, envir = envir)
   if(!all(variable_exists)) {
-    warning(paste("The following object were not found: ", list[!variable_exists]))
+    warning(paste("The following objects were not found: ", paste(list[!variable_exists], collapse = ", ")))
     return(invisible(character()))
   }
   data = list()
