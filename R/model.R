@@ -83,6 +83,8 @@ cmdstan_model <- function(stan_file) {
 #'  **Method** \tab **Description** \cr
 #'  code \tab Return Stan program as a string. \cr
 #'  print \tab Print readable version of Stan program. \cr
+#'  stan_file \tab Return the file path to the Stan program. \cr
+#'  exe_file \tab Return the file path to the compiled executable once compiled. \cr
 #'  [compile][model-method-compile] \tab Compile Stan program. \cr
 #'  [sample][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
@@ -131,8 +133,9 @@ CmdStanModel <- R6::R6Class(
 #' @family CmdStanModel methods
 #'
 #' @description The `compile` method of a [`CmdStanModel`] object calls CmdStan
-#'   to translate a Stan program to C++ and call the C++ compiler. The resulting
-#'   files are placed in the same directory as the Stan program.
+#'   to translate a Stan program to C++ and then create a compiled executable.
+#'   The resulting files are placed in the same directory as the Stan program
+#'   associated with the `CmdStanModel` object.
 #'
 #' @section Usage:
 #'   ```
@@ -146,9 +149,14 @@ CmdStanModel <- R6::R6Class(
 #'   ```
 #'
 #' @section Arguments for the `compile` method:
-#'   These arguments are described briefly here and in greater detail in the
-#'   CmdStan manual.
-#'   * `threads`: (logical) Should the model be compiled with threading support?
+#'   Leaving all arguments at their defaults should be fine for most users, but
+#'   optional arguments are provided to enable new features in CmdStan (and the
+#'   Stan Math library). See the CmdStan manual for more details.
+#'   * `threads`: (logical) Should the model be compiled with
+#'     [threading support](https://github.com/stan-dev/math/wiki/Threading-Support)?
+#'     If `TRUE` then `-DSTAN_THREADS` is added to the compiler flags. See
+#'     [set_num_threads()] to set the number of threads, which is read by
+#'     CmdStan at run-time from an environment variable.
 #'   * `opencl`: (logical) Should the model be compiled with OpenCL support enabled?
 #'   * `opencl_platform_id`: (nonnegative integer) The ID of the OpenCL platform on which
 #'     to run the compiled model.
@@ -157,8 +165,10 @@ CmdStanModel <- R6::R6Class(
 #'   * `compiler_flags`: (character vector) Any additional compiler flags to be
 #'     used when compiling the model.
 #'
-#' @section Value: The `compile` method returns the [`CmdStanModel`] object
-#'   invisibly.
+#' @section Value: This method is called for its side effect of creating the
+#'   executable and adding its path to the [`CmdStanModel`] object, but it also
+#'   returns the [`CmdStanModel`] object invisibly. After compilation the path
+#'   to the executable can be accesed via `$exe_file()`.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples

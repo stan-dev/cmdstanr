@@ -261,7 +261,10 @@ set_make_local <- function(threads = FALSE,
 #'
 #' @name stan_threads
 #' @description These functions set or get the `STAN_NUM_THREADS` environment
-#'   variable.
+#'   variable, which will be read by CmdStan at run-time if threading support
+#'   was enabled when [compiled][model-method-compile]. For details on how this
+#'   is used see GitHub wiki
+#'   [Threading Support](https://github.com/stan-dev/math/wiki/Threading-Support).
 #'
 NULL
 
@@ -277,9 +280,10 @@ num_threads <- function() {
 #' @export
 #' @param num_threads (positive integer) The number of threads to set.
 set_num_threads <- function(num_threads) {
-  if(is.numeric(num_threads) && num_threads%%1==0 && num_threads > 0) {
+  if (is.numeric(num_threads) && num_threads%%1==0 && num_threads > 0) {
     Sys.setenv("STAN_NUM_THREADS" = num_threads)
   } else {
-    stop("Please set a valid number of threads. Valid values are integers > 0.", call. = FALSE)
+    stop("Please set a valid number of threads. Valid values are integers > 0.",
+         call. = FALSE)
   }
 }

@@ -5,8 +5,9 @@
 \title{Compile a Stan program or get the Stan code}
 \description{
 The \code{compile} method of a \code{\link{CmdStanModel}} object calls CmdStan
-to translate a Stan program to C++ and call the C++ compiler. The resulting
-files are placed in the same directory as the Stan program.
+to translate a Stan program to C++ and then create a compiled executable.
+The resulting files are placed in the same directory as the Stan program
+associated with the \code{CmdStanModel} object.
 }
 \section{Usage}{
 \preformatted{$compile(
@@ -21,10 +22,15 @@ files are placed in the same directory as the Stan program.
 
 \section{Arguments for the \code{compile} method}{
 
-These arguments are described briefly here and in greater detail in the
-CmdStan manual.
+Leaving all arguments at their defaults should be fine for most users, but
+optional arguments are provided to enable new features in CmdStan (and the
+Stan Math library). See the CmdStan manual for more details.
 \itemize{
-\item \code{threads}: (logical) Should the model be compiled with threading support?
+\item \code{threads}: (logical) Should the model be compiled with
+\href{https://github.com/stan-dev/math/wiki/Threading-Support}{threading support}?
+If \code{TRUE} then \code{-DSTAN_THREADS} is added to the compiler flags. See
+\code{\link[=set_num_threads]{set_num_threads()}} to set the number of threads, which is read by
+CmdStan at run-time from an environment variable.
 \item \code{opencl}: (logical) Should the model be compiled with OpenCL support enabled?
 \item \code{opencl_platform_id}: (nonnegative integer) The ID of the OpenCL platform on which
 to run the compiled model.
@@ -36,8 +42,10 @@ used when compiling the model.
 }
 
 \section{Value}{
- The \code{compile} method returns the \code{\link{CmdStanModel}} object
-invisibly.
+ This method is called for its side effect of creating the
+executable and adding its path to the \code{\link{CmdStanModel}} object, but it also
+returns the \code{\link{CmdStanModel}} object invisibly. After compilation the path
+to the executable can be accesed via \code{$exe_file()}.
 }
 
 \examples{
