@@ -17,6 +17,8 @@ available methods.
 \strong{Method} \tab \strong{Description} \cr
 code \tab Return Stan program as a string. \cr
 print \tab Print readable version of Stan program. \cr
+stan_file \tab Return the file path to the Stan program. \cr
+exe_file \tab Return the file path to the compiled executable once compiled. \cr
 \link[=model-method-compile]{compile} \tab Compile Stan program. \cr
 \link[=model-method-sample]{sample}
 \tab Run CmdStan's \code{"sample"} method, return \code{\link{CmdStanMCMC}} object. \cr

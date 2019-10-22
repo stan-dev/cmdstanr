@@ -83,6 +83,8 @@ cmdstan_model <- function(stan_file) {
 #'  **Method** \tab **Description** \cr
 #'  code \tab Return Stan program as a string. \cr
 #'  print \tab Print readable version of Stan program. \cr
+#'  stan_file \tab Return the file path to the Stan program. \cr
+#'  exe_file \tab Return the file path to the compiled executable once compiled. \cr
 #'  [compile][model-method-compile] \tab Compile Stan program. \cr
 #'  [sample][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
@@ -123,7 +125,6 @@ CmdStanModel <- R6::R6Class(
   )
 )
 
-
 # CmdStanModel methods -----------------------------------
 
 #' Compile a Stan program or get the Stan code
@@ -132,24 +133,65 @@ CmdStanModel <- R6::R6Class(
 #' @family CmdStanModel methods
 #'
 #' @description The `compile` method of a [`CmdStanModel`] object calls CmdStan
-#'   to translate a Stan program to C++ and call the C++ compiler. The resulting
-#'   files are placed in the same directory as the Stan program.
+#'   to translate a Stan program to C++ and then create a compiled executable.
+#'   The resulting files are placed in the same directory as the Stan program
+#'   associated with the `CmdStanModel` object.
 #'
 #' @section Usage:
 #'   ```
-#'   $compile()
+#'   $compile(
+#'     threads = FALSE,
+#'     opencl = FALSE,
+#'     opencl_platform_id = 0,
+#'     opencl_device_id = 0,
+#'     compiler_flags = NULL
+#'   )
 #'   ```
 #'
-#' @section Value: The `compile` method returns the [`CmdStanModel`] object
-#'   invisibly.
+#' @section Arguments:
+#'   Leaving all arguments at their defaults should be fine for most users, but
+#'   optional arguments are provided to enable new features in CmdStan (and the
+#'   Stan Math library). See the CmdStan manual for more details.
+#'   * `threads`: (logical) Should the model be compiled with
+#'     [threading support](https://github.com/stan-dev/math/wiki/Threading-Support)?
+#'     If `TRUE` then `-DSTAN_THREADS` is added to the compiler flags. See
+#'     [set_num_threads()] to set the number of threads, which is read by
+#'     CmdStan at run-time from an environment variable.
+#'   * `opencl`: (logical) Should the model be compiled with OpenCL support enabled?
+#'   * `opencl_platform_id`: (nonnegative integer) The ID of the OpenCL platform on which
+#'     to run the compiled model.
+#'   * `opencl_device_id`: (nonnegative integer) The ID of the OpenCL device on the selected
+#'     OpenCL platform on which to run the compiled model.
+#'   * `compiler_flags`: (character vector) Any additional compiler flags to be
+#'     used when compiling the model.
+#'
+#' @section Value: This method is called for its side effect of creating the
+#'   executable and adding its path to the [`CmdStanModel`] object, but it also
+#'   returns the [`CmdStanModel`] object invisibly. After compilation the path
+#'   to the executable can be accesed via `$exe_file()`.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 NULL
 
-compile_method <- function() { # TODO: add compiler options?
+compile_method <- function(threads = FALSE,
+                           opencl = FALSE,
+                           opencl_platform_id = 0,
+                           opencl_device_id = 0,
+                           compiler_flags = NULL) {
   exe <- strip_ext(self$stan_file())
+  make_local_changed <- set_make_local(threads,
+                                       opencl,
+                                       opencl_platform_id,
+                                       opencl_device_id,
+                                       compiler_flags)
+  # rebuild main.o and the model if there was a change in make/local
+  if(make_local_changed) {
+    print("A change in the compile flags was found. Recompiling the model...\n")
+    build_cleanup(exe,
+                  remove_main = TRUE)
+  }
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
     command = "make",

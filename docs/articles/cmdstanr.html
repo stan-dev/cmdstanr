@@ -119,7 +119,7 @@
       <h1>Getting started with CmdStanR</h1>
                         <h4 class="author">Jonah Gabry</h4>
             
-            <h4 class="date">2019-10-16</h4>
+            <h4 class="date">2019-10-20</h4>
       
       
       <div class="hidden name"><code>cmdstanr.Rmd</code></div>
@@ -175,9 +175,8 @@ parameters {
   real&lt;lower=0,upper=1&gt; theta;
 } 
 model {
-  theta ~ beta(1,1);
-  for (n in 1:N) 
-    y[n] ~ bernoulli(theta);
+  theta ~ beta(1,1);  // uniform prior on interval 0,1
+  y ~ bernoulli(theta);
 }</code></pre>
 </div>
 <div id="model-fitting" class="section level3">
@@ -215,18 +214,18 @@ model {
         stepsize_jitter = 0 (Default)
 id = 1
 data
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpuy5v7H/standata-9655777c974f.data.R
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp9vDDJD/standata-d7934c27cde.data.R
 init = 2 (Default)
 random
   seed = 123
 output
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpuy5v7H/bernoulli-stan-sample-1.csv
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmp9vDDJD/bernoulli-stan-sample-1.csv
   diagnostic_file =  (Default)
   refresh = 100 (Default)
 
 
-Gradient evaluation took 1.8e-05 seconds
-1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
+Gradient evaluation took 1.9e-05 seconds
+1000 transitions using 10 leapfrog steps per transition would take 0.19 seconds.
 Adjust your expectations accordingly!
 
 
@@ -253,9 +252,9 @@ Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Iteration: 1900 / 2000 [ 95%]  (Sampling)
 Iteration: 2000 / 2000 [100%]  (Sampling)
 
- Elapsed Time: 0.01166 seconds (Warm-up)
-               0.017674 seconds (Sampling)
-               0.029334 seconds (Total)
+ Elapsed Time: 0.007504 seconds (Warm-up)
+               0.01633 seconds (Sampling)
+               0.023834 seconds (Total)
 
 method = sample (Default)
   sample
@@ -283,18 +282,18 @@ method = sample (Default)
         stepsize_jitter = 0 (Default)
 id = 2
 data
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpuy5v7H/standata-9655777c974f.data.R
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp9vDDJD/standata-d7934c27cde.data.R
 init = 2 (Default)
 random
   seed = 124
 output
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpuy5v7H/bernoulli-stan-sample-2.csv
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmp9vDDJD/bernoulli-stan-sample-2.csv
   diagnostic_file =  (Default)
   refresh = 100 (Default)
 
 
-Gradient evaluation took 1.7e-05 seconds
-1000 transitions using 10 leapfrog steps per transition would take 0.17 seconds.
+Gradient evaluation took 2e-05 seconds
+1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds.
 Adjust your expectations accordingly!
 
 
@@ -321,9 +320,9 @@ Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Iteration: 1900 / 2000 [ 95%]  (Sampling)
 Iteration: 2000 / 2000 [100%]  (Sampling)
 
- Elapsed Time: 0.011325 seconds (Warm-up)
-               0.018128 seconds (Sampling)
-               0.029453 seconds (Total)</code></pre>
+ Elapsed Time: 0.007537 seconds (Warm-up)
+               0.015647 seconds (Sampling)
+               0.023184 seconds (Total)</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a> method creates <a href="https://r6.r-lib.org/">R6</a> <a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>CmdStanMCMC</code></a> objects.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/class.html">class</a></span>(fit)</a></code></pre></div>
 <pre><code>[1] "CmdStanMCMC" "R6"         </code></pre>
@@ -338,10 +337,10 @@ Iteration: 2000 / 2000 [100%]  (Sampling)
 post-warmup draws per chain=1000, total post-warmup draws=2000.
 
        mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat
-theta  0.24    0.00 0.12  0.06  0.14  0.22  0.32  0.52   720    1
-lp__  -7.32    0.03 0.73 -9.37 -7.53 -7.05 -6.81 -6.75   737    1
+theta  0.24    0.00 0.12  0.06  0.15  0.23  0.32  0.52   736    1
+lp__  -7.31    0.03 0.78 -9.60 -7.51 -7.04 -6.82 -6.75   650    1
 
-Samples were drawn using NUTS(diag_e) at Wed Oct 16 23:07:44 2019.
+Samples were drawn using NUTS(diag_e) at Sun Oct 20 18:24:48 2019.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -384,7 +383,7 @@ convergence, Rhat=1).</code></pre>
 
 
       <footer><div class="copyright">
-  <p>Developed by Jonah Gabry.</p>
+  <p>Developed by Jonah Gabry, Rok Češnovar.</p>
 </div>
 
 <div class="pkgdown">
