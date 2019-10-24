@@ -23,11 +23,11 @@ SystemRequirements: CmdStan <https://mc-stan.org/users/interfaces/cmdstan>
 Imports: 
     checkmate,
     processx,
-    R6,
-    jsonlite (>= 1.2)
+    R6
 Suggests: 
     knitr,
     rmarkdown,
     rstan,
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    jsonlite (>= 1.2.0)
 VignetteBuilder: knitr

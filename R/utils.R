@@ -179,44 +179,29 @@ write_json <- function(data) {
   checkmate::assert_names(names(data), type = "unique")
   temp_file <- tempfile(pattern = "standata-", fileext = ".json")
   cmdstanr_jsondump(
-    list = names(data),
-    file = temp_file,
-    envir = as.environment(data)
+    data = data,
+    file = temp_file
   )
   temp_file
 }
 
-#' Dump data to temporary file in format readable by CmdStan
+#' Dump data to a JSON file readable by CmdStan
 #'
-#' @param list A vector of character string: the names of one or more R objects to be dumped.
+#' @param data A named list of objects to be written in a json file
 #' @param file A character string represeneting the path to the output file
-#' @param envir The environment to search for the listed objects.
 #' @export
-#' @return Path to temporary file containing the data.
-cmdstanr_jsondump <- function(list,
-                          file,
-                          envir = parent.frame()) {
+cmdstanr_jsondump <- function(data, file) {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the 'jsonlite' package.", call. = FALSE)
   }
-  temp_file <- tempfile(pattern = "standata-", fileext = ".json")
   # check filename is valid(vector of characters) and of nonzero length
   if (!is.character(file) || !nzchar(file)) {
-    warning("The supplied filename is invalid!")
-    return(invisible(character()))
+    stop("The supplied filename is invalid!")
   }
-  # check if all variables in list exist
-  variable_exists <- sapply(list, exists, envir = envir)
-  if(!all(variable_exists)) {
-    warning(paste("The following objects were not found: ", paste(list[!variable_exists], collapse = ", ")))
-    return(invisible(character()))
-  }
-  data = list()
-  for (var_name in list) {
-    var <- get(var_name, envir)
+  for (var_name in names(data)) {
+    var <- data[[var_name]]
     if(!(is.numeric(var) || is.factor(var) || is.logical(var) || is.data.frame(var)  || is.list(var))) {
-      warning(paste("Variable ", var_name, " is of invalid type."))
-      return(invisible(character()))
+      stop(paste("Variable ", var_name, " is of invalid type."))
     }
     # convert TRUE/FALSE to 1/0
     if(is.logical(var)) {
