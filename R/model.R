@@ -564,7 +564,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 
 # Internals ---------------------------------------------------------------
 
-#' Write data to a temporary `.data.R` file if necessary
+#' Write data to a temporary `.json` file if necessary
 #' @noRd
 #' @param data If not `NULL`, then either a path to a data file compatible with
 #'   CmdStan, or a named list of \R objects in the style that RStan uses.
@@ -575,7 +575,11 @@ process_data <- function(data) {
   } else if (is.character(data)) {
     path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {
-    path <- write_rdump(data)
+    path <- tempfile(pattern = "standata-", fileext = ".json")
+    write_stan_json(
+      data = data,
+      file = path
+    )
   } else {
     stop("'data' should be a path or a named list.", call. = FALSE)
   }
