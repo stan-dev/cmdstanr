@@ -168,9 +168,11 @@ repair_variable_names <- function(names) {
 }
 
 list_to_array <- function(x) {
-  if (length(x) == 0 ) return(NULL)
+  list_length <- length(x)
+  if (list_length == 0 ) return(NULL)
+  element_dim <- dim(x[[1]])
   check_equal_dim <- function(x, target_dim) { !is.null(x) && dim(x) == target_dim }
-  all_same_size <- all(sapply(x, check_equal_dim, target_dim = dim(x[[1]])))
+  all_same_size <- all(sapply(x, check_equal_dim, target_dim = element_dim))
   if(!all_same_size) {
     stop("All matrices/vectors in the list must be the same size!")
   }
@@ -178,10 +180,8 @@ list_to_array <- function(x) {
   if(!all_numeric) {
     stop("All elements of the list must be numeric!")
   }
-  list_length <- length(x)
-  element_dim <- dim(x[[1]])
   element_num_of_dim <- length(element_dim)
-  x <- do.call("c", x)
+  x <- unlist(x)
   dim(x) <- c(element_dim, list_length)
   aperm(x, c(element_num_of_dim + 1L, seq_len(element_num_of_dim)))
 }
@@ -217,7 +217,7 @@ write_stan_json <- function(data, file) {
   # call to write JSON with
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
   # handling factors as integers
-  jsonlite::write_json(data, auto_unbox = TRUE, factor = "integer", path = file)
+  jsonlite::write_json(data, auto_unbox = TRUE, factor = "integer", digits = NA, path = file)
 }
 
 # compilation, build files, threading -------------------------------------
