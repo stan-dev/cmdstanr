@@ -345,6 +345,7 @@ RunSet <- R6::R6Class(
     method = function() private$args_$method,
     commands = function() private$commands_,
     data_file = function() private$args_$data_file,
+    diagnostic_file = function() private$args_$diagnostic_file,
     output_files = function() private$output_files_,
     console_files = function() private$console_files_,
 

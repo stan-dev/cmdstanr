@@ -3,6 +3,8 @@ NOT_CRAN <-
   identical(Sys.getenv("NOT_CRAN"), "true") ||
   identical(Sys.getenv("TRAVIS"), "true")
 
+TEMPFILE <- tempfile(fileext = ".csv")
+
 if (NOT_CRAN) {
   set_cmdstan_path()
   stan_program <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
@@ -104,7 +106,8 @@ if (NOT_CRAN) {
     metric = "dense_e",
     stepsize = 1.1,
     adapt_engaged = TRUE,
-    adapt_delta = 0.7
+    adapt_delta = 0.7,
+    diagnostic_file = TEMPFILE
   )
 
   # using any one of these should cause sample() to error
@@ -122,7 +125,8 @@ if (NOT_CRAN) {
     metric = "NOT_A_METRIC",
     stepsize = 0,
     adapt_engaged = "NO",
-    adapt_delta = 2
+    adapt_delta = 2,
+    diagnostic_file = "NOT_A_DIR/FILE_NAME"
   )
 
   bad_arg_values_2 <- list(
@@ -173,7 +177,6 @@ test_that("sample() method works with init file", {
   expect_sample_output(mod$sample(data = data_file_r, init = init_file))
 })
 
-
 test_that("sample() method runs when all arguments specified", {
   skip_on_cran()
 
@@ -212,7 +215,8 @@ if (NOT_CRAN) {
     seed = 12345,
     algorithm = "lbfgs",
     iter = 100,
-    init_alpha = 0.002
+    init_alpha = 0.002,
+    diagnostic_file = TEMPFILE
   )
 
   # using any of these should cause optimize() to error
@@ -223,7 +227,8 @@ if (NOT_CRAN) {
     seed = "NOT_A_SEED",
     algorithm = "NOT_AN_ALGORITHM",
     iter = -20,
-    init_alpha = -20
+    init_alpha = -20,
+    diagnostic_file = "NOT_A_DIR/FILE_NAME"
   )
 }
 
@@ -273,7 +278,7 @@ if (NOT_CRAN) {
   ok_arg_values <- list(
     data = data_list,
     refresh = 5,
-    init = 1.5,
+    init = 0,
     seed = 12345,
     algorithm = "meanfield",
     iter = 10000,
@@ -284,7 +289,8 @@ if (NOT_CRAN) {
     adapt_iter = 51,
     tol_rel_obj = 0.011,
     eval_elbo = 101,
-    output_samples = 10
+    output_samples = 10,
+    diagnostic_file = TEMPFILE
   )
 
   # using any one of these should cause sample() to error
@@ -302,7 +308,8 @@ if (NOT_CRAN) {
     adapt_iter = -10,
     tol_rel_obj = -0.5,
     eval_elbo = -10,
-    output_samples = -10
+    output_samples = -10,
+    diagnostic_file = "NOT_A_DIR/FILE_NAME"
   )
 }
 

@@ -23,6 +23,7 @@ variables. Thus modes correspond to modes of the model as written.
   seed = NULL,
   refresh = NULL,
   init = NULL,
+  diagnostic_file = NULL,
   algorithm = NULL,
   init_alpha = NULL,
   iter = NULL
@@ -54,6 +55,9 @@ screen updates.
 \item A character vector of data file paths (one per chain) to
 initialization files.
 }
+\item \code{diagnostic_file}: (character) A file path where auxiliary diagnostic
+information (beyond standard diagnostics) should be written to CSV.
+By default no file is written, which is appropriate for most use cases.
 }
 }
 

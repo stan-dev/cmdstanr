@@ -16,3 +16,7 @@
 #'      - `0` initializes to `0`;
 #'      - A character vector of data file paths (one per chain) to
 #'        initialization files.
+#'   * `diagnostic_file`: (character) A file path where auxiliary diagnostic
+#'     information (beyond standard diagnostics) should be written to CSV.
+#'     By default no file is written, which is appropriate for most use cases.
+#'

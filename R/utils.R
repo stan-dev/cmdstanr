@@ -57,10 +57,12 @@ strip_ext <- function(file) {
 # If a file/dir exists return its absolute path
 # doesn't error if not found
 absolute_path <- function(path) {
-  if (!file.exists(path)) {
-    return(path)
+  if (file.exists(path)) {
+    new_path <- repair_path(path)
+  } else {
+    new_path <- path
   }
-  new_path <- repair_path(path)
+
   if (grepl("^~", path) || grepl("^(/+|[A-Za-z]:)", new_path)) {
     return(new_path)
   }

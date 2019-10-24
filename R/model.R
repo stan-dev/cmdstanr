@@ -219,20 +219,21 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @section Usage:
 #'   ```
 #'   $sample(
-#'     num_chains = 1,
-#'   # num_cores = NULL, # not yet available
 #'     data = NULL,
+#'     seed = NULL,
+#'     refresh = NULL,
+#'     init = NULL,
+#'     diagnostic_file = NULL,
+#'     num_chains = NULL,
+#'     # num_cores = NULL, # not yet implemented
 #'     num_warmup = NULL,
 #'     num_samples = NULL,
 #'     save_warmup = FALSE,
 #'     thin = NULL,
-#'     refresh = NULL,
-#'     init = NULL,
-#'     seed = NULL,
 #'     max_depth = NULL,
 #'     metric = NULL,
 #'     stepsize = NULL,
-#'     adapt_engaged = NULL,
+#'     adapt_engaged = TRUE,
 #'     adapt_delta = NULL
 #'   )
 #'   ```
@@ -243,10 +244,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   These arguments are described briefly here and in greater detail in the
 #'   CmdStan manual. Arguments left at `NULL` default to the default used by the
 #'   installed version of CmdStan.
+#'   * `num_chains`: (positive integer) The number of Markov chains to run.
 #'   * `num_samples`: (positive integer) The number of sampling iterations.
 #'   * `num_warmup`: (positive integer) The number of warmup iterations.
-#'   * `save_warmup`: (logical) Should warmup iterations also be streamed
-#'     to the output?
+#'   * `save_warmup`: (logical) Should warmup iterations also be saved? The default is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'     typically be left at its default (no thinning).
 #'   * `adapt_engaged`: (logical) Do warmup adaptation?
@@ -264,8 +265,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'        `inv_metric` whose value is either the diagonal vector or the full
 #'        covariance matrix.
 #'
-#'     If you want to turn off adaptation when using a precomuted metric set
-#'     `adapt_engaged=FALSE`, otherwise it will use the precomputed metric just
+#'     If you want to turn off adaptation when using a precomputed metric set
+#'     `adapt_engaged=FALSE`, otherwise it will use the provided metric just
 #'     as an initial guess during adaptation. See the _Euclidean Metric_ section
 #'     of the CmdStan manual for more details on these options.
 #'
@@ -283,17 +284,18 @@ sample_method <- function(data = NULL,
                           seed = NULL,
                           refresh = NULL,
                           init = NULL,
+                          diagnostic_file = NULL,
                           num_chains = NULL, # TODO: CmdStan does 1 chain, but should this default to 4?
-                          # num_cores = NULL,
+                          # num_cores = NULL, # TODO
                           num_warmup = NULL,
                           num_samples = NULL,
-                          save_warmup = FALSE, # TODO: document this
+                          save_warmup = FALSE,
                           thin = NULL,
-                          max_depth = NULL,
+                          adapt_engaged = TRUE,
+                          adapt_delta = NULL,
                           metric = NULL,
                           stepsize = NULL,
-                          adapt_engaged = NULL,
-                          adapt_delta = NULL) {
+                          max_depth = NULL) {
 
   num_chains <- num_chains %||% 1
   checkmate::assert_integerish(num_chains, lower = 1)
@@ -316,6 +318,7 @@ sample_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = chain_ids,
     data_file = process_data(data),
+    diagnostic_file = diagnostic_file,
     seed = seed,
     init = init,
     refresh = refresh
@@ -361,6 +364,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
+#'     diagnostic_file = NULL,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
 #'     iter = NULL
@@ -390,6 +394,7 @@ optimize_method <- function(data = NULL,
                             seed = NULL,
                             refresh = NULL,
                             init = NULL,
+                            diagnostic_file = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
                             iter = NULL) {
@@ -411,6 +416,7 @@ optimize_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = 1,
     data_file = process_data(data),
+    diagnostic_file = diagnostic_file,
     seed = seed,
     init = init,
     refresh = refresh
@@ -453,6 +459,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
+#'     diagnostic_file = NULL,
 #'     algorithm = NULL,
 #'     iter = NULL,
 #'     grad_samples = NULL,
@@ -500,6 +507,7 @@ variational_method <- function(data = NULL,
                                seed = NULL,
                                refresh = NULL,
                                init = NULL,
+                               diagnostic_file = NULL,
                                algorithm = NULL,
                                iter = NULL,
                                grad_samples = NULL,
@@ -535,6 +543,7 @@ variational_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = 1,
     data_file = process_data(data),
+    diagnostic_file = diagnostic_file,
     seed = seed,
     init = init,
     refresh = refresh

@@ -11,20 +11,21 @@ data.
 }
 \section{Usage}{
 \preformatted{$sample(
-  num_chains = 1,
-# num_cores = NULL, # not yet available
   data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  diagnostic_file = NULL,
+  num_chains = NULL,
+  # num_cores = NULL, # not yet implemented
   num_warmup = NULL,
   num_samples = NULL,
   save_warmup = FALSE,
   thin = NULL,
-  refresh = NULL,
-  init = NULL,
-  seed = NULL,
   max_depth = NULL,
   metric = NULL,
   stepsize = NULL,
-  adapt_engaged = NULL,
+  adapt_engaged = TRUE,
   adapt_delta = NULL
 )
 }
@@ -54,6 +55,9 @@ screen updates.
 \item A character vector of data file paths (one per chain) to
 initialization files.
 }
+\item \code{diagnostic_file}: (character) A file path where auxiliary diagnostic
+information (beyond standard diagnostics) should be written to CSV.
+By default no file is written, which is appropriate for most use cases.
 }
 }
 
@@ -64,10 +68,10 @@ These arguments are described briefly here and in greater detail in the
 CmdStan manual. Arguments left at \code{NULL} default to the default used by the
 installed version of CmdStan.
 \itemize{
+\item \code{num_chains}: (positive integer) The number of Markov chains to run.
 \item \code{num_samples}: (positive integer) The number of sampling iterations.
 \item \code{num_warmup}: (positive integer) The number of warmup iterations.
-\item \code{save_warmup}: (logical) Should warmup iterations also be streamed
-to the output?
+\item \code{save_warmup}: (logical) Should warmup iterations also be saved? The default is \code{FALSE}.
 \item \code{thin}: (positive integer) The period between saved samples. This should
 typically be left at its default (no thinning).
 \item \code{adapt_engaged}: (logical) Do warmup adaptation?
@@ -87,8 +91,8 @@ Each path must be to a JSON or Rdump file that contains an entry
 covariance matrix.
 }
 
-If you want to turn off adaptation when using a precomuted metric set
-\code{adapt_engaged=FALSE}, otherwise it will use the precomputed metric just
+If you want to turn off adaptation when using a precomputed metric set
+\code{adapt_engaged=FALSE}, otherwise it will use the provided metric just
 as an initial guess during adaptation. See the \emph{Euclidean Metric} section
 of the CmdStan manual for more details on these options.
 \item \code{max_depth}: (positive integer) The maximum allowed tree depth. See the
