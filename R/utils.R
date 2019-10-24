@@ -178,7 +178,12 @@ list_to_array <- function(x) {
   if(!all_numeric) {
     stop("All elements of the list must be numeric!")
   }
-  unlist(x)
+  list_length <- length(x)
+  element_dim <- dim(x[[1]])
+  element_num_of_dim <- length(element_dim)
+  x <- do.call("c", x)
+  dim(x) <- c(element_dim, list_length)
+  aperm(x, c(element_num_of_dim + 1L, seq_len(element_num_of_dim)))
 }
 
 #' Dump data to a JSON file readable by CmdStan
