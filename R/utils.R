@@ -28,7 +28,8 @@ make_cmd <- function() {
 }
 
 check_target_exe <- function(exe) {
-  if(!file.exists(cmdstan_path(), exe)) {
+  exe_path <- file.path(cmdstan_path(), exe)
+  if (!file.exists(exe_path)) {
     run_log <- processx::run(
       command = make_cmd(),
       args = exe,
