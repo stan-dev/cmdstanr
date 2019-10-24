@@ -167,6 +167,20 @@ repair_variable_names <- function(names) {
   names
 }
 
+list_to_array <- function(x) {
+  if (length(x) == 0 ) return(NULL)
+  check_equal_dim <- function(x, target_dim) { !is.null(x) && dim(x) == target_dim }
+  all_same_size <- all(sapply(x, check_equal_dim, target_dim = dim(x[[1]])))
+  if(!all_same_size) {
+    stop("All matrices/vectors in the list must be the same size!")
+  }
+  all_numeric <- all(sapply(x, function(a) is.numeric(a)))
+  if(!all_numeric) {
+    stop("All elements of the list must be numeric!")
+  }
+  unlist(x)
+}
+
 #' Dump data to a JSON file readable by CmdStan
 #'
 #' @param data A named list of \R objects.
@@ -190,6 +204,8 @@ write_stan_json <- function(data, file) {
       mode(var) <- "integer"
     } else if(is.data.frame(var)) {
       var <- data.matrix(var)
+    }else if(is.list(var)) {
+      var <- list_to_array(var)
     }
     data[[var_name]] <- var
   }
