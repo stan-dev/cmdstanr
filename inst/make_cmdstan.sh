@@ -4,13 +4,16 @@
 #  - build binaries, compile example model to build model header
 #  - symlink downloaded version as "cmdstan"
 
-while getopts ":d:v:j:" opt; do
+WIN=0
+while getopts ":d:v:j:w" opt; do
   case $opt in
     d) RELDIR="$OPTARG"
     ;;
     v) VER="$OPTARG"
     ;;
     j) JOBS="$OPTARG"
+    ;;
+    w) WIN=1
     ;;
     \?) echo "Invalid option -$OPTARG" >&2
     ;;
@@ -76,8 +79,11 @@ fi
 ln -s ${CS} cmdstan
 pushd cmdstan > /dev/null
 echo "building cmdstan binaries"
-make -j${JOBS} build examples/bernoulli/bernoulli
-# make build -j${JOBS}
+if [[ ${WIN} -ne 0 ]]; then
+  mingw32-make -j${JOBS} build examples/bernoulli/bernoulli.exe
+else
+  make -j${JOBS} build examples/bernoulli/bernoulli
+fi
 echo "installed ${CS}; symlink: `ls -l ${RELDIR}/cmdstan`"
 
 # cleanup
