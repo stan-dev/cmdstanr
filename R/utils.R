@@ -170,8 +170,8 @@ repair_variable_names <- function(names) {
 list_to_array <- function(x) {
   list_length <- length(x)
   if (list_length == 0 ) return(NULL)
-  element_dim <- dim(x[[1]])
-  check_equal_dim <- function(x, target_dim) { !is.null(x) && dim(x) == target_dim }
+  element_dim <- length(x[[1]])
+  check_equal_dim <- function(x, target_dim) { !is.null(element_dim) && length(x) == target_dim }
   all_same_size <- all(sapply(x, check_equal_dim, target_dim = element_dim))
   if(!all_same_size) {
     stop("All matrices/vectors in the list must be the same size!")

@@ -70,4 +70,36 @@ test_that("test JSON errors", {
     write_stan_json(list(N = N), file = ""),
     "The supplied filename is invalid!"
   )
+  I <- 2; J <- 3;
+  N <- lapply(1:I, function(i) {
+    if (i==1)
+      rep(26, J)
+    else
+      rep(26, J-1)
+  })
+  expect_error(
+    write_stan_json(list(N = N), file = "abc.txt"),
+    "All matrices/vectors in the list must be the same size!"
+  )
+  N <- lapply(1:I, function(i) {
+    if (i==1)
+      rep(26, J)
+    else
+      J
+  })
+  expect_error(
+    write_stan_json(list(N = N), file = "abc.txt"),
+    "All matrices/vectors in the list must be the same size!"
+  )
+  I <- 2; J <- 3;
+  N <- lapply(1:I, function(i) {
+    if (i==1)
+      rep(26, J)
+    else
+      NULL
+  })
+  expect_error(
+    write_stan_json(list(N = N), file = "abc.txt"),
+    "All matrices/vectors in the list must be the same size!"
+  )
 })
