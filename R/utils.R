@@ -167,30 +167,12 @@ repair_variable_names <- function(names) {
   names
 }
 
-#' Dump data to temporary file in format readable by CmdStan
-#'
-#' @param data A named list of \R objects.
-#' @return Path to temporary file containing the data.
-#' @noRd
-write_json <- function(data) {
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("Please install the 'jsonlite' package.", call. = FALSE)
-  }
-  checkmate::assert_names(names(data), type = "unique")
-  temp_file <- tempfile(pattern = "standata-", fileext = ".json")
-  cmdstanr_jsondump(
-    data = data,
-    file = temp_file
-  )
-  temp_file
-}
-
 #' Dump data to a JSON file readable by CmdStan
 #'
-#' @param data A named list of objects to be written in a json file
+#' @param data A named list of \R objects.
 #' @param file A character string represeneting the path to the output file
 #' @export
-cmdstanr_jsondump <- function(data, file) {
+write_stan_json <- function(data, file) {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the 'jsonlite' package.", call. = FALSE)
   }
