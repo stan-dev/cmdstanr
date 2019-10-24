@@ -66,17 +66,19 @@ fi
 echo "download complete"
 
 echo "unpacking archive"
-tar xzf ${CS}.tar.gz
+if [[ -e cmdstan ]]; then
+    rm -rf cmdstan
+fi
+
+mkdir cmdstan
+tar xzf ${CS}.tar.gz -C cmdstan/ --strip-components 1
 TAR_RC=$?
 if [[ ${TAR_RC} -ne 0 ]]; then
     echo "corrupt download file ${CS}.tar.gz, tar exited with: ${TAR_RC}"
     exit ${TAR_RC}
 fi
+rm ${CS}.tar.gz
 
-if [[ -h cmdstan ]]; then
-    unlink cmdstan
-fi
-ln -s ${CS} cmdstan
 pushd cmdstan > /dev/null
 echo "building cmdstan binaries"
 if [[ ${WIN} -ne 0 ]]; then
@@ -84,11 +86,10 @@ if [[ ${WIN} -ne 0 ]]; then
 else
   make -j${JOBS} build examples/bernoulli/bernoulli
 fi
-echo "installed ${CS}; symlink: `ls -l ${RELDIR}/cmdstan`"
+echo "installed ${CS} to ${RELDIR}/cmdstan"
 
 # cleanup
 pushd -0 > /dev/null
 dirs -c > /dev/null
 echo ""
-echo "CmdStan installation location: `ls -Fd ${RELDIR}/${CS}`"
-echo "Can use symlink: ${RELDIR}/cmdstan"
+echo "CmdStan installation location: `ls -Fd ${RELDIR}/cmdstan`"
