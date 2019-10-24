@@ -194,7 +194,7 @@ compile_method <- function(threads = FALSE,
   }
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
-    command = "make",
+    command = make_cmd(),
     args = exe,
     wd = cmdstan_path(),
     echo_cmd = TRUE,

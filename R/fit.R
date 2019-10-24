@@ -39,8 +39,10 @@ CmdStanMCMC <- R6::R6Class(
     },
     summary = function() {
       # Run cmdstan's bin/stansummary on csv files
+      target_exe = file.path("bin", cmdstan_ext("stansummary"))
+      check_target_exe(target_exe)
       run_log <- processx::run(
-        command = file.path("bin", cmdstan_ext("stansummary")),
+        command = target_exe,
         args = self$output_files(),
         wd = cmdstan_path(),
         echo_cmd = TRUE,
@@ -49,8 +51,10 @@ CmdStanMCMC <- R6::R6Class(
     },
     diagnose = function() {
       # Run cmdstan's bin/diagnose on csv files
+      target_exe = file.path("bin", cmdstan_ext("diagnose"))
+      check_target_exe(target_exe)
       run_log <- processx::run(
-        command = file.path("bin", cmdstan_ext("diagnose")),
+        command = target_exe,
         args = self$output_files(),
         wd = cmdstan_path(),
         echo_cmd = TRUE,

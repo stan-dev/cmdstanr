@@ -15,7 +15,29 @@ os_is_windows <- function() {
   if (!is.null(x)) x else y
 }
 
+#' Returns the type of make command to use to compile
+#' @return Returns "mingw32-make" if using cmdstan 2.21+ and running Windows
+#' @noRd
+make_cmd <- function() {
+  # Cmdstan 2.21 introduced TBB that requires mingw32-make on Windows
+  if (.cmdstanr$VERSION >= "2.21" && os_is_windows) {
+    "mingw32-make.exe"
+  } else {
+    "make"
+  }
+}
 
+check_target_exe <- function(exe) {
+  if(!file.exists(cmdstan_path(), exe)) {
+    run_log <- processx::run(
+      command = make_cmd(),
+      args = exe,
+      wd = cmdstan_path(),
+      echo_cmd = TRUE,
+      echo = TRUE
+    )
+  }
+}
 # paths and extensions ----------------------------------------------------
 
 # Replace `\\` with `/` in a path
