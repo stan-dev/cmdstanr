@@ -28,6 +28,7 @@ install_cmdstan <- function(dir = NULL, cores = 2, quiet = FALSE) {
   if (os_is_windows()) {
     make_cmdstan <- c(make_cmdstan, "-w")
   }
+
   install_log <- processx::run(
     command = "bash",
     args = make_cmdstan,
