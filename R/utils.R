@@ -211,11 +211,26 @@ list_to_array <- function(x) {
   aperm(x, c(element_num_of_dim + 1L, seq_len(element_num_of_dim)))
 }
 
-#' Dump data to a JSON file readable by CmdStan
+#' Write data to a JSON file readable by CmdStan
 #'
-#' @param data A named list of \R objects.
-#' @param file A character string represeneting the path to the output file
 #' @export
+#' @param data A named list of \R objects.
+#' @param file A string specifying the path to where the data file should be
+#'   written.
+#'
+#' @examples
+#' x <- matrix(rnorm(10), 5, 2)
+#' y <- rpois(nrow(x), lambda = 10)
+#' z <- c(TRUE, FALSE)
+#' data <- list(N = nrow(x), K = ncol(x), x = x, y = y, z = z)
+#'
+#' # write data to json file
+#' file <- tempfile(fileext = ".json")
+#' write_stan_json(data, file)
+#'
+#' # check the contents of the file
+#' cat(readLines(file), sep = "\n")
+#'
 write_stan_json <- function(data, file) {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the 'jsonlite' package.", call. = FALSE)
