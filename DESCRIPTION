@@ -28,5 +28,6 @@ Suggests:
     knitr,
     rmarkdown,
     rstan,
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    jsonlite (>= 1.2.0)
 VignetteBuilder: knitr
