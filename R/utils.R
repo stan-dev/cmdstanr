@@ -20,7 +20,7 @@ os_is_windows <- function() {
 #' @noRd
 make_cmd <- function() {
   # Cmdstan 2.21 introduced TBB that requires mingw32-make on Windows
-  if ((.cmdstanr$VERSION >= "2.21") && os_is_windows) {
+  if ((.cmdstanr$VERSION >= "2.21") && os_is_windows()) {
     "mingw32-make.exe"
   } else {
     "make"
