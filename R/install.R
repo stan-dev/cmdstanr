@@ -25,7 +25,7 @@ install_cmdstan <- function(dir = NULL, cores = 2, quiet = FALSE) {
     make_cmdstan <- c(make_cmdstan, paste0("-d ", dir))
   }
   make_cmdstan <- c(make_cmdstan, paste0("-j", cores))
-  if ((.cmdstanr$VERSION >= "2.21") && os_is_windows()) {
+  if (os_is_windows()) {
     make_cmdstan <- c(make_cmdstan, "-w")
   }
   install_log <- processx::run(
