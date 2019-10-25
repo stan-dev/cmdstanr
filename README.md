@@ -26,6 +26,9 @@ releases.
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
 
+* More flexible license: CmdStanR uses the BSD-3 license rather than the GPL-3
+license required for RStan.
+
 
 ### Installation
 
