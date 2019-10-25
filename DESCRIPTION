@@ -25,9 +25,9 @@ Imports:
     processx,
     R6
 Suggests: 
+    jsonlite (>= 1.2.0),
     knitr,
     rmarkdown,
     rstan,
-    testthat (>= 2.1.0),
-    jsonlite (>= 1.2.0)
+    testthat (>= 2.1.0)
 VignetteBuilder: knitr

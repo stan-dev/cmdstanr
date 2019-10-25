@@ -49,6 +49,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/stan_threads.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/write_stan_json.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/articles/cmdstanr.html</loc>
   </url>
 </urlset>

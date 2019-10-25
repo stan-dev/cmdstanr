@@ -127,7 +127,7 @@
 <!-- badges: start -->
 
 <p>CmdStanR is a lightweight interface to <a href="https://mc-stan.org">Stan</a> for R users (see <a href="https://github.com/stan-dev/cmdstanpy">CmdStanPy</a> for Python).</p>
-<p>CmdStanR is in early stages of development and currently requires RStan to use <code><a href="https://rdrr.io/pkg/rstan/man/stan_rdump.html">rstan::stan_rdump()</a></code> for writing data files and <code><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">rstan::read_stan_csv()</a></code> for reading CmdStan output into R (RStan is not used to compile anything). This dependency on RStan will eventually be removed.</p>
+<p>CmdStanR is in early stages of development and currently requires RStan to use <code><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">rstan::read_stan_csv()</a></code> for reading CmdStan output into R (RStan is not used to compile anything). This dependency on RStan will eventually be removed.</p>
 <div id="goals" class="section level3">
 <h3 class="hasAnchor">
 <a href="#goals" class="anchor"></a>Goals</h3>
@@ -140,6 +140,7 @@
 </ul>
 </li>
 <li><p>Modularity: CmdStanR runs Stan’s algorithms and lets downstream modules do the analysis.</p></li>
+<li><p>More flexible license: CmdStanR uses the BSD-3 license rather than the GPL-3 license required for RStan.</p></li>
 </ul>
 </div>
 <div id="installation" class="section level3">

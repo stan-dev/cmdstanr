@@ -77,3 +77,7 @@ reference:
       - CmdStanMLE
       - CmdStanVB
       - starts_with("fit-method")
+  - title: "Other tools for working with CmdStan"
+    contents:
+      - write_stan_json
+

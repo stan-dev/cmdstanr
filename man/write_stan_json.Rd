@@ -2,15 +2,30 @@
 % Please edit documentation in R/utils.R
 \name{write_stan_json}
 \alias{write_stan_json}
-\title{Dump data to a JSON file readable by CmdStan}
+\title{Write data to a JSON file readable by CmdStan}
 \usage{
 write_stan_json(data, file)
 }
 \arguments{
 \item{data}{A named list of \R objects.}
 
-\item{file}{A character string represeneting the path to the output file}
+\item{file}{A string specifying the path to where the data file should be
+written.}
 }
 \description{
-Dump data to a JSON file readable by CmdStan
+Write data to a JSON file readable by CmdStan
+}
+\examples{
+x <- matrix(rnorm(10), 5, 2)
+y <- rpois(nrow(x), lambda = 10)
+z <- c(TRUE, FALSE)
+data <- list(N = nrow(x), K = ncol(x), x = x, y = y, z = z)
+
+# write data to json file
+file <- tempfile(fileext = ".json")
+write_stan_json(data, file)
+
+# check the contents of the file
+cat(readLines(file), sep = "\\n")
+
 }
