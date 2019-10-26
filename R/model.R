@@ -187,10 +187,9 @@ compile_method <- function(threads = FALSE,
                                        opencl_device_id,
                                        compiler_flags)
   # rebuild main.o and the model if there was a change in make/local
-  if(make_local_changed) {
-    print("A change in the compile flags was found. Forcing re-compile of the model...\n")
-    build_cleanup(exe,
-                  remove_main = TRUE)
+  if (make_local_changed) {
+    message("A change in the compiler flags was found. Forcing recompilation.\n")
+    build_cleanup(exe, remove_main = TRUE)
   }
   # add path to the build tbb library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
