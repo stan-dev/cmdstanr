@@ -188,7 +188,7 @@ compile_method <- function(threads = FALSE,
                                        compiler_flags)
   # rebuild main.o and the model if there was a change in make/local
   if(make_local_changed) {
-    print("A change in the compile flags was found. Recompiling the model...\n")
+    print("A change in the compile flags was found. Forcing re-compile of the model...\n")
     build_cleanup(exe,
                   remove_main = TRUE)
   }
