@@ -257,7 +257,14 @@ write_stan_json <- function(data, file) {
   # call to write JSON with
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
   # handling factors as integers
-  jsonlite::write_json(data, auto_unbox = TRUE, factor = "integer", digits = NA, path = file)
+  jsonlite::write_json(
+    data,
+    path = file,
+    auto_unbox = TRUE,
+    factor = "integer",
+    digits = NA,
+    pretty = TRUE
+  )
 }
 
 # compilation, build files, threading -------------------------------------

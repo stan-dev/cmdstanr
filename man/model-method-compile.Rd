@@ -4,7 +4,7 @@
 \alias{model-method-compile}
 \title{Compile a Stan program or get the Stan code}
 \description{
-The \code{compile} method of a \code{\link{CmdStanModel}} object calls CmdStan
+The \code{$compile()} method of a \code{\link{CmdStanModel}} object calls CmdStan
 to translate a Stan program to C++ and then create a compiled executable.
 The resulting files are placed in the same directory as the Stan program
 associated with the \code{CmdStanModel} object. After compilation the path

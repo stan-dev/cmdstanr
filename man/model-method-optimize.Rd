@@ -4,15 +4,15 @@
 \alias{model-method-optimize}
 \title{Run Stan's optimization algorithms}
 \description{
-The \code{optimize} method of a \code{\link{CmdStanModel}} object runs Stan's
-optimizer.
+The \code{$optimize()} method of a \code{\link{CmdStanModel}} object runs
+Stan's optimizer.
 }
 \details{
 CmdStan can find the posterior mode (assuming there is one). If the
 posterior is not convex, there is no guarantee Stan will be able to find
 the global mode as opposed to a local optimum of log probability. For
 optimization, the mode is calculated without the Jacobian adjustment for
-con- strained variables, which shifts the mode due to the change of
+constrained variables, which shifts the mode due to the change of
 variables. Thus modes correspond to modes of the model as written.
 
 -- \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan Interface User's Guide}
@@ -63,10 +63,10 @@ By default no file is written, which is appropriate for most use cases.
 
 \section{Arguments unique to the \code{optimize} method}{
  In addition to the
-arguments above, the \code{optimize} method also has its own set of arguments.
-These arguments are described briefly here and in greater detail in the
-CmdStan manual. Arguments left at \code{NULL} default to the default used by the
-installed version of CmdStan.
+arguments above, the \code{$optimize()} method also has its own set of
+arguments. These arguments are described briefly here and in greater detail
+in the CmdStan manual. Arguments left at \code{NULL} default to the default used
+by the installed version of CmdStan.
 \itemize{
 \item \code{algorithm}: (string) The optimization algorithm. One of
 \code{"lbfgs"}, \code{"bfgs"}, or \code{"newton"}.
@@ -77,7 +77,7 @@ iteration. Not applicable if \code{algorithm="newton"}.
 }
 
 \section{Value}{
- The \code{optimize} method returns a \code{\link{CmdStanMLE}} object.
+ The \code{$optimize()} method returns a \code{\link{CmdStanMLE}} object.
 }
 
 \examples{

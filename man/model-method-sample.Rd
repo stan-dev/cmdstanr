@@ -4,7 +4,7 @@
 \alias{model-method-sample}
 \title{Run Stan's MCMC algorithms}
 \description{
-The \code{sample} method of a \code{\link{CmdStanModel}} object runs the
+The \code{$sample()} method of a \code{\link{CmdStanModel}} object runs the
 default MCMC algorithm in CmdStan (\code{algorithm=hmc engine=nuts}), to produce
 a set of draws from the posterior distribution of a model conditioned on
 some data.
@@ -63,7 +63,7 @@ By default no file is written, which is appropriate for most use cases.
 
 \section{Arguments unique to the \code{sample} method}{
  In addition to the
-arguments above, the \code{sample} method also has its own set of arguments.
+arguments above, the \code{$sample()} method also has its own set of arguments.
 These arguments are described briefly here and in greater detail in the
 CmdStan manual. Arguments left at \code{NULL} default to the default used by the
 installed version of CmdStan.
@@ -71,7 +71,8 @@ installed version of CmdStan.
 \item \code{num_chains}: (positive integer) The number of Markov chains to run.
 \item \code{num_samples}: (positive integer) The number of sampling iterations.
 \item \code{num_warmup}: (positive integer) The number of warmup iterations.
-\item \code{save_warmup}: (logical) Should warmup iterations also be saved? The default is \code{FALSE}.
+\item \code{save_warmup}: (logical) Should warmup iterations also be saved?
+The default is \code{FALSE}.
 \item \code{thin}: (positive integer) The period between saved samples. This should
 typically be left at its default (no thinning).
 \item \code{adapt_engaged}: (logical) Do warmup adaptation?
@@ -101,7 +102,7 @@ of the CmdStan manual for more details on these options.
 }
 
 \section{Value}{
- The \code{sample} method returns a \code{\link{CmdStanMCMC}} object.
+ The \code{$sample()} method returns a \code{\link{CmdStanMCMC}} object.
 }
 
 \examples{

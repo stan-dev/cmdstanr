@@ -139,7 +139,7 @@ CmdStanModel <- R6::R6Class(
 #' @name model-method-compile
 #' @family CmdStanModel methods
 #'
-#' @description The `compile` method of a [`CmdStanModel`] object calls CmdStan
+#' @description The `$compile()` method of a [`CmdStanModel`] object calls CmdStan
 #'   to translate a Stan program to C++ and then create a compiled executable.
 #'   The resulting files are placed in the same directory as the Stan program
 #'   associated with the `CmdStanModel` object. After compilation the path
@@ -229,7 +229,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @name model-method-sample
 #' @family CmdStanModel methods
 #'
-#' @description The `sample` method of a [`CmdStanModel`] object runs the
+#' @description The `$sample()` method of a [`CmdStanModel`] object runs the
 #'   default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce
 #'   a set of draws from the posterior distribution of a model conditioned on
 #'   some data.
@@ -258,14 +258,15 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'
 #' @template model-common-args
 #' @section Arguments unique to the `sample` method: In addition to the
-#'   arguments above, the `sample` method also has its own set of arguments.
+#'   arguments above, the `$sample()` method also has its own set of arguments.
 #'   These arguments are described briefly here and in greater detail in the
 #'   CmdStan manual. Arguments left at `NULL` default to the default used by the
 #'   installed version of CmdStan.
 #'   * `num_chains`: (positive integer) The number of Markov chains to run.
 #'   * `num_samples`: (positive integer) The number of sampling iterations.
 #'   * `num_warmup`: (positive integer) The number of warmup iterations.
-#'   * `save_warmup`: (logical) Should warmup iterations also be saved? The default is `FALSE`.
+#'   * `save_warmup`: (logical) Should warmup iterations also be saved?
+#'     The default is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'     typically be left at its default (no thinning).
 #'   * `adapt_engaged`: (logical) Do warmup adaptation?
@@ -291,7 +292,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `max_depth`: (positive integer) The maximum allowed tree depth. See the
 #'     _Tree Depth_ section of the CmdStan manual for more details.
 #'
-#' @section Value: The `sample` method returns a [`CmdStanMCMC`] object.
+#' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -363,14 +364,14 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' @name model-method-optimize
 #' @family CmdStanModel methods
 #'
-#' @description The `optimize` method of a [`CmdStanModel`] object runs Stan's
-#'   optimizer.
+#' @description The `$optimize()` method of a [`CmdStanModel`] object runs
+#'   Stan's optimizer.
 #'
 #' @details CmdStan can find the posterior mode (assuming there is one). If the
 #'   posterior is not convex, there is no guarantee Stan will be able to find
 #'   the global mode as opposed to a local optimum of log probability. For
 #'   optimization, the mode is calculated without the Jacobian adjustment for
-#'   con- strained variables, which shifts the mode due to the change of
+#'   constrained variables, which shifts the mode due to the change of
 #'   variables. Thus modes correspond to modes of the model as written.
 #'
 #'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
@@ -391,17 +392,17 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'
 #' @template model-common-args
 #' @section Arguments unique to the `optimize` method: In addition to the
-#'   arguments above, the `optimize` method also has its own set of arguments.
-#'   These arguments are described briefly here and in greater detail in the
-#'   CmdStan manual. Arguments left at `NULL` default to the default used by the
-#'   installed version of CmdStan.
+#'   arguments above, the `$optimize()` method also has its own set of
+#'   arguments. These arguments are described briefly here and in greater detail
+#'   in the CmdStan manual. Arguments left at `NULL` default to the default used
+#'   by the installed version of CmdStan.
 #'   * `algorithm`: (string) The optimization algorithm. One of
 #'     `"lbfgs"`, `"bfgs"`, or `"newton"`.
 #'   * `iter`: (positive integer) The number of iterations.
 #'   * `init_alpha`: (non-negative real) The line search step size for first
 #'      iteration. Not applicable if `algorithm="newton"`.
 #'
-#' @section Value: The `optimize` method returns a [`CmdStanMLE`] object.
+#' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -458,7 +459,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #' @name model-method-variational
 #' @family CmdStanModel methods
 #'
-#' @description The `variational` method of a [`CmdStanModel`] object runs
+#' @description The `$variational()` method of a [`CmdStanModel`] object runs
 #'   Stan's variational Bayes (ADVI) algorithms.
 #'
 #' @details CmdStan can fit a variational approximation to the posterior. The
@@ -493,7 +494,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'
 #' @template model-common-args
 #' @section Arguments unique to the `variational` method: In addition to the
-#'   arguments above, the `variational` method also has its own set of
+#'   arguments above, the `$variational()` method also has its own set of
 #'   arguments. These arguments are described briefly here and in greater detail
 #'   in the CmdStan manual. Arguments left at `NULL` default to the default used
 #'   by the installed version of CmdStan.
@@ -514,7 +515,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   * `output_samples:` (positive integer) Number of posterior samples to
 #'     draw and save.
 #'
-#' @section Value: The `variational` method returns a [`CmdStanVB`] object.
+#' @section Value: The `$variational()` method returns a [`CmdStanVB`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples

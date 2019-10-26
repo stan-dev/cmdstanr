@@ -4,7 +4,7 @@
 \alias{model-method-variational}
 \title{Run Stan's variational approximation algorithms}
 \description{
-The \code{variational} method of a \code{\link{CmdStanModel}} object runs
+The \code{$variational()} method of a \code{\link{CmdStanModel}} object runs
 Stan's variational Bayes (ADVI) algorithms.
 }
 \details{
@@ -70,7 +70,7 @@ By default no file is written, which is appropriate for most use cases.
 
 \section{Arguments unique to the \code{variational} method}{
  In addition to the
-arguments above, the \code{variational} method also has its own set of
+arguments above, the \code{$variational()} method also has its own set of
 arguments. These arguments are described briefly here and in greater detail
 in the CmdStan manual. Arguments left at \code{NULL} default to the default used
 by the installed version of CmdStan.
@@ -95,7 +95,7 @@ draw and save.
 }
 
 \section{Value}{
- The \code{variational} method returns a \code{\link{CmdStanVB}} object.
+ The \code{$variational()} method returns a \code{\link{CmdStanVB}} object.
 }
 
 \examples{
