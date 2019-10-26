@@ -302,7 +302,7 @@ set_make_local <- function(threads = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
                            compiler_flags = NULL) {
-  cmdstanr_generated_flags_comment <- "# cmdstanr generated make/local flags"
+  cmdstanr_generated_flags_comment <- "# cmdstanr generated make/local flags (add user flags above this line)"
   make_local_path <- file.path(cmdstan_path(), "make", "local")
   user_flags <- c()
   if (file.exists(make_local_path)) {
@@ -333,7 +333,9 @@ set_make_local <- function(threads = FALSE,
     stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
     compiler_flags <- c(compiler_flags, stan_threads)
   }
-  compiler_flags <- c(cmdstanr_generated_flags_comment, compiler_flags)
+  if (length(compiler_flags) > 0) {
+    compiler_flags <- c(cmdstanr_generated_flags_comment, compiler_flags)
+  }
   new_make_local_cmdstanr <- paste(compiler_flags, collapse = "\n")
   # dont rewrite make/local if there are no changes
   if (new_make_local_cmdstanr != old_make_local_cmdstanr) {
