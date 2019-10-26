@@ -5,8 +5,8 @@
 \alias{fit-method-save_data_file}
 \title{Save output and data files}
 \description{
-All fitted model objects have methods \code{save_output_files()} and
-\code{save_data_file()}. These methods move csv output files and R dump or json
+All fitted model objects have methods \code{$save_output_files()} and
+\code{$save_data_file()}. These methods move csv output files and R dump or json
 data files from the CmdStanR temporary directory to a user-specified
 location. By default the suffix \code{'-<run_id>_<timestamp>'} is added to the
 file name(s), where \code{run_id} is the chain number if applicable (MCMC only)
@@ -21,7 +21,7 @@ $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
 }
 
 \section{Arguments}{
- \code{save_output_files()} and \code{save_data_file()} have the
+ \code{$save_output_files()} and \code{$save_data_file()} have the
 same arguments:
 \itemize{
 \item \code{dir}: (string) Path to directory where the files should be saved.

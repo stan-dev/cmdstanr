@@ -110,7 +110,7 @@ CmdStanMCMC <- R6::R6Class(
 #' @template seealso-docs
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
-#'   [`optimize()`][model-method-optimize] method of a [`CmdStanModel`]
+#'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`]
 #'   object.
 #'
 #' @details
@@ -177,7 +177,7 @@ CmdStanMLE <- R6::R6Class(
 #' @template seealso-docs
 #'
 #' @description A `CmdStanVB` object is the fitted model object returned by the
-#'   [`variational()`][model-method-variational] method of a
+#'   [`$variational()`][model-method-variational] method of a
 #'   [`CmdStanModel`] object.
 #'
 #' @details
@@ -265,8 +265,8 @@ CmdStanVB <- R6::R6Class(
 #' @name fit-method-save_output_files
 #' @aliases fit-method-save_data_file
 #'
-#' @description All fitted model objects have methods `save_output_files()` and
-#'   `save_data_file()`. These methods move csv output files and R dump or json
+#' @description All fitted model objects have methods `$save_output_files()` and
+#'   `$save_data_file()`. These methods move csv output files and R dump or json
 #'   data files from the CmdStanR temporary directory to a user-specified
 #'   location. By default the suffix `'-<run_id>_<timestamp>'` is added to the
 #'   file name(s), where `run_id` is the chain number if applicable (MCMC only)
@@ -280,7 +280,7 @@ CmdStanVB <- R6::R6Class(
 #'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
 #'   ```
 #'
-#' @section Arguments: `save_output_files()` and `save_data_file()` have the
+#' @section Arguments: `$save_output_files()` and `$save_data_file()` have the
 #'   same arguments:
 #' * `dir`: (string) Path to directory where the files should be saved.
 #' * `basename`: (string) Base filename to use.

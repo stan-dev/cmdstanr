@@ -42,6 +42,8 @@ complicated for RStan, often requiring non-trivial changes to the
 and \pkg{StanHeaders}. With CmdStanR, the latest features in Stan will be
 available from \R immediately after updating CmdStan, which can be done
 with the \code{\link[=install_cmdstan]{install_cmdstan()}} function.
+
+The licenses of CmdStanR (BSD-3) and RStan (GPL-3) are also different.
 }
 
 \seealso{
