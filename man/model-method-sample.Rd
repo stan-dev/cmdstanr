@@ -4,10 +4,10 @@
 \alias{model-method-sample}
 \title{Run Stan's MCMC algorithms}
 \description{
-The \code{sample} method of a \code{\link{CmdStanModel}} object runs the default
-MCMC algorithm in CmdStan (\code{algorithm=hmc engine=nuts}), to produce a set
-of draws from the posterior distribution of a model conditioned on some
-data.
+The \code{sample} method of a \code{\link{CmdStanModel}} object runs the
+default MCMC algorithm in CmdStan (\code{algorithm=hmc engine=nuts}), to produce
+a set of draws from the posterior distribution of a model conditioned on
+some data.
 }
 \section{Usage}{
 \preformatted{$sample(
@@ -118,9 +118,6 @@ set_cmdstan_path(path = NULL)
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program)
 mod$print()
-
-# Compile to create executable
-mod$compile()
 
 # Run sample method (MCMC via Stan's dynamic HMC/NUTS),
 # specifying data as a named list (like RStan)
