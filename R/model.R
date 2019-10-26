@@ -195,7 +195,7 @@ compile_method <- function(threads = FALSE,
   # add path to the build tbb library to the PATH variable to avoid copying the dll file
   if ((.cmdstanr$VERSION >= "2.21") && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH"),sep=""))
+    Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
