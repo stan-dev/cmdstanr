@@ -37,6 +37,8 @@
 #'   available from \R immediately after updating CmdStan, which can be done
 #'   with the [install_cmdstan()] function.
 #'
+#'   The licenses of CmdStanR (BSD-3) and RStan (GPL-3) are also different.
+#'
 #' @template seealso-docs
 #'
 NULL
