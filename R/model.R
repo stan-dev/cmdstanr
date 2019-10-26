@@ -5,7 +5,13 @@
 #' file containing a Stan program.
 #'
 #' @export
-#' @param stan_file Path to Stan program.
+#' @param stan_file The path to a `.stan` file containing a Stan program.
+#' @param compile Do compilation? The default is `TRUE`. If `FALSE`
+#'   compilation can be done later via the [`$compile()`][model-method-compile]
+#'   method.
+#' @param ... Optionally, additional arguments to pass to the
+#'   [`$compile()`][model-method-compile] method. Ignored if `compile=FALSE`.
+#'
 #' @return A [`CmdStanModel`] object.
 #'
 #' @seealso [install_cmdstan()], [cmdstan_path()]
@@ -25,9 +31,6 @@
 #' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #' mod <- cmdstan_model(stan_program)
 #' mod$print()
-#'
-#' # Compile to create executable
-#' mod$compile()
 #'
 #' # Run sample method (MCMC via Stan's dynamic HMC/NUTS),
 #' # specifying data as a named list (like RStan)
@@ -60,8 +63,8 @@
 #'
 #' }
 #'
-cmdstan_model <- function(stan_file) {
-  CmdStanModel$new(stan_file = stan_file)
+cmdstan_model <- function(stan_file, compile = TRUE, ...) {
+  CmdStanModel$new(stan_file = stan_file, compile = compile, ...)
 }
 
 
@@ -106,9 +109,13 @@ CmdStanModel <- R6::R6Class(
     exe_file_ = character()
   ),
   public = list(
-    initialize = function(stan_file) {
+    initialize = function(stan_file, compile, ...) {
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
+      checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
+      if (compile) {
+        self$compile(...)
+      }
       invisible(self)
     },
     stan_file = function() private$stan_file_,
@@ -135,7 +142,8 @@ CmdStanModel <- R6::R6Class(
 #' @description The `compile` method of a [`CmdStanModel`] object calls CmdStan
 #'   to translate a Stan program to C++ and then create a compiled executable.
 #'   The resulting files are placed in the same directory as the Stan program
-#'   associated with the `CmdStanModel` object.
+#'   associated with the `CmdStanModel` object. After compilation the path
+#'   to the executable can be accesed via the `$exe_file()` method.
 #'
 #' @section Usage:
 #'   ```
@@ -146,6 +154,7 @@ CmdStanModel <- R6::R6Class(
 #'     opencl_device_id = 0,
 #'     compiler_flags = NULL
 #'   )
+#'   $exe_file()
 #'   ```
 #'
 #' @section Arguments:
@@ -167,11 +176,15 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @section Value: This method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
-#'   returns the [`CmdStanModel`] object invisibly. After compilation the path
-#'   to the executable can be accesed via `$exe_file()`.
+#'   returns the [`CmdStanModel`] object invisibly.
 #'
 #' @template seealso-docs
-#' @inherit cmdstan_model examples
+#'
+#' @examples
+#' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(stan_program, compile = FALSE)
+#' mod$compile()
+#' mod$exe_file()
 #'
 NULL
 
@@ -216,10 +229,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @name model-method-sample
 #' @family CmdStanModel methods
 #'
-#' @description The `sample` method of a [`CmdStanModel`] object runs the default
-#'   MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce a set
-#'   of draws from the posterior distribution of a model conditioned on some
-#'   data.
+#' @description The `sample` method of a [`CmdStanModel`] object runs the
+#'   default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce
+#'   a set of draws from the posterior distribution of a model conditioned on
+#'   some data.
 #'
 #' @section Usage:
 #'   ```
