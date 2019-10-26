@@ -113,9 +113,6 @@ stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program)
 mod$print()
 
-# Compile to create executable
-mod$compile()
-
 # Run sample method (MCMC via Stan's dynamic HMC/NUTS),
 # specifying data as a named list (like RStan)
 standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))

@@ -109,15 +109,18 @@ operator. This design choice allows for CmdStanR and
 experience and share many implementation details, which also helps facilitate
 collaboration between developers.
 
-The
-[`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
-method is used to translate the Stan code to C++ and compile the C++ code:
+The Stan program can be printed using the `print` method: 
 
 ```{r compile}
-mod$compile()
 mod$print()  # print the Stan program
 ```
 
+The path to the compiled executable is available by calling the `exe_file`
+method:
+
+```{r exe_file}
+mod$exe_file()
+```
 
 ### Model fitting
 

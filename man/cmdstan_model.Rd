@@ -4,10 +4,17 @@
 \alias{cmdstan_model}
 \title{Create a new CmdStanModel object}
 \usage{
-cmdstan_model(stan_file)
+cmdstan_model(stan_file, compile = TRUE, ...)
 }
 \arguments{
-\item{stan_file}{Path to Stan program.}
+\item{stan_file}{The path to a \code{.stan} file containing a Stan program.}
+
+\item{compile}{Do compilation? The default is \code{TRUE}. If \code{FALSE}
+compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}
+method.}
+
+\item{...}{Optionally, additional arguments to pass to the
+\code{\link[=model-method-compile]{$compile()}} method. Ignored if \code{compile=FALSE}.}
 }
 \value{
 A \code{\link{CmdStanModel}} object.
@@ -31,9 +38,6 @@ set_cmdstan_path(path = NULL)
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program)
 mod$print()
-
-# Compile to create executable
-mod$compile()
 
 # Run sample method (MCMC via Stan's dynamic HMC/NUTS),
 # specifying data as a named list (like RStan)
