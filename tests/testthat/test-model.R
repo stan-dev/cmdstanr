@@ -8,14 +8,10 @@ TEMPFILE <- tempfile(fileext = ".csv")
 if (NOT_CRAN) {
   set_cmdstan_path()
   stan_program <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
-  mod <- cmdstan_model(stan_file = stan_program)
-
-  # stan prog outside cmdstan dir
-  stan_program_2 <- test_path("resources", "stan", "bernoulli.stan")
-  mod_2 <- cmdstan_model(stan_file = stan_program_2)
+  mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 
   # valid ways to supply data
-  data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
+  data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
   data_file_r <- test_path("resources", "data", "bernoulli.data.R")
   data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 }
@@ -75,7 +71,11 @@ test_that("compile() method works", {
 
 test_that("compilation works when stan program not in cmdstan dir", {
   skip_on_cran()
-  out <- utils::capture.output(mod_2$compile())
+
+  stan_program_2 <- test_path("resources", "stan", "bernoulli.stan")
+  out <- utils::capture.output(
+    mod_2 <- cmdstan_model(stan_file = stan_program_2)
+  )
   expect_output(print(out), "Translating Stan model")
   expect_equal(mod_2$exe_file(), strip_ext(absolute_path(stan_program_2)))
 

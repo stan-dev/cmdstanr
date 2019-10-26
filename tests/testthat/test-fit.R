@@ -7,8 +7,7 @@ if (NOT_CRAN) {
   set_cmdstan_path()
   stan_program <- test_path("resources/stan/logistic.stan")
   data_file <- test_path("resources/data/logistic.data.R")
-  mod <- cmdstan_model(stan_file = stan_program)
-  utils::capture.output(mod$compile())
+  utils::capture.output(mod <- cmdstan_model(stan_file = stan_program))
   utils::capture.output(fit_mcmc <- mod$sample(data = data_file, num_chains = 2))
   utils::capture.output(suppressWarnings(
     fit_mle <- mod$optimize(data = data_file)
