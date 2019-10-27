@@ -51,6 +51,13 @@ test_that("object initialized correctly", {
   expect_equal(mod$exe_file(), character(0))
 })
 
+test_that("code() and print() methods work", {
+  skip_on_cran()
+  expect_known_output(mod$print(), file = test_path("answers", "model-print-output.stan"))
+  expect_known_value(mod$code(), file = test_path("answers", "model-code-output.rds"))
+})
+
+
 test_that("error if no compile() before sample()", {
   skip_on_cran()
   expect_error(
@@ -334,14 +341,4 @@ test_that("variational() method errors for any invalid argument before calling c
   }
 })
 
-
-
-# Other methods -----------------------------------------------------------
-
-context("CmdStanModel-other")
-test_that("code() and print() methods work", {
-  skip_on_cran()
-  expect_known_output(mod$print(), file = test_path("answers", "model-print-output"))
-  expect_known_output(cat(mod$code()), file = test_path("answers", "model-code-output"))
-})
 

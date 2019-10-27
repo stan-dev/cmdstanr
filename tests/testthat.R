@@ -8,5 +8,5 @@ NOT_CRAN <-
 if (NOT_CRAN) {
   test_check("cmdstanr")
 } else {
-  test_check("cmdstanr", filter = "path|install")
+  test_check("cmdstanr", filter = "fit|model", invert = TRUE)
 }
