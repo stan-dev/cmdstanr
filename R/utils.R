@@ -302,26 +302,43 @@ set_make_local <- function(threads = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
                            compiler_flags = NULL) {
+  cmdstanr_generated_flags_comment <- "# cmdstanr generated make/local flags (add user flags above this line)"
   make_local_path <- file.path(cmdstan_path(), "make", "local")
-  old_make_local_content <- ""
-  if(file.exists(make_local_path)) {
-    # read the contents of make/local to compare with the new contents
-    old_make_local_content <- paste(readLines(make_local_path), collapse = "\n")
+  user_flags <- c()
+  old_make_local_cmdstanr <- c()
+  if (file.exists(make_local_path)) {
+    old_make_local_all <- readLines(make_local_path)
+    is_user_flag <- TRUE
+    for (x in old_make_local_all) {
+      if (startsWith(x, cmdstanr_generated_flags_comment)) {
+        is_user_flag <- FALSE
+      }
+      if (!is_user_flag) {
+        old_make_local_cmdstanr <- c(old_make_local_cmdstanr, x)
+      } else {
+        user_flags <- c(user_flags, x)
+      }
+    }
   }
-  if(opencl) {
+  old_make_local_cmdstanr <- paste(old_make_local_cmdstanr, collapse = "\n")
+  if (opencl) {
     stan_opencl <- "STAN_OPENCL = true"
-    platform_id <- paste("OPENCL_PLATFORM_ID", opencl_platform_id, sep = " = ")
-    device_id <- paste("OPENCL_DEVICE_ID", opencl_device_id, sep = " = ")
+    platform_id <- paste("OPENCL_PLATFORM_ID =", opencl_platform_id)
+    device_id <- paste("OPENCL_DEVICE_ID =", opencl_device_id)
     compiler_flags <- c(compiler_flags, stan_opencl, platform_id, device_id)
   }
-  if(threads) {
+  if (threads) {
     stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
     compiler_flags <- c(compiler_flags, stan_threads)
   }
-  new_make_local_content <- paste(compiler_flags, collapse = "\n")
-  # dont rewrite make/local if there are no changes
-  if(new_make_local_content != old_make_local_content) {
-    write(new_make_local_content, file = make_local_path, append = FALSE)
+  if (length(compiler_flags) > 0) {
+    compiler_flags <- c(cmdstanr_generated_flags_comment, compiler_flags)
+  }
+  new_make_local_cmdstanr <- paste(compiler_flags, collapse = "\n")
+  if (new_make_local_cmdstanr != old_make_local_cmdstanr) {
+    # only rewrite make/local if there are changes
+    make_local_content <- c(user_flags, new_make_local_cmdstanr)
+    writeLines(make_local_content, make_local_path)
     return(TRUE)
   }
   return(FALSE)
