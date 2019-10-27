@@ -22,9 +22,6 @@
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_model.html</loc>
   </url>
   <url>
-    <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_path.html</loc>
-  </url>
-  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstanr-package.html</loc>
   </url>
   <url>
@@ -44,6 +41,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-variational.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/stan_threads.html</loc>

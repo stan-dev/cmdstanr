@@ -43,8 +43,8 @@
 
 
 <meta property="og:title" content="Save output and data files — fit-method-save_output_files" />
-<meta property="og:description" content="All fitted model objects have methods save_output_files() and
-save_data_file(). These methods move csv output files and R dump or json
+<meta property="og:description" content="All fitted model objects have methods $save_output_files() and
+$save_data_file(). These methods move csv output files and R dump or json
 data files from the CmdStanR temporary directory to a user-specified
 location. By default the suffix '-&amp;lt;run_id&amp;gt;_&amp;lt;timestamp&amp;gt;' is added to the
 file name(s), where run_id is the chain number if applicable (MCMC only)
@@ -168,8 +168,8 @@ been intentionally set to FALSE." />
     </div>
 
     <div class="ref-description">
-    <p>All fitted model objects have methods <code>save_output_files()</code> and
-<code>save_data_file()</code>. These methods move csv output files and R dump or json
+    <p>All fitted model objects have methods <code>$save_output_files()</code> and
+<code>$save_data_file()</code>. These methods move csv output files and R dump or json
 data files from the CmdStanR temporary directory to a user-specified
 location. By default the suffix <code>'-&lt;run_id&gt;_&lt;timestamp&gt;'</code> is added to the
 file name(s), where <code>run_id</code> is the chain number if applicable (MCMC only)
@@ -189,7 +189,7 @@ $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
 
-    <p><code>save_output_files()</code> and <code>save_data_file()</code> have the
+    <p><code>$save_output_files()</code> and <code>$save_data_file()</code> have the
 same arguments:</p><ul>
 <li><p><code>dir</code>: (string) Path to directory where the files should be saved.</p></li>
 <li><p><code>basename</code>: (string) Base filename to use.</p></li>
