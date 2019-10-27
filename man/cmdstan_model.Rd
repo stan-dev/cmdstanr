@@ -27,9 +27,10 @@ file containing a Stan program.
 \examples{
 \dontrun{
 # Set path to cmdstan
-# Note: if you installed CmdStan via install_cmdstan() with default settings
-# then default below should work. Otherwise use the `path` argument to
-# specify the location of your CmdStan installation.
+# (Note: if you installed CmdStan via install_cmdstan() with default settings
+# then setting the path is unnecessary but the default below should still work.
+# Otherwise use the `path` argument to specify the location of your
+# CmdStan installation.)
 
 set_cmdstan_path(path = NULL)
 

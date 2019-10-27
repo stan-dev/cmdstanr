@@ -40,6 +40,7 @@
 #'   The licenses of CmdStanR (BSD-3) and RStan (GPL-3) are also different.
 #'
 #' @template seealso-docs
+#' @inherit cmdstan_model examples
 #'
 NULL
 
