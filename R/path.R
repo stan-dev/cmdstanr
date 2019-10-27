@@ -1,10 +1,18 @@
 #' Get or set the file path to the CmdStan installation
 #'
-#' `cmdstan_path()` returns the full path to the CmdStan installation. The path
-#' can be set using the `set_cmdstan_path()` function. See **Details**.
+#' @description Use the `set_cmdstan_path()` function to tell CmdStanR where the
+#'   CmdStan installation in located. Once the path has been set,
+#'   `cmdstan_path()` will return the full path to the CmdStan installation and
+#'   `cmdstan_version()` will return the CmdStan version number. See **Details**
+#'   for how to avoid manually setting the path in each \R session.
 #'
 #' @export
-#' @return The file path to the CmdStan installation.
+#'
+#' @param path The full file path to the CmdStan installation as a string. If
+#'   `NULL` (the default) then the path is set to the default path used by
+#'   [install_cmdstan()] if it exists.
+#' @return A string. Either the file path to the CmdStan installation or the
+#'   CmdStan version number.
 #'
 #' @details
 #' Before the package can be used it needs to know where the CmdStan
@@ -24,27 +32,6 @@
 #' It is always possible to change the path after loading the package using
 #' `set_cmdstan_path(path)`.
 #'
-#'
-cmdstan_path <- function() {
-  path <- .cmdstanr$PATH
-  if (is.null(path)) {
-    stop("CmdStan path has not been set yet. See ?set_cmdstan_path.",
-         call. = FALSE)
-  }
-  path <- repair_path(path)
-
-  if (is.null(.cmdstanr$VERSION)) {
-    .cmdstanr$VERSION <- read_cmdstan_version(path)
-  }
-
-  path
-}
-
-#' @rdname cmdstan_path
-#' @export
-#' @param path The full file path to the CmdStan installation as a string. If
-#'   `NULL` (the default) then the path is set to the default path used by
-#'   [install_cmdstan()] if it exists.
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
     path <- cmdstan_default_path()
@@ -58,6 +45,25 @@ set_cmdstan_path <- function(path = NULL) {
     warning("Path not set. Can't find directory: ", path, call. = FALSE)
   }
   invisible(path)
+}
+
+#' @rdname set_cmdstan_path
+#' @export
+cmdstan_path <- function() {
+  path <- .cmdstanr$PATH %||% stop_no_path()
+  path <- repair_path(path)
+
+  if (is.null(.cmdstanr$VERSION)) {
+    .cmdstanr$VERSION <- read_cmdstan_version(path)
+  }
+
+  path
+}
+
+#' @rdname set_cmdstan_path
+#' @export
+cmdstan_version <- function() {
+  .cmdstanr$VERSION %||% stop_no_path()
 }
 
 
@@ -75,9 +81,10 @@ cmdstan_tempdir <- function() {
   .cmdstanr$TEMP_DIR
 }
 
-# cmdstan version number
-cmdstan_version <- function() {
-  .cmdstanr$VERSION
+# error message to throw if no path has been set
+stop_no_path <- function() {
+  stop("CmdStan path has not been set yet. See ?set_cmdstan_path.",
+       call. = FALSE)
 }
 
 #' cmdstan_default_path

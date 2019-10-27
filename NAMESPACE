@@ -3,6 +3,7 @@
 export(cmdstan_default_path)
 export(cmdstan_model)
 export(cmdstan_path)
+export(cmdstan_version)
 export(install_cmdstan)
 export(num_threads)
 export(set_cmdstan_path)
