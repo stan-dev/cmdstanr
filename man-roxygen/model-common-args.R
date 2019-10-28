@@ -16,7 +16,8 @@
 #'      - `0` initializes to `0`;
 #'      - A character vector of data file paths (one per chain) to
 #'        initialization files.
-#'   * `diagnostic_file`: (character) A file path where auxiliary diagnostic
-#'     information (beyond standard diagnostics) should be written to CSV.
-#'     By default no file is written, which is appropriate for most use cases.
+#'   * `save_diagnostics`: (logical) Should auxiliary diagnostic information
+#'     (beyond standard diagnostics) be written to separate diagnostic CSV files?
+#'     The default is `FALSE`, which is appropriate for most use cases. This
+#'     argument is a replacement for the `diagnostic_file` argument to CmdStan.
 #'

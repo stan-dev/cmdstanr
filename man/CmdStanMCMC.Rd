@@ -22,6 +22,8 @@ Return post-warmup draws as an \code{iters x chains x variables} array. \cr
 \tab Save output csv files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{save_data_file}}
 \tab Save R dump or JSON data file to a specified location. \cr
+\code{\link[=fit-method-save_diagnostic_files]{save_diagnostic_files}}
+\tab Save diagnostic csv files to a specified location. \cr
 }
 }
 \seealso{

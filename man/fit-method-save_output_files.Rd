@@ -13,16 +13,19 @@ file name(s), where \code{run_id} is the chain number if applicable (MCMC only)
 and \code{1} otherwise. If files with the specified names already exist they are
 overwritten, but this shouldn't occur unless the \code{timestamp} argument has
 been intentionally set to \code{FALSE}.
+
+\code{save_diagnostic_files()} can be used if \code{save_diagnostics=TRUE} when
+fitting the model.
 }
 \section{Usage}{
 \preformatted{$save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
 $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
+$save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE)
 }
 }
 
 \section{Arguments}{
- \code{$save_output_files()} and \code{$save_data_file()} have the
-same arguments:
+
 \itemize{
 \item \code{dir}: (string) Path to directory where the files should be saved.
 \item \code{basename}: (string) Base filename to use.

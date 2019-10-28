@@ -15,7 +15,7 @@ some data.
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  diagnostic_file = NULL,
+  save_diagnostics = FALSE,
   num_chains = NULL,
   # num_cores = NULL, # not yet implemented
   num_warmup = NULL,
@@ -55,9 +55,10 @@ screen updates.
 \item A character vector of data file paths (one per chain) to
 initialization files.
 }
-\item \code{diagnostic_file}: (character) A file path where auxiliary diagnostic
-information (beyond standard diagnostics) should be written to CSV.
-By default no file is written, which is appropriate for most use cases.
+\item \code{save_diagnostics}: (logical) Should auxiliary diagnostic information
+(beyond standard diagnostics) be written to separate diagnostic CSV files?
+The default is \code{FALSE}, which is appropriate for most use cases. This
+argument is a replacement for the \code{diagnostic_file} argument to CmdStan.
 }
 }
 
