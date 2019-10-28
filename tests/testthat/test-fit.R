@@ -8,12 +8,13 @@ if (NOT_CRAN) {
   stan_program <- test_path("resources/stan/logistic.stan")
   data_file <- test_path("resources/data/logistic.data.R")
   utils::capture.output(mod <- cmdstan_model(stan_file = stan_program))
-  utils::capture.output(fit_mcmc <- mod$sample(data = data_file, num_chains = 2))
+  utils::capture.output(fit_mcmc <- mod$sample(data = data_file, num_chains = 2,
+                                               save_diagnostics = TRUE))
   utils::capture.output(suppressWarnings(
-    fit_mle <- mod$optimize(data = data_file)
+    fit_mle <- mod$optimize(data = data_file, save_diagnostics = FALSE)
   ))
   utils::capture.output(suppressWarnings(
-    fit_vb <- mod$variational(data = data_file)
+    fit_vb <- mod$variational(data = data_file, save_diagnostics = TRUE)
   ))
 
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
@@ -43,6 +44,17 @@ test_that("saving data file after mcmc works", {
   expect_match(path, "testing-mcmc-data_")
   expect_match(path, ".data.R$")
 })
+
+test_that("saving diagnostic csv mcmc output works", {
+  skip_on_cran()
+  paths <- fit_mcmc$save_diagnostic_files(tempdir(), basename = "testing-mcmc")
+  expect_true(all(file.exists(paths)))
+  expect_true(all(file.size(paths) > 0))
+  checkmate::expect_file_exists(paths, extension = "csv")
+  expect_match(paths[1], "testing-mcmc-diagnostic-1")
+  expect_match(paths[2], "testing-mcmc-diagnostic-2")
+})
+
 
 test_that("summary() method succesfully calls bin/stansummary", {
   skip_on_cran()
@@ -85,6 +97,11 @@ test_that("saving data file after optimization works", {
   checkmate::expect_file_exists(path)
   expect_match(path, "testing-mle-data_")
   expect_match(path, ".data.R$")
+})
+
+test_that("saving diagnostics files errors if don't exist", {
+  skip_on_cran()
+  expect_error(fit_mle$save_diagnostic_files(), "No diagnostic files found")
 })
 
 test_that("reading in csv optimization output works", {
@@ -151,7 +168,7 @@ test_that("RunSet methods return valid output", {
   runset <- fit_mcmc$runset
   checkmate::expect_r6(runset$args(), "CmdStanArgs")
   checkmate::expect_list(
-    runset$commands(),
+    runset$command_args(),
     types = "character",
     len = runset$num_runs(),
     unique = TRUE
@@ -163,5 +180,6 @@ test_that("RunSet methods return valid output", {
   checkmate::expect_file_exists(runset$data_file())
   checkmate::expect_file_exists(runset$output_files())
   checkmate::expect_file_exists(runset$console_files())
+  checkmate::expect_file_exists(runset$diagnostic_files())
 })
 

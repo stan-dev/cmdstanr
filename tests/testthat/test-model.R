@@ -3,8 +3,6 @@ NOT_CRAN <-
   identical(Sys.getenv("NOT_CRAN"), "true") ||
   identical(Sys.getenv("TRAVIS"), "true")
 
-TEMPFILE <- tempfile(fileext = ".csv")
-
 if (NOT_CRAN) {
   set_cmdstan_path()
   stan_program <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
@@ -119,7 +117,7 @@ if (NOT_CRAN) {
     stepsize = 1.1,
     adapt_engaged = TRUE,
     adapt_delta = 0.7,
-    diagnostic_file = TEMPFILE
+    save_diagnostics = FALSE
   )
 
   # using any one of these should cause sample() to error
@@ -138,7 +136,7 @@ if (NOT_CRAN) {
     stepsize = 0,
     adapt_engaged = "NO",
     adapt_delta = 2,
-    diagnostic_file = "NOT_A_DIR/FILE_NAME"
+    save_diagnostics = "NOT_LOGICAL"
   )
 
   bad_arg_values_2 <- list(
@@ -224,7 +222,7 @@ if (NOT_CRAN) {
     algorithm = "lbfgs",
     iter = 100,
     init_alpha = 0.002,
-    diagnostic_file = TEMPFILE
+    save_diagnostics = FALSE
   )
 
   # using any of these should cause optimize() to error
@@ -236,7 +234,7 @@ if (NOT_CRAN) {
     algorithm = "NOT_AN_ALGORITHM",
     iter = -20,
     init_alpha = -20,
-    diagnostic_file = "NOT_A_DIR/FILE_NAME"
+    save_diagnostics = "NOT_LOGICAL"
   )
 }
 
@@ -298,7 +296,7 @@ if (NOT_CRAN) {
     tol_rel_obj = 0.011,
     eval_elbo = 101,
     output_samples = 10,
-    diagnostic_file = TEMPFILE
+    save_diagnostics = FALSE
   )
 
   # using any one of these should cause sample() to error
@@ -317,7 +315,7 @@ if (NOT_CRAN) {
     tol_rel_obj = -0.5,
     eval_elbo = -10,
     output_samples = -10,
-    diagnostic_file = "NOT_A_DIR/FILE_NAME"
+    save_diagnostics = "NOT_LOGICAL"
   )
 }
 
