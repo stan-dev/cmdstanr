@@ -12,6 +12,7 @@ to the executable can be accesed via the \code{$exe_file()} method.
 }
 \section{Usage}{
 \preformatted{$compile(
+  quiet = TRUE,
   threads = FALSE,
   opencl = FALSE,
   opencl_platform_id = 0,
@@ -28,6 +29,10 @@ Leaving all arguments at their defaults should be fine for most users, but
 optional arguments are provided to enable new features in CmdStan (and the
 Stan Math library). See the CmdStan manual for more details.
 \itemize{
+\item \code{quiet}: (logical) Should the verbose output from CmdStan during
+compilation be suppressed? The default is \code{TRUE}, but if you encounter an
+error we recommend trying again with \code{quiet=FALSE} to see more of the
+output.
 \item \code{threads}: (logical) Should the model be compiled with
 \href{https://github.com/stan-dev/math/wiki/Threading-Support}{threading support}?
 If \code{TRUE} then \code{-DSTAN_THREADS} is added to the compiler flags. See
