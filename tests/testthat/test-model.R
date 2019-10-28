@@ -71,7 +71,7 @@ test_that("compile() method works", {
   skip_on_cran()
   expected <- if (!file.exists(strip_ext(mod$stan_file())))
     "Translating Stan model" else "is up to date"
-  out <- utils::capture.output(mod$compile())
+  out <- utils::capture.output(mod$compile(quiet = FALSE))
   expect_output(print(out), expected)
   expect_equal(mod$exe_file(), strip_ext(stan_program))
 })
@@ -80,11 +80,16 @@ test_that("compilation works when stan program not in cmdstan dir", {
   skip_on_cran()
 
   stan_program_2 <- test_path("resources", "stan", "bernoulli.stan")
-  out <- utils::capture.output(
-    mod_2 <- cmdstan_model(stan_file = stan_program_2)
+  expect_message(
+    mod_2 <- cmdstan_model(stan_file = stan_program_2, quiet = TRUE),
+    "Compiling Stan program..."
   )
-  expect_output(print(out), "Translating Stan model")
   expect_equal(mod_2$exe_file(), strip_ext(absolute_path(stan_program_2)))
+
+  out <- utils::capture.output(
+    mod_2 <- suppressMessages(cmdstan_model(stan_file = stan_program_2, quiet = FALSE))
+  )
+  expect_output(print(out), "is up to date")
 
   # cleanup
   file.remove(paste0(mod_2$exe_file(), c("", ".o",".hpp")))

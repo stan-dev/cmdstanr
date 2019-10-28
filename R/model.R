@@ -115,6 +115,7 @@ CmdStanModel <- R6::R6Class(
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
       if (compile) {
+        message("Compiling Stan program...")
         self$compile(...)
       }
       invisible(self)
@@ -149,6 +150,7 @@ CmdStanModel <- R6::R6Class(
 #' @section Usage:
 #'   ```
 #'   $compile(
+#'     quiet = TRUE,
 #'     threads = FALSE,
 #'     opencl = FALSE,
 #'     opencl_platform_id = 0,
@@ -162,6 +164,10 @@ CmdStanModel <- R6::R6Class(
 #'   Leaving all arguments at their defaults should be fine for most users, but
 #'   optional arguments are provided to enable new features in CmdStan (and the
 #'   Stan Math library). See the CmdStan manual for more details.
+#'   * `quiet`: (logical) Should the verbose output from CmdStan during
+#'     compilation be suppressed? The default is `TRUE`, but if you encounter an
+#'     error we recommend trying again with `quiet=FALSE` to see more of the
+#'     output.
 #'   * `threads`: (logical) Should the model be compiled with
 #'     [threading support](https://github.com/stan-dev/math/wiki/Threading-Support)?
 #'     If `TRUE` then `-DSTAN_THREADS` is added to the compiler flags. See
@@ -189,7 +195,8 @@ CmdStanModel <- R6::R6Class(
 #'
 NULL
 
-compile_method <- function(threads = FALSE,
+compile_method <- function(quiet = TRUE,
+                           threads = FALSE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
@@ -210,14 +217,17 @@ compile_method <- function(threads = FALSE,
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
+
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
     command = make_cmd(),
     args = exe,
     wd = cmdstan_path(),
-    echo_cmd = TRUE,
-    echo = TRUE
+    echo_cmd = !quiet,
+    echo = !quiet,
+    spinner = quiet
   )
+
   private$exe_file_ <- exe
   invisible(self)
 }
