@@ -251,7 +251,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     diagnostic_file = NULL,
+#'     save_diagnostics = FALSE,
 #'     num_chains = NULL,
 #'     # num_cores = NULL, # not yet implemented
 #'     num_warmup = NULL,
@@ -313,7 +313,7 @@ sample_method <- function(data = NULL,
                           seed = NULL,
                           refresh = NULL,
                           init = NULL,
-                          diagnostic_file = NULL,
+                          save_diagnostics = FALSE,
                           num_chains = NULL, # TODO: CmdStan does 1 chain, but should this default to 4?
                           # num_cores = NULL, # TODO
                           num_warmup = NULL,
@@ -347,18 +347,17 @@ sample_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = chain_ids,
     data_file = process_data(data),
-    diagnostic_file = diagnostic_file,
+    save_diagnostics = save_diagnostics,
     seed = seed,
     init = init,
     refresh = refresh
   )
 
   runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
-  csv_files <- runset$output_files()
   for (chain in chain_ids) { # FIXME: allow parallelization
     run_log <- processx::run(
-      command = cmdstan_args$compose_command(),
-      args = cmdstan_args$compose_all_args(chain, csv_files[chain]),
+      command = runset$command(),
+      args = runset$command_args()[[chain]],
       wd = dirname(self$exe_file()),
       echo_cmd = FALSE,
       echo = TRUE
@@ -393,7 +392,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     diagnostic_file = NULL,
+#'     save_diagnostics = FALSE,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
 #'     iter = NULL
@@ -423,7 +422,7 @@ optimize_method <- function(data = NULL,
                             seed = NULL,
                             refresh = NULL,
                             init = NULL,
-                            diagnostic_file = NULL,
+                            save_diagnostics = FALSE,
                             algorithm = NULL,
                             init_alpha = NULL,
                             iter = NULL) {
@@ -445,7 +444,7 @@ optimize_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = 1,
     data_file = process_data(data),
-    diagnostic_file = diagnostic_file,
+    save_diagnostics = save_diagnostics,
     seed = seed,
     init = init,
     refresh = refresh
@@ -453,8 +452,8 @@ optimize_method <- function(data = NULL,
 
   runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
   run_log <- processx::run(
-    command = cmdstan_args$compose_command(),
-    args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
+    command = runset$command(),
+    args = runset$command_args()[[1]],
     wd = dirname(self$exe_file()),
     echo_cmd = FALSE,
     echo = TRUE
@@ -488,7 +487,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     diagnostic_file = NULL,
+#'     save_diagnostics = FALSE,
 #'     algorithm = NULL,
 #'     iter = NULL,
 #'     grad_samples = NULL,
@@ -536,7 +535,7 @@ variational_method <- function(data = NULL,
                                seed = NULL,
                                refresh = NULL,
                                init = NULL,
-                               diagnostic_file = NULL,
+                               save_diagnostics = FALSE,
                                algorithm = NULL,
                                iter = NULL,
                                grad_samples = NULL,
@@ -572,7 +571,7 @@ variational_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = 1,
     data_file = process_data(data),
-    diagnostic_file = diagnostic_file,
+    save_diagnostics = save_diagnostics,
     seed = seed,
     init = init,
     refresh = refresh
@@ -580,8 +579,8 @@ variational_method <- function(data = NULL,
 
   runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
   run_log <- processx::run(
-    command = cmdstan_args$compose_command(),
-    args = cmdstan_args$compose_all_args(idx = 1, runset$output_files()[1]),
+    command = runset$command(),
+    args = runset$command_args()[[1]],
     wd = dirname(self$exe_file()),
     echo_cmd = FALSE,
     echo = TRUE

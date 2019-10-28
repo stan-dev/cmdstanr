@@ -24,6 +24,8 @@
 #'    \tab Save output csv files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
 #'    \tab Save R dump or JSON data file to a specified location. \cr
+#'  [`save_diagnostic_files`][fit-method-save_diagnostic_files]
+#'    \tab Save diagnostic csv files to a specified location. \cr
 #' }
 #'
 NULL
@@ -75,6 +77,10 @@ CmdStanMCMC <- R6::R6Class(
     output_files = function() {
       # get the paths to the temporary output csv files
       self$runset$output_files()
+    },
+    diagnostic_files = function() {
+      # get the paths to the temporary diagnostic csv files
+      self$runset$diagnostic_files()
     }
   ),
   private = list(
@@ -155,6 +161,9 @@ CmdStanMLE <- R6::R6Class(
     },
     output_files = function() {
       self$runset$output_files()
+    },
+    diagnostic_files = function() {
+      self$runset$diagnostic_files()
     }
   ),
   private = list(
@@ -192,6 +201,8 @@ CmdStanMLE <- R6::R6Class(
 #'    \tab Save output csv files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
 #'    \tab Save R dump or JSON data file to a specified location. \cr
+#'  [`save_diagnostic_files`][fit-method-save_diagnostic_files]
+#'    \tab Save diagnostic csv files to a specified location. \cr
 #' }
 #'
 NULL
@@ -234,6 +245,9 @@ CmdStanVB <- R6::R6Class(
     },
     output_files = function() {
       self$runset$output_files()
+    },
+    diagnostic_files = function() {
+      self$runset$diagnostic_files()
     }
   ),
   private = list(
@@ -264,6 +278,7 @@ CmdStanVB <- R6::R6Class(
 #'
 #' @name fit-method-save_output_files
 #' @aliases fit-method-save_data_file
+#' @aliases fit-method-save_diagnostic_files
 #'
 #' @description All fitted model objects have methods `$save_output_files()` and
 #'   `$save_data_file()`. These methods move csv output files and R dump or json
@@ -274,14 +289,17 @@ CmdStanVB <- R6::R6Class(
 #'   overwritten, but this shouldn't occur unless the `timestamp` argument has
 #'   been intentionally set to `FALSE`.
 #'
+#'   `save_diagnostic_files()` can be used if `save_diagnostics=TRUE` when
+#'   fitting the model.
+#'
 #' @section Usage:
 #'   ```
 #'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
 #'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
+#'   $save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE)
 #'   ```
 #'
-#' @section Arguments: `$save_output_files()` and `$save_data_file()` have the
-#'   same arguments:
+#' @section Arguments:
 #' * `dir`: (string) Path to directory where the files should be saved.
 #' * `basename`: (string) Base filename to use.
 #' * `timestamp`: (logical) Should a timestamp be added to the file name(s)?
@@ -298,12 +316,18 @@ NULL
 save_output_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE) {
   self$runset$save_output_files(dir, basename, timestamp)
 }
+save_diagnostic_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE) {
+  self$runset$save_diagnostic_files(dir, basename, timestamp)
+}
 save_data_file_method = function(dir = ".", basename = NULL, timestamp = TRUE) {
   self$runset$save_data_file(dir, basename, timestamp)
 }
 CmdStanMCMC$set("public", "save_output_files", save_output_files_method)
 CmdStanMLE$set("public", "save_output_files", save_output_files_method)
 CmdStanVB$set("public", "save_output_files", save_output_files_method)
+CmdStanMCMC$set("public", "save_diagnostic_files", save_diagnostic_files_method)
+CmdStanMLE$set("public", "save_diagnostic_files", save_diagnostic_files_method)
+CmdStanVB$set("public", "save_diagnostic_files", save_diagnostic_files_method)
 CmdStanMCMC$set("public", "save_data_file", save_data_file_method)
 CmdStanMLE$set("public", "save_data_file", save_data_file_method)
 CmdStanVB$set("public", "save_data_file", save_data_file_method)
@@ -329,29 +353,52 @@ RunSet <- R6::R6Class(
       private$args_ <- args
       private$num_runs_ <- as.integer(num_runs)
 
+
+      # diagnostic csv files if diagnostic_file=TRUE
+      private$diagnostic_files_ <- NULL
+      if (args$save_diagnostics) {
+        private$diagnostic_files_ <-
+          file.path(
+            cmdstan_tempdir(),
+            paste0(args$csv_basename(), "-diagnostic-", args$run_ids, ".csv")
+          )
+        invisible(file.create(private$diagnostic_files_))
+      }
+
+      # output csv files if diagnostic_file=TRUE
       private$output_files_ <-
         file.path(
           cmdstan_tempdir(),
           paste0(args$csv_basename(), "-", args$run_ids, ".csv")
         )
+      invisible(file.create(private$output_files_))
+
+      # files to store console output (NOT USED CURRENTLY)
       private$console_files_ <- change_ext(private$output_files_, ".txt")
-      private$commands_ <- lapply(args$run_ids, function(j) {
-        args$compose_all_args(idx = j, output_file = private$output_files_[j])
+      invisible(file.create(private$console_files_))
+
+      # create the commands to run each chain
+      private$command_args_ <- lapply(args$run_ids, function(j) {
+        args$compose_all_args(
+          idx = j,
+          output_file = private$output_files_[j],
+          diagnostic_file = private$diagnostic_files_[j] # maybe NULL
+        )
       })
       private$retcodes_ <- rep(-1L, num_runs)
-
-      invisible(file.create(private$output_files_, private$console_files_))
       invisible(self)
     },
+
     args = function() private$args_,
     num_runs = function() private$num_runs_,
     num_chains = function() private$num_runs_,
     run_ids = function() private$args_$run_ids,
     model_name = function() private$args_$model_name,
     method = function() private$args_$method,
-    commands = function() private$commands_,
+    command = function() private$args_$command(),
+    command_args = function() private$command_args_,
     data_file = function() private$args_$data_file,
-    diagnostic_file = function() private$args_$diagnostic_file,
+    diagnostic_files = function() private$diagnostic_files_,
     output_files = function() private$output_files_,
     console_files = function() private$console_files_,
 
@@ -376,6 +423,24 @@ RunSet <- R6::R6Class(
         timestamp = timestamp
       )
     },
+    save_diagnostic_files = function(dir = ".",
+                                     basename = NULL,
+                                     timestamp = TRUE) {
+      if (!length(self$diagnostic_files())) {
+        stop(
+          "No diagnostic files found. ",
+          "Set 'save_diagnostics=TRUE' when fitting the model.",
+          call. = FALSE)
+      }
+      copy_temp_files(
+        current_paths = self$diagnostic_files(),
+        new_dir = dir,
+        new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
+        ids = self$run_ids(),
+        ext = ".csv",
+        timestamp = timestamp
+      )
+    },
     save_data_file = function(dir = ".",
                               basename = NULL,
                               timestamp = TRUE) {
@@ -393,8 +458,9 @@ RunSet <- R6::R6Class(
     args_ = NULL,
     num_runs_ = integer(),
     output_files_ = character(),
+    diagnostic_files_ = character(),
     console_files_ = character(),
-    commands_ = list(),
+    command_args_ = list(),
     retcodes_ = integer()
   )
 )
