@@ -66,7 +66,7 @@ CmdStanArgs <- R6::R6Class(
     # @param idx The run id. For MCMC this is the chain id, for optimization
     #   this is just 1.
     # @param output_file File path to csv file where output will be written.
-    # @param output_file File path to csv file where diagnostics will be written.
+    # @param diagnostic_file File path to csv file where diagnostics will be written.
     # @return Character vector of arguments of the form "name=value".
     #
     compose_all_args = function(idx = NULL,
