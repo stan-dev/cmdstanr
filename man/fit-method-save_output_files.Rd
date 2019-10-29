@@ -14,7 +14,7 @@ and \code{1} otherwise. If files with the specified names already exist they are
 overwritten, but this shouldn't occur unless the \code{timestamp} argument has
 been intentionally set to \code{FALSE}.
 
-\code{save_diagnostic_files()} can be used if \code{save_diagnostics=TRUE} when
+\code{save_diagnostic_files()} can only be used if \code{save_diagnostics=TRUE} when
 fitting the model.
 }
 \section{Usage}{
