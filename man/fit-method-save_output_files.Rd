@@ -3,6 +3,7 @@
 \name{fit-method-save_output_files}
 \alias{fit-method-save_output_files}
 \alias{fit-method-save_data_file}
+\alias{fit-method-save_diagnostic_files}
 \title{Save output and data files}
 \description{
 All fitted model objects have methods \code{$save_output_files()} and
