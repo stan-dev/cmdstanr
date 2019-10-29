@@ -288,7 +288,7 @@ CmdStanVB <- R6::R6Class(
 #'   overwritten, but this shouldn't occur unless the `timestamp` argument has
 #'   been intentionally set to `FALSE`.
 #'
-#'   `save_diagnostic_files()` can only be used if `save_diagnostics=TRUE` when
+#'   `$save_diagnostic_files()` can only be used if `save_diagnostics=TRUE` when
 #'   fitting the model.
 #'
 #' @section Usage:
