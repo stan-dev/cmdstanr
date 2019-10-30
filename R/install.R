@@ -17,8 +17,19 @@
 #'   and speed up installation.
 #' @param quiet Defaults to `FALSE`, but if `TRUE` will suppress the verbose
 #'   output during the installation process.
+#' @param force_reinstall Defaults to `FALSE`, but if `TRUE` will reinstall cmdstan
+#'   even if the version to be installed is the same as the one currently installed.
+#' @param backup_existing Defaults to `FALSE`, but if `TRUE` will backup the currently
+#'   installed cmdstan to the folder cmdstan_backup at the location of the current install.
+#' @param github_repo_clone Defaults to `FALSE`, but if `TRUE` will install the Github
+#'   clone of cmdstan and checkout the develop branch
 #'
-install_cmdstan <- function(dir = NULL, cores = 2, quiet = FALSE) {
+install_cmdstan <- function(dir = NULL,
+                            cores = 2,
+                            quiet = FALSE,
+                            force_reinstall = FALSE,
+                            backup_existing = FALSE,
+                            github_repo_clone = FALSE) {
   make_cmdstan <- system.file("make_cmdstan.sh", package = "cmdstanr")
   if (!is.null(dir)) {
     checkmate::assert_directory_exists(dir)
@@ -28,7 +39,15 @@ install_cmdstan <- function(dir = NULL, cores = 2, quiet = FALSE) {
   if (os_is_windows()) {
     make_cmdstan <- c(make_cmdstan, "-w")
   }
-
+  if (backup_existing) {
+    make_cmdstan <- c(make_cmdstan, "-b")
+  }
+  if (github_repo_clone) {
+    make_cmdstan <- c(make_cmdstan, "-c")
+  }
+  if (force_reinstall) {
+    make_cmdstan <- c(make_cmdstan, "-f")
+  }
   install_log <- processx::run(
     command = "bash",
     args = make_cmdstan,

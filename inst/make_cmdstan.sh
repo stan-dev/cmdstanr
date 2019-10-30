@@ -4,8 +4,7 @@
 #  - build binaries, compile example model to build model header
 #  - symlink downloaded version as "cmdstan"
 
-WIN=0
-while getopts ":d:v:j:w" opt; do
+while getopts ":d:v:j:wbcf" opt; do
   case $opt in
     d) RELDIR="$OPTARG"
     ;;
@@ -15,10 +14,36 @@ while getopts ":d:v:j:w" opt; do
     ;;
     w) WIN=1
     ;;
+    b) BACKUP_OLD=1
+    ;;
+    c) REPO_CLONE=1
+    ;;
+    f) FORCE=1
+    ;;
     \?) echo "Invalid option -$OPTARG" >&2
     ;;
   esac
 done
+
+if [ -z ${WIN} ]; then
+    WIN=0
+fi
+
+if [ -z ${BACKUP_OLD} ]; then
+    BACKUP_OLD=0
+fi
+
+if [ -z ${REPO_CLONE} ]; then
+    REPO_CLONE=0
+fi
+
+if [ -z ${FORCE} ]; then
+    FORCE=0
+fi
+
+if [ -z ${R} ]; then
+    R=0
+fi
 
 if [ -z ${JOBS} ]; then
     JOBS="2"
@@ -28,15 +53,44 @@ if [ -z ${RELDIR} ]; then
     RELDIR="$HOME/.cmdstanr"
 fi
 
-# if [[ -e ${RELDIR} && ! -d ${RELDIR} ]]; then
-#    echo "line 29"
-#    echo "cannot install cmdstan, ${RELDIR} is not a directory"
-#    exit 1
-# fi
-
 if [[ ! -e ${RELDIR} ]]; then
    mkdir -p ${RELDIR}
 fi
+
+backup_cmdstan() {
+    if [[ -e cmdstan ]]; then
+        echo "backing up and cleaning installed cmdstan"
+        pushd cmdstan > /dev/null
+        # cleaning the backup
+        if [[ ${WIN} -ne 0 ]]; then
+            mingw32-make clean-all
+        else
+            make clean-all
+        fi
+        pushd ../ > /dev/null
+        # removing existing backup folder
+        if [[ -e cmdstan_backup ]]; then
+            rm -rf cmdstan_backup
+        fi
+        mv cmdstan/ cmdstan_backup/
+    fi
+}
+
+cleanup_cmdstan() {
+    if [[ ${WIN} -ne 0 ]]; then
+        mingw32-make clean-all
+    else
+        make clean-all
+    fi
+}
+
+build_cmdstan() {
+    if [[ ${WIN} -ne 0 ]]; then
+        mingw32-make -j${JOBS} build examples/bernoulli/bernoulli.exe
+    else
+        make -j${JOBS} build examples/bernoulli/bernoulli
+    fi
+}
 
 echo "cmdstan dir: ${RELDIR}"
 
@@ -46,13 +100,31 @@ if [ -z ${VER} ]; then
     VER=`perl -p -e 's/"tag_name": "v//g; s/",//g' tmp-tag`
     rm tmp-tag
 fi
+
 CS=cmdstan-${VER}
+INSTALL_DIR=cmdstan
 echo "cmdstan version: ${VER}"
 
 pushd ${RELDIR} > /dev/null
-if [[ -d $cs && -f ${CS}/bin/stanc && -f ${CS}/examples/bernoulli/bernoulli ]]; then
-    echo "cmdstan already installed"
-    exit 0
+#testing if there are files in the cmdstan folder
+if [[ -d ${INSTALL_DIR} && -f ${INSTALL_DIR}/makefile ]]; then
+    echo "cmdstan already installed, checking version"
+    x=$(grep '^CMDSTAN_VERSION := ' ${INSTALL_DIR}/makefile | sed -e 's/CMDSTAN_VERSION := //g')
+    # if the version is the latest dont upgrade
+    # except if forced
+    if [[ ! $VER > $x && $FORCE -ne 1 ]]; then
+        echo "installed cmdstan is the latest version"
+        echo "only running clean and rebuild"
+        pushd cmdstan > /dev/null
+        echo "rebuilding cmdstan binaries"
+        cleanup_cmdstan
+        build_cmdstan
+        exit 0;
+    else
+        if [[ ${BACKUP_OLD} -ne 0 ]]; then
+            backup_cmdstan
+        fi
+    fi
 fi
 echo "installing ${CS}"
 
@@ -81,11 +153,7 @@ rm ${CS}.tar.gz
 
 pushd cmdstan > /dev/null
 echo "building cmdstan binaries"
-if [[ ${WIN} -ne 0 ]]; then
-  mingw32-make -j${JOBS} build examples/bernoulli/bernoulli.exe
-else
-  make -j${JOBS} build examples/bernoulli/bernoulli
-fi
+build_cmdstan
 echo "installed ${CS} to ${RELDIR}/cmdstan"
 
 # cleanup
