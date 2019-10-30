@@ -37,12 +37,12 @@ be specified for any of the fitting methods (\code{sample}, \code{optimize},
 \code{variational}). Arguments left at \code{NULL} default to the default used by the
 installed version of CmdStan.
 \itemize{
-\item \code{data} (multiple options): The data to use:
+\item \code{data}: (multiple options) The data to use. One of the following:
 \itemize{
-\item A named list of \R objects like for RStan;
-\item A path to a data file compatible with CmdStan (\R dump or JSON). See
-the appendices in the CmdStan manual for details on using these
-formats.
+\item A named list of \R objects (like for RStan). Internally this list is
+then written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
+\item A path to a data file compatible with CmdStan (JSON or \R dump). See
+the appendices in the CmdStan manual for details on using these formats.
 }
 \item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 \item \code{refresh}: (non-negative integer) The number of iterations between
@@ -56,9 +56,15 @@ screen updates.
 initialization files.
 }
 \item \code{save_diagnostics}: (logical) Should auxiliary diagnostic information
-(beyond standard diagnostics) be written to separate diagnostic CSV files?
-The default is \code{FALSE}, which is appropriate for most use cases. This
-argument is a replacement for the \code{diagnostic_file} argument to CmdStan.
+(beyond standard diagnostics) be written to temporary diagnostic CSV
+files? This argument replaces CmdStan's \code{diagnostic_file} argument and
+the content written to CSV is controlled by the user's CmdStan
+installation and not CmdStanR. The default is \code{save_diagnostics=FALSE},
+which is appropriate for almost every use case (all diagnostics
+recommended for users to check are \emph{always} saved, e.g., divergences for
+HMC). To save the temporary files created when \code{save_diagnostics=TRUE}
+see the \code{\link[=fit-method-save_diagnostic_files]{$save_diagnostic_files()}}
+method.
 }
 }
 
@@ -69,8 +75,8 @@ arguments. These arguments are described briefly here and in greater detail
 in the CmdStan manual. Arguments left at \code{NULL} default to the default used
 by the installed version of CmdStan.
 \itemize{
-\item \code{algorithm}: (string) The optimization algorithm. One of
-\code{"lbfgs"}, \code{"bfgs"}, or \code{"newton"}.
+\item \code{algorithm}: (string) The optimization algorithm. One of \code{"lbfgs"},
+\code{"bfgs"}, or \code{"newton"}.
 \item \code{iter}: (positive integer) The number of iterations.
 \item \code{init_alpha}: (non-negative real) The line search step size for first
 iteration. Not applicable if \code{algorithm="newton"}.
@@ -91,7 +97,7 @@ iteration. Not applicable if \code{algorithm="newton"}.
 
 set_cmdstan_path(path = NULL)
 
-# Create a CmdStan model object from a Stan program,
+# Create a CmdStanModel object from a Stan program,
 # here using the example model that comes with CmdStan
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program)

@@ -403,7 +403,7 @@ RunSet <- R6::R6Class(
     method = function() private$args_$method,
     command = function() private$args_$command(),
     command_args = function() private$command_args_,
-    # console_files = function() private$console_files_,
+    console_files = function() private$console_files_,
     data_file = function() private$args_$data_file,
     output_files = function() private$output_files_,
     diagnostic_files = function() {

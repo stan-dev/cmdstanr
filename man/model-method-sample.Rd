@@ -37,12 +37,12 @@ be specified for any of the fitting methods (\code{sample}, \code{optimize},
 \code{variational}). Arguments left at \code{NULL} default to the default used by the
 installed version of CmdStan.
 \itemize{
-\item \code{data} (multiple options): The data to use:
+\item \code{data}: (multiple options) The data to use. One of the following:
 \itemize{
-\item A named list of \R objects like for RStan;
-\item A path to a data file compatible with CmdStan (\R dump or JSON). See
-the appendices in the CmdStan manual for details on using these
-formats.
+\item A named list of \R objects (like for RStan). Internally this list is
+then written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
+\item A path to a data file compatible with CmdStan (JSON or \R dump). See
+the appendices in the CmdStan manual for details on using these formats.
 }
 \item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 \item \code{refresh}: (non-negative integer) The number of iterations between
@@ -56,24 +56,42 @@ screen updates.
 initialization files.
 }
 \item \code{save_diagnostics}: (logical) Should auxiliary diagnostic information
-(beyond standard diagnostics) be written to separate diagnostic CSV files?
-The default is \code{FALSE}, which is appropriate for most use cases. This
-argument is a replacement for the \code{diagnostic_file} argument to CmdStan.
+(beyond standard diagnostics) be written to temporary diagnostic CSV
+files? This argument replaces CmdStan's \code{diagnostic_file} argument and
+the content written to CSV is controlled by the user's CmdStan
+installation and not CmdStanR. The default is \code{save_diagnostics=FALSE},
+which is appropriate for almost every use case (all diagnostics
+recommended for users to check are \emph{always} saved, e.g., divergences for
+HMC). To save the temporary files created when \code{save_diagnostics=TRUE}
+see the \code{\link[=fit-method-save_diagnostic_files]{$save_diagnostic_files()}}
+method.
 }
 }
 
 \section{Arguments unique to the \code{sample} method}{
  In addition to the
 arguments above, the \code{$sample()} method also has its own set of arguments.
-These arguments are described briefly here and in greater detail in the
-CmdStan manual. Arguments left at \code{NULL} default to the default used by the
-installed version of CmdStan.
+
+The following arguments are offered by CmdStanR but not CmdStan:
 \itemize{
 \item \code{num_chains}: (positive integer) The number of Markov chains to run.
-\item \code{num_samples}: (positive integer) The number of sampling iterations.
-\item \code{num_warmup}: (positive integer) The number of warmup iterations.
-\item \code{save_warmup}: (logical) Should warmup iterations also be saved?
-The default is \code{FALSE}.
+Currently the chains are run sequentially, but the option to
+execute CmdStan runs in parallel is coming soon.
+This argument does not correspond to an argument in CmdStan because all
+CmdStan arguments pertain to the execution of a single run only.
+}
+
+The rest of the arguments correspond to arguments offered by CmdStan. They
+are described briefly here and in greater detail in the CmdStan manual.
+Arguments left at \code{NULL} default to the default used by the installed
+version of CmdStan.
+\itemize{
+\item \code{num_samples}: (positive integer) The number of post-warmup iterations to
+run per chain.
+\item \code{num_warmup}: (positive integer) The number of warmup iterations to run
+per chain.
+\item \code{save_warmup}: (logical) Should warmup iterations be saved? The default
+is \code{FALSE}.
 \item \code{thin}: (positive integer) The period between saved samples. This should
 typically be left at its default (no thinning).
 \item \code{adapt_engaged}: (logical) Do warmup adaptation?
@@ -82,23 +100,22 @@ statistic.
 \item \code{stepsize}: (positive real) The \emph{initial} step size for the discrete
 approximation to continuous Hamiltonian dynamics. This is further tuned
 during warmup.
-\item \code{metric}: (character) The geometry of the base manifold. One of the
-following:
+\item \code{metric}: (character) The geometry of the base manifold. See the
+\emph{Euclidean Metric} section of the CmdStan documentation for more details.
+One of the following:
 \itemize{
-\item A single string from among \code{"diag_e"}, \code{"dense_e"}, \code{"unit_e"};
-\item A character vector containing paths to files (one per chain)
-compatible with CmdStan that contain precomputed metrics.
-Each path must be to a JSON or Rdump file that contains an entry
-\code{inv_metric} whose value is either the diagonal vector or the full
-covariance matrix.
+\item A single string from among \code{"diag_e"}, \code{"dense_e"}, \code{"unit_e"}.
+\item A character vector containing paths to files (one per chain) compatible
+with CmdStan that contain precomputed metrics. Each path must be to a
+JSON or Rdump file that contains an entry \code{inv_metric} whose value is
+either the diagonal vector or the full covariance matrix. If
+\code{adapt_engaged=TRUE}, Stan will use the provided metric just as an
+initial guess during adaptation. To turn off adaptation when using a
+precomputed metric set \code{adapt_engaged=FALSE}.
 }
-
-If you want to turn off adaptation when using a precomputed metric set
-\code{adapt_engaged=FALSE}, otherwise it will use the provided metric just
-as an initial guess during adaptation. See the \emph{Euclidean Metric} section
-of the CmdStan manual for more details on these options.
-\item \code{max_depth}: (positive integer) The maximum allowed tree depth. See the
-\emph{Tree Depth} section of the CmdStan manual for more details.
+\item \code{max_depth}: (positive integer) The maximum allowed tree depth for the
+NUTS engine. See the \emph{Tree Depth} section of the CmdStan manual for more
+details.
 }
 }
 
@@ -116,7 +133,7 @@ of the CmdStan manual for more details on these options.
 
 set_cmdstan_path(path = NULL)
 
-# Create a CmdStan model object from a Stan program,
+# Create a CmdStanModel object from a Stan program,
 # here using the example model that comes with CmdStan
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program)

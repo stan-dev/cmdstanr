@@ -4,24 +4,33 @@
 \alias{fit-method-save_output_files}
 \alias{fit-method-save_data_file}
 \alias{fit-method-save_diagnostic_files}
+\alias{fit-method-output_files}
+\alias{fit-method-data_file}
+\alias{fit-method-diagnostic_files}
 \title{Save output and data files}
 \description{
-All fitted model objects have methods \code{$save_output_files()} and
-\code{$save_data_file()}. These methods move csv output files and R dump or json
-data files from the CmdStanR temporary directory to a user-specified
-location. By default the suffix \code{'-<run_id>_<timestamp>'} is added to the
-file name(s), where \code{run_id} is the chain number if applicable (MCMC only)
-and \code{1} otherwise. If files with the specified names already exist they are
-overwritten, but this shouldn't occur unless the \code{timestamp} argument has
-been intentionally set to \code{FALSE}.
+All fitted model objects have methods for saving (copying to a
+specified location) the temporary files created by CmdStanR for CmdStan
+output and data files. These methods move output files or data files from
+the CmdStanR temporary directory to a user-specified location. By default
+the suffix \code{'-<run_id>_<timestamp>'} is added to the file name(s), where
+\code{run_id} is the chain number if applicable (MCMC only) and \code{1} otherwise.
+If files with the specified names already exist they are overwritten, but
+this shouldn't occur unless the \code{timestamp} argument has been intentionally
+set to \code{FALSE}.
 
-\code{$save_diagnostic_files()} can only be used if \code{save_diagnostics=TRUE} when
-fitting the model.
+If necessary, the versions without the \code{save_} prefix (e.g.,
+\code{$output_files()}) can be used to get the path(s) to the temporary file(s)
+themselves.
 }
 \section{Usage}{
 \preformatted{$save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
 $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
 $save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE)
+
+$output_files()
+$data_file()
+$diagnostic_files()
 }
 }
 
@@ -37,8 +46,9 @@ the form
 }
 
 \section{Value}{
- The paths to the new files or \code{NA} for any that couldn't be
-copied.
+ For the \code{$save_*} methods, the paths to the new files or \code{NA}
+for any that couldn't be copied. For the methods without the \code{save_}
+prefix, the path to the temporary files.
 }
 
 \seealso{

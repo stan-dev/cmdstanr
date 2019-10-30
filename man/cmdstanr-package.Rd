@@ -56,7 +56,7 @@ The licenses of CmdStanR (BSD-3) and RStan (GPL-3) are also different.
 
 set_cmdstan_path(path = NULL)
 
-# Create a CmdStan model object from a Stan program,
+# Create a CmdStanModel object from a Stan program,
 # here using the example model that comes with CmdStan
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program)

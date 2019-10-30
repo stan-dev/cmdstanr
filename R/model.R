@@ -27,7 +27,7 @@
 #'
 #' set_cmdstan_path(path = NULL)
 #'
-#' # Create a CmdStan model object from a Stan program,
+#' # Create a CmdStanModel object from a Stan program,
 #' # here using the example model that comes with CmdStan
 #' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #' mod <- cmdstan_model(stan_program)
@@ -269,38 +269,48 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @template model-common-args
 #' @section Arguments unique to the `sample` method: In addition to the
 #'   arguments above, the `$sample()` method also has its own set of arguments.
-#'   These arguments are described briefly here and in greater detail in the
-#'   CmdStan manual. Arguments left at `NULL` default to the default used by the
-#'   installed version of CmdStan.
+#'
+#'   The following arguments are offered by CmdStanR but not CmdStan:
+#'
 #'   * `num_chains`: (positive integer) The number of Markov chains to run.
-#'   * `num_samples`: (positive integer) The number of sampling iterations.
-#'   * `num_warmup`: (positive integer) The number of warmup iterations.
-#'   * `save_warmup`: (logical) Should warmup iterations also be saved?
-#'     The default is `FALSE`.
+#'   Currently the chains are run sequentially, but the option to
+#'   execute CmdStan runs in parallel is coming soon.
+#'   This argument does not correspond to an argument in CmdStan because all
+#'   CmdStan arguments pertain to the execution of a single run only.
+#'
+#'   The rest of the arguments correspond to arguments offered by CmdStan. They
+#'   are described briefly here and in greater detail in the CmdStan manual.
+#'   Arguments left at `NULL` default to the default used by the installed
+#'   version of CmdStan.
+#'
+#'   * `num_samples`: (positive integer) The number of post-warmup iterations to
+#'   run per chain.
+#'   * `num_warmup`: (positive integer) The number of warmup iterations to run
+#'   per chain.
+#'   * `save_warmup`: (logical) Should warmup iterations be saved? The default
+#'   is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
-#'     typically be left at its default (no thinning).
+#'   typically be left at its default (no thinning).
 #'   * `adapt_engaged`: (logical) Do warmup adaptation?
 #'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
-#'     statistic.
+#'   statistic.
 #'   * `stepsize`: (positive real) The _initial_ step size for the discrete
-#'     approximation to continuous Hamiltonian dynamics. This is further tuned
-#'     during warmup.
-#'   * `metric`: (character) The geometry of the base manifold. One of the
-#'     following:
-#'      - A single string from among `"diag_e"`, `"dense_e"`, `"unit_e"`;
-#'      - A character vector containing paths to files (one per chain)
-#'        compatible with CmdStan that contain precomputed metrics.
-#'        Each path must be to a JSON or Rdump file that contains an entry
-#'        `inv_metric` whose value is either the diagonal vector or the full
-#'        covariance matrix.
-#'
-#'     If you want to turn off adaptation when using a precomputed metric set
-#'     `adapt_engaged=FALSE`, otherwise it will use the provided metric just
-#'     as an initial guess during adaptation. See the _Euclidean Metric_ section
-#'     of the CmdStan manual for more details on these options.
-#'
-#'   * `max_depth`: (positive integer) The maximum allowed tree depth. See the
-#'     _Tree Depth_ section of the CmdStan manual for more details.
+#'   approximation to continuous Hamiltonian dynamics. This is further tuned
+#'   during warmup.
+#'   * `metric`: (character) The geometry of the base manifold. See the
+#'   _Euclidean Metric_ section of the CmdStan documentation for more details.
+#'   One of the following:
+#'     - A single string from among `"diag_e"`, `"dense_e"`, `"unit_e"`.
+#'     - A character vector containing paths to files (one per chain) compatible
+#'     with CmdStan that contain precomputed metrics. Each path must be to a
+#'     JSON or Rdump file that contains an entry `inv_metric` whose value is
+#'     either the diagonal vector or the full covariance matrix. If
+#'     `adapt_engaged=TRUE`, Stan will use the provided metric just as an
+#'     initial guess during adaptation. To turn off adaptation when using a
+#'     precomputed metric set `adapt_engaged=FALSE`.
+#'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
+#'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
+#'   details.
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -405,11 +415,12 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   arguments. These arguments are described briefly here and in greater detail
 #'   in the CmdStan manual. Arguments left at `NULL` default to the default used
 #'   by the installed version of CmdStan.
-#'   * `algorithm`: (string) The optimization algorithm. One of
-#'     `"lbfgs"`, `"bfgs"`, or `"newton"`.
+#'
+#'   * `algorithm`: (string) The optimization algorithm. One of `"lbfgs"`,
+#'   `"bfgs"`, or `"newton"`.
 #'   * `iter`: (positive integer) The number of iterations.
 #'   * `init_alpha`: (non-negative real) The line search step size for first
-#'      iteration. Not applicable if `algorithm="newton"`.
+#'   iteration. Not applicable if `algorithm="newton"`.
 #'
 #' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
 #'
@@ -507,22 +518,23 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   arguments. These arguments are described briefly here and in greater detail
 #'   in the CmdStan manual. Arguments left at `NULL` default to the default used
 #'   by the installed version of CmdStan.
+#'
 #'   * `algorithm`: (string) The algorithm. Either `"meanfield"` or `"fullrank"`.
 #'   * `iter`: (positive integer) The _maximum_ number of iterations.
 #'   * `grad_samples`: (positive integer) The number of samples for Monte Carlo
-#'     estimate of gradients.
+#'   estimate of gradients.
 #'   * `elbo_samples`: (positive integer) The number of samples for Monte Carlo
-#'     estimate of ELBO (objective function).
+#'   estimate of ELBO (objective function).
 #'   * `eta`: (positive real) The stepsize weighting parameter for adaptive
-#'     stepsize sequence.
+#'   stepsize sequence.
 #'   * `adapt_engaged`: (logical) Do warmup adaptation?
 #'   * `adapt_iter`: (positive integer) The _maximum_ number of adaptation
-#'     iterations.
+#'   iterations.
 #'   * `tol_rel_obj`: (positive real) Convergence tolerance on the relative norm
-#'     of the objective.
+#'   of the objective.
 #'   * `eval_elbo`: (positive integer) Evaluate ELBO every Nth iteration.
-#'   * `output_samples:` (positive integer) Number of posterior samples to
-#'     draw and save.
+#'   * `output_samples:` (positive integer) Number of posterior samples to draw
+#'   and save.
 #'
 #' @section Value: The `$variational()` method returns a [`CmdStanVB`] object.
 #'
