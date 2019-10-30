@@ -19,9 +19,11 @@ objects.
 \code{draws} \tab
 Return post-warmup draws as an \code{iters x chains x variables} array. \cr
 \code{\link[=fit-method-save_output_files]{save_output_files}}
-\tab Save output csv files to a specified location. \cr
+\tab Save output CSV files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{save_data_file}}
-\tab Save R dump or JSON data file to a specified location. \cr
+\tab Save JSON data file to a specified location. \cr
+\code{\link[=fit-method-save_diagnostic_files]{save_diagnostic_files}}
+\tab Save diagnostic CSV files to a specified location. \cr
 }
 }
 \seealso{
