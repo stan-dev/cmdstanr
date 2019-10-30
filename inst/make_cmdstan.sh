@@ -94,62 +94,70 @@ build_cmdstan() {
 
 echo "cmdstan dir: ${RELDIR}"
 
-if [ -z ${VER} ]; then
-    TAG=`curl -s https://api.github.com/repos/stan-dev/cmdstan/releases/latest | grep "tag_name"`
-    echo $TAG > tmp-tag
-    VER=`perl -p -e 's/"tag_name": "v//g; s/",//g' tmp-tag`
-    rm tmp-tag
-fi
+if [[ ${REPO_CLONE} -ne 0 ]]; then
+    pushd ${RELDIR} > /dev/null
+    if [[ ${BACKUP_OLD} -ne 0 ]]; then
+        backup_cmdstan
+    fi
+    git clone --recursive https://github.com/stan-dev/cmdstan.git --single-branch -b develop cmdstan
+else
+    if [ -z ${VER} ]; then
+        TAG=`curl -s https://api.github.com/repos/stan-dev/cmdstan/releases/latest | grep "tag_name"`
+        echo $TAG > tmp-tag
+        VER=`perl -p -e 's/"tag_name": "v//g; s/",//g' tmp-tag`
+        rm tmp-tag
+    fi
 
-CS=cmdstan-${VER}
-INSTALL_DIR=cmdstan
-echo "cmdstan version: ${VER}"
+    CS=cmdstan-${VER}
+    INSTALL_DIR=cmdstan
+    echo "cmdstan version: ${VER}"
 
-pushd ${RELDIR} > /dev/null
-#testing if there are files in the cmdstan folder
-if [[ -d ${INSTALL_DIR} && -f ${INSTALL_DIR}/makefile ]]; then
-    echo "cmdstan already installed, checking version"
-    x=$(grep '^CMDSTAN_VERSION := ' ${INSTALL_DIR}/makefile | sed -e 's/CMDSTAN_VERSION := //g')
-    # if the version is the latest dont upgrade
-    # except if forced
-    if [[ ! $VER > $x && $FORCE -ne 1 ]]; then
-        echo "installed cmdstan is the latest version"
-        echo "only running clean and rebuild"
-        pushd cmdstan > /dev/null
-        echo "rebuilding cmdstan binaries"
-        cleanup_cmdstan
-        build_cmdstan
-        exit 0;
-    else
-        if [[ ${BACKUP_OLD} -ne 0 ]]; then
-            backup_cmdstan
+    pushd ${RELDIR} > /dev/null
+    #testing if there are files in the cmdstan folder
+    if [[ -d ${INSTALL_DIR} && -f ${INSTALL_DIR}/makefile ]]; then
+        echo "cmdstan already installed, checking version"
+        x=$(grep '^CMDSTAN_VERSION := ' ${INSTALL_DIR}/makefile | sed -e 's/CMDSTAN_VERSION := //g')
+        # if the version is the latest dont upgrade
+        # except if forced
+        if [[ ! $VER > $x && $FORCE -ne 1 ]]; then
+            echo "installed cmdstan is the latest version"
+            echo "only running clean and rebuild"
+            pushd cmdstan > /dev/null
+            echo "rebuilding cmdstan binaries"
+            cleanup_cmdstan
+            build_cmdstan
+            exit 0;
+        else
+            if [[ ${BACKUP_OLD} -ne 0 ]]; then
+                backup_cmdstan
+            fi
         fi
     fi
-fi
-echo "installing ${CS}"
+    echo "installing ${CS}"
 
-echo "downloading ${CS}.tar.gz from github"
-curl -s -OL https://github.com/stan-dev/cmdstan/releases/download/v${VER}/${CS}.tar.gz
-CURL_RC=$?
-if [[ ${CURL_RC} -ne 0 ]]; then
-    echo "github download failed, curl exited with: ${CURL_RC}"
-    exit ${CURL_RC}
-fi
-echo "download complete"
+    echo "downloading ${CS}.tar.gz from github"
+    curl -s -OL https://github.com/stan-dev/cmdstan/releases/download/v${VER}/${CS}.tar.gz
+    CURL_RC=$?
+    if [[ ${CURL_RC} -ne 0 ]]; then
+        echo "github download failed, curl exited with: ${CURL_RC}"
+        exit ${CURL_RC}
+    fi
+    echo "download complete"
 
-echo "unpacking archive"
-if [[ -e cmdstan ]]; then
-    rm -rf cmdstan
-fi
+    echo "unpacking archive"
+    if [[ -e cmdstan ]]; then
+        rm -rf cmdstan
+    fi
 
-mkdir cmdstan
-tar xzf ${CS}.tar.gz -C cmdstan/ --strip-components 1
-TAR_RC=$?
-if [[ ${TAR_RC} -ne 0 ]]; then
-    echo "corrupt download file ${CS}.tar.gz, tar exited with: ${TAR_RC}"
-    exit ${TAR_RC}
+    mkdir cmdstan
+    tar xzf ${CS}.tar.gz -C cmdstan/ --strip-components 1
+    TAR_RC=$?
+    if [[ ${TAR_RC} -ne 0 ]]; then
+        echo "corrupt download file ${CS}.tar.gz, tar exited with: ${TAR_RC}"
+        exit ${TAR_RC}
+    fi
+    rm ${CS}.tar.gz
 fi
-rm ${CS}.tar.gz
 
 pushd cmdstan > /dev/null
 echo "building cmdstan binaries"
