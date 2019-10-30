@@ -112,10 +112,8 @@ else
     #testing if there are files in the cmdstan folder
     if [[ -d ${INSTALL_DIR} && -f ${INSTALL_DIR}/makefile ]]; then
         echo "cmdstan already installed, checking version"
-        x=$(grep '^CMDSTAN_VERSION := ' ${INSTALL_DIR}/makefile | sed -e 's/CMDSTAN_VERSION := //g')
-        # if the version is the latest dont upgrade
-        # except if forced
-        if [[ ! $VER > $x && $FORCE -ne 1 ]]; then
+        OLD_VER=$(grep '^CMDSTAN_VERSION := ' ${INSTALL_DIR}/makefile | sed -e 's/CMDSTAN_VERSION := //g')
+        if [[ ! $VER > $OLD_VER && $FORCE -ne 1 ]]; then
             echo "installed cmdstan is the latest version"
             echo "only running clean and rebuild"
             pushd cmdstan > /dev/null
