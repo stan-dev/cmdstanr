@@ -458,7 +458,7 @@ RunSet <- R6::R6Class(
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = NULL,
-        ext = ".data.R",
+        ext = ".json",
         timestamp = timestamp
       )
     }
