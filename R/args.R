@@ -31,7 +31,7 @@ CmdStanArgs <- R6::R6Class(
                           run_ids,
                           method_args,
                           data_file = NULL,
-                          diagnostic_file = NULL,
+                          save_diagnostics = FALSE,
                           seed = NULL,
                           init = NULL,
                           refresh = NULL) {
@@ -40,15 +40,12 @@ CmdStanArgs <- R6::R6Class(
       self$exe_file <- exe_file
       self$run_ids <- run_ids
       self$data_file <- repair_path(data_file)
-      self$diagnostic_file <- repair_path(diagnostic_file)
       self$seed <- seed
       self$init <- repair_path(init)
       self$refresh <- refresh
       self$method_args <- method_args
+      self$save_diagnostics <- save_diagnostics
 
-      if (!is.null(self$diagnostic_file)) {
-        self$diagnostic_file <- absolute_path(self$diagnostic_file)
-      }
       self$method <- self$method_args$method
       self$method_args$validate(num_runs = length(run_ids))
       self$validate()
@@ -69,9 +66,12 @@ CmdStanArgs <- R6::R6Class(
     # @param idx The run id. For MCMC this is the chain id, for optimization
     #   this is just 1.
     # @param output_file File path to csv file where output will be written.
+    # @param diagnostic_file File path to csv file where diagnostics will be written.
     # @return Character vector of arguments of the form "name=value".
     #
-    compose_all_args = function(idx = NULL, output_file = NULL) {
+    compose_all_args = function(idx = NULL,
+                                output_file = NULL,
+                                diagnostic_file = NULL) {
       args <-
         list(
           id = NULL,
@@ -104,8 +104,8 @@ CmdStanArgs <- R6::R6Class(
       }
 
       args$output <- c("output", paste0("file=", output_file))
-      if (!is.null(self$diagnostic_file)) {
-        args$output <- c(args$output, paste0("diagnostic_file=", self$diagnostic_file))
+      if (!is.null(diagnostic_file)) {
+        args$output <- c(args$output, paste0("diagnostic_file=", diagnostic_file))
       }
       if (!is.null(self$refresh)) {
         args$output <- c(args$output, paste0("refresh=", self$refresh))
@@ -114,7 +114,7 @@ CmdStanArgs <- R6::R6Class(
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
     },
-    compose_command = function() {
+    command = function() {
       paste0(if (!os_is_windows()) "./", basename(self$exe_file))
     }
   )
@@ -343,19 +343,14 @@ validate_cmdstan_args = function(self) {
                                any.missing = FALSE,
                                null.ok = FALSE)
 
+  checkmate::assert_flag(self$save_diagnostics)
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
   if (!is.null(self$data_file)) {
     checkmate::assert_file_exists(self$data_file, access = "r")
   }
-  if (!is.null(self$diagnostic_file)) {
-    checkmate::assert_directory_exists(dirname(self$diagnostic_file))
-  }
-
   num_runs <- length(self$run_ids)
   validate_init(self$init, num_runs)
   validate_seed(self$seed, num_runs)
-  self$init <- maybe_recycle_init(self$init, num_runs)
-  self$seed <- maybe_generate_seed(self$seed, num_runs)
 
   invisible(TRUE)
 }

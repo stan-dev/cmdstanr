@@ -6,7 +6,8 @@ Authors@R:
            email = "jsg2201@columbia.edu"),
       person(given = "Rok", family = "Češnovar", role = c("aut"), 
            email = "rok.cesnovar@fri.uni-lj.si"),     
-      person(given = "Mitzi", family = "Morris", role = c("ctb")))
+      person(given = "Mitzi", family = "Morris", role = c("ctb")),
+      person(given = "Ben", family = "Bales", role = c("ctb")))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>. 
     The 'CmdStanR' interface to 'Stan' (the 'cmdstanr' R package) calls
     'CmdStan' (the shell interface) for compilation, running algorithms, 

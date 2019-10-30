@@ -178,6 +178,7 @@ to the executable can be accesed via the <code>$exe_file()</code> method.</p>
 
     
 <pre>$compile(
+  quiet = TRUE,
   threads = FALSE,
   opencl = FALSE,
   opencl_platform_id = 0,
@@ -194,6 +195,10 @@ $exe_file()
 <p>Leaving all arguments at their defaults should be fine for most users, but
 optional arguments are provided to enable new features in CmdStan (and the
 Stan Math library). See the CmdStan manual for more details.</p><ul>
+<li><p><code>quiet</code>: (logical) Should the verbose output from CmdStan during
+compilation be suppressed? The default is <code>TRUE</code>, but if you encounter an
+error we recommend trying again with <code>quiet=FALSE</code> to see more of the
+output.</p></li>
 <li><p><code>threads</code>: (logical) Should the model be compiled with
 <a href='https://github.com/stan-dev/math/wiki/Threading-Support'>threading support</a>?
 If <code>TRUE</code> then <code>-DSTAN_THREADS</code> is added to the compiler flags. See
@@ -229,8 +234,8 @@ for online documentation and tutorials.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
 <span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>stan_program</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='no'>mod</span>$<span class='fu'>compile</span>()</div><div class='output co'>#&gt; Running make /Users/jgabry/.cmdstanr/cmdstan/examples/bernoulli/bernoulli
-#&gt; make: `/Users/jgabry/.cmdstanr/cmdstan/examples/bernoulli/bernoulli' is up to date.</div><div class='input'><span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan/examples/bernoulli/bernoulli"</div><div class='input'>
+<span class='no'>mod</span>$<span class='fu'>compile</span>()
+<span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan/examples/bernoulli/bernoulli"</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

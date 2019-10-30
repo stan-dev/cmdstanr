@@ -117,9 +117,8 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Getting started with CmdStanR</h1>
-                        <h4 class="author">Jonah Gabry</h4>
+                        <h4 class="author">Jonah Gabry and Rok Češnovar</h4>
             
-            <h4 class="date">2019-10-26</h4>
       
       
       <div class="hidden name"><code>cmdstanr.Rmd</code></div>
@@ -160,11 +159,9 @@
 <p>The <code><a href="../reference/cmdstan_model.html">cmdstan_model()</a></code> function creates a new <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a> object from a file containing a Stan program. Here we’ll use the example Stan program that comes with the CmdStan installation:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">file &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span>(<span class="kw"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span>(), <span class="st">"examples"</span>, <span class="st">"bernoulli"</span>, <span class="st">"bernoulli.stan"</span>)</a>
 <a class="sourceLine" id="cb5-2" data-line-number="2">mod &lt;-<span class="st"> </span><span class="kw"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span>(file)</a></code></pre></div>
-<pre><code>Running make \
-  /Users/jgabry/.cmdstanr/cmdstan/examples/bernoulli/bernoulli
-make: `/Users/jgabry/.cmdstanr/cmdstan/examples/bernoulli/bernoulli' is up to date.</code></pre>
+<pre><code>Compiling Stan program...</code></pre>
 <p>The object <code>mod</code> is an <a href="https://r6.r-lib.org/">R6</a> reference object of class <code>CmdStanModel</code> and behaves similarly to to R’s reference class objects and those in object oriented programming languages. Methods are accessed using the <code><a href="https://rdrr.io/r/base/Extract.html">$</a></code> operator. This design choice allows for CmdStanR and <a href="https://github.com/stan-dev/cmdstanpy">CmdStanPy</a> to provide a similar user experience and share many implementation details, which also helps facilitate collaboration between developers.</p>
-<p>The Stan program can be printed using the <code>print</code> method:</p>
+<p>The Stan program can be printed using the <code>$print()</code> method:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">mod<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>()  <span class="co"># print the Stan program</span></a></code></pre></div>
 <pre><code>data { 
   int&lt;lower=0&gt; N; 
@@ -177,7 +174,7 @@ model {
   theta ~ beta(1,1);  // uniform prior on interval 0,1
   y ~ bernoulli(theta);
 }</code></pre>
-<p>The path to the compiled executable is available by calling the <code>exe_file</code> method:</p>
+<p>The path to the compiled executable is available by calling the <code>$exe_file()</code> method:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1">mod<span class="op">$</span><span class="kw">exe_file</span>()</a></code></pre></div>
 <pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan/examples/bernoulli/bernoulli"</code></pre>
 </div>
@@ -216,18 +213,18 @@ model {
         stepsize_jitter = 0 (Default)
 id = 1
 data
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpFJCH7W/standata-12450229f771a.json
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp5HpGs2/standata-2d2b427700a.json
 init = 2 (Default)
 random
   seed = 123
 output
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpFJCH7W/bernoulli-stan-sample-1.csv
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmp5HpGs2/bernoulli-stan-sample-1.csv
   diagnostic_file =  (Default)
   refresh = 100 (Default)
 
 
-Gradient evaluation took 1.8e-05 seconds
-1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
+Gradient evaluation took 1.6e-05 seconds
+1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
 Adjust your expectations accordingly!
 
 
@@ -254,9 +251,9 @@ Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Iteration: 1900 / 2000 [ 95%]  (Sampling)
 Iteration: 2000 / 2000 [100%]  (Sampling)
 
- Elapsed Time: 0.007904 seconds (Warm-up)
-               0.016149 seconds (Sampling)
-               0.024053 seconds (Total)
+ Elapsed Time: 0.006559 seconds (Warm-up)
+               0.01334 seconds (Sampling)
+               0.019899 seconds (Total)
 
 method = sample (Default)
   sample
@@ -284,18 +281,18 @@ method = sample (Default)
         stepsize_jitter = 0 (Default)
 id = 2
 data
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpFJCH7W/standata-12450229f771a.json
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp5HpGs2/standata-2d2b427700a.json
 init = 2 (Default)
 random
   seed = 124
 output
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpFJCH7W/bernoulli-stan-sample-2.csv
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmp5HpGs2/bernoulli-stan-sample-2.csv
   diagnostic_file =  (Default)
   refresh = 100 (Default)
 
 
-Gradient evaluation took 1.8e-05 seconds
-1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
+Gradient evaluation took 1.6e-05 seconds
+1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
 Adjust your expectations accordingly!
 
 
@@ -322,9 +319,9 @@ Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Iteration: 1900 / 2000 [ 95%]  (Sampling)
 Iteration: 2000 / 2000 [100%]  (Sampling)
 
- Elapsed Time: 0.007842 seconds (Warm-up)
-               0.01678 seconds (Sampling)
-               0.024622 seconds (Total)</code></pre>
+ Elapsed Time: 0.006559 seconds (Warm-up)
+               0.013424 seconds (Sampling)
+               0.019983 seconds (Total)</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a> method creates <a href="https://r6.r-lib.org/">R6</a> <a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>CmdStanMCMC</code></a> objects.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/class.html">class</a></span>(fit)</a></code></pre></div>
 <pre><code>[1] "CmdStanMCMC" "R6"         </code></pre>
@@ -342,7 +339,7 @@ post-warmup draws per chain=1000, total post-warmup draws=2000.
 theta  0.24    0.00 0.12  0.06  0.15  0.23  0.32  0.52   736    1
 lp__  -7.31    0.03 0.78 -9.60 -7.51 -7.04 -6.82 -6.75   650    1
 
-Samples were drawn using NUTS(diag_e) at Sat Oct 26 21:30:44 2019.
+Samples were drawn using NUTS(diag_e) at Tue Oct 29 23:16:51 2019.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>

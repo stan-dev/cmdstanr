@@ -17,9 +17,9 @@ object.
 \code{lp} \tab Return the the total log probability density (up to an additive
 constant) computed in the model block of the Stan program. \cr
 \code{\link[=fit-method-save_output_files]{save_output_files}}
-\tab Save output csv files to a specified location. \cr
+\tab Save output CSV files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{save_data_file}}
-\tab Save R dump or JSON data file to a specified location. \cr
+\tab Save JSON data file to a specified location. \cr
 }
 }
 \seealso{
