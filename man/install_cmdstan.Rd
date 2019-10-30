@@ -5,8 +5,9 @@
 \title{Install the latest release of CmdStan}
 \usage{
 install_cmdstan(dir = NULL, cores = 2, quiet = FALSE,
-  force_reinstall = FALSE, backup_existing = FALSE,
-  github_repo_clone = FALSE)
+  overwrite = FALSE, repo_clone = FALSE,
+  repo_url = "https://github.com/stan-dev/cmdstan.git",
+  repo_branch = "develop")
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
@@ -20,17 +21,16 @@ using more cores if available.}
 \item{quiet}{Defaults to \code{FALSE}, but if \code{TRUE} will suppress the verbose
 output during the installation process.}
 
-\item{force_reinstall}{Defaults to \code{FALSE}, but if \code{TRUE} will download and
-reinstall CmdStan even if the version to be installed is the same as the
-one currently installed. If \code{FALSE} then the current installation will just
-be cleaned and rebuilt.}
+\item{overwrite}{Defaults to \code{FALSE}, but if \code{TRUE} will download and
+reinstall CmdStan even if an existing installation was found.}
 
-\item{backup_existing}{Defaults to \code{FALSE}, but if \code{TRUE} will backup the
-currently installed CmdStan to the folder \code{"cmdstan_backup"} at the
-location of the current install.}
+\item{repo_clone}{Defaults to \code{FALSE}, but if \code{TRUE} will install a
+git clone of cmdstan and checkout the specified branch.}
 
-\item{github_repo_clone}{Defaults to \code{FALSE}, but if \code{TRUE} will install the
-Github clone of cmdstan and checkout the develop branch.}
+\item{repo_url}{The URL of the git repository to clone. The default URL
+is the stan-dev cmdstan github repository}
+
+\item{repo_branch}{The branch to checkout in the cloned repository}
 }
 \value{
 \link[base:invisible]{Invisibly}, the list returned by \code{\link[processx:run]{processx::run()}},

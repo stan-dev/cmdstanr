@@ -18,15 +18,13 @@
 #'   using more cores if available.
 #' @param quiet Defaults to `FALSE`, but if `TRUE` will suppress the verbose
 #'   output during the installation process.
-#' @param force_reinstall Defaults to `FALSE`, but if `TRUE` will download and
-#'   reinstall CmdStan even if the version to be installed is the same as the
-#'   one currently installed. If `FALSE` then the current installation will just
-#'   be cleaned and rebuilt.
-#' @param backup_existing Defaults to `FALSE`, but if `TRUE` will backup the
-#'   currently installed CmdStan to the folder `"cmdstan_backup"` at the
-#'   location of the current install.
-#' @param github_repo_clone Defaults to `FALSE`, but if `TRUE` will install the
-#'   Github clone of cmdstan and checkout the develop branch.
+#' @param overwrite Defaults to `FALSE`, but if `TRUE` will download and
+#'   reinstall CmdStan even if an existing installation was found.
+#' @param repo_clone Defaults to `FALSE`, but if `TRUE` will install a
+#'   git clone of cmdstan and checkout the specified branch.
+#' @param repo_url The URL of the git repository to clone. The default URL
+#'   is the stan-dev cmdstan github repository
+#' @param repo_branch The branch to checkout in the cloned repository
 #'
 #' @return [Invisibly][base::invisible], the list returned by [processx::run()],
 #'   which contains information about the system process that was run. See the
@@ -35,9 +33,10 @@
 install_cmdstan <- function(dir = NULL,
                             cores = 2,
                             quiet = FALSE,
-                            force_reinstall = FALSE,
-                            backup_existing = FALSE,
-                            github_repo_clone = FALSE) {
+                            overwrite = FALSE,
+                            repo_clone = FALSE,
+                            repo_url = "https://github.com/stan-dev/cmdstan.git",
+                            repo_branch = "develop") {
   make_cmdstan <- system.file("make_cmdstan.sh", package = "cmdstanr")
   if (!is.null(dir)) {
     checkmate::assert_directory_exists(dir)
@@ -47,14 +46,11 @@ install_cmdstan <- function(dir = NULL,
   if (os_is_windows()) {
     make_cmdstan <- c(make_cmdstan, "-w")
   }
-  if (backup_existing) {
-    make_cmdstan <- c(make_cmdstan, "-b")
+  if (overwrite) {
+    make_cmdstan <- c(make_cmdstan, "-o")
   }
-  if (github_repo_clone) {
-    make_cmdstan <- c(make_cmdstan, "-c")
-  }
-  if (force_reinstall) {
-    make_cmdstan <- c(make_cmdstan, "-f")
+  if (repo_clone) {
+    make_cmdstan <- c(make_cmdstan, "-c", "-u", repo_url, "-b", repo_branch)
   }
   install_log <- processx::run(
     command = "bash",

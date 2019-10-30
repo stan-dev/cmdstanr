@@ -4,7 +4,7 @@
 #  - build binaries, compile example model to build model header
 #  - symlink downloaded version as "cmdstan"
 
-while getopts ":d:v:j:wbcf" opt; do
+while getopts ":d:v:j:wcob:u:" opt; do
   case $opt in
     d) RELDIR="$OPTARG"
     ;;
@@ -14,11 +14,13 @@ while getopts ":d:v:j:wbcf" opt; do
     ;;
     w) WIN=1
     ;;
-    b) BACKUP_OLD=1
-    ;;
     c) REPO_CLONE=1
     ;;
-    f) FORCE=1
+    b) REPO_BRANCH="$OPTARG"
+    ;;
+    u) REPO_URL="$OPTARG"
+    ;;
+    o) OVERWRITE=1
     ;;
     \?) echo "Invalid option -$OPTARG" >&2
     ;;
@@ -29,20 +31,20 @@ if [ -z ${WIN} ]; then
     WIN=0
 fi
 
-if [ -z ${BACKUP_OLD} ]; then
-    BACKUP_OLD=0
+if [ -z ${OVERWRITE} ]; then
+    OVERWRITE=0
 fi
 
 if [ -z ${REPO_CLONE} ]; then
     REPO_CLONE=0
 fi
 
-if [ -z ${FORCE} ]; then
-    FORCE=0
+if [ -z ${REPO_BRANCH} ]; then
+    REPO_BRANCH="develop"
 fi
 
-if [ -z ${R} ]; then
-    R=0
+if [ -z ${REPO_URL} ]; then
+    REPO_URL="https://github.com/stan-dev/cmdstan.git"
 fi
 
 if [ -z ${JOBS} ]; then
@@ -65,21 +67,6 @@ cleanup_cmdstan() {
     fi
 }
 
-backup_cmdstan() {
-    if [[ -e cmdstan ]]; then
-        echo "backing up and cleaning installed cmdstan"
-        pushd cmdstan > /dev/null
-        # cleaning the backup
-        cleanup_cmdstan
-        pushd ../ > /dev/null
-        # removing existing backup folder
-        if [[ -e cmdstan_backup ]]; then
-            rm -rf cmdstan_backup
-        fi
-        mv cmdstan/ cmdstan_backup/
-    fi
-}
-
 build_cmdstan() {
     if [[ ${WIN} -ne 0 ]]; then
         mingw32-make -j${JOBS} build examples/bernoulli/bernoulli.exe
@@ -88,15 +75,31 @@ build_cmdstan() {
     fi
 }
 
-echo "cmdstan dir: ${RELDIR}"
+INSTALL_DIR=cmdstan
+pushd ${RELDIR} > /dev/null
+if [[ ${OVERWRITE} -ne 1 ]]; then
+    if [[ -d ${INSTALL_DIR} ]]; then
+        echo "cmdstan found in ${RELDIR}/, installation stopped"
+        echo "remove the cmdstan folder or set overwrite = TRUE in install_cmdstan()"
+        exit 0;
+    fi
+fi
+
+if [[ -e cmdstan ]]; then
+    echo "removing the existing installation of cmdstan"
+    rm -rf cmdstan
+fi
 
 if [[ ${REPO_CLONE} -ne 0 ]]; then
-    pushd ${RELDIR} > /dev/null
-    if [[ ${BACKUP_OLD} -ne 0 ]]; then
-        backup_cmdstan
+    echo "cloning ${REPO_URL} and checking out branch ${REPO_BRANCH}"
+    git clone --recursive ${REPO_URL} --single-branch -b ${REPO_BRANCH} ${INSTALL_DIR}
+    GIT_RC=$?
+    if [[ ${GIT_RC} -ne 0 ]]; then
+        echo "error cloning repository"
+        exit ${GIT_RC}
     fi
-    git clone --recursive https://github.com/stan-dev/cmdstan.git --single-branch -b develop cmdstan
 else
+    
     if [ -z ${VER} ]; then
         TAG=`curl -s https://api.github.com/repos/stan-dev/cmdstan/releases/latest | grep "tag_name"`
         echo $TAG > tmp-tag
@@ -105,31 +108,10 @@ else
     fi
 
     CS=cmdstan-${VER}
-    INSTALL_DIR=cmdstan
-    echo "cmdstan version: ${VER}"
 
-    pushd ${RELDIR} > /dev/null
-    #testing if there are files in the cmdstan folder
-    if [[ -d ${INSTALL_DIR} && -f ${INSTALL_DIR}/makefile ]]; then
-        echo "cmdstan already installed, checking version"
-        OLD_VER=$(grep '^CMDSTAN_VERSION := ' ${INSTALL_DIR}/makefile | sed -e 's/CMDSTAN_VERSION := //g')
-        if [[ ! $VER > $OLD_VER && $FORCE -ne 1 ]]; then
-            echo "installed cmdstan is the latest version"
-            echo "only running clean and rebuild"
-            pushd cmdstan > /dev/null
-            echo "rebuilding cmdstan binaries"
-            cleanup_cmdstan
-            build_cmdstan
-            exit 0;
-        else
-            if [[ ${BACKUP_OLD} -ne 0 ]]; then
-                backup_cmdstan
-            fi
-        fi
-    fi
-    echo "installing ${CS}"
-
+    echo "installing cmdstan ${VER} in ${RELDIR}"
     echo "downloading ${CS}.tar.gz from github"
+
     curl -s -OL https://github.com/stan-dev/cmdstan/releases/download/v${VER}/${CS}.tar.gz
     CURL_RC=$?
     if [[ ${CURL_RC} -ne 0 ]]; then
@@ -139,10 +121,7 @@ else
     echo "download complete"
 
     echo "unpacking archive"
-    if [[ -e cmdstan ]]; then
-        rm -rf cmdstan
-    fi
-
+    
     mkdir cmdstan
     tar xzf ${CS}.tar.gz -C cmdstan/ --strip-components 1
     TAR_RC=$?
