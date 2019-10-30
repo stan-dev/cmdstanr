@@ -21,11 +21,11 @@
 #'  `draws` \tab
 #'    Return post-warmup draws as an `iters x chains x variables` array. \cr
 #'  [`save_output_files`][fit-method-save_output_files]
-#'    \tab Save output csv files to a specified location. \cr
+#'    \tab Save output CSV files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
-#'    \tab Save R dump or JSON data file to a specified location. \cr
+#'    \tab Save JSON data file to a specified location. \cr
 #'  [`save_diagnostic_files`][fit-method-save_diagnostic_files]
-#'    \tab Save diagnostic csv files to a specified location. \cr
+#'    \tab Save diagnostic CSV files to a specified location. \cr
 #' }
 #'
 NULL
@@ -120,9 +120,9 @@ CmdStanMCMC <- R6::R6Class(
 #'  `lp` \tab Return the the total log probability density (up to an additive
 #'    constant) computed in the model block of the Stan program. \cr
 #'  [`save_output_files`][fit-method-save_output_files]
-#'    \tab Save output csv files to a specified location. \cr
+#'    \tab Save output CSV files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
-#'    \tab Save R dump or JSON data file to a specified location. \cr
+#'    \tab Save JSON data file to a specified location. \cr
 #' }
 #'
 NULL
@@ -184,11 +184,11 @@ CmdStanMLE <- R6::R6Class(
 #'  `draws` \tab Return approximate posterior draws as matrix with one colunm per
 #'    variable. \cr
 #'  [`save_output_files`][fit-method-save_output_files]
-#'    \tab Save output csv files to a specified location. \cr
+#'    \tab Save output CSV files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
-#'    \tab Save R dump or JSON data file to a specified location. \cr
+#'    \tab Save JSON data file to a specified location. \cr
 #'  [`save_diagnostic_files`][fit-method-save_diagnostic_files]
-#'    \tab Save diagnostic csv files to a specified location. \cr
+#'    \tab Save diagnostic CSV files to a specified location. \cr
 #' }
 #'
 NULL

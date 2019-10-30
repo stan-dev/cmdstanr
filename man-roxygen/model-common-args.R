@@ -17,13 +17,13 @@
 #'     - A character vector of data file paths (one per chain) to
 #'       initialization files.
 #'   * `save_diagnostics`: (logical) Should auxiliary diagnostic information
-#'     (beyond standard diagnostics) be written to temporary diagnostic CSV
-#'     files? This argument replaces CmdStan's `diagnostic_file` argument and
-#'     the content written to CSV is controlled by the user's CmdStan
-#'     installation and not CmdStanR. The default is `save_diagnostics=FALSE`,
-#'     which is appropriate for almost every use case (all diagnostics
-#'     recommended for users to check are _always_ saved, e.g., divergences for
-#'     HMC). To save the temporary files created when `save_diagnostics=TRUE`
-#'     see the [`$save_diagnostic_files()`][fit-method-save_diagnostic_files]
-#'     method.
+#'   (beyond standard diagnostics) be written to temporary diagnostic CSV files?
+#'   This argument replaces CmdStan's `diagnostic_file` argument and the content
+#'   written to CSV is controlled by the user's CmdStan installation and not
+#'   CmdStanR (and for some algorithms no content may be written). The default
+#'   is `save_diagnostics=FALSE`, which is appropriate for almost every use case
+#'   (all diagnostics recommended for users to check are _always_ saved, e.g.,
+#'   divergences for HMC). To save the temporary files created when
+#'   `save_diagnostics=TRUE` see the
+#'   [`$save_diagnostic_files()`][fit-method-save_diagnostic_files] method.
 #'
