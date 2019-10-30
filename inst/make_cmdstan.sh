@@ -57,30 +57,26 @@ if [[ ! -e ${RELDIR} ]]; then
    mkdir -p ${RELDIR}
 fi
 
+cleanup_cmdstan() {
+    if [[ ${WIN} -ne 0 ]]; then
+        mingw32-make clean-all
+    else
+        make clean-all
+    fi
+}
+
 backup_cmdstan() {
     if [[ -e cmdstan ]]; then
         echo "backing up and cleaning installed cmdstan"
         pushd cmdstan > /dev/null
         # cleaning the backup
-        if [[ ${WIN} -ne 0 ]]; then
-            mingw32-make clean-all
-        else
-            make clean-all
-        fi
+        cleanup_cmdstan
         pushd ../ > /dev/null
         # removing existing backup folder
         if [[ -e cmdstan_backup ]]; then
             rm -rf cmdstan_backup
         fi
         mv cmdstan/ cmdstan_backup/
-    fi
-}
-
-cleanup_cmdstan() {
-    if [[ ${WIN} -ne 0 ]]; then
-        mingw32-make clean-all
-    else
-        make clean-all
     fi
 }
 
