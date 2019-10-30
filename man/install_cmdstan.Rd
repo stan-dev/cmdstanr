@@ -4,7 +4,9 @@
 \alias{install_cmdstan}
 \title{Install the latest release of CmdStan}
 \usage{
-install_cmdstan(dir = NULL, cores = 2, quiet = FALSE)
+install_cmdstan(dir = NULL, cores = 2, quiet = FALSE,
+  force_reinstall = FALSE, backup_existing = FALSE,
+  github_repo_clone = FALSE)
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
@@ -12,10 +14,28 @@ to install it in a folder \code{".cmdstanr"} in the user's home directory
 (\code{Sys.getenv("HOME")}).}
 
 \item{cores}{The number of CPU cores to use to parallelize building CmdStan
-and speed up installation.}
+and speed up installation. The default is \code{cores=2}, although we recommend
+using more cores if available.}
 
 \item{quiet}{Defaults to \code{FALSE}, but if \code{TRUE} will suppress the verbose
 output during the installation process.}
+
+\item{force_reinstall}{Defaults to \code{FALSE}, but if \code{TRUE} will download and
+reinstall CmdStan even if the version to be installed is the same as the
+one currently installed. If \code{FALSE} then the current installation will just
+be cleaned and rebuilt.}
+
+\item{backup_existing}{Defaults to \code{FALSE}, but if \code{TRUE} will backup the
+currently installed CmdStan to the folder \code{"cmdstan_backup"} at the
+location of the current install.}
+
+\item{github_repo_clone}{Defaults to \code{FALSE}, but if \code{TRUE} will install the
+Github clone of cmdstan and checkout the develop branch.}
+}
+\value{
+\link[base:invisible]{Invisibly}, the list returned by \code{\link[processx:run]{processx::run()}},
+which contains information about the system process that was run. See the
+\strong{Value} section at \code{\link[processx:run]{processx::run()}} for details.
 }
 \description{
 \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}

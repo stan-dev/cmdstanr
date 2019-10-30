@@ -14,15 +14,23 @@
 #'   to install it in a folder `".cmdstanr"` in the user's home directory
 #'   (`Sys.getenv("HOME")`).
 #' @param cores The number of CPU cores to use to parallelize building CmdStan
-#'   and speed up installation.
+#'   and speed up installation. The default is `cores=2`, although we recommend
+#'   using more cores if available.
 #' @param quiet Defaults to `FALSE`, but if `TRUE` will suppress the verbose
 #'   output during the installation process.
-#' @param force_reinstall Defaults to `FALSE`, but if `TRUE` will reinstall cmdstan
-#'   even if the version to be installed is the same as the one currently installed.
-#' @param backup_existing Defaults to `FALSE`, but if `TRUE` will backup the currently
-#'   installed cmdstan to the folder cmdstan_backup at the location of the current install.
-#' @param github_repo_clone Defaults to `FALSE`, but if `TRUE` will install the Github
-#'   clone of cmdstan and checkout the develop branch
+#' @param force_reinstall Defaults to `FALSE`, but if `TRUE` will download and
+#'   reinstall CmdStan even if the version to be installed is the same as the
+#'   one currently installed. If `FALSE` then the current installation will just
+#'   be cleaned and rebuilt.
+#' @param backup_existing Defaults to `FALSE`, but if `TRUE` will backup the
+#'   currently installed CmdStan to the folder `"cmdstan_backup"` at the
+#'   location of the current install.
+#' @param github_repo_clone Defaults to `FALSE`, but if `TRUE` will install the
+#'   Github clone of cmdstan and checkout the develop branch.
+#'
+#' @return [Invisibly][base::invisible], the list returned by [processx::run()],
+#'   which contains information about the system process that was run. See the
+#'   **Value** section at [processx::run()] for details.
 #'
 install_cmdstan <- function(dir = NULL,
                             cores = 2,
