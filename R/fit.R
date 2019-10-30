@@ -67,21 +67,13 @@ CmdStanMCMC <- R6::R6Class(
       # iter x chains x params array
       if (is.null(private$draws_)) private$read_csv()
       private$draws_
-    },
+    }
     # sampler_params = function() {
     #   # currently sampler params list from rstan::get_sampler_params()
     #   # but this shouldn't use rstan
     #   if (is.null(private$sampler_params_)) private$read_csv()
     #   private$sampler_params_
-    # },
-    output_files = function() {
-      # get the paths to the temporary output csv files
-      self$runset$output_files()
-    },
-    diagnostic_files = function() {
-      # get the paths to the temporary diagnostic csv files
-      self$runset$diagnostic_files()
-    }
+    # }
   ),
   private = list(
     draws_ = NULL,
@@ -158,12 +150,6 @@ CmdStanMLE <- R6::R6Class(
     lp = function() {
       if (is.null(private$lp_)) private$read_csv()
       private$lp_
-    },
-    output_files = function() {
-      self$runset$output_files()
-    },
-    diagnostic_files = function() {
-      self$runset$diagnostic_files()
     }
   ),
   private = list(
@@ -242,12 +228,6 @@ CmdStanVB <- R6::R6Class(
       # iter x params array
       if (is.null(private$log_g_)) private$read_csv()
       private$log_g_
-    },
-    output_files = function() {
-      self$runset$output_files()
-    },
-    diagnostic_files = function() {
-      self$runset$diagnostic_files()
     }
   ),
   private = list(
@@ -278,24 +258,31 @@ CmdStanVB <- R6::R6Class(
 #'
 #' @name fit-method-save_output_files
 #' @aliases fit-method-save_data_file fit-method-save_diagnostic_files
+#'   fit-method-output_files fit-method-data_file fit-method-diagnostic_files
 #'
-#' @description All fitted model objects have methods `$save_output_files()` and
-#'   `$save_data_file()`. These methods move csv output files and R dump or json
-#'   data files from the CmdStanR temporary directory to a user-specified
-#'   location. By default the suffix `'-<run_id>_<timestamp>'` is added to the
-#'   file name(s), where `run_id` is the chain number if applicable (MCMC only)
-#'   and `1` otherwise. If files with the specified names already exist they are
-#'   overwritten, but this shouldn't occur unless the `timestamp` argument has
-#'   been intentionally set to `FALSE`.
+#' @description All fitted model objects have methods for saving (copying to a
+#'   specified location) the temporary files created by CmdStanR for CmdStan
+#'   output and data files. These methods move output files or data files from
+#'   the CmdStanR temporary directory to a user-specified location. By default
+#'   the suffix `'-<run_id>_<timestamp>'` is added to the file name(s), where
+#'   `run_id` is the chain number if applicable (MCMC only) and `1` otherwise.
+#'   If files with the specified names already exist they are overwritten, but
+#'   this shouldn't occur unless the `timestamp` argument has been intentionally
+#'   set to `FALSE`.
 #'
-#'   `$save_diagnostic_files()` can only be used if `save_diagnostics=TRUE` when
-#'   fitting the model.
+#'   If necessary, the versions without the `save_` prefix (e.g.,
+#'   `$output_files()`) can be used to get the path(s) to the temporary file(s)
+#'   themselves.
 #'
 #' @section Usage:
 #'   ```
 #'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
 #'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
 #'   $save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE)
+#'
+#'   $output_files()
+#'   $data_file()
+#'   $diagnostic_files()
 #'   ```
 #'
 #' @section Arguments:
@@ -305,12 +292,32 @@ CmdStanVB <- R6::R6Class(
 #'   Defaults to `TRUE`. The timestamp is preceeded by an underscore is of
 #'   the form
 #'
-#' @section Value: The paths to the new files or `NA` for any that couldn't be
-#'   copied.
+#' @section Value: For the `$save_*` methods, the paths to the new files or `NA`
+#'   for any that couldn't be copied. For the methods without the `save_`
+#'   prefix, the path to the temporary files.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
 NULL
+
+output_files_method <- function() {
+  self$runset$output_files()
+}
+diagnostic_files_method = function() {
+  self$runset$diagnostic_files()
+}
+data_file_method <- function() {
+  self$runset$data_file()
+}
+CmdStanMCMC$set("public", "output_files", output_files_method)
+CmdStanMLE$set("public", "output_files", output_files_method)
+CmdStanVB$set("public", "output_files", output_files_method)
+CmdStanMCMC$set("public", "diagnostic_files", diagnostic_files_method)
+CmdStanMLE$set("public", "diagnostic_files", diagnostic_files_method)
+CmdStanVB$set("public", "diagnostic_files", diagnostic_files_method)
+CmdStanMCMC$set("public", "data_file", data_file_method)
+CmdStanMLE$set("public", "data_file", data_file_method)
+CmdStanVB$set("public", "data_file", data_file_method)
 
 save_output_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE) {
   self$runset$save_output_files(dir, basename, timestamp)
@@ -396,10 +403,19 @@ RunSet <- R6::R6Class(
     method = function() private$args_$method,
     command = function() private$args_$command(),
     command_args = function() private$command_args_,
+    # console_files = function() private$console_files_,
     data_file = function() private$args_$data_file,
-    diagnostic_files = function() private$diagnostic_files_,
     output_files = function() private$output_files_,
-    console_files = function() private$console_files_,
+    diagnostic_files = function() {
+      if (!length(private$diagnostic_files_)) {
+        stop(
+          "No diagnostic files found. ",
+          "Set 'save_diagnostics=TRUE' when fitting the model.",
+          call. = FALSE
+        )
+      }
+      private$diagnostic_files_
+    },
 
     # ._check_retcodes = function() all(private$retcodes_  == 0),
     # ._retcode = function(idx) private$retcodes_[idx],
@@ -425,12 +441,6 @@ RunSet <- R6::R6Class(
     save_diagnostic_files = function(dir = ".",
                                      basename = NULL,
                                      timestamp = TRUE) {
-      if (!length(self$diagnostic_files())) {
-        stop(
-          "No diagnostic files found. ",
-          "Set 'save_diagnostics=TRUE' when fitting the model.",
-          call. = FALSE)
-      }
       copy_temp_files(
         current_paths = self$diagnostic_files(),
         new_dir = dir,
