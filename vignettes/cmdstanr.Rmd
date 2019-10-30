@@ -1,7 +1,6 @@
 ---
 title: "Getting started with CmdStanR"
-author: "Jonah Gabry"
-date: "`r Sys.Date()`"
+author: "Jonah Gabry and Rok Češnovar"
 output: 
   rmarkdown::html_vignette:
     toc: true
@@ -109,13 +108,13 @@ operator. This design choice allows for CmdStanR and
 experience and share many implementation details, which also helps facilitate
 collaboration between developers.
 
-The Stan program can be printed using the `print` method: 
+The Stan program can be printed using the `$print()` method: 
 
 ```{r compile}
 mod$print()  # print the Stan program
 ```
 
-The path to the compiled executable is available by calling the `exe_file`
+The path to the compiled executable is available by calling the `$exe_file()`
 method:
 
 ```{r exe_file}
