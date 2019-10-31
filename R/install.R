@@ -50,7 +50,7 @@ install_cmdstan <- function(dir = NULL,
     make_cmdstan <- c(make_cmdstan, "-o")
   }
   if (repo_clone) {
-    make_cmdstan <- c(make_cmdstan, "-c", "-u", repo_url, "-b", repo_branch)
+    make_cmdstan <- c(make_cmdstan, "-r", "-u", repo_url, "-b", repo_branch)
   }
   install_log <- processx::run(
     command = "bash",
@@ -71,4 +71,34 @@ install_cmdstan <- function(dir = NULL,
     "to point CmdStanR to the location of the new installation."
   )
   invisible(install_log)
+}
+
+#' Checks out a branch in the cmdstan folder if the installed cmdstan is a clone of a git
+#' repository
+#'
+#' @export
+#' @param branch_name Name of the git repository branch to checkout
+#' @param clean_and_rebuild If `TRUE` will run make clean-all and make build after
+#'   cheking out the new branch.
+#' @param cores The number of CPU cores to use to parallelize building CmdStan.
+#'   The default is `cores=2`, although we recommend
+#'   using more cores if available.
+#' @param quiet Defaults to `FALSE`, but if `TRUE` will suppress the verbose
+#'   output during the checkout process.
+#'
+cmdstan_git_checkout_branch <- function(branch_name,
+                                        clean_and_rebuild = TRUE,
+                                        cores = 2,
+                                        quiet = FALSE) {
+  make_cmdstan <- system.file("make_cmdstan.sh", package = "cmdstanr")
+  make_cmdstan <- c(make_cmdstan, paste0("-d ", cmdstan_path()))
+  make_cmdstan <- c(make_cmdstan, paste0("-j", cores))
+  make_cmdstan <- c(make_cmdstan, "-c", "-b", branch_name)
+  install_log <- processx::run(
+    command = "bash",
+    args = make_cmdstan,
+    echo = !quiet,
+    echo_cmd = !quiet,
+    spinner = quiet
+  )
 }

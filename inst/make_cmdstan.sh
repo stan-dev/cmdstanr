@@ -4,7 +4,7 @@
 #  - build binaries, compile example model to build model header
 #  - symlink downloaded version as "cmdstan"
 
-while getopts ":d:v:j:wcob:u:" opt; do
+while getopts ":d:v:j:wrob:u:c" opt; do
   case $opt in
     d) RELDIR="$OPTARG"
     ;;
@@ -14,7 +14,9 @@ while getopts ":d:v:j:wcob:u:" opt; do
     ;;
     w) WIN=1
     ;;
-    c) REPO_CLONE=1
+    r) REPO_CLONE=1
+    ;;
+    c) REPO_CHECKOUT_BRANCH=1
     ;;
     b) REPO_BRANCH="$OPTARG"
     ;;
@@ -37,6 +39,10 @@ fi
 
 if [ -z ${REPO_CLONE} ]; then
     REPO_CLONE=0
+fi
+
+if [ -z ${REPO_CHECKOUT_BRANCH} ]; then
+    REPO_CHECKOUT_BRANCH=0
 fi
 
 if [ -z ${REPO_BRANCH} ]; then
@@ -77,6 +83,29 @@ build_cmdstan() {
 
 INSTALL_DIR=cmdstan
 pushd ${RELDIR} > /dev/null
+
+if [[ ${REPO_CHECKOUT_BRANCH} -ne 0 ]]; then
+    git fetch origin
+    PULL_RC=$?
+    if [[ ${PULL_RC} -ne 0 ]]; then
+        echo "error pulling from the repository"
+        echo "please check if the branch exists on the clone repository and"
+        echo "there are not any unstashed changes in ${RELDIR}/cmdstan"
+        exit ${GIT_RC}
+    fi
+    git checkout ${REPO_BRANCH}
+    CHECKOUT_RC=$?
+    if [[ ${CHECKOUT_RC} -ne 0 ]]; then
+        echo "error checking out git branch"
+        exit ${GIT_RC}
+    fi
+    git submodule update --recursive
+    cleanup_cmdstan
+    build_cmdstan
+    echo "branch checkout and rebuild done"
+    exit 0;
+fi
+
 if [[ ${OVERWRITE} -ne 1 ]]; then
     if [[ -d ${INSTALL_DIR} ]]; then
         echo "cmdstan found in ${RELDIR}/, installation stopped"
@@ -92,7 +121,8 @@ fi
 
 if [[ ${REPO_CLONE} -ne 0 ]]; then
     echo "cloning ${REPO_URL} and checking out branch ${REPO_BRANCH}"
-    git clone --recursive ${REPO_URL} --single-branch -b ${REPO_BRANCH} ${INSTALL_DIR}
+    echo "this may take a few minutes ..."
+    git clone --recursive ${REPO_URL} -b ${REPO_BRANCH} ${INSTALL_DIR}
     GIT_RC=$?
     if [[ ${GIT_RC} -ne 0 ]]; then
         echo "error cloning repository"
