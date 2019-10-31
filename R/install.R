@@ -57,8 +57,21 @@ install_cmdstan <- function(dir = NULL,
     args = make_cmdstan,
     echo = !quiet,
     echo_cmd = !quiet,
-    spinner = quiet
+    spinner = quiet,
+    error_on_status = FALSE
   )
+
+  if (is.na(install_log$status) || install_log$status != 0) {
+    if (!quiet) {
+      suggestion <- "See the error message(s) above."
+    } else {
+      suggestion <- "Please try again with 'quiet=FALSE' to get the full error output."
+    }
+    cat("\n")
+    warning("There was a problem during installation. ", suggestion,
+            call. = FALSE)
+    return(invisible(install_log))
+  }
 
   if (!is.null(dir)) {
     install_path <- file.path(dir, "cmdstan")
@@ -68,7 +81,7 @@ install_cmdstan <- function(dir = NULL,
 
   message(
     "\nUse set_cmdstan_path('", install_path, "') ",
-    "to point CmdStanR to the location of the new installation."
+    "to point CmdStanR to the location of the CmdStan installation."
   )
   invisible(install_log)
 }
