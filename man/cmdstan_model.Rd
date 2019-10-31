@@ -45,8 +45,11 @@ mod$print()
 standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
 fit_mcmc <- mod$sample(data = standata, seed = 123, num_chains = 2)
 
-# Call CmdStan's bin/summary
+# Call CmdStan's bin/stansummary
 fit_mcmc$summary()
+
+# Call CmdStan's bin/diagnose
+fit_mcmc$diagnose()
 
 # Run optimization method (default is Stan's LBFGS algorithm)
 # and also demonstrate specifying data as a path to a file (readable by CmdStan)
