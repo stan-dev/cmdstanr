@@ -22,15 +22,15 @@ using more cores if available.}
 output during the installation process.}
 
 \item{overwrite}{Defaults to \code{FALSE}, but if \code{TRUE} will download and
-reinstall CmdStan even if an existing installation was found.}
+reinstall CmdStan even if an existing installation is found.}
 
 \item{repo_clone}{Defaults to \code{FALSE}, but if \code{TRUE} will install a
-git clone of cmdstan and checkout the specified branch.}
+git clone of CmdStan and checkout the specified branch.}
 
 \item{repo_url}{The URL of the git repository to clone. The default URL
-is the stan-dev cmdstan github repository}
+points to the \code{stan-dev/cmdstan} github repository.}
 
-\item{repo_branch}{The branch to checkout in the cloned repository}
+\item{repo_branch}{The branch to checkout in the cloned repository.}
 }
 \value{
 \link[base:invisible]{Invisibly}, the list returned by \code{\link[processx:run]{processx::run()}},
@@ -41,9 +41,12 @@ which contains information about the system process that was run. See the
 \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
 The \code{install_cmdstan()} function runs a script
 (see \code{inst/make_cmdstan.sh} on \href{https://github.com/stan-dev/cmdstanr}{GitHub})
-that attempts to download and install the latest release of
+that by default attempts to download and install the latest release of
 \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan}. Currently the
 necessary C++ tool chain is assumed to be available (see Appendix B of the
 CmdStan \href{https://github.com/stan-dev/cmdstan/releases/latest}{guide}),
 but in the future CmdStanR may help install the requirements.
+}
+\seealso{
+\code{\link[=cmdstan_git_checkout_branch]{cmdstan_git_checkout_branch()}}
 }

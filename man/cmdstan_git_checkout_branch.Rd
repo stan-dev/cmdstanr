@@ -2,26 +2,33 @@
 % Please edit documentation in R/install.R
 \name{cmdstan_git_checkout_branch}
 \alias{cmdstan_git_checkout_branch}
-\title{Checks out a branch in the cmdstan folder if the installed cmdstan is a clone of a git
-repository}
+\title{Check out a branch from a git repository and rebuild CmdStan}
 \usage{
-cmdstan_git_checkout_branch(branch_name, clean_and_rebuild = TRUE,
+cmdstan_git_checkout_branch(repo_branch, clean_and_rebuild = TRUE,
   cores = 2, quiet = FALSE)
 }
 \arguments{
-\item{branch_name}{Name of the git repository branch to checkout}
+\item{repo_branch}{The branch to checkout in the cloned repository.}
 
-\item{clean_and_rebuild}{If \code{TRUE} will run make clean-all and make build after
-cheking out the new branch.}
+\item{clean_and_rebuild}{If \code{TRUE} (the default), will run \code{make clean-all}
+and \code{make build} after checking out the new branch.}
 
-\item{cores}{The number of CPU cores to use to parallelize building CmdStan.
-The default is \code{cores=2}, although we recommend
+\item{cores}{The number of CPU cores to use to parallelize building CmdStan
+and speed up installation. The default is \code{cores=2}, although we recommend
 using more cores if available.}
 
 \item{quiet}{Defaults to \code{FALSE}, but if \code{TRUE} will suppress the verbose
-output during the checkout process.}
+output during the installation process.}
+}
+\value{
+\link[base:invisible]{Invisibly}, the list returned by \code{\link[processx:run]{processx::run()}},
+which contains information about the system process that was run. See the
+\strong{Value} section at \code{\link[processx:run]{processx::run()}} for details.
 }
 \description{
-Checks out a branch in the cmdstan folder if the installed cmdstan is a clone of a git
-repository
+This only works if the installed CmdStan is from a clone of the git
+repository.
+}
+\seealso{
+\code{\link[=install_cmdstan]{install_cmdstan()}}
 }
