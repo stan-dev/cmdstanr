@@ -80,7 +80,7 @@ build_cmdstan() {
     fi
 }
 
-echoerr() {
+error_msg() {
   printf "%s\n" "$*" >&2;
 }
 
@@ -91,15 +91,15 @@ if [[ ${REPO_CHECKOUT_BRANCH} -ne 0 ]]; then
     git fetch origin
     PULL_RC=$?
     if [[ ${PULL_RC} -ne 0 ]]; then
-        echoerr "Error: pulling from the repository failed."
-        echoerr "Please check that the branch exists in the repository to be cloned,"
-        echoerr "and that there are not any unstashed changes in ${RELDIR}/cmdstan."
+        error_msg "Error: pulling from the repository failed."
+        error_msg "Please check that the branch exists in the repository to be cloned,"
+        error_msg "and that there are not any unstashed changes in ${RELDIR}/cmdstan."
         exit ${GIT_RC}
     fi
     git checkout ${REPO_BRANCH}
     CHECKOUT_RC=$?
     if [[ ${CHECKOUT_RC} -ne 0 ]]; then
-        echoerr "Error: checking out git branch failed."
+        error_msg "Error: checking out git branch failed."
         exit ${GIT_RC}
     fi
     git submodule update --recursive
@@ -111,8 +111,8 @@ fi
 
 if [[ ${OVERWRITE} -ne 1 ]]; then
     if [[ -d ${INSTALL_DIR} ]]; then
-        echoerr "Error: an installation already exists at ${RELDIR}/cmdstan."
-        echoerr "Please remove the 'cmdstan' folder or set overwrite=TRUE in install_cmdstan()."
+        error_msg "Error: an installation already exists at ${RELDIR}/cmdstan."
+        error_msg "Please remove the 'cmdstan' folder or set overwrite=TRUE in install_cmdstan()."
         exit 1;
     fi
 fi
@@ -127,7 +127,7 @@ if [[ ${REPO_CLONE} -ne 0 ]]; then
     git clone --recursive ${REPO_URL} -b ${REPO_BRANCH} ${INSTALL_DIR}
     GIT_RC=$?
     if [[ ${GIT_RC} -ne 0 ]]; then
-        echoerr "Error: cloning repository failed."
+        error_msg "Error: cloning repository failed."
         exit ${GIT_RC}
     fi
 else
@@ -147,7 +147,7 @@ else
     curl -s -OL https://github.com/stan-dev/cmdstan/releases/download/v${VER}/${CS}.tar.gz
     CURL_RC=$?
     if [[ ${CURL_RC} -ne 0 ]]; then
-        echoerr "Error: GitHub download failed, curl exited with: ${CURL_RC}"
+        error_msg "Error: GitHub download failed, curl exited with: ${CURL_RC}"
         exit ${CURL_RC}
     fi
     echo "* Download complete."
@@ -158,7 +158,7 @@ else
     tar xzf ${CS}.tar.gz -C cmdstan/ --strip-components 1
     TAR_RC=$?
     if [[ ${TAR_RC} -ne 0 ]]; then
-        echoerr "Error: corrupt download file ${CS}.tar.gz, tar exited with: ${TAR_RC}"
+        error_msg "Error: corrupt download file ${CS}.tar.gz, tar exited with: ${TAR_RC}"
         exit ${TAR_RC}
     fi
     rm ${CS}.tar.gz
