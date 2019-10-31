@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# install a cmdstan release into a specified directory
+# install a CmdStan release into a specified directory
 #  - build binaries, compile example model to build model header
-#  - symlink downloaded version as "cmdstan"
 
 while getopts ":d:v:j:wrob:u:c" opt; do
   case $opt in
@@ -81,6 +80,10 @@ build_cmdstan() {
     fi
 }
 
+echoerr() {
+  printf "%s\n" "$*" >&2;
+}
+
 INSTALL_DIR=cmdstan
 pushd ${RELDIR} > /dev/null
 
@@ -88,50 +91,47 @@ if [[ ${REPO_CHECKOUT_BRANCH} -ne 0 ]]; then
     git fetch origin
     PULL_RC=$?
     if [[ ${PULL_RC} -ne 0 ]]; then
-        echo "error pulling from the repository"
-        echo "please check if the branch exists on the clone repository and"
-        echo "there are not any unstashed changes in ${RELDIR}/cmdstan"
+        echoerr "Error: pulling from the repository failed."
+        echoerr "Please check that the branch exists in the repository to be cloned,"
+        echoerr "and that there are not any unstashed changes in ${RELDIR}/cmdstan."
         exit ${GIT_RC}
     fi
     git checkout ${REPO_BRANCH}
     CHECKOUT_RC=$?
     if [[ ${CHECKOUT_RC} -ne 0 ]]; then
-        echo "error checking out git branch"
+        echoerr "Error: checking out git branch failed."
         exit ${GIT_RC}
     fi
     git submodule update --recursive
     cleanup_cmdstan
     build_cmdstan
-    echo "branch checkout and rebuild done"
+    echo "* Finished checking out branch and rebuilding."
     exit 0;
 fi
 
 if [[ ${OVERWRITE} -ne 1 ]]; then
     if [[ -d ${INSTALL_DIR} ]]; then
-        echo "cmdstan found in ${RELDIR}/, installation stopped"
-        echo "remove the cmdstan folder or set overwrite = TRUE in install_cmdstan()"
-        echo ""
-        echo "CmdStan installation location: `ls -Fd ${RELDIR}/cmdstan`"
-        exit 0;
+        echoerr "Error: an installation already exists at ${RELDIR}/cmdstan."
+        echoerr "Please remove the 'cmdstan' folder or set overwrite=TRUE in install_cmdstan()."
+        exit 1;
     fi
 fi
 
 if [[ -e cmdstan ]]; then
-    echo "removing the existing installation of cmdstan"
+    echo "* Removing the existing installation of CmdStan."
     rm -rf cmdstan
 fi
 
 if [[ ${REPO_CLONE} -ne 0 ]]; then
-    echo "cloning ${REPO_URL} and checking out branch ${REPO_BRANCH}"
-    echo "this may take a few minutes ..."
+    echo "* Cloning ${REPO_URL} and checking out branch ${REPO_BRANCH}. This may take a few minutes ..."
     git clone --recursive ${REPO_URL} -b ${REPO_BRANCH} ${INSTALL_DIR}
     GIT_RC=$?
     if [[ ${GIT_RC} -ne 0 ]]; then
-        echo "error cloning repository"
+        echoerr "Error: cloning repository failed."
         exit ${GIT_RC}
     fi
 else
-    
+
     if [ -z ${VER} ]; then
         TAG=`curl -s https://api.github.com/repos/stan-dev/cmdstan/releases/latest | grep "tag_name"`
         echo $TAG > tmp-tag
@@ -141,36 +141,36 @@ else
 
     CS=cmdstan-${VER}
 
-    echo "installing cmdstan ${VER} in ${RELDIR}"
-    echo "downloading ${CS}.tar.gz from github"
+    echo "* Installing CmdStan ${VER} in ${RELDIR}"
+    echo "* Downloading ${CS}.tar.gz from GitHub."
 
     curl -s -OL https://github.com/stan-dev/cmdstan/releases/download/v${VER}/${CS}.tar.gz
     CURL_RC=$?
     if [[ ${CURL_RC} -ne 0 ]]; then
-        echo "github download failed, curl exited with: ${CURL_RC}"
+        echoerr "Error: GitHub download failed, curl exited with: ${CURL_RC}"
         exit ${CURL_RC}
     fi
-    echo "download complete"
+    echo "* Download complete."
 
-    echo "unpacking archive"
-    
+    echo "* Unpacking archive ..."
+
     mkdir cmdstan
     tar xzf ${CS}.tar.gz -C cmdstan/ --strip-components 1
     TAR_RC=$?
     if [[ ${TAR_RC} -ne 0 ]]; then
-        echo "corrupt download file ${CS}.tar.gz, tar exited with: ${TAR_RC}"
+        echoerr "Error: corrupt download file ${CS}.tar.gz, tar exited with: ${TAR_RC}"
         exit ${TAR_RC}
     fi
     rm ${CS}.tar.gz
 fi
 
 pushd cmdstan > /dev/null
-echo "building cmdstan binaries"
+echo "* Building CmdStan binaries"
 build_cmdstan
-echo "installed ${CS} to ${RELDIR}/cmdstan"
+echo "* Installed ${CS} to ${RELDIR}/cmdstan"
 
 # cleanup
 pushd -0 > /dev/null
 dirs -c > /dev/null
 echo ""
-echo "CmdStan installation location: `ls -Fd ${RELDIR}/cmdstan`"
+echo "* CmdStan installation location: `ls -Fd ${RELDIR}/cmdstan`"
