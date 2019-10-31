@@ -117,5 +117,5 @@ cmdstan_git_checkout_branch <- function(repo_branch,
     echo_cmd = !quiet,
     spinner = quiet
   )
-  install_log
+  invisible(install_log)
 }
