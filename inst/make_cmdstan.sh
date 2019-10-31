@@ -112,7 +112,7 @@ fi
 if [[ ${OVERWRITE} -ne 1 ]]; then
     if [[ -d ${INSTALL_DIR} ]]; then
         error_msg "Error: an installation already exists at ${RELDIR}/cmdstan."
-        error_msg "Please remove the 'cmdstan' folder or set overwrite=TRUE in install_cmdstan()."
+        error_msg "Please remove or rename the 'cmdstan' folder or set overwrite=TRUE in install_cmdstan()."
         exit 1;
     fi
 fi

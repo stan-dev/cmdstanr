@@ -8,7 +8,8 @@ cmdstan_git_checkout_branch(repo_branch, clean_and_rebuild = TRUE,
   cores = 2, quiet = FALSE)
 }
 \arguments{
-\item{repo_branch}{The branch to checkout in the cloned repository.}
+\item{repo_branch}{If \code{repo_clone} is \code{TRUE}, the name of the branch to
+checkout in the cloned repository.}
 
 \item{clean_and_rebuild}{If \code{TRUE} (the default), will run \code{make clean-all}
 and \code{make build} after checking out the new branch.}
@@ -17,8 +18,8 @@ and \code{make build} after checking out the new branch.}
 and speed up installation. The default is \code{cores=2}, although we recommend
 using more cores if available.}
 
-\item{quiet}{Defaults to \code{FALSE}, but if \code{TRUE} will suppress the verbose
-output during the installation process.}
+\item{quiet}{Should the verbose output from the system process be suppressed
+during installation? The default is \code{FALSE}.}
 }
 \value{
 \link[base:invisible]{Invisibly}, the list returned by \code{\link[processx:run]{processx::run()}},
@@ -27,7 +28,7 @@ which contains information about the system process that was run. See the
 }
 \description{
 This only works if the installed CmdStan is from a clone of the git
-repository.
+repository. See \link{install_cmdstan} for more details.
 }
 \seealso{
 \code{\link[=install_cmdstan]{install_cmdstan()}}

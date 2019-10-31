@@ -11,20 +11,26 @@
 #'
 #' @export
 #' @param dir Path to the directory in which to install CmdStan. The default is
-#'   to install it in a folder `".cmdstanr"` in the user's home directory
-#'   (`Sys.getenv("HOME")`).
+#'   to install it in a directory called `.cmdstanr` within the user's home
+#'   directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstanr")`).
 #' @param cores The number of CPU cores to use to parallelize building CmdStan
 #'   and speed up installation. The default is `cores=2`, although we recommend
 #'   using more cores if available.
-#' @param quiet Defaults to `FALSE`, but if `TRUE` will suppress the verbose
-#'   output during the installation process.
-#' @param overwrite Defaults to `FALSE`, but if `TRUE` will download and
-#'   reinstall CmdStan even if an existing installation is found.
-#' @param repo_clone Defaults to `FALSE`, but if `TRUE` will install a
-#'   git clone of CmdStan and checkout the specified branch.
-#' @param repo_url The URL of the git repository to clone. The default URL
-#'   points to the `stan-dev/cmdstan` github repository.
-#' @param repo_branch The branch to checkout in the cloned repository.
+#' @param quiet Should the verbose output from the system process be suppressed
+#'   during installation? The default is `FALSE`.
+#' @param overwrite When an existing installation is found in `dir`, should
+#'   CmdStan still be downloaded and reinstalled? The default is `FALSE`, in
+#'   which case an informative error is thrown instead of overwriting the user's
+#'   installation.
+#' @param repo_clone If `FALSE` (the default), the latest CmdStan release is
+#'   downloaded and installed from tarball. If `TRUE` will install a git clone
+#'   of CmdStan from `repo_url` and check out the branch `repo_branch`.
+#' @param repo_url If `repo_clone` is `TRUE`, the URL of the git repository to
+#'   clone. The default URL points to the
+#'   [`stan-dev/cmdstan`](https://github.com/stan-dev/cmdstan)
+#'   repository on GitHub.
+#' @param repo_branch If `repo_clone` is `TRUE`, the name of the branch to
+#'   checkout in the cloned repository.
 #'
 #' @return [Invisibly][base::invisible], the list returned by [processx::run()],
 #'   which contains information about the system process that was run. See the
@@ -92,13 +98,13 @@ install_cmdstan <- function(dir = NULL,
 #' Check out a branch from a git repository and rebuild CmdStan
 #'
 #' This only works if the installed CmdStan is from a clone of the git
-#' repository.
+#' repository. See [install_cmdstan] for more details.
 #'
 #' @export
 #' @inheritParams install_cmdstan
-#' @inherit install_cmdstan return
 #' @param clean_and_rebuild If `TRUE` (the default), will run `make clean-all`
 #'   and `make build` after checking out the new branch.
+#' @inherit install_cmdstan return
 #'
 #' @seealso [install_cmdstan()]
 #'

@@ -11,26 +11,32 @@ install_cmdstan(dir = NULL, cores = 2, quiet = FALSE,
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
-to install it in a folder \code{".cmdstanr"} in the user's home directory
-(\code{Sys.getenv("HOME")}).}
+to install it in a directory called \code{.cmdstanr} within the user's home
+directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstanr")}).}
 
 \item{cores}{The number of CPU cores to use to parallelize building CmdStan
 and speed up installation. The default is \code{cores=2}, although we recommend
 using more cores if available.}
 
-\item{quiet}{Defaults to \code{FALSE}, but if \code{TRUE} will suppress the verbose
-output during the installation process.}
+\item{quiet}{Should the verbose output from the system process be suppressed
+during installation? The default is \code{FALSE}.}
 
-\item{overwrite}{Defaults to \code{FALSE}, but if \code{TRUE} will download and
-reinstall CmdStan even if an existing installation is found.}
+\item{overwrite}{When an existing installation is found in \code{dir}, should
+CmdStan still be downloaded and reinstalled? The default is \code{FALSE}, in
+which case an informative error is thrown instead of overwriting the user's
+installation.}
 
-\item{repo_clone}{Defaults to \code{FALSE}, but if \code{TRUE} will install a
-git clone of CmdStan and checkout the specified branch.}
+\item{repo_clone}{If \code{FALSE} (the default), the latest CmdStan release is
+downloaded and installed from tarball. If \code{TRUE} will install a git clone
+of CmdStan from \code{repo_url} and check out the branch \code{repo_branch}.}
 
-\item{repo_url}{The URL of the git repository to clone. The default URL
-points to the \code{stan-dev/cmdstan} github repository.}
+\item{repo_url}{If \code{repo_clone} is \code{TRUE}, the URL of the git repository to
+clone. The default URL points to the
+\href{https://github.com/stan-dev/cmdstan}{stan-dev/cmdstan}
+repository on GitHub.}
 
-\item{repo_branch}{The branch to checkout in the cloned repository.}
+\item{repo_branch}{If \code{repo_clone} is \code{TRUE}, the name of the branch to
+checkout in the cloned repository.}
 }
 \value{
 \link[base:invisible]{Invisibly}, the list returned by \code{\link[processx:run]{processx::run()}},
