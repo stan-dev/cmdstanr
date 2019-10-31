@@ -110,6 +110,8 @@ if [[ ${OVERWRITE} -ne 1 ]]; then
     if [[ -d ${INSTALL_DIR} ]]; then
         echo "cmdstan found in ${RELDIR}/, installation stopped"
         echo "remove the cmdstan folder or set overwrite = TRUE in install_cmdstan()"
+        echo ""
+        echo "CmdStan installation location: `ls -Fd ${RELDIR}/cmdstan`"
         exit 0;
     fi
 fi
