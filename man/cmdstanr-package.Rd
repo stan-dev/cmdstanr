@@ -35,8 +35,8 @@ this package does not directly call any C++ code, instead relying on
 CmdStan for compilation, running algorithms, and writing results to output
 files. Both forms of interfacing with Stan have advantages and
 disadvantages. An in-memory interface like RStan is able to offer more
-advanced features than CmdStanR (for example RStan's \code{grad_log_prob} and
-\code{unconstrain_pars} methods) but keeping up with Stan releases is more
+advanced features than CmdStanR (for example RStan's \code{log_prob} and
+\code{grad_log_prob} methods) but keeping up with Stan releases is more
 complicated for RStan, often requiring non-trivial changes to the
 \pkg{rstan} package and always requiring new CRAN releases of \pkg{rstan}
 and \pkg{StanHeaders}. With CmdStanR, the latest features in Stan will be
