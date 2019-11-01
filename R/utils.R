@@ -376,3 +376,7 @@ set_num_threads <- function(num_threads) {
          call. = FALSE)
   }
 }
+
+parse_diagnose_output <- function(data, k) {
+  print(data)
+}
