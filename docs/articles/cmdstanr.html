@@ -213,18 +213,18 @@ model {
         stepsize_jitter = 0 (Default)
 id = 1
 data
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp5HpGs2/standata-2d2b427700a.json
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2KHrEH/standata-9fc561f2ded.json
 init = 2 (Default)
 random
   seed = 123
 output
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmp5HpGs2/bernoulli-stan-sample-1.csv
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmp2KHrEH/bernoulli-stan-sample-1.csv
   diagnostic_file =  (Default)
   refresh = 100 (Default)
 
 
-Gradient evaluation took 1.6e-05 seconds
-1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
+Gradient evaluation took 1.7e-05 seconds
+1000 transitions using 10 leapfrog steps per transition would take 0.17 seconds.
 Adjust your expectations accordingly!
 
 
@@ -251,9 +251,9 @@ Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Iteration: 1900 / 2000 [ 95%]  (Sampling)
 Iteration: 2000 / 2000 [100%]  (Sampling)
 
- Elapsed Time: 0.006559 seconds (Warm-up)
-               0.01334 seconds (Sampling)
-               0.019899 seconds (Total)
+ Elapsed Time: 0.006866 seconds (Warm-up)
+               0.013867 seconds (Sampling)
+               0.020733 seconds (Total)
 
 method = sample (Default)
   sample
@@ -281,12 +281,12 @@ method = sample (Default)
         stepsize_jitter = 0 (Default)
 id = 2
 data
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp5HpGs2/standata-2d2b427700a.json
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2KHrEH/standata-9fc561f2ded.json
 init = 2 (Default)
 random
   seed = 124
 output
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmp5HpGs2/bernoulli-stan-sample-2.csv
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmp2KHrEH/bernoulli-stan-sample-2.csv
   diagnostic_file =  (Default)
   refresh = 100 (Default)
 
@@ -319,9 +319,9 @@ Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Iteration: 1900 / 2000 [ 95%]  (Sampling)
 Iteration: 2000 / 2000 [100%]  (Sampling)
 
- Elapsed Time: 0.006559 seconds (Warm-up)
-               0.013424 seconds (Sampling)
-               0.019983 seconds (Total)</code></pre>
+ Elapsed Time: 0.006287 seconds (Warm-up)
+               0.014045 seconds (Sampling)
+               0.020332 seconds (Total)</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a> method creates <a href="https://r6.r-lib.org/">R6</a> <a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>CmdStanMCMC</code></a> objects.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/class.html">class</a></span>(fit)</a></code></pre></div>
 <pre><code>[1] "CmdStanMCMC" "R6"         </code></pre>
@@ -339,7 +339,7 @@ post-warmup draws per chain=1000, total post-warmup draws=2000.
 theta  0.24    0.00 0.12  0.06  0.15  0.23  0.32  0.52   736    1
 lp__  -7.31    0.03 0.78 -9.60 -7.51 -7.04 -6.82 -6.75   650    1
 
-Samples were drawn using NUTS(diag_e) at Tue Oct 29 23:16:51 2019.
+Samples were drawn using NUTS(diag_e) at Fri Nov 01 12:31:47 2019.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -359,7 +359,7 @@ convergence, Rhat=1).</code></pre>
 <h2 class="hasAnchor">
 <a href="#comparison-with-rstan" class="anchor"></a>Comparison with RStan</h2>
 <p>The RStan interface (<a href="https://mc-stan.org/rstan"><strong>rstan</strong></a> package) is an in-memory interface to Stan and relies on R packages like <strong>Rcpp</strong> and <strong>inline</strong> call C++ code from R. On the other hand, the CmdStanR interface does not directly call any C++ code from R, instead relying on CmdStan for compilation, running algorithms, and writing results to output files.</p>
-<p>Both forms of interfacing with Stan have advantages and disadvantages. An in-memory interface like RStan is able to offer more advanced features than CmdStanR (for example the <code><a href="https://rdrr.io/pkg/rstan/man/stanfit-method-logprob.html">rstan::grad_log_prob()</a></code> and <code><a href="https://rdrr.io/pkg/rstan/man/stanfit-method-logprob.html">rstan::unconstrain_pars()</a></code> methods) but keeping up with Stan releases is more complicated for RStan, often requiring non-trivial changes to the <strong>rstan</strong> package and requiring new CRAN releases of <strong>rstan</strong> and <strong>StanHeaders</strong>. With CmdStanR, the latest features in Stan will be available from R immediately after updating CmdStan, without an update to the <strong>cmdstanr</strong> package.</p>
+<p>Both forms of interfacing with Stan have advantages and disadvantages. An in-memory interface like RStan is able to offer more advanced features than CmdStanR (for example the <code><a href="https://rdrr.io/pkg/rstan/man/stanfit-method-logprob.html">rstan::log_prob()</a></code> and <code><a href="https://rdrr.io/pkg/rstan/man/stanfit-method-logprob.html">rstan::grad_log_prob()</a></code> methods) but keeping up with Stan releases is more complicated for RStan, often requiring non-trivial changes to the <strong>rstan</strong> package and requiring new CRAN releases of <strong>rstan</strong> and <strong>StanHeaders</strong>. With CmdStanR, the latest features in Stan will be available from R immediately after updating CmdStan, without an update to the <strong>cmdstanr</strong> package.</p>
 <p>Another difference between RStan and CmdStanR is the license. RStan is GPL-3 while the license for CmdStanR (like Stan) is BSD-3, which is a bit more permissive.</p>
 </div>
   </div>

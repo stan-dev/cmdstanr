@@ -4,26 +4,55 @@
 \alias{install_cmdstan}
 \title{Install the latest release of CmdStan}
 \usage{
-install_cmdstan(dir = NULL, cores = 2, quiet = FALSE)
+install_cmdstan(dir = NULL, cores = 2, quiet = FALSE,
+  overwrite = FALSE, repo_clone = FALSE,
+  repo_url = "https://github.com/stan-dev/cmdstan.git",
+  repo_branch = "develop")
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
-to install it in a folder \code{".cmdstanr"} in the user's home directory
-(\code{Sys.getenv("HOME")}).}
+to install it in a directory called \code{.cmdstanr} within the user's home
+directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstanr")}).}
 
 \item{cores}{The number of CPU cores to use to parallelize building CmdStan
-and speed up installation.}
+and speed up installation. The default is \code{cores=2}, although we recommend
+using more cores if available.}
 
-\item{quiet}{Defaults to \code{FALSE}, but if \code{TRUE} will suppress the verbose
-output during the installation process.}
+\item{quiet}{Should the verbose output from the system process be suppressed
+during installation? The default is \code{FALSE}.}
+
+\item{overwrite}{When an existing installation is found in \code{dir}, should
+CmdStan still be downloaded and reinstalled? The default is \code{FALSE}, in
+which case an informative error is thrown instead of overwriting the user's
+installation.}
+
+\item{repo_clone}{If \code{FALSE} (the default), the latest CmdStan release is
+downloaded and installed from tarball. If \code{TRUE} will install a git clone
+of CmdStan from \code{repo_url} and check out the branch \code{repo_branch}.}
+
+\item{repo_url}{If \code{repo_clone} is \code{TRUE}, the URL of the git repository to
+clone. The default URL points to the
+\href{https://github.com/stan-dev/cmdstan}{stan-dev/cmdstan}
+repository on GitHub.}
+
+\item{repo_branch}{If \code{repo_clone} is \code{TRUE}, the name of the branch to
+checkout in the cloned repository.}
+}
+\value{
+\link[base:invisible]{Invisibly}, the list returned by \code{\link[processx:run]{processx::run()}},
+which contains information about the system process that was run. See the
+\strong{Value} section at \code{\link[processx:run]{processx::run()}} for details.
 }
 \description{
 \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
 The \code{install_cmdstan()} function runs a script
 (see \code{inst/make_cmdstan.sh} on \href{https://github.com/stan-dev/cmdstanr}{GitHub})
-that attempts to download and install the latest release of
+that by default attempts to download and install the latest release of
 \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan}. Currently the
 necessary C++ tool chain is assumed to be available (see Appendix B of the
 CmdStan \href{https://github.com/stan-dev/cmdstan/releases/latest}{guide}),
 but in the future CmdStanR may help install the requirements.
+}
+\seealso{
+\code{\link[=cmdstan_git_checkout_branch]{cmdstan_git_checkout_branch()}}
 }

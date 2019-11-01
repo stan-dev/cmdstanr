@@ -19,7 +19,7 @@ r_github_packages:
   - r-lib/covr
 
 before_install:
-  - sudo bash inst/make_cmdstan.sh -j2
+  - sudo bash inst/make_cmdstan.sh -j2 -o
 
 after_success:
     - Rscript -e 'covr::codecov()'

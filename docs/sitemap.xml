@@ -19,6 +19,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_default_path.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_git_checkout_branch.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_model.html</loc>
   </url>
   <url>
