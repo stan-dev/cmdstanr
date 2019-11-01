@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Install the latest release of CmdStan — install_cmdstan • cmdstanr</title>
+<title>Check out a branch from a git repository and rebuild CmdStan — cmdstan_git_checkout_branch • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,15 +42,9 @@
 
 
 
-<meta property="og:title" content="Install the latest release of CmdStan — install_cmdstan" />
-<meta property="og:description" content="
-The install_cmdstan() function runs a script
-(see inst/make_cmdstan.sh on GitHub)
-that by default attempts to download and install the latest release of
-CmdStan. Currently the
-necessary C++ tool chain is assumed to be available (see Appendix B of the
-CmdStan guide),
-but in the future CmdStanR may help install the requirements." />
+<meta property="og:title" content="Check out a branch from a git repository and rebuild CmdStan — cmdstan_git_checkout_branch" />
+<meta property="og:description" content="This only works if the installed CmdStan is from a clone of the git
+repository. See install_cmdstan for more details." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -162,35 +156,31 @@ but in the future CmdStanR may help install the requirements." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Install the latest release of CmdStan</h1>
+    <h1>Check out a branch from a git repository and rebuild CmdStan</h1>
     
-    <div class="hidden name"><code>install_cmdstan.Rd</code></div>
+    <div class="hidden name"><code>cmdstan_git_checkout_branch.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><img src='figures/logo.png' width="25px" alt="https://mc-stan.org/about/logo/" />
-The <code>install_cmdstan()</code> function runs a script
-(see <code>inst/make_cmdstan.sh</code> on <a href='https://github.com/stan-dev/cmdstanr'>GitHub</a>)
-that by default attempts to download and install the latest release of
-<a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan</a>. Currently the
-necessary C++ tool chain is assumed to be available (see Appendix B of the
-CmdStan <a href='https://github.com/stan-dev/cmdstan/releases/latest'>guide</a>),
-but in the future CmdStanR may help install the requirements.</p>
+    <p>This only works if the installed CmdStan is from a clone of the git
+repository. See <a href='install_cmdstan.html'>install_cmdstan</a> for more details.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>install_cmdstan</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>overwrite</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>repo_clone</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>repo_url</span> <span class='kw'>=</span> <span class='st'>"https://github.com/stan-dev/cmdstan.git"</span>,
-  <span class='kw'>repo_branch</span> <span class='kw'>=</span> <span class='st'>"develop"</span>)</pre>
+    <pre class="usage"><span class='fu'>cmdstan_git_checkout_branch</span>(<span class='no'>repo_branch</span>, <span class='kw'>clean_and_rebuild</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>dir</th>
-      <td><p>Path to the directory in which to install CmdStan. The default is
-to install it in a directory called <code>.cmdstanr</code> within the user's home
-directory (i.e, <code><a href='https://rdrr.io/r/base/file.path.html'>file.path(Sys.getenv("HOME"), ".cmdstanr")</a></code>).</p></td>
+      <th>repo_branch</th>
+      <td><p>If <code>repo_clone</code> is <code>TRUE</code>, the name of the branch to
+checkout in the cloned repository.</p></td>
+    </tr>
+    <tr>
+      <th>clean_and_rebuild</th>
+      <td><p>If <code>TRUE</code> (the default), will run <code>make clean-all</code>
+and <code>make build</code> after checking out the new branch.</p></td>
     </tr>
     <tr>
       <th>cores</th>
@@ -203,31 +193,6 @@ using more cores if available.</p></td>
       <td><p>Should the verbose output from the system process be suppressed
 during installation? The default is <code>FALSE</code>.</p></td>
     </tr>
-    <tr>
-      <th>overwrite</th>
-      <td><p>When an existing installation is found in <code>dir</code>, should
-CmdStan still be downloaded and reinstalled? The default is <code>FALSE</code>, in
-which case an informative error is thrown instead of overwriting the user's
-installation.</p></td>
-    </tr>
-    <tr>
-      <th>repo_clone</th>
-      <td><p>If <code>FALSE</code> (the default), the latest CmdStan release is
-downloaded and installed from tarball. If <code>TRUE</code> will install a git clone
-of CmdStan from <code>repo_url</code> and check out the branch <code>repo_branch</code>.</p></td>
-    </tr>
-    <tr>
-      <th>repo_url</th>
-      <td><p>If <code>repo_clone</code> is <code>TRUE</code>, the URL of the git repository to
-clone. The default URL points to the
-<a href='https://github.com/stan-dev/cmdstan'>stan-dev/cmdstan</a>
-repository on GitHub.</p></td>
-    </tr>
-    <tr>
-      <th>repo_branch</th>
-      <td><p>If <code>repo_clone</code> is <code>TRUE</code>, the name of the branch to
-checkout in the cloned repository.</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -237,7 +202,7 @@ which contains information about the system process that was run. See the
 <strong>Value</strong> section at <code><a href='http://processx.r-lib.org/reference/run.html'>processx::run()</a></code> for details.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='cmdstan_git_checkout_branch.html'>cmdstan_git_checkout_branch()</a></code></p></div>
+    <div class='dont-index'><p><code><a href='install_cmdstan.html'>install_cmdstan()</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
