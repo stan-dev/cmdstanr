@@ -64,8 +64,8 @@ install_cmdstan <- function(dir = NULL,
   install_log <- processx::run(
     command = "bash",
     args = make_cmdstan,
+    echo_cmd = FALSE,
     echo = !quiet,
-    echo_cmd = !quiet,
     spinner = quiet,
     error_on_status = FALSE
   )
@@ -88,10 +88,7 @@ install_cmdstan <- function(dir = NULL,
     install_path <- cmdstan_default_path()
   }
 
-  message(
-    "\nUse set_cmdstan_path('", install_path, "') ",
-    "to point CmdStanR to the location of the CmdStan installation."
-  )
+  set_cmdstan_path(install_path)
   invisible(install_log)
 }
 
