@@ -113,6 +113,9 @@ cmdstan_git_checkout_branch <- function(repo_branch,
   make_cmdstan <- c(make_cmdstan, paste0("-d ", cmdstan_path()))
   make_cmdstan <- c(make_cmdstan, paste0("-j", cores))
   make_cmdstan <- c(make_cmdstan, "-c", "-b", repo_branch)
+  if(clean_and_rebuild) {
+    make_cmdstan <- c(make_cmdstan, "-p")
+  }
   install_log <- processx::run(
     command = "bash",
     args = make_cmdstan,

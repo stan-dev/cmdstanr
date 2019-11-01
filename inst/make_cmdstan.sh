@@ -3,7 +3,7 @@
 # install a CmdStan release into a specified directory
 #  - build binaries, compile example model to build model header
 
-while getopts ":d:v:j:wrob:u:c" opt; do
+while getopts ":d:v:j:wrob:u:cp" opt; do
   case $opt in
     d) RELDIR="$OPTARG"
     ;;
@@ -23,6 +23,8 @@ while getopts ":d:v:j:wrob:u:c" opt; do
     ;;
     o) OVERWRITE=1
     ;;
+    p) CLEAN_AND_REBUILD=1
+    ;;
     \?) echo "Invalid option -$OPTARG" >&2
     ;;
   esac
@@ -30,6 +32,10 @@ done
 
 if [ -z ${WIN} ]; then
     WIN=0
+fi
+
+if [ -z ${CLEAN_AND_REBUILD} ]; then
+    CLEAN_AND_REBUILD=0
 fi
 
 if [ -z ${OVERWRITE} ]; then
@@ -111,9 +117,13 @@ if [[ ${REPO_CHECKOUT_BRANCH} -ne 0 ]]; then
         exit ${GIT_RC}
     fi
     git submodule update --recursive
-    cleanup_cmdstan
-    build_cmdstan
-    echo "* Finished checking out branch and rebuilding."
+    if [[ ${CLEAN_AND_REBUILD} -ne 0 ]]; then
+        cleanup_cmdstan
+        build_cmdstan
+        echo "* Finished checking out branch and rebuilding."
+    else
+        echo "* Finished checking out branch."
+    fi    
     exit 0;
 fi
 
