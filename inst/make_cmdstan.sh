@@ -111,9 +111,9 @@ fi
 
 if [[ ${OVERWRITE} -ne 1 ]]; then
     if [[ -d ${INSTALL_DIR} ]]; then
-        error_msg "Error: an installation already exists at ${RELDIR}/cmdstan."
+        error_msg "Error: an installation already exists at ${RELDIR}/cmdstan"
         error_msg "Please remove or rename the 'cmdstan' folder or set overwrite=TRUE in install_cmdstan()."
-        exit 1;
+        exit 0; # don't actually error though
     fi
 fi
 
@@ -165,12 +165,11 @@ else
 fi
 
 pushd cmdstan > /dev/null
-echo "* Building CmdStan binaries"
+echo "* Building CmdStan binaries."
 build_cmdstan
-echo "* Installed ${CS} to ${RELDIR}/cmdstan"
 
-# cleanup
+echo "* Cleaning up ..."
 pushd -0 > /dev/null
 dirs -c > /dev/null
-echo ""
-echo "* CmdStan installation location: `ls -Fd ${RELDIR}/cmdstan`"
+echo "* Finished installing CmdStan to `ls -Fd ${RELDIR}/cmdstan`"
+
