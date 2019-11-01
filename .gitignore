@@ -2,12 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-inst/doc
 
-# ignore just in case hpp,o, or exe not cleaned up in tests/
-*.hpp
-*.o
-*.exe
-tests/testthat/resources/stan/bernoulli
-tests/testthat/resources/stan/bernoulli_include
-tests/testthat/resources/stan/logistic
+design-questions/*
+inst/doc
