@@ -367,19 +367,42 @@ sample_method <- function(data = NULL,
   )
 
   runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
+  procs = list()
   for (chain in chain_ids) { # FIXME: allow parallelization
-    run_log <- processx::run(
+    procs[[chain]] <- processx::process$new(
       command = runset$command(),
       args = runset$command_args()[[chain]],
       wd = dirname(self$exe_file()),
-      echo_cmd = FALSE,
-      echo = TRUE
+      echo_cmd = TRUE,
+      stdout = "|",
+      stderr = "|"
     )
+  }
+  while(any_chain_allive(procs)) {
+    processx::poll(procs, 100)
+    for (chain in chain_ids) {
+      output <- procs[[chain]]$read_output_lines()
+      lapply(output, process_output_lines, chain)
+    }
   }
   CmdStanMCMC$new(runset) # see fit.R
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
 
+process_output_lines <- function(out, chain_id) {
+  if(startsWith(out, "Iteration: ")){
+    cat(paste0("CHAIN ", chain_id, ": ", out, "\n"))
+  }
+}
+
+any_chain_allive <-function(chains) {
+  for (x in chains) {
+    if(x$is_alive()) {
+      return(TRUE)
+    }
+  }
+  return(FALSE)
+}
 
 #' Run Stan's optimization algorithms
 #'

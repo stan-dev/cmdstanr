@@ -60,8 +60,7 @@ CmdStanMCMC <- R6::R6Class(
         args = self$output_files(),
         wd = cmdstan_path(),
         echo_cmd = TRUE,
-        echo = FALSE,
-        stdout_line_callback = parse_diagnose_output
+        echo = TRUE
       )
     },
     draws = function() {
