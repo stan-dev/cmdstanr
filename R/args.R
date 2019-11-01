@@ -13,7 +13,7 @@
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
 #' * `FixedParamArgs`: not yet implemented.
-#' * `GenerateQuantitiesArgs`: not yet implemented.
+#' * `GQArgs`: not yet implemented.
 #' * `VariationalArgs`: not yet implemented.
 #'
 NULL
@@ -415,7 +415,7 @@ validate_sample_args <- function(self, num_runs) {
 
 #' Validate arguments for optimization
 #' @noRd
-#' @param self A `OptimizeArgs` object.
+#' @param self An `OptimizeArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_optimize_args <- function(self) {
   checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
