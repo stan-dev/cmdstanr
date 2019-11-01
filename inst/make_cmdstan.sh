@@ -74,9 +74,17 @@ cleanup_cmdstan() {
 
 build_cmdstan() {
     if [[ ${WIN} -ne 0 ]]; then
-        mingw32-make -j${JOBS} build examples/bernoulli/bernoulli.exe
+        mingw32-make -j${JOBS} build
     else
-        make -j${JOBS} build examples/bernoulli/bernoulli
+        make -j${JOBS} build
+    fi
+}
+
+build_example() {
+    if [[ ${WIN} -ne 0 ]]; then
+        mingw32-make -j${JOBS} examples/bernoulli/bernoulli.exe
+    else
+        make -j${JOBS} examples/bernoulli/bernoulli
     fi
 }
 
@@ -167,6 +175,9 @@ fi
 pushd cmdstan > /dev/null
 echo "* Building CmdStan binaries."
 build_cmdstan
+if [[ ${REPO_CLONE} -ne 1 ]]; then
+build_example
+fi
 
 echo "* Cleaning up ..."
 pushd -0 > /dev/null
