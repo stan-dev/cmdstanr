@@ -110,7 +110,8 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     stan_file_ = character(),
-    exe_file_ = character()
+    exe_file_ = character(),
+    chain_parse_state = list()
   ),
   public = list(
     initialize = function(stan_file, compile, ...) {
@@ -338,7 +339,13 @@ sample_method <- function(data = NULL,
                           metric = NULL,
                           stepsize = NULL,
                           max_depth = NULL) {
-
+  # cleanup any background processes on error or interrupt
+  # should not be used if for non-blocking sampling
+  on.exit(
+    {
+      lapply(procs, function(x) { x$kill_tree() })
+    }, add = TRUE
+  )
   num_chains <- num_chains %||% 1
   checkmate::assert_integerish(num_chains, lower = 1)
   chain_ids <- seq_len(num_chains)
@@ -369,40 +376,32 @@ sample_method <- function(data = NULL,
   runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
   procs = list()
   for (chain in chain_ids) { # FIXME: allow parallelization
+    try(
     procs[[chain]] <- processx::process$new(
       command = runset$command(),
       args = runset$command_args()[[chain]],
       wd = dirname(self$exe_file()),
       echo_cmd = TRUE,
       stdout = "|",
-      stderr = "|"
+      stderr = "|",
+      cleanup = TRUE,
+      cleanup_tree = TRUE
+    ), silent = TRUE
     )
   }
-  while(any_chain_allive(procs)) {
-    processx::poll(procs, 100)
-    for (chain in chain_ids) {
-      output <- procs[[chain]]$read_output_lines()
-      lapply(output, process_output_lines, chain)
-    }
+  CmdStanMCMC$new(chain_ids) # see fit.R
+  CmdStanModel$private$chain_parse_state <- rep(0, length(chain_ids))
+  names(CmdStanModel$private$chain_parse_state) <- chain_ids
+  while(any_chain_alive(procs)) {
+      processx::poll(procs, 100)
+      for (chain in chain_ids) {
+        output <- procs[[chain]]$read_output_lines()
+        lapply(output, process_output_lines, chain)
+      }
   }
   CmdStanMCMC$new(runset) # see fit.R
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
-
-process_output_lines <- function(out, chain_id) {
-  if(startsWith(out, "Iteration: ")){
-    cat(paste0("CHAIN ", chain_id, ": ", out, "\n"))
-  }
-}
-
-any_chain_allive <-function(chains) {
-  for (x in chains) {
-    if(x$is_alive()) {
-      return(TRUE)
-    }
-  }
-  return(FALSE)
-}
 
 #' Run Stan's optimization algorithms
 #'
@@ -650,4 +649,28 @@ process_data <- function(data) {
     stop("'data' should be a path or a named list.", call. = FALSE)
   }
   path
+}
+
+process_output_lines <- function(out, chain_id) {
+  # print(CmdStanModel$private$chain_output)
+  # CmdStanModel$private$chain_output[[chain_id]]$out = c(CmdStanModel$private$chain_output[[chain_id]]$out, out)
+  if ((nchar(out) == 0))
+    return(NULL)
+  # print based on state
+  if (CmdStanModel$private$chain_parse_state[[chain_id]] == 1) {
+    cat(paste0("CHAIN ", chain_id, ": ", out, "\n"))
+  }
+  # calculate new state
+  if (startsWith(out, "Adjust your expectations accordingly!")) {
+    CmdStanModel$private$chain_parse_state[[chain_id]] <- 1
+  }
+}
+
+any_chain_alive <-function(chains) {
+  for (x in chains) {
+    if(x$is_alive()) {
+      return(TRUE)
+    }
+  }
+  return(FALSE)
 }
