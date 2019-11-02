@@ -392,12 +392,17 @@ sample_method <- function(data = NULL,
       runset$process_sample_output(output, chain_id)
     }
   }
-  cat("All chains have finished.\n")
-  cat(paste0("Average execution time of the ",
-             num_chains,
-             " chains: ",
-             format(round(mean(runset$time()),1), nsmall = 1),
-             " seconds"))
+  if (length(runset$time()) > 0) {
+    cat("All chains have finished.\n")
+    cat(paste0("Average execution time of the ",
+               num_chains,
+               " chains: ",
+               format(round(mean(runset$time()),1), nsmall = 1),
+               " seconds"))
+  } else {
+    cat("All chains were stopped by critical exceptions.\n")
+  }
+
   CmdStanMCMC$new(runset) # see fit.R
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)

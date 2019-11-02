@@ -487,6 +487,9 @@ RunSet <- R6::R6Class(
           next_state <- state
           if (startsWith(line, "Adjust your expectations accordingly!")) {
             next_state <- 1
+          } else if(startsWith(line, "Exception:")) {
+            next_state <- 1
+            state <- 1
           } else if(startsWith(line, " Elapsed Time:")) {
             next_state <- 2
             state <- 2
