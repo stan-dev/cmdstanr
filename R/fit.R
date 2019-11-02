@@ -74,12 +74,12 @@ CmdStanMCMC <- R6::R6Class(
       self$runset$time()
     },
     output = function(id) {
-      out <- self$runset$output()
-      if (id %in% out) {
-        self$runset$output()[[id]]
-      } else {
-        return(NULL)
-      }
+      cat(paste(self$runset$output()[[id]], collapse="\n"))
+      # if (id %in% out) {
+      #   self$runset$output()[[id]]
+      # } else {
+      #   return(NULL)
+      # }
     }
     # sampler_params = function() {
     #   # currently sampler params list from rstan::get_sampler_params()
@@ -480,8 +480,8 @@ RunSet <- R6::R6Class(
       if (length(out) == 0) {
         return(NULL)
       }
-      # private$chain_output_[[id]] <- c(private$chain_output_[[id]], out)
       for (line in out) {
+        private$chain_output_[[id]] = c(private$chain_output_[[id]], line)
         if (nchar(line) > 0) {
           state <- private$chain_output_state_[[id]]
           next_state <- state
@@ -505,12 +505,13 @@ RunSet <- R6::R6Class(
     },
     mark_chain_start = function(id) {
       private$chain_start_time_[[id]] <- Sys.time()
+      private$chain_output_[[id]] = c("")
     },
     time = function() {
       as.numeric(private$chain_run_time_)
     },
     output = function() {
-      chain_output_
+      private$chain_output_
     }
   ),
   private = list(
