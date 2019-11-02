@@ -18,6 +18,8 @@ objects.
 \code{diagnose} \tab Run and print CmdStan's \code{bin/diagnose}. \cr
 \code{draws} \tab
 Return post-warmup draws as an \code{iters x chains x variables} array. \cr
+\code{time} \tab Return execution times of all chains \cr
+\code{output(id)} \tab Return the stdout and stderr of the chain with the provided id
 \code{\link[=fit-method-save_output_files]{save_output_files}}
 \tab Save output CSV files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{save_data_file}}

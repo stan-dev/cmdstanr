@@ -20,6 +20,8 @@
 #'  `diagnose` \tab Run and print CmdStan's `bin/diagnose`. \cr
 #'  `draws` \tab
 #'    Return post-warmup draws as an `iters x chains x variables` array. \cr
+#'  `time` \tab Return execution times of all chains \cr
+#'  `output(id)` \tab Return the stdout and stderr of the chain with the provided id
 #'  [`save_output_files`][fit-method-save_output_files]
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
@@ -67,6 +69,17 @@ CmdStanMCMC <- R6::R6Class(
       # iter x chains x params array
       if (is.null(private$draws_)) private$read_csv()
       private$draws_
+    },
+    time = function() {
+      self$runset$time()
+    },
+    output = function(id) {
+      out <- self$runset$output()
+      if (id %in% out) {
+        self$runset$output()[[id]]
+      } else {
+        return(NULL)
+      }
     }
     # sampler_params = function() {
     #   # currently sampler params list from rstan::get_sampler_params()
@@ -349,7 +362,7 @@ RunSet <- R6::R6Class(
     # @param args CmdStanArgs object.
     # @param num_runs The number of CmdStan runs. For MCMC this is the number of
     #   chains. For optimization this must be set to 1.
-    initialize = function(args, num_runs) {
+    initialize = function(args, num_runs, chain_ids) {
       checkmate::assert_r6(args, classes = "CmdStanArgs")
       checkmate::assert_integerish(num_runs,
                                    any.missing = FALSE,
@@ -358,7 +371,8 @@ RunSet <- R6::R6Class(
                                    lower = 1)
       private$args_ <- args
       private$num_runs_ <- as.integer(num_runs)
-
+      private$chain_output_state_ <- rep(0, length(args$run_ids))
+      names(private$chain_output_state_) <- args$run_ids
 
       # diagnostic csv files if diagnostic_file=TRUE
       private$diagnostic_files_ <- NULL
@@ -461,6 +475,42 @@ RunSet <- R6::R6Class(
         ext = ".json",
         timestamp = timestamp
       )
+    },
+    process_sample_output = function(out, id) {
+      if (length(out) == 0) {
+        return(NULL)
+      }
+      # private$chain_output_[[id]] <- c(private$chain_output_[[id]], out)
+      for (line in out) {
+        if (nchar(line) > 0) {
+          state <- private$chain_output_state_[[id]]
+          next_state <- state
+          if (startsWith(line, "Adjust your expectations accordingly!")) {
+            next_state <- 1
+          } else if(startsWith(line, " Elapsed Time:")) {
+            next_state <- 2
+            state <- 2
+          }
+          if (state == 1) {
+            cat(paste0("CHAIN ", id, ": ", line, "\n"))
+          }
+          if (state == 2) {
+            if(regexpr("(Total)", line) > 0) {
+              private$chain_run_time_[[id]] = (Sys.time()-private$chain_start_time_[[id]])
+            }
+          }
+          private$chain_output_state_[[id]] <- next_state
+        }
+      }
+    },
+    mark_chain_start = function(id) {
+      private$chain_start_time_[[id]] <- Sys.time()
+    },
+    time = function() {
+      as.numeric(private$chain_run_time_)
+    },
+    output = function() {
+      chain_output_
     }
   ),
   private = list(
@@ -470,6 +520,10 @@ RunSet <- R6::R6Class(
     diagnostic_files_ = character(),
     console_files_ = character(),
     command_args_ = list(),
-    retcodes_ = integer()
+    retcodes_ = integer(),
+    chain_output_state_ = list(),
+    chain_output_ = list(),
+    chain_start_time_ = list(),
+    chain_run_time_ = list()
   )
 )

@@ -20,8 +20,8 @@ expect_experimental_warning <- function(object) {
     regexp = "experimental and the structure of returned object may change"
   )
 }
-expect_sample_output <- function(object) {
-  testthat::expect_output(object, "Gradient evaluation took")
+expect_sample_output <- function(object, chains) {
+  testthat::expect_output(object, paste0("Running MCMC sampling with ", chains, " chain"))
 }
 expect_optim_output <- function(object) {
   expect_experimental_warning(
@@ -155,17 +155,17 @@ if (NOT_CRAN) {
 test_that("sample() method works with data list", {
   skip_on_cran()
 
-  expect_sample_output(fit <- mod$sample(data = data_list, num_chains = 1))
+  expect_sample_output(fit <- mod$sample(data = data_list, num_chains = 1), 1)
   expect_is(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method works with data files", {
   skip_on_cran()
 
-  expect_sample_output(fit_r <- mod$sample(data = data_file_r, num_chains = 1))
+  expect_sample_output(fit_r <- mod$sample(data = data_file_r, num_chains = 1), 1)
   expect_is(fit_r, "CmdStanMCMC")
 
-  expect_sample_output(fit_json <- mod$sample(data = data_file_json, num_chains = 1))
+  expect_sample_output(fit_json <- mod$sample(data = data_file_json, num_chains = 1), 1)
   expect_is(fit_json, "CmdStanMCMC")
 })
 
@@ -180,13 +180,13 @@ test_that("sample() method works with init file", {
     fileext = ".json"
   )
   write_stan_json(init_list, file = init_file)
-  expect_sample_output(mod$sample(data = data_file_r, init = init_file))
+  expect_sample_output(mod$sample(data = data_file_r, init = init_file, num_chains = 1), 1)
 })
 
 test_that("sample() method runs when all arguments specified", {
   skip_on_cran()
 
-  expect_sample_output(fit <- do.call(mod$sample, ok_arg_values))
+  expect_sample_output(fit <- do.call(mod$sample, ok_arg_values), 2)
   expect_is(fit, "CmdStanMCMC")
 })
 
