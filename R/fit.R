@@ -362,7 +362,7 @@ RunSet <- R6::R6Class(
     # @param args CmdStanArgs object.
     # @param num_runs The number of CmdStan runs. For MCMC this is the number of
     #   chains. For optimization this must be set to 1.
-    initialize = function(args, num_runs, chain_ids) {
+    initialize = function(args, num_runs) {
       checkmate::assert_r6(args, classes = "CmdStanArgs")
       checkmate::assert_integerish(num_runs,
                                    any.missing = FALSE,
@@ -371,9 +371,6 @@ RunSet <- R6::R6Class(
                                    lower = 1)
       private$args_ <- args
       private$num_runs_ <- as.integer(num_runs)
-      private$chain_output_state_ <- rep(0, length(args$run_ids))
-      names(private$chain_output_state_) <- args$run_ids
-
       # diagnostic csv files if diagnostic_file=TRUE
       private$diagnostic_files_ <- NULL
       if (args$save_diagnostics) {
@@ -406,6 +403,17 @@ RunSet <- R6::R6Class(
         )
       })
       private$retcodes_ <- rep(-1L, num_runs)
+      private$chain_info_ <- data.frame( id = seq(private$num_runs_),
+                  stopped = rep(FALSE, private$num_runs_),
+                  state = rep(0, private$num_runs_),
+                  output_state = rep(0, private$num_runs_),
+                  output = rep(" ", private$num_runs_),
+                  start_time = rep(0, private$num_runs_),
+                  warmup_time = rep(0, private$num_runs_),
+                  sampling_time = rep(0, private$num_runs_),
+                  total_time = rep(0, private$num_runs_),
+                  last_section_start_time = rep(0, private$num_runs_)
+                )
       invisible(self)
     },
 
@@ -477,41 +485,75 @@ RunSet <- R6::R6Class(
       )
     },
     process_sample_output = function(out, id) {
+      id <- as.character(id)
       if (length(out) == 0) {
         return(NULL)
       }
       for (line in out) {
-        private$chain_output_[[id]] = c(private$chain_output_[[id]], line)
+        private$chain_output_[[id]] <- c(private$chain_output_[[id]], line)
         if (nchar(line) > 0) {
-          state <- private$chain_output_state_[[id]]
+          state <- private$chain_info_[id,"state"]
           next_state <- state
-          if (startsWith(line, "Adjust your expectations accordingly!")) {
-            next_state <- 1
-          } else if(startsWith(line, "Exception:")) {
-            next_state <- 1
-            state <- 1
-          } else if(startsWith(line, " Elapsed Time:")) {
-            next_state <- 2
+          if(state == 1 && regexpr("Iteration:", line) > 0) {
             state <- 2
+            next_state <- 2
+            private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
-          if (state == 1) {
-            cat(paste0("CHAIN ", id, ": ", line, "\n"))
+          if(private$chain_info_[id,"state"] == 2 && regexpr("(Sampling)", line) > 0) {
+            next_state <- 3 # 3 = sampling
+            private$chain_info_[id,"warmup_time"] <- Sys.time() - private$chain_info_[id,"last_section_start_time"]
+            private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
-          if (state == 2) {
-            if(regexpr("(Total)", line) > 0) {
-              private$chain_run_time_[[id]] = (Sys.time()-private$chain_start_time_[[id]])
+          if(regexpr("\\[100%\\]", line) > 0) {
+            if (state == 2) { #warmup only run
+              private$chain_info_[id,"warmup_time"] <- Sys.time() - private$chain_info_[id,"last_section_start_time"]
+            } else if (state == 3) { # sampling
+              private$chain_info_[id,"sampling_time"] <- Sys.time() - private$chain_info_[id,"last_section_start_time"]
             }
+            next_state <- 4 # writing csv and finishing
           }
-          private$chain_output_state_[[id]] <- next_state
+          if ((state > 1 && state < 4) ||
+              (state == 1 && startsWith(line, "Exception:"))) {
+            cat(paste0("CHAIN ", id,": ", line, "\n"))
+          }
+          private$chain_info_[id,"state"] <- next_state
         }
       }
     },
     mark_chain_start = function(id) {
-      private$chain_start_time_[[id]] <- Sys.time()
-      private$chain_output_[[id]] = c("")
+      id <- as.character(id)
+      private$chain_info_[id,"start_time"] <- Sys.time()
+      private$chain_info_[id,"state"] <- 1
+      private$chain_info_[id,"last_section_start_time"] <- private$chain_info_[id,"start_time"]
+      private$chain_output_[[id]] <- c("")
+    },
+    mark_chain_stop = function(id) {
+      id <- as.character(id)
+      if (private$chain_info_[id,"state"] == 4) {
+        private$chain_info_[id,"state"] <- 5
+        private$chain_info_[id,"total_time"] <- Sys.time() - private$chain_info_[id,"start_time"]
+        cat(paste0("Chain ",
+                   id,
+                   " finished in ",
+                   format(round(mean(private$chain_info_[id,"total_time"]),1), nsmall = 1),
+                   " seconds.\n"))
+      } else {
+        cat(paste0("Chain ", id, " finished unexpectedly!\n"))
+      }
+    },
+    chain_state = function(id = NULL) {
+      if(is.null(id)) {
+        private$chain_info_$state
+      } else {
+        private$chain_info_[id,"state"]
+      }
     },
     time = function() {
-      as.numeric(private$chain_run_time_)
+      info = private$chain_info_[private$chain_info_$state==5,]
+      data.frame(chain_id = info$id,
+                 warmup_time = info$warmup_time,
+                 sampling_time = info$sampling_time,
+                 total_time = info$total_time)
     },
     output = function() {
       private$chain_output_
@@ -525,9 +567,7 @@ RunSet <- R6::R6Class(
     console_files_ = character(),
     command_args_ = list(),
     retcodes_ = integer(),
-    chain_output_state_ = list(),
-    chain_output_ = list(),
-    chain_start_time_ = list(),
-    chain_run_time_ = list()
+    chain_info_ = NULL,
+    chain_output_ = list()
   )
 )

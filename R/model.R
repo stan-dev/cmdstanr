@@ -276,8 +276,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   The following arguments are offered by CmdStanR but not CmdStan:
 #'
 #'   * `num_chains`: (positive integer) The number of Markov chains to run.
-#'   Currently the chains are run sequentially, but the option to
-#'   execute CmdStan runs in parallel is coming soon.
+#'   The chains will run in parallel and will be scheduled to free CPU cores
+#'   by the OS. Limiting the number of chains that run in parallel is in the works.
 #'   This argument does not correspond to an argument in CmdStan because all
 #'   CmdStan arguments pertain to the execution of a single run only.
 #'
@@ -327,7 +327,7 @@ sample_method <- function(data = NULL,
                           refresh = NULL,
                           init = NULL,
                           save_diagnostics = FALSE,
-                          num_chains = NULL, # TODO: CmdStan does 1 chain, but should this default to 4?
+                          num_chains = 4,
                           # num_cores = NULL, # TODO
                           num_warmup = NULL,
                           num_samples = NULL,
@@ -339,7 +339,6 @@ sample_method <- function(data = NULL,
                           stepsize = NULL,
                           max_depth = NULL) {
   # cleanup any background processes on error or interrupt
-  # should not be used if for non-blocking sampling
   on.exit(
     {
       lapply(procs, function(x) { x$kill_tree() })
@@ -385,31 +384,54 @@ sample_method <- function(data = NULL,
     )
     runset$mark_chain_start(chain_id)
   }
-  while(any_chain_allive(procs)) {
+  while(any_chain_alive(procs, runset)) {
+
     processx::poll(procs, 100)
     for (chain_id in runset$run_ids()) {
       output <- procs[[chain_id]]$read_output_lines()
       runset$process_sample_output(output, chain_id)
     }
   }
-  if (length(runset$time()) > 0) {
-    cat("All chains have finished.\n")
-    cat(paste0("Average execution time of the ",
-               num_chains,
-               " chains: ",
-               format(round(mean(runset$time()),1), nsmall = 1),
-               " seconds"))
-  } else {
-    cat("All chains were stopped by critical exceptions.\n")
+  if(num_chains > 1) {
+    failed_chains = num_chains - sum(runset$chain_state()==5)
+    if (failed_chains == 0) {
+        if(num_chains==2) {
+          cat("Both chains finished succesfully.\n")
+        } else {
+          cat(paste0("All ", num_chains," chains finished succesfully.\n"))
+        }
+        cat(paste0("Mean execution time: ",
+                   format(round(mean(runset$time()$total_time),1), nsmall = 1),
+                   " seconds"))
+    } else {
+      if(failed_chains == num_chains) {
+        cat("All chains finished unexpectedly!\n")
+      } else {
+        cat(paste0(failed_chains, " chain(s) finished unexpectedly!\n"))
+        cat(paste0("The remaining chains had a mean execution time of ",
+                   format(round(mean(runset$time()$total_time),1), nsmall = 1),
+                   " seconds"))
+      }
+    }
   }
-
   CmdStanMCMC$new(runset) # see fit.R
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
 
-any_chain_allive <-function(procs) {
-  proc_alive <- sapply(procs, function(x) { x$is_alive() } )
-  return(any(proc_alive))
+any_chain_alive <-function(procs, runset) {
+  alive <- FALSE
+  for(id in runset$run_ids()) {
+    if (procs[[id]]$is_alive()) {
+      alive <- TRUE
+    }
+    if ((runset$chain_state(id) < 5) && !procs[[id]]$is_alive()) {
+      #if the chain just finished make sure we process all
+      output <- procs[[id]]$read_output_lines()
+      runset$process_sample_output(output, id)
+      runset$mark_chain_stop(id)
+    }
+  }
+  alive
 }
 
 #' Run Stan's optimization algorithms
