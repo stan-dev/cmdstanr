@@ -75,8 +75,8 @@ arguments above, the \code{$sample()} method also has its own set of arguments.
 The following arguments are offered by CmdStanR but not CmdStan:
 \itemize{
 \item \code{num_chains}: (positive integer) The number of Markov chains to run.
-Currently the chains are run sequentially, but the option to
-execute CmdStan runs in parallel is coming soon.
+The chains will run in parallel and will be scheduled to free CPU cores
+by the OS. Limiting the number of chains that run in parallel is in the works.
 This argument does not correspond to an argument in CmdStan because all
 CmdStan arguments pertain to the execution of a single run only.
 }

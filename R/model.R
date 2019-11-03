@@ -341,7 +341,9 @@ sample_method <- function(data = NULL,
   # cleanup any background processes on error or interrupt
   on.exit(
     {
-      lapply(procs, function(x) { x$kill_tree() })
+      if(exists("procs")) {
+        lapply(procs, function(x) { x$kill_tree() })
+      }
     }, add = TRUE
   )
   num_chains <- num_chains %||% 1
