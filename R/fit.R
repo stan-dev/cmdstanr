@@ -73,13 +73,12 @@ CmdStanMCMC <- R6::R6Class(
     time = function() {
       self$runset$time()
     },
-    output = function(id) {
-      cat(paste(self$runset$output()[[id]], collapse="\n"))
-      # if (id %in% out) {
-      #   self$runset$output()[[id]]
-      # } else {
-      #   return(NULL)
-      # }
+    output = function(id = NULL) {
+      if (is.null(id)) {
+        self$runset$output()
+      } else {
+        cat(paste(self$runset$output()[[id]], collapse="\n"))
+      }
     }
     # sampler_params = function() {
     #   # currently sampler params list from rstan::get_sampler_params()

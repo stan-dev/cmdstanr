@@ -376,4 +376,3 @@ set_num_threads <- function(num_threads) {
          call. = FALSE)
   }
 }
-
