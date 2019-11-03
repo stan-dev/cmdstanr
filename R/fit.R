@@ -21,7 +21,7 @@
 #'  `draws` \tab
 #'    Return post-warmup draws as an `iters x chains x variables` array. \cr
 #'  `time` \tab Return execution times of all chains \cr
-#'  `output(id)` \tab Return the stdout and stderr of the chain with the provided id
+#'  `output(id)` \tab Return the stdout and stderr of the chain with the provided id \cr
 #'  [`save_output_files`][fit-method-save_output_files]
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
