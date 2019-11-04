@@ -364,18 +364,20 @@ RunSet <- R6::R6Class(
       private$diagnostic_files_ <- NULL
       if (args$save_diagnostics) {
         private$diagnostic_files_ <-
-          file.path(
-            cmdstan_tempdir(),
-            paste0(args$csv_basename(), "-diagnostic-", args$run_ids, ".csv")
+          tempfile(
+            pattern = paste0(args$csv_basename(), "-diagnostic-", args$run_ids, "-"),
+            tmpdir = cmdstan_tempdir(),
+            fileext = ".csv"
           )
         invisible(file.create(private$diagnostic_files_))
       }
 
       # output csv files if diagnostic_file=TRUE
       private$output_files_ <-
-        file.path(
-          cmdstan_tempdir(),
-          paste0(args$csv_basename(), "-", args$run_ids, ".csv")
+        tempfile(
+          pattern = paste0(args$csv_basename(), "-", args$run_ids, "-"),
+          tmpdir = cmdstan_tempdir(),
+          fileext = ".csv"
         )
       invisible(file.create(private$output_files_))
 
