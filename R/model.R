@@ -275,11 +275,12 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'
 #'   The following arguments are offered by CmdStanR but not CmdStan:
 #'
-#'   * `num_chains`: (positive integer) The number of Markov chains to run.
-#'   The chains will run in parallel and will be scheduled to free CPU cores
-#'   by the OS. Limiting the number of chains that run in parallel is in the works.
-#'   This argument does not correspond to an argument in CmdStan because all
-#'   CmdStan arguments pertain to the execution of a single run only.
+#'   * `num_chains`: (positive integer) The number of Markov chains to run. The
+#'   default is 4. The chains will run in parallel and be scheduled to free CPU
+#'   cores by the OS. Limiting the number of chains that run in parallel is not
+#'   yet possible but is in the works. This argument does not correspond to an
+#'   argument in CmdStan because all CmdStan arguments pertain to the execution
+#'   of a single run only.
 #'
 #'   The rest of the arguments correspond to arguments offered by CmdStan. They
 #'   are described briefly here and in greater detail in the CmdStan manual.
