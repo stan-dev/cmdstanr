@@ -342,7 +342,7 @@ sample_method <- function(data = NULL,
   # cleanup any background processes on error or interrupt
   on.exit(
     {
-      if(exists("procs")) {
+      if (exists("procs")) {
         lapply(procs, function(x) { x$kill_tree() })
       }
     }, add = TRUE
@@ -374,8 +374,8 @@ sample_method <- function(data = NULL,
   )
 
   runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
-  procs = list()
-  cat(paste0("Running MCMC sampling with ", num_chains, " chain(s)...", "\n"))
+  procs <- list()
+  cat("Running MCMC with", num_chains, "chain(s) ...\n")
   for (chain_id in runset$run_ids()) {
     procs[[chain_id]] <- processx::process$new(
       command = runset$command(),
@@ -387,18 +387,17 @@ sample_method <- function(data = NULL,
     )
     runset$mark_chain_start(chain_id)
   }
-  while(any_chain_alive(procs, runset)) {
-
+  while (any_chain_alive(procs, runset)) {
     processx::poll(procs, 100)
     for (chain_id in runset$run_ids()) {
       output <- procs[[chain_id]]$read_output_lines()
       runset$process_sample_output(output, chain_id)
     }
   }
-  if(num_chains > 1) {
-    failed_chains = num_chains - sum(runset$chain_state()==5)
-    if (failed_chains == 0) {
-        if(num_chains==2) {
+  if (num_chains > 1) {
+    num_failed_chains <- num_chains - sum(runset$chain_state() == 5)
+    if (num_failed_chains == 0) {
+        if (num_chains == 2) {
           cat("Both chains finished succesfully.\n")
         } else {
           cat(paste0("All ", num_chains," chains finished succesfully.\n"))
@@ -407,13 +406,13 @@ sample_method <- function(data = NULL,
                    format(round(mean(runset$time()$total_time),1), nsmall = 1),
                    " seconds"))
     } else {
-      if(failed_chains == num_chains) {
+      if (num_failed_chains == num_chains) {
         cat("All chains finished unexpectedly!\n")
       } else {
-        cat(paste0(failed_chains, " chain(s) finished unexpectedly!\n"))
-        cat(paste0("The remaining chains had a mean execution time of ",
-                   format(round(mean(runset$time()$total_time),1), nsmall = 1),
-                   " seconds"))
+        cat(num_failed_chains, "chain(s) finished unexpectedly!\n")
+        cat("The remaining chains had a mean execution time of",
+            format(round(mean(runset$time()$total_time), 1), nsmall = 1),
+            "seconds")
       }
     }
   }
@@ -423,7 +422,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 
 any_chain_alive <-function(procs, runset) {
   alive <- FALSE
-  for(id in runset$run_ids()) {
+  for (id in runset$run_ids()) {
     if (procs[[id]]$is_alive()) {
       alive <- TRUE
     }

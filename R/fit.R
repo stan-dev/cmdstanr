@@ -497,20 +497,20 @@ RunSet <- R6::R6Class(
       }
       for (line in out) {
         private$chain_output_[[id]] <- c(private$chain_output_[[id]], line)
-        if (nchar(line) > 0) {
+        if (nzchar(line)) {
           state <- private$chain_info_[id,"state"]
           next_state <- state
-          if(state == 1 && regexpr("Iteration:", line) > 0) {
+          if (state == 1 && regexpr("Iteration:", line) > 0) {
             state <- 2
             next_state <- 2
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
-          if(private$chain_info_[id,"state"] == 2 && regexpr("(Sampling)", line) > 0) {
+          if (private$chain_info_[id,"state"] == 2 && regexpr("(Sampling)", line) > 0) {
             next_state <- 3 # 3 = sampling
             private$chain_info_[id,"warmup_time"] <- Sys.time() - private$chain_info_[id,"last_section_start_time"]
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
-          if(regexpr("\\[100%\\]", line) > 0) {
+          if (regexpr("\\[100%\\]", line) > 0) {
             if (state == 2) { #warmup only run
               private$chain_info_[id,"warmup_time"] <- Sys.time() - private$chain_info_[id,"last_section_start_time"]
             } else if (state == 3) { # sampling
@@ -538,24 +538,22 @@ RunSet <- R6::R6Class(
       if (private$chain_info_[id,"state"] == 4) {
         private$chain_info_[id,"state"] <- 5
         private$chain_info_[id,"total_time"] <- Sys.time() - private$chain_info_[id,"start_time"]
-        cat(paste0("Chain ",
-                   id,
-                   " finished in ",
-                   format(round(mean(private$chain_info_[id,"total_time"]),1), nsmall = 1),
-                   " seconds.\n"))
+        cat("Chain", id, "finished in",
+            format(round(mean(private$chain_info_[id,"total_time"]), 1), nsmall = 1),
+            "seconds.\n")
       } else {
-        cat(paste0("Chain ", id, " finished unexpectedly!\n"))
+        cat("Chain", id, "finished unexpectedly!\n")
       }
     },
     chain_state = function(id = NULL) {
-      if(is.null(id)) {
+      if (is.null(id)) {
         private$chain_info_$state
       } else {
         private$chain_info_[id,"state"]
       }
     },
     time = function() {
-      info = private$chain_info_[private$chain_info_$state==5,]
+      info <- private$chain_info_[private$chain_info_$state==5,]
       data.frame(chain_id = info$id,
                  warmup_time = info$warmup_time,
                  sampling_time = info$sampling_time,

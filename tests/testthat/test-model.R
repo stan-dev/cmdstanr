@@ -21,7 +21,7 @@ expect_experimental_warning <- function(object) {
   )
 }
 expect_sample_output <- function(object, chains) {
-  testthat::expect_output(object, paste0("Running MCMC sampling with ", chains, " chain"))
+  testthat::expect_output(object, paste0("Running MCMC with ", chains, " chain"))
 }
 expect_optim_output <- function(object) {
   expect_experimental_warning(
