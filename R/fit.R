@@ -382,7 +382,7 @@ RunSet <- R6::R6Class(
         invisible(file.create(private$diagnostic_files_))
       }
 
-      # output csv files if diagnostic_file=TRUE
+      # output csv files
       private$output_files_ <-
         tempfile(
           pattern = paste0(args$csv_basename(), "-", args$run_ids, "-"),
@@ -404,17 +404,20 @@ RunSet <- R6::R6Class(
         )
       })
       private$retcodes_ <- rep(-1L, num_runs)
-      private$chain_info_ <- data.frame( id = seq(private$num_runs_),
-                  stopped = rep(FALSE, private$num_runs_),
-                  state = rep(0, private$num_runs_),
-                  output_state = rep(0, private$num_runs_),
-                  output = rep(" ", private$num_runs_),
-                  start_time = rep(0, private$num_runs_),
-                  warmup_time = rep(0, private$num_runs_),
-                  sampling_time = rep(0, private$num_runs_),
-                  total_time = rep(0, private$num_runs_),
-                  last_section_start_time = rep(0, private$num_runs_)
-                )
+
+      zeros <- rep(0, num_runs)
+      private$chain_info_ <- data.frame(
+        id = seq_len(num_runs),
+        stopped = rep(FALSE, num_runs),
+        state = zeros,
+        output_state = zeros,
+        output = rep(" ", num_runs),
+        start_time = zeros,
+        warmup_time = zeros,
+        sampling_time = zeros,
+        total_time = zeros,
+        last_section_start_time = zeros
+      )
       invisible(self)
     },
 
