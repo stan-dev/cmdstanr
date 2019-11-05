@@ -183,6 +183,68 @@ test_that("sample() method works with init file", {
   expect_sample_output(mod$sample(data = data_file_r, init = init_file))
 })
 
+test_that("sample() method works with provided inv_metrics", {
+  skip_on_cran()
+
+  inv_metric_vector <- array(1, dim = c(1))
+  inv_metric_matrix <- matrix(1, nrow = 1, ncol = 1)
+
+  inv_metric_vector_json <- test_path("resources", "data", "bernoulli.inv_metric.diag_e.json")
+  inv_metric_matrix_json <- test_path("resources", "data", "bernoulli.inv_metric.dense_e.json")
+
+  inv_metric_vector_r <- test_path("resources", "data", "bernoulli.inv_metric.diag_e.data.R")
+  inv_metric_matrix_r <- test_path("resources", "data", "bernoulli.inv_metric.dense_e.data.R")
+
+  expect_sample_output(fit_r <- mod$sample(data = data_file_r,
+                                           num_chains = 1,
+                                           metric = "diag_e",
+                                           inv_metric = inv_metric_vector))
+  expect_is(fit_r, "CmdStanMCMC")
+
+  expect_sample_output(fit_r <- mod$sample(data = data_file_r,
+                                           num_chains = 1,
+                                           metric = "dense_e",
+                                           inv_metric = inv_metric_matrix))
+  expect_is(fit_r, "CmdStanMCMC")
+
+  expect_sample_output(fit_json <- mod$sample(data = data_file_json,
+                                              num_chains = 1,
+                                              metric = "diag_e",
+                                              metric_file = inv_metric_vector_json))
+  expect_is(fit_json, "CmdStanMCMC")
+
+  expect_sample_output(fit_json <- mod$sample(data = data_file_json,
+                                              num_chains = 1,
+                                              metric = "dense_e",
+                                              metric_file = inv_metric_matrix_json))
+  expect_is(fit_json, "CmdStanMCMC")
+
+  expect_sample_output(fit_r <- mod$sample(data = data_file_json,
+                                              num_chains = 1,
+                                              metric = "diag_e",
+                                              metric_file = inv_metric_vector_r))
+  expect_is(fit_r, "CmdStanMCMC")
+
+  expect_sample_output(fit_r <- mod$sample(data = data_file_json,
+                                              num_chains = 1,
+                                              metric = "dense_e",
+                                              metric_file = inv_metric_matrix_r))
+  expect_is(fit_r, "CmdStanMCMC")
+})
+
+test_that("sample() method fails if metric_file and inv_metric both provided", {
+  skip_on_cran()
+
+  inv_metric_vector <- array(1, dim = c(1))
+  inv_metric_vector_json <- test_path("resources", "data", "bernoulli.inv_metric.diag_e.json")
+
+  expect_error(mod$sample(data = data_file_r,
+                          num_chains = 1,
+                          metric = "diag_e",
+                          inv_metric = inv_metric_vector,
+                          metric_file = inv_metric_vector_json))
+})
+
 test_that("sample() method runs when all arguments specified", {
   skip_on_cran()
 

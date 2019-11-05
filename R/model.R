@@ -263,6 +263,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     thin = NULL,
 #'     max_depth = NULL,
 #'     metric = NULL,
+#'     inv_metric = NULL,
+#'     metric_file = NULL,
 #'     stepsize = NULL,
 #'     adapt_engaged = TRUE,
 #'     adapt_delta = NULL
@@ -304,13 +306,22 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   _Euclidean Metric_ section of the CmdStan documentation for more details.
 #'   One of the following:
 #'     - A single string from among `"diag_e"`, `"dense_e"`, `"unit_e"`.
-#'     - A character vector containing paths to files (one per chain) compatible
-#'     with CmdStan that contain precomputed metrics. Each path must be to a
-#'     JSON or Rdump file that contains an entry `inv_metric` whose value is
-#'     either the diagonal vector or the full covariance matrix. If
+#'   * `inv_metric`: (vector, matrix) A vector (if metric == 'diag_e') or a
+#'     matrix (if metric == 'dense_e') for initializing the inverse metric. The
+#'     vector is interpreted as a diagonal metric. The inverse metric is
+#'     usually set to an estimate of the posterior covariance. If
 #'     `adapt_engaged=TRUE`, Stan will use the provided metric just as an
-#'     initial guess during adaptation. To turn off adaptation when using a
-#'     precomputed metric set `adapt_engaged=FALSE`.
+#'     initial guess during adaptation. To turn off adaptation when using
+#'     a precomputed metric set `adapt_engaged=FALSE`. Cannot be used in
+#'     conjunction with metric_file.
+#'   * `metric_file`: (character) A character vector containing paths to files
+#'     (one per chain) compatible with CmdStan that contain precomputed metrics.
+#'     Each path must be to a JSON or Rdump file that contains an entry
+#'     `inv_metric` whose value is either the diagonal vector or the full
+#'     covariance matrix. If `adapt_engaged=TRUE`, Stan will use the provided
+#'     metric just as an initial guess during adaptation. To turn off adaptation
+#'     when using a precomputed metric set `adapt_engaged=FALSE`. Cannot be
+#'     used in conjunction with inv_metric.
 #'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
 #'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
 #'   details.
@@ -336,6 +347,8 @@ sample_method <- function(data = NULL,
                           adapt_engaged = TRUE,
                           adapt_delta = NULL,
                           metric = NULL,
+                          inv_metric = NULL,
+                          metric_file = NULL,
                           stepsize = NULL,
                           max_depth = NULL) {
 
@@ -350,6 +363,8 @@ sample_method <- function(data = NULL,
     thin = thin,
     max_depth = max_depth,
     metric = metric,
+    inv_metric = inv_metric,
+    metric_file = metric_file,
     stepsize = stepsize,
     adapt_engaged = adapt_engaged,
     adapt_delta = adapt_delta
