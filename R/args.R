@@ -150,13 +150,13 @@ SampleArgs <- R6::R6Class(
       self$max_depth <- max_depth
       self$metric <- metric
       self$inv_metric <- inv_metric
-      if(!is.null(inv_metric)) {
-        if(!is.null(metric_file)) {
-          stop("Only one of inv_metric and metric_file can be non-NULL")
+      if (!is.null(inv_metric)) {
+        if (!is.null(metric_file)) {
+          stop("Only one of inv_metric and metric_file can be specified")
         }
 
         # wrap inv_metric in list if not in one
-        if(!is.list(inv_metric)) {
+        if (!is.list(inv_metric)) {
           inv_metric = list(inv_metric)
         }
 
@@ -167,12 +167,12 @@ SampleArgs <- R6::R6Class(
             tmpdir = cmdstan_tempdir(),
             fileext = ".json"
           )
-        for(i in seq_along(inv_metric_paths)) {
+        for (i in seq_along(inv_metric_paths)) {
           write_stan_json(list(inv_metric = inv_metric[[i]]), inv_metric_paths[i])
         }
 
         self$metric_file <- inv_metric_paths
-      } else {
+      } else if (!is.null(metric_file)) {
         self$metric_file <- sapply(metric_file, absolute_path)
       }
       self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
@@ -597,8 +597,9 @@ validate_metric <- function(metric) {
   }
 
   checkmate::assert_character(metric, any.missing = FALSE, min.len = 1)
+  checkmate::assert_subset(metric, choices = available_metrics())
 
-  return(invisible(metric %in% available_metrics()))
+  return(invisible(TRUE))
 }
 
 #' Validate metric file
@@ -614,9 +615,9 @@ validate_metric_file <- function(metric_file, num_runs) {
 
   checkmate::assert_file_exists(metric_file, access = "r")
 
-  if(length(metric_file) != 1 && length(metric_file) != num_runs) {
+  if (length(metric_file) != 1 && length(metric_file) != num_runs) {
     stop(length(metric_file), " metric(s) provided. Must provide ",
-         if(num_runs > 1) "1 or ", num_runs, " metric(s) for ",
+         if (num_runs > 1) "1 or ", num_runs, " metric(s) for ",
          num_runs, " chain(s)")
   }
 

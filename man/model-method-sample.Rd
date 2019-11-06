@@ -24,6 +24,8 @@ some data.
   thin = NULL,
   max_depth = NULL,
   metric = NULL,
+  metric_file = NULL,
+  inv_metric = NULL,
   stepsize = NULL,
   adapt_engaged = TRUE,
   adapt_delta = NULL
@@ -105,14 +107,23 @@ during warmup.
 One of the following:
 \itemize{
 \item A single string from among \code{"diag_e"}, \code{"dense_e"}, \code{"unit_e"}.
-\item A character vector containing paths to files (one per chain) compatible
-with CmdStan that contain precomputed metrics. Each path must be to a
-JSON or Rdump file that contains an entry \code{inv_metric} whose value is
-either the diagonal vector or the full covariance matrix. If
-\code{adapt_engaged=TRUE}, Stan will use the provided metric just as an
-initial guess during adaptation. To turn off adaptation when using a
-precomputed metric set \code{adapt_engaged=FALSE}.
 }
+\item \code{metric_file}: (character) A character vector containing paths to files
+(one per chain) compatible with CmdStan that contain precomputed metrics.
+Each path must be to a JSON or Rdump file that contains an entry
+\code{inv_metric} whose value is either the diagonal vector or the full
+covariance matrix. If \code{adapt_engaged=TRUE}, Stan will use the provided
+metric just as an initial guess during adaptation. To turn off adaptation
+when using a precomputed metric set \code{adapt_engaged=FALSE}. Cannot be
+used in conjunction with \code{inv_metric}.
+\item \code{inv_metric}: (vector, matrix) A vector (if metric == 'diag_e') or a
+matrix (if metric == 'dense_e') for initializing the inverse metric. The
+vector is interpreted as a diagonal metric. The inverse metric is
+usually set to an estimate of the posterior covariance. If
+\code{adapt_engaged=TRUE}, Stan will use the provided metric just as an
+initial guess during adaptation. To turn off adaptation when using
+a precomputed metric set \code{adapt_engaged=FALSE}. Cannot be used in
+conjunction with \code{metric_file}.
 \item \code{max_depth}: (positive integer) The maximum allowed tree depth for the
 NUTS engine. See the \emph{Tree Depth} section of the CmdStan manual for more
 details.

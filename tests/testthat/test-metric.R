@@ -117,5 +117,5 @@ test_that("sample() method fails if metric_file and inv_metric both provided", {
                           metric = "diag_e",
                           inv_metric = inv_metric_vector,
                           metric_file = inv_metric_vector_json),
-               "Only one of inv_metric and metric_file can be non-NULL")
+               "Only one of inv_metric and metric_file can be specified")
 })
