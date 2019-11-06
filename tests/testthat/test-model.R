@@ -93,6 +93,35 @@ test_that("compilation works when stan program not in cmdstan dir", {
   file.remove(paste0(mod_2$exe_file(), c("", ".o",".hpp")))
 })
 
+test_that("compilation works with include_paths", {
+  skip_on_cran()
+
+  stan_program_w_include <- test_path("resources", "stan", "bernoulli_include.stan")
+  expect_error(
+    cmdstan_model(stan_file = stan_program_w_include, include_paths = "NOT_A_DIR",
+                  quiet = TRUE),
+    "Directory 'NOT_A_DIR' does not exist"
+  )
+
+  expect_error(
+    expect_output(
+      cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE),
+      "could not find include file"
+    )
+  )
+
+  expect_message(
+    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
+                                   include_paths = test_path("resources", "stan")),
+    "Compiling Stan program"
+  )
+  expect_equal(mod_w_include$exe_file(), strip_ext(absolute_path(stan_program_w_include)))
+
+  # cleanup
+  file.remove(paste0(mod_w_include$exe_file(), c("", ".o",".hpp")))
+})
+
+
 # Sample ------------------------------------------------------------------
 context("CmdStanModel-sample")
 

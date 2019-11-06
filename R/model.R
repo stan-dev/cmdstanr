@@ -154,6 +154,7 @@ CmdStanModel <- R6::R6Class(
 #'   ```
 #'   $compile(
 #'     quiet = TRUE,
+#'     include_paths = NULL,
 #'     threads = FALSE,
 #'     opencl = FALSE,
 #'     opencl_platform_id = 0,
@@ -171,6 +172,8 @@ CmdStanModel <- R6::R6Class(
 #'     compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'     error we recommend trying again with `quiet=FALSE` to see more of the
 #'     output.
+#'   * `include_paths`: (character vector) Paths to directories where Stan should
+#'     look for files specified in `#include` directives in the Stan program.
 #'   * `threads`: (logical) Should the model be compiled with
 #'     [threading support](https://github.com/stan-dev/math/wiki/Threading-Support)?
 #'     If `TRUE` then `-DSTAN_THREADS` is added to the compiler flags. See
@@ -199,6 +202,7 @@ CmdStanModel <- R6::R6Class(
 NULL
 
 compile_method <- function(quiet = TRUE,
+                           include_paths = NULL,
                            threads = FALSE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
@@ -221,10 +225,17 @@ compile_method <- function(quiet = TRUE,
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
 
+  if (!is.null(include_paths)) {
+    checkmate::assert_directory_exists(include_paths, access = "r")
+    include_paths <- sapply(include_paths, absolute_path, USE.NAMES = FALSE)
+    include_paths <- paste0(include_paths, collapse = ",")
+    include_paths <- paste0("STANCFLAGS += --include_paths=", include_paths)
+  }
+
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
     command = make_cmd(),
-    args = exe,
+    args = c(exe, include_paths),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
