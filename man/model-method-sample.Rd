@@ -26,7 +26,10 @@ some data.
   metric = NULL,
   stepsize = NULL,
   adapt_engaged = TRUE,
-  adapt_delta = NULL
+  adapt_delta = NULL,
+  init_buffer = NULL,
+  term_buffer = NULL,
+  window = NULL
 )
 }
 }
@@ -116,6 +119,12 @@ precomputed metric set \code{adapt_engaged=FALSE}.
 \item \code{max_depth}: (positive integer) The maximum allowed tree depth for the
 NUTS engine. See the \emph{Tree Depth} section of the CmdStan manual for more
 details.
+\item \code{init_buffer}: (non-negative integer) Width of initial fast timestep
+adaptation interval during warmup
+\item \code{term_buffer}: (non-negative integer) Width of final fast timestep
+adaptation interval during warmup
+\item \code{window}: (non-negative integer) Initial width of slow timestep/metric
+adaptation interval
 }
 }
 
