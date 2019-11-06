@@ -134,6 +134,8 @@ SampleArgs <- R6::R6Class(
                           thin = NULL,
                           max_depth = NULL,
                           metric = NULL,
+                          metric_file = NULL,
+                          inv_metric = NULL,
                           stepsize = NULL,
                           adapt_engaged = NULL,
                           adapt_delta = NULL,
@@ -150,17 +152,39 @@ SampleArgs <- R6::R6Class(
       self$thin <- thin
       self$max_depth <- max_depth
       self$metric <- metric
-      # self$metric_file <- character()
+      self$inv_metric <- inv_metric
+      if (!is.null(inv_metric)) {
+        if (!is.null(metric_file)) {
+          stop("Only one of inv_metric and metric_file can be specified.",
+               call. = FALSE)
+        }
+
+        # wrap inv_metric in list if not in one
+        if (!is.list(inv_metric)) {
+          inv_metric <- list(inv_metric)
+        }
+
+        # write all inv_metrics to disk
+        inv_metric_paths <-
+          tempfile(
+            pattern = paste0("inv_metric-", seq_along(inv_metric), "-"),
+            tmpdir = cmdstan_tempdir(),
+            fileext = ".json"
+          )
+        for (i in seq_along(inv_metric_paths)) {
+          write_stan_json(list(inv_metric = inv_metric[[i]]), inv_metric_paths[i])
+        }
+
+        self$metric_file <- inv_metric_paths
+      } else if (!is.null(metric_file)) {
+        self$metric_file <- sapply(metric_file, absolute_path)
+      }
       self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
       self$adapt_engaged <- adapt_engaged
       self$adapt_delta <- adapt_delta
       self$init_buffer <- init_buffer
       self$term_buffer <- term_buffer
       self$window <- window
-
-      if (metric_is_file(self$metric)) {
-        self$metric <- sapply(self$metric, repair_path)
-      }
 
       if (is.logical(self$adapt_engaged)) {
         self$adapt_engaged <- as.integer(self$adapt_engaged)
@@ -172,7 +196,7 @@ SampleArgs <- R6::R6Class(
     },
     validate = function(num_runs) {
       validate_sample_args(self, num_runs)
-      self$metric <- maybe_recycle_metric(self$metric, num_runs)
+      self$metric_file <- maybe_recycle_metric_file(self$metric_file, num_runs)
       invisible(self)
     },
 
@@ -194,7 +218,8 @@ SampleArgs <- R6::R6Class(
         .make_arg("save_warmup"),
         .make_arg("thin"),
         "algorithm=hmc",
-        .make_arg("metric", idx),
+        .make_arg("metric"),
+        .make_arg("metric_file", idx),
         .make_arg("stepsize", idx),
         "engine=nuts",
         .make_arg("max_depth"),
@@ -429,7 +454,8 @@ validate_sample_args <- function(self, num_runs) {
 
   # TODO: implement other checks for metric from cmdstanpy:
   # https://github.com/stan-dev/cmdstanpy/blob/master/cmdstanpy/cmdstan_args.py#L130
-  validate_metric(self$metric, num_runs)
+  validate_metric(self$metric)
+  validate_metric_file(self$metric_file, num_runs)
 
   invisible(TRUE)
 }
@@ -581,67 +607,62 @@ maybe_generate_seed <- function(seed, num_runs) {
   seed
 }
 
-
-# Check if metric speficied as file(s).
-# This particular function doesn't check if files exist
-metric_is_file <- function(metric) {
-  if (is.null(metric)) return(FALSE)
-  if (length(metric) > 1) return(TRUE)
-  !metric %in% available_metrics()
-}
-
 #' Validate metric
 #' @noRd
 #' @param metric User's `metric` argument.
 #' @param num_runs Number of CmdStan runs (number of MCMC chains).
 #' @return Either throws an error or returns `invisible(TRUE)`.
 #'
-validate_metric <- function(metric, num_runs) {
+validate_metric <- function(metric) {
   if (is.null(metric)) {
     return(invisible(TRUE))
   }
 
   checkmate::assert_character(metric, any.missing = FALSE, min.len = 1)
+  checkmate::assert_subset(metric, choices = available_metrics())
 
-  # TODO: need to check if in the right format (see CmdStanPy implementation)
-  if (length(metric) == 1) {
-    must_have_file <- !metric %in% available_metrics()
-    if (must_have_file) {
-      if (!checkmate::test_file_exists(metric, access = "r")) {
-        stop("'metric' is not one of {'diag_e', 'dense_e', 'unit_e'} but ",
-             "is also not a path to a readable file.", call. = FALSE)
-      }
-    }
-  } else if (length(metric) != num_runs) {
-    stop("'metric' must have length equal to one or the number of chains.",
-         call. = FALSE)
-  } else {
-    checkmate::assert_file_exists(metric, access = "r")
+  return(invisible(TRUE))
+}
+
+#' Validate metric file
+#' @noRd
+#' @param metric_file User's `metric_file` argument.
+#' @param num_runs Number of CmdStan runs (number of MCMC chains).
+#' @return Either throws an error or returns `invisible(TRUE)`.
+#'
+validate_metric_file <- function(metric_file, num_runs) {
+  if (is.null(metric_file)) {
+    return(invisible(TRUE))
+  }
+
+  checkmate::assert_file_exists(metric_file, access = "r")
+
+  if (length(metric_file) != 1 && length(metric_file) != num_runs) {
+    stop(length(metric_file), " metric(s) provided. Must provide ",
+         if (num_runs > 1) "1 or ", num_runs, " metric(s) for ",
+         num_runs, " chain(s).")
   }
 
   invisible(TRUE)
 }
 
-#' Recycle metric if not a file (i.e. is one of 'diag_e', 'dense_e', 'unit_e')
+#' Recycle metric_file if not NULL
 #' @noRd
-#' @param metric Already validated `metric` argument.
+#' @param metric_file Path to already validated `metric_file` argument.
 #' @param num_runs Number of CmdStan runs.
-#' @return `metric`, unless a string of length 1 (and not a file path), in which
-#'   case `rep(metric, num_runs)`.
-maybe_recycle_metric <- function(metric, num_runs) {
-  if (is.null(metric) ||
-      length(metric) == num_runs ||
-      !metric %in% available_metrics()) {
-    return(metric)
+#' @return `rep(metric_file, num_runs)` if metric_file is a single path, otherwise
+#'    return `metric_file`.
+maybe_recycle_metric_file <- function(metric_file, num_runs) {
+  if (is.null(metric_file) ||
+      length(metric_file) == num_runs) {
+    return(metric_file)
   }
-  rep(metric, num_runs)
+  rep(metric_file, num_runs)
 }
 
 available_metrics <- function() {
   c("unit_e", "diag_e", "dense_e")
 }
-
-
 
 # Composition helpers -----------------------------------------------------
 
