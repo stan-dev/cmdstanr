@@ -134,8 +134,8 @@ SampleArgs <- R6::R6Class(
                           thin = NULL,
                           max_depth = NULL,
                           metric = NULL,
-                          inv_metric = NULL,
                           metric_file = NULL,
+                          inv_metric = NULL,
                           stepsize = NULL,
                           adapt_engaged = NULL,
                           adapt_delta = NULL) {
@@ -161,21 +161,19 @@ SampleArgs <- R6::R6Class(
         }
 
         # write all inv_metrics to disk
-        inv_metric_paths <- c()
-        for(metric_i in 1:length(inv_metric)) {
-          inv_metric_path <-
-            file.path(
-              cmdstan_tempdir(),
-              paste0("inv_metric-", metric_i, ".json")
-            )
-          write_stan_json(list(inv_metric = inv_metric[[metric_i]]), inv_metric_path)
-          inv_metric_paths <- c(inv_metric_paths, inv_metric_path)
+        inv_metric_paths <-
+          tempfile(
+            pattern = paste0("inv_metric-", 1:length(inv_metric), "-"),
+            tmpdir = cmdstan_tempdir(),
+            fileext = ".json"
+          )
+        for(i in seq_along(inv_metric_paths)) {
+          write_stan_json(list(inv_metric = inv_metric[[i]]), inv_metric_paths[i])
         }
 
         self$metric_file <- inv_metric_paths
       } else {
-        self$metric_file <- sapply(metric_file, repair_path)
-        self$metric_file <- sapply(self$metric_file, absolute_path)
+        self$metric_file <- sapply(metric_file, absolute_path)
       }
       self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
       self$adapt_engaged <- adapt_engaged
@@ -614,20 +612,12 @@ validate_metric_file <- function(metric_file, num_runs) {
     return(invisible(TRUE))
   }
 
-  checkmate::assert_character(metric_file, any.missing = FALSE, min.len = 1)
+  checkmate::assert_file_exists(metric_file, access = "r")
 
-  if(is.character(metric_file)) {
-    files_exist = sapply(metric_file, function(file) checkmate::test_file_exists(file, access = "r"))
-    # TODO: need to check if in the right format (see CmdStanPy implementation)
-    if (any(!files_exist)) {
-      stop(paste0("Could not read metric file(s): ", paste(metric_file[!files_exist], collapse = ", ")), call. = FALSE)
-    }
-
-    if(length(metric_file) != 1 && length(metric_file) != num_runs) {
-      stop(paste0(length(metric_file), " metric(s) provided. Must provide ",
-                  if(num_runs > 1) "1 or " else "", num_runs, " metric(s) for ",
-                  num_runs, " chain(s)"))
-    }
+  if(length(metric_file) != 1 && length(metric_file) != num_runs) {
+    stop(length(metric_file), " metric(s) provided. Must provide ",
+         if(num_runs > 1) "1 or ", num_runs, " metric(s) for ",
+         num_runs, " chain(s)")
   }
 
   invisible(TRUE)
