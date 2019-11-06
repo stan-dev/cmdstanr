@@ -7,3 +7,5 @@
 ^docs$
 ^pkgdown$
 ^man-roxygen$
+^dev-helpers\.R$
+^LICENSE\.md$

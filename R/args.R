@@ -152,18 +152,19 @@ SampleArgs <- R6::R6Class(
       self$inv_metric <- inv_metric
       if (!is.null(inv_metric)) {
         if (!is.null(metric_file)) {
-          stop("Only one of inv_metric and metric_file can be specified")
+          stop("Only one of inv_metric and metric_file can be specified.",
+               call. = FALSE)
         }
 
         # wrap inv_metric in list if not in one
         if (!is.list(inv_metric)) {
-          inv_metric = list(inv_metric)
+          inv_metric <- list(inv_metric)
         }
 
         # write all inv_metrics to disk
         inv_metric_paths <-
           tempfile(
-            pattern = paste0("inv_metric-", 1:length(inv_metric), "-"),
+            pattern = paste0("inv_metric-", seq_along(inv_metric), "-"),
             tmpdir = cmdstan_tempdir(),
             fileext = ".json"
           )
@@ -618,7 +619,7 @@ validate_metric_file <- function(metric_file, num_runs) {
   if (length(metric_file) != 1 && length(metric_file) != num_runs) {
     stop(length(metric_file), " metric(s) provided. Must provide ",
          if (num_runs > 1) "1 or ", num_runs, " metric(s) for ",
-         num_runs, " chain(s)")
+         num_runs, " chain(s).")
   }
 
   invisible(TRUE)

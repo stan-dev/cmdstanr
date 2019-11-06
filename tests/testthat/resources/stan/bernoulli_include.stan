@@ -1,5 +1,5 @@
 functions {
-  #include divide_real_by_two.stan
+#include divide_real_by_two.stan
 }
 data {
   int<lower=0> N;
@@ -9,7 +9,7 @@ parameters {
   real<lower=0,upper=1> theta;
 }
 model {
-  theta ~ beta(divide_real_by_two(2),1);
+  theta ~ beta(divide_real_by_two(2.0),1);
   for (n in 1:N)
     y[n] ~ bernoulli(theta);
 }
