@@ -117,7 +117,10 @@ if (NOT_CRAN) {
     stepsize = 1.1,
     adapt_engaged = TRUE,
     adapt_delta = 0.7,
-    save_diagnostics = FALSE
+    save_diagnostics = FALSE,
+    init_buffer = 20,
+    term_buffer = 0,
+    window = 15
   )
 
   # using any one of these should cause sample() to error
@@ -136,17 +139,24 @@ if (NOT_CRAN) {
     stepsize = 0,
     adapt_engaged = "NO",
     adapt_delta = 2,
-    save_diagnostics = "NOT_LOGICAL"
+    save_diagnostics = "NOT_LOGICAL",
+    init_buffer = "NOT_INTEGER",
+    term_buffer = "NOT_INTEGER",
+    window = "NOT_INTEGER"
   )
 
   bad_arg_values_2 <- list(
     init = "NOT_A_FILE",
     seed = 1:10,
     stepsize = 1:10,
-    metric = c("AA", "BB")
+    metric = c("AA", "BB"),
+    init_buffer = -5,
+    term_buffer = -6,
+    window = -7
   )
 
   bad_arg_values_3 <- list(
+    data_file = rep("NOT_A_FILE", 5),
     init = rep("NOT_A_FILE", 10),
     metric = c("AA", "BB", "CC")
   )
@@ -203,6 +213,12 @@ test_that("sample() method errors for any invalid arguments before calling cmdst
   for (nm in names(bad_arg_values_2)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values_2[[nm]]
+    expect_error(do.call(mod$sample, args), regexp = nm)
+  }
+
+  for (nm in names(bad_arg_values_3)) {
+    args <- ok_arg_values
+    args[[nm]] <- bad_arg_values_3[[nm]]
     expect_error(do.call(mod$sample, args), regexp = nm)
   }
 })

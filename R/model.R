@@ -265,7 +265,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     metric = NULL,
 #'     stepsize = NULL,
 #'     adapt_engaged = TRUE,
-#'     adapt_delta = NULL
+#'     adapt_delta = NULL,
+#'     init_buffer = NULL,
+#'     term_buffer = NULL,
+#'     window = NULL
 #'   )
 #'   ```
 #'
@@ -314,6 +317,12 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
 #'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
 #'   details.
+#'   * `init_buffer`: (non-negative integer) Width of initial fast timestep
+#'   adaptation interval during warmup
+#'   * `term_buffer`: (non-negative integer) Width of final fast timestep
+#'   adaptation interval during warmup
+#'   * `window`: (non-negative integer) Initial width of slow timestep/metric
+#'   adaptation interval
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -337,7 +346,10 @@ sample_method <- function(data = NULL,
                           adapt_delta = NULL,
                           metric = NULL,
                           stepsize = NULL,
-                          max_depth = NULL) {
+                          max_depth = NULL,
+                          init_buffer = NULL,
+                          term_buffer = NULL,
+                          window = NULL) {
 
   num_chains <- num_chains %||% 1
   checkmate::assert_integerish(num_chains, lower = 1)
@@ -352,7 +364,10 @@ sample_method <- function(data = NULL,
     metric = metric,
     stepsize = stepsize,
     adapt_engaged = adapt_engaged,
-    adapt_delta = adapt_delta
+    adapt_delta = adapt_delta,
+    init_buffer = init_buffer,
+    term_buffer = term_buffer,
+    window = window
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = sample_args,

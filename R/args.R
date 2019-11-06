@@ -39,9 +39,9 @@ CmdStanArgs <- R6::R6Class(
       self$model_name <- model_name
       self$exe_file <- exe_file
       self$run_ids <- run_ids
-      self$data_file <- repair_path(data_file)
+      self$data_file <- if(!is.null(data_file)) sapply(data_file, repair_path)
       self$seed <- seed
-      self$init <- repair_path(init)
+      self$init <- if(!is.null(init)) sapply(init, repair_path)
       self$refresh <- refresh
       self$method_args <- method_args
       self$save_diagnostics <- save_diagnostics
@@ -136,7 +136,10 @@ SampleArgs <- R6::R6Class(
                           metric = NULL,
                           stepsize = NULL,
                           adapt_engaged = NULL,
-                          adapt_delta = NULL) {
+                          adapt_delta = NULL,
+                          init_buffer = NULL,
+                          term_buffer = NULL,
+                          window = NULL) {
 
       # TODO: cmdstanpy uses different names for these but these are same as
       # regular cmdstan for now
@@ -151,6 +154,9 @@ SampleArgs <- R6::R6Class(
       self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
       self$adapt_engaged <- adapt_engaged
       self$adapt_delta <- adapt_delta
+      self$init_buffer <- init_buffer
+      self$term_buffer <- term_buffer
+      self$window <- window
 
       if (metric_is_file(self$metric)) {
         self$metric <- sapply(self$metric, repair_path)
@@ -195,7 +201,10 @@ SampleArgs <- R6::R6Class(
         if (!is.null(self$adapt_delta) || !is.null(self$adapt_engaged))
           "adapt",
         .make_arg("adapt_delta"),
-        .make_arg("adapt_engaged")
+        .make_arg("adapt_engaged"),
+        .make_arg("init_buffer"),
+        .make_arg("term_buffer"),
+        .make_arg("window")
       )
 
       # convert list to character vector
@@ -394,6 +403,18 @@ validate_sample_args <- function(self, num_runs) {
                             null.ok = TRUE)
   checkmate::assert_integerish(self$max_depth,
                                lower = 1,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$init_buffer,
+                               lower = 0,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$term_buffer,
+                               lower = 0,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$window,
+                               lower = 0,
                                len = 1,
                                null.ok = TRUE)
 
