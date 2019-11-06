@@ -194,10 +194,12 @@ CmdStanModel <- R6::R6Class(
 #' @template seealso-docs
 #'
 #' @examples
+#' \dontrun{
 #' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #' mod <- cmdstan_model(stan_program, compile = FALSE)
 #' mod$compile()
 #' mod$exe_file()
+#' }
 #'
 NULL
 
