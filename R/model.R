@@ -154,6 +154,7 @@ CmdStanModel <- R6::R6Class(
 #'   ```
 #'   $compile(
 #'     quiet = TRUE,
+#'     include_paths = NULL,
 #'     threads = FALSE,
 #'     opencl = FALSE,
 #'     opencl_platform_id = 0,
@@ -171,6 +172,8 @@ CmdStanModel <- R6::R6Class(
 #'     compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'     error we recommend trying again with `quiet=FALSE` to see more of the
 #'     output.
+#'   * `include_paths`: (character vector) Paths to directories where Stan should
+#'     look for files specified in `#include` directives in the Stan program.
 #'   * `threads`: (logical) Should the model be compiled with
 #'     [threading support](https://github.com/stan-dev/math/wiki/Threading-Support)?
 #'     If `TRUE` then `-DSTAN_THREADS` is added to the compiler flags. See
@@ -191,14 +194,17 @@ CmdStanModel <- R6::R6Class(
 #' @template seealso-docs
 #'
 #' @examples
+#' \dontrun{
 #' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #' mod <- cmdstan_model(stan_program, compile = FALSE)
 #' mod$compile()
 #' mod$exe_file()
+#' }
 #'
 NULL
 
 compile_method <- function(quiet = TRUE,
+                           include_paths = NULL,
                            threads = FALSE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
@@ -221,10 +227,17 @@ compile_method <- function(quiet = TRUE,
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
 
+  if (!is.null(include_paths)) {
+    checkmate::assert_directory_exists(include_paths, access = "r")
+    include_paths <- sapply(include_paths, absolute_path, USE.NAMES = FALSE)
+    include_paths <- paste0(include_paths, collapse = ",")
+    include_paths <- paste0("STANCFLAGS += --include_paths=", include_paths)
+  }
+
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
     command = make_cmd(),
-    args = exe,
+    args = c(exe, include_paths),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
@@ -263,6 +276,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     thin = NULL,
 #'     max_depth = NULL,
 #'     metric = NULL,
+#'     metric_file = NULL,
+#'     inv_metric = NULL,
 #'     stepsize = NULL,
 #'     adapt_engaged = TRUE,
 #'     adapt_delta = NULL
@@ -295,23 +310,35 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning).
-#'   * `adapt_engaged`: (logical) Do warmup adaptation?
+#'   * `adapt_engaged`: (logical) Do adaptation during warmup? The default is
+#'   `TRUE`. If also specifying a precomputed inverse metric via the `inv_metric`
+#'   argument (or `metric_file`) then, if `adapt_engaged=TRUE`, Stan will use
+#'   the provided inverse metric just as an initial guess during adaptation. To
+#'   turn off adaptation when using a precomputed inverse metric set
+#'   `adapt_engaged=FALSE`.
 #'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
 #'   statistic.
 #'   * `stepsize`: (positive real) The _initial_ step size for the discrete
 #'   approximation to continuous Hamiltonian dynamics. This is further tuned
 #'   during warmup.
-#'   * `metric`: (character) The geometry of the base manifold. See the
-#'   _Euclidean Metric_ section of the CmdStan documentation for more details.
-#'   One of the following:
-#'     - A single string from among `"diag_e"`, `"dense_e"`, `"unit_e"`.
-#'     - A character vector containing paths to files (one per chain) compatible
-#'     with CmdStan that contain precomputed metrics. Each path must be to a
-#'     JSON or Rdump file that contains an entry `inv_metric` whose value is
-#'     either the diagonal vector or the full covariance matrix. If
-#'     `adapt_engaged=TRUE`, Stan will use the provided metric just as an
-#'     initial guess during adaptation. To turn off adaptation when using a
-#'     precomputed metric set `adapt_engaged=FALSE`.
+#'   * `metric`: (character) One of `"diag_e"`, `"dense_e"`, or `"unit_e"`,
+#'   specifying the geometry of the base manifold. See the _Euclidean Metric_
+#'   section of the CmdStan documentation for more details. To specify a
+#'   precomputed (inverse) metric, see the `inv_metric` argument below.
+#'   * `metric_file`: (character) A character vector containing paths to JSON or
+#'   Rdump file files (one per chain) compatible with CmdStan that contain
+#'   precomputed inverse metrics. The `metric_file` argument is inherited from
+#'   CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
+#'   named `inv_metric`, referring to the _inverse_ metric. We recommend instead
+#'   using CmdStanR's `inv_metric` argument (see below) to specify an inverse
+#'   metric directly using a vector or matrix from your \R session.
+#'   * `inv_metric`: (vector, matrix) A vector (if `metric='diag_e'`) or a
+#'   matrix (if `metric='dense_e'`) for initializing the inverse metric, which
+#'   can be used as an alternative to the `metric_file` argument. A vector is
+#'   interpreted as a diagonal metric. The inverse metric is usually set to an
+#'   estimate of the posterior covariance. See the `adapt_engaged` argument
+#'   above for details on how specifying a precomputed inverse metric interacts
+#'   with adaptation.
 #'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
 #'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
 #'   details.
@@ -337,6 +364,8 @@ sample_method <- function(data = NULL,
                           adapt_engaged = TRUE,
                           adapt_delta = NULL,
                           metric = NULL,
+                          metric_file = NULL,
+                          inv_metric = NULL,
                           stepsize = NULL,
                           max_depth = NULL) {
   # cleanup any background processes on error or interrupt
@@ -355,6 +384,8 @@ sample_method <- function(data = NULL,
     thin = thin,
     max_depth = max_depth,
     metric = metric,
+    metric_file = metric_file,
+    inv_metric = inv_metric,
     stepsize = stepsize,
     adapt_engaged = adapt_engaged,
     adapt_delta = adapt_delta

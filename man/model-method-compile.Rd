@@ -13,6 +13,7 @@ to the executable can be accesed via the \code{$exe_file()} method.
 \section{Usage}{
 \preformatted{$compile(
   quiet = TRUE,
+  include_paths = NULL,
   threads = FALSE,
   opencl = FALSE,
   opencl_platform_id = 0,
@@ -33,6 +34,8 @@ Stan Math library). See the CmdStan manual for more details.
 compilation be suppressed? The default is \code{TRUE}, but if you encounter an
 error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.
+\item \code{include_paths}: (character vector) Paths to directories where Stan should
+look for files specified in \code{#include} directives in the Stan program.
 \item \code{threads}: (logical) Should the model be compiled with
 \href{https://github.com/stan-dev/math/wiki/Threading-Support}{threading support}?
 If \code{TRUE} then \code{-DSTAN_THREADS} is added to the compiler flags. See
@@ -55,10 +58,12 @@ returns the \code{\link{CmdStanModel}} object invisibly.
 }
 
 \examples{
+\dontrun{
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program, compile = FALSE)
 mod$compile()
 mod$exe_file()
+}
 
 }
 \seealso{
