@@ -345,11 +345,11 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   above for details (and control over) on how specifying a precomputed
 #'   inverse metric interacts with adaptation.
 #'   * `init_buffer`: (non-negative integer) Width of initial fast timestep
-#'   adaptation interval during warmup
+#'   adaptation interval during warmup.
 #'   * `term_buffer`: (non-negative integer) Width of final fast timestep
-#'   adaptation interval during warmup
+#'   adaptation interval during warmup.
 #'   * `window`: (non-negative integer) Initial width of slow timestep/metric
-#'   adaptation interval
+#'   adaptation interval.
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'

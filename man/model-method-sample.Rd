@@ -132,11 +132,11 @@ estimate of the posterior covariance. See the \code{adapt_engaged} argument
 above for details (and control over) on how specifying a precomputed
 inverse metric interacts with adaptation.
 \item \code{init_buffer}: (non-negative integer) Width of initial fast timestep
-adaptation interval during warmup
+adaptation interval during warmup.
 \item \code{term_buffer}: (non-negative integer) Width of final fast timestep
-adaptation interval during warmup
+adaptation interval during warmup.
 \item \code{window}: (non-negative integer) Initial width of slow timestep/metric
-adaptation interval
+adaptation interval.
 }
 }
 
