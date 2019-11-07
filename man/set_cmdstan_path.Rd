@@ -38,8 +38,8 @@ then its value will be automatically set as the default path to CmdStan for
 the \R session.
 \item If no environment variable is found when loaded but the directory
 \code{".cmdstanr/cmdstan"} exists in the user's home directory
-(\code{Sys.getenv("HOME")}, \emph{not} the current working directory) then it will
-be set as the path to CmdStan for the \R session. This is the same as the
+(\code{Sys.getenv("HOME")}, \emph{not} the current working directory) then it will be
+set as the path to CmdStan for the \R session. This is the same as the
 default directory that \code{\link[=install_cmdstan]{install_cmdstan()}} would use to install the latest
 version of CmdStan.
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# install a CmdStan release into a specified directory
+# install CmdStan into a specified directory
 #  - build binaries, compile example model to build model header
 
 while getopts ":d:v:j:wrob:u:cp" opt; do
@@ -123,7 +123,7 @@ if [[ ${REPO_CHECKOUT_BRANCH} -ne 0 ]]; then
         echo "* Finished checking out branch and rebuilding."
     else
         echo "* Finished checking out branch."
-    fi    
+    fi
     exit 0;
 fi
 
@@ -186,7 +186,7 @@ pushd cmdstan > /dev/null
 echo "* Building CmdStan binaries."
 build_cmdstan
 if [[ ${REPO_CLONE} -ne 1 ]]; then
-build_example
+  build_example
 fi
 
 echo "* Cleaning up ..."

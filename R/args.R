@@ -12,9 +12,9 @@
 #'
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
-#' * `FixedParamArgs`: not yet implemented.
+#' * `VariationalArgs`: stores arguments specific to `method=variational`
 #' * `GQArgs`: not yet implemented.
-#' * `VariationalArgs`: not yet implemented.
+#' * `FixedParamArgs`: not yet implemented.
 #'
 NULL
 
@@ -346,18 +346,6 @@ VariationalArgs <- R6::R6Class(
     }
   )
 )
-
-# FixedParamArgs -------------------------------------------------------------
-
-# FixedParamArgs <- R6::R6Class(
-#   "FixedParamArgs",
-#   public = list(
-#     method = "fixed_param",
-#     compose = function(idx, args = NULL) c(args, "method=fixed_param"),
-#     validate = function(num_runs) invisible(self)
-#   )
-# )
-
 
 
 # Validate the 'Args' objects --------------------------------------------
