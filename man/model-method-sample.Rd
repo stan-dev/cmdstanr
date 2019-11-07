@@ -25,10 +25,10 @@ some data.
   max_depth = NULL,
   adapt_engaged = TRUE,
   adapt_delta = NULL,
-  stepsize = NULL
+  stepsize = NULL,
   metric = NULL,
   metric_file = NULL,
-  inv_metric = NULL,,
+  inv_metric = NULL,
   init_buffer = NULL,
   term_buffer = NULL,
   window = NULL
