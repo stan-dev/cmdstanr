@@ -275,12 +275,12 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     save_warmup = FALSE,
 #'     thin = NULL,
 #'     max_depth = NULL,
-#'     metric = NULL,
-#'     metric_file = NULL,
-#'     inv_metric = NULL,
-#'     stepsize = NULL,
 #'     adapt_engaged = TRUE,
 #'     adapt_delta = NULL,
+#'     stepsize = NULL
+#'     metric = NULL,
+#'     metric_file = NULL,
+#'     inv_metric = NULL,,
 #'     init_buffer = NULL,
 #'     term_buffer = NULL,
 #'     window = NULL
@@ -312,6 +312,9 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning).
+#'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
+#'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
+#'   details.
 #'   * `adapt_engaged`: (logical) Do warmup adaptation? The default is `TRUE`.
 #'   If a precomputed inverse metric is specified via the `inv_metric` argument
 #'   (or `metric_file`) then, if `adapt_engaged=TRUE`, Stan will use the
@@ -341,9 +344,6 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   estimate of the posterior covariance. See the `adapt_engaged` argument
 #'   above for details (and control over) on how specifying a precomputed
 #'   inverse metric interacts with adaptation.
-#'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
-#'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
-#'   details.
 #'   * `init_buffer`: (non-negative integer) Width of initial fast timestep
 #'   adaptation interval during warmup
 #'   * `term_buffer`: (non-negative integer) Width of final fast timestep
@@ -369,13 +369,13 @@ sample_method <- function(data = NULL,
                           num_samples = NULL,
                           save_warmup = FALSE,
                           thin = NULL,
+                          max_depth = NULL,
                           adapt_engaged = TRUE,
                           adapt_delta = NULL,
+                          stepsize = NULL,
                           metric = NULL,
                           metric_file = NULL,
                           inv_metric = NULL,
-                          stepsize = NULL,
-                          max_depth = NULL,
                           init_buffer = NULL,
                           term_buffer = NULL,
                           window = NULL) {
@@ -390,12 +390,12 @@ sample_method <- function(data = NULL,
     save_warmup = save_warmup,
     thin = thin,
     max_depth = max_depth,
+    adapt_engaged = adapt_engaged,
+    adapt_delta = adapt_delta,
+    stepsize = stepsize,
     metric = metric,
     metric_file = metric_file,
     inv_metric = inv_metric,
-    stepsize = stepsize,
-    adapt_engaged = adapt_engaged,
-    adapt_delta = adapt_delta,
     init_buffer = init_buffer,
     term_buffer = term_buffer,
     window = window

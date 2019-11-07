@@ -133,12 +133,12 @@ SampleArgs <- R6::R6Class(
                           save_warmup = NULL,
                           thin = NULL,
                           max_depth = NULL,
+                          adapt_engaged = NULL,
+                          adapt_delta = NULL,
+                          stepsize = NULL,
                           metric = NULL,
                           metric_file = NULL,
                           inv_metric = NULL,
-                          stepsize = NULL,
-                          adapt_engaged = NULL,
-                          adapt_delta = NULL,
                           init_buffer = NULL,
                           term_buffer = NULL,
                           window = NULL) {
@@ -151,6 +151,9 @@ SampleArgs <- R6::R6Class(
       self$save_warmup <- save_warmup
       self$thin <- thin
       self$max_depth <- max_depth
+      self$adapt_engaged <- adapt_engaged
+      self$adapt_delta <- adapt_delta
+      self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
       self$metric <- metric
       self$inv_metric <- inv_metric
       if (!is.null(inv_metric)) {
@@ -179,9 +182,6 @@ SampleArgs <- R6::R6Class(
       } else if (!is.null(metric_file)) {
         self$metric_file <- sapply(metric_file, absolute_path)
       }
-      self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
-      self$adapt_engaged <- adapt_engaged
-      self$adapt_delta <- adapt_delta
       self$init_buffer <- init_buffer
       self$term_buffer <- term_buffer
       self$window <- window

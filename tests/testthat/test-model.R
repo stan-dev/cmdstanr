@@ -185,7 +185,6 @@ if (NOT_CRAN) {
   )
 
   bad_arg_values_3 <- list(
-    data_file = rep("NOT_A_FILE", 5),
     init = rep("NOT_A_FILE", 10),
     metric = c("AA", "BB", "CC")
   )
