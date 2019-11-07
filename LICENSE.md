@@ -1,6 +1,7 @@
 BSD 3-Clause License
+=====================
 
-Copyright (c) 2019, Stan Developers and their Assignees
+Copyright (c) 2019, Stan Developers and their Assignees    
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
