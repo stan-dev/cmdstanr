@@ -309,11 +309,11 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning).
-#'   * `adapt_engaged`: (logical) Do warmup adaptation? The default is `TRUE`.
-#'   If a precomputed inverse metric is specified via the `inv_metric` argument
-#'   (or `metric_file`) then, if `adapt_engaged=TRUE`, Stan will use the
-#'   provided inverse metric just as an initial guess during adaptation. To turn
-#'   off adaptation when using a precomputed inverse metric set
+#'   * `adapt_engaged`: (logical) Do adaptation during warmup? The default is
+#'   `TRUE`. If also specifying a precomputed inverse metric via the `inv_metric`
+#'   argument (or `metric_file`) then, if `adapt_engaged=TRUE`, Stan will use
+#'   the provided inverse metric just as an initial guess during adaptation. To
+#'   turn off adaptation when using a precomputed inverse metric set
 #'   `adapt_engaged=FALSE`.
 #'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
 #'   statistic.
@@ -336,8 +336,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   can be used as an alternative to the `metric_file` argument. A vector is
 #'   interpreted as a diagonal metric. The inverse metric is usually set to an
 #'   estimate of the posterior covariance. See the `adapt_engaged` argument
-#'   above for details (and control over) on how specifying a precomputed
-#'   inverse metric interacts with adaptation.
+#'   above for details on how specifying a precomputed inverse metric interacts
+#'   with adaptation.
 #'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
 #'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
 #'   details.
