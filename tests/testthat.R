@@ -1,9 +1,7 @@
 library(testthat)
 library(cmdstanr)
 
-NOT_CRAN <-
-  identical(Sys.getenv("NOT_CRAN"), "true") ||
-  identical(Sys.getenv("TRAVIS"), "true")
+NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
 if (NOT_CRAN) {
   test_check("cmdstanr")
