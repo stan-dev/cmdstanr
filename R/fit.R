@@ -434,7 +434,6 @@ RunSet <- R6::R6Class(
     console_files = function() private$console_files_,
     data_file = function() private$args_$data_file,
     output_files = function() private$output_files_,
-    # procs = function() private$procs_,
     diagnostic_files = function() {
       if (!length(private$diagnostic_files_)) {
         stop(
@@ -543,7 +542,7 @@ RunSet <- R6::R6Class(
             format(round(mean(private$chain_info_[id,"total_time"]), 1), nsmall = 1),
             "seconds.\n")
       } else {
-        cat("Chain", id, "finished unexpectedly!\n")
+        warning("Chain ", id, " finished unexpectedly!\n")
       }
     },
     chain_state = function(id = NULL) {
@@ -562,22 +561,30 @@ RunSet <- R6::R6Class(
     },
     output = function() {
       private$chain_output_
+    },
+    any_chain_alive = function() {
+      alive <- FALSE
+      for (id in self$run_ids()) {
+        if (private$procs_[[id]]$is_alive()) {
+          alive <- TRUE
+        }
+        if ((self$chain_state(id) < 5) && !private$procs_[[id]]$is_alive()) {
+          #if the chain just finished make sure we process all
+          output <- private$procs_[[id]]$read_output_lines()
+          self$process_sample_output(output, id)
+          self$mark_chain_stop(id)
+        }
+      }
+      alive
+    },
+    procs = function(id = NULL,
+                     proc = NULL) {
+      if (is.null(id)) {
+        private$procs_
+      } else {
+        private$procs_[[id]] <- proc
+      }   
     }
-    # any_chain_alive <-function() {
-    #   alive <- FALSE
-    #   # for (id in self$run_ids()) {
-    #   #   if (private$procs_[[id]]$is_alive()) {
-    #   #     alive <- TRUE
-    #   #   }
-    #   #   if ((self$chain_state(id) < 5) && !procs[[id]]$is_alive()) {
-    #   #     #if the chain just finished make sure we process all
-    #   #     output <- procs[[id]]$read_output_lines()
-    #   #     self$process_sample_output(output, id)
-    #   #     self$mark_chain_stop(id)
-    #   #   }
-    #   # }
-    #   alive
-    # }
   ),
   private = list(
     args_ = NULL,
@@ -589,6 +596,6 @@ RunSet <- R6::R6Class(
     retcodes_ = integer(),
     chain_info_ = NULL,
     chain_output_ = list(),
-    # procs_ = list()
+    procs_ = list()
   )
 )

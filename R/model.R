@@ -405,7 +405,7 @@ sample_method <- function(data = NULL,
   runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
   cat("Running MCMC with", num_chains, "chain(s) ...\n")
   for (chain_id in runset$run_ids()) {
-    runset$procs()[[chain_id]] <- processx::process$new(
+    proc <- processx::process$new(
       command = runset$command(),
       args = runset$command_args()[[chain_id]],
       wd = dirname(self$exe_file()),
@@ -413,10 +413,11 @@ sample_method <- function(data = NULL,
       stdout = "|",
       stderr = "|"
     )
+    runset$procs(chain_id, proc)
     runset$mark_chain_start(chain_id)
   }
   while (runset$any_chain_alive()) {
-    processx::poll(procs, 100)
+    processx::poll(runset$procs(), 100)
     for (chain_id in runset$run_ids()) {
       output <- runset$procs()[[chain_id]]$read_output_lines()
       runset$process_sample_output(output, chain_id)
@@ -435,9 +436,9 @@ sample_method <- function(data = NULL,
                    " seconds"))
     } else {
       if (num_failed_chains == num_chains) {
-        cat("All chains finished unexpectedly!\n")
+        warning("All chains finished unexpectedly!\n")
       } else {
-        cat(num_failed_chains, "chain(s) finished unexpectedly!\n")
+        warning(num_failed_chains, " chain(s) finished unexpectedly!\n")
         cat("The remaining chains had a mean execution time of",
             format(round(mean(runset$time()$total_time), 1), nsmall = 1),
             "seconds")
