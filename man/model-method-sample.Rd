@@ -23,12 +23,12 @@ some data.
   save_warmup = FALSE,
   thin = NULL,
   max_depth = NULL,
-  metric = NULL,
-  metric_file = NULL,
-  inv_metric = NULL,
-  stepsize = NULL,
   adapt_engaged = TRUE,
   adapt_delta = NULL,
+  stepsize = NULL
+  metric = NULL,
+  metric_file = NULL,
+  inv_metric = NULL,,
   init_buffer = NULL,
   term_buffer = NULL,
   window = NULL
@@ -99,11 +99,14 @@ per chain.
 is \code{FALSE}.
 \item \code{thin}: (positive integer) The period between saved samples. This should
 typically be left at its default (no thinning).
-\item \code{adapt_engaged}: (logical) Do adaptation during warmup? The default is
-\code{TRUE}. If also specifying a precomputed inverse metric via the \code{inv_metric}
-argument (or \code{metric_file}) then, if \code{adapt_engaged=TRUE}, Stan will use
-the provided inverse metric just as an initial guess during adaptation. To
-turn off adaptation when using a precomputed inverse metric set
+\item \code{max_depth}: (positive integer) The maximum allowed tree depth for the
+NUTS engine. See the \emph{Tree Depth} section of the CmdStan manual for more
+details.
+\item \code{adapt_engaged}: (logical) Do warmup adaptation? The default is \code{TRUE}.
+If a precomputed inverse metric is specified via the \code{inv_metric} argument
+(or \code{metric_file}) then, if \code{adapt_engaged=TRUE}, Stan will use the
+provided inverse metric just as an initial guess during adaptation. To turn
+off adaptation when using a precomputed inverse metric set
 \code{adapt_engaged=FALSE}.
 \item \code{adapt_delta}: (real in \code{(0,1)}) The adaptation target acceptance
 statistic.
@@ -126,11 +129,8 @@ matrix (if \code{metric='dense_e'}) for initializing the inverse metric, which
 can be used as an alternative to the \code{metric_file} argument. A vector is
 interpreted as a diagonal metric. The inverse metric is usually set to an
 estimate of the posterior covariance. See the \code{adapt_engaged} argument
-above for details on how specifying a precomputed inverse metric interacts
-with adaptation.
-\item \code{max_depth}: (positive integer) The maximum allowed tree depth for the
-NUTS engine. See the \emph{Tree Depth} section of the CmdStan manual for more
-details.
+above for details (and control over) on how specifying a precomputed
+inverse metric interacts with adaptation.
 \item \code{init_buffer}: (non-negative integer) Width of initial fast timestep
 adaptation interval during warmup
 \item \code{term_buffer}: (non-negative integer) Width of final fast timestep
