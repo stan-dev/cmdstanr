@@ -342,9 +342,7 @@ sample_method <- function(data = NULL,
   # cleanup any background processes on error or interrupt
   on.exit(
     {
-      if (exists("procs")) {
-        lapply(procs, function(x) { x$kill_tree() })
-      }
+      lapply(runset$procs(), function(x) { x$kill_tree() })
     }, add = TRUE
   )
   num_chains <- num_chains %||% 1
@@ -374,10 +372,9 @@ sample_method <- function(data = NULL,
   )
 
   runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
-  procs <- list()
   cat("Running MCMC with", num_chains, "chain(s) ...\n")
   for (chain_id in runset$run_ids()) {
-    procs[[chain_id]] <- processx::process$new(
+    runset$procs()[[chain_id]] <- processx::process$new(
       command = runset$command(),
       args = runset$command_args()[[chain_id]],
       wd = dirname(self$exe_file()),
@@ -387,10 +384,10 @@ sample_method <- function(data = NULL,
     )
     runset$mark_chain_start(chain_id)
   }
-  while (any_chain_alive(procs, runset)) {
+  while (runset$any_chain_alive()) {
     processx::poll(procs, 100)
     for (chain_id in runset$run_ids()) {
-      output <- procs[[chain_id]]$read_output_lines()
+      output <- runset$procs()[[chain_id]]$read_output_lines()
       runset$process_sample_output(output, chain_id)
     }
   }
@@ -419,22 +416,6 @@ sample_method <- function(data = NULL,
   CmdStanMCMC$new(runset) # see fit.R
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
-
-any_chain_alive <-function(procs, runset) {
-  alive <- FALSE
-  for (id in runset$run_ids()) {
-    if (procs[[id]]$is_alive()) {
-      alive <- TRUE
-    }
-    if ((runset$chain_state(id) < 5) && !procs[[id]]$is_alive()) {
-      #if the chain just finished make sure we process all
-      output <- procs[[id]]$read_output_lines()
-      runset$process_sample_output(output, id)
-      runset$mark_chain_stop(id)
-    }
-  }
-  alive
-}
 
 #' Run Stan's optimization algorithms
 #'

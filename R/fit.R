@@ -434,6 +434,7 @@ RunSet <- R6::R6Class(
     console_files = function() private$console_files_,
     data_file = function() private$args_$data_file,
     output_files = function() private$output_files_,
+    # procs = function() private$procs_,
     diagnostic_files = function() {
       if (!length(private$diagnostic_files_)) {
         stop(
@@ -562,6 +563,21 @@ RunSet <- R6::R6Class(
     output = function() {
       private$chain_output_
     }
+    # any_chain_alive <-function() {
+    #   alive <- FALSE
+    #   # for (id in self$run_ids()) {
+    #   #   if (private$procs_[[id]]$is_alive()) {
+    #   #     alive <- TRUE
+    #   #   }
+    #   #   if ((self$chain_state(id) < 5) && !procs[[id]]$is_alive()) {
+    #   #     #if the chain just finished make sure we process all
+    #   #     output <- procs[[id]]$read_output_lines()
+    #   #     self$process_sample_output(output, id)
+    #   #     self$mark_chain_stop(id)
+    #   #   }
+    #   # }
+    #   alive
+    # }
   ),
   private = list(
     args_ = NULL,
@@ -572,6 +588,7 @@ RunSet <- R6::R6Class(
     command_args_ = list(),
     retcodes_ = integer(),
     chain_info_ = NULL,
-    chain_output_ = list()
+    chain_output_ = list(),
+    # procs_ = list()
   )
 )
