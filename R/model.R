@@ -441,7 +441,7 @@ sample_method <- function(data = NULL,
         warning(num_failed_chains, " chain(s) finished unexpectedly!\n")
         cat("The remaining chains had a mean execution time of",
             format(round(mean(runset$time()$total_time), 1), nsmall = 1),
-            "seconds")
+            "seconds\n")
       }
     }
   }

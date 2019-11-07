@@ -45,27 +45,35 @@ CmdStanMCMC <- R6::R6Class(
     },
     summary = function() {
       # Run cmdstan's bin/stansummary on csv files
-      target_exe = file.path("bin", cmdstan_ext("stansummary"))
-      check_target_exe(target_exe)
-      run_log <- processx::run(
-        command = target_exe,
-        args = self$output_files(),
-        wd = cmdstan_path(),
-        echo_cmd = TRUE,
-        echo = TRUE
-      )
+      if (length(self$output_files()) > 0) {
+        target_exe = file.path("bin", cmdstan_ext("stansummary"))
+        check_target_exe(target_exe)
+        run_log <- processx::run(
+          command = target_exe,
+          args = self$output_files(),
+          wd = cmdstan_path(),
+          echo_cmd = TRUE,
+          echo = TRUE
+        )
+      } else {
+        warning("No chains finished successfully. Unable to summarize!")
+      }
     },
     diagnose = function() {
       # Run cmdstan's bin/diagnose on csv files
-      target_exe = file.path("bin", cmdstan_ext("diagnose"))
-      check_target_exe(target_exe)
-      run_log <- processx::run(
-        command = target_exe,
-        args = self$output_files(),
-        wd = cmdstan_path(),
-        echo_cmd = TRUE,
-        echo = TRUE
-      )
+      if (length(self$output_files()) > 0) {
+        target_exe = file.path("bin", cmdstan_ext("diagnose"))
+        check_target_exe(target_exe)
+        run_log <- processx::run(
+          command = target_exe,
+          args = self$output_files(),
+          wd = cmdstan_path(),
+          echo_cmd = TRUE,
+          echo = TRUE
+        )
+      } else {
+        warning("No chains finished successfully. Unable to diagnose!")
+      }
     },
     draws = function() {
       # iter x chains x params array
@@ -97,7 +105,9 @@ CmdStanMCMC <- R6::R6Class(
       if (!all(file.exists(self$output_files()))) {
         stop("Can't find output file(s).", call. = FALSE)
       }
-
+      if(length(self$output_files()) == 0) {
+        stop("No chains finished successfully. Unable to retrieve the fit.", call. = FALSE)
+      }
       # FIXME don't use rstan
       if (!requireNamespace("rstan", quietly = TRUE)) {
         stop("Please install the 'rstan' package. This is temporarily required ",
@@ -433,7 +443,6 @@ RunSet <- R6::R6Class(
     command_args = function() private$command_args_,
     console_files = function() private$console_files_,
     data_file = function() private$args_$data_file,
-    output_files = function() private$output_files_,
     diagnostic_files = function() {
       if (!length(private$diagnostic_files_)) {
         stop(
@@ -444,7 +453,10 @@ RunSet <- R6::R6Class(
       }
       private$diagnostic_files_
     },
-
+    output_files = function() {
+      chain_finished <- sapply(strsplit(private$output_files_, "-"), function(x) private$chain_info_[as.integer(x[4]), "state"]==5)
+      private$output_files_[chain_finished]
+    },
     # ._check_retcodes = function() all(private$retcodes_  == 0),
     # ._retcode = function(idx) private$retcodes_[idx],
     # ._set_retcode = function(idx, val) {
@@ -542,6 +554,7 @@ RunSet <- R6::R6Class(
             format(round(mean(private$chain_info_[id,"total_time"]), 1), nsmall = 1),
             "seconds.\n")
       } else {
+        private$chain_info_[id,"state"] <- 6
         warning("Chain ", id, " finished unexpectedly!\n")
       }
     },
