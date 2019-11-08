@@ -359,27 +359,11 @@ RunSet <- R6::R6Class(
       private$args_ <- args
       private$num_runs_ <- as.integer(num_runs)
 
-
-      # diagnostic csv files if diagnostic_file=TRUE
-      private$diagnostic_files_ <- NULL
+      # output csv files
+      private$output_files_ <- args$new_output_files()
       if (args$save_diagnostics) {
-        private$diagnostic_files_ <-
-          tempfile(
-            pattern = paste0(args$csv_basename(), "-diagnostic-", args$run_ids, "-"),
-            tmpdir = cmdstan_tempdir(),
-            fileext = ".csv"
-          )
-        invisible(file.create(private$diagnostic_files_))
+        private$diagnostic_files_ <- args$new_diagnostic_files()
       }
-
-      # output csv files if diagnostic_file=TRUE
-      private$output_files_ <-
-        tempfile(
-          pattern = paste0(args$csv_basename(), "-", args$run_ids, "-"),
-          tmpdir = cmdstan_tempdir(),
-          fileext = ".csv"
-        )
-      invisible(file.create(private$output_files_))
 
       # files to store console output (NOT USED CURRENTLY)
       private$console_files_ <- change_ext(private$output_files_, ".txt")
@@ -469,7 +453,7 @@ RunSet <- R6::R6Class(
     args_ = NULL,
     num_runs_ = integer(),
     output_files_ = character(),
-    diagnostic_files_ = character(),
+    diagnostic_files_ = NULL,
     console_files_ = character(),
     command_args_ = list(),
     retcodes_ = integer()
