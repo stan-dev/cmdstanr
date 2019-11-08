@@ -35,6 +35,22 @@ test_that("sample() method works with provided init files", {
   ))
 })
 
+test_that("sample() method works with valid numeric init values", {
+  skip_on_cran()
+
+  expect_sample_output(mod$sample(
+    data = data_list,
+    num_chains = 1,
+    init = 0
+  ))
+
+  expect_sample_output(mod$sample(
+    data = data_list,
+    num_chains = 1,
+    init = 2
+  ))
+})
+
 test_that("sample method throws error for invalid init argument", {
   skip_on_cran()
 
@@ -54,11 +70,10 @@ test_that("sample method throws error for invalid init argument", {
     "File does not exist"
   )
 
-  # broadcasts
+  # broadcasts currently errors
   expect_error(
     mod$sample(data = data_list, num_chains = 2, init = init_json_1),
-    "If 'init' is specified as a character vector it must have one element per chain",
-    fixed = TRUE
+    "must have one element per chain"
   )
 })
 
