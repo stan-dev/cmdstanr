@@ -12,32 +12,6 @@ if (NOT_CRAN) {
   data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 }
 
-expect_experimental_warning <- function(object) {
-  testthat::expect_warning(
-    object,
-    regexp = "experimental and the structure of returned object may change"
-  )
-}
-expect_sample_output <- function(object) {
-  testthat::expect_output(object, "Gradient evaluation took")
-}
-expect_optim_output <- function(object) {
-  expect_experimental_warning(
-    expect_output(
-      object,
-      regexp = "Initial log joint probability"
-    )
-  )
-}
-expect_vb_output <- function(object) {
-  expect_experimental_warning(
-    expect_output(
-      object,
-      regexp = "Drawing a sample of size"
-    )
-  )
-}
-
 # Compile -----------------------------------------------------------------
 context("CmdStanModel-compile")
 

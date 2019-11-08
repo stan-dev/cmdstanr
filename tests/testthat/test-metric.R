@@ -9,12 +9,8 @@ if (NOT_CRAN) {
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 }
 
-expect_sample_output <- function(object) {
-  testthat::expect_output(object, "Gradient evaluation took")
-}
-
 # Sample ------------------------------------------------------------------
-context("CmdStanModel-sample-with-metric")
+context("CmdStanModel-sample-metric")
 
 test_that("sample() method works with provided inv_metrics", {
   skip_on_cran()
