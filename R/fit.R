@@ -558,7 +558,7 @@ RunSet <- R6::R6Class(
             "seconds.\n")
       } else {
         private$chain_info_[id,"state"] <- 6
-        warning("Chain ", id, " finished unexpectedly!\n")
+        warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
       }
     },
     chain_state = function(id = NULL) {
@@ -618,7 +618,7 @@ RunSet <- R6::R6Class(
     },
     num_of_running_chains = function() {
       num <- sum(sapply(private$procs_, function(x) x$is_alive()))
-    }, 
+    },
     set_total_time = function(time) {
       private$total_time_ = as.numeric(time)
     }
