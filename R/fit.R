@@ -572,14 +572,34 @@ RunSet <- R6::R6Class(
         private$chain_info_[id,"state"]
       }
     },
+    total_run_times = function() {
+      # vector of total times (length is number of chains)
+      info <- private$chain_info_
+      info[info$state == 5, "total_time"]
+    },
+    total_time = function() {
+      # scalar overall time
+      private$total_time_
+    },
     time = function() {
-      info <- private$chain_info_[private$chain_info_$state==5,]
-      chain_time <- data.frame(chain_id = info$id,
-                 warmup_time = info$warmup_time,
-                 sampling_time = info$sampling_time,
-                 total_time = info$total_time)
+      info <- private$chain_info_[private$chain_info_$state==5, ]
+      chain_time <- data.frame(
+        chain_id = info$id,
+        warmup_time = info$warmup_time,
+        sampling_time = info$sampling_time,
+        total_time = info$total_time
+      )
 
-      list(total_time = private$total_time_, chain_time = chain_time)
+      if (isTRUE(self$args()$refresh == 0) &&
+          self$method() == "sample") {
+        warning("Separate warmup and sampling times are not available ",
+                "after running with 'refresh=0'.", call. = FALSE)
+        chain_time$warmup_time <- NA_real_
+        chain_time$sampling_time <- NA_real_
+      }
+
+      list(total_time = self$total_time(),
+           chain_time = chain_time)
     },
     output = function() {
       private$chain_output_
