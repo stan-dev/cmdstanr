@@ -454,7 +454,12 @@ RunSet <- R6::R6Class(
       private$diagnostic_files_
     },
     output_files = function() {
-      chain_finished <- sapply(strsplit(private$output_files_, "-"), function(x) private$chain_info_[as.integer(x[4]), "state"]==5)
+      chain_finished <- sapply(strsplit(private$output_files_, "-"), function(x) {
+        # if we are using background processes only output the file if
+        # the process finished normally
+        private$chain_info_[as.integer(x[4]), "state"] == 0 ||
+        private$chain_info_[as.integer(x[4]), "state"] == 5
+      })
       private$output_files_[chain_finished]
     },
     # ._check_retcodes = function() all(private$retcodes_  == 0),
@@ -596,7 +601,7 @@ RunSet <- R6::R6Class(
         private$procs_
       } else {
         private$procs_[[id]] <- proc
-      }   
+      }
     }
   ),
   private = list(

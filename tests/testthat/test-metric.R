@@ -12,7 +12,7 @@ if (NOT_CRAN) {
 }
 
 expect_sample_output <- function(object) {
-  testthat::expect_output(object, "Gradient evaluation took")
+  testthat::expect_output(object, "Running MCMC with ")
 }
 
 # Sample ------------------------------------------------------------------
