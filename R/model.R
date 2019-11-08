@@ -463,24 +463,25 @@ sample_method <- function(data = NULL,
     num_failed_chains <- num_chains - sum(runset$chain_state() == 5)
     if (num_failed_chains == 0) {
         if (num_chains == 2) {
-          cat("Both chains finished succesfully.\n")
+          cat("\nBoth chains finished succesfully.\n")
         } else {
-          cat(paste0("All ", num_chains," chains finished succesfully.\n"))
+          cat("\nAll", num_chains, "chains finished succesfully.\n")
         }
-        cat(paste0("Mean chain execution time: ",
-                   format(round(mean(runset$time()$chain_time$total_time),1), nsmall = 1),
-                   " seconds\n"))
-        cat(paste0("Total execution time: ",
-                   format(round(runset$time()$total_time,1), nsmall = 1) ),
-                   "\n")
+        cat("Mean chain execution time:",
+            format(round(mean(runset$total_run_times()), 1), nsmall = 1),
+            "seconds.\n")
+        cat("Total execution time:",
+            format(round(runset$total_time(), 1), nsmall = 1),
+            "seconds.\n")
     } else {
       if (num_failed_chains == num_chains) {
-        warning("All chains finished unexpectedly!\n")
+        warning("All chains finished unexpectedly!\n", call. = FALSE)
       } else {
-        warning(num_failed_chains, " chain(s) finished unexpectedly!\n")
+        warning(num_failed_chains, " chain(s) finished unexpectedly!\n",
+                call. = FALSE)
         cat("The remaining chains had a mean execution time of",
-            format(round(mean(runset$time()$total_time), 1), nsmall = 1),
-            "seconds\n")
+            format(round(mean(runset$total_time()), 1), nsmall = 1),
+            "seconds.\n")
       }
     }
   }
