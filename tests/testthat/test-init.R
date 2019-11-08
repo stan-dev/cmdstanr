@@ -16,6 +16,7 @@ expect_sample_output <- function(object) {
 # Sample ------------------------------------------------------------------
 context("CmdStanModel-sample-with-init")
 
+# these create _relative_ paths to init files
 init_json_1 <- test_path("resources", "init", "bernoulli.init-1.json")
 init_json_2 <- test_path("resources", "init", "bernoulli.init-2.json")
 
@@ -70,7 +71,7 @@ test_that("sample method throws error for invalid init argument", {
     "File does not exist"
   )
 
-  # broadcasts currently errors
+  # currently errors instead of broadcasts
   expect_error(
     mod$sample(data = data_list, num_chains = 2, init = init_json_1),
     "must have one element per chain"
