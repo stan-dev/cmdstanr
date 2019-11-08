@@ -365,7 +365,7 @@ sample_method <- function(data = NULL,
                           init = NULL,
                           save_diagnostics = FALSE,
                           num_chains = 4,
-                          # num_cores = NULL, # TODO
+                          num_cores = num_chains,
                           num_warmup = NULL,
                           num_samples = NULL,
                           save_warmup = FALSE,
@@ -422,26 +422,42 @@ sample_method <- function(data = NULL,
   )
 
   runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
-  cat("Running MCMC with", num_chains, "chain(s) ...\n")
-  for (chain_id in runset$run_ids()) {
-    proc <- processx::process$new(
-      command = runset$command(),
-      args = runset$command_args()[[chain_id]],
-      wd = dirname(self$exe_file()),
-      echo_cmd = TRUE,
-      stdout = "|",
-      stderr = "|"
-    )
-    runset$procs(chain_id, proc)
-    runset$mark_chain_start(chain_id)
-  }
-  while (runset$any_chain_alive()) {
-    processx::poll(runset$procs(), 100)
-    for (chain_id in runset$run_ids()) {
-      output <- runset$procs()[[chain_id]]$read_output_lines()
-      runset$process_sample_output(output, chain_id)
+  cat("Running MCMC with", num_chains, "chain(s) on ", num_cores, " core(s) ...\n")
+  start_time <- Sys.time()
+  chain_ind <- 1
+  chains <- runset$run_ids()
+  while(!runset$all_chains_finished()) {
+    # if we have free cores and any leftover chains
+    while(runset$active_cores() != num_cores && runset$any_chains_queued()) {
+      chain_id <- chains[chain_ind]
+      proc <- processx::process$new(
+        command = runset$command(),
+        args = runset$command_args()[[chain_id]],
+        wd = dirname(self$exe_file()),
+        echo_cmd = TRUE,
+        stdout = "|",
+        stderr = "|"
+      )
+      runset$procs(chain_id, proc)
+      runset$mark_chain_start(chain_id)
+      runset$active_cores(runset$active_cores()+1)
+      chain_ind <- chain_ind + 1
+    }
+    start_active_cores <- runset$active_cores()
+    while(runset$active_cores() == start_active_cores && runset$active_cores() > 0) {
+      Sys.sleep(0.1)
+      processx::poll(runset$procs(), 0)
+      for (chain_id in runset$run_ids()) {
+        if(runset$chain_state(chain_id) > 0) {
+          output <- runset$procs()[[chain_id]]$read_output_lines()
+          runset$process_sample_output(output, chain_id)
+        }
+      }
+      runset$active_cores(runset$num_of_running_chains())
     }
   }
+  runset$set_total_time(Sys.time() - start_time)
+
   if (num_chains > 1) {
     num_failed_chains <- num_chains - sum(runset$chain_state() == 5)
     if (num_failed_chains == 0) {
@@ -450,9 +466,12 @@ sample_method <- function(data = NULL,
         } else {
           cat(paste0("All ", num_chains," chains finished succesfully.\n"))
         }
-        cat(paste0("Mean execution time: ",
-                   format(round(mean(runset$time()$total_time),1), nsmall = 1),
-                   " seconds"))
+        cat(paste0("Mean chain execution time: ",
+                   format(round(mean(runset$time()$chain_time$total_time),1), nsmall = 1),
+                   " seconds\n"))
+        cat(paste0("Total execution time: ",
+                   format(round(runset$time()$total_time,1), nsmall = 1) ),
+                   "\n")
     } else {
       if (num_failed_chains == num_chains) {
         warning("All chains finished unexpectedly!\n")

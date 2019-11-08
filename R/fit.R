@@ -425,6 +425,8 @@ RunSet <- R6::R6Class(
         total_time = zeros,
         last_section_start_time = zeros
       )
+
+      private$active_cores_ <- 0
       invisible(self)
     },
 
@@ -568,28 +570,36 @@ RunSet <- R6::R6Class(
     },
     time = function() {
       info <- private$chain_info_[private$chain_info_$state==5,]
-      data.frame(chain_id = info$id,
+      chain_time <- data.frame(chain_id = info$id,
                  warmup_time = info$warmup_time,
                  sampling_time = info$sampling_time,
                  total_time = info$total_time)
+
+      list(total_time = private$total_time_, chain_time = chain_time)
     },
     output = function() {
       private$chain_output_
     },
-    any_chain_alive = function() {
-      alive <- FALSE
+    all_chains_finished = function() {
+      all_finished <- TRUE
       for (id in self$run_ids()) {
-        if (private$procs_[[id]]$is_alive()) {
-          alive <- TRUE
-        }
-        if ((self$chain_state(id) < 5) && !private$procs_[[id]]$is_alive()) {
-          #if the chain just finished make sure we process all
-          output <- private$procs_[[id]]$read_output_lines()
-          self$process_sample_output(output, id)
-          self$mark_chain_stop(id)
+        # if chain is not finished yet
+        if (self$chain_state(id) < 5) {
+          if (self$chain_state(id) > 0 && !private$procs_[[id]]$is_alive()) {
+            # if the chain just finished make sure we process all
+            # input and mark the chain finished
+            output <- private$procs_[[id]]$read_output_lines()
+            self$process_sample_output(output, id)
+            self$mark_chain_stop(id)
+          } else {
+            all_finished <- FALSE
+          }
         }
       }
-      alive
+      all_finished
+    },
+    any_chains_queued = function() {
+      any(sapply(self$run_ids(), function(x) self$chain_state(x) == 0))
     },
     procs = function(id = NULL,
                      proc = NULL) {
@@ -598,6 +608,19 @@ RunSet <- R6::R6Class(
       } else {
         private$procs_[[id]] <- proc
       }
+    },
+    active_cores = function(num = NULL) {
+      if (is.null(num)) {
+        private$active_cores_
+      } else {
+        private$active_cores_ = num
+      }
+    },
+    num_of_running_chains = function() {
+      num <- sum(sapply(private$procs_, function(x) x$is_alive()))
+    }, 
+    set_total_time = function(time) {
+      private$total_time_ = as.numeric(time)
     }
   ),
   private = list(
@@ -610,6 +633,8 @@ RunSet <- R6::R6Class(
     retcodes_ = integer(),
     chain_info_ = NULL,
     chain_output_ = list(),
-    procs_ = list()
+    procs_ = list(),
+    active_cores_ = NULL,
+    total_time_ = NULL
   )
 )
