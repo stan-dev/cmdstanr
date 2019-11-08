@@ -12,9 +12,9 @@
 #'
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
-#' * `FixedParamArgs`: not yet implemented.
+#' * `VariationalArgs`: stores arguments specific to `method=variational`
 #' * `GQArgs`: not yet implemented.
-#' * `VariationalArgs`: not yet implemented.
+#' * `FixedParamArgs`: not yet implemented.
 #'
 NULL
 
@@ -39,9 +39,9 @@ CmdStanArgs <- R6::R6Class(
       self$model_name <- model_name
       self$exe_file <- exe_file
       self$run_ids <- run_ids
-      self$data_file <- repair_path(data_file)
+      self$data_file <- if(!is.null(data_file)) sapply(data_file, repair_path)
       self$seed <- seed
-      self$init <- repair_path(init)
+      self$init <- if(!is.null(init)) sapply(init, repair_path)
       self$refresh <- refresh
       self$method_args <- method_args
       self$save_diagnostics <- save_diagnostics
@@ -133,12 +133,15 @@ SampleArgs <- R6::R6Class(
                           save_warmup = NULL,
                           thin = NULL,
                           max_depth = NULL,
+                          adapt_engaged = NULL,
+                          adapt_delta = NULL,
+                          stepsize = NULL,
                           metric = NULL,
                           metric_file = NULL,
                           inv_metric = NULL,
-                          stepsize = NULL,
-                          adapt_engaged = NULL,
-                          adapt_delta = NULL) {
+                          init_buffer = NULL,
+                          term_buffer = NULL,
+                          window = NULL) {
 
       # TODO: cmdstanpy uses different names for these but these are same as
       # regular cmdstan for now
@@ -148,6 +151,9 @@ SampleArgs <- R6::R6Class(
       self$save_warmup <- save_warmup
       self$thin <- thin
       self$max_depth <- max_depth
+      self$adapt_engaged <- adapt_engaged
+      self$adapt_delta <- adapt_delta
+      self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
       self$metric <- metric
       self$inv_metric <- inv_metric
       if (!is.null(inv_metric)) {
@@ -176,9 +182,9 @@ SampleArgs <- R6::R6Class(
       } else if (!is.null(metric_file)) {
         self$metric_file <- sapply(metric_file, absolute_path)
       }
-      self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
-      self$adapt_engaged <- adapt_engaged
-      self$adapt_delta <- adapt_delta
+      self$init_buffer <- init_buffer
+      self$term_buffer <- term_buffer
+      self$window <- window
 
       if (is.logical(self$adapt_engaged)) {
         self$adapt_engaged <- as.integer(self$adapt_engaged)
@@ -220,7 +226,10 @@ SampleArgs <- R6::R6Class(
         if (!is.null(self$adapt_delta) || !is.null(self$adapt_engaged))
           "adapt",
         .make_arg("adapt_delta"),
-        .make_arg("adapt_engaged")
+        .make_arg("adapt_engaged"),
+        .make_arg("init_buffer"),
+        .make_arg("term_buffer"),
+        .make_arg("window")
       )
 
       # convert list to character vector
@@ -338,18 +347,6 @@ VariationalArgs <- R6::R6Class(
   )
 )
 
-# FixedParamArgs -------------------------------------------------------------
-
-# FixedParamArgs <- R6::R6Class(
-#   "FixedParamArgs",
-#   public = list(
-#     method = "fixed_param",
-#     compose = function(idx, args = NULL) c(args, "method=fixed_param"),
-#     validate = function(num_runs) invisible(self)
-#   )
-# )
-
-
 
 # Validate the 'Args' objects --------------------------------------------
 
@@ -419,6 +416,18 @@ validate_sample_args <- function(self, num_runs) {
                             null.ok = TRUE)
   checkmate::assert_integerish(self$max_depth,
                                lower = 1,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$init_buffer,
+                               lower = 0,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$term_buffer,
+                               lower = 0,
+                               len = 1,
+                               null.ok = TRUE)
+  checkmate::assert_integerish(self$window,
+                               lower = 0,
                                len = 1,
                                null.ok = TRUE)
 

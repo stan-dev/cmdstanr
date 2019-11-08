@@ -1,7 +1,5 @@
 # Setup -------------------------------------------------------------------
-NOT_CRAN <-
-  identical(Sys.getenv("NOT_CRAN"), "true") ||
-  identical(Sys.getenv("TRAVIS"), "true")
+NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
 if (NOT_CRAN) {
   set_cmdstan_path()
@@ -67,11 +65,11 @@ test_that("error if no compile() before sample()", {
 
 test_that("compile() method works", {
   skip_on_cran()
-  expected <- if (!file.exists(strip_ext(mod$stan_file())))
+  expected <- if (!file.exists(cmdstan_ext(strip_ext(mod$stan_file()))))
     "Translating Stan model" else "is up to date"
   out <- utils::capture.output(mod$compile(quiet = FALSE))
   expect_output(print(out), expected)
-  expect_equal(mod$exe_file(), strip_ext(stan_program))
+  expect_equal(mod$exe_file(), cmdstan_ext(strip_ext(stan_program)))
 })
 
 test_that("compilation works when stan program not in cmdstan dir", {
@@ -82,7 +80,7 @@ test_that("compilation works when stan program not in cmdstan dir", {
     mod_2 <- cmdstan_model(stan_file = stan_program_2, quiet = TRUE),
     "Compiling Stan program..."
   )
-  expect_equal(mod_2$exe_file(), strip_ext(absolute_path(stan_program_2)))
+  expect_equal(mod_2$exe_file(), cmdstan_ext(strip_ext(absolute_path(stan_program_2))))
 
   out <- utils::capture.output(
     mod_2 <- suppressMessages(cmdstan_model(stan_file = stan_program_2, quiet = FALSE))
@@ -146,7 +144,10 @@ if (NOT_CRAN) {
     stepsize = 1.1,
     adapt_engaged = TRUE,
     adapt_delta = 0.7,
-    save_diagnostics = FALSE
+    save_diagnostics = FALSE,
+    init_buffer = 20,
+    term_buffer = 0,
+    window = 15
   )
 
   # using any one of these should cause sample() to error
@@ -165,14 +166,20 @@ if (NOT_CRAN) {
     stepsize = 0,
     adapt_engaged = "NO",
     adapt_delta = 2,
-    save_diagnostics = "NOT_LOGICAL"
+    save_diagnostics = "NOT_LOGICAL",
+    init_buffer = "NOT_INTEGER",
+    term_buffer = "NOT_INTEGER",
+    window = "NOT_INTEGER"
   )
 
   bad_arg_values_2 <- list(
     init = "NOT_A_FILE",
     seed = 1:10,
     stepsize = 1:10,
-    metric = c("AA", "BB")
+    metric = c("AA", "BB"),
+    init_buffer = -5,
+    term_buffer = -6,
+    window = -7
   )
 
   bad_arg_values_3 <- list(
@@ -232,6 +239,12 @@ test_that("sample() method errors for any invalid arguments before calling cmdst
   for (nm in names(bad_arg_values_2)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values_2[[nm]]
+    expect_error(do.call(mod$sample, args), regexp = nm)
+  }
+
+  for (nm in names(bad_arg_values_3)) {
+    args <- ok_arg_values
+    args[[nm]] <- bad_arg_values_3[[nm]]
     expect_error(do.call(mod$sample, args), regexp = nm)
   }
 })

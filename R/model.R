@@ -275,12 +275,15 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     save_warmup = FALSE,
 #'     thin = NULL,
 #'     max_depth = NULL,
+#'     adapt_engaged = TRUE,
+#'     adapt_delta = NULL,
+#'     stepsize = NULL,
 #'     metric = NULL,
 #'     metric_file = NULL,
 #'     inv_metric = NULL,
-#'     stepsize = NULL,
-#'     adapt_engaged = TRUE,
-#'     adapt_delta = NULL
+#'     init_buffer = NULL,
+#'     term_buffer = NULL,
+#'     window = NULL
 #'   )
 #'   ```
 #'
@@ -310,11 +313,14 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning).
-#'   * `adapt_engaged`: (logical) Do adaptation during warmup? The default is
-#'   `TRUE`. If also specifying a precomputed inverse metric via the `inv_metric`
-#'   argument (or `metric_file`) then, if `adapt_engaged=TRUE`, Stan will use
-#'   the provided inverse metric just as an initial guess during adaptation. To
-#'   turn off adaptation when using a precomputed inverse metric set
+#'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
+#'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
+#'   details.
+#'   * `adapt_engaged`: (logical) Do warmup adaptation? The default is `TRUE`.
+#'   If a precomputed inverse metric is specified via the `inv_metric` argument
+#'   (or `metric_file`) then, if `adapt_engaged=TRUE`, Stan will use the
+#'   provided inverse metric just as an initial guess during adaptation. To turn
+#'   off adaptation when using a precomputed inverse metric set
 #'   `adapt_engaged=FALSE`.
 #'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
 #'   statistic.
@@ -337,11 +343,14 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   can be used as an alternative to the `metric_file` argument. A vector is
 #'   interpreted as a diagonal metric. The inverse metric is usually set to an
 #'   estimate of the posterior covariance. See the `adapt_engaged` argument
-#'   above for details on how specifying a precomputed inverse metric interacts
-#'   with adaptation.
-#'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
-#'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
-#'   details.
+#'   above for details (and control over) on how specifying a precomputed
+#'   inverse metric interacts with adaptation.
+#'   * `init_buffer`: (non-negative integer) Width of initial fast timestep
+#'   adaptation interval during warmup.
+#'   * `term_buffer`: (non-negative integer) Width of final fast timestep
+#'   adaptation interval during warmup.
+#'   * `window`: (non-negative integer) Initial width of slow timestep/metric
+#'   adaptation interval.
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -361,13 +370,16 @@ sample_method <- function(data = NULL,
                           num_samples = NULL,
                           save_warmup = FALSE,
                           thin = NULL,
+                          max_depth = NULL,
                           adapt_engaged = TRUE,
                           adapt_delta = NULL,
+                          stepsize = NULL,
                           metric = NULL,
                           metric_file = NULL,
                           inv_metric = NULL,
-                          stepsize = NULL,
-                          max_depth = NULL) {
+                          init_buffer = NULL,
+                          term_buffer = NULL,
+                          window = NULL) {
   # cleanup any background processes on error or interrupt
   on.exit(
     {
@@ -376,6 +388,7 @@ sample_method <- function(data = NULL,
       }
     }, add = TRUE
   )
+
   num_chains <- num_chains %||% 1
   checkmate::assert_integerish(num_chains, lower = 1)
 
@@ -385,12 +398,15 @@ sample_method <- function(data = NULL,
     save_warmup = save_warmup,
     thin = thin,
     max_depth = max_depth,
+    adapt_engaged = adapt_engaged,
+    adapt_delta = adapt_delta,
+    stepsize = stepsize,
     metric = metric,
     metric_file = metric_file,
     inv_metric = inv_metric,
-    stepsize = stepsize,
-    adapt_engaged = adapt_engaged,
-    adapt_delta = adapt_delta
+    init_buffer = init_buffer,
+    term_buffer = term_buffer,
+    window = window
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = sample_args,

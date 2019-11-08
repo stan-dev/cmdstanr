@@ -188,10 +188,15 @@ some data.</p>
   save_warmup = FALSE,
   thin = NULL,
   max_depth = NULL,
-  metric = NULL,
-  stepsize = NULL,
   adapt_engaged = TRUE,
-  adapt_delta = NULL
+  adapt_delta = NULL,
+  stepsize = NULL,
+  metric = NULL,
+  metric_file = NULL,
+  inv_metric = NULL,
+  init_buffer = NULL,
+  term_buffer = NULL,
+  window = NULL
 )
 </pre>
 
@@ -253,27 +258,44 @@ per chain.</p></li>
 is <code>FALSE</code>.</p></li>
 <li><p><code>thin</code>: (positive integer) The period between saved samples. This should
 typically be left at its default (no thinning).</p></li>
-<li><p><code>adapt_engaged</code>: (logical) Do warmup adaptation?</p></li>
+<li><p><code>max_depth</code>: (positive integer) The maximum allowed tree depth for the
+NUTS engine. See the <em>Tree Depth</em> section of the CmdStan manual for more
+details.</p></li>
+<li><p><code>adapt_engaged</code>: (logical) Do warmup adaptation? The default is <code>TRUE</code>.
+If a precomputed inverse metric is specified via the <code>inv_metric</code> argument
+(or <code>metric_file</code>) then, if <code>adapt_engaged=TRUE</code>, Stan will use the
+provided inverse metric just as an initial guess during adaptation. To turn
+off adaptation when using a precomputed inverse metric set
+<code>adapt_engaged=FALSE</code>.</p></li>
 <li><p><code>adapt_delta</code>: (real in <code>(0,1)</code>) The adaptation target acceptance
 statistic.</p></li>
 <li><p><code>stepsize</code>: (positive real) The <em>initial</em> step size for the discrete
 approximation to continuous Hamiltonian dynamics. This is further tuned
 during warmup.</p></li>
-<li><p><code>metric</code>: (character) The geometry of the base manifold. See the
-<em>Euclidean Metric</em> section of the CmdStan documentation for more details.
-One of the following:</p><ul>
-<li><p>A single string from among <code>"diag_e"</code>, <code>"dense_e"</code>, <code>"unit_e"</code>.</p></li>
-<li><p>A character vector containing paths to files (one per chain) compatible
-with CmdStan that contain precomputed metrics. Each path must be to a
-JSON or Rdump file that contains an entry <code>inv_metric</code> whose value is
-either the diagonal vector or the full covariance matrix. If
-<code>adapt_engaged=TRUE</code>, Stan will use the provided metric just as an
-initial guess during adaptation. To turn off adaptation when using a
-precomputed metric set <code>adapt_engaged=FALSE</code>.</p></li>
-</ul></li>
-<li><p><code>max_depth</code>: (positive integer) The maximum allowed tree depth for the
-NUTS engine. See the <em>Tree Depth</em> section of the CmdStan manual for more
-details.</p></li>
+<li><p><code>metric</code>: (character) One of <code>"diag_e"</code>, <code>"dense_e"</code>, or <code>"unit_e"</code>,
+specifying the geometry of the base manifold. See the <em>Euclidean Metric</em>
+section of the CmdStan documentation for more details. To specify a
+precomputed (inverse) metric, see the <code>inv_metric</code> argument below.</p></li>
+<li><p><code>metric_file</code>: (character) A character vector containing paths to JSON or
+Rdump file files (one per chain) compatible with CmdStan that contain
+precomputed inverse metrics. The <code>metric_file</code> argument is inherited from
+CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
+named <code>inv_metric</code>, referring to the <em>inverse</em> metric. We recommend instead
+using CmdStanR's <code>inv_metric</code> argument (see below) to specify an inverse
+metric directly using a vector or matrix from your <span style="R">R</span> session.</p></li>
+<li><p><code>inv_metric</code>: (vector, matrix) A vector (if <code>metric='diag_e'</code>) or a
+matrix (if <code>metric='dense_e'</code>) for initializing the inverse metric, which
+can be used as an alternative to the <code>metric_file</code> argument. A vector is
+interpreted as a diagonal metric. The inverse metric is usually set to an
+estimate of the posterior covariance. See the <code>adapt_engaged</code> argument
+above for details (and control over) on how specifying a precomputed
+inverse metric interacts with adaptation.</p></li>
+<li><p><code>init_buffer</code>: (non-negative integer) Width of initial fast timestep
+adaptation interval during warmup.</p></li>
+<li><p><code>term_buffer</code>: (non-negative integer) Width of final fast timestep
+adaptation interval during warmup.</p></li>
+<li><p><code>window</code>: (non-negative integer) Initial width of slow timestep/metric
+adaptation interval.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>

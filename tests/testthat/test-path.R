@@ -1,7 +1,5 @@
 # Setup -------------------------------------------------------------------
-NOT_CRAN <-
-  identical(Sys.getenv("NOT_CRAN"), "true") ||
-  identical(Sys.getenv("TRAVIS"), "true")
+NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
 Sys.unsetenv("CMDSTAN")
 
