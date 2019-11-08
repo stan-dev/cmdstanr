@@ -520,6 +520,10 @@ RunSet <- R6::R6Class(
             next_state <- 2
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
+          if (state == 1 && regexpr("Elapsed Time:", line) > 0) {
+            state <- 4
+            next_state <- 4
+          }
           if (private$chain_info_[id,"state"] == 2 && regexpr("(Sampling)", line) > 0) {
             next_state <- 3 # 3 = sampling
             private$chain_info_[id,"warmup_time"] <- Sys.time() - last_secion_start_time
