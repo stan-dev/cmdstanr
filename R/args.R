@@ -44,7 +44,7 @@ CmdStanArgs <- R6::R6Class(
       }
       self$seed <- seed
       self$init <- init
-      if (!is.null(self$init) && is.character(init)) {
+      if (is.character(self$init)) {
         self$init <- sapply(self$init, absolute_path, USE.NAMES = FALSE)
       }
       self$refresh <- refresh
