@@ -14,8 +14,9 @@
 #'     - A real number `x>0` initializes randomly between `[-x,x]` (on the
 #'       *unconstrained* parameter space);
 #'     - `0` initializes to `0`;
-#'     - A character vector of data file paths (one per chain) to
-#'       initialization files.
+#'     - A character vector of paths (one per chain) to JSON or Rdump files. See
+#'       [write_stan_json()] to write \R objects to JSON files compatible with
+#'       CmdStan.
 #'   * `save_diagnostics`: (logical) Should auxiliary diagnostic information
 #'   (beyond standard diagnostics) be written to temporary diagnostic CSV files?
 #'   This argument replaces CmdStan's `diagnostic_file` argument and the content

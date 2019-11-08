@@ -57,8 +57,9 @@ screen updates.
 \item A real number \code{x>0} initializes randomly between \code{[-x,x]} (on the
 \emph{unconstrained} parameter space);
 \item \code{0} initializes to \code{0};
-\item A character vector of data file paths (one per chain) to
-initialization files.
+\item A character vector of paths (one per chain) to JSON or Rdump files. See
+\code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
+CmdStan.
 }
 \item \code{save_diagnostics}: (logical) Should auxiliary diagnostic information
 (beyond standard diagnostics) be written to temporary diagnostic CSV files?

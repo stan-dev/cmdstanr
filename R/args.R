@@ -39,9 +39,14 @@ CmdStanArgs <- R6::R6Class(
       self$model_name <- model_name
       self$exe_file <- exe_file
       self$run_ids <- run_ids
-      self$data_file <- if(!is.null(data_file)) sapply(data_file, repair_path)
+      self$data_file <- if (!is.null(data_file)) {
+        sapply(data_file, absolute_path, USE.NAMES = FALSE)
+      }
       self$seed <- seed
-      self$init <- if(!is.null(init)) sapply(init, repair_path)
+      self$init <- init
+      if (!is.null(self$init) && is.character(init)) {
+        self$init <- sapply(self$init, absolute_path, USE.NAMES = FALSE)
+      }
       self$refresh <- refresh
       self$method_args <- method_args
       self$save_diagnostics <- save_diagnostics
@@ -534,7 +539,7 @@ validate_init <- function(init, num_runs) {
          call. = FALSE)
   } else if (is.character(init)) {
     if (length(init) != num_runs) {
-      stop("If 'init' is specified as a character vector it must have",
+      stop("If 'init' is specified as a character vector it must have ",
            "one element per chain.",
            call. = FALSE)
     }
@@ -551,7 +556,6 @@ validate_init <- function(init, num_runs) {
 #' @return `init`, unless numeric and length 1, in which case `rep(init, num_runs)`.
 maybe_recycle_init <- function(init, num_runs) {
   if (is.null(init) ||
-      is.character(init) ||
       length(init) == num_runs) {
     return(init)
   }
