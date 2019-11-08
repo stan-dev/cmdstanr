@@ -45,35 +45,33 @@ CmdStanMCMC <- R6::R6Class(
     },
     summary = function() {
       # Run cmdstan's bin/stansummary on csv files
-      if (length(self$output_files()) > 0) {
-        target_exe = file.path("bin", cmdstan_ext("stansummary"))
-        check_target_exe(target_exe)
-        run_log <- processx::run(
-          command = target_exe,
-          args = self$output_files(),
-          wd = cmdstan_path(),
-          echo_cmd = TRUE,
-          echo = TRUE
-        )
-      } else {
-        warning("No chains finished successfully. Unable to summarize!")
+      if (length(self$output_files()) == 0) {
+        stop("No chains finished successfully. Unable to run summary()!")
       }
+      target_exe = file.path("bin", cmdstan_ext("stansummary"))
+      check_target_exe(target_exe)
+      run_log <- processx::run(
+        command = target_exe,
+        args = self$output_files(),
+        wd = cmdstan_path(),
+        echo_cmd = TRUE,
+        echo = TRUE
+      )
     },
     diagnose = function() {
       # Run cmdstan's bin/diagnose on csv files
-      if (length(self$output_files()) > 0) {
-        target_exe = file.path("bin", cmdstan_ext("diagnose"))
-        check_target_exe(target_exe)
-        run_log <- processx::run(
-          command = target_exe,
-          args = self$output_files(),
-          wd = cmdstan_path(),
-          echo_cmd = TRUE,
-          echo = TRUE
-        )
-      } else {
-        warning("No chains finished successfully. Unable to diagnose!")
+      if (length(self$output_files()) == 0) {
+        stop("No chains finished successfully. Unable to run diagnose()")
       }
+      target_exe = file.path("bin", cmdstan_ext("diagnose"))
+      check_target_exe(target_exe)
+      run_log <- processx::run(
+        command = target_exe,
+        args = self$output_files(),
+        wd = cmdstan_path(),
+        echo_cmd = TRUE,
+        echo = TRUE
+      )
     },
     draws = function() {
       # iter x chains x params array
@@ -420,10 +418,7 @@ RunSet <- R6::R6Class(
       zeros <- rep(0, num_runs)
       private$chain_info_ <- data.frame(
         id = seq_len(num_runs),
-        stopped = rep(FALSE, num_runs),
         state = zeros,
-        output_state = zeros,
-        output = rep(" ", num_runs),
         start_time = zeros,
         warmup_time = zeros,
         sampling_time = zeros,
@@ -515,6 +510,7 @@ RunSet <- R6::R6Class(
       for (line in out) {
         private$chain_output_[[id]] <- c(private$chain_output_[[id]], line)
         if (nzchar(line)) {
+          last_secion_start_time <- private$chain_info_[id,"last_section_start_time"]
           state <- private$chain_info_[id,"state"]
           next_state <- state
           if (state == 1 && regexpr("Iteration:", line) > 0) {
@@ -524,14 +520,14 @@ RunSet <- R6::R6Class(
           }
           if (private$chain_info_[id,"state"] == 2 && regexpr("(Sampling)", line) > 0) {
             next_state <- 3 # 3 = sampling
-            private$chain_info_[id,"warmup_time"] <- Sys.time() - private$chain_info_[id,"last_section_start_time"]
+            private$chain_info_[id,"warmup_time"] <- Sys.time() - last_secion_start_time
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
           if (regexpr("\\[100%\\]", line) > 0) {
             if (state == 2) { #warmup only run
-              private$chain_info_[id,"warmup_time"] <- Sys.time() - private$chain_info_[id,"last_section_start_time"]
+              private$chain_info_[id,"warmup_time"] <- Sys.time() - last_secion_start_time
             } else if (state == 3) { # sampling
-              private$chain_info_[id,"sampling_time"] <- Sys.time() - private$chain_info_[id,"last_section_start_time"]
+              private$chain_info_[id,"sampling_time"] <- Sys.time() - last_secion_start_time
             }
             next_state <- 4 # writing csv and finishing
           }

@@ -380,6 +380,7 @@ sample_method <- function(data = NULL,
                           init_buffer = NULL,
                           term_buffer = NULL,
                           window = NULL) {
+
   # cleanup any background processes on error or interrupt
   on.exit(
     {
