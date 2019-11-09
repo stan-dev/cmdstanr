@@ -16,8 +16,8 @@ some data.
   refresh = NULL,
   init = NULL,
   save_diagnostics = FALSE,
-  num_chains = NULL,
-  # num_cores = NULL, # not yet implemented
+  num_chains = 4,
+  num_cores = getOption("mc.cores", 1),
   num_warmup = NULL,
   num_samples = NULL,
   save_warmup = FALSE,
@@ -77,16 +77,19 @@ divergences for HMC). To save the temporary files created when
  In addition to the
 arguments above, the \code{$sample()} method also has its own set of arguments.
 
-The following arguments are offered by CmdStanR but not CmdStan:
+The following two arguments are offered by CmdStanR but do not correspond
+to arguments in CmdStan because all CmdStan arguments pertain to the
+execution of a single run only.
 \itemize{
 \item \code{num_chains}: (positive integer) The number of Markov chains to run. The
 default is 4.
 \item \code{num_cores}: (positive integer) The maximum number of cores to use for
-running parallel chains.
+running parallel chains. If \code{num_cores} is not specified then the default is
+to look for the option \code{"mc.cores"},
+which can be set for an entire \R session by \code{options(mc.cores=value)}.
+If the \code{"mc.cores"} option has not been set then the default is \code{1}.
 }
 
-These two argument does not correspond to arguments in CmdStan because
-all CmdStan arguments pertain to the execution of a single run only.
 The rest of the arguments correspond to arguments offered by CmdStan. They
 are described briefly here and in greater detail in the CmdStan manual.
 Arguments left at \code{NULL} default to the default used by the installed

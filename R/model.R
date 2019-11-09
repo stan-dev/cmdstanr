@@ -270,8 +270,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     refresh = NULL,
 #'     init = NULL,
 #'     save_diagnostics = FALSE,
-#'     num_chains = NULL,
-#'     # num_cores = NULL, # not yet implemented
+#'     num_chains = 4,
+#'     num_cores = getOption("mc.cores", 1),
 #'     num_warmup = NULL,
 #'     num_samples = NULL,
 #'     save_warmup = FALSE,
@@ -293,16 +293,19 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @section Arguments unique to the `sample` method: In addition to the
 #'   arguments above, the `$sample()` method also has its own set of arguments.
 #'
-#'   The following arguments are offered by CmdStanR but not CmdStan:
+#'   The following two arguments are offered by CmdStanR but do not correspond
+#'   to arguments in CmdStan because all CmdStan arguments pertain to the
+#'   execution of a single run only.
 #'
 #'   * `num_chains`: (positive integer) The number of Markov chains to run. The
 #'   default is 4.
 #'
 #'   * `num_cores`: (positive integer) The maximum number of cores to use for
-#'   running parallel chains.
+#'   running parallel chains. If `num_cores` is not specified then the default is
+#'   to look for the option `"mc.cores"`,
+#'   which can be set for an entire \R session by `options(mc.cores=value)`.
+#'   If the `"mc.cores"` option has not been set then the default is `1`.
 #'
-#'   These two argument does not correspond to arguments in CmdStan because
-#'   all CmdStan arguments pertain to the execution of a single run only.
 #'   The rest of the arguments correspond to arguments offered by CmdStan. They
 #'   are described briefly here and in greater detail in the CmdStan manual.
 #'   Arguments left at `NULL` default to the default used by the installed
@@ -368,7 +371,7 @@ sample_method <- function(data = NULL,
                           init = NULL,
                           save_diagnostics = FALSE,
                           num_chains = 4,
-                          num_cores = num_chains,
+                          num_cores = getOption("mc.cores", 1),
                           num_warmup = NULL,
                           num_samples = NULL,
                           save_warmup = FALSE,
