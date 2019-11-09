@@ -67,7 +67,8 @@ install_cmdstan <- function(dir = NULL,
     echo_cmd = FALSE,
     echo = !quiet,
     spinner = quiet,
-    error_on_status = FALSE
+    error_on_status = FALSE,
+    stderr_line_callback = function(x,p) { if(quiet) message(x) }
   )
 
   if (is.na(install_log$status) || install_log$status != 0) {
@@ -121,7 +122,9 @@ cmdstan_git_checkout_branch <- function(repo_branch,
     args = make_cmdstan,
     echo = !quiet,
     echo_cmd = !quiet,
-    spinner = quiet
+    spinner = quiet,
+    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    error_on_status = TRUE
   )
   invisible(install_log)
 }
