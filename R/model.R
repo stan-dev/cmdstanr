@@ -413,7 +413,7 @@ sample_method <- function(data = NULL,
     refresh = refresh
   )
 
-  runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
+  runset <- CmdStanRun$new(args = cmdstan_args, num_runs = num_chains)
   procs <- runset$procs()
   on.exit(procs$cleanup(), add = TRUE)
   start_time <- Sys.time()
@@ -545,7 +545,7 @@ optimize_method <- function(data = NULL,
     refresh = refresh
   )
 
-  runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
+  runset <- CmdStanRun$new(args = cmdstan_args, num_runs = 1)
   run_log <- processx::run(
     command = runset$command(),
     args = runset$command_args()[[1]],
@@ -673,7 +673,7 @@ variational_method <- function(data = NULL,
     refresh = refresh
   )
 
-  runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
+  runset <- CmdStanRun$new(args = cmdstan_args, num_runs = 1)
   run_log <- processx::run(
     command = runset$command(),
     args = runset$command_args()[[1]],

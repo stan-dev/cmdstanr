@@ -182,9 +182,9 @@ test_that("log_p(), log_g() methods return vectors (reading csv works)", {
 
 
 
-# RunSet ------------------------------------------------------------------
+# CmdStanRun ------------------------------------------------------------------
 
-test_that("RunSet methods return valid output", {
+test_that("CmdStanRun (runset) methods return valid output", {
   skip_on_cran()
 
   runset <- fit_mcmc$runset
