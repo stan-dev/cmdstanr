@@ -242,7 +242,7 @@ compile_method <- function(quiet = TRUE,
     echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet,
-    stderr_line_callback = function(x,p) { if(quiet) parse_compile_error(x, p) },
+    stderr_line_callback = function(x,p) { if(quiet) message(x) },
     error_on_status = TRUE
   )
 
