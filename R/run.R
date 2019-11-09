@@ -302,9 +302,9 @@ CmdStanProcs <- R6::R6Class(
     },
     is_error_message = function(line) {
       startsWith(line, "Exception:") ||
-      regexpr(line, "either mistyped or misplaced.") ||
-      regexpr(line, "A method must be specified!") ||
-      regexpr(line, "is not a valid value for")
+      (regexpr(line, "either mistyped or misplaced.") > 0) ||
+      (regexpr(line, "A method must be specified!") > 0) ||
+      (regexpr(line, "is not a valid value for") > 0)
     },
     process_sample_output = function(out, id) {
       id <- as.character(id)
