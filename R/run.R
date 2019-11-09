@@ -191,14 +191,24 @@ CmdStanProcs <- R6::R6Class(
       lapply(private$processes_, function(p) p$kill_tree())
       invisible(self)
     },
-    poll = function() {
-      processx::poll(private$processes_, 0)
+    poll = function(ms) { # time in milliseconds
+      processx::poll(private$processes_, ms)
+    },
+    wait = function(s) { # time in seconds
+      Sys.sleep(s)
     },
     get_proc = function(id) {
       private$processes_[[id]]
     },
-    set_proc = function(id, proc) {
-      private$processes_[[id]] <- proc
+    new_proc = function(id, command, args, wd) {
+      private$processes_[[id]] <- processx::process$new(
+        command = command,
+        args = args,
+        wd = wd,
+        echo_cmd = TRUE,
+        stdout = "|",
+        stderr = "|"
+      )
       invisible(self)
     },
     active_cores = function() {

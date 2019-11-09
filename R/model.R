@@ -418,26 +418,24 @@ sample_method <- function(data = NULL,
   runset <- CmdStanRun$new(args = cmdstan_args, num_runs = num_chains)
   procs <- runset$procs()
   on.exit(procs$cleanup(), add = TRUE)
+
   start_time <- Sys.time()
   chains <- runset$run_ids()
   chain_ind <- 1
 
-  cat("Running MCMC with", num_chains, "chain(s) on ", num_cores, " core(s) ...\n")
+  cat("Running MCMC with", num_chains, "chain(s) on", num_cores, "core(s)...\n\n")
   while (!procs$all_finished()) {
 
     # if we have free cores and any leftover chains
     while (procs$active_cores() != num_cores &&
            procs$any_queued()) {
       chain_id <- chains[chain_ind]
-      proc <- processx::process$new(
+      procs$new_proc(
+        id = chain_id,
         command = runset$command(),
         args = runset$command_args()[[chain_id]],
-        wd = dirname(self$exe_file()),
-        echo_cmd = TRUE,
-        stdout = "|",
-        stderr = "|"
+        wd = dirname(self$exe_file())
       )
-      procs$set_proc(chain_id, proc)
       procs$mark_chain_start(chain_id)
       procs$set_active_cores(procs$active_cores() + 1)
       chain_ind <- chain_ind + 1
@@ -446,8 +444,8 @@ sample_method <- function(data = NULL,
 
     while (procs$active_cores() == start_active_cores &&
            procs$active_cores() > 0) {
-      Sys.sleep(0.1)
-      procs$poll()
+      procs$wait(0.1)
+      procs$poll(0)
       for (chain_id in chains) {
         if (!procs$is_queued(chain_id)) {
           output <- procs$get_proc(chain_id)$read_output_lines()
@@ -459,7 +457,8 @@ sample_method <- function(data = NULL,
   }
   procs$set_total_time(Sys.time() - start_time)
   procs$report_time()
-  CmdStanMCMC$new(runset) # see fit.R
+
+  CmdStanMCMC$new(runset)
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
 
