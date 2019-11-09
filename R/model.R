@@ -518,7 +518,8 @@ optimize_method <- function(data = NULL,
     args = runset$command_args()[[1]],
     wd = dirname(self$exe_file()),
     echo_cmd = FALSE,
-    echo = TRUE
+    echo = TRUE,
+    error_on_status = TRUE
   )
   CmdStanMLE$new(runset)
 }
@@ -646,7 +647,8 @@ variational_method <- function(data = NULL,
     args = runset$command_args()[[1]],
     wd = dirname(self$exe_file()),
     echo_cmd = FALSE,
-    echo = TRUE
+    echo = TRUE,
+    error_on_status = TRUE
   )
   CmdStanVB$new(runset)
 }

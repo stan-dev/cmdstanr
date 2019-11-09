@@ -35,7 +35,8 @@ check_target_exe <- function(exe) {
       args = exe,
       wd = cmdstan_path(),
       echo_cmd = TRUE,
-      echo = TRUE
+      echo = TRUE,
+      error_on_status = TRUE
     )
   }
 }
