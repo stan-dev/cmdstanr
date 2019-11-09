@@ -241,7 +241,9 @@ compile_method <- function(quiet = TRUE,
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
-    spinner = quiet
+    spinner = quiet,
+    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    error_on_status = TRUE
   )
 
   private$exe_file_ <- exe
@@ -516,7 +518,8 @@ optimize_method <- function(data = NULL,
     args = runset$command_args()[[1]],
     wd = dirname(self$exe_file()),
     echo_cmd = FALSE,
-    echo = TRUE
+    echo = TRUE,
+    error_on_status = TRUE
   )
   CmdStanMLE$new(runset)
 }
@@ -644,7 +647,8 @@ variational_method <- function(data = NULL,
     args = runset$command_args()[[1]],
     wd = dirname(self$exe_file()),
     echo_cmd = FALSE,
-    echo = TRUE
+    echo = TRUE,
+    error_on_status = TRUE
   )
   CmdStanVB$new(runset)
 }
