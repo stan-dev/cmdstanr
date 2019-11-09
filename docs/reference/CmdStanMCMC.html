@@ -44,8 +44,8 @@
 
 <meta property="og:title" content="CmdStanMCMC objects — CmdStanMCMC" />
 <meta property="og:description" content="A CmdStanMCMC object is the fitted model object returned by
-the sample() method of a CmdStanModel
-object. Like CmdStanModel objects, CmdStanMCMC objects are R6
+the $sample() method of a CmdStanModel object.
+Like CmdStanModel objects, CmdStanMCMC objects are R6
 objects." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
@@ -165,8 +165,8 @@ objects." />
 
     <div class="ref-description">
     <p>A <code>CmdStanMCMC</code> object is the fitted model object returned by
-the <code><a href='model-method-sample.html'>sample()</a></code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code>
-object. Like <code>CmdStanModel</code> objects, <code>CmdStanMCMC</code> objects are <a href='https://rdrr.io/pkg/R6/man/R6Class.html'>R6</a>
+the <code><a href='model-method-sample.html'>$sample()</a></code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.
+Like <code>CmdStanModel</code> objects, <code>CmdStanMCMC</code> objects are <a href='https://rdrr.io/pkg/R6/man/R6Class.html'>R6</a>
 objects.</p>
     </div>
 
@@ -179,10 +179,15 @@ objects.</p>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code>summary</code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
 <tr><td><code>diagnose</code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
-<tr><td><code>draws</code></td><td>Return post-warmup draws as an <code>iters x chains x variables</code> array.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>save_output_files</a></code></td><td>Save output CSV files to a specified location.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>save_data_file</a></code></td><td>Save JSON data file to a specified location.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>save_diagnostic_files</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
+<tr><td><code>draws</code></td><td>Return post-warmup draws as an <code>iters x chains x variables</code> array.</td></tr>
+<tr><td><code>time</code></td><td>Return a list containing the total time and a data frame of
+execution times of all chains.</td></tr>
+<tr><td><code>output</code></td><td>Return the stdout and stderr of all chains as a list of
+character vectors, or pretty print the output for a single chain if
+<code>id</code> argument is specified.</td></tr>
 </table>
 
 

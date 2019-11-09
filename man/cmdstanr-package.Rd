@@ -62,10 +62,14 @@ stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program)
 mod$print()
 
-# Run sample method (MCMC via Stan's dynamic HMC/NUTS),
-# specifying data as a named list (like RStan)
-standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-fit_mcmc <- mod$sample(data = standata, seed = 123, num_chains = 2)
+# data as a named list (like RStan)
+stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+fit_mcmc <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  num_chains = 2,
+  num_cores = 2
+)
 
 # Call CmdStan's bin/stansummary
 fit_mcmc$summary()
@@ -73,26 +77,27 @@ fit_mcmc$summary()
 # Call CmdStan's bin/diagnose
 fit_mcmc$diagnose()
 
-# Run optimization method (default is Stan's LBFGS algorithm)
-# and also demonstrate specifying data as a path to a file (readable by CmdStan)
-my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
-fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-
-#' Print estimates
-fit_optim$summary()
-
-# Run variational Bayes method (default is meanfield ADVI)
-fit_vb <- mod$variational(data = standata, seed = 123)
-
-# Call CmdStan's bin/summary
-fit_vb$summary()
-
 # For models fit using MCMC, if you like working with RStan's stanfit objects
 # then you can create one with rstan::read_stan_csv()
 if (require(rstan, quietly = TRUE)) {
   stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
   print(stanfit)
 }
+
+
+# Run optimization method (default is Stan's LBFGS algorithm)
+# and also demonstrate specifying data as a path to a file (readable by CmdStan)
+my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
+fit_optim <- mod$optimize(data = my_data_file, seed = 123)
+
+#' Print estimates
+fit_optim$summary()
+
+# Run variational Bayes method (default is meanfield ADVI)
+fit_vb <- mod$variational(data = stan_data, seed = 123)
+
+# Call CmdStan's bin/summary
+fit_vb$summary()
 
 }
 
