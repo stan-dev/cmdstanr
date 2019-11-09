@@ -241,7 +241,8 @@ compile_method <- function(quiet = TRUE,
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
-    spinner = quiet
+    spinner = quiet,
+    stderr_line_callback = parse_compile_error
   )
 
   private$exe_file_ <- exe
