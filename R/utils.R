@@ -378,5 +378,5 @@ set_num_threads <- function(num_threads) {
 }
 
 parse_compile_error = function(line, proc) {
-  warning(line, immediate. = TRUE, call. = FALSE)
+  message(line)
 }
