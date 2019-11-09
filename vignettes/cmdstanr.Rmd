@@ -134,7 +134,12 @@ as a path to a data file compatible with CmdStan (R dump or JSON).
 
 ```{r sample}
 data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-fit <- mod$sample(data = data_list, seed = 123, num_chains = 2)
+fit <- mod$sample(
+  data = data_list, 
+  seed = 123, 
+  num_chains = 2, 
+  num_cores = 2
+)
 ```
 
 The
@@ -143,22 +148,24 @@ method creates [R6](https://r6.r-lib.org/)
 [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 objects.
 
-```{r summary}
+```{r R6-class}
 class(fit)
 ```
 
-The [`$summary()`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) and [`$diagnose()`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) methods
+Currently, the
+[`$summary()`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) and
+[`$diagnose()`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) methods
 call CmdStan's `stansummary` and `diagnose` utilities, respectively:
 
-```r
-fit$summary()
+```{r summary-and-diagnose}
 fit$diagnose()
+fit$summary()
 ```
 
-Because CmdStanR is not fully developed, currently the best way to work with the
-output is to create a stanfit object (RStan) from the csv output files written
-by CmdStan. This can be done by using `rstan::read_stan_csv()` in combination
-with the `$output_files()` method of the `CmdStanMCMC` object.
+Because CmdStanR is not fully developed yet, for the time being the best way to
+work with the output is to create a stanfit object (RStan) from the csv output
+files written by CmdStan. This can be done by using `rstan::read_stan_csv()` in
+combination with the `$output_files()` method of the `CmdStanMCMC` object.
 
 ```{r stanfit}
 stanfit <- rstan::read_stan_csv(fit$output_files())
