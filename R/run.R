@@ -300,6 +300,12 @@ CmdStanProcs <- R6::R6Class(
       }
       invisible(self)
     },
+    is_error_message = function(line) {
+      startsWith(line, "Exception:") ||
+      regexpr(line, "either mistyped or misplaced.") ||
+      regexpr(line, "A method must be specified!") ||
+      regexpr(line, "is not a valid value for")
+    },
     process_sample_output = function(out, id) {
       id <- as.character(id)
       if (length(out) == 0) {
@@ -334,9 +340,15 @@ CmdStanProcs <- R6::R6Class(
             }
             next_state <- 4 # writing csv and finishing
           }
-          if ((state > 1 && state < 4) ||
-              (state == 1 && startsWith(line, "Exception:"))) {
-            cat(paste0("CHAIN ", id,": ", line, "\n"))
+          if (state > 1 && state < 4) {
+            cat("CHAIN ", id,": ", line, "\n")
+          }
+          if (self$is_error_message(line)) {
+            # will print all remaining output in case of excpetions
+            if(state == 1) {
+              state = 2;
+            }
+            message("CHAIN ", id,": ", line)
           }
           private$chain_info_[id,"state"] <- next_state
         }
