@@ -26,9 +26,10 @@
 #'    \tab Save diagnostic CSV files to a specified location. \cr
 #'  `draws` \tab
 #'    Return post-warmup draws as an `iters x chains x variables` array. \cr
-#'  `time` \tab Return a data frame of execution times of all chains. \cr
+#'  `time` \tab Return a list containing the total time and a data frame of
+#'    execution times of all chains. \cr
 #'  `output` \tab Return the stdout and stderr of all chains as a list of
-#'    character vectors, or print the output for a single chain if
+#'    character vectors, or pretty print the output for a single chain if
 #'    `id` argument is specified. \cr
 #' }
 #'
@@ -45,8 +46,9 @@ CmdStanMCMC <- R6::R6Class(
     },
     summary = function() {
       # Run cmdstan's bin/stansummary on csv files
-      if (length(self$output_files()) == 0) {
-        stop("No chains finished successfully. Unable to run summary()!")
+      if (!length(self$output_files())) {
+        stop("No chains finished successfully. Unable to run summary()!",
+             call. = FALSE)
       }
       target_exe = file.path("bin", cmdstan_ext("stansummary"))
       check_target_exe(target_exe)
@@ -60,8 +62,9 @@ CmdStanMCMC <- R6::R6Class(
     },
     diagnose = function() {
       # Run cmdstan's bin/diagnose on csv files
-      if (length(self$output_files()) == 0) {
-        stop("No chains finished successfully. Unable to run diagnose()")
+      if (!length(self$output_files())) {
+        stop("No chains finished successfully. Unable to run diagnose()!",
+             call. = FALSE)
       }
       target_exe = file.path("bin", cmdstan_ext("diagnose"))
       check_target_exe(target_exe)
@@ -83,9 +86,9 @@ CmdStanMCMC <- R6::R6Class(
     },
     output = function(id = NULL) {
       if (is.null(id)) {
-        self$runset$output()
+        self$runset$procs()$chain_output()
       } else {
-        cat(paste(self$runset$output()[[id]], collapse="\n"))
+        cat(paste(self$runset$procs()$chain_output(id), collapse="\n"))
       }
     }
     # sampler_params = function() {
@@ -103,9 +106,11 @@ CmdStanMCMC <- R6::R6Class(
       if (!all(file.exists(self$output_files()))) {
         stop("Can't find output file(s).", call. = FALSE)
       }
-      if(length(self$output_files()) == 0) {
-        stop("No chains finished successfully. Unable to retrieve the fit.", call. = FALSE)
+      if (!length(self$output_files())) {
+        stop("No chains finished successfully. Unable to retrieve the fit.",
+             call. = FALSE)
       }
+
       # FIXME don't use rstan
       if (!requireNamespace("rstan", quietly = TRUE)) {
         stop("Please install the 'rstan' package. This is temporarily required ",
@@ -413,20 +418,8 @@ RunSet <- R6::R6Class(
           diagnostic_file = private$diagnostic_files_[j] # maybe NULL
         )
       })
-      private$retcodes_ <- rep(-1L, num_runs)
 
-      zeros <- rep(0, num_runs)
-      private$chain_info_ <- data.frame(
-        id = seq_len(num_runs),
-        state = zeros,
-        start_time = zeros,
-        warmup_time = zeros,
-        sampling_time = zeros,
-        total_time = zeros,
-        last_section_start_time = zeros
-      )
-
-      private$active_cores_ <- 0
+      private$procs_ <- CmdStanProcs$new(self$run_ids())
       invisible(self)
     },
 
@@ -451,22 +444,11 @@ RunSet <- R6::R6Class(
       private$diagnostic_files_
     },
     output_files = function() {
-      chain_finished <- sapply(strsplit(private$output_files_, "-"), function(x) {
-        # if we are using background processes only output the file if
-        # the process finished normally
-        private$chain_info_[as.integer(x[4]), "state"] == 0 ||
-        private$chain_info_[as.integer(x[4]), "state"] == 5
-      })
-      private$output_files_[chain_finished]
+      # if we are using background processes only output the file if
+      # the process finished normally
+      ok <- self$procs()$is_finished() || self$procs()$is_queued()
+      private$output_files_[ok]
     },
-    # ._check_retcodes = function() all(private$retcodes_  == 0),
-    # ._retcode = function(idx) private$retcodes_[idx],
-    # ._set_retcode = function(idx, val) {
-    #   private$retcodes_[idx] <- val
-    #   invisible(self)
-    # },
-    # ._check_console_msgs = function() {},
-    # validate = function() {},
 
     save_output_files = function(dir = ".",
                                  basename = NULL,
@@ -504,6 +486,184 @@ RunSet <- R6::R6Class(
         timestamp = timestamp
       )
     },
+
+    procs = function() {
+      private$procs_
+    },
+    time = function() {
+      if (self$method() != "sample") {
+        return(NULL)
+      }
+
+      info <- self$procs()$chain_info()
+      info <- info[info$state == 5, ]
+      chain_time <- data.frame(
+        chain_id = info$id,
+        warmup = info$warmup_time,
+        sampling = info$sampling_time,
+        total = info$total_time
+      )
+
+      if (isTRUE(self$args()$refresh == 0)) {
+        warning("Separate warmup and sampling times are not available ",
+                "after running with 'refresh=0'.", call. = FALSE)
+        chain_time$warmup <- NA_real_
+        chain_time$sampling <- NA_real_
+      }
+
+      list(total = self$procs()$total_time(), chains = chain_time)
+    }
+  ),
+  private = list(
+    args_ = NULL,  # CmdStanArgs object
+    procs_ = NULL, # CmdStanProcs object
+    num_runs_ = integer(),
+    output_files_ = character(),
+    diagnostic_files_ = character(),
+    console_files_ = character(),
+    command_args_ = list()
+  )
+)
+
+
+# CmdStanProcs ------------------------------------------------------------
+CmdStanProcs <- R6::R6Class(
+  classname = "CmdStanProcs",
+  public = list(
+    initialize = function(run_ids) {
+      private$run_ids_ <- run_ids
+
+      num_runs <- length(run_ids)
+      zeros <- rep(0, num_runs)
+      private$chain_info_ <- data.frame(
+        id = seq_len(num_runs),
+        state = zeros,
+        start_time = zeros,
+        warmup_time = zeros,
+        sampling_time = zeros,
+        total_time = zeros,
+        last_section_start_time = zeros
+      )
+      private$active_cores_ <- 0
+
+      invisible(self)
+    },
+    run_ids = function() {
+      private$run_ids_
+    },
+    cleanup = function() {
+      lapply(private$processes_, function(p) p$kill_tree())
+      invisible(self)
+    },
+    poll = function() {
+      processx::poll(private$processes_, 0)
+    },
+    get_proc = function(id) {
+      private$processes_[[id]]
+    },
+    set_proc = function(id, proc) {
+      private$processes_[[id]] <- proc
+      invisible(self)
+    },
+    active_cores = function() {
+      private$active_cores_
+    },
+    set_active_cores = function(cores) {
+      private$active_cores_ <- cores
+      invisible(self)
+    },
+    total_chain_times = function() {
+      # vector of total times (length is number of chains)
+      info <- self$chain_info()
+      info[self$is_finished(), "total_time"]
+    },
+    total_time = function() {
+      # scalar overall time
+      private$total_time_
+    },
+    set_total_time = function(time) {
+      private$total_time_ <- as.numeric(time)
+      invisible(self)
+    },
+    all_finished = function() {
+      finished <- TRUE
+      for (id in self$run_ids()) {
+        # if chain is not finished yet
+        if (self$is_still_working(id)) {
+          if (!self$is_queued(id) && !self$is_alive(id)) {
+            # if the chain just finished make sure we process all
+            # input and mark the chain finished
+            output <- self$get_proc(id)$read_output_lines()
+            self$process_sample_output(output, id)
+            self$mark_chain_stop(id)
+          } else {
+            finished <- FALSE
+          }
+        }
+      }
+      finished
+    },
+    is_alive = function(id = NULL) {
+      if (!is.null(id)) {
+        return(private$processes_[[id]]$is_alive())
+      }
+      sapply(private$processes_, function(x) x$is_alive())
+    },
+    is_still_working = function(id = NULL) {
+      self$chain_state(id) < 5
+    },
+    is_finished = function(id = NULL) {
+      self$chain_state(id) == 5
+    },
+    is_queued = function(id = NULL) {
+      self$chain_state(id) == 0
+    },
+    num_alive = function() {
+      sum(self$is_alive())
+    },
+    num_failed = function() {
+      length(self$run_ids()) - sum(self$is_finished())
+    },
+    any_queued = function() {
+      any(self$is_queued())
+    },
+    chain_info = function() {
+      private$chain_info_
+    },
+    chain_output = function(id = NULL) {
+      out <- private$chain_output_
+      if (is.null(id)) {
+        return(out)
+      }
+      out[[id]]
+    },
+    chain_state = function(id = NULL) {
+      states <- self$chain_info()$state
+      if (is.null(id)) {
+        return(states)
+      }
+      states[id]
+    },
+    mark_chain_start = function(id) {
+      id <- as.character(id)
+      private$chain_info_[id,"start_time"] <- Sys.time()
+      private$chain_info_[id,"state"] <- 1
+      private$chain_info_[id,"last_section_start_time"] <- private$chain_info_[id,"start_time"]
+      private$chain_output_[[id]] <- c("")
+      invisible(self)
+    },
+    mark_chain_stop = function(id) {
+      id <- as.character(id)
+      if (private$chain_info_[id,"state"] == 4) {
+        private$chain_info_[id,"state"] <- 5
+        private$chain_info_[id,"total_time"] <- Sys.time() - private$chain_info_[id,"start_time"]
+        self$report_time(id)
+      } else {
+        private$chain_info_[id,"state"] <- 6
+        warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+      }
+      invisible(self)
+    },
     process_sample_output = function(out, id) {
       id <- as.character(id)
       if (length(out) == 0) {
@@ -512,7 +672,7 @@ RunSet <- R6::R6Class(
       for (line in out) {
         private$chain_output_[[id]] <- c(private$chain_output_[[id]], line)
         if (nzchar(line)) {
-          last_secion_start_time <- private$chain_info_[id,"last_section_start_time"]
+          last_section_start_time <- private$chain_info_[id,"last_section_start_time"]
           state <- private$chain_info_[id,"state"]
           next_state <- state
           if (state == 1 && regexpr("Iteration:", line) > 0) {
@@ -524,16 +684,17 @@ RunSet <- R6::R6Class(
             state <- 4
             next_state <- 4
           }
-          if (private$chain_info_[id,"state"] == 2 && regexpr("(Sampling)", line) > 0) {
+          if (private$chain_info_[id,"state"] == 2 &&
+              regexpr("(Sampling)", line) > 0) {
             next_state <- 3 # 3 = sampling
-            private$chain_info_[id,"warmup_time"] <- Sys.time() - last_secion_start_time
+            private$chain_info_[id,"warmup_time"] <- Sys.time() - last_section_start_time
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
           if (regexpr("\\[100%\\]", line) > 0) {
             if (state == 2) { #warmup only run
-              private$chain_info_[id,"warmup_time"] <- Sys.time() - last_secion_start_time
+              private$chain_info_[id,"warmup_time"] <- Sys.time() - last_section_start_time
             } else if (state == 3) { # sampling
-              private$chain_info_[id,"sampling_time"] <- Sys.time() - last_secion_start_time
+              private$chain_info_[id,"sampling_time"] <- Sys.time() - last_section_start_time
             }
             next_state <- 4 # writing csv and finishing
           }
@@ -544,121 +705,50 @@ RunSet <- R6::R6Class(
           private$chain_info_[id,"state"] <- next_state
         }
       }
+      invisible(self)
     },
-    mark_chain_start = function(id) {
-      id <- as.character(id)
-      private$chain_info_[id,"start_time"] <- Sys.time()
-      private$chain_info_[id,"state"] <- 1
-      private$chain_info_[id,"last_section_start_time"] <- private$chain_info_[id,"start_time"]
-      private$chain_output_[[id]] <- c("")
-    },
-    mark_chain_stop = function(id) {
-      id <- as.character(id)
-      if (private$chain_info_[id,"state"] == 4) {
-        private$chain_info_[id,"state"] <- 5
-        private$chain_info_[id,"total_time"] <- Sys.time() - private$chain_info_[id,"start_time"]
+    report_time = function(id = NULL) {
+      if (!is.null(id)) {
         cat("Chain", id, "finished in",
-            format(round(mean(private$chain_info_[id,"total_time"]), 1), nsmall = 1),
+            format(round(mean(self$chain_info()[id,"total_time"]), 1), nsmall = 1),
             "seconds.\n")
-      } else {
-        private$chain_info_[id,"state"] <- 6
-        warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
-      }
-    },
-    chain_state = function(id = NULL) {
-      if (is.null(id)) {
-        private$chain_info_$state
-      } else {
-        private$chain_info_[id,"state"]
-      }
-    },
-    total_run_times = function() {
-      # vector of total times (length is number of chains)
-      info <- private$chain_info_
-      info[info$state == 5, "total_time"]
-    },
-    total_time = function() {
-      # scalar overall time
-      private$total_time_
-    },
-    time = function() {
-      info <- private$chain_info_[private$chain_info_$state==5, ]
-      chain_time <- data.frame(
-        chain_id = info$id,
-        warmup_time = info$warmup_time,
-        sampling_time = info$sampling_time,
-        total_time = info$total_time
-      )
-
-      if (isTRUE(self$args()$refresh == 0) &&
-          self$method() == "sample") {
-        warning("Separate warmup and sampling times are not available ",
-                "after running with 'refresh=0'.", call. = FALSE)
-        chain_time$warmup_time <- NA_real_
-        chain_time$sampling_time <- NA_real_
+        return(invisible(self))
       }
 
-      list(total_time = self$total_time(),
-           chain_time = chain_time)
-    },
-    output = function() {
-      private$chain_output_
-    },
-    all_chains_finished = function() {
-      all_finished <- TRUE
-      for (id in self$run_ids()) {
-        # if chain is not finished yet
-        if (self$chain_state(id) < 5) {
-          if (self$chain_state(id) > 0 && !private$procs_[[id]]$is_alive()) {
-            # if the chain just finished make sure we process all
-            # input and mark the chain finished
-            output <- private$procs_[[id]]$read_output_lines()
-            self$process_sample_output(output, id)
-            self$mark_chain_stop(id)
+      num_chains <- length(self$run_ids())
+      if (num_chains > 1) {
+        num_failed <- self$num_failed()
+        if (num_failed == 0) {
+          if (num_chains == 2) {
+            cat("\nBoth chains finished succesfully.\n")
           } else {
-            all_finished <- FALSE
+            cat("\nAll", num_chains, "chains finished succesfully.\n")
           }
+          cat("Mean chain execution time:",
+              format(round(mean(self$total_chain_times()), 1), nsmall = 1),
+              "seconds.\n")
+          cat("Total execution time:",
+              format(round(self$total_time(), 1), nsmall = 1),
+              "seconds.\n")
+        } else if (num_failed == num_chains) {
+          warning("All chains finished unexpectedly!\n", call. = FALSE)
+        } else {
+          warning(num_failed, " chain(s) finished unexpectedly!\n", call. = FALSE)
+          cat("The remaining chains had a mean execution time of",
+              format(round(mean(self$total_time()), 1), nsmall = 1),
+              "seconds.\n")
         }
       }
-      all_finished
-    },
-    any_chains_queued = function() {
-      any(sapply(self$run_ids(), function(x) self$chain_state(x) == 0))
-    },
-    procs = function(id = NULL,
-                     proc = NULL) {
-      if (is.null(id)) {
-        private$procs_
-      } else {
-        private$procs_[[id]] <- proc
-      }
-    },
-    active_cores = function(num = NULL) {
-      if (is.null(num)) {
-        private$active_cores_
-      } else {
-        private$active_cores_ = num
-      }
-    },
-    num_of_running_chains = function() {
-      num <- sum(sapply(private$procs_, function(x) x$is_alive()))
-    },
-    set_total_time = function(time) {
-      private$total_time_ = as.numeric(time)
+      invisible(self)
     }
   ),
   private = list(
-    args_ = NULL,
-    num_runs_ = integer(),
-    output_files_ = character(),
-    diagnostic_files_ = character(),
-    console_files_ = character(),
-    command_args_ = list(),
-    retcodes_ = integer(),
-    chain_info_ = NULL,
+    processes_ = NULL, # will be list of processx::process objects
+    active_cores_ = integer(),
+    run_ids_ = integer(),
+    chain_info_ = data.frame(),
     chain_output_ = list(),
-    procs_ = list(),
-    active_cores_ = NULL,
-    total_time_ = NULL
+    total_time_ = numeric()
   )
 )
+

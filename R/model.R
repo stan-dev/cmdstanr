@@ -382,15 +382,6 @@ sample_method <- function(data = NULL,
                           term_buffer = NULL,
                           window = NULL) {
 
-  # cleanup any background processes on error or interrupt
-  on.exit(
-    {
-      if(exists("runset")) {
-        lapply(runset$procs(), function(x) { x$kill_tree() })
-      }
-    }, add = TRUE
-  )
-
   num_chains <- num_chains %||% 1
   checkmate::assert_integerish(num_chains, lower = 1)
 
@@ -423,13 +414,18 @@ sample_method <- function(data = NULL,
   )
 
   runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
-  cat("Running MCMC with", num_chains, "chain(s) on ", num_cores, " core(s) ...\n")
+  procs <- runset$procs()
+  on.exit(procs$cleanup(), add = TRUE)
   start_time <- Sys.time()
-  chain_ind <- 1
   chains <- runset$run_ids()
-  while(!runset$all_chains_finished()) {
+  chain_ind <- 1
+
+  cat("Running MCMC with", num_chains, "chain(s) on ", num_cores, " core(s) ...\n")
+  while (!procs$all_finished()) {
+
     # if we have free cores and any leftover chains
-    while(runset$active_cores() != num_cores && runset$any_chains_queued()) {
+    while (procs$active_cores() != num_cores &&
+           procs$any_queued()) {
       chain_id <- chains[chain_ind]
       proc <- processx::process$new(
         command = runset$command(),
@@ -439,55 +435,32 @@ sample_method <- function(data = NULL,
         stdout = "|",
         stderr = "|"
       )
-      runset$procs(chain_id, proc)
-      runset$mark_chain_start(chain_id)
-      runset$active_cores(runset$active_cores()+1)
+      procs$set_proc(chain_id, proc)
+      procs$mark_chain_start(chain_id)
+      procs$set_active_cores(procs$active_cores() + 1)
       chain_ind <- chain_ind + 1
     }
-    start_active_cores <- runset$active_cores()
-    while(runset$active_cores() == start_active_cores && runset$active_cores() > 0) {
-      Sys.sleep(0.1)
-      processx::poll(runset$procs(), 0)
-      for (chain_id in runset$run_ids()) {
-        if(runset$chain_state(chain_id) > 0) {
-          output <- runset$procs()[[chain_id]]$read_output_lines()
-          runset$process_sample_output(output, chain_id)
-        }
-      }
-      runset$active_cores(runset$num_of_running_chains())
-    }
-  }
-  runset$set_total_time(Sys.time() - start_time)
+    start_active_cores <- procs$active_cores()
 
-  if (num_chains > 1) {
-    num_failed_chains <- num_chains - sum(runset$chain_state() == 5)
-    if (num_failed_chains == 0) {
-        if (num_chains == 2) {
-          cat("\nBoth chains finished succesfully.\n")
-        } else {
-          cat("\nAll", num_chains, "chains finished succesfully.\n")
+    while (procs$active_cores() == start_active_cores &&
+           procs$active_cores() > 0) {
+      Sys.sleep(0.1)
+      procs$poll()
+      for (chain_id in chains) {
+        if (!procs$is_queued(chain_id)) {
+          output <- procs$get_proc(chain_id)$read_output_lines()
+          procs$process_sample_output(output, chain_id)
         }
-        cat("Mean chain execution time:",
-            format(round(mean(runset$total_run_times()), 1), nsmall = 1),
-            "seconds.\n")
-        cat("Total execution time:",
-            format(round(runset$total_time(), 1), nsmall = 1),
-            "seconds.\n")
-    } else {
-      if (num_failed_chains == num_chains) {
-        warning("All chains finished unexpectedly!\n", call. = FALSE)
-      } else {
-        warning(num_failed_chains, " chain(s) finished unexpectedly!\n",
-                call. = FALSE)
-        cat("The remaining chains had a mean execution time of",
-            format(round(mean(runset$total_time()), 1), nsmall = 1),
-            "seconds.\n")
       }
+      procs$set_active_cores(procs$num_alive())
     }
   }
+  procs$set_total_time(Sys.time() - start_time)
+  procs$report_time()
   CmdStanMCMC$new(runset) # see fit.R
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
+
 
 #' Run Stan's optimization algorithms
 #'

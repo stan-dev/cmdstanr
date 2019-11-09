@@ -24,9 +24,10 @@ objects.
 \tab Save diagnostic CSV files to a specified location. \cr
 \code{draws} \tab
 Return post-warmup draws as an \code{iters x chains x variables} array. \cr
-\code{time} \tab Return a data frame of execution times of all chains. \cr
+\code{time} \tab Return a list containing the total time and a data frame of
+execution times of all chains. \cr
 \code{output} \tab Return the stdout and stderr of all chains as a list of
-character vectors, or print the output for a single chain if
+character vectors, or pretty print the output for a single chain if
 \code{id} argument is specified. \cr
 }
 }
