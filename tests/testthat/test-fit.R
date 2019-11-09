@@ -9,7 +9,6 @@ if (NOT_CRAN) {
   utils::capture.output(mod <- cmdstan_model(stan_file = stan_program))
   utils::capture.output(fit_mcmc <- mod$sample(data = data_file_json,
                                                num_chains = 2,
-                                               num_cores = 2,
                                                save_diagnostics = TRUE))
   utils::capture.output(suppressWarnings(
     fit_mle <- mod$optimize(data = data_file_json, save_diagnostics = FALSE)
