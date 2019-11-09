@@ -495,8 +495,9 @@ RunSet <- R6::R6Class(
         return(NULL)
       }
 
-      info <- self$procs()$chain_info()
-      info <- info[info$state == 5, ]
+      procs <- self$procs()
+      info <- procs$chain_info()
+      info <- info[procs$is_finished(), ]
       chain_time <- data.frame(
         chain_id = info$id,
         warmup = info$warmup_time,
@@ -511,7 +512,7 @@ RunSet <- R6::R6Class(
         chain_time$sampling <- NA_real_
       }
 
-      list(total = self$procs()$total_time(), chains = chain_time)
+      list(total = procs$total_time(), chains = chain_time)
     }
   ),
   private = list(
