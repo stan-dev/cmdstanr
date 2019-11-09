@@ -446,7 +446,7 @@ RunSet <- R6::R6Class(
     output_files = function() {
       # if we are using background processes only output the file if
       # the process finished normally
-      ok <- self$procs()$is_finished() || self$procs()$is_queued()
+      ok <- self$procs()$is_finished() | self$procs()$is_queued()
       private$output_files_[ok]
     },
 
@@ -734,7 +734,9 @@ CmdStanProcs <- R6::R6Class(
         } else if (num_failed == num_chains) {
           warning("All chains finished unexpectedly!\n", call. = FALSE)
         } else {
-          warning(num_failed, " chain(s) finished unexpectedly!\n", call. = FALSE)
+          warning(num_failed, " chain(s) finished unexpectedly!",
+                  immediate. = TRUE,
+                  call. = FALSE)
           cat("The remaining chains had a mean execution time of",
               format(round(mean(self$total_time()), 1), nsmall = 1),
               "seconds.\n")
