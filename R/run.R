@@ -351,14 +351,14 @@ CmdStanProcs <- R6::R6Class(
             next_state <- 4 # writing csv and finishing
           }
           if (state > 1 && state < 4) {
-            cat("CHAIN ", id,": ", line, "\n")
+            cat("Chain", id, line, "\n")
           }
           if (self$is_error_message(line)) {
             # will print all remaining output in case of excpetions
             if(state == 1) {
               state = 2;
             }
-            message("CHAIN ", id,": ", line)
+            message("Chain ", id, " ", line)
           }
           private$chain_info_[id,"state"] <- next_state
         }
