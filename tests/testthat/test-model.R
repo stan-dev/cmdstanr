@@ -132,6 +132,7 @@ if (NOT_CRAN) {
   ok_arg_values <- list(
     data = data_list,
     num_chains = 2,
+    num_cores = 1,
     num_warmup = 50,
     num_samples = 100,
     save_warmup = FALSE,
@@ -154,6 +155,7 @@ if (NOT_CRAN) {
   bad_arg_values <- list(
     data = "NOT_A_FILE",
     num_chains = -1,
+    num_cores = -1,
     num_warmup = -1,
     num_samples = -1,
     save_warmup = "NO",
@@ -173,6 +175,8 @@ if (NOT_CRAN) {
   )
 
   bad_arg_values_2 <- list(
+    num_chains = "NOT_A_NUMBER",
+    num_cores = "NOT_A_NUMBER",
     init = "NOT_A_FILE",
     seed = 1:10,
     stepsize = 1:10,

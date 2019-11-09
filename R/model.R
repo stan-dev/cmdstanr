@@ -388,7 +388,8 @@ sample_method <- function(data = NULL,
                           window = NULL) {
 
   num_chains <- num_chains %||% 1
-  checkmate::assert_integerish(num_chains, lower = 1)
+  checkmate::assert_integerish(num_chains, lower = 1, len = 1)
+  checkmate::assert_integerish(num_cores, lower = 1, len = 1)
 
   sample_args <- SampleArgs$new(
     num_warmup = num_warmup,
