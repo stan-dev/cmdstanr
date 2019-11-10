@@ -92,6 +92,7 @@ absolute_path <- function(path) {
   }
   repair_path(file.path(getwd(), new_path))
 }
+absolute_path <- Vectorize(absolute_path, USE.NAMES = FALSE)
 
 
 # Change extension from a file path
