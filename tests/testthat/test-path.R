@@ -1,4 +1,4 @@
-# Setup -------------------------------------------------------------------
+context("paths")
 NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
 Sys.unsetenv("CMDSTAN")
@@ -13,7 +13,6 @@ if (NOT_CRAN) {
 unset_cmdstan_path()
 
 # Setting paths -----------------------------------------------------------
-context("Paths-setting")
 test_that("Setting path works and confirms with message", {
   expect_message(
     set_cmdstan_path(PATH),
@@ -60,8 +59,6 @@ test_that("cmdstanr_initialize() also looks for default path", {
 
 
 # Getting path and version ------------------------------------------------
-context("Paths-getting")
-
 test_that("Getting a valid path works", {
   skip_on_cran()
 

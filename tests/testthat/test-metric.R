@@ -1,3 +1,5 @@
+context("model-sample-metric")
+
 # Setup -------------------------------------------------------------------
 NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
@@ -9,12 +11,8 @@ if (NOT_CRAN) {
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 }
 
-expect_sample_output <- function(object) {
-  testthat::expect_output(object, "Running MCMC with ")
-}
 
-# Sample ------------------------------------------------------------------
-context("CmdStanModel-sample-with-metric")
+# test metric argument ----------------------------------------------------
 
 test_that("sample() method works with provided inv_metrics", {
   skip_on_cran()

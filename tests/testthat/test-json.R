@@ -1,4 +1,4 @@
-context("JSON")
+context("json")
 
 test_that("test JSON output unboxing", {
   temp_file <- tempfile()
