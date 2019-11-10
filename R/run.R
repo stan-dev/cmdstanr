@@ -14,7 +14,6 @@ CmdStanRun <- R6::R6Class(
       checkmate::assert_r6(procs, classes = "CmdStanProcs")
       self$args <- args
       self$procs <- procs
-      private$command_args_ <- self$command_args()
       private$output_files_ <- self$new_output_files()
       if (self$save_diagnostics()) {
         private$diagnostic_files_ <- self$new_diagnostic_files()
@@ -95,8 +94,8 @@ CmdStanRun <- R6::R6Class(
         private$command_args_ <- lapply(self$run_ids(), function(j) {
           self$args$compose_all_args(
             idx = j,
-            output_file = self$output_files()[j],
-            diagnostic_file = self$diagnostic_files()[j] # maybe NULL
+            output_file = private$output_files_[j],
+            diagnostic_file = private$diagnostic_files_[j] # maybe NULL
           )
         })
       }
