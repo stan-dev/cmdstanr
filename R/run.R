@@ -1,28 +1,26 @@
-# RunSet ---------------------------------------------------------------
+# CmdStanRun (RunSet) -----------------------------------------------------
 
 # Record of CmdStan runs for a specified configuration and number of chains.
 CmdStanRun <- R6::R6Class(
   classname = "CmdStanRun",
   public = list(
     # Initialize object
-    # @param args CmdStanArgs object. See args.R.
-    # @param num_runs The number of CmdStan runs. For MCMC this is the number of
-    #   chains. Currently for other methods this must be set to 1.
-    initialize = function(args, num_runs) {
+    # @param args CmdStanArgs object.
+    # @param procs CmdStanProcs object.
+    args = NULL,
+    procs = NULL,
+    initialize = function(args, procs) {
       checkmate::assert_r6(args, classes = "CmdStanArgs")
-      checkmate::assert_integerish(num_runs,
-                                   any.missing = FALSE,
-                                   null.ok = FALSE,
-                                   len = 1,
-                                   lower = 1)
-      private$args_ <- args
-      private$num_runs_ <- as.integer(num_runs)
+      checkmate::assert_r6(procs, classes = "CmdStanProcs")
+      self$args <- args
+      self$procs <- procs
+
       # diagnostic csv files if diagnostic_file=TRUE
       private$diagnostic_files_ <- NULL
-      if (args$save_diagnostics) {
+      if (self$args$save_diagnostics) {
         private$diagnostic_files_ <-
           tempfile(
-            pattern = paste0(args$csv_basename(), "-diagnostic-", args$run_ids, "-"),
+            pattern = paste0(self$csv_basename(), "-diagnostic-", self$run_ids(), "-"),
             tmpdir = cmdstan_tempdir(),
             fileext = ".csv"
           )
@@ -32,7 +30,7 @@ CmdStanRun <- R6::R6Class(
       # output csv files
       private$output_files_ <-
         tempfile(
-          pattern = paste0(args$csv_basename(), "-", args$run_ids, "-"),
+          pattern = paste0(self$csv_basename(), "-", self$run_ids(), "-"),
           tmpdir = cmdstan_tempdir(),
           fileext = ".csv"
         )
@@ -43,28 +41,29 @@ CmdStanRun <- R6::R6Class(
       invisible(file.create(private$console_files_))
 
       # create the commands to run each chain
-      private$command_args_ <- lapply(args$run_ids, function(j) {
-        args$compose_all_args(
+      private$command_args_ <- lapply(self$run_ids(), function(j) {
+        self$args$compose_all_args(
           idx = j,
           output_file = private$output_files_[j],
           diagnostic_file = private$diagnostic_files_[j] # maybe NULL
         )
       })
 
-      private$procs_ <- CmdStanProcs$new(self$run_ids())
       invisible(self)
     },
 
-    args = function() private$args_,
-    num_runs = function() private$num_runs_,
-    num_chains = function() private$num_runs_,
-    run_ids = function() private$args_$run_ids,
-    model_name = function() private$args_$model_name,
-    method = function() private$args_$method,
-    command = function() private$args_$command(),
+    num_runs = function() self$procs$num_runs(),
+    num_chains = function() self$num_runs(),
+    num_cores = function() self$procs$num_cores(),
+    run_ids = function() self$args$run_ids,
+    exe_file = function() self$args$exe_file,
+    model_name = function() self$args$model_name,
+    method = function() self$args$method,
+    csv_basename = function() self$args$csv_basename(),
+    command = function() self$args$command(),
     command_args = function() private$command_args_,
     console_files = function() private$console_files_,
-    data_file = function() private$args_$data_file,
+    data_file = function() self$args$data_file,
     diagnostic_files = function() {
       if (!length(private$diagnostic_files_)) {
         stop(
@@ -78,10 +77,9 @@ CmdStanRun <- R6::R6Class(
     output_files = function() {
       # if we are using background processes only output the file if
       # the process finished normally
-      ok <- self$procs()$is_finished() | self$procs()$is_queued()
+      ok <- self$procs$is_finished() | self$procs$is_queued()
       private$output_files_[ok]
     },
-
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE) {
@@ -119,15 +117,23 @@ CmdStanRun <- R6::R6Class(
       )
     },
 
-    procs = function() {
-      private$procs_
+    run_cmdstan = function() {
+      if (self$method() == "sample") {
+        private$run_sample_()
+      } else if (self$method() == "optimize") {
+        private$run_optimize_()
+      } else if (self$method() == "variational") {
+        private$run_variational_()
+      }
     },
+
     time = function() {
       if (self$method() != "sample") {
+        # FIXME add time for other methods?
         return(NULL)
       }
 
-      procs <- self$procs()
+      procs <- self$procs
       info <- procs$chain_info()
       info <- info[procs$is_finished(), ]
       chain_time <- data.frame(
@@ -137,7 +143,7 @@ CmdStanRun <- R6::R6Class(
         total = info$total_time
       )
 
-      if (isTRUE(self$args()$refresh == 0)) {
+      if (isTRUE(self$args$refresh == 0)) {
         warning("Separate warmup and sampling times are not available ",
                 "after running with 'refresh=0'.", call. = FALSE)
         chain_time$warmup <- NA_real_
@@ -148,15 +154,76 @@ CmdStanRun <- R6::R6Class(
     }
   ),
   private = list(
-    args_ = NULL,  # CmdStanArgs object
-    procs_ = NULL, # CmdStanProcs object
-    num_runs_ = integer(),
     output_files_ = character(),
     diagnostic_files_ = character(),
     console_files_ = character(),
     command_args_ = list()
   )
 )
+
+
+# run helpers -------------------------------------------------
+.run_sample <- function() {
+  procs <- self$procs
+  on.exit(procs$cleanup(), add = TRUE)
+
+  cat("Running MCMC with", procs$num_runs(), "chain(s) on", procs$num_cores(),
+      "core(s)...\n\n")
+
+  start_time <- Sys.time()
+  chains <- procs$run_ids()
+  chain_ind <- 1
+
+  while (!procs$all_finished()) {
+
+    # if we have free cores and any leftover chains
+    while (procs$active_cores() != procs$num_cores() &&
+           procs$any_queued()) {
+      chain_id <- chains[chain_ind]
+      procs$new_proc(
+        id = chain_id,
+        command = self$command(),
+        args = self$command_args()[[chain_id]],
+        wd = dirname(self$exe_file())
+      )
+      procs$mark_chain_start(chain_id)
+      procs$set_active_cores(procs$active_cores() + 1)
+      chain_ind <- chain_ind + 1
+    }
+    start_active_cores <- procs$active_cores()
+
+    while (procs$active_cores() == start_active_cores &&
+           procs$active_cores() > 0) {
+      procs$wait(0.1)
+      procs$poll(0)
+      for (chain_id in chains) {
+        if (!procs$is_queued(chain_id)) {
+          output <- procs$get_proc(chain_id)$read_output_lines()
+          procs$process_sample_output(output, chain_id)
+        }
+      }
+      procs$set_active_cores(procs$num_alive())
+    }
+  }
+  procs$set_total_time(Sys.time() - start_time)
+  procs$report_time()
+}
+CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
+
+.run_other <- function() {
+  # FIXME for consistency we should use a CmdStanProcs object
+  # for optimize and variational too, but for now this is fine
+  run_log <- processx::run(
+    command = self$command(),
+    args = self$command_args()[[1]],
+    wd = dirname(self$exe_file()),
+    echo_cmd = FALSE,
+    echo = TRUE,
+    error_on_status = TRUE
+  )
+}
+CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
+CmdStanRun$set("private", name = "run_variational_", value = .run_other)
 
 
 # CmdStanProcs ------------------------------------------------------------
@@ -166,13 +233,20 @@ CmdStanRun <- R6::R6Class(
 CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
-    initialize = function(run_ids) {
-      private$run_ids_ <- run_ids
-
-      num_runs <- length(run_ids)
+    # @param num_runs The number of CmdStan runs. For MCMC this is the number of
+    #   chains. Currently for other methods this must be set to 1.
+    # @param num_cores The number of cores for running MCMC chains in parallel.
+    #   Currently for other method this must be set to 1.
+    initialize = function(num_runs, num_cores) {
+      checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
+      checkmate::assert_integerish(num_cores, lower = 1, len = 1, any.missing = FALSE)
+      private$num_runs_ <- as.integer(num_runs)
+      private$num_cores_ <- as.integer(num_cores)
+      private$active_cores_ <- 0
+      private$run_ids_ <- seq_len(num_runs)
       zeros <- rep(0, num_runs)
       private$chain_info_ <- data.frame(
-        id = seq_len(num_runs),
+        id = private$run_ids_,
         state = zeros,
         start_time = zeros,
         warmup_time = zeros,
@@ -180,9 +254,13 @@ CmdStanProcs <- R6::R6Class(
         total_time = zeros,
         last_section_start_time = zeros
       )
-      private$active_cores_ <- 0
-
       invisible(self)
+    },
+    num_runs = function() {
+      private$num_runs_
+    },
+    num_cores = function() {
+      private$num_cores_
     },
     run_ids = function() {
       private$run_ids_
@@ -373,7 +451,7 @@ CmdStanProcs <- R6::R6Class(
         return(invisible(self))
       }
 
-      num_chains <- length(self$run_ids())
+      num_chains <- self$num_runs()
       if (num_chains > 1) {
         num_failed <- self$num_failed()
         if (num_failed == 0) {
@@ -404,8 +482,10 @@ CmdStanProcs <- R6::R6Class(
   ),
   private = list(
     processes_ = NULL, # will be list of processx::process objects
-    active_cores_ = integer(),
     run_ids_ = integer(),
+    num_runs_ = integer(),
+    num_cores_ = integer(),
+    active_cores_ = integer(),
     chain_info_ = data.frame(),
     chain_output_ = list(),
     total_time_ = numeric()

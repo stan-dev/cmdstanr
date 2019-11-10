@@ -88,9 +88,9 @@ CmdStanMCMC <- R6::R6Class(
     },
     output = function(id = NULL) {
       if (is.null(id)) {
-        self$runset$procs()$chain_output()
+        self$runset$procs$chain_output()
       } else {
-        cat(paste(self$runset$procs()$chain_output(id), collapse="\n"))
+        cat(paste(self$runset$procs$chain_output(id), collapse="\n"))
       }
     }
     # sampler_params = function() {

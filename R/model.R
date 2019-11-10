@@ -392,9 +392,7 @@ sample_method <- function(data = NULL,
                           term_buffer = NULL,
                           window = NULL) {
 
-  num_chains <- num_chains %||% 1
   checkmate::assert_integerish(num_chains, lower = 1, len = 1)
-  checkmate::assert_integerish(num_cores, lower = 1, len = 1)
 
   sample_args <- SampleArgs$new(
     num_warmup = num_warmup,
@@ -423,50 +421,9 @@ sample_method <- function(data = NULL,
     init = init,
     refresh = refresh
   )
-
-  runset <- CmdStanRun$new(args = cmdstan_args, num_runs = num_chains)
-  procs <- runset$procs()
-  on.exit(procs$cleanup(), add = TRUE)
-
-  start_time <- Sys.time()
-  chains <- runset$run_ids()
-  chain_ind <- 1
-
-  cat("Running MCMC with", num_chains, "chain(s) on", num_cores, "core(s)...\n\n")
-  while (!procs$all_finished()) {
-
-    # if we have free cores and any leftover chains
-    while (procs$active_cores() != num_cores &&
-           procs$any_queued()) {
-      chain_id <- chains[chain_ind]
-      procs$new_proc(
-        id = chain_id,
-        command = runset$command(),
-        args = runset$command_args()[[chain_id]],
-        wd = dirname(self$exe_file())
-      )
-      procs$mark_chain_start(chain_id)
-      procs$set_active_cores(procs$active_cores() + 1)
-      chain_ind <- chain_ind + 1
-    }
-    start_active_cores <- procs$active_cores()
-
-    while (procs$active_cores() == start_active_cores &&
-           procs$active_cores() > 0) {
-      procs$wait(0.1)
-      procs$poll(0)
-      for (chain_id in chains) {
-        if (!procs$is_queued(chain_id)) {
-          output <- procs$get_proc(chain_id)$read_output_lines()
-          procs$process_sample_output(output, chain_id)
-        }
-      }
-      procs$set_active_cores(procs$num_alive())
-    }
-  }
-  procs$set_total_time(Sys.time() - start_time)
-  procs$report_time()
-
+  cmdstan_procs <- CmdStanProcs$new(num_chains, num_cores)
+  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset$run_cmdstan()
   CmdStanMCMC$new(runset)
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
@@ -555,15 +512,9 @@ optimize_method <- function(data = NULL,
     refresh = refresh
   )
 
-  runset <- CmdStanRun$new(args = cmdstan_args, num_runs = 1)
-  run_log <- processx::run(
-    command = runset$command(),
-    args = runset$command_args()[[1]],
-    wd = dirname(self$exe_file()),
-    echo_cmd = FALSE,
-    echo = TRUE,
-    error_on_status = TRUE
-  )
+  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset$run_cmdstan()
   CmdStanMLE$new(runset)
 }
 CmdStanModel$set("public", name = "optimize", value = optimize_method)
@@ -684,15 +635,9 @@ variational_method <- function(data = NULL,
     refresh = refresh
   )
 
-  runset <- CmdStanRun$new(args = cmdstan_args, num_runs = 1)
-  run_log <- processx::run(
-    command = runset$command(),
-    args = runset$command_args()[[1]],
-    wd = dirname(self$exe_file()),
-    echo_cmd = FALSE,
-    echo = TRUE,
-    error_on_status = TRUE
-  )
+  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset$run_cmdstan()
   CmdStanVB$new(runset)
 }
 CmdStanModel$set("public", name = "variational", value = variational_method)
