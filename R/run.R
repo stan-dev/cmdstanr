@@ -14,41 +14,11 @@ CmdStanRun <- R6::R6Class(
       checkmate::assert_r6(procs, classes = "CmdStanProcs")
       self$args <- args
       self$procs <- procs
-
-      # diagnostic csv files if diagnostic_file=TRUE
-      private$diagnostic_files_ <- NULL
-      if (self$args$save_diagnostics) {
-        private$diagnostic_files_ <-
-          tempfile(
-            pattern = paste0(self$csv_basename(), "-diagnostic-", self$run_ids(), "-"),
-            tmpdir = cmdstan_tempdir(),
-            fileext = ".csv"
-          )
-        invisible(file.create(private$diagnostic_files_))
+      private$command_args_ <- self$command_args()
+      private$output_files_ <- self$new_output_files()
+      if (self$save_diagnostics()) {
+        private$diagnostic_files_ <- self$new_diagnostic_files()
       }
-
-      # output csv files
-      private$output_files_ <-
-        tempfile(
-          pattern = paste0(self$csv_basename(), "-", self$run_ids(), "-"),
-          tmpdir = cmdstan_tempdir(),
-          fileext = ".csv"
-        )
-      invisible(file.create(private$output_files_))
-
-      # files to store console output (NOT USED CURRENTLY)
-      private$console_files_ <- change_ext(private$output_files_, ".txt")
-      invisible(file.create(private$console_files_))
-
-      # create the commands to run each chain
-      private$command_args_ <- lapply(self$run_ids(), function(j) {
-        self$args$compose_all_args(
-          idx = j,
-          output_file = private$output_files_[j],
-          diagnostic_file = private$diagnostic_files_[j] # maybe NULL
-        )
-      })
-
       invisible(self)
     },
 
@@ -60,10 +30,11 @@ CmdStanRun <- R6::R6Class(
     model_name = function() self$args$model_name,
     method = function() self$args$method,
     csv_basename = function() self$args$csv_basename(),
-    command = function() self$args$command(),
-    command_args = function() private$command_args_,
     console_files = function() private$console_files_,
     data_file = function() self$args$data_file,
+    save_diagnostics = function() self$args$save_diagnostics,
+    new_output_files = function() self$args$new_output_files(),
+    new_diagnostic_files = function() self$args$new_diagnostic_files(),
     diagnostic_files = function() {
       if (!length(private$diagnostic_files_)) {
         stop(
@@ -117,6 +88,21 @@ CmdStanRun <- R6::R6Class(
       )
     },
 
+    command = function() self$args$command(),
+    command_args = function() {
+      if (!length(private$command_args_)) {
+        # create a list of character vectors (one per run/chain) of cmdstan arguments
+        private$command_args_ <- lapply(self$run_ids(), function(j) {
+          self$args$compose_all_args(
+            idx = j,
+            output_file = self$output_files()[j],
+            diagnostic_file = self$diagnostic_files()[j] # maybe NULL
+          )
+        })
+      }
+      private$command_args_
+    },
+
     run_cmdstan = function() {
       if (self$method() == "sample") {
         private$run_sample_()
@@ -155,8 +141,7 @@ CmdStanRun <- R6::R6Class(
   ),
   private = list(
     output_files_ = character(),
-    diagnostic_files_ = character(),
-    console_files_ = character(),
+    diagnostic_files_ = NULL,
     command_args_ = list()
   )
 )

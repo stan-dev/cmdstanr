@@ -39,26 +39,53 @@ CmdStanArgs <- R6::R6Class(
       self$model_name <- model_name
       self$exe_file <- exe_file
       self$run_ids <- run_ids
-      self$data_file <- if(!is.null(data_file)) sapply(data_file, repair_path)
+      self$data_file <- data_file
       self$seed <- seed
-      self$init <- if(!is.null(init)) sapply(init, repair_path)
+      self$init <- init
       self$refresh <- refresh
       self$method_args <- method_args
+      self$method <- self$method_args$method
       self$save_diagnostics <- save_diagnostics
 
-      self$method <- self$method_args$method
-      self$method_args$validate(num_runs = length(run_ids))
+      self$method_args$validate(num_runs = length(self$run_ids))
       self$validate()
     },
     validate = function() {
       validate_cmdstan_args(self)
+      if (is.character(self$data_file)) {
+        self$data_file <- absolute_path(self$data_file)
+      }
+      if (is.character(self$init)) {
+        self$init <- absolute_path(self$init)
+      }
       self$init <- maybe_recycle_init(self$init, length(self$run_ids))
       self$seed <- maybe_generate_seed(self$seed, length(self$run_ids))
       invisible(self)
     },
-    # create default basename for csv output file from model name and method
-    csv_basename = function() {
-      paste0(self$model_name, "-stan-", self$method)
+
+    tempfile_basename = function(type = c("output", "diagnostic")) {
+      type <- match.arg(type)
+      paste0(self$model_name, "-stan-", self$method, "-",
+             if (type == "diagnostic") "diagnostic-",
+             self$run_ids, "-")
+    },
+    new_output_files = function() {
+      files <- tempfile(
+        pattern = self$tempfile_basename("output"),
+        tmpdir = cmdstan_tempdir(),
+        fileext = ".csv"
+      )
+      invisible(file.create(files))
+      files
+    },
+    new_diagnostic_files = function() {
+      files <- tempfile(
+        pattern = self$tempfile_basename("diagnostic"),
+        tmpdir = cmdstan_tempdir(),
+        fileext = ".csv"
+      )
+      invisible(file.create(files))
+      files
     },
 
     # Compose all arguments to pass to CmdStan
@@ -533,9 +560,9 @@ validate_init <- function(init, num_runs) {
     stop("If 'init' is numeric it must be a single real number >= 0.",
          call. = FALSE)
   } else if (is.character(init)) {
-    if (length(init) != num_runs) {
-      stop("If 'init' is specified as a character vector it must have",
-           "one element per chain.",
+    if (length(init) != 1 && length(init) != num_runs) {
+      stop("If 'init' is specified as a character vector it must have ",
+           "length 1 or length 'num_chains'.",
            call. = FALSE)
     }
     checkmate::assert_file_exists(init, access = "r")
@@ -551,7 +578,6 @@ validate_init <- function(init, num_runs) {
 #' @return `init`, unless numeric and length 1, in which case `rep(init, num_runs)`.
 maybe_recycle_init <- function(init, num_runs) {
   if (is.null(init) ||
-      is.character(init) ||
       length(init) == num_runs) {
     return(init)
   }
