@@ -151,9 +151,9 @@ copy_temp_files <-
 
 
 # FIXME: also parse the csv header
-read_optim_csv <- function(csv_file) {
+read_optim_csv <- function(output_file) {
   csv_no_comments <- utils::read.csv(
-    csv_file,
+    output_file,
     comment.char = "#",
     colClasses = "numeric"
   )
@@ -166,9 +166,9 @@ read_optim_csv <- function(csv_file) {
 }
 
 # FIXME: also parse the csv header
-read_vb_csv <- function(csv_file) {
+read_vb_csv <- function(output_file) {
   csv_no_comments <- utils::read.csv(
-    csv_file,
+    output_file,
     comment.char = "#",
     colClasses = "numeric"
   )
