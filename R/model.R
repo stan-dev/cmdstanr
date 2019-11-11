@@ -33,10 +33,14 @@
 #' mod <- cmdstan_model(stan_program)
 #' mod$print()
 #'
-#' # Run sample method (MCMC via Stan's dynamic HMC/NUTS),
-#' # specifying data as a named list (like RStan)
-#' standata <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
-#' fit_mcmc <- mod$sample(data = standata, seed = 123, num_chains = 2)
+#' # data as a named list (like RStan)
+#' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+#' fit_mcmc <- mod$sample(
+#'   data = stan_data,
+#'   seed = 123,
+#'   num_chains = 2,
+#'   num_cores = 2
+#' )
 #'
 #' # Call CmdStan's bin/stansummary
 #' fit_mcmc$summary()
@@ -44,26 +48,27 @@
 #' # Call CmdStan's bin/diagnose
 #' fit_mcmc$diagnose()
 #'
-#' # Run optimization method (default is Stan's LBFGS algorithm)
-#' # and also demonstrate specifying data as a path to a file (readable by CmdStan)
-#' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.R")
-#' fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-#'
-#' #' Print estimates
-#' fit_optim$summary()
-#'
-#' # Run variational Bayes method (default is meanfield ADVI)
-#' fit_vb <- mod$variational(data = standata, seed = 123)
-#'
-#' # Call CmdStan's bin/summary
-#' fit_vb$summary()
-#'
 #' # For models fit using MCMC, if you like working with RStan's stanfit objects
 #' # then you can create one with rstan::read_stan_csv()
 #' if (require(rstan, quietly = TRUE)) {
 #'   stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
 #'   print(stanfit)
 #' }
+#'
+#'
+#' # Run optimization method (default is Stan's LBFGS algorithm)
+#' # and also demonstrate specifying data as a path to a file (readable by CmdStan)
+#' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
+#' fit_optim <- mod$optimize(data = my_data_file, seed = 123)
+#'
+#' #' Print estimates
+#' fit_optim$summary()
+#'
+#' # Run variational Bayes method (default is meanfield ADVI)
+#' fit_vb <- mod$variational(data = stan_data, seed = 123)
+#'
+#' # Call CmdStan's bin/summary
+#' fit_vb$summary()
 #'
 #' }
 #'
@@ -270,8 +275,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     refresh = NULL,
 #'     init = NULL,
 #'     save_diagnostics = FALSE,
-#'     num_chains = NULL,
-#'     # num_cores = NULL, # not yet implemented
+#'     num_chains = 4,
+#'     num_cores = getOption("mc.cores", 1),
 #'     num_warmup = NULL,
 #'     num_samples = NULL,
 #'     save_warmup = FALSE,
@@ -293,13 +298,18 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @section Arguments unique to the `sample` method: In addition to the
 #'   arguments above, the `$sample()` method also has its own set of arguments.
 #'
-#'   The following arguments are offered by CmdStanR but not CmdStan:
+#'   The following two arguments are offered by CmdStanR but do not correspond
+#'   to arguments in CmdStan because all CmdStan arguments pertain to the
+#'   execution of a single run only.
 #'
-#'   * `num_chains`: (positive integer) The number of Markov chains to run.
-#'   Currently the chains are run sequentially, but the option to
-#'   execute CmdStan runs in parallel is coming soon.
-#'   This argument does not correspond to an argument in CmdStan because all
-#'   CmdStan arguments pertain to the execution of a single run only.
+#'   * `num_chains`: (positive integer) The number of Markov chains to run. The
+#'   default is 4.
+#'
+#'   * `num_cores`: (positive integer) The maximum number of cores to use for
+#'   running parallel chains. If `num_cores` is not specified then the default is
+#'   to look for the option `"mc.cores"`,
+#'   which can be set for an entire \R session by `options(mc.cores=value)`.
+#'   If the `"mc.cores"` option has not been set then the default is `1`.
 #'
 #'   The rest of the arguments correspond to arguments offered by CmdStan. They
 #'   are described briefly here and in greater detail in the CmdStan manual.
@@ -365,8 +375,8 @@ sample_method <- function(data = NULL,
                           refresh = NULL,
                           init = NULL,
                           save_diagnostics = FALSE,
-                          num_chains = NULL, # TODO: CmdStan does 1 chain, but should this default to 4?
-                          # num_cores = NULL, # TODO
+                          num_chains = 4,
+                          num_cores = getOption("mc.cores", 1),
                           num_warmup = NULL,
                           num_samples = NULL,
                           save_warmup = FALSE,
@@ -382,9 +392,7 @@ sample_method <- function(data = NULL,
                           term_buffer = NULL,
                           window = NULL) {
 
-  num_chains <- num_chains %||% 1
-  checkmate::assert_integerish(num_chains, lower = 1)
-  chain_ids <- seq_len(num_chains)
+  checkmate::assert_integerish(num_chains, lower = 1, len = 1)
 
   sample_args <- SampleArgs$new(
     num_warmup = num_warmup,
@@ -406,25 +414,17 @@ sample_method <- function(data = NULL,
     method_args = sample_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    run_ids = chain_ids,
+    run_ids = seq_len(num_chains),
     data_file = process_data(data),
     save_diagnostics = save_diagnostics,
     seed = seed,
     init = init,
     refresh = refresh
   )
-
-  runset <- RunSet$new(args = cmdstan_args, num_runs = num_chains)
-  for (chain in chain_ids) { # FIXME: allow parallelization
-    run_log <- processx::run(
-      command = runset$command(),
-      args = runset$command_args()[[chain]],
-      wd = dirname(self$exe_file()),
-      echo_cmd = FALSE,
-      echo = TRUE
-    )
-  }
-  CmdStanMCMC$new(runset) # see fit.R
+  cmdstan_procs <- CmdStanProcs$new(num_chains, num_cores)
+  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset$run_cmdstan()
+  CmdStanMCMC$new(runset)
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
 
@@ -512,15 +512,9 @@ optimize_method <- function(data = NULL,
     refresh = refresh
   )
 
-  runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
-  run_log <- processx::run(
-    command = runset$command(),
-    args = runset$command_args()[[1]],
-    wd = dirname(self$exe_file()),
-    echo_cmd = FALSE,
-    echo = TRUE,
-    error_on_status = TRUE
-  )
+  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset$run_cmdstan()
   CmdStanMLE$new(runset)
 }
 CmdStanModel$set("public", name = "optimize", value = optimize_method)
@@ -641,15 +635,9 @@ variational_method <- function(data = NULL,
     refresh = refresh
   )
 
-  runset <- RunSet$new(args = cmdstan_args, num_runs = 1)
-  run_log <- processx::run(
-    command = runset$command(),
-    args = runset$command_args()[[1]],
-    wd = dirname(self$exe_file()),
-    echo_cmd = FALSE,
-    echo = TRUE,
-    error_on_status = TRUE
-  )
+  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset$run_cmdstan()
   CmdStanVB$new(runset)
 }
 CmdStanModel$set("public", name = "variational", value = variational_method)
