@@ -11,6 +11,9 @@
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).
 
+To get started see the vignette 
+[_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html).
+
 CmdStanR is in early stages of development and currently requires RStan to use
 `rstan::read_stan_csv()` for reading CmdStan output into R (RStan is not used
 to compile anything). This dependency on RStan will eventually be removed.
