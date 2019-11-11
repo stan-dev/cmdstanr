@@ -1,7 +1,5 @@
-# Setup -------------------------------------------------------------------
+context("install")
 NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
-
-context("Installation")
 
 test_that("test cmdstan installation", {
   skip_if_offline()

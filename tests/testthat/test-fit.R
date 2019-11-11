@@ -4,12 +4,12 @@ NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 if (NOT_CRAN) {
   set_cmdstan_path()
   stan_program <- test_path("resources/stan/logistic.stan")
-  # data_file_r <- test_path("resources/data/logistic.data.R")
   data_file_json <- test_path("resources/data/logistic.data.json")
-  utils::capture.output(mod <- cmdstan_model(stan_file = stan_program))
-  utils::capture.output(fit_mcmc <- mod$sample(data = data_file_json,
-                                               num_chains = 2,
-                                               save_diagnostics = TRUE))
+  mod <- cmdstan_model(stan_file = stan_program)
+  utils::capture.output(
+    fit_mcmc <- mod$sample(data = data_file_json, num_chains = 2,
+                           save_diagnostics = TRUE)
+  )
   utils::capture.output(suppressWarnings(
     fit_mle <- mod$optimize(data = data_file_json, save_diagnostics = FALSE)
   ))
@@ -25,7 +25,7 @@ if (NOT_CRAN) {
 
 
 # CmdStanMCMC -------------------------------------------------------------
-context("CmdStanMCMC")
+context("fit-objects-mcmc")
 
 test_that("saving csv mcmc output works", {
   skip_on_cran()
@@ -85,7 +85,7 @@ test_that("draws() method returns posterior sample (reading csv works)", {
 
 
 # CmdStanMLE --------------------------------------------------------------
-context("CmdStanMLE")
+context("fit-objects-mle")
 
 test_that("saving csv optimzation output works", {
   skip_on_cran()
@@ -125,7 +125,7 @@ test_that("summary method doesn't error for optimization", {
 })
 
 # CmdStanVB -------------------------------------------------------------
-context("CmdStanVB")
+context("fit-objects-vb")
 
 test_that("saving csv variational output works", {
   skip_on_cran()
@@ -184,6 +184,7 @@ test_that("log_p(), log_g() methods return vectors (reading csv works)", {
 
 # CmdStanRun ------------------------------------------------------------------
 
+context("runset (CmdStanRun)")
 test_that("CmdStanRun (runset) methods return valid output", {
   skip_on_cran()
 
@@ -202,7 +203,6 @@ test_that("CmdStanRun (runset) methods return valid output", {
   expect_equal(runset$run_ids(), seq_len(runset$num_chains()))
   checkmate::expect_file_exists(runset$data_file())
   checkmate::expect_file_exists(runset$output_files())
-  checkmate::expect_file_exists(runset$console_files())
   checkmate::expect_file_exists(runset$diagnostic_files())
 })
 

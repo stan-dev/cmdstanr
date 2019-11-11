@@ -1,4 +1,4 @@
-context("Threads")
+context("threads")
 
 Sys.unsetenv("STAN_NUM_THREADS")
 
