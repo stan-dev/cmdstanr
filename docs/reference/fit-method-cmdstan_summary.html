@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>CmdStanVB objects — CmdStanVB • cmdstanr</title>
+<title>Run CmdStan's <code>bin/stansummary</code> and <code>bin/diagnose</code> — fit-method-cmdstan_summary • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,10 +42,8 @@
 
 
 
-<meta property="og:title" content="CmdStanVB objects — CmdStanVB" />
-<meta property="og:description" content="A CmdStanVB object is the fitted model object returned by the
-$variational() method of a
-CmdStanModel object." />
+<meta property="og:title" content="Run CmdStan's <code>bin/stansummary</code> and <code>bin/diagnose</code> — fit-method-cmdstan_summary" />
+<meta property="og:description" content="Run CmdStan's bin/stansummary and bin/diagnose" />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -157,52 +155,40 @@ CmdStanModel object." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>CmdStanVB objects</h1>
+    <h1>Run CmdStan's <code>bin/stansummary</code> and <code>bin/diagnose</code></h1>
     
-    <div class="hidden name"><code>CmdStanVB.Rd</code></div>
+    <div class="hidden name"><code>fit-method-cmdstan_summary.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>A <code>CmdStanVB</code> object is the fitted model object returned by the
-<code><a href='model-method-variational.html'>$variational()</a></code> method of a
-<code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.</p>
+    <p>Run CmdStan's <code>bin/stansummary</code> and <code>bin/diagnose</code></p>
     </div>
 
 
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <h2 class="hasAnchor" id="note"><a class="anchor" href="#note"></a>Note</h2>
 
-    <p><code>CmdStanVB</code> objects have the following associated methods:</p>
-<table class='table'>
-<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code>draws</code></td><td>Return approximate posterior draws as a
-<code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code> object.</td></tr>
-<tr><td><code><a href='fit-method-summary.html'>summary</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_output_files</a></code></td><td>Save output CSV files to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_data_file</a></code></td><td>Save JSON data file to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_diagnostic_files</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
-</table>
+    <p>Although these methods also work for models fit using the
+<code><a href='model-method-variational.html'>$variational()</a></code> method, much of the output is
+only relevant for models fit using the <code><a href='model-method-sample.html'>$sample()</a></code>
+method.</p>
+    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
 
+    
+<pre>$cmdstan_summary()
+$cmdstan_diagnose()
+</pre>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>The CmdStanR website (<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>)
-for online documentation and tutorials.</p>
-<p>The Stan and CmdStan documentation:</p><ul>
-<li><p>Stan doc (html or pdf): <a href='https://mc-stan.org/users/documentation/'>mc-stan.org/users/documentation/</a></p></li>
-<li><p>CmdStan doc (pdf): (<a href='https://github.com/stan-dev/cmdstan/releases/latest'>github.com/stan-dev/cmdstan/releases/</a>).</p></li>
-</ul>
-
-<p>Other fitted model objects: <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>,
-  <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#details">Details</a></li>
+      <li><a href="#note">Note</a></li>
+      <li><a href="#usage">Usage</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>
 
