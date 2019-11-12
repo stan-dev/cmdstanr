@@ -1,10 +1,8 @@
 context("model-sample-metric")
 
 # Setup -------------------------------------------------------------------
-NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
-
-if (NOT_CRAN) {
-  set_cmdstan_path()
+if (not_on_cran()) {
+  set_cmdstan_path_for_tests()
   stan_program <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   mod <- cmdstan_model(stan_file = stan_program)
 

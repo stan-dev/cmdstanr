@@ -1,10 +1,9 @@
 context("paths")
-NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
 Sys.unsetenv("CMDSTAN")
 
-if (NOT_CRAN) {
-  PATH <- set_cmdstan_path()
+if (not_on_cran()) {
+  PATH <- set_cmdstan_path_for_tests()
   VERSION <- cmdstan_version()
 } else { # CRAN
   PATH <- Sys.getenv("HOME") # not actually installed, just a valid path
