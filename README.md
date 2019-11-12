@@ -55,4 +55,4 @@ or open a new one if none are applicable.
 ### License
 
 CmdStanR, like CmdStan and the core Stan C++ code, is licensed under new BSD.
-See the [LICENSE.md](LICENSE.md) file.
+See the `LICENSE.md` file.
