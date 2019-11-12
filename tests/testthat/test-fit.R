@@ -5,16 +5,17 @@ if (NOT_CRAN) {
   set_cmdstan_path()
   stan_program <- test_path("resources/stan/logistic.stan")
   data_file_json <- test_path("resources/data/logistic.data.json")
+  data_list <- jsonlite::read_json(data_file_json, simplifyVector = TRUE)
   mod <- cmdstan_model(stan_file = stan_program)
   utils::capture.output(
-    fit_mcmc <- mod$sample(data = data_file_json, num_chains = 2,
+    fit_mcmc <- mod$sample(data = data_list, num_chains = 2,
                            save_diagnostics = TRUE)
   )
   utils::capture.output(suppressWarnings(
-    fit_mle <- mod$optimize(data = data_file_json, save_diagnostics = FALSE)
+    fit_mle <- mod$optimize(data = data_list, save_diagnostics = FALSE)
   ))
   utils::capture.output(suppressWarnings(
-    fit_vb <- mod$variational(data = data_file_json, save_diagnostics = TRUE)
+    fit_vb <- mod$variational(data = data_list, save_diagnostics = TRUE)
   ))
 
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
@@ -29,34 +30,53 @@ context("fit-objects-mcmc")
 
 test_that("saving csv mcmc output works", {
   skip_on_cran()
-  checkmate::expect_file_exists(fit_mcmc$output_files(), extension = "csv")
+  old_paths <- fit_mcmc$output_files()
+  checkmate::expect_file_exists(old_paths, extension = "csv")
 
-  paths <- fit_mcmc$save_output_files(tempdir(), basename = "testing-mcmc-output")
-  expect_true(all(file.exists(paths)))
+  expect_message(
+    paths <- fit_mcmc$save_output_files(tempdir(), basename = "testing-mcmc-output"),
+    "Moved 2 output files and set internal paths to new locations"
+  )
   checkmate::expect_file_exists(paths, extension = "csv")
   expect_match(paths[1], "testing-mcmc-output-1")
   expect_match(paths[2], "testing-mcmc-output-2")
+
+  expect_false(any(file.exists(old_paths)))
+  expect_equal(fit_mcmc$output_files(), paths)
 })
 
 test_that("saving data file after mcmc works", {
   skip_on_cran()
-  checkmate::expect_file_exists(fit_mcmc$data_file(), extension = "json")
+  old_path <- fit_mcmc$data_file()
+  checkmate::expect_file_exists(old_path, extension = "json")
 
-  path <- fit_mcmc$save_data_file(tempdir(), basename = "testing-mcmc-data")
+  expect_message(
+    path <- fit_mcmc$save_data_file(tempdir(), basename = "testing-mcmc-data"),
+    "Moved data file and set internal path to new location"
+  )
   checkmate::expect_file_exists(path, extension = "json")
   expect_match(path, "testing-mcmc-data_")
+
+  expect_false(file.exists(old_path))
+  expect_equal(fit_mcmc$data_file(), path)
 })
 
 test_that("saving diagnostic csv mcmc output works", {
   skip_on_cran()
-  checkmate::expect_file_exists(fit_mcmc$diagnostic_files(), extension = "csv")
+  old_paths <- fit_mcmc$diagnostic_files()
+  checkmate::expect_file_exists(old_paths, extension = "csv")
 
-  paths <- fit_mcmc$save_diagnostic_files(tempdir(), basename = "testing-mcmc")
-  expect_true(all(file.exists(paths)))
-  expect_true(all(file.size(paths) > 0))
+  expect_message(
+    paths <- fit_mcmc$save_diagnostic_files(tempdir(), basename = "testing-mcmc"),
+    "Moved 2 diagnostic files and set internal paths to new locations"
+  )
   checkmate::expect_file_exists(paths, extension = "csv")
+  expect_true(all(file.size(paths) > 0))
   expect_match(paths[1], "testing-mcmc-diagnostic-1")
   expect_match(paths[2], "testing-mcmc-diagnostic-2")
+
+  expect_false(any(file.exists(old_paths)))
+  expect_equal(fit_mcmc$diagnostic_files(), paths)
 })
 
 

@@ -136,6 +136,8 @@ copy_temp_files <-
       stamp <- format(Sys.time(), "%Y%m%d-%H%M")
       new_names <- paste0(new_names, "_", stamp)
     }
+
+    ext <- if (startsWith(ext, ".")) ext else paste0(".", ext)
     new_names <- paste0(new_names, ext)
     destinations <- file.path(new_dir, new_names)
 

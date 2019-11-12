@@ -53,38 +53,55 @@ CmdStanRun <- R6::R6Class(
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE) {
-      copy_temp_files(
-        current_paths = self$output_files(),
+      new_paths <- copy_temp_files(
+        current_paths = self$output_files(), # FIXME use include_failed=TRUE once #76 is fixed
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = self$run_ids(),
         ext = ".csv",
         timestamp = timestamp
       )
+      file.remove(self$output_files())
+      private$output_files_ <- new_paths
+      message("Moved ", length(self$output_files()),
+              " output files and set internal paths to new locations:\n",
+              paste("-", new_paths, collapse = "\n"))
+      invisible(new_paths)
     },
     save_diagnostic_files = function(dir = ".",
                                      basename = NULL,
                                      timestamp = TRUE) {
-      copy_temp_files(
-        current_paths = self$diagnostic_files(),
+      new_paths <- copy_temp_files(
+        current_paths = self$diagnostic_files(), # FIXME use include_failed=TRUE once #76 is fixed
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
         ids = self$run_ids(),
         ext = ".csv",
         timestamp = timestamp
       )
+      file.remove(self$diagnostic_files())
+      private$diagnostic_files_ <- new_paths
+      message("Moved ", length(self$diagnostic_files()),
+              " diagnostic files and set internal paths to new locations:\n",
+              paste("-", new_paths, collapse = "\n"))
+      invisible(new_paths)
     },
     save_data_file = function(dir = ".",
                               basename = NULL,
                               timestamp = TRUE) {
-      copy_temp_files(
+      new_path <- copy_temp_files(
         current_paths = self$data_file(),
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = NULL,
-        ext = ".json",
+        ext = tools::file_ext(self$data_file()),
         timestamp = timestamp
       )
+      file.remove(self$data_file())
+      self$args$data_file <- new_path
+      message("Moved data file and set internal path to new location:\n",
+              "- ", new_path)
+      invisible(new_path)
     },
 
     command = function() self$args$command(),
