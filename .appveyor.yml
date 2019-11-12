@@ -19,6 +19,7 @@ environment:
   NOT_CRAN: true
   _R_CHECK_FORCE_SUGGESTS_: false
   USE_RTOOLS: true
+  HOME: 'C:\Users\appveyor'
   # GCC_PATH: mingw_32
   # R_REMOTES_STANDALONE: true
 
@@ -29,7 +30,7 @@ skip_commits:
 
 build_script:
   - travis-tool.sh install_deps
-  - cmd: bash inst/make_cmdstan.sh -j2 -w -d 'C:\Users\appveyor\.cmdstanr'
+  - cmd: bash inst/make_cmdstan.sh -j2 -w
 
 test_script:
   - travis-tool.sh run_tests
