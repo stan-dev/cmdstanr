@@ -9,7 +9,8 @@ Run CmdStan's \code{bin/stansummary} and \code{bin/diagnose}
 }
 \note{
 Although these methods also work for models fit using the
-\link[=model-method-sample]{$variational()][model-method-variational] method, much of the output is only relevant for models fit using the [$sample()}
+\code{\link[=model-method-variational]{$variational()}} method, much of the output is
+only relevant for models fit using the \code{\link[=model-method-sample]{$sample()}}
 method.
 }
 \section{Usage}{

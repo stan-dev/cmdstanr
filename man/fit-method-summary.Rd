@@ -4,8 +4,26 @@
 \alias{fit-method-summary}
 \title{Run \code{posterior::summarise_draws()}}
 \description{
-Run \code{posterior::summarise_draws()}
+Run \link[posterior:summarise_draws]{summarise_draws()} from the
+\pkg{posterior} package.
 }
+\section{Usage}{
+\preformatted{$summary(...)
+}
+}
+
+\section{Arguments}{
+
+\itemize{
+\item \code{...}: Arguments to pass to \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}.
+}
+}
+
+\section{Value}{
+
+The data frame returned by \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}.
+}
+
 \seealso{
 \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
 }

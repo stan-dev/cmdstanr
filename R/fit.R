@@ -16,7 +16,10 @@
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `summary` \tab Run [posterior::summarise_draws(...)]. \cr
+#'  `draws` \tab Return post-warmup draws as a
+#'    [`draws_array`][posterior::draws_array] object.\cr
+#'  [`summary`][fit-method-summary]
+#'    \tab Run [posterior::summarise_draws()]. \cr
 #'  [`cmdstan_summary`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`cmdstan_diagnose`][fit-method-cmdstan_summary]
@@ -27,8 +30,6 @@
 #'    \tab Save JSON data file to a specified location. \cr
 #'  [`save_diagnostic_files`][fit-method-save_diagnostic_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
-#'  `draws` \tab
-#'    Return post-warmup draws as an `iters x chains x variables` array. \cr
 #'  `time` \tab Return a list containing the total time and a data frame of
 #'    execution times of all chains. \cr
 #'  `output` \tab Return the stdout and stderr of all chains as a list of
@@ -180,9 +181,11 @@ CmdStanMLE <- R6::R6Class(
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `draws` \tab Return approximate posterior draws as matrix with one colunm per
-#'    variable. \cr
-#'  `summary` \tab Run [posterior::summarise_draws()].
+#'  `draws` \tab
+#'    Return approximate posterior draws as a
+#'    [`draws_matrix`][posterior::draws_matrix] object. \cr
+#'  [`summary`][fit-method-summary]
+#'    \tab Run [posterior::summarise_draws()]. \cr
 #'  [`cmdstan_summary`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`cmdstan_diagnose`][fit-method-cmdstan_diagnose]
@@ -251,12 +254,18 @@ CmdStanVB <- R6::R6Class(
 #' Run `posterior::summarise_draws()`
 #'
 #' @name fit-method-summary
+#' @description Run [summarise_draws()][posterior::summarise_draws] from the
+#'   \pkg{posterior} package.
+#'
 #' @section Usage:
 #'   ```
 #'   $summary(...)
 #'   ```
 #' @section Arguments:
 #' * `...`: Arguments to pass to [posterior::summarise_draws()].
+#'
+#' @section Value:
+#' The data frame returned by [posterior::summarise_draws()].
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
@@ -278,13 +287,14 @@ summary_method <- function(...) {
 CmdStanMCMC$set("public", "summary", summary_method)
 CmdStanVB$set("public", "summary", summary_method)
 
+
 #' Run CmdStan's `bin/stansummary` and `bin/diagnose`
 #'
 #' @name fit-method-cmdstan_summary
 #' @aliases fit-method-cmdstan_diagnose
 #' @note Although these methods also work for models fit using the
-#'   [`$variational()][model-method-variational] method, much of the output is
-#'   only relevant for models fit using the [`$sample()][model-method-sample]
+#'   [`$variational()`][model-method-variational] method, much of the output is
+#'   only relevant for models fit using the [`$sample()`][model-method-sample]
 #'   method.
 #'
 #' @section Usage:
@@ -307,6 +317,7 @@ CmdStanMCMC$set("public", "cmdstan_summary", cmdstan_summary_method)
 CmdStanVB$set("public", "cmdstan_summary", cmdstan_summary_method)
 CmdStanMCMC$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
 CmdStanVB$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
+
 
 #' Save output and data files
 #'
