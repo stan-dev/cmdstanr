@@ -14,8 +14,11 @@ objects.
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
-\code{summary} \tab Run and print CmdStan's \code{bin/stansummary}. \cr
-\code{diagnose} \tab Run and print CmdStan's \code{bin/diagnose}. \cr
+\code{summary} \tab Run \link[posterior:summarise_draws(...)]{posterior::summarise_draws(...)}. \cr
+\code{\link[=fit-method-cmdstan_summary]{cmdstan_summary}}
+\tab Run and print CmdStan's \code{bin/stansummary}. \cr
+\code{\link[=fit-method-cmdstan_summary]{cmdstan_diagnose}}
+\tab Run and print CmdStan's \code{bin/diagnose}. \cr
 \code{\link[=fit-method-save_output_files]{save_output_files}}
 \tab Save output CSV files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{save_data_file}}

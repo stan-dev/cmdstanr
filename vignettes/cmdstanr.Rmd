@@ -152,14 +152,14 @@ objects.
 class(fit)
 ```
 
-Currently, the
-[`$summary()`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) and
-[`$diagnose()`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) methods
+The
+[`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) and
+[`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) methods
 call CmdStan's `stansummary` and `diagnose` utilities, respectively:
 
 ```{r summary-and-diagnose}
-fit$diagnose()
-fit$summary()
+fit$cmdstan_diagnose()
+fit$cmdstan_summary()
 ```
 
 Because CmdStanR is not fully developed yet, for the time being the best way to

@@ -112,6 +112,27 @@ CmdStanRun <- R6::R6Class(
       }
     },
 
+    # run bin/stansummary or bin/diagnose
+    # @param tool The name of the tool in `bin/` to run.
+    # @param flags An optional character vector of flags (e.g. c("--sig_figs=1")).
+    run_cmdstan_tool = function(tool = c("stansummary", "diagnose"), flags = NULL) {
+      tool <- match.arg(tool)
+      if (!length(self$output_files())) {
+        stop("No CmdStan runs finished successfully. ",
+             "Unable to run bin/", tool, ".", call. = FALSE)
+      }
+      target_exe = file.path("bin", cmdstan_ext(tool))
+      check_target_exe(target_exe)
+      run_log <- processx::run(
+        command = target_exe,
+        args = c(self$output_files(), flags),
+        wd = cmdstan_path(),
+        echo_cmd = TRUE,
+        echo = TRUE,
+        error_on_status = TRUE
+      )
+    },
+
     time = function() {
       if (self$method() != "sample") {
         # FIXME add time for other methods?
