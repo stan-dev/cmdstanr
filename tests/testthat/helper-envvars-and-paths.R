@@ -13,7 +13,7 @@ on_codecov <- function() {
 
 set_cmdstan_path_for_tests <- function() {
   if (on_appveyor()) {
-    set_cmdstan_path("C:/Users/appveyor/.cmdstanr/cmdstan")
+    set_cmdstan_path()
   } else {
     set_cmdstan_path()
   }
