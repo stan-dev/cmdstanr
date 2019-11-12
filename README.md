@@ -5,6 +5,7 @@
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/cmdstanr)](https://CRAN.R-project.org/package=cmdstanr)
 [![Travis build status](https://travis-ci.org/stan-dev/cmdstanr.svg?branch=master)](https://travis-ci.org/stan-dev/cmdstanr)
+<!-- [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/stan-dev/cmdstanr?branch=master&svg=true)](https://ci.appveyor.com/project/stan-dev/cmdstanr) -->
 [![Codecov test coverage](https://codecov.io/gh/stan-dev/cmdstanr/branch/master/graph/badge.svg)](https://codecov.io/gh/stan-dev/cmdstanr?branch=master)
 <!-- badges: end -->
 
