@@ -7,20 +7,19 @@ init:
         $ErrorActionPreference = "Stop"
         Invoke-WebRequest http://raw.github.com/krlmlr/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
         Import-Module '..\appveyor-tool.ps1'
-        git config --global core.autocrlf true
 
 install:
   ps: Bootstrap
 
 cache:
   - C:\RLibrary
-  - C:\Users\appveyor\.cmdstanr
+#  - C:\Users\appveyor\.cmdstanr
 
 environment:
   NOT_CRAN: true
   _R_CHECK_FORCE_SUGGESTS_: false
   USE_RTOOLS: true
-  HOME: C:\Users\appveyor
+  # HOME: C:\Users\appveyor # note: I tried forcing HOME to this but doesn't seem to help
   # GCC_PATH: mingw_32
   # R_REMOTES_STANDALONE: true
 
