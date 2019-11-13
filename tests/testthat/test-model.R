@@ -1,8 +1,6 @@
 # Setup -------------------------------------------------------------------
-NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
-
-if (NOT_CRAN) {
-  set_cmdstan_path()
+if (not_on_cran()) {
+  set_cmdstan_path_for_tests()
   stan_program <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 
@@ -98,7 +96,7 @@ test_that("compilation works with include_paths", {
 # Sample ------------------------------------------------------------------
 context("model-sample")
 
-if (NOT_CRAN) {
+if (not_on_cran()) {
   if (!length(mod$exe_file())) {
     utils::capture.output(mod$compile())
   }
@@ -233,7 +231,7 @@ test_that("sample() method errors for any invalid arguments before calling cmdst
 # Optimize ----------------------------------------------------------------
 context("model-optimize")
 
-if (NOT_CRAN) {
+if (not_on_cran()) {
   # these are all valid for optimize()
   ok_arg_values <- list(
     data = data_list,
@@ -300,7 +298,7 @@ test_that("optimize() errors when combining 'newton' with 'init_alpha'", {
 # Variational -------------------------------------------------------------
 context("model-variational")
 
-if (NOT_CRAN) {
+if (not_on_cran()) {
   # these are all valid for variational()
   ok_arg_values <- list(
     data = data_list,

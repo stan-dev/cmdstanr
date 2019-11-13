@@ -52,7 +52,7 @@ repair_path <- function(path) {
   path <- path.expand(path)
   path <- gsub("\\\\", "/", path)
   path <- gsub("//", "/", path)
-  if (substr(path, nchar(path), nchar(path)) == "/") {
+  if (endsWith(path, "/")) {
     # remove trailing "/" (is this necessary?)
     path <- substr(path, 1, nchar(path) - 1)
   }

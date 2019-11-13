@@ -6,6 +6,7 @@
 [![CRAN status](https://www.r-pkg.org/badges/version/cmdstanr)](https://CRAN.R-project.org/package=cmdstanr)
 [![Travis build status](https://travis-ci.org/stan-dev/cmdstanr.svg?branch=master)](https://travis-ci.org/stan-dev/cmdstanr)
 [![Codecov test coverage](https://codecov.io/gh/stan-dev/cmdstanr/branch/master/graph/badge.svg)](https://codecov.io/gh/stan-dev/cmdstanr?branch=master)
+<!-- [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/stan-dev/cmdstanr?branch=master&svg=true)](https://ci.appveyor.com/project/stan-dev/cmdstanr) -->
 <!-- badges: end -->
 
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
@@ -14,9 +15,9 @@ CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 To get started see the vignette 
 [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html).
 
-CmdStanR is in early stages of development and currently requires RStan to use
-`rstan::read_stan_csv()` for reading CmdStan output into R (RStan is not used
-to compile anything). This dependency on RStan will eventually be removed.
+CmdStanR is in early stages of development and currently requires
+`rstan::read_stan_csv()` for reading CmdStan output into R (RStan is not used to
+compile anything). This dependency on RStan will eventually be removed.
 
 ### Goals
 
@@ -54,4 +55,4 @@ or open a new one if none are applicable.
 ### License
 
 CmdStanR, like CmdStan and the core Stan C++ code, is licensed under new BSD.
-See the [LICENSE.md](LICENSE.md) file.
+See the `LICENSE.md` file.

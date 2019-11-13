@@ -1,11 +1,10 @@
 # Setup -------------------------------------------------------------------
-NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
 
-if (NOT_CRAN) {
-  set_cmdstan_path()
+if (not_on_cran()) {
+  set_cmdstan_path_for_tests()
   stan_program <- test_path("resources/stan/logistic.stan")
   data_file_json <- test_path("resources/data/logistic.data.json")
-  mod <- cmdstan_model(stan_file = stan_program)
+  mod <- cmdstan_model(stan_file = stan_program, quiet = FALSE)
   utils::capture.output(
     fit_mcmc <- mod$sample(data = data_file_json, num_chains = 2,
                            save_diagnostics = TRUE)
