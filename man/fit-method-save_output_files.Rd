@@ -20,7 +20,7 @@ this shouldn't occur unless the \code{timestamp} argument has been intentionally
 set to \code{FALSE}.
 
 If necessary, the versions without the \code{save_} prefix (e.g.,
-\code{$output_files()}) can be used to get the path(s) to the temporary file(s)
+\verb{$output_files()}) can be used to get the path(s) to the temporary file(s)
 themselves.
 }
 \section{Usage}{
@@ -46,7 +46,7 @@ the form
 }
 
 \section{Value}{
- For the \code{$save_*} methods, the paths to the new files or \code{NA}
+ For the \verb{$save_*} methods, the paths to the new files or \code{NA}
 for any that couldn't be copied. For the methods without the \code{save_}
 prefix, the path to the temporary files.
 }
