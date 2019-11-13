@@ -10,7 +10,6 @@ cmdstan_default_path()
 A file path.
 }
 \description{
-Default path to symlink to latest cmdstan if installed via
-\code{\link[=install_cmdstan]{install_cmdstan()}} with default settings.
+Path to where  \code{\link[=install_cmdstan]{install_cmdstan()}} with default settings installs CmdStan.
 }
 \keyword{internal}

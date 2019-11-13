@@ -89,8 +89,7 @@ stop_no_path <- function() {
 
 #' cmdstan_default_path
 #'
-#' Default path to symlink to latest cmdstan if installed via
-#' [install_cmdstan()] with default settings.
+#' Path to where  [install_cmdstan()] with default settings installs CmdStan.
 #'
 #' @keywords internal
 #' @return A file path.

@@ -1,11 +1,12 @@
 context("install")
-NOT_CRAN <- identical(Sys.getenv("NOT_CRAN"), "true")
+
+
 
 test_that("test cmdstan installation", {
   skip_if_offline()
-  skip_if(identical(Sys.getenv("R_COVR"), "true"), message = "R_COVR")
+  skip_if(on_codecov(), message = "R_COVR")
 
-  if (NOT_CRAN) {
+  if (not_on_cran()) {
     dir <- dirname(cmdstan_default_path())
   } else {
     dir <- tempdir()
@@ -22,7 +23,7 @@ test_that("test cmdstan installation", {
 
 test_that("Test cmdstan installation error", {
   skip_if_offline()
-  if (NOT_CRAN) {
+  if (not_on_cran()) {
     dir <- dirname(cmdstan_default_path())
   } else {
     dir <- tempdir()
