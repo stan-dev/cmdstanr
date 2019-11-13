@@ -10,3 +10,4 @@
 ^dev-helpers\.R$
 ^LICENSE\.md$
 ^\.appveyor\.yml$
+^\.github$

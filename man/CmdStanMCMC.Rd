@@ -23,7 +23,7 @@ objects.
 \code{\link[=fit-method-save_diagnostic_files]{save_diagnostic_files}}
 \tab Save diagnostic CSV files to a specified location. \cr
 \code{draws} \tab
-Return post-warmup draws as an \code{iters x chains x variables} array. \cr
+Return post-warmup draws as an \verb{iters x chains x variables} array. \cr
 \code{time} \tab Return a list containing the total time and a data frame of
 execution times of all chains. \cr
 \code{output} \tab Return the stdout and stderr of all chains as a list of
@@ -41,7 +41,8 @@ The Stan and CmdStan documentation:
 \item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
 }
 
-Other fitted model objects: \code{\link{CmdStanMLE}},
-  \code{\link{CmdStanVB}}
+Other fitted model objects: 
+\code{\link{CmdStanMLE}},
+\code{\link{CmdStanVB}}
 }
 \concept{fitted model objects}

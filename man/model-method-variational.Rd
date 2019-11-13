@@ -4,7 +4,7 @@
 \alias{model-method-variational}
 \title{Run Stan's variational approximation algorithms}
 \description{
-The \code{$variational()} method of a \code{\link{CmdStanModel}} object runs
+The \verb{$variational()} method of a \code{\link{CmdStanModel}} object runs
 Stan's variational Bayes (ADVI) algorithms.
 }
 \details{
@@ -15,7 +15,7 @@ uses a fully factorized Gaussian for the approximation. The
 \code{algorithm="fullrank"} option uses a Gaussian with a full-rank covariance
 matrix for the approximation.
 
--- \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan Interface User's Guide}
+-- \href{https://github.com/stan-dev/cmdstan/releases/latest}{\emph{CmdStan Interface User's Guide}}
 }
 \section{Usage}{
 \preformatted{$variational(
@@ -56,7 +56,7 @@ the appendices in the CmdStan manual for details on using these formats.
 printed screen updates.
 \item \code{init}: (multiple options) The initialization method:
 \itemize{
-\item A real number \code{x>0} initializes randomly between \code{[-x,x]} (on the
+\item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
 \emph{unconstrained} parameter space);
 \item \code{0} initializes to \code{0};
 \item A character vector of paths (one per chain) to JSON or Rdump files. See
@@ -78,7 +78,7 @@ divergences for HMC). To save the temporary files created when
 
 \section{Arguments unique to the \code{variational} method}{
  In addition to the
-arguments above, the \code{$variational()} method also has its own set of
+arguments above, the \verb{$variational()} method also has its own set of
 arguments. These arguments are described briefly here and in greater detail
 in the CmdStan manual. Arguments left at \code{NULL} default to the default used
 by the installed version of CmdStan.
@@ -97,13 +97,13 @@ iterations.
 \item \code{tol_rel_obj}: (positive real) Convergence tolerance on the relative norm
 of the objective.
 \item \code{eval_elbo}: (positive integer) Evaluate ELBO every Nth iteration.
-\item \code{output_samples:} (positive integer) Number of posterior samples to draw
+\item \verb{output_samples:} (positive integer) Number of posterior samples to draw
 and save.
 }
 }
 
 \section{Value}{
- The \code{$variational()} method returns a \code{\link{CmdStanVB}} object.
+ The \verb{$variational()} method returns a \code{\link{CmdStanVB}} object.
 }
 
 \examples{
@@ -172,8 +172,9 @@ The Stan and CmdStan documentation:
 \item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
 }
 
-Other CmdStanModel methods: \code{\link{model-method-compile}},
-  \code{\link{model-method-optimize}},
-  \code{\link{model-method-sample}}
+Other CmdStanModel methods: 
+\code{\link{model-method-compile}},
+\code{\link{model-method-optimize}},
+\code{\link{model-method-sample}}
 }
 \concept{CmdStanModel methods}

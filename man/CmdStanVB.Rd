@@ -34,7 +34,8 @@ The Stan and CmdStan documentation:
 \item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
 }
 
-Other fitted model objects: \code{\link{CmdStanMCMC}},
-  \code{\link{CmdStanMLE}}
+Other fitted model objects: 
+\code{\link{CmdStanMCMC}},
+\code{\link{CmdStanMLE}}
 }
 \concept{fitted model objects}

@@ -4,15 +4,19 @@
 \alias{cmdstan_git_checkout_branch}
 \title{Check out a branch from a git repository and rebuild CmdStan}
 \usage{
-cmdstan_git_checkout_branch(repo_branch, clean_and_rebuild = TRUE,
-  cores = 2, quiet = FALSE)
+cmdstan_git_checkout_branch(
+  repo_branch,
+  clean_and_rebuild = TRUE,
+  cores = 2,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{repo_branch}{If \code{repo_clone} is \code{TRUE}, the name of the branch to
 checkout in the cloned repository.}
 
-\item{clean_and_rebuild}{If \code{TRUE} (the default), will run \code{make clean-all}
-and \code{make build} after checking out the new branch.}
+\item{clean_and_rebuild}{If \code{TRUE} (the default), will run \verb{make clean-all}
+and \verb{make build} after checking out the new branch.}
 
 \item{cores}{The number of CPU cores to use to parallelize building CmdStan
 and speed up installation. The default is \code{cores=2}, although we recommend
