@@ -25,7 +25,8 @@ SystemRequirements: 'CmdStan' <https://mc-stan.org/users/interfaces/cmdstan>
 Imports: 
     checkmate,
     processx,
-    R6
+    R6,
+    posterior (>= 0.0.1)
 Suggests: 
     jsonlite (>= 1.2.0),
     knitr,
@@ -33,3 +34,5 @@ Suggests:
     rstan,
     testthat (>= 2.1.0)
 VignetteBuilder: knitr
+Remotes:  
+    jgabry/posterior
