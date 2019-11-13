@@ -178,10 +178,15 @@ CmdStan <a href='https://github.com/stan-dev/cmdstan/releases/latest'>guide</a>)
 but in the future CmdStanR may help install the requirements.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>install_cmdstan</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>overwrite</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>repo_clone</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+    <pre class="usage"><span class='fu'>install_cmdstan</span>(
+  <span class='kw'>dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>overwrite</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>repo_clone</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>repo_url</span> <span class='kw'>=</span> <span class='st'>"https://github.com/stan-dev/cmdstan.git"</span>,
-  <span class='kw'>repo_branch</span> <span class='kw'>=</span> <span class='st'>"develop"</span>)</pre>
+  <span class='kw'>repo_branch</span> <span class='kw'>=</span> <span class='st'>"develop"</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -220,7 +225,7 @@ of CmdStan from <code>repo_url</code> and check out the branch <code>repo_branch
       <th>repo_url</th>
       <td><p>If <code>repo_clone</code> is <code>TRUE</code>, the URL of the git repository to
 clone. The default URL points to the
-<a href='https://github.com/stan-dev/cmdstan'>stan-dev/cmdstan</a>
+<a href='https://github.com/stan-dev/cmdstan'><code>stan-dev/cmdstan</code></a>
 repository on GitHub.</p></td>
     </tr>
     <tr>

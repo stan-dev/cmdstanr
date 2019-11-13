@@ -254,8 +254,8 @@ CmdStanVB <- R6::R6Class(
 #' Run `posterior::summarise_draws()`
 #'
 #' @name fit-method-summary
-#' @description Run [summarise_draws()][posterior::summarise_draws] from the
-#'   \pkg{posterior} package.
+#' @description Run [posterior::summarise_draws()] from the \pkg{posterior}
+#'   package.
 #'
 #' @section Usage:
 #'   ```

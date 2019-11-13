@@ -24,9 +24,9 @@ Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: 'CmdStan' <https://mc-stan.org/users/interfaces/cmdstan>
 Imports: 
     checkmate,
+    posterior (>= 0.0.1),
     processx,
-    R6,
-    posterior (>= 0.0.1)
+    R6
 Suggests: 
     jsonlite (>= 1.2.0),
     knitr,

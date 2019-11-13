@@ -4,8 +4,8 @@
 \alias{fit-method-summary}
 \title{Run \code{posterior::summarise_draws()}}
 \description{
-Run \link[posterior:summarise_draws]{summarise_draws()} from the
-\pkg{posterior} package.
+Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}} from the \pkg{posterior}
+package.
 }
 \section{Usage}{
 \preformatted{$summary(...)
