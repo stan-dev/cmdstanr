@@ -16,7 +16,7 @@ the CmdStanR temporary directory to a user-specified location. \strong{The paths
 stored in the fitted model object will also be updated to point to the new
 file locations.}
 
-The versions without the \code{save_} prefix (e.g., \code{$output_files()}) return
+The versions without the \code{save_} prefix (e.g., \verb{$output_files()}) return
 the current file paths without moving any files.
 }
 \section{Usage}{
@@ -46,22 +46,22 @@ If files with the specified names already exist they are overwritten, but
 this shouldn't occur unless the \code{timestamp} argument has been intentionally
 set to \code{FALSE}.
 
-For \code{$save_output_files()} the files moved to \code{dir} will have names of
+For \verb{$save_output_files()} the files moved to \code{dir} will have names of
 the form \code{basename-id_date-time}, where \code{basename} is the user's
 provided \code{basename} argument, \code{id} is the MCMC chain number (or 1 for non MCMC),
 and the date and time are included after an underscore (if \code{timestamp=TRUE}).
 
-For \code{$save_diagnostic_files()} everything is the same as for
-\code{$save_output_files()} except the word \code{"diagnostic"} is included in the new
+For \verb{$save_diagnostic_files()} everything is the same as for
+\verb{$save_output_files()} except the word \code{"diagnostic"} is included in the new
 file name between \code{basename} and \code{id}.
 
-For \code{$save_data_file()} no \code{id} is included in the file name because even
+For \verb{$save_data_file()} no \code{id} is included in the file name because even
 with multiple MCMC chains the data file is the same.
 }
 
 \section{Value}{
 
-The \code{$save_*} methods print a message with the new file paths and (invisibly)
+The \verb{$save_*} methods print a message with the new file paths and (invisibly)
 return a character vector of the new paths (or \code{NA} for any that couldn't be
 copied). They also have the side effect of setting the internal paths in the
 fitted model object to the new paths.

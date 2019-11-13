@@ -4,11 +4,11 @@
 \alias{model-method-compile}
 \title{Compile a Stan program or get the Stan code}
 \description{
-The \code{$compile()} method of a \code{\link{CmdStanModel}} object calls CmdStan
+The \verb{$compile()} method of a \code{\link{CmdStanModel}} object calls CmdStan
 to translate a Stan program to C++ and then create a compiled executable.
 The resulting files are placed in the same directory as the Stan program
 associated with the \code{CmdStanModel} object. After compilation the path
-to the executable can be accesed via the \code{$exe_file()} method.
+to the executable can be accesed via the \verb{$exe_file()} method.
 }
 \section{Usage}{
 \preformatted{$compile(
@@ -35,7 +35,7 @@ compilation be suppressed? The default is \code{TRUE}, but if you encounter an
 error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.
 \item \code{include_paths}: (character vector) Paths to directories where Stan should
-look for files specified in \code{#include} directives in the Stan program.
+look for files specified in \verb{#include} directives in the Stan program.
 \item \code{threads}: (logical) Should the model be compiled with
 \href{https://github.com/stan-dev/math/wiki/Threading-Support}{threading support}?
 If \code{TRUE} then \code{-DSTAN_THREADS} is added to the compiler flags. See
@@ -76,8 +76,9 @@ The Stan and CmdStan documentation:
 \item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
 }
 
-Other CmdStanModel methods: \code{\link{model-method-optimize}},
-  \code{\link{model-method-sample}},
-  \code{\link{model-method-variational}}
+Other CmdStanModel methods: 
+\code{\link{model-method-optimize}},
+\code{\link{model-method-sample}},
+\code{\link{model-method-variational}}
 }
 \concept{CmdStanModel methods}
