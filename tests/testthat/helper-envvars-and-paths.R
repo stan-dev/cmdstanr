@@ -18,3 +18,11 @@ set_cmdstan_path_for_tests <- function() {
     set_cmdstan_path()
   }
 }
+
+delete_extensions <- function() {
+  if (os_is_windows()) {
+    c(".exe", ".o", ".hpp")
+  } else {
+    c("", ".o",".hpp")
+  }
+}

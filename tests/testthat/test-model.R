@@ -61,7 +61,7 @@ test_that("compilation works when stan program not in cmdstan dir", {
   expect_output(print(out), "is up to date")
 
   # cleanup
-  file.remove(paste0(mod_2$exe_file(), c("", ".o",".hpp")))
+  file.remove(paste0(strip_ext(mod_2$exe_file()), delete_extensions()))
 })
 
 test_that("compilation works with include_paths", {
@@ -86,10 +86,10 @@ test_that("compilation works with include_paths", {
                                    include_paths = test_path("resources", "stan")),
     "Compiling Stan program"
   )
-  expect_equal(mod_w_include$exe_file(), strip_ext(absolute_path(stan_program_w_include)))
+  expect_equal(mod_w_include$exe_file(), cmdstan_ext(strip_ext(absolute_path(stan_program_w_include))))
 
   # cleanup
-  file.remove(paste0(mod_w_include$exe_file(), c("", ".o",".hpp")))
+  file.remove(paste0(strip_ext(mod_w_include$exe_file()), delete_extensions()))
 })
 
 
