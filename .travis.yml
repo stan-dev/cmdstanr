@@ -10,13 +10,13 @@ cache:
     - $HOME/.cmdstanr
   packages: true
 
+r_github_packages:
+  - r-lib/covr
+  - jgabry/posterior
 
 warnings_are_errors: true
 env:
   - NOT_CRAN=true _R_CHECK_FORCE_SUGGESTS_=false
-
-r_github_packages:
-  - r-lib/covr
 
 before_install:
   - sudo bash inst/make_cmdstan.sh -j2 -o
