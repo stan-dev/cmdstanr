@@ -4,8 +4,8 @@
 \alias{model-method-sample}
 \title{Run Stan's MCMC algorithms}
 \description{
-The \code{$sample()} method of a \code{\link{CmdStanModel}} object runs the
-default MCMC algorithm in CmdStan (\code{algorithm=hmc engine=nuts}), to produce
+The \verb{$sample()} method of a \code{\link{CmdStanModel}} object runs the
+default MCMC algorithm in CmdStan (\verb{algorithm=hmc engine=nuts}), to produce
 a set of draws from the posterior distribution of a model conditioned on
 some data.
 }
@@ -54,7 +54,7 @@ the appendices in the CmdStan manual for details on using these formats.
 printed screen updates.
 \item \code{init}: (multiple options) The initialization method:
 \itemize{
-\item A real number \code{x>0} initializes randomly between \code{[-x,x]} (on the
+\item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
 \emph{unconstrained} parameter space);
 \item \code{0} initializes to \code{0};
 \item A character vector of paths (one per chain) to JSON or Rdump files. See
@@ -76,7 +76,7 @@ divergences for HMC). To save the temporary files created when
 
 \section{Arguments unique to the \code{sample} method}{
  In addition to the
-arguments above, the \code{$sample()} method also has its own set of arguments.
+arguments above, the \verb{$sample()} method also has its own set of arguments.
 
 The following two arguments are offered by CmdStanR but do not correspond
 to arguments in CmdStan because all CmdStan arguments pertain to the
@@ -113,7 +113,7 @@ If a precomputed inverse metric is specified via the \code{inv_metric} argument
 provided inverse metric just as an initial guess during adaptation. To turn
 off adaptation when using a precomputed inverse metric set
 \code{adapt_engaged=FALSE}.
-\item \code{adapt_delta}: (real in \code{(0,1)}) The adaptation target acceptance
+\item \code{adapt_delta}: (real in \verb{(0,1)}) The adaptation target acceptance
 statistic.
 \item \code{stepsize}: (positive real) The \emph{initial} step size for the discrete
 approximation to continuous Hamiltonian dynamics. This is further tuned
@@ -146,7 +146,7 @@ adaptation interval.
 }
 
 \section{Value}{
- The \code{$sample()} method returns a \code{\link{CmdStanMCMC}} object.
+ The \verb{$sample()} method returns a \code{\link{CmdStanMCMC}} object.
 }
 
 \examples{
@@ -218,8 +218,9 @@ The Stan and CmdStan documentation:
 \item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
 }
 
-Other CmdStanModel methods: \code{\link{model-method-compile}},
-  \code{\link{model-method-optimize}},
-  \code{\link{model-method-variational}}
+Other CmdStanModel methods: 
+\code{\link{model-method-compile}},
+\code{\link{model-method-optimize}},
+\code{\link{model-method-variational}}
 }
 \concept{CmdStanModel methods}

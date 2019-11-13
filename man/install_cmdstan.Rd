@@ -4,10 +4,15 @@
 \alias{install_cmdstan}
 \title{Install the latest release of CmdStan}
 \usage{
-install_cmdstan(dir = NULL, cores = 2, quiet = FALSE,
-  overwrite = FALSE, repo_clone = FALSE,
+install_cmdstan(
+  dir = NULL,
+  cores = 2,
+  quiet = FALSE,
+  overwrite = FALSE,
+  repo_clone = FALSE,
   repo_url = "https://github.com/stan-dev/cmdstan.git",
-  repo_branch = "develop")
+  repo_branch = "develop"
+)
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
@@ -32,7 +37,7 @@ of CmdStan from \code{repo_url} and check out the branch \code{repo_branch}.}
 
 \item{repo_url}{If \code{repo_clone} is \code{TRUE}, the URL of the git repository to
 clone. The default URL points to the
-\href{https://github.com/stan-dev/cmdstan}{stan-dev/cmdstan}
+\href{https://github.com/stan-dev/cmdstan}{\code{stan-dev/cmdstan}}
 repository on GitHub.}
 
 \item{repo_branch}{If \code{repo_clone} is \code{TRUE}, the name of the branch to
