@@ -237,25 +237,27 @@ write_stan_json <- function(data, file) {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the 'jsonlite' package.", call. = FALSE)
   }
-  # check filename is valid(vector of characters) and of nonzero length
   if (!is.character(file) || !nzchar(file)) {
-    stop("The supplied filename is invalid!")
+    stop("The supplied filename is invalid!", call. = FALSE)
   }
+
   for (var_name in names(data)) {
     var <- data[[var_name]]
-    if(!(is.numeric(var) || is.factor(var) || is.logical(var) || is.data.frame(var)  || is.list(var))) {
-      stop(paste("Variable ", var_name, " is of invalid type."))
+    if (!(is.numeric(var) || is.factor(var) || is.logical(var) ||
+          is.data.frame(var) || is.list(var))) {
+      stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
     }
-    # convert TRUE/FALSE to 1/0
-    if(is.logical(var)) {
-      mode(var) <- "integer"
-    } else if(is.data.frame(var)) {
+
+    if (is.logical(var)) {
+      mode(var) <- "integer" # convert TRUE/FALSE to 1/0
+    } else if (is.data.frame(var)) {
       var <- data.matrix(var)
-    }else if(is.list(var)) {
+    } else if (is.list(var)) {
       var <- list_to_array(var)
     }
     data[[var_name]] <- var
   }
+
   # call to write JSON with
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
   # handling factors as integers

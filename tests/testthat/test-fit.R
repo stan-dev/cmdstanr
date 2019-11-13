@@ -9,6 +9,10 @@ if (not_on_cran()) {
     fit_mcmc <- mod$sample(data = data_file_json, num_chains = 2,
                            save_diagnostics = TRUE)
   )
+  utils::capture.output(
+    fit_mcmc_0 <- mod$sample(data = data_file_json, num_chains = 2,
+                             refresh = 0)
+  )
   utils::capture.output(suppressWarnings(
     fit_mle <- mod$optimize(data = data_file_json, save_diagnostics = FALSE)
   ))
@@ -85,6 +89,48 @@ test_that("cmdstan_summary() method succesfully calls bin/stansummary after mcmc
 test_that("cmdstan_diagnose() method succesfully calls bin/diagnose after mcmc", {
   skip_on_cran()
   expect_output(fit_mcmc$cmdstan_diagnose(), "Checking sampler transitions for divergences")
+})
+
+test_that("output() method works after mcmc", {
+  skip_on_cran()
+  checkmate::expect_list(
+    fit_mcmc$output(),
+    types = "character",
+    any.missing = FALSE,
+    len = fit_mcmc$runset$num_runs()
+  )
+  expect_output(fit_mcmc$output(id = 1), "Gradient evaluation took")
+})
+
+test_that("time() method works after mcmc", {
+  skip_on_cran()
+  run_times <- fit_mcmc$time()
+  checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
+  testthat::expect_named(run_times, c("total", "chains"))
+  checkmate::expect_number(run_times$total, finite = TRUE)
+  checkmate::expect_data_frame(
+    run_times$chains,
+    any.missing = FALSE,
+    types = c("integer", "numeric"),
+    nrows = fit_mcmc$runset$num_runs(),
+    ncols = 4
+  )
+
+  # after refresh=0 warmup and sampling times should be NA
+  testthat::expect_warning(
+    run_times_0 <- fit_mcmc_0$time(),
+    "Separate warmup and sampling times are not available"
+  )
+  checkmate::expect_number(run_times_0$total, finite = TRUE)
+  checkmate::expect_data_frame(run_times_0$chains,
+                               any.missing = TRUE,
+                               types = c("integer", "numeric"),
+                               nrows = fit_mcmc_0$runset$num_runs(),
+                               ncols = 4)
+  for (j in 1:nrow(run_times_0$chains)) {
+    checkmate::expect_scalar_na(run_times_0$chains$warmup[j])
+    checkmate::expect_scalar_na(run_times_0$chains$sampling[j])
+  }
 })
 
 

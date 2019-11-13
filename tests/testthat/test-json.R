@@ -51,7 +51,8 @@ test_that("test JSON output lists", {
 test_that("test JSON errors", {
   skip_on_cran()
   temp_file <- tempfile()
-  N = c(1.0, 2.0, 3, 4)
+
+  N <- c(1.0, 2.0, 3, 4)
   expect_error(
     write_stan_json(list(N = N), file = c(1,2)),
     "The supplied filename is invalid!"
@@ -60,6 +61,7 @@ test_that("test JSON errors", {
     write_stan_json(list(N = N), file = ""),
     "The supplied filename is invalid!"
   )
+
   I <- 2; J <- 3;
   N <- lapply(1:I, function(i) {
     if (i==1)
@@ -91,5 +93,10 @@ test_that("test JSON errors", {
   expect_error(
     write_stan_json(list(N = N), file = "abc.txt"),
     "All matrices/vectors in the list must be the same size!"
+  )
+
+  expect_error(
+    write_stan_json(list(N = "STRING"), file = "abc.txt"),
+    "Variable 'N' is of invalid type"
   )
 })
