@@ -4,11 +4,11 @@
 \alias{model-method-compile}
 \title{Compile a Stan program or get the Stan code}
 \description{
-The \verb{$compile()} method of a \code{\link{CmdStanModel}} object calls CmdStan
-to translate a Stan program to C++ and then create a compiled executable.
-The resulting files are placed in the same directory as the Stan program
-associated with the \code{CmdStanModel} object. After compilation the path
-to the executable can be accesed via the \verb{$exe_file()} method.
+The \verb{$compile()} method of a \code{\link{CmdStanModel}} object calls
+CmdStan to translate a Stan program to C++ and create a compiled
+executable. The resulting files are placed in the same directory as the
+Stan program associated with the \code{CmdStanModel} object. After compilation
+the path to the executable can be accesed via the \verb{$exe_file()} method.
 }
 \section{Usage}{
 \preformatted{$compile(
@@ -27,8 +27,8 @@ $exe_file()
 \section{Arguments}{
 
 Leaving all arguments at their defaults should be fine for most users, but
-optional arguments are provided to enable new features in CmdStan (and the
-Stan Math library). See the CmdStan manual for more details.
+optional arguments are provided to enable features in CmdStan (and the Stan
+Math library). See the CmdStan manual for more details.
 \itemize{
 \item \code{quiet}: (logical) Should the verbose output from CmdStan during
 compilation be suppressed? The default is \code{TRUE}, but if you encounter an

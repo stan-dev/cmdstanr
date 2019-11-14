@@ -79,7 +79,7 @@ by the installed version of CmdStan.
 \item \code{algorithm}: (string) The optimization algorithm. One of \code{"lbfgs"},
 \code{"bfgs"}, or \code{"newton"}.
 \item \code{iter}: (positive integer) The number of iterations.
-\item \code{init_alpha}: (non-negative real) The line search step size for first
+\item \code{init_alpha}: (nonnegative real) The line search step size for first
 iteration. Not applicable if \code{algorithm="newton"}.
 }
 }

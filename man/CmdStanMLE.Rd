@@ -9,7 +9,7 @@ A \code{CmdStanMLE} object is the fitted model object returned by the
 object.
 }
 \details{
-\code{CmdStanMLE} objects have the following associated methods:
+\code{CmdStanMLE} objects have the following methods:
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr

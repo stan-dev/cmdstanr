@@ -33,17 +33,21 @@ an in-memory interface to Stan and relies on \R packages like \pkg{Rcpp}
 and \pkg{inline} to call C++ code from R. On the other hand, the \R code in
 this package does not directly call any C++ code, instead relying on
 CmdStan for compilation, running algorithms, and writing results to output
-files. Both forms of interfacing with Stan have advantages and
-disadvantages. An in-memory interface like RStan is able to offer more
-advanced features than CmdStanR (for example RStan's \code{log_prob} and
-\code{grad_log_prob} methods) but keeping up with Stan releases is more
-complicated for RStan, often requiring non-trivial changes to the
-\pkg{rstan} package and always requiring new CRAN releases of \pkg{rstan}
-and \pkg{StanHeaders}. With CmdStanR, the latest features in Stan will be
-available from \R immediately after updating CmdStan, which can be done
-with the \code{\link[=install_cmdstan]{install_cmdstan()}} function.
+files.
 
-The licenses of CmdStanR (BSD-3) and RStan (GPL-3) are also different.
+Both forms of interfacing with Stan have advantages and disadvantages. An
+in-memory interface like RStan is able to offer more advanced features than
+CmdStanR (for example the \code{rstan::log_prob()} and \code{rstan::grad_log_prob()}
+methods) but keeping up with Stan releases is more complicated for RStan,
+often requiring non-trivial changes to the \pkg{rstan} package and always
+requiring new CRAN releases of \pkg{rstan} and \pkg{StanHeaders}. With
+CmdStanR, the latest features in Stan will be available from \R immediately
+after updating CmdStan, which can be done with the \code{\link[=install_cmdstan]{install_cmdstan()}}
+function.
+
+Another difference between RStan and CmdStanR is the license. RStan is
+GPL-3 while the license for CmdStanR (like Stan) is BSD-3, which is a bit
+more permissive.
 }
 
 \examples{

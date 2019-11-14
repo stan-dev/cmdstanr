@@ -4,10 +4,10 @@
 \alias{CmdStanModel}
 \title{CmdStanModel objects}
 \description{
-A \code{CmdStanModel} object is an \link[R6:R6]{R6} object returned by
-the \code{\link[=cmdstan_model]{cmdstan_model()}} function. The object stores the path to a Stan
-program as well as a path to a compiled executable once created, and
-provides methods for fitting the model. See \strong{Details} section for
+A \code{CmdStanModel} object is an \link[R6:R6]{R6} object created by the
+\code{\link[=cmdstan_model]{cmdstan_model()}} function. The object stores the path to a Stan program
+and compiled executable (once created), and provides methods for fitting
+the model using Stan's algorithms. See the \strong{Details} section for
 available methods.
 }
 \details{
@@ -18,7 +18,7 @@ available methods.
 code \tab Return Stan program as a string. \cr
 print \tab Print readable version of Stan program. \cr
 stan_file \tab Return the file path to the Stan program. \cr
-exe_file \tab Return the file path to the compiled executable once compiled. \cr
+exe_file \tab Return the file path to the compiled executable. \cr
 \link[=model-method-compile]{compile} \tab Compile Stan program. \cr
 \link[=model-method-sample]{sample}
 \tab Run CmdStan's \code{"sample"} method, return \code{\link{CmdStanMCMC}} object. \cr

@@ -10,7 +10,7 @@ Like \code{CmdStanModel} objects, \code{CmdStanMCMC} objects are \link[R6:R6]{R6
 objects.
 }
 \details{
-\code{CmdStanMCMC} objects have the following associated methods:
+\code{CmdStanMCMC} objects have the following methods:
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr

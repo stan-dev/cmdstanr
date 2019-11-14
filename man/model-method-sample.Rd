@@ -103,7 +103,7 @@ per chain.
 \item \code{save_warmup}: (logical) Should warmup iterations be saved? The default
 is \code{FALSE}.
 \item \code{thin}: (positive integer) The period between saved samples. This should
-typically be left at its default (no thinning).
+typically be left at its default (no thinning) unless memory is a problem.
 \item \code{max_depth}: (positive integer) The maximum allowed tree depth for the
 NUTS engine. See the \emph{Tree Depth} section of the CmdStan manual for more
 details.
@@ -134,13 +134,13 @@ matrix (if \code{metric='dense_e'}) for initializing the inverse metric, which
 can be used as an alternative to the \code{metric_file} argument. A vector is
 interpreted as a diagonal metric. The inverse metric is usually set to an
 estimate of the posterior covariance. See the \code{adapt_engaged} argument
-above for details (and control over) on how specifying a precomputed
+above for details on (and control over) how specifying a precomputed
 inverse metric interacts with adaptation.
-\item \code{init_buffer}: (non-negative integer) Width of initial fast timestep
+\item \code{init_buffer}: (nonnegative integer) Width of initial fast timestep
 adaptation interval during warmup.
-\item \code{term_buffer}: (non-negative integer) Width of final fast timestep
+\item \code{term_buffer}: (nonnegative integer) Width of final fast timestep
 adaptation interval during warmup.
-\item \code{window}: (non-negative integer) Initial width of slow timestep/metric
+\item \code{window}: (nonnegative integer) Initial width of slow timestep/metric
 adaptation interval.
 }
 }

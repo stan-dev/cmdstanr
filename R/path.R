@@ -95,7 +95,6 @@ stop_no_path <- function() {
 #' @return A file path.
 #' @export
 cmdstan_default_path <- function() {
-  # ".cmdstanr/cmdstan" is a symlink to latest version
   file.path(Sys.getenv("HOME"), ".cmdstanr", "cmdstan")
 }
 
