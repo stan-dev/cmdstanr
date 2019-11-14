@@ -19,6 +19,7 @@ environment:
   NOT_CRAN: true
   _R_CHECK_FORCE_SUGGESTS_: false
   USE_RTOOLS: true
+  HOME: C:/MinGW/msys/1.0/
   # GCC_PATH: mingw_32
   # R_REMOTES_STANDALONE: true
 

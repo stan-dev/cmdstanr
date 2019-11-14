@@ -4,8 +4,7 @@ context("model-optimize")
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
   mod <- cmdstan_model(stan_file = beroulli_example_file())
-
-  data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+  data_list <- bernoulli_example_data()
 
   # these are all valid for optimize()
   ok_arg_values <- list(
