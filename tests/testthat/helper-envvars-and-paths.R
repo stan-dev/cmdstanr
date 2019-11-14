@@ -17,7 +17,7 @@ not_on_cran <- function() {
 
 set_cmdstan_path_for_tests <- function() {
   if (on_appveyor()) {
-    set_cmdstan_path()
+    set_cmdstan_path("C:/MinGW/msys/1.0/.cmdstanr/cmdstan")
   } else {
     set_cmdstan_path()
   }
