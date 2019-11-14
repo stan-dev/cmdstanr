@@ -24,6 +24,7 @@ Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: 'CmdStan' <https://mc-stan.org/users/interfaces/cmdstan>
 Imports: 
     checkmate,
+    posterior (>= 0.0.1),
     processx,
     R6
 Suggests: 
@@ -33,3 +34,5 @@ Suggests:
     rstan,
     testthat (>= 2.1.0)
 VignetteBuilder: knitr
+Remotes:  
+    jgabry/posterior

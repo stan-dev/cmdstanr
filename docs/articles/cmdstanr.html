@@ -195,15 +195,15 @@ model {
 <pre><code>Running MCMC with 2 chain(s) on 2 core(s)...
 
 Running ./bernoulli 'id=1' random 'seed=123' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjyIIW3/standata-127003b46c44e.json' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpIMtuOx/standata-74836e72cbcc.json' \
   output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpjyIIW3/bernoulli-stan-sample-1-127002301fb49.csv' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpIMtuOx/bernoulli-stan-sample-1-748332a1f6ba.csv' \
   'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt \
   'engaged=1'
 Running ./bernoulli 'id=2' random 'seed=124' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjyIIW3/standata-127003b46c44e.json' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpIMtuOx/standata-74836e72cbcc.json' \
   output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpjyIIW3/bernoulli-stan-sample-2-1270057188793.csv' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpIMtuOx/bernoulli-stan-sample-2-7483274d474e.csv' \
   'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt \
   'engaged=1'
 Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
@@ -255,16 +255,23 @@ Chain 2 finished in 0.2 seconds.
 
 Both chains finished succesfully.
 Mean chain execution time: 0.2 seconds.
-Total execution time: 0.2 seconds.</code></pre>
+Total execution time: 0.3 seconds.</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a> method creates <a href="https://r6.r-lib.org/">R6</a> <a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>CmdStanMCMC</code></a> objects.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/class.html">class</a></span>(fit)</a></code></pre></div>
 <pre><code>[1] "CmdStanMCMC" "R6"         </code></pre>
-<p>Currently, the <a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>$summary()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>$diagnose()</code></a> methods call CmdStan’s <code>stansummary</code> and <code>diagnose</code> utilities, respectively:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">fit<span class="op">$</span><span class="kw">diagnose</span>()</a></code></pre></div>
+<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-summary.html"><code>$summary()</code></a> method calls <code>summarise_draws()</code> from the <strong>posterior</strong> package:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">fit<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>()</a></code></pre></div>
+<pre><code># A tibble: 2 x 10
+  variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
+  &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+1 theta     0.244  0.226 0.122 0.126  0.0778  0.467  1.00     684.     762.
+2 lp__     -7.31  -7.04  0.783 0.380 -8.88   -6.75   1.00     814.    1029.</code></pre>
+<p><a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_summary()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_diagnose()</code></a> methods call CmdStan’s <code>stansummary</code> and <code>diagnose</code> utilities, respectively:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1">fit<span class="op">$</span><span class="kw">cmdstan_diagnose</span>()</a></code></pre></div>
 <pre><code>Running bin/diagnose \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpjyIIW3/bernoulli-stan-sample-1-127002301fb49.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpjyIIW3/bernoulli-stan-sample-2-1270057188793.csv
-Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpjyIIW3/bernoulli-stan-sample-1-127002301fb49.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpjyIIW3/bernoulli-stan-sample-2-1270057188793.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpIMtuOx/bernoulli-stan-sample-1-748332a1f6ba.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpIMtuOx/bernoulli-stan-sample-2-7483274d474e.csv
+Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpIMtuOx/bernoulli-stan-sample-1-748332a1f6ba.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpIMtuOx/bernoulli-stan-sample-2-7483274d474e.csv
 
 Checking sampler transitions treedepth.
 Treedepth satisfactory for all transitions.
@@ -280,34 +287,34 @@ Effective sample size satisfactory.
 Split R-hat values satisfactory all parameters.
 
 Processing complete, no problems detected.</code></pre>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1">fit<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>()</a></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1">fit<span class="op">$</span><span class="kw">cmdstan_summary</span>()</a></code></pre></div>
 <pre><code>Running bin/stansummary \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpjyIIW3/bernoulli-stan-sample-1-127002301fb49.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpjyIIW3/bernoulli-stan-sample-2-1270057188793.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpIMtuOx/bernoulli-stan-sample-1-748332a1f6ba.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpIMtuOx/bernoulli-stan-sample-2-7483274d474e.csv
 Inference for Stan model: bernoulli_model
 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 
-Warmup took (0.0069, 0.0068) seconds, 0.014 seconds total
-Sampling took (0.014, 0.015) seconds, 0.029 seconds total
+Warmup took (0.0071, 0.0071) seconds, 0.014 seconds total
+Sampling took (0.014, 0.014) seconds, 0.029 seconds total
 
                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
-lp__            -7.3  3.1e-02    0.78   -8.9  -7.0  -6.8  6.5e+02  2.2e+04  1.0e+00
+lp__            -7.3  3.1e-02    0.78   -8.9  -7.0  -6.8  6.5e+02  2.3e+04  1.0e+00
 accept_stat__   0.92  3.3e-03    0.12   0.68  0.97   1.0  1.3e+03  4.6e+04  1.0e+00
 stepsize__      0.95  1.3e-01    0.14   0.81   1.1   1.1  1.0e+00  3.5e+01  4.2e+13
 treedepth__      1.4  1.2e-02    0.48    1.0   1.0   2.0  1.7e+03  5.7e+04  1.0e+00
 n_leapfrog__     2.5  2.0e-01     1.3    1.0   3.0   3.0  4.4e+01  1.5e+03  1.0e+00
 divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
 energy__         7.8  4.2e-02     1.0    6.8   7.5   9.8  6.1e+02  2.1e+04  1.0e+00
-theta           0.24  4.5e-03    0.12  0.077  0.23  0.47  7.4e+02  2.5e+04  1.0e+00
+theta           0.24  4.5e-03    0.12  0.077  0.23  0.47  7.4e+02  2.6e+04  1.0e+00
 
 Samples were drawn using hmc with nuts.
 For each parameter, N_Eff is a crude measure of effective sample size,
 and R_hat is the potential scale reduction factor on split chains (at 
 convergence, R_hat=1).</code></pre>
 <p>Because CmdStanR is not fully developed yet, for the time being the best way to work with the output is to create a stanfit object (RStan) from the csv output files written by CmdStan. This can be done by using <code><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">rstan::read_stan_csv()</a></code> in combination with the <code>$output_files()</code> method of the <code>CmdStanMCMC</code> object.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1">stanfit &lt;-<span class="st"> </span>rstan<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">read_stan_csv</a></span>(fit<span class="op">$</span><span class="kw">output_files</span>())</a>
-<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(stanfit)</a></code></pre></div>
-<pre><code>Inference for Stan model: bernoulli-stan-sample-1-127002301fb49.
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1">stanfit &lt;-<span class="st"> </span>rstan<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">read_stan_csv</a></span>(fit<span class="op">$</span><span class="kw">output_files</span>())</a>
+<a class="sourceLine" id="cb21-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(stanfit)</a></code></pre></div>
+<pre><code>Inference for Stan model: bernoulli-stan-sample-1-748332a1f6ba.
 2 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=2000.
 
@@ -315,7 +322,7 @@ post-warmup draws per chain=1000, total post-warmup draws=2000.
 theta  0.24    0.00 0.12  0.06  0.15  0.23  0.32  0.52   736    1
 lp__  -7.31    0.03 0.78 -9.60 -7.51 -7.04 -6.82 -6.75   650    1
 
-Samples were drawn using NUTS(diag_e) at Sat Nov 09 18:30:59 2019.
+Samples were drawn using NUTS(diag_e) at Wed Nov 13 17:27:12 2019.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>

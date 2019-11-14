@@ -28,7 +28,13 @@
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstanr-package.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-summary.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/install_cmdstan.html</loc>

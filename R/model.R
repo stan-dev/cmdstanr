@@ -42,11 +42,14 @@
 #'   num_cores = 2
 #' )
 #'
-#' # Call CmdStan's bin/stansummary
+#' # Use 'posterior' package for summaries
 #' fit_mcmc$summary()
 #'
+#' # Call CmdStan's bin/stansummary
+#' fit_mcmc$cmdstan_summary()
+#'
 #' # Call CmdStan's bin/diagnose
-#' fit_mcmc$diagnose()
+#' fit_mcmc$cmdstan_diagnose()
 #'
 #' # For models fit using MCMC, if you like working with RStan's stanfit objects
 #' # then you can create one with rstan::read_stan_csv()
@@ -234,7 +237,7 @@ compile_method <- function(quiet = TRUE,
 
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
-    include_paths <- sapply(include_paths, absolute_path, USE.NAMES = FALSE)
+    include_paths <- absolute_path(include_paths)
     include_paths <- paste0(include_paths, collapse = ",")
     include_paths <- paste0("STANCFLAGS += --include_paths=", include_paths)
   }

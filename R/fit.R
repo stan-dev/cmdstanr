@@ -16,16 +16,20 @@
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `summary` \tab Run and print CmdStan's `bin/stansummary`. \cr
-#'  `diagnose` \tab Run and print CmdStan's `bin/diagnose`. \cr
+#'  `draws` \tab Return post-warmup draws as a
+#'    [`draws_array`][posterior::draws_array] object.\cr
+#'  [`summary`][fit-method-summary]
+#'    \tab Run [posterior::summarise_draws()]. \cr
+#'  [`cmdstan_summary`][fit-method-cmdstan_summary]
+#'    \tab Run and print CmdStan's `bin/stansummary`. \cr
+#'  [`cmdstan_diagnose`][fit-method-cmdstan_summary]
+#'    \tab Run and print CmdStan's `bin/diagnose`. \cr
 #'  [`save_output_files`][fit-method-save_output_files]
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
 #'    \tab Save JSON data file to a specified location. \cr
 #'  [`save_diagnostic_files`][fit-method-save_diagnostic_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
-#'  `draws` \tab
-#'    Return post-warmup draws as an `iters x chains x variables` array. \cr
 #'  `time` \tab Return a list containing the total time and a data frame of
 #'    execution times of all chains. \cr
 #'  `output` \tab Return the stdout and stderr of all chains as a list of
@@ -44,44 +48,12 @@ CmdStanMCMC <- R6::R6Class(
       self$runset <- runset
       invisible(self)
     },
-    summary = function() {
-      # Run cmdstan's bin/stansummary on csv files
-      if (!length(self$output_files())) {
-        stop("No chains finished successfully. Unable to run summary()!",
-             call. = FALSE)
-      }
-      target_exe = file.path("bin", cmdstan_ext("stansummary"))
-      check_target_exe(target_exe)
-      run_log <- processx::run(
-        command = target_exe,
-        args = self$output_files(),
-        wd = cmdstan_path(),
-        echo_cmd = TRUE,
-        echo = TRUE,
-        error_on_status = TRUE
-      )
-    },
-    diagnose = function() {
-      # Run cmdstan's bin/diagnose on csv files
-      if (!length(self$output_files())) {
-        stop("No chains finished successfully. Unable to run diagnose()!",
-             call. = FALSE)
-      }
-      target_exe = file.path("bin", cmdstan_ext("diagnose"))
-      check_target_exe(target_exe)
-      run_log <- processx::run(
-        command = target_exe,
-        args = self$output_files(),
-        wd = cmdstan_path(),
-        echo_cmd = TRUE,
-        echo = TRUE,
-        error_on_status = TRUE
-      )
-    },
     draws = function() {
       # iter x chains x params array
-      if (is.null(private$draws_)) private$read_csv()
-      private$draws_
+      if (is.null(private$draws_)) {
+        private$read_csv()
+      }
+      posterior::as_draws_array(private$draws_)
     },
     time = function() {
       self$runset$time()
@@ -209,9 +181,15 @@ CmdStanMLE <- R6::R6Class(
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `summary` \tab Run and print CmdStan's `bin/stansummary`. \cr
-#'  `draws` \tab Return approximate posterior draws as matrix with one colunm per
-#'    variable. \cr
+#'  `draws` \tab
+#'    Return approximate posterior draws as a
+#'    [`draws_matrix`][posterior::draws_matrix] object. \cr
+#'  [`summary`][fit-method-summary]
+#'    \tab Run [posterior::summarise_draws()]. \cr
+#'  [`cmdstan_summary`][fit-method-cmdstan_summary]
+#'    \tab Run and print CmdStan's `bin/stansummary`. \cr
+#'  [`cmdstan_diagnose`][fit-method-cmdstan_diagnose]
+#'    \tab Run and print CmdStan's `bin/diagnose`. \cr
 #'  [`save_output_files`][fit-method-save_output_files]
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
@@ -231,23 +209,12 @@ CmdStanVB <- R6::R6Class(
       self$runset <- runset
       invisible(self)
     },
-    summary = function() {
-      # Run cmdstan's bin/stansummary on csv files
-      target_exe = file.path("bin", cmdstan_ext("stansummary"))
-      check_target_exe(target_exe)
-      run_log <- processx::run(
-        command = target_exe,
-        args = self$output_files(),
-        wd = cmdstan_path(),
-        echo_cmd = TRUE,
-        echo = TRUE,
-        error_on_status = TRUE
-      )
-    },
     draws = function() {
       # iter x params array
-      if (is.null(private$draws_)) private$read_csv()
-      private$draws_
+      if (is.null(private$draws_)) {
+        private$read_csv()
+      }
+      posterior::as_draws_matrix(private$draws_)
     },
     log_p = function() {
       # iter x params array
@@ -283,6 +250,74 @@ CmdStanVB <- R6::R6Class(
 # )
 
 # Shared methods ----------------------------------------------------------
+
+#' Run `posterior::summarise_draws()`
+#'
+#' @name fit-method-summary
+#' @description Run [posterior::summarise_draws()] from the \pkg{posterior}
+#'   package.
+#'
+#' @section Usage:
+#'   ```
+#'   $summary(...)
+#'   ```
+#' @section Arguments:
+#' * `...`: Arguments to pass to [posterior::summarise_draws()].
+#'
+#' @section Value:
+#' The data frame returned by [posterior::summarise_draws()].
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+NULL
+
+summary_method <- function(...) {
+  if (self$runset$method() == "sample") {
+    summary <- posterior::summarise_draws(self$draws(), ...)
+  } else { # don't include MCMC diagnostics for non MCMC
+    args <- list(...)
+    args$x <- self$draws()
+    if (!"measures" %in% names(args)) {
+      args$measures <- posterior::default_summary_measures()
+    }
+    summary <- do.call(posterior::summarise_draws, args)
+  }
+  summary
+}
+CmdStanMCMC$set("public", "summary", summary_method)
+CmdStanVB$set("public", "summary", summary_method)
+
+
+#' Run CmdStan's `bin/stansummary` and `bin/diagnose`
+#'
+#' @name fit-method-cmdstan_summary
+#' @aliases fit-method-cmdstan_diagnose
+#' @note Although these methods also work for models fit using the
+#'   [`$variational()`][model-method-variational] method, much of the output is
+#'   only relevant for models fit using the [`$sample()`][model-method-sample]
+#'   method.
+#'
+#' @section Usage:
+#'   ```
+#'   $cmdstan_summary()
+#'   $cmdstan_diagnose()
+#'   ```
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+NULL
+
+cmdstan_summary_method <- function(...) {
+  self$runset$run_cmdstan_tool("stansummary", ...)
+}
+cmdstan_diagnose_method <- function(...) {
+  self$runset$run_cmdstan_tool("diagnose", ...)
+}
+CmdStanMCMC$set("public", "cmdstan_summary", cmdstan_summary_method)
+CmdStanVB$set("public", "cmdstan_summary", cmdstan_summary_method)
+CmdStanMCMC$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
+CmdStanVB$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
+
 
 #' Save output and data files
 #'

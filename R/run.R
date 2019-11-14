@@ -29,7 +29,6 @@ CmdStanRun <- R6::R6Class(
     model_name = function() self$args$model_name,
     method = function() self$args$method,
     csv_basename = function() self$args$csv_basename(),
-    console_files = function() private$console_files_,
     data_file = function() self$args$data_file,
     save_diagnostics = function() self$args$save_diagnostics,
     new_output_files = function() self$args$new_output_files(),
@@ -127,6 +126,27 @@ CmdStanRun <- R6::R6Class(
       } else if (self$method() == "variational") {
         private$run_variational_()
       }
+    },
+
+    # run bin/stansummary or bin/diagnose
+    # @param tool The name of the tool in `bin/` to run.
+    # @param flags An optional character vector of flags (e.g. c("--sig_figs=1")).
+    run_cmdstan_tool = function(tool = c("stansummary", "diagnose"), flags = NULL) {
+      tool <- match.arg(tool)
+      if (!length(self$output_files())) {
+        stop("No CmdStan runs finished successfully. ",
+             "Unable to run bin/", tool, ".", call. = FALSE)
+      }
+      target_exe = file.path("bin", cmdstan_ext(tool))
+      check_target_exe(target_exe)
+      run_log <- processx::run(
+        command = target_exe,
+        args = c(self$output_files(), flags),
+        wd = cmdstan_path(),
+        echo_cmd = TRUE,
+        echo = TRUE,
+        error_on_status = TRUE
+      )
     },
 
     time = function() {

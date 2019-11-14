@@ -175,9 +175,11 @@ CmdStanModel object." />
     <p><code>CmdStanVB</code> objects have the following associated methods:</p>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code>summary</code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
-<tr><td><code>draws</code></td><td>Return approximate posterior draws as matrix with one colunm per
-variable.</td></tr>
+<tr><td><code>draws</code></td><td>Return approximate posterior draws as a
+<code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code> object.</td></tr>
+<tr><td><code><a href='fit-method-summary.html'>summary</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
+<tr><td><code><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
+<tr><td><code><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>save_output_files</a></code></td><td>Save output CSV files to a specified location.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>save_data_file</a></code></td><td>Save JSON data file to a specified location.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>save_diagnostic_files</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
@@ -193,8 +195,9 @@ for online documentation and tutorials.</p>
 <li><p>CmdStan doc (pdf): (<a href='https://github.com/stan-dev/cmdstan/releases/latest'>github.com/stan-dev/cmdstan/releases/</a>).</p></li>
 </ul>
 
-<p>Other fitted model objects: <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>,
-  <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
+<p>Other fitted model objects: 
+<code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>,
+<code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

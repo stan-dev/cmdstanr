@@ -10,6 +10,10 @@ if (not_on_cran()) {
     fit_mcmc <- mod$sample(data = data_list, num_chains = 2,
                            save_diagnostics = TRUE)
   )
+  utils::capture.output(
+    fit_mcmc_0 <- mod$sample(data = data_file_json, num_chains = 2,
+                             refresh = 0)
+  )
   utils::capture.output(suppressWarnings(
     fit_mle <- mod$optimize(data = data_list, save_diagnostics = FALSE)
   ))
@@ -78,28 +82,75 @@ test_that("saving diagnostic csv mcmc output works", {
   expect_equal(fit_mcmc$diagnostic_files(), paths)
 })
 
+test_that("draws() method returns posterior sample (reading csv works)", {
+  skip_on_cran()
+  draws <- fit_mcmc$draws()
+  expect_type(draws, "double")
+  expect_s3_class(draws, "draws_array")
+  expect_equal(posterior::variables(draws), c(PARAM_NAMES, "lp__"))
+})
 
-test_that("summary() method succesfully calls bin/stansummary", {
+test_that("summary() method works after mcmc", {
+  skip_on_cran()
+  x <- fit_mcmc$summary()
+  expect_s3_class(x, "data.frame")
+  expect_equal(x$variable, c(PARAM_NAMES, "lp__"))
+})
+
+test_that("cmdstan_summary() method succesfully calls bin/stansummary after mcmc", {
   skip_on_cran()
   expect_output(
-    fit_mcmc$summary(),
+    fit_mcmc$cmdstan_summary(),
     "Inference for Stan model: logistic_model",
     fixed = TRUE
   )
 })
 
-test_that("diagnose() method succesfully calls bin/diagnose", {
+test_that("cmdstan_diagnose() method succesfully calls bin/diagnose after mcmc", {
   skip_on_cran()
-  expect_output(fit_mcmc$diagnose(), "Checking sampler transitions for divergences")
+  expect_output(fit_mcmc$cmdstan_diagnose(), "Checking sampler transitions for divergences")
 })
 
-test_that("draws() method returns posterior sample (reading csv works)", {
+test_that("output() method works after mcmc", {
   skip_on_cran()
-  draws <- fit_mcmc$draws()
-  expect_type(draws, "double")
-  expect_true(is.array(draws))
-  expect_true(length(dim(draws)) == 3)
-  expect_equal(dimnames(draws)[[3]], c(PARAM_NAMES, "lp__"))
+  checkmate::expect_list(
+    fit_mcmc$output(),
+    types = "character",
+    any.missing = FALSE,
+    len = fit_mcmc$runset$num_runs()
+  )
+  expect_output(fit_mcmc$output(id = 1), "Gradient evaluation took")
+})
+
+test_that("time() method works after mcmc", {
+  skip_on_cran()
+  run_times <- fit_mcmc$time()
+  checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
+  testthat::expect_named(run_times, c("total", "chains"))
+  checkmate::expect_number(run_times$total, finite = TRUE)
+  checkmate::expect_data_frame(
+    run_times$chains,
+    any.missing = FALSE,
+    types = c("integer", "numeric"),
+    nrows = fit_mcmc$runset$num_runs(),
+    ncols = 4
+  )
+
+  # after refresh=0 warmup and sampling times should be NA
+  testthat::expect_warning(
+    run_times_0 <- fit_mcmc_0$time(),
+    "Separate warmup and sampling times are not available"
+  )
+  checkmate::expect_number(run_times_0$total, finite = TRUE)
+  checkmate::expect_data_frame(run_times_0$chains,
+                               any.missing = TRUE,
+                               types = c("integer", "numeric"),
+                               nrows = fit_mcmc_0$runset$num_runs(),
+                               ncols = 4)
+  for (j in 1:nrow(run_times_0$chains)) {
+    checkmate::expect_scalar_na(run_times_0$chains$warmup[j])
+    checkmate::expect_scalar_na(run_times_0$chains$sampling[j])
+  }
 })
 
 
@@ -176,17 +227,29 @@ test_that("saving diagnostic csv from variational works", {
   expect_match(paths[1], "testing-vb-diagnostic-1")
 })
 
-test_that("summary() method after variation succesfully calls bin/stansummary", {
+test_that("summary() method works after vb", {
   skip_on_cran()
-  expect_output(fit_vb$summary(), "Inference for Stan model")
+  x <- fit_vb$summary()
+  expect_s3_class(x, "data.frame")
+  expect_equal(x$variable, PARAM_NAMES)
+
+  x <- fit_vb$summary(measures = c("mean", "sd"))
+  expect_s3_class(x, "data.frame")
+  expect_equal(x$variable, PARAM_NAMES)
+  expect_equal(colnames(x), c("variable", "mean", "sd"))
 })
 
-test_that("draws() method returns approx posterior sample (reading csv works)", {
+test_that("cmdstan_summary() method after variational works", {
+  skip_on_cran()
+  expect_output(fit_vb$cmdstan_summary(), "Inference for Stan model")
+})
+
+test_that("draws() method returns posterior sample (reading csv works)", {
   skip_on_cran()
   draws <- fit_vb$draws()
   expect_type(draws, "double")
-  expect_true(is.matrix(draws))
-  expect_equal(colnames(draws), PARAM_NAMES)
+  expect_s3_class(draws, "draws_matrix")
+  expect_equal(posterior::variables(draws), PARAM_NAMES)
 })
 
 test_that("log_p(), log_g() methods return vectors (reading csv works)", {
