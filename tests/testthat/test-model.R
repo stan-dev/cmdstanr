@@ -11,9 +11,6 @@ if (not_on_cran()) {
 }
 
 
-# Compile -----------------------------------------------------------------
-context("model-compile")
-
 test_that("object initialized correctly", {
   skip_on_cran()
   expect_equal(mod$stan_file(), stan_program)
@@ -27,80 +24,15 @@ test_that("code() and print() methods work", {
 })
 
 
-test_that("error if no compile() before sample()", {
-  skip_on_cran()
-  expect_error(
-    mod$sample(),
-    "Model not compiled. Try running the compile() method first.",
-    fixed = TRUE
-  )
-})
-
-test_that("compile() method works", {
-  skip_on_cran()
-  expected <- if (!file.exists(cmdstan_ext(strip_ext(mod$stan_file()))))
-    "Translating Stan model" else "is up to date"
-  out <- utils::capture.output(mod$compile(quiet = FALSE))
-  expect_output(print(out), expected)
-  expect_equal(mod$exe_file(), cmdstan_ext(strip_ext(stan_program)))
-})
-
-test_that("compilation works when stan program not in cmdstan dir", {
-  skip_on_cran()
-
-  stan_program_2 <- test_path("resources", "stan", "bernoulli.stan")
-  expect_message(
-    mod_2 <- cmdstan_model(stan_file = stan_program_2, quiet = TRUE),
-    "Compiling Stan program..."
-  )
-  expect_equal(mod_2$exe_file(), cmdstan_ext(strip_ext(absolute_path(stan_program_2))))
-
-  out <- utils::capture.output(
-    mod_2 <- suppressMessages(cmdstan_model(stan_file = stan_program_2, quiet = FALSE))
-  )
-  expect_output(print(out), "is up to date")
-
-  # cleanup
-  file.remove(paste0(mod_2$exe_file(), c("", ".o",".hpp")))
-})
-
-test_that("compilation works with include_paths", {
-  skip_on_cran()
-
-  stan_program_w_include <- test_path("resources", "stan", "bernoulli_include.stan")
-  expect_error(
-    cmdstan_model(stan_file = stan_program_w_include, include_paths = "NOT_A_DIR",
-                  quiet = TRUE),
-    "Directory 'NOT_A_DIR' does not exist"
-  )
-
-  expect_error(
-    expect_output(
-      cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE),
-      "could not find include file"
-    )
-  )
-
-  expect_message(
-    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
-                                   include_paths = test_path("resources", "stan")),
-    "Compiling Stan program"
-  )
-  expect_equal(mod_w_include$exe_file(), strip_ext(absolute_path(stan_program_w_include)))
-
-  # cleanup
-  file.remove(paste0(mod_w_include$exe_file(), c("", ".o",".hpp")))
-})
-
+# Compile -----------------------------------------------------------------
+if (not_on_cran()) {
+  mod$compile()
+}
 
 # Sample ------------------------------------------------------------------
 context("model-sample")
 
 if (not_on_cran()) {
-  if (!length(mod$exe_file())) {
-    utils::capture.output(mod$compile())
-  }
-
   # these are all valid for sample()
   ok_arg_values <- list(
     data = data_list,
