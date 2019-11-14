@@ -7,7 +7,7 @@ if (not_on_cran()) {
   mod <- cmdstan_model(stan_file = stan_program)
 
   # valid ways to supply data
-  data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+  data_list <- bernoulli_example_data()
   data_file_r <- test_path("resources", "data", "bernoulli.data.R")
   data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 

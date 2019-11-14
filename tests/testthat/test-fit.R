@@ -23,7 +23,7 @@ if (not_on_cran()) {
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
   # cleanup
-  file.remove(paste0(mod$exe_file(), c("", ".o",".hpp")))
+  file.remove(paste0(strip_ext(mod$exe_file()), delete_extensions()))
 }
 
 
