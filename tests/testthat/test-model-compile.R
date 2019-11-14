@@ -1,4 +1,5 @@
-# Setup -------------------------------------------------------------------
+context("model-compile")
+
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
   stan_program <- beroulli_example_file()
@@ -10,6 +11,8 @@ if (not_on_cran()) {
 
 test_that("object initialized correctly", {
   skip_on_cran()
+  print(cmdstan_ext(strip_ext(mod$stan_file())))
+  print(cmdstan_ext(strip_ext(mod$exe_file())))
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
 })

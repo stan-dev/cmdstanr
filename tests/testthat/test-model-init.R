@@ -2,8 +2,7 @@ context("model-init")
 
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
-  stan_program <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
-  mod <- cmdstan_model(stan_file = stan_program)
+  mod <- cmdstan_model(stan_file = beroulli_example_file())
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 }
 
