@@ -1,3 +1,6 @@
+beroulli_example_file <- function() {
+  file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+}
 
 on_appveyor <- function() {
   identical(tolower(Sys.getenv("APPVEYOR")), "true")
@@ -17,7 +20,7 @@ not_on_cran <- function() {
 
 set_cmdstan_path_for_tests <- function() {
   if (on_appveyor()) {
-    set_cmdstan_path()
+    set_cmdstan_path("C:/MinGW/msys/1.0/.cmdstanr/cmdstan")
   } else {
     set_cmdstan_path()
   }

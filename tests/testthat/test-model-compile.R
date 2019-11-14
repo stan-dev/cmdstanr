@@ -1,14 +1,23 @@
-# Setup -------------------------------------------------------------------
+context("model-compile")
+
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
-  stan_program <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+  stan_program <- beroulli_example_file()
   mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 
   stan_program_different_dir <- test_path("resources", "stan", "bernoulli.stan")
   stan_program_w_include <- test_path("resources", "stan", "bernoulli_include.stan")
 }
 
-test_that("error if no compile() before sample()", {
+test_that("object initialized correctly", {
+  skip_on_cran()
+  print(cmdstan_ext(strip_ext(mod$stan_file())))
+  print(cmdstan_ext(strip_ext(mod$exe_file())))
+  expect_equal(mod$stan_file(), stan_program)
+  expect_equal(mod$exe_file(), character(0))
+})
+
+test_that("error if no compile() before model fitting", {
   skip_on_cran()
   expect_error(
     mod$sample(),
@@ -19,8 +28,10 @@ test_that("error if no compile() before sample()", {
 
 test_that("compile() method works", {
   skip_on_cran()
+
   expected <- if (!file.exists(cmdstan_ext(strip_ext(mod$stan_file()))))
     "Translating Stan model" else "is up to date"
+  print(cmdstan_ext(strip_ext(mod$stan_file())))
   out <- utils::capture.output(mod$compile(quiet = FALSE))
   expect_output(print(out), expected)
   expect_equal(mod$exe_file(), cmdstan_ext(strip_ext(stan_program)))
