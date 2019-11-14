@@ -1,3 +1,6 @@
+beroulli_example_file <- function() {
+  file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+}
 
 on_appveyor <- function() {
   identical(tolower(Sys.getenv("APPVEYOR")), "true")

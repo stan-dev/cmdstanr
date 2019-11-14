@@ -1,7 +1,5 @@
 context("install")
 
-
-
 test_that("test cmdstan installation", {
   skip_if_offline()
   skip_if(on_codecov(), message = "R_COVR")
