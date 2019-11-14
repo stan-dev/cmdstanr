@@ -29,7 +29,6 @@ CmdStanRun <- R6::R6Class(
     model_name = function() self$args$model_name,
     method = function() self$args$method,
     csv_basename = function() self$args$csv_basename(),
-    console_files = function() private$console_files_,
     data_file = function() self$args$data_file,
     save_diagnostics = function() self$args$save_diagnostics,
     new_output_files = function() self$args$new_output_files(),
