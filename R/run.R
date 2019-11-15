@@ -41,13 +41,13 @@ CmdStanRun <- R6::R6Class(
           call. = FALSE
         )
       }
-      private$diagnostic_files_
+      absolute_path(private$diagnostic_files_)
     },
     output_files = function() {
       # if we are using background processes only output the file if
       # the process finished normally
       ok <- self$procs$is_finished() | self$procs$is_queued()
-      private$output_files_[ok]
+      absolute_path(private$output_files_[ok])
     },
     save_output_files = function(dir = ".",
                                  basename = NULL,
