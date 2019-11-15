@@ -73,7 +73,8 @@ CmdStanRun <- R6::R6Class(
                                      basename = NULL,
                                      timestamp = TRUE) {
       # FIXME use self$diagnostic_files(include_failed=TRUE) once #76 is fixed
-      current_files <- private$diagnostic_files_
+      current_files <- self$diagnostic_files() # used so we get error if 0 files
+      current_files <- private$diagnostic_files_ # used so we still save all of them
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
