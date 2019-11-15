@@ -52,17 +52,19 @@ CmdStanRun <- R6::R6Class(
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE) {
+      # FIXME use self$output_files(include_failed=TRUE) once #76 is fixed
+      current_files <- private$output_files_
       new_paths <- copy_temp_files(
-        current_paths = self$output_files(), # FIXME use include_failed=TRUE once #76 is fixed
+        current_paths = current_files,
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = self$run_ids(),
         ext = ".csv",
         timestamp = timestamp
       )
-      file.remove(self$output_files())
+      file.remove(current_files)
       private$output_files_ <- new_paths
-      message("Moved ", length(self$output_files()),
+      message("Moved ", length(current_files),
               " output files and set internal paths to new locations:\n",
               paste("-", new_paths, collapse = "\n"))
       invisible(new_paths)
@@ -70,17 +72,19 @@ CmdStanRun <- R6::R6Class(
     save_diagnostic_files = function(dir = ".",
                                      basename = NULL,
                                      timestamp = TRUE) {
+      # FIXME use self$diagnostic_files(include_failed=TRUE) once #76 is fixed
+      current_files <- private$diagnostic_files_
       new_paths <- copy_temp_files(
-        current_paths = self$diagnostic_files(), # FIXME use include_failed=TRUE once #76 is fixed
+        current_paths = current_files,
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
         ids = self$run_ids(),
         ext = ".csv",
         timestamp = timestamp
       )
-      file.remove(self$diagnostic_files())
+      file.remove(current_files)
       private$diagnostic_files_ <- new_paths
-      message("Moved ", length(self$diagnostic_files()),
+      message("Moved ", length(current_files),
               " diagnostic files and set internal paths to new locations:\n",
               paste("-", new_paths, collapse = "\n"))
       invisible(new_paths)
