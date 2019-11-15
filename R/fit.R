@@ -12,7 +12,7 @@
 #'   objects.
 #'
 #' @details
-#' `CmdStanMCMC` objects have the following associated methods:
+#' `CmdStanMCMC` objects have the following methods:
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
@@ -113,7 +113,7 @@ CmdStanMCMC <- R6::R6Class(
 #'   object.
 #'
 #' @details
-#' `CmdStanMLE` objects have the following associated methods:
+#' `CmdStanMLE` objects have the following methods:
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
@@ -138,8 +138,8 @@ CmdStanMLE <- R6::R6Class(
       invisible(self)
     },
     summary = function() {
-      # FIXME: what should summary for optimization do?
-      # (bin/stansummary isn't compatible)
+      # FIXME: we only have point estimates for optimization,
+      # so what should summary do?
 
       cat("Estimates from optimization:\n")
       c(self$mle(), self$lp())
@@ -177,7 +177,7 @@ CmdStanMLE <- R6::R6Class(
 #'   [`CmdStanModel`] object.
 #'
 #' @details
-#' `CmdStanVB` objects have the following associated methods:
+#' `CmdStanVB` objects have the following methods:
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr

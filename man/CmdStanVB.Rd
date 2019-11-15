@@ -9,7 +9,7 @@ A \code{CmdStanVB} object is the fitted model object returned by the
 \code{\link{CmdStanModel}} object.
 }
 \details{
-\code{CmdStanVB} objects have the following associated methods:
+\code{CmdStanVB} objects have the following methods:
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr

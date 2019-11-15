@@ -10,7 +10,7 @@
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
 #' @param ... Optionally, additional arguments to pass to the
-#'   [`$compile()`][model-method-compile] method. Ignored if `compile=FALSE`.
+#'   [`$compile()`][model-method-compile] method if `compile=TRUE`.
 #'
 #' @return A [`CmdStanModel`] object.
 #'
@@ -85,10 +85,10 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #' CmdStanModel objects
 #'
 #' @name CmdStanModel
-#' @description A `CmdStanModel` object is an [R6][R6::R6] object returned by
-#'   the [cmdstan_model()] function. The object stores the path to a Stan
-#'   program as well as a path to a compiled executable once created, and
-#'   provides methods for fitting the model. See **Details** section for
+#' @description A `CmdStanModel` object is an [R6][R6::R6] object created by the
+#'   [cmdstan_model()] function. The object stores the path to a Stan program
+#'   and compiled executable (once created), and provides methods for fitting
+#'   the model using Stan's algorithms. See the **Details** section for
 #'   available methods.
 #'
 #' @details
@@ -99,7 +99,7 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'  code \tab Return Stan program as a string. \cr
 #'  print \tab Print readable version of Stan program. \cr
 #'  stan_file \tab Return the file path to the Stan program. \cr
-#'  exe_file \tab Return the file path to the compiled executable once compiled. \cr
+#'  exe_file \tab Return the file path to the compiled executable. \cr
 #'  [compile][model-method-compile] \tab Compile Stan program. \cr
 #'  [sample][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
@@ -152,11 +152,11 @@ CmdStanModel <- R6::R6Class(
 #' @name model-method-compile
 #' @family CmdStanModel methods
 #'
-#' @description The `$compile()` method of a [`CmdStanModel`] object calls CmdStan
-#'   to translate a Stan program to C++ and then create a compiled executable.
-#'   The resulting files are placed in the same directory as the Stan program
-#'   associated with the `CmdStanModel` object. After compilation the path
-#'   to the executable can be accesed via the `$exe_file()` method.
+#' @description The `$compile()` method of a [`CmdStanModel`] object calls
+#'   CmdStan to translate a Stan program to C++ and create a compiled
+#'   executable. The resulting files are placed in the same directory as the
+#'   Stan program associated with the `CmdStanModel` object. After compilation
+#'   the path to the executable can be accesed via the `$exe_file()` method.
 #'
 #' @section Usage:
 #'   ```
@@ -174,8 +174,8 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @section Arguments:
 #'   Leaving all arguments at their defaults should be fine for most users, but
-#'   optional arguments are provided to enable new features in CmdStan (and the
-#'   Stan Math library). See the CmdStan manual for more details.
+#'   optional arguments are provided to enable features in CmdStan (and the Stan
+#'   Math library). See the CmdStan manual for more details.
 #'   * `quiet`: (logical) Should the verbose output from CmdStan during
 #'     compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'     error we recommend trying again with `quiet=FALSE` to see more of the
@@ -326,7 +326,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `save_warmup`: (logical) Should warmup iterations be saved? The default
 #'   is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
-#'   typically be left at its default (no thinning).
+#'   typically be left at its default (no thinning) unless memory is a problem.
 #'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
 #'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
 #'   details.
@@ -357,13 +357,13 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   can be used as an alternative to the `metric_file` argument. A vector is
 #'   interpreted as a diagonal metric. The inverse metric is usually set to an
 #'   estimate of the posterior covariance. See the `adapt_engaged` argument
-#'   above for details (and control over) on how specifying a precomputed
+#'   above for details on (and control over) how specifying a precomputed
 #'   inverse metric interacts with adaptation.
-#'   * `init_buffer`: (non-negative integer) Width of initial fast timestep
+#'   * `init_buffer`: (nonnegative integer) Width of initial fast timestep
 #'   adaptation interval during warmup.
-#'   * `term_buffer`: (non-negative integer) Width of final fast timestep
+#'   * `term_buffer`: (nonnegative integer) Width of final fast timestep
 #'   adaptation interval during warmup.
-#'   * `window`: (non-negative integer) Initial width of slow timestep/metric
+#'   * `window`: (nonnegative integer) Initial width of slow timestep/metric
 #'   adaptation interval.
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
@@ -473,7 +473,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   * `algorithm`: (string) The optimization algorithm. One of `"lbfgs"`,
 #'   `"bfgs"`, or `"newton"`.
 #'   * `iter`: (positive integer) The number of iterations.
-#'   * `init_alpha`: (non-negative real) The line search step size for first
+#'   * `init_alpha`: (nonnegative real) The line search step size for first
 #'   iteration. Not applicable if `algorithm="newton"`.
 #'
 #' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
@@ -651,7 +651,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #' Write data to a temporary `.json` file if necessary
 #' @noRd
 #' @param data If not `NULL`, then either a path to a data file compatible with
-#'   CmdStan, or a named list of \R objects in the style that RStan uses.
+#'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
 #' @return Path to data file.
 process_data <- function(data) {
   if (is.null(data)) {
@@ -660,10 +660,7 @@ process_data <- function(data) {
     path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {
     path <- tempfile(pattern = "standata-", fileext = ".json")
-    write_stan_json(
-      data = data,
-      file = path
-    )
+    write_stan_json(data = data, file = path)
   } else {
     stop("'data' should be a path or a named list.", call. = FALSE)
   }

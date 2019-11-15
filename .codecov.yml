@@ -1,3 +1,7 @@
+codecov:
+  ci:
+    - !appveyor                # ignore CI builds by AppVeyor
+
 coverage:
   status:
     project:

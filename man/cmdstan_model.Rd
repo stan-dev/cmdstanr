@@ -14,7 +14,7 @@ compilation can be done later via the \code{\link[=model-method-compile]{$compil
 method.}
 
 \item{...}{Optionally, additional arguments to pass to the
-\code{\link[=model-method-compile]{$compile()}} method. Ignored if \code{compile=FALSE}.}
+\code{\link[=model-method-compile]{$compile()}} method if \code{compile=TRUE}.}
 }
 \value{
 A \code{\link{CmdStanModel}} object.
