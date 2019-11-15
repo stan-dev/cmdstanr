@@ -360,7 +360,8 @@ CmdStanVB$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
 #' For `$save_output_files()` the files moved to `dir` will have names of
 #' the form `basename-id_date-time`, where `basename` is the user's
 #' provided `basename` argument, `id` is the MCMC chain number (or 1 for non MCMC),
-#' and the date and time are included after an underscore (if `timestamp=TRUE`).
+#' and the date and time are included after an underscore if `timestamp=TRUE`.
+#' The timestamp is created via `format(Sys.time(), "%Y%m%d-%H%M%S")`.
 #'
 #' For `$save_diagnostic_files()` everything is the same as for
 #' `$save_output_files()` except the word `"diagnostic"` is included in the new

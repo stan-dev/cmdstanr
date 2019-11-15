@@ -11,8 +11,6 @@ if (not_on_cran()) {
 
 test_that("object initialized correctly", {
   skip_on_cran()
-  print(cmdstan_ext(strip_ext(mod$stan_file())))
-  print(cmdstan_ext(strip_ext(mod$exe_file())))
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
 })
@@ -28,10 +26,8 @@ test_that("error if no compile() before model fitting", {
 
 test_that("compile() method works", {
   skip_on_cran()
-
   expected <- if (!file.exists(cmdstan_ext(strip_ext(mod$stan_file()))))
     "Translating Stan model" else "is up to date"
-  print(cmdstan_ext(strip_ext(mod$stan_file())))
   out <- utils::capture.output(mod$compile(quiet = FALSE))
   expect_output(print(out), expected)
   expect_equal(mod$exe_file(), cmdstan_ext(strip_ext(stan_program)))

@@ -49,7 +49,8 @@ set to \code{FALSE}.
 For \verb{$save_output_files()} the files moved to \code{dir} will have names of
 the form \code{basename-id_date-time}, where \code{basename} is the user's
 provided \code{basename} argument, \code{id} is the MCMC chain number (or 1 for non MCMC),
-and the date and time are included after an underscore (if \code{timestamp=TRUE}).
+and the date and time are included after an underscore if \code{timestamp=TRUE}.
+The timestamp is created via \code{format(Sys.time(), "\%Y\%m\%d-\%H\%M\%S")}.
 
 For \verb{$save_diagnostic_files()} everything is the same as for
 \verb{$save_output_files()} except the word \code{"diagnostic"} is included in the new

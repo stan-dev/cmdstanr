@@ -1,11 +1,9 @@
-# Setup -------------------------------------------------------------------
-
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
   stan_program <- test_path("resources/stan/logistic.stan")
   data_file_json <- test_path("resources/data/logistic.data.json")
   data_list <- jsonlite::read_json(data_file_json, simplifyVector = TRUE)
-  mod <- cmdstan_model(stan_file = stan_program, quiet = FALSE)
+  mod <- cmdstan_model(stan_file = stan_program)
   utils::capture.output(
     fit_mcmc <- mod$sample(data = data_list, num_chains = 2,
                            save_diagnostics = TRUE)

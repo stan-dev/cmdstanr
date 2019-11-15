@@ -15,7 +15,7 @@ CmdStanRun <- R6::R6Class(
       self$args <- args
       self$procs <- procs
       private$output_files_ <- self$new_output_files()
-      if (self$save_diagnostics()) {
+      if (self$args$save_diagnostics) {
         private$diagnostic_files_ <- self$new_diagnostic_files()
       }
       invisible(self)
@@ -30,7 +30,6 @@ CmdStanRun <- R6::R6Class(
     method = function() self$args$method,
     csv_basename = function() self$args$csv_basename(),
     data_file = function() self$args$data_file,
-    save_diagnostics = function() self$args$save_diagnostics,
     new_output_files = function() self$args$new_output_files(),
     new_diagnostic_files = function() self$args$new_diagnostic_files(),
     diagnostic_files = function() {
@@ -41,13 +40,13 @@ CmdStanRun <- R6::R6Class(
           call. = FALSE
         )
       }
-      absolute_path(private$diagnostic_files_)
+      private$diagnostic_files_
     },
     output_files = function() {
       # if we are using background processes only output the file if
       # the process finished normally
       ok <- self$procs$is_finished() | self$procs$is_queued()
-      absolute_path(private$output_files_[ok])
+      private$output_files_[ok]
     },
     save_output_files = function(dir = ".",
                                  basename = NULL,

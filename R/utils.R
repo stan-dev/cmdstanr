@@ -143,7 +143,7 @@ copy_temp_files <-
     if (!all(copied)) {
       destinations[!copied] <- NA_character_
     }
-    destinations
+    absolute_path(destinations)
   }
 
 
