@@ -3,7 +3,6 @@ context("model-sample")
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
   stan_program <- beroulli_example_file()
-  print(stan_program)
   mod <- cmdstan_model(stan_file = stan_program)
 
   # valid ways to supply data
@@ -58,6 +57,7 @@ if (not_on_cran()) {
   )
 
   bad_arg_values_2 <- list(
+    data = matrix(1:10),
     num_chains = "NOT_A_NUMBER",
     num_cores = "NOT_A_NUMBER",
     init = "NOT_A_FILE",

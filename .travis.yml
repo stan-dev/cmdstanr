@@ -21,4 +21,4 @@ before_install:
   - sudo bash inst/make_cmdstan.sh -j2 -o
 
 after_success:
-    - Rscript -e 'covr::codecov()'
+    - Rscript -e 'covr::codecov(line_exclusions = list("R/zzz.R"))'
