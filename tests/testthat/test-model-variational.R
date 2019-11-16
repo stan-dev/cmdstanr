@@ -10,7 +10,7 @@ if (not_on_cran()) {
     data = data_list,
     refresh = 5,
     init = 0,
-    seed = 12345,
+    seed = 123,
     algorithm = "meanfield",
     iter = 10000,
     grad_samples = 2,
@@ -51,8 +51,8 @@ test_that("variational() method runs when all arguments specified validly", {
   expect_vb_output(fit1 <- do.call(mod$variational, ok_arg_values))
   expect_is(fit1, "CmdStanVB")
 
-  # leaving all at default (except 'data')
-  expect_vb_output(fit2 <- mod$variational(data = data_list))
+  # leaving all at default (except data and seed)
+  expect_vb_output(fit2 <- mod$variational(data = data_list, seed = 123))
   expect_is(fit2, "CmdStanVB")
 })
 
