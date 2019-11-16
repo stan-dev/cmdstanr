@@ -2,8 +2,8 @@ context("model-variational")
 
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
-  mod <- cmdstan_model(stan_file = beroulli_example_file())
-  data_list <- bernoulli_example_data()
+  mod <- testing_model("bernoulli")
+  data_list <- testing_data("bernoulli")
 
   # these are all valid for variational()
   ok_arg_values <- list(
@@ -62,9 +62,6 @@ test_that("variational() method errors for any invalid argument before calling c
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
-    expect_error(
-      expect_experimental_warning(do.call(mod$variational, args)),
-      regexp = nm
-    )
+    expect_error(do.call(mod$variational, args), regexp = nm)
   }
 })

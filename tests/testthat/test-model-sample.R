@@ -2,11 +2,11 @@ context("model-sample")
 
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
-  stan_program <- beroulli_example_file()
-  mod <- cmdstan_model(stan_file = stan_program)
+  stan_program <- testing_stan_file("bernoulli")
+  mod <- testing_model("bernoulli")
 
   # valid ways to supply data
-  data_list <- bernoulli_example_data()
+  data_list <- testing_data("bernoulli")
   data_file_r <- test_path("resources", "data", "bernoulli.data.R")
   data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 

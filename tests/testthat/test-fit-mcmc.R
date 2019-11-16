@@ -2,17 +2,11 @@ context("fitted-mcmc")
 
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
-  stan_program <- test_path("resources/stan/logistic.stan")
-  data_file_json <- test_path("resources/data/logistic.data.json")
-  data_list <- jsonlite::read_json(data_file_json, simplifyVector = TRUE)
-  mod <- cmdstan_model(stan_file = stan_program)
-  utils::capture.output(
-    fit_mcmc <- mod$sample(data = data_list, num_chains = 2, seed = 123)
-  )
-  utils::capture.output(
-    fit_mcmc_0 <- mod$sample(data = data_file_json, num_chains = 2,
-                             refresh = 0, seed = 123)
-  )
+  fit_mcmc <- testing_fit("logistic", method = "sample",
+                          seed = 123, num_chains = 2)
+  fit_mcmc_0 <- testing_fit("logistic", method = "sample",
+                            seed = 123, num_chains = 2,
+                            refresh = 0)
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 

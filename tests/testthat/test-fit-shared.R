@@ -2,19 +2,14 @@ context("fitted-shared-methods")
 
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
-  stan_program <- test_path("resources/stan/logistic.stan")
-  data_file_json <- test_path("resources/data/logistic.data.json")
-  data_list <- jsonlite::read_json(data_file_json, simplifyVector = TRUE)
-  mod <- cmdstan_model(stan_file = stan_program)
 
   fits <- list()
+  fits[["sample"]] <- testing_fit("logistic", method = "sample",
+                                  seed = 123, save_diagnostics = TRUE)
+  fits[["variational"]] <- testing_fit("logistic", method = "variational",
+                                       seed = 123, save_diagnostics = TRUE)
+  fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
   all_methods <- c("sample", "optimize", "variational")
-  for (method in all_methods) {
-    utils::capture.output(
-      fits[[method]] <- mod[[method]](data = data_list, seed = 321,
-                                      save_diagnostics = method != "optimize")
-    )
-  }
 }
 
 

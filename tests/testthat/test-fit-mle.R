@@ -2,12 +2,7 @@ context("fitted-mle")
 
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
-  stan_program <- test_path("resources/stan/logistic.stan")
-  data_file_json <- test_path("resources/data/logistic.data.json")
-  mod <- cmdstan_model(stan_file = stan_program)
-  utils::capture.output(
-    fit_mle <- mod$optimize(data = data_file_json, seed = 123)
-  )
+  fit_mle <- testing_fit("logistic", method = "optimize", seed = 123)
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
