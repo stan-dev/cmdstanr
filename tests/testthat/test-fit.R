@@ -91,7 +91,7 @@ test_that("draws() method returns posterior sample (reading csv works)", {
 test_that("summary() method works after mcmc", {
   skip_on_cran()
   x <- fit_mcmc$summary()
-  expect_s3_class(x, "data.frame")
+  expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c(PARAM_NAMES, "lp__"))
 })
 
@@ -189,7 +189,15 @@ test_that("reading in csv optimization output works", {
 test_that("summary method doesn't error for optimization", {
   skip_on_cran()
   # summary method for optimization isn't fully designed yet
-  expect_output(fit_mle$summary(), "Estimates from optimization")
+  x <- fit_mle$summary()
+  expect_s3_class(x, "draws_summary")
+  expect_equal(colnames(x), c("variable", "estimate"))
+})
+
+test_that("$cmdstan_* methods after mle isn't available", {
+  skip_on_cran()
+  expect_error(fit_mle$cmdstan_summary(), "Not available for optimize method")
+  expect_error(fit_mle$cmdstan_diagnose(), "Not available for optimize method")
 })
 
 # CmdStanVB -------------------------------------------------------------
@@ -225,21 +233,21 @@ test_that("saving diagnostic csv from variational works", {
   expect_match(paths[1], "testing-vb-diagnostic-1")
 })
 
-test_that("summary() method works after vb", {
-  skip_on_cran()
-  x <- fit_vb$summary()
-  expect_s3_class(x, "data.frame")
-  expect_equal(x$variable, PARAM_NAMES)
-
-  x <- fit_vb$summary(measures = c("mean", "sd"))
-  expect_s3_class(x, "data.frame")
-  expect_equal(x$variable, PARAM_NAMES)
-  expect_equal(colnames(x), c("variable", "mean", "sd"))
-})
-
 test_that("cmdstan_summary() method after variational works", {
   skip_on_cran()
   expect_output(fit_vb$cmdstan_summary(), "Inference for Stan model")
+})
+
+test_that("summary() method works after vb", {
+  skip_on_cran()
+  x <- fit_vb$summary()
+  expect_s3_class(x, "draws_summary")
+  expect_equal(x$variable, PARAM_NAMES)
+
+  x <- fit_vb$summary(measures = c("mean", "sd"))
+  expect_s3_class(x, "draws_summary")
+  expect_equal(x$variable, PARAM_NAMES)
+  expect_equal(colnames(x), c("variable", "mean", "sd"))
 })
 
 test_that("draws() method returns posterior sample (reading csv works)", {

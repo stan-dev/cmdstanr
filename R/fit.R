@@ -41,20 +41,8 @@ NULL
 
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
+  inherit = CmdStanFit,
   public = list(
-    runset =  NULL,
-    initialize = function(runset) {
-      checkmate::assert_r6(runset, classes = "CmdStanRun")
-      self$runset <- runset
-      invisible(self)
-    },
-    draws = function() {
-      # iter x chains x params array
-      if (is.null(private$draws_)) {
-        private$read_csv()
-      }
-      posterior::as_draws_array(private$draws_)
-    },
     time = function() {
       self$runset$time()
     },
@@ -65,21 +53,10 @@ CmdStanMCMC <- R6::R6Class(
         cat(paste(self$runset$procs$chain_output(id), collapse="\n"))
       }
     }
-    # sampler_params = function() {
-    #   # currently sampler params list from rstan::get_sampler_params()
-    #   # but this shouldn't use rstan
-    #   if (is.null(private$sampler_params_)) private$read_csv()
-    #   private$sampler_params_
-    # }
   ),
   private = list(
-    draws_ = NULL,
     sampler_params_ = NULL,
-    stanfit_ = NULL,
-    read_csv = function() {
-      if (!all(file.exists(self$output_files()))) {
-        stop("Can't find output file(s).", call. = FALSE)
-      }
+    read_csv_ = function() {
       if (!length(self$output_files())) {
         stop("No chains finished successfully. Unable to retrieve the fit.",
              call. = FALSE)
@@ -91,10 +68,9 @@ CmdStanMCMC <- R6::R6Class(
              "for reading the csv files from CmdStan.", call. = FALSE)
       }
       stanfit <- rstan::read_stan_csv(self$output_files())
-      private$draws_ <-
-        rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
-      private$sampler_params_ <-
-        rstan::get_sampler_params(stanfit, inc_warmup = FALSE)
+      draws_array <- rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
+      private$draws_ <- posterior::as_draws_array(draws_array)
+      invisible(self)
     }
   )
 )
@@ -130,36 +106,26 @@ NULL
 
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
+  inherit = CmdStanFit,
   public = list(
-    runset = NULL,
-    initialize = function(runset) {
-      checkmate::assert_r6(runset, classes = "CmdStanRun")
-      self$runset <- runset
-      invisible(self)
-    },
-    summary = function() {
-      # FIXME: we only have point estimates for optimization,
-      # so what should summary do?
-
-      cat("Estimates from optimization:\n")
-      c(self$mle(), self$lp())
-    },
     mle = function() {
-      if (is.null(private$mle_)) private$read_csv()
+      if (is.null(private$mle_)) private$read_csv_()
       private$mle_
     },
     lp = function() {
-      if (is.null(private$lp_)) private$read_csv()
+      if (is.null(private$lp_)) private$read_csv_()
       private$lp_
     }
   ),
   private = list(
     mle_ = NULL,
     lp_ = NULL,
-    read_csv = function() {
+    read_csv_ = function() {
       optim_output <- read_optim_csv(self$output_files())
       private$mle_ <- optim_output[["mle"]]
       private$lp_ <- optim_output[["lp"]]
+      private$draws_ <- posterior::as_draws_matrix(t(private$mle_))
+      invisible(self)
     }
   )
 )
@@ -202,54 +168,98 @@ NULL
 
 CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",
+  inherit = CmdStanFit,
   public = list(
-    runset = NULL,
+    log_p = function() {
+      # iter x params array
+      if (is.null(private$log_p_)) private$read_csv_()
+      private$log_p_
+    },
+    log_g = function() {
+      # iter x params array
+      if (is.null(private$log_g_)) private$read_csv_()
+      private$log_g_
+    }
+  ),
+  private = list(
+    log_p_ = NULL,
+    log_g_ = NULL,
+    read_csv_ = function() {
+      vb_output <- read_vb_csv(self$output_files())
+      private$log_p_ <- vb_output[["log_p"]]
+      private$log_g_ <- vb_output[["log_g"]]
+      private$draws_ <- posterior::as_draws_matrix(vb_output[["draws"]])
+      invisible(self)
+    }
+  )
+)
+
+
+# CmdStanFit superclass ---------------------------------------------------
+CmdStanFit <- R6::R6Class(
+  classname = "CmdStanFit",
+  public = list(
+    runset =  NULL,
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
       invisible(self)
     },
     draws = function() {
-      # iter x params array
       if (is.null(private$draws_)) {
-        private$read_csv()
+        private$read_csv_()
       }
-      posterior::as_draws_matrix(private$draws_)
+      private$draws_
     },
-    log_p = function() {
-      # iter x params array
-      if (is.null(private$log_p_)) private$read_csv()
-      private$log_p_
+    summary = function(...) {
+      if (self$runset$method() == "sample") {
+        summary <- posterior::summarise_draws(self$draws(), ...)
+      } else { # don't include MCMC diagnostics for non MCMC
+        args <- list(...)
+        args$x <- self$draws()
+        if (!"measures" %in% names(args)) {
+          args$measures <- posterior::default_summary_measures()
+        }
+        summary <- do.call(posterior::summarise_draws, args)
+      }
+      if (self$runset$method() == "optimize") {
+        summary <- summary[, c("variable", "mean")]
+        colnames(summary) <- c("variable", "estimate")
+      }
+      summary
     },
-    log_g = function() {
-      # iter x params array
-      if (is.null(private$log_g_)) private$read_csv()
-      private$log_g_
+    cmdstan_summary = function(...) {
+      self$runset$run_cmdstan_tool("stansummary", ...)
+    },
+    cmdstan_diagnose = function(...) {
+      self$runset$run_cmdstan_tool("diagnose", ...)
+    },
+    output_files = function() {
+      self$runset$output_files()
+    },
+    diagnostic_files = function() {
+      self$runset$diagnostic_files()
+    },
+    data_file = function() {
+      self$runset$data_file()
+    },
+    save_output_files = function(dir = ".", basename = NULL, timestamp = TRUE) {
+      self$runset$save_output_files(dir, basename, timestamp)
+    },
+    save_diagnostic_files = function(dir = ".", basename = NULL, timestamp = TRUE) {
+      self$runset$save_diagnostic_files(dir, basename, timestamp)
+    },
+    save_data_file = function(dir = ".", basename = NULL, timestamp = TRUE) {
+      self$runset$save_data_file(dir, basename, timestamp)
     }
   ),
   private = list(
-    draws_ = NULL,
-    log_p_ = NULL,
-    log_g_ = NULL,
-    read_csv = function() {
-      if (!all(file.exists(self$output_files()))) {
-        stop("Can't find output file(s).", call. = FALSE)
-      }
-
-      vb_output <- read_vb_csv(self$output_files())
-      private$draws_ <- vb_output[["draws"]]
-      private$log_p_ <- vb_output[["log_p"]]
-      private$log_g_ <- vb_output[["log_g"]]
-    }
+    draws_ = NULL
   )
 )
 
-# CmdStanGQ ---------------------------------------------------------------
-# CmdStanGQ <- R6::R6Class(
-#   classname = "CmdStanGQ"
-# )
 
-# Shared methods ----------------------------------------------------------
+# Document shared methods ----------------------------------------------------------
 
 #' Run `posterior::summarise_draws()`
 #'
@@ -271,22 +281,6 @@ CmdStanVB <- R6::R6Class(
 #'
 NULL
 
-summary_method <- function(...) {
-  if (self$runset$method() == "sample") {
-    summary <- posterior::summarise_draws(self$draws(), ...)
-  } else { # don't include MCMC diagnostics for non MCMC
-    args <- list(...)
-    args$x <- self$draws()
-    if (!"measures" %in% names(args)) {
-      args$measures <- posterior::default_summary_measures()
-    }
-    summary <- do.call(posterior::summarise_draws, args)
-  }
-  summary
-}
-CmdStanMCMC$set("public", "summary", summary_method)
-CmdStanVB$set("public", "summary", summary_method)
-
 
 #' Run CmdStan's `bin/stansummary` and `bin/diagnose`
 #'
@@ -306,17 +300,6 @@ CmdStanVB$set("public", "summary", summary_method)
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
 NULL
-
-cmdstan_summary_method <- function(...) {
-  self$runset$run_cmdstan_tool("stansummary", ...)
-}
-cmdstan_diagnose_method <- function(...) {
-  self$runset$run_cmdstan_tool("diagnose", ...)
-}
-CmdStanMCMC$set("public", "cmdstan_summary", cmdstan_summary_method)
-CmdStanVB$set("public", "cmdstan_summary", cmdstan_summary_method)
-CmdStanMCMC$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
-CmdStanVB$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
 
 
 #' Save output and data files
@@ -382,41 +365,3 @@ CmdStanVB$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
 NULL
-
-output_files_method <- function() {
-  self$runset$output_files()
-}
-diagnostic_files_method = function() {
-  self$runset$diagnostic_files()
-}
-data_file_method <- function() {
-  self$runset$data_file()
-}
-CmdStanMCMC$set("public", "output_files", output_files_method)
-CmdStanMLE$set("public", "output_files", output_files_method)
-CmdStanVB$set("public", "output_files", output_files_method)
-CmdStanMCMC$set("public", "diagnostic_files", diagnostic_files_method)
-CmdStanMLE$set("public", "diagnostic_files", diagnostic_files_method)
-CmdStanVB$set("public", "diagnostic_files", diagnostic_files_method)
-CmdStanMCMC$set("public", "data_file", data_file_method)
-CmdStanMLE$set("public", "data_file", data_file_method)
-CmdStanVB$set("public", "data_file", data_file_method)
-
-save_output_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE) {
-  self$runset$save_output_files(dir, basename, timestamp)
-}
-save_diagnostic_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE) {
-  self$runset$save_diagnostic_files(dir, basename, timestamp)
-}
-save_data_file_method = function(dir = ".", basename = NULL, timestamp = TRUE) {
-  self$runset$save_data_file(dir, basename, timestamp)
-}
-CmdStanMCMC$set("public", "save_output_files", save_output_files_method)
-CmdStanMLE$set("public", "save_output_files", save_output_files_method)
-CmdStanVB$set("public", "save_output_files", save_output_files_method)
-CmdStanMCMC$set("public", "save_diagnostic_files", save_diagnostic_files_method)
-CmdStanMLE$set("public", "save_diagnostic_files", save_diagnostic_files_method)
-CmdStanVB$set("public", "save_diagnostic_files", save_diagnostic_files_method)
-CmdStanMCMC$set("public", "save_data_file", save_data_file_method)
-CmdStanMLE$set("public", "save_data_file", save_data_file_method)
-CmdStanVB$set("public", "save_data_file", save_data_file_method)

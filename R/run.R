@@ -136,6 +136,9 @@ CmdStanRun <- R6::R6Class(
     # @param tool The name of the tool in `bin/` to run.
     # @param flags An optional character vector of flags (e.g. c("--sig_figs=1")).
     run_cmdstan_tool = function(tool = c("stansummary", "diagnose"), flags = NULL) {
+      if (self$method() == "optimize") {
+        stop("Not available for optimize method.", call. = FALSE)
+      }
       tool <- match.arg(tool)
       if (!length(self$output_files())) {
         stop("No CmdStan runs finished successfully. ",
