@@ -1,5 +1,3 @@
-# Setup -------------------------------------------------------------------
-
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
   stan_program <- test_path("resources/stan/chain_fails.stan")
@@ -64,6 +62,7 @@ test_that("correct warnings are thrown when some chains fail", {
 })
 
 test_that("$save_* methods save all files regardless of chain failure", {
+  skip_on_cran()
   expect_message(
     fit_all_fail$save_output_files(dir = tempdir()),
     "Moved 4 output files"
@@ -84,6 +83,7 @@ test_that("$save_* methods save all files regardless of chain failure", {
 })
 
 test_that("errors when using draws after all chains fail", {
+  skip_on_cran()
   expect_error(fit_all_fail$summary(), "No chains finished successfully")
   expect_error(fit_all_fail$draws(), "No chains finished successfully")
   expect_error(fit_all_fail$cmdstan_summary(), "Unable to run bin/stansummary")
@@ -91,6 +91,7 @@ test_that("errors when using draws after all chains fail", {
 })
 
 test_that("can use draws after some chains fail", {
+  skip_on_cran()
   expect_s3_class(fit_some_fail$summary(), "draws_summary")
   expect_s3_class(fit_some_fail$draws(), "draws_array")
   expect_output(fit_some_fail$cmdstan_summary(), "Inference for Stan model")
