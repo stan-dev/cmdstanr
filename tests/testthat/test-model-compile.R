@@ -61,9 +61,6 @@ test_that("compilation works when stan program not in cmdstan dir", {
     mod_2 <- suppressMessages(cmdstan_model(stan_file = stan_program_different_dir, quiet = FALSE))
   )
   expect_output(print(out), "is up to date")
-
-  # cleanup
-  file.remove(paste0(strip_ext(mod_2$exe_file()), delete_extensions()))
 })
 
 test_that("compilation works with include_paths", {
@@ -88,7 +85,4 @@ test_that("compilation works with include_paths", {
     "Compiling Stan program"
   )
   expect_equal(mod_w_include$exe_file(), cmdstan_ext(strip_ext(absolute_path(stan_program_w_include))))
-
-  # cleanup
-  file.remove(paste0(strip_ext(mod_w_include$exe_file()), delete_extensions()))
 })

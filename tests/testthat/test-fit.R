@@ -20,9 +20,6 @@ if (not_on_cran()) {
   ))
 
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
-
-  # cleanup
-  file.remove(paste0(strip_ext(mod$exe_file()), delete_extensions()))
 }
 
 
@@ -316,7 +313,6 @@ test_that("CmdStanRun (runset) methods return valid output", {
   expect_equal(runset$model_name(), "logistic")
   expect_equal(runset$method(), "sample")
   expect_equal(runset$run_ids(), seq_len(runset$num_runs()))
-  expect_equal(runset$run_ids(), seq_len(runset$num_chains()))
   checkmate::expect_file_exists(runset$data_file())
   checkmate::expect_file_exists(runset$output_files())
   checkmate::expect_file_exists(runset$diagnostic_files())

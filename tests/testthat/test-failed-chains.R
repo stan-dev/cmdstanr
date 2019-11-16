@@ -32,8 +32,6 @@ if (not_on_cran()) {
       fit_some_fail <- make_some_fail(mod)
     )
   )
-
-  # cleanup at end of file
 }
 
 test_that("correct warnings are thrown when all chains fail", {
@@ -97,7 +95,3 @@ test_that("can use draws after some chains fail", {
   expect_output(fit_some_fail$cmdstan_summary(), "Inference for Stan model")
   expect_output(fit_some_fail$cmdstan_diagnose(), "Processing complete")
 })
-
-
-# cleanup
-file.remove(paste0(strip_ext(mod$exe_file()), delete_extensions()))
