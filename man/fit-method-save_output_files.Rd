@@ -11,26 +11,22 @@
 \description{
 All fitted model objects have methods for saving (copying to a
 specified location) the temporary files created by CmdStanR for CmdStan
-output and data files. These methods move output files or data files from
-the CmdStanR temporary directory to a user-specified location. By default
-the suffix \code{'-<run_id>_<timestamp>'} is added to the file name(s), where
-\code{run_id} is the chain number if applicable (MCMC only) and \code{1} otherwise.
-If files with the specified names already exist they are overwritten, but
-this shouldn't occur unless the \code{timestamp} argument has been intentionally
-set to \code{FALSE}.
+output csv files and input data files. These methods move the files from
+the CmdStanR temporary directory to a user-specified location. \strong{The paths
+stored in the fitted model object will also be updated to point to the new
+file locations.}
 
-If necessary, the versions without the \code{save_} prefix (e.g.,
-\verb{$output_files()}) can be used to get the path(s) to the temporary file(s)
-themselves.
+The versions without the \code{save_} prefix (e.g., \verb{$output_files()}) return
+the current file paths without moving any files.
 }
 \section{Usage}{
-\preformatted{$save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
-$save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
-$save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE)
+\preformatted{$save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+$save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+$save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 
 $output_files()
-$data_file()
 $diagnostic_files()
+$data_file()
 }
 }
 
@@ -38,17 +34,42 @@ $diagnostic_files()
 
 \itemize{
 \item \code{dir}: (string) Path to directory where the files should be saved.
-\item \code{basename}: (string) Base filename to use.
+\item \code{basename}: (string) Base filename to use. See \strong{Details}.
 \item \code{timestamp}: (logical) Should a timestamp be added to the file name(s)?
-Defaults to \code{TRUE}. The timestamp is preceeded by an underscore is of
-the form
+Defaults to \code{TRUE}. See \strong{Details}.
+\item \code{random}: (logical) Should random alphanumeric characters be added to the
+end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.
 }
 }
 
+\section{Details}{
+
+For \verb{$save_output_files()} the files moved to \code{dir} will have names of
+the form \code{basename-timestamp-id-random}, where
+\itemize{
+\item \code{basename} is the user's provided \code{basename} argument;
+\item \code{timestamp} is of the form \code{format(Sys.time(), "\%Y\%m\%d\%H\%M")};
+\item \code{id} is the MCMC chain id (or \code{1} for non MCMC);
+\item \code{random} contains five random alphanumeric characters/
+}
+
+For \verb{$save_diagnostic_files()} everything is the same as for
+\verb{$save_output_files()} except \code{"-diagnostic-"} is included in the new
+file name after \code{basename}.
+
+For \verb{$save_data_file()} no \code{id} is included in the file name because even
+with multiple MCMC chains the data file is the same.
+}
+
 \section{Value}{
- For the \verb{$save_*} methods, the paths to the new files or \code{NA}
-for any that couldn't be copied. For the methods without the \code{save_}
-prefix, the path to the temporary files.
+
+The \verb{$save_*} methods print a message with the new file paths and (invisibly)
+return a character vector of the new paths (or \code{NA} for any that couldn't be
+copied). They also have the side effect of setting the internal paths in the
+fitted model object to the new paths.
+
+The methods \emph{without} the \code{save_} prefix return character vectors of file
+paths without moving any files.
 }
 
 \seealso{

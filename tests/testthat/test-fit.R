@@ -1,12 +1,11 @@
-# Setup -------------------------------------------------------------------
-
 if (not_on_cran()) {
   set_cmdstan_path_for_tests()
   stan_program <- test_path("resources/stan/logistic.stan")
   data_file_json <- test_path("resources/data/logistic.data.json")
-  mod <- cmdstan_model(stan_file = stan_program, quiet = FALSE)
+  data_list <- jsonlite::read_json(data_file_json, simplifyVector = TRUE)
+  mod <- cmdstan_model(stan_file = stan_program)
   utils::capture.output(
-    fit_mcmc <- mod$sample(data = data_file_json, num_chains = 2,
+    fit_mcmc <- mod$sample(data = data_list, num_chains = 2,
                            save_diagnostics = TRUE)
   )
   utils::capture.output(
@@ -14,10 +13,10 @@ if (not_on_cran()) {
                              refresh = 0)
   )
   utils::capture.output(suppressWarnings(
-    fit_mle <- mod$optimize(data = data_file_json, save_diagnostics = FALSE)
+    fit_mle <- mod$optimize(data = data_list, save_diagnostics = FALSE)
   ))
   utils::capture.output(suppressWarnings(
-    fit_vb <- mod$variational(data = data_file_json, save_diagnostics = TRUE)
+    fit_vb <- mod$variational(data = data_list, save_diagnostics = TRUE)
   ))
 
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
@@ -32,34 +31,64 @@ context("fit-objects-mcmc")
 
 test_that("saving csv mcmc output works", {
   skip_on_cran()
-  checkmate::expect_file_exists(fit_mcmc$output_files(), extension = "csv")
+  old_paths <- fit_mcmc$output_files()
+  checkmate::expect_file_exists(old_paths, extension = "csv")
 
-  paths <- fit_mcmc$save_output_files(tempdir(), basename = "testing-mcmc-output")
-  expect_true(all(file.exists(paths)))
+  expect_message(
+    paths <- fit_mcmc$save_output_files(tempdir(), basename = "testing-mcmc-output"),
+    "Moved 2 output files and set internal paths to new locations"
+  )
   checkmate::expect_file_exists(paths, extension = "csv")
-  expect_match(paths[1], "testing-mcmc-output-1")
-  expect_match(paths[2], "testing-mcmc-output-2")
+
+  should_match <- paste0("testing-mcmc-output-",
+                         format(Sys.time(), "%Y%m%d%H%M"),
+                         "-",
+                         1:2)
+  expect_match(paths[1], should_match[1])
+  expect_match(paths[2], should_match[2])
+
+  expect_false(any(file.exists(old_paths)))
+  expect_equal(fit_mcmc$output_files(), paths)
 })
 
 test_that("saving data file after mcmc works", {
   skip_on_cran()
-  checkmate::expect_file_exists(fit_mcmc$data_file(), extension = "json")
+  old_path <- fit_mcmc$data_file()
+  checkmate::expect_file_exists(old_path, extension = "json")
 
-  path <- fit_mcmc$save_data_file(tempdir(), basename = "testing-mcmc-data")
+  expect_message(
+    path <- fit_mcmc$save_data_file(tempdir(), basename = "testing-mcmc-data"),
+    "Moved data file and set internal path to new location"
+  )
   checkmate::expect_file_exists(path, extension = "json")
-  expect_match(path, "testing-mcmc-data_")
+  expect_match(path, "testing-mcmc-data-")
+
+  expect_false(file.exists(old_path))
+  expect_equal(fit_mcmc$data_file(), path)
 })
 
 test_that("saving diagnostic csv mcmc output works", {
   skip_on_cran()
-  checkmate::expect_file_exists(fit_mcmc$diagnostic_files(), extension = "csv")
+  old_paths <- fit_mcmc$diagnostic_files()
+  checkmate::expect_file_exists(old_paths, extension = "csv")
 
-  paths <- fit_mcmc$save_diagnostic_files(tempdir(), basename = "testing-mcmc")
-  expect_true(all(file.exists(paths)))
-  expect_true(all(file.size(paths) > 0))
+  expect_message(
+    paths <- fit_mcmc$save_diagnostic_files(tempdir(), basename = "testing-mcmc"),
+    "Moved 2 diagnostic files and set internal paths to new locations"
+  )
   checkmate::expect_file_exists(paths, extension = "csv")
-  expect_match(paths[1], "testing-mcmc-diagnostic-1")
-  expect_match(paths[2], "testing-mcmc-diagnostic-2")
+  expect_true(all(file.size(paths) > 0))
+
+  should_match <- paste0("testing-mcmc-diagnostic-",
+                         format(Sys.time(), "%Y%m%d%H%M"),
+                         "-",
+                         1:2)
+
+  expect_match(paths[1], should_match[1])
+  expect_match(paths[2], should_match[2])
+
+  expect_false(any(file.exists(old_paths)))
+  expect_equal(fit_mcmc$diagnostic_files(), paths)
 })
 
 test_that("draws() method returns posterior sample (reading csv works)", {
@@ -141,19 +170,28 @@ test_that("saving csv optimzation output works", {
   skip_on_cran()
   checkmate::expect_file_exists(fit_mle$output_files(), extension = "csv")
 
-  path <- fit_mle$save_output_files(tempdir(), basename = "testing-mle-output")
+  expect_message(
+    path <- fit_mle$save_output_files(tempdir(), basename = "testing-mle-output",
+                                      timestamp = FALSE, random = FALSE),
+    "Moved 1 output files and set internal paths to new locations"
+  )
   expect_length(path, 1)
   checkmate::expect_file_exists(path, extension = "csv")
-  expect_match(path, "testing-mle-output-1")
+  expect_equal(basename(path), "testing-mle-output-1.csv")
 })
 
 test_that("saving data file after optimization works", {
   skip_on_cran()
+
   checkmate::expect_file_exists(fit_mle$data_file(), extension = "json")
 
-  path <- fit_mle$save_data_file(tempdir(), basename = "testing-mle-data")
+  expect_message(
+    path <- fit_mle$save_data_file(tempdir(), basename = "testing-mle-data",
+                                   timestamp = FALSE, random = TRUE),
+    "Moved data file and set internal path to new location"
+  )
   checkmate::expect_file_exists(path, extension = "json")
-  expect_match(path, "testing-mle-data_")
+  expect_match(basename(path), "testing-mle-data-")
 })
 
 test_that("saving diagnostics files errors if don't exist", {
@@ -179,12 +217,19 @@ context("fit-objects-vb")
 
 test_that("saving csv variational output works", {
   skip_on_cran()
-  checkmate::expect_file_exists(fit_vb$output_files(), extension = "csv")
 
-  path <- fit_vb$save_output_files(tempdir(), basename = "testing-vb-output")
+  old_path <- fit_vb$output_files()
+  checkmate::expect_file_exists(old_path, extension = "csv")
+
+  expect_message(
+    path <- fit_vb$save_output_files(tempdir(), basename = "testing-vb-output",
+                                      timestamp = FALSE, random = TRUE),
+    "Moved 1 output files and set internal paths to new locations"
+  )
+  expect_false(file.exists(old_path))
   expect_length(path, 1)
   checkmate::expect_file_exists(path, extension = "csv")
-  expect_match(path, "testing-vb-output-1")
+  expect_match(path, "testing-vb-output-1-")
 })
 
 test_that("saving data file after variational works", {
@@ -193,14 +238,15 @@ test_that("saving data file after variational works", {
 
   path <- fit_vb$save_data_file(tempdir(), basename = "testing-vb-data")
   checkmate::expect_file_exists(path, extension = "json")
-  expect_match(path, "testing-vb-data_")
+  expect_match(path, "testing-vb-data-")
 })
 
 test_that("saving diagnostic csv from variational works", {
   skip_on_cran()
   checkmate::expect_file_exists(fit_vb$diagnostic_files(), extension = "csv")
 
-  paths <- fit_vb$save_diagnostic_files(tempdir(), basename = "testing-vb")
+  paths <- fit_vb$save_diagnostic_files(tempdir(), basename = "testing-vb",
+                                        timestamp = FALSE)
   expect_true(all(file.exists(paths)))
   expect_true(all(file.size(paths) > 0))
   checkmate::expect_file_exists(paths, extension = "csv")
