@@ -101,7 +101,6 @@ test_that("sample() method works with data files", {
 
 test_that("sample() method works with init file", {
   skip_on_cran()
-  skip_if_not_installed("rstan")
 
   init_list <- list(theta = 0.5)
   init_file <- tempfile(
