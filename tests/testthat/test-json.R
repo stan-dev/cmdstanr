@@ -20,7 +20,7 @@ test_that("test JSON output boolean", {
 
 test_that("test JSON output factor", {
   temp_file <- tempfile()
-  N = factor(c(0,1,2,2,1,0), labels = c("c1", "c2", "c3"))
+  N <- factor(c(0,1,2,2,1,0), labels = c("c1", "c2", "c3"))
   write_stan_json(list(N = N), file = temp_file)
   json_output <- readLines(temp_file)
   expect_known_output(cat(json_output, sep = "\n"),
@@ -29,12 +29,29 @@ test_that("test JSON output factor", {
 
 test_that("test JSON output integer vector", {
   temp_file <- tempfile()
-  N = c(1.0, 2.0, 3, 4)
+  N <- c(1.0, 2.0, 3, 4)
 
   write_stan_json(list(N = N), file = temp_file)
   json_output <- readLines(temp_file)
   expect_known_output(cat(json_output, sep = "\n"),
                       file = test_path("answers", "json-integer.json"))
+})
+
+test_that("test JSON output data frame and matrix", {
+  temp_file_df <- tempfile()
+  temp_file_mat <- tempfile()
+  x <- 1:3
+  y <- c(0.2, 0.3, 0.4)
+  df <- data.frame(x = x, y = y)
+  mat <- as.matrix(cbind(x, y))
+
+  write_stan_json(list(X = df), file = temp_file_df)
+  write_stan_json(list(X = mat), file = temp_file_mat)
+  json_output_mat <- readLines(temp_file_df)
+  json_output_df <- readLines(temp_file_mat)
+  expect_identical(json_output_df, json_output_mat)
+  expect_known_output(cat(json_output_df, sep = "\n"),
+                      file = test_path("answers", "json-df-matrix.json"))
 })
 
 test_that("test JSON output lists", {

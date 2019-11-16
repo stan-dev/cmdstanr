@@ -10,7 +10,7 @@ if (not_on_cran()) {
 init_json_1 <- test_path("resources", "init", "bernoulli.init-1.json")
 init_json_2 <- test_path("resources", "init", "bernoulli.init-2.json")
 
-test_that("fitting methods work with provided init files", {
+test_that("all fitting methods work with provided init files", {
   skip_on_cran()
 
   expect_sample_output(
@@ -47,6 +47,12 @@ test_that("sample method throws error for invalid init argument", {
   expect_error(
     mod$sample(data = data_list, num_chains = 2, init = -10),
     "If 'init' is numeric it must be a single real number >= 0",
+    fixed = TRUE
+  )
+
+  expect_error(
+    mod$sample(data = data_list, init = data.frame(x = 10)),
+    "If specified 'init' must be numeric or a character vector",
     fixed = TRUE
   )
 
