@@ -43,6 +43,9 @@ CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
   public = list(
+    num_chains = function() {
+      super$num_runs()
+    },
     time = function() {
       self$runset$time()
     },
@@ -199,12 +202,17 @@ CmdStanVB <- R6::R6Class(
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
-    runset =  NULL,
+    runset = NULL,
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
       invisible(self)
     },
+
+    num_runs = function() {
+      self$runset$num_runs()
+    },
+
     draws = function() {
       if (is.null(private$draws_)) {
         private$read_csv_()
@@ -234,6 +242,7 @@ CmdStanFit <- R6::R6Class(
     cmdstan_diagnose = function(...) {
       self$runset$run_cmdstan_tool("diagnose", ...)
     },
+
     output_files = function() {
       self$runset$output_files()
     },
@@ -243,13 +252,22 @@ CmdStanFit <- R6::R6Class(
     data_file = function() {
       self$runset$data_file()
     },
-    save_output_files = function(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) {
+    save_output_files = function(dir = ".",
+                                 basename = NULL,
+                                 timestamp = TRUE,
+                                 random = TRUE) {
       self$runset$save_output_files(dir, basename, timestamp, random)
     },
-    save_diagnostic_files = function(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) {
+    save_diagnostic_files = function(dir = ".",
+                                     basename = NULL,
+                                     timestamp = TRUE,
+                                     random = TRUE) {
       self$runset$save_diagnostic_files(dir, basename, timestamp, random)
     },
-    save_data_file = function(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) {
+    save_data_file = function(dir = ".",
+                              basename = NULL,
+                              timestamp = TRUE,
+                              random = TRUE) {
       self$runset$save_data_file(dir, basename, timestamp, random)
     }
   ),

@@ -22,7 +22,6 @@ CmdStanRun <- R6::R6Class(
     },
 
     num_runs = function() self$procs$num_runs(),
-    num_chains = function() self$num_runs(),
     num_cores = function() self$procs$num_cores(),
     run_ids = function() self$args$run_ids,
     exe_file = function() self$args$exe_file,
