@@ -423,9 +423,9 @@ CmdStanProcs <- R6::R6Class(
     },
     is_error_message = function(line) {
       startsWith(line, "Exception:") ||
-      (regexpr(line, "either mistyped or misplaced.") > 0) ||
-      (regexpr(line, "A method must be specified!") > 0) ||
-      (regexpr(line, "is not a valid value for") > 0)
+      (regexpr("either mistyped or misplaced.", line, perl = TRUE) > 0) ||
+      (regexpr("A method must be specified!", line, perl = TRUE) > 0) ||
+      (regexpr("is not a valid value for", line, perl = TRUE) > 0)
     },
     process_sample_output = function(out, id) {
       id <- as.character(id)
@@ -438,22 +438,22 @@ CmdStanProcs <- R6::R6Class(
           last_section_start_time <- private$chain_info_[id,"last_section_start_time"]
           state <- private$chain_info_[id,"state"]
           next_state <- state
-          if (state == 1 && regexpr("Iteration:", line) > 0) {
+          if (state == 1 && regexpr("Iteration:", line, perl = TRUE) > 0) {
             state <- 2
             next_state <- 2
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
-          if (state == 1 && regexpr("Elapsed Time:", line) > 0) {
+          if (state == 1 && regexpr("Elapsed Time:", line, perl = TRUE) > 0) {
             state <- 4
             next_state <- 4
           }
           if (private$chain_info_[id,"state"] == 2 &&
-              regexpr("(Sampling)", line) > 0) {
+              regexpr("(Sampling)", line, perl = TRUE) > 0) {
             next_state <- 3 # 3 = sampling
             private$chain_info_[id,"warmup_time"] <- Sys.time() - last_section_start_time
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
-          if (regexpr("\\[100%\\]", line) > 0) {
+          if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
             if (state == 2) { #warmup only run
               private$chain_info_[id,"warmup_time"] <- Sys.time() - last_section_start_time
             } else if (state == 3) { # sampling
