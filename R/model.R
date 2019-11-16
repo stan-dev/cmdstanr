@@ -634,7 +634,7 @@ variational_method <- function(data = NULL,
   runset$run_cmdstan()
 
   message(
-    "Optimization method is experimental and ",
+    "Variational method is experimental and ",
     "the structure of returned object may change."
   )
   CmdStanVB$new(runset)
