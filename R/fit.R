@@ -1,3 +1,189 @@
+# CmdStanFit superclass ---------------------------------------------------
+CmdStanFit <- R6::R6Class(
+  classname = "CmdStanFit",
+  public = list(
+    runset = NULL,
+    initialize = function(runset) {
+      checkmate::assert_r6(runset, classes = "CmdStanRun")
+      self$runset <- runset
+      invisible(self)
+    },
+
+    num_runs = function() {
+      self$runset$num_runs()
+    },
+
+    draws = function() {
+      if (is.null(private$draws_)) {
+        private$read_csv_()
+      }
+      private$draws_
+    },
+    summary = function(...) {
+      if (self$runset$method() == "sample") {
+        summary <- posterior::summarise_draws(self$draws(), ...)
+      } else { # don't include MCMC diagnostics for non MCMC
+        args <- list(...)
+        args$x <- self$draws()
+        if (!"measures" %in% names(args)) {
+          args$measures <- posterior::default_summary_measures()
+        }
+        summary <- do.call(posterior::summarise_draws, args)
+      }
+      if (self$runset$method() == "optimize") {
+        summary <- summary[, c("variable", "mean")]
+        colnames(summary) <- c("variable", "estimate")
+      }
+      summary
+    },
+    cmdstan_summary = function(...) {
+      self$runset$run_cmdstan_tool("stansummary", ...)
+    },
+    cmdstan_diagnose = function(...) {
+      self$runset$run_cmdstan_tool("diagnose", ...)
+    },
+
+    output_files = function() {
+      self$runset$output_files()
+    },
+    diagnostic_files = function() {
+      self$runset$diagnostic_files()
+    },
+    data_file = function() {
+      self$runset$data_file()
+    },
+    save_output_files = function(dir = ".",
+                                 basename = NULL,
+                                 timestamp = TRUE,
+                                 random = TRUE) {
+      self$runset$save_output_files(dir, basename, timestamp, random)
+    },
+    save_diagnostic_files = function(dir = ".",
+                                     basename = NULL,
+                                     timestamp = TRUE,
+                                     random = TRUE) {
+      self$runset$save_diagnostic_files(dir, basename, timestamp, random)
+    },
+    save_data_file = function(dir = ".",
+                              basename = NULL,
+                              timestamp = TRUE,
+                              random = TRUE) {
+      self$runset$save_data_file(dir, basename, timestamp, random)
+    }
+  ),
+  private = list(
+    draws_ = NULL
+  )
+)
+
+
+# Document shared methods ----------------------------------------------------------
+
+#' Run `posterior::summarise_draws()`
+#'
+#' @name fit-method-summary
+#' @description Run [posterior::summarise_draws()] from the \pkg{posterior}
+#'   package.
+#'
+#' @section Usage:
+#'   ```
+#'   $summary(...)
+#'   ```
+#' @section Arguments:
+#' * `...`: Arguments to pass to [posterior::summarise_draws()].
+#'
+#' @section Value:
+#' The data frame returned by [posterior::summarise_draws()].
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+NULL
+
+
+#' Run CmdStan's `bin/stansummary` and `bin/diagnose`
+#'
+#' @name fit-method-cmdstan_summary
+#' @aliases fit-method-cmdstan_diagnose
+#' @note Although these methods also work for models fit using the
+#'   [`$variational()`][model-method-variational] method, much of the output is
+#'   only relevant for models fit using the [`$sample()`][model-method-sample]
+#'   method.
+#'
+#' @section Usage:
+#'   ```
+#'   $cmdstan_summary()
+#'   $cmdstan_diagnose()
+#'   ```
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+NULL
+
+
+#' Save output and data files
+#'
+#' @name fit-method-save_output_files
+#' @aliases fit-method-save_data_file fit-method-save_diagnostic_files
+#'   fit-method-output_files fit-method-data_file fit-method-diagnostic_files
+#'
+#' @description All fitted model objects have methods for saving (copying to a
+#'   specified location) the temporary files created by CmdStanR for CmdStan
+#'   output csv files and input data files. These methods move the files from
+#'   the CmdStanR temporary directory to a user-specified location. __The paths
+#'   stored in the fitted model object will also be updated to point to the new
+#'   file locations.__
+#'
+#'   The versions without the `save_` prefix (e.g., `$output_files()`) return
+#'   the current file paths without moving any files.
+#'
+#' @section Usage:
+#'   ```
+#'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+#'   $save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+#'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+#'
+#'   $output_files()
+#'   $diagnostic_files()
+#'   $data_file()
+#'   ```
+#'
+#' @section Arguments:
+#' * `dir`: (string) Path to directory where the files should be saved.
+#' * `basename`: (string) Base filename to use. See __Details__.
+#' * `timestamp`: (logical) Should a timestamp be added to the file name(s)?
+#'   Defaults to `TRUE`. See __Details__.
+#' * `random`: (logical) Should random alphanumeric characters be added to the
+#'   end of the file name(s)? Defaults to `TRUE`. See __Details__.
+#'
+#' @section Details:
+#' For `$save_output_files()` the files moved to `dir` will have names of
+#' the form `basename-timestamp-id-random`, where
+#' * `basename` is the user's provided `basename` argument;
+#' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
+#' * `id` is the MCMC chain id (or `1` for non MCMC);
+#' * `random` contains five random alphanumeric characters/
+#'
+#' For `$save_diagnostic_files()` everything is the same as for
+#' `$save_output_files()` except `"-diagnostic-"` is included in the new
+#' file name after `basename`.
+#'
+#' For `$save_data_file()` no `id` is included in the file name because even
+#' with multiple MCMC chains the data file is the same.
+#'
+#' @section Value:
+#' The `$save_*` methods print a message with the new file paths and (invisibly)
+#' return a character vector of the new paths (or `NA` for any that couldn't be
+#' copied). They also have the side effect of setting the internal paths in the
+#' fitted model object to the new paths.
+#'
+#' The methods _without_ the `save_` prefix return character vectors of file
+#' paths without moving any files.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+NULL
+
+
 # CmdStanMCMC -------------------------------------------------------------
 
 #' CmdStanMCMC objects
@@ -197,188 +383,3 @@ CmdStanVB <- R6::R6Class(
   )
 )
 
-
-# CmdStanFit superclass ---------------------------------------------------
-CmdStanFit <- R6::R6Class(
-  classname = "CmdStanFit",
-  public = list(
-    runset = NULL,
-    initialize = function(runset) {
-      checkmate::assert_r6(runset, classes = "CmdStanRun")
-      self$runset <- runset
-      invisible(self)
-    },
-
-    num_runs = function() {
-      self$runset$num_runs()
-    },
-
-    draws = function() {
-      if (is.null(private$draws_)) {
-        private$read_csv_()
-      }
-      private$draws_
-    },
-    summary = function(...) {
-      if (self$runset$method() == "sample") {
-        summary <- posterior::summarise_draws(self$draws(), ...)
-      } else { # don't include MCMC diagnostics for non MCMC
-        args <- list(...)
-        args$x <- self$draws()
-        if (!"measures" %in% names(args)) {
-          args$measures <- posterior::default_summary_measures()
-        }
-        summary <- do.call(posterior::summarise_draws, args)
-      }
-      if (self$runset$method() == "optimize") {
-        summary <- summary[, c("variable", "mean")]
-        colnames(summary) <- c("variable", "estimate")
-      }
-      summary
-    },
-    cmdstan_summary = function(...) {
-      self$runset$run_cmdstan_tool("stansummary", ...)
-    },
-    cmdstan_diagnose = function(...) {
-      self$runset$run_cmdstan_tool("diagnose", ...)
-    },
-
-    output_files = function() {
-      self$runset$output_files()
-    },
-    diagnostic_files = function() {
-      self$runset$diagnostic_files()
-    },
-    data_file = function() {
-      self$runset$data_file()
-    },
-    save_output_files = function(dir = ".",
-                                 basename = NULL,
-                                 timestamp = TRUE,
-                                 random = TRUE) {
-      self$runset$save_output_files(dir, basename, timestamp, random)
-    },
-    save_diagnostic_files = function(dir = ".",
-                                     basename = NULL,
-                                     timestamp = TRUE,
-                                     random = TRUE) {
-      self$runset$save_diagnostic_files(dir, basename, timestamp, random)
-    },
-    save_data_file = function(dir = ".",
-                              basename = NULL,
-                              timestamp = TRUE,
-                              random = TRUE) {
-      self$runset$save_data_file(dir, basename, timestamp, random)
-    }
-  ),
-  private = list(
-    draws_ = NULL
-  )
-)
-
-
-# Document shared methods ----------------------------------------------------------
-
-#' Run `posterior::summarise_draws()`
-#'
-#' @name fit-method-summary
-#' @description Run [posterior::summarise_draws()] from the \pkg{posterior}
-#'   package.
-#'
-#' @section Usage:
-#'   ```
-#'   $summary(...)
-#'   ```
-#' @section Arguments:
-#' * `...`: Arguments to pass to [posterior::summarise_draws()].
-#'
-#' @section Value:
-#' The data frame returned by [posterior::summarise_draws()].
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
-#'
-NULL
-
-
-#' Run CmdStan's `bin/stansummary` and `bin/diagnose`
-#'
-#' @name fit-method-cmdstan_summary
-#' @aliases fit-method-cmdstan_diagnose
-#' @note Although these methods also work for models fit using the
-#'   [`$variational()`][model-method-variational] method, much of the output is
-#'   only relevant for models fit using the [`$sample()`][model-method-sample]
-#'   method.
-#'
-#' @section Usage:
-#'   ```
-#'   $cmdstan_summary()
-#'   $cmdstan_diagnose()
-#'   ```
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
-#'
-NULL
-
-
-#' Save output and data files
-#'
-#' @name fit-method-save_output_files
-#' @aliases fit-method-save_data_file fit-method-save_diagnostic_files
-#'   fit-method-output_files fit-method-data_file fit-method-diagnostic_files
-#'
-#' @description All fitted model objects have methods for saving (copying to a
-#'   specified location) the temporary files created by CmdStanR for CmdStan
-#'   output csv files and input data files. These methods move the files from
-#'   the CmdStanR temporary directory to a user-specified location. __The paths
-#'   stored in the fitted model object will also be updated to point to the new
-#'   file locations.__
-#'
-#'   The versions without the `save_` prefix (e.g., `$output_files()`) return
-#'   the current file paths without moving any files.
-#'
-#' @section Usage:
-#'   ```
-#'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-#'   $save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-#'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-#'
-#'   $output_files()
-#'   $diagnostic_files()
-#'   $data_file()
-#'   ```
-#'
-#' @section Arguments:
-#' * `dir`: (string) Path to directory where the files should be saved.
-#' * `basename`: (string) Base filename to use. See __Details__.
-#' * `timestamp`: (logical) Should a timestamp be added to the file name(s)?
-#'   Defaults to `TRUE`. See __Details__.
-#' * `random`: (logical) Should random alphanumeric characters be added to the
-#'   end of the file name(s)? Defaults to `TRUE`. See __Details__.
-#'
-#' @section Details:
-#' For `$save_output_files()` the files moved to `dir` will have names of
-#' the form `basename-timestamp-id-random`, where
-#' * `basename` is the user's provided `basename` argument;
-#' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
-#' * `id` is the MCMC chain id (or `1` for non MCMC);
-#' * `random` contains five random alphanumeric characters/
-#'
-#' For `$save_diagnostic_files()` everything is the same as for
-#' `$save_output_files()` except `"-diagnostic-"` is included in the new
-#' file name after `basename`.
-#'
-#' For `$save_data_file()` no `id` is included in the file name because even
-#' with multiple MCMC chains the data file is the same.
-#'
-#' @section Value:
-#' The `$save_*` methods print a message with the new file paths and (invisibly)
-#' return a character vector of the new paths (or `NA` for any that couldn't be
-#' copied). They also have the side effect of setting the internal paths in the
-#' fitted model object to the new paths.
-#'
-#' The methods _without_ the `save_` prefix return character vectors of file
-#' paths without moving any files.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
-#'
-NULL
