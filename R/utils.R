@@ -133,7 +133,11 @@ copy_temp_files <-
 
     ext <- if (startsWith(ext, ".")) ext else paste0(".", ext)
     new_names <- paste0(new_names, ext)
-    destinations <- file.path(new_dir, new_names)
+    if (new_dir == ".") {
+      destinations <- new_names
+    } else {
+      destinations <- file.path(new_dir, new_names)
+    }
 
     copied <- file.copy(
       from = current_paths,
