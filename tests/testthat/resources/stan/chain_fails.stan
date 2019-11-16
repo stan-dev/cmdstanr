@@ -9,6 +9,7 @@ parameters {
 }
 model {
   if (fail) {
+    // this should result in a failed chain 
     theta ~ normal(1 / 0.0, 1);
   } else {
     theta ~ normal(0, 1);
