@@ -24,7 +24,8 @@ not_on_cran <- function() {
 
 set_cmdstan_path_for_tests <- function() {
   if (on_appveyor()) {
-    set_cmdstan_path("C:/MinGW/msys/1.0/.cmdstanr/cmdstan")
+    set_cmdstan_path("C:/Users/appveyor/.cmdstanr/cmdstan/")
+    Sys.setenv(PATH = paste0("C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;C:\\Rtools\\mingw_32\\bin;", Sys.getenv("PATH")))
   } else {
     set_cmdstan_path()
   }

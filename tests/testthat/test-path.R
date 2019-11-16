@@ -53,7 +53,7 @@ test_that("cmdstanr_initialize() also looks for default path", {
 
   unset_cmdstan_path()
   cmdstanr_initialize()
-  expect_equal(cmdstan_path(), PATH)
+  expect_equal(tolower(cmdstan_path()), tolower(PATH))
 })
 
 

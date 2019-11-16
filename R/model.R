@@ -234,7 +234,7 @@ compile_method <- function(quiet = TRUE,
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
-
+  
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
     include_paths <- absolute_path(include_paths)
