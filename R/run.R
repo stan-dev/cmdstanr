@@ -50,7 +50,8 @@ CmdStanRun <- R6::R6Class(
     },
     save_output_files = function(dir = ".",
                                  basename = NULL,
-                                 timestamp = TRUE) {
+                                 timestamp = TRUE,
+                                 random = TRUE) {
       # FIXME use self$output_files(include_failed=TRUE) once #76 is fixed
       current_files <- private$output_files_
       new_paths <- copy_temp_files(
@@ -59,9 +60,10 @@ CmdStanRun <- R6::R6Class(
         new_basename = basename %||% self$model_name(),
         ids = self$run_ids(),
         ext = ".csv",
-        timestamp = timestamp
+        timestamp = timestamp,
+        random = random
       )
-      file.remove(current_files)
+      file.remove(current_files[!current_files %in% new_paths])
       private$output_files_ <- new_paths
       message("Moved ", length(current_files),
               " output files and set internal paths to new locations:\n",
@@ -70,7 +72,8 @@ CmdStanRun <- R6::R6Class(
     },
     save_diagnostic_files = function(dir = ".",
                                      basename = NULL,
-                                     timestamp = TRUE) {
+                                     timestamp = TRUE,
+                                     random = TRUE) {
       # FIXME use self$diagnostic_files(include_failed=TRUE) once #76 is fixed
       current_files <- self$diagnostic_files() # used so we get error if 0 files
       current_files <- private$diagnostic_files_ # used so we still save all of them
@@ -80,9 +83,10 @@ CmdStanRun <- R6::R6Class(
         new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
         ids = self$run_ids(),
         ext = ".csv",
-        timestamp = timestamp
+        timestamp = timestamp,
+        random = random
       )
-      file.remove(current_files)
+      file.remove(current_files[!current_files %in% new_paths])
       private$diagnostic_files_ <- new_paths
       message("Moved ", length(current_files),
               " diagnostic files and set internal paths to new locations:\n",
@@ -91,16 +95,20 @@ CmdStanRun <- R6::R6Class(
     },
     save_data_file = function(dir = ".",
                               basename = NULL,
-                              timestamp = TRUE) {
+                              timestamp = TRUE,
+                              random = TRUE) {
       new_path <- copy_temp_files(
         current_paths = self$data_file(),
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = NULL,
         ext = tools::file_ext(self$data_file()),
-        timestamp = timestamp
+        timestamp = timestamp,
+        random = random
       )
-      file.remove(self$data_file())
+      if (new_path != self$data_file()) {
+        file.remove(self$data_file())
+      }
       self$args$data_file <- new_path
       message("Moved data file and set internal path to new location:\n",
               "- ", new_path)

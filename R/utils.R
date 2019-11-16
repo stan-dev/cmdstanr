@@ -119,16 +119,23 @@ copy_temp_files <-
            new_basename,
            ids = NULL,
            timestamp = TRUE,
+           random = TRUE,
            ext = ".csv") {
     checkmate::assert_directory_exists(new_dir, access = "w")
 
     new_names <- new_basename
-    if (!is.null(ids)) {
-      new_names <- paste0(new_basename, "-", ids)
-    }
     if (timestamp) {
-      stamp <- format(Sys.time(), "%Y%m%d-%H%M%S")
-      new_names <- paste0(new_names, "_", stamp)
+      stamp <- format(Sys.time(), "%Y%m%d%H%M")
+      new_names <- paste0(new_names, "-", stamp)
+    }
+    if (!is.null(ids)) {
+      new_names <- paste0(new_names, "-", ids)
+    }
+
+    if (random) {
+      tf <- tempfile()
+      rand <- substr(tf, nchar(tf) - 4, nchar(tf))
+      new_names <- paste0(new_names, "-", rand)
     }
 
     ext <- if (startsWith(ext, ".")) ext else paste0(".", ext)

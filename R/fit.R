@@ -337,9 +337,9 @@ CmdStanVB$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
 #'
 #' @section Usage:
 #'   ```
-#'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
-#'   $save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE)
-#'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
+#'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+#'   $save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+#'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 #'
 #'   $output_files()
 #'   $diagnostic_files()
@@ -351,21 +351,20 @@ CmdStanVB$set("public", "cmdstan_diagnose", cmdstan_diagnose_method)
 #' * `basename`: (string) Base filename to use. See __Details__.
 #' * `timestamp`: (logical) Should a timestamp be added to the file name(s)?
 #'   Defaults to `TRUE`. See __Details__.
+#' * `random`: (logical) Should random alphanumeric characters be added to the
+#'   end of the file name(s)? Defaults to `TRUE`. See __Details__.
 #'
 #' @section Details:
-#' If files with the specified names already exist they are overwritten, but
-#' this shouldn't occur unless the `timestamp` argument has been intentionally
-#' set to `FALSE`.
-#'
 #' For `$save_output_files()` the files moved to `dir` will have names of
-#' the form `basename-id_date-time`, where `basename` is the user's
-#' provided `basename` argument, `id` is the MCMC chain number (or 1 for non MCMC),
-#' and the date and time are included after an underscore if `timestamp=TRUE`.
-#' The timestamp is created via `format(Sys.time(), "%Y%m%d-%H%M%S")`.
+#' the form `basename-timestamp-id-random`, where
+#' * `basename` is the user's provided `basename` argument;
+#' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
+#' * `id` is the MCMC chain id (or `1` for non MCMC);
+#' * `random` contains five random alphanumeric characters/
 #'
 #' For `$save_diagnostic_files()` everything is the same as for
-#' `$save_output_files()` except the word `"diagnostic"` is included in the new
-#' file name between `basename` and `id`.
+#' `$save_output_files()` except `"-diagnostic-"` is included in the new
+#' file name after `basename`.
 #'
 #' For `$save_data_file()` no `id` is included in the file name because even
 #' with multiple MCMC chains the data file is the same.
@@ -402,14 +401,14 @@ CmdStanMCMC$set("public", "data_file", data_file_method)
 CmdStanMLE$set("public", "data_file", data_file_method)
 CmdStanVB$set("public", "data_file", data_file_method)
 
-save_output_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE) {
-  self$runset$save_output_files(dir, basename, timestamp)
+save_output_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) {
+  self$runset$save_output_files(dir, basename, timestamp, random)
 }
-save_diagnostic_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE) {
-  self$runset$save_diagnostic_files(dir, basename, timestamp)
+save_diagnostic_files_method <- function(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) {
+  self$runset$save_diagnostic_files(dir, basename, timestamp, random)
 }
-save_data_file_method = function(dir = ".", basename = NULL, timestamp = TRUE) {
-  self$runset$save_data_file(dir, basename, timestamp)
+save_data_file_method = function(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) {
+  self$runset$save_data_file(dir, basename, timestamp, random)
 }
 CmdStanMCMC$set("public", "save_output_files", save_output_files_method)
 CmdStanMLE$set("public", "save_output_files", save_output_files_method)

@@ -20,9 +20,9 @@ The versions without the \code{save_} prefix (e.g., \verb{$output_files()}) retu
 the current file paths without moving any files.
 }
 \section{Usage}{
-\preformatted{$save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
-$save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE)
-$save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
+\preformatted{$save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+$save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+$save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 
 $output_files()
 $diagnostic_files()
@@ -37,24 +37,25 @@ $data_file()
 \item \code{basename}: (string) Base filename to use. See \strong{Details}.
 \item \code{timestamp}: (logical) Should a timestamp be added to the file name(s)?
 Defaults to \code{TRUE}. See \strong{Details}.
+\item \code{random}: (logical) Should random alphanumeric characters be added to the
+end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.
 }
 }
 
 \section{Details}{
 
-If files with the specified names already exist they are overwritten, but
-this shouldn't occur unless the \code{timestamp} argument has been intentionally
-set to \code{FALSE}.
-
 For \verb{$save_output_files()} the files moved to \code{dir} will have names of
-the form \code{basename-id_date-time}, where \code{basename} is the user's
-provided \code{basename} argument, \code{id} is the MCMC chain number (or 1 for non MCMC),
-and the date and time are included after an underscore if \code{timestamp=TRUE}.
-The timestamp is created via \code{format(Sys.time(), "\%Y\%m\%d-\%H\%M\%S")}.
+the form \code{basename-timestamp-id-random}, where
+\itemize{
+\item \code{basename} is the user's provided \code{basename} argument;
+\item \code{timestamp} is of the form \code{format(Sys.time(), "\%Y\%m\%d\%H\%M")};
+\item \code{id} is the MCMC chain id (or \code{1} for non MCMC);
+\item \code{random} contains five random alphanumeric characters/
+}
 
 For \verb{$save_diagnostic_files()} everything is the same as for
-\verb{$save_output_files()} except the word \code{"diagnostic"} is included in the new
-file name between \code{basename} and \code{id}.
+\verb{$save_output_files()} except \code{"-diagnostic-"} is included in the new
+file name after \code{basename}.
 
 For \verb{$save_data_file()} no \code{id} is included in the file name because even
 with multiple MCMC chains the data file is the same.
