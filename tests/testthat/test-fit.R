@@ -1,5 +1,5 @@
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
   stan_program <- test_path("resources/stan/logistic.stan")
   data_file_json <- test_path("resources/data/logistic.data.json")
   data_list <- jsonlite::read_json(data_file_json, simplifyVector = TRUE)

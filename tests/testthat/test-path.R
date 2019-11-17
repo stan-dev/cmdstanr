@@ -3,7 +3,7 @@ context("paths")
 Sys.unsetenv("CMDSTAN")
 
 if (not_on_cran()) {
-  PATH <- absolute_path(set_cmdstan_path_for_tests())
+  PATH <- absolute_path(set_cmdstan_path())
   VERSION <- cmdstan_version()
 } else { # CRAN
   PATH <- absolute_path(Sys.getenv("HOME")) # not actually installed, just a valid path
@@ -53,7 +53,7 @@ test_that("cmdstanr_initialize() also looks for default path", {
 
   unset_cmdstan_path()
   cmdstanr_initialize()
-  expect_equal(cmdstan_path(), PATH)
+  expect_equal(tolower(cmdstan_path()), tolower(PATH))
 })
 
 

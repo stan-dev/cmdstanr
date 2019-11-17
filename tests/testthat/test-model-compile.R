@@ -1,7 +1,7 @@
 context("model-compile")
 
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
   stan_program <- beroulli_example_file()
   mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 
@@ -35,15 +35,16 @@ test_that("compile() method works", {
 
 test_that("compile() method forces recompilation if changes in flags", {
   skip_on_cran()
-  skip_on_ci() # FIXME: this test seems to pass locally but fail on travis
+  skip_on_travis() # FIXME should work on travis
+
   expect_message(
-    mod$compile(opencl=TRUE),
+    mod$compile(threads=TRUE),
     "change in the compiler flags was found"
   )
 
   # change it back
   expect_message(
-    mod$compile(opencl=FALSE),
+    mod$compile(threads=FALSE),
     "change in the compiler flags was found"
   )
 })
