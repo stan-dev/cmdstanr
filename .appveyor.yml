@@ -37,10 +37,10 @@ install:
         Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
         throw "There are newer queued builds for this pull request, failing early." }
   
-        & "C:\\Program Files\\Git\\mingw64\\bin\\curl.exe" -s -o ../R-win.exe -L https://cran.rstudio.com/bin/windows/base/R-"+$env:_R_VERSION+"-win.exe
+        & "C:\\Program Files\\Git\\mingw64\\bin\\curl.exe" -s -o ../R-win.exe -L https://cran.rstudio.com/bin/windows/base/R-$env:_R_VERSION-win.exe
         echo "Running R installer"
         Start-Process -FilePath ..\R-win.exe -ArgumentList "/VERYSILENT /DIR=C:\R" -NoNewWindow -Wait
-        & "C:\\Program Files\\Git\\mingw64\\bin\\curl.exe" -s -o ../R-tools-win.exe -L https://cran.rstudio.com/bin/windows/Rtools/Rtools"+$env:_RTOOLS_VERSION+".exe
+        & "C:\\Program Files\\Git\\mingw64\\bin\\curl.exe" -s -o ../R-tools-win.exe -L https://cran.rstudio.com/bin/windows/Rtools/Rtools$env:_RTOOLS_VERSION.exe
         echo "Running RTools installer"
         Start-Process -FilePath ..\R-tools-win.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
   - SET PATH=C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;C:\\Rtools\\mingw_32\\bin;%PATH%
