@@ -22,15 +22,6 @@ not_on_cran <- function() {
   on_travis() || on_appveyor() || identical(Sys.getenv("NOT_CRAN"), "true")
 }
 
-set_cmdstan_path_for_tests <- function() {
-  if (on_appveyor()) {
-    set_cmdstan_path("C:/Users/appveyor/.cmdstanr/cmdstan/")
-    Sys.setenv(PATH = paste0("C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;C:\\Rtools\\mingw_32\\bin;", Sys.getenv("PATH")))
-  } else {
-    set_cmdstan_path()
-  }
-}
-
 delete_extensions <- function() {
   if (os_is_windows()) {
     c(".exe", ".o", ".hpp")

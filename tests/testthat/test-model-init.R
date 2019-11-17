@@ -1,7 +1,7 @@
 context("model-init")
 
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
   mod <- cmdstan_model(stan_file = beroulli_example_file())
   data_list <- bernoulli_example_data()
 }
