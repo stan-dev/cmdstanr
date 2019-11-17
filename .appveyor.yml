@@ -8,11 +8,7 @@ platform:
 # cache:
 #   - C:\\R\\
 #   - C:\\Rtools
-
-init:
-  ps: |
-        $ErrorActionPreference = "Stop"
-        Invoke-WebRequest https://gist.githubusercontent.com/rok-cesnovar/0d74c310d41b12e62f842de4ea92322b/raw/90b718b2dac8dbf0fda49abdf0b6bd29b344be35/appveyor_install_cmdstanr.R -OutFile "..\appveyor_install_cmdstanr.R"
+        
 clone_folder: c:\projects\cmdstanr
 shallow_clone: true
 clone_depth: 1
@@ -30,6 +26,7 @@ install:
   # directly to master instead of just PR builds (or the converse).
   # credits: JuliaLang developers.
   - ps: |
+        $ErrorActionPreference = "Stop"
         if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
         https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
         Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
@@ -44,8 +41,12 @@ install:
   - SET PATH=C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;C:\\Rtools\\mingw_32\\bin;%PATH%
   - g++ --version
   - mingw32-make --version
+  - echo "Installing R package dependencies"
   - Rscript -e "sessionInfo()"
-  - Rscript ..\\appveyor_install_cmdstanr.R 
+  - Rscript -e 'install.packages(c("remotes", "knitr", "pandoc"), repos = "https://cloud.r-project.org")'
+  - Rscript -e 'options(repos = c(CRAN = "https://cloud.r-project.org"), download.file.method = "auto")'
+  - Rscript -e 'remotes::install_deps(dependencies = TRUE, type="win.binary")'
+  - echo "Installing Cmdstan"
   - bash inst/make_cmdstan.sh -j2 -w
   - echo "Installation done"
 
@@ -53,8 +54,8 @@ build: false
 
 test_script:
   - SET PATH=C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;%PATH%
-  - R.exe CMD build . --no-build-vignettes --no-manual
-  - R.exe CMD check .\\cmdstanr_0.0.0.9000.tar.gz --no-build-vignettes --no-manual --as-cran --install-args=--build
+  - R.exe CMD build .
+  - R.exe CMD check .\\cmdstanr_0.0.0.9000.tar.gz --as-cran --install-args=--build
 
 on_failure:
   - 7z a failure.zip *.Rcheck\*
