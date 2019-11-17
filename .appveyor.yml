@@ -55,7 +55,7 @@ build: false
 test_script:
   - SET PATH=C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;%PATH%
   - R.exe CMD build . --no-manual
-  - R.exe CMD check .\\cmdstanr_0.0.0.9000.tar.gz --no-manual --as-cran --install-args=--build
+  - R.exe CMD check .\\cmdstanr_0.0.0.9000.tar.gz --no-manual --install-args=--build
 
 on_failure:
   - 7z a failure.zip *.Rcheck\*
