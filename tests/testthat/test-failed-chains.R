@@ -1,5 +1,5 @@
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
   stan_program <- test_path("resources/stan/chain_fails.stan")
   mod <- cmdstan_model(stan_file = stan_program)
 

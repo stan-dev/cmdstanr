@@ -14,14 +14,6 @@ not_on_cran <- function() {
   on_travis() || on_appveyor() || identical(Sys.getenv("NOT_CRAN"), "true")
 }
 
-set_cmdstan_path_for_tests <- function() {
-  if (on_appveyor()) {
-    set_cmdstan_path("C:/MinGW/msys/1.0/.cmdstanr/cmdstan")
-  } else {
-    set_cmdstan_path()
-  }
-}
-
 delete_extensions <- function() {
   if (os_is_windows()) {
     c(".exe", ".o", ".hpp")

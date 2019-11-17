@@ -1,7 +1,7 @@
 context("model-sample")
 
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
   stan_program <- testing_stan_file("bernoulli")
   mod <- testing_model("bernoulli")
 
@@ -174,4 +174,3 @@ test_that("mc.cores option detected", {
     fixed = TRUE
   )
 })
-

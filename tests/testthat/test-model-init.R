@@ -1,7 +1,7 @@
 context("model-init")
 
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
   mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
 }
