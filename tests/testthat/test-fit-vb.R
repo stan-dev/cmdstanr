@@ -1,7 +1,7 @@
 context("fitted-vb")
 
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
   fit_vb <- testing_fit("logistic", method = "variational", seed = 123)
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }

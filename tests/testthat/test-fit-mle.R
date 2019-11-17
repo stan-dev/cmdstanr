@@ -1,7 +1,7 @@
 context("fitted-mle")
 
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
   fit_mle <- testing_fit("logistic", method = "optimize", seed = 123)
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }

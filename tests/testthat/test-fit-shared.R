@@ -1,7 +1,7 @@
 context("fitted-shared-methods")
 
 if (not_on_cran()) {
-  set_cmdstan_path_for_tests()
+  set_cmdstan_path()
 
   fits <- list()
   fits[["sample"]] <- testing_fit("logistic", method = "sample",
