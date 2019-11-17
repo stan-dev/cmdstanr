@@ -43,9 +43,9 @@ install:
   - mingw32-make --version
   - echo "Installing R package dependencies"
   - Rscript -e "sessionInfo()"
-  - Rscript -e 'install.packages(c("remotes", "knitr", "pandoc"), repos = "https://cloud.r-project.org")'
-  - Rscript -e 'options(repos = c(CRAN = "https://cloud.r-project.org"), download.file.method = "auto")'
-  - Rscript -e 'remotes::install_deps(dependencies = TRUE, type="win.binary")'
+  - Rscript -e "install.packages(c('remotes', 'knitr', 'pandoc'), repos = 'https://cloud.r-project.org')"
+  - Rscript -e "options(repos = c(CRAN = 'https://cloud.r-project.org'), download.file.method = 'auto')"
+  - Rscript -e "remotes::install_deps(dependencies = TRUE, type='win.binary')"
   - echo "Installing Cmdstan"
   - bash inst/make_cmdstan.sh -j2 -w
   - echo "Installation done"
