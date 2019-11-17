@@ -40,26 +40,34 @@ install:
         & "C:\\Program Files\\Git\\mingw64\\bin\\curl.exe" -s -o ../R-win.exe -L https://cran.rstudio.com/bin/windows/base/R-$env:_R_VERSION-win.exe
         echo "Running R installer"
         Start-Process -FilePath ..\R-win.exe -ArgumentList "/VERYSILENT /DIR=C:\R" -NoNewWindow -Wait
+
         & "C:\\Program Files\\Git\\mingw64\\bin\\curl.exe" -s -o ../R-tools-win.exe -L https://cran.rstudio.com/bin/windows/Rtools/Rtools$env:_RTOOLS_VERSION.exe
         echo "Running RTools installer"
         Start-Process -FilePath ..\R-tools-win.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
+
   - SET PATH=C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;C:\\Rtools\\mingw_32\\bin;%PATH%
+  - echo "Printing toolchain information"
   - g++ --version
   - mingw32-make --version
+
   - echo "Installing R package dependencies"
   - Rscript -e "sessionInfo()"
   - Rscript -e "install.packages(c('remotes', 'knitr', 'pandoc'), repos = 'https://cloud.r-project.org')"
   - Rscript -e "options(repos = c(CRAN = 'https://cloud.r-project.org'), download.file.method = 'auto')"
   - Rscript -e "remotes::install_deps(dependencies = TRUE, type='win.binary')"
+
   - echo "Installing Cmdstan"
   - bash inst/make_cmdstan.sh %_CMDSTAN_INSTALL_FLAGS%
+
   - echo "Installation done"
 
 build: false
 
 test_script:
   - SET PATH=C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;%PATH%
+  - echo "Build the package"
   - R.exe CMD build . %_R_BUILD_FLAGS%
+  - echo "Check the package"
   - R.exe CMD check .\\cmdstanr_*.tar.gz %_R_CHECK_FLAGS%
 
 on_failure:
