@@ -345,8 +345,7 @@ set_make_local <- function(threads = FALSE,
       checkmate::assert_file_exists(make_local_path, access = 'rw')
     }
     make_local_content <- c(user_flags, new_make_local_cmdstanr)
-    # writeLines(make_local_content, make_local_path)
-    cat(make_local_content, sep = "\n", file = make_local_path)
+    writeLines(make_local_content, make_local_path)
     return(TRUE)
   }
 
