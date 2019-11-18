@@ -308,6 +308,7 @@ set_make_local <- function(threads = FALSE,
   user_flags <- c()
   old_make_local_cmdstanr <- c()
   if (file.exists(make_local_path)) {
+    checkmate::assert_file_exists(make_local_path, access = 'rw')
     old_make_local_all <- readLines(make_local_path)
     is_user_flag <- TRUE
     for (x in old_make_local_all) {
@@ -336,13 +337,16 @@ set_make_local <- function(threads = FALSE,
     compiler_flags <- c(cmdstanr_generated_flags_comment, compiler_flags)
   }
   new_make_local_cmdstanr <- paste(compiler_flags, collapse = "\n")
+
   if (new_make_local_cmdstanr != old_make_local_cmdstanr) {
     # only rewrite make/local if there are changes
     if (!file.exists(make_local_path)) {
       file.create(make_local_path)
+      checkmate::assert_file_exists(make_local_path, access = 'rw')
     }
     make_local_content <- c(user_flags, new_make_local_cmdstanr)
-    writeLines(make_local_content, make_local_path)
+    # writeLines(make_local_content, make_local_path)
+    cat(make_local_content, sep = "\n", file = make_local_path)
     return(TRUE)
   }
 
