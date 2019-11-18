@@ -145,7 +145,7 @@ test_that("sample() method errors for any invalid arguments before calling cmdst
 test_that("sample works for warmup-only run", {
   skip_on_cran()
   expect_output(
-    fit <- mod_ok$sample(num_chains = 2, data = standata, num_samples = 0),
+    fit <- mod$sample(num_chains = 2, data = data_list, num_samples = 0),
     "Iteration: 1000 / 1000 [100%]  (Warmup)",
     fixed = TRUE
   )
