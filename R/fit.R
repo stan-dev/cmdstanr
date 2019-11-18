@@ -13,12 +13,17 @@ CmdStanFit <- R6::R6Class(
       self$runset$num_runs()
     },
 
+    time = function() {
+      self$runset$time()
+    },
+
     draws = function() {
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
       private$draws_
     },
+
     summary = function(...) {
       if (self$runset$method() == "sample") {
         summary <- posterior::summarise_draws(self$draws(), ...)
@@ -231,9 +236,6 @@ CmdStanMCMC <- R6::R6Class(
   public = list(
     num_chains = function() {
       super$num_runs()
-    },
-    time = function() {
-      self$runset$time()
     },
     output = function(id = NULL) {
       if (is.null(id)) {

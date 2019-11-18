@@ -135,3 +135,14 @@ test_that("draws() method returns a 'draws' object", {
     expect_s3_class(draws, "draws")
   }
 })
+
+test_that("time() method errors for optimization and variational", {
+  skip_on_cran()
+
+  # further testing for time() for mcmc in test-fit-mcmc.R
+  expect_silent(fits[["sample"]]$time())
+
+  # error for now until this method is implemented
+  expect_error(fits[["optimize"]]$time(), "Not yet implemented")
+  expect_error(fits[["variational"]]$time(), "Not yet implemented")
+})

@@ -22,12 +22,10 @@ CmdStanRun <- R6::R6Class(
     },
 
     num_runs = function() self$procs$num_runs(),
-    num_cores = function() self$procs$num_cores(),
     run_ids = function() self$args$run_ids,
     exe_file = function() self$args$exe_file,
     model_name = function() self$args$model_name,
     method = function() self$args$method,
-    csv_basename = function() self$args$csv_basename(),
     data_file = function() self$args$data_file,
     new_output_files = function() self$args$new_output_files(),
     new_diagnostic_files = function() self$args$new_diagnostic_files(),
@@ -166,7 +164,8 @@ CmdStanRun <- R6::R6Class(
     time = function() {
       if (self$method() != "sample") {
         # FIXME add time for other methods?
-        return(NULL)
+        stop("Not yet implemented for ", self$method(), " method.",
+             call. = FALSE)
       }
 
       procs <- self$procs
