@@ -52,7 +52,7 @@ install:
 
   - echo "Installing R package dependencies"
   - Rscript -e "sessionInfo()"
-  - Rscript -e "install.packages(c('remotes', 'knitr', 'pandoc'), repos = 'https://cloud.r-project.org')"
+  - Rscript -e "install.packages(c('remotes', 'knitr', 'pandoc', 'covr'), repos = 'https://cloud.r-project.org')"
   - Rscript -e "options(repos = c(CRAN = 'https://cloud.r-project.org'), download.file.method = 'auto')"
   - Rscript -e "remotes::install_deps(dependencies = TRUE, type='win.binary')"
 
@@ -69,6 +69,9 @@ test_script:
   - R.exe CMD build . %_R_BUILD_FLAGS%
   - echo "Check the package"
   - R.exe CMD check .\\cmdstanr_*.tar.gz %_R_CHECK_FLAGS%
+
+on_success:
+  - Rscript -e "covr::codecov(quiet=FALSE, line_exclusions = list('R/zzz.R'))"
 
 on_failure:
   - 7z a failure.zip *.Rcheck\*
