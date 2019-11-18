@@ -332,16 +332,20 @@ set_make_local <- function(threads = FALSE,
     stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
     compiler_flags <- c(compiler_flags, stan_threads)
   }
-  if (length(compiler_flags) > 0) {
+  if (length(compiler_flags)) {
     compiler_flags <- c(cmdstanr_generated_flags_comment, compiler_flags)
   }
   new_make_local_cmdstanr <- paste(compiler_flags, collapse = "\n")
   if (new_make_local_cmdstanr != old_make_local_cmdstanr) {
     # only rewrite make/local if there are changes
+    if (!file.exists(make_local_path)) {
+      file.create(make_local_path)
+    }
     make_local_content <- c(user_flags, new_make_local_cmdstanr)
     writeLines(make_local_content, make_local_path)
     return(TRUE)
   }
+
   FALSE
 }
 
