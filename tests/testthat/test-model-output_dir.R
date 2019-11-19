@@ -53,11 +53,12 @@ test_that("error if output_dir is invalid", {
   )
 
   not_readable <- file.path(sandbox, "locked")
-  dir.create(not_readable, mode = 0)
+  dir.create(not_readable, mode = "220")
   expect_error(
     testing_fit("bernoulli", output_dir = not_readable),
     "not readable"
   )
+  file.remove(list.files(sandbox, full.names = TRUE, recursive = TRUE))
 })
 
 
