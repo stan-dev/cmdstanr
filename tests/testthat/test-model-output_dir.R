@@ -51,13 +51,16 @@ test_that("error if output_dir is invalid", {
     testing_fit("bernoulli", output_dir = TRUE),
     "No directory provided"
   )
-
-  not_readable <- file.path(sandbox, "locked")
-  dir.create(not_readable, mode = "220")
-  expect_error(
-    testing_fit("bernoulli", output_dir = not_readable),
-    "not readable"
-  )
+  
+  if (!os_is_windows()) {
+    # FIXME: how do I create an unreadable file on windows?
+    not_readable <- file.path(sandbox, "locked")
+    dir.create(not_readable, mode = "220")
+    expect_error(
+      testing_fit("bernoulli", output_dir = not_readable),
+      "not readable"
+    )
+  }
   file.remove(list.files(sandbox, full.names = TRUE, recursive = TRUE))
 })
 
