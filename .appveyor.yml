@@ -5,24 +5,29 @@ image: Visual Studio 2017
 platform:
   - x64
 
-# cache:
-#   - C:\\R\\
-#   - C:\\Rtools
+cache:
+  - C:\RLibrary
+  - C:\RTools
+  # saving these seems to be working but I'm not sure it's preventing
+  # installing them again every time
 
 clone_folder: c:\projects\cmdstanr
 shallow_clone: true
 clone_depth: 1
 
+
 environment:
-  NOT_CRAN: true
-  _R_CHECK_FORCE_SUGGESTS_: false
-  USE_RTOOLS: true
   HOME: C:\Users\appveyor\
+  NOT_CRAN: true
+  # versions
   _R_VERSION: "3.6.1"
   _RTOOLS_VERSION: "35"
-  _CMDSTAN_INSTALL_FLAGS: "-j2 -w"
+  # flags
+  _R_CHECK_FORCE_SUGGESTS_: false
+  _R_CHECK_SYSTEM_CLOCK_: false
   _R_BUILD_FLAGS: "--no-manual"
   _R_CHECK_FLAGS: "--no-manual --as-cran --install-args=--build"
+  _CMDSTAN_INSTALL_FLAGS: "-j2 -w"
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
@@ -45,6 +50,12 @@ install:
         echo "Running RTools installer"
         Start-Process -FilePath ..\R-tools-win.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
 
+        echo "Setting R_LIBS_USER"
+        $env:R_LIBS_USER = 'c:\RLibrary'
+        if ( -not(Test-Path $env:R_LIBS_USER) ) {
+          mkdir $env:R_LIBS_USER
+        }
+
   - SET PATH=C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;C:\\Rtools\\mingw_32\\bin;%PATH%
   - echo "Printing toolchain information"
   - g++ --version
@@ -52,7 +63,7 @@ install:
 
   - echo "Installing R package dependencies"
   - Rscript -e "sessionInfo()"
-  - Rscript -e "install.packages(c('remotes', 'knitr', 'pandoc'), repos = 'https://cloud.r-project.org')"
+  - Rscript -e "install.packages(c('remotes', 'covr', 'knitr'), repos = 'https://cloud.r-project.org')"
   - Rscript -e "options(repos = c(CRAN = 'https://cloud.r-project.org'), download.file.method = 'auto')"
   - Rscript -e "remotes::install_deps(dependencies = TRUE, type='win.binary')"
 
@@ -69,6 +80,9 @@ test_script:
   - R.exe CMD build . %_R_BUILD_FLAGS%
   - echo "Check the package"
   - R.exe CMD check .\\cmdstanr_*.tar.gz %_R_CHECK_FLAGS%
+
+on_success:
+  - Rscript -e "covr::codecov(line_exclusions = list('R/zzz.R'))"
 
 on_failure:
   - 7z a failure.zip *.Rcheck\*
