@@ -82,7 +82,7 @@ test_script:
   - R.exe CMD check .\\cmdstanr_*.tar.gz %_R_CHECK_FLAGS%
 
 on_success:
-  - Rscript -e "covr::codecov(line_exclusions = list('R/zzz.R'))"
+  - Rscript -e "covr::codecov(quiet=FALSE, line_exclusions = list('R/zzz.R'))"
 
 on_failure:
   - 7z a failure.zip *.Rcheck\*
