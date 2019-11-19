@@ -29,19 +29,19 @@ test_that("error if output_dir is invalid", {
   skip_on_cran()
 
   expect_error(
-    mod$sample(output_dir = "NOT_A_DIR"),
+    testing_fit("bernoulli", output_dir = "NOT_A_DIR"),
     "Directory 'NOT_A_DIR' does not exist",
     fixed = TRUE
   )
   expect_error(
-    mod$sample(output_dir = list()),
+    testing_fit("bernoulli", output_dir = TRUE),
     "No directory provided"
   )
 
   not_readable <- test_path("answers", "sandbox", "locked")
   dir.create(not_readable, mode = 0)
   expect_error(
-    mod$sample(output_dir = not_readable),
+    testing_fit("bernoulli", output_dir = not_readable),
     "not readable"
   )
 })
