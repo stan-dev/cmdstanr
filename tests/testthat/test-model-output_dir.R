@@ -4,7 +4,6 @@ if (not_on_cran()) {
   set_cmdstan_path()
 }
 
-
 test_that("all fitting methods work with output_dir", {
   skip_on_cran()
   for (method in c("sample", "optimize", "variational")) {
@@ -13,16 +12,27 @@ test_that("all fitting methods work with output_dir", {
       dir.create(method_dir)
     }
 
-    # no output_dir should equate to tempdir
+    # no output_dir means should use tempdir
     fit <- testing_fit("bernoulli", method = method, seed = 123)
     expect_equal(fit$runset$args$output_dir, absolute_path(tempdir()))
 
-    # specify output_dir
+    # specifying output_dir
     fit <- testing_fit("bernoulli", method = method, seed = 123,
                         output_dir = method_dir)
     expect_equal(fit$runset$args$output_dir, absolute_path(method_dir))
     expect_equal(length(list.files(method_dir)), fit$num_runs())
   }
+
+  # specifying output_dir and save_diagnostics
+  fit <- testing_fit("bernoulli", method = "sample", seed = 123,
+                     output_dir = test_path("answers", "sandbox", "sample"),
+                     save_diagnostics = TRUE)
+
+  files <- list.files(test_path("answers", "sandbox", "sample"))
+  expect_equal(
+    sum(grepl("diagnostic", files)),
+    fit$num_runs()
+  )
 })
 
 test_that("error if output_dir is invalid", {
