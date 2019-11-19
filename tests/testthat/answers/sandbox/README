@@ -1,4 +1,0 @@
-A directory we can play around with during testing, e.g. for reading and writing files (test-method-output_dir.R for example).
-
-Everything in this directory (except this file) gets removed during
-teardown after tests are run.
