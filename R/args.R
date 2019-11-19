@@ -34,7 +34,8 @@ CmdStanArgs <- R6::R6Class(
                           save_diagnostics = FALSE,
                           seed = NULL,
                           init = NULL,
-                          refresh = NULL) {
+                          refresh = NULL,
+                          output_dir = NULL) {
 
       self$model_name <- model_name
       self$exe_file <- exe_file
@@ -46,12 +47,14 @@ CmdStanArgs <- R6::R6Class(
       self$method_args <- method_args
       self$method <- self$method_args$method
       self$save_diagnostics <- save_diagnostics
+      self$output_dir <- output_dir %||% tempdir(check = TRUE)
 
       self$method_args$validate(num_runs = length(self$run_ids))
       self$validate()
     },
     validate = function() {
       validate_cmdstan_args(self)
+      self$output_dir <- absolute_path(self$output_dir)
       if (is.character(self$data_file)) {
         self$data_file <- absolute_path(self$data_file)
       }
@@ -63,27 +66,22 @@ CmdStanArgs <- R6::R6Class(
       invisible(self)
     },
 
-    tempfile_basename = function(type = c("output", "diagnostic")) {
+    new_file_names = function(type = c("output", "diagnostic")) {
+      basename <- self$model_name
       type <- match.arg(type)
-      paste0(self$model_name, "-stan-", self$method, "-",
-             if (type == "diagnostic") "diagnostic-",
-             self$run_ids, "-")
-    },
-    new_output_files = function() {
-      files <- tempfile(
-        pattern = self$tempfile_basename("output"),
-        tmpdir = cmdstan_tempdir(),
-        fileext = ".csv"
+      if (type == "diagnostic") {
+        basename <- paste0(basename, "-diagnostic")
+      }
+      generate_file_names( # defined in utils.R
+        basename = basename,
+        ext = ".csv",
+        ids = self$run_ids,
+        timestamp = TRUE,
+        random = TRUE
       )
-      invisible(file.create(files))
-      files
     },
-    new_diagnostic_files = function() {
-      files <- tempfile(
-        pattern = self$tempfile_basename("diagnostic"),
-        tmpdir = cmdstan_tempdir(),
-        fileext = ".csv"
-      )
+    new_files = function(type = c("output", "diagnostic")) {
+      files <- file.path(self$output_dir, self$new_file_names(type))
       invisible(file.create(files))
       files
     },
@@ -382,8 +380,9 @@ VariationalArgs <- R6::R6Class(
 #' @param self A `CmdStanArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_cmdstan_args = function(self) {
-  # TODO: validate that can write to output directory
   validate_exe_file(self$exe_file)
+
+  checkmate::assert_directory_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
   checkmate::assert_integerish(self$run_ids,

@@ -9,12 +9,12 @@
 \alias{fit-method-diagnostic_files}
 \title{Save output and data files}
 \description{
-All fitted model objects have methods for saving (copying to a
-specified location) the temporary files created by CmdStanR for CmdStan
-output csv files and input data files. These methods move the files from
-the CmdStanR temporary directory to a user-specified location. \strong{The paths
-stored in the fitted model object will also be updated to point to the new
-file locations.}
+All fitted model objects have methods for saving (moving to a
+specified location) the files created by CmdStanR to hold CmdStan output
+csv files and input data files. These methods move the files from their
+current location (possibly the temporary directory) to a user-specified
+location. \strong{The paths stored in the fitted model object will also be
+updated to point to the new file locations.}
 
 The versions without the \code{save_} prefix (e.g., \verb{$output_files()}) return
 the current file paths without moving any files.
@@ -50,7 +50,7 @@ the form \code{basename-timestamp-id-random}, where
 \item \code{basename} is the user's provided \code{basename} argument;
 \item \code{timestamp} is of the form \code{format(Sys.time(), "\%Y\%m\%d\%H\%M")};
 \item \code{id} is the MCMC chain id (or \code{1} for non MCMC);
-\item \code{random} contains five random alphanumeric characters/
+\item \code{random} contains six random alphanumeric characters.
 }
 
 For \verb{$save_diagnostic_files()} everything is the same as for

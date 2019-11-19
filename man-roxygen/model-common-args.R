@@ -28,3 +28,16 @@
 #'   `save_diagnostics=TRUE` see the
 #'   [`$save_diagnostic_files()`][fit-method-save_diagnostic_files] method.
 #'
+#'   * `output_dir`: (string) A path to a directory where CmdStan should write
+#'   its output CSV files. For interactive use this can typically be left at
+#'   `NULL` (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
+#'   posterior draws and diagnostics) available in \R via methods of the fitted
+#'   model objects. The behavior of `output_dir` is as follows:
+#'     - If `NULL` (the default) then the CSV files are written to a temporary
+#'       directory and only saved permanently if the user calls one of the
+#'       `$save_*` methods of the fitted model object (e.g.,
+#'       [`$save_output_files()`][fit-method-save_output_files]).
+#'     - If a path then the files are created in `output_dir` with names
+#'       corresponding the defaults used by `$save_output_files()` (and similar
+#'       methods like `$save_diagnostic_files()`).
+#'

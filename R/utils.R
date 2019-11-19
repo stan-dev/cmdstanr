@@ -80,7 +80,7 @@ strip_ext <- function(file) {
 
 # If a file/dir exists return its absolute path
 # doesn't error if not found
-absolute_path <- function(path) {
+.absolute_path <- function(path) {
   if (file.exists(path)) {
     new_path <- repair_path(path)
   } else {
@@ -92,7 +92,7 @@ absolute_path <- function(path) {
   }
   repair_path(file.path(getwd(), new_path))
 }
-absolute_path <- Vectorize(absolute_path, USE.NAMES = FALSE)
+absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 
 
 
@@ -122,28 +122,15 @@ copy_temp_files <-
            random = TRUE,
            ext = ".csv") {
     checkmate::assert_directory_exists(new_dir, access = "w")
-
-    new_names <- new_basename
-    if (timestamp) {
-      stamp <- format(Sys.time(), "%Y%m%d%H%M")
-      new_names <- paste0(new_names, "-", stamp)
-    }
-    if (!is.null(ids)) {
-      new_names <- paste0(new_names, "-", ids)
-    }
-
-    if (random) {
-      tf <- tempfile()
-      rand <- substr(tf, nchar(tf) - 4, nchar(tf))
-      new_names <- paste0(new_names, "-", rand)
-    }
-
-    ext <- if (startsWith(ext, ".")) ext else paste0(".", ext)
-    new_names <- paste0(new_names, ext)
-    if (new_dir == ".") {
-      destinations <- new_names
-    } else {
-      destinations <- file.path(new_dir, new_names)
+    destinations <- generate_file_names(
+      basename = new_basename,
+      ext = ext,
+      ids = ids,
+      timestamp = timestamp,
+      random = random
+    )
+    if (new_dir != ".") {
+      destinations <- file.path(new_dir, destinations)
     }
 
     copied <- file.copy(
@@ -155,6 +142,36 @@ copy_temp_files <-
       destinations[!copied] <- NA_character_
     }
     absolute_path(destinations)
+  }
+
+# generate new file names
+# see doc above for copy_temp_files
+generate_file_names <-
+  function(basename,
+           ext = ".csv",
+           ids = NULL,
+           timestamp = TRUE,
+           random = TRUE) {
+    new_names <- basename
+    if (timestamp) {
+      stamp <- format(Sys.time(), "%Y%m%d%H%M")
+      new_names <- paste0(new_names, "-", stamp)
+    }
+    if (!is.null(ids)) {
+      new_names <- paste0(new_names, "-", ids)
+    }
+
+    if (random) {
+      tf <- tempfile()
+      rand <- substr(tf, nchar(tf) - 5, nchar(tf))
+      new_names <- paste0(new_names, "-", rand)
+    }
+
+    if (length(ext)) {
+      ext <- if (startsWith(ext, ".")) ext else paste0(".", ext)
+      new_names <- paste0(new_names, ext)
+    }
+    new_names
   }
 
 

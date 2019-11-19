@@ -27,8 +27,12 @@ CmdStanRun <- R6::R6Class(
     model_name = function() self$args$model_name,
     method = function() self$args$method,
     data_file = function() self$args$data_file,
-    new_output_files = function() self$args$new_output_files(),
-    new_diagnostic_files = function() self$args$new_diagnostic_files(),
+    new_output_files = function() {
+      self$args$new_files(type = "output")
+    },
+    new_diagnostic_files = function() {
+      self$args$new_files(type = "diagnostic")
+    },
     diagnostic_files = function() {
       if (!length(private$diagnostic_files_)) {
         stop(

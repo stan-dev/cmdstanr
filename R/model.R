@@ -278,6 +278,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     refresh = NULL,
 #'     init = NULL,
 #'     save_diagnostics = FALSE,
+#'     output_dir = NULL,
 #'     num_chains = 4,
 #'     num_cores = getOption("mc.cores", 1),
 #'     num_warmup = NULL,
@@ -378,6 +379,7 @@ sample_method <- function(data = NULL,
                           refresh = NULL,
                           init = NULL,
                           save_diagnostics = FALSE,
+                          output_dir = NULL,
                           num_chains = 4,
                           num_cores = getOption("mc.cores", 1),
                           num_warmup = NULL,
@@ -422,7 +424,8 @@ sample_method <- function(data = NULL,
     save_diagnostics = save_diagnostics,
     seed = seed,
     init = init,
-    refresh = refresh
+    refresh = refresh,
+    output_dir = output_dir
   )
   cmdstan_procs <- CmdStanProcs$new(num_chains, num_cores)
   runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
@@ -457,6 +460,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     refresh = NULL,
 #'     init = NULL,
 #'     save_diagnostics = FALSE,
+#'     output_dir = NULL,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
 #'     iter = NULL
@@ -488,6 +492,7 @@ optimize_method <- function(data = NULL,
                             refresh = NULL,
                             init = NULL,
                             save_diagnostics = FALSE,
+                            output_dir = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
                             iter = NULL) {
@@ -505,7 +510,8 @@ optimize_method <- function(data = NULL,
     save_diagnostics = save_diagnostics,
     seed = seed,
     init = init,
-    refresh = refresh
+    refresh = refresh,
+    output_dir = output_dir
   )
 
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
@@ -546,6 +552,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     refresh = NULL,
 #'     init = NULL,
 #'     save_diagnostics = FALSE,
+#'     output_dir = NULL,
 #'     algorithm = NULL,
 #'     iter = NULL,
 #'     grad_samples = NULL,
@@ -595,6 +602,7 @@ variational_method <- function(data = NULL,
                                refresh = NULL,
                                init = NULL,
                                save_diagnostics = FALSE,
+                               output_dir = NULL,
                                algorithm = NULL,
                                iter = NULL,
                                grad_samples = NULL,
@@ -626,7 +634,8 @@ variational_method <- function(data = NULL,
     save_diagnostics = save_diagnostics,
     seed = seed,
     init = init,
-    refresh = refresh
+    refresh = refresh,
+    output_dir = output_dir
   )
 
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
