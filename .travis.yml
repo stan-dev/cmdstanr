@@ -13,7 +13,7 @@ cache:
 # FIXME: replace with cmdstanr master eventually
 r_github_packages:
   - r-lib/covr
-  - stan-dev/cmdstanr@install_cmdstan_from_r
+  - stan-dev/cmdstanr
 
 warnings_are_errors: true
 env:
