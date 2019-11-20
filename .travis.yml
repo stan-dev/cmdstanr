@@ -26,4 +26,4 @@ before_script:
   - sudo chown -R $USER:$USER $HOME/.cmdstanr/cmdstan/make/local
 
 after_success:
-  - Rscript -e 'covr::codecov(line_exclusions = list("R/zzz.R"))'
+  - travis_wait Rscript -e 'covr::codecov(line_exclusions = list("R/zzz.R"))'
