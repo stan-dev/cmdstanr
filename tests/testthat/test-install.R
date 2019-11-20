@@ -1,6 +1,6 @@
 context("install")
 
-test_that("test cmdstan installation", {
+test_that("install_cmdstan successfully installs cmdstan", {
   skip_if_offline()
   # skip_on_covr()
 
@@ -15,7 +15,7 @@ test_that("test cmdstan installation", {
   )
 })
 
-test_that("Test cmdstan installation error", {
+test_that("install_cmdstan errors if installation already exists", {
   skip_if_offline()
   if (not_on_cran()) {
     dir <- dirname(cmdstan_default_path())

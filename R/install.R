@@ -190,19 +190,6 @@ clone_repo <- function(dir, repo_url, repo_branch, quiet) {
   )
 }
 
-cleanup_cmdstan <- function(dir, quiet) {
-  processx::run(
-    make_cmd(),
-    args = "clean-all",
-    wd = dir,
-    echo_cmd = FALSE,
-    echo = !quiet,
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) }
-  )
-}
-
 build_cmdstan <- function(dir, cores, quiet) {
   processx::run(
     make_cmd(),
