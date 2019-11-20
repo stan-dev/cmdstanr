@@ -13,7 +13,7 @@ cache:
 # FIXME: replace with cmdstanr master eventually
 r_github_packages:
   - r-lib/covr
-  - stan-dev/cmdstanr@install_cmdstan_from_r 
+  - stan-dev/cmdstanr@install_cmdstan_from_r
 
 warnings_are_errors: true
 env:
@@ -22,6 +22,8 @@ env:
 # this before_script works if cmdstanr is in r_github_packages above
 before_script:
   - Rscript -e 'cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)'
+  - sudo touch $HOME/.cmdstanr/cmdstan/make/local
+  - sudo chown -R $USER:$USER $HOME/.cmdstanr/cmdstan/make/local
 
 after_success:
   - Rscript -e 'covr::codecov(line_exclusions = list("R/zzz.R"))'

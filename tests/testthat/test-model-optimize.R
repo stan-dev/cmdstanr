@@ -3,8 +3,8 @@ context("model-optimize")
 # Setup -------------------------------------------------------------------
 if (not_on_cran()) {
   set_cmdstan_path()
-  mod <- cmdstan_model(stan_file = beroulli_example_file())
-  data_list <- bernoulli_example_data()
+  mod <- testing_model("bernoulli")
+  data_list <- testing_data("bernoulli")
 
   # these are all valid for optimize()
   ok_arg_values <- list(
@@ -50,19 +50,14 @@ test_that("optimize() method errors for any invalid argument before calling cmds
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
-    expect_error(
-      expect_experimental_warning(do.call(mod$optimize, args)),
-      regexp = nm
-    )
+    expect_error(do.call(mod$optimize, args), regexp = nm)
   }
 })
 
 test_that("optimize() errors when combining 'newton' with 'init_alpha'", {
   skip_on_cran()
   expect_error(
-    expect_experimental_warning(
-      mod$optimize(data = data_list, algorithm = "newton", init_alpha = 0.1)
-    ),
+      mod$optimize(data = data_list, algorithm = "newton", init_alpha = 0.1),
     "'init_alpha' can't be used when algorithm is 'newton'"
   )
 })

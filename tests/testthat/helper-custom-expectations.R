@@ -1,5 +1,5 @@
-expect_experimental_warning <- function(object) {
-  expect_warning(
+expect_experimental_message <- function(object) {
+  expect_message(
     object,
     regexp = "experimental and the structure of returned object may change"
   )
@@ -14,7 +14,7 @@ expect_sample_output <- function(object, num_chains = NULL) {
 }
 
 expect_optim_output <- function(object) {
-  expect_experimental_warning(
+  expect_experimental_message(
     expect_output(
       object,
       regexp = "Initial log joint probability"
@@ -23,7 +23,7 @@ expect_optim_output <- function(object) {
 }
 
 expect_vb_output <- function(object) {
-  expect_experimental_warning(
+  expect_experimental_message(
     expect_output(
       object,
       regexp = "Drawing a sample of size"

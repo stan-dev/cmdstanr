@@ -2,11 +2,11 @@ context("model-sample")
 
 if (not_on_cran()) {
   set_cmdstan_path()
-  stan_program <- beroulli_example_file()
-  mod <- cmdstan_model(stan_file = stan_program)
+  stan_program <- testing_stan_file("bernoulli")
+  mod <- testing_model("bernoulli")
 
   # valid ways to supply data
-  data_list <- bernoulli_example_data()
+  data_list <- testing_data("bernoulli")
   data_file_r <- test_path("resources", "data", "bernoulli.data.R")
   data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 
@@ -101,7 +101,6 @@ test_that("sample() method works with data files", {
 
 test_that("sample() method works with init file", {
   skip_on_cran()
-  skip_if_not_installed("rstan")
 
   init_list <- list(theta = 0.5)
   init_file <- tempfile(
@@ -143,6 +142,15 @@ test_that("sample() method errors for any invalid arguments before calling cmdst
   }
 })
 
+test_that("sample works for warmup-only run", {
+  skip_on_cran()
+  expect_output(
+    fit <- mod$sample(num_chains = 2, data = data_list, num_samples = 0),
+    "Iteration: 1000 / 1000 [100%]  (Warmup)",
+    fixed = TRUE
+  )
+})
+
 test_that("sampling in parallel works", {
   skip_on_cran()
   expect_output(
@@ -175,4 +183,3 @@ test_that("mc.cores option detected", {
     fixed = TRUE
   )
 })
-
