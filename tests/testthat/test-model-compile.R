@@ -2,11 +2,8 @@ context("model-compile")
 
 if (not_on_cran()) {
   set_cmdstan_path()
-  stan_program <- beroulli_example_file()
+  stan_program <- cmdstan_example_file()
   mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
-
-  stan_program_different_dir <- test_path("resources", "stan", "bernoulli.stan")
-  stan_program_w_include <- test_path("resources", "stan", "bernoulli_include.stan")
 }
 
 test_that("object initialized correctly", {
@@ -31,6 +28,9 @@ test_that("compile() method works", {
   out <- utils::capture.output(mod$compile(quiet = FALSE))
   expect_output(print(out), expected)
   expect_equal(mod$exe_file(), cmdstan_ext(strip_ext(stan_program)))
+
+  out <- utils::capture.output(mod$compile(quiet = FALSE))
+  expect_output(print(out), "is up to date")
 })
 
 test_that("compile() method forces recompilation if changes in flags", {
@@ -48,26 +48,10 @@ test_that("compile() method forces recompilation if changes in flags", {
   )
 })
 
-test_that("compilation works when stan program not in cmdstan dir", {
-  skip_on_cran()
-
-  expect_message(
-    mod_2 <- cmdstan_model(stan_file = stan_program_different_dir, quiet = TRUE),
-    "Compiling Stan program..."
-  )
-  expect_equal(mod_2$exe_file(), cmdstan_ext(strip_ext(absolute_path(stan_program_different_dir))))
-
-  out <- utils::capture.output(
-    mod_2 <- suppressMessages(cmdstan_model(stan_file = stan_program_different_dir, quiet = FALSE))
-  )
-  expect_output(print(out), "is up to date")
-
-  # cleanup
-  file.remove(paste0(strip_ext(mod_2$exe_file()), delete_extensions()))
-})
-
 test_that("compilation works with include_paths", {
   skip_on_cran()
+
+  stan_program_w_include <- testing_stan_file("bernoulli_include")
 
   expect_error(
     cmdstan_model(stan_file = stan_program_w_include, include_paths = "NOT_A_DIR",
@@ -87,8 +71,8 @@ test_that("compilation works with include_paths", {
                                    include_paths = test_path("resources", "stan")),
     "Compiling Stan program"
   )
-  expect_equal(mod_w_include$exe_file(), cmdstan_ext(strip_ext(absolute_path(stan_program_w_include))))
-
-  # cleanup
-  file.remove(paste0(strip_ext(mod_w_include$exe_file()), delete_extensions()))
+  expect_equal(
+    mod_w_include$exe_file(),
+    cmdstan_ext(strip_ext(absolute_path(stan_program_w_include)))
+  )
 })

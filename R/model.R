@@ -491,13 +491,6 @@ optimize_method <- function(data = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
                             iter = NULL) {
-
-  warning(
-    "Optimization method is experimental and ",
-    "the structure of returned object may change.",
-    call. = FALSE
-  )
-
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
@@ -518,6 +511,11 @@ optimize_method <- function(data = NULL,
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
   runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
   runset$run_cmdstan()
+
+  message(
+    "Optimization method is experimental and ",
+    "the structure of returned object may change."
+  )
   CmdStanMLE$new(runset)
 }
 CmdStanModel$set("public", name = "optimize", value = optimize_method)
@@ -607,13 +605,6 @@ variational_method <- function(data = NULL,
                                tol_rel_obj = NULL,
                                eval_elbo = NULL,
                                output_samples = NULL) {
-
-  warning(
-    "Variational inference method is experimental and ",
-    "the structure of returned object may change.",
-    call. = FALSE
-  )
-
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -641,6 +632,11 @@ variational_method <- function(data = NULL,
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
   runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
   runset$run_cmdstan()
+
+  message(
+    "Variational method is experimental and ",
+    "the structure of returned object may change."
+  )
   CmdStanVB$new(runset)
 }
 CmdStanModel$set("public", name = "variational", value = variational_method)

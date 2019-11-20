@@ -9,11 +9,9 @@ Authors@R:
       person(given = "Ben", family = "Bales", role = c("ctb")),     
       person(given = "Mitzi", family = "Morris", role = c("ctb"), 
            comment = "CmdStanPy"))
-Description: A lightweight interface to 'Stan' <https://mc-stan.org>. 
-    The 'CmdStanR' interface to 'Stan' (the 'cmdstanr' R package) calls
-    'CmdStan' (the shell interface) for compilation, running algorithms, 
-    and writing results to files. Methods for accessing the results
-    from R are also provided.
+Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
+    The 'CmdStanR' interface is an alternative to 'RStan' that calls 'CmdStan' 
+    (the shell interface) for compilation and running algorithms.
 License: BSD_3_clause + file LICENSE
 URL: https://mc-stan.org/cmdstanr, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues
