@@ -10,7 +10,6 @@ cache:
     - $HOME/.cmdstanr
   packages: true
 
-# FIXME: replace with cmdstanr master eventually
 r_github_packages:
   - r-lib/covr
   - stan-dev/cmdstanr
