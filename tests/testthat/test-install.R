@@ -2,7 +2,7 @@ context("install")
 
 test_that("test cmdstan installation", {
   skip_if_offline()
-  skip_if(on_codecov(), message = "R_COVR")
+  skip_on_covr()
 
   if (not_on_cran()) {
     dir <- dirname(cmdstan_default_path())
@@ -11,12 +11,12 @@ test_that("test cmdstan installation", {
   }
   expect_message(
     expect_output(
-      install_log <- install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE),
-      "Finished installing CmdStan"
+      install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE),
+      "Compiling, linking C++ code",
+      fixed = TRUE
     ),
     "CmdStan path set"
   )
-  expect_equal(install_log$status, 0)
 })
 
 test_that("Test cmdstan installation error", {
@@ -27,9 +27,9 @@ test_that("Test cmdstan installation error", {
     dir <- tempdir()
   }
   if (dir.exists(file.path(dir, "cmdstan"))) {
-    expect_output(
-      install_cmdstan(dir = dir, cores = 1, quiet = FALSE, overwrite = FALSE),
-      "Please remove or rename the 'cmdstan' folder"
+    expect_warning(
+      install_cmdstan(dir = dir, overwrite = FALSE),
+      "An installation already exists"
     )
   }
 })
