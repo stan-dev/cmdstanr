@@ -29,6 +29,7 @@ test_that("install_cmdstan() errors if installation already exists", {
 })
 
 test_that("internal clone_repo() function clones the repo", {
+  skip_on_covr() 
   skip_on_cran()
   skip_if_offline()
   clone_dir <- tempfile(tmpdir = tempdir(check=TRUE))
