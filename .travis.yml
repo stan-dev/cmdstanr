@@ -19,6 +19,8 @@ env:
 
 before_install:
   - sudo bash inst/make_cmdstan.sh -j2 -o
+  - sudo touch $HOME/.cmdstanr/cmdstan/make/local
+  - sudo chown -R $USER:$USER $HOME/.cmdstanr/cmdstan/make/local
 
 after_success:
   - Rscript -e 'covr::codecov(line_exclusions = list("R/zzz.R"))'
