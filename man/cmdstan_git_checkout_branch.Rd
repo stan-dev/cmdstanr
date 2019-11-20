@@ -22,13 +22,8 @@ and \verb{make build} after checking out the new branch.}
 and speed up installation. The default is \code{cores=2}, although we recommend
 using more cores if available.}
 
-\item{quiet}{Should the verbose output from the system process be suppressed
-during installation? The default is \code{FALSE}.}
-}
-\value{
-\link[base:invisible]{Invisibly}, the list returned by \code{\link[processx:run]{processx::run()}},
-which contains information about the system process that was run. See the
-\strong{Value} section at \code{\link[processx:run]{processx::run()}} for details.
+\item{quiet}{Should the verbose output from the system processes be
+suppressed when building the CmdStan binaries? The default is \code{FALSE}.}
 }
 \description{
 This only works if the installed CmdStan is from a clone of the git

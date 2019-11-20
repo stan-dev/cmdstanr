@@ -21,6 +21,8 @@
 #'   CmdStan still be downloaded and reinstalled? The default is `FALSE`, in
 #'   which case an informative error is thrown instead of overwriting the user's
 #'   installation.
+#' @param timeout Timeout (in seconds) for the CmdStan build stage of the
+#'   installation process. The default is `timeout=600` (10 minutes).
 #' @param repo_clone If `FALSE` (the default), the latest CmdStan release is
 #'   downloaded and installed from tarball. If `TRUE` will install a git clone
 #'   of CmdStan from `repo_url` and check out the branch `repo_branch`.
@@ -37,6 +39,7 @@ install_cmdstan <- function(dir = NULL,
                             cores = 2,
                             quiet = FALSE,
                             overwrite = FALSE,
+                            timeout = 600,
                             repo_clone = FALSE,
                             repo_url = "https://github.com/stan-dev/cmdstan.git",
                             repo_branch = "develop") {
@@ -78,7 +81,7 @@ install_cmdstan <- function(dir = NULL,
     message("* Latest CmdStan release is v", ver)
     message("* Installing CmdStan v", ver, " in ", dir)
     message("* Downloading ", cmdstan_ver, " from GitHub...")
-    dest_file <- file.path(dir, paste0(cmdstan_ver, ".tar.gz"))
+    dest_file <- file.path(dir, cmdstan_ver)
     download_rc <- utils::download.file(url = github_download_url(ver),
                                         destfile = dest_file)
     if (download_rc != 0) {
@@ -94,22 +97,22 @@ install_cmdstan <- function(dir = NULL,
       extras = "--strip-components 1"
     )
     if (untar_rc != 0) {
-      stop("Corrupt download file. Exited with return code: ", untar_rc,
+      stop("Problem extracting tarball. Exited with return code: ", untar_rc,
            call. = FALSE)
     }
     file.remove(dest_file)
   }
 
   message("* Building CmdStan binaries...")
-  build_log <- build_cmdstan(dir_cmdstan, cores, quiet)
+  build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
   if (!build_status_ok(build_log, quiet = quiet)) {
-    return(build_log)
+    return(invisible(build_log))
   }
 
   if (!repo_clone) {
-    example_log <- build_example(dir_cmdstan, cores, quiet)
+    example_log <- build_example(dir_cmdstan, cores, quiet, timeout)
     if (!build_status_ok(example_log, quiet = quiet)) {
-      return(example_log)
+      return(invisible(example_log))
     }
   }
 
@@ -190,7 +193,7 @@ clone_repo <- function(dir, repo_url, repo_branch, quiet) {
   )
 }
 
-build_cmdstan <- function(dir, cores, quiet) {
+build_cmdstan <- function(dir, cores, quiet, timeout) {
   processx::run(
     make_cmd(),
     args = c(paste0("-j", cores), "build"),
@@ -200,11 +203,11 @@ build_cmdstan <- function(dir, cores, quiet) {
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if(quiet) message(x) },
-    timeout = 600 # timeout after 10 minutes to avoid infinite loop problem?
+    timeout = timeout
   )
 }
 
-build_example <- function(dir, cores, quiet) {
+build_example <- function(dir, cores, quiet, timeout) {
   processx::run(
     make_cmd(),
     args = c(paste0("-j", cores), cmdstan_ext("examples/bernoulli/bernoulli")),
@@ -213,21 +216,43 @@ build_example <- function(dir, cores, quiet) {
     echo = !quiet,
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) }
+    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    timeout = timeout
   )
 }
 
 build_status_ok <- function(process_log, quiet = FALSE) {
-  if (is.na(process_log$status) || process_log$status != 0) {
-    if (!quiet) {
-      suggestion <- "See the error message(s) above."
+  if (process_log$timeout) {
+    if (quiet) {
+      end_warning <-
+        " and running again with 'quiet=FALSE' to see full installation output."
     } else {
-      suggestion <- "Please try again with 'quiet=FALSE' to get the full error output."
+      end_warning <- "."
     }
-    cat("\n")
-    warning("There was a problem during installation. ", suggestion,
-            call. = FALSE)
+    warning(
+      "The build process timed out. ",
+      "Try increasing the value of the 'timeout' argument",
+      end_warning,
+      call. = FALSE
+    )
     return(FALSE)
   }
+
+  if (is.na(process_log$status) || process_log$status != 0) {
+    if (quiet) {
+      end_warning <-
+        " and/or try again with 'quiet=FALSE' to see full installation output."
+    } else {
+      end_warning <- "."
+    }
+    cat("\n")
+    warning(
+      "There was a problem during installation. See the error message(s) above",
+      end_warning,
+      call. = FALSE
+    )
+    return(FALSE)
+  }
+
   TRUE
 }
