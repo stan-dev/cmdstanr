@@ -5,11 +5,11 @@ image: Visual Studio 2017
 platform:
   - x64
 
-cache:
-  - C:\RLibrary
-  - C:\RTools
-  # saving these seems to be working but I'm not sure it's preventing
-  # installing them again every time
+# cache:
+#  - C:\RLibrary
+#  - C:\RTools
+# saving these seems to be working but I'm not sure it's preventing
+# installing them again every time (it doesn't obviously save time)
 
 clone_folder: c:\projects\cmdstanr
 shallow_clone: true
@@ -27,7 +27,6 @@ environment:
   _R_CHECK_SYSTEM_CLOCK_: false
   _R_BUILD_FLAGS: "--no-manual"
   _R_CHECK_FLAGS: "--no-manual --as-cran --install-args=--build"
-  _CMDSTAN_INSTALL_FLAGS: "-j2 -w"
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
@@ -66,11 +65,7 @@ install:
   - Rscript -e "install.packages(c('remotes', 'covr', 'knitr'), repos = 'https://cloud.r-project.org')"
   - Rscript -e "options(repos = c(CRAN = 'https://cloud.r-project.org'), download.file.method = 'auto')"
   - Rscript -e "remotes::install_deps(dependencies = TRUE, type='win.binary')"
-
-  - echo "Installing Cmdstan"
-  - bash inst/make_cmdstan.sh %_CMDSTAN_INSTALL_FLAGS%
-
-  - echo "Installation done"
+  - echo "Finished installing R dependencies"
 
 build: false
 
@@ -78,6 +73,10 @@ test_script:
   - SET PATH=C:\\R\\bin\\x64;C:\\Rtools\\bin;C:\\Rtools\\mingw_64\\bin;%PATH%
   - echo "Build the package"
   - R.exe CMD build . %_R_BUILD_FLAGS%
+  - echo "Install the package so we can call install_cmdstan()"
+  - R.exe CMD INSTALL .\\cmdstanr_*.tar.gz
+  - echo "Install CmdStan via cmdstanr::install_cmdstan()"
+  - Rscript -e "cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)"
   - echo "Check the package"
   - R.exe CMD check .\\cmdstanr_*.tar.gz %_R_CHECK_FLAGS%
 
