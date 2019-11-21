@@ -15,16 +15,16 @@ available methods.
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
-code \tab Return Stan program as a string. \cr
-print \tab Print readable version of Stan program. \cr
-stan_file \tab Return the file path to the Stan program. \cr
-exe_file \tab Return the file path to the compiled executable. \cr
-\link[=model-method-compile]{compile} \tab Compile Stan program. \cr
-\link[=model-method-sample]{sample}
+\verb{$code()} \tab Return Stan program as a string. \cr
+\verb{$print()} \tab Print readable version of Stan program. \cr
+\verb{$stan_file()} \tab Return the file path to the Stan program. \cr
+\verb{$exe_file()} \tab Return the file path to the compiled executable. \cr
+\code{\link[=model-method-compile]{$compile()}} \tab Compile Stan program. \cr
+\code{\link[=model-method-sample]{$sample()}}
 \tab Run CmdStan's \code{"sample"} method, return \code{\link{CmdStanMCMC}} object. \cr
-\link[=model-method-optimize]{optimize}
+\code{\link[=model-method-optimize]{$optimize()}}
 \tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object. \cr
-\link[=model-method-variational]{variational}
+\code{\link[=model-method-variational]{$variational()}}
 \tab Run CmdStan's \code{"variational"} method, return \code{\link{CmdStanVB}} object. \cr
 }
 }
