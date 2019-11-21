@@ -207,8 +207,8 @@ NULL
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `draws` \tab Return post-warmup draws as a
-#'    [`draws_array`][posterior::draws_array] object.\cr
+#'  `draws` \tab Return a [`draws_array`][posterior::draws_array] of
+#'  (post-warmup) posterior draws.\cr
 #'  [`summary`][fit-method-summary]
 #'    \tab Run [posterior::summarise_draws()]. \cr
 #'  [`cmdstan_summary`][fit-method-cmdstan_summary]
@@ -284,9 +284,14 @@ CmdStanMCMC <- R6::R6Class(
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `mle` \tab Return the MLE (or posterior mode) as a named vector. \cr
-#'  `lp` \tab Return the the total log probability density (up to an additive
-#'    constant) computed in the model block of the Stan program. \cr
+#'  `mle` \tab Return the (penalized) maximum likelihood point estimate
+#'  (posterior mode) as a vector with one element per variable. \cr
+#'  `lp` \tab Return the total log probability density (up to an additive
+#'  constant) computed in the model block of the Stan program. \cr
+#'  `draws` \tab Same as the `$mle()` method but the point estimate is returned
+#'  as a 1-row [`draws_matrix`][posterior::draws_matrix] with one column per
+#'  variable (instead of as a named vector) to be consistent with the fitted
+#'  model objects for methods other than optimization. \cr
 #'  [`save_output_files`][fit-method-save_output_files]
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`save_data_file`][fit-method-save_data_file]
@@ -338,11 +343,14 @@ CmdStanMLE <- R6::R6Class(
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `draws` \tab
-#'    Return approximate posterior draws as a
-#'    [`draws_matrix`][posterior::draws_matrix] object. \cr
+#'  `draws` \tab Return a [`draws_matrix`][posterior::draws_matrix] of
+#'  approximate posterior draws. \cr
 #'  [`summary`][fit-method-summary]
 #'    \tab Run [posterior::summarise_draws()]. \cr
+#'  `log_p` \tab Return a numeric vector containing the target (log-posterior)
+#'  evaluated at each of the draws. \cr
+#'  `log_g` \tab Return a numeric vector containing the log density of the
+#'  variational approximation to the posterior evaluated at each of the draws. \cr
 #'  [`cmdstan_summary`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`cmdstan_diagnose`][fit-method-cmdstan_diagnose]

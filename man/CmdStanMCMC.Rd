@@ -14,8 +14,8 @@ objects.
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
-\code{draws} \tab Return post-warmup draws as a
-\code{\link[posterior:draws_array]{draws_array}} object.\cr
+\code{draws} \tab Return a \code{\link[posterior:draws_array]{draws_array}} of
+(post-warmup) posterior draws.\cr
 \code{\link[=fit-method-summary]{summary}}
 \tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
 \code{\link[=fit-method-cmdstan_summary]{cmdstan_summary}}
