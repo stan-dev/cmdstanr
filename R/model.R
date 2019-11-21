@@ -96,16 +96,16 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  code \tab Return Stan program as a string. \cr
-#'  print \tab Print readable version of Stan program. \cr
-#'  stan_file \tab Return the file path to the Stan program. \cr
-#'  exe_file \tab Return the file path to the compiled executable. \cr
-#'  [compile][model-method-compile] \tab Compile Stan program. \cr
-#'  [sample][model-method-sample]
+#'  `$code()` \tab Return Stan program as a string. \cr
+#'  `$print()` \tab Print readable version of Stan program. \cr
+#'  `$stan_file()` \tab Return the file path to the Stan program. \cr
+#'  `$exe_file()` \tab Return the file path to the compiled executable. \cr
+#'  [`$compile()`][model-method-compile] \tab Compile Stan program. \cr
+#'  [`$sample()`][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
-#'  [optimize][model-method-optimize]
+#'  [`$optimize()`][model-method-optimize]
 #'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. \cr
-#'  [variational][model-method-variational]
+#'  [`$variational()`][model-method-variational]
 #'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. \cr
 #' }
 #'
