@@ -13,11 +13,14 @@ A \code{CmdStanVB} object is the fitted model object returned by the
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
-\code{draws} \tab
-Return approximate posterior draws as a
-\code{\link[posterior:draws_matrix]{draws_matrix}} object. \cr
+\code{draws} \tab Return a \code{\link[posterior:draws_matrix]{draws_matrix}} of
+approximate posterior draws. \cr
 \code{\link[=fit-method-summary]{summary}}
 \tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
+\code{log_p} \tab Return a numeric vector containing the target (log-posterior)
+evaluated at each of the draws. \cr
+\code{log_g} \tab Return a numeric vector containing the log density of the
+variational approximation to the posterior evaluated at each of the draws. \cr
 \code{\link[=fit-method-cmdstan_summary]{cmdstan_summary}}
 \tab Run and print CmdStan's \code{bin/stansummary}. \cr
 \code{\link[=fit-method-cmdstan_diagnose]{cmdstan_diagnose}}

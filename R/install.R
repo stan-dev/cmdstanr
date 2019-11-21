@@ -1,13 +1,12 @@
 #' Install the latest release of CmdStan
 #'
 #' \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-#' The `install_cmdstan()` function runs a script
-#' (see `inst/make_cmdstan.sh` on [GitHub](https://github.com/stan-dev/cmdstanr))
-#' that by default attempts to download and install the latest release of
-#' [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest). Currently the
-#' necessary C++ tool chain is assumed to be available (see Appendix B of the
-#' CmdStan [guide](https://github.com/stan-dev/cmdstan/releases/latest)),
-#' but in the future CmdStanR may help install the requirements.
+#' The `install_cmdstan()` function attempts to download and install the latest
+#' release of [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest) or
+#' a development version from a repository. Currently the necessary C++ tool
+#' chain is assumed to be available (see Appendix B of the CmdStan
+#' [guide](https://github.com/stan-dev/cmdstan/releases/latest)), but in the
+#' future CmdStanR may help install the requirements.
 #'
 #' @export
 #' @param dir Path to the directory in which to install CmdStan. The default is
@@ -16,12 +15,14 @@
 #' @param cores The number of CPU cores to use to parallelize building CmdStan
 #'   and speed up installation. The default is `cores=2`, although we recommend
 #'   using more cores if available.
-#' @param quiet Should the verbose output from the system process be suppressed
-#'   during installation? The default is `FALSE`.
+#' @param quiet Should the verbose output from the system processes be
+#'   suppressed when building the CmdStan binaries? The default is `FALSE`.
 #' @param overwrite When an existing installation is found in `dir`, should
 #'   CmdStan still be downloaded and reinstalled? The default is `FALSE`, in
 #'   which case an informative error is thrown instead of overwriting the user's
 #'   installation.
+#' @param timeout Timeout (in seconds) for the CmdStan build stage of the
+#'   installation process. The default is `timeout=600` (10 minutes).
 #' @param repo_clone If `FALSE` (the default), the latest CmdStan release is
 #'   downloaded and installed from tarball. If `TRUE` will install a git clone
 #'   of CmdStan from `repo_url` and check out the branch `repo_branch`.
@@ -32,65 +33,91 @@
 #' @param repo_branch If `repo_clone` is `TRUE`, the name of the branch to
 #'   checkout in the cloned repository.
 #'
-#' @return [Invisibly][base::invisible], the list returned by [processx::run()],
-#'   which contains information about the system process that was run. See the
-#'   **Value** section at [processx::run()] for details.
-#'
 #' @seealso [cmdstan_git_checkout_branch()]
 #'
 install_cmdstan <- function(dir = NULL,
                             cores = 2,
                             quiet = FALSE,
                             overwrite = FALSE,
+                            timeout = 600,
                             repo_clone = FALSE,
                             repo_url = "https://github.com/stan-dev/cmdstan.git",
                             repo_branch = "develop") {
-  make_cmdstan <- system.file("make_cmdstan.sh", package = "cmdstanr")
-  if (!is.null(dir)) {
-    checkmate::assert_directory_exists(dir)
-    make_cmdstan <- c(make_cmdstan, paste0("-d ", dir))
-  }
-  make_cmdstan <- c(make_cmdstan, paste0("-j", cores))
-  if (os_is_windows()) {
-    make_cmdstan <- c(make_cmdstan, "-w")
-  }
-  if (overwrite) {
-    make_cmdstan <- c(make_cmdstan, "-o")
-  }
-  if (repo_clone) {
-    make_cmdstan <- c(make_cmdstan, "-r", "-u", repo_url, "-b", repo_branch)
-  }
-
-  install_log <- processx::run(
-    command = "bash",
-    args = make_cmdstan,
-    echo_cmd = FALSE,
-    echo = !quiet,
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) }
-  )
-
-  if (is.na(install_log$status) || install_log$status != 0) {
-    if (!quiet) {
-      suggestion <- "See the error message(s) above."
-    } else {
-      suggestion <- "Please try again with 'quiet=FALSE' to get the full error output."
+  if (is.null(dir)) {
+    dir_cmdstan <- cmdstan_default_path()
+    dir <- dirname(dir_cmdstan)
+    if (!dir.exists(dir)) {
+      dir.create(dir, recursive = TRUE)
     }
-    cat("\n")
-    warning("There was a problem during installation. ", suggestion,
-            call. = FALSE)
-    return(invisible(install_log))
-  }
-
-  if (!is.null(dir)) {
-    install_path <- file.path(dir, "cmdstan")
   } else {
-    install_path <- cmdstan_default_path()
+    checkmate::assert_directory_exists(dir, access = "rwx")
+    dir <- repair_path(dir)
+    dir_cmdstan <- file.path(dir, "cmdstan")
   }
 
-  set_cmdstan_path(install_path)
-  invisible(install_log)
+  if (dir.exists(dir_cmdstan)) {
+    if (!overwrite) {
+      warning(
+        "An installation already exists at ", dir_cmdstan, ". ",
+        "Please remove or rename the 'cmdstan' folder or set overwrite=TRUE.",
+        call. = FALSE
+      )
+      return(invisible(NULL))
+    } else {
+      message("* Removing the existing installation of CmdStan...")
+      unlink(dir_cmdstan, recursive = TRUE, force = TRUE)
+    }
+  }
+
+  if (repo_clone) {
+    message(
+      "* Cloning ", repo_url, " and checking out branch ", repo_branch, ". ",
+      "This may take a few minutes ..."
+    )
+    clone_repo(dir_cmdstan, repo_url, repo_branch, quiet)
+  } else {
+    ver <- latest_released_version()
+    cmdstan_ver <- paste0("cmdstan-", ver, ".tar.gz")
+    message("* Latest CmdStan release is v", ver)
+    message("* Installing CmdStan v", ver, " in ", dir)
+    message("* Downloading ", cmdstan_ver, " from GitHub...")
+    dest_file <- file.path(dir, cmdstan_ver)
+    download_rc <- utils::download.file(url = github_download_url(ver),
+                                        destfile = dest_file)
+    if (download_rc != 0) {
+      stop("GitHub download failed. Exited with return code: ", download_rc,
+           call. = FALSE)
+    }
+    message("* Download complete")
+
+    message("* Unpacking archive...")
+    untar_rc <- utils::untar(
+      dest_file,
+      exdir = file.path(dir, "cmdstan/"),
+      extras = "--strip-components 1"
+    )
+    if (untar_rc != 0) {
+      stop("Problem extracting tarball. Exited with return code: ", untar_rc,
+           call. = FALSE)
+    }
+    file.remove(dest_file)
+  }
+
+  message("* Building CmdStan binaries...")
+  build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
+  if (!build_status_ok(build_log, quiet = quiet)) {
+    return(invisible(build_log))
+  }
+
+  if (!repo_clone) {
+    example_log <- build_example(dir_cmdstan, cores, quiet, timeout)
+    if (!build_status_ok(example_log, quiet = quiet)) {
+      return(invisible(example_log))
+    }
+  }
+
+  message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
+  set_cmdstan_path(dir_cmdstan)
 }
 
 #' Check out a branch from a git repository and rebuild CmdStan
@@ -127,4 +154,105 @@ cmdstan_git_checkout_branch <- function(repo_branch,
     error_on_status = TRUE
   )
   invisible(install_log)
+}
+
+
+
+# internal ----------------------------------------------------------------
+
+# construct url for download from cmdstan version number
+github_download_url <- function(version_number) {
+  base_url <- "https://github.com/stan-dev/cmdstan/releases/download/"
+  paste0(base_url, "v", version_number,
+         "/cmdstan-", version_number, ".tar.gz")
+}
+
+# get version number of latest release
+latest_released_version <- function() {
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("Please install the jsonlite package.", call. = FALSE)
+  }
+  contents <- url("https://api.github.com/repos/stan-dev/cmdstan/releases/latest")
+  tag_name <- jsonlite::parse_json(contents)[["tag_name"]]
+  version_number <- sub("v", "", tag_name)
+  version_number
+}
+
+# internal functions to run system commands -------------------------------
+clone_repo <- function(dir, repo_url, repo_branch, quiet) {
+  git_args <- c("clone", "--recursive",
+                repo_url, paste0("-b", repo_branch),
+                dir)
+  processx::run(
+    command = "git",
+    args = git_args,
+    echo_cmd = FALSE,
+    error_on_status = TRUE,
+    echo = !quiet,
+    spinner = quiet
+  )
+}
+
+build_cmdstan <- function(dir, cores, quiet, timeout) {
+  processx::run(
+    make_cmd(),
+    args = c(paste0("-j", cores), "build"),
+    wd = dir,
+    echo_cmd = FALSE,
+    echo = !quiet,
+    spinner = quiet,
+    error_on_status = FALSE,
+    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    timeout = timeout
+  )
+}
+
+build_example <- function(dir, cores, quiet, timeout) {
+  processx::run(
+    make_cmd(),
+    args = c(paste0("-j", cores), cmdstan_ext("examples/bernoulli/bernoulli")),
+    wd = dir,
+    echo_cmd = FALSE,
+    echo = !quiet,
+    spinner = quiet,
+    error_on_status = FALSE,
+    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    timeout = timeout
+  )
+}
+
+build_status_ok <- function(process_log, quiet = FALSE) {
+  if (process_log$timeout) {
+    if (quiet) {
+      end_warning <-
+        " and running again with 'quiet=FALSE' to see full installation output."
+    } else {
+      end_warning <- "."
+    }
+    warning(
+      "The build process timed out. ",
+      "Try increasing the value of the 'timeout' argument",
+      end_warning,
+      call. = FALSE
+    )
+    return(FALSE)
+  }
+
+  if (is.na(process_log$status) || process_log$status != 0) {
+    if (quiet) {
+      end_warning <-
+        " and/or try again with 'quiet=FALSE' to see full installation output."
+    } else {
+      end_warning <- "."
+    }
+    cat("\n")
+    warning(
+      "There was a problem during installation. See the error message(s) above",
+      end_warning,
+      call. = FALSE
+    )
+    return(FALSE)
+  }
+
+  TRUE
 }

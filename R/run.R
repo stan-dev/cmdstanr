@@ -238,6 +238,8 @@ CmdStanRun <- R6::R6Class(
         if (!procs$is_queued(chain_id)) {
           output <- procs$get_proc(chain_id)$read_output_lines()
           procs$process_sample_output(output, chain_id)
+          error_output <- procs$get_proc(chain_id)$read_error_lines()
+          procs$process_error_output(error_output, chain_id)
         }
       }
       procs$set_active_cores(procs$num_alive())
@@ -357,6 +359,9 @@ CmdStanProcs <- R6::R6Class(
             # input and mark the chain finished
             output <- self$get_proc(id)$read_output_lines()
             self$process_sample_output(output, id)
+            error_output <- self$get_proc(id)$read_error_lines()
+            self$process_error_output(error_output, id)
+
             self$mark_chain_stop(id)
           } else {
             finished <- FALSE
@@ -431,6 +436,13 @@ CmdStanProcs <- R6::R6Class(
       (regexpr("either mistyped or misplaced.", line, perl = TRUE) > 0) ||
       (regexpr("A method must be specified!", line, perl = TRUE) > 0) ||
       (regexpr("is not a valid value for", line, perl = TRUE) > 0)
+    },
+    process_error_output = function(err_out, id) {
+      if(length(err_out)) {
+        for(err_line in err_out) {
+          message("Chain ", id, " ", err_line)
+        }
+      }
     },
     process_sample_output = function(out, id) {
       id <- as.character(id)
