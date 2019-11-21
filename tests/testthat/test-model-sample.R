@@ -13,6 +13,7 @@ if (not_on_cran()) {
   # these are all valid for sample()
   ok_arg_values <- list(
     data = data_list,
+    output_dir = tempdir(),
     num_chains = 2,
     num_cores = 1,
     num_warmup = 50,
@@ -36,6 +37,7 @@ if (not_on_cran()) {
   # using any one of these should cause sample() to error
   bad_arg_values <- list(
     data = "NOT_A_FILE",
+    output_dir = "NOT_A_DIRECTORY",
     num_chains = -1,
     num_cores = -1,
     num_warmup = -1,
@@ -58,6 +60,7 @@ if (not_on_cran()) {
 
   bad_arg_values_2 <- list(
     data = matrix(1:10),
+    output_dir = 1,
     num_chains = "NOT_A_NUMBER",
     num_cores = "NOT_A_NUMBER",
     init = "NOT_A_FILE",

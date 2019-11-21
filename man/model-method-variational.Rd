@@ -24,6 +24,7 @@ matrix for the approximation.
   refresh = NULL,
   init = NULL,
   save_diagnostics = FALSE,
+  output_dir = NULL,
   algorithm = NULL,
   iter = NULL,
   grad_samples = NULL,
@@ -73,6 +74,20 @@ is \code{save_diagnostics=FALSE}, which is appropriate for almost every use case
 divergences for HMC). To save the temporary files created when
 \code{save_diagnostics=TRUE} see the
 \code{\link[=fit-method-save_diagnostic_files]{$save_diagnostic_files()}} method.
+\item \code{output_dir}: (string) A path to a directory where CmdStan should write
+its output CSV files. For interactive use this can typically be left at
+\code{NULL} (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
+posterior draws and diagnostics) available in \R via methods of the fitted
+model objects. The behavior of \code{output_dir} is as follows:
+\itemize{
+\item If \code{NULL} (the default) then the CSV files are written to a temporary
+directory and only saved permanently if the user calls one of the
+\verb{$save_*} methods of the fitted model object (e.g.,
+\code{\link[=fit-method-save_output_files]{$save_output_files()}}).
+\item If a path then the files are created in \code{output_dir} with names
+corresponding the defaults used by \verb{$save_output_files()} (and similar
+methods like \verb{$save_diagnostic_files()}).
+}
 }
 }
 

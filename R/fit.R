@@ -131,12 +131,12 @@ NULL
 #' @aliases fit-method-save_data_file fit-method-save_diagnostic_files
 #'   fit-method-output_files fit-method-data_file fit-method-diagnostic_files
 #'
-#' @description All fitted model objects have methods for saving (copying to a
-#'   specified location) the temporary files created by CmdStanR for CmdStan
-#'   output csv files and input data files. These methods move the files from
-#'   the CmdStanR temporary directory to a user-specified location. __The paths
-#'   stored in the fitted model object will also be updated to point to the new
-#'   file locations.__
+#' @description All fitted model objects have methods for saving (moving to a
+#'   specified location) the files created by CmdStanR to hold CmdStan output
+#'   csv files and input data files. These methods move the files from their
+#'   current location (possibly the temporary directory) to a user-specified
+#'   location. __The paths stored in the fitted model object will also be
+#'   updated to point to the new file locations.__
 #'
 #'   The versions without the `save_` prefix (e.g., `$output_files()`) return
 #'   the current file paths without moving any files.
@@ -166,7 +166,7 @@ NULL
 #' * `basename` is the user's provided `basename` argument;
 #' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
 #' * `id` is the MCMC chain id (or `1` for non MCMC);
-#' * `random` contains five random alphanumeric characters/
+#' * `random` contains six random alphanumeric characters.
 #'
 #' For `$save_diagnostic_files()` everything is the same as for
 #' `$save_output_files()` except `"-diagnostic-"` is included in the new
