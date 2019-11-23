@@ -175,41 +175,6 @@ generate_file_names <-
     new_names
   }
 
-
-# FIXME: also parse the csv header
-read_optim_csv <- function(output_file) {
-  csv_no_comments <- utils::read.csv(
-    output_file,
-    comment.char = "#",
-    colClasses = "numeric"
-  )
-  mat <- as.matrix(csv_no_comments)
-  colnames(mat) <- repair_variable_names(colnames(mat))
-  list(
-    mle = mat[1, colnames(mat) != "lp__"],
-    lp = mat[1, colnames(mat) == "lp__"]
-  )
-}
-
-# FIXME: also parse the csv header
-read_vb_csv <- function(output_file) {
-  csv_no_comments <- utils::read.csv(
-    output_file,
-    comment.char = "#",
-    colClasses = "numeric"
-  )
-  # drop first row since according to CmdStan manual it's just the mean
-  mat <- as.matrix(csv_no_comments)[-1,, drop=FALSE]
-  colnames(mat) <- repair_variable_names(colnames(mat))
-  drop_cols <- c("lp__", "log_p__", "log_g__")
-  keep_cols <- setdiff(colnames(mat), drop_cols)
-  list(
-    log_p = mat[, "log_p__"],
-    log_g = mat[, "log_g__"],
-    draws = mat[, keep_cols, drop=FALSE]
-  )
-}
-
 # convert names like beta.1.1 to beta[1,1]
 repair_variable_names <- function(names) {
   names <- sub("\\.", "[", names)
