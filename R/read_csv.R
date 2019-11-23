@@ -1,4 +1,11 @@
-check_sampling_info_matches <- function(a, b) {
+#' Check that the sampling information from two CSV files matches.
+#' Will throw errors if the sampling informations dont match. If
+#' it returns, the sampling informations match.
+#'
+#' @param a the first sampling info to check
+#' @param b the second sampling info to check
+#'
+check_sampling_csv_info_matches <- function(a, b) {
   if(a$stan_version_major != b$stan_version_major ||
      a$stan_version_minor != b$stan_version_minor ||
      a$stan_version_patch != b$stan_version_patch) {
@@ -22,14 +29,14 @@ check_sampling_info_matches <- function(a, b) {
     }
   }
 }
-# convert names like beta.1.1 to beta[1,1]
-repair_variable_names <- function(names) {
-  names <- sub("\\.", "[", names)
-  names <- gsub("\\.", ",", names)
-  names[grep("\\[", names)] <-
-    paste0(names[grep("\\[", names)], "]")
-  names
-}
+
+#' Reads the sampling arguments and the diagonal of the
+#' inverse mass matrix from the comments in a CSV file.
+#'
+#' @param csv_file A CSV file containing results from sampling
+#' @return A list containing all sampling parameters and the
+#' diagonal of the inverse mass matrix
+#'
 read_sample_info_csv <- function(csv_file) {
   param_names_read <- FALSE
   sampling_params_read <- FALSE
@@ -91,7 +98,6 @@ read_sample_info_csv <- function(csv_file) {
         }
       }
     }
-
     if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
       diagonal_matrix_next <- TRUE
     } else if(diagonal_matrix_next) {
@@ -109,6 +115,17 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info
 }
 
+#' Reads sampling results from the supplied CSV files. Returns a list
+#' containing sampling arguments, the diagonal of the inverse mass
+#' matrix, the post-warmup samples, the sampling parameters and
+#' optionally samples produced during warmup.
+#'
+#' @param output_files Paths to the CSV files to read.
+#'
+#' @return The list of sampling arguments, the diagonal of the inverse mass
+#' matrix, the post-warmup samples, the sampling parameters and warmup samples
+#' if the run was run with save_warmup = 1.
+#'
 read_sample_csv <- function(output_files) {
   sampling_info <- NULL
   inverse_mass_matrix_diag <- c()
@@ -123,7 +140,7 @@ read_sample_csv <- function(output_files) {
     } else {
       csv_file_info <- read_sample_info_csv(output_file)
       # check if sampling info matches
-      check_sampling_info_matches(sampling_info,
+      check_sampling_csv_info_matches(sampling_info,
                                   csv_file_info)
       sampling_info$id <- c(sampling_info$id,
                             csv_file_info$id)
@@ -146,7 +163,7 @@ read_sample_csv <- function(output_files) {
     } else {
       num_of_draws <- sampling_info$sample_num_samples
     }
-    draws <- read.csv(output_file, header = TRUE, comment.char = "#")
+    draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
     sampling_params_draws <- rbind(sampling_params_draws, draws[, sampling_info$sampler_params])
     if(sampling_info$sample_save_warmup == 1) {
       warmup_draws_array <- rbind(post_warmup_draws_array,
@@ -162,7 +179,7 @@ read_sample_csv <- function(output_files) {
   #inverse mass matrix is returned separately
   sampling_info$inverse_mass_matrix_diag <- NULL
   if(!is.null(inverse_mass_matrix_diag)) {
-    dimnames(inverse_mass_matrix_diag) <- list(diagonal_elements = seq(dim(b$inverse_mass_matrix_diag)[1]),
+    dimnames(inverse_mass_matrix_diag) <- list(diagonal_elements = seq(dim(sampling_info$inverse_mass_matrix_diag)[1]),
                                                chain_id = sampling_info$id)
   }
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
@@ -175,7 +192,7 @@ read_sample_csv <- function(output_files) {
   post_warmup_draws_array <- posterior::as_draws_array(array(unlist(post_warmup_draws_array),
                                                              dim = c(sampling_info$sample_num_samples, num_chains, length(sampling_info$model_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$model_params)))
-  post_warmup_draws_array <- posterior::as_draws_array(array(unlist(sampling_params_draws),
+  sampling_params_draws <- posterior::as_draws_array(array(unlist(sampling_params_draws),
                                                              dim = c(sampling_info$sample_num_samples+sampling_info$sample_num_warmup, num_chains, length(sampling_info$sampler_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$sampler_params)))
   list(

@@ -247,20 +247,16 @@ CmdStanMCMC <- R6::R6Class(
   ),
   private = list(
     sampler_params_ = NULL,
+    warmup_draws_ = NULL,
     read_csv_ = function() {
       if (!length(self$output_files())) {
         stop("No chains finished successfully. Unable to retrieve the fit.",
              call. = FALSE)
       }
-
-      # FIXME don't use rstan
-      if (!requireNamespace("rstan", quietly = TRUE)) {
-        stop("Please install the 'rstan' package. This is temporarily required ",
-             "for reading the csv files from CmdStan.", call. = FALSE)
-      }
-      stanfit <- rstan::read_stan_csv(self$output_files())
-      draws_array <- rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
-      private$draws_ <- posterior::as_draws_array(draws_array)
+      data_csv <- read_sample_csv(self$output_files())
+      private$draws_ <- data_csv$post_warmup
+      private$warmup_draws_ <- data_csv$warmup
+      private$sampler_params_ <- data_csv$sampler
       invisible(self)
     }
   )

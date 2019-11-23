@@ -16,7 +16,7 @@ test_that("draws() method returns draws_array (reading csv works)", {
   draws <- fit_mcmc$draws()
   expect_type(draws, "double")
   expect_s3_class(draws, "draws_array")
-  expect_equal(posterior::variables(draws), c(PARAM_NAMES, "lp__"))
+  expect_equal(posterior::variables(draws), c("lp__", PARAM_NAMES))
   expect_equal(posterior::nchains(draws), fit_mcmc$num_chains())
 })
 
@@ -24,7 +24,7 @@ test_that("summary() method works after mcmc", {
   skip_on_cran()
   x <- fit_mcmc$summary()
   expect_s3_class(x, "draws_summary")
-  expect_equal(x$variable, c(PARAM_NAMES, "lp__"))
+  expect_equal(x$variable, c("lp__", PARAM_NAMES))
 })
 
 test_that("output() method works after mcmc", {
