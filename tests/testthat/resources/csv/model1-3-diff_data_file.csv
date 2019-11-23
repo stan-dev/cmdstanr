@@ -1,5 +1,5 @@
 # stan_version_major = 2
-# stan_version_minor = 20
+# stan_version_minor = 21
 # stan_version_patch = 0
 # model = model1
 # method = sample (Default)
@@ -28,7 +28,7 @@
 #         stepsize_jitter = 0 (Default)
 # id = 1
 # data
-#   file = /tmp/RtmpcXhiID/standata-124764cd0999.json
+#   file = /tmp/RtmpcXhiID/standata.json
 # init = 2 (Default)
 # random
 #   seed = 1927315875

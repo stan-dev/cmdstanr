@@ -1,7 +1,7 @@
 # stan_version_major = 2
-# stan_version_minor = 20
+# stan_version_minor = 21
 # stan_version_patch = 0
-# model = model1
+# model = model_fail
 # method = sample (Default)
 #   sample
 #     num_samples = 1000 (Default)
