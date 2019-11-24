@@ -43,6 +43,7 @@ read_sample_info_csv <- function(csv_file) {
   param_names_read <- FALSE
   sampling_params_read <- FALSE
   diagonal_matrix_next <- FALSE
+  diagonal_matrix_read <- FALSE
   arg_prefix <- ""
   csv_file_info = list()
   con  <- file(csv_file, open = "r")
@@ -62,7 +63,11 @@ read_sample_info_csv <- function(csv_file) {
         }
         next;
       } else {
-        break;
+        if(diagonal_matrix_read){
+          break;
+        } else {
+          next;
+        }
       }
     }
     # no more sampling settings follow the list of parameters
@@ -100,11 +105,16 @@ read_sample_info_csv <- function(csv_file) {
         }
       }
     }
+    if (regexpr("# Step size = ", line, perl = TRUE) > 0) {
+      key_val <- grep("=", tmp, fixed = TRUE, value = TRUE)
+      csv_file_info[["step_size"]] <- as.numeric(key_val[2])
+    }
     if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
       diagonal_matrix_next <- TRUE
     } else if(diagonal_matrix_next) {
       csv_file_info$inverse_mass_matrix_diag <- rapply(strsplit(gsub("# ", "", line), ","), as.numeric)
       diagonal_matrix_next <- FALSE
+      diagonal_matrix_read <- TRUE
     }
   }
   close(con)
@@ -172,7 +182,7 @@ read_sample_csv <- function(output_files) {
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
     sampling_params_draws <- rbind(sampling_params_draws, draws[, sampling_info$sampler_params])
     if(sampling_info$sample_save_warmup == 1) {
-      warmup_draws_array <- rbind(post_warmup_draws_array,
+      warmup_draws_array <- rbind(warmup_draws_array,
                                   draws[1:sampling_info$sample_num_warmup, sampling_info$model_params])
       post_warmup_draws_array <- rbind(post_warmup_draws_array,
                                        draws[(sampling_info$sample_num_warmup+1):num_of_draws, sampling_info$model_params])
@@ -185,6 +195,9 @@ read_sample_csv <- function(output_files) {
   #inverse mass matrix is returned separately
   sampling_info$inverse_mass_matrix_diag <- NULL
   if(!is.null(inverse_mass_matrix_diag)) {
+    if(!is.array(inverse_mass_matrix_diag)) {
+      inverse_mass_matrix_diag <- array(inverse_mass_matrix_diag, dim = c(length(inverse_mass_matrix_diag),1))
+    }
     dimnames(inverse_mass_matrix_diag) <- list(diagonal_elements = seq(dim(sampling_info$inverse_mass_matrix_diag)[1]),
                                                chain_id = sampling_info$id)
   }
