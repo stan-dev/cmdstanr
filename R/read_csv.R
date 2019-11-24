@@ -219,7 +219,7 @@ read_sample_csv <- function(output_files) {
                                                              dim = c(sampling_info$sample_num_samples, num_chains, length(sampling_info$model_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$model_params)))
   sampling_params_draws <- posterior::as_draws_array(array(unlist(sampling_params_draws),
-                                                             dim = c(sampling_info$sample_num_samples+sampling_info$sample_num_warmup, num_chains, length(sampling_info$sampler_params)),
+                                                             dim = c(num_of_draws, num_chains, length(sampling_info$sampler_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$sampler_params)))
   list(
     sampling_info = sampling_info,
