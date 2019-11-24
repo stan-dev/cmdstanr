@@ -36,6 +36,14 @@ test_that("read_sample_csv() fails for different sampling settings", {
                "Supplied CSV files do not match in all sampling settings!")
 })
 
+test_that("read_sample_csv() fails for different parameters", {
+  skip_on_cran()
+  csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
+                 test_path("resources", "csv", "model1-3-diff_params.csv"))
+  expect_error(read_sample_csv(csv_files),
+               "Supplied CSV files have samples for different parameters!")
+})
+
 test_that("read_sample_csv() fails if the file does not exist", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-doesntexist.csv"))

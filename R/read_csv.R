@@ -14,7 +14,7 @@ check_sampling_csv_info_matches <- function(a, b) {
   if(a$model != b$model) {
     return("Supplied CSV files were not generated wtih the same model!")
   }
-  if(!all(a$params == b$params)) {
+  if(!all(a$model_params == b$model_params)) {
     return("Supplied CSV files have samples for different parameters!")
   }
   if(a$data_file != b$data_file) {
