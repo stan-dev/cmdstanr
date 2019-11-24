@@ -9,25 +9,26 @@ check_sampling_csv_info_matches <- function(a, b) {
   if(a$stan_version_major != b$stan_version_major ||
      a$stan_version_minor != b$stan_version_minor ||
      a$stan_version_patch != b$stan_version_patch) {
-    stop("Supplied CSV files were not generated with the same version of Cmdstan!")
+    return("Supplied CSV files were not generated with the same version of Cmdstan!")
   }
   if(a$model != b$model) {
-    stop("Supplied CSV files were not generated wtih the same model!")
+    return("Supplied CSV files were not generated wtih the same model!")
   }
   if(!all(a$params == b$params)) {
-    stop("Supplied CSV files have samples for different parameters!")
+    return("Supplied CSV files have samples for different parameters!")
   }
   if(a$data_file != b$data_file) {
-    stop("Supplied CSV files have samples from chains run with non-matching data!")
+    return("Supplied CSV files have samples from chains run with non-matching data!")
   }
   for(name in names(a)) {
     if(startsWith(name, "sample_")) {
       if (is.null(b[[name]]) ||
           a[[name]] != b[[name]]) {
-        stop("Supplied CSV files do not match in all sampling settings!")
+        return("Supplied CSV files do not match in all sampling settings!")
       }
     }
   }
+  NULL
 }
 
 #' Reads the sampling arguments and the diagonal of the
@@ -38,6 +39,7 @@ check_sampling_csv_info_matches <- function(a, b) {
 #' diagonal of the inverse mass matrix
 #'
 read_sample_info_csv <- function(csv_file) {
+  checkmate::assert_file_exists(csv_file, access = "r", extension = "stan")
   param_names_read <- FALSE
   sampling_params_read <- FALSE
   diagonal_matrix_next <- FALSE
@@ -133,6 +135,7 @@ read_sample_csv <- function(output_files) {
   post_warmup_draws_array <- c()
   warmup_draws_array <- c()
   for(output_file in output_files) {
+    checkmate::assert_file_exists(output_file, access = "r", extension = "stan")
     # read meta data
     if (is.null(sampling_info)) {
       sampling_info <- read_sample_info_csv(output_file)
@@ -140,8 +143,11 @@ read_sample_csv <- function(output_files) {
     } else {
       csv_file_info <- read_sample_info_csv(output_file)
       # check if sampling info matches
-      check_sampling_csv_info_matches(sampling_info,
+      error <- check_sampling_csv_info_matches(sampling_info,
                                   csv_file_info)
+      if(!is.null(error)) {
+        stop(error)
+      }
       sampling_info$id <- c(sampling_info$id,
                             csv_file_info$id)
       sampling_info$init <- c(sampling_info$init,
