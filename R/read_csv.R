@@ -39,7 +39,7 @@ check_sampling_csv_info_matches <- function(a, b) {
 #' diagonal of the inverse mass matrix
 #'
 read_sample_info_csv <- function(csv_file) {
-  checkmate::assert_file_exists(csv_file, access = "r", extension = "stan")
+  checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
   param_names_read <- FALSE
   sampling_params_read <- FALSE
   diagonal_matrix_next <- FALSE
@@ -135,7 +135,7 @@ read_sample_csv <- function(output_files) {
   post_warmup_draws_array <- c()
   warmup_draws_array <- c()
   for(output_file in output_files) {
-    checkmate::assert_file_exists(output_file, access = "r", extension = "stan")
+    checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
     # read meta data
     if (is.null(sampling_info)) {
       sampling_info <- read_sample_info_csv(output_file)
