@@ -121,6 +121,9 @@ read_sample_info_csv <- function(csv_file) {
   if(is.null(csv_file_info$inverse_mass_matrix_diag)) {
     csv_file_info$inverse_mass_matrix_diag <- NULL
   }
+  if(is.null(csv_file_info$method)) {
+    stop("Supplied CSV file is corrupt!")
+  }
   if(csv_file_info$method != "sample") {
     stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
   }
@@ -180,6 +183,9 @@ read_sample_csv <- function(output_files) {
       num_of_draws <- sampling_info$sample_num_samples
     }
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
+    if (dim(draws)[1] != num_of_draws) {
+      stop("Supplied CSV file is corrupt. The number of samples does not match the sampling arguments!")
+    }
     sampling_params_draws <- rbind(sampling_params_draws, draws[, sampling_info$sampler_params])
     if(sampling_info$sample_save_warmup == 1) {
       warmup_draws_array <- rbind(warmup_draws_array,
@@ -191,6 +197,7 @@ read_sample_csv <- function(output_files) {
       post_warmup_draws_array <- rbind(post_warmup_draws_array,
                                        draws[, sampling_info$model_params])
     }
+
   }
   #inverse mass matrix is returned separately
   sampling_info$inverse_mass_matrix_diag <- NULL

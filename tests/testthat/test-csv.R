@@ -58,6 +58,32 @@ test_that("read_sample_csv() fails for non-sampling csv", {
                "Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
 })
 
+test_that("read_sample_csv() fails with empty csv file", {
+  skip_on_cran()
+  file_path <- test_path("resources", "csv", "empty.csv")
+  file.create(file_path)
+  expect_error(read_sample_csv(file_path),
+               "Supplied CSV file is corrupt!")
+  file.remove(file_path)
+})
+
+test_that("read_sample_csv() fails with the no params listed", {
+  skip_on_cran()
+  file_path <- test_path("resources", "csv", "model1-3-no-params.csv")
+  expect_error(read_sample_csv(file_path),
+               "no lines available in input")
+})
+
+test_that("read_sample_csv() fails with the number of samples found not matchin sampling arguments", {
+  skip_on_cran()
+  file_path <- test_path("resources", "csv", "model1-3-no-samples.csv")
+  expect_error(read_sample_csv(file_path),
+               "Supplied CSV file is corrupt. The number of samples does not match the sampling arguments!")
+  file_path <- test_path("resources", "csv", "model1-3-diff_params.csv")
+  expect_error(read_sample_csv(file_path),
+               "Supplied CSV file is corrupt. The number of samples does not match the sampling arguments!")
+})
+
 test_that("read_sample_csv() matches rstan::read_stan_csv()", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
