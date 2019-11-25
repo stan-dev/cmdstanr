@@ -369,6 +369,8 @@ set_num_threads <- function(num_threads) {
 }
 
 check_divergences <- function(data_csv) {
+  if(data_csv$sampling_info$sample_num_samples == 0)
+    return(NULL)
   if(data_csv$sampling_info$sample_save_warmup == 1) {
     first_iter <- data_csv$sampling_info$sample_num_warmup + 1
     last_iter <- data_csv$sampling_info$sample_num_warmup + data_csv$sampling_info$sample_num_samples
@@ -390,6 +392,8 @@ check_divergences <- function(data_csv) {
 }
 
 check_sampler_transitions_treedepth <- function(data_csv) {
+  if(data_csv$sampling_info$sample_num_samples == 0)
+    return(NULL)
   if(data_csv$sampling_info$sample_save_warmup == 1) {
     first_iter <- data_csv$sampling_info$sample_num_warmup + 1
     last_iter <- data_csv$sampling_info$sample_num_warmup + data_csv$sampling_info$sample_num_samples
