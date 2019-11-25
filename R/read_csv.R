@@ -183,9 +183,6 @@ read_sample_csv <- function(output_files) {
       num_of_draws <- sampling_info$sample_num_samples
     }
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
-    if (dim(draws)[1] != num_of_draws) {
-      stop("Supplied CSV file is corrupt. The number of samples does not match the sampling arguments!")
-    }
     sampling_params_draws <- rbind(sampling_params_draws, draws[, sampling_info$sampler_params])
     if(sampling_info$sample_save_warmup == 1) {
       warmup_draws_array <- rbind(warmup_draws_array,
