@@ -22,8 +22,8 @@ check_sampling_csv_info_matches <- function(a, b) {
   }
   for(name in names(a)) {
     if(startsWith(name, "sample_")) {
-      if (is.null(b[[name]]) ||
-          a[[name]] != b[[name]]) {
+      if ((is.null(b[[name]]) ||  a[[name]] != b[[name]])
+          && regexpr("metric", name) == 0) {
         return("Supplied CSV files do not match in all sampling settings!")
       }
     }
