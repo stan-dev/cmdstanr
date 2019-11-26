@@ -26,6 +26,6 @@ file <- tempfile(fileext = ".json")
 write_stan_json(data, file)
 
 # check the contents of the file
-cat(readLines(file), sep = "\\n")
+cat(readLines(file), sep = "\n")
 
 }

@@ -174,20 +174,20 @@ objects.</p>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p><code>CmdStanMCMC</code> objects have the following associated methods:</p>
+    <p><code>CmdStanMCMC</code> objects have the following methods:</p>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code>draws</code></td><td>Return post-warmup draws as a
-<code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>draws_array</a></code> object.</td></tr>
-<tr><td><code><a href='fit-method-summary.html'>summary</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_output_files</a></code></td><td>Save output CSV files to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_data_file</a></code></td><td>Save JSON data file to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_diagnostic_files</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
-<tr><td><code>time</code></td><td>Return a list containing the total time and a data frame of
+<tr><td><code>$draws()</code></td><td>Return a <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>draws_array</a></code> of
+(post-warmup) posterior draws.</td></tr>
+<tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
+<tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
+<tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV files to a specified location.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file to a specified location.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_diagnostic_files()</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
+<tr><td><code>$time()</code></td><td>Return a list containing the total time and a data frame of
 execution times of all chains.</td></tr>
-<tr><td><code>output</code></td><td>Return the stdout and stderr of all chains as a list of
+<tr><td><code>$output()</code></td><td>Return the stdout and stderr of all chains as a list of
 character vectors, or pretty print the output for a single chain if
 <code>id</code> argument is specified.</td></tr>
 </table>
