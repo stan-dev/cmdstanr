@@ -172,14 +172,19 @@ object.</p>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p><code>CmdStanMLE</code> objects have the following associated methods:</p>
+    <p><code>CmdStanMLE</code> objects have the following methods:</p>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code>mle</code></td><td>Return the MLE (or posterior mode) as a named vector.</td></tr>
-<tr><td><code>lp</code></td><td>Return the the total log probability density (up to an additive
+<tr><td><code>$mle()</code></td><td>Return the (penalized) maximum likelihood point estimate
+(posterior mode) as a vector with one element per variable.</td></tr>
+<tr><td><code>$lp()</code></td><td>Return the total log probability density (up to an additive
 constant) computed in the model block of the Stan program.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_output_files</a></code></td><td>Save output CSV files to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_data_file</a></code></td><td>Save JSON data file to a specified location.</td></tr>
+<tr><td><code>$draws()</code></td><td>Same as the <code>$mle()</code> method but the point estimate is
+returned as a 1-row <code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code> with one
+column per variable (instead of as a named vector) to be consistent with the
+fitted model objects for methods other than optimization.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV files to a specified location.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file to a specified location.</td></tr>
 </table>
 
 

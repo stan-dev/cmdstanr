@@ -44,13 +44,12 @@
 
 <meta property="og:title" content="Install the latest release of CmdStan — install_cmdstan" />
 <meta property="og:description" content="
-The install_cmdstan() function runs a script
-(see inst/make_cmdstan.sh on GitHub)
-that by default attempts to download and install the latest release of
-CmdStan. Currently the
-necessary C++ tool chain is assumed to be available (see Appendix B of the
-CmdStan guide),
-but in the future CmdStanR may help install the requirements." />
+The install_cmdstan() function attempts to download and install the latest
+release of CmdStan or
+a development version from a repository. Currently the necessary C++ tool
+chain is assumed to be available (see Appendix B of the CmdStan
+guide), but in the
+future CmdStanR may help install the requirements." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -169,13 +168,12 @@ but in the future CmdStanR may help install the requirements." />
 
     <div class="ref-description">
     <p><img src='figures/logo.png' width="25px" alt="https://mc-stan.org/about/logo/" />
-The <code>install_cmdstan()</code> function runs a script
-(see <code>inst/make_cmdstan.sh</code> on <a href='https://github.com/stan-dev/cmdstanr'>GitHub</a>)
-that by default attempts to download and install the latest release of
-<a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan</a>. Currently the
-necessary C++ tool chain is assumed to be available (see Appendix B of the
-CmdStan <a href='https://github.com/stan-dev/cmdstan/releases/latest'>guide</a>),
-but in the future CmdStanR may help install the requirements.</p>
+The <code>install_cmdstan()</code> function attempts to download and install the latest
+release of <a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan</a> or
+a development version from a repository. Currently the necessary C++ tool
+chain is assumed to be available (see Appendix B of the CmdStan
+<a href='https://github.com/stan-dev/cmdstan/releases/latest'>guide</a>), but in the
+future CmdStanR may help install the requirements.</p>
     </div>
 
     <pre class="usage"><span class='fu'>install_cmdstan</span>(
@@ -183,6 +181,7 @@ but in the future CmdStanR may help install the requirements.</p>
   <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>,
   <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>overwrite</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>timeout</span> <span class='kw'>=</span> <span class='fl'>600</span>,
   <span class='kw'>repo_clone</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>repo_url</span> <span class='kw'>=</span> <span class='st'>"https://github.com/stan-dev/cmdstan.git"</span>,
   <span class='kw'>repo_branch</span> <span class='kw'>=</span> <span class='st'>"develop"</span>
@@ -205,8 +204,8 @@ using more cores if available.</p></td>
     </tr>
     <tr>
       <th>quiet</th>
-      <td><p>Should the verbose output from the system process be suppressed
-during installation? The default is <code>FALSE</code>.</p></td>
+      <td><p>Should the verbose output from the system processes be
+suppressed when building the CmdStan binaries? The default is <code>FALSE</code>.</p></td>
     </tr>
     <tr>
       <th>overwrite</th>
@@ -214,6 +213,11 @@ during installation? The default is <code>FALSE</code>.</p></td>
 CmdStan still be downloaded and reinstalled? The default is <code>FALSE</code>, in
 which case an informative error is thrown instead of overwriting the user's
 installation.</p></td>
+    </tr>
+    <tr>
+      <th>timeout</th>
+      <td><p>Timeout (in seconds) for the CmdStan build stage of the
+installation process. The default is <code>timeout=600</code> (10 minutes).</p></td>
     </tr>
     <tr>
       <th>repo_clone</th>
@@ -235,11 +239,6 @@ checkout in the cloned repository.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p><a href='https://rdrr.io/r/base/invisible.html'>Invisibly</a>, the list returned by <code><a href='http://processx.r-lib.org/reference/run.html'>processx::run()</a></code>,
-which contains information about the system process that was run. See the
-<strong>Value</strong> section at <code><a href='http://processx.r-lib.org/reference/run.html'>processx::run()</a></code> for details.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='cmdstan_git_checkout_branch.html'>cmdstan_git_checkout_branch()</a></code></p></div>
@@ -249,7 +248,6 @@ which contains information about the system process that was run. See the
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      <li><a href="#value">Value</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>
 

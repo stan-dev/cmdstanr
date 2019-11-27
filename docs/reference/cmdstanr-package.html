@@ -189,16 +189,19 @@ an in-memory interface to Stan and relies on <span style="R">R</span> packages l
 and <span class="pkg">inline</span> to call C++ code from R. On the other hand, the <span style="R">R</span> code in
 this package does not directly call any C++ code, instead relying on
 CmdStan for compilation, running algorithms, and writing results to output
-files. Both forms of interfacing with Stan have advantages and
-disadvantages. An in-memory interface like RStan is able to offer more
-advanced features than CmdStanR (for example RStan's <code>log_prob</code> and
-<code>grad_log_prob</code> methods) but keeping up with Stan releases is more
-complicated for RStan, often requiring non-trivial changes to the
-<span class="pkg">rstan</span> package and always requiring new CRAN releases of <span class="pkg">rstan</span>
-and <span class="pkg">StanHeaders</span>. With CmdStanR, the latest features in Stan will be
-available from <span style="R">R</span> immediately after updating CmdStan, which can be done
-with the <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> function.</p>
-<p>The licenses of CmdStanR (BSD-3) and RStan (GPL-3) are also different.</p>
+files.</p>
+<p>Both forms of interfacing with Stan have advantages and disadvantages. An
+in-memory interface like RStan is able to offer more advanced features than
+CmdStanR (for example the <code><a href='https://rdrr.io/pkg/rstan/man/stanfit-method-logprob.html'>rstan::log_prob()</a></code> and <code><a href='https://rdrr.io/pkg/rstan/man/stanfit-method-logprob.html'>rstan::grad_log_prob()</a></code>
+methods) but keeping up with Stan releases is more complicated for RStan,
+often requiring non-trivial changes to the <span class="pkg">rstan</span> package and always
+requiring new CRAN releases of <span class="pkg">rstan</span> and <span class="pkg">StanHeaders</span>. With
+CmdStanR, the latest features in Stan will be available from <span style="R">R</span> immediately
+after updating CmdStan, which can be done with the <code><a href='install_cmdstan.html'>install_cmdstan()</a></code>
+function.</p>
+<p>Another difference between RStan and CmdStanR is the license. RStan is
+GPL-3 while the license for CmdStanR (like Stan) is BSD-3, which is a bit
+more permissive.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>The CmdStanR website (<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>)
@@ -242,15 +245,15 @@ for online documentation and tutorials.</p>
 )</div><div class='output co'>#&gt; Running MCMC with 2 chain(s) on 2 core(s)...
 #&gt; 
 #&gt; Running ./bernoulli 'id=1' random 'seed=123' data \
-#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpa9Oi4a/standata-73c8ba6519a.json' \
+#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/standata-138e8236502a5.json' \
 #&gt;   output \
-#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-sample-1-73c854375b6f.csv' \
+#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-1-90b0ca.csv' \
 #&gt;   'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt \
 #&gt;   'engaged=1'
 #&gt; Running ./bernoulli 'id=2' random 'seed=124' data \
-#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpa9Oi4a/standata-73c8ba6519a.json' \
+#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/standata-138e8236502a5.json' \
 #&gt;   output \
-#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-sample-2-73c87e53ff9a.csv' \
+#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-2-90b0ca.csv' \
 #&gt;   'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt \
 #&gt;   'engaged=1'
 #&gt; Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
@@ -297,11 +300,11 @@ for online documentation and tutorials.</p>
 #&gt; Chain 2 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
 #&gt; Chain 2 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
 #&gt; Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
-#&gt; Chain 1 finished in 0.1 seconds.
+#&gt; Chain 1 finished in 0.2 seconds.
 #&gt; Chain 2 finished in 0.1 seconds.
 #&gt; 
 #&gt; Both chains finished succesfully.
-#&gt; Mean chain execution time: 0.1 seconds.
+#&gt; Mean chain execution time: 0.2 seconds.
 #&gt; Total execution time: 0.2 seconds.</div><div class='input'>
 <span class='co'># Use 'posterior' package for summaries</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 2 x 10</span><span>
@@ -311,23 +314,23 @@ for online documentation and tutorials.</p>
 #&gt; </span><span style='color: #BCBCBC;'>2</span><span> lp__     -</span><span style='color: #BB0000;'>7.31</span><span>  -</span><span style='color: #BB0000;'>7.04</span><span>  0.783 0.380 -</span><span style='color: #BB0000;'>8.88</span><span>   -</span><span style='color: #BB0000;'>6.75</span><span>   1.00     814.    </span><span style='text-decoration: underline;'>1</span><span>029.</div><div class='input'>
 <span class='co'># Call CmdStan's bin/stansummary</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'>cmdstan_summary</span>()</div><div class='output co'>#&gt; Running bin/stansummary \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-sample-1-73c854375b6f.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-sample-2-73c87e53ff9a.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-1-90b0ca.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-2-90b0ca.csv
 #&gt; Inference for Stan model: bernoulli_model
 #&gt; 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.0081, 0.0096) seconds, 0.018 seconds total
-#&gt; Sampling took (0.019, 0.019) seconds, 0.038 seconds total
+#&gt; Warmup took (0.0081, 0.0080) seconds, 0.016 seconds total
+#&gt; Sampling took (0.017, 0.018) seconds, 0.035 seconds total
 #&gt; 
 #&gt;                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
-#&gt; lp__            -7.3  3.1e-02    0.78   -8.9  -7.0  -6.8  6.5e+02  1.7e+04  1.0e+00
-#&gt; accept_stat__   0.92  3.3e-03    0.12   0.68  0.97   1.0  1.3e+03  3.5e+04  1.0e+00
-#&gt; stepsize__      0.95  1.3e-01    0.14   0.81   1.1   1.1  1.0e+00  2.7e+01  4.2e+13
-#&gt; treedepth__      1.4  1.2e-02    0.48    1.0   1.0   2.0  1.7e+03  4.4e+04  1.0e+00
+#&gt; lp__            -7.3  3.1e-02    0.78   -8.9  -7.0  -6.8  6.5e+02  1.9e+04  1.0e+00
+#&gt; accept_stat__   0.92  3.3e-03    0.12   0.68  0.97   1.0  1.3e+03  3.8e+04  1.0e+00
+#&gt; stepsize__      0.95  1.3e-01    0.14   0.81   1.1   1.1  1.0e+00  2.9e+01  4.2e+13
+#&gt; treedepth__      1.4  1.2e-02    0.48    1.0   1.0   2.0  1.7e+03  4.7e+04  1.0e+00
 #&gt; n_leapfrog__     2.5  2.0e-01     1.3    1.0   3.0   3.0  4.4e+01  1.2e+03  1.0e+00
 #&gt; divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-#&gt; energy__         7.8  4.2e-02     1.0    6.8   7.5   9.8  6.1e+02  1.6e+04  1.0e+00
-#&gt; theta           0.24  4.5e-03    0.12  0.077  0.23  0.47  7.4e+02  2.0e+04  1.0e+00
+#&gt; energy__         7.8  4.2e-02     1.0    6.8   7.5   9.8  6.1e+02  1.8e+04  1.0e+00
+#&gt; theta           0.24  4.5e-03    0.12  0.077  0.23  0.47  7.4e+02  2.1e+04  1.0e+00
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,
@@ -336,9 +339,9 @@ for online documentation and tutorials.</p>
 #&gt; </div><div class='input'>
 <span class='co'># Call CmdStan's bin/diagnose</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'>cmdstan_diagnose</span>()</div><div class='output co'>#&gt; Running bin/diagnose \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-sample-1-73c854375b6f.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-sample-2-73c87e53ff9a.csv
-#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-sample-1-73c854375b6f.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-sample-2-73c87e53ff9a.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-1-90b0ca.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-2-90b0ca.csv
+#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-1-90b0ca.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-2-90b0ca.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -359,7 +362,7 @@ for online documentation and tutorials.</p>
 <span class='kw'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='no'>rstan</span>, <span class='kw'>quietly</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)) {
   <span class='no'>stanfit</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>rstan</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/rstan/man/stan_csv.html'>read_stan_csv</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'>output_files</span>())
   <span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>stanfit</span>)
-}</div><div class='output co'>#&gt; Inference for Stan model: bernoulli-stan-sample-1-73c854375b6f.
+}</div><div class='output co'>#&gt; Inference for Stan model: bernoulli-201911251935-1-90b0ca.
 #&gt; 2 chains, each with iter=2000; warmup=1000; thin=1; 
 #&gt; post-warmup draws per chain=1000, total post-warmup draws=2000.
 #&gt; 
@@ -367,7 +370,7 @@ for online documentation and tutorials.</p>
 #&gt; theta  0.24    0.00 0.12  0.06  0.15  0.23  0.32  0.52   736    1
 #&gt; lp__  -7.31    0.03 0.78 -9.60 -7.51 -7.04 -6.82 -6.75   650    1
 #&gt; 
-#&gt; Samples were drawn using NUTS(diag_e) at Wed Nov 13 17:27:03 2019.
+#&gt; Samples were drawn using NUTS(diag_e) at Mon Nov 25 19:35:45 2019.
 #&gt; For each parameter, n_eff is a crude measure of effective sample size,
 #&gt; and Rhat is the potential scale reduction factor on split chains (at 
 #&gt; convergence, Rhat=1).</div><div class='input'>
@@ -375,7 +378,7 @@ for online documentation and tutorials.</p>
 <span class='co'># Run optimization method (default is Stan's LBFGS algorithm)</span>
 <span class='co'># and also demonstrate specifying data as a path to a file (readable by CmdStan)</span>
 <span class='no'>my_data_file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.data.json"</span>)
-<span class='no'>fit_optim</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='https://rdrr.io/r/stats/optimize.html'>optimize</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>my_data_file</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Optimization method is experimental and the structure of returned object may change.</span></div><div class='output co'>#&gt; method = optimize
+<span class='no'>fit_optim</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='https://rdrr.io/r/stats/optimize.html'>optimize</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>my_data_file</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; method = optimize
 #&gt;   optimize
 #&gt;     algorithm = lbfgs (Default)
 #&gt;       lbfgs
@@ -395,7 +398,7 @@ for online documentation and tutorials.</p>
 #&gt; random
 #&gt;   seed = 123
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-optimize-1-73c83cb21841.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-1-46bcd6.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt; 
@@ -403,12 +406,14 @@ for online documentation and tutorials.</p>
 #&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes 
 #&gt;        6      -5.00402   0.000103557   2.55661e-07           1           1        9   
 #&gt; Optimization terminated normally: 
-#&gt;   Convergence detected: relative gradient magnitude is below tolerance</div><div class='input'>
+#&gt;   Convergence detected: relative gradient magnitude is below tolerance</div><div class='output co'>#&gt; <span class='message'>Optimization method is experimental and the structure of returned object may change.</span></div><div class='input'>
 <span class='co'>#' Print estimates</span>
-<span class='no'>fit_optim</span>$<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span>()</div><div class='output co'>#&gt; Estimates from optimization:</div><div class='output co'>#&gt;    theta     lp__ 
-#&gt;  0.20000 -5.00402 </div><div class='input'>
+<span class='no'>fit_optim</span>$<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span>()</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 1 x 2</span><span>
+#&gt;   variable estimate
+#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>       </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'>1</span><span> theta         0.2</div><div class='input'>
 <span class='co'># Run variational Bayes method (default is meanfield ADVI)</span>
-<span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'>variational</span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Variational inference method is experimental and the structure of returned object may change.</span></div><div class='output co'>#&gt; method = variational
+<span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'>variational</span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; method = variational
 #&gt;   variational
 #&gt;     algorithm = meanfield (Default)
 #&gt;       meanfield
@@ -424,12 +429,12 @@ for online documentation and tutorials.</p>
 #&gt;     output_samples = 1000 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmpa9Oi4a/standata-73c850567288.json
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/standata-138e83d17a60e.json
 #&gt; init = 2 (Default)
 #&gt; random
 #&gt;   seed = 123
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//Rtmpa9Oi4a/bernoulli-stan-variational-1-73c85b7967ec.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCkyQkF/bernoulli-201911251935-1-970077.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt; 
@@ -441,8 +446,8 @@ for online documentation and tutorials.</p>
 #&gt; 
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 1.8e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
+#&gt; Gradient evaluation took 1.7e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.17 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -474,7 +479,7 @@ for online documentation and tutorials.</p>
 #&gt;   1600           -6.164             0.010            0.009   MEDIAN ELBO CONVERGED
 #&gt; 
 #&gt; Drawing a sample of size 1000 from the approximate posterior... 
-#&gt; COMPLETED.</div><div class='input'>
+#&gt; COMPLETED.</div><div class='output co'>#&gt; <span class='message'>Variational method is experimental and the structure of returned object may change.</span></div><div class='input'>
 <span class='co'># Call CmdStan's bin/summary</span>
 <span class='no'>fit_vb</span>$<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span>()</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 1 x 7</span><span>
 #&gt;   variable  mean median    sd   mad     q5   q95
