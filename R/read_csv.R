@@ -2,6 +2,7 @@
 #' Will throw errors if the sampling informations dont match. If
 #' it returns, the sampling informations match.
 #'
+#' @noRd
 #' @param a the first sampling info to check
 #' @param b the second sampling info to check
 #'
@@ -34,6 +35,7 @@ check_sampling_csv_info_matches <- function(a, b) {
 #' Reads the sampling arguments and the diagonal of the
 #' inverse mass matrix from the comments in a CSV file.
 #'
+#' @noRd
 #' @param csv_file A CSV file containing results from sampling
 #' @return A list containing all sampling parameters and the
 #' diagonal of the inverse mass matrix
