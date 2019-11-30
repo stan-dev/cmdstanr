@@ -7,13 +7,13 @@
 #' @param b the second sampling info to check
 #'
 check_sampling_csv_info_matches <- function(a, b) {
-  if(a$model_name != b$model_name) {
+  if (a$model_name != b$model_name) {
     return("Supplied CSV files were not generated wtih the same model!")
   }
-  if(!(all(a$model_params == b$model_params) && all(a$sampler_params == b$sampler_params))) {
+  if ((length(a$model_params)!= length(b$model_params)) || !(all(a$model_params == b$model_params) && all(a$sampler_params == b$sampler_params))) {
     return("Supplied CSV files have samples for different parameters!")
   }
-  for(name in names(a)) {
+  for (name in names(a)) {
     if (name != "id" && name != "inverse_mass_matrix" && (is.null(b[[name]]) ||  a[[name]] != b[[name]])) {
       return("Supplied CSV files do not match in all sampling settings!")
     }
@@ -91,7 +91,7 @@ read_sample_info_csv <- function(csv_file) {
       } else {
         csv_file_info$inverse_mass_matrix <- c(csv_file_info$inverse_mass_matrix, rapply(strsplit(gsub("# ", "", line), ","), as.numeric))
       }
-      csv_file_info$inverse_mass_matrix_rows <- csv_file_info$inverse_mass_matrix_rows +1
+      csv_file_info$inverse_mass_matrix_rows <- csv_file_info$inverse_mass_matrix_rows + 1
     }
   }
   close(con)
