@@ -2,6 +2,11 @@ context("read-sample-csv")
 
 if (not_on_cran()) {
   set_cmdstan_path()
+  fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize")
+  fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
+                          seed = 123, num_chains = 2, num_samples = 0, metric = "diag_e")
+  fit_bernoulli_dense_e_no_samples <- testing_fit("bernoulli", method = "sample",
+                          seed = 123, num_chains = 2, num_samples = 0, metric = "dense_e")
   fit_bernoulli_thin_1 <- testing_fit("bernoulli", method = "sample",
                           seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1)
   fit_logistic_thin_1 <- testing_fit("logistic", method = "sample",
@@ -47,8 +52,7 @@ test_that("read_sample_csv() fails if the file does not exist", {
 
 test_that("read_sample_csv() fails for non-sampling csv", {
   skip_on_cran()
-  csv_files <- c(test_path("resources", "csv", "model1-1-nonsampling.csv"))
-  expect_error(read_sample_csv(csv_files),
+  expect_error(read_sample_csv(fit_bernoulli_optimize$output_files()),
                "Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
 })
 
@@ -242,3 +246,11 @@ test_that("read_sample_csv() works with thin", {
   expect_equal(dim(csv_output_10_with_warmup$warmup), c(100, 2, 5))
 })
 
+test_that("read_sample_csv() works with no samples", {
+  skip_on_cran()
+
+  csv_output_diag_e_0 <- read_sample_csv(fit_bernoulli_diag_e_no_samples$output_files())
+  expect_equal(dim(csv_output_diag_e_0$post_warmup), c(0,2,2))
+  csv_output_dense_e_0 <- read_sample_csv(fit_bernoulli_dense_e_no_samples$output_files())
+  expect_equal(dim(csv_output_dense_e_0$post_warmup), c(0,2,2))
+})
