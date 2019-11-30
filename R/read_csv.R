@@ -146,10 +146,10 @@ read_sample_info_csv <- function(csv_file) {
 #'
 read_sample_csv <- function(output_files) {
   sampling_info <- NULL
-  inverse_mass_matrix_diag <- c()
-  sampling_params_draws <- c()
-  post_warmup_draws_array <- c()
   warmup_draws_array <- c()
+  warmup_sampling_params_draws <- c()
+  post_warmup_draws_array <- c()
+  post_warmup_sampling_params_draws <- c()
   inverse_mass_matrix = c()
   for(output_file in output_files) {
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
@@ -172,16 +172,23 @@ read_sample_csv <- function(output_files) {
     }
     # read sampling data
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
-    sampling_params_draws <- rbind(sampling_params_draws, draws[, sampling_info$sampler_params])
+    
     if(sampling_info$save_warmup == 1) {
       warmup_draws_array <- rbind(warmup_draws_array,
                                   draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$model_params])
+      warmup_sampling_params_draws <- rbind(warmup_sampling_params_draws,
+                                     draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$sampler_params])
       post_warmup_draws_array <- rbind(post_warmup_draws_array,
                                        draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$model_params])
+      post_warmup_sampling_params_draws <- rbind(post_warmup_sampling_params_draws,
+                                       draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$sampler_params])
+
     } else {
       warmup_draws_array <- NULL
       post_warmup_draws_array <- rbind(post_warmup_draws_array,
                                        draws[, sampling_info$model_params])
+      post_warmup_sampling_params_draws <- rbind(post_warmup_sampling_params_draws,
+                                       draws[, sampling_info$sampler_params])
     }
 
   }
@@ -191,20 +198,24 @@ read_sample_csv <- function(output_files) {
     warmup_draws_array <- posterior::as_draws_array(array(unlist(warmup_draws_array),
                                                           dim = c(sampling_info$num_warmup/sampling_info$thin, num_chains, length(sampling_info$model_params)),
                                                           dimnames = list(NULL, NULL, sampling_info$model_params)))
+    warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(warmup_sampling_params_draws),
+                                                             dim = c(sampling_info$num_warmup/sampling_info$thin, num_chains, length(sampling_info$sampler_params)),
+                                                             dimnames = list(NULL, NULL, sampling_info$sampler_params)))
   }
   
   post_warmup_draws_array <- posterior::as_draws_array(array(unlist(post_warmup_draws_array),
                                                              dim = c(sampling_info$num_samples/sampling_info$thin, num_chains, length(sampling_info$model_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$model_params)))
-  sampling_params_draws <- posterior::as_draws_array(array(unlist(sampling_params_draws),
-                                                             dim = c(sampling_info$num_iter, num_chains, length(sampling_info$sampler_params)),
+  post_warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(post_warmup_sampling_params_draws),
+                                                             dim = c(sampling_info$num_samples/sampling_info$thin, num_chains, length(sampling_info$sampler_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$sampler_params)))
   list(
     sampling_info = sampling_info,
     inverse_mass_matrix = inverse_mass_matrix,
     warmup = warmup_draws_array,
     post_warmup = post_warmup_draws_array,
-    sampler = sampling_params_draws
+    warmup_sampler = warmup_sampling_params_draws,
+    post_warmup_sampler = post_warmup_sampling_params_draws
   )
 }
 
