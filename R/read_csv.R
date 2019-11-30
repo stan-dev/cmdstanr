@@ -86,22 +86,21 @@ read_sample_info_csv <- function(csv_file) {
       inverse_mass_matrix_next <- TRUE
     } else if(inverse_mass_matrix_diagonal_next) {
       inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
-      if ((length(inv_mass_matrix_split) > 0) && !identical(inv_mass_matrix_split[[1]], character(0))) {
-        csv_file_info$inverse_mass_matrix <- rapply(inv_mass_matrix_split, as.numeric)
-      } else {
+      if ((length(inv_mass_matrix_split) == 0) ||
+          ((length(inv_mass_matrix_split) == 1) && identical(inv_mass_matrix_split[[1]], character(0)))) {
         break;
       }
+      csv_file_info$inverse_mass_matrix <- rapply(inv_mass_matrix_split, as.numeric)
     } else if(inverse_mass_matrix_next) {
+      inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
+      if ((length(inv_mass_matrix_split) == 0) ||
+          ((length(inv_mass_matrix_split) == 1) && identical(inv_mass_matrix_split[[1]], character(0)))) {
+        break;
+      }
       if(csv_file_info$inverse_mass_matrix_rows == 0) {
-        inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
         csv_file_info$inverse_mass_matrix <- rapply(inv_mass_matrix_split, as.numeric)
-      } else {
-        inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
-        if ((length(inv_mass_matrix_split) > 0) && !identical(inv_mass_matrix_split[[1]], character(0))) {
-          csv_file_info$inverse_mass_matrix <- c(csv_file_info$inverse_mass_matrix, rapply(inv_mass_matrix_split, as.numeric))
-        } else {
-          break;
-        }        
+      } else {        
+        csv_file_info$inverse_mass_matrix <- c(csv_file_info$inverse_mass_matrix, rapply(inv_mass_matrix_split, as.numeric))
       }
       csv_file_info$inverse_mass_matrix_rows <- csv_file_info$inverse_mass_matrix_rows + 1
     }
