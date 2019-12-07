@@ -43,11 +43,11 @@
 
 
 <meta property="og:title" content="Compile a Stan program or get the Stan code — model-method-compile" />
-<meta property="og:description" content="The $compile() method of a CmdStanModel object calls CmdStan
-to translate a Stan program to C++ and then create a compiled executable.
-The resulting files are placed in the same directory as the Stan program
-associated with the CmdStanModel object. After compilation the path
-to the executable can be accesed via the $exe_file() method." />
+<meta property="og:description" content="The $compile() method of a CmdStanModel object calls
+CmdStan to translate a Stan program to C++ and create a compiled
+executable. The resulting files are placed in the same directory as the
+Stan program associated with the CmdStanModel object. After compilation
+the path to the executable can be accesed via the $exe_file() method." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -165,11 +165,11 @@ to the executable can be accesed via the $exe_file() method." />
     </div>
 
     <div class="ref-description">
-    <p>The <code>$compile()</code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object calls CmdStan
-to translate a Stan program to C++ and then create a compiled executable.
-The resulting files are placed in the same directory as the Stan program
-associated with the <code>CmdStanModel</code> object. After compilation the path
-to the executable can be accesed via the <code>$exe_file()</code> method.</p>
+    <p>The <code>$compile()</code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object calls
+CmdStan to translate a Stan program to C++ and create a compiled
+executable. The resulting files are placed in the same directory as the
+Stan program associated with the <code>CmdStanModel</code> object. After compilation
+the path to the executable can be accesed via the <code>$exe_file()</code> method.</p>
     </div>
 
 
@@ -194,8 +194,8 @@ $exe_file()
     
 
 <p>Leaving all arguments at their defaults should be fine for most users, but
-optional arguments are provided to enable new features in CmdStan (and the
-Stan Math library). See the CmdStan manual for more details.</p><ul>
+optional arguments are provided to enable features in CmdStan (and the Stan
+Math library). See the CmdStan manual for more details.</p><ul>
 <li><p><code>quiet</code>: (logical) Should the verbose output from CmdStan during
 compilation be suppressed? The default is <code>TRUE</code>, but if you encounter an
 error we recommend trying again with <code>quiet=FALSE</code> to see more of the

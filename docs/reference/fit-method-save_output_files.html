@@ -43,18 +43,14 @@
 
 
 <meta property="og:title" content="Save output and data files — fit-method-save_output_files" />
-<meta property="og:description" content="All fitted model objects have methods for saving (copying to a
-specified location) the temporary files created by CmdStanR for CmdStan
-output and data files. These methods move output files or data files from
-the CmdStanR temporary directory to a user-specified location. By default
-the suffix '-&amp;lt;run_id&amp;gt;_&amp;lt;timestamp&amp;gt;' is added to the file name(s), where
-run_id is the chain number if applicable (MCMC only) and 1 otherwise.
-If files with the specified names already exist they are overwritten, but
-this shouldn't occur unless the timestamp argument has been intentionally
-set to FALSE.
-If necessary, the versions without the save_ prefix (e.g.,
-$output_files()) can be used to get the path(s) to the temporary file(s)
-themselves." />
+<meta property="og:description" content="All fitted model objects have methods for saving (moving to a
+specified location) the files created by CmdStanR to hold CmdStan output
+csv files and input data files. These methods move the files from their
+current location (possibly the temporary directory) to a user-specified
+location. The paths stored in the fitted model object will also be
+updated to point to the new file locations.
+The versions without the save_ prefix (e.g., $output_files()) return
+the current file paths without moving any files." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -172,18 +168,14 @@ themselves." />
     </div>
 
     <div class="ref-description">
-    <p>All fitted model objects have methods for saving (copying to a
-specified location) the temporary files created by CmdStanR for CmdStan
-output and data files. These methods move output files or data files from
-the CmdStanR temporary directory to a user-specified location. By default
-the suffix <code>'-&lt;run_id&gt;_&lt;timestamp&gt;'</code> is added to the file name(s), where
-<code>run_id</code> is the chain number if applicable (MCMC only) and <code>1</code> otherwise.
-If files with the specified names already exist they are overwritten, but
-this shouldn't occur unless the <code>timestamp</code> argument has been intentionally
-set to <code>FALSE</code>.</p>
-<p>If necessary, the versions without the <code>save_</code> prefix (e.g.,
-<code>$output_files()</code>) can be used to get the path(s) to the temporary file(s)
-themselves.</p>
+    <p>All fitted model objects have methods for saving (moving to a
+specified location) the files created by CmdStanR to hold CmdStan output
+csv files and input data files. These methods move the files from their
+current location (possibly the temporary directory) to a user-specified
+location. <strong>The paths stored in the fitted model object will also be
+updated to point to the new file locations.</strong></p>
+<p>The versions without the <code>save_</code> prefix (e.g., <code>$output_files()</code>) return
+the current file paths without moving any files.</p>
     </div>
 
 
@@ -191,13 +183,13 @@ themselves.</p>
     <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
 
     
-<pre>$save_output_files(dir = ".", basename = NULL, timestamp = TRUE)
-$save_data_file(dir = ".", basename = NULL, timestamp = TRUE)
-$save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE)
+<pre>$save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+$save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+$save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 
 $output_files()
-$data_file()
 $diagnostic_files()
+$data_file()
 </pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -206,17 +198,40 @@ $diagnostic_files()
 
 <ul>
 <li><p><code>dir</code>: (string) Path to directory where the files should be saved.</p></li>
-<li><p><code>basename</code>: (string) Base filename to use.</p></li>
+<li><p><code>basename</code>: (string) Base filename to use. See <strong>Details</strong>.</p></li>
 <li><p><code>timestamp</code>: (logical) Should a timestamp be added to the file name(s)?
-Defaults to <code>TRUE</code>. The timestamp is preceeded by an underscore is of
-the form</p></li>
+Defaults to <code>TRUE</code>. See <strong>Details</strong>.</p></li>
+<li><p><code>random</code>: (logical) Should random alphanumeric characters be added to the
+end of the file name(s)? Defaults to <code>TRUE</code>. See <strong>Details</strong>.</p></li>
 </ul>
 
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    
+
+<p>For <code>$save_output_files()</code> the files moved to <code>dir</code> will have names of
+the form <code>basename-timestamp-id-random</code>, where</p><ul>
+<li><p><code>basename</code> is the user's provided <code>basename</code> argument;</p></li>
+<li><p><code>timestamp</code> is of the form <code><a href='https://rdrr.io/r/base/format.html'>format(Sys.time(), "%Y%m%d%H%M")</a></code>;</p></li>
+<li><p><code>id</code> is the MCMC chain id (or <code>1</code> for non MCMC);</p></li>
+<li><p><code>random</code> contains six random alphanumeric characters.</p></li>
+</ul>
+
+<p>For <code>$save_diagnostic_files()</code> everything is the same as for
+<code>$save_output_files()</code> except <code>"-diagnostic-"</code> is included in the new
+file name after <code>basename</code>.</p>
+<p>For <code>$save_data_file()</code> no <code>id</code> is included in the file name because even
+with multiple MCMC chains the data file is the same.</p>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>For the <code>$save_*</code> methods, the paths to the new files or <code>NA</code>
-for any that couldn't be copied. For the methods without the <code>save_</code>
-prefix, the path to the temporary files.</p>
+    
+
+<p>The <code>$save_*</code> methods print a message with the new file paths and (invisibly)
+return a character vector of the new paths (or <code>NA</code> for any that couldn't be
+copied). They also have the side effect of setting the internal paths in the
+fitted model object to the new paths.</p>
+<p>The methods <em>without</em> the <code>save_</code> prefix return character vectors of file
+paths without moving any files.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
@@ -227,6 +242,7 @@ prefix, the path to the temporary files.</p>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#usage">Usage</a></li>
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#details">Details</a></li>
       <li><a href="#value">Value</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>

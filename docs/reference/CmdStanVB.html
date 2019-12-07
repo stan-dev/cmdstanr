@@ -172,17 +172,21 @@ CmdStanModel object." />
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p><code>CmdStanVB</code> objects have the following associated methods:</p>
+    <p><code>CmdStanVB</code> objects have the following methods:</p>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code>draws</code></td><td>Return approximate posterior draws as a
-<code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code> object.</td></tr>
-<tr><td><code><a href='fit-method-summary.html'>summary</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_output_files</a></code></td><td>Save output CSV files to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_data_file</a></code></td><td>Save JSON data file to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>save_diagnostic_files</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
+<tr><td><code>$draws()</code></td><td>Return a <code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code> of
+approximate posterior draws.</td></tr>
+<tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
+<tr><td><code>$log_p()</code></td><td>Return a numeric vector containing the target
+(log-posterior) evaluated at each of the draws.</td></tr>
+<tr><td><code>$log_g()</code></td><td>Return a numeric vector containing the log density of the
+variational approximation to the posterior evaluated at each of the draws.</td></tr>
+<tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
+<tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV files to a specified location.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file to a specified location.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_diagnostic_files()</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
 </table>
 
 

@@ -2,30 +2,21 @@
 #' Will throw errors if the sampling informations dont match. If
 #' it returns, the sampling informations match.
 #'
+#' @noRd
 #' @param a the first sampling info to check
 #' @param b the second sampling info to check
 #'
 check_sampling_csv_info_matches <- function(a, b) {
-  if(a$stan_version_major != b$stan_version_major ||
-     a$stan_version_minor != b$stan_version_minor ||
-     a$stan_version_patch != b$stan_version_patch) {
-    return("Supplied CSV files were not generated with the same version of Cmdstan!")
-  }
-  if(a$model != b$model) {
+  if (a$model_name != b$model_name) {
     return("Supplied CSV files were not generated wtih the same model!")
   }
-  if(!all(a$model_params == b$model_params)) {
+  if ((length(a$model_params)!= length(b$model_params)) || !(all(a$model_params == b$model_params) && all(a$sampler_params == b$sampler_params))) {
     return("Supplied CSV files have samples for different parameters!")
   }
-  if(a$data_file != b$data_file) {
-    return("Supplied CSV files have samples from chains run with non-matching data!")
-  }
-  for(name in names(a)) {
-    if(startsWith(name, "sample_")) {
-      if ((is.null(b[[name]]) ||  a[[name]] != b[[name]])
-          && regexpr("metric", name) == 0) {
-        return("Supplied CSV files do not match in all sampling settings!")
-      }
+  dont_match_list <- c("id", "inverse_mass_matrix")
+  for (name in names(a)) {
+    if (!(name %in% dont_match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
+      return("Supplied CSV files do not match in all sampling settings!")
     }
   }
   NULL
@@ -34,6 +25,7 @@ check_sampling_csv_info_matches <- function(a, b) {
 #' Reads the sampling arguments and the diagonal of the
 #' inverse mass matrix from the comments in a CSV file.
 #'
+#' @noRd
 #' @param csv_file A CSV file containing results from sampling
 #' @return A list containing all sampling parameters and the
 #' diagonal of the inverse mass matrix
@@ -41,12 +33,14 @@ check_sampling_csv_info_matches <- function(a, b) {
 read_sample_info_csv <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
   param_names_read <- FALSE
-  sampling_params_read <- FALSE
-  diagonal_matrix_next <- FALSE
+  inverse_mass_matrix_next <- FALSE
+  inverse_mass_matrix_diagonal_next <- FALSE
   diagonal_matrix_read <- FALSE
   arg_prefix <- ""
   csv_file_info = list()
   con  <- file(csv_file, open = "r")
+  csv_file_info[["inverse_mass_matrix"]] <- NULL
+  csv_file_info$inverse_mass_matrix_rows <- 0
   while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
     if (!startsWith(line, "#")) {
       if(!param_names_read) {
@@ -63,7 +57,7 @@ read_sample_info_csv <- function(csv_file) {
         }
         next;
       } else {
-        if(diagonal_matrix_read){
+        if(inverse_mass_matrix_next || inverse_mass_matrix_diagonal_next){
           break;
         } else {
           next;
@@ -75,59 +69,80 @@ read_sample_info_csv <- function(csv_file) {
       tmp <- gsub("#", "", line, fixed = TRUE)
       tmp <- gsub("(Default)", "", tmp, fixed = TRUE)
       key_val <- grep("=", tmp, fixed = TRUE, value = TRUE)
-      if(length(key_val) == 0) {
-        arg_name <- trimws(tmp)
-        if(arg_prefix != "" && !sampling_params_read) {
-          arg_prefix <- paste(arg_prefix, arg_name, sep = "_")
+      key_val <- strsplit(key_val, split = "=", fixed = TRUE)
+      key_val <- rapply(key_val, trimws)
+      if (length(key_val) == 2) {
+        numeric_val <- suppressWarnings(as.numeric(key_val[2]))
+        if(!is.na(numeric_val)) {
+          csv_file_info[[key_val[1]]] <- numeric_val
         } else {
-          arg_prefix <- trimws(tmp)
-        }
-      } else {
-        key_val <- strsplit(key_val, split = "=", fixed = TRUE)
-        key_val <- rapply(key_val, trimws)
-        if(length(key_val) == 2) {
-          numeric_val <- suppressWarnings(as.numeric(key_val[2]))
-          # marks the end of sampling args
-          if(key_val[1] == "id" || key_val[1] == "init") {
-            arg_prefix <- ""
-            sampling_params_read <- TRUE
-          }
-          if(arg_prefix != ""){
-            setting_name <- paste(arg_prefix, key_val[1], sep = "_")
-          } else {
-            setting_name <- key_val[1]
-          }
-          if(!is.na(numeric_val)) {
-            csv_file_info[[setting_name]] <- numeric_val
-          } else {
-            csv_file_info[[setting_name]] <- key_val[2]
-          }
+          csv_file_info[[key_val[1]]] <- key_val[2]
         }
       }
     }
-    if (regexpr("# Step size = ", line, perl = TRUE) > 0) {
-      key_val <- grep("=", tmp, fixed = TRUE, value = TRUE)
-      csv_file_info[["step_size"]] <- as.numeric(key_val[2])
-    }
+
     if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
-      diagonal_matrix_next <- TRUE
-    } else if(diagonal_matrix_next) {
-      csv_file_info$inverse_mass_matrix_diag <- rapply(strsplit(gsub("# ", "", line), ","), as.numeric)
-      diagonal_matrix_next <- FALSE
-      diagonal_matrix_read <- TRUE
+      inverse_mass_matrix_diagonal_next <- TRUE
+    } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
+      inverse_mass_matrix_next <- TRUE
+    } else if(inverse_mass_matrix_diagonal_next) {
+      inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
+      if ((length(inv_mass_matrix_split) == 0) ||
+          ((length(inv_mass_matrix_split) == 1) && identical(inv_mass_matrix_split[[1]], character(0)))) {
+        break;
+      }
+      csv_file_info$inverse_mass_matrix <- rapply(inv_mass_matrix_split, as.numeric)
+    } else if(inverse_mass_matrix_next) {
+      inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
+      if ((length(inv_mass_matrix_split) == 0) ||
+          ((length(inv_mass_matrix_split) == 1) && identical(inv_mass_matrix_split[[1]], character(0)))) {
+        break;
+      }
+      if(csv_file_info$inverse_mass_matrix_rows == 0) {
+        csv_file_info$inverse_mass_matrix <- rapply(inv_mass_matrix_split, as.numeric)
+      } else {
+        csv_file_info$inverse_mass_matrix <- c(csv_file_info$inverse_mass_matrix, rapply(inv_mass_matrix_split, as.numeric))
+      }
+      csv_file_info$inverse_mass_matrix_rows <- csv_file_info$inverse_mass_matrix_rows + 1
     }
   }
   close(con)
-  if(is.null(csv_file_info$inverse_mass_matrix_diag)) {
-    csv_file_info$inverse_mass_matrix_diag <- NULL
-  }
   if(is.null(csv_file_info$method)) {
     stop("Supplied CSV file is corrupt!")
-  }
-  if(csv_file_info$method != "sample") {
+  } else if(csv_file_info$method != "sample") {
     stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
   }
-  csv_file_info
+  if(csv_file_info$save_warmup == 1) {
+    num_iter <- csv_file_info$num_warmup + csv_file_info$num_samples
+  } else {
+    num_iter <- csv_file_info$num_samples
+  }
+  num_iter <- num_iter / csv_file_info$thin
+  if(csv_file_info$inverse_mass_matrix_rows > 0) {
+    rows <- csv_file_info$inverse_mass_matrix_rows
+    cols <- length(csv_file_info$inverse_mass_matrix)/csv_file_info$inverse_mass_matrix_rows
+    dim(csv_file_info$inverse_mass_matrix) <- c(rows,cols)
+  }
+  list(
+    model_name = csv_file_info$model,
+    method = "sample",
+    num_iter = num_iter,
+    id = csv_file_info$id,
+    num_warmup = csv_file_info$num_warmup,
+    num_samples = csv_file_info$num_samples,
+    save_warmup = csv_file_info$save_warmup,
+    thin =  csv_file_info$thin,
+    max_depth = csv_file_info$max_depth,
+    adapt_engaged = csv_file_info$engaged,
+    adapt_delta = csv_file_info$delta,
+    stepsize = csv_file_info$stepsize,
+    init_buffer = csv_file_info$init_buffer,
+    term_buffer = csv_file_info$term_buffer,
+    window = csv_file_info$window,
+    model_params = csv_file_info$model_params,
+    sampler_params = csv_file_info$sampler_params,
+    inverse_mass_matrix = csv_file_info$inverse_mass_matrix
+  )
 }
 
 #' Reads sampling results from the supplied CSV files. Returns a list
@@ -143,16 +158,19 @@ read_sample_info_csv <- function(csv_file) {
 #'
 read_sample_csv <- function(output_files) {
   sampling_info <- NULL
-  inverse_mass_matrix_diag <- c()
-  sampling_params_draws <- c()
-  post_warmup_draws_array <- c()
-  warmup_draws_array <- c()
+  warmup_draws_array <- list()
+  warmup_sampling_params_draws <- list()
+  post_warmup_draws_array <- list()
+  post_warmup_sampling_params_draws <- list()
+  inverse_mass_matrix = list()
   for(output_file in output_files) {
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
     # read meta data
     if (is.null(sampling_info)) {
       sampling_info <- read_sample_info_csv(output_file)
-      inverse_mass_matrix_diag <- sampling_info$inverse_mass_matrix_diag
+      inverse_mass_matrix <- list()
+      inverse_mass_matrix[[sampling_info$id]] <- sampling_info$inverse_mass_matrix
+      id <- sampling_info$id
     } else {
       csv_file_info <- read_sample_info_csv(output_file)
       # check if sampling info matches
@@ -163,67 +181,48 @@ read_sample_csv <- function(output_files) {
       }
       sampling_info$id <- c(sampling_info$id,
                             csv_file_info$id)
-      sampling_info$init <- c(sampling_info$init,
-                              csv_file_info$init)
-      sampling_info$random_seed <- c(sampling_info$random_seed,
-                                     csv_file_info$random_seed)
-      sampling_info$output_file <- c(sampling_info$output_file,
-                                     csv_file_info$output_file)
-      sampling_info$output_diagnostic_file <- c(sampling_info$output_diagnostic_file,
-                                                csv_file_info$output_diagnostic_file)
-      sampling_info$output_refresh <- c(sampling_info$output_refresh,
-                                        csv_file_info$output_refresh)
-      inverse_mass_matrix_diag <- cbind(inverse_mass_matrix_diag,
-                                        csv_file_info$inverse_mass_matrix_diag)
+      inverse_mass_matrix[[csv_file_info$id]] <- csv_file_info$inverse_mass_matrix
+      id <- csv_file_info$id
     }
     # read sampling data
-    if(sampling_info$sample_save_warmup == 1) {
-      num_of_draws <- sampling_info$sample_num_samples + sampling_info$sample_num_warmup
-    } else {
-      num_of_draws <- sampling_info$sample_num_samples
-    }
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
-    sampling_params_draws <- rbind(sampling_params_draws, draws[, sampling_info$sampler_params])
-    if(sampling_info$sample_save_warmup == 1) {
-      warmup_draws_array <- rbind(warmup_draws_array,
-                                  draws[1:sampling_info$sample_num_warmup, sampling_info$model_params])
-      post_warmup_draws_array <- rbind(post_warmup_draws_array,
-                                       draws[(sampling_info$sample_num_warmup+1):num_of_draws, sampling_info$model_params])
+
+    if(sampling_info$save_warmup == 1) {
+      warmup_draws_array[[id]] <- draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$model_params]
+      warmup_sampling_params_draws[[id]] <- draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$sampler_params]
+      post_warmup_draws_array[[id]] <- draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$model_params]
+      post_warmup_sampling_params_draws[[id]] <- draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$sampler_params]
+
     } else {
       warmup_draws_array <- NULL
-      post_warmup_draws_array <- rbind(post_warmup_draws_array,
-                                       draws[, sampling_info$model_params])
+      post_warmup_draws_array[[id]] <- draws[, sampling_info$model_params]
+      post_warmup_sampling_params_draws[[id]] <- draws[, sampling_info$sampler_params]
     }
-
-  }
-  #inverse mass matrix is returned separately
-  sampling_info$inverse_mass_matrix_diag <- NULL
-  if(!is.null(inverse_mass_matrix_diag)) {
-    if(!is.array(inverse_mass_matrix_diag)) {
-      inverse_mass_matrix_diag <- array(inverse_mass_matrix_diag, dim = c(length(inverse_mass_matrix_diag),1))
-    }
-    dimnames(inverse_mass_matrix_diag) <- list(diagonal_elements = seq(dim(sampling_info$inverse_mass_matrix_diag)[1]),
-                                               chain_id = sampling_info$id)
   }
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
   num_chains <- length(sampling_info$id)
   if(!is.null(warmup_draws_array)) {
-    warmup_draws_array <- posterior::as_draws_array(array(unlist(warmup_draws_array),
-                                                          dim = c(sampling_info$sample_num_warmup, num_chains, length(sampling_info$model_params)),
+    warmup_draws_array <- posterior::as_draws_array(array(unlist(do.call(rbind, warmup_draws_array)),
+                                                          dim = c(sampling_info$num_warmup/sampling_info$thin, num_chains, length(sampling_info$model_params)),
                                                           dimnames = list(NULL, NULL, sampling_info$model_params)))
+    warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(do.call(rbind, warmup_sampling_params_draws)),
+                                                             dim = c(sampling_info$num_warmup/sampling_info$thin, num_chains, length(sampling_info$sampler_params)),
+                                                             dimnames = list(NULL, NULL, sampling_info$sampler_params)))
   }
-  post_warmup_draws_array <- posterior::as_draws_array(array(unlist(post_warmup_draws_array),
-                                                             dim = c(sampling_info$sample_num_samples, num_chains, length(sampling_info$model_params)),
+
+  post_warmup_draws_array <- posterior::as_draws_array(array(unlist(do.call(rbind, post_warmup_draws_array)),
+                                                             dim = c(sampling_info$num_samples/sampling_info$thin, num_chains, length(sampling_info$model_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$model_params)))
-  sampling_params_draws <- posterior::as_draws_array(array(unlist(sampling_params_draws),
-                                                             dim = c(num_of_draws, num_chains, length(sampling_info$sampler_params)),
+  post_warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(do.call(rbind, post_warmup_sampling_params_draws)),
+                                                             dim = c(sampling_info$num_samples/sampling_info$thin, num_chains, length(sampling_info$sampler_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$sampler_params)))
   list(
     sampling_info = sampling_info,
-    inverse_mass_matrix_diag = inverse_mass_matrix_diag,
+    inverse_mass_matrix = inverse_mass_matrix,
     warmup = warmup_draws_array,
     post_warmup = post_warmup_draws_array,
-    sampler = sampling_params_draws
+    warmup_sampler = warmup_sampling_params_draws,
+    post_warmup_sampler = post_warmup_sampling_params_draws
   )
 }
 
