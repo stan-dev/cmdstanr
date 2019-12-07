@@ -102,11 +102,6 @@ test_that("cmdstan_ext() works", {
   }
 })
 
-test_that("repair_path() fixes slashes", {
-  # all slashes should be single "/", and no trailing slash
-  expect_equal(repair_path("a//b\\c/"), "a/b/c")
-})
-
 # cleanup -----------------------------------------------------------------
 Sys.unsetenv("CMDSTAN")
 unset_cmdstan_path()
