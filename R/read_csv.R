@@ -13,8 +13,9 @@ check_sampling_csv_info_matches <- function(a, b) {
   if ((length(a$model_params)!= length(b$model_params)) || !(all(a$model_params == b$model_params) && all(a$sampler_params == b$sampler_params))) {
     return("Supplied CSV files have samples for different parameters!")
   }
+  dont_match_list <- c("id", "inverse_mass_matrix")
   for (name in names(a)) {
-    if (name != "id" && name != "inverse_mass_matrix" && (is.null(b[[name]]) ||  a[[name]] != b[[name]])) {
+    if (!(name %in% dont_match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
       return("Supplied CSV files do not match in all sampling settings!")
     }
   }
@@ -99,7 +100,7 @@ read_sample_info_csv <- function(csv_file) {
       }
       if(csv_file_info$inverse_mass_matrix_rows == 0) {
         csv_file_info$inverse_mass_matrix <- rapply(inv_mass_matrix_split, as.numeric)
-      } else {        
+      } else {
         csv_file_info$inverse_mass_matrix <- c(csv_file_info$inverse_mass_matrix, rapply(inv_mass_matrix_split, as.numeric))
       }
       csv_file_info$inverse_mass_matrix_rows <- csv_file_info$inverse_mass_matrix_rows + 1
@@ -185,7 +186,7 @@ read_sample_csv <- function(output_files) {
     }
     # read sampling data
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
-    
+
     if(sampling_info$save_warmup == 1) {
       warmup_draws_array[[id]] <- draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$model_params]
       warmup_sampling_params_draws[[id]] <- draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$sampler_params]
@@ -208,7 +209,7 @@ read_sample_csv <- function(output_files) {
                                                              dim = c(sampling_info$num_warmup/sampling_info$thin, num_chains, length(sampling_info$sampler_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$sampler_params)))
   }
-  
+
   post_warmup_draws_array <- posterior::as_draws_array(array(unlist(do.call(rbind, post_warmup_draws_array)),
                                                              dim = c(sampling_info$num_samples/sampling_info$thin, num_chains, length(sampling_info$model_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$model_params)))
