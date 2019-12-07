@@ -234,6 +234,12 @@ CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
   public = list(
+    initialize = function(runset) {
+      super$initialize(runset)
+      data_csv <- read_sample_csv(self$output_files())
+      check_divergences(data_csv)
+      check_sampler_transitions_treedepth(data_csv)
+    },
     num_chains = function() {
       super$num_runs()
     },

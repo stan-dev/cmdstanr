@@ -204,18 +204,18 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file", {
   num_warmup <- csv_output$sampling_info$num_warmup/csv_output$sampling_info$thin
   num_iter <- csv_output$sampling_info$num_iter
   # match warmup sampler info
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "divergent__"),
-               posterior::extract_one_variable_matrix(sampler_params[(num_warmup+1):num_iter,,], "divergent__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "accept_stat__"),
-               posterior::extract_one_variable_matrix(sampler_params[(num_warmup+1):num_iter,,], "accept_stat__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "treedepth__"),
-               posterior::extract_one_variable_matrix(sampler_params[(num_warmup+1):num_iter,,], "treedepth__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "stepsize__"),
-               posterior::extract_one_variable_matrix(sampler_params[(num_warmup+1):num_iter,,], "stepsize__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "n_leapfrog__"),
-               posterior::extract_one_variable_matrix(sampler_params[(num_warmup+1):num_iter,,], "n_leapfrog__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "energy__"),
-               posterior::extract_one_variable_matrix(sampler_params[(num_warmup+1):num_iter,,], "energy__"))
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "divergent__"),
+               posterior::extract_one_variable_matrix(sampler_params[1:num_warmup,,], "divergent__"))
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "accept_stat__"),
+               posterior::extract_one_variable_matrix(sampler_params[1:num_warmup,,], "accept_stat__"))
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "treedepth__"),
+               posterior::extract_one_variable_matrix(sampler_params[1:num_warmup,,], "treedepth__"))
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "stepsize__"),
+               posterior::extract_one_variable_matrix(sampler_params[1:num_warmup,,], "stepsize__"))
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "n_leapfrog__"),
+               posterior::extract_one_variable_matrix(sampler_params[1:num_warmup,,], "n_leapfrog__"))
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "energy__"),
+               posterior::extract_one_variable_matrix(sampler_params[1:num_warmup,,], "energy__"))
   # match post-warmup sampling info
   expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "divergent__"),
                posterior::extract_one_variable_matrix(sampler_params[(num_warmup+1):num_iter,,], "divergent__"))

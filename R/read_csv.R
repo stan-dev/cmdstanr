@@ -202,20 +202,28 @@ read_sample_csv <- function(output_files) {
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
   num_chains <- length(sampling_info$id)
   if(!is.null(warmup_draws_array)) {
-    warmup_draws_array <- posterior::as_draws_array(array(unlist(do.call(rbind, warmup_draws_array)),
+    if(!is.null(warmup_draws_array) && (length(warmup_draws_array) > 0)) {
+      
+      warmup_draws_array <- posterior::as_draws_array(array(unlist(do.call(rbind, warmup_draws_array)),
                                                           dim = c(sampling_info$num_warmup/sampling_info$thin, num_chains, length(sampling_info$model_params)),
                                                           dimnames = list(NULL, NULL, sampling_info$model_params)))
-    warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(do.call(rbind, warmup_sampling_params_draws)),
+    }
+    if(!is.null(warmup_sampling_params_draws) && (length(warmup_sampling_params_draws) > 0)) {
+          warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(do.call(rbind, warmup_sampling_params_draws)),
                                                              dim = c(sampling_info$num_warmup/sampling_info$thin, num_chains, length(sampling_info$sampler_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$sampler_params)))
+    }
   }
-
-  post_warmup_draws_array <- posterior::as_draws_array(array(unlist(do.call(rbind, post_warmup_draws_array)),
+  if(!is.null(post_warmup_draws_array) && (length(post_warmup_draws_array) > 0)) {
+    post_warmup_draws_array <- posterior::as_draws_array(array(unlist(do.call(rbind, post_warmup_draws_array)),
                                                              dim = c(sampling_info$num_samples/sampling_info$thin, num_chains, length(sampling_info$model_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$model_params)))
-  post_warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(do.call(rbind, post_warmup_sampling_params_draws)),
+  }
+  if(!is.null(post_warmup_sampling_params_draws) && (length(post_warmup_sampling_params_draws) > 0)) {
+    post_warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(do.call(rbind, post_warmup_sampling_params_draws)),
                                                              dim = c(sampling_info$num_samples/sampling_info$thin, num_chains, length(sampling_info$sampler_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$sampler_params)))
+  }  
   list(
     sampling_info = sampling_info,
     inverse_mass_matrix = inverse_mass_matrix,
