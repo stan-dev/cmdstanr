@@ -138,7 +138,7 @@ specifying the geometry of the base manifold. See the \emph{Euclidean Metric}
 section of the CmdStan documentation for more details. To specify a
 precomputed (inverse) metric, see the \code{inv_metric} argument below.
 \item \code{metric_file}: (character) A character vector containing paths to JSON or
-Rdump file files (one per chain) compatible with CmdStan that contain
+Rdump files (one per chain) compatible with CmdStan that contain
 precomputed inverse metrics. The \code{metric_file} argument is inherited from
 CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
 named \code{inv_metric}, referring to the \emph{inverse} metric. We recommend instead
