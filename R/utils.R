@@ -369,19 +369,12 @@ set_num_threads <- function(num_threads) {
 }
 
 check_divergences <- function(data_csv) {
-  if(data_csv$sampling_info$sample_num_samples == 0)
+  if(data_csv$sampling_info$num_samples == 0)
     return(NULL)
-  if(data_csv$sampling_info$sample_save_warmup == 1) {
-    first_iter <- data_csv$sampling_info$sample_num_warmup + 1
-    last_iter <- data_csv$sampling_info$sample_num_warmup + data_csv$sampling_info$sample_num_samples
-  } else {
-    first_iter <- 1
-    last_iter <- data_csv$sampling_info$sample_num_samples
-  }
-  divergences <- posterior::extract_one_variable_matrix(data_csv$sampler[first_iter:last_iter,,], "divergent__")
+  divergences <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler, "divergent__")
   num_of_divergences <- sum(divergences)
   if (num_of_divergences > 0) {
-    num_iter <- data_csv$sampling_info$sample_num_samples
+    num_iter <- data_csv$sampling_info$num_samples/data_csv$sampling_info$thin
     percentage_divergences <- (num_of_divergences)/num_iter*100
     message(num_of_divergences, " of ", num_iter, " (", (format(round(percentage_divergences, 0), nsmall = 0)), "%)",
             " transitions ended with a divergence.\n",
@@ -394,24 +387,17 @@ check_divergences <- function(data_csv) {
 check_sampler_transitions_treedepth <- function(data_csv) {
   if(data_csv$sampling_info$sample_num_samples == 0)
     return(NULL)
-  if(data_csv$sampling_info$sample_save_warmup == 1) {
-    first_iter <- data_csv$sampling_info$sample_num_warmup + 1
-    last_iter <- data_csv$sampling_info$sample_num_warmup + data_csv$sampling_info$sample_num_samples
-  } else {
-    first_iter <- 1
-    last_iter <- data_csv$sampling_info$sample_num_samples
-  }
-  max_treedepth <- data_csv$sampling_info$sample_adapt_hmc_nuts_max_depth
-  treedepth <- posterior::extract_one_variable_matrix(data_csv$sampler[first_iter:last_iter,,], "treedepth__")
+  max_treedepth <- data_csv$sampling_info$max_depth
+  treedepth <- posterior::extract_one_variable_matrix(data_csv$sampler, "treedepth__")
   max_treedepth_hit <- sum(treedepth >= max_treedepth)
   if (max_treedepth_hit > 0) {
-    num_iter <- data_csv$sampling_info$sample_num_samples
+    num_iter <- data_csv$sampling_info$num_samples/data_csv$sampling_info$thin
     percentage_max_treedepth <- (max_treedepth_hit)/num_iter*100
     message(max_treedepth_hit, " of ", num_iter, " (", (format(round(percentage_max_treedepth, 0), nsmall = 0)), "%)",
             " transitions hit the maximum treedepth limit of ", max_treedepth,
             " or 2^", max_treedepth, "-1 leapfrog steps.\n",
             "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
-            "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
+            "Increasing the max_depth limit can avoid this at the expense of more computation.\n",
             "If increasing max_depth does not remove warnings, try to reparameterize the model.\n")
   }
 }
