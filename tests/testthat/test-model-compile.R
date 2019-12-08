@@ -76,3 +76,27 @@ test_that("compilation works with include_paths", {
     cmdstan_ext(strip_ext(absolute_path(stan_program_w_include)))
   )
 })
+
+test_that("stanc simple compile flags work", {
+  skip_on_cran()
+  set_make_local(stanc_flags = list("test-flag" = TRUE, test2_flag = TRUE))
+  path_to_make_local <- file.path(cmdstan_path(), "make", "local")
+  make_local <- readChar(path_to_make_local, file.info(path_to_make_local)$size)
+  expect_match(make_local, "STANCFLAGS \\+= --test-flag --test2_flag")
+})
+
+test_that("stanc compile flag with argument work", {
+  skip_on_cran()
+  set_make_local(stanc_flags = list("test-flag" = "path/to/file"))
+  path_to_make_local <- file.path(cmdstan_path(), "make", "local")
+  make_local <- readChar(path_to_make_local, file.info(path_to_make_local)$size)
+  expect_match(make_local, "STANCFLAGS \\+= --test-flag='path/to/file'")
+})
+
+test_that("stanc compile flags work", {
+  skip_on_cran()
+  set_make_local(stanc_flags = list(test_flag = TRUE, "test-flag" = "path/to/file"))
+  path_to_make_local <- file.path(cmdstan_path(), "make", "local")
+  make_local <- readChar(path_to_make_local, file.info(path_to_make_local)$size)
+  expect_match(make_local, "STANCFLAGS \\+= --test_flag --test-flag='path/to/file'")
+})

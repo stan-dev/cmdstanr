@@ -217,12 +217,14 @@ compile_method <- function(quiet = TRUE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
+                           stanc_flags = NULL,
                            compiler_flags = NULL) {
   exe <- strip_ext(self$stan_file())
   make_local_changed <- set_make_local(threads,
                                        opencl,
                                        opencl_platform_id,
                                        opencl_device_id,
+                                       stanc_flags,
                                        compiler_flags)
   # rebuild main.o and the model if there was a change in make/local
   if (make_local_changed) {

@@ -319,6 +319,7 @@ set_make_local <- function(threads = FALSE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
+                           stanc_flags = NULL,
                            compiler_flags = NULL) {
   cmdstanr_generated_flags_comment <-
     "# cmdstanr generated make/local flags (add user flags above this line)"
@@ -350,6 +351,17 @@ set_make_local <- function(threads = FALSE,
   if (threads) {
     stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
     compiler_flags <- c(compiler_flags, stan_threads)
+  }
+  if(!is.null(stanc_flags)) {
+    comp_flags = c()
+    for (i in seq_len(length(stanc_flags))) {
+      if (isTRUE(as.logical(stanc_flags[[i]]))) {
+        comp_flags = c(comp_flags, paste0("--",names(stanc_flags)[i]))
+      } else {
+        comp_flags = c(comp_flags, paste0("--", names(stanc_flags)[i], "=", "'", stanc_flags[[i]], "'"))
+      }
+    }
+    compiler_flags <- c(compiler_flags, paste0("STANCFLAGS += ",paste0(comp_flags, collapse = " ")))
   }
   if (length(compiler_flags)) {
     compiler_flags <- c(cmdstanr_generated_flags_comment, compiler_flags)
