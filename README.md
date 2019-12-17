@@ -43,6 +43,7 @@ GitHub, but expect frequent changes until an official release.
 
 ```r
 # install.packages("devtools")
+# devtools::install_github("jgabry/posterior")
 devtools::install_github("stan-dev/cmdstanr")
 ```
 
