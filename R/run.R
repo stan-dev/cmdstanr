@@ -245,7 +245,7 @@ CmdStanRun <- R6::R6Class(
       procs$set_active_cores(procs$num_alive())
     }
   }
-  procs$set_total_time(Sys.time() - start_time)
+  procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
   procs$report_time()
 }
 CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
@@ -423,7 +423,8 @@ CmdStanProcs <- R6::R6Class(
       id <- as.character(id)
       if (private$chain_info_[id,"state"] == 4) {
         private$chain_info_[id,"state"] <- 5
-        private$chain_info_[id,"total_time"] <- Sys.time() - private$chain_info_[id,"start_time"]
+        private$chain_info_[id,"total_time"] <- as.double((Sys.time() - private$chain_info_[id,"start_time"]), units = "secs")
+
         self$report_time(id)
       } else {
         private$chain_info_[id,"state"] <- 6
@@ -467,14 +468,14 @@ CmdStanProcs <- R6::R6Class(
           if (private$chain_info_[id,"state"] == 2 &&
               regexpr("(Sampling)", line, perl = TRUE) > 0) {
             next_state <- 3 # 3 = sampling
-            private$chain_info_[id,"warmup_time"] <- Sys.time() - last_section_start_time
+            private$chain_info_[id,"warmup_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
           if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
             if (state == 2) { #warmup only run
-              private$chain_info_[id,"warmup_time"] <- Sys.time() - last_section_start_time
+              private$chain_info_[id,"warmup_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             } else if (state == 3) { # sampling
-              private$chain_info_[id,"sampling_time"] <- Sys.time() - last_section_start_time
+              private$chain_info_[id,"sampling_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             }
             next_state <- 4 # writing csv and finishing
           }
