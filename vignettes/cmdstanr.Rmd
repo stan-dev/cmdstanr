@@ -86,6 +86,9 @@ set_cmdstan_path(PATH_TO_CMDSTAN)
 If you need to check or get the current path to CmdStan use the 
 `cmdstan_path()` function.
 
+To verify the version of CmdStan you are using, use the `cmdstan_version()`
+function.
+
 ## Running CmdStan from R
 
 ### Compilation 
