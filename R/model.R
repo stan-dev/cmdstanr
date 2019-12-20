@@ -347,7 +347,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   section of the CmdStan documentation for more details. To specify a
 #'   precomputed (inverse) metric, see the `inv_metric` argument below.
 #'   * `metric_file`: (character) A character vector containing paths to JSON or
-#'   Rdump file files (one per chain) compatible with CmdStan that contain
+#'   Rdump files (one per chain) compatible with CmdStan that contain
 #'   precomputed inverse metrics. The `metric_file` argument is inherited from
 #'   CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
 #'   named `inv_metric`, referring to the _inverse_ metric. We recommend instead

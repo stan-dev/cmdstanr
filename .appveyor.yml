@@ -62,7 +62,7 @@ install:
 
   - echo "Installing R package dependencies"
   - Rscript -e "sessionInfo()"
-  - Rscript -e "install.packages(c('remotes', 'covr', 'knitr'), repos = 'https://cloud.r-project.org')"
+  - Rscript -e "install.packages(c('remotes', 'covr', 'knitr', 'xml2'), repos = 'https://cloud.r-project.org')"
   - Rscript -e "options(repos = c(CRAN = 'https://cloud.r-project.org'), download.file.method = 'auto')"
   - Rscript -e "remotes::install_deps(dependencies = TRUE, type='win.binary')"
   - echo "Finished installing R dependencies"
