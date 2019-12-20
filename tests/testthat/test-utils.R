@@ -31,7 +31,7 @@ test_that("check_sampler_transitions_treedepth() works", {
   output <- "1 of 100 \\(1%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
   expect_message(check_sampler_transitions_treedepth(csv_output), output)
 
-}
+})
 
 test_that("cmdstan_summary works if bin/stansummary deleted file", {
   skip_on_cran()
