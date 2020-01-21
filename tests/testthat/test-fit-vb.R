@@ -6,17 +6,17 @@ if (not_on_cran()) {
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
-test_that("summary() method works after vb", {
-  skip_on_cran()
-  x <- fit_vb$summary()
-  expect_s3_class(x, "draws_summary")
-  expect_equal(x$variable, PARAM_NAMES)
+# test_that("summary() method works after vb", {
+#   skip_on_cran()
+#   x <- fit_vb$summary()
+#   expect_s3_class(x, "draws_summary")
+#   expect_equal(x$variable, PARAM_NAMES)
 
-  x <- fit_vb$summary(measures = c("mean", "sd"))
-  expect_s3_class(x, "draws_summary")
-  expect_equal(x$variable, PARAM_NAMES)
-  expect_equal(colnames(x), c("variable", "mean", "sd"))
-})
+#   x <- fit_vb$summary(measures = c("mean", "sd"))
+#   expect_s3_class(x, "draws_summary")
+#   expect_equal(x$variable, PARAM_NAMES)
+#   expect_equal(colnames(x), c("variable", "mean", "sd"))
+# })
 
 test_that("draws() method returns posterior sample (reading csv works)", {
   skip_on_cran()

@@ -2,7 +2,11 @@ context("model-output_dir")
 
 if (not_on_cran()) {
   set_cmdstan_path()
-  sandbox <- file.path(tempdir(check = TRUE), "sandbox")
+  if (getRversion() < '3.5.0') {
+    sandbox <- file.path(tempdir(), "sandbox")
+  } else {
+    sandbox <- file.path(tempdir(check = TRUE), "sandbox")
+  }
   if (!dir.exists(sandbox)) {
     dir.create(sandbox)
   }
@@ -51,7 +55,7 @@ test_that("error if output_dir is invalid", {
     testing_fit("bernoulli", output_dir = TRUE),
     "No directory provided"
   )
-  
+
   if (!os_is_windows()) {
     # FIXME: how do I create an unreadable file on windows?
     not_readable <- file.path(sandbox, "locked")
