@@ -2,7 +2,11 @@ context("install")
 
 test_that("install_cmdstan() successfully installs cmdstan", {
   skip_if_offline()
-  dir <- tempdir(check = TRUE)
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE),
@@ -33,8 +37,11 @@ test_that("install_cmdstan() errors if installation already exists", {
 
 test_that("install_cmdstan() errors if it times out", {
   skip_if_offline()
-  dir <- tempdir(check = TRUE)
-
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
   dir_exists <- dir.exists(file.path(dir, "cmdstan"))
 
   # with quiet=TRUE
