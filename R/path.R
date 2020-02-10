@@ -74,7 +74,7 @@ cmdstan_version <- function() {
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- NULL
 .cmdstanr$VERSION <- NULL
-.cmdstanr$TMP_DIR <- NULL
+.cmdstanr$TEMP_DIR <- NULL
 
 # path to temp directory
 cmdstan_tempdir <- function() {
