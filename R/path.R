@@ -74,7 +74,7 @@ cmdstan_version <- function() {
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- NULL
 .cmdstanr$VERSION <- NULL
-.cmdstanr$TMP_DIR <- NULL
+.cmdstanr$TEMP_DIR <- NULL
 
 # path to temp directory
 cmdstan_tempdir <- function() {
@@ -126,7 +126,11 @@ cmdstanr_initialize <- function() {
     }
   }
 
-  .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
+  if (getRversion() < '3.5.0') {
+    .cmdstanr$TEMP_DIR <- tempdir()
+  } else {
+    .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
+  }
   invisible(TRUE)
 }
 

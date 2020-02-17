@@ -47,7 +47,11 @@ CmdStanArgs <- R6::R6Class(
       self$method_args <- method_args
       self$method <- self$method_args$method
       self$save_diagnostics <- save_diagnostics
-      self$output_dir <- output_dir %||% tempdir(check = TRUE)
+      if (getRversion() < '3.5.0') {
+        self$output_dir <- output_dir %||% tempdir()
+      } else {
+        self$output_dir <- output_dir %||% tempdir(check = TRUE)
+      }
 
       self$method_args$validate(num_runs = length(self$run_ids))
       self$validate()
