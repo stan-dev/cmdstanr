@@ -669,6 +669,9 @@ process_data <- function(data) {
       write_stan_json(data = data, file = path)
     } else {
       path <- tempfile(pattern = "standata-", fileext = ".dat")
+      if (!requireNamespace("rstan", quietly = TRUE)) {
+        stop("For CmdStan < 2.22 the rstan package is required for writing data.")
+      }
       rstan::stan_rdump(names(data), file = path, env = list2env(data))
     }
   } else {
