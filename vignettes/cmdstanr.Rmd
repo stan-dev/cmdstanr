@@ -172,11 +172,21 @@ fit$cmdstan_diagnose()
 fit$cmdstan_summary()
 ```
 
-The output of sampling CSV files can be read by using `read_sample_csv()` in
-combination with the `$output_files()` method of the `CmdStanMCMC` object.
+The `$draws()` method of the `CmdStanMCMC` object can be used to extract
+the post-warmup posterior draws:
 
 ```{r stanfit}
-stanfit <- read_sample_csv(fit$output_files())
+draws <- fit$draws()
+str(draws)
+```
+
+It is also possible to create a stanfit object (from RStan) from the csv
+output	files written by CmdStan. This can be done by using
+`rstan::read_stan_csv()` in combination with the `$output_files()` method of the
+`CmdStanMCMC` object.
+
+```{r stanfit}
+stanfit <- rstan::read_stan_csv(fit$output_files())
 print(stanfit)
 ```
 
