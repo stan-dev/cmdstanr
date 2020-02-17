@@ -306,7 +306,9 @@ CmdStanProcs <- R6::R6Class(
       private$run_ids_
     },
     cleanup = function() {
-      lapply(private$processes_, function(p) p$kill_tree)
+      lapply(private$processes_, function(p) {
+        try(p$kill_tree(), silent = TRUE)
+      })
       invisible(self)
     },
     poll = function(ms) { # time in milliseconds
