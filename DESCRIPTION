@@ -24,12 +24,12 @@ Imports:
     checkmate,
     posterior (>= 0.0.1),
     processx,
-    rstan,
     R6
 Suggests: 
     jsonlite (>= 1.2.0),
     knitr,
     rmarkdown,
+    rstan,
     testthat (>= 2.1.0)
 VignetteBuilder: knitr
 Remotes: 
