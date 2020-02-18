@@ -664,8 +664,16 @@ process_data <- function(data) {
   } else if (is.character(data)) {
     path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {
-    path <- tempfile(pattern = "standata-", fileext = ".dat")
-    rstan::stan_rdump(names(data), file = path, env = list2env(data))
+    if (cmdstan_version() >= "2.22") {
+      path <- tempfile(pattern = "standata-", fileext = ".json")
+      write_stan_json(data = data, file = path)
+    } else {
+      path <- tempfile(pattern = "standata-", fileext = ".dat")
+      if (!requireNamespace("rstan", quietly = TRUE)) {
+        stop("For CmdStan < 2.22 the rstan package is required for writing data.")
+      }
+      rstan::stan_rdump(names(data), file = path, env = list2env(data))
+    }
   } else {
     stop("'data' should be a path or a named list.", call. = FALSE)
   }

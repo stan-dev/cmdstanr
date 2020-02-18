@@ -96,16 +96,16 @@ test_that("saving data file works", {
   for (method in all_methods) {
     fit <- fits[[method]]
     old_path <- fit$data_file()
-    checkmate::expect_file_exists(old_path, extension = "dat")
+    checkmate::expect_file_exists(old_path, extension = "json")
 
     expect_message(
       path <- fit$save_data_file(tempdir(), basename = NULL,
                                  timestamp = FALSE, random = FALSE),
       "Moved data file and set internal path"
     )
-    checkmate::expect_file_exists(path, extension = "dat")
+    checkmate::expect_file_exists(path, extension = "json")
     expect_true(file.size(path) > 0)
-    expect_equal(basename(path), "logistic.dat")
+    expect_equal(basename(path), "logistic.json")
 
     expect_false(file.exists(old_path))
     expect_equal(fit$data_file(), path)
