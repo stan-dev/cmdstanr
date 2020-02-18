@@ -13,7 +13,7 @@ check_sampling_csv_info_matches <- function(a, b) {
   if ((length(a$model_params)!= length(b$model_params)) || !(all(a$model_params == b$model_params) && all(a$sampler_params == b$sampler_params))) {
     return("Supplied CSV files have samples for different parameters!")
   }
-  dont_match_list <- c("id", "inverse_mass_matrix")
+  dont_match_list <- c("id", "inverse_metric")
   for (name in names(a)) {
     if (!(name %in% dont_match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
       return("Supplied CSV files do not match in all sampling settings!")
@@ -33,14 +33,14 @@ check_sampling_csv_info_matches <- function(a, b) {
 read_sample_info_csv <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
   param_names_read <- FALSE
-  inverse_mass_matrix_next <- FALSE
-  inverse_mass_matrix_diagonal_next <- FALSE
+  inverse_metric_next <- FALSE
+  inverse_metric_diagonal_next <- FALSE
   diagonal_matrix_read <- FALSE
   arg_prefix <- ""
   csv_file_info = list()
   con  <- file(csv_file, open = "r")
-  csv_file_info[["inverse_mass_matrix"]] <- NULL
-  csv_file_info$inverse_mass_matrix_rows <- 0
+  csv_file_info[["inverse_metric"]] <- NULL
+  csv_file_info$inverse_metric_rows <- 0
   while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
     if (!startsWith(line, "#")) {
       if(!param_names_read) {
@@ -57,7 +57,7 @@ read_sample_info_csv <- function(csv_file) {
         }
         next;
       } else {
-        if(inverse_mass_matrix_next || inverse_mass_matrix_diagonal_next){
+        if(inverse_metric_next || inverse_metric_diagonal_next){
           break;
         } else {
           next;
@@ -82,28 +82,28 @@ read_sample_info_csv <- function(csv_file) {
     }
 
     if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
-      inverse_mass_matrix_diagonal_next <- TRUE
+      inverse_metric_diagonal_next <- TRUE
     } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
-      inverse_mass_matrix_next <- TRUE
-    } else if(inverse_mass_matrix_diagonal_next) {
+      inverse_metric_next <- TRUE
+    } else if(inverse_metric_diagonal_next) {
       inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
       if ((length(inv_mass_matrix_split) == 0) ||
           ((length(inv_mass_matrix_split) == 1) && identical(inv_mass_matrix_split[[1]], character(0)))) {
         break;
       }
-      csv_file_info$inverse_mass_matrix <- rapply(inv_mass_matrix_split, as.numeric)
-    } else if(inverse_mass_matrix_next) {
+      csv_file_info$inverse_metric <- rapply(inv_mass_matrix_split, as.numeric)
+    } else if(inverse_metric_next) {
       inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
       if ((length(inv_mass_matrix_split) == 0) ||
           ((length(inv_mass_matrix_split) == 1) && identical(inv_mass_matrix_split[[1]], character(0)))) {
         break;
       }
-      if(csv_file_info$inverse_mass_matrix_rows == 0) {
-        csv_file_info$inverse_mass_matrix <- rapply(inv_mass_matrix_split, as.numeric)
+      if(csv_file_info$inverse_metric_rows == 0) {
+        csv_file_info$inverse_metric <- rapply(inv_mass_matrix_split, as.numeric)
       } else {
-        csv_file_info$inverse_mass_matrix <- c(csv_file_info$inverse_mass_matrix, rapply(inv_mass_matrix_split, as.numeric))
+        csv_file_info$inverse_metric <- c(csv_file_info$inverse_metric, rapply(inv_mass_matrix_split, as.numeric))
       }
-      csv_file_info$inverse_mass_matrix_rows <- csv_file_info$inverse_mass_matrix_rows + 1
+      csv_file_info$inverse_metric_rows <- csv_file_info$inverse_metric_rows + 1
     }
   }
   close(con)
@@ -118,10 +118,10 @@ read_sample_info_csv <- function(csv_file) {
     num_iter <- csv_file_info$num_samples
   }
   num_iter <- num_iter / csv_file_info$thin
-  if(csv_file_info$inverse_mass_matrix_rows > 0) {
-    rows <- csv_file_info$inverse_mass_matrix_rows
-    cols <- length(csv_file_info$inverse_mass_matrix)/csv_file_info$inverse_mass_matrix_rows
-    dim(csv_file_info$inverse_mass_matrix) <- c(rows,cols)
+  if(csv_file_info$inverse_metric_rows > 0) {
+    rows <- csv_file_info$inverse_metric_rows
+    cols <- length(csv_file_info$inverse_metric)/csv_file_info$inverse_metric_rows
+    dim(csv_file_info$inverse_metric) <- c(rows,cols)
   }
   list(
     model_name = csv_file_info$model,
@@ -141,7 +141,7 @@ read_sample_info_csv <- function(csv_file) {
     window = csv_file_info$window,
     model_params = csv_file_info$model_params,
     sampler_params = csv_file_info$sampler_params,
-    inverse_mass_matrix = csv_file_info$inverse_mass_matrix
+    inverse_metric = csv_file_info$inverse_metric
   )
 }
 
@@ -162,14 +162,14 @@ read_sample_csv <- function(output_files) {
   warmup_sampling_params_draws <- list()
   post_warmup_draws_array <- list()
   post_warmup_sampling_params_draws <- list()
-  inverse_mass_matrix = list()
+  inverse_metric = list()
   for(output_file in output_files) {
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
     # read meta data
     if (is.null(sampling_info)) {
       sampling_info <- read_sample_info_csv(output_file)
-      inverse_mass_matrix <- list()
-      inverse_mass_matrix[[sampling_info$id]] <- sampling_info$inverse_mass_matrix
+      inverse_metric <- list()
+      inverse_metric[[sampling_info$id]] <- sampling_info$inverse_metric
       id <- sampling_info$id
     } else {
       csv_file_info <- read_sample_info_csv(output_file)
@@ -181,7 +181,7 @@ read_sample_csv <- function(output_files) {
       }
       sampling_info$id <- c(sampling_info$id,
                             csv_file_info$id)
-      inverse_mass_matrix[[csv_file_info$id]] <- csv_file_info$inverse_mass_matrix
+      inverse_metric[[csv_file_info$id]] <- csv_file_info$inverse_metric
       id <- csv_file_info$id
     }
     # read sampling data
@@ -226,7 +226,7 @@ read_sample_csv <- function(output_files) {
   }  
   list(
     sampling_info = sampling_info,
-    inverse_mass_matrix = inverse_mass_matrix,
+    inverse_metric = inverse_metric,
     warmup = warmup_draws_array,
     post_warmup = post_warmup_draws_array,
     warmup_sampler = warmup_sampling_params_draws,
