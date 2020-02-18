@@ -13,7 +13,7 @@ check_sampling_csv_info_matches <- function(a, b) {
   if ((length(a$model_params)!= length(b$model_params)) || !(all(a$model_params == b$model_params) && all(a$sampler_params == b$sampler_params))) {
     return("Supplied CSV files have samples for different parameters!")
   }
-  dont_match_list <- c("id", "inverse_metric")
+  dont_match_list <- c("id", "inverse_metric", "step_size")
   for (name in names(a)) {
     if (!(name %in% dont_match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
       return("Supplied CSV files do not match in all sampling settings!")
@@ -81,27 +81,29 @@ read_sample_info_csv <- function(csv_file) {
       }
     }
 
-    if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
+    if (regexpr("# Step size = ", line, perl = TRUE) > 0) {
+      csv_file_info$step_size <- as.numeric(strsplit(line, " = ")[[1]][2])
+    } else if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
       inverse_metric_diagonal_next <- TRUE
     } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
       inverse_metric_next <- TRUE
     } else if(inverse_metric_diagonal_next) {
-      inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
-      if ((length(inv_mass_matrix_split) == 0) ||
-          ((length(inv_mass_matrix_split) == 1) && identical(inv_mass_matrix_split[[1]], character(0)))) {
+      inv_metric_split <- strsplit(gsub("# ", "", line), ",")
+      if ((length(inv_metric_split) == 0) ||
+          ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
         break;
       }
-      csv_file_info$inverse_metric <- rapply(inv_mass_matrix_split, as.numeric)
+      csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
     } else if(inverse_metric_next) {
-      inv_mass_matrix_split <- strsplit(gsub("# ", "", line), ",")
-      if ((length(inv_mass_matrix_split) == 0) ||
-          ((length(inv_mass_matrix_split) == 1) && identical(inv_mass_matrix_split[[1]], character(0)))) {
+      inv_metric_split <- strsplit(gsub("# ", "", line), ",")
+      if ((length(inv_metric_split) == 0) ||
+          ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
         break;
       }
       if(csv_file_info$inverse_metric_rows == 0) {
-        csv_file_info$inverse_metric <- rapply(inv_mass_matrix_split, as.numeric)
+        csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
       } else {
-        csv_file_info$inverse_metric <- c(csv_file_info$inverse_metric, rapply(inv_mass_matrix_split, as.numeric))
+        csv_file_info$inverse_metric <- c(csv_file_info$inverse_metric, rapply(inv_metric_split, as.numeric))
       }
       csv_file_info$inverse_metric_rows <- csv_file_info$inverse_metric_rows + 1
     }
@@ -141,7 +143,8 @@ read_sample_info_csv <- function(csv_file) {
     window = csv_file_info$window,
     model_params = csv_file_info$model_params,
     sampler_params = csv_file_info$sampler_params,
-    inverse_metric = csv_file_info$inverse_metric
+    inverse_metric = csv_file_info$inverse_metric,
+    step_size = csv_file_info$step_size
   )
 }
 
@@ -223,10 +226,14 @@ read_sample_csv <- function(output_files) {
     post_warmup_sampling_params_draws <- posterior::as_draws_array(array(unlist(do.call(rbind, post_warmup_sampling_params_draws)),
                                                              dim = c(sampling_info$num_samples/sampling_info$thin, num_chains, length(sampling_info$sampler_params)),
                                                              dimnames = list(NULL, NULL, sampling_info$sampler_params)))
-  }  
+  }
+  sampling_info$inverse_metric <- NULL
+  step_size_temp <- sampling_info$step_size
+  sampling_info$step_size <- NULL
   list(
     sampling_info = sampling_info,
     inverse_metric = inverse_metric,
+    step_size = step_size_temp,
     warmup = warmup_draws_array,
     post_warmup = post_warmup_draws_array,
     warmup_sampler = warmup_sampling_params_draws,
