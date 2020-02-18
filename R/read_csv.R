@@ -198,6 +198,7 @@ read_sample_csv <- function(output_files) {
 
     } else {
       warmup_draws_array <- NULL
+      warmup_sampling_params_draws <- NULL
       post_warmup_draws_array[[id]] <- draws[, sampling_info$model_params]
       post_warmup_sampling_params_draws[[id]] <- draws[, sampling_info$sampler_params]
     }
