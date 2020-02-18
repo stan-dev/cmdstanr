@@ -175,7 +175,7 @@ fit$cmdstan_summary()
 The `$draws()` method of the `CmdStanMCMC` object can be used to extract
 the post-warmup posterior draws:
 
-```{r stanfit}
+```{r draws}
 draws <- fit$draws()
 str(draws)
 ```
