@@ -24,6 +24,13 @@ CmdStanFit <- R6::R6Class(
       private$draws_
     },
 
+    sampling_info = function() {
+      if (is.null(private$sampling_info_)) {
+        private$read_csv_()
+      }
+      private$sampling_info_
+    },
+
     summary = function(...) {
       if (self$runset$method() == "sample") {
         summary <- posterior::summarise_draws(self$draws(), ...)
@@ -77,7 +84,8 @@ CmdStanFit <- R6::R6Class(
     }
   ),
   private = list(
-    draws_ = NULL
+    draws_ = NULL,
+    sampling_info_ = NULL
   )
 )
 
@@ -261,8 +269,7 @@ CmdStanMCMC <- R6::R6Class(
       }
       data_csv <- read_sample_csv(self$output_files())
       private$draws_ <- data_csv$post_warmup
-      private$warmup_draws_ <- data_csv$warmup
-      private$sampler_params_ <- data_csv$sampler
+      private$sampling_info_ <- data_csv$sampling_info
       invisible(self)
     }
   )
