@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.vscode/*
 
 design-questions/*
 inst/doc
