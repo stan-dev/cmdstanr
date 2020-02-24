@@ -247,6 +247,11 @@ CmdStanMCMC <- R6::R6Class(
       data_csv <- read_sample_csv(self$output_files())
       check_divergences(data_csv)
       check_sampler_transitions_treedepth(data_csv)
+      private$draws_ <- data_csv$post_warmup_draws
+      private$warmup_draws_ <- data_csv$warmup_draws
+      private$sampling_info_ <- data_csv$sampling_info
+      private$sampler_diagnostics_ <- data_csv$sampling_info
+      private$warmup_sampler_diagnostics_ <- data_csv$sampling_info
     },
     num_chains = function() {
       super$num_runs()
@@ -260,7 +265,8 @@ CmdStanMCMC <- R6::R6Class(
     }
   ),
   private = list(
-    sampler_params_ = NULL,
+    sampler_diagnostics_ = NULL,
+    warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     read_csv_ = function() {
       if (!length(self$output_files())) {
@@ -268,8 +274,11 @@ CmdStanMCMC <- R6::R6Class(
              call. = FALSE)
       }
       data_csv <- read_sample_csv(self$output_files())
-      private$draws_ <- data_csv$post_warmup
+      private$draws_ <- data_csv$post_warmup_draws
+      private$warmup_draws_ <- data_csv$warmup_draws
       private$sampling_info_ <- data_csv$sampling_info
+      private$sampler_diagnostics_ <- data_csv$sampling_info
+      private$warmup_sampler_diagnostics_ <- data_csv$sampling_info
       invisible(self)
     }
   )
