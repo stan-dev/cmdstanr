@@ -18,6 +18,10 @@ CmdStanFit <- R6::R6Class(
     },
 
     draws = function() {
+      if (!length(self$output_files())) {
+        stop("No chains finished successfully. Unable to retrieve the fit.",
+             call. = FALSE)
+      }
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
@@ -33,6 +37,10 @@ CmdStanFit <- R6::R6Class(
 
     summary = function(...) {
       if (self$runset$method() == "sample") {
+        if (!length(self$output_files())) {
+          stop("No chains finished successfully. Unable to retrieve the fit.",
+              call. = FALSE)
+        }
         summary <- posterior::summarise_draws(self$draws(), ...)
       } else { # don't include MCMC diagnostics for non MCMC
         args <- list(...)
