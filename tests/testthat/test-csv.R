@@ -80,11 +80,11 @@ test_that("read_sample_csv() matches rstan::read_stan_csv()", {
   draws_array <- readRDS(test_path("answers", "rstan-read-stan-csv-no-warmup.rds"))
   draws_array <- posterior::as_draws_array(draws_array)
   csv_output <- read_sample_csv(csv_files)
-  expect_equal(csv_output$post_warmup[,, "mu"],
+  expect_equal(csv_output$post_warmup_draws[,, "mu"],
                draws_array[,,"mu"])
-  expect_equal(csv_output$post_warmup[,, "sigma"],
+  expect_equal(csv_output$post_warmup_draws[,, "sigma"],
                draws_array[,,"sigma"])
-  expect_equal(csv_output$post_warmup[,, "lp__"],
+  expect_equal(csv_output$post_warmup_draws[,, "lp__"],
                draws_array[,,"lp__"])
 })
 
@@ -98,22 +98,22 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() with save_warmup", {
   csv_output <- read_sample_csv(csv_files)
 
   warmup_iter <- csv_output$sampling_info$num_warmup
-  num_iter <- csv_output$sampling_info$num_iter
+  num_iter <- csv_output$sampling_info$num_samples+csv_output$sampling_info$num_warmup
 
   draws_array_post_warmup <- draws_array[(warmup_iter+1):num_iter,,]
   draws_array_warmup <- draws_array[1:warmup_iter,,]
 
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup, "mu"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "mu"),
                posterior::extract_one_variable_matrix(draws_array_post_warmup, "mu"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup, "sigma"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "sigma"),
                posterior::extract_one_variable_matrix(draws_array_post_warmup, "sigma"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup, "lp__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "lp__"),
                posterior::extract_one_variable_matrix(draws_array_post_warmup, "lp__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup, "mu"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_draws, "mu"),
                posterior::extract_one_variable_matrix(draws_array_warmup, "mu"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup, "sigma"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_draws, "sigma"),
                posterior::extract_one_variable_matrix(draws_array_warmup, "sigma"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup, "lp__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_draws, "lp__"),
                posterior::extract_one_variable_matrix(draws_array_warmup, "lp__"))
 })
 
@@ -125,11 +125,11 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file without
   draws_array <- posterior::as_draws_array(draws_array)
   csv_output <- read_sample_csv(csv_files)
 
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup, "mu"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "mu"),
                posterior::extract_one_variable_matrix(draws_array, "mu"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup, "sigma"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "sigma"),
                posterior::extract_one_variable_matrix(draws_array, "sigma"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup, "lp__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "lp__"),
                posterior::extract_one_variable_matrix(draws_array, "lp__"))
 })
 
@@ -193,7 +193,6 @@ test_that("read_sample_csv() returns correct dense inverse mass matrix for 2 csv
                 7.78791, 0.0780934, 4.34037, 8.13132, 7.53072, 5.61617, 4.72335, 8.10162, 7.75486, 35.6602))
 })
 
-
 test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
@@ -202,32 +201,37 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file", {
   sampler_diagnostics <- posterior::as_draws_array(sampler_diagnostics[[1]])
   csv_output <- read_sample_csv(csv_files)
   num_warmup <- csv_output$sampling_info$num_warmup/csv_output$sampling_info$thin
-  num_iter <- csv_output$sampling_info$num_iter
+  if(csv_output$sampling_info$save_warmup) {
+    num_iter <- csv_output$sampling_info$num_samples + csv_output$sampling_info$num_warmup
+  } else {
+    num_iter <- csv_output$sampling_info$num_samples
+  }
+
   # match warmup sampler info
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "divergent__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "divergent__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "divergent__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "accept_stat__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "accept_stat__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "accept_stat__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "treedepth__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "treedepth__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "treedepth__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "stepsize__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "stepsize__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "stepsize__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "n_leapfrog__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "n_leapfrog__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "n_leapfrog__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler, "energy__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "energy__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "energy__"))
   # match post-warmup sampling info
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "divergent__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "divergent__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "divergent__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "accept_stat__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "accept_stat__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "accept_stat__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "treedepth__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "treedepth__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "treedepth__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "stepsize__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "stepsize__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "stepsize__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "n_leapfrog__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "n_leapfrog__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "n_leapfrog__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler, "energy__"),
+  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "energy__"),
                posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "energy__"))
 })
 
@@ -238,19 +242,19 @@ test_that("read_sample_csv() works with thin", {
   csv_output_10 <- read_sample_csv(fit_logistic_thin_10$output_files())
   csv_output_1_with_warmup <- read_sample_csv(fit_logistic_thin_1_with_warmup$output_files())
   csv_output_10_with_warmup <- read_sample_csv(fit_logistic_thin_10_with_warmup$output_files())
-  expect_equal(dim(csv_output_1$post_warmup), c(1000, 2, 5))
-  expect_equal(dim(csv_output_10$post_warmup), c(100, 2, 5))
-  expect_equal(dim(csv_output_1_with_warmup$post_warmup), c(1000, 2, 5))
-  expect_equal(dim(csv_output_1_with_warmup$warmup), c(1000, 2, 5))
-  expect_equal(dim(csv_output_10_with_warmup$post_warmup), c(100, 2, 5))
-  expect_equal(dim(csv_output_10_with_warmup$warmup), c(100, 2, 5))
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 5))
+  expect_equal(dim(csv_output_10$post_warmup_draws), c(100, 2, 5))
+  expect_equal(dim(csv_output_1_with_warmup$post_warmup_draws), c(1000, 2, 5))
+  expect_equal(dim(csv_output_1_with_warmup$warmup_draws), c(1000, 2, 5))
+  expect_equal(dim(csv_output_10_with_warmup$post_warmup_draws), c(100, 2, 5))
+  expect_equal(dim(csv_output_10_with_warmup$warmup_draws), c(100, 2, 5))
 })
 
 test_that("read_sample_csv() works with no samples", {
   skip_on_cran()
 
   csv_output_diag_e_0 <- read_sample_csv(fit_bernoulli_diag_e_no_samples$output_files())
-  expect_equal(dim(csv_output_diag_e_0$post_warmup), c(0,2,2))
+  expect_equal(dim(csv_output_diag_e_0$post_warmup_draws), c(0,2,2))
   csv_output_dense_e_0 <- read_sample_csv(fit_bernoulli_dense_e_no_samples$output_files())
-  expect_equal(dim(csv_output_dense_e_0$post_warmup), c(0,2,2))
+  expect_equal(dim(csv_output_dense_e_0$post_warmup_draws), c(0,2,2))
 })

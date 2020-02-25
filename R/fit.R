@@ -248,10 +248,12 @@ CmdStanMCMC <- R6::R6Class(
       check_divergences(data_csv)
       check_sampler_transitions_treedepth(data_csv)
       private$draws_ <- data_csv$post_warmup_draws
-      private$warmup_draws_ <- data_csv$warmup_draws
+      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
       private$sampling_info_ <- data_csv$sampling_info
-      private$sampler_diagnostics_ <- data_csv$sampling_info
-      private$warmup_sampler_diagnostics_ <- data_csv$sampling_info
+      if(data_csv$sampling_info$save_warmup) {
+        private$warmup_draws_ <- data_csv$warmup_draws
+        private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+      }
     },
     num_chains = function() {
       super$num_runs()
@@ -275,10 +277,12 @@ CmdStanMCMC <- R6::R6Class(
       }
       data_csv <- read_sample_csv(self$output_files())
       private$draws_ <- data_csv$post_warmup_draws
-      private$warmup_draws_ <- data_csv$warmup_draws
+      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
       private$sampling_info_ <- data_csv$sampling_info
-      private$sampler_diagnostics_ <- data_csv$sampling_info
-      private$warmup_sampler_diagnostics_ <- data_csv$sampling_info
+      if(data_csv$sampling_info$save_warmup) {
+        private$warmup_draws_ <- data_csv$warmup_draws
+        private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+      }
       invisible(self)
     }
   )

@@ -232,6 +232,7 @@ read_sample_csv <- function(output_files) {
   }
   sampling_info$inverse_metric <- NULL
   sampling_info$step_size <- NULL  
+  sampling_info$num_iter <- NULL 
   list(
     sampling_info = sampling_info,
     inverse_metric = inverse_metric,
