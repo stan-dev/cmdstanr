@@ -250,7 +250,8 @@ CmdStanMCMC <- R6::R6Class(
       private$draws_ <- data_csv$post_warmup_draws
       private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
       private$sampling_info_ <- data_csv$sampling_info
-      if(data_csv$sampling_info$save_warmup) {
+      if(!is.null(data_csv$sampling_info$save_warmup) 
+         && data_csv$sampling_info$save_warmup) {
         private$warmup_draws_ <- data_csv$warmup_draws
         private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
       }
@@ -279,7 +280,8 @@ CmdStanMCMC <- R6::R6Class(
       private$draws_ <- data_csv$post_warmup_draws
       private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
       private$sampling_info_ <- data_csv$sampling_info
-      if(data_csv$sampling_info$save_warmup) {
+      if(!is.null(data_csv$sampling_info$save_warmup) 
+         && data_csv$sampling_info$save_warmup) {
         private$warmup_draws_ <- data_csv$warmup_draws
         private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
       }
