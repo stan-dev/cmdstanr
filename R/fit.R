@@ -273,6 +273,36 @@ CmdStanMCMC <- R6::R6Class(
       } else {
         cat(paste(self$runset$procs$chain_output(id), collapse="\n"))
       }
+    },
+
+    draws = function(inc_warmup = FALSE) {
+      if (!length(self$output_files())) {
+        stop("No chains finished successfully. Unable to retrieve the fit.",
+             call. = FALSE)
+      }
+      if (is.null(private$draws_)) {
+        private$read_csv_()
+      }
+      if(inc_warmup) {
+        bind_draws(private$warmup_draws_, private$draws_, along="iteration")
+      } else {
+        private$draws_
+      }
+    },
+
+    sampler_diagnostics = function(inc_warmup = FALSE) {
+      if (!length(self$output_files())) {
+        stop("No chains finished successfully. Unable to retrieve the fit.",
+             call. = FALSE)
+      }
+      if (is.null(private$draws_)) {
+        private$read_csv_()
+      }
+      if(inc_warmup) {
+        bind_draws(private$warmup_sampler_diagnostics_, private$sampler_diagnostics_, along="iteration")
+      } else {
+        private$sampler_diagnostics_
+      }
     }
   ),
   private = list(
