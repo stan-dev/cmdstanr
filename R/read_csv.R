@@ -133,6 +133,7 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info$adapt_delta <- csv_file_info$delta
   csv_file_info$engaged <- NULL
   csv_file_info$delta <- NULL
+  csv_file_info$file <- NULL
   return(csv_file_info)
 }
 
