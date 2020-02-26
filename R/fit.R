@@ -318,12 +318,8 @@ CmdStanMCMC <- R6::R6Class(
 #'  **Method** \tab **Description** \cr
 #'  `$mle()` \tab Return the (penalized) maximum likelihood point estimate
 #'  (posterior mode) as a vector with one element per variable. \cr
-#'  `$lp()` \tab Return the total log probability density (up to an additive
-#'  constant) computed in the model block of the Stan program. \cr
-#'  `$draws()` \tab Same as the `$mle()` method but the point estimate is
-#'  returned as a 1-row [`draws_matrix`][posterior::draws_matrix] with one
-#'  column per variable (instead of as a named vector) to be consistent with the
-#'  fitted model objects for methods other than optimization. \cr
+#'  `$lp()` \tab Return the total log probability density (`target`) computed
+#'  in the model block of the Stan program. \cr
 #'  [`$save_output_files()`][fit-method-save_output_files]
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`$save_data_file()`][fit-method-save_data_file]
