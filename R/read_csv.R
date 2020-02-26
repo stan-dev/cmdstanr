@@ -135,6 +135,7 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info$delta <- NULL
   csv_file_info$file <- NULL
   csv_file_info$diagnostic_file <- NULL
+  csv_file_info$metric_file <- NULL
   return(csv_file_info)
 }
 
