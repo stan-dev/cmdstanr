@@ -2,10 +2,7 @@
 % Please edit documentation in R/read_csv.R
 \name{read_sample_csv}
 \alias{read_sample_csv}
-\title{Reads sampling results from the supplied CSV files. Returns a list
-containing sampling arguments, the diagonal of the inverse mass
-matrix, the post-warmup samples, the sampling parameters and
-optionally samples produced during warmup.}
+\title{Read sampling results from the supplied CSV files}
 \usage{
 read_sample_csv(output_files)
 }
@@ -18,8 +15,8 @@ matrix, the post-warmup samples, the sampling parameters and warmup samples
 if the run was run with save_warmup = 1.
 }
 \description{
-Reads sampling results from the supplied CSV files. Returns a list
-containing sampling arguments, the diagonal of the inverse mass
-matrix, the post-warmup samples, the sampling parameters and
-optionally samples produced during warmup.
+Read sampling results from the supplied CSV files. Returns a list containing
+sampling arguments, the diagonal of the inverse mass matrix, the post-warmup
+samples, the sampling parameters and optionally samples produced during
+warmup.
 }
