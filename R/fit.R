@@ -283,8 +283,8 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
-      if(inc_warmup) {
-        bind_draws(private$warmup_draws_, private$draws_, along="iteration")
+      if(inc_warmup && private$sampling_info_$save_warmup) {
+        posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")
       } else {
         private$draws_
       }
@@ -298,8 +298,8 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
-      if(inc_warmup) {
-        bind_draws(private$warmup_sampler_diagnostics_, private$sampler_diagnostics_, along="iteration")
+      if(inc_warmup && private$sampling_info_$save_warmup) {
+        posterior::bind_draws(private$warmup_sampler_diagnostics_, private$sampler_diagnostics_, along="iteration")
       } else {
         private$sampler_diagnostics_
       }

@@ -7,6 +7,9 @@ if (not_on_cran()) {
   fit_mcmc_0 <- testing_fit("logistic", method = "sample",
                             seed = 123, num_chains = 2,
                             refresh = 0)
+  fit_mcmc_1 <- testing_fit("logistic", method = "sample",
+                            seed = 123, num_chains = 2,
+                            refresh = 0, save_warmup = TRUE)
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
@@ -67,4 +70,16 @@ test_that("time() method works after mcmc", {
     checkmate::expect_scalar_na(run_times_0$chains$warmup[j])
     checkmate::expect_scalar_na(run_times_0$chains$sampling[j])
   }
+})
+
+test_that("inc_warmup in draws() works", {
+  skip_on_cran()
+  x0 <- fit_mcmc_0$draws(inc_warmup = FALSE)
+  x1 <- fit_mcmc_0$draws(inc_warmup = TRUE)
+  x2 <- fit_mcmc_1$draws(inc_warmup = FALSE)
+  x3 <- fit_mcmc_1$draws(inc_warmup = TRUE)
+  expect_equal(dim(x0), c(1000, 2, 5))
+  expect_equal(dim(x1), c(1000, 2, 5))
+  expect_equal(dim(x2), c(1000, 2, 5))
+  expect_equal(dim(x3), c(2000, 2, 5))
 })
