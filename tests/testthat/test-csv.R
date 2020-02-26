@@ -258,3 +258,13 @@ test_that("read_sample_csv() works with no samples", {
   csv_output_dense_e_0 <- read_sample_csv(fit_bernoulli_dense_e_no_samples$output_files())
   expect_equal(dim(csv_output_dense_e_0$post_warmup_draws), c(0,2,2))
 })
+
+test_that("read_sample_csv() reads values up to adaptation", {
+  skip_on_cran()
+
+  csv_files <- test_path("resources", "csv", "bernoulli-3-diff_params.csv")
+
+  csv_out <- read_sample_csv(csv_files)
+  expect_equal(csv_out$sampling_info$pi, 3.14)
+  expect_true(is.null(csv_out$sampling_info$pi_square))
+})

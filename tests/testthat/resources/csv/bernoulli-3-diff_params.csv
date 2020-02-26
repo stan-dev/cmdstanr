@@ -37,12 +37,14 @@
 #   diagnostic_file =  (Default)
 #   refresh = 100 (Default)
 lp__,accept_stat__,stepsize__,treedepth__,n_leapfrog__,divergent__,energy__,mu,theta
+# pi = 3.14
 # Adaptation terminated
 # Step size = 0.712907
 # Diagonal elements of inverse mass matrix:
 # 1.00098, 0.068748
 -19.4938,0.953779,0.712907,2,3,0,19.4971,8.11498,7.4563
 #
+# pi_square = 9.86
 #  Elapsed Time: 0.038029 seconds (Warm-up)
 #                0.030711 seconds (Sampling)
 #                0.06874 seconds (Total)
