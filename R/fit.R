@@ -18,14 +18,29 @@ CmdStanFit <- R6::R6Class(
     },
 
     draws = function() {
+      if (!length(self$output_files())) {
+        stop("No chains finished successfully. Unable to retrieve the fit.",
+             call. = FALSE)
+      }
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
       private$draws_
     },
 
+    sampling_info = function() {
+      if (is.null(private$sampling_info_)) {
+        private$read_csv_()
+      }
+      private$sampling_info_
+    },
+
     summary = function(...) {
       if (self$runset$method() == "sample") {
+        if (!length(self$output_files())) {
+          stop("No chains finished successfully. Unable to retrieve the fit.",
+              call. = FALSE)
+        }
         summary <- posterior::summarise_draws(self$draws(), ...)
       } else { # don't include MCMC diagnostics for non MCMC
         args <- list(...)
@@ -77,7 +92,8 @@ CmdStanFit <- R6::R6Class(
     }
   ),
   private = list(
-    draws_ = NULL
+    draws_ = NULL,
+    sampling_info_ = NULL
   )
 )
 
@@ -234,6 +250,20 @@ CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
   public = list(
+    initialize = function(runset) {
+      super$initialize(runset)
+      data_csv <- read_sample_csv(self$output_files())
+      check_divergences(data_csv)
+      check_sampler_transitions_treedepth(data_csv)
+      private$draws_ <- data_csv$post_warmup_draws
+      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
+      private$sampling_info_ <- data_csv$sampling_info
+      if(!is.null(data_csv$sampling_info$save_warmup) 
+         && data_csv$sampling_info$save_warmup) {
+        private$warmup_draws_ <- data_csv$warmup_draws
+        private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+      }
+    },
     num_chains = function() {
       super$num_runs()
     },
@@ -246,21 +276,23 @@ CmdStanMCMC <- R6::R6Class(
     }
   ),
   private = list(
-    sampler_params_ = NULL,
+    sampler_diagnostics_ = NULL,
+    warmup_sampler_diagnostics_ = NULL,
+    warmup_draws_ = NULL,
     read_csv_ = function() {
       if (!length(self$output_files())) {
         stop("No chains finished successfully. Unable to retrieve the fit.",
              call. = FALSE)
       }
-
-      # FIXME don't use rstan
-      if (!requireNamespace("rstan", quietly = TRUE)) {
-        stop("Please install the 'rstan' package. This is temporarily required ",
-             "for reading the csv files from CmdStan.", call. = FALSE)
+      data_csv <- read_sample_csv(self$output_files())
+      private$draws_ <- data_csv$post_warmup_draws
+      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
+      private$sampling_info_ <- data_csv$sampling_info
+      if(!is.null(data_csv$sampling_info$save_warmup) 
+         && data_csv$sampling_info$save_warmup) {
+        private$warmup_draws_ <- data_csv$warmup_draws
+        private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
       }
-      stanfit <- rstan::read_stan_csv(self$output_files())
-      draws_array <- rstan::extract(stanfit, permuted = FALSE, inc_warmup = FALSE)
-      private$draws_ <- posterior::as_draws_array(draws_array)
       invisible(self)
     }
   )

@@ -1,0 +1,51 @@
+# stan_version_major = 2
+# stan_version_minor = 21
+# stan_version_patch = 0
+# model = bernoulli_model
+# method = sample (Default)
+#   sample
+#     num_samples = 1000 (Default)
+#     num_warmup = 1000 (Default)
+#     save_warmup = 0
+#     thin = 1 (Default)
+#     adapt
+#       engaged = 1 (Default)
+#       gamma = 0.050000000000000003 (Default)
+#       delta = 0.80000000000000004 (Default)
+#       kappa = 0.75 (Default)
+#       t0 = 10 (Default)
+#       init_buffer = 75 (Default)
+#       term_buffer = 50 (Default)
+#       window = 25 (Default)
+#     algorithm = hmc (Default)
+#       hmc
+#         engine = nuts (Default)
+#           nuts
+#             max_depth = 10
+#         metric = diag_e (Default)
+#         metric_file =  (Default)
+#         stepsize = 1 (Default)
+#         stepsize_jitter = 0 (Default)
+# id = 3
+# data
+#   file = /tmp/RtmpcXhiID/standata-124764cd0999.json
+# init = 2 (Default)
+# random
+#   seed = 1927315875
+# output
+#   file = /tmp/RtmpcXhiID/tests-201911231643-1-3613bb.csv
+#   diagnostic_file =  (Default)
+#   refresh = 100 (Default)
+lp__,accept_stat__,stepsize__,treedepth__,n_leapfrog__,divergent__,energy__,mu,theta
+# pi = 3.14
+# Adaptation terminated
+# Step size = 0.712907
+# Diagonal elements of inverse mass matrix:
+# 1.00098, 0.068748
+-19.4938,0.953779,0.712907,2,3,0,19.4971,8.11498,7.4563
+#
+# pi_square = 9.86
+#  Elapsed Time: 0.038029 seconds (Warm-up)
+#                0.030711 seconds (Sampling)
+#                0.06874 seconds (Total)
+#

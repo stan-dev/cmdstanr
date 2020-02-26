@@ -1,0 +1,53 @@
+# stan_version_major = 2
+# stan_version_minor = 21
+# stan_version_patch = 0
+# model = warning_model
+# method = sample (Default)
+#   sample
+#     num_samples = 1000 (Default)
+#     num_warmup = 1000 (Default)
+#     save_warmup = 0 (Default)
+#     thin = 1 (Default)
+#     adapt
+#       engaged = 1 (Default)
+#       gamma = 0.050000000000000003 (Default)
+#       delta = 0.80000000000000004 (Default)
+#       kappa = 0.75 (Default)
+#       t0 = 10 (Default)
+#       init_buffer = 75 (Default)
+#       term_buffer = 50 (Default)
+#       window = 25 (Default)
+#     algorithm = hmc (Default)
+#       hmc
+#         engine = nuts (Default)
+#           nuts
+#             max_depth = 5
+#         metric = dense_e
+#         metric_file =  (Default)
+#         stepsize = 1 (Default)
+#         stepsize_jitter = 0 (Default)
+# id = 2
+# data
+#   file = /tmp/RtmpwuXj7q/standata-626e2e1de93.dat
+# init = 2 (Default)
+# random
+#   seed = 1742584894
+# output
+#   file = /tmp/RtmpwuXj7q/warning-201911291802-1-b9bf01.csv
+#   diagnostic_file =  (Default)
+#   refresh = 100 (Default)
+lp__,accept_stat__,stepsize__,treedepth__,n_leapfrog__,divergent__,energy__,mu,tau,theta.1,theta.2,theta.3,theta.4,theta.5,theta.6,theta.7,theta.8
+# Adaptation terminated
+# Step size = 0.232778
+# Elements of inverse mass matrix:
+# 11.08, -0.305763, 5.27013, 7.33046, 7.31263, 6.93229, 10.1923, 7.46852, 7.51557, 7.78791
+# -0.305763, 0.678461, 1.70598, 0.337143, -0.69887, 0.423236, -0.974023, -0.605539, 1.83794, 0.0780934
+# 5.27013, 1.70598, 36.2726, 7.9386, 3.88642, 12.0214, 4.2487, 3.84886, 12.9738, 4.34037
+# 7.33046, 0.337143, 7.9386, 23.9878, 4.93047, 5.76139, 7.34008, 7.78631, 6.79063, 8.13132
+# 7.31263, -0.69887, 3.88642, 4.93047, 25.3662, 7.2269, 7.5408, 8.18066, 5.77239, 7.53072
+# 6.93229, 0.423236, 12.0214, 5.76139, 7.2269, 24.0619, 7.24315, 7.194, 10.1647, 5.61617
+# 10.1923, -0.974023, 4.2487, 7.34008, 7.5408, 7.24315, 26.2403, 6.91029, 1.26095, 4.72335
+# 7.46852, -0.605539, 3.84886, 7.78631, 8.18066, 7.194, 6.91029, 30.2862, 5.61914, 8.10162
+# 7.51557, 1.83794, 12.9738, 6.79063, 5.77239, 10.1647, 1.26095, 5.61914, 34.5498, 7.75486
+# 7.78791, 0.0780934, 4.34037, 8.13132, 7.53072, 5.61617, 4.72335, 8.10162, 7.75486, 35.6602
+-12.1669,0.771978,0.232778,3,7,0,19.0882,5.46421,2.63041,5.84162,5.91101,3.42499,6.52557,7.03691,8.51128,5.55333,2.67202

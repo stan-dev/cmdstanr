@@ -172,10 +172,18 @@ fit$cmdstan_diagnose()
 fit$cmdstan_summary()
 ```
 
-Because CmdStanR is not fully developed yet, for the time being the best way to
-work with the output is to create a stanfit object (RStan) from the csv output
-files written by CmdStan. This can be done by using `rstan::read_stan_csv()` in
-combination with the `$output_files()` method of the `CmdStanMCMC` object.
+The `$draws()` method of the `CmdStanMCMC` object can be used to extract
+the post-warmup posterior draws:
+
+```{r draws}
+draws <- fit$draws()
+str(draws)
+```
+
+It is also possible to create a stanfit object (from RStan) from the csv
+output	files written by CmdStan. This can be done by using
+`rstan::read_stan_csv()` in combination with the `$output_files()` method of the
+`CmdStanMCMC` object.
 
 ```{r stanfit}
 stanfit <- rstan::read_stan_csv(fit$output_files())
