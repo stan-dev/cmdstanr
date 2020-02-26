@@ -215,11 +215,13 @@ in-memory interface like RStan is able to offer more advanced features than
 CmdStanR (for example the `rstan::log_prob()` and `rstan::grad_log_prob()`
 methods) but keeping up with Stan releases is more complicated for RStan, often
 requiring non-trivial changes to the **rstan** package and requiring new CRAN
-releases of **rstan** and **StanHeaders**. With CmdStanR, the latest features in
-Stan will be available from R immediately after updating CmdStan, without an
-update to the **cmdstanr** package.
+releases of **rstan** and **StanHeaders**. On the other hand, with CmdStanR, 
+the latest features in Stan will be available from R immediately after updating 
+CmdStan, without an update to the **cmdstanr** package. We also anticipate that
+running Stan via external processes will have the advantage of playing nicer with 
+R (and RStudio) and result in fewer unexpected crashes than when using RStan.
 
-Another difference between RStan and CmdStanR is the license. RStan is GPL-3
-while the license for CmdStanR (like Stan) is BSD-3, which is a bit more
-permissive.
+Finally, RStan and CmdStanR have different open source licenses. RStan uses the 
+GPL-3 license while the license for CmdStanR (like Stan) is BSD-3, which is a bit 
+more permissive.
 

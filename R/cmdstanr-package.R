@@ -37,7 +37,9 @@
 #'   requiring new CRAN releases of \pkg{rstan} and \pkg{StanHeaders}. With
 #'   CmdStanR, the latest features in Stan will be available from \R immediately
 #'   after updating CmdStan, which can be done with the [install_cmdstan()]
-#'   function.
+#'   function. We also anticipate that running Stan via external processes will 
+#'   have the advantage of playing nicer with R (and RStudio) and result in fewer 
+#'   unexpected crashes than when using RStan.
 #'
 #'   Another difference between RStan and CmdStanR is the license. RStan is
 #'   GPL-3 while the license for CmdStanR (like Stan) is BSD-3, which is a bit
