@@ -33,18 +33,19 @@ CmdStanFit <- R6::R6Class(
 
     summary = function(...) {
       if (self$runset$method() == "sample") {
-        if (!length(self$output_files())) {
-          stop("No chains finished successfully. Unable to retrieve the fit.",
-              call. = FALSE)
-        }
         summary <- posterior::summarise_draws(self$draws(), ...)
-      } else { # don't include MCMC diagnostics for non MCMC
-        args <- list(...)
-        args$x <- self$draws()
-        if (!"measures" %in% names(args)) {
-          args$measures <- posterior::default_summary_measures()
+      } else {
+        if (!length(list(...))) {
+          # if user didn't supply any args use default summary measures,
+          # which don't include MCMC-specific things
+          summary <- posterior::summarise_draws(
+            self$draws(),
+            posterior::default_summary_measures()
+          )
+        } else {
+          # otherwise use whatever the user specified via ...
+          summary <- posterior::summarise_draws(self$draws(), ...)
         }
-        summary <- do.call(posterior::summarise_draws, args)
       }
       if (self$runset$method() == "optimize") {
         summary <- summary[, c("variable", "mean")]
@@ -220,7 +221,12 @@ NULL
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
 #'  `$draws()` \tab Return a [`draws_array`][posterior::draws_array] of
-#'  (post-warmup) posterior draws.\cr
+#'  posterior draws. If warmup draws were saved then they can be included
+#'  by specifying the argument `inc_warmup=TRUE`. \cr
+#'  `$sampler_diagnostics()` \tab Return a [`draws_array`][posterior::draws_array] of
+#'  sampler diagnostics (e.g., `divergent__`, `treedepth__`, etc).
+#'  If warmup draws were saved then they can be included
+#'  by specifying the argument `inc_warmup=TRUE`. \cr
 #'  [`$summary()`][fit-method-summary]
 #'    \tab Run [posterior::summarise_draws()]. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
@@ -257,8 +263,8 @@ CmdStanMCMC <- R6::R6Class(
         private$draws_ <- data_csv$post_warmup_draws
         private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
         private$sampling_info_ <- data_csv$sampling_info
-        if(!is.null(data_csv$sampling_info$save_warmup) 
-          && data_csv$sampling_info$save_warmup) {
+        if (!is.null(data_csv$sampling_info$save_warmup)
+            && data_csv$sampling_info$save_warmup) {
           private$warmup_draws_ <- data_csv$warmup_draws
           private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
         }
@@ -279,8 +285,8 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
-      if(inc_warmup) {
-        if(!private$sampling_info_$save_warmup) {
+      if (inc_warmup) {
+        if (!private$sampling_info_$save_warmup) {
           stop("Warmup draws were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
         }
         posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")
@@ -293,8 +299,8 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
-      if(inc_warmup) {
-        if(!private$sampling_info_$save_warmup) {
+      if (inc_warmup) {
+        if (!private$sampling_info_$save_warmup) {
           stop("Warmup sampler diagnostics were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
         }
         posterior::bind_draws(private$warmup_sampler_diagnostics_, private$sampler_diagnostics_, along="iteration")
@@ -317,7 +323,7 @@ CmdStanMCMC <- R6::R6Class(
       private$draws_ <- data_csv$post_warmup_draws
       private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
       private$sampling_info_ <- data_csv$sampling_info
-      if(!is.null(data_csv$sampling_info$save_warmup) 
+      if (!is.null(data_csv$sampling_info$save_warmup)
          && data_csv$sampling_info$save_warmup) {
         private$warmup_draws_ <- data_csv$warmup_draws
         private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
