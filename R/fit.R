@@ -248,16 +248,20 @@ CmdStanMCMC <- R6::R6Class(
   public = list(
     initialize = function(runset) {
       super$initialize(runset)
-      data_csv <- read_sample_csv(self$output_files())
-      check_divergences(data_csv)
-      check_sampler_transitions_treedepth(data_csv)
-      private$draws_ <- data_csv$post_warmup_draws
-      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
-      private$sampling_info_ <- data_csv$sampling_info
-      if(!is.null(data_csv$sampling_info$save_warmup) 
-         && data_csv$sampling_info$save_warmup) {
-        private$warmup_draws_ <- data_csv$warmup_draws
-        private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+      if (!length(self$output_files())) {
+        warning("No chains finished successfully. Unable to retrieve the fit.")
+      } else {
+        data_csv <- read_sample_csv(self$output_files())
+        check_divergences(data_csv)
+        check_sampler_transitions_treedepth(data_csv)
+        private$draws_ <- data_csv$post_warmup_draws
+        private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
+        private$sampling_info_ <- data_csv$sampling_info
+        if(!is.null(data_csv$sampling_info$save_warmup) 
+          && data_csv$sampling_info$save_warmup) {
+          private$warmup_draws_ <- data_csv$warmup_draws
+          private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+        }
       }
     },
     num_chains = function() {
@@ -303,6 +307,7 @@ CmdStanMCMC <- R6::R6Class(
     sampler_diagnostics_ = NULL,
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
+    draws_ = NULL,
     read_csv_ = function() {
       if (!length(self$output_files())) {
         stop("No chains finished successfully. Unable to retrieve the fit.",
