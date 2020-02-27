@@ -150,6 +150,6 @@ read_cmdstan_version <- function(path) {
     return(NULL)
   }
   makefile <- readLines(makefile_path)
-  version_line <- grep("^CMDSTAN_VERSION", makefile, value = TRUE)
+  version_line <- grep("^CMDSTAN_VERSION :=", makefile, value = TRUE)
   sub("CMDSTAN_VERSION := ", "", version_line)
 }

@@ -13,6 +13,14 @@ test_that("check_divergences() works", {
   output <- "14 of 100 \\(14%\\) transitions ended with a divergence."
   expect_message(check_divergences(csv_output), output)
 
+  csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
+                 test_path("resources", "csv", "model1-2-no-warmup.csv"))
+  csv_output <- read_sample_csv(csv_files)
+  divergences <- posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "divergent__")
+  print(divergences)
+  output <- "28 of 200 \\(14%\\) transitions ended with a divergence."
+  expect_message(check_divergences(csv_output), output)
+
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_sample_csv(csv_files)
   output <- "1 of 100 \\(1%\\) transitions ended with a divergence."
