@@ -178,7 +178,12 @@ objects.</p>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code>$draws()</code></td><td>Return a <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>draws_array</a></code> of
-(post-warmup) posterior draws.</td></tr>
+posterior draws. If warmup draws were saved then they can be included
+by specifying the argument <code>inc_warmup=TRUE</code>.</td></tr>
+<tr><td><code>$sampler_diagnostics()</code></td><td>Return a <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>draws_array</a></code> of
+sampler diagnostics (e.g., <code>divergent__</code>, <code>treedepth__</code>, etc).
+If warmup draws were saved then they can be included
+by specifying the argument <code>inc_warmup=TRUE</code>.</td></tr>
 <tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>

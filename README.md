@@ -15,15 +15,13 @@ CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 To get started see the vignette 
 [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html).
 
-CmdStanR is in early stages of development.
-
 ### Goals
 
 * A clean interface to Stan services so that CmdStanR can keep up with Stan
 releases.
 
 * Minimal dependencies:
-  - depend on very few other R packages
+  - depend on few other R packages
   - R code doesn't interface directly with c++, only calls compiled executables 
       
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
