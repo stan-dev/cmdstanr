@@ -155,10 +155,10 @@ read_sample_info_csv <- function(csv_file) {
 #'
 read_sample_csv <- function(output_files) {
   sampling_info <- NULL
-  warmup_draws_array <- list()
-  warmup_sampler_diagnostics_draws <- list()
-  post_warmup_draws_array <- list()
-  post_warmup_sampler_diagnostics_draws <- list()
+  warmup_draws <- NULL
+  warmup_sampler_diagnostics_draws <- NULL
+  post_warmup_draws <- NULL
+  post_warmup_sampler_diagnostics_draws <- NULL
   inverse_metric = list()
   step_size = list()
   for(output_file in output_files) {
@@ -187,16 +187,45 @@ read_sample_csv <- function(output_files) {
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
 
     if(sampling_info$save_warmup == 1) {
-      warmup_draws_array[[id]] <- posterior::as_draws_array(draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$model_params])
-      warmup_sampler_diagnostics_draws[[id]] <- posterior::as_draws_array(draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$sampler_diagnostics])
-      post_warmup_draws_array[[id]] <- posterior::as_draws_array(draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$model_params])
-      post_warmup_sampler_diagnostics_draws[[id]] <- posterior::as_draws_array(draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$sampler_diagnostics])
-
+      new_warmup_draws <- posterior::as_draws_array(draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$model_params])
+      if(is.null(warmup_draws)) {
+        warmup_draws <- new_warmup_draws
+      } else {
+        warmup_draws <- posterior::bind_draws(warmup_draws, new_warmup_draws, along="chain")
+      }
+      new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$sampler_diagnostics])
+      if(is.null(warmup_sampler_diagnostics_draws)) {
+        warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
+      } else {
+        warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws, new_warmup_sampler_diagnostics_draws, along="chain")
+      }
+      new_post_warmup_draws <- posterior::as_draws_array(draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$model_params])
+      if(is.null(post_warmup_draws)) {
+        post_warmup_draws <- new_post_warmup_draws
+      } else {
+        post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
+      }
+      new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$sampler_diagnostics])
+      if(is.null(post_warmup_sampler_diagnostics_draws)) {
+        post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
+      } else {
+        post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws, new_post_warmup_sampler_diagnostics_draws, along="chain")
+      }
     } else {
-      warmup_draws_array <- NULL
+      warmup_draws <- NULL
       warmup_sampler_diagnostics_draws <- NULL
-      post_warmup_draws_array[[id]] <- posterior::as_draws_array(draws[, sampling_info$model_params])
-      post_warmup_sampler_diagnostics_draws[[id]] <- posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics])
+      if(is.null(post_warmup_draws)) {
+        post_warmup_draws <- posterior::as_draws_array(draws[, sampling_info$model_params])
+      } else {
+        post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
+                                                       posterior::as_draws_array(draws[, sampling_info$model_params]), along="chain")
+      }
+      if(is.null(post_warmup_sampler_diagnostics_draws)) {
+        post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics])
+      } else {
+        post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
+                                                       posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics]), along="chain")
+      }
     }
   }
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
@@ -207,8 +236,8 @@ read_sample_csv <- function(output_files) {
     sampling_info = sampling_info,
     inverse_metric = inverse_metric,
     step_size = step_size,
-    warmup_draws = warmup_draws_array,
-    post_warmup_draws = post_warmup_draws_array,
+    warmup_draws = warmup_draws,
+    post_warmup_draws = post_warmup_draws,
     warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
     post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
   )
