@@ -18,10 +18,6 @@ CmdStanFit <- R6::R6Class(
     },
 
     draws = function() {
-      if (!length(self$output_files())) {
-        stop("No chains finished successfully. Unable to retrieve the fit.",
-             call. = FALSE)
-      }
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
@@ -276,14 +272,13 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     draws = function(inc_warmup = FALSE) {
-      if (!length(self$output_files())) {
-        stop("No chains finished successfully. Unable to retrieve the fit.",
-             call. = FALSE)
-      }
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
-      if(inc_warmup && private$sampling_info_$save_warmup) {
+      if(inc_warmup) {
+        if(!private$sampling_info_$save_warmup) {
+          stop("Warmup draws were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+        }
         posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")
       } else {
         private$draws_
@@ -291,14 +286,13 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     sampler_diagnostics = function(inc_warmup = FALSE) {
-      if (!length(self$output_files())) {
-        stop("No chains finished successfully. Unable to retrieve the fit.",
-             call. = FALSE)
-      }
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
-      if(inc_warmup && private$sampling_info_$save_warmup) {
+      if(inc_warmup) {
+        if(!private$sampling_info_$save_warmup) {
+          stop("Warmup sampler diagnostics were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+        }
         posterior::bind_draws(private$warmup_sampler_diagnostics_, private$sampler_diagnostics_, along="iteration")
       } else {
         private$sampler_diagnostics_

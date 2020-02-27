@@ -75,11 +75,20 @@ test_that("time() method works after mcmc", {
 test_that("inc_warmup in draws() works", {
   skip_on_cran()
   x0 <- fit_mcmc_0$draws(inc_warmup = FALSE)
-  x1 <- fit_mcmc_0$draws(inc_warmup = TRUE)
-  x2 <- fit_mcmc_1$draws(inc_warmup = FALSE)
-  x3 <- fit_mcmc_1$draws(inc_warmup = TRUE)
+  x1 <- fit_mcmc_1$draws(inc_warmup = FALSE)
+  x2 <- fit_mcmc_1$draws(inc_warmup = TRUE)
   expect_equal(dim(x0), c(1000, 2, 5))
+  expect_error(fit_mcmc_0$draws(inc_warmup = TRUE),
+               "Warmup draws were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
   expect_equal(dim(x1), c(1000, 2, 5))
-  expect_equal(dim(x2), c(1000, 2, 5))
-  expect_equal(dim(x3), c(2000, 2, 5))
+  expect_equal(dim(x2), c(2000, 2, 5))
+  y0 <- fit_mcmc_0$sampler_diagnostics(inc_warmup = FALSE)
+  y1 <- fit_mcmc_1$sampler_diagnostics(inc_warmup = FALSE)
+  y2 <- fit_mcmc_1$sampler_diagnostics(inc_warmup = TRUE)
+  expect_equal(dim(y0), c(1000, 2, 6))
+  expect_error(fit_mcmc_0$sampler_diagnostics(inc_warmup = TRUE),
+               "Warmup sampler diagnostics were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+  expect_equal(dim(y1), c(1000, 2, 6))
+  expect_equal(dim(y2), c(2000, 2, 6))
+
 })
