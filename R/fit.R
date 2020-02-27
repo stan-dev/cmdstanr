@@ -33,18 +33,19 @@ CmdStanFit <- R6::R6Class(
 
     summary = function(...) {
       if (self$runset$method() == "sample") {
-        if (!length(self$output_files())) {
-          stop("No chains finished successfully. Unable to retrieve the fit.",
-              call. = FALSE)
-        }
         summary <- posterior::summarise_draws(self$draws(), ...)
-      } else { # don't include MCMC diagnostics for non MCMC
-        args <- list(...)
-        args$x <- self$draws()
-        if (!"measures" %in% names(args)) {
-          args$measures <- posterior::default_summary_measures()
+      } else {
+        if (!length(list(...))) {
+          # if user didn't supply any args use default summary measures,
+          # which don't include MCMC-specific things
+          summary <- posterior::summarise_draws(
+            self$draws(),
+            posterior::default_summary_measures()
+          )
+        } else {
+          # otherwise use whatever the user specified via ...
+          summary <- posterior::summarise_draws(self$draws(), ...)
         }
-        summary <- do.call(posterior::summarise_draws, args)
       }
       if (self$runset$method() == "optimize") {
         summary <- summary[, c("variable", "mean")]

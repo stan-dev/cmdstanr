@@ -28,6 +28,9 @@ test_that("summary() method works after mcmc", {
   x <- fit_mcmc$summary()
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", PARAM_NAMES))
+
+  x <- fit_mcmc$summary(c("rhat", "sd"))
+  expect_equal(colnames(x), c("variable", "rhat", "sd"))
 })
 
 test_that("output() method works after mcmc", {
