@@ -15,7 +15,12 @@ objects.
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
 \verb{$draws()} \tab Return a \code{\link[posterior:draws_array]{draws_array}} of
-(post-warmup) posterior draws.\cr
+posterior draws. If warmup draws were saved then they can be included
+by specifying the argument \code{inc_warmup=TRUE}. \cr
+\verb{$sampler_diagnostics()} \tab Return a \code{\link[posterior:draws_array]{draws_array}} of
+sampler diagnostics (e.g., \code{divergent__}, \code{treedepth__}, etc).
+If warmup draws were saved then they can be included
+by specifying the argument \code{inc_warmup=TRUE}. \cr
 \code{\link[=fit-method-summary]{$summary()}}
 \tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}}
