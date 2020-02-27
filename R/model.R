@@ -186,7 +186,10 @@ CmdStanModel <- R6::R6Class(
 #'     [threading support](https://github.com/stan-dev/math/wiki/Threading-Support)?
 #'     If `TRUE` then `-DSTAN_THREADS` is added to the compiler flags. See
 #'     [set_num_threads()] to set the number of threads, which is read by
-#'     CmdStan at run-time from an environment variable.
+#'     CmdStan at run-time from an environment variable. **NOTE:** this is
+#'     different than setting the number of cores for running multiple Markov
+#'     chains in parallel, which can be set at run-time using the `num_cores`
+#'     argument of the [`$sample()`][model-method-sample] method.
 #'   * `opencl`: (logical) Should the model be compiled with OpenCL support enabled?
 #'   * `opencl_platform_id`: (nonnegative integer) The ID of the OpenCL platform on which
 #'     to run the compiled model.

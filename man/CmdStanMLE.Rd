@@ -15,12 +15,8 @@ object.
 \strong{Method} \tab \strong{Description} \cr
 \verb{$mle()} \tab Return the (penalized) maximum likelihood point estimate
 (posterior mode) as a vector with one element per variable. \cr
-\verb{$lp()} \tab Return the total log probability density (up to an additive
-constant) computed in the model block of the Stan program. \cr
-\verb{$draws()} \tab Same as the \verb{$mle()} method but the point estimate is
-returned as a 1-row \code{\link[posterior:draws_matrix]{draws_matrix}} with one
-column per variable (instead of as a named vector) to be consistent with the
-fitted model objects for methods other than optimization. \cr
+\verb{$lp()} \tab Return the total log probability density (\code{target}) computed
+in the model block of the Stan program. \cr
 \code{\link[=fit-method-save_output_files]{$save_output_files()}}
 \tab Save output CSV files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{$save_data_file()}}

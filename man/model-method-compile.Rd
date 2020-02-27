@@ -40,7 +40,10 @@ look for files specified in \verb{#include} directives in the Stan program.
 \href{https://github.com/stan-dev/math/wiki/Threading-Support}{threading support}?
 If \code{TRUE} then \code{-DSTAN_THREADS} is added to the compiler flags. See
 \code{\link[=set_num_threads]{set_num_threads()}} to set the number of threads, which is read by
-CmdStan at run-time from an environment variable.
+CmdStan at run-time from an environment variable. \strong{NOTE:} this is
+different than setting the number of cores for running multiple Markov
+chains in parallel, which can be set at run-time using the \code{num_cores}
+argument of the \code{\link[=model-method-sample]{$sample()}} method.
 \item \code{opencl}: (logical) Should the model be compiled with OpenCL support enabled?
 \item \code{opencl_platform_id}: (nonnegative integer) The ID of the OpenCL platform on which
 to run the compiled model.
