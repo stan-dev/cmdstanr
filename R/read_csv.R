@@ -139,10 +139,13 @@ read_sample_info_csv <- function(csv_file) {
   return(csv_file_info)
 }
 
-#' Reads sampling results from the supplied CSV files. Returns a list
-#' containing sampling arguments, the diagonal of the inverse mass
-#' matrix, the post-warmup samples, the sampling parameters and
-#' optionally samples produced during warmup.
+#' Read sampling results from the supplied CSV files
+#'
+#' Read sampling results from the supplied CSV files. Returns a list containing
+#' sampling arguments, the diagonal of the inverse mass matrix, the post-warmup
+#' samples, the sampling parameters and optionally samples produced during
+#' warmup.
+#'
 #' @export
 #' @param output_files Paths to the CSV files to read.
 #'
