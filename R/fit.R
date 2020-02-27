@@ -253,8 +253,8 @@ CmdStanMCMC <- R6::R6Class(
     initialize = function(runset) {
       super$initialize(runset)
       data_csv <- read_sample_csv(self$output_files())
-      check_divergences(data_csv)
-      check_sampler_transitions_treedepth(data_csv)
+      # check_divergences(data_csv)
+      # check_sampler_transitions_treedepth(data_csv)
       private$draws_ <- data_csv$post_warmup_draws
       private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
       private$sampling_info_ <- data_csv$sampling_info
