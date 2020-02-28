@@ -240,8 +240,10 @@ read_sample_csv <- function(output_files) {
   }
   if(!is.null(warmup_draws)){
     dimnames(warmup_draws)$variable <- repair_variable_names(sampling_info$model_params)
-  }  
-  dimnames(post_warmup_draws)$variable <- repair_variable_names(sampling_info$model_params)
+  }
+  if(!is.null(post_warmup_draws)){
+    dimnames(post_warmup_draws)$variable <- repair_variable_names(sampling_info$model_params)
+  }
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
   sampling_info$inverse_metric <- NULL
   sampling_info$step_size <- NULL  
