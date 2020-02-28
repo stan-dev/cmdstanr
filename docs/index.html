@@ -126,7 +126,6 @@
 
 <p>CmdStanR is a lightweight interface to <a href="https://mc-stan.org">Stan</a> for R users (see <a href="https://github.com/stan-dev/cmdstanpy">CmdStanPy</a> for Python).</p>
 <p>To get started see the vignette <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html"><em>Getting started with CmdStanR</em></a>.</p>
-<p>CmdStanR is in early stages of development and currently requires <code><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">rstan::read_stan_csv()</a></code> for reading CmdStan output into R (RStan is not used to compile anything). This dependency on RStan will eventually be removed.</p>
 <div id="goals" class="section level3">
 <h3 class="hasAnchor">
 <a href="#goals" class="anchor"></a>Goals</h3>
@@ -134,7 +133,7 @@
 <li><p>A clean interface to Stan services so that CmdStanR can keep up with Stan releases.</p></li>
 <li>Minimal dependencies:
 <ul>
-<li>depend on very few other R packages</li>
+<li>depend on few other R packages</li>
 <li>R code doesn’t interface directly with c++, only calls compiled executables</li>
 </ul>
 </li>
@@ -147,7 +146,8 @@
 <a href="#installation" class="anchor"></a>Installation</h3>
 <p>CmdStanR is not released yet, but will eventually be released as the <strong>cmdstanr</strong> R package. Currently you can install the development version from GitHub, but expect frequent changes until an official release.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co"># install.packages("devtools")</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">devtools<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">install_github</a></span>(<span class="st">"stan-dev/cmdstanr"</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="co"># devtools::install_github("jgabry/posterior")</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">devtools<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">install_github</a></span>(<span class="st">"stan-dev/cmdstanr"</span>)</a></code></pre></div>
 </div>
 <div id="contributing" class="section level3">
 <h3 class="hasAnchor">

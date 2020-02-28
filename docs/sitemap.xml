@@ -52,6 +52,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-variational.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/read_sample_csv.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.html</loc>
   </url>
   <url>
