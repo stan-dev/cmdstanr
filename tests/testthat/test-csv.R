@@ -13,6 +13,10 @@ if (not_on_cran()) {
                           seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1)
   fit_logistic_thin_1_with_warmup <- testing_fit("logistic", method = "sample",
                           seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1, save_warmup = 1)
+  fit_logistic_thin_3 <- testing_fit("logistic", method = "sample",
+                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 3)
+  fit_logistic_thin_3_with_warmup <- testing_fit("logistic", method = "sample",
+                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 3, save_warmup = 1)
   fit_logistic_thin_10 <- testing_fit("logistic", method = "sample",
                           seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 10, save_warmup = 0)
   fit_logistic_thin_10_with_warmup <- testing_fit("logistic", method = "sample",
@@ -239,13 +243,18 @@ test_that("read_sample_csv() works with thin", {
   skip_on_cran()
 
   csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files())
+  csv_output_3 <- read_sample_csv(fit_logistic_thin_3$output_files())
   csv_output_10 <- read_sample_csv(fit_logistic_thin_10$output_files())
   csv_output_1_with_warmup <- read_sample_csv(fit_logistic_thin_1_with_warmup$output_files())
+  csv_output_3_with_warmup <- read_sample_csv(fit_logistic_thin_3_with_warmup$output_files())
   csv_output_10_with_warmup <- read_sample_csv(fit_logistic_thin_10_with_warmup$output_files())
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 5))
+  expect_equal(dim(csv_output_3$post_warmup_draws), c(334, 2, 5))
   expect_equal(dim(csv_output_10$post_warmup_draws), c(100, 2, 5))
   expect_equal(dim(csv_output_1_with_warmup$post_warmup_draws), c(1000, 2, 5))
   expect_equal(dim(csv_output_1_with_warmup$warmup_draws), c(1000, 2, 5))
+  expect_equal(dim(csv_output_3_with_warmup$post_warmup_draws), c(334, 2, 5))
+  expect_equal(dim(csv_output_3_with_warmup$warmup_draws), c(334, 2, 5))
   expect_equal(dim(csv_output_10_with_warmup$post_warmup_draws), c(100, 2, 5))
   expect_equal(dim(csv_output_10_with_warmup$warmup_draws), c(100, 2, 5))
 })

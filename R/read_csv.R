@@ -185,46 +185,57 @@ read_sample_csv <- function(output_files) {
     }
     # read sampling data
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
-
-    if(sampling_info$save_warmup == 1) {
-      new_warmup_draws <- posterior::as_draws_array(draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$model_params])
-      if(is.null(warmup_draws)) {
-        warmup_draws <- new_warmup_draws
+    if(nrow(draws) > 0) {
+      if(sampling_info$save_warmup == 1) {
+        new_warmup_draws <- posterior::as_draws_array(draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$model_params])
+        if(is.null(warmup_draws)) {
+          warmup_draws <- new_warmup_draws
+        } else {
+          warmup_draws <- posterior::bind_draws(warmup_draws,
+                                                new_warmup_draws,
+                                                along="chain")
+        }
+        new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$sampler_diagnostics])
+        if(is.null(warmup_sampler_diagnostics_draws)) {
+          warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
+        } else {
+          warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
+                                                                    new_warmup_sampler_diagnostics_draws,
+                                                                    along="chain")
+        }
+        new_post_warmup_draws <- posterior::as_draws_array(draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$model_params])
+        if(is.null(post_warmup_draws)) {
+          post_warmup_draws <- new_post_warmup_draws
+        } else {
+          post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
+        }
+        new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$sampler_diagnostics])
+        if(is.null(post_warmup_sampler_diagnostics_draws)) {
+          post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
+        } else {
+          post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
+                                                                         new_post_warmup_sampler_diagnostics_draws,
+                                                                         along="chain")
+        }
       } else {
-        warmup_draws <- posterior::bind_draws(warmup_draws, new_warmup_draws, along="chain")
-      }
-      new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:sampling_info$num_warmup/sampling_info$thin, sampling_info$sampler_diagnostics])
-      if(is.null(warmup_sampler_diagnostics_draws)) {
-        warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
-      } else {
-        warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws, new_warmup_sampler_diagnostics_draws, along="chain")
-      }
-      new_post_warmup_draws <- posterior::as_draws_array(draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$model_params])
-      if(is.null(post_warmup_draws)) {
-        post_warmup_draws <- new_post_warmup_draws
-      } else {
-        post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
-      }
-      new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(sampling_info$num_warmup/sampling_info$thin+1):sampling_info$num_iter, sampling_info$sampler_diagnostics])
-      if(is.null(post_warmup_sampler_diagnostics_draws)) {
-        post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
-      } else {
-        post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws, new_post_warmup_sampler_diagnostics_draws, along="chain")
-      }
-    } else {
-      warmup_draws <- NULL
-      warmup_sampler_diagnostics_draws <- NULL
-      if(is.null(post_warmup_draws)) {
-        post_warmup_draws <- posterior::as_draws_array(draws[, sampling_info$model_params])
-      } else {
-        post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
-                                                       posterior::as_draws_array(draws[, sampling_info$model_params]), along="chain")
-      }
-      if(is.null(post_warmup_sampler_diagnostics_draws)) {
-        post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics])
-      } else {
-        post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                       posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics]), along="chain")
+        warmup_draws <- NULL
+        warmup_sampler_diagnostics_draws <- NULL
+        new_post_warmup_draws <- posterior::as_draws_array(draws[, sampling_info$model_params])
+        if(is.null(post_warmup_draws)) {
+          post_warmup_draws <- new_post_warmup_draws
+        } else {
+          post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
+                                                     new_post_warmup_draws,
+                                                     along="chain")
+        }
+        new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics])
+        if(is.null(post_warmup_sampler_diagnostics_draws)) {
+          post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
+        } else {
+          post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws, 
+                                                                         new_post_warmup_sampler_diagnostics_draws,
+                                                                         along="chain")
+        }  
       }
     }
   }

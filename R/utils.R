@@ -404,35 +404,39 @@ set_num_threads <- function(num_threads) {
 }
 
 check_divergences <- function(data_csv) {
-  divergences <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
-  num_of_draws <- length(divergences)
-  if(num_of_draws > 0) {
-    num_of_divergences <- sum(divergences)
-    if (num_of_divergences > 0) {
-      percentage_divergences <- (num_of_divergences)/num_of_draws*100
-      message(num_of_divergences, " of ", num_of_draws, " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
-              " transitions ended with a divergence.\n",
-              "These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.\n",
-              "Try increasing adapt delta closer to 1.\n",
-              "If this doesn't remove all divergences, try to reparameterize the model.\n")
+  if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
+    divergences <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
+    num_of_draws <- length(divergences)
+    if(num_of_draws > 0) {
+      num_of_divergences <- sum(divergences)
+      if (num_of_divergences > 0) {
+        percentage_divergences <- (num_of_divergences)/num_of_draws*100
+        message(num_of_divergences, " of ", num_of_draws, " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
+                " transitions ended with a divergence.\n",
+                "These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.\n",
+                "Try increasing adapt delta closer to 1.\n",
+                "If this doesn't remove all divergences, try to reparameterize the model.\n")
+      }
     }
-  }
+  }  
 }
 
 check_sampler_transitions_treedepth <- function(data_csv) {
-  treedepth <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
-  num_of_draws <- length(treedepth)
-  if(num_of_draws > 0) {
-    max_treedepth <- data_csv$sampling_info$max_depth
-    max_treedepth_hit <- sum(treedepth >= max_treedepth)
-    if (max_treedepth_hit > 0) {
-      percentage_max_treedepth <- (max_treedepth_hit)/num_of_draws*100
-      message(max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 0)), "%)",
-              " transitions hit the maximum treedepth limit of ", max_treedepth,
-              " or 2^", max_treedepth, "-1 leapfrog steps.\n",
-              "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
-              "Increasing the max_depth limit can avoid this at the expense of more computation.\n",
-              "If increasing max_depth does not remove warnings, try to reparameterize the model.\n")
+  if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
+    treedepth <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
+    num_of_draws <- length(treedepth)
+    if(num_of_draws > 0) {
+      max_treedepth <- data_csv$sampling_info$max_depth
+      max_treedepth_hit <- sum(treedepth >= max_treedepth)
+      if (max_treedepth_hit > 0) {
+        percentage_max_treedepth <- (max_treedepth_hit)/num_of_draws*100
+        message(max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
+                " transitions hit the maximum treedepth limit of ", max_treedepth,
+                " or 2^", max_treedepth, "-1 leapfrog steps.\n",
+                "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
+                "Increasing the max_depth limit can avoid this at the expense of more computation.\n",
+                "If increasing max_depth does not remove warnings, try to reparameterize the model.\n")
+      }
     }
   }
 }
