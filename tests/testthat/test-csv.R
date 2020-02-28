@@ -263,9 +263,9 @@ test_that("read_sample_csv() works with no samples", {
   skip_on_cran()
 
   csv_output_diag_e_0 <- read_sample_csv(fit_bernoulli_diag_e_no_samples$output_files())
-  expect_equal(dim(csv_output_diag_e_0$post_warmup_draws), c(0,2,2))
+  expect_equal(csv_output_diag_e_0$post_warmup_draws, NULL)
   csv_output_dense_e_0 <- read_sample_csv(fit_bernoulli_dense_e_no_samples$output_files())
-  expect_equal(dim(csv_output_dense_e_0$post_warmup_draws), c(0,2,2))
+  expect_equal(csv_output_dense_e_0$post_warmup_draws, NULL)
 })
 
 test_that("read_sample_csv() reads values up to adaptation", {
