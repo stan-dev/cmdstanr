@@ -181,8 +181,9 @@ read_sample_csv <- function(output_files) {
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
     if(nrow(draws) > 0) {
       num_warmup_draws <- ceiling(sampling_info$num_warmup/sampling_info$thin)
-      num_post_warmup_draws <- ceiling(sampling_info$num_warmup/sampling_info$thin)
+      num_post_warmup_draws <- ceiling(sampling_info$num_samples/sampling_info$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
+      
       if(sampling_info$save_warmup == 1) {
 
         new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, sampling_info$model_params])
