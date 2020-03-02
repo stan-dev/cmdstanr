@@ -130,7 +130,7 @@ NULL
 #'
 #' @section Value:
 #' A 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
-#' variable). The variables for Stan's default MCMC algorith are
+#' variable). The variables for Stan's default MCMC algorithm are
 #' `"accept_stat__"`, `"stepsize__"`, `"treedepth__"`, `"n_leapfrog__"`,
 #' `"divergent__"`, `"energy__"`.
 #'

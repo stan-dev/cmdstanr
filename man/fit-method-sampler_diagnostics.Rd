@@ -23,7 +23,7 @@ iteration and chain of MCMC.
 \section{Value}{
 
 A 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
-variable). The variables for Stan's default MCMC algorith are
+variable). The variables for Stan's default MCMC algorithm are
 \code{"accept_stat__"}, \code{"stepsize__"}, \code{"treedepth__"}, \code{"n_leapfrog__"},
 \code{"divergent__"}, \code{"energy__"}.
 }
