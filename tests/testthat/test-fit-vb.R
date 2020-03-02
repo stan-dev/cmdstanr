@@ -26,10 +26,10 @@ test_that("draws() method returns posterior sample (reading csv works)", {
   expect_equal(posterior::variables(draws), PARAM_NAMES)
 })
 
-test_that("log_p(), log_g() methods return vectors (reading csv works)", {
+test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
   skip_on_cran()
-  lp <- fit_vb$log_p()
-  lg <- fit_vb$log_g()
+  lp <- fit_vb$lp()
+  lg <- fit_vb$lp_approx()
   expect_type(lp, "double")
   expect_type(lg, "double")
   expect_equal(length(lp), nrow(fit_vb$draws()))

@@ -447,9 +447,9 @@ CmdStanMLE <- R6::R6Class(
 #'  [`$draws()`][fit-method-draws] \tab Return approximate posterior draws
 #'  as a [`draws_matrix`][posterior::draws_matrix]. \cr
 #'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
-#'  `$log_p()` \tab Return a numeric vector containing the target
+#'  `$lp()` \tab Return a numeric vector containing the target
 #'  (log-posterior) evaluated at each of the draws. \cr
-#'  `$log_g()` \tab Return a numeric vector containing the log density of the
+#'  `$lp_approx()` \tab Return a numeric vector containing the log density of the
 #'  variational approximation to the posterior evaluated at each of the draws. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
@@ -469,24 +469,23 @@ CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",
   inherit = CmdStanFit,
   public = list(
-    log_p = function() {
-      # iter x params array
-      if (is.null(private$log_p_)) private$read_csv_()
-      private$log_p_
+    lp = function() {
+      if (is.null(private$lp_)) private$read_csv_()
+      private$lp_
     },
-    log_g = function() {
+    lp_approx = function() {
       # iter x params array
-      if (is.null(private$log_g_)) private$read_csv_()
-      private$log_g_
+      if (is.null(private$lp_approx_)) private$read_csv_()
+      private$lp_approx_
     }
   ),
   private = list(
-    log_p_ = NULL,
-    log_g_ = NULL,
+    lp_ = NULL,
+    lp_approx_ = NULL,
     read_csv_ = function() {
       vb_output <- read_vb_csv(self$output_files())
-      private$log_p_ <- vb_output[["log_p"]]
-      private$log_g_ <- vb_output[["log_g"]]
+      private$lp_ <- vb_output[["log_p"]]
+      private$lp_approx_ <- vb_output[["log_g"]]
       private$draws_ <- posterior::as_draws_matrix(vb_output[["draws"]])
       invisible(self)
     }
