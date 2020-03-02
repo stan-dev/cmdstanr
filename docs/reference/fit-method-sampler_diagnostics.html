@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>CmdStanVB objects — CmdStanVB • cmdstanr</title>
+<title>Extract sampler diagnostics — fit-method-sampler_diagnostics • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,10 +42,9 @@
 
 
 
-<meta property="og:title" content="CmdStanVB objects — CmdStanVB" />
-<meta property="og:description" content="A CmdStanVB object is the fitted model object returned by the
-$variational() method of a
-CmdStanModel object." />
+<meta property="og:title" content="Extract sampler diagnostics — fit-method-sampler_diagnostics" />
+<meta property="og:description" content="Extract the values of sampler diagnostics for each
+iteration and chain of MCMC." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -157,57 +156,52 @@ CmdStanModel object." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>CmdStanVB objects</h1>
+    <h1>Extract sampler diagnostics</h1>
     
-    <div class="hidden name"><code>CmdStanVB.Rd</code></div>
+    <div class="hidden name"><code>fit-method-sampler_diagnostics.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>A <code>CmdStanVB</code> object is the fitted model object returned by the
-<code><a href='model-method-variational.html'>$variational()</a></code> method of a
-<code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.</p>
+    <p>Extract the values of sampler diagnostics for each
+iteration and chain of MCMC.</p>
     </div>
 
 
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
 
-    <p><code>CmdStanVB</code> objects have the following methods:</p>
-<table class='table'>
-<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code><a href='fit-method-draws.html'>$draws()</a></code></td><td>Return approximate posterior draws
-as a <code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
-<tr><td><code>$lp()</code></td><td>Return a numeric vector containing the target
-(log-posterior) evaluated at each of the draws.</td></tr>
-<tr><td><code>$lp_approx()</code></td><td>Return a numeric vector containing the log density of the
-variational approximation to the posterior evaluated at each of the draws.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV files to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>$save_diagnostic_files()</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
-</table>
+    
+<pre>$sampler_diagnostics(inc_warmup = FALSE, ...)
+</pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
 
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+    
 
-    <div class='dont-index'><p>The CmdStanR website (<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>)
-for online documentation and tutorials.</p>
-<p>The Stan and CmdStan documentation:</p><ul>
-<li><p>Stan doc (html or pdf): <a href='https://mc-stan.org/users/documentation/'>mc-stan.org/users/documentation/</a></p></li>
-<li><p>CmdStan doc (pdf): (<a href='https://github.com/stan-dev/cmdstan/releases/latest'>github.com/stan-dev/cmdstan/releases/</a>).</p></li>
+<ul>
+<li><p><code>inc_warmup</code>: Should warmup draws be included? Defaults to <code>FALSE</code>.</p></li>
+<li><p><code>...</code>: Optional arguments to pass to <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>posterior::as_draws_array()</a></code>.</p></li>
 </ul>
 
-<p>Other fitted model objects: 
-<code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>,
-<code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    
+
+<p>A 3-D <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>draws_array</a></code> object (iteration x chain x
+variable). The variables for Stan's default MCMC algorith are
+<code>"accept_stat__"</code>, <code>"stepsize__"</code>, <code>"treedepth__"</code>, <code>"n_leapfrog__"</code>,
+<code>"divergent__"</code>, <code>"energy__"</code>.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#details">Details</a></li>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#value">Value</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>
 

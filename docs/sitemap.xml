@@ -31,6 +31,12 @@
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-draws.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html</loc>
   </url>
   <url>
