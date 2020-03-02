@@ -97,6 +97,47 @@ CmdStanFit <- R6::R6Class(
 
 # Document shared methods ----------------------------------------------------------
 
+#' Extract posterior draws
+#'
+#' @name fit-method-draws
+#' @description Extract posterior draws after MCMC or approximate posterior draws
+#'   after variational approximation.
+#'
+#' @section Usage:
+#'   ```
+#'   $draws(inc_warmup = FALSE, ...)
+#'   ```
+#' @section Arguments:
+#' * `inc_warmup`: Should warmup draws be included? Defaults to `FALSE`. Only
+#' applicable for MCMC.
+#' * `...`: Optional arguments to pass to [posterior::as_draws_array()].
+#'
+NULL
+
+#' Extract sampler diagnostics
+#'
+#' @name fit-method-sampler_diagnostics
+#' @description Extract the values of sampler diagnostics for each
+#' iteration and chain of MCMC.
+#'
+#' @section Usage:
+#'   ```
+#'   $sampler_diagnostics(inc_warmup = FALSE, ...)
+#'   ```
+#' @section Arguments:
+#' * `inc_warmup`: Should warmup draws be included? Defaults to `FALSE`.
+#' * `...`: Optional arguments to pass to [posterior::as_draws_array()].
+#'
+#' @section Value:
+#' A 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
+#' variable). The variables for Stan's default MCMC algorith are
+#' `"accept_stat__"`, `"stepsize__"`, `"treedepth__"`, `"n_leapfrog__"`,
+#' `"divergent__"`, `"energy__"`.
+#'
+#' @seealso [`CmdStanMCMC`]
+#'
+NULL
+
 #' Run `posterior::summarise_draws()`
 #'
 #' @name fit-method-summary
@@ -220,13 +261,10 @@ NULL
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `$draws()` \tab Return a [`draws_array`][posterior::draws_array] of
-#'  posterior draws. If warmup draws were saved then they can be included
-#'  by specifying the argument `inc_warmup=TRUE`. \cr
-#'  `$sampler_diagnostics()` \tab Return a [`draws_array`][posterior::draws_array] of
-#'  sampler diagnostics (e.g., `divergent__`, `treedepth__`, etc).
-#'  If warmup draws were saved then they can be included
-#'  by specifying the argument `inc_warmup=TRUE`. \cr
+#'  [`$draws()`][fit-method-draws]
+#'    \tab Return posterior draws as a [`draws_array`][posterior::draws_array]. \cr
+#'  [`$sampler_diagnostics()`][fit-method-sampler_diagnostics]
+#'    \tab Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. \cr
 #'  [`$summary()`][fit-method-summary]
 #'    \tab Run [posterior::summarise_draws()]. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
@@ -406,10 +444,9 @@ CmdStanMLE <- R6::R6Class(
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `$draws()` \tab Return a [`draws_matrix`][posterior::draws_matrix] of
-#'  approximate posterior draws. \cr
-#'  [`$summary()`][fit-method-summary]
-#'    \tab Run [posterior::summarise_draws()]. \cr
+#'  [`$draws()`][fit-method-draws] \tab Return approximate posterior draws
+#'  as a [`draws_matrix`][posterior::draws_matrix]. \cr
+#'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
 #'  `$log_p()` \tab Return a numeric vector containing the target
 #'  (log-posterior) evaluated at each of the draws. \cr
 #'  `$log_g()` \tab Return a numeric vector containing the log density of the

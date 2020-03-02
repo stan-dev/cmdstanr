@@ -13,10 +13,9 @@ A \code{CmdStanVB} object is the fitted model object returned by the
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
-\verb{$draws()} \tab Return a \code{\link[posterior:draws_matrix]{draws_matrix}} of
-approximate posterior draws. \cr
-\code{\link[=fit-method-summary]{$summary()}}
-\tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
+\code{\link[=fit-method-draws]{$draws()}} \tab Return approximate posterior draws
+as a \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
+\code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
 \verb{$log_p()} \tab Return a numeric vector containing the target
 (log-posterior) evaluated at each of the draws. \cr
 \verb{$log_g()} \tab Return a numeric vector containing the log density of the
