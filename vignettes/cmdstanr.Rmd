@@ -89,6 +89,10 @@ If you need to check or get the current path to CmdStan use the
 To verify the version of CmdStan you are using, use the `cmdstan_version()`
 function.
 
+```{r cmdstan_version}
+cmdstan_version()
+```
+
 ## Running CmdStan from R
 
 ### Compilation 
@@ -104,12 +108,12 @@ mod <- cmdstan_model(file)
 ```
 
 The object `mod` is an [R6](https://r6.r-lib.org/) reference object of class
-`CmdStanModel` and behaves similarly to to R's reference class objects and those
-in object oriented programming languages. Methods are accessed using the `$`
-operator. This design choice allows for CmdStanR and
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html) and
+behaves similarly to to R's reference class objects and those in object oriented
+programming languages. Methods are accessed using the `$` operator. This design
+choice allows for CmdStanR and
 [CmdStanPy](https://github.com/stan-dev/cmdstanpy) to provide a similar user
-experience and share many implementation details, which also helps facilitate
-collaboration between developers.
+experience and share many implementation details.
 
 The Stan program can be printed using the `$print()` method: 
 
@@ -117,7 +121,7 @@ The Stan program can be printed using the `$print()` method:
 mod$print()  # print the Stan program
 ```
 
-The path to the compiled executable is available by calling the `$exe_file()`
+The path to the compiled executable is returned by the `$exe_file()`
 method:
 
 ```{r exe_file}
@@ -128,15 +132,16 @@ mod$exe_file()
 
 #### MCMC
 
-To run Stan's default MCMC algorithm we can use the
+The
 [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
 method for
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
-objects. Data can be passed in as a named list of R objects (like for RStan) or
-as a path to a data file compatible with CmdStan (R dump or JSON).
+objects runs Stan's default MCMC algorithm. Data can be passed in as a named
+list of R objects (like for RStan) or as a path to a data file compatible with
+CmdStan (JSON or R dump).
 
 ```{r sample}
-data_list <- list(N = 10, y =c(0,1,0,0,0,0,0,0,0,1))
+data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit <- mod$sample(
   data = data_list, 
   seed = 123, 
@@ -151,12 +156,8 @@ method creates [R6](https://r6.r-lib.org/)
 [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 objects.
 
-```{r R6-class}
-class(fit)
-```
-
-The `$draws()` method of the `CmdStanMCMC` object can be used to extract
-the posterior draws as a 3-D array (iteration x chain x variable):
+The `$draws()` method can be used to extract the posterior draws as a 3-D array
+(iteration x chain x variable):
 
 ```{r draws}
 # this is a draws_array object from the posterior package
@@ -171,14 +172,13 @@ method calls `summarise_draws()` from the **posterior** package:
 fit$summary()
 ```
 
-[`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-and
-[`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-methods call CmdStan's `stansummary` and `diagnose` utilities, respectively:
+The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
+and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
+methods call CmdStan's `diagnose` and `stansummary` utilities, respectively:
 
 ```{r summary-and-diagnose}
-fit$cmdstan_summary()
 fit$cmdstan_diagnose()
+fit$cmdstan_summary()
 ```
 
 
