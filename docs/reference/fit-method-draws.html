@@ -43,8 +43,9 @@
 
 
 <meta property="og:title" content="Extract posterior draws — fit-method-draws" />
-<meta property="og:description" content="Extract posterior draws after MCMC or approximate posterior draws
-after variational approximation." />
+<meta property="og:description" content="Extract posterior draws after MCMC or approximate posterior
+draws after variational approximation using formats provided by the
+posterior package." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -162,8 +163,9 @@ after variational approximation." />
     </div>
 
     <div class="ref-description">
-    <p>Extract posterior draws after MCMC or approximate posterior draws
-after variational approximation.</p>
+    <p>Extract posterior draws after MCMC or approximate posterior
+draws after variational approximation using formats provided by the
+<span class="pkg">posterior</span> package.</p>
     </div>
 
 
@@ -184,6 +186,19 @@ applicable for MCMC.</p></li>
 <li><p><code>...</code>: Optional arguments to pass to <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>posterior::as_draws_array()</a></code>.</p></li>
 </ul>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    
+
+<ul>
+<li><p>For MCMC, a 3-D <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>draws_array</a></code> object (iteration x
+chain x variable). The variables include the <code>parameters</code>, <code>transformed parameters</code>, and <code>generated quantities</code> from the Stan program as well as
+<code>lp__</code>, the total log probability (<code>target</code>) accumulated in the <code>model</code>
+block.</p></li>
+<li><p>For variational inference, a 2-D <code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code>
+object (draw x variable).</p></li>
+</ul>
+
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -191,6 +206,7 @@ applicable for MCMC.</p></li>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#usage">Usage</a></li>
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#value">Value</a></li>
     </ul>
 
   </div>
