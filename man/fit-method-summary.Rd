@@ -15,7 +15,7 @@ package.
 \section{Arguments}{
 
 \itemize{
-\item \code{...}: Arguments to pass to \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}.
+\item \code{...}: Optional arguments to pass to \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}.
 }
 }
 

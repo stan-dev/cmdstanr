@@ -100,8 +100,9 @@ CmdStanFit <- R6::R6Class(
 #' Extract posterior draws
 #'
 #' @name fit-method-draws
-#' @description Extract posterior draws after MCMC or approximate posterior draws
-#'   after variational approximation.
+#' @description Extract posterior draws after MCMC or approximate posterior
+#'   draws after variational approximation using formats provided by the
+#'   \pkg{posterior} package.
 #'
 #' @section Usage:
 #'   ```
@@ -112,13 +113,22 @@ CmdStanFit <- R6::R6Class(
 #' applicable for MCMC.
 #' * `...`: Optional arguments to pass to [posterior::as_draws_array()].
 #'
+#' @section Value:
+#' * For MCMC, a 3-D [`draws_array`][posterior::draws_array] object (iteration x
+#' chain x variable). The variables include the `parameters`, `transformed
+#' parameters`, and `generated quantities` from the Stan program as well as
+#' `lp__`, the total log probability (`target`) accumulated in the `model`
+#' block.
+#' * For variational inference, a 2-D [`draws_matrix`][posterior::draws_matrix]
+#' object (draw x variable).
+#'
 NULL
 
 #' Extract sampler diagnostics
 #'
 #' @name fit-method-sampler_diagnostics
-#' @description Extract the values of sampler diagnostics for each
-#' iteration and chain of MCMC.
+#' @description Extract the values of sampler diagnostics for each iteration and
+#'   chain of MCMC.
 #'
 #' @section Usage:
 #'   ```
@@ -149,7 +159,7 @@ NULL
 #'   $summary(...)
 #'   ```
 #' @section Arguments:
-#' * `...`: Arguments to pass to [posterior::summarise_draws()].
+#' * `...`: Optional arguments to pass to [posterior::summarise_draws()].
 #'
 #' @section Value:
 #' The data frame returned by [posterior::summarise_draws()].

@@ -4,8 +4,9 @@
 \alias{fit-method-draws}
 \title{Extract posterior draws}
 \description{
-Extract posterior draws after MCMC or approximate posterior draws
-after variational approximation.
+Extract posterior draws after MCMC or approximate posterior
+draws after variational approximation using formats provided by the
+\pkg{posterior} package.
 }
 \section{Usage}{
 \preformatted{$draws(inc_warmup = FALSE, ...)
@@ -18,6 +19,18 @@ after variational approximation.
 \item \code{inc_warmup}: Should warmup draws be included? Defaults to \code{FALSE}. Only
 applicable for MCMC.
 \item \code{...}: Optional arguments to pass to \code{\link[posterior:as_draws_array]{posterior::as_draws_array()}}.
+}
+}
+
+\section{Value}{
+
+\itemize{
+\item For MCMC, a 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x
+chain x variable). The variables include the \code{parameters}, \verb{transformed parameters}, and \verb{generated quantities} from the Stan program as well as
+\code{lp__}, the total log probability (\code{target}) accumulated in the \code{model}
+block.
+\item For variational inference, a 2-D \code{\link[posterior:draws_matrix]{draws_matrix}}
+object (draw x variable).
 }
 }
 

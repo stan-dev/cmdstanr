@@ -4,8 +4,8 @@
 \alias{fit-method-sampler_diagnostics}
 \title{Extract sampler diagnostics}
 \description{
-Extract the values of sampler diagnostics for each
-iteration and chain of MCMC.
+Extract the values of sampler diagnostics for each iteration and
+chain of MCMC.
 }
 \section{Usage}{
 \preformatted{$sampler_diagnostics(inc_warmup = FALSE, ...)
