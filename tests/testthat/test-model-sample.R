@@ -28,7 +28,7 @@ if (not_on_cran()) {
     stepsize = 1.1,
     adapt_engaged = TRUE,
     adapt_delta = 0.7,
-    save_diagnostics = FALSE,
+    save_extra_diagnostics = FALSE,
     init_buffer = 20,
     term_buffer = 0,
     window = 15
@@ -52,7 +52,7 @@ if (not_on_cran()) {
     stepsize = 0,
     adapt_engaged = "NO",
     adapt_delta = 2,
-    save_diagnostics = "NOT_LOGICAL",
+    save_extra_diagnostics = "NOT_LOGICAL",
     init_buffer = "NOT_INTEGER",
     term_buffer = "NOT_INTEGER",
     window = "NOT_INTEGER"

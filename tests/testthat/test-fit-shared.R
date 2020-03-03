@@ -5,9 +5,9 @@ if (not_on_cran()) {
 
   fits <- list()
   fits[["sample"]] <- testing_fit("logistic", method = "sample",
-                                  seed = 123, save_diagnostics = TRUE)
+                                  seed = 123, save_extra_diagnostics = TRUE)
   fits[["variational"]] <- testing_fit("logistic", method = "variational",
-                                       seed = 123, save_diagnostics = TRUE)
+                                       seed = 123, save_extra_diagnostics = TRUE)
   fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
   all_methods <- c("sample", "optimize", "variational")
 }
@@ -60,7 +60,7 @@ test_that("saving diagnostic csv output works", {
     if (method == "optimize") {
       expect_error(
         fit$save_diagnostic_files(),
-        "No diagnostic files found. Set 'save_diagnostics=TRUE' when fitting the model",
+        "No diagnostic files found. Set 'save_extra_diagnostics=TRUE' when fitting the model",
         fixed = TRUE
       )
       next
