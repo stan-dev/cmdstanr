@@ -31,7 +31,7 @@ CmdStanArgs <- R6::R6Class(
                           run_ids,
                           method_args,
                           data_file = NULL,
-                          save_diagnostics = FALSE,
+                          save_extra_diagnostics = FALSE,
                           seed = NULL,
                           init = NULL,
                           refresh = NULL,
@@ -46,7 +46,7 @@ CmdStanArgs <- R6::R6Class(
       self$refresh <- refresh
       self$method_args <- method_args
       self$method <- self$method_args$method
-      self$save_diagnostics <- save_diagnostics
+      self$save_extra_diagnostics <- save_extra_diagnostics
       if (getRversion() < '3.5.0') {
         self$output_dir <- output_dir %||% tempdir()
       } else {
@@ -395,7 +395,7 @@ validate_cmdstan_args = function(self) {
                                any.missing = FALSE,
                                null.ok = FALSE)
 
-  checkmate::assert_flag(self$save_diagnostics)
+  checkmate::assert_flag(self$save_extra_diagnostics)
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
   if (!is.null(self$data_file)) {
     checkmate::assert_file_exists(self$data_file, access = "r")

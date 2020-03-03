@@ -15,7 +15,7 @@ if (not_on_cran()) {
     algorithm = "lbfgs",
     iter = 100,
     init_alpha = 0.002,
-    save_diagnostics = FALSE
+    save_extra_diagnostics = FALSE
   )
 
   # using any of these should cause optimize() to error
@@ -27,7 +27,7 @@ if (not_on_cran()) {
     algorithm = "NOT_AN_ALGORITHM",
     iter = -20,
     init_alpha = -20,
-    save_diagnostics = "NOT_LOGICAL"
+    save_extra_diagnostics = "NOT_LOGICAL"
   )
 }
 

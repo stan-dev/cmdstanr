@@ -15,7 +15,7 @@ some data.
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  save_diagnostics = FALSE,
+  save_extra_diagnostics = FALSE,
   output_dir = NULL,
   num_chains = 4,
   num_cores = getOption("mc.cores", 1),
@@ -62,15 +62,15 @@ printed screen updates.
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 }
-\item \code{save_diagnostics}: (logical) Should auxiliary diagnostic information
+\item \code{save_extra_diagnostics}: (logical) Should auxiliary diagnostic information
 (beyond standard diagnostics) be written to temporary diagnostic CSV files?
 This argument replaces CmdStan's \code{diagnostic_file} argument and the content
 written to CSV is controlled by the user's CmdStan installation and not
 CmdStanR (and for some algorithms no content may be written). The default
-is \code{save_diagnostics=FALSE}, which is appropriate for almost every use case
+is \code{save_extra_diagnostics=FALSE}, which is appropriate for almost every use case
 (all diagnostics recommended for users to check are \emph{always} saved, e.g.,
 divergences for HMC). To save the temporary files created when
-\code{save_diagnostics=TRUE} see the
+\code{save_extra_diagnostics=TRUE} see the
 \code{\link[=fit-method-save_diagnostic_files]{$save_diagnostic_files()}} method.
 \item \code{output_dir}: (string) A path to a directory where CmdStan should write
 its output CSV files. For interactive use this can typically be left at

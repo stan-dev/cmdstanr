@@ -31,10 +31,10 @@ test_that("all fitting methods work with output_dir", {
     expect_equal(length(list.files(method_dir)), fit$num_runs())
   }
 
-  # specifying output_dir and save_diagnostics
+  # specifying output_dir and save_extra_diagnostics
   fit <- testing_fit("bernoulli", method = "sample", seed = 123,
                      output_dir = file.path(sandbox, "sample"),
-                     save_diagnostics = TRUE)
+                     save_extra_diagnostics = TRUE)
 
   files <- list.files(file.path(sandbox, "sample"))
   expect_equal(

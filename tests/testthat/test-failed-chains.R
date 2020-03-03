@@ -6,7 +6,7 @@ if (not_on_cran()) {
   make_all_fail <- function(x) {
     utils::capture.output(
       all_fail <- x$sample(data = list(pr_fail = 1),
-                           save_diagnostics = TRUE)
+                           save_extra_diagnostics = TRUE)
     )
     all_fail
   }
@@ -17,7 +17,7 @@ if (not_on_cran()) {
       utils::capture.output(
         check_some_fail <- x$sample(
           data = list(pr_fail = 0.5),
-          save_diagnostics = TRUE
+          save_extra_diagnostics = TRUE
         )
       )
       num_files <- length(check_some_fail$output_files())

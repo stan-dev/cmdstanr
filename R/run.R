@@ -15,7 +15,7 @@ CmdStanRun <- R6::R6Class(
       self$args <- args
       self$procs <- procs
       private$output_files_ <- self$new_output_files()
-      if (self$args$save_diagnostics) {
+      if (self$args$save_extra_diagnostics) {
         private$diagnostic_files_ <- self$new_diagnostic_files()
       }
       invisible(self)
@@ -37,7 +37,7 @@ CmdStanRun <- R6::R6Class(
       if (!length(private$diagnostic_files_)) {
         stop(
           "No diagnostic files found. ",
-          "Set 'save_diagnostics=TRUE' when fitting the model.",
+          "Set 'save_extra_diagnostics=TRUE' when fitting the model.",
           call. = FALSE
         )
       }
