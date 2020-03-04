@@ -268,9 +268,11 @@ read_optim_csv <- function(output_file) {
   )
   mat <- as.matrix(csv_no_comments)
   colnames(mat) <- repair_variable_names(colnames(mat))
+
+  # not really draws (just point estimate) but this is consistent with
+  # names and format for mcmc and vb
   list(
-    mle = mat[1, colnames(mat) != "lp__"],
-    lp = mat[1, colnames(mat) == "lp__"]
+    draws = posterior::as_draws_matrix(mat[1,, drop=FALSE])
   )
 }
 
@@ -284,11 +286,17 @@ read_vb_csv <- function(output_file) {
   # drop first row since according to CmdStan manual it's just the mean
   mat <- as.matrix(csv_no_comments)[-1,, drop=FALSE]
   colnames(mat) <- repair_variable_names(colnames(mat))
-  drop_cols <- c("lp__", "log_p__", "log_g__")
-  keep_cols <- setdiff(colnames(mat), drop_cols)
-  list(
-    log_p = mat[, "log_p__"],
-    log_g = mat[, "log_g__"],
-    draws = mat[, keep_cols, drop=FALSE]
-  )
+  mat <- mat[, colnames(mat) != "lp__", drop=FALSE]
+  draws <- posterior::as_draws_matrix(mat)
+  draws <- posterior::rename_variables(draws, lp__ = log_p__, lp_approx__ = log_g__)
+  list(draws = draws)
+}
+
+# convert names like beta.1.1 to beta[1,1]
+repair_variable_names <- function(names) {
+  names <- sub("\\.", "[", names)
+  names <- gsub("\\.", ",", names)
+  names[grep("\\[", names)] <-
+    paste0(names[grep("\\[", names)], "]")
+  names
 }
