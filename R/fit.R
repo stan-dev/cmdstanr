@@ -302,7 +302,11 @@ CmdStanMCMC <- R6::R6Class(
   public = list(
     initialize = function(runset) {
       super$initialize(runset)
-      private$read_csv_(diagnostic_warnings = TRUE)
+      if (!length(self$output_files())) {
+        warning("No chains finished successfully. Unable to retrieve the fit.")
+      } else {
+        private$read_csv_(diagnostic_warnings = TRUE)
+      }
     },
     num_chains = function() {
       super$num_runs()
