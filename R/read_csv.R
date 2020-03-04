@@ -43,13 +43,13 @@ read_sample_info_csv <- function(csv_file) {
   parsing_done <- FALSE
   while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0 && !parsing_done) {
     if (!startsWith(line, "#")) {
-      if(!param_names_read) {
+      if (!param_names_read) {
         param_names_read <- TRUE
         all_names <- strsplit(line, ",")[[1]]
         csv_file_info[["sampler_diagnostics"]] <- c()
         csv_file_info[["model_params"]] <- c()
         for(x in all_names) {
-          if(endsWith(x, "__") && x != "lp__"){
+          if (endsWith(x, "__") && x != "lp__"){
             csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
           } else {
             csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
@@ -57,7 +57,7 @@ read_sample_info_csv <- function(csv_file) {
         }
       }
     } else {
-      if(!adaptation_terminated) {
+      if (!adaptation_terminated) {
         if (regexpr("# Adaptation terminated", line, perl = TRUE) > 0) {
           adaptation_terminated <- TRUE
         } else {
@@ -68,12 +68,12 @@ read_sample_info_csv <- function(csv_file) {
           key_val <- rapply(key_val, trimws)
           if (length(key_val) == 2) {
             numeric_val <- suppressWarnings(as.numeric(key_val[2]))
-            if(!is.na(numeric_val)) {
+            if (!is.na(numeric_val)) {
               csv_file_info[[key_val[1]]] <- numeric_val
             } else {
-              if(nzchar(key_val[2])) {
+              if (nzchar(key_val[2])) {
                 csv_file_info[[key_val[1]]] <- key_val[2]
-              }              
+              }
             }
           }
         }
@@ -85,7 +85,7 @@ read_sample_info_csv <- function(csv_file) {
           inverse_metric_diagonal_next <- TRUE
         } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
           inverse_metric_next <- TRUE
-        } else if(inverse_metric_diagonal_next) {          
+        } else if (inverse_metric_diagonal_next) {
           inv_metric_split <- strsplit(gsub("# ", "", line), ",")
           if ((length(inv_metric_split) == 0) ||
               ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
@@ -93,14 +93,14 @@ read_sample_info_csv <- function(csv_file) {
           }
           csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
           parsing_done <- TRUE
-        } else if(inverse_metric_next) {
+        } else if (inverse_metric_next) {
           inv_metric_split <- strsplit(gsub("# ", "", line), ",")
           if ((length(inv_metric_split) == 0) ||
               ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
             parsing_done <- TRUE
             break;
           }
-          if(csv_file_info$inverse_metric_rows == 0) {
+          if (csv_file_info$inverse_metric_rows == 0) {
             csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
           } else {
             csv_file_info$inverse_metric <- c(csv_file_info$inverse_metric, rapply(inv_metric_split, as.numeric))
@@ -111,12 +111,12 @@ read_sample_info_csv <- function(csv_file) {
     }
   }
   close(con)
-  if(is.null(csv_file_info$method)) {
+  if (is.null(csv_file_info$method)) {
     stop("Supplied CSV file is corrupt!")
-  } else if(csv_file_info$method != "sample") {
+  } else if (csv_file_info$method != "sample") {
     stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
   }
-  if(csv_file_info$inverse_metric_rows > 0) {
+  if (csv_file_info$inverse_metric_rows > 0) {
     rows <- csv_file_info$inverse_metric_rows
     cols <- length(csv_file_info$inverse_metric)/csv_file_info$inverse_metric_rows
     dim(csv_file_info$inverse_metric) <- c(rows,cols)
@@ -168,7 +168,7 @@ read_sample_csv <- function(output_files) {
       # check if sampling info matches
       error <- check_sampling_csv_info_matches(sampling_info,
                                   csv_file_info)
-      if(!is.null(error)) {
+      if (!is.null(error)) {
         stop(error)
       }
       sampling_info$id <- c(sampling_info$id,
@@ -179,15 +179,15 @@ read_sample_csv <- function(output_files) {
     }
     # read sampling data
     draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
-    if(nrow(draws) > 0) {
+    if (nrow(draws) > 0) {
       num_warmup_draws <- ceiling(sampling_info$num_warmup/sampling_info$thin)
       num_post_warmup_draws <- ceiling(sampling_info$num_samples/sampling_info$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
-      
-      if(sampling_info$save_warmup == 1) {
+
+      if (sampling_info$save_warmup == 1) {
 
         new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, sampling_info$model_params])
-        if(is.null(warmup_draws)) {
+        if (is.null(warmup_draws)) {
           warmup_draws <- new_warmup_draws
         } else {
           warmup_draws <- posterior::bind_draws(warmup_draws,
@@ -195,7 +195,7 @@ read_sample_csv <- function(output_files) {
                                                 along="chain")
         }
         new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, sampling_info$sampler_diagnostics])
-        if(is.null(warmup_sampler_diagnostics_draws)) {
+        if (is.null(warmup_sampler_diagnostics_draws)) {
           warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
         } else {
           warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
@@ -203,13 +203,13 @@ read_sample_csv <- function(output_files) {
                                                                     along="chain")
         }
         new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampling_info$model_params])
-        if(is.null(post_warmup_draws)) {
+        if (is.null(post_warmup_draws)) {
           post_warmup_draws <- new_post_warmup_draws
         } else {
           post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
         }
         new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampling_info$sampler_diagnostics])
-        if(is.null(post_warmup_sampler_diagnostics_draws)) {
+        if (is.null(post_warmup_sampler_diagnostics_draws)) {
           post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
         } else {
           post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
@@ -220,7 +220,7 @@ read_sample_csv <- function(output_files) {
         warmup_draws <- NULL
         warmup_sampler_diagnostics_draws <- NULL
         new_post_warmup_draws <- posterior::as_draws_array(draws[, sampling_info$model_params])
-        if(is.null(post_warmup_draws)) {
+        if (is.null(post_warmup_draws)) {
           post_warmup_draws <- new_post_warmup_draws
         } else {
           post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
@@ -228,26 +228,26 @@ read_sample_csv <- function(output_files) {
                                                      along="chain")
         }
         new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics])
-        if(is.null(post_warmup_sampler_diagnostics_draws)) {
+        if (is.null(post_warmup_sampler_diagnostics_draws)) {
           post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
         } else {
-          post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws, 
+          post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
                                                                          new_post_warmup_sampler_diagnostics_draws,
                                                                          along="chain")
-        }  
+        }
       }
     }
   }
-  if(!is.null(warmup_draws)){
+  if (!is.null(warmup_draws)){
     dimnames(warmup_draws)$variable <- repair_variable_names(sampling_info$model_params)
   }
-  if(!is.null(post_warmup_draws)){
+  if (!is.null(post_warmup_draws)){
     dimnames(post_warmup_draws)$variable <- repair_variable_names(sampling_info$model_params)
   }
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
   sampling_info$inverse_metric <- NULL
-  sampling_info$step_size <- NULL  
-  sampling_info$num_iter <- NULL 
+  sampling_info$step_size <- NULL
+  sampling_info$num_iter <- NULL
   list(
     sampling_info = sampling_info,
     inverse_metric = inverse_metric,
