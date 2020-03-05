@@ -47,7 +47,7 @@
 #' # Use 'posterior' package for summaries
 #' fit_mcmc$summary()
 #'
-#' # Call CmdStan's diagnose stansummary utilities
+#' # Call CmdStan's diagnose and stansummary utilities
 #' fit_mcmc$cmdstan_diagnose()
 #' fit_mcmc$cmdstan_summary()
 #'
@@ -438,7 +438,8 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer.
+#'   Stan's optimizer to obtain a posterior mode (penalized maximum likelihood)
+#'   estimate.
 #'
 #' @details CmdStan can find the posterior mode (assuming there is one). If the
 #'   posterior is not convex, there is no guarantee Stan will be able to find

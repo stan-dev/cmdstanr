@@ -54,7 +54,7 @@ fit_mcmc <- mod$sample(
 # Use 'posterior' package for summaries
 fit_mcmc$summary()
 
-# Call CmdStan's diagnose stansummary utilities
+# Call CmdStan's diagnose and stansummary utilities
 fit_mcmc$cmdstan_diagnose()
 fit_mcmc$cmdstan_summary()
 

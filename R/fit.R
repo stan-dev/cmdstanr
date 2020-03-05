@@ -1,4 +1,6 @@
 # CmdStanFit superclass ---------------------------------------------------
+# CmdStanMCMC, CmdStanMLE, and CmdStanVB all share the methods of the
+# superclass CmdStanFit and also have their own unique methods
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
@@ -22,6 +24,12 @@ CmdStanFit <- R6::R6Class(
         private$read_csv_()
       }
       private$draws_
+    },
+
+    lp = function() {
+      lp__ <- posterior::subset_draws(self$draws(), variable = "lp__")
+      lp__ <- posterior::as_draws_matrix(lp__) # if mcmc this combines all chains, otherwise does nothing
+      as.numeric(lp__)
     },
 
     sampling_info = function() {
@@ -104,6 +112,10 @@ CmdStanFit <- R6::R6Class(
 #'   draws after variational approximation using formats provided by the
 #'   \pkg{posterior} package.
 #'
+#'   The variables include the `parameters`, `transformed parameters`, and
+#'   `generated quantities` from the Stan program as well as `lp__`, the total
+#'   log probability (`target`) accumulated in the `model` block.
+#'
 #' @section Usage:
 #'   ```
 #'   $draws(inc_warmup = FALSE, ...)
@@ -111,16 +123,18 @@ CmdStanFit <- R6::R6Class(
 #' @section Arguments:
 #' * `inc_warmup`: Should warmup draws be included? Defaults to `FALSE`. Only
 #' applicable for MCMC.
-#' * `...`: Optional arguments to pass to [posterior::as_draws_array()].
+#' * `...`: Arguments passed on to [posterior::as_draws()].
 #'
 #' @section Value:
 #' * For MCMC, a 3-D [`draws_array`][posterior::draws_array] object (iteration x
-#' chain x variable). The variables include the `parameters`, `transformed
-#' parameters`, and `generated quantities` from the Stan program as well as
-#' `lp__`, the total log probability (`target`) accumulated in the `model`
-#' block.
+#' chain x variable).
 #' * For variational inference, a 2-D [`draws_matrix`][posterior::draws_matrix]
-#' object (draw x variable).
+#' object (draw x variable). An additional variable `lp_approx__` is also
+#' included, which is the log density of the variational approximation to the
+#' posterior evaluated at each of the draws.
+#' * For optimization, a 1-row [`draws_matrix`][posterior::draws_matrix] with
+#' one column per variable. These are *not* actually draws, just point estimates
+#' stored in the `draws_matrix` format.
 #'
 NULL
 
@@ -385,22 +399,24 @@ CmdStanMCMC <- R6::R6Class(
 #' @template seealso-docs
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
-#'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`]
-#'   object.
+#'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
 #'
 #' @details
 #' `CmdStanMLE` objects have the following methods:
 #'
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
-#'  `$mle()` \tab Return the (penalized) maximum likelihood point estimate
-#'  (posterior mode) as a vector with one element per variable. \cr
+#'  [`draws()`][fit-method-draws] \tab Return the point estimate as a 1-row
+#'  [`draws_matrix`][posterior::draws_matrix]. \cr
+#'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
 #'  `$lp()` \tab Return the total log probability density (`target`) computed
 #'  in the model block of the Stan program. \cr
-#'  [`$save_output_files()`][fit-method-save_output_files]
-#'    \tab Save output CSV files to a specified location. \cr
-#'  [`$save_data_file()`][fit-method-save_data_file]
-#'    \tab Save JSON data file to a specified location. \cr
+#'  `$mle()` \tab Return the penalized maximum likelihod estimate (posterior
+#'  mode) as a numeric vector with one element per variable (excluding `lp()`). \cr
+#'  [`$save_output_files()`][fit-method-save_output_files] \tab Save output CSV
+#'  files to a specified location. \cr
+#'  [`$save_data_file()`][fit-method-save_data_file] \tab Save JSON data file
+#'  to a specified location. \cr
 #' }
 #'
 NULL
@@ -410,22 +426,16 @@ CmdStanMLE <- R6::R6Class(
   inherit = CmdStanFit,
   public = list(
     mle = function() {
-      if (is.null(private$mle_)) private$read_csv_()
-      private$mle_
-    },
-    lp = function() {
-      if (is.null(private$lp_)) private$read_csv_()
-      private$lp_
+      x <- self$draws()
+      x <- x[, colnames(x) != "lp__"]
+      estimate <- setNames(as.numeric(x), nm = posterior::variables(x))
+      estimate
     }
   ),
   private = list(
-    mle_ = NULL,
-    lp_ = NULL,
     read_csv_ = function() {
       optim_output <- read_optim_csv(self$output_files())
-      private$mle_ <- optim_output[["mle"]]
-      private$lp_ <- optim_output[["lp"]]
-      private$draws_ <- posterior::as_draws_matrix(t(private$mle_))
+      private$draws_ <- optim_output[["draws"]]
       invisible(self)
     }
   )
@@ -473,24 +483,14 @@ CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",
   inherit = CmdStanFit,
   public = list(
-    lp = function() {
-      if (is.null(private$lp_)) private$read_csv_()
-      private$lp_
-    },
     lp_approx = function() {
-      # iter x params array
-      if (is.null(private$lp_approx_)) private$read_csv_()
-      private$lp_approx_
+      as.numeric(self$draws()[, "lp_approx__"])
     }
   ),
   private = list(
-    lp_ = NULL,
-    lp_approx_ = NULL,
     read_csv_ = function() {
       vb_output <- read_vb_csv(self$output_files())
-      private$lp_ <- vb_output[["log_p"]]
-      private$lp_approx_ <- vb_output[["log_g"]]
-      private$draws_ <- posterior::as_draws_matrix(vb_output[["draws"]])
+      private$draws_ <- vb_output[["draws"]]
       invisible(self)
     }
   )

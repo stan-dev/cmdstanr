@@ -5,22 +5,24 @@
 \title{CmdStanMLE objects}
 \description{
 A \code{CmdStanMLE} object is the fitted model object returned by the
-\code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}}
-object.
+\code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object.
 }
 \details{
 \code{CmdStanMLE} objects have the following methods:
 
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
-\verb{$mle()} \tab Return the (penalized) maximum likelihood point estimate
-(posterior mode) as a vector with one element per variable. \cr
+\code{\link[=fit-method-draws]{draws()}} \tab Return the point estimate as a 1-row
+\code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
+\code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
 \verb{$lp()} \tab Return the total log probability density (\code{target}) computed
 in the model block of the Stan program. \cr
-\code{\link[=fit-method-save_output_files]{$save_output_files()}}
-\tab Save output CSV files to a specified location. \cr
-\code{\link[=fit-method-save_data_file]{$save_data_file()}}
-\tab Save JSON data file to a specified location. \cr
+\verb{$mle()} \tab Return the penalized maximum likelihod estimate (posterior
+mode) as a numeric vector with one element per variable (excluding \code{lp()}). \cr
+\code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV
+files to a specified location. \cr
+\code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file
+to a specified location. \cr
 }
 }
 \seealso{

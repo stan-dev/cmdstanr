@@ -10,11 +10,11 @@ test_that("summary() method works after vb", {
   skip_on_cran()
   x <- fit_vb$summary()
   expect_s3_class(x, "draws_summary")
-  expect_equal(x$variable, PARAM_NAMES)
+  expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
 
   x <- fit_vb$summary(c("mean", "sd"))
   expect_s3_class(x, "draws_summary")
-  expect_equal(x$variable, PARAM_NAMES)
+  expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
   expect_equal(colnames(x), c("variable", "mean", "sd"))
 })
 
@@ -23,7 +23,7 @@ test_that("draws() method returns posterior sample (reading csv works)", {
   draws <- fit_vb$draws()
   expect_type(draws, "double")
   expect_s3_class(draws, "draws_matrix")
-  expect_equal(posterior::variables(draws), PARAM_NAMES)
+  expect_equal(posterior::variables(draws), c("lp__", "lp_approx__", PARAM_NAMES))
 })
 
 test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
@@ -33,5 +33,5 @@ test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
   expect_type(lp, "double")
   expect_type(lg, "double")
   expect_equal(length(lp), nrow(fit_vb$draws()))
-  expect_equal(length(lg), nrow(fit_vb$draws()))
+  expect_equal(length(lg), length(lp))
 })
