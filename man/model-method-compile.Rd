@@ -42,7 +42,7 @@ If \code{TRUE} then \code{-DSTAN_THREADS} is added to the compiler flags. See
 \code{\link[=set_num_threads]{set_num_threads()}} to set the number of threads, which is read by
 CmdStan at run-time from an environment variable. \strong{NOTE:} this is
 different than setting the number of cores for running multiple Markov
-chains in parallel, which can be set at run-time using the \code{num_cores}
+chains in parallel, which can be set at run-time using the \code{cores}
 argument of the \code{\link[=model-method-sample]{$sample()}} method.
 \item \code{opencl}: (logical) Should the model be compiled with OpenCL support enabled?
 \item \code{opencl_platform_id}: (nonnegative integer) The ID of the OpenCL platform on which

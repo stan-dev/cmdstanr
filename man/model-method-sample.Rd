@@ -17,8 +17,8 @@ some data.
   init = NULL,
   save_extra_diagnostics = FALSE,
   output_dir = NULL,
-  num_chains = 4,
-  num_cores = getOption("mc.cores", 1),
+  chains = 4,
+  cores = getOption("mc.cores", 1),
   warmup_iters = NULL,
   sampling_iters = NULL,
   save_warmup = FALSE,
@@ -97,10 +97,10 @@ The following two arguments are offered by CmdStanR but do not correspond
 to arguments in CmdStan because all CmdStan arguments pertain to the
 execution of a single run only.
 \itemize{
-\item \code{num_chains}: (positive integer) The number of Markov chains to run. The
+\item \code{chains}: (positive integer) The number of Markov chains to run. The
 default is 4.
-\item \code{num_cores}: (positive integer) The maximum number of cores to use for
-running parallel chains. If \code{num_cores} is not specified then the default is
+\item \code{cores}: (positive integer) The maximum number of cores to use for
+running parallel chains. If \code{cores} is not specified then the default is
 to look for the option \code{"mc.cores"},
 which can be set for an entire \R session by \code{options(mc.cores=value)}.
 If the \code{"mc.cores"} option has not been set then the default is \code{1}.
@@ -187,8 +187,8 @@ stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit_mcmc <- mod$sample(
   data = stan_data,
   seed = 123,
-  num_chains = 2,
-  num_cores = 2
+  chains = 2,
+  cores = 2
 )
 
 # Use 'posterior' package for summaries
