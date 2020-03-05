@@ -6,10 +6,10 @@ if (not_on_cran()) {
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
-test_that("reading in csv optimization output works", {
+test_that("mle and lp methods work after optimization", {
   skip_on_cran()
   expect_named(fit_mle$mle(), PARAM_NAMES)
-  expect_named(fit_mle$lp(), "lp__")
+  checkmate::expect_numeric(fit_mle$lp(), len = 1)
 })
 
 test_that("summary method doesn't error for optimization", {
@@ -18,5 +18,5 @@ test_that("summary method doesn't error for optimization", {
   x <- fit_mle$summary()
   expect_s3_class(x, "draws_summary")
   expect_equal(colnames(x), c("variable", "estimate"))
-  expect_equal(x$variable, PARAM_NAMES)
+  expect_equal(x$variable, c("lp__", PARAM_NAMES))
 })
