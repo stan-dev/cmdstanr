@@ -40,8 +40,8 @@
 #' fit_mcmc <- mod$sample(
 #'   data = stan_data,
 #'   seed = 123,
-#'   num_chains = 2,
-#'   num_cores = 2
+#'   chains = 2,
+#'   cores = 2
 #' )
 #'
 #' # Use 'posterior' package for summaries
@@ -182,7 +182,7 @@ CmdStanModel <- R6::R6Class(
 #'     [set_num_threads()] to set the number of threads, which is read by
 #'     CmdStan at run-time from an environment variable. **NOTE:** this is
 #'     different than setting the number of cores for running multiple Markov
-#'     chains in parallel, which can be set at run-time using the `num_cores`
+#'     chains in parallel, which can be set at run-time using the `cores`
 #'     argument of the [`$sample()`][model-method-sample] method.
 #'   * `opencl`: (logical) Should the model be compiled with OpenCL support enabled?
 #'   * `opencl_platform_id`: (nonnegative integer) The ID of the OpenCL platform on which
@@ -276,8 +276,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     init = NULL,
 #'     save_extra_diagnostics = FALSE,
 #'     output_dir = NULL,
-#'     num_chains = 4,
-#'     num_cores = getOption("mc.cores", 1),
+#'     chains = 4,
+#'     cores = getOption("mc.cores", 1),
 #'     warmup_iters = NULL,
 #'     sampling_iters = NULL,
 #'     save_warmup = FALSE,
@@ -303,11 +303,11 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   to arguments in CmdStan because all CmdStan arguments pertain to the
 #'   execution of a single run only.
 #'
-#'   * `num_chains`: (positive integer) The number of Markov chains to run. The
+#'   * `chains`: (positive integer) The number of Markov chains to run. The
 #'   default is 4.
 #'
-#'   * `num_cores`: (positive integer) The maximum number of cores to use for
-#'   running parallel chains. If `num_cores` is not specified then the default is
+#'   * `cores`: (positive integer) The maximum number of cores to use for
+#'   running parallel chains. If `cores` is not specified then the default is
 #'   to look for the option `"mc.cores"`,
 #'   which can be set for an entire \R session by `options(mc.cores=value)`.
 #'   If the `"mc.cores"` option has not been set then the default is `1`.
@@ -377,8 +377,8 @@ sample_method <- function(data = NULL,
                           init = NULL,
                           save_extra_diagnostics = FALSE,
                           output_dir = NULL,
-                          num_chains = 4,
-                          num_cores = getOption("mc.cores", 1),
+                          chains = 4,
+                          cores = getOption("mc.cores", 1),
                           warmup_iters = NULL,
                           sampling_iters = NULL,
                           save_warmup = FALSE,
@@ -394,7 +394,7 @@ sample_method <- function(data = NULL,
                           term_buffer = NULL,
                           window = NULL) {
 
-  checkmate::assert_integerish(num_chains, lower = 1, len = 1)
+  checkmate::assert_integerish(chains, lower = 1, len = 1)
 
   sample_args <- SampleArgs$new(
     warmup_iters = warmup_iters,
@@ -416,7 +416,7 @@ sample_method <- function(data = NULL,
     method_args = sample_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    run_ids = seq_len(num_chains),
+    run_ids = seq_len(chains),
     data_file = process_data(data),
     save_extra_diagnostics = save_extra_diagnostics,
     seed = seed,
@@ -424,8 +424,8 @@ sample_method <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir
   )
-  cmdstan_procs <- CmdStanProcs$new(num_chains, num_cores)
-  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = cores)
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
 }
@@ -513,7 +513,7 @@ optimize_method <- function(data = NULL,
   )
 
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
-  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
 
   message(
@@ -637,7 +637,7 @@ variational_method <- function(data = NULL,
   )
 
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
-  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
 
   message(

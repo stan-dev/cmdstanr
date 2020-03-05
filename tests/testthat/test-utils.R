@@ -3,7 +3,7 @@ context("utils")
 if (not_on_cran()) {
   set_cmdstan_path()
   fit_mcmc <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2)
+                          seed = 123, chains = 2)
 }
 
 test_that("check_divergences() works", {

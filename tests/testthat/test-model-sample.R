@@ -14,8 +14,8 @@ if (not_on_cran()) {
   ok_arg_values <- list(
     data = data_list,
     output_dir = tempdir(),
-    num_chains = 2,
-    num_cores = 1,
+    chains = 2,
+    cores = 1,
     warmup_iters = 50,
     sampling_iters = 100,
     save_warmup = FALSE,
@@ -38,8 +38,8 @@ if (not_on_cran()) {
   bad_arg_values <- list(
     data = "NOT_A_FILE",
     output_dir = "NOT_A_DIRECTORY",
-    num_chains = -1,
-    num_cores = -1,
+    chains = -1,
+    cores = -1,
     warmup_iters = -1,
     sampling_iters = -1,
     save_warmup = "NO",
@@ -61,8 +61,8 @@ if (not_on_cran()) {
   bad_arg_values_2 <- list(
     data = matrix(1:10),
     output_dir = 1,
-    num_chains = "NOT_A_NUMBER",
-    num_cores = "NOT_A_NUMBER",
+    chains = "NOT_A_NUMBER",
+    cores = "NOT_A_NUMBER",
     init = "NOT_A_FILE",
     seed = 1:10,
     stepsize = 1:10,
@@ -88,17 +88,17 @@ test_that("code() and print() methods work", {
 test_that("sample() method works with data list", {
   skip_on_cran()
 
-  expect_sample_output(fit <- mod$sample(data = data_list, num_chains = 1), 1)
+  expect_sample_output(fit <- mod$sample(data = data_list, chains = 1), 1)
   expect_is(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method works with data files", {
   skip_on_cran()
 
-  expect_sample_output(fit_r <- mod$sample(data = data_file_r, num_chains = 1), 1)
+  expect_sample_output(fit_r <- mod$sample(data = data_file_r, chains = 1), 1)
   expect_is(fit_r, "CmdStanMCMC")
 
-  expect_sample_output(fit_json <- mod$sample(data = data_file_json, num_chains = 1), 1)
+  expect_sample_output(fit_json <- mod$sample(data = data_file_json, chains = 1), 1)
   expect_is(fit_json, "CmdStanMCMC")
 })
 
@@ -112,7 +112,7 @@ test_that("sample() method works with init file", {
     fileext = ".json"
   )
   write_stan_json(init_list, file = init_file)
-  expect_sample_output(mod$sample(data = data_file_r, init = init_file, num_chains = 1), 1)
+  expect_sample_output(mod$sample(data = data_file_r, init = init_file, chains = 1), 1)
 })
 
 test_that("sample() method runs when all arguments specified", {
@@ -148,7 +148,7 @@ test_that("sample() method errors for any invalid arguments before calling cmdst
 test_that("sample works for warmup-only run", {
   skip_on_cran()
   expect_output(
-    fit <- mod$sample(num_chains = 2, data = data_list, sampling_iters = 0),
+    fit <- mod$sample(chains = 2, data = data_list, sampling_iters = 0),
     "Iteration: 1000 / 1000 [100%]  (Warmup)",
     fixed = TRUE
   )
@@ -157,13 +157,13 @@ test_that("sample works for warmup-only run", {
 test_that("sampling in parallel works", {
   skip_on_cran()
   expect_output(
-    mod$sample(data = data_list, num_chains = 2, num_cores = 2),
+    mod$sample(data = data_list, chains = 2, cores = 2),
     "Running MCMC with 2 chain(s) on 2 core(s)",
     fixed = TRUE
   )
 
   expect_output(
-    mod$sample(data = data_list, num_chains = 2, num_cores = 2),
+    mod$sample(data = data_list, chains = 2, cores = 2),
     "Both chains finished succesfully",
     fixed = TRUE
   )
@@ -174,14 +174,14 @@ test_that("mc.cores option detected", {
 
   options(mc.cores = 3)
   expect_output(
-    mod$sample(data = data_list, num_chains = 3),
+    mod$sample(data = data_list, chains = 3),
     "Running MCMC with 3 chain(s) on 3 core(s)",
     fixed = TRUE
   )
 
   options(mc.cores = NULL)
   expect_output(
-    mod$sample(data = data_list, num_chains = 2),
+    mod$sample(data = data_list, chains = 2),
     "Running MCMC with 2 chain(s) on 1 core(s)",
     fixed = TRUE
   )

@@ -172,11 +172,8 @@ SampleArgs <- R6::R6Class(
                           term_buffer = NULL,
                           window = NULL) {
 
-      # TODO: cmdstanpy uses different names for these but these are same as
-      # regular cmdstan for now
       self$warmup_iters <- warmup_iters
       self$sampling_iters <- sampling_iters
-
       self$save_warmup <- save_warmup
       self$thin <- thin
       self$max_depth <- max_depth
@@ -567,7 +564,7 @@ validate_init <- function(init, num_runs) {
   } else if (is.character(init)) {
     if (length(init) != 1 && length(init) != num_runs) {
       stop("If 'init' is specified as a character vector it must have ",
-           "length 1 or length 'num_chains'.",
+           "length 1 or number of chains.",
            call. = FALSE)
     }
     checkmate::assert_file_exists(init, access = "r")

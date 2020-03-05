@@ -279,7 +279,8 @@ CmdStanProcs <- R6::R6Class(
     #   Currently for other method this must be set to 1.
     initialize = function(num_runs, num_cores) {
       checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
-      checkmate::assert_integerish(num_cores, lower = 1, len = 1, any.missing = FALSE)
+      checkmate::assert_integerish(num_cores, lower = 1, len = 1, any.missing = FALSE,
+                                   .var.name = "cores")
       private$num_runs_ <- as.integer(num_runs)
       private$num_cores_ <- as.integer(num_cores)
       private$active_cores_ <- 0

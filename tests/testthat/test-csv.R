@@ -4,23 +4,23 @@ if (not_on_cran()) {
   set_cmdstan_path()
   fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize")
   fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 0, metric = "diag_e")
+                          seed = 123, chains = 2, sampling_iters = 0, metric = "diag_e")
   fit_bernoulli_dense_e_no_samples <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 0, metric = "dense_e")
+                          seed = 123, chains = 2, sampling_iters = 0, metric = "dense_e")
   fit_bernoulli_thin_1 <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 1)
+                          seed = 123, chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 1)
   fit_logistic_thin_1 <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 1)
+                          seed = 123, chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 1)
   fit_logistic_thin_1_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 1, save_warmup = 1)
+                          seed = 123, chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 1, save_warmup = 1)
   fit_logistic_thin_3 <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 3)
+                          seed = 123, chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 3)
   fit_logistic_thin_3_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 3, save_warmup = 1)
+                          seed = 123, chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 3, save_warmup = 1)
   fit_logistic_thin_10 <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 10, save_warmup = 0)
+                          seed = 123, chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 10, save_warmup = 0)
   fit_logistic_thin_10_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 10, save_warmup = 1)
+                          seed = 123, chains = 2, sampling_iters = 1000, warmup_iters = 1000, thin = 10, save_warmup = 1)
 }
 
 test_that("read_sample_csv() fails for different model names", {

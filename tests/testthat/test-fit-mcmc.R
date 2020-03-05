@@ -3,12 +3,12 @@ context("fitted-mcmc")
 if (not_on_cran()) {
   set_cmdstan_path()
   fit_mcmc <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2)
+                          seed = 123, chains = 2)
   fit_mcmc_0 <- testing_fit("logistic", method = "sample",
-                            seed = 123, num_chains = 2,
+                            seed = 123, chains = 2,
                             refresh = 0)
   fit_mcmc_1 <- testing_fit("logistic", method = "sample",
-                            seed = 123, num_chains = 2,
+                            seed = 123, chains = 2,
                             refresh = 0, save_warmup = TRUE)
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
