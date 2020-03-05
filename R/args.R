@@ -157,8 +157,8 @@ SampleArgs <- R6::R6Class(
   lock_objects = FALSE,
   public = list(
     method = "sample",
-    initialize = function(num_warmup = NULL,
-                          num_samples = NULL,
+    initialize = function(warmup_iters = NULL,
+                          sampling_iters = NULL,
                           save_warmup = NULL,
                           thin = NULL,
                           max_depth = NULL,
@@ -174,8 +174,8 @@ SampleArgs <- R6::R6Class(
 
       # TODO: cmdstanpy uses different names for these but these are same as
       # regular cmdstan for now
-      self$num_warmup <- num_warmup
-      self$num_samples <- num_samples
+      self$warmup_iters <- warmup_iters
+      self$sampling_iters <- sampling_iters
 
       self$save_warmup <- save_warmup
       self$thin <- thin
@@ -242,8 +242,10 @@ SampleArgs <- R6::R6Class(
       }
       new_args <- list(
         "method=sample",
-        .make_arg("num_samples"),
-        .make_arg("num_warmup"),
+        if (!is.null(self$sampling_iters))
+          paste0("num_samples=", self$sampling_iters),
+        if (!is.null(self$warmup_iters))
+          paste0("num_warmup=", self$warmup_iters),
         .make_arg("save_warmup"),
         .make_arg("thin"),
         "algorithm=hmc",
@@ -423,11 +425,11 @@ validate_sample_args <- function(self, num_runs) {
                                lower = 1,
                                len = 1,
                                null.ok = TRUE)
-  checkmate::assert_integerish(self$num_samples,
+  checkmate::assert_integerish(self$sampling_iters,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)
-  checkmate::assert_integerish(self$num_warmup,
+  checkmate::assert_integerish(self$warmup_iters,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)

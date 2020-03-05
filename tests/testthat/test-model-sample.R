@@ -16,8 +16,8 @@ if (not_on_cran()) {
     output_dir = tempdir(),
     num_chains = 2,
     num_cores = 1,
-    num_warmup = 50,
-    num_samples = 100,
+    warmup_iters = 50,
+    sampling_iters = 100,
     save_warmup = FALSE,
     thin = 2,
     refresh = 5,
@@ -40,8 +40,8 @@ if (not_on_cran()) {
     output_dir = "NOT_A_DIRECTORY",
     num_chains = -1,
     num_cores = -1,
-    num_warmup = -1,
-    num_samples = -1,
+    warmup_iters = -1,
+    sampling_iters = -1,
     save_warmup = "NO",
     thin = 0,
     refresh = -10,
@@ -148,7 +148,7 @@ test_that("sample() method errors for any invalid arguments before calling cmdst
 test_that("sample works for warmup-only run", {
   skip_on_cran()
   expect_output(
-    fit <- mod$sample(num_chains = 2, data = data_list, num_samples = 0),
+    fit <- mod$sample(num_chains = 2, data = data_list, sampling_iters = 0),
     "Iteration: 1000 / 1000 [100%]  (Warmup)",
     fixed = TRUE
   )

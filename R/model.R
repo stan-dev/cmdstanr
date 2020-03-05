@@ -278,8 +278,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     output_dir = NULL,
 #'     num_chains = 4,
 #'     num_cores = getOption("mc.cores", 1),
-#'     num_warmup = NULL,
-#'     num_samples = NULL,
+#'     warmup_iters = NULL,
+#'     sampling_iters = NULL,
 #'     save_warmup = FALSE,
 #'     thin = NULL,
 #'     max_depth = NULL,
@@ -317,9 +317,9 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   Arguments left at `NULL` default to the default used by the installed
 #'   version of CmdStan.
 #'
-#'   * `num_samples`: (positive integer) The number of post-warmup iterations to
+#'   * `sampling_iters`: (positive integer) The number of post-warmup iterations to
 #'   run per chain.
-#'   * `num_warmup`: (positive integer) The number of warmup iterations to run
+#'   * `warmup_iters`: (positive integer) The number of warmup iterations to run
 #'   per chain.
 #'   * `save_warmup`: (logical) Should warmup iterations be saved? The default
 #'   is `FALSE`.
@@ -379,8 +379,8 @@ sample_method <- function(data = NULL,
                           output_dir = NULL,
                           num_chains = 4,
                           num_cores = getOption("mc.cores", 1),
-                          num_warmup = NULL,
-                          num_samples = NULL,
+                          warmup_iters = NULL,
+                          sampling_iters = NULL,
                           save_warmup = FALSE,
                           thin = NULL,
                           max_depth = NULL,
@@ -397,8 +397,8 @@ sample_method <- function(data = NULL,
   checkmate::assert_integerish(num_chains, lower = 1, len = 1)
 
   sample_args <- SampleArgs$new(
-    num_warmup = num_warmup,
-    num_samples = num_samples,
+    warmup_iters = warmup_iters,
+    sampling_iters = sampling_iters,
     save_warmup = save_warmup,
     thin = thin,
     max_depth = max_depth,
