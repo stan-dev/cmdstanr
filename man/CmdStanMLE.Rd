@@ -5,8 +5,7 @@
 \title{CmdStanMLE objects}
 \description{
 A \code{CmdStanMLE} object is the fitted model object returned by the
-\code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object
-to obtain a posterior mode (penalized maximum likelihood) point estimate.
+\code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object.
 }
 \details{
 \code{CmdStanMLE} objects have the following methods:

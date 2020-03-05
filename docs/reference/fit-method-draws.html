@@ -45,7 +45,10 @@
 <meta property="og:title" content="Extract posterior draws — fit-method-draws" />
 <meta property="og:description" content="Extract posterior draws after MCMC or approximate posterior
 draws after variational approximation using formats provided by the
-posterior package." />
+posterior package.
+The variables include the parameters, transformed parameters, and
+generated quantities from the Stan program as well as lp__, the total
+log probability (target) accumulated in the model block." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -166,6 +169,9 @@ posterior package." />
     <p>Extract posterior draws after MCMC or approximate posterior
 draws after variational approximation using formats provided by the
 <span class="pkg">posterior</span> package.</p>
+<p>The variables include the <code>parameters</code>, <code>transformed parameters</code>, and
+<code>generated quantities</code> from the Stan program as well as <code>lp__</code>, the total
+log probability (<code>target</code>) accumulated in the <code>model</code> block.</p>
     </div>
 
 
@@ -183,7 +189,7 @@ draws after variational approximation using formats provided by the
 <ul>
 <li><p><code>inc_warmup</code>: Should warmup draws be included? Defaults to <code>FALSE</code>. Only
 applicable for MCMC.</p></li>
-<li><p><code>...</code>: Optional arguments to pass to <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>posterior::as_draws_array()</a></code>.</p></li>
+<li><p><code>...</code>: Arguments passed on to <code><a href='https://rdrr.io/pkg/posterior/man/draws.html'>posterior::as_draws()</a></code>.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -192,11 +198,14 @@ applicable for MCMC.</p></li>
 
 <ul>
 <li><p>For MCMC, a 3-D <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>draws_array</a></code> object (iteration x
-chain x variable). The variables include the <code>parameters</code>, <code>transformed parameters</code>, and <code>generated quantities</code> from the Stan program as well as
-<code>lp__</code>, the total log probability (<code>target</code>) accumulated in the <code>model</code>
-block.</p></li>
+chain x variable).</p></li>
 <li><p>For variational inference, a 2-D <code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code>
-object (draw x variable).</p></li>
+object (draw x variable). An additional variable <code>lp_approx__</code> is also
+included, which is the log density of the variational approximation to the
+posterior evaluated at each of the draws.</p></li>
+<li><p>For optimization, a 1-row <code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code> with
+one column per variable. These are <em>not</em> actually draws, just point estimates
+stored in the <code>draws_matrix</code> format.</p></li>
 </ul>
 
 

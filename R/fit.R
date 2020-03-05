@@ -399,8 +399,7 @@ CmdStanMCMC <- R6::R6Class(
 #' @template seealso-docs
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
-#'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object
-#'   to obtain a posterior mode (penalized maximum likelihood) point estimate.
+#'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
 #'
 #' @details
 #' `CmdStanMLE` objects have the following methods:
