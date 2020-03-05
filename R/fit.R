@@ -429,6 +429,7 @@ CmdStanMLE <- R6::R6Class(
       x <- self$draws()
       x <- x[, colnames(x) != "lp__"]
       estimate <- setNames(as.numeric(x), nm = posterior::variables(x))
+      estimate
     }
   ),
   private = list(
