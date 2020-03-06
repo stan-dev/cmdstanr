@@ -458,7 +458,11 @@ CmdStanProcs <- R6::R6Class(
           last_section_start_time <- private$chain_info_[id,"last_section_start_time"]
           state <- private$chain_info_[id,"state"]
           next_state <- state
-          if (state == 1 && regexpr("Iteration:", line, perl = TRUE) > 0) {
+          if (state < 2 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
+            state <- 1.5
+            next_state <- 1.5
+          }    
+          if (state < 2 && regexpr("Iteration:", line, perl = TRUE) > 0) {
             state <- 2
             next_state <- 2
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
@@ -482,7 +486,11 @@ CmdStanProcs <- R6::R6Class(
             next_state <- 4 # writing csv and finishing
           }
           if (state > 1 && state < 4) {
-            cat("Chain", id, line, "\n")
+            if(state == 1.5) {
+              message("Chain ", id, line)
+            } else {
+              cat("Chain", id, line, "\n")
+            }            
           }
           if (self$is_error_message(line)) {
             # will print all remaining output in case of excpetions
