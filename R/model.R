@@ -392,7 +392,31 @@ sample_method <- function(data = NULL,
                           inv_metric = NULL,
                           init_buffer = NULL,
                           term_buffer = NULL,
-                          window = NULL) {
+                          window = NULL,
+                          # deprecated
+                          num_cores = NULL,
+                          num_chains = NULL,
+                          num_warmup = NULL,
+                          num_samples = NULL
+                          ) {
+
+  # temporary deprecation warnings
+  if (!is.null(num_cores)) {
+    warning("'num_cores' is deprecated. Please use 'cores' instead.")
+    cores <- num_cores
+  }
+  if (!is.null(num_chains)) {
+    warning("'num_chains' is deprecated. Please use 'chains' instead.")
+    chains <- num_chains
+  }
+  if (!is.null(num_warmup)) {
+    warning("'num_warmup' is deprecated. Please use 'warmup_iters' instead.")
+    warmup_iters <- num_warmup
+  }
+  if (!is.null(num_samples)) {
+    warning("'num_samples' is deprecated. Please use 'sampling_iters' instead.")
+    sampling_iters <- num_samples
+  }
 
   checkmate::assert_integerish(chains, lower = 1, len = 1)
 
