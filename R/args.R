@@ -157,8 +157,8 @@ SampleArgs <- R6::R6Class(
   lock_objects = FALSE,
   public = list(
     method = "sample",
-    initialize = function(warmup_iters = NULL,
-                          sampling_iters = NULL,
+    initialize = function(iter_warmup = NULL,
+                          iter_sampling = NULL,
                           save_warmup = NULL,
                           thin = NULL,
                           max_depth = NULL,
@@ -172,8 +172,8 @@ SampleArgs <- R6::R6Class(
                           term_buffer = NULL,
                           window = NULL) {
 
-      self$warmup_iters <- warmup_iters
-      self$sampling_iters <- sampling_iters
+      self$iter_warmup <- iter_warmup
+      self$iter_sampling <- iter_sampling
       self$save_warmup <- save_warmup
       self$thin <- thin
       self$max_depth <- max_depth
@@ -239,10 +239,10 @@ SampleArgs <- R6::R6Class(
       }
       new_args <- list(
         "method=sample",
-        if (!is.null(self$sampling_iters))
-          paste0("num_samples=", self$sampling_iters),
-        if (!is.null(self$warmup_iters))
-          paste0("num_warmup=", self$warmup_iters),
+        if (!is.null(self$iter_sampling))
+          paste0("num_samples=", self$iter_sampling),
+        if (!is.null(self$iter_warmup))
+          paste0("num_warmup=", self$iter_warmup),
         .make_arg("save_warmup"),
         .make_arg("thin"),
         "algorithm=hmc",
@@ -422,11 +422,11 @@ validate_sample_args <- function(self, num_runs) {
                                lower = 1,
                                len = 1,
                                null.ok = TRUE)
-  checkmate::assert_integerish(self$sampling_iters,
+  checkmate::assert_integerish(self$iter_sampling,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)
-  checkmate::assert_integerish(self$warmup_iters,
+  checkmate::assert_integerish(self$iter_warmup,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)

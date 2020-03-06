@@ -19,8 +19,8 @@ some data.
   output_dir = NULL,
   chains = 4,
   cores = getOption("mc.cores", 1),
-  warmup_iters = NULL,
-  sampling_iters = NULL,
+  iter_warmup = NULL,
+  iter_sampling = NULL,
   save_warmup = FALSE,
   thin = NULL,
   max_depth = NULL,
@@ -111,9 +111,9 @@ are described briefly here and in greater detail in the CmdStan manual.
 Arguments left at \code{NULL} default to the default used by the installed
 version of CmdStan.
 \itemize{
-\item \code{sampling_iters}: (positive integer) The number of post-warmup iterations to
+\item \code{iter_sampling}: (positive integer) The number of post-warmup iterations to
 run per chain.
-\item \code{warmup_iters}: (positive integer) The number of warmup iterations to run
+\item \code{iter_warmup}: (positive integer) The number of warmup iterations to run
 per chain.
 \item \code{save_warmup}: (logical) Should warmup iterations be saved? The default
 is \code{FALSE}.

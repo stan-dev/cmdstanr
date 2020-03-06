@@ -278,8 +278,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     output_dir = NULL,
 #'     chains = 4,
 #'     cores = getOption("mc.cores", 1),
-#'     warmup_iters = NULL,
-#'     sampling_iters = NULL,
+#'     iter_warmup = NULL,
+#'     iter_sampling = NULL,
 #'     save_warmup = FALSE,
 #'     thin = NULL,
 #'     max_depth = NULL,
@@ -317,9 +317,9 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   Arguments left at `NULL` default to the default used by the installed
 #'   version of CmdStan.
 #'
-#'   * `sampling_iters`: (positive integer) The number of post-warmup iterations to
+#'   * `iter_sampling`: (positive integer) The number of post-warmup iterations to
 #'   run per chain.
-#'   * `warmup_iters`: (positive integer) The number of warmup iterations to run
+#'   * `iter_warmup`: (positive integer) The number of warmup iterations to run
 #'   per chain.
 #'   * `save_warmup`: (logical) Should warmup iterations be saved? The default
 #'   is `FALSE`.
@@ -379,8 +379,8 @@ sample_method <- function(data = NULL,
                           output_dir = NULL,
                           chains = 4,
                           cores = getOption("mc.cores", 1),
-                          warmup_iters = NULL,
-                          sampling_iters = NULL,
+                          iter_warmup = NULL,
+                          iter_sampling = NULL,
                           save_warmup = FALSE,
                           thin = NULL,
                           max_depth = NULL,
@@ -410,19 +410,19 @@ sample_method <- function(data = NULL,
     chains <- num_chains
   }
   if (!is.null(num_warmup)) {
-    warning("'num_warmup' is deprecated. Please use 'warmup_iters' instead.")
-    warmup_iters <- num_warmup
+    warning("'num_warmup' is deprecated. Please use 'iter_warmup' instead.")
+    iter_warmup <- num_warmup
   }
   if (!is.null(num_samples)) {
-    warning("'num_samples' is deprecated. Please use 'sampling_iters' instead.")
-    sampling_iters <- num_samples
+    warning("'num_samples' is deprecated. Please use 'iter_sampling' instead.")
+    iter_sampling <- num_samples
   }
 
   checkmate::assert_integerish(chains, lower = 1, len = 1)
 
   sample_args <- SampleArgs$new(
-    warmup_iters = warmup_iters,
-    sampling_iters = sampling_iters,
+    iter_warmup = iter_warmup,
+    iter_sampling = iter_sampling,
     save_warmup = save_warmup,
     thin = thin,
     max_depth = max_depth,
