@@ -493,7 +493,7 @@ CmdStanProcs <- R6::R6Class(
             }            
           }
           if (self$is_error_message(line)) {
-            # will print all remaining output in case of excpetions
+            # will print all remaining output in case of exceptions
             if(state == 1) {
               state = 2;
             }
