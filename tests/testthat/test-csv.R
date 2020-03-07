@@ -11,6 +11,10 @@ if (not_on_cran()) {
                           seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1)
   fit_logistic_thin_1 <- testing_fit("logistic", method = "sample",
                           seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1)
+  fit_logistic_thin_1a <- testing_fit("logistic", method = "sample",
+                                     seed = 123, num_chains = 2, num_samples = 500, num_warmup = 1000, thin = 1)
+  fit_logistic_thin_1b <- testing_fit("logistic", method = "sample",
+                                      seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 500, thin = 1)
   fit_logistic_thin_1_with_warmup <- testing_fit("logistic", method = "sample",
                           seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1, save_warmup = 1)
   fit_logistic_thin_3 <- testing_fit("logistic", method = "sample",
@@ -31,12 +35,24 @@ test_that("read_sample_csv() fails for different model names", {
                "Supplied CSV files were not generated wtih the same model!")
 })
 
-test_that("read_sample_csv() fails for different sampling settings", {
+test_that("read_sample_csv() fails for different number of samples in csv", {
   skip_on_cran()
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_10$output_files())
   expect_error(read_sample_csv(csv_files),
-               "Supplied CSV files do not match in all sampling settings!")
+               "Supplied CSV files dont match in the number of stored samples!")
+  csv_files <- c(fit_logistic_thin_1$output_files(),
+                 fit_logistic_thin_1a$output_files())
+  expect_error(read_sample_csv(csv_files),
+               "Supplied CSV files dont match in the number of stored samples!")
+  csv_files <- c(fit_logistic_thin_1$output_files(),
+                 fit_logistic_thin_1b$output_files())
+  expect_warning(read_sample_csv(csv_files),
+               "The supplied csv files do not match in the following arguments: num_warmup!")
+  csv_files <- c(fit_logistic_thin_1$output_files(),
+                 fit_logistic_thin_1_with_warmup$output_files())
+  expect_error(read_sample_csv(csv_files),
+                 "Supplied CSV files dont match in the number of stored samples!")
 })
 
 test_that("read_sample_csv() fails for different parameters", {

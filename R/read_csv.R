@@ -14,10 +14,12 @@ check_sampling_csv_info_matches <- function(a, b) {
     return(list(error = "Supplied CSV files have samples for different parameters!"))
   }
   if(a$num_samples != b$num_samples ||
+    a$thin != b$thin ||
+    a$save_warmup != b$save_warmup ||
     (a$save_warmup == 1 && a$num_warmup != b$num_warmup)) {
       return(list(error = "Supplied CSV files dont match in the number of stored samples!"))
   }
-  dont_match_list <- c("id", "inverse_metric", "step_size", "seed", "init", "file_name")
+  dont_match_list <- c("id", "inverse_metric", "step_size", "seed", "init")
   not_matching <- c()
   for (name in names(a)) {
     if (!(name %in% dont_match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
@@ -126,7 +128,6 @@ read_sample_info_csv <- function(csv_file) {
     cols <- length(csv_file_info$inverse_metric)/inverse_metric_rows
     dim(csv_file_info$inverse_metric) <- c(rows,cols)
   }
-  csv_file_info$file_name <- csv_file
   csv_file_info$model_name <- csv_file_info$model
   csv_file_info$model <- NULL
   csv_file_info$adapt_engaged <- csv_file_info$engaged
@@ -254,7 +255,7 @@ read_sample_csv <- function(output_files) {
   }
   if(length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
-    warning("The supplied csv files do not match in the following arguments: ", not_matching_list)
+    warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
   }
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
   sampling_info$inverse_metric <- NULL
