@@ -23,6 +23,8 @@
 #'   installation.
 #' @param timeout Timeout (in seconds) for the CmdStan build stage of the
 #'   installation process. The default is `timeout=600` (10 minutes).
+#' @param release_tag Specifies the Cmdstan release tag to be installed. By default,
+#'   set to NULL, which downloads the latest stable release.
 #' @param repo_clone If `FALSE` (the default), the latest CmdStan release is
 #'   downloaded and installed from tarball. If `TRUE` will install a git clone
 #'   of CmdStan from `repo_url` and check out the branch `repo_branch`.
@@ -40,6 +42,7 @@ install_cmdstan <- function(dir = NULL,
                             quiet = FALSE,
                             overwrite = FALSE,
                             timeout = 600,
+                            release_tag = NULL,
                             repo_clone = FALSE,
                             repo_url = "https://github.com/stan-dev/cmdstan.git",
                             repo_branch = "develop") {
@@ -76,14 +79,25 @@ install_cmdstan <- function(dir = NULL,
     )
     clone_repo(dir_cmdstan, repo_url, repo_branch, quiet)
   } else {
-    ver <- latest_released_version()
+    if(!is.null(release_tag)) {
+      ver <- sub("v", "", release_tag)
+    } else {
+      ver <- latest_released_version()
+      message("* Latest CmdStan release is v", ver)
+    }
+    
     cmdstan_ver <- paste0("cmdstan-", ver, ".tar.gz")
-    message("* Latest CmdStan release is v", ver)
     message("* Installing CmdStan v", ver, " in ", dir)
     message("* Downloading ", cmdstan_ver, " from GitHub...")
     dest_file <- file.path(dir, cmdstan_ver)
-    download_rc <- utils::download.file(url = github_download_url(ver),
+    download_rc <- 1
+    retries <- 0
+    while(retries < 5 && download_rc != 0) {
+      download_rc <- utils::download.file(url = github_download_url(ver),
                                         destfile = dest_file)
+      retries <- retries + 1
+    }
+    
     if (download_rc != 0) {
       stop("GitHub download failed. Exited with return code: ", download_rc,
            call. = FALSE)
