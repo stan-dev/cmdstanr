@@ -19,10 +19,12 @@ check_sampling_csv_info_matches <- function(a, b) {
     (a$save_warmup == 1 && a$num_warmup != b$num_warmup)) {
       return(list(error = "Supplied CSV files dont match in the number of stored samples!"))
   }
-  dont_match_list <- c("id", "inverse_metric", "step_size", "seed", "init")
+  match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
+                  "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_depth",
+                  "metric", "stepsize", "stepsize_jitter", "adapt_engaged", "adapt_delta", "num_warmup")
   not_matching <- c()
   for (name in names(a)) {
-    if (!(name %in% dont_match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
+    if ((name %in% match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
       not_matching <- c(not_matching, name)
     }
   }
