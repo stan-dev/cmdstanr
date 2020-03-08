@@ -120,7 +120,6 @@ CmdStanModel <- R6::R6Class(
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
       if (compile) {
-        message("Compiling Stan program...")
         self$compile(...)
       }
       invisible(self)
@@ -191,6 +190,8 @@ CmdStanModel <- R6::R6Class(
 #'     OpenCL platform on which to run the compiled model.
 #'   * `compiler_flags`: (character vector) Any additional compiler flags to be
 #'     used when compiling the model.
+#'   * `force_recompile`: (character vector) Should the model be recompiled
+#'     even if was not modified since last compiled. The default is `FALSE`.
 #'
 #' @section Value: This method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
@@ -214,17 +215,35 @@ compile_method <- function(quiet = TRUE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
-                           compiler_flags = NULL) {
-  exe <- strip_ext(self$stan_file())
+                           compiler_flags = NULL,
+                           force_recompile = FALSE) {
   make_local_changed <- set_make_local(threads,
                                        opencl,
                                        opencl_platform_id,
                                        opencl_device_id,
                                        compiler_flags)
+  exe <- cmdstan_ext(strip_ext(self$stan_file()))
+  recompile <- make_local_changed || force_recompile ||
+               !file.exists(exe) || (file.mtime(exe) < file.mtime(self$stan_file()))
+  if (!recompile) {
+    message("Model executable is up to date!")
+    private$exe_file_ <- exe
+    return(invisible(self))
+  } else {
+    message("Compiling Stan program...")
+  }
+
+  temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
+  file.copy(self$stan_file(), temp_stan_file)
+  tmp_exe <- cmdstan_ext(strip_ext(temp_stan_file)) # adds .exe on Windows
+  
   # rebuild main.o and the model if there was a change in make/local
   if (make_local_changed) {
     message("A change in the compiler flags was found. Forcing recompilation.\n")
-    build_cleanup(exe, remove_main = TRUE)
+    main_o_path <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
+    if (file.exists(main_o_path)) {
+      file.remove(main_o_path)
+    }
   }
   # add path to the build tbb library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
@@ -239,10 +258,9 @@ compile_method <- function(quiet = TRUE,
     include_paths <- paste0("STANCFLAGS += --include_paths=", include_paths)
   }
 
-  exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(exe, include_paths),
+    args = c(tmp_exe, include_paths),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
@@ -250,7 +268,8 @@ compile_method <- function(quiet = TRUE,
     stderr_line_callback = function(x,p) { if(quiet) message(x) },
     error_on_status = TRUE
   )
-
+  
+  file.copy(tmp_exe, exe)
   private$exe_file_ <- exe
   invisible(self)
 }

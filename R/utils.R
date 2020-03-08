@@ -253,25 +253,6 @@ write_stan_json <- function(data, file) {
   )
 }
 
-# compilation, build files, threading -------------------------------------
-
-#' Cleanup build files of a Stan model
-#'
-#' Deletes `model_name.o`, `model_name.hpp` and the executable.
-#'
-#' @param model_path (string) The absolute path to the model.
-#' @param remove_main (logical) Set `TRUE` to also remove the CmdStan `main.o`.
-#' @noRd
-build_cleanup <- function(model_path, remove_main = FALSE) {
-  files_to_remove <- c(
-    paste0(model_path, c("", ".exe", ".o", ".hpp")),
-    if (remove_main) file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-  )
-  for (file in files_to_remove) if (file.exists(file)) {
-    file.remove(file)
-  }
-}
-
 set_make_local <- function(threads = FALSE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
