@@ -172,6 +172,15 @@ latest_released_version <- function() {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the jsonlite package.", call. = FALSE)
   }
+  contents <- url("https://api.github.com/repos/stan-dev/cmdstan/releases")
+  releases <- jsonlite::parse_json(contents)
+  for(release in releases) {
+    if(!release$prerelease) {
+      version_number <- sub("v", "", release$tag_name)
+      return(version_number)
+    }
+  }
+  # in case none of the releases are release candidates, take the latest
   contents <- url("https://api.github.com/repos/stan-dev/cmdstan/releases/latest")
   tag_name <- jsonlite::parse_json(contents)[["tag_name"]]
   version_number <- sub("v", "", tag_name)
