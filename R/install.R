@@ -194,11 +194,13 @@ latest_released_version <- function() {
       return(version_number)
     }
   }
-  # in case none of the releases are release candidates, take the latest
-  contents <- url("https://api.github.com/repos/stan-dev/cmdstan/releases/latest")
-  tag_name <- jsonlite::parse_json(contents)[["tag_name"]]
-  version_number <- sub("v", "", tag_name)
-  version_number
+  # if none of the releases are stable, use the latest
+  if (length(releases) > 0) {
+    version_number <- sub("v", "", releases[[1]]$tag_name)
+    version_number
+  } else {
+    stop("No Cmdstan release available!")
+  }  
 }
 
 # internal functions to run system commands -------------------------------
