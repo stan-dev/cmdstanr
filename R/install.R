@@ -23,6 +23,8 @@
 #'   installation.
 #' @param timeout Timeout (in seconds) for the CmdStan build stage of the
 #'   installation process. The default is `timeout=600` (10 minutes).
+#' @param release_url Specifies the URL to a specific Cmdstan release to be installed.
+#'   By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.
 #' @param repo_clone If `FALSE` (the default), the latest CmdStan release is
 #'   downloaded and installed from tarball. If `TRUE` will install a git clone
 #'   of CmdStan from `repo_url` and check out the branch `repo_branch`.
@@ -40,6 +42,7 @@ install_cmdstan <- function(dir = NULL,
                             quiet = FALSE,
                             overwrite = FALSE,
                             timeout = 600,
+                            release_url = NULL,
                             repo_clone = FALSE,
                             repo_url = "https://github.com/stan-dev/cmdstan.git",
                             repo_branch = "develop") {
@@ -76,14 +79,33 @@ install_cmdstan <- function(dir = NULL,
     )
     clone_repo(dir_cmdstan, repo_url, repo_branch, quiet)
   } else {
-    ver <- latest_released_version()
-    cmdstan_ver <- paste0("cmdstan-", ver, ".tar.gz")
-    message("* Latest CmdStan release is v", ver)
-    message("* Installing CmdStan v", ver, " in ", dir)
-    message("* Downloading ", cmdstan_ver, " from GitHub...")
-    dest_file <- file.path(dir, cmdstan_ver)
-    download_rc <- utils::download.file(url = github_download_url(ver),
+    if(!is.null(release_url)) {
+      if(!endsWith(release_url, ".tar.gz")) {
+        stop(paste0(release_url, "is not a .tar.gz archive! cmdstanr supports installing from .tar.gz archives only"))
+      }
+      message("* Installing Cmdstan from ", release_url)
+      download_url <- release_url
+      split_url <- strsplit(release_url, "/")
+      tar_name <- tail(split_url[[1]], n=1)
+      cmdstan_ver <- substr(tar_name, 0, nchar(tar_name)-7)
+      dest_file <- file.path(dir, cmdstan_ver)
+    } else {
+      ver <- latest_released_version()
+      message("* Latest CmdStan release is v", ver)
+      cmdstan_ver <- paste0("cmdstan-", ver, ".tar.gz")
+      message("* Installing CmdStan v", ver, " in ", dir)
+      message("* Downloading ", cmdstan_ver, " from GitHub...")
+      download_url <- github_download_url(ver)
+      dest_file <- file.path(dir, cmdstan_ver)
+    }    
+    download_rc <- 1
+    retries <- 0
+    while(retries < 5 && download_rc != 0) {
+      download_rc <- utils::download.file(url = download_url,
                                         destfile = dest_file)
+      retries <- retries + 1
+    }
+    
     if (download_rc != 0) {
       stop("GitHub download failed. Exited with return code: ", download_rc,
            call. = FALSE)
@@ -172,10 +194,21 @@ latest_released_version <- function() {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the jsonlite package.", call. = FALSE)
   }
-  contents <- url("https://api.github.com/repos/stan-dev/cmdstan/releases/latest")
-  tag_name <- jsonlite::parse_json(contents)[["tag_name"]]
-  version_number <- sub("v", "", tag_name)
-  version_number
+  contents <- url("https://api.github.com/repos/stan-dev/cmdstan/releases")
+  releases <- jsonlite::parse_json(contents)
+  for(release in releases) {
+    if(!release$prerelease) {
+      version_number <- sub("v", "", release$tag_name)
+      return(version_number)
+    }
+  }
+  # if none of the releases are stable, use the latest
+  if (length(releases) > 0) {
+    version_number <- sub("v", "", releases[[1]]$tag_name)
+    version_number
+  } else {
+    stop("No Cmdstan release available!")
+  }  
 }
 
 # internal functions to run system commands -------------------------------
