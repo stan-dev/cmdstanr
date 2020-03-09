@@ -225,6 +225,7 @@ compile_method <- function(quiet = TRUE,
   exe <- cmdstan_ext(strip_ext(self$stan_file()))
   recompile <- make_local_changed || force_recompile ||
                !file.exists(exe) || (file.mtime(exe) < file.mtime(self$stan_file()))
+  model_name <- paste0(strip_ext(basename(self$stan_file())), "_model")
   if (!recompile) {
     message("Model executable is up to date!")
     private$exe_file_ <- exe
@@ -258,9 +259,13 @@ compile_method <- function(quiet = TRUE,
     include_paths <- paste0("STANCFLAGS += --include_paths=", include_paths)
   }
 
+  # TODO(Rok): Once we handle stancflags separately this should be overriden
+  # if a user specifies their own name
+  model_name_stancflag <- paste0("STANCFLAGS+=--name=", model_name)
+
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(tmp_exe, include_paths),
+    args = c(tmp_exe, include_paths, model_name_stancflag),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
