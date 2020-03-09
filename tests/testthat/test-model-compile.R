@@ -58,13 +58,24 @@ test_that("compile() method forces recompilation if model modified", {
 
 test_that("compile() method works with spaces in path", {
   skip_on_cran()
-  # remove executable if exists
-  stan_file <- testing_stan_file("folder spaces/bernoulli spaces.stan")
-  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
+  stan_file <- testing_stan_file("bernoulli")
+  stan_model_with_spaces <- testing_stan_file("folder spaces/bernoulli spaces")
+
+  dir_with_spaces <- test_path("resources", "stan", "folder spaces")
+  if (!file.exists(dir_with_spaces)) {
+    dir.create(dir_with_spaces)
+  }
+  file.copy(stan_file, stan_model_with_spaces)
+
+  mod_spaces <- cmdstan_model(stan_file = stan_model_with_spaces, compile = FALSE)
+  exe <- cmdstan_ext(strip_ext(mod_spaces$stan_file()))
   if (file.exists(exe)) {
     file.remove(exe)
   }
-  expect_message(mod$compile(), "Compiling Stan program...")
+  expect_message(mod_spaces$compile(), "Compiling Stan program...")
+  file.remove(stan_model_with_spaces)
+  file.remove(exe)
+  file.remove(dir_with_spaces)
 })
 
 test_that("compile() method forces recompilation if changes in flags", {

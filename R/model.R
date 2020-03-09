@@ -261,7 +261,7 @@ compile_method <- function(quiet = TRUE,
 
   # TODO(Rok): Once we handle stancflags separately this should be overriden
   # if a user specifies their own name
-  model_name_stancflag <- paste0("STANCFLAGS+=--name=", model_name)
+  model_name_stancflag <- paste0("STANCFLAGS+=--name=", sub(" ", "_", model_name))
 
   run_log <- processx::run(
     command = make_cmd(),
