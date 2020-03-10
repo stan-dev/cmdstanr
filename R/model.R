@@ -201,9 +201,16 @@ compile_method <- function(quiet = TRUE,
                            stanc_options = list(),
                            force_recompile = FALSE) {
   exe <- cmdstan_ext(strip_ext(self$stan_file()))
-  recompile <- force_recompile || !file.exists(exe) || (file.mtime(exe) < file.mtime(self$stan_file()))
+  # compile if compile options changed, the user forced compilation,
+  # the executable does not exist or the stan model was changed since last compilation
+  if (!file.exists(exe)) {
+    force_recompile <- TRUE
+  } else if (file.mtime(exe) < file.mtime(self$stan_file())) {
+    force_recompile <- TRUE
+  }
+
   model_name <- paste0(strip_ext(basename(self$stan_file())), "_model")
-  if (!recompile) {
+  if (!force_recompile) {
     message("Model executable is up to date!")
     private$exe_file_ <- exe
     return(invisible(self))
@@ -212,7 +219,7 @@ compile_method <- function(quiet = TRUE,
   }
 
   temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
-  file.copy(self$stan_file(), temp_stan_file)
+  file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   tmp_exe <- cmdstan_ext(strip_ext(temp_stan_file)) # adds .exe on Windows
 
   # add path to the build tbb library to the PATH variable to avoid copying the dll file
@@ -256,7 +263,7 @@ compile_method <- function(quiet = TRUE,
     error_on_status = TRUE
   )
   
-  file.copy(tmp_exe, exe)
+  file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   invisible(self)
 }
