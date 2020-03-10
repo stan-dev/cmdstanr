@@ -241,9 +241,14 @@ compile_method <- function(quiet = TRUE,
   # rebuild main.o and the model if there was a change in make/local
   if (make_local_changed) {
     message("A change in the compiler flags was found. Forcing recompilation.\n")
-    main_o_path <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-    if (file.exists(main_o_path)) {
-      file.remove(main_o_path)
+    main_path <- file.path(cmdstan_path(), "src", "cmdstan", "main")
+    model_header_path <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header")
+    files_to_remove <- c(
+      paste0(main_path, c(".d", ".o")),
+      paste0(model_header_path, c(".d", ".hpp.gch"))
+    )
+    for (file in files_to_remove) if (file.exists(file)) {
+      file.remove(file)
     }
   }
   # add path to the build tbb library to the PATH variable to avoid copying the dll file
