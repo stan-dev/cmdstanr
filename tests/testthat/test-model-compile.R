@@ -78,6 +78,15 @@ test_that("compile() method works with spaces in path", {
   file.remove(dir_with_spaces)
 })
 
+test_that("compile() method overwrites binaries", {
+  skip_on_cran()
+  mod$compile(quiet = TRUE)
+  old_time = file.mtime(mod$exe_file())
+  mod$compile(quiet = TRUE, force_recompile = TRUE)
+  new_time =
+  expect_gt(file.mtime(mod$exe_file()), old_time)
+})
+
 test_that("compile() method forces recompilation if changes in flags", {
   skip_on_cran()
 

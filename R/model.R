@@ -228,7 +228,7 @@ compile_method <- function(quiet = TRUE,
   recompile <- force_recompile || make_local_changed
   if (!file.exists(exe)) {
     recompile <- TRUE
-  } else if (file.mtime(exe) < file.mtime(self$stan_file()) {
+  } else if (file.mtime(exe) < file.mtime(self$stan_file())) {
     recompile <- TRUE
   }
                 
@@ -244,7 +244,7 @@ compile_method <- function(quiet = TRUE,
   temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   tmp_exe <- cmdstan_ext(strip_ext(temp_stan_file)) # adds .exe on Windows
-  
+
   # rebuild main.o and the model if there was a change in make/local
   if (make_local_changed) {
     message("A change in the compiler flags was found. Forcing recompilation.\n")
