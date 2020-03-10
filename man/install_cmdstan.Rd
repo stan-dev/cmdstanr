@@ -10,6 +10,7 @@ install_cmdstan(
   quiet = FALSE,
   overwrite = FALSE,
   timeout = 600,
+  release_url = NULL,
   repo_clone = FALSE,
   repo_url = "https://github.com/stan-dev/cmdstan.git",
   repo_branch = "develop"
@@ -34,6 +35,9 @@ installation.}
 
 \item{timeout}{Timeout (in seconds) for the CmdStan build stage of the
 installation process. The default is \code{timeout=600} (10 minutes).}
+
+\item{release_url}{Specifies the URL to a specific Cmdstan release to be installed.
+By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.}
 
 \item{repo_clone}{If \code{FALSE} (the default), the latest CmdStan release is
 downloaded and installed from tarball. If \code{TRUE} will install a git clone
