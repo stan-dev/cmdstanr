@@ -120,7 +120,6 @@ CmdStanModel <- R6::R6Class(
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
       if (compile) {
-        message("Compiling Stan program...")
         self$compile(...)
       }
       invisible(self)
@@ -161,7 +160,8 @@ CmdStanModel <- R6::R6Class(
 #'     opencl = FALSE,
 #'     opencl_platform_id = 0,
 #'     opencl_device_id = 0,
-#'     compiler_flags = NULL
+#'     compiler_flags = NULL,
+#'     force_recompile = FALSE
 #'   )
 #'   $exe_file()
 #'   ```
@@ -191,6 +191,8 @@ CmdStanModel <- R6::R6Class(
 #'     OpenCL platform on which to run the compiled model.
 #'   * `compiler_flags`: (character vector) Any additional compiler flags to be
 #'     used when compiling the model.
+#'   * `force_recompile`: (logical) Should the model be recompiled
+#'     even if was not modified since last compiled. The default is `FALSE`.
 #'
 #' @section Value: This method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
@@ -214,17 +216,48 @@ compile_method <- function(quiet = TRUE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
                            opencl_device_id = 0,
-                           compiler_flags = NULL) {
-  exe <- strip_ext(self$stan_file())
+                           compiler_flags = NULL,
+                           force_recompile = FALSE) {
   make_local_changed <- set_make_local(threads,
                                        opencl,
                                        opencl_platform_id,
                                        opencl_device_id,
                                        compiler_flags)
+  exe <- cmdstan_ext(strip_ext(self$stan_file()))
+  # compile if compile options changed, the user forced compilation,
+  # the executable does not exist or the stan model was changed since last compilation
+  recompile <- force_recompile || make_local_changed
+  if (!file.exists(exe)) {
+    recompile <- TRUE
+  } else if (file.mtime(exe) < file.mtime(self$stan_file())) {
+    recompile <- TRUE
+  }
+
+  model_name <- paste0(strip_ext(basename(self$stan_file())), "_model")
+  if (!recompile) {
+    message("Model executable is up to date!")
+    private$exe_file_ <- exe
+    return(invisible(self))
+  } else {
+    message("Compiling Stan program...")
+  }
+
+  temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
+  file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
+  tmp_exe <- cmdstan_ext(strip_ext(temp_stan_file)) # adds .exe on Windows
+
   # rebuild main.o and the model if there was a change in make/local
   if (make_local_changed) {
     message("A change in the compiler flags was found. Forcing recompilation.\n")
-    build_cleanup(exe, remove_main = TRUE)
+    main_path <- file.path(cmdstan_path(), "src", "cmdstan", "main")
+    model_header_path <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header")
+    files_to_remove <- c(
+      paste0(main_path, c(".d", ".o")),
+      paste0(model_header_path, c(".d", ".hpp.gch"))
+    )
+    for (file in files_to_remove) if (file.exists(file)) {
+      file.remove(file)
+    }
   }
   # add path to the build tbb library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
@@ -239,10 +272,13 @@ compile_method <- function(quiet = TRUE,
     include_paths <- paste0("STANCFLAGS += --include_paths=", include_paths)
   }
 
-  exe <- cmdstan_ext(exe) # adds .exe on Windows
+  # TODO(Rok): Once we handle stancflags separately this should be overriden
+  # if a user specifies their own name
+  model_name_stancflag <- paste0("STANCFLAGS+=--name=", sub(" ", "_", model_name))
+
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(exe, include_paths),
+    args = c(tmp_exe, include_paths, model_name_stancflag),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
@@ -251,6 +287,7 @@ compile_method <- function(quiet = TRUE,
     error_on_status = TRUE
   )
 
+  file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   invisible(self)
 }
