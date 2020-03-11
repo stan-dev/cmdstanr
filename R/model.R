@@ -235,7 +235,10 @@ compile_method <- function(quiet = TRUE,
     stancflags_val <- paste0(stancflags_val, " --include_paths=", include_paths, " ")
   }
 
-  stanc_options <- c(stanc_options, )
+  if (!("name" %in% names(stanc_options))) {
+    stanc_options[["name"]] <- sub(" ", "_", model_name)
+  }
+  
   stanc_built_options = c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
@@ -245,12 +248,7 @@ compile_method <- function(quiet = TRUE,
       stanc_built_options = c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
   }
-  stancflags_val <- paste0("STANCFLAGS +=",stancflags_val, paste0(stanc_built_options, collapse = " "))
-
-  print(stancflags_val)
-  # TODO(Rok): Once we handle stancflags separately this should be overriden
-  # if a user specifies their own name
-  # model_name_stancflag <- paste0("STANCFLAGS+=--name=", sub(" ", "_", model_name))
+  stancflags_val <- paste0("STANCFLAGS += ",stancflags_val, paste0(stanc_built_options, collapse = " "))
 
   run_log <- processx::run(
     command = make_cmd(),
