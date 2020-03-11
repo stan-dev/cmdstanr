@@ -160,7 +160,8 @@ CmdStanModel <- R6::R6Class(
 #'     opencl = FALSE,
 #'     opencl_platform_id = 0,
 #'     opencl_device_id = 0,
-#'     compiler_flags = NULL
+#'     compiler_flags = NULL,
+#'     force_recompile = FALSE
 #'   )
 #'   $exe_file()
 #'   ```
@@ -190,7 +191,7 @@ CmdStanModel <- R6::R6Class(
 #'     OpenCL platform on which to run the compiled model.
 #'   * `compiler_flags`: (character vector) Any additional compiler flags to be
 #'     used when compiling the model.
-#'   * `force_recompile`: (character vector) Should the model be recompiled
+#'   * `force_recompile`: (logical) Should the model be recompiled
 #'     even if was not modified since last compiled. The default is `FALSE`.
 #'
 #' @section Value: This method is called for its side effect of creating the
@@ -231,7 +232,7 @@ compile_method <- function(quiet = TRUE,
   } else if (file.mtime(exe) < file.mtime(self$stan_file())) {
     recompile <- TRUE
   }
-                
+
   model_name <- paste0(strip_ext(basename(self$stan_file())), "_model")
   if (!recompile) {
     message("Model executable is up to date!")
@@ -285,7 +286,7 @@ compile_method <- function(quiet = TRUE,
     stderr_line_callback = function(x,p) { if(quiet) message(x) },
     error_on_status = TRUE
   )
-  
+
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   invisible(self)

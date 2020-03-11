@@ -18,7 +18,8 @@ the path to the executable can be accesed via the \verb{$exe_file()} method.
   opencl = FALSE,
   opencl_platform_id = 0,
   opencl_device_id = 0,
-  compiler_flags = NULL
+  compiler_flags = NULL,
+  force_recompile = FALSE
 )
 $exe_file()
 }
@@ -51,7 +52,7 @@ to run the compiled model.
 OpenCL platform on which to run the compiled model.
 \item \code{compiler_flags}: (character vector) Any additional compiler flags to be
 used when compiling the model.
-\item \code{force_recompile}: (character vector) Should the model be recompiled
+\item \code{force_recompile}: (logical) Should the model be recompiled
 even if was not modified since last compiled. The default is \code{FALSE}.
 }
 }
