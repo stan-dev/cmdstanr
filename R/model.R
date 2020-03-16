@@ -201,7 +201,7 @@ compile_method <- function(quiet = TRUE,
                            stanc_options = list(),
                            force_recompile = FALSE) {
   exe <- cmdstan_ext(strip_ext(self$stan_file()))
-  # compile if compile options changed, the user forced compilation,
+  # compile if the user forced compilation,
   # the executable does not exist or the stan model was changed since last compilation
   if (!file.exists(exe)) {
     force_recompile <- TRUE
@@ -227,6 +227,11 @@ compile_method <- function(quiet = TRUE,
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
+
+  if (!("name" %in% names(stanc_options))) {
+    stanc_options[["name"]] <- sub(" ", "_", model_name)
+  }
+  
   stancflags_val <- ""
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
@@ -235,10 +240,6 @@ compile_method <- function(quiet = TRUE,
     stancflags_val <- paste0(stancflags_val, " --include_paths=", include_paths, " ")
   }
 
-  if (!("name" %in% names(stanc_options))) {
-    stanc_options[["name"]] <- sub(" ", "_", model_name)
-  }
-  
   stanc_built_options = c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
@@ -248,19 +249,21 @@ compile_method <- function(quiet = TRUE,
       stanc_built_options = c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
   }
-  stancflags_val <- paste0("STANCFLAGS += ",stancflags_val, paste0(stanc_built_options, collapse = " "))
+  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
 
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(tmp_exe, stancflags_val),
+    args = c(tmp_exe,
+             cpp_options_to_compile_flags(.cmdstanr$CPP_OPTIONS),
+             stancflags_val),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    stderr_line_callback = function(x,p) { if (!quiet) message(x) },
     error_on_status = TRUE
   )
-  
+
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   invisible(self)
