@@ -256,8 +256,8 @@ write_stan_json <- function(data, file) {
 #' Set the Cmdstan make options or flags used when compiling the
 #' generated C++ code.
 #'
-#' @cpp_options a list of make options to use when compiling the generated C++ code
-#' @quiet If TRUE suppresses all the output.
+#' @param cpp_options a list of make options to use when compiling the generated C++ code
+#' @param quiet If TRUE suppresses all the output.
 #' @return TRUE if the cpp_options were changed, FALSE otherwise
 #' @export
 #'

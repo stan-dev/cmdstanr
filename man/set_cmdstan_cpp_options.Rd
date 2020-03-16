@@ -7,6 +7,11 @@ generated C++ code.}
 \usage{
 set_cmdstan_cpp_options(cpp_options, quiet = FALSE)
 }
+\arguments{
+\item{cpp_options}{a list of make options to use when compiling the generated C++ code}
+
+\item{quiet}{If TRUE suppresses all the output.}
+}
 \value{
 TRUE if the cpp_options were changed, FALSE otherwise
 }
