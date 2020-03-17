@@ -257,10 +257,11 @@ write_stan_json <- function(data, file) {
 #' generated C++ code.
 #'
 #' @param cpp_options a list of make options to use when compiling the generated C++ code
+#' @param quiet If TRUE, will suppress the output of compilation
 #' @return TRUE if cpp_options were changed, FALSE otherwise
 #' @export
 #'
-set_cmdstan_cpp_options <- function(cpp_options) {
+set_cmdstan_cpp_options <- function(cpp_options, quiet = TRUE) {
   if (is.null(.cmdstanr$CPP_OPTIONS) ||
       any(length(cpp_options) != length(.cmdstanr$CPP_OPTIONS)) ||
       any(names(cpp_options) != names(.cmdstanr$CPP_OPTIONS)) ||
@@ -276,7 +277,7 @@ set_cmdstan_cpp_options <- function(cpp_options) {
     for (file in files_to_remove) if (file.exists(file)) {
       file.remove(file)
     }
-    
+
     run_log <- processx::run(
       command = make_cmd(),
       args = c(
