@@ -152,9 +152,9 @@ test_that("name in STANCFLAGS is set correctly", {
 test_that("recompiles on change of make flags", {
   skip_on_cran()
   #remove all flags
-  set_cmdstan_cpp_options(cpp_options = list(),quiet = TRUE)
+  set_cmdstan_cpp_options(cpp_options = list())
 
-  expect_true(set_cmdstan_cpp_options(cpp_options = list(stan_threads = TRUE), quiet = TRUE))
-  expect_false(set_cmdstan_cpp_options(cpp_options = list(stan_threads = TRUE), quiet = TRUE))
-  expect_true(set_cmdstan_cpp_options(cpp_options = list(), quiet = TRUE))
+  expect_true(set_cmdstan_cpp_options(cpp_options = list(stan_threads = TRUE)))
+  expect_false(set_cmdstan_cpp_options(cpp_options = list(stan_threads = TRUE)))
+  expect_true(set_cmdstan_cpp_options(cpp_options = list()))
 })
