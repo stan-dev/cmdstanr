@@ -276,6 +276,7 @@ set_cmdstan_cpp_options <- function(cpp_options) {
     for (file in files_to_remove) if (file.exists(file)) {
       file.remove(file)
     }
+    
     run_log <- processx::run(
       command = make_cmd(),
       args = c(
