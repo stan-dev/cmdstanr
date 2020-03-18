@@ -69,8 +69,33 @@
 #' fit_vb$summary()
 #' }
 #'
-cmdstan_model <- function(stan_file, compile = TRUE, ...) {
-  CmdStanModel$new(stan_file = stan_file, compile = compile, ...)
+cmdstan_model <- function(stan_file = NULL, model_code = NULL, model_name = NULL, compile = TRUE, ...) {
+  if (!is.null(model_code)) {
+    if (!is.null(stan_file)) {
+      stop("Illegal use cmdstan_model! Both stan_file and model_code are non-NULL!")
+    }
+    if (is.null(model_name)) {
+      stop("Must set model_name when using model_code!")
+    }
+    tmp_stan_file <- cmdstan_temp_model_path()
+    newer <- FALSE
+    if (file.exists(tmp_stan_file)){
+
+    } else {
+      newer <- TRUE
+    }
+    if (newer) {
+      tmp_stan_file_conn <- file(tmp_stan_file)
+      readLines(model_code, tmp_stan_file_conn, warn = FALSE)
+      close(tmp_stan_file_conn)
+    }
+
+    # tmp_stan_file_conn <- file(tmp_stan_file)
+    # writeLines(model_code, tmp_stan_file_conn)
+    # close(tmp_stan_file_conn)
+    stan_file = tmp_stan_file
+  }
+  CmdStanModel$new(stan_file = stan_file, model_name = model_name, compile = compile, ...)
 }
 
 
@@ -112,13 +137,14 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     stan_file_ = character(),
-    exe_file_ = character()
+    exe_file_ = character(),
+    model_name = character()
   ),
   public = list(
-    initialize = function(stan_file, compile, ...) {
+    initialize = function(stan_file = NULL, model_name, compile, ...) {
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
-      checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
+      checkmate::assert_flag(compile)      
       if (compile) {
         self$compile(...)
       }

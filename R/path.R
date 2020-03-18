@@ -73,12 +73,21 @@ cmdstan_version <- function() {
 # number, and path to temp dir
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- NULL
+.cmdstanr$TEMP_MODEL_PATH <- NULL
 .cmdstanr$VERSION <- NULL
 .cmdstanr$TEMP_DIR <- NULL
 
 # path to temp directory
 cmdstan_tempdir <- function() {
   .cmdstanr$TEMP_DIR
+}
+
+# path to temp model
+cmdstan_temp_model_path <- function() {
+  if (is.null(.cmdstanr$TEMP_MODEL_PATH)) {
+    .cmdstanr$TEMP_MODEL_PATH <- tempfile(fileext = ".stan")
+  }
+  .cmdstanr$TEMP_MODEL_PATH
 }
 
 # error message to throw if no path has been set
