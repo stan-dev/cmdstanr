@@ -79,20 +79,21 @@ cmdstan_model <- function(stan_file = NULL, model_code = NULL, model_name = NULL
     }
     tmp_stan_file <- cmdstan_temp_model_path()
     newer <- FALSE
-    if (file.exists(tmp_stan_file)){
-
+    if (file.exists(tmp_stan_file)) {
+      tmp_stan_file_conn <- file(tmp_stan_file)
+      old_model_code <- readLines(tmp_stan_file_conn, warn = FALSE)
+      close(tmp_stan_file_conn)
+      if (any(strsplit(model_code, split="\n")[[1]] != old_model_code)) {
+        newer <- TRUE
+      }
     } else {
       newer <- TRUE
     }
     if (newer) {
       tmp_stan_file_conn <- file(tmp_stan_file)
-      readLines(model_code, tmp_stan_file_conn, warn = FALSE)
+      writeLines(model_code, tmp_stan_file_conn)
       close(tmp_stan_file_conn)
-    }
-
-    # tmp_stan_file_conn <- file(tmp_stan_file)
-    # writeLines(model_code, tmp_stan_file_conn)
-    # close(tmp_stan_file_conn)
+    }    
     stan_file = tmp_stan_file
   }
   CmdStanModel$new(stan_file = stan_file, model_name = model_name, compile = compile, ...)
