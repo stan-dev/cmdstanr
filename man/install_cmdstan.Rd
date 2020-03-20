@@ -9,7 +9,7 @@ install_cmdstan(
   cores = 2,
   quiet = FALSE,
   overwrite = FALSE,
-  timeout = 600,
+  timeout = 1200,
   release_url = NULL,
   repo_clone = FALSE,
   repo_url = "https://github.com/stan-dev/cmdstan.git",
