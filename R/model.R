@@ -6,6 +6,8 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program.
+#' @param model_code A string containing a Stan program.
+#' @param model_name The name of Stan model. Mandatory if `model_code` is used.
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -81,9 +83,9 @@ cmdstan_model <- function(stan_file = NULL, model_code = NULL, model_name = NULL
     newer <- FALSE
     if (file.exists(tmp_stan_file)) {
       tmp_stan_file_conn <- file(tmp_stan_file)
-      old_model_code <- readLines(tmp_stan_file_conn, warn = FALSE)
+      old_model_code <- trimws(paste0(readLines(tmp_stan_file_conn, warn = FALSE), collapse = "\n"))
       close(tmp_stan_file_conn)
-      if (any(strsplit(model_code, split="\n")[[1]] != old_model_code)) {
+      if (old_model_code != trimws(model_code)) {
         newer <- TRUE
       }
     } else {
@@ -95,6 +97,9 @@ cmdstan_model <- function(stan_file = NULL, model_code = NULL, model_name = NULL
       close(tmp_stan_file_conn)
     }    
     stan_file = tmp_stan_file
+  }
+  if (is.null(model_name)) {
+    model_name <- paste0(strip_ext(basename(stan_file)), "_model")
   }
   CmdStanModel$new(stan_file = stan_file, model_name = model_name, compile = compile, ...)
 }
@@ -120,6 +125,7 @@ cmdstan_model <- function(stan_file = NULL, model_code = NULL, model_name = NULL
 #'  `$print()` \tab Print readable version of Stan program. \cr
 #'  `$stan_file()` \tab Return the file path to the Stan program. \cr
 #'  `$exe_file()` \tab Return the file path to the compiled executable. \cr
+#'  `$model_name()` \tab Return the model name. \cr
 #'  [`$compile()`][model-method-compile] \tab Compile Stan program. \cr
 #'  [`$sample()`][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
@@ -139,18 +145,20 @@ CmdStanModel <- R6::R6Class(
   private = list(
     stan_file_ = character(),
     exe_file_ = character(),
-    model_name = character()
+    model_name_ = character()
   ),
   public = list(
     initialize = function(stan_file = NULL, model_name, compile, ...) {
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       private$stan_file_ <- absolute_path(stan_file)
+      private$model_name_ <- model_name
       checkmate::assert_flag(compile)      
       if (compile) {
         self$compile(...)
       }
       invisible(self)
     },
+    model_name = function() private$model_name_,
     stan_file = function() private$stan_file_,
     exe_file = function() private$exe_file_,
     code = function() {
@@ -250,7 +258,11 @@ compile_method <- function(quiet = TRUE,
                                        opencl_platform_id,
                                        opencl_device_id,
                                        compiler_flags)
-  exe <- cmdstan_ext(strip_ext(self$stan_file()))
+  if (self$stan_file() == cmdstan_temp_model_path()) {
+    exe <- cmdstan_ext(file.path(getwd(), paste0(self$model_name())))
+  } else {
+    exe <- cmdstan_ext(strip_ext(self$stan_file()))
+  }
   # compile if compile options changed, the user forced compilation,
   # the executable does not exist or the stan model was changed since last compilation
   recompile <- force_recompile || make_local_changed
@@ -260,7 +272,6 @@ compile_method <- function(quiet = TRUE,
     recompile <- TRUE
   }
 
-  model_name <- paste0(strip_ext(basename(self$stan_file())), "_model")
   if (!recompile) {
     message("Model executable is up to date!")
     private$exe_file_ <- exe
@@ -301,7 +312,7 @@ compile_method <- function(quiet = TRUE,
 
   # TODO(Rok): Once we handle stancflags separately this should be overriden
   # if a user specifies their own name
-  model_name_stancflag <- paste0("STANCFLAGS+=--name=", sub(" ", "_", model_name))
+  model_name_stancflag <- paste0("STANCFLAGS+=--name=", sub(" ", "_", self$model_name()))
 
   run_log <- processx::run(
     command = make_cmd(),

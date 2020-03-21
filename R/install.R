@@ -22,7 +22,7 @@
 #'   which case an informative error is thrown instead of overwriting the user's
 #'   installation.
 #' @param timeout Timeout (in seconds) for the CmdStan build stage of the
-#'   installation process. The default is `timeout=600` (10 minutes).
+#'   installation process. The default is `timeout=1200` (10 minutes).
 #' @param release_url Specifies the URL to a specific Cmdstan release to be installed.
 #'   By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.
 #' @param repo_clone If `FALSE` (the default), the latest CmdStan release is
