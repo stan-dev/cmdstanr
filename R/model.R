@@ -160,7 +160,8 @@ CmdStanModel <- R6::R6Class(
 #'     opencl = FALSE,
 #'     opencl_platform_id = 0,
 #'     opencl_device_id = 0,
-#'     compiler_flags = NULL
+#'     compiler_flags = NULL,
+#'     force_recompile = FALSE
 #'   )
 #'   $exe_file()
 #'   ```
@@ -177,7 +178,7 @@ CmdStanModel <- R6::R6Class(
 #'     look for files specified in `#include` directives in the Stan program.
 #'   * `stanc_options`: (character vector) Any Stan-to-C++ transpiler options to be
 #'     used when compiling the model.
-#'   * `force_recompile`: (character vector) Should the model be recompiled
+#'   * `force_recompile`: (logical) Should the model be recompiled
 #'     even if was not modified since last compiled. The default is `FALSE`.
 #'
 #' @section Value: This method is called for its side effect of creating the
