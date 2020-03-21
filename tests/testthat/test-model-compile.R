@@ -162,7 +162,7 @@ test_that("compile() method re-compiles when model in string only when changes m
   mod <- cmdstan_model(model_code = mc, model_name = "bernoulli_model", compile = FALSE)
   mod$compile()
   expect_message(mod$compile(), "Model executable is up to date!")
-  expect_message(cmdstan_model(model_code = mc1, model_name = "bernoulli_model", compile = FALSE), "Model executable is up to date!")
+  expect_message(cmdstan_model(model_code = mc1, model_name = "bernoulli_model"), "Model executable is up to date!")
 
   mc2 <- "
   data {
