@@ -253,61 +253,61 @@ write_stan_json <- function(data, file) {
   )
 }
 
-set_make_local <- function(threads = FALSE,
-                           opencl = FALSE,
-                           opencl_platform_id = 0,
-                           opencl_device_id = 0,
-                           compiler_flags = NULL) {
-  cmdstanr_generated_flags_comment <-
-    "# cmdstanr generated make/local flags (add user flags above this line)"
-  make_local_path <- file.path(cmdstan_path(), "make", "local")
-  user_flags <- c()
-  old_make_local_cmdstanr <- c()
-  if (file.exists(make_local_path)) {
-    checkmate::assert_file_exists(make_local_path, access = 'rw')
-    old_make_local_all <- readLines(make_local_path)
-    is_user_flag <- TRUE
-    for (x in old_make_local_all) {
-      if (startsWith(x, cmdstanr_generated_flags_comment)) {
-        is_user_flag <- FALSE
-      }
-      if (!is_user_flag) {
-        old_make_local_cmdstanr <- c(old_make_local_cmdstanr, x)
-      } else {
-        user_flags <- c(user_flags, x)
-      }
+#' Set the Cmdstan make options or flags used when compiling the
+#' generated C++ code.
+#'
+#' @param cpp_options a list of make options to use when compiling the generated C++ code
+#' @param quiet If TRUE, will suppress the output of compilation
+#' @return TRUE if cpp_options were changed, FALSE otherwise
+#' @export
+#'
+set_cmdstan_cpp_options <- function(cpp_options, quiet = TRUE) {
+  if (is.null(.cmdstanr$CPP_OPTIONS) ||
+      any(length(cpp_options) != length(.cmdstanr$CPP_OPTIONS)) ||
+      any(names(cpp_options) != names(.cmdstanr$CPP_OPTIONS)) ||
+      any(unlist(cpp_options) != unlist(.cmdstanr$CPP_OPTIONS))) {
+    message("The cpp options were changed, recompiling pre-built binaries...")
+    .cmdstanr$CPP_OPTIONS <- cpp_options
+    main_path <- file.path(cmdstan_path(), "src", "cmdstan", "main")
+    model_header_path <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header")
+    files_to_remove <- c(
+      paste0(main_path, c(".d", ".o")),
+      paste0(model_header_path, c(".d", ".hpp.gch"))
+    )
+    for (file in files_to_remove) if (file.exists(file)) {
+      file.remove(file)
     }
-  }
-  old_make_local_cmdstanr <- paste(old_make_local_cmdstanr, collapse = "\n")
-  if (opencl) {
-    stan_opencl <- "STAN_OPENCL = true"
-    platform_id <- paste("OPENCL_PLATFORM_ID =", opencl_platform_id)
-    device_id <- paste("OPENCL_DEVICE_ID =", opencl_device_id)
-    compiler_flags <- c(compiler_flags, stan_opencl, platform_id, device_id)
-  }
-  if (threads) {
-    stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
-    compiler_flags <- c(compiler_flags, stan_threads)
-  }
-  if (length(compiler_flags)) {
-    compiler_flags <- c(cmdstanr_generated_flags_comment, compiler_flags)
-  }
-  new_make_local_cmdstanr <- paste(compiler_flags, collapse = "\n")
 
-  if (new_make_local_cmdstanr != old_make_local_cmdstanr) {
-    # only rewrite make/local if there are changes
-    if (!file.exists(make_local_path)) {
-      file.create(make_local_path)
-      checkmate::assert_file_exists(make_local_path, access = 'rw')
-    }
-    make_local_content <- c(user_flags, new_make_local_cmdstanr)
-    writeLines(make_local_content, make_local_path)
-    return(TRUE)
+    run_log <- processx::run(
+      command = make_cmd(),
+      args = c(
+                paste0(main_path, ".o"),
+                cpp_options_to_compile_flags(cpp_options)
+              ),
+      wd = cmdstan_path(),
+      echo_cmd = !quiet,
+      echo = !quiet,
+      spinner = quiet,
+      stderr_line_callback = function(x,p) { if(!quiet) message(x) },
+      error_on_status = TRUE
+    )
+    TRUE
+  } else {
+    FALSE
   }
-
-  FALSE
 }
 
+cpp_options_to_compile_flags <- function(cpp_options) {
+  if (length(cpp_options) == 0) {
+    return(NULL)
+  }
+  stanc_built_options = c()
+  for (i in seq_len(length(cpp_options))) {
+    option_name <- names(cpp_options)[i]
+    stanc_built_options = c(stanc_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+  }
+  paste0(stanc_built_options, collapse = " ")
+}
 
 #' Set or get the number of threads used to execute Stan models
 #'

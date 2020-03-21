@@ -37,20 +37,7 @@ error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.
 \item \code{include_paths}: (character vector) Paths to directories where Stan should
 look for files specified in \verb{#include} directives in the Stan program.
-\item \code{threads}: (logical) Should the model be compiled with
-\href{https://github.com/stan-dev/math/wiki/Threading-Support}{threading support}?
-If \code{TRUE} then \code{-DSTAN_THREADS} is added to the compiler flags. See
-\code{\link[=set_num_threads]{set_num_threads()}} to set the number of threads, which is read by
-CmdStan at run-time from an environment variable. \strong{NOTE:} this is
-different than setting the number of cores for running multiple Markov
-chains in parallel, which can be set at run-time using the \code{num_cores}
-argument of the \code{\link[=model-method-sample]{$sample()}} method.
-\item \code{opencl}: (logical) Should the model be compiled with OpenCL support enabled?
-\item \code{opencl_platform_id}: (nonnegative integer) The ID of the OpenCL platform on which
-to run the compiled model.
-\item \code{opencl_device_id}: (nonnegative integer) The ID of the OpenCL device on the selected
-OpenCL platform on which to run the compiled model.
-\item \code{compiler_flags}: (character vector) Any additional compiler flags to be
+\item \code{stanc_options}: (character vector) Any Stan-to-C++ transpiler options to be
 used when compiling the model.
 \item \code{force_recompile}: (logical) Should the model be recompiled
 even if was not modified since last compiled. The default is \code{FALSE}.
