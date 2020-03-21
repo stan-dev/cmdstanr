@@ -133,3 +133,67 @@ test_that("compilation works with include_paths", {
     cmdstan_ext(strip_ext(absolute_path(stan_program_w_include)))
   )
 })
+
+test_that("compile() method works when model in string", {
+  skip_on_cran()
+
+  mc <- "
+  data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  model {
+    theta ~ beta(1,1);  // uniform prior on interval 0,1
+    y ~ bernoulli(theta);
+  }
+  "
+
+  mod <- cmdstan_model(model_code = mc, model_name = "bernoulli_model", compile = FALSE)
+  expect_message(mod$compile(), "Compiling Stan program...");
+  file.remove(mod$exe_file())
+})
+
+test_that("compile() method re-compiles when model in string only when changes made", {
+  skip_on_cran()
+
+  mc <- "
+  data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  model {
+    theta ~ beta(1,1);  // uniform prior on interval 0,1
+    y ~ bernoulli(theta);
+  }
+  "
+  mc1 <- mc
+
+  mod <- cmdstan_model(model_code = mc, model_name = "bernoulli_model", compile = FALSE)
+  mod$compile()
+  expect_message(mod$compile(), "Model executable is up to date!")
+  expect_message(cmdstan_model(model_code = mc1, model_name = "bernoulli_model", compile = FALSE), "Model executable is up to date!")
+
+  mc2 <- "
+  data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta1;
+  }
+  model {
+    theta1 ~ beta(1,1);  // uniform prior on interval 0,1
+    y ~ bernoulli(theta1);
+  }
+  "
+  mod <- cmdstan_model(model_code = mc2, model_name = "bernoulli_model", compile = FALSE)
+  expect_message(mod$compile(), "Compiling Stan program...")
+  file.remove(mod$exe_file())
+})
+
