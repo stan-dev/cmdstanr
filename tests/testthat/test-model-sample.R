@@ -203,7 +203,7 @@ test_that("sample() method runs when fixed_param = TRUE", {
   expect_sample_output(fit_500_w <- mod_fp$sample(fixed_param = TRUE, num_samples = 500, num_warmup = 5000), 1)
   expect_equal(dim(fit_500_w$draws()), c(500,1,10))
 
-  expect_equal(fit_1000$sampling_info$algorithm, "fixed_param")
-  expect_equal(fit_500$sampling_info$algorithm, "fixed_param")
-  expect_equal(fit_500_w$sampling_info$algorithm, "fixed_param")
+  expect_equal(fit_1000$sampling_info()$algorithm, "fixed_param")
+  expect_equal(fit_500$sampling_info()$algorithm, "fixed_param")
+  expect_equal(fit_500_w$sampling_info()$algorithm, "fixed_param")
 })
