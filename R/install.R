@@ -188,25 +188,13 @@ latest_released_version <- function() {
     stop("Please install the jsonlite package.", call. = FALSE)
   }
   dest_file <- tempfile(pattern = "releases-", fileext = ".json")
-  download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases"
+  download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
   release_list_downloaded <- download_with_retries(download_url, dest_file)
   if (!release_list_downloaded) {
     stop("GitHub download of release list failed.", call. = FALSE)
   }
-  releases <- jsonlite::read_json(dest_file)
-  for(release in releases) {
-    if(!release$prerelease) {
-      version_number <- sub("v", "", release$tag_name)
-      return(version_number)
-    }
-  }
-  # if none of the releases are stable, use the latest
-  if (length(releases) > 0) {
-    version_number <- sub("v", "", releases[[1]]$tag_name)
-    version_number
-  } else {
-    stop("No Cmdstan release available!")
-  }  
+  release <- jsonlite::read_json(dest_file)
+  sub("v", "", release$tag_name)
 }
 
 # download with retries and pauses
