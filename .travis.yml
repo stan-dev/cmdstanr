@@ -20,7 +20,7 @@ env:
 
 # this before_script works if cmdstanr is in r_github_packages above
 before_script:
-  - Rscript -e 'cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)'
+  - Rscript -e 'cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.22.1/cmdstan-2.22.1.tar.gz")'
   - sudo touch $HOME/.cmdstanr/cmdstan/make/local
   - sudo chown -R $USER:$USER $HOME/.cmdstanr/cmdstan/make/local
 
