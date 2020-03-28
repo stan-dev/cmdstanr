@@ -123,18 +123,18 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() with save_warmup", {
   draws_array_post_warmup <- draws_array[(warmup_iter+1):num_iter,,]
   draws_array_warmup <- draws_array[1:warmup_iter,,]
 
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "mu"),
-               posterior::extract_one_variable_matrix(draws_array_post_warmup, "mu"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "sigma"),
-               posterior::extract_one_variable_matrix(draws_array_post_warmup, "sigma"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "lp__"),
-               posterior::extract_one_variable_matrix(draws_array_post_warmup, "lp__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_draws, "mu"),
-               posterior::extract_one_variable_matrix(draws_array_warmup, "mu"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_draws, "sigma"),
-               posterior::extract_one_variable_matrix(draws_array_warmup, "sigma"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_draws, "lp__"),
-               posterior::extract_one_variable_matrix(draws_array_warmup, "lp__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "mu"),
+               posterior::extract_variable_matrix(draws_array_post_warmup, "mu"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "sigma"),
+               posterior::extract_variable_matrix(draws_array_post_warmup, "sigma"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "lp__"),
+               posterior::extract_variable_matrix(draws_array_post_warmup, "lp__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_draws, "mu"),
+               posterior::extract_variable_matrix(draws_array_warmup, "mu"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_draws, "sigma"),
+               posterior::extract_variable_matrix(draws_array_warmup, "sigma"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_draws, "lp__"),
+               posterior::extract_variable_matrix(draws_array_warmup, "lp__"))
 })
 
 test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file without warmup", {
@@ -145,12 +145,12 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file without
   draws_array <- posterior::as_draws_array(draws_array)
   csv_output <- read_sample_csv(csv_files)
 
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "mu"),
-               posterior::extract_one_variable_matrix(draws_array, "mu"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "sigma"),
-               posterior::extract_one_variable_matrix(draws_array, "sigma"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_draws, "lp__"),
-               posterior::extract_one_variable_matrix(draws_array, "lp__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "mu"),
+               posterior::extract_variable_matrix(draws_array, "mu"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "sigma"),
+               posterior::extract_variable_matrix(draws_array, "sigma"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "lp__"),
+               posterior::extract_variable_matrix(draws_array, "lp__"))
 })
 
 test_that("read_sample_csv() returns correct diagonal of inverse mass matrix", {
@@ -228,31 +228,31 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file", {
   }
 
   # match warmup sampler info
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "divergent__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "divergent__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "accept_stat__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "accept_stat__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "treedepth__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "treedepth__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "stepsize__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "stepsize__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "n_leapfrog__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "n_leapfrog__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$warmup_sampler_diagnostics, "energy__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[1:num_warmup,,], "energy__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "divergent__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "divergent__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "accept_stat__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "accept_stat__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "treedepth__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "treedepth__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "stepsize__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "stepsize__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "n_leapfrog__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "n_leapfrog__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "energy__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "energy__"))
   # match post-warmup sampling info
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "divergent__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "divergent__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "accept_stat__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "accept_stat__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "treedepth__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "treedepth__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "stepsize__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "stepsize__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "n_leapfrog__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "n_leapfrog__"))
-  expect_equal(posterior::extract_one_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "energy__"),
-               posterior::extract_one_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "energy__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "divergent__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "divergent__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "accept_stat__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "accept_stat__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "treedepth__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "treedepth__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "stepsize__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "stepsize__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "n_leapfrog__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "n_leapfrog__"))
+  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "energy__"),
+               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "energy__"))
 })
 
 test_that("read_sample_csv() works with thin", {

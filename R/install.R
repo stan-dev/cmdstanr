@@ -98,17 +98,10 @@ install_cmdstan <- function(dir = NULL,
       download_url <- github_download_url(ver)
       dest_file <- file.path(dir, cmdstan_ver)
     }    
-    download_rc <- 1
-    retries <- 0
-    while(retries < 5 && download_rc != 0) {
-      download_rc <- utils::download.file(url = download_url,
-                                        destfile = dest_file)
-      retries <- retries + 1
-    }
     
-    if (download_rc != 0) {
-      stop("GitHub download failed. Exited with return code: ", download_rc,
-           call. = FALSE)
+    tar_downloaded <- download_with_retries(download_url, dest_file)
+    if (!tar_downloaded) {
+      stop("GitHub download of Cmdstan failed.", call. = FALSE)
     }
     message("* Download complete")
 
@@ -194,21 +187,38 @@ latest_released_version <- function() {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the jsonlite package.", call. = FALSE)
   }
-  contents <- url("https://api.github.com/repos/stan-dev/cmdstan/releases")
-  releases <- jsonlite::parse_json(contents)
-  for(release in releases) {
-    if(!release$prerelease) {
-      version_number <- sub("v", "", release$tag_name)
-      return(version_number)
-    }
+  dest_file <- tempfile(pattern = "releases-", fileext = ".json")
+  download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
+  release_list_downloaded <- download_with_retries(download_url, dest_file)
+  if (!release_list_downloaded) {
+    stop("GitHub download of release list failed.", call. = FALSE)
   }
-  # if none of the releases are stable, use the latest
-  if (length(releases) > 0) {
-    version_number <- sub("v", "", releases[[1]]$tag_name)
-    version_number
-  } else {
-    stop("No Cmdstan release available!")
-  }  
+  release <- jsonlite::read_json(dest_file)
+  sub("v", "", release$tag_name)
+}
+
+# download with retries and pauses
+download_with_retries <- function(download_url,
+                                  destination_file,
+                                  retries = 5, 
+                                  pause_sec = 5,
+                                  quiet = TRUE) {
+                                    download_rc <- 1
+    download_rc <- 1
+    while(retries > 0 && download_rc != 0) {
+      download_rc <- utils::download.file(url = download_url,
+                                        destfile = destination_file, 
+                                        quiet = quiet)
+      if (download_rc != 0) {
+        Sys.sleep(pause_sec)
+      }
+      retries <- retries - 1
+    }
+    if (download_rc == 0) {
+      TRUE
+    } else {
+      FALSE
+    }
 }
 
 # internal functions to run system commands -------------------------------

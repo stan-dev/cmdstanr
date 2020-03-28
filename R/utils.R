@@ -343,7 +343,7 @@ set_num_threads <- function(num_threads) {
 
 check_divergences <- function(data_csv) {
   if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-    divergences <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
+    divergences <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
     num_of_draws <- length(divergences)
     num_of_divergences <- sum(divergences)
     if (num_of_divergences > 0) {
@@ -359,7 +359,7 @@ check_divergences <- function(data_csv) {
 
 check_sampler_transitions_treedepth <- function(data_csv) {
   if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-    treedepth <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
+    treedepth <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
     num_of_draws <- length(treedepth)
     max_treedepth <- data_csv$sampling_info$max_depth
     max_treedepth_hit <- sum(treedepth >= max_treedepth)
