@@ -261,12 +261,12 @@ write_stan_json <- function(data, file) {
 #' @return TRUE if cpp_options were changed, FALSE otherwise
 #' @export
 #'
-set_cmdstan_cpp_options <- function(cpp_options, quiet = TRUE) {
+set_cmdstan_cpp_options <- function(cpp_options) {
   if (is.null(.cmdstanr$CPP_OPTIONS) ||
       any(length(cpp_options) != length(.cmdstanr$CPP_OPTIONS)) ||
       any(names(cpp_options) != names(.cmdstanr$CPP_OPTIONS)) ||
       any(unlist(cpp_options) != unlist(.cmdstanr$CPP_OPTIONS))) {
-    message("The cpp options were changed, recompiling pre-built binaries...")
+    message("The cpp options were changed, removing pre-built binaries...")
     .cmdstanr$CPP_OPTIONS <- cpp_options
     main_path <- file.path(cmdstan_path(), "src", "cmdstan", "main")
     model_header_path <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header")
@@ -277,20 +277,6 @@ set_cmdstan_cpp_options <- function(cpp_options, quiet = TRUE) {
     for (file in files_to_remove) if (file.exists(file)) {
       file.remove(file)
     }
-
-    run_log <- processx::run(
-      command = make_cmd(),
-      args = c(
-                paste0(main_path, ".o"),
-                cpp_options_to_compile_flags(cpp_options)
-              ),
-      wd = cmdstan_path(),
-      echo_cmd = !quiet,
-      echo = !quiet,
-      spinner = quiet,
-      stderr_line_callback = function(x,p) { if(!quiet) message(x) },
-      error_on_status = TRUE
-    )
     TRUE
   } else {
     FALSE
