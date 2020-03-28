@@ -130,7 +130,12 @@ CmdStanModel <- R6::R6Class(
     },
     stan_file = function() private$stan_file_,
     exe_file = function() private$exe_file_,
-    model_name = function() private$model_name_,
+    model_name = function(name = NULL) {
+      if (!is.null(name)) {
+        private$model_name_ = name
+      }
+      private$model_name_
+    },
     code = function() {
       # Get Stan code as a string
       readLines(self$stan_file())
@@ -208,8 +213,10 @@ compile_method <- function(quiet = TRUE,
                            force_recompile = FALSE) {
   if (is.null(self$model_name())) {
     exe <- cmdstan_ext(strip_ext(self$stan_file()))
+    self$model_name(sub(" ", "_", 
+                        paste0(strip_ext(basename(self$stan_file())), "_model")))
   } else {
-    exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))
+    exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))    
   }
 
   # compile if the user forced compilation,
@@ -238,12 +245,7 @@ compile_method <- function(quiet = TRUE,
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
 
-  if (!is.null(self$model_name())) {
-    stanc_options[["name"]] <- self$model_name()
-  } else if (!("name" %in% names(stanc_options))) {
-    stanc_options[["name"]] <- sub(" ", "_", 
-                                   paste0(strip_ext(basename(self$stan_file())), "_model"))
-  }
+  stanc_options[["name"]] <- self$model_name()
   
   stancflags_val <- ""
   if (!is.null(include_paths)) {
