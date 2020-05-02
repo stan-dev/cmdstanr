@@ -20,7 +20,7 @@ environment:
   HOME: C:\Users\appveyor\
   NOT_CRAN: true
   # versions
-  _R_VERSION: "3.6.3"
+  _R_VERSION: "4.0.0"
   _RTOOLS_VERSION: "35"
   # flags
   _R_CHECK_FORCE_SUGGESTS_: false
