@@ -1,7 +1,10 @@
 if (not_on_cran()) {
   set_cmdstan_path()
   stan_program <- test_path("resources/stan/chain_fails.stan")
+  stan_program_init_warnings <- test_path("resources/stan/init_warnings.stan")
+
   mod <- cmdstan_model(stan_file = stan_program)
+  mod_init_warnings <- cmdstan_model(stan_file = stan_program_init_warnings)
 
   make_all_fail <- function(x) {
     utils::capture.output(
@@ -94,4 +97,16 @@ test_that("can use draws after some chains fail", {
   expect_s3_class(fit_some_fail$draws(), "draws_array")
   expect_output(fit_some_fail$cmdstan_summary(), "Inference for Stan model")
   expect_output(fit_some_fail$cmdstan_diagnose(), "Processing complete")
+})
+
+test_that("init warnings are shown", {
+  skip_on_cran()
+  suppressWarnings(
+    expect_message(
+      utils::capture.output(
+        mod_init_warnings$sample(num_chains = 1)
+      ),
+      "Rejecting initial value"
+    )
+  )
 })

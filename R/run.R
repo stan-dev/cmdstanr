@@ -379,10 +379,10 @@ CmdStanProcs <- R6::R6Class(
       sapply(private$processes_, function(x) x$is_alive())
     },
     is_still_working = function(id = NULL) {
-      self$chain_state(id) < 5
+      self$chain_state(id) < 6
     },
     is_finished = function(id = NULL) {
-      self$chain_state(id) == 5
+      self$chain_state(id) == 6
     },
     is_queued = function(id = NULL) {
       self$chain_state(id) == 0
@@ -423,13 +423,13 @@ CmdStanProcs <- R6::R6Class(
     },
     mark_chain_stop = function(id) {
       id <- as.character(id)
-      if (private$chain_info_[id,"state"] == 4) {
-        private$chain_info_[id,"state"] <- 5
+      if (private$chain_info_[id,"state"] == 5) {
+        private$chain_info_[id,"state"] <- 6
         private$chain_info_[id,"total_time"] <- as.double((Sys.time() - private$chain_info_[id,"start_time"]), units = "secs")
 
         self$report_time(id)
       } else {
-        private$chain_info_[id,"state"] <- 6
+        private$chain_info_[id,"state"] <- 7
         warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
       }
       invisible(self)
@@ -457,35 +457,54 @@ CmdStanProcs <- R6::R6Class(
         if (nzchar(line)) {
           last_section_start_time <- private$chain_info_[id,"last_section_start_time"]
           state <- private$chain_info_[id,"state"]
+          #' @noRd
+          #' State machine for reading stdout. 
+          #' 0 - chain has not started yet
+          #' 1 - chain is initializing (before iterations) and no output is printed
+          #' 2 - chain is initializing and inital values were rejected (output is printed)
+          #' 3 - chain is in warmup
+          #' 4 - chain is in sampling
+          #' 5 - iterations are done but the chain process has not stopped yet
+          #' 6 - the chain's process has stopped
+          #' state 2 is only used because rejection in cmdstan is printed to stdout not stderr
+          #' and we want to avoid printing the intial chain metadata
           next_state <- state
-          if (state == 1 && regexpr("Iteration:", line, perl = TRUE) > 0) {
+          if (state < 3 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
             state <- 2
             next_state <- 2
+          }    
+          if (state < 3 && regexpr("Iteration:", line, perl = TRUE) > 0) {
+            state <- 3 # 3 =  warmup
+            next_state <- 3
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
-          if (state == 1 && regexpr("Elapsed Time:", line, perl = TRUE) > 0) {
-            state <- 4
-            next_state <- 4
+          if (state < 3 && regexpr("Elapsed Time:", line, perl = TRUE) > 0) {
+            state <- 5 # 5 = end of samp+ling
+            next_state <- 5
           }
-          if (private$chain_info_[id,"state"] == 2 &&
+          if (private$chain_info_[id,"state"] == 3 &&
               regexpr("(Sampling)", line, perl = TRUE) > 0) {
-            next_state <- 3 # 3 = sampling
+            next_state <- 4 # 4 = sampling
             private$chain_info_[id,"warmup_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             private$chain_info_[id,"last_section_start_time"] <- Sys.time()
           }
           if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
-            if (state == 2) { #warmup only run
+            if (state == 3) { #warmup only run
               private$chain_info_[id,"warmup_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
-            } else if (state == 3) { # sampling
+            } else if (state == 4) { # sampling
               private$chain_info_[id,"sampling_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             }
-            next_state <- 4 # writing csv and finishing
+            next_state <- 5 # writing csv and finishing
           }
-          if (state > 1 && state < 4) {
-            cat("Chain", id, line, "\n")
+          if (state > 1 && state < 5) {
+            if(state == 2) {
+              message("Chain ", id, " ", line)
+            } else {
+              cat("Chain", id, line, "\n")
+            }            
           }
           if (self$is_error_message(line)) {
-            # will print all remaining output in case of excpetions
+            # will print all remaining output in case of exceptions
             if(state == 1) {
               state = 2;
             }
@@ -509,9 +528,9 @@ CmdStanProcs <- R6::R6Class(
         num_failed <- self$num_failed()
         if (num_failed == 0) {
           if (num_chains == 2) {
-            cat("\nBoth chains finished succesfully.\n")
+            cat("\nBoth chains finished successfully.\n")
           } else {
-            cat("\nAll", num_chains, "chains finished succesfully.\n")
+            cat("\nAll", num_chains, "chains finished successfully.\n")
           }
           cat("Mean chain execution time:",
               format(round(mean(self$total_chain_times()), 1), nsmall = 1),
