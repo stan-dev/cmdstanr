@@ -60,6 +60,3 @@ chain is assumed to be available (see Appendix B of the CmdStan
 \href{https://github.com/stan-dev/cmdstan/releases/latest}{guide}), but in the
 future CmdStanR may help install the requirements.
 }
-\seealso{
-\code{\link[=cmdstan_git_checkout_branch]{cmdstan_git_checkout_branch()}}
-}

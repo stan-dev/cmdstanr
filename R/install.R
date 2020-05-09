@@ -35,8 +35,6 @@
 #' @param repo_branch If `repo_clone` is `TRUE`, the name of the branch to
 #'   checkout in the cloned repository.
 #'
-#' @seealso [cmdstan_git_checkout_branch()]
-#'
 install_cmdstan <- function(dir = NULL,
                             cores = 2,
                             quiet = FALSE,
@@ -134,44 +132,6 @@ install_cmdstan <- function(dir = NULL,
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
   set_cmdstan_path(dir_cmdstan)
 }
-
-#' Check out a branch from a git repository and rebuild CmdStan
-#'
-#' This only works if the installed CmdStan is from a clone of the git
-#' repository. See [install_cmdstan] for more details.
-#'
-#' @export
-#' @inheritParams install_cmdstan
-#' @param clean_and_rebuild If `TRUE` (the default), will run `make clean-all`
-#'   and `make build` after checking out the new branch.
-#' @inherit install_cmdstan return
-#'
-#' @seealso [install_cmdstan()]
-#'
-cmdstan_git_checkout_branch <- function(repo_branch,
-                                        clean_and_rebuild = TRUE,
-                                        cores = 2,
-                                        quiet = FALSE) {
-  make_cmdstan <- system.file("make_cmdstan.sh", package = "cmdstanr")
-  make_cmdstan <- c(make_cmdstan, paste0("-d ", cmdstan_path()))
-  make_cmdstan <- c(make_cmdstan, paste0("-j", cores))
-  make_cmdstan <- c(make_cmdstan, "-c", "-b", repo_branch)
-  if (clean_and_rebuild) {
-    make_cmdstan <- c(make_cmdstan, "-p")
-  }
-  install_log <- processx::run(
-    command = "bash",
-    args = make_cmdstan,
-    echo = !quiet,
-    echo_cmd = !quiet,
-    spinner = quiet,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) },
-    error_on_status = TRUE
-  )
-  invisible(install_log)
-}
-
-
 
 # internal ----------------------------------------------------------------
 
