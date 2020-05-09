@@ -309,7 +309,6 @@ NULL
 #' }
 #'
 NULL
-
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
@@ -319,7 +318,7 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files())) {
         warning("No chains finished successfully. Unable to retrieve the fit.")
       } else {
-        private$read_csv_(diagnostic_warnings = TRUE)
+        private$read_csv_(diagnostic_warnings = !runset$args$method_args$fixed_param)
       }
     },
     num_chains = function() {

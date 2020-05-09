@@ -58,10 +58,16 @@ read_sample_info_csv <- function(csv_file) {
         csv_file_info[["sampler_diagnostics"]] <- c()
         csv_file_info[["model_params"]] <- c()
         for(x in all_names) {
-          if (endsWith(x, "__") && x != "lp__"){
-            csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
+          if (csv_file_info$algorithm != "fixed_param") {
+            if (endsWith(x, "__") && x != "lp__"){
+              csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
+            } else {
+              csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
+            }
           } else {
-            csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
+            if (!endsWith(x, "__")){
+              csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
+            }
           }
         }
       }
@@ -170,8 +176,12 @@ read_sample_csv <- function(output_files) {
     # read meta data
     if (is.null(sampling_info)) {
       sampling_info <- read_sample_info_csv(output_file)
-      inverse_metric[[sampling_info$id]] <- sampling_info$inverse_metric
-      step_size[[sampling_info$id]] <- sampling_info$step_size
+      if (!is.null(sampling_info$inverse_metric)) {
+        inverse_metric[[sampling_info$id]] <- sampling_info$inverse_metric
+      }
+      if (!is.null(sampling_info$step_size)) {
+        step_size[[sampling_info$id]] <- sampling_info$step_size
+      }
       id <- sampling_info$id
     } else {
       csv_file_info <- read_sample_info_csv(output_file)
@@ -184,8 +194,13 @@ read_sample_csv <- function(output_files) {
       not_matching <- c(not_matching, check$not_matching)
       sampling_info$id <- c(sampling_info$id,
                             csv_file_info$id)
-      inverse_metric[[csv_file_info$id]] <- csv_file_info$inverse_metric
-      step_size[[csv_file_info$id]] <- csv_file_info$step_size
+
+      if (!is.null(csv_file_info$inverse_metric)) {
+        inverse_metric[[csv_file_info$id]] <- csv_file_info$inverse_metric
+      }
+      if (!is.null(csv_file_info$step_size)) {
+        step_size[[csv_file_info$id]] <- csv_file_info$step_size
+      }
       id <- csv_file_info$id
     }
     # read sampling data
@@ -238,13 +253,15 @@ read_sample_csv <- function(output_files) {
                                                      new_post_warmup_draws,
                                                      along="chain")
         }
-        new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics])
-        if (is.null(post_warmup_sampler_diagnostics_draws)) {
-          post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
-        } else {
-          post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                         new_post_warmup_sampler_diagnostics_draws,
-                                                                         along="chain")
+        if (sampling_info$algorithm != "fixed_param") {
+          new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampling_info$sampler_diagnostics])
+          if (is.null(post_warmup_sampler_diagnostics_draws)) {
+            post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
+          } else {
+            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
+                                                                          new_post_warmup_sampler_diagnostics_draws,
+                                                                          along="chain")
+          }
         }
       }
     }
