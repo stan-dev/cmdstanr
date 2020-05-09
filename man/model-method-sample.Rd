@@ -157,6 +157,8 @@ adaptation interval during warmup.
 adaptation interval during warmup.
 \item \code{window}: (nonnegative integer) Initial width of slow timestep/metric
 adaptation interval.
+\item \code{fixed_param}: (logical) When \code{True}, call CmdStan with argument
+"algorithm=fixed_param".
 }
 }
 
