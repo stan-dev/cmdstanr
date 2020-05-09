@@ -95,7 +95,7 @@ stop_no_path <- function() {
 #' @return A file path.
 #' @export
 cmdstan_default_path <- function() {
-  file.path(Sys.getenv("HOME"), ".cmdstanr", "cmdstan")
+  file.path(Sys.getenv("HOME"), ".cmdstanr")
 }
 
 # unset the path (only used in tests)
@@ -122,7 +122,20 @@ cmdstanr_initialize <- function() {
   } else { # environment variable not found
     path <- cmdstan_default_path()
     if (dir.exists(path)) {
-      suppressMessages(set_cmdstan_path(path))
+      cmdstan_installs <- list.dirs(path = path, recursive = FALSE, full.names = FALSE)
+      # if installed in folder cmdstan, with no version
+      # move to cmdstan-version folder
+      if ("cmdstan" %in% cmdstan_installs) {
+        ver <- read_cmdstan_version(file.path(path, "cmdstan"))
+        old_path <- file.path(path, "cmdstan")
+        new_path <- file.path(path, paste0("cmdstan-",ver))
+        file.rename(old_path, new_path)
+        cmdstan_installs <- list.dirs(path = path, recursive = FALSE, full.names = FALSE)
+      }
+      if(length(cmdstan_installs) > 0) {
+        newest <- sort(cmdstan_installs, decreasing = TRUE)[1]        
+        suppressMessages(set_cmdstan_path(file.path(path, newest)))
+      }
     }
   }
 

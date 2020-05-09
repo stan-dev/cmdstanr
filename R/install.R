@@ -106,7 +106,7 @@ install_cmdstan <- function(dir = NULL,
     message("* Unpacking archive...")
     untar_rc <- utils::untar(
       dest_file,
-      exdir = file.path(dir, "cmdstan/"),
+      exdir = file.path(dir, paste0("cmdstan-", ver)),
       extras = "--strip-components 1"
     )
     if (untar_rc != 0) {
