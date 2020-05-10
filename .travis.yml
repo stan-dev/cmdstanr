@@ -20,9 +20,9 @@ env:
 
 # this before_script works if cmdstanr is in r_github_packages above
 before_script:
-  - Rscript -e 'cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.22.1/cmdstan-2.22.1.tar.gz")'
-  - sudo touch $HOME/.cmdstanr/cmdstan/make/local
-  - sudo chown -R $USER:$USER $HOME/.cmdstanr/cmdstan/make/local
+  - Rscript -e 'cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.0/cmdstan-2.23.0.tar.gz")'
+  - sudo touch $HOME/.cmdstanr/cmdstan-2.23.0/make/local
+  - sudo chown -R $USER:$USER $HOME/.cmdstanr/cmdstan-2.23.0/make/local
 
 after_success:
   - travis_wait Rscript -e 'covr::codecov(line_exclusions = list("R/zzz.R"))'

@@ -20,7 +20,7 @@ environment:
   HOME: C:\Users\appveyor\
   NOT_CRAN: true
   # versions
-  _R_VERSION: "3.6.3"
+  _R_VERSION: "4.0.0"
   _RTOOLS_VERSION: "35"
   # flags
   _R_CHECK_FORCE_SUGGESTS_: false
@@ -76,7 +76,7 @@ test_script:
   - echo "Install the package so we can call install_cmdstan()"
   - R.exe CMD INSTALL .\\cmdstanr_*.tar.gz
   - echo "Install CmdStan via cmdstanr::install_cmdstan()"
-  - Rscript -e "cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)"
+  - Rscript -e "cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = \"https://github.com/stan-dev/cmdstan/releases/download/v2.23.0/cmdstan-2.23.0.tar.gz\")"
   - echo "Check the package"
   - R.exe CMD check .\\cmdstanr_*.tar.gz %_R_CHECK_FLAGS%
 

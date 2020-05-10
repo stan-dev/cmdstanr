@@ -88,15 +88,45 @@ stop_no_path <- function() {
        call. = FALSE)
 }
 
-#' cmdstan_default_path
+#' cmdstan_default_install_path
 #'
 #' Path to where  [install_cmdstan()] with default settings installs CmdStan.
 #'
 #' @keywords internal
-#' @return A file path.
+#' @return The installation path.
+#' @export
+cmdstan_default_install_path <- function() {
+  file.path(Sys.getenv("HOME"), ".cmdstanr")
+}
+
+#' cmdstan_default_path
+#'
+#' Returns the path to the installation of cmdstan with the most recent release version.
+#'
+#' @keywords internal
+#' @return Path to the cmdstan installation with the most recent release version, NULL if no
+#' installation found.
 #' @export
 cmdstan_default_path <- function() {
-  file.path(Sys.getenv("HOME"), ".cmdstanr", "cmdstan")
+  installs_path <- file.path(Sys.getenv("HOME"), ".cmdstanr")
+  if(dir.exists(installs_path)) {
+    cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
+    is_rc <- sapply(cmdstan_installs, is_release_candidate)
+    cmdstan_installs <- cmdstan_installs[!is_rc]
+    # if installed in folder cmdstan, with no version
+    # move to cmdstan-version folder
+    if ("cmdstan" %in% cmdstan_installs) {
+      ver <- read_cmdstan_version(file.path(installs_path, "cmdstan"))
+      old_path <- file.path(installs_path, "cmdstan")
+      new_path <- file.path(installs_path, paste0("cmdstan-",ver))
+      file.rename(old_path, new_path)
+      cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
+    }
+    if(length(cmdstan_installs) > 0) {
+      return(file.path(installs_path,sort(cmdstan_installs, decreasing = TRUE)[1]))
+    }
+  }  
+  return(NULL)
 }
 
 # unset the path (only used in tests)
@@ -122,7 +152,7 @@ cmdstanr_initialize <- function() {
 
   } else { # environment variable not found
     path <- cmdstan_default_path()
-    if (dir.exists(path)) {
+    if (!is.null(path)) {
       suppressMessages(set_cmdstan_path(path))
     }
   }
@@ -153,4 +183,19 @@ read_cmdstan_version <- function(path) {
   makefile <- readLines(makefile_path)
   version_line <- grep("^CMDSTAN_VERSION :=", makefile, value = TRUE)
   sub("CMDSTAN_VERSION := ", "", version_line)
+}
+
+#' Returns whether the supplied installation is a release candidate
+#' @noRd
+#' @param path Path to installation.
+#' @return TRUE if the installation in the supplied path is a release candidate
+is_release_candidate <- function(path) {
+  if(endsWith(path,"/")) {
+    path <- substr(path,1,nchar(path)-1)
+  }
+  if(length(grep(pattern="-rc[0-9]*$", x=path)) > 0){
+    TRUE
+  } else{
+    FALSE
+  }
 }

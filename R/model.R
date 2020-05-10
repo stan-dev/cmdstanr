@@ -392,6 +392,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   adaptation interval during warmup.
 #'   * `window`: (nonnegative integer) Initial width of slow timestep/metric
 #'   adaptation interval.
+#'   * `fixed_param`: (logical) When ``True``, call CmdStan with argument
+#'   "algorithm=fixed_param".
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -421,10 +423,15 @@ sample_method <- function(data = NULL,
                           inv_metric = NULL,
                           init_buffer = NULL,
                           term_buffer = NULL,
-                          window = NULL) {
+                          window = NULL,
+                          fixed_param = FALSE) {
 
   checkmate::assert_integerish(num_chains, lower = 1, len = 1)
-
+  if (fixed_param) {
+    num_chains <- 1
+    num_cores <- 1
+    save_warmup <- FALSE
+  }
   sample_args <- SampleArgs$new(
     num_warmup = num_warmup,
     num_samples = num_samples,
@@ -439,7 +446,8 @@ sample_method <- function(data = NULL,
     inv_metric = inv_metric,
     init_buffer = init_buffer,
     term_buffer = term_buffer,
-    window = window
+    window = window,
+    fixed_param = fixed_param
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = sample_args,
