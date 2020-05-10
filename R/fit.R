@@ -318,7 +318,9 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files())) {
         warning("No chains finished successfully. Unable to retrieve the fit.")
       } else {
-        private$read_csv_(diagnostic_warnings = !runset$args$method_args$fixed_param)
+        if (self$runset$args$validate_csv) {
+          private$read_csv_(diagnostic_warnings = !runset$args$method_args$fixed_param)
+        }        
       }
     },
     num_chains = function() {
