@@ -24,7 +24,7 @@ test_that("error if no compile() before model fitting", {
 test_that("compile() method works", {
   skip_on_cran()
   # remove executable if exists
-  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
+  exe <- cmdstan_ext(file.path(dirname(mod$stan_file()),mod$model_name()))
   if (file.exists(exe)) {
     file.remove(exe)
   }
@@ -36,7 +36,6 @@ test_that("compile() method works", {
   }
   out <- utils::capture.output(mod$compile(quiet = FALSE))
   expect_output(print(out), "Translating Stan model")
-
 })
 
 test_that("compile() method forces recompilation force_recompile = TRUE", {
@@ -132,29 +131,4 @@ test_that("name in STANCFLAGS is set correctly", {
   expect_output(print(out), out_no_name)
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))
   expect_output(print(out), out_name)
-})
-
-test_that("name in STANCFLAGS is set correctly", {
-  skip_on_cran()
-  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
-  if(os_is_windows()) {
-    out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
-    out_name <- "bin/stanc.exe --name='bernoulli2_model' --o"
-  } else {
-    out_no_name <- "bin/stanc --name='bernoulli_model' --o"
-    out_name <- "bin/stanc --name='bernoulli2_model' --o"
-  }
-  expect_output(print(out), out_no_name)
-  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))
-  expect_output(print(out), out_name)
-})
-
-test_that("recompiles on change of make flags", {
-  skip_on_cran()
-  #remove all flags
-  set_cmdstan_cpp_options(cpp_options = list())
-
-  expect_true(set_cmdstan_cpp_options(cpp_options = list(stan_threads = TRUE)))
-  expect_false(set_cmdstan_cpp_options(cpp_options = list(stan_threads = TRUE)))
-  expect_true(set_cmdstan_cpp_options(cpp_options = list()))
 })

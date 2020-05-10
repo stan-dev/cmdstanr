@@ -215,17 +215,18 @@ compile_method <- function(quiet = TRUE,
                            cpp_options = list(),
                            stanc_options = list(),
                            force_recompile = FALSE) {
-  if (is.null(self$model_name())) {
-    if(is.null(stanc_options[["name"]])) {
+  if(is.null(stanc_options[["name"]])) {
+    if (is.null(self$model_name())) {    
       exe <- cmdstan_ext(strip_ext(self$stan_file()))
       self$model_name(sub(" ", "_",
                         paste0(strip_ext(basename(self$stan_file())), "_model")))
       stanc_options[["name"]] <- self$model_name()
     } else {
-      self$model_name(stanc_options[["name"]])
+      stanc_options[["name"]] <- self$model_name()
       exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))
     }
   } else {
+    self$model_name(stanc_options[["name"]])
     exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))
   }
   # compile if the user forced compilation,
