@@ -181,11 +181,14 @@ CmdStanModel <- R6::R6Class(
 #'   optional arguments are provided to enable features in CmdStan (and the Stan
 #'   Math library). See the CmdStan manual for more details.
 #'   * `quiet`: (logical) Should the verbose output from CmdStan during
-#'     compilation be suppressed? The default is `TRUE`, but if you encounter an
-#'     error we recommend trying again with `quiet=FALSE` to see more of the
-#'     output.
+#'   compilation be suppressed? The default is `TRUE`, but if you encounter an
+#'   error we recommend trying again with `quiet=FALSE` to see more of the
+#'   output.
 #'   * `include_paths`: (character vector) Paths to directories where Stan should
-#'     look for files specified in `#include` directives in the Stan program.
+#'   look for files specified in `#include` directives in the Stan program.
+#'   * `cpp_options`: (character vector) Any makefile options to be
+#'   used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
+#'   Anything you would otherwise write in the make/local file.
 #'   * `stanc_options`: (character vector) Any Stan-to-C++ transpiler options to be
 #'     used when compiling the model.
 #'   * `force_recompile`: (logical) Should the model be recompiled

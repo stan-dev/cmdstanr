@@ -37,6 +37,9 @@ error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.
 \item \code{include_paths}: (character vector) Paths to directories where Stan should
 look for files specified in \verb{#include} directives in the Stan program.
+\item \code{cpp_options}: (character vector) Any makefile options to be
+used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
+Anything you would otherwise write in the make/local file.
 \item \code{stanc_options}: (character vector) Any Stan-to-C++ transpiler options to be
 used when compiling the model.
 \item \code{force_recompile}: (logical) Should the model be recompiled

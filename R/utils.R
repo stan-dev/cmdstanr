@@ -356,7 +356,6 @@ prepare_precompiled <- function(cpp_options, quiet = FALSE) {
     if (model_header_gch_used && file.exists(model_header_path_w_flags)) {
       file.copy(model_header_path_w_flags, model_header_path_gch, overwrite=TRUE)
     }
-
   }
 }
 

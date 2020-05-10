@@ -171,7 +171,7 @@ The <code>cmdstan_model()</code> function creates a new <code><a href='CmdStanMo
 file containing a Stan program.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>cmdstan_model</span>(<span class='no'>stan_file</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>cmdstan_model</span>(<span class='no'>stan_file</span>, <span class='kw'>model_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -179,6 +179,10 @@ file containing a Stan program.</p>
     <tr>
       <th>stan_file</th>
       <td><p>The path to a <code>.stan</code> file containing a Stan program.</p></td>
+    </tr>
+    <tr>
+      <th>model_name</th>
+      <td><p>The name of the Stan model.</p></td>
     </tr>
     <tr>
       <th>compile</th>

@@ -206,20 +206,10 @@ error we recommend trying again with <code>quiet=FALSE</code> to see more of the
 output.</p></li>
 <li><p><code>include_paths</code>: (character vector) Paths to directories where Stan should
 look for files specified in <code>#include</code> directives in the Stan program.</p></li>
-<li><p><code>threads</code>: (logical) Should the model be compiled with
-<a href='https://github.com/stan-dev/math/wiki/Threading-Support'>threading support</a>?
-If <code>TRUE</code> then <code>-DSTAN_THREADS</code> is added to the compiler flags. See
-<code><a href='stan_threads.html'>set_num_threads()</a></code> to set the number of threads, which is read by
-CmdStan at run-time from an environment variable. <strong>NOTE:</strong> this is
-different than setting the number of cores for running multiple Markov
-chains in parallel, which can be set at run-time using the <code>num_cores</code>
-argument of the <code><a href='model-method-sample.html'>$sample()</a></code> method.</p></li>
-<li><p><code>opencl</code>: (logical) Should the model be compiled with OpenCL support enabled?</p></li>
-<li><p><code>opencl_platform_id</code>: (nonnegative integer) The ID of the OpenCL platform on which
-to run the compiled model.</p></li>
-<li><p><code>opencl_device_id</code>: (nonnegative integer) The ID of the OpenCL device on the selected
-OpenCL platform on which to run the compiled model.</p></li>
-<li><p><code>compiler_flags</code>: (character vector) Any additional compiler flags to be
+<li><p><code>cpp_options</code>: (character vector) Any makefile options to be
+used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
+Anything you would otherwise write in the make/local file.</p></li>
+<li><p><code>stanc_options</code>: (character vector) Any Stan-to-C++ transpiler options to be
 used when compiling the model.</p></li>
 <li><p><code>force_recompile</code>: (logical) Should the model be recompiled
 even if was not modified since last compiled. The default is <code>FALSE</code>.</p></li>
