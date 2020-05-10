@@ -66,25 +66,3 @@ test_that("install_cmdstan() errors if it times out", {
     fixed = TRUE
   )
 })
-
-test_that("internal clone_repo() function clones the repo", {
-  skip_if_offline()
-  skip_on_cran()
-  skip_on_covr()
-
-  clone_dir <- tempfile(tmpdir = tempdir(check=TRUE))
-  if (!dir.exists(clone_dir)) {
-    dir.create(clone_dir)
-  }
-
-  clone_log <- clone_repo(
-    dir = clone_dir,
-    repo_url = "https://github.com/stan-dev/cmdstan.git",
-    repo_branch = "develop",
-    quiet = FALSE
-  )
-  expect_equal(clone_log$status, 0)
-  checkmate::expect_directory_exists(file.path(clone_dir, "stan"))
-  checkmate::expect_directory_exists(file.path(clone_dir, "stan", "lib", "stan_math"))
-})
-
