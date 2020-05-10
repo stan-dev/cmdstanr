@@ -36,7 +36,7 @@ CmdStanArgs <- R6::R6Class(
                           init = NULL,
                           refresh = NULL,
                           output_dir = NULL,
-                          validate_csv = validate_csv) {
+                          validate_csv = TRUE) {
 
       self$model_name <- model_name
       self$exe_file <- exe_file
