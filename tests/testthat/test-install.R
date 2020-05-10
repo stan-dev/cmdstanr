@@ -9,7 +9,8 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   }
   expect_message(
     expect_output(
-      install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE),
+      install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
+                      release_url = test_release_url()),
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
@@ -19,7 +20,6 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   skip_if_offline()
-  ver <- latest_released_version()
   if (not_on_cran()) {
     # want to test passing NULL to install_cmdstan but need a real dir to
     # check in dir.exists() below so also create dir_check
@@ -27,14 +27,15 @@ test_that("install_cmdstan() errors if installation already exists", {
   } else {
     install_dir <- tempdir()
   }
-  dir <- file.path(install_dir, paste0("cmdstan-",ver))
+  dir <- file.path(install_dir, "cmdstan-2.23.0")
   fake_folder <- FALSE
   if (!dir.exists(dir)) {
     fake_folder <- TRUE
     dir.create(dir)
   }
   expect_warning(
-    install_cmdstan(dir = install_dir, overwrite = FALSE),
+    install_cmdstan(dir = install_dir, overwrite = FALSE,
+                    release_url = test_release_url()),
     "An installation already exists"
   )
 })
@@ -51,7 +52,8 @@ test_that("install_cmdstan() errors if it times out", {
   # with quiet=TRUE
   expect_warning(
     expect_message(
-      install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists),
+      install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
+                      release_url = test_release_url()),
       if (dir_exists) "* Removing the existing installation" else "* Latest CmdStan release",
       fixed = TRUE
     ),
@@ -62,7 +64,8 @@ test_that("install_cmdstan() errors if it times out", {
   # with quiet=FALSE
   expect_warning(
     expect_message(
-      install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists),
+      install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
+                      release_url = test_release_url()),
       if (dir_exists) "* Removing the existing installation" else "* Latest CmdStan release",
       fixed = TRUE
     ),
