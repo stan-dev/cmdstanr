@@ -209,16 +209,22 @@ NULL
 
 compile_method <- function(quiet = TRUE,
                            include_paths = NULL,
+                           cpp_options = list(),
                            stanc_options = list(),
                            force_recompile = FALSE) {
   if (is.null(self$model_name())) {
-    exe <- cmdstan_ext(strip_ext(self$stan_file()))
-    self$model_name(sub(" ", "_", 
+    if(is.null(stanc_options[["name"]])) {
+      exe <- cmdstan_ext(strip_ext(self$stan_file()))
+      self$model_name(sub(" ", "_",
                         paste0(strip_ext(basename(self$stan_file())), "_model")))
+      stanc_options[["name"]] <- self$model_name()
+    } else {
+      self$model_name(stanc_options[["name"]])
+      exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))
+    }
   } else {
-    exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))    
+    exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))
   }
-
   # compile if the user forced compilation,
   # the executable does not exist or the stan model was changed since last compilation
   if (!file.exists(exe)) {
@@ -244,8 +250,6 @@ compile_method <- function(quiet = TRUE,
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
-
-  stanc_options[["name"]] <- self$model_name()
   
   stancflags_val <- ""
   if (!is.null(include_paths)) {
@@ -254,7 +258,6 @@ compile_method <- function(quiet = TRUE,
     include_paths <- paste0(include_paths, collapse = ",")
     stancflags_val <- paste0(stancflags_val, " --include_paths=", include_paths, " ")
   }
-
   stanc_built_options = c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
@@ -265,11 +268,11 @@ compile_method <- function(quiet = TRUE,
     }
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
-
+  prepare_precompiled(cpp_options, quiet)
   run_log <- processx::run(
     command = make_cmd(),
     args = c(tmp_exe,
-             cpp_options_to_compile_flags(.cmdstanr$CPP_OPTIONS),
+             cpp_options_to_compile_flags(cpp_options),
              stancflags_val),
     wd = cmdstan_path(),
     echo_cmd = !quiet,

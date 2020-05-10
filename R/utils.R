@@ -272,46 +272,92 @@ write_stan_json <- function(data, file) {
   )
 }
 
-#' Set the Cmdstan make options or flags used when compiling the
-#' generated C++ code.
-#'
-#' @param cpp_options a list of make options to use when compiling the generated C++ code
-#' @param quiet If TRUE, will suppress the output of compilation
-#' @return TRUE if cpp_options were changed, FALSE otherwise
-#' @export
-#'
-set_cmdstan_cpp_options <- function(cpp_options) {
-  if (is.null(.cmdstanr$CPP_OPTIONS) ||
-      any(length(cpp_options) != length(.cmdstanr$CPP_OPTIONS)) ||
-      any(names(cpp_options) != names(.cmdstanr$CPP_OPTIONS)) ||
-      any(unlist(cpp_options) != unlist(.cmdstanr$CPP_OPTIONS))) {
-    message("The cpp options were changed, removing pre-built binaries...")
-    .cmdstanr$CPP_OPTIONS <- cpp_options
-    main_path <- file.path(cmdstan_path(), "src", "cmdstan", "main")
-    model_header_path <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header")
-    files_to_remove <- c(
-      paste0(main_path, c(".d", ".o")),
-      paste0(model_header_path, c(".d", ".hpp.gch"))
-    )
-    for (file in files_to_remove) if (file.exists(file)) {
-      file.remove(file)
-    }
-    TRUE
-  } else {
-    FALSE
-  }
-}
-
 cpp_options_to_compile_flags <- function(cpp_options) {
   if (length(cpp_options) == 0) {
     return(NULL)
   }
-  stanc_built_options = c()
+  cpp_built_options = c()
   for (i in seq_len(length(cpp_options))) {
     option_name <- names(cpp_options)[i]
-    stanc_built_options = c(stanc_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+    cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
   }
-  paste0(stanc_built_options, collapse = " ")
+  paste0(cpp_built_options, collapse = " ")
+}
+
+prepare_precompiled <- function(cpp_options, quiet = FALSE) {
+  flags <- NULL
+  if (!is.null(cpp_options$stan_threads)) {
+    flags <- c(flags, "threads")
+  }
+  if (!is.null(cpp_options$stan_mpi)) {
+    flags <- c(flags, "mpi")
+  }
+  if (!is.null(cpp_options$stan_opencl)) {
+    flags <- c(flags, "opencl")
+  }
+  if (is.null(flags)) {
+    flags <- "noflags"
+  } else {
+    flags <- paste0(flags, collapse = "_")
+  }
+  main_path_w_flags <- file.path(cmdstan_path(), "src", "cmdstan", paste0("main_", flags, ".o"))
+  main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
+  main_path_d <- file.path(cmdstan_path(), "src", "cmdstan", "main.d")
+  model_header_path_w_flags <- file.path(cmdstan_path(), "stan", "src", "stan", "model", paste0("model_header_", flags, ".hpp.gch"))
+  model_header_path_gch <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.hpp.gch")
+  model_header_path_d <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.d")
+  model_header_path_hpp <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.d")
+  if (file.exists(model_header_path_gch)) {
+    model_header_gch_used <- TRUE
+  } else {
+    model_header_gch_used <- FALSE
+  }
+  if (!file.exists(main_path_w_flags)) {
+    
+    files_to_remove <- c(
+      main_path_o,
+      main_path_d,
+      model_header_path_gch,
+      model_header_path_d
+    )
+    for (file in files_to_remove) if (file.exists(file)) {
+      file.remove(file)
+    }
+    run_log <- processx::run(
+      command = make_cmd(),
+      args = c(cpp_options_to_compile_flags(cpp_options),
+               main_path_o),
+      wd = cmdstan_path(),
+      echo_cmd = !quiet,
+      echo = !quiet,
+      spinner = quiet,
+      stderr_line_callback = function(x,p) { if (!quiet) message(x) },
+      error_on_status = TRUE
+    )
+    file.copy(main_path_o, main_path_w_flags)
+    if (model_header_gch_used) {
+      run_log <- processx::run(
+        command = make_cmd(),
+        args = c(cpp_options_to_compile_flags(cpp_options),
+                file.path("stan", "src", "stan", "model", "model_header.hpp.gch")),
+        wd = cmdstan_path(),
+        echo_cmd = !quiet,
+        echo = !quiet,
+        spinner = quiet,
+        stderr_line_callback = function(x,p) { if (!quiet) message(x) },
+        error_on_status = TRUE
+      )
+      if (file.exists(model_header_path_gch)) {
+        file.copy(model_header_path_gch, model_header_path_w_flags)
+      }
+    }
+  } else {
+    file.copy(main_path_w_flags, main_path_o, overwrite=TRUE)
+    if (model_header_gch_used && file.exists(model_header_path_w_flags)) {
+      file.copy(model_header_path_w_flags, model_header_path_gch, overwrite=TRUE)
+    }
+
+  }
 }
 
 #' Set or get the number of threads used to execute Stan models

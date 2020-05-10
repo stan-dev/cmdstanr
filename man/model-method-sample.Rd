@@ -159,6 +159,9 @@ adaptation interval during warmup.
 adaptation interval.
 \item \code{fixed_param}: (logical) When \code{True}, call CmdStan with argument
 "algorithm=fixed_param".
+\item \code{validate_csv}: (logical) When \code{True}, validate the sampling results
+in the csv files. Disable if you wish to manually read in the sampling results
+and validate them.
 }
 }
 

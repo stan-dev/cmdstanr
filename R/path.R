@@ -75,7 +75,6 @@ cmdstan_version <- function() {
 .cmdstanr$PATH <- NULL
 .cmdstanr$VERSION <- NULL
 .cmdstanr$TEMP_DIR <- NULL
-.cmdstanr$CPP_OPTIONS <- NULL
 
 # path to temp directory
 cmdstan_tempdir <- function() {
