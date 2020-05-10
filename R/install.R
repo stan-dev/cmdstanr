@@ -49,7 +49,7 @@ install_cmdstan <- function(dir = NULL,
     message("* Installing Cmdstan from ", release_url)
     download_url <- release_url
     split_url <- strsplit(release_url, "/")
-    tar_name <- tail(split_url[[1]], n=1)
+    tar_name <- utils::tail(split_url[[1]], n=1)
     cmdstan_ver <- substr(tar_name, 0, nchar(tar_name)-7)
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
     dir_cmdstan <- file.path(dir, cmdstan_ver)

@@ -320,7 +320,7 @@ read_vb_csv <- function(output_file) {
   colnames(mat) <- repair_variable_names(colnames(mat))
   mat <- mat[, colnames(mat) != "lp__", drop=FALSE]
   draws <- posterior::as_draws_matrix(mat)
-  draws <- posterior::rename_variables(draws, lp__ = log_p__, lp_approx__ = log_g__)
+  draws <- posterior::rename_variables(draws, lp__ = "log_p__", lp_approx__ = "log_g__")
   list(draws = draws)
 }
 
