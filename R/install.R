@@ -92,11 +92,9 @@ install_cmdstan <- function(dir = NULL,
     return(invisible(build_log))
   }
 
-  if (!repo_clone) {
-    example_log <- build_example(dir_cmdstan, cores, quiet, timeout)
-    if (!build_status_ok(example_log, quiet = quiet)) {
-      return(invisible(example_log))
-    }
+  example_log <- build_example(dir_cmdstan, cores, quiet, timeout)
+  if (!build_status_ok(example_log, quiet = quiet)) {
+    return(invisible(example_log))
   }
 
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
