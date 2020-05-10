@@ -261,6 +261,9 @@ compile_method <- function(quiet = TRUE,
     include_paths <- paste0(include_paths, collapse = ",")
     stancflags_val <- paste0(stancflags_val, " --include_paths=", include_paths, " ")
   }
+  if(!is.null(cpp_options$stan_opencl)){
+    stanc_options[["use-opencl"]] <- TRUE
+  }
   stanc_built_options = c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
