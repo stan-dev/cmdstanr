@@ -402,6 +402,9 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   adaptation interval.
 #'   * `fixed_param`: (logical) When ``True``, call CmdStan with argument
 #'   "algorithm=fixed_param".
+#'   * `validate_csv`: (logical) When ``True``, validate the sampling results
+#'   in the csv files. Disable if you wish to manually read in the sampling results
+#'   and validate them.
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -432,7 +435,8 @@ sample_method <- function(data = NULL,
                           init_buffer = NULL,
                           term_buffer = NULL,
                           window = NULL,
-                          fixed_param = FALSE) {
+                          fixed_param = FALSE,
+                          validate_csv = TRUE) {
 
   checkmate::assert_integerish(num_chains, lower = 1, len = 1)
   if (fixed_param) {
@@ -467,7 +471,8 @@ sample_method <- function(data = NULL,
     seed = seed,
     init = init,
     refresh = refresh,
-    output_dir = output_dir
+    output_dir = output_dir,
+    validate_csv = validate_csv
   )
   cmdstan_procs <- CmdStanProcs$new(num_chains, num_cores)
   runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
