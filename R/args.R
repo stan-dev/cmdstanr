@@ -35,7 +35,8 @@ CmdStanArgs <- R6::R6Class(
                           seed = NULL,
                           init = NULL,
                           refresh = NULL,
-                          output_dir = NULL) {
+                          output_dir = NULL,
+                          validate_csv = TRUE) {
 
       self$model_name <- model_name
       self$exe_file <- exe_file
@@ -47,6 +48,7 @@ CmdStanArgs <- R6::R6Class(
       self$method_args <- method_args
       self$method <- self$method_args$method
       self$save_extra_diagnostics <- save_extra_diagnostics
+      self$validate_csv <- validate_csv
       if (getRversion() < '3.5.0') {
         self$output_dir <- output_dir %||% tempdir()
       } else {
