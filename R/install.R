@@ -23,85 +23,68 @@
 #'   installation.
 #' @param timeout Timeout (in seconds) for the CmdStan build stage of the
 #'   installation process. The default is `timeout=600` (10 minutes).
-#' @param repo_clone If `FALSE` (the default), the latest CmdStan release is
-#'   downloaded and installed from tarball. If `TRUE` will install a git clone
-#'   of CmdStan from `repo_url` and check out the branch `repo_branch`.
-#' @param repo_url If `repo_clone` is `TRUE`, the URL of the git repository to
-#'   clone. The default URL points to the
-#'   [`stan-dev/cmdstan`](https://github.com/stan-dev/cmdstan)
-#'   repository on GitHub.
-#' @param repo_branch If `repo_clone` is `TRUE`, the name of the branch to
-#'   checkout in the cloned repository.
-#'
-#' @seealso [cmdstan_git_checkout_branch()]
+#' @param release_url Specifies the URL to a specific Cmdstan release to be installed.
+#'   By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.
 #'
 install_cmdstan <- function(dir = NULL,
                             cores = 2,
                             quiet = FALSE,
                             overwrite = FALSE,
-                            timeout = 600,
-                            repo_clone = FALSE,
-                            repo_url = "https://github.com/stan-dev/cmdstan.git",
-                            repo_branch = "develop") {
+                            timeout = 1200,
+                            release_url = NULL) {
   if (is.null(dir)) {
-    dir_cmdstan <- cmdstan_default_path()
-    dir <- dirname(dir_cmdstan)
+    dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
       dir.create(dir, recursive = TRUE)
     }
   } else {
     checkmate::assert_directory_exists(dir, access = "rwx")
     dir <- repair_path(dir)
-    dir_cmdstan <- file.path(dir, "cmdstan")
-  }
+  }  
 
-  if (dir.exists(dir_cmdstan)) {
-    if (!overwrite) {
-      warning(
-        "An installation already exists at ", dir_cmdstan, ". ",
-        "Please remove or rename the 'cmdstan' folder or set overwrite=TRUE.",
-        call. = FALSE
-      )
-      return(invisible(NULL))
-    } else {
-      message("* Removing the existing installation of CmdStan...")
-      unlink(dir_cmdstan, recursive = TRUE, force = TRUE)
+  if(!is.null(release_url)) {
+    if(!endsWith(release_url, ".tar.gz")) {
+      stop(paste0(release_url, "is not a .tar.gz archive! cmdstanr supports installing from .tar.gz archives only"))
     }
-  }
-
-  if (repo_clone) {
-    message(
-      "* Cloning ", repo_url, " and checking out branch ", repo_branch, ". ",
-      "This may take a few minutes ..."
-    )
-    clone_repo(dir_cmdstan, repo_url, repo_branch, quiet)
+    message("* Installing Cmdstan from ", release_url)
+    download_url <- release_url
+    split_url <- strsplit(release_url, "/")
+    tar_name <- utils::tail(split_url[[1]], n=1)
+    cmdstan_ver <- substr(tar_name, 0, nchar(tar_name)-7)
+    tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
+    dir_cmdstan <- file.path(dir, cmdstan_ver)
+    dest_file <- file.path(dir, tar_gz_file)
   } else {
     ver <- latest_released_version()
-    cmdstan_ver <- paste0("cmdstan-", ver, ".tar.gz")
     message("* Latest CmdStan release is v", ver)
-    message("* Installing CmdStan v", ver, " in ", dir)
-    message("* Downloading ", cmdstan_ver, " from GitHub...")
-    dest_file <- file.path(dir, cmdstan_ver)
-    download_rc <- utils::download.file(url = github_download_url(ver),
-                                        destfile = dest_file)
-    if (download_rc != 0) {
-      stop("GitHub download failed. Exited with return code: ", download_rc,
-           call. = FALSE)
-    }
-    message("* Download complete")
-
-    message("* Unpacking archive...")
-    untar_rc <- utils::untar(
-      dest_file,
-      exdir = file.path(dir, "cmdstan/"),
-      extras = "--strip-components 1"
-    )
-    if (untar_rc != 0) {
-      stop("Problem extracting tarball. Exited with return code: ", untar_rc,
-           call. = FALSE)
-    }
-    file.remove(dest_file)
+    cmdstan_ver <- paste0("cmdstan-", ver)
+    tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
+    dir_cmdstan <- file.path(dir, cmdstan_ver)
+    message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
+    message("* Downloading ", tar_gz_file, " from GitHub...")
+    download_url <- github_download_url(ver)
+    dest_file <- file.path(dir, tar_gz_file)
   }
+  if(!check_install_dir(dir_cmdstan, overwrite)) {
+    return(invisible(NULL))
+  }
+  tar_downloaded <- download_with_retries(download_url, dest_file)
+  if (!tar_downloaded) {
+    stop("GitHub download of Cmdstan failed.", call. = FALSE)
+  }
+  message("* Download complete")
+
+  message("* Unpacking archive...")
+  untar_rc <- utils::untar(
+    dest_file,
+    exdir = dir_cmdstan,
+    extras = "--strip-components 1"
+  )
+  if (untar_rc != 0) {
+    stop("Problem extracting tarball. Exited with return code: ", untar_rc,
+          call. = FALSE)
+  }
+  file.remove(dest_file)
 
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
@@ -109,54 +92,14 @@ install_cmdstan <- function(dir = NULL,
     return(invisible(build_log))
   }
 
-  if (!repo_clone) {
-    example_log <- build_example(dir_cmdstan, cores, quiet, timeout)
-    if (!build_status_ok(example_log, quiet = quiet)) {
-      return(invisible(example_log))
-    }
+  example_log <- build_example(dir_cmdstan, cores, quiet, timeout)
+  if (!build_status_ok(example_log, quiet = quiet)) {
+    return(invisible(example_log))
   }
 
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
   set_cmdstan_path(dir_cmdstan)
 }
-
-#' Check out a branch from a git repository and rebuild CmdStan
-#'
-#' This only works if the installed CmdStan is from a clone of the git
-#' repository. See [install_cmdstan] for more details.
-#'
-#' @export
-#' @inheritParams install_cmdstan
-#' @param clean_and_rebuild If `TRUE` (the default), will run `make clean-all`
-#'   and `make build` after checking out the new branch.
-#' @inherit install_cmdstan return
-#'
-#' @seealso [install_cmdstan()]
-#'
-cmdstan_git_checkout_branch <- function(repo_branch,
-                                        clean_and_rebuild = TRUE,
-                                        cores = 2,
-                                        quiet = FALSE) {
-  make_cmdstan <- system.file("make_cmdstan.sh", package = "cmdstanr")
-  make_cmdstan <- c(make_cmdstan, paste0("-d ", cmdstan_path()))
-  make_cmdstan <- c(make_cmdstan, paste0("-j", cores))
-  make_cmdstan <- c(make_cmdstan, "-c", "-b", repo_branch)
-  if (clean_and_rebuild) {
-    make_cmdstan <- c(make_cmdstan, "-p")
-  }
-  install_log <- processx::run(
-    command = "bash",
-    args = make_cmdstan,
-    echo = !quiet,
-    echo_cmd = !quiet,
-    spinner = quiet,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) },
-    error_on_status = TRUE
-  )
-  invisible(install_log)
-}
-
-
 
 # internal ----------------------------------------------------------------
 
@@ -172,25 +115,38 @@ latest_released_version <- function() {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Please install the jsonlite package.", call. = FALSE)
   }
-  contents <- url("https://api.github.com/repos/stan-dev/cmdstan/releases/latest")
-  tag_name <- jsonlite::parse_json(contents)[["tag_name"]]
-  version_number <- sub("v", "", tag_name)
-  version_number
+  dest_file <- tempfile(pattern = "releases-", fileext = ".json")
+  download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
+  release_list_downloaded <- download_with_retries(download_url, dest_file)
+  if (!release_list_downloaded) {
+    stop("GitHub download of release list failed.", call. = FALSE)
+  }
+  release <- jsonlite::read_json(dest_file)
+  sub("v", "", release$tag_name)
 }
 
-# internal functions to run system commands -------------------------------
-clone_repo <- function(dir, repo_url, repo_branch, quiet) {
-  git_args <- c("clone", "--recursive",
-                repo_url, paste0("-b", repo_branch),
-                dir)
-  processx::run(
-    command = "git",
-    args = git_args,
-    echo_cmd = FALSE,
-    error_on_status = TRUE,
-    echo = !quiet,
-    spinner = quiet
-  )
+# download with retries and pauses
+download_with_retries <- function(download_url,
+                                  destination_file,
+                                  retries = 5, 
+                                  pause_sec = 5,
+                                  quiet = TRUE) {
+                                    download_rc <- 1
+    download_rc <- 1
+    while(retries > 0 && download_rc != 0) {
+      download_rc <- utils::download.file(url = download_url,
+                                        destfile = destination_file, 
+                                        quiet = quiet)
+      if (download_rc != 0) {
+        Sys.sleep(pause_sec)
+      }
+      retries <- retries - 1
+    }
+    if (download_rc == 0) {
+      TRUE
+    } else {
+      FALSE
+    }
 }
 
 build_cmdstan <- function(dir, cores, quiet, timeout) {

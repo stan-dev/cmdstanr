@@ -7,9 +7,10 @@
 cmdstan_default_path()
 }
 \value{
-A file path.
+Path to the cmdstan installation with the most recent release version, NULL if no
+installation found.
 }
 \description{
-Path to where  \code{\link[=install_cmdstan]{install_cmdstan()}} with default settings installs CmdStan.
+Returns the path to the installation of cmdstan with the most recent release version.
 }
 \keyword{internal}

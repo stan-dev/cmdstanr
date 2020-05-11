@@ -23,14 +23,68 @@ test_that("error if no compile() before model fitting", {
 
 test_that("compile() method works", {
   skip_on_cran()
-  expected <- if (!file.exists(cmdstan_ext(strip_ext(mod$stan_file()))))
-    "Translating Stan model" else "is up to date"
-  out <- utils::capture.output(mod$compile(quiet = FALSE))
-  expect_output(print(out), expected)
-  expect_equal(mod$exe_file(), cmdstan_ext(strip_ext(stan_program)))
+  # remove executable if exists
+  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
+  if (file.exists(exe)) {
+    file.remove(exe)
+  }
+  expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
+  expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
 
+  if (file.exists(exe)) {
+    file.remove(exe)
+  }
   out <- utils::capture.output(mod$compile(quiet = FALSE))
-  expect_output(print(out), "is up to date")
+  expect_output(print(out), "Translating Stan model")
+
+})
+
+test_that("compile() method forces recompilation force_recompile = TRUE", {
+  skip_on_cran()
+  mod$compile(quiet = TRUE)
+  expect_message(mod$compile(quiet = TRUE, force_recompile = TRUE), "Compiling Stan program...")
+})
+
+test_that("compile() method forces recompilation if model modified", {
+  skip_on_cran()
+  # remove executable if exists
+  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
+  if (!file.exists(exe)) {
+    mod$compile(quiet = TRUE)
+  }
+  Sys.setFileTime(mod$stan_file(), Sys.time()) #touch file to trigger recompile
+  expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
+})
+
+test_that("compile() method works with spaces in path", {
+  skip_on_cran()
+  stan_file <- testing_stan_file("bernoulli")
+  stan_model_with_spaces <- testing_stan_file("folder spaces/bernoulli spaces")
+
+  dir_with_spaces <- test_path("resources", "stan", "folder spaces")
+  if (!file.exists(dir_with_spaces)) {
+    dir.create(dir_with_spaces)
+  }
+  file.copy(stan_file, stan_model_with_spaces)
+
+  mod_spaces <- cmdstan_model(stan_file = stan_model_with_spaces, compile = FALSE)
+  exe <- cmdstan_ext(strip_ext(mod_spaces$stan_file()))
+  if (file.exists(exe)) {
+    file.remove(exe)
+  }
+  expect_message(mod_spaces$compile(), "Compiling Stan program...")
+  file.remove(stan_model_with_spaces)
+  file.remove(exe)
+  file.remove(dir_with_spaces)
+})
+
+test_that("compile() method overwrites binaries", {
+  skip_on_cran()
+  mod$compile(quiet = TRUE)
+  old_time = file.mtime(mod$exe_file())
+  mod$compile(quiet = TRUE, force_recompile = TRUE)
+  new_time =
+  expect_gt(file.mtime(mod$exe_file()), old_time)
 })
 
 test_that("compile() method forces recompilation if changes in flags", {
@@ -52,7 +106,10 @@ test_that("compilation works with include_paths", {
   skip_on_cran()
 
   stan_program_w_include <- testing_stan_file("bernoulli_include")
-
+  exe <- cmdstan_ext(strip_ext(stan_program_w_include))
+  if(file.exists(exe)) {
+    file.remove(exe)
+  }
   expect_error(
     cmdstan_model(stan_file = stan_program_w_include, include_paths = "NOT_A_DIR",
                   quiet = TRUE),

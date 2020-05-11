@@ -32,7 +32,7 @@ interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
 later in this vignette for more details on how the two inferfaces differ.
 
 **CmdStanR is unreleased and user facing functions are still subject to change**, 
-but the development version can be installed from GitHub:
+but the development version can be installed from GitHub (requires the `devtools` R package):
 
 ```{r install_github, eval=FALSE}
 devtools::install_github("stan-dev/cmdstanr")

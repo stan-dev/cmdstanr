@@ -35,7 +35,8 @@ CmdStanArgs <- R6::R6Class(
                           seed = NULL,
                           init = NULL,
                           refresh = NULL,
-                          output_dir = NULL) {
+                          output_dir = NULL,
+                          validate_csv = TRUE) {
 
       self$model_name <- model_name
       self$exe_file <- exe_file
@@ -47,6 +48,7 @@ CmdStanArgs <- R6::R6Class(
       self$method_args <- method_args
       self$method <- self$method_args$method
       self$save_extra_diagnostics <- save_extra_diagnostics
+      self$validate_csv <- validate_csv
       if (getRversion() < '3.5.0') {
         self$output_dir <- output_dir %||% tempdir()
       } else {
@@ -170,7 +172,8 @@ SampleArgs <- R6::R6Class(
                           inv_metric = NULL,
                           init_buffer = NULL,
                           term_buffer = NULL,
-                          window = NULL) {
+                          window = NULL,
+                          fixed_param = FALSE) {
 
       self$iter_warmup <- iter_warmup
       self$iter_sampling <- iter_sampling
@@ -182,6 +185,7 @@ SampleArgs <- R6::R6Class(
       self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
       self$metric <- metric
       self$inv_metric <- inv_metric
+      self$fixed_param <- fixed_param
       if (!is.null(inv_metric)) {
         if (!is.null(metric_file)) {
           stop("Only one of inv_metric and metric_file can be specified.",
@@ -237,28 +241,53 @@ SampleArgs <- R6::R6Class(
       .make_arg <- function(arg_name, idx = NULL) {
         compose_arg(self, arg_name, idx)
       }
-      new_args <- list(
-        "method=sample",
-        if (!is.null(self$iter_sampling))
-          paste0("num_samples=", self$iter_sampling),
-        if (!is.null(self$iter_warmup))
-          paste0("num_warmup=", self$iter_warmup),
-        .make_arg("save_warmup"),
-        .make_arg("thin"),
-        "algorithm=hmc",
-        .make_arg("metric"),
-        .make_arg("metric_file", idx),
-        .make_arg("stepsize", idx),
-        "engine=nuts",
-        .make_arg("max_depth"),
-        if (!is.null(self$adapt_delta) || !is.null(self$adapt_engaged))
-          "adapt",
-        .make_arg("adapt_delta"),
-        .make_arg("adapt_engaged"),
-        .make_arg("init_buffer"),
-        .make_arg("term_buffer"),
-        .make_arg("window")
-      )
+
+      if (self$fixed_param) {
+        new_args <- list(
+          "method=sample",
+          if (!is.null(self$iter_sampling))
+            paste0("num_samples=", self$iter_sampling),
+          if (!is.null(self$iter_warmup))
+            paste0("num_warmup=", self$iter_warmup),
+          .make_arg("save_warmup"),
+          .make_arg("thin"),
+          "algorithm=fixed_param",
+          .make_arg("metric"),
+          .make_arg("metric_file", idx),
+          .make_arg("stepsize", idx),
+          .make_arg("max_depth"),
+          if (!is.null(self$adapt_delta) || !is.null(self$adapt_engaged))
+            "adapt",
+          .make_arg("adapt_delta"),
+          .make_arg("adapt_engaged"),
+          .make_arg("init_buffer"),
+          .make_arg("term_buffer"),
+          .make_arg("window")
+        )
+      } else {
+        new_args <- list(
+          "method=sample",
+          if (!is.null(self$iter_sampling))
+            paste0("num_samples=", self$iter_sampling),
+          if (!is.null(self$iter_warmup))
+            paste0("num_warmup=", self$iter_warmup),
+          .make_arg("save_warmup"),
+          .make_arg("thin"),
+          "algorithm=hmc",
+          .make_arg("metric"),
+          .make_arg("metric_file", idx),
+          .make_arg("stepsize", idx),
+          "engine=nuts",
+          .make_arg("max_depth"),
+          if (!is.null(self$adapt_delta) || !is.null(self$adapt_engaged))
+            "adapt",
+          .make_arg("adapt_delta"),
+          .make_arg("adapt_engaged"),
+          .make_arg("init_buffer"),
+          .make_arg("term_buffer"),
+          .make_arg("window")
+        )
+      }
 
       # convert list to character vector
       new_args <- do.call(c, new_args)
@@ -698,4 +727,3 @@ compose_arg <- function(self, arg_name, idx = NULL) {
   arg_name <- sub("adapt_", "", arg_name) # e.g. adapt_delta -> delta
   paste0(arg_name, "=", val)
 }
-

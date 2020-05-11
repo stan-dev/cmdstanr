@@ -41,6 +41,25 @@ check_target_exe <- function(exe) {
     )
   }
 }
+
+
+check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
+  if (dir.exists(dir_cmdstan)) {
+    if (!overwrite) {
+      warning(
+        "An installation already exists at ", dir_cmdstan, ". ",
+        "Please remove or rename the installation folder or set overwrite=TRUE.",
+        call. = FALSE
+      )
+      return(FALSE)
+    } else {
+      message("* Removing the existing installation of CmdStan...")
+      unlink(dir_cmdstan, recursive = TRUE, force = TRUE)
+    }
+  }
+  TRUE
+}
+  
 # paths and extensions ----------------------------------------------------
 
 # Replace `\\` with `/` in a path
@@ -253,25 +272,6 @@ write_stan_json <- function(data, file) {
   )
 }
 
-# compilation, build files, threading -------------------------------------
-
-#' Cleanup build files of a Stan model
-#'
-#' Deletes `model_name.o`, `model_name.hpp` and the executable.
-#'
-#' @param model_path (string) The absolute path to the model.
-#' @param remove_main (logical) Set `TRUE` to also remove the CmdStan `main.o`.
-#' @noRd
-build_cleanup <- function(model_path, remove_main = FALSE) {
-  files_to_remove <- c(
-    paste0(model_path, c("", ".exe", ".o", ".hpp")),
-    if (remove_main) file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-  )
-  for (file in files_to_remove) if (file.exists(file)) {
-    file.remove(file)
-  }
-}
-
 set_make_local <- function(threads = FALSE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
@@ -362,7 +362,7 @@ set_num_threads <- function(num_threads) {
 
 check_divergences <- function(data_csv) {
   if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-    divergences <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
+    divergences <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
     num_of_draws <- length(divergences)
     num_of_divergences <- sum(divergences)
     if (num_of_divergences > 0) {
@@ -378,7 +378,7 @@ check_divergences <- function(data_csv) {
 
 check_sampler_transitions_treedepth <- function(data_csv) {
   if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-    treedepth <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
+    treedepth <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
     num_of_draws <- length(treedepth)
     max_treedepth <- data_csv$sampling_info$max_depth
     max_treedepth_hit <- sum(treedepth >= max_treedepth)
