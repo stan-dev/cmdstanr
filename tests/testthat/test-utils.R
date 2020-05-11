@@ -80,3 +80,17 @@ test_that("list_to_array works with empty list", {
 test_that("list_to_array fails for non-numeric values", {
   expect_error(list_to_array(list(k = "test")), "All elements of the list must be numeric!")
 })
+
+test_that("cpp_options_to_compile_flags() works", {
+  options = list(
+    stan_threads = TRUE
+  )
+  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE")
+  options = list(
+    stan_threads = TRUE,
+    stanc2 = TRUE
+  )
+  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE STANC2=TRUE")
+  options = list()
+  expect_equal(cpp_options_to_compile_flags(options), NULL)
+})

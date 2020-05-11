@@ -36,7 +36,6 @@ test_that("compile() method works", {
   }
   out <- utils::capture.output(mod$compile(quiet = FALSE))
   expect_output(print(out), "Translating Stan model")
-
 })
 
 test_that("compile() method forces recompilation force_recompile = TRUE", {
@@ -87,21 +86,6 @@ test_that("compile() method overwrites binaries", {
   expect_gt(file.mtime(mod$exe_file()), old_time)
 })
 
-test_that("compile() method forces recompilation if changes in flags", {
-  skip_on_cran()
-
-  expect_message(
-    mod$compile(threads=TRUE),
-    "change in the compiler flags was found"
-  )
-
-  # change it back
-  expect_message(
-    mod$compile(threads=FALSE),
-    "change in the compiler flags was found"
-  )
-})
-
 test_that("compilation works with include_paths", {
   skip_on_cran()
 
@@ -132,4 +116,19 @@ test_that("compilation works with include_paths", {
     mod_w_include$exe_file(),
     cmdstan_ext(strip_ext(absolute_path(stan_program_w_include)))
   )
+})
+
+test_that("name in STANCFLAGS is set correctly", {
+  skip_on_cran()
+  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
+  if(os_is_windows()) {
+    out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
+    out_name <- "bin/stanc.exe --name='bernoulli2_model' --o"
+  } else {
+    out_no_name <- "bin/stanc --name='bernoulli_model' --o"
+    out_name <- "bin/stanc --name='bernoulli2_model' --o"
+  }
+  expect_output(print(out), out_no_name)
+  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))
+  expect_output(print(out), out_name)
 })
