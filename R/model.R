@@ -166,11 +166,8 @@ CmdStanModel <- R6::R6Class(
 #'   $compile(
 #'     quiet = TRUE,
 #'     include_paths = NULL,
-#'     threads = FALSE,
-#'     opencl = FALSE,
-#'     opencl_platform_id = 0,
-#'     opencl_device_id = 0,
-#'     compiler_flags = NULL,
+#'     cpp_options = list(),
+#'     stanc_options = list(),
 #'     force_recompile = FALSE
 #'   )
 #'   $exe_file()
@@ -216,7 +213,7 @@ compile_method <- function(quiet = TRUE,
                            stanc_options = list(),
                            force_recompile = FALSE) {
   if(is.null(stanc_options[["name"]])) {
-    if (is.null(self$model_name())) {    
+    if (is.null(self$model_name())) {
       exe <- cmdstan_ext(strip_ext(self$stan_file()))
       self$model_name(sub(" ", "_",
                         paste0(strip_ext(basename(self$stan_file())), "_model")))
@@ -236,7 +233,7 @@ compile_method <- function(quiet = TRUE,
   } else if (file.mtime(exe) < file.mtime(self$stan_file())) {
     force_recompile <- TRUE
   }
-  
+
   if (!force_recompile) {
     message("Model executable is up to date!")
     private$exe_file_ <- exe
@@ -254,7 +251,7 @@ compile_method <- function(quiet = TRUE,
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
-  
+
   stancflags_val <- ""
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")

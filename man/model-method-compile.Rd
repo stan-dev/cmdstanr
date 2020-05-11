@@ -14,11 +14,8 @@ the path to the executable can be accesed via the \verb{$exe_file()} method.
 \preformatted{$compile(
   quiet = TRUE,
   include_paths = NULL,
-  threads = FALSE,
-  opencl = FALSE,
-  opencl_platform_id = 0,
-  opencl_device_id = 0,
-  compiler_flags = NULL,
+  cpp_options = list(),
+  stanc_options = list(),
   force_recompile = FALSE
 )
 $exe_file()
