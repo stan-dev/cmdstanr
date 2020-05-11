@@ -9,7 +9,7 @@ if (not_on_cran()) {
   make_all_fail <- function(x) {
     utils::capture.output(
       all_fail <- x$sample(data = list(pr_fail = 1),
-                           save_extra_diagnostics = TRUE)
+                           save_latent_dynamics = TRUE)
     )
     all_fail
   }
@@ -20,7 +20,7 @@ if (not_on_cran()) {
       utils::capture.output(
         check_some_fail <- x$sample(
           data = list(pr_fail = 0.5),
-          save_extra_diagnostics = TRUE
+          save_latent_dynamics = TRUE
         )
       )
       num_files <- length(check_some_fail$output_files())
@@ -66,20 +66,20 @@ test_that("$save_* methods save all files regardless of chain failure", {
   skip_on_cran()
   expect_message(
     fit_all_fail$save_output_files(dir = tempdir()),
-    "Moved 4 output files"
+    "Moved 4 files"
   )
   expect_message(
     fit_some_fail$save_output_files(dir = tempdir()),
-    "Moved 4 output files"
+    "Moved 4 files"
   )
 
   expect_message(
-    fit_all_fail$save_diagnostic_files(dir = tempdir()),
-    "Moved 4 diagnostic files"
+    fit_all_fail$save_latent_dynamics_files(dir = tempdir()),
+    "Moved 4 files"
   )
   expect_message(
-    fit_some_fail$save_diagnostic_files(dir = tempdir()),
-    "Moved 4 diagnostic files"
+    fit_some_fail$save_latent_dynamics_files(dir = tempdir()),
+    "Moved 4 files"
   )
 })
 

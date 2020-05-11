@@ -31,7 +31,7 @@ CmdStanArgs <- R6::R6Class(
                           run_ids,
                           method_args,
                           data_file = NULL,
-                          save_extra_diagnostics = FALSE,
+                          save_latent_dynamics = FALSE,
                           seed = NULL,
                           init = NULL,
                           refresh = NULL,
@@ -47,7 +47,7 @@ CmdStanArgs <- R6::R6Class(
       self$refresh <- refresh
       self$method_args <- method_args
       self$method <- self$method_args$method
-      self$save_extra_diagnostics <- save_extra_diagnostics
+      self$save_latent_dynamics <- save_latent_dynamics
       self$validate_csv <- validate_csv
       if (getRversion() < '3.5.0') {
         self$output_dir <- output_dir %||% tempdir()
@@ -97,12 +97,12 @@ CmdStanArgs <- R6::R6Class(
     # @param idx The run id. For MCMC this is the chain id, for optimization
     #   this is just 1.
     # @param output_file File path to csv file where output will be written.
-    # @param diagnostic_file File path to csv file where diagnostics will be written.
+    # @param latent_dynamics_file File path to csv file where "extra" diagnostics (latent dynamics) will be written.
     # @return Character vector of arguments of the form "name=value".
     #
     compose_all_args = function(idx = NULL,
                                 output_file = NULL,
-                                diagnostic_file = NULL) {
+                                latent_dynamics_file = NULL) {
       args <-
         list(
           id = NULL,
@@ -135,8 +135,8 @@ CmdStanArgs <- R6::R6Class(
       }
 
       args$output <- c("output", paste0("file=", output_file))
-      if (!is.null(diagnostic_file)) {
-        args$output <- c(args$output, paste0("diagnostic_file=", diagnostic_file))
+      if (!is.null(latent_dynamics_file)) {
+        args$output <- c(args$output, paste0("diagnostic_file=", latent_dynamics_file))
       }
       if (!is.null(self$refresh)) {
         args$output <- c(args$output, paste0("refresh=", self$refresh))
@@ -163,10 +163,10 @@ SampleArgs <- R6::R6Class(
                           iter_sampling = NULL,
                           save_warmup = NULL,
                           thin = NULL,
-                          max_depth = NULL,
+                          max_treedepth = NULL,
                           adapt_engaged = NULL,
                           adapt_delta = NULL,
-                          stepsize = NULL,
+                          step_size = NULL,
                           metric = NULL,
                           metric_file = NULL,
                           inv_metric = NULL,
@@ -179,10 +179,10 @@ SampleArgs <- R6::R6Class(
       self$iter_sampling <- iter_sampling
       self$save_warmup <- save_warmup
       self$thin <- thin
-      self$max_depth <- max_depth
+      self$max_treedepth <- max_treedepth
       self$adapt_engaged <- adapt_engaged
       self$adapt_delta <- adapt_delta
-      self$stepsize <- stepsize # TODO: cmdstanpy uses step_size but cmdstan is stepsize
+      self$step_size <- step_size
       self$metric <- metric
       self$inv_metric <- inv_metric
       self$fixed_param <- fixed_param
@@ -238,24 +238,22 @@ SampleArgs <- R6::R6Class(
     #   character vector. This will get passed in from CmdStanArgs$compose_all_args().
     # @return A character vector of CmdStan arguments.
     compose = function(idx, args = NULL) {
-      .make_arg <- function(arg_name, idx = NULL) {
-        compose_arg(self, arg_name, idx)
+      .make_arg <- function(arg_name, cmdstan_arg_name = NULL, idx = NULL) {
+        compose_arg(self, arg_name = arg_name, cmdstan_arg_name = cmdstan_arg_name, idx = idx)
       }
 
       if (self$fixed_param) {
         new_args <- list(
           "method=sample",
-          if (!is.null(self$iter_sampling))
-            paste0("num_samples=", self$iter_sampling),
-          if (!is.null(self$iter_warmup))
-            paste0("num_warmup=", self$iter_warmup),
+          .make_arg("iter_sampling", cmdstan_arg_name = "num_samples"),
+          .make_arg("iter_warmup", cmdstan_arg_name = "num_warmup"),
           .make_arg("save_warmup"),
           .make_arg("thin"),
           "algorithm=fixed_param",
           .make_arg("metric"),
-          .make_arg("metric_file", idx),
-          .make_arg("stepsize", idx),
-          .make_arg("max_depth"),
+          .make_arg("metric_file", idx = idx),
+          .make_arg("step_size", cmdstan_arg_name = "stepsize", idx = idx),
+          .make_arg("max_treedepth", cmdstan_arg_name = "max_depth"),
           if (!is.null(self$adapt_delta) || !is.null(self$adapt_engaged))
             "adapt",
           .make_arg("adapt_delta"),
@@ -267,18 +265,16 @@ SampleArgs <- R6::R6Class(
       } else {
         new_args <- list(
           "method=sample",
-          if (!is.null(self$iter_sampling))
-            paste0("num_samples=", self$iter_sampling),
-          if (!is.null(self$iter_warmup))
-            paste0("num_warmup=", self$iter_warmup),
+          .make_arg("iter_sampling", cmdstan_arg_name = "num_samples"),
+          .make_arg("iter_warmup", cmdstan_arg_name = "num_warmup"),
           .make_arg("save_warmup"),
           .make_arg("thin"),
           "algorithm=hmc",
           .make_arg("metric"),
-          .make_arg("metric_file", idx),
-          .make_arg("stepsize", idx),
+          .make_arg("metric_file", idx = idx),
+          .make_arg("step_size", cmdstan_arg_name = "stepsize", idx = idx),
           "engine=nuts",
-          .make_arg("max_depth"),
+          .make_arg("max_treedepth", cmdstan_arg_name = "max_depth"),
           if (!is.null(self$adapt_delta) || !is.null(self$adapt_engaged))
             "adapt",
           .make_arg("adapt_delta"),
@@ -423,7 +419,7 @@ validate_cmdstan_args = function(self) {
                                any.missing = FALSE,
                                null.ok = FALSE)
 
-  checkmate::assert_flag(self$save_extra_diagnostics)
+  checkmate::assert_flag(self$save_latent_dynamics)
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
   if (!is.null(self$data_file)) {
     checkmate::assert_file_exists(self$data_file, access = "r")
@@ -472,7 +468,7 @@ validate_sample_args <- function(self, num_runs) {
                             lower = 0, upper = 1,
                             len = 1,
                             null.ok = TRUE)
-  checkmate::assert_integerish(self$max_depth,
+  checkmate::assert_integerish(self$max_treedepth,
                                lower = 1,
                                len = 1,
                                null.ok = TRUE)
@@ -489,10 +485,10 @@ validate_sample_args <- function(self, num_runs) {
                                len = 1,
                                null.ok = TRUE)
 
-  if (length(self$stepsize) == 1) {
-    checkmate::assert_number(self$stepsize, lower = .Machine$double.eps)
+  if (length(self$step_size) == 1) {
+    checkmate::assert_number(self$step_size, lower = .Machine$double.eps)
   } else {
-    checkmate::assert_numeric(self$stepsize,
+    checkmate::assert_numeric(self$step_size,
                               lower = .Machine$double.eps,
                               len = num_runs,
                               null.ok = TRUE)
@@ -715,15 +711,22 @@ available_metrics <- function() {
 #' @noRd
 #' @param self An Args object (e.g., `SampleArgs`).
 #' @param arg_name Name of slot in `self` containing the argument value.
+#' @param cmdstan_arg_name Name of corresponding argument for CmdStan (if not
+#'   the same as arg_name). For example for `arg_name="max_treedepth"` we have
+#'   `cmdstan_arg_name="max_depth"` (at least until CmdStan 3).
 #' @param idx Chain id (only applicable for MCMC).
-compose_arg <- function(self, arg_name, idx = NULL) {
+compose_arg <- function(self, arg_name, cmdstan_arg_name = NULL, idx = NULL) {
   val <- self[[arg_name]]
+  cmdstan_arg_name <- cmdstan_arg_name %||% arg_name
+
   if (is.null(val)) {
     return(NULL)
   }
   if (!is.null(idx) && length(val) >= idx) {
     val <- val[idx]
   }
-  arg_name <- sub("adapt_", "", arg_name) # e.g. adapt_delta -> delta
-  paste0(arg_name, "=", val)
+  # e.g. adapt_delta -> delta (to deal with weird hierarchical arg structure in CmdStan 2)
+  cmdstan_arg_name <- sub("adapt_", "", cmdstan_arg_name)
+
+  paste0(cmdstan_arg_name, "=", val)
 }

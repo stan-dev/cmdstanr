@@ -311,7 +311,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     save_extra_diagnostics = FALSE,
+#'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
 #'     chains = 4,
 #'     cores = getOption("mc.cores", 1),
@@ -319,10 +319,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     iter_sampling = NULL,
 #'     save_warmup = FALSE,
 #'     thin = NULL,
-#'     max_depth = NULL,
+#'     max_treedepth = NULL,
 #'     adapt_engaged = TRUE,
 #'     adapt_delta = NULL,
-#'     stepsize = NULL,
+#'     step_size = NULL,
 #'     metric = NULL,
 #'     metric_file = NULL,
 #'     inv_metric = NULL,
@@ -364,7 +364,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning) unless memory is a problem.
-#'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
+#'   * `max_treedepth`: (positive integer) The maximum allowed tree depth for the
 #'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
 #'   details.
 #'   * `adapt_engaged`: (logical) Do warmup adaptation? The default is `TRUE`.
@@ -375,7 +375,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   `adapt_engaged=FALSE`.
 #'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
 #'   statistic.
-#'   * `stepsize`: (positive real) The _initial_ step size for the discrete
+#'   * `step_size`: (positive real) The _initial_ step size for the discrete
 #'   approximation to continuous Hamiltonian dynamics. This is further tuned
 #'   during warmup.
 #'   * `metric`: (character) One of `"diag_e"`, `"dense_e"`, or `"unit_e"`,
@@ -419,7 +419,7 @@ sample_method <- function(data = NULL,
                           seed = NULL,
                           refresh = NULL,
                           init = NULL,
-                          save_extra_diagnostics = FALSE,
+                          save_latent_dynamics = FALSE,
                           output_dir = NULL,
                           chains = 4,
                           cores = getOption("mc.cores", 1),
@@ -427,10 +427,10 @@ sample_method <- function(data = NULL,
                           iter_sampling = NULL,
                           save_warmup = FALSE,
                           thin = NULL,
-                          max_depth = NULL,
+                          max_treedepth = NULL,
                           adapt_engaged = TRUE,
                           adapt_delta = NULL,
-                          stepsize = NULL,
+                          step_size = NULL,
                           metric = NULL,
                           metric_file = NULL,
                           inv_metric = NULL,
@@ -443,7 +443,10 @@ sample_method <- function(data = NULL,
                           num_cores = NULL,
                           num_chains = NULL,
                           num_warmup = NULL,
-                          num_samples = NULL) {
+                          num_samples = NULL,
+                          save_extra_diagnostics = NULL,
+                          max_depth = NULL,
+                          stepsize = NULL) {
 
   if (fixed_param) {
     chains <- 1
@@ -468,6 +471,18 @@ sample_method <- function(data = NULL,
     warning("'num_samples' is deprecated. Please use 'iter_sampling' instead.")
     iter_sampling <- num_samples
   }
+  if (!is.null(max_depth)) {
+    warning("'max_depth' is deprecated. Please use 'max_treedepth' instead.")
+    max_treedepth <- max_depth
+  }
+  if (!is.null(stepsize)) {
+    warning("'stepsize' is deprecated. Please use 'step_size' instead.")
+    step_size <- stepsize
+  }
+  if (!is.null(save_extra_diagnostics)) {
+    warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
+    save_latent_dynamics <- save_extra_diagnostics
+  }
 
   checkmate::assert_integerish(chains, lower = 1, len = 1)
 
@@ -476,10 +491,10 @@ sample_method <- function(data = NULL,
     iter_sampling = iter_sampling,
     save_warmup = save_warmup,
     thin = thin,
-    max_depth = max_depth,
+    max_treedepth = max_treedepth,
     adapt_engaged = adapt_engaged,
     adapt_delta = adapt_delta,
-    stepsize = stepsize,
+    step_size = step_size,
     metric = metric,
     metric_file = metric_file,
     inv_metric = inv_metric,
@@ -494,7 +509,7 @@ sample_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = seq_len(chains),
     data_file = process_data(data),
-    save_extra_diagnostics = save_extra_diagnostics,
+    save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -534,7 +549,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     save_extra_diagnostics = FALSE,
+#'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
@@ -566,7 +581,7 @@ optimize_method <- function(data = NULL,
                             seed = NULL,
                             refresh = NULL,
                             init = NULL,
-                            save_extra_diagnostics = FALSE,
+                            save_latent_dynamics = FALSE,
                             output_dir = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
@@ -582,7 +597,7 @@ optimize_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = 1,
     data_file = process_data(data),
-    save_extra_diagnostics = save_extra_diagnostics,
+    save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -626,7 +641,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     save_extra_diagnostics = FALSE,
+#'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
 #'     algorithm = NULL,
 #'     iter = NULL,
@@ -654,8 +669,8 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   estimate of gradients.
 #'   * `elbo_samples`: (positive integer) The number of samples for Monte Carlo
 #'   estimate of ELBO (objective function).
-#'   * `eta`: (positive real) The stepsize weighting parameter for adaptive
-#'   stepsize sequence.
+#'   * `eta`: (positive real) The step size weighting parameter for adaptive
+#'   step size sequence.
 #'   * `adapt_engaged`: (logical) Do warmup adaptation?
 #'   * `adapt_iter`: (positive integer) The _maximum_ number of adaptation
 #'   iterations.
@@ -676,7 +691,7 @@ variational_method <- function(data = NULL,
                                seed = NULL,
                                refresh = NULL,
                                init = NULL,
-                               save_extra_diagnostics = FALSE,
+                               save_latent_dynamics = FALSE,
                                output_dir = NULL,
                                algorithm = NULL,
                                iter = NULL,
@@ -706,7 +721,7 @@ variational_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = 1,
     data_file = process_data(data),
-    save_extra_diagnostics = save_extra_diagnostics,
+    save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
     refresh = refresh,

@@ -15,8 +15,8 @@ CmdStanRun <- R6::R6Class(
       self$args <- args
       self$procs <- procs
       private$output_files_ <- self$new_output_files()
-      if (self$args$save_extra_diagnostics) {
-        private$diagnostic_files_ <- self$new_diagnostic_files()
+      if (self$args$save_latent_dynamics) {
+        private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
       }
       invisible(self)
     },
@@ -30,18 +30,18 @@ CmdStanRun <- R6::R6Class(
     new_output_files = function() {
       self$args$new_files(type = "output")
     },
-    new_diagnostic_files = function() {
+    new_latent_dynamics_files = function() {
       self$args$new_files(type = "diagnostic")
     },
-    diagnostic_files = function() {
-      if (!length(private$diagnostic_files_)) {
+    latent_dynamics_files = function() {
+      if (!length(private$latent_dynamics_files_)) {
         stop(
-          "No diagnostic files found. ",
-          "Set 'save_extra_diagnostics=TRUE' when fitting the model.",
+          "No latent dynamics files found. ",
+          "Set 'save_latent_dynamics=TRUE' when fitting the model.",
           call. = FALSE
         )
       }
-      private$diagnostic_files_
+      private$latent_dynamics_files_
     },
     output_files = function() {
       # if we are using background processes only output the file if
@@ -67,17 +67,17 @@ CmdStanRun <- R6::R6Class(
       file.remove(current_files[!current_files %in% new_paths])
       private$output_files_ <- new_paths
       message("Moved ", length(current_files),
-              " output files and set internal paths to new locations:\n",
+              " files and set internal paths to new locations:\n",
               paste("-", new_paths, collapse = "\n"))
       invisible(new_paths)
     },
-    save_diagnostic_files = function(dir = ".",
+    save_latent_dynamics_files = function(dir = ".",
                                      basename = NULL,
                                      timestamp = TRUE,
                                      random = TRUE) {
-      # FIXME use self$diagnostic_files(include_failed=TRUE) once #76 is fixed
-      current_files <- self$diagnostic_files() # used so we get error if 0 files
-      current_files <- private$diagnostic_files_ # used so we still save all of them
+      # FIXME use self$latent_dynamics_files(include_failed=TRUE) once #76 is fixed
+      current_files <- self$latent_dynamics_files() # used so we get error if 0 files
+      current_files <- private$latent_dynamics_files_ # used so we still save all of them
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -88,9 +88,9 @@ CmdStanRun <- R6::R6Class(
         random = random
       )
       file.remove(current_files[!current_files %in% new_paths])
-      private$diagnostic_files_ <- new_paths
+      private$latent_dynamics_files_ <- new_paths
       message("Moved ", length(current_files),
-              " diagnostic files and set internal paths to new locations:\n",
+              " files and set internal paths to new locations:\n",
               paste("-", new_paths, collapse = "\n"))
       invisible(new_paths)
     },
@@ -124,7 +124,7 @@ CmdStanRun <- R6::R6Class(
           self$args$compose_all_args(
             idx = j,
             output_file = private$output_files_[j],
-            diagnostic_file = private$diagnostic_files_[j] # maybe NULL
+            latent_dynamics_file = private$latent_dynamics_files_[j] # maybe NULL
           )
         })
       }
@@ -194,7 +194,7 @@ CmdStanRun <- R6::R6Class(
   ),
   private = list(
     output_files_ = character(),
-    diagnostic_files_ = NULL,
+    latent_dynamics_files_ = NULL,
     command_args_ = list()
   )
 )
@@ -459,7 +459,7 @@ CmdStanProcs <- R6::R6Class(
           last_section_start_time <- private$chain_info_[id,"last_section_start_time"]
           state <- private$chain_info_[id,"state"]
           #' @noRd
-          #' State machine for reading stdout. 
+          #' State machine for reading stdout.
           #' 0 - chain has not started yet
           #' 1 - chain is initializing (before iterations) and no output is printed
           #' 2 - chain is initializing and inital values were rejected (output is printed)
@@ -473,7 +473,7 @@ CmdStanProcs <- R6::R6Class(
           if (state < 3 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
             state <- 2
             next_state <- 2
-          }    
+          }
           if (state < 3 && regexpr("Iteration:", line, perl = TRUE) > 0) {
             state <- 3 # 3 =  warmup
             next_state <- 3
@@ -502,7 +502,7 @@ CmdStanProcs <- R6::R6Class(
               message("Chain ", id, " ", line)
             } else {
               cat("Chain", id, line, "\n")
-            }            
+            }
           }
           if (self$is_error_message(line)) {
             # will print all remaining output in case of exceptions

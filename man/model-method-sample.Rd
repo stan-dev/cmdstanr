@@ -15,7 +15,7 @@ some data.
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  save_extra_diagnostics = FALSE,
+  save_latent_dynamics = FALSE,
   output_dir = NULL,
   chains = 4,
   cores = getOption("mc.cores", 1),
@@ -23,10 +23,10 @@ some data.
   iter_sampling = NULL,
   save_warmup = FALSE,
   thin = NULL,
-  max_depth = NULL,
+  max_treedepth = NULL,
   adapt_engaged = TRUE,
   adapt_delta = NULL,
-  stepsize = NULL,
+  step_size = NULL,
   metric = NULL,
   metric_file = NULL,
   inv_metric = NULL,
@@ -64,16 +64,16 @@ printed screen updates.
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 }
-\item \code{save_extra_diagnostics}: (logical) Should auxiliary diagnostic information
-(beyond standard diagnostics) be written to temporary diagnostic CSV files?
+\item \code{save_latent_dynamics}: (logical) Should auxiliary diagnostic information
+about the latent dynamics be written to temporary diagnostic CSV files?
 This argument replaces CmdStan's \code{diagnostic_file} argument and the content
 written to CSV is controlled by the user's CmdStan installation and not
 CmdStanR (and for some algorithms no content may be written). The default
-is \code{save_extra_diagnostics=FALSE}, which is appropriate for almost every use case
+is \code{save_latent_dynamics=FALSE}, which is appropriate for almost every use case
 (all diagnostics recommended for users to check are \emph{always} saved, e.g.,
 divergences for HMC). To save the temporary files created when
-\code{save_extra_diagnostics=TRUE} see the
-\code{\link[=fit-method-save_diagnostic_files]{$save_diagnostic_files()}} method.
+\code{save_latent_dynamics=TRUE} see the
+\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}} method.
 \item \code{output_dir}: (string) A path to a directory where CmdStan should write
 its output CSV files. For interactive use this can typically be left at
 \code{NULL} (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
@@ -86,7 +86,7 @@ directory and only saved permanently if the user calls one of the
 \code{\link[=fit-method-save_output_files]{$save_output_files()}}).
 \item If a path then the files are created in \code{output_dir} with names
 corresponding the defaults used by \verb{$save_output_files()} (and similar
-methods like \verb{$save_diagnostic_files()}).
+methods like \verb{$save_latent_dynamics_files()}).
 }
 }
 }
@@ -121,7 +121,7 @@ per chain.
 is \code{FALSE}.
 \item \code{thin}: (positive integer) The period between saved samples. This should
 typically be left at its default (no thinning) unless memory is a problem.
-\item \code{max_depth}: (positive integer) The maximum allowed tree depth for the
+\item \code{max_treedepth}: (positive integer) The maximum allowed tree depth for the
 NUTS engine. See the \emph{Tree Depth} section of the CmdStan manual for more
 details.
 \item \code{adapt_engaged}: (logical) Do warmup adaptation? The default is \code{TRUE}.
@@ -132,7 +132,7 @@ off adaptation when using a precomputed inverse metric set
 \code{adapt_engaged=FALSE}.
 \item \code{adapt_delta}: (real in \verb{(0,1)}) The adaptation target acceptance
 statistic.
-\item \code{stepsize}: (positive real) The \emph{initial} step size for the discrete
+\item \code{step_size}: (positive real) The \emph{initial} step size for the discrete
 approximation to continuous Hamiltonian dynamics. This is further tuned
 during warmup.
 \item \code{metric}: (character) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
