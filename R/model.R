@@ -328,7 +328,9 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     inv_metric = NULL,
 #'     init_buffer = NULL,
 #'     term_buffer = NULL,
-#'     window = NULL
+#'     window = NULL,
+#'     fixed_param = FALSE,
+#'     validate_csv = TRUE
 #'   )
 #'   ```
 #'
@@ -400,11 +402,11 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   adaptation interval during warmup.
 #'   * `window`: (nonnegative integer) Initial width of slow timestep/metric
 #'   adaptation interval.
-#'   * `fixed_param`: (logical) When ``True``, call CmdStan with argument
-#'   "algorithm=fixed_param".
-#'   * `validate_csv`: (logical) When ``True``, validate the sampling results
-#'   in the csv files. Disable if you wish to manually read in the sampling results
-#'   and validate them.
+#'   * `fixed_param`: (logical) When `TRUE`, call CmdStan with argument
+#'   `"algorithm=fixed_param"`. The default is `FALSE`.
+#'   * `validate_csv`: (logical) When `TRUE` (the default), validate the
+#'   sampling results in the csv files. Disable if you wish to manually read in
+#'   the sampling results and validate them.
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
