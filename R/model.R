@@ -6,7 +6,7 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program.
-#' @param model_name The name of the Stan model.
+#' @param exe_file The exe_file path.
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -70,8 +70,8 @@
 #' fit_vb$summary()
 #' }
 #'
-cmdstan_model <- function(stan_file, model_name = NULL, compile = TRUE, ...) {
-  CmdStanModel$new(stan_file = stan_file, model_name = model_name, compile = compile, ...)
+cmdstan_model <- function(stan_file, exe_file = character(0), compile = TRUE, ...) {
+  CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
 }
 
 
@@ -95,7 +95,6 @@ cmdstan_model <- function(stan_file, model_name = NULL, compile = TRUE, ...) {
 #'  `$print()` \tab Print readable version of Stan program. \cr
 #'  `$stan_file()` \tab Return the file path to the Stan program. \cr
 #'  `$exe_file()` \tab Return the file path to the compiled executable. \cr
-#'  `$model_name()` \tab Return the model name. \cr
 #'  [`$compile()`][model-method-compile] \tab Compile Stan program. \cr
 #'  [`$sample()`][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
@@ -114,27 +113,25 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     stan_file_ = character(),
-    exe_file_ = character(),
-    model_name_ = character()
+    exe_file_ = character()
   ),
   public = list(
-    initialize = function(stan_file, model_name, compile, ...) {
+    initialize = function(stan_file, exe_file, compile, ...) {
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
-      private$model_name_ <- model_name
+      private$exe_file_ <- exe_file
       if (compile) {
         self$compile(...)
       }
       invisible(self)
     },
     stan_file = function() private$stan_file_,
-    exe_file = function() private$exe_file_,
-    model_name = function(name = NULL) {
-      if (!is.null(name)) {
-        private$model_name_ = name
+    exe_file = function(path = NULL) {
+      if (!is.null(path)) {
+        private$exe_file_ = path
       }
-      private$model_name_
+      private$exe_file_
     },
     code = function() {
       # Get Stan code as a string
@@ -183,10 +180,10 @@ CmdStanModel <- R6::R6Class(
 #'   output.
 #'   * `include_paths`: (character vector) Paths to directories where Stan should
 #'   look for files specified in `#include` directives in the Stan program.
-#'   * `cpp_options`: (character vector) Any makefile options to be
+#'   * `cpp_options`: (list) Any makefile options to be
 #'   used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
 #'   Anything you would otherwise write in the make/local file.
-#'   * `stanc_options`: (character vector) Any Stan-to-C++ transpiler options to be
+#'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be
 #'     used when compiling the model.
 #'   * `force_recompile`: (logical) Should the model be recompiled
 #'     even if was not modified since last compiled. The default is `FALSE`.
@@ -203,6 +200,11 @@ CmdStanModel <- R6::R6Class(
 #' mod <- cmdstan_model(stan_program, compile = FALSE)
 #' mod$compile()
 #' mod$exe_file()
+#'
+#' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), compile = FALSE)
+#' mod$compile()
+#' mod$exe_file()
 #' }
 #'
 NULL
@@ -212,31 +214,29 @@ compile_method <- function(quiet = TRUE,
                            cpp_options = list(),
                            stanc_options = list(),
                            force_recompile = FALSE) {
-  if(is.null(stanc_options[["name"]])) {
-    if (is.null(self$model_name())) {
-      exe <- cmdstan_ext(strip_ext(self$stan_file()))
-      self$model_name(sub(" ", "_",
-                        paste0(strip_ext(basename(self$stan_file())), "_model")))
-      stanc_options[["name"]] <- self$model_name()
-    } else {
-      stanc_options[["name"]] <- self$model_name()
-      exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))
-    }
+  if (is.null(self$exe_file())) {
+    exe <- cmdstan_ext(strip_ext(self$stan_file()))
   } else {
-    self$model_name(stanc_options[["name"]])
-    exe <- cmdstan_ext(file.path(dirname(self$stan_file()), self$model_name()))
+    exe <- cmdstan_ext(strip_ext(self$exe_file()))
+  }
+  if (is.null(self$stan_file())) {
+    model_name <- basename(strip_ext(self$exe_file()))
+  } else {
+    model_name <- sub(" ", "_",
+                        paste0(strip_ext(basename(self$stan_file())), "_model"))
   }
   # compile if the user forced compilation,
   # the executable does not exist or the stan model was changed since last compilation
   if (!file.exists(exe)) {
     force_recompile <- TRUE
-  } else if (file.mtime(exe) < file.mtime(self$stan_file())) {
+  } else if (file.exists(self$stan_file())
+             && file.mtime(exe) < file.mtime(self$stan_file())) {
     force_recompile <- TRUE
   }
 
   if (!force_recompile) {
     message("Model executable is up to date!")
-    private$exe_file_ <- exe
+    private$exe_file(exe)
     return(invisible(self))
   } else {
     message("Compiling Stan program...")
@@ -259,8 +259,11 @@ compile_method <- function(quiet = TRUE,
     include_paths <- paste0(include_paths, collapse = ",")
     stancflags_val <- paste0(stancflags_val, " --include_paths=", include_paths, " ")
   }
-  if(!is.null(cpp_options$stan_opencl)){
+  if (!is.null(cpp_options$stan_opencl)) {
     stanc_options[["use-opencl"]] <- TRUE
+  }
+  if (is.null(stanc_options[["name"]])) {
+    stanc_options[["name"]] <- model_name
   }
   stanc_built_options = c()
   for (i in seq_len(length(stanc_options))) {
