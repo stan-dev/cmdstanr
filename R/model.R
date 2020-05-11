@@ -6,6 +6,7 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program.
+#' @param exe_file Optionally, a path to an existing executable.
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -69,8 +70,8 @@
 #' fit_vb$summary()
 #' }
 #'
-cmdstan_model <- function(stan_file, compile = TRUE, ...) {
-  CmdStanModel$new(stan_file = stan_file, compile = compile, ...)
+cmdstan_model <- function(stan_file = character(), exe_file = character(), compile = TRUE, ...) {
+  CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
 }
 
 
@@ -115,17 +116,27 @@ CmdStanModel <- R6::R6Class(
     exe_file_ = character()
   ),
   public = list(
-    initialize = function(stan_file, compile, ...) {
-      checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
+    initialize = function(stan_file, exe_file, compile, ...) {
+      if (all(exe_file == character())) {
+        checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
+      } else {
+        checkmate::assert_file_exists(exe_file, access = "r", extension = cmdstan_ext())
+      }
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
+      private$exe_file_ <- exe_file
       if (compile) {
         self$compile(...)
       }
       invisible(self)
     },
     stan_file = function() private$stan_file_,
-    exe_file = function() private$exe_file_,
+    exe_file = function(path = NULL) {
+      if (!is.null(path)) {
+        private$exe_file_ = path
+      }
+      private$exe_file_
+    },
     code = function() {
       # Get Stan code as a string
       readLines(self$stan_file())
@@ -156,11 +167,8 @@ CmdStanModel <- R6::R6Class(
 #'   $compile(
 #'     quiet = TRUE,
 #'     include_paths = NULL,
-#'     threads = FALSE,
-#'     opencl = FALSE,
-#'     opencl_platform_id = 0,
-#'     opencl_device_id = 0,
-#'     compiler_flags = NULL,
+#'     cpp_options = list(),
+#'     stanc_options = list(),
 #'     force_recompile = FALSE
 #'   )
 #'   $exe_file()
@@ -171,25 +179,15 @@ CmdStanModel <- R6::R6Class(
 #'   optional arguments are provided to enable features in CmdStan (and the Stan
 #'   Math library). See the CmdStan manual for more details.
 #'   * `quiet`: (logical) Should the verbose output from CmdStan during
-#'     compilation be suppressed? The default is `TRUE`, but if you encounter an
-#'     error we recommend trying again with `quiet=FALSE` to see more of the
-#'     output.
+#'   compilation be suppressed? The default is `TRUE`, but if you encounter an
+#'   error we recommend trying again with `quiet=FALSE` to see more of the
+#'   output.
 #'   * `include_paths`: (character vector) Paths to directories where Stan should
-#'     look for files specified in `#include` directives in the Stan program.
-#'   * `threads`: (logical) Should the model be compiled with
-#'     [threading support](https://github.com/stan-dev/math/wiki/Threading-Support)?
-#'     If `TRUE` then `-DSTAN_THREADS` is added to the compiler flags. See
-#'     [set_num_threads()] to set the number of threads, which is read by
-#'     CmdStan at run-time from an environment variable. **NOTE:** this is
-#'     different than setting the number of cores for running multiple Markov
-#'     chains in parallel, which can be set at run-time using the `num_cores`
-#'     argument of the [`$sample()`][model-method-sample] method.
-#'   * `opencl`: (logical) Should the model be compiled with OpenCL support enabled?
-#'   * `opencl_platform_id`: (nonnegative integer) The ID of the OpenCL platform on which
-#'     to run the compiled model.
-#'   * `opencl_device_id`: (nonnegative integer) The ID of the OpenCL device on the selected
-#'     OpenCL platform on which to run the compiled model.
-#'   * `compiler_flags`: (character vector) Any additional compiler flags to be
+#'   look for files specified in `#include` directives in the Stan program.
+#'   * `cpp_options`: (list) Any makefile options to be
+#'   used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
+#'   Anything you would otherwise write in the make/local file.
+#'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be
 #'     used when compiling the model.
 #'   * `force_recompile`: (logical) Should the model be recompiled
 #'     even if was not modified since last compiled. The default is `FALSE`.
@@ -206,37 +204,42 @@ CmdStanModel <- R6::R6Class(
 #' mod <- cmdstan_model(stan_program, compile = FALSE)
 #' mod$compile()
 #' mod$exe_file()
+#'
+#' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), compile = FALSE)
+#' mod$compile()
+#' mod$exe_file()
 #' }
 #'
 NULL
 
 compile_method <- function(quiet = TRUE,
                            include_paths = NULL,
-                           threads = FALSE,
-                           opencl = FALSE,
-                           opencl_platform_id = 0,
-                           opencl_device_id = 0,
-                           compiler_flags = NULL,
+                           cpp_options = list(),
+                           stanc_options = list(),
                            force_recompile = FALSE) {
-  make_local_changed <- set_make_local(threads,
-                                       opencl,
-                                       opencl_platform_id,
-                                       opencl_device_id,
-                                       compiler_flags)
-  exe <- cmdstan_ext(strip_ext(self$stan_file()))
-  # compile if compile options changed, the user forced compilation,
-  # the executable does not exist or the stan model was changed since last compilation
-  recompile <- force_recompile || make_local_changed
-  if (!file.exists(exe)) {
-    recompile <- TRUE
-  } else if (file.mtime(exe) < file.mtime(self$stan_file())) {
-    recompile <- TRUE
+  if (all(nzchar(self$exe_file()))) {
+    exe <- cmdstan_ext(strip_ext(self$stan_file()))
+  } else {
+    exe <- cmdstan_ext(strip_ext(self$exe_file()))
   }
-
-  model_name <- paste0(strip_ext(basename(self$stan_file())), "_model")
-  if (!recompile) {
+  if (is.null(self$stan_file())) {
+    model_name <- basename(strip_ext(self$exe_file()))
+  } else {
+    model_name <- sub(" ", "_",
+                        paste0(strip_ext(basename(self$stan_file())), "_model"))
+  }
+  # compile if the user forced compilation,
+  # the executable does not exist or the stan model was changed since last compilation
+  if (!file.exists(exe)) {
+    force_recompile <- TRUE
+  } else if (file.exists(self$stan_file())
+             && file.mtime(exe) < file.mtime(self$stan_file())) {
+    force_recompile <- TRUE
+  }
+  if (!force_recompile) {
     message("Model executable is up to date!")
-    private$exe_file_ <- exe
+    self$exe_file(exe)
     return(invisible(self))
   } else {
     message("Compiling Stan program...")
@@ -246,44 +249,46 @@ compile_method <- function(quiet = TRUE,
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   tmp_exe <- cmdstan_ext(strip_ext(temp_stan_file)) # adds .exe on Windows
 
-  # rebuild main.o and the model if there was a change in make/local
-  if (make_local_changed) {
-    message("A change in the compiler flags was found. Forcing recompilation.\n")
-    main_path <- file.path(cmdstan_path(), "src", "cmdstan", "main")
-    model_header_path <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header")
-    files_to_remove <- c(
-      paste0(main_path, c(".d", ".o")),
-      paste0(model_header_path, c(".d", ".hpp.gch"))
-    )
-    for (file in files_to_remove) if (file.exists(file)) {
-      file.remove(file)
-    }
-  }
   # add path to the build tbb library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
   }
 
+  stancflags_val <- ""
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
     include_paths <- absolute_path(include_paths)
     include_paths <- paste0(include_paths, collapse = ",")
-    include_paths <- paste0("STANCFLAGS += --include_paths=", include_paths)
+    stancflags_val <- paste0(stancflags_val, " --include_paths=", include_paths, " ")
   }
-
-  # TODO(Rok): Once we handle stancflags separately this should be overriden
-  # if a user specifies their own name
-  model_name_stancflag <- paste0("STANCFLAGS+=--name=", sub(" ", "_", model_name))
-
+  if (!is.null(cpp_options$stan_opencl)) {
+    stanc_options[["use-opencl"]] <- TRUE
+  }
+  if (is.null(stanc_options[["name"]])) {
+    stanc_options[["name"]] <- model_name
+  }
+  stanc_built_options = c()
+  for (i in seq_len(length(stanc_options))) {
+    option_name <- names(stanc_options)[i]
+    if (isTRUE(as.logical(stanc_options[[i]]))) {
+      stanc_built_options = c(stanc_built_options, paste0("--", option_name))
+    } else {
+      stanc_built_options = c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
+    }
+  }
+  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
+  prepare_precompiled(cpp_options, quiet)
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(tmp_exe, include_paths, model_name_stancflag),
+    args = c(tmp_exe,
+             cpp_options_to_compile_flags(cpp_options),
+             stancflags_val),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    stderr_line_callback = function(x,p) { if (!quiet) message(x) },
     error_on_status = TRUE
   )
 
