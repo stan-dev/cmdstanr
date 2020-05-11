@@ -214,9 +214,9 @@ compile_method <- function(quiet = TRUE,
                            cpp_options = list(),
                            stanc_options = list(),
                            force_recompile = FALSE) {
-  if (is.null(self$exe_file())) {
+  if (all(nzchar(self$exe_file()))) {
     exe <- cmdstan_ext(strip_ext(self$stan_file()))
-  } else {
+  } else {    
     exe <- cmdstan_ext(strip_ext(self$exe_file()))
   }
   if (is.null(self$stan_file())) {
@@ -233,10 +233,9 @@ compile_method <- function(quiet = TRUE,
              && file.mtime(exe) < file.mtime(self$stan_file())) {
     force_recompile <- TRUE
   }
-
   if (!force_recompile) {
     message("Model executable is up to date!")
-    private$exe_file(exe)
+    self$exe_file(exe)
     return(invisible(self))
   } else {
     message("Compiling Stan program...")
