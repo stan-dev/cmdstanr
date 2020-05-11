@@ -1,13 +1,13 @@
-[<img src="https://raw.githubusercontent.com/stan-dev/logos/master/logo_tm.png" width=100 alt="Stan Logo"/>](https://mc-stan.org)
-
 # CmdStanR 
 
-<!-- badges: start -->
+<!--badges: start-->
 [![CRAN status](https://www.r-pkg.org/badges/version/cmdstanr)](https://CRAN.R-project.org/package=cmdstanr)
 [![Codecov test coverage](https://codecov.io/gh/stan-dev/cmdstanr/branch/master/graph/badge.svg)](https://codecov.io/gh/stan-dev/cmdstanr?branch=master)
 [![Travis build status](https://travis-ci.org/stan-dev/cmdstanr.svg?branch=master)](https://travis-ci.org/stan-dev/cmdstanr)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/stan-dev/cmdstanr?branch=master&svg=true)](https://ci.appveyor.com/project/jgabry/cmdstanr)
-<!-- badges: end -->
+<!--badges: end -->
+
+[<img src="https://raw.githubusercontent.com/stan-dev/logos/master/logo_tm.png" width=100 alt="Stan Logo"/>](https://mc-stan.org)
 
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).

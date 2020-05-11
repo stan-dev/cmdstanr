@@ -3,7 +3,7 @@ pkgdown: 1.5.1
 pkgdown_sha: ~
 articles:
   cmdstanr: cmdstanr.html
-last_built: 2020-05-10T18:58Z
+last_built: 2020-05-11T21:06Z
 urls:
   reference: https://mc-stan.org/cmdstanr/reference
   article: https://mc-stan.org/cmdstanr/articles
