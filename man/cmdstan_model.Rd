@@ -14,7 +14,7 @@ cmdstan_model(
 \arguments{
 \item{stan_file}{The path to a \code{.stan} file containing a Stan program.}
 
-\item{exe_file}{The exe_file path.}
+\item{exe_file}{Optionally, a path to an existing executable.}
 
 \item{compile}{Do compilation? The default is \code{TRUE}. If \code{FALSE}
 compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}
