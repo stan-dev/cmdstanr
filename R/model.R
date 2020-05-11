@@ -70,7 +70,7 @@
 #' fit_vb$summary()
 #' }
 #'
-cmdstan_model <- function(stan_file = character(0), exe_file = character(0), compile = TRUE, ...) {
+cmdstan_model <- function(stan_file = character(), exe_file = character(), compile = TRUE, ...) {
   CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
 }
 
@@ -117,10 +117,10 @@ CmdStanModel <- R6::R6Class(
   ),
   public = list(
     initialize = function(stan_file, exe_file, compile, ...) {
-      if(all(nzchar(exe_file))) {
-        checkmate::assert_file_exists(exe_file, access = "r", extension = cmdstan_ext())
-      } else {
+      if (all(exe_file == character())) {
         checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
+      } else {        
+        checkmate::assert_file_exists(exe_file, access = "r", extension = cmdstan_ext())
       }      
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
