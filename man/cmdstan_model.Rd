@@ -4,12 +4,17 @@
 \alias{cmdstan_model}
 \title{Create a new CmdStanModel object}
 \usage{
-cmdstan_model(stan_file, model_name = NULL, compile = TRUE, ...)
+cmdstan_model(
+  stan_file = character(),
+  exe_file = character(),
+  compile = TRUE,
+  ...
+)
 }
 \arguments{
 \item{stan_file}{The path to a \code{.stan} file containing a Stan program.}
 
-\item{model_name}{The name of the Stan model.}
+\item{exe_file}{The exe_file path.}
 
 \item{compile}{Do compilation? The default is \code{TRUE}. If \code{FALSE}
 compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}

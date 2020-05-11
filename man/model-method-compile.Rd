@@ -34,10 +34,10 @@ error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.
 \item \code{include_paths}: (character vector) Paths to directories where Stan should
 look for files specified in \verb{#include} directives in the Stan program.
-\item \code{cpp_options}: (character vector) Any makefile options to be
+\item \code{cpp_options}: (list) Any makefile options to be
 used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
 Anything you would otherwise write in the make/local file.
-\item \code{stanc_options}: (character vector) Any Stan-to-C++ transpiler options to be
+\item \code{stanc_options}: (list) Any Stan-to-C++ transpiler options to be
 used when compiling the model.
 \item \code{force_recompile}: (logical) Should the model be recompiled
 even if was not modified since last compiled. The default is \code{FALSE}.
@@ -54,6 +54,11 @@ returns the \code{\link{CmdStanModel}} object invisibly.
 \dontrun{
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program, compile = FALSE)
+mod$compile()
+mod$exe_file()
+
+stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), compile = FALSE)
 mod$compile()
 mod$exe_file()
 }
