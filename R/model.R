@@ -6,7 +6,7 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program.
-#' @param exe_file The exe_file path.
+#' @param exe_file Optionally, a path to an existing executable.
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -119,9 +119,9 @@ CmdStanModel <- R6::R6Class(
     initialize = function(stan_file, exe_file, compile, ...) {
       if (all(exe_file == character())) {
         checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
-      } else {        
+      } else {
         checkmate::assert_file_exists(exe_file, access = "r", extension = cmdstan_ext())
-      }      
+      }
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
       private$exe_file_ <- exe_file
@@ -220,7 +220,7 @@ compile_method <- function(quiet = TRUE,
                            force_recompile = FALSE) {
   if (all(nzchar(self$exe_file()))) {
     exe <- cmdstan_ext(strip_ext(self$stan_file()))
-  } else {    
+  } else {
     exe <- cmdstan_ext(strip_ext(self$exe_file()))
   }
   if (is.null(self$stan_file())) {
