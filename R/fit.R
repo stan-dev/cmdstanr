@@ -334,9 +334,9 @@ CmdStanMCMC <- R6::R6Class(
       }
     },
 
-    draws = function(inc_warmup = FALSE, cores = self$runset$procs$num_cores()) {
+    draws = function(inc_warmup = FALSE) {
       if (is.null(private$draws_)) {
-        private$read_csv_(cores = cores)
+        private$read_csv_()
       }
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
@@ -367,12 +367,12 @@ CmdStanMCMC <- R6::R6Class(
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     draws_ = NULL,
-    read_csv_ = function(diagnostic_warnings = FALSE, cores = self$runset$procs$num_cores()) {
+    read_csv_ = function(diagnostic_warnings = FALSE) {
       if (!length(self$output_files())) {
         stop("No chains finished successfully. Unable to retrieve the fit.",
              call. = FALSE)
       }
-      data_csv <- read_sample_csv(self$output_files(), cores)
+      data_csv <- read_sample_csv(self$output_files(), self$runset$procs$num_cores())
       if (diagnostic_warnings) {
         check_divergences(data_csv)
         check_sampler_transitions_treedepth(data_csv)
