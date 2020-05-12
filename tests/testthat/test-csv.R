@@ -48,7 +48,7 @@ test_that("read_sample_csv() fails for different number of samples in csv", {
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1b$output_files())
   expect_warning(read_sample_csv(csv_files),
-               "The supplied csv files do not match in the following arguments: num_warmup!")
+               "The supplied csv files do not match in the following arguments: iter_warmup!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1_with_warmup$output_files())
   expect_error(read_sample_csv(csv_files),

@@ -34,7 +34,7 @@ test_that("saving csv output files works", {
 
     expect_message(
       paths <- fit$save_output_files(tempdir(), basename = "testing-output"),
-      paste("Moved", fit$num_runs(), "output files and set internal paths")
+      paste("Moved", fit$num_runs(), "files and set internal paths")
     )
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
