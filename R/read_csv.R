@@ -204,9 +204,14 @@ read_sample_csv <- function(output_files) {
       id <- csv_file_info$id
     }
     # read sampling data
-    draws <- vroom::vroom(output_file, comment = "# ", delim = ',', trim_ws = TRUE, col_types = c(lp__ = "d"), num_threads = 4)
+    suppressWarnings(      
+      draws <- vroom::vroom(output_file, comment = "# ", delim = ',', trim_ws = TRUE, col_types = c(lp__ = "d"), num_threads = 4)
+    )
+    if(ncol(draws) == 0) {
+      stop("The supplied csv file does not contain any sampling data!")
+    }
     draws <- draws[!is.na(draws$lp__),]
-    if (nrow(draws) > 0) {
+    if (nrow(draws) > 0) {      
       num_warmup_draws <- ceiling(sampling_info$num_warmup/sampling_info$thin)
       num_post_warmup_draws <- ceiling(sampling_info$num_samples/sampling_info$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws

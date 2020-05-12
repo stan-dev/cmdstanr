@@ -85,12 +85,12 @@ test_that("read_sample_csv() fails with empty csv file", {
   file.remove(file_path)
 })
 
-# test_that("read_sample_csv() fails with the no params listed", {
-#   skip_on_cran()
-#   file_path <- test_path("resources", "csv", "model1-3-no-params.csv")
-#   expect_error(read_sample_csv(file_path),
-#                "no lines available in input")
-# })
+test_that("read_sample_csv() fails with the no params listed", {
+  skip_on_cran()
+  file_path <- test_path("resources", "csv", "model1-3-no-params.csv")
+  expect_error(read_sample_csv(file_path),
+               "The supplied csv file does not contain any sampling data!")
+})
 
 test_that("read_sample_csv() matches rstan::read_stan_csv()", {
   skip_on_cran()
