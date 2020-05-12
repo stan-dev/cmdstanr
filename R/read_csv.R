@@ -162,7 +162,7 @@ read_sample_info_csv <- function(csv_file) {
 #' matrix, the post-warmup samples, the sampling parameters and warmup samples
 #' if the run was run with save_warmup = 1.
 #'
-read_sample_csv <- function(output_files) {
+read_sample_csv <- function(output_files, cores = getOption("mc.cores", 1)) {
   sampling_info <- NULL
   warmup_draws <- NULL
   warmup_sampler_diagnostics_draws <- NULL
@@ -205,7 +205,7 @@ read_sample_csv <- function(output_files) {
     }
     # read sampling data
     suppressWarnings(      
-      draws <- vroom::vroom(output_file, comment = "# ", delim = ',', trim_ws = TRUE, col_types = c(lp__ = "d"), num_threads = 4)
+      draws <- vroom::vroom(output_file, comment = "# ", delim = ',', trim_ws = TRUE, col_types = c(lp__ = "d"), num_threads = cores)
     )
     if(ncol(draws) == 0) {
       stop("The supplied csv file does not contain any sampling data!")

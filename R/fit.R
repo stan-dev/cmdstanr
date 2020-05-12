@@ -372,7 +372,8 @@ CmdStanMCMC <- R6::R6Class(
         stop("No chains finished successfully. Unable to retrieve the fit.",
              call. = FALSE)
       }
-      data_csv <- read_sample_csv(self$output_files())
+      print(self$runset$procs$num_cores())
+      data_csv <- read_sample_csv(self$output_files(), self$runset$procs$num_cores())
       if (diagnostic_warnings) {
         check_divergences(data_csv)
         check_sampler_transitions_treedepth(data_csv)
