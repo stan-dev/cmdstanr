@@ -162,7 +162,7 @@ read_sample_info_csv <- function(csv_file) {
 #' matrix, the post-warmup samples, the sampling parameters and warmup samples
 #' if the run was run with save_warmup = 1.
 #'
-read_sample_csv <- function(output_files, t = 3) {
+read_sample_csv <- function(output_files) {
   sampling_info <- NULL
   warmup_draws <- NULL
   warmup_sampler_diagnostics_draws <- NULL
@@ -204,14 +204,8 @@ read_sample_csv <- function(output_files, t = 3) {
       id <- csv_file_info$id
     }
     # read sampling data
-    if(t == 1){
-      draws <- utils::read.csv(output_file, header = TRUE, comment.char = "#")
-    } else if(t == 2){
-      draws <- readr::read_csv(output_file, comment = "# ", trim_ws = TRUE)
-    } else if(t == 3){
-      draws <- vroom::vroom(output_file, comment = "# ", delim = ',', trim_ws = TRUE, col_types = c(lp__ = "d"), num_threads = 4)
-      draws <- draws[!is.na(draws$lp__),]
-    }    
+    draws <- vroom::vroom(output_file, comment = "# ", delim = ',', trim_ws = TRUE, col_types = c(lp__ = "d"), num_threads = 4)
+    draws <- draws[!is.na(draws$lp__),]
     if (nrow(draws) > 0) {
       num_warmup_draws <- ceiling(sampling_info$num_warmup/sampling_info$thin)
       num_post_warmup_draws <- ceiling(sampling_info$num_samples/sampling_info$thin)

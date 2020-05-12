@@ -24,7 +24,8 @@ Imports:
     checkmate,
     posterior (>= 0.0.2),
     processx,
-    R6
+    R6,
+    vroom
 Suggests: 
     jsonlite (>= 1.2.0),
     knitr,
