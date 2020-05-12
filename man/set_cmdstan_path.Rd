@@ -36,12 +36,13 @@ this to avoid having to manually set the path every session:
 \item If the \link[=Sys.setenv]{environment variable} \code{"CMDSTAN"} exists at load time
 then its value will be automatically set as the default path to CmdStan for
 the \R session.
-\item If no environment variable is found when loaded but the directory
-\code{".cmdstanr/cmdstan"} exists in the user's home directory
-(\code{Sys.getenv("HOME")}, \emph{not} the current working directory) then it will be
-set as the path to CmdStan for the \R session. This is the same as the
-default directory that \code{\link[=install_cmdstan]{install_cmdstan()}} would use to install the latest
-version of CmdStan.
+\item If no environment variable is found when loaded but any directory in the form
+\code{".cmdstanr/cmdstan-[version]"}, for example \code{".cmdstanr/cmdstan-2.23.0"},
+exists in the user's home directory (\code{Sys.getenv("HOME")},
+\emph{not} the current working directory) then the path to the cmdstan with the largest
+version number will be set as the path to CmdStan for the \R session.
+This is the same as the default directory that \code{\link[=install_cmdstan]{install_cmdstan()}} would use to
+install the latest version of CmdStan.
 }
 
 It is always possible to change the path after loading the package using
