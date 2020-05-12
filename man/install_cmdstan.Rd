@@ -9,10 +9,8 @@ install_cmdstan(
   cores = 2,
   quiet = FALSE,
   overwrite = FALSE,
-  timeout = 600,
-  repo_clone = FALSE,
-  repo_url = "https://github.com/stan-dev/cmdstan.git",
-  repo_branch = "develop"
+  timeout = 1200,
+  release_url = NULL
 )
 }
 \arguments{
@@ -35,17 +33,8 @@ installation.}
 \item{timeout}{Timeout (in seconds) for the CmdStan build stage of the
 installation process. The default is \code{timeout=600} (10 minutes).}
 
-\item{repo_clone}{If \code{FALSE} (the default), the latest CmdStan release is
-downloaded and installed from tarball. If \code{TRUE} will install a git clone
-of CmdStan from \code{repo_url} and check out the branch \code{repo_branch}.}
-
-\item{repo_url}{If \code{repo_clone} is \code{TRUE}, the URL of the git repository to
-clone. The default URL points to the
-\href{https://github.com/stan-dev/cmdstan}{\code{stan-dev/cmdstan}}
-repository on GitHub.}
-
-\item{repo_branch}{If \code{repo_clone} is \code{TRUE}, the name of the branch to
-checkout in the cloned repository.}
+\item{release_url}{Specifies the URL to a specific Cmdstan release to be installed.
+By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.}
 }
 \description{
 \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
@@ -55,7 +44,4 @@ a development version from a repository. Currently the necessary C++ tool
 chain is assumed to be available (see Appendix B of the CmdStan
 \href{https://github.com/stan-dev/cmdstan/releases/latest}{guide}), but in the
 future CmdStanR may help install the requirements.
-}
-\seealso{
-\code{\link[=cmdstan_git_checkout_branch]{cmdstan_git_checkout_branch()}}
 }

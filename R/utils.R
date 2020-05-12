@@ -41,6 +41,25 @@ check_target_exe <- function(exe) {
     )
   }
 }
+
+
+check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
+  if (dir.exists(dir_cmdstan)) {
+    if (!overwrite) {
+      warning(
+        "An installation already exists at ", dir_cmdstan, ". ",
+        "Please remove or rename the installation folder or set overwrite=TRUE.",
+        call. = FALSE
+      )
+      return(FALSE)
+    } else {
+      message("* Removing the existing installation of CmdStan...")
+      unlink(dir_cmdstan, recursive = TRUE, force = TRUE)
+    }
+  }
+  TRUE
+}
+  
 # paths and extensions ----------------------------------------------------
 
 # Replace `\\` with `/` in a path
@@ -253,80 +272,92 @@ write_stan_json <- function(data, file) {
   )
 }
 
-# compilation, build files, threading -------------------------------------
-
-#' Cleanup build files of a Stan model
-#'
-#' Deletes `model_name.o`, `model_name.hpp` and the executable.
-#'
-#' @param model_path (string) The absolute path to the model.
-#' @param remove_main (logical) Set `TRUE` to also remove the CmdStan `main.o`.
-#' @noRd
-build_cleanup <- function(model_path, remove_main = FALSE) {
-  files_to_remove <- c(
-    paste0(model_path, c("", ".exe", ".o", ".hpp")),
-    if (remove_main) file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-  )
-  for (file in files_to_remove) if (file.exists(file)) {
-    file.remove(file)
+cpp_options_to_compile_flags <- function(cpp_options) {
+  if (length(cpp_options) == 0) {
+    return(NULL)
   }
+  cpp_built_options = c()
+  for (i in seq_len(length(cpp_options))) {
+    option_name <- names(cpp_options)[i]
+    cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+  }
+  paste0(cpp_built_options, collapse = " ")
 }
 
-set_make_local <- function(threads = FALSE,
-                           opencl = FALSE,
-                           opencl_platform_id = 0,
-                           opencl_device_id = 0,
-                           compiler_flags = NULL) {
-  cmdstanr_generated_flags_comment <-
-    "# cmdstanr generated make/local flags (add user flags above this line)"
-  make_local_path <- file.path(cmdstan_path(), "make", "local")
-  user_flags <- c()
-  old_make_local_cmdstanr <- c()
-  if (file.exists(make_local_path)) {
-    checkmate::assert_file_exists(make_local_path, access = 'rw')
-    old_make_local_all <- readLines(make_local_path)
-    is_user_flag <- TRUE
-    for (x in old_make_local_all) {
-      if (startsWith(x, cmdstanr_generated_flags_comment)) {
-        is_user_flag <- FALSE
-      }
-      if (!is_user_flag) {
-        old_make_local_cmdstanr <- c(old_make_local_cmdstanr, x)
-      } else {
-        user_flags <- c(user_flags, x)
+prepare_precompiled <- function(cpp_options, quiet = FALSE) {
+  flags <- NULL
+  if (!is.null(cpp_options$stan_threads)) {
+    flags <- c(flags, "threads")
+  }
+  if (!is.null(cpp_options$stan_mpi)) {
+    flags <- c(flags, "mpi")
+  }
+  if (!is.null(cpp_options$stan_opencl)) {
+    flags <- c(flags, "opencl")
+  }
+  if (is.null(flags)) {
+    flags <- "noflags"
+  } else {
+    flags <- paste0(flags, collapse = "_")
+  }
+  main_path_w_flags <- file.path(cmdstan_path(), "src", "cmdstan", paste0("main_", flags, ".o"))
+  main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
+  main_path_d <- file.path(cmdstan_path(), "src", "cmdstan", "main.d")
+  model_header_path_w_flags <- file.path(cmdstan_path(), "stan", "src", "stan", "model", paste0("model_header_", flags, ".hpp.gch"))
+  model_header_path_gch <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.hpp.gch")
+  model_header_path_d <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.d")
+  model_header_path_hpp <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.d")
+  if (file.exists(model_header_path_gch)) {
+    model_header_gch_used <- TRUE
+  } else {
+    model_header_gch_used <- FALSE
+  }
+  if (!file.exists(main_path_w_flags)) {
+    
+    files_to_remove <- c(
+      main_path_o,
+      main_path_d,
+      model_header_path_gch,
+      model_header_path_d
+    )
+    for (file in files_to_remove) if (file.exists(file)) {
+      file.remove(file)
+    }
+    run_log <- processx::run(
+      command = make_cmd(),
+      args = c(cpp_options_to_compile_flags(cpp_options),
+               main_path_o),
+      wd = cmdstan_path(),
+      echo_cmd = !quiet,
+      echo = !quiet,
+      spinner = quiet,
+      stderr_line_callback = function(x,p) { if (!quiet) message(x) },
+      error_on_status = TRUE
+    )
+    file.copy(main_path_o, main_path_w_flags)
+    if (model_header_gch_used) {
+      run_log <- processx::run(
+        command = make_cmd(),
+        args = c(cpp_options_to_compile_flags(cpp_options),
+                file.path("stan", "src", "stan", "model", "model_header.hpp.gch")),
+        wd = cmdstan_path(),
+        echo_cmd = !quiet,
+        echo = !quiet,
+        spinner = quiet,
+        stderr_line_callback = function(x,p) { if (!quiet) message(x) },
+        error_on_status = TRUE
+      )
+      if (file.exists(model_header_path_gch)) {
+        file.copy(model_header_path_gch, model_header_path_w_flags)
       }
     }
-  }
-  old_make_local_cmdstanr <- paste(old_make_local_cmdstanr, collapse = "\n")
-  if (opencl) {
-    stan_opencl <- "STAN_OPENCL = true"
-    platform_id <- paste("OPENCL_PLATFORM_ID =", opencl_platform_id)
-    device_id <- paste("OPENCL_DEVICE_ID =", opencl_device_id)
-    compiler_flags <- c(compiler_flags, stan_opencl, platform_id, device_id)
-  }
-  if (threads) {
-    stan_threads <- "CXXFLAGS += -DSTAN_THREADS"
-    compiler_flags <- c(compiler_flags, stan_threads)
-  }
-  if (length(compiler_flags)) {
-    compiler_flags <- c(cmdstanr_generated_flags_comment, compiler_flags)
-  }
-  new_make_local_cmdstanr <- paste(compiler_flags, collapse = "\n")
-
-  if (new_make_local_cmdstanr != old_make_local_cmdstanr) {
-    # only rewrite make/local if there are changes
-    if (!file.exists(make_local_path)) {
-      file.create(make_local_path)
-      checkmate::assert_file_exists(make_local_path, access = 'rw')
+  } else {
+    file.copy(main_path_w_flags, main_path_o, overwrite=TRUE)
+    if (model_header_gch_used && file.exists(model_header_path_w_flags)) {
+      file.copy(model_header_path_w_flags, model_header_path_gch, overwrite=TRUE)
     }
-    make_local_content <- c(user_flags, new_make_local_cmdstanr)
-    writeLines(make_local_content, make_local_path)
-    return(TRUE)
   }
-
-  FALSE
 }
-
 
 #' Set or get the number of threads used to execute Stan models
 #'
@@ -362,7 +393,7 @@ set_num_threads <- function(num_threads) {
 
 check_divergences <- function(data_csv) {
   if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-    divergences <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
+    divergences <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
     num_of_draws <- length(divergences)
     num_of_divergences <- sum(divergences)
     if (num_of_divergences > 0) {
@@ -378,7 +409,7 @@ check_divergences <- function(data_csv) {
 
 check_sampler_transitions_treedepth <- function(data_csv) {
   if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-    treedepth <- posterior::extract_one_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
+    treedepth <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
     num_of_draws <- length(treedepth)
     max_treedepth <- data_csv$sampling_info$max_depth
     max_treedepth_hit <- sum(treedepth >= max_treedepth)

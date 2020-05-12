@@ -17,23 +17,27 @@
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
+
+<!-- bootstrap-toc -->
+<link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script>
 
 <!-- headroom.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -49,7 +53,6 @@ executable. The resulting files are placed in the same directory as the
 Stan program associated with the CmdStanModel object. After compilation
 the path to the executable can be accesed via the $exe_file() method." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
-<meta name="twitter:card" content="summary" />
 
 
 
@@ -67,7 +70,7 @@ the path to the executable can be accesed via the $exe_file() method." />
 
   </head>
 
-  <body>
+  <body data-spy="scroll" data-target="#toc">
     <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -160,7 +163,7 @@ the path to the executable can be accesed via the $exe_file() method." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Compile a Stan program or get the Stan code</h1>
-    
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/model.R'><code>R/model.R</code></a></small>
     <div class="hidden name"><code>model-method-compile.Rd</code></div>
     </div>
 
@@ -180,11 +183,9 @@ the path to the executable can be accesed via the <code>$exe_file()</code> metho
 <pre>$compile(
   quiet = TRUE,
   include_paths = NULL,
-  threads = FALSE,
-  opencl = FALSE,
-  opencl_platform_id = 0,
-  opencl_device_id = 0,
-  compiler_flags = NULL
+  cpp_options = list(),
+  stanc_options = list(),
+  force_recompile = FALSE
 )
 $exe_file()
 </pre>
@@ -202,21 +203,13 @@ error we recommend trying again with <code>quiet=FALSE</code> to see more of the
 output.</p></li>
 <li><p><code>include_paths</code>: (character vector) Paths to directories where Stan should
 look for files specified in <code>#include</code> directives in the Stan program.</p></li>
-<li><p><code>threads</code>: (logical) Should the model be compiled with
-<a href='https://github.com/stan-dev/math/wiki/Threading-Support'>threading support</a>?
-If <code>TRUE</code> then <code>-DSTAN_THREADS</code> is added to the compiler flags. See
-<code><a href='stan_threads.html'>set_num_threads()</a></code> to set the number of threads, which is read by
-CmdStan at run-time from an environment variable. <strong>NOTE:</strong> this is
-different than setting the number of cores for running multiple Markov
-chains in parallel, which can be set at run-time using the <code>num_cores</code>
-argument of the <code><a href='model-method-sample.html'>$sample()</a></code> method.</p></li>
-<li><p><code>opencl</code>: (logical) Should the model be compiled with OpenCL support enabled?</p></li>
-<li><p><code>opencl_platform_id</code>: (nonnegative integer) The ID of the OpenCL platform on which
-to run the compiled model.</p></li>
-<li><p><code>opencl_device_id</code>: (nonnegative integer) The ID of the OpenCL device on the selected
-OpenCL platform on which to run the compiled model.</p></li>
-<li><p><code>compiler_flags</code>: (character vector) Any additional compiler flags to be
+<li><p><code>cpp_options</code>: (list) Any makefile options to be
+used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
+Anything you would otherwise write in the make/local file.</p></li>
+<li><p><code>stanc_options</code>: (list) Any Stan-to-C++ transpiler options to be
 used when compiling the model.</p></li>
+<li><p><code>force_recompile</code>: (logical) Should the model be recompiled
+even if was not modified since last compiled. The default is <code>FALSE</code>.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -242,21 +235,17 @@ for online documentation and tutorials.</p>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
 <span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>stan_program</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='no'>mod</span>$<span class='fu'>compile</span>()
-<span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan/examples/bernoulli/bernoulli"</div><div class='input'># }
+<span class='no'>mod</span>$<span class='fu'>compile</span>()</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan-2.22.1/examples/bernoulli/bernoulli"</div><div class='input'>
+<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
+<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>stan_program</span>, <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>stan_threads</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>), <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
+<span class='no'>mod</span>$<span class='fu'>compile</span>()</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan-2.22.1/examples/bernoulli/bernoulli"</div><div class='input'># }
 
 </div></pre>
   </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#usage">Usage</a></li>
-      <li><a href="#arguments">Arguments</a></li>
-      <li><a href="#value">Value</a></li>
-      <li><a href="#see-also">See also</a></li>
-      <li><a href="#examples">Examples</a></li>
-    </ul>
-
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
 
@@ -267,7 +256,7 @@ for online documentation and tutorials.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

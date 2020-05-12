@@ -32,7 +32,9 @@ some data.
   inv_metric = NULL,
   init_buffer = NULL,
   term_buffer = NULL,
-  window = NULL
+  window = NULL,
+  fixed_param = FALSE,
+  validate_csv = TRUE
 )
 }
 }
@@ -157,6 +159,11 @@ adaptation interval during warmup.
 adaptation interval during warmup.
 \item \code{window}: (nonnegative integer) Initial width of slow timestep/metric
 adaptation interval.
+\item \code{fixed_param}: (logical) When \code{TRUE}, call CmdStan with argument
+\code{"algorithm=fixed_param"}. The default is \code{FALSE}.
+\item \code{validate_csv}: (logical) When \code{TRUE} (the default), validate the
+sampling results in the csv files. Disable if you wish to manually read in
+the sampling results and validate them.
 }
 }
 

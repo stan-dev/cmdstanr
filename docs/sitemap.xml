@@ -16,10 +16,10 @@
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanVB.html</loc>
   </url>
   <url>
-    <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_default_path.html</loc>
+    <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_default_install_path.html</loc>
   </url>
   <url>
-    <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_git_checkout_branch.html</loc>
+    <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_default_path.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_model.html</loc>

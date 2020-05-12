@@ -14,11 +14,9 @@ the path to the executable can be accesed via the \verb{$exe_file()} method.
 \preformatted{$compile(
   quiet = TRUE,
   include_paths = NULL,
-  threads = FALSE,
-  opencl = FALSE,
-  opencl_platform_id = 0,
-  opencl_device_id = 0,
-  compiler_flags = NULL
+  cpp_options = list(),
+  stanc_options = list(),
+  force_recompile = FALSE
 )
 $exe_file()
 }
@@ -36,21 +34,13 @@ error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.
 \item \code{include_paths}: (character vector) Paths to directories where Stan should
 look for files specified in \verb{#include} directives in the Stan program.
-\item \code{threads}: (logical) Should the model be compiled with
-\href{https://github.com/stan-dev/math/wiki/Threading-Support}{threading support}?
-If \code{TRUE} then \code{-DSTAN_THREADS} is added to the compiler flags. See
-\code{\link[=set_num_threads]{set_num_threads()}} to set the number of threads, which is read by
-CmdStan at run-time from an environment variable. \strong{NOTE:} this is
-different than setting the number of cores for running multiple Markov
-chains in parallel, which can be set at run-time using the \code{num_cores}
-argument of the \code{\link[=model-method-sample]{$sample()}} method.
-\item \code{opencl}: (logical) Should the model be compiled with OpenCL support enabled?
-\item \code{opencl_platform_id}: (nonnegative integer) The ID of the OpenCL platform on which
-to run the compiled model.
-\item \code{opencl_device_id}: (nonnegative integer) The ID of the OpenCL device on the selected
-OpenCL platform on which to run the compiled model.
-\item \code{compiler_flags}: (character vector) Any additional compiler flags to be
+\item \code{cpp_options}: (list) Any makefile options to be
+used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
+Anything you would otherwise write in the make/local file.
+\item \code{stanc_options}: (list) Any Stan-to-C++ transpiler options to be
 used when compiling the model.
+\item \code{force_recompile}: (logical) Should the model be recompiled
+even if was not modified since last compiled. The default is \code{FALSE}.
 }
 }
 
@@ -64,6 +54,11 @@ returns the \code{\link{CmdStanModel}} object invisibly.
 \dontrun{
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program, compile = FALSE)
+mod$compile()
+mod$exe_file()
+
+stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), compile = FALSE)
 mod$compile()
 mod$exe_file()
 }
