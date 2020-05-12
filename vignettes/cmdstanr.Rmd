@@ -69,12 +69,14 @@ will be automatically set as the default path to CmdStan for the R session. This
 is useful if your CmdStan installation is not located in the default directory
 that would have been used by `install_cmdstan()` (see #2).
 
-2. If no environment variable is found when loaded but the directory
-`".cmdstanr/cmdstan"` exists in the user's *home* directory (not working
-directory) then it will be set as the path to CmdStan for the R session. This is
-the same as the default directory that `install_cmdstan()` uses to install the
-latest version of CmdStan, so if that's how you installed CmdStan you shouldn't
-need to manually set the path to CmdStan when loading CmdStanR.
+2. If no environment variable is found when loaded but any directory in the form
+`".cmdstanr/cmdstan-[version]"`, for example `".cmdstanr/cmdstan-2.23.0"`,
+exists in the user's home directory (`Sys.getenv("HOME")`,
+*not* the current working directory) then the path to the cmdstan with the
+largest version number will be set as the path to CmdStan for the R session.
+This is the same as the default directory that `install_cmdstan()` uses to
+install the latest version of CmdStan, so if that's how you installed CmdStan
+you shouldn't need to manually set the path to CmdStan when loading CmdStanR.
 
 If neither of these applies (or you want to subsequently change the path) you
 can use the `set_cmdstan_path()` function:

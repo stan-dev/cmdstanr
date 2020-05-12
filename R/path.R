@@ -22,12 +22,13 @@
 #' * If the [environment variable][Sys.setenv()] `"CMDSTAN"` exists at load time
 #' then its value will be automatically set as the default path to CmdStan for
 #' the \R session.
-#' * If no environment variable is found when loaded but the directory
-#' `".cmdstanr/cmdstan"` exists in the user's home directory
-#' (`Sys.getenv("HOME")`, *not* the current working directory) then it will be
-#' set as the path to CmdStan for the \R session. This is the same as the
-#' default directory that [install_cmdstan()] would use to install the latest
-#' version of CmdStan.
+#' * If no environment variable is found when loaded but any directory in the form
+#' `".cmdstanr/cmdstan-[version]"`, for example `".cmdstanr/cmdstan-2.23.0"`,
+#' exists in the user's home directory (`Sys.getenv("HOME")`,
+#' *not* the current working directory) then the path to the cmdstan with the largest
+#' version number will be set as the path to CmdStan for the \R session.
+#' This is the same as the default directory that [install_cmdstan()] would use to
+#' install the latest version of CmdStan.
 #'
 #' It is always possible to change the path after loading the package using
 #' `set_cmdstan_path(path)`.
