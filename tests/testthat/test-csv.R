@@ -117,8 +117,8 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() with save_warmup", {
   draws_array <- posterior::as_draws_array(draws_array)
   csv_output <- read_sample_csv(csv_files)
 
-  warmup_iter <- csv_output$sampling_info$num_warmup
-  num_iter <- csv_output$sampling_info$num_samples+csv_output$sampling_info$num_warmup
+  warmup_iter <- csv_output$sampling_info$iter_warmup
+  num_iter <- csv_output$sampling_info$iter_sampling + csv_output$sampling_info$iter_warmup
 
   draws_array_post_warmup <- draws_array[(warmup_iter+1):num_iter,,]
   draws_array_warmup <- draws_array[1:warmup_iter,,]
@@ -220,11 +220,11 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file", {
   sampler_diagnostics <- readRDS(test_path("answers", "rstan-read-stan-csv-sampler-params.rds"))
   sampler_diagnostics <- posterior::as_draws_array(sampler_diagnostics[[1]])
   csv_output <- read_sample_csv(csv_files)
-  num_warmup <- csv_output$sampling_info$num_warmup/csv_output$sampling_info$thin
+  num_warmup <- csv_output$sampling_info$iter_warmup/csv_output$sampling_info$thin
   if(csv_output$sampling_info$save_warmup) {
-    num_iter <- csv_output$sampling_info$num_samples + csv_output$sampling_info$num_warmup
+    num_iter <- csv_output$sampling_info$iter_sampling + csv_output$sampling_info$iter_warmup
   } else {
-    num_iter <- csv_output$sampling_info$num_samples
+    num_iter <- csv_output$sampling_info$iter_sampling
   }
 
   # match warmup sampler info

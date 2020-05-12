@@ -713,7 +713,7 @@ available_metrics <- function() {
 #' @param arg_name Name of slot in `self` containing the argument value.
 #' @param cmdstan_arg_name Name of corresponding argument for CmdStan (if not
 #'   the same as arg_name). For example for `arg_name="max_treedepth"` we have
-#'   `cmdstan_arg_name="max_depth"` (at least until CmdStan 3).
+#'   `cmdstan_arg_name="max_depth"` (at least until names change in CmdStan 3).
 #' @param idx Chain id (only applicable for MCMC).
 compose_arg <- function(self, arg_name, cmdstan_arg_name = NULL, idx = NULL) {
   val <- self[[arg_name]]
