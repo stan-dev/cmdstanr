@@ -3,10 +3,10 @@
 \name{fit-method-save_output_files}
 \alias{fit-method-save_output_files}
 \alias{fit-method-save_data_file}
-\alias{fit-method-save_diagnostic_files}
+\alias{fit-method-save_latent_dynamics_files}
 \alias{fit-method-output_files}
 \alias{fit-method-data_file}
-\alias{fit-method-diagnostic_files}
+\alias{fit-method-latent_dynamics_files}
 \title{Save output and data files}
 \description{
 All fitted model objects have methods for saving (moving to a
@@ -21,11 +21,11 @@ the current file paths without moving any files.
 }
 \section{Usage}{
 \preformatted{$save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-$save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+$save_latent_dynamics_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 $save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 
 $output_files()
-$diagnostic_files()
+$latent_dynamics_files()
 $data_file()
 }
 }
@@ -53,7 +53,7 @@ the form \code{basename-timestamp-id-random}, where
 \item \code{random} contains six random alphanumeric characters.
 }
 
-For \verb{$save_diagnostic_files()} everything is the same as for
+For \verb{$save_latent_dynamics_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-diagnostic-"} is included in the new
 file name after \code{basename}.
 

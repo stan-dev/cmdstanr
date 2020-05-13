@@ -59,7 +59,7 @@ check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
   }
   TRUE
 }
-  
+
 # paths and extensions ----------------------------------------------------
 
 # Replace `\\` with `/` in a path
@@ -313,7 +313,7 @@ prepare_precompiled <- function(cpp_options, quiet = FALSE) {
     model_header_gch_used <- FALSE
   }
   if (!file.exists(main_path_w_flags)) {
-    
+
     files_to_remove <- c(
       main_path_o,
       main_path_d,
@@ -408,10 +408,10 @@ check_divergences <- function(data_csv) {
 }
 
 check_sampler_transitions_treedepth <- function(data_csv) {
-  if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
+  if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
     treedepth <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
     num_of_draws <- length(treedepth)
-    max_treedepth <- data_csv$sampling_info$max_depth
+    max_treedepth <- data_csv$sampling_info$max_treedepth
     max_treedepth_hit <- sum(treedepth >= max_treedepth)
     if (max_treedepth_hit > 0) {
       percentage_max_treedepth <- (max_treedepth_hit)/num_of_draws*100
@@ -419,8 +419,8 @@ check_sampler_transitions_treedepth <- function(data_csv) {
               " transitions hit the maximum treedepth limit of ", max_treedepth,
               " or 2^", max_treedepth, "-1 leapfrog steps.\n",
               "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
-              "Increasing the max_depth limit can avoid this at the expense of more computation.\n",
-              "If increasing max_depth does not remove warnings, try to reparameterize the model.\n")
+              "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
+              "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n")
     }
   }
 }

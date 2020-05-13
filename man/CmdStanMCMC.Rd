@@ -28,7 +28,7 @@ objects.
 \tab Save output CSV files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{$save_data_file()}}
 \tab Save JSON data file to a specified location. \cr
-\code{\link[=fit-method-save_diagnostic_files]{$save_diagnostic_files()}}
+\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
 \tab Save diagnostic CSV files to a specified location. \cr
 \verb{$time()} \tab Return a list containing the total time and a data frame of
 execution times of all chains. \cr

@@ -4,27 +4,27 @@ if (not_on_cran()) {
   set_cmdstan_path()
   fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize")
   fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 0, metric = "diag_e")
+                          seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
   fit_bernoulli_dense_e_no_samples <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 0, metric = "dense_e")
+                          seed = 123, chains = 2, iter_sampling = 0, metric = "dense_e")
   fit_bernoulli_thin_1 <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1)
+                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
   fit_logistic_thin_1 <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1)
+                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
   fit_logistic_thin_1a <- testing_fit("logistic", method = "sample",
-                                     seed = 123, num_chains = 2, num_samples = 500, num_warmup = 1000, thin = 1)
+                                     seed = 123, chains = 2, iter_sampling = 500, iter_warmup = 1000, thin = 1)
   fit_logistic_thin_1b <- testing_fit("logistic", method = "sample",
-                                      seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 500, thin = 1)
+                                      seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 500, thin = 1)
   fit_logistic_thin_1_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 1, save_warmup = 1)
+                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1, save_warmup = 1)
   fit_logistic_thin_3 <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 3)
+                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 3)
   fit_logistic_thin_3_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 3, save_warmup = 1)
+                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 3, save_warmup = 1)
   fit_logistic_thin_10 <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 10, save_warmup = 0)
+                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 0)
   fit_logistic_thin_10_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, num_chains = 2, num_samples = 1000, num_warmup = 1000, thin = 10, save_warmup = 1)
+                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 1)
 }
 
 test_that("read_sample_csv() fails for different model names", {
@@ -48,7 +48,7 @@ test_that("read_sample_csv() fails for different number of samples in csv", {
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1b$output_files())
   expect_warning(read_sample_csv(csv_files),
-               "The supplied csv files do not match in the following arguments: num_warmup!")
+               "The supplied csv files do not match in the following arguments: iter_warmup!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1_with_warmup$output_files())
   expect_error(read_sample_csv(csv_files),
@@ -117,8 +117,8 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() with save_warmup", {
   draws_array <- posterior::as_draws_array(draws_array)
   csv_output <- read_sample_csv(csv_files)
 
-  warmup_iter <- csv_output$sampling_info$num_warmup
-  num_iter <- csv_output$sampling_info$num_samples+csv_output$sampling_info$num_warmup
+  warmup_iter <- csv_output$sampling_info$iter_warmup
+  num_iter <- csv_output$sampling_info$iter_sampling + csv_output$sampling_info$iter_warmup
 
   draws_array_post_warmup <- draws_array[(warmup_iter+1):num_iter,,]
   draws_array_warmup <- draws_array[1:warmup_iter,,]
@@ -220,11 +220,11 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file", {
   sampler_diagnostics <- readRDS(test_path("answers", "rstan-read-stan-csv-sampler-params.rds"))
   sampler_diagnostics <- posterior::as_draws_array(sampler_diagnostics[[1]])
   csv_output <- read_sample_csv(csv_files)
-  num_warmup <- csv_output$sampling_info$num_warmup/csv_output$sampling_info$thin
+  num_warmup <- csv_output$sampling_info$iter_warmup/csv_output$sampling_info$thin
   if(csv_output$sampling_info$save_warmup) {
-    num_iter <- csv_output$sampling_info$num_samples + csv_output$sampling_info$num_warmup
+    num_iter <- csv_output$sampling_info$iter_sampling + csv_output$sampling_info$iter_warmup
   } else {
-    num_iter <- csv_output$sampling_info$num_samples
+    num_iter <- csv_output$sampling_info$iter_sampling
   }
 
   # match warmup sampler info

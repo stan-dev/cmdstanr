@@ -5,9 +5,9 @@ if (not_on_cran()) {
 
   fits <- list()
   fits[["sample"]] <- testing_fit("logistic", method = "sample",
-                                  seed = 123, save_extra_diagnostics = TRUE)
+                                  seed = 123, save_latent_dynamics = TRUE)
   fits[["variational"]] <- testing_fit("logistic", method = "variational",
-                                       seed = 123, save_extra_diagnostics = TRUE)
+                                       seed = 123, save_latent_dynamics = TRUE)
   fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
   all_methods <- c("sample", "optimize", "variational")
 }
@@ -19,7 +19,7 @@ test_that("*_files() methods return the right number of paths", {
     expect_length(fits[[method]]$output_files(), fits[[method]]$num_runs())
     expect_length(fits[[method]]$data_file(), 1)
     if (method != "optimize") {
-      expect_length(fits[[method]]$diagnostic_files(), fits[[method]]$num_runs())
+      expect_length(fits[[method]]$latent_dynamics_files(), fits[[method]]$num_runs())
     }
   }
 })
@@ -34,7 +34,7 @@ test_that("saving csv output files works", {
 
     expect_message(
       paths <- fit$save_output_files(tempdir(), basename = "testing-output"),
-      paste("Moved", fit$num_runs(), "output files and set internal paths")
+      paste("Moved", fit$num_runs(), "files and set internal paths")
     )
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
@@ -59,19 +59,19 @@ test_that("saving diagnostic csv output works", {
     fit <- fits[[method]]
     if (method == "optimize") {
       expect_error(
-        fit$save_diagnostic_files(),
-        "No diagnostic files found. Set 'save_extra_diagnostics=TRUE' when fitting the model",
+        fit$save_latent_dynamics_files(),
+        "No latent dynamics files found. Set 'save_latent_dynamics=TRUE' when fitting the model",
         fixed = TRUE
       )
       next
     }
 
-    old_paths <- fit$diagnostic_files()
+    old_paths <- fit$latent_dynamics_files()
     checkmate::expect_file_exists(old_paths, extension = "csv")
 
     expect_message(
-      paths <- fit$save_diagnostic_files(tempdir(), basename = "testing-output"),
-      paste("Moved", fit$num_runs(), "diagnostic files and set internal paths")
+      paths <- fit$save_latent_dynamics_files(tempdir(), basename = "testing-output"),
+      paste("Moved", fit$num_runs(), "files and set internal paths")
     )
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
@@ -86,7 +86,7 @@ test_that("saving diagnostic csv output works", {
     }
 
     expect_false(any(file.exists(old_paths)))
-    expect_equal(fit$diagnostic_files(), paths)
+    expect_equal(fit$latent_dynamics_files(), paths)
   }
 })
 

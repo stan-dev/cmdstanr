@@ -41,8 +41,8 @@
 #' fit_mcmc <- mod$sample(
 #'   data = stan_data,
 #'   seed = 123,
-#'   num_chains = 2,
-#'   num_cores = 2
+#'   chains = 2,
+#'   cores = 2
 #' )
 #'
 #' # Use 'posterior' package for summaries
@@ -316,18 +316,18 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     save_extra_diagnostics = FALSE,
+#'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
-#'     num_chains = 4,
-#'     num_cores = getOption("mc.cores", 1),
-#'     num_warmup = NULL,
-#'     num_samples = NULL,
+#'     chains = 4,
+#'     cores = getOption("mc.cores", 1),
+#'     iter_warmup = NULL,
+#'     iter_sampling = NULL,
 #'     save_warmup = FALSE,
 #'     thin = NULL,
-#'     max_depth = NULL,
+#'     max_treedepth = NULL,
 #'     adapt_engaged = TRUE,
 #'     adapt_delta = NULL,
-#'     stepsize = NULL,
+#'     step_size = NULL,
 #'     metric = NULL,
 #'     metric_file = NULL,
 #'     inv_metric = NULL,
@@ -347,11 +347,11 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   to arguments in CmdStan because all CmdStan arguments pertain to the
 #'   execution of a single run only.
 #'
-#'   * `num_chains`: (positive integer) The number of Markov chains to run. The
+#'   * `chains`: (positive integer) The number of Markov chains to run. The
 #'   default is 4.
 #'
-#'   * `num_cores`: (positive integer) The maximum number of cores to use for
-#'   running parallel chains. If `num_cores` is not specified then the default is
+#'   * `cores`: (positive integer) The maximum number of cores to use for
+#'   running parallel chains. If `cores` is not specified then the default is
 #'   to look for the option `"mc.cores"`,
 #'   which can be set for an entire \R session by `options(mc.cores=value)`.
 #'   If the `"mc.cores"` option has not been set then the default is `1`.
@@ -361,15 +361,15 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   Arguments left at `NULL` default to the default used by the installed
 #'   version of CmdStan.
 #'
-#'   * `num_samples`: (positive integer) The number of post-warmup iterations to
+#'   * `iter_sampling`: (positive integer) The number of post-warmup iterations to
 #'   run per chain.
-#'   * `num_warmup`: (positive integer) The number of warmup iterations to run
+#'   * `iter_warmup`: (positive integer) The number of warmup iterations to run
 #'   per chain.
 #'   * `save_warmup`: (logical) Should warmup iterations be saved? The default
 #'   is `FALSE`.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning) unless memory is a problem.
-#'   * `max_depth`: (positive integer) The maximum allowed tree depth for the
+#'   * `max_treedepth`: (positive integer) The maximum allowed tree depth for the
 #'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
 #'   details.
 #'   * `adapt_engaged`: (logical) Do warmup adaptation? The default is `TRUE`.
@@ -380,7 +380,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   `adapt_engaged=FALSE`.
 #'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
 #'   statistic.
-#'   * `stepsize`: (positive real) The _initial_ step size for the discrete
+#'   * `step_size`: (positive real) The _initial_ step size for the discrete
 #'   approximation to continuous Hamiltonian dynamics. This is further tuned
 #'   during warmup.
 #'   * `metric`: (character) One of `"diag_e"`, `"dense_e"`, or `"unit_e"`,
@@ -424,18 +424,18 @@ sample_method <- function(data = NULL,
                           seed = NULL,
                           refresh = NULL,
                           init = NULL,
-                          save_extra_diagnostics = FALSE,
+                          save_latent_dynamics = FALSE,
                           output_dir = NULL,
-                          num_chains = 4,
-                          num_cores = getOption("mc.cores", 1),
-                          num_warmup = NULL,
-                          num_samples = NULL,
+                          chains = 4,
+                          cores = getOption("mc.cores", 1),
+                          iter_warmup = NULL,
+                          iter_sampling = NULL,
                           save_warmup = FALSE,
                           thin = NULL,
-                          max_depth = NULL,
+                          max_treedepth = NULL,
                           adapt_engaged = TRUE,
                           adapt_delta = NULL,
-                          stepsize = NULL,
+                          step_size = NULL,
                           metric = NULL,
                           metric_file = NULL,
                           inv_metric = NULL,
@@ -443,23 +443,63 @@ sample_method <- function(data = NULL,
                           term_buffer = NULL,
                           window = NULL,
                           fixed_param = FALSE,
-                          validate_csv = TRUE) {
+                          validate_csv = TRUE,
+                          # deprecated
+                          num_cores = NULL,
+                          num_chains = NULL,
+                          num_warmup = NULL,
+                          num_samples = NULL,
+                          save_extra_diagnostics = NULL,
+                          max_depth = NULL,
+                          stepsize = NULL) {
 
-  checkmate::assert_integerish(num_chains, lower = 1, len = 1)
   if (fixed_param) {
-    num_chains <- 1
-    num_cores <- 1
+    chains <- 1
+    cores <- 1
     save_warmup <- FALSE
   }
+
+  # temporary deprecation warnings
+  if (!is.null(num_cores)) {
+    warning("'num_cores' is deprecated. Please use 'cores' instead.")
+    cores <- num_cores
+  }
+  if (!is.null(num_chains)) {
+    warning("'num_chains' is deprecated. Please use 'chains' instead.")
+    chains <- num_chains
+  }
+  if (!is.null(num_warmup)) {
+    warning("'num_warmup' is deprecated. Please use 'iter_warmup' instead.")
+    iter_warmup <- num_warmup
+  }
+  if (!is.null(num_samples)) {
+    warning("'num_samples' is deprecated. Please use 'iter_sampling' instead.")
+    iter_sampling <- num_samples
+  }
+  if (!is.null(max_depth)) {
+    warning("'max_depth' is deprecated. Please use 'max_treedepth' instead.")
+    max_treedepth <- max_depth
+  }
+  if (!is.null(stepsize)) {
+    warning("'stepsize' is deprecated. Please use 'step_size' instead.")
+    step_size <- stepsize
+  }
+  if (!is.null(save_extra_diagnostics)) {
+    warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
+    save_latent_dynamics <- save_extra_diagnostics
+  }
+
+  checkmate::assert_integerish(chains, lower = 1, len = 1)
+
   sample_args <- SampleArgs$new(
-    num_warmup = num_warmup,
-    num_samples = num_samples,
+    iter_warmup = iter_warmup,
+    iter_sampling = iter_sampling,
     save_warmup = save_warmup,
     thin = thin,
-    max_depth = max_depth,
+    max_treedepth = max_treedepth,
     adapt_engaged = adapt_engaged,
     adapt_delta = adapt_delta,
-    stepsize = stepsize,
+    step_size = step_size,
     metric = metric,
     metric_file = metric_file,
     inv_metric = inv_metric,
@@ -472,17 +512,17 @@ sample_method <- function(data = NULL,
     method_args = sample_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    run_ids = seq_len(num_chains),
+    run_ids = seq_len(chains),
     data_file = process_data(data),
-    save_extra_diagnostics = save_extra_diagnostics,
+    save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
     validate_csv = validate_csv
   )
-  cmdstan_procs <- CmdStanProcs$new(num_chains, num_cores)
-  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = cores)
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
 }
@@ -514,7 +554,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     save_extra_diagnostics = FALSE,
+#'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
@@ -546,7 +586,7 @@ optimize_method <- function(data = NULL,
                             seed = NULL,
                             refresh = NULL,
                             init = NULL,
-                            save_extra_diagnostics = FALSE,
+                            save_latent_dynamics = FALSE,
                             output_dir = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
@@ -562,7 +602,7 @@ optimize_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = 1,
     data_file = process_data(data),
-    save_extra_diagnostics = save_extra_diagnostics,
+    save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -570,7 +610,7 @@ optimize_method <- function(data = NULL,
   )
 
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
-  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
 
   message(
@@ -606,7 +646,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     seed = NULL,
 #'     refresh = NULL,
 #'     init = NULL,
-#'     save_extra_diagnostics = FALSE,
+#'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
 #'     algorithm = NULL,
 #'     iter = NULL,
@@ -634,8 +674,8 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   estimate of gradients.
 #'   * `elbo_samples`: (positive integer) The number of samples for Monte Carlo
 #'   estimate of ELBO (objective function).
-#'   * `eta`: (positive real) The stepsize weighting parameter for adaptive
-#'   stepsize sequence.
+#'   * `eta`: (positive real) The step size weighting parameter for adaptive
+#'   step size sequence.
 #'   * `adapt_engaged`: (logical) Do warmup adaptation?
 #'   * `adapt_iter`: (positive integer) The _maximum_ number of adaptation
 #'   iterations.
@@ -656,7 +696,7 @@ variational_method <- function(data = NULL,
                                seed = NULL,
                                refresh = NULL,
                                init = NULL,
-                               save_extra_diagnostics = FALSE,
+                               save_latent_dynamics = FALSE,
                                output_dir = NULL,
                                algorithm = NULL,
                                iter = NULL,
@@ -686,7 +726,7 @@ variational_method <- function(data = NULL,
     exe_file = self$exe_file(),
     run_ids = 1,
     data_file = process_data(data),
-    save_extra_diagnostics = save_extra_diagnostics,
+    save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -694,7 +734,7 @@ variational_method <- function(data = NULL,
   )
 
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
-  runset <- CmdStanRun$new(cmdstan_args, cmdstan_procs)
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
 
   message(
