@@ -75,8 +75,8 @@ stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit_mcmc <- mod$sample(
   data = stan_data,
   seed = 123,
-  num_chains = 2,
-  num_cores = 2
+  chains = 2,
+  cores = 2
 )
 
 # Use 'posterior' package for summaries

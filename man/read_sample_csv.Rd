@@ -14,7 +14,7 @@ read_sample_csv(output_files, cores = getOption("mc.cores", 1))
 \value{
 The list of sampling arguments, the diagonal of the inverse mass
 matrix, the post-warmup samples, the sampling parameters and warmup samples
-if the run was run with save_warmup = 1.
+if the run was run with \code{save_warmup = 1}.
 }
 \description{
 Read sampling results from the supplied CSV files. Returns a list containing

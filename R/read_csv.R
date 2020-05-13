@@ -13,15 +13,15 @@ check_sampling_csv_info_matches <- function(a, b) {
   if ((length(a$model_params)!= length(b$model_params)) || !(all(a$model_params == b$model_params) && all(a$sampler_diagnostics == b$sampler_diagnostics))) {
     return(list(error = "Supplied CSV files have samples for different parameters!"))
   }
-  if(a$num_samples != b$num_samples ||
-    a$thin != b$thin ||
-    a$save_warmup != b$save_warmup ||
-    (a$save_warmup == 1 && a$num_warmup != b$num_warmup)) {
-      return(list(error = "Supplied CSV files dont match in the number of stored samples!"))
+  if (a$iter_sampling != b$iter_sampling ||
+      a$thin != b$thin ||
+      a$save_warmup != b$save_warmup ||
+      (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
+    return(list(error = "Supplied CSV files dont match in the number of stored samples!"))
   }
   match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
-                  "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_depth",
-                  "metric", "stepsize", "stepsize_jitter", "adapt_engaged", "adapt_delta", "num_warmup")
+                  "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_treedepth",
+                  "metric", "step_size", "stepsize_jitter", "adapt_engaged", "adapt_delta", "iter_warmup")
   not_matching <- c()
   for (name in names(a)) {
     if ((name %in% match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
@@ -59,13 +59,13 @@ read_sample_info_csv <- function(csv_file) {
         csv_file_info[["model_params"]] <- c()
         for(x in all_names) {
           if (csv_file_info$algorithm != "fixed_param") {
-            if (endsWith(x, "__") && x != "lp__"){
+            if (endsWith(x, "__") && x != "lp__") {
               csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
             } else {
               csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
             }
           } else {
-            if (!endsWith(x, "__")){
+            if (!endsWith(x, "__")) {
               csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
             }
           }
@@ -136,16 +136,27 @@ read_sample_info_csv <- function(csv_file) {
     cols <- length(csv_file_info$inverse_metric)/inverse_metric_rows
     dim(csv_file_info$inverse_metric) <- c(rows,cols)
   }
+
+  # rename from old cmdstan names to new cmdstanX names
   csv_file_info$model_name <- csv_file_info$model
-  csv_file_info$model <- NULL
   csv_file_info$adapt_engaged <- csv_file_info$engaged
   csv_file_info$adapt_delta <- csv_file_info$delta
+  csv_file_info$max_treedepth <- csv_file_info$max_depth
+  csv_file_info$step_size <- csv_file_info$stepsize
+  csv_file_info$iter_warmup <- csv_file_info$num_warmup
+  csv_file_info$iter_sampling <- csv_file_info$num_samples
+  csv_file_info$model <- NULL
   csv_file_info$engaged <- NULL
   csv_file_info$delta <- NULL
+  csv_file_info$max_depth <- NULL
+  csv_file_info$stepsize <- NULL
+  csv_file_info$num_warmup <- NULL
+  csv_file_info$num_samples <- NULL
   csv_file_info$file <- NULL
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
-  return(csv_file_info)
+
+  csv_file_info
 }
 
 #' Read sampling results from the supplied CSV files
@@ -161,7 +172,7 @@ read_sample_info_csv <- function(csv_file) {
 #'
 #' @return The list of sampling arguments, the diagonal of the inverse mass
 #' matrix, the post-warmup samples, the sampling parameters and warmup samples
-#' if the run was run with save_warmup = 1.
+#' if the run was run with `save_warmup = 1`.
 #'
 read_sample_csv <- function(output_files, cores = getOption("mc.cores", 1)) {
   sampling_info <- NULL
@@ -169,9 +180,9 @@ read_sample_csv <- function(output_files, cores = getOption("mc.cores", 1)) {
   warmup_sampler_diagnostics_draws <- NULL
   post_warmup_draws <- NULL
   post_warmup_sampler_diagnostics_draws <- NULL
-  inverse_metric = list()
-  step_size = list()
-  not_matching = c()
+  inverse_metric <- list()
+  step_size <- list()
+  not_matching <- c()
   for(output_file in output_files) {
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
     # read meta data
@@ -187,14 +198,12 @@ read_sample_csv <- function(output_files, cores = getOption("mc.cores", 1)) {
     } else {
       csv_file_info <- read_sample_info_csv(output_file)
       # check if sampling info matches
-      check <- check_sampling_csv_info_matches(sampling_info,
-                                  csv_file_info)
+      check <- check_sampling_csv_info_matches(sampling_info, csv_file_info)
       if (!is.null(check$error)) {
         stop(check$error)
       }
       not_matching <- c(not_matching, check$not_matching)
-      sampling_info$id <- c(sampling_info$id,
-                            csv_file_info$id)
+      sampling_info$id <- c(sampling_info$id, csv_file_info$id)
 
       if (!is.null(csv_file_info$inverse_metric)) {
         inverse_metric[[csv_file_info$id]] <- csv_file_info$inverse_metric
@@ -213,8 +222,8 @@ read_sample_csv <- function(output_files, cores = getOption("mc.cores", 1)) {
     }
     draws <- draws[!is.na(draws$lp__),]
     if (nrow(draws) > 0) {      
-      num_warmup_draws <- ceiling(sampling_info$num_warmup/sampling_info$thin)
-      num_post_warmup_draws <- ceiling(sampling_info$num_samples/sampling_info$thin)
+      num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
+      num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
 
       if (sampling_info$save_warmup == 1) {
@@ -279,7 +288,7 @@ read_sample_csv <- function(output_files, cores = getOption("mc.cores", 1)) {
   if (!is.null(post_warmup_draws)){
     dimnames(post_warmup_draws)$variable <- repair_variable_names(sampling_info$model_params)
   }
-  if(length(not_matching) > 0) {
+  if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
   }

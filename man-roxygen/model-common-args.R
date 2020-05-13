@@ -17,16 +17,16 @@
 #'     - A character vector of paths (one per chain) to JSON or Rdump files. See
 #'       [write_stan_json()] to write \R objects to JSON files compatible with
 #'       CmdStan.
-#'   * `save_extra_diagnostics`: (logical) Should auxiliary diagnostic information
-#'   (beyond standard diagnostics) be written to temporary diagnostic CSV files?
+#'   * `save_latent_dynamics`: (logical) Should auxiliary diagnostic information
+#'   about the latent dynamics be written to temporary diagnostic CSV files?
 #'   This argument replaces CmdStan's `diagnostic_file` argument and the content
 #'   written to CSV is controlled by the user's CmdStan installation and not
 #'   CmdStanR (and for some algorithms no content may be written). The default
-#'   is `save_extra_diagnostics=FALSE`, which is appropriate for almost every use case
+#'   is `save_latent_dynamics=FALSE`, which is appropriate for almost every use case
 #'   (all diagnostics recommended for users to check are _always_ saved, e.g.,
 #'   divergences for HMC). To save the temporary files created when
-#'   `save_extra_diagnostics=TRUE` see the
-#'   [`$save_diagnostic_files()`][fit-method-save_diagnostic_files] method.
+#'   `save_latent_dynamics=TRUE` see the
+#'   [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] method.
 #'
 #'   * `output_dir`: (string) A path to a directory where CmdStan should write
 #'   its output CSV files. For interactive use this can typically be left at
@@ -39,5 +39,5 @@
 #'       [`$save_output_files()`][fit-method-save_output_files]).
 #'     - If a path then the files are created in `output_dir` with names
 #'       corresponding the defaults used by `$save_output_files()` (and similar
-#'       methods like `$save_diagnostic_files()`).
+#'       methods like `$save_latent_dynamics_files()`).
 #'

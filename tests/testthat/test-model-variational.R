@@ -21,7 +21,7 @@ if (not_on_cran()) {
     tol_rel_obj = 0.011,
     eval_elbo = 101,
     output_samples = 10,
-    save_extra_diagnostics = FALSE
+    save_latent_dynamics = FALSE
   )
 
   # using any one of these should cause variational() to error
@@ -40,7 +40,7 @@ if (not_on_cran()) {
     tol_rel_obj = -0.5,
     eval_elbo = -10,
     output_samples = -10,
-    save_extra_diagnostics = "NOT_LOGICAL"
+    save_latent_dynamics = "NOT_LOGICAL"
   )
 }
 

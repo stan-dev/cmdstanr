@@ -71,8 +71,8 @@ CmdStanFit <- R6::R6Class(
     output_files = function() {
       self$runset$output_files()
     },
-    diagnostic_files = function() {
-      self$runset$diagnostic_files()
+    latent_dynamics_files = function() {
+      self$runset$latent_dynamics_files()
     },
     data_file = function() {
       self$runset$data_file()
@@ -83,11 +83,11 @@ CmdStanFit <- R6::R6Class(
                                  random = TRUE) {
       self$runset$save_output_files(dir, basename, timestamp, random)
     },
-    save_diagnostic_files = function(dir = ".",
+    save_latent_dynamics_files = function(dir = ".",
                                      basename = NULL,
                                      timestamp = TRUE,
                                      random = TRUE) {
-      self$runset$save_diagnostic_files(dir, basename, timestamp, random)
+      self$runset$save_latent_dynamics_files(dir, basename, timestamp, random)
     },
     save_data_file = function(dir = ".",
                               basename = NULL,
@@ -206,8 +206,8 @@ NULL
 #' Save output and data files
 #'
 #' @name fit-method-save_output_files
-#' @aliases fit-method-save_data_file fit-method-save_diagnostic_files
-#'   fit-method-output_files fit-method-data_file fit-method-diagnostic_files
+#' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
+#'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files
 #'
 #' @description All fitted model objects have methods for saving (moving to a
 #'   specified location) the files created by CmdStanR to hold CmdStan output
@@ -222,11 +222,11 @@ NULL
 #' @section Usage:
 #'   ```
 #'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-#'   $save_diagnostic_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+#'   $save_latent_dynamics_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 #'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 #'
 #'   $output_files()
-#'   $diagnostic_files()
+#'   $latent_dynamics_files()
 #'   $data_file()
 #'   ```
 #'
@@ -246,7 +246,7 @@ NULL
 #' * `id` is the MCMC chain id (or `1` for non MCMC);
 #' * `random` contains six random alphanumeric characters.
 #'
-#' For `$save_diagnostic_files()` everything is the same as for
+#' For `$save_latent_dynamics_files()` everything is the same as for
 #' `$save_output_files()` except `"-diagnostic-"` is included in the new
 #' file name after `basename`.
 #'
@@ -299,7 +299,7 @@ NULL
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`$save_data_file()`][fit-method-save_data_file]
 #'    \tab Save JSON data file to a specified location. \cr
-#'  [`$save_diagnostic_files()`][fit-method-save_diagnostic_files]
+#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
 #'  `$time()` \tab Return a list containing the total time and a data frame of
 #'    execution times of all chains. \cr
@@ -320,7 +320,7 @@ CmdStanMCMC <- R6::R6Class(
       } else {
         if (self$runset$args$validate_csv) {
           private$read_csv_(diagnostic_warnings = !runset$args$method_args$fixed_param)
-        }        
+        }
       }
     },
     num_chains = function() {
@@ -474,7 +474,7 @@ CmdStanMLE <- R6::R6Class(
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`$save_data_file()`][fit-method-save_data_file]
 #'    \tab Save JSON data file to a specified location. \cr
-#'  [`$save_diagnostic_files()`][fit-method-save_diagnostic_files]
+#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
 #' }
 #'

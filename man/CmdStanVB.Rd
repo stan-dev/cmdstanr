@@ -28,7 +28,7 @@ variational approximation to the posterior evaluated at each of the draws. \cr
 \tab Save output CSV files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{$save_data_file()}}
 \tab Save JSON data file to a specified location. \cr
-\code{\link[=fit-method-save_diagnostic_files]{$save_diagnostic_files()}}
+\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
 \tab Save diagnostic CSV files to a specified location. \cr
 }
 }
