@@ -215,7 +215,7 @@ read_sample_csv <- function(output_files, cores = getOption("mc.cores", 1)) {
     }
     # read sampling data
     suppressWarnings(      
-      draws <- vroom::vroom(output_file, comment = "# ", delim = ',', trim_ws = TRUE, col_types = c(lp__ = "d"), num_threads = cores)
+      draws <- vroom::vroom(output_file, comment = "# ", delim = ',', trim_ws = TRUE, col_types = c(lp__ = "d"), num_threads = cores, altrep = FALSE)
     )
     if(ncol(draws) == 0) {
       stop("The supplied csv file does not contain any sampling data!")
