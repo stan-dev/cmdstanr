@@ -157,6 +157,7 @@ read_sample_info_csv <- function(csv_file) {
 #'
 #' @export
 #' @param output_files Paths to the CSV files to read.
+#' @param cores The number of cores to use to read and process the output files
 #'
 #' @return The list of sampling arguments, the diagonal of the inverse mass
 #' matrix, the post-warmup samples, the sampling parameters and warmup samples

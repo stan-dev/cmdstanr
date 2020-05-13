@@ -4,10 +4,12 @@
 \alias{read_sample_csv}
 \title{Read sampling results from the supplied CSV files}
 \usage{
-read_sample_csv(output_files)
+read_sample_csv(output_files, cores = getOption("mc.cores", 1))
 }
 \arguments{
 \item{output_files}{Paths to the CSV files to read.}
+
+\item{cores}{The number of cores to use to read and process the output files}
 }
 \value{
 The list of sampling arguments, the diagonal of the inverse mass
