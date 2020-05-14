@@ -174,7 +174,7 @@ read_sample_info_csv <- function(csv_file) {
 #' matrix, the post-warmup samples, the sampling parameters and warmup samples
 #' if the run was run with `save_warmup = 1`.
 #'
-read_sample_csv <- function(output_files, col_select = NULL, cores = getOption("mc.cores", 1)) {
+read_sample_csv <- function(output_files, parameters = TRUE, sampler_diagnostics = TRUE, cores = getOption("mc.cores", 1)) {
   sampling_info <- NULL
   warmup_draws <- NULL
   warmup_sampler_diagnostics_draws <- NULL
@@ -183,6 +183,7 @@ read_sample_csv <- function(output_files, col_select = NULL, cores = getOption("
   inverse_metric <- list()
   step_size <- list()
   col_types <- NULL
+  col_select <- NULL
   not_matching <- c()
   for(output_file in output_files) {
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
@@ -214,21 +215,50 @@ read_sample_csv <- function(output_files, col_select = NULL, cores = getOption("
       }
       id <- csv_file_info$id
     }
-    if(is.null(col_select)) {
-      col_select <- c("lp__", sampling_info$sampler_diagnostics, sampling_info$model_params[sampling_info$model_params!="lp__"])
-    } else {
-      if (!("lp__" %in% col_select)) {
-        col_select <- c("lp__", col_select)
+    if(!is.logical(parameters) && !is.null(parameters)) {
+      for(p in parameters) {
+        if (!(p %in% sampling_info$model_params)) {
+          stop(paste0("The specified parameter ", p, "  was not found in the sampling output!"))
+        }
       }
     }
-    selected_sampler_diagnostics <- sampling_info$sampler_diagnostics[sampling_info$sampler_diagnostics %in% col_select]
-    selected_model_params <- sampling_info$model_params[sampling_info$model_params %in% col_select]
-    col_types <- setNames(rep("d", length(col_select)), col_select)
-    integers <- c("treedepth__", "n_leapfrog__", "divergent__")
-    for (i in integers) {
-      if (!is.null(col_types[i])) {
-        col_types[i] <- "i"
+    if(!is.logical(sampler_diagnostics) && !is.null(sampler_diagnostics)) {
+      for(p in sampler_diagnostics) {
+        if (!(p %in% sampling_info$sampler_diagnostics)) {
+          if (p == "lp__") {
+            stop("lp__ is a part of model parameters not sampler diagnostics.")
+          } else {
+            stop(paste0("The specified sampler diagnostic ", p, "  was not found in the sampling output!"))
+          }          
+        }
       }
+    }
+    if(is.null(col_select)) {
+      col_select <- "lp__"
+      # filter out lp__ to not repeat it
+      parameters <- parameters[parameters!="lp__"] 
+      if (is.logical(sampler_diagnostics) && sampler_diagnostics == TRUE) {
+        col_select <- c(col_select, sampling_info$sampler_diagnostics)
+      } else if(!is.logical(sampler_diagnostics) && !is.null(sampler_diagnostics)) {
+        col_select <- c(col_select, sampler_diagnostics)
+      }
+      if (is.logical(parameters) && parameters == TRUE) {
+        col_select <- c(col_select, sampling_info$model_params[sampling_info$model_params!="lp__"])
+      } else if(!is.logical(parameters) && !is.null(parameters)) {
+        col_select <- c(col_select, parameters)
+      }
+      selected_sampler_diagnostics <- sampling_info$sampler_diagnostics[sampling_info$sampler_diagnostics %in% col_select]
+      selected_model_params <- sampling_info$model_params[sampling_info$model_params %in% col_select]
+      col_types <- setNames(rep("d", length(col_select)), col_select)
+      integers <- c("treedepth__", "n_leapfrog__", "divergent__")
+      for (i in integers) {
+        if (!is.null(col_types[i])) {
+          col_types[i] <- "i"
+        }
+      }
+    }
+    if (length(sampling_info$sampler_diagnostics) == 0 && length(sampling_info$model_params) == 0) {
+      stop("The supplied csv file does not contain any parameter names or data!")
     }
     suppressWarnings(      
       draws <- vroom::vroom(output_file,
@@ -249,56 +279,67 @@ read_sample_csv <- function(output_files, col_select = NULL, cores = getOption("
       num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
       if (sampling_info$save_warmup == 1) {
-
-        new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, selected_model_params])
-        if (is.null(warmup_draws)) {
-          warmup_draws <- new_warmup_draws
-        } else {
-          warmup_draws <- posterior::bind_draws(warmup_draws,
-                                                new_warmup_draws,
-                                                along="chain")
+        if(length(selected_model_params) > 0) {
+          new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, selected_model_params])
+          if (is.null(warmup_draws)) {
+            warmup_draws <- new_warmup_draws
+          } else {
+            warmup_draws <- posterior::bind_draws(warmup_draws,
+                                                  new_warmup_draws,
+                                                  along="chain")
+          }
         }
-        new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, selected_sampler_diagnostics])
-        if (is.null(warmup_sampler_diagnostics_draws)) {
-          warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
-        } else {
-          warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
-                                                                    new_warmup_sampler_diagnostics_draws,
-                                                                    along="chain")
+        if(length(selected_sampler_diagnostics) > 0) {
+          new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, selected_sampler_diagnostics])
+          if (is.null(warmup_sampler_diagnostics_draws)) {
+            warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
+          } else {
+            warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
+                                                                      new_warmup_sampler_diagnostics_draws,
+                                                                      along="chain")
+          }
         }
-        new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, selected_model_params])
-        if (is.null(post_warmup_draws)) {
-          post_warmup_draws <- new_post_warmup_draws
-        } else {
-          post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
+        if(length(selected_model_params) > 0) {
+          new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, selected_model_params])
+          if (is.null(post_warmup_draws)) {
+            post_warmup_draws <- new_post_warmup_draws
+          } else {
+            post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
+          }
         }
-        new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, selected_sampler_diagnostics])
-        if (is.null(post_warmup_sampler_diagnostics_draws)) {
-          post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
-        } else {
-          post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                         new_post_warmup_sampler_diagnostics_draws,
-                                                                         along="chain")
-        }
-      } else {
-        warmup_draws <- NULL
-        warmup_sampler_diagnostics_draws <- NULL
-        new_post_warmup_draws <- posterior::as_draws_array(draws[, selected_model_params])
-        if (is.null(post_warmup_draws)) {
-          post_warmup_draws <- new_post_warmup_draws
-        } else {
-          post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
-                                                     new_post_warmup_draws,
-                                                     along="chain")
-        }
-        if (sampling_info$algorithm != "fixed_param") {
-          new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, selected_sampler_diagnostics])
+        if(length(selected_sampler_diagnostics) > 0) {
+          new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, selected_sampler_diagnostics])
           if (is.null(post_warmup_sampler_diagnostics_draws)) {
             post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
           } else {
             post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
                                                                           new_post_warmup_sampler_diagnostics_draws,
                                                                           along="chain")
+          }
+        }
+      } else {
+        warmup_draws <- NULL
+        warmup_sampler_diagnostics_draws <- NULL
+        if(length(selected_model_params) > 0) {
+          new_post_warmup_draws <- posterior::as_draws_array(draws[, selected_model_params])
+          if (is.null(post_warmup_draws)) {
+            post_warmup_draws <- new_post_warmup_draws
+          } else {
+            post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
+                                                      new_post_warmup_draws,
+                                                      along="chain")
+          }
+        }
+        if (sampling_info$algorithm != "fixed_param") {
+          if(length(selected_sampler_diagnostics) > 0) {
+            new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, selected_sampler_diagnostics])
+            if (is.null(post_warmup_sampler_diagnostics_draws)) {
+              post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
+            } else {
+              post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
+                                                                            new_post_warmup_sampler_diagnostics_draws,
+                                                                            along="chain")
+            }
           }
         }
       }
@@ -369,4 +410,26 @@ repair_variable_names <- function(names) {
   names[grep("\\[", names)] <-
     paste0(names[grep("\\[", names)], "]")
   names
+}
+
+remaining_columns_to_read <- function(requested, currently_read, all_columns) {
+  if (is.null(requested)) {
+    return(FALSE)
+  }
+  if (is.logical(requested)) {
+    if (requested == FALSE) {
+      return(FALSE)
+    }
+    if (is.null(all_columns)) {
+        return(TRUE)
+    }
+    requested <- all_columns
+  }
+  unread <- pmatch(requested, currently_read)
+  unread <- requested[is.na(unread)]
+  if (length(unread) > 0) {
+    return(unread)
+  } else {
+    return(FALSE)
+  }
 }

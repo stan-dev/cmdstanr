@@ -4,7 +4,11 @@
 \alias{read_sample_csv}
 \title{Read sampling results from the supplied CSV files}
 \usage{
-read_sample_csv(output_files, cores = getOption("mc.cores", 1))
+read_sample_csv(
+  output_files,
+  col_select = NULL,
+  cores = getOption("mc.cores", 1)
+)
 }
 \arguments{
 \item{output_files}{Paths to the CSV files to read.}

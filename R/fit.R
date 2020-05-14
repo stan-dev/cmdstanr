@@ -320,7 +320,8 @@ CmdStanMCMC <- R6::R6Class(
       } else {
         if (self$runset$args$validate_csv && !runset$args$method_args$fixed_param) {
           data_csv <- read_sample_csv(self$output_files(),
-                                      col_select = c("lp__", "treedepth__", "divergent__"),
+                                      parameters = FALSE,
+                                      sampler_diagnostics = c("treedepth__", "divergent__"),
                                       cores = self$runset$procs$num_cores()
           )
           check_divergences(data_csv)
@@ -339,9 +340,9 @@ CmdStanMCMC <- R6::R6Class(
       }
     },
 
-    draws = function(inc_warmup = FALSE) {
+    draws = function(inc_warmup = FALSE, parameters = TRUE) {
       if (is.null(private$draws_)) {
-        private$read_csv_()
+        private$read_csv_(parameters = parameters, sampler_diagnostics = FALSE)
       }
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
@@ -354,8 +355,8 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     sampler_diagnostics = function(inc_warmup = FALSE) {
-      if (is.null(private$draws_)) {
-        private$read_csv_()
+      if (is.null(private$sampler_diagnostics_)) {
+        private$read_csv_(parameters = FALSE, sampler_diagnostics = TRUE)
       }
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
@@ -368,23 +369,49 @@ CmdStanMCMC <- R6::R6Class(
     }
   ),
   private = list(
+    read_sampler_diagnostics_ = NULL,
+    read_parameters_ = NULL,
     sampler_diagnostics_ = NULL,
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     draws_ = NULL,
-    read_csv_ = function() {
+    sampling_info_ = NULL,
+    read_csv_ = function(parameters = TRUE, sampler_diagnostics = TRUE) {
+      parameters_to_read <- remaining_columns_to_read(parameters, private$read_sampler_diagnostics_, private$sampling_info_$model_params)
+      sampler_diagnostics_to_read <- remaining_columns_to_read(sampler_diagnostics, private$sampler_diagnostics_, private$sampling_info_$sampler_diagnostics)
       if (!length(self$output_files())) {
         stop("No chains finished successfully. Unable to retrieve the fit.",
              call. = FALSE)
       }
-      data_csv <- read_sample_csv(self$output_files(), cores = self$runset$procs$num_cores())
-      private$draws_ <- data_csv$post_warmup_draws
-      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
+      data_csv <- read_sample_csv(self$output_files(),
+                                  parameters = unread_parameters,
+                                  sampler_diagnostics = sampler_diagnostics,
+                                  cores = self$runset$procs$num_cores())
       private$sampling_info_ <- data_csv$sampling_info
+      if(!is.null(data_csv$post_warmup_draws)) {
+        private$draws_ <- data_csv$post_warmup_draws
+        if (is.logical(parameters) && parameters == TRUE) {
+          private$read_parameters_ <- private$sampling_info_$model_params
+        } else if(!is.logical(parameters) && !is.null(parameters)) {
+          private$read_parameters_ <- c(private$read_parameters_, parameters)
+        }
+      }
+      if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
+        private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
+        if (is.logical(sampler_diagnostics) && sampler_diagnostics == TRUE) {
+          private$read_sampler_diagnostics_ <- private$sampling_info_$sampler_diagnostics
+        } else if(!is.logical(sampler_diagnostics) && !is.null(sampler_diagnostics)) {
+          private$read_sampler_diagnostics_ <- c(private$read_sampler_diagnostics_, sampler_diagnostics)
+        }
+      }
       if (!is.null(data_csv$sampling_info$save_warmup)
          && data_csv$sampling_info$save_warmup) {
-        private$warmup_draws_ <- data_csv$warmup_draws
-        private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+        if(!is.null(data_csv$warmup_draws)) {
+          private$warmup_draws_ <- data_csv$warmup_draws
+        }
+        if(!is.null(data_csv$warmup_sampler_diagnostics)) {
+          private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+        }
       }
       invisible(self)
     }

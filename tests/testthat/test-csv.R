@@ -89,7 +89,7 @@ test_that("read_sample_csv() fails with the no params listed", {
   skip_on_cran()
   file_path <- test_path("resources", "csv", "model1-3-no-params.csv")
   expect_error(read_sample_csv(file_path),
-               "The supplied csv file does not contain any sampling data!")
+               "The supplied csv file does not contain any parameter names or data!")
 })
 
 test_that("read_sample_csv() matches rstan::read_stan_csv()", {
@@ -275,6 +275,29 @@ test_that("read_sample_csv() works with thin", {
   expect_equal(dim(csv_output_10_with_warmup$warmup_draws), c(100, 2, 5))
 })
 
+test_that("read_sample_csv() works with filtered parameters", {
+  skip_on_cran()
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = TRUE, sampler_diagnostics = FALSE)
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 5))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = FALSE, sampler_diagnostics = FALSE)
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 1)) # lp__ is always read
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = FALSE, sampler_diagnostics = TRUE)
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 1))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 6))
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = c("lp__", "alpha"), sampler_diagnostics = FALSE)
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = FALSE, sampler_diagnostics = c("n_leapfrog__", "divergent__"))
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 1)) # lp__ is always read
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = c("lp__", "alpha"), sampler_diagnostics = c("n_leapfrog__", "divergent__"))
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
+
+})
+
 test_that("read_sample_csv() works with no samples", {
   skip_on_cran()
 
@@ -293,3 +316,25 @@ test_that("read_sample_csv() reads values up to adaptation", {
   expect_equal(csv_out$sampling_info$pi, 3.14)
   expect_true(is.null(csv_out$sampling_info$pi_square))
 })
+
+test_that("remaining_columns_to_read() works", {
+  expect_false(remaining_columns_to_read(FALSE, NULL, NULL))
+  expect_false(remaining_columns_to_read(FALSE, NULL, c("a")))
+  expect_false(remaining_columns_to_read(FALSE, c("a"), c("a")))
+  expect_false(remaining_columns_to_read(FALSE, c("a"), c("a", "b", "c")))
+  expect_false(remaining_columns_to_read(FALSE, NULL, NULL))
+
+  expect_true(remaining_columns_to_read(TRUE, NULL, NULL))
+  expect_equal(remaining_columns_to_read(TRUE, NULL, c("a")), "a")
+  expect_equal(remaining_columns_to_read(TRUE, c("a"), c("a")), FALSE)
+  expect_equal(remaining_columns_to_read(TRUE, c("b"), c("a", "b", "c")), c("a", "c"))
+  expect_equal(remaining_columns_to_read(TRUE, c("b", "c"), c("a", "b", "c")), c("a"))
+
+  expect_equal(remaining_columns_to_read(c("a"), NULL, NULL), c("a"))
+  expect_equal(remaining_columns_to_read(c("a"), NULL, c("a")), c("a"))
+  expect_equal(remaining_columns_to_read(c("a"), c("a"), c("a")), FALSE)
+  expect_equal(remaining_columns_to_read(c("a"), c("b"), c("a", "b", "c")), c("a"))
+  expect_equal(remaining_columns_to_read(c("a", "b"), c("b", "c"), c("a", "b", "c")), c("a"))
+  expect_equal(remaining_columns_to_read(c("a", "b"), c("a", "b"), c("a", "b", "c")), FALSE)
+})
+
