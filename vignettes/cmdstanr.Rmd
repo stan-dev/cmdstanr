@@ -85,13 +85,11 @@ can use the `set_cmdstan_path()` function:
 set_cmdstan_path(PATH_TO_CMDSTAN)
 ```
 
-If you need to check or get the current path to CmdStan use the 
-`cmdstan_path()` function.
+To check the path to the CmdStan installation and the CmdStan version number
+you can use `cmdstan_path()` and `cmdstan_version()`:
 
-To verify the version of CmdStan you are using, use the `cmdstan_version()`
-function.
-
-```{r cmdstan_version}
+```{r cmdstan_path}
+cmdstan_path()
 cmdstan_version()
 ```
 
@@ -158,8 +156,16 @@ method creates [R6](https://r6.r-lib.org/)
 [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 objects.
 
-The `$draws()` method can be used to extract the posterior draws as a 3-D array
-(iteration x chain x variable):
+The [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
+method calls `summarise_draws()` from the **posterior** package: 
+
+```{r summary}
+fit$summary()
+```
+
+The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
+method can be used to extract the posterior draws as a 3-D array (iteration x
+chain x variable):
 
 ```{r draws}
 # this is a draws_array object from the posterior package
@@ -167,12 +173,16 @@ draws <- fit$draws()
 str(draws)
 ```
 
-The [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
-method calls `summarise_draws()` from the **posterior** package: 
+The
+[`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html)
+method extracts the values of the sampler parameters (`treedepth__`,
+`divergent__`, etc.) as a 3-D array (iteration x chain x variable):
 
-```{r summary}
-fit$summary()
+```{r sampler_diagnostics}
+# this is a draws_array object from the posterior package
+str(fit$sampler_diagnostics())
 ```
+
 
 The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
 and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
