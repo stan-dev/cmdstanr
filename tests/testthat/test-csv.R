@@ -277,25 +277,29 @@ test_that("read_sample_csv() works with thin", {
 
 test_that("read_sample_csv() works with filtered parameters", {
   skip_on_cran()
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = TRUE, sampler_diagnostics = FALSE)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = NULL, sampler_diagnostics = list())
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 5))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = FALSE, sampler_diagnostics = FALSE)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = list(), sampler_diagnostics = list())
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 1)) # lp__ is always read
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = FALSE, sampler_diagnostics = TRUE)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = list(), sampler_diagnostics = NULL)
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 1))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 6))
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = c("lp__", "alpha"), sampler_diagnostics = FALSE)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = list("lp__", "alpha"), sampler_diagnostics = list())
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = FALSE, sampler_diagnostics = c("n_leapfrog__", "divergent__"))
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = list("lp__", "beta[1]"), sampler_diagnostics = list())
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = list(), sampler_diagnostics = list("n_leapfrog__", "divergent__"))
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 1)) # lp__ is always read
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = c("lp__", "alpha"), sampler_diagnostics = c("n_leapfrog__", "divergent__"))
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), parameters = list("lp__", "alpha"), sampler_diagnostics = list("n_leapfrog__", "divergent__"))
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
-
+  expect_error(read_sample_csv(fit_logistic_thin_1$output_files(), parameters = list("NOPE"), sampler_diagnostics = list("n_leapfrog__", "divergent__")),
+               "The specified parameter NOPE was not found in the sampling output!")
 })
 
 test_that("read_sample_csv() works with no samples", {
@@ -318,23 +322,16 @@ test_that("read_sample_csv() reads values up to adaptation", {
 })
 
 test_that("remaining_columns_to_read() works", {
-  expect_false(remaining_columns_to_read(FALSE, NULL, NULL))
-  expect_false(remaining_columns_to_read(FALSE, NULL, c("a")))
-  expect_false(remaining_columns_to_read(FALSE, c("a"), c("a")))
-  expect_false(remaining_columns_to_read(FALSE, c("a"), c("a", "b", "c")))
-  expect_false(remaining_columns_to_read(FALSE, NULL, NULL))
-
-  expect_true(remaining_columns_to_read(TRUE, NULL, NULL))
-  expect_equal(remaining_columns_to_read(TRUE, NULL, c("a")), "a")
-  expect_equal(remaining_columns_to_read(TRUE, c("a"), c("a")), FALSE)
-  expect_equal(remaining_columns_to_read(TRUE, c("b"), c("a", "b", "c")), c("a", "c"))
-  expect_equal(remaining_columns_to_read(TRUE, c("b", "c"), c("a", "b", "c")), c("a"))
-
-  expect_equal(remaining_columns_to_read(c("a"), NULL, NULL), c("a"))
-  expect_equal(remaining_columns_to_read(c("a"), NULL, c("a")), c("a"))
-  expect_equal(remaining_columns_to_read(c("a"), c("a"), c("a")), FALSE)
-  expect_equal(remaining_columns_to_read(c("a"), c("b"), c("a", "b", "c")), c("a"))
-  expect_equal(remaining_columns_to_read(c("a", "b"), c("b", "c"), c("a", "b", "c")), c("a"))
-  expect_equal(remaining_columns_to_read(c("a", "b"), c("a", "b"), c("a", "b", "c")), FALSE)
+  expect_equal(remaining_columns_to_read(NULL, NULL, NULL), NULL)
+  expect_equal(remaining_columns_to_read(NULL, c("a"), NULL), NULL)
+  expect_equal(remaining_columns_to_read(NULL, NULL, c("a")), list("a"))
+  expect_equal(remaining_columns_to_read(list("a"), c("a"), NULL), list())
+  expect_equal(remaining_columns_to_read(list("a"), NULL, c("a")), list("a"))
+  expect_equal(remaining_columns_to_read(list("a"), c("a", "b", "c"), NULL), list())
+  expect_equal(remaining_columns_to_read(list("a"), NULL, c("a", "b", "c")), list("a"))
+  expect_equal(remaining_columns_to_read(NULL, c("a", "b", "c"), NULL), NULL)
+  expect_equal(remaining_columns_to_read(NULL, NULL, c("a", "b", "c")), list("a", "b", "c"))
+  expect_equal(remaining_columns_to_read(list("a", "b", "c"), c("a", "b", "c"), NULL), list())
+  expect_equal(remaining_columns_to_read(list("a", "b", "c"), NULL, c("a", "b", "c")), list("a", "b", "c"))
 })
 

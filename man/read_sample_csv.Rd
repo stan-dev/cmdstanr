@@ -6,12 +6,21 @@
 \usage{
 read_sample_csv(
   output_files,
-  col_select = NULL,
+  parameters = NULL,
+  sampler_diagnostics = NULL,
   cores = getOption("mc.cores", 1)
 )
 }
 \arguments{
 \item{output_files}{Paths to the CSV files to read.}
+
+\item{parameters}{(list) When \code{NULL}, the function will return
+draws for all model parameters. When supplied a list, the function
+will return  draws from the listed model parameters.}
+
+\item{sampler_diagnostics}{(list) When \code{NULL}, the function will return
+draws for all sampler diagnostics . When supplied a list, the function
+will return  draws from the listed sampler diagnostics .}
 
 \item{cores}{The number of cores to use to read and process the output files}
 }
@@ -25,4 +34,17 @@ Read sampling results from the supplied CSV files. Returns a list containing
 sampling arguments, the diagonal of the inverse mass matrix, the post-warmup
 samples, the sampling parameters and optionally samples produced during
 warmup.
+}
+\examples{
+\dontrun{
+# Read all draws
+d <- read_sample_csv(fit$output_files())
+# Read only model parameter draws
+d <- read_sample_csv(fit$output_files(), parameters = NULL, sampler_diagnostics = list())
+# Read only specific parameter draws
+d <- read_sample_csv(fit$output_files(), parameters = list("beta", "theta"), sampler_diagnostics = list())
+# Read only specific sampler diagnostic
+d <- read_sample_csv(fit$output_files(), parameters = list(), sampler_diagnostics = c("divergent__"))
+}
+
 }

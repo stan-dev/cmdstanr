@@ -168,13 +168,30 @@ read_sample_info_csv <- function(csv_file) {
 #'
 #' @export
 #' @param output_files Paths to the CSV files to read.
+#' @param parameters (list) When `NULL`, the function will return
+#' draws for all model parameters. When supplied a list, the function
+#' will return  draws from the listed model parameters.
+#' @param sampler_diagnostics (list) When `NULL`, the function will return
+#' draws for all sampler diagnostics . When supplied a list, the function
+#' will return  draws from the listed sampler diagnostics .
 #' @param cores The number of cores to use to read and process the output files
 #'
 #' @return The list of sampling arguments, the diagonal of the inverse mass
 #' matrix, the post-warmup samples, the sampling parameters and warmup samples
 #' if the run was run with `save_warmup = 1`.
+#' @examples
+#' \dontrun{
+#' # Read all draws
+#' d <- read_sample_csv(fit$output_files())
+#' # Read only model parameter draws
+#' d <- read_sample_csv(fit$output_files(), parameters = NULL, sampler_diagnostics = list())
+#' # Read only specific parameter draws
+#' d <- read_sample_csv(fit$output_files(), parameters = list("beta", "theta"), sampler_diagnostics = list())
+#' # Read only specific sampler diagnostic
+#' d <- read_sample_csv(fit$output_files(), parameters = list(), sampler_diagnostics = c("divergent__"))
+#' }
 #'
-read_sample_csv <- function(output_files, parameters = TRUE, sampler_diagnostics = TRUE, cores = getOption("mc.cores", 1)) {
+read_sample_csv <- function(output_files, parameters = NULL, sampler_diagnostics = NULL, cores = getOption("mc.cores", 1)) {
   sampling_info <- NULL
   warmup_draws <- NULL
   warmup_sampler_diagnostics_draws <- NULL
@@ -215,20 +232,22 @@ read_sample_csv <- function(output_files, parameters = TRUE, sampler_diagnostics
       }
       id <- csv_file_info$id
     }
-    if(!is.logical(parameters) && !is.null(parameters)) {
+    repaired_model_params <- repair_variable_names(sampling_info$model_params)
+    repaired_sampler_diagnostics <- repair_variable_names(sampling_info$sampler_diagnostics)    
+    if(!is.null(parameters)) {
       for(p in parameters) {
-        if (!(p %in% sampling_info$model_params)) {
-          stop(paste0("The specified parameter ", p, "  was not found in the sampling output!"))
+        if (!(p %in% repaired_model_params)) {
+          stop(paste0("The specified parameter ", p, " was not found in the sampling output!"))
         }
       }
     }
-    if(!is.logical(sampler_diagnostics) && !is.null(sampler_diagnostics)) {
+    if(!is.null(sampler_diagnostics)) {
       for(p in sampler_diagnostics) {
-        if (!(p %in% sampling_info$sampler_diagnostics)) {
+        if (!(p %in% repaired_sampler_diagnostics)) {
           if (p == "lp__") {
             stop("lp__ is a part of model parameters not sampler diagnostics.")
           } else {
-            stop(paste0("The specified sampler diagnostic ", p, "  was not found in the sampling output!"))
+            stop(paste0("The specified sampler diagnostic ", p, " was not found in the sampling output!"))
           }          
         }
       }
@@ -237,37 +256,29 @@ read_sample_csv <- function(output_files, parameters = TRUE, sampler_diagnostics
       col_select <- "lp__"
       # filter out lp__ to not repeat it
       parameters <- parameters[parameters!="lp__"] 
-      if (is.logical(sampler_diagnostics) && sampler_diagnostics == TRUE) {
+      if (is.null(sampler_diagnostics)) {
         col_select <- c(col_select, sampling_info$sampler_diagnostics)
-      } else if(!is.logical(sampler_diagnostics) && !is.null(sampler_diagnostics)) {
-        col_select <- c(col_select, sampler_diagnostics)
+      } else {
+        col_select <- c(col_select, unrepair_variable_names(unlist(sampler_diagnostics, use.names=FALSE)))
       }
-      if (is.logical(parameters) && parameters == TRUE) {
+      if (is.null(parameters)) {
         col_select <- c(col_select, sampling_info$model_params[sampling_info$model_params!="lp__"])
-      } else if(!is.logical(parameters) && !is.null(parameters)) {
-        col_select <- c(col_select, parameters)
+      } else {
+        col_select <- c(col_select, unrepair_variable_names(unlist(parameters, use.names=FALSE)))
       }
       selected_sampler_diagnostics <- sampling_info$sampler_diagnostics[sampling_info$sampler_diagnostics %in% col_select]
       selected_model_params <- sampling_info$model_params[sampling_info$model_params %in% col_select]
-      col_types <- setNames(rep("d", length(col_select)), col_select)
-      integers <- c("treedepth__", "n_leapfrog__", "divergent__")
-      for (i in integers) {
-        if (!is.null(col_types[i])) {
-          col_types[i] <- "i"
-        }
-      }
     }
     if (length(sampling_info$sampler_diagnostics) == 0 && length(sampling_info$model_params) == 0) {
       stop("The supplied csv file does not contain any parameter names or data!")
     }
-    suppressWarnings(      
-      draws <- vroom::vroom(output_file,
+    suppressWarnings(
+    draws <- vroom::vroom(output_file,
                             comment = "# ",
                             delim = ',',
                             trim_ws = TRUE,
-                            col_types = col_types,
-                            num_threads = cores,
                             col_select = col_select,
+                            col_types = c("lp__" = "d"),
                             altrep = FALSE)
     )
     if(ncol(draws) == 0) {
@@ -355,7 +366,7 @@ read_sample_csv <- function(output_files, parameters = TRUE, sampler_diagnostics
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
   }
-  sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
+  sampling_info$model_params <- repaired_model_params
   sampling_info$inverse_metric <- NULL
   sampling_info$step_size <- NULL
   sampling_info$num_iter <- NULL
@@ -412,24 +423,29 @@ repair_variable_names <- function(names) {
   names
 }
 
-remaining_columns_to_read <- function(requested, currently_read, all_columns) {
+# convert names like beta[1,1] to beta.1.1
+unrepair_variable_names <- function(names) {
+  names <- sub("\\[", "\\.", names)
+  names <- gsub(",","\\.",  names)
+  names <- gsub("\\]","",  names)
+  names
+}
+
+remaining_columns_to_read <- function(requested, currently_read, all) {
   if (is.null(requested)) {
-    return(FALSE)
-  }
-  if (is.logical(requested)) {
-    if (requested == FALSE) {
-      return(FALSE)
+    if (is.null(all)) {
+      return(NULL)
     }
-    if (is.null(all_columns)) {
-        return(TRUE)
+    requested <- all
+  }
+  if (length(requested)==0) {
+    return(list())
+  }
+  unread <- list()
+  for (p in requested) {
+    if (!(p %in% currently_read)) {
+      unread <- append(unread, p)
     }
-    requested <- all_columns
   }
-  unread <- pmatch(requested, currently_read)
-  unread <- requested[is.na(unread)]
-  if (length(unread) > 0) {
-    return(unread)
-  } else {
-    return(FALSE)
-  }
+  unread
 }

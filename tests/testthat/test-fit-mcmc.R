@@ -93,5 +93,4 @@ test_that("inc_warmup in draws() works", {
                "Warmup sampler diagnostics were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
   expect_equal(dim(y1), c(1000, 2, 6))
   expect_equal(dim(y2), c(2000, 2, 6))
-
 })
