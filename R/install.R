@@ -85,7 +85,9 @@ install_cmdstan <- function(dir = NULL,
           call. = FALSE)
   }
   file.remove(dest_file)
-
+  if (os_is_windows() && (cmdstan_version() < "2.24")) {
+    write("ifeq (gcc,$(CXX_TYPE))\nCXXFLAGS_WARNINGS+= -Wno-int-in-bool-context -Wno-attributes\nendif", file.path(cmdstan_path(), "make", "local"), append = TRUE)
+  }  
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
   if (!build_status_ok(build_log, quiet = quiet)) {
