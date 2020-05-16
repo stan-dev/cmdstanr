@@ -13,8 +13,10 @@
 #'   to install it in a directory called `.cmdstanr` within the user's home
 #'   directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstanr")`).
 #' @param cores The number of CPU cores to use to parallelize building CmdStan
-#'   and speed up installation. The default is `cores=2`, although we recommend
-#'   using more cores if available.
+#'   and speed up installation. If `cores` is not specified then the default is
+#'   to look for the option `"mc.cores"`, which can be set for an entire \R session
+#'   by `options(mc.cores=value)`. If the `"mc.cores"` option has not been set then
+#'   the default is `2`.
 #' @param quiet Should the verbose output from the system processes be
 #'   suppressed when building the CmdStan binaries? The default is `FALSE`.
 #' @param overwrite When an existing installation is found in `dir`, should
@@ -27,7 +29,7 @@
 #'   By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.
 #'
 install_cmdstan <- function(dir = NULL,
-                            cores = 2,
+                            cores = getOption("mc.cores", 2),
                             quiet = FALSE,
                             overwrite = FALSE,
                             timeout = 1200,
@@ -149,7 +151,7 @@ download_with_retries <- function(download_url,
     }
 }
 
-build_cmdstan <- function(dir, cores, quiet, timeout) {
+build_cmdstan <- function(dir, cores = getOption("mc.cores", 2), quiet = FALSE, timeout) {
   processx::run(
     make_cmd(),
     args = c(paste0("-j", cores), "build"),
@@ -161,6 +163,110 @@ build_cmdstan <- function(dir, cores, quiet, timeout) {
     stderr_line_callback = function(x,p) { if(quiet) message(x) },
     timeout = timeout
   )
+}
+
+clean_cmdstan <- function(dir = cmdstan_path(), cores = getOption("mc.cores", 2), quiet = FALSE) {
+  processx::run(
+    make_cmd(),
+    args = c("clean-all"),
+    wd = dir,
+    echo_cmd = FALSE,
+    echo = !quiet,
+    spinner = quiet,
+    error_on_status = FALSE,
+    stderr_line_callback = function(x,p) { if(quiet) message(x) }
+  )
+  # remove main_.*.o files and model_header_.*.hpp.gch files
+  files_to_remove <- c(
+    list.files(path=file.path(cmdstan_path(), "src", "cmdstan"), pattern="main_.*\\.o$", full.names = TRUE),
+    list.files(path=file.path(cmdstan_path(), "stan", "src", "stan", "model"), pattern="model_header_.*\\.hpp.gch$", full.names = TRUE)
+  )
+  file.remove(files_to_remove)
+}
+
+#' Clean and build the cmdstan installation
+#'
+#' The `rebuild_cmdstan()` function cleans and rebuilds the cmdstan installation.
+#' Use this function in case of any issues when compiling models. This function
+#' runs the
+#'
+#' @export
+#' @param dir Path to the directory of the CmdStan installation. The default is
+#'   the path to the Cmdstan installation in use.
+#' @param cores The number of CPU cores to use to parallelize and speedup the 
+#'   building stage. If `cores` is not specified then the default is
+#'   to look for the option `"mc.cores"`, which can be set for an entire \R session
+#'   by `options(mc.cores=value)`. If the `"mc.cores"` option has not been set then
+#'   the default is `2`.
+#' @param quiet Should the verbose output from the system processes be
+#'   suppressed when cleaning and building the CmdStan installation? The default is `FALSE`.
+#' @param timeout Timeout (in seconds) for the CmdStan build stage of the
+#'   installation process. The default is `timeout=600` (10 minutes).
+#'
+rebuild_cmdstan <- function(dir = cmdstan_path(), cores = getOption("mc.cores", 1), quiet = FALSE, timeout = 600) {
+  clean_cmdstan(dir, cores, quiet)
+  build_cmdstan(dir, cores, quiet, timeout)
+  return(invisible(NULL))
+}
+
+#' Function to read and write makefile flags and variables in the make/local file of
+#' a cmdstan installation. 
+#'
+#' If `flags = NULL` this function will return the contents of the make/local file
+#' for the specified installation. The default used installation is the installation 
+#' curentlly in use.
+#' If `flags = list(...)` the supplied list of flags is written to the make/local file.
+#' an the contents of the update make/local file is returned.
+#'
+#' Writing to the make/local file can be used to permanently add makefile
+#' flags/variables to an installation. For example adding specific compiler switches,
+#' changing the C++ compiler, etc. A change to the make/local file should typically
+#' be followed by `rebuild_cmdstan()`.
+#'
+#' @export
+#' @param dir Path to the directory of the CmdStan installation. The default is
+#'   the path to the Cmdstan installation in use.
+#' @param flags 
+#' @param append Should the listed makefile flags be appended to the end of an existing
+#'   make/local file? The default is `FALSE`.
+#' @example
+#' \dontrun{
+#' flags = list(
+#'   "CXX" = "clang++",
+#'   "CXXFLAGS+= -march-native",
+#'   PRECOMPILED_HEADERS = TRUE
+#' )
+#' cmdstan_make_local(flags = flags)
+#' 
+cmdstan_make_local <- function(dir = cmdstan_path(), flags = NULL, append = TRUE) {
+  make_local_path <- file.path(cmdstan_path(), "make", "local")
+  if (!is.null(flags)) {
+    built_flags = c()
+    for (i in seq_len(length(flags))) {
+      option_name <- names(flags)[i]
+      if (isTRUE(as.logical(flags[[i]]))) {
+        built_flags = c(built_flags, paste0(option_name, "=true"))
+      } else if (isFALSE(as.logical(flags[[i]]))) {
+        built_flags = c(built_flags, paste0(option_name, "=false"))
+      } else {
+        if (is.null(option_name) || !nzchar(option_name)) {
+          built_flags = c(built_flags, paste0(flags[[i]]))
+        } else {
+          built_flags = c(built_flags, paste0(option_name, "=", flags[[i]]))
+        }
+      }
+    }
+    write(
+      built_flags,
+      file = make_local_path,
+      append = append
+    )
+  }
+  if (file.exists(make_local_path)) {
+    return(strsplit(trimws(readChar(fileName, file.info(fileName)$size)), "\n")[[1]])
+  } else {
+    return(NULL)
+  }  
 }
 
 build_example <- function(dir, cores, quiet, timeout) {

@@ -6,7 +6,7 @@
 \usage{
 install_cmdstan(
   dir = NULL,
-  cores = 2,
+  cores = getOption("mc.cores", 2),
   quiet = FALSE,
   overwrite = FALSE,
   timeout = 1200,
@@ -19,8 +19,10 @@ to install it in a directory called \code{.cmdstanr} within the user's home
 directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstanr")}).}
 
 \item{cores}{The number of CPU cores to use to parallelize building CmdStan
-and speed up installation. The default is \code{cores=2}, although we recommend
-using more cores if available.}
+and speed up installation. If \code{cores} is not specified then the default is
+to look for the option \code{"mc.cores"}, which can be set for an entire \R session
+by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not been set then
+the default is \code{2}.}
 
 \item{quiet}{Should the verbose output from the system processes be
 suppressed when building the CmdStan binaries? The default is \code{FALSE}.}
