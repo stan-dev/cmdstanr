@@ -92,7 +92,6 @@ install_cmdstan <- function(dir = NULL,
   }
   file.remove(dest_file)
   cmdstan_make_local(dir = dir_cmdstan, flags = makefile_flags, append = TRUE)
-  # windows bugfixes
   if (os_is_windows()) {
     if ((cmdstan_ver < "2.24")) {
       cmdstan_make_local(dir = dir_cmdstan, flags = list(
@@ -101,7 +100,14 @@ install_cmdstan <- function(dir = NULL,
         "endif"
       ), append = TRUE)
     }
-  }  
+    if ((cmdstan_ver > "2.22") && (cmdstan_ver < "2.24")) {
+      windows_stanc <- file.path(dir_cmdstan, "bin", "windows-stanc")
+      bin_stanc_exe <- file.path(dir_cmdstan, "bin", "stanc.exe")
+      if (file.exists(windows_stanc)) {
+        file.rename(windows_stanc, bin_stanc_exe)
+      }
+    }
+  }
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
   if (!build_status_ok(build_log, quiet = quiet)) {
