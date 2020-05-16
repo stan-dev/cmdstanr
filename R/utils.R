@@ -455,7 +455,7 @@ check_sampler_transitions_treedepth <- function(data_csv) {
 #' cmdstan_make_local(flags = flags)
 #' 
 cmdstan_make_local <- function(dir = cmdstan_path(), flags = NULL, append = TRUE) {
-  make_local_path <- file.path(cmdstan_path(), "make", "local")
+  make_local_path <- file.path(dir, "make", "local")
   if (!is.null(flags)) {
     built_flags = c()
     for (i in seq_len(length(flags))) {
