@@ -479,7 +479,7 @@ cmdstan_make_local <- function(dir = cmdstan_path(), flags = NULL, append = TRUE
     )
   }
   if (file.exists(make_local_path)) {
-    return(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]])
+    return(trimws(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]]))
   } else {
     return(NULL)
   }  
