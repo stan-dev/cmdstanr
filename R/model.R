@@ -242,7 +242,7 @@ compile_method <- function(quiet = TRUE,
   # temporary deprecation warnings
   if (isTRUE(threads)) {
     warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
-    stanc_options[["stan_threads"]] <- TRUE
+    cpp_options[["stan_threads"]] <- TRUE
   }
   if (!force_recompile) {
     message("Model executable is up to date!")
