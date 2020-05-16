@@ -442,7 +442,7 @@ check_sampler_transitions_treedepth <- function(data_csv) {
 #' @export
 #' @param dir Path to the directory of the CmdStan installation. The default is
 #'   the path to the Cmdstan installation in use.
-#' @param flags 
+#' @param flags a list of flags to be written to the make/local file.
 #' @param append Should the listed makefile flags be appended to the end of an existing
 #'   make/local file? The default is `FALSE`.
 #' @example

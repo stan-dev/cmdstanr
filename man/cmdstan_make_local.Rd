@@ -11,7 +11,7 @@ cmdstan_make_local(dir = cmdstan_path(), flags = NULL, append = TRUE)
 \item{dir}{Path to the directory of the CmdStan installation. The default is
 the path to the Cmdstan installation in use.}
 
-\item{flags}{}
+\item{flags}{a list of flags to be written to the make/local file.}
 
 \item{append}{Should the listed makefile flags be appended to the end of an existing
 make/local file? The default is \code{FALSE}.}

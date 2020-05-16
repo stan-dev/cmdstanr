@@ -54,7 +54,7 @@ test_that("install_cmdstan() errors if it times out", {
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
                       release_url = test_release_url()),
-      if (dir_exists) "* Removing the existing installation" else "* Latest CmdStan release",
+      if (dir_exists) "* Removing the existing installation" else "* * Installing Cmdstan from https://github.com",
       fixed = TRUE
     ),
     "increasing the value of the 'timeout' argument and running again with 'quiet=FALSE'",
@@ -66,7 +66,7 @@ test_that("install_cmdstan() errors if it times out", {
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
                       release_url = test_release_url()),
-      if (dir_exists) "* Removing the existing installation" else "* Latest CmdStan release",
+      if (dir_exists) "* Removing the existing installation" else "* * Installing Cmdstan from https://github.com",
       fixed = TRUE
     ),
     "Try increasing the value of the 'timeout' argument.",
