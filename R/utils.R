@@ -284,7 +284,7 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   paste0(cpp_built_options, collapse = " ")
 }
 
-prepare_precompiled <- function(cpp_options, quiet = FALSE) {
+prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
   flags <- NULL
   if (!is.null(cpp_options$stan_threads)) {
     flags <- c(flags, "threads")
@@ -423,4 +423,64 @@ check_sampler_transitions_treedepth <- function(data_csv) {
               "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n")
     }
   }
+}
+
+#' Function to read and write makefile flags and variables in the make/local file of
+#' a cmdstan installation. 
+#'
+#' If `flags = NULL` this function will return the contents of the make/local file
+#' for the specified installation. The default used installation is the installation 
+#' curentlly in use.
+#' If `flags = list(...)` the supplied list of flags is written to the make/local file.
+#' an the contents of the update make/local file is returned.
+#'
+#' Writing to the make/local file can be used to permanently add makefile
+#' flags/variables to an installation. For example adding specific compiler switches,
+#' changing the C++ compiler, etc. A change to the make/local file should typically
+#' be followed by `rebuild_cmdstan()`.
+#'
+#' @export
+#' @param dir Path to the directory of the CmdStan installation. The default is
+#'   the path to the Cmdstan installation in use.
+#' @param flags 
+#' @param append Should the listed makefile flags be appended to the end of an existing
+#'   make/local file? The default is `FALSE`.
+#' @example
+#' \dontrun{
+#' flags = list(
+#'   "CXX" = "clang++",
+#'   "CXXFLAGS+= -march-native",
+#'   PRECOMPILED_HEADERS = TRUE
+#' )
+#' cmdstan_make_local(flags = flags)
+#' 
+cmdstan_make_local <- function(dir = cmdstan_path(), flags = NULL, append = TRUE) {
+  make_local_path <- file.path(cmdstan_path(), "make", "local")
+  if (!is.null(flags)) {
+    built_flags = c()
+    for (i in seq_len(length(flags))) {
+      option_name <- names(flags)[i]
+      if (isTRUE(as.logical(flags[[i]]))) {
+        built_flags = c(built_flags, paste0(option_name, "=true"))
+      } else if (isFALSE(as.logical(flags[[i]]))) {
+        built_flags = c(built_flags, paste0(option_name, "=false"))
+      } else {
+        if (is.null(option_name) || !nzchar(option_name)) {
+          built_flags = c(built_flags, paste0(flags[[i]]))
+        } else {
+          built_flags = c(built_flags, paste0(option_name, "=", flags[[i]]))
+        }
+      }
+    }
+    write(
+      built_flags,
+      file = make_local_path,
+      append = append
+    )
+  }
+  if (file.exists(make_local_path)) {
+    return(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]])
+  } else {
+    return(NULL)
+  }  
 }
