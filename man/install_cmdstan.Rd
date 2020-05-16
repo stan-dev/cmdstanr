@@ -10,7 +10,8 @@ install_cmdstan(
   quiet = FALSE,
   overwrite = FALSE,
   timeout = 1200,
-  release_url = NULL
+  release_url = NULL,
+  makefile_flags = list()
 )
 }
 \arguments{
@@ -37,6 +38,10 @@ installation process. The default is \code{timeout=600} (10 minutes).}
 
 \item{release_url}{Specifies the URL to a specific Cmdstan release to be installed.
 By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.}
+
+\item{makefile_flags}{Specifies any makefile flags/variables to be written to the
+make/local file. For example list("CXX" = "clang++") will force the use of clang for
+compilation.}
 }
 \description{
 \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}

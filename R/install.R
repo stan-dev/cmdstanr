@@ -32,7 +32,7 @@
 #'   compilation.
 #'
 install_cmdstan <- function(dir = NULL,
-                            cores = 2,
+                            cores = getOption("mc.cores", 2),
                             quiet = FALSE,
                             overwrite = FALSE,
                             timeout = 1200,
@@ -91,13 +91,16 @@ install_cmdstan <- function(dir = NULL,
           call. = FALSE)
   }
   file.remove(dest_file)
-  cmdstan_make_local(flags = makefile_flags, append = TRUE)
-  if (os_is_windows() && (cmdstan_ver < "2.24")) {
-    cmdstan_make_local(flags = list(
-      "ifeq (gcc,$(CXX_TYPE))",
-      "CXXFLAGS_WARNINGS+= -Wno-int-in-bool-context -Wno-attributes",
-      "endif"
-    ), append = TRUE)
+  cmdstan_make_local(dir = dir_cmdstan, flags = makefile_flags, append = TRUE)
+  # windows bugfixes
+  if (os_is_windows()) {
+    if ((cmdstan_ver < "2.24")) {
+      cmdstan_make_local(dir = dir_cmdstan, flags = list(
+        "ifeq (gcc,$(CXX_TYPE))",
+        "CXXFLAGS_WARNINGS+= -Wno-int-in-bool-context -Wno-attributes",
+        "endif"
+      ), append = TRUE)
+    }
   }  
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
