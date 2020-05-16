@@ -27,13 +27,17 @@
 #'   installation process. The default is `timeout=600` (10 minutes).
 #' @param release_url Specifies the URL to a specific Cmdstan release to be installed.
 #'   By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.
+#' @param makefile_flags Specifies any makefile flags/variables to be written to the
+#'   make/local file. For example list("CXX" = "clang++") will force the use of clang for
+#'   compilation.
 #'
 install_cmdstan <- function(dir = NULL,
-                            cores = getOption("mc.cores", 2),
+                            cores = 2,
                             quiet = FALSE,
                             overwrite = FALSE,
                             timeout = 1200,
-                            release_url = NULL) {
+                            release_url = NULL,
+                            makefile_flags = list()) {
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
@@ -87,12 +91,13 @@ install_cmdstan <- function(dir = NULL,
           call. = FALSE)
   }
   file.remove(dest_file)
+  cmdstan_make_local(flags = makefile_flags, append = TRUE)
   if (os_is_windows() && (cmdstan_ver < "2.24")) {
     cmdstan_make_local(flags = list(
       "ifeq (gcc,$(CXX_TYPE))",
       "CXXFLAGS_WARNINGS+= -Wno-int-in-bool-context -Wno-attributes",
       "endif"
-    ))
+    ), append = TRUE)
   }  
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
