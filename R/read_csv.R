@@ -10,7 +10,9 @@ check_sampling_csv_info_matches <- function(a, b) {
   if (a$model_name != b$model_name) {
     return(list(error = "Supplied CSV files were not generated wtih the same model!"))
   }
-  if ((length(a$model_params)!= length(b$model_params)) || !(all(a$model_params == b$model_params) && all(a$sampler_diagnostics == b$sampler_diagnostics))) {
+  if ((length(a$model_params) != length(b$model_params)) ||
+      !(all(a$model_params == b$model_params) &&
+        all(a$sampler_diagnostics == b$sampler_diagnostics))) {
     return(list(error = "Supplied CSV files have samples for different parameters!"))
   }
   if (a$iter_sampling != b$iter_sampling ||
@@ -247,7 +249,7 @@ read_sample_csv <- function(files,
     if (!is.null(parameters)) {
       for (p in parameters) {
         if (!(p %in% repaired_model_params)) {
-          stop(paste0("The specified parameter ", p, " was not found in the sampling output!"))
+          stop("The specified parameter ", p, " was not found in the sampling output!")
         }
       }
     }
@@ -257,7 +259,7 @@ read_sample_csv <- function(files,
           if (p == "lp__") {
             stop("lp__ is a part of model parameters not sampler diagnostics.")
           } else {
-            stop(paste0("The specified sampler diagnostic ", p, " was not found in the sampling output!"))
+            stop("The specified sampler diagnostic ", p, " was not found in the sampling output!")
           }
         }
       }
@@ -366,11 +368,11 @@ read_sample_csv <- function(files,
       }
     }
   }
-  if (!is.null(warmup_draws)){
-    dimnames(warmup_draws)$variable <- repair_variable_names(selected_model_params)
+  if (!is.null(warmup_draws)) {
+    posterior::variables(warmup_draws) <- repair_variable_names(selected_model_params)
   }
-  if (!is.null(post_warmup_draws)){
-    dimnames(post_warmup_draws)$variable <- repair_variable_names(selected_model_params)
+  if (!is.null(post_warmup_draws)) {
+    posterior::variables(post_warmup_draws) <- repair_variable_names(selected_model_params)
   }
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
@@ -446,7 +448,7 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     }
     requested <- all
   }
-  if (length(requested)==0) {
+  if (length(requested) == 0) {
     return(list())
   }
   unread <- list()
