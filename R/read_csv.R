@@ -232,6 +232,7 @@ read_sample_csv <- function(files,
       }
       not_matching <- c(not_matching, check$not_matching)
       sampling_info$id <- c(sampling_info$id, csv_file_info$id)
+      sampling_info$seed <- c(sampling_info$seed, csv_file_info$seed)
 
       if (!is.null(csv_file_info$inverse_metric)) {
         inverse_metric[[csv_file_info$id]] <- csv_file_info$inverse_metric
