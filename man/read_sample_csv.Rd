@@ -2,17 +2,17 @@
 % Please edit documentation in R/read_csv.R
 \name{read_sample_csv}
 \alias{read_sample_csv}
-\title{Read sampling results from the supplied CSV files}
+\title{Read samples from CmdStan CSV files into \R}
 \usage{
 read_sample_csv(
-  output_files,
+  files,
   parameters = NULL,
   sampler_diagnostics = NULL,
   cores = getOption("mc.cores", 1)
 )
 }
 \arguments{
-\item{output_files}{Paths to the CSV files to read.}
+\item{files}{Paths to the CSV files to read.}
 
 \item{parameters}{(list) When \code{NULL}, the function will return
 draws for all model parameters. When supplied a list, the function
@@ -25,18 +25,29 @@ will return  draws from the listed sampler diagnostics .}
 \item{cores}{The number of cores to use to read and process the output files}
 }
 \value{
-The list of sampling arguments, the diagonal of the inverse mass
-matrix, the post-warmup samples, the sampling parameters and warmup samples
-if the run was run with \code{save_warmup = 1}.
+A named list containing:
+\itemize{
+\item \code{sampling_info}: A list of the arguments used to run the sampler.
+\item \code{inverse_metric}: A list (one element per chain) of inverse mass matrices
+or their diagonals, depending on the type of metric used.
+\item \code{warmup_draws}:  If \code{save_warmup} was \code{TRUE} then the warmup samples (iter
+x chain x variable array).
+\item \code{post_warmup_draws}: The post-warmup samples (iter x chain x variable array).
+\item \code{warmup_sampler_diagnostics}:  If \code{save_warmup} was \code{TRUE} then the values
+of the sampler parameters during warmup (iter x chain x variable array).
+\item \code{sampler_diagnostics}: The post-warmup sampler parameters (iter x chain x
+variable array).
+}
 }
 \description{
-Read sampling results from the supplied CSV files. Returns a list containing
-sampling arguments, the diagonal of the inverse mass matrix, the post-warmup
-samples, the sampling parameters and optionally samples produced during
-warmup.
+Read samples from CmdStan CSV files into \R
 }
 \examples{
 \dontrun{
+stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+mod <- cmdstan_model(stan_program)
+fit <- mod$sample(data = list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1)))
+
 # Read all draws
 d <- read_sample_csv(fit$output_files())
 # Read only model parameter draws
