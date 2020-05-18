@@ -2,15 +2,24 @@
 % Please edit documentation in R/install.R
 \name{install_cmdstan}
 \alias{install_cmdstan}
-\title{Install the latest release of CmdStan}
+\alias{rebuild_cmdstan}
+\title{Install CmdStan or clean and rebuild an existing installation}
 \usage{
 install_cmdstan(
   dir = NULL,
-  cores = 2,
+  cores = getOption("mc.cores", 2),
   quiet = FALSE,
   overwrite = FALSE,
   timeout = 1200,
-  release_url = NULL
+  release_url = NULL,
+  makefile_flags = list()
+)
+
+rebuild_cmdstan(
+  dir = cmdstan_path(),
+  cores = getOption("mc.cores", 2),
+  quiet = FALSE,
+  timeout = 600
 )
 }
 \arguments{
@@ -19,8 +28,10 @@ to install it in a directory called \code{.cmdstanr} within the user's home
 directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstanr")}).}
 
 \item{cores}{The number of CPU cores to use to parallelize building CmdStan
-and speed up installation. The default is \code{cores=2}, although we recommend
-using more cores if available.}
+and speed up installation. If \code{cores} is not specified then the default is
+to look for the option \code{"mc.cores"}, which can be set for an entire \R
+session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
+been set then the default is \code{2}.}
 
 \item{quiet}{Should the verbose output from the system processes be
 suppressed when building the CmdStan binaries? The default is \code{FALSE}.}
@@ -33,15 +44,24 @@ installation.}
 \item{timeout}{Timeout (in seconds) for the CmdStan build stage of the
 installation process. The default is \code{timeout=600} (10 minutes).}
 
-\item{release_url}{Specifies the URL to a specific Cmdstan release to be installed.
-By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.}
+\item{release_url}{Specifies the URL to a specific Cmdstan release to be
+installed. By default set to \code{NULL}, which downloads the latest stable
+release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}.}
+
+\item{makefile_flags}{A list specifying any makefile flags/variables to be
+written to the \code{make/local} file. For example \code{list("CXX" = "clang++")}
+will force the use of clang for compilation.}
 }
 \description{
-\if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-The \code{install_cmdstan()} function attempts to download and install the latest
-release of \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan} or
-a development version from a repository. Currently the necessary C++ tool
+The \code{install_cmdstan()} function attempts to download and
+install the latest release of
+\href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan} or a
+development version from a repository. Currently the necessary C++ tool
 chain is assumed to be available (see Appendix B of the CmdStan
 \href{https://github.com/stan-dev/cmdstan/releases/latest}{guide}), but in the
 future CmdStanR may help install the requirements.
+
+The \code{rebuild_cmdstan()} function cleans and rebuilds the cmdstan
+installation. Use this function in case of any issues when compiling
+models.
 }
