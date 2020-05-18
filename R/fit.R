@@ -357,7 +357,8 @@ CmdStanMCMC <- R6::R6Class(
       }
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
-          stop("Warmup draws were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+          stop("Warmup draws were requested from a fit object without them! ",
+               "Please rerun the model with save_warmup = TRUE.")
         }
 
         posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")[,,parameters]
@@ -378,7 +379,8 @@ CmdStanMCMC <- R6::R6Class(
       }
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
-          stop("Warmup sampler diagnostics were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+          stop("Warmup sampler diagnostics were requested from a fit object without them! ",
+               "Please rerun the model with save_warmup = TRUE.")
         }
         posterior::bind_draws(private$warmup_sampler_diagnostics_, private$sampler_diagnostics_, along="iteration")
       } else {
@@ -414,15 +416,15 @@ CmdStanMCMC <- R6::R6Class(
                                   sampler_diagnostics = sampler_diagnostics_to_read,
                                   cores = self$runset$procs$num_cores())
       private$sampling_info_ <- data_csv$sampling_info
-      if(!is.null(data_csv$post_warmup_draws)) {
-        if(is.null(private$draws_)) {
+      if (!is.null(data_csv$post_warmup_draws)) {
+        if (is.null(private$draws_)) {
           private$draws_ <- data_csv$post_warmup_draws
         } else {
           private$draws_ <- posterior::bind_draws(data_csv$post_warmup_draws[,,-1], private$draws_, along="variable")
         }
       }
-      if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-        if(is.null(private$sampler_diagnostics_)) {
+      if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
+        if (is.null(private$sampler_diagnostics_)) {
           private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
         } else {
           private$sampler_diagnostics_ <- posterior::bind_draws(data_csv$post_warmup_sampler_diagnostics, private$sampler_diagnostics_, along="variable")
@@ -430,15 +432,15 @@ CmdStanMCMC <- R6::R6Class(
       }
       if (!is.null(data_csv$sampling_info$save_warmup)
          && data_csv$sampling_info$save_warmup) {
-        if(!is.null(data_csv$warmup_draws)) {
-          if(is.null(private$warmup_draws_)) {
+        if (!is.null(data_csv$warmup_draws)) {
+          if (is.null(private$warmup_draws_)) {
             private$warmup_draws_ <- data_csv$warmup_draws
           } else {
             private$warmup_draws_ <- posterior::bind_draws(data_csv$warmup_draws[,,-1], private$warmup_draws_, along="variable")
           }
         }
-        if(!is.null(data_csv$warmup_sampler_diagnostics)) {
-          if(is.null(private$warmup_sampler_diagnostics_)) {
+        if (!is.null(data_csv$warmup_sampler_diagnostics)) {
+          if (is.null(private$warmup_sampler_diagnostics_)) {
             private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
           } else {
             private$warmup_sampler_diagnostics_ <- posterior::bind_draws(data_csv$warmup_sampler_diagnostics, private$warmup_sampler_diagnostics_, along="variable")
