@@ -341,7 +341,12 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     draws = function(inc_warmup = FALSE, parameters = NULL) {
-      to_read <- remaining_columns_to_read(parameters, dimnames(private$draws_)$variable, private$sampling_info_$model_params)
+      to_read <-
+        remaining_columns_to_read(
+          parameters,
+          posterior::variables(private$draws_),
+          private$sampling_info_$model_params
+        )
       if (is.null(to_read) || (length(to_read) > 0)) {
         private$read_csv_(parameters = parameters, sampler_diagnostics = list())
       }
@@ -354,7 +359,7 @@ CmdStanMCMC <- R6::R6Class(
         if (!private$sampling_info_$save_warmup) {
           stop("Warmup draws were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
         }
-        
+
         posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")[,,parameters]
       } else {
         private$draws_[,,parameters]
@@ -362,7 +367,12 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     sampler_diagnostics = function(inc_warmup = FALSE) {
-      to_read <- remaining_columns_to_read(NULL, dimnames(private$sampler_diagnostics_)$variable, private$sampling_info_$sampler_diagnostics)
+      to_read <-
+        remaining_columns_to_read(
+          NULL,
+          posterior::variables(private$sampler_diagnostics_),
+          private$sampling_info_$sampler_diagnostics
+        )
       if (is.null(to_read) || (length(to_read) > 0)) {
         private$read_csv_(parameters = list(), sampler_diagnostics = NULL)
       }
@@ -383,12 +393,22 @@ CmdStanMCMC <- R6::R6Class(
     draws_ = NULL,
     sampling_info_ = NULL,
     read_csv_ = function(parameters = NULL, sampler_diagnostics = NULL) {
-      parameters_to_read <- remaining_columns_to_read(parameters, dimnames(private$draws_)$variable, private$sampling_info_$model_params)
-      sampler_diagnostics_to_read <- remaining_columns_to_read(sampler_diagnostics, dimnames(private$sampler_diagnostics_)$variable, private$sampling_info_$sampler_diagnostics)
       if (!length(self$output_files())) {
         stop("No chains finished successfully. Unable to retrieve the fit.",
              call. = FALSE)
       }
+      parameters_to_read <-
+        remaining_columns_to_read(
+          parameters,
+          posterior::variables(private$draws_),
+          private$sampling_info_$model_params
+        )
+      sampler_diagnostics_to_read <-
+        remaining_columns_to_read(
+          sampler_diagnostics,
+          posterior::variables(private$sampler_diagnostics_),
+          private$sampling_info_$sampler_diagnostics
+        )
       data_csv <- read_sample_csv(self$output_files(),
                                   parameters = parameters_to_read,
                                   sampler_diagnostics = sampler_diagnostics_to_read,
