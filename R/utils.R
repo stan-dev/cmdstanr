@@ -426,10 +426,10 @@ check_sampler_transitions_treedepth <- function(data_csv) {
 }
 
 #' Function to read and write makefile flags and variables in the make/local file of
-#' a cmdstan installation. 
+#' a cmdstan installation.
 #'
 #' If `flags = NULL` this function will return the contents of the make/local file
-#' for the specified installation. The default used installation is the installation 
+#' for the specified installation. The default used installation is the installation
 #' curentlly in use.
 #' If `flags = list(...)` the supplied list of flags is written to the make/local file.
 #' an the contents of the update make/local file is returned.
@@ -445,7 +445,7 @@ check_sampler_transitions_treedepth <- function(data_csv) {
 #' @param flags a list of flags to be written to the make/local file.
 #' @param append Should the listed makefile flags be appended to the end of an existing
 #'   make/local file? The default is `FALSE`.
-#' @example
+#' @examples
 #' \dontrun{
 #' flags = list(
 #'   "CXX" = "clang++",
@@ -453,7 +453,8 @@ check_sampler_transitions_treedepth <- function(data_csv) {
 #'   PRECOMPILED_HEADERS = TRUE
 #' )
 #' cmdstan_make_local(flags = flags)
-#' 
+#' }
+#'
 cmdstan_make_local <- function(dir = cmdstan_path(), flags = NULL, append = TRUE) {
   make_local_path <- file.path(dir, "make", "local")
   if (!is.null(flags)) {
@@ -482,5 +483,5 @@ cmdstan_make_local <- function(dir = cmdstan_path(), flags = NULL, append = TRUE
     return(trimws(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]]))
   } else {
     return(NULL)
-  }  
+  }
 }

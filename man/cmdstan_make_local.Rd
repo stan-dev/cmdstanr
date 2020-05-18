@@ -29,3 +29,14 @@ flags/variables to an installation. For example adding specific compiler switche
 changing the C++ compiler, etc. A change to the make/local file should typically
 be followed by \code{rebuild_cmdstan()}.
 }
+\examples{
+\dontrun{
+flags = list(
+  "CXX" = "clang++",
+  "CXXFLAGS+= -march-native",
+  PRECOMPILED_HEADERS = TRUE
+)
+cmdstan_make_local(flags = flags)
+}
+
+}
