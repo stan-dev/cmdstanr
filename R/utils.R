@@ -43,23 +43,6 @@ check_target_exe <- function(exe) {
 }
 
 
-check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
-  if (dir.exists(dir_cmdstan)) {
-    if (!overwrite) {
-      warning(
-        "An installation already exists at ", dir_cmdstan, ". ",
-        "Please remove or rename the installation folder or set overwrite=TRUE.",
-        call. = FALSE
-      )
-      return(FALSE)
-    } else {
-      message("* Removing the existing installation of CmdStan...")
-      unlink(dir_cmdstan, recursive = TRUE, force = TRUE)
-    }
-  }
-  TRUE
-}
-
 # paths and extensions ----------------------------------------------------
 
 # Replace `\\` with `/` in a path

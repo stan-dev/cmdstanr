@@ -150,6 +150,23 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 
 # internal ----------------------------------------------------------------
 
+check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
+  if (dir.exists(dir_cmdstan)) {
+    if (!overwrite) {
+      warning(
+        "An installation already exists at ", dir_cmdstan, ". ",
+        "Please remove or rename the installation folder or set overwrite=TRUE.",
+        call. = FALSE
+      )
+      return(FALSE)
+    } else {
+      message("* Removing the existing installation of CmdStan...")
+      unlink(dir_cmdstan, recursive = TRUE, force = TRUE)
+    }
+  }
+  TRUE
+}
+
 # construct url for download from cmdstan version number
 github_download_url <- function(version_number) {
   base_url <- "https://github.com/stan-dev/cmdstan/releases/download/"
