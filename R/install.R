@@ -12,6 +12,13 @@
 #'   installation. Use this function in case of any issues when compiling
 #'   models.
 #'
+#'   The `cmdstan_make_local()` function is used to read/write makefile flags
+#'   and variables from/to the `make/local` file of a CmdStan installation.
+#'   Writing to the make/local file can be used to permanently add makefile
+#'   flags/variables to an installation. For example adding specific compiler
+#'   switches, changing the C++ compiler, etc. A change to the make/local file
+#'   should typically be followed by calling `rebuild_cmdstan()`.
+#'
 #' @export
 #' @param dir Path to the directory in which to install CmdStan. The default is
 #'   to install it in a directory called `.cmdstanr` within the user's home
@@ -28,13 +35,18 @@
 #'   which case an informative error is thrown instead of overwriting the user's
 #'   installation.
 #' @param timeout Timeout (in seconds) for the CmdStan build stage of the
-#'   installation process. The default is `timeout=600` (10 minutes).
+#'   installation process.
 #' @param release_url Specifies the URL to a specific Cmdstan release to be
 #'   installed. By default set to `NULL`, which downloads the latest stable
 #'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases).
-#' @param makefile_flags A list specifying any makefile flags/variables to be
-#'   written to the `make/local` file. For example `list("CXX" = "clang++")`
+#' @param flags A list specifying any makefile flags/variables to be
+#'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
 #'   will force the use of clang for compilation.
+#'
+#' @examples
+#' \dontrun{
+#' install_cmdstan(cores = 4)
+#' }
 #'
 install_cmdstan <- function(dir = NULL,
                             cores = getOption("mc.cores", 2),
@@ -42,7 +54,7 @@ install_cmdstan <- function(dir = NULL,
                             overwrite = FALSE,
                             timeout = 1200,
                             release_url = NULL,
-                            makefile_flags = list()) {
+                            flags = list()) {
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
@@ -97,7 +109,7 @@ install_cmdstan <- function(dir = NULL,
           call. = FALSE)
   }
   file.remove(dest_file)
-  cmdstan_make_local(dir = dir_cmdstan, flags = makefile_flags, append = TRUE)
+  cmdstan_make_local(dir = dir_cmdstan, flags = flags, append = TRUE)
   if (os_is_windows()) {
     if (cmdstan_ver < "2.24") {
       cmdstan_make_local(
@@ -145,6 +157,53 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
   build_cmdstan(dir, cores, quiet, timeout)
   invisible(NULL)
 }
+
+#' @rdname install_cmdstan
+#' @export
+#' @param append For `cmdstan_make_local()`, should the listed makefile flags be
+#'   appended to the end of the existing make/local file? The default is `TRUE`.
+#'   If `FALSE` the file is overwritten.
+#' @return For `cmdstan_make_local()`, if `flags=NULL` then the existing
+#'   contents of `make/local` are returned without writing anything, otherwise
+#'   the updated contents are returned.
+#' @examples
+#' \dontrun{
+#' flags <- list(
+#'   "CXX" = "clang++",
+#'   "CXXFLAGS+= -march-native",
+#'   PRECOMPILED_HEADERS = TRUE
+#' )
+#' cmdstan_make_local(flags = flags)
+#' rebuild_cmdstan()
+#' }
+#'
+cmdstan_make_local <- function(dir = cmdstan_path(), flags = NULL, append = TRUE) {
+  make_local_path <- file.path(dir, "make", "local")
+  if (!is.null(flags)) {
+    built_flags = c()
+    for (i in seq_len(length(flags))) {
+      option_name <- names(flags)[i]
+      if (isTRUE(as.logical(flags[[i]]))) {
+        built_flags = c(built_flags, paste0(option_name, "=true"))
+      } else if (isFALSE(as.logical(flags[[i]]))) {
+        built_flags = c(built_flags, paste0(option_name, "=false"))
+      } else {
+        if (is.null(option_name) || !nzchar(option_name)) {
+          built_flags = c(built_flags, paste0(flags[[i]]))
+        } else {
+          built_flags = c(built_flags, paste0(option_name, "=", flags[[i]]))
+        }
+      }
+    }
+    write(built_flags, file = make_local_path, append = append)
+  }
+  if (file.exists(make_local_path)) {
+    return(trimws(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]]))
+  } else {
+    return(NULL)
+  }
+}
+
 
 
 

@@ -3,6 +3,7 @@
 \name{install_cmdstan}
 \alias{install_cmdstan}
 \alias{rebuild_cmdstan}
+\alias{cmdstan_make_local}
 \title{Install CmdStan or clean and rebuild an existing installation}
 \usage{
 install_cmdstan(
@@ -12,7 +13,7 @@ install_cmdstan(
   overwrite = FALSE,
   timeout = 1200,
   release_url = NULL,
-  makefile_flags = list()
+  flags = list()
 )
 
 rebuild_cmdstan(
@@ -21,6 +22,8 @@ rebuild_cmdstan(
   quiet = FALSE,
   timeout = 600
 )
+
+cmdstan_make_local(dir = cmdstan_path(), flags = NULL, append = TRUE)
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
@@ -42,15 +45,24 @@ which case an informative error is thrown instead of overwriting the user's
 installation.}
 
 \item{timeout}{Timeout (in seconds) for the CmdStan build stage of the
-installation process. The default is \code{timeout=600} (10 minutes).}
+installation process.}
 
 \item{release_url}{Specifies the URL to a specific Cmdstan release to be
 installed. By default set to \code{NULL}, which downloads the latest stable
 release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}.}
 
-\item{makefile_flags}{A list specifying any makefile flags/variables to be
-written to the \code{make/local} file. For example \code{list("CXX" = "clang++")}
+\item{flags}{A list specifying any makefile flags/variables to be
+written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
 will force the use of clang for compilation.}
+
+\item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
+appended to the end of the existing make/local file? The default is \code{TRUE}.
+If \code{FALSE} the file is overwritten.}
+}
+\value{
+For \code{cmdstan_make_local()}, if \code{flags=NULL} then the existing
+contents of \code{make/local} are returned without writing anything, otherwise
+the updated contents are returned.
 }
 \description{
 The \code{install_cmdstan()} function attempts to download and
@@ -64,4 +76,27 @@ future CmdStanR may help install the requirements.
 The \code{rebuild_cmdstan()} function cleans and rebuilds the cmdstan
 installation. Use this function in case of any issues when compiling
 models.
+
+The \code{cmdstan_make_local()} function is used to read/write makefile flags
+and variables from/to the \code{make/local} file of a CmdStan installation.
+Writing to the make/local file can be used to permanently add makefile
+flags/variables to an installation. For example adding specific compiler
+switches, changing the C++ compiler, etc. A change to the make/local file
+should typically be followed by calling \code{rebuild_cmdstan()}.
+}
+\examples{
+\dontrun{
+install_cmdstan(cores = 4)
+}
+
+\dontrun{
+flags <- list(
+  "CXX" = "clang++",
+  "CXXFLAGS+= -march-native",
+  PRECOMPILED_HEADERS = TRUE
+)
+cmdstan_make_local(flags = flags)
+rebuild_cmdstan()
+}
+
 }
