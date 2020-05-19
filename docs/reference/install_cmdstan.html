@@ -277,19 +277,15 @@ contents of <code>make/local</code> are returned without writing anything, other
 the updated contents are returned.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'>install_cmdstan</span>(<span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>4</span>)
-}
+    <pre class="examples"><div class='input'><span class='co'># install_cmdstan(cores = 4)</span>
 
-<span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
 <span class='no'>flags</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
   <span class='st'>"CXX"</span> <span class='kw'>=</span> <span class='st'>"clang++"</span>,
   <span class='st'>"CXXFLAGS+= -march-native"</span>,
   <span class='kw'>PRECOMPILED_HEADERS</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )
-<span class='fu'>cmdstan_make_local</span>(<span class='kw'>flags</span> <span class='kw'>=</span> <span class='no'>flags</span>)
-<span class='fu'>rebuild_cmdstan</span>()
-}</div></pre>
+<span class='co'># cmdstan_make_local(flags = flags)</span>
+<span class='co'># rebuild_cmdstan()</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

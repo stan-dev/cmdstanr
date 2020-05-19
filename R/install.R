@@ -44,9 +44,7 @@
 #'   will force the use of clang for compilation.
 #'
 #' @examples
-#' \dontrun{
-#' install_cmdstan(cores = 4)
-#' }
+#' # install_cmdstan(cores = 4)
 #'
 install_cmdstan <- function(dir = NULL,
                             cores = getOption("mc.cores", 2),
@@ -167,17 +165,17 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #'   contents of `make/local` are returned without writing anything, otherwise
 #'   the updated contents are returned.
 #' @examples
-#' \dontrun{
 #' flags <- list(
 #'   "CXX" = "clang++",
 #'   "CXXFLAGS+= -march-native",
 #'   PRECOMPILED_HEADERS = TRUE
 #' )
-#' cmdstan_make_local(flags = flags)
-#' rebuild_cmdstan()
-#' }
+#' # cmdstan_make_local(flags = flags)
+#' # rebuild_cmdstan()
 #'
-cmdstan_make_local <- function(dir = cmdstan_path(), flags = NULL, append = TRUE) {
+cmdstan_make_local <- function(dir = cmdstan_path(),
+                               flags = NULL,
+                               append = TRUE) {
   make_local_path <- file.path(dir, "make", "local")
   if (!is.null(flags)) {
     built_flags = c()

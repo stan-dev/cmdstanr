@@ -85,18 +85,14 @@ switches, changing the C++ compiler, etc. A change to the make/local file
 should typically be followed by calling \code{rebuild_cmdstan()}.
 }
 \examples{
-\dontrun{
-install_cmdstan(cores = 4)
-}
+# install_cmdstan(cores = 4)
 
-\dontrun{
 flags <- list(
   "CXX" = "clang++",
   "CXXFLAGS+= -march-native",
   PRECOMPILED_HEADERS = TRUE
 )
-cmdstan_make_local(flags = flags)
-rebuild_cmdstan()
-}
+# cmdstan_make_local(flags = flags)
+# rebuild_cmdstan()
 
 }
