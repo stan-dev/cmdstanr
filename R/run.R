@@ -458,17 +458,16 @@ CmdStanProcs <- R6::R6Class(
         if (nzchar(line)) {
           last_section_start_time <- private$chain_info_[id,"last_section_start_time"]
           state <- private$chain_info_[id,"state"]
-          #' @noRd
-          #' State machine for reading stdout.
-          #' 0 - chain has not started yet
-          #' 1 - chain is initializing (before iterations) and no output is printed
-          #' 2 - chain is initializing and inital values were rejected (output is printed)
-          #' 3 - chain is in warmup
-          #' 4 - chain is in sampling
-          #' 5 - iterations are done but the chain process has not stopped yet
-          #' 6 - the chain's process has stopped
-          #' state 2 is only used because rejection in cmdstan is printed to stdout not stderr
-          #' and we want to avoid printing the intial chain metadata
+          # State machine for reading stdout.
+          # 0 - chain has not started yet
+          # 1 - chain is initializing (before iterations) and no output is printed
+          # 2 - chain is initializing and inital values were rejected (output is printed)
+          # 3 - chain is in warmup
+          # 4 - chain is in sampling
+          # 5 - iterations are done but the chain process has not stopped yet
+          # 6 - the chain's process has stopped
+          # (Note: state 2 is only used because rejection in cmdstan is printed
+          # to stdout not stderr and we want to avoid printing the intial chain metadata)
           next_state <- state
           if (state < 3 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
             state <- 2
@@ -507,7 +506,7 @@ CmdStanProcs <- R6::R6Class(
           if (self$is_error_message(line)) {
             # will print all remaining output in case of exceptions
             if(state == 1) {
-              state = 2;
+              state <- 2;
             }
             message("Chain ", id, " ", line)
           }
