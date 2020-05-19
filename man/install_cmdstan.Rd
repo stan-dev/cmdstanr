@@ -2,16 +2,28 @@
 % Please edit documentation in R/install.R
 \name{install_cmdstan}
 \alias{install_cmdstan}
-\title{Install the latest release of CmdStan}
+\alias{rebuild_cmdstan}
+\alias{cmdstan_make_local}
+\title{Install CmdStan or clean and rebuild an existing installation}
 \usage{
 install_cmdstan(
   dir = NULL,
-  cores = 2,
+  cores = getOption("mc.cores", 2),
   quiet = FALSE,
   overwrite = FALSE,
   timeout = 1200,
-  release_url = NULL
+  release_url = NULL,
+  flags = list()
 )
+
+rebuild_cmdstan(
+  dir = cmdstan_path(),
+  cores = getOption("mc.cores", 2),
+  quiet = FALSE,
+  timeout = 600
+)
+
+cmdstan_make_local(dir = cmdstan_path(), flags = NULL, append = TRUE)
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
@@ -19,8 +31,10 @@ to install it in a directory called \code{.cmdstanr} within the user's home
 directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstanr")}).}
 
 \item{cores}{The number of CPU cores to use to parallelize building CmdStan
-and speed up installation. The default is \code{cores=2}, although we recommend
-using more cores if available.}
+and speed up installation. If \code{cores} is not specified then the default is
+to look for the option \code{"mc.cores"}, which can be set for an entire \R
+session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
+been set then the default is \code{2}.}
 
 \item{quiet}{Should the verbose output from the system processes be
 suppressed when building the CmdStan binaries? The default is \code{FALSE}.}
@@ -31,17 +45,54 @@ which case an informative error is thrown instead of overwriting the user's
 installation.}
 
 \item{timeout}{Timeout (in seconds) for the CmdStan build stage of the
-installation process. The default is \code{timeout=600} (10 minutes).}
+installation process.}
 
-\item{release_url}{Specifies the URL to a specific Cmdstan release to be installed.
-By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.}
+\item{release_url}{Specifies the URL to a specific Cmdstan release to be
+installed. By default set to \code{NULL}, which downloads the latest stable
+release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}.}
+
+\item{flags}{A list specifying any makefile flags/variables to be
+written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
+will force the use of clang for compilation.}
+
+\item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
+appended to the end of the existing make/local file? The default is \code{TRUE}.
+If \code{FALSE} the file is overwritten.}
+}
+\value{
+For \code{cmdstan_make_local()}, if \code{flags=NULL} then the existing
+contents of \code{make/local} are returned without writing anything, otherwise
+the updated contents are returned.
 }
 \description{
-\if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-The \code{install_cmdstan()} function attempts to download and install the latest
-release of \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan} or
-a development version from a repository. Currently the necessary C++ tool
+The \code{install_cmdstan()} function attempts to download and
+install the latest release of
+\href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan} or a
+development version from a repository. Currently the necessary C++ tool
 chain is assumed to be available (see Appendix B of the CmdStan
 \href{https://github.com/stan-dev/cmdstan/releases/latest}{guide}), but in the
 future CmdStanR may help install the requirements.
+
+The \code{rebuild_cmdstan()} function cleans and rebuilds the cmdstan
+installation. Use this function in case of any issues when compiling
+models.
+
+The \code{cmdstan_make_local()} function is used to read/write makefile flags
+and variables from/to the \code{make/local} file of a CmdStan installation.
+Writing to the make/local file can be used to permanently add makefile
+flags/variables to an installation. For example adding specific compiler
+switches, changing the C++ compiler, etc. A change to the make/local file
+should typically be followed by calling \code{rebuild_cmdstan()}.
+}
+\examples{
+# install_cmdstan(cores = 4)
+
+flags <- list(
+  "CXX" = "clang++",
+  "CXXFLAGS+= -march-native",
+  PRECOMPILED_HEADERS = TRUE
+)
+# cmdstan_make_local(flags = flags)
+# rebuild_cmdstan()
+
 }

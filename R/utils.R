@@ -43,23 +43,6 @@ check_target_exe <- function(exe) {
 }
 
 
-check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
-  if (dir.exists(dir_cmdstan)) {
-    if (!overwrite) {
-      warning(
-        "An installation already exists at ", dir_cmdstan, ". ",
-        "Please remove or rename the installation folder or set overwrite=TRUE.",
-        call. = FALSE
-      )
-      return(FALSE)
-    } else {
-      message("* Removing the existing installation of CmdStan...")
-      unlink(dir_cmdstan, recursive = TRUE, force = TRUE)
-    }
-  }
-  TRUE
-}
-
 # paths and extensions ----------------------------------------------------
 
 # Replace `\\` with `/` in a path
@@ -284,7 +267,7 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   paste0(cpp_built_options, collapse = " ")
 }
 
-prepare_precompiled <- function(cpp_options, quiet = FALSE) {
+prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
   flags <- NULL
   if (!is.null(cpp_options$stan_threads)) {
     flags <- c(flags, "threads")
@@ -424,3 +407,4 @@ check_sampler_transitions_treedepth <- function(data_csv) {
     }
   }
 }
+

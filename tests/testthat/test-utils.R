@@ -94,3 +94,37 @@ test_that("cpp_options_to_compile_flags() works", {
   options = list()
   expect_equal(cpp_options_to_compile_flags(options), NULL)
 })
+
+test_that("cmdstan_make_local() works", {
+  exisiting_make_local <- cmdstan_make_local()
+  make_local_path <- file.path(cmdstan_path(), "make", "local")
+  if (file.exists(make_local_path)) {
+    file.remove(make_local_path)
+  }
+  expect_equal(cmdstan_make_local(), NULL)
+  flags = list(
+   "CXX" = "clang++",
+   "CXXFLAGS+= -march-native",
+   TEST1 = TRUE,
+   "TEST2" = FALSE
+  )
+  expect_equal(cmdstan_make_local(flags = flags),
+               c(
+                 "CXX=clang++",
+                 "CXXFLAGS+= -march-native",
+                 "TEST1=true",
+                 "TEST2=false"
+                 ))
+  expect_equal(cmdstan_make_local(flags = list("TEST3" = TRUE)),
+               c(
+                 "CXX=clang++",
+                 "CXXFLAGS+= -march-native",
+                 "TEST1=true",
+                 "TEST2=false",
+                 "TEST3=true"
+               ))
+  expect_equal(cmdstan_make_local(flags = list("TEST4" = TRUE), append = FALSE),
+               c("TEST4=true"))
+  cmdstan_make_local(flags = as.list(exisiting_make_local), append = FALSE)
+})
+

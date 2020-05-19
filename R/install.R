@@ -1,20 +1,33 @@
-#' Install the latest release of CmdStan
+#' Install CmdStan or clean and rebuild an existing installation
 #'
-#' \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-#' The `install_cmdstan()` function attempts to download and install the latest
-#' release of [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest) or
-#' a development version from a repository. Currently the necessary C++ tool
-#' chain is assumed to be available (see Appendix B of the CmdStan
-#' [guide](https://github.com/stan-dev/cmdstan/releases/latest)), but in the
-#' future CmdStanR may help install the requirements.
+#' @description The `install_cmdstan()` function attempts to download and
+#'   install the latest release of
+#'   [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest) or a
+#'   development version from a repository. Currently the necessary C++ tool
+#'   chain is assumed to be available (see Appendix B of the CmdStan
+#'   [guide](https://github.com/stan-dev/cmdstan/releases/latest)), but in the
+#'   future CmdStanR may help install the requirements.
+#'
+#'   The `rebuild_cmdstan()` function cleans and rebuilds the cmdstan
+#'   installation. Use this function in case of any issues when compiling
+#'   models.
+#'
+#'   The `cmdstan_make_local()` function is used to read/write makefile flags
+#'   and variables from/to the `make/local` file of a CmdStan installation.
+#'   Writing to the make/local file can be used to permanently add makefile
+#'   flags/variables to an installation. For example adding specific compiler
+#'   switches, changing the C++ compiler, etc. A change to the make/local file
+#'   should typically be followed by calling `rebuild_cmdstan()`.
 #'
 #' @export
 #' @param dir Path to the directory in which to install CmdStan. The default is
 #'   to install it in a directory called `.cmdstanr` within the user's home
 #'   directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstanr")`).
 #' @param cores The number of CPU cores to use to parallelize building CmdStan
-#'   and speed up installation. The default is `cores=2`, although we recommend
-#'   using more cores if available.
+#'   and speed up installation. If `cores` is not specified then the default is
+#'   to look for the option `"mc.cores"`, which can be set for an entire \R
+#'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
+#'   been set then the default is `2`.
 #' @param quiet Should the verbose output from the system processes be
 #'   suppressed when building the CmdStan binaries? The default is `FALSE`.
 #' @param overwrite When an existing installation is found in `dir`, should
@@ -22,16 +35,24 @@
 #'   which case an informative error is thrown instead of overwriting the user's
 #'   installation.
 #' @param timeout Timeout (in seconds) for the CmdStan build stage of the
-#'   installation process. The default is `timeout=600` (10 minutes).
-#' @param release_url Specifies the URL to a specific Cmdstan release to be installed.
-#'   By default set to NULL, which downloads the latest stable release from stan-dev/cmdstan.
+#'   installation process.
+#' @param release_url Specifies the URL to a specific Cmdstan release to be
+#'   installed. By default set to `NULL`, which downloads the latest stable
+#'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases).
+#' @param flags A list specifying any makefile flags/variables to be
+#'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
+#'   will force the use of clang for compilation.
+#'
+#' @examples
+#' # install_cmdstan(cores = 4)
 #'
 install_cmdstan <- function(dir = NULL,
-                            cores = 2,
+                            cores = getOption("mc.cores", 2),
                             quiet = FALSE,
                             overwrite = FALSE,
                             timeout = 1200,
-                            release_url = NULL) {
+                            release_url = NULL,
+                            flags = list()) {
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
@@ -40,11 +61,12 @@ install_cmdstan <- function(dir = NULL,
   } else {
     checkmate::assert_directory_exists(dir, access = "rwx")
     dir <- repair_path(dir)
-  }  
+  }
 
-  if(!is.null(release_url)) {
-    if(!endsWith(release_url, ".tar.gz")) {
-      stop(paste0(release_url, "is not a .tar.gz archive! cmdstanr supports installing from .tar.gz archives only"))
+  if (!is.null(release_url)) {
+    if (!endsWith(release_url, ".tar.gz")) {
+      stop(release_url, " is not a .tar.gz archive!",
+           "cmdstanr supports installing from .tar.gz archives only.")
     }
     message("* Installing Cmdstan from ", release_url)
     download_url <- release_url
@@ -65,7 +87,7 @@ install_cmdstan <- function(dir = NULL,
     download_url <- github_download_url(ver)
     dest_file <- file.path(dir, tar_gz_file)
   }
-  if(!check_install_dir(dir_cmdstan, overwrite)) {
+  if (!check_install_dir(dir_cmdstan, overwrite)) {
     return(invisible(NULL))
   }
   tar_downloaded <- download_with_retries(download_url, dest_file)
@@ -85,6 +107,27 @@ install_cmdstan <- function(dir = NULL,
           call. = FALSE)
   }
   file.remove(dest_file)
+  cmdstan_make_local(dir = dir_cmdstan, flags = flags, append = TRUE)
+  if (os_is_windows()) {
+    if (cmdstan_ver < "2.24") {
+      cmdstan_make_local(
+        dir = dir_cmdstan,
+        flags = list(
+          "ifeq (gcc,$(CXX_TYPE))",
+          "CXXFLAGS_WARNINGS+= -Wno-int-in-bool-context -Wno-attributes",
+          "endif"
+        ),
+        append = TRUE
+      )
+    }
+    if (cmdstan_ver > "2.22" && cmdstan_ver < "2.24") {
+      windows_stanc <- file.path(dir_cmdstan, "bin", "windows-stanc")
+      bin_stanc_exe <- file.path(dir_cmdstan, "bin", "stanc.exe")
+      if (file.exists(windows_stanc)) {
+        file.rename(windows_stanc, bin_stanc_exe)
+      }
+    }
+  }
 
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
@@ -101,7 +144,85 @@ install_cmdstan <- function(dir = NULL,
   set_cmdstan_path(dir_cmdstan)
 }
 
+
+#' @rdname install_cmdstan
+#' @export
+rebuild_cmdstan <- function(dir = cmdstan_path(),
+                            cores = getOption("mc.cores", 2),
+                            quiet = FALSE,
+                            timeout = 600) {
+  clean_cmdstan(dir, cores, quiet)
+  build_cmdstan(dir, cores, quiet, timeout)
+  invisible(NULL)
+}
+
+#' @rdname install_cmdstan
+#' @export
+#' @param append For `cmdstan_make_local()`, should the listed makefile flags be
+#'   appended to the end of the existing make/local file? The default is `TRUE`.
+#'   If `FALSE` the file is overwritten.
+#' @return For `cmdstan_make_local()`, if `flags=NULL` then the existing
+#'   contents of `make/local` are returned without writing anything, otherwise
+#'   the updated contents are returned.
+#' @examples
+#' flags <- list(
+#'   "CXX" = "clang++",
+#'   "CXXFLAGS+= -march-native",
+#'   PRECOMPILED_HEADERS = TRUE
+#' )
+#' # cmdstan_make_local(flags = flags)
+#' # rebuild_cmdstan()
+#'
+cmdstan_make_local <- function(dir = cmdstan_path(),
+                               flags = NULL,
+                               append = TRUE) {
+  make_local_path <- file.path(dir, "make", "local")
+  if (!is.null(flags)) {
+    built_flags = c()
+    for (i in seq_len(length(flags))) {
+      option_name <- names(flags)[i]
+      if (isTRUE(as.logical(flags[[i]]))) {
+        built_flags = c(built_flags, paste0(option_name, "=true"))
+      } else if (isFALSE(as.logical(flags[[i]]))) {
+        built_flags = c(built_flags, paste0(option_name, "=false"))
+      } else {
+        if (is.null(option_name) || !nzchar(option_name)) {
+          built_flags = c(built_flags, paste0(flags[[i]]))
+        } else {
+          built_flags = c(built_flags, paste0(option_name, "=", flags[[i]]))
+        }
+      }
+    }
+    write(built_flags, file = make_local_path, append = append)
+  }
+  if (file.exists(make_local_path)) {
+    return(trimws(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]]))
+  } else {
+    return(NULL)
+  }
+}
+
+
+
+
 # internal ----------------------------------------------------------------
+
+check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
+  if (dir.exists(dir_cmdstan)) {
+    if (!overwrite) {
+      warning(
+        "An installation already exists at ", dir_cmdstan, ". ",
+        "Please remove or rename the installation folder or set overwrite=TRUE.",
+        call. = FALSE
+      )
+      return(FALSE)
+    } else {
+      message("* Removing the existing installation of CmdStan...")
+      unlink(dir_cmdstan, recursive = TRUE, force = TRUE)
+    }
+  }
+  TRUE
+}
 
 # construct url for download from cmdstan version number
 github_download_url <- function(version_number) {
@@ -128,15 +249,14 @@ latest_released_version <- function() {
 # download with retries and pauses
 download_with_retries <- function(download_url,
                                   destination_file,
-                                  retries = 5, 
+                                  retries = 5,
                                   pause_sec = 5,
                                   quiet = TRUE) {
-                                    download_rc <- 1
     download_rc <- 1
-    while(retries > 0 && download_rc != 0) {
+    while (retries > 0 && download_rc != 0) {
       download_rc <- utils::download.file(url = download_url,
-                                        destfile = destination_file, 
-                                        quiet = quiet)
+                                          destfile = destination_file,
+                                          quiet = quiet)
       if (download_rc != 0) {
         Sys.sleep(pause_sec)
       }
@@ -149,7 +269,10 @@ download_with_retries <- function(download_url,
     }
 }
 
-build_cmdstan <- function(dir, cores, quiet, timeout) {
+build_cmdstan <- function(dir,
+                          cores = getOption("mc.cores", 2),
+                          quiet = FALSE,
+                          timeout) {
   processx::run(
     make_cmd(),
     args = c(paste0("-j", cores), "build"),
@@ -161,6 +284,35 @@ build_cmdstan <- function(dir, cores, quiet, timeout) {
     stderr_line_callback = function(x,p) { if(quiet) message(x) },
     timeout = timeout
   )
+}
+
+clean_cmdstan <- function(dir = cmdstan_path(),
+                          cores = getOption("mc.cores", 2),
+                          quiet = FALSE) {
+  processx::run(
+    make_cmd(),
+    args = c("clean-all"),
+    wd = dir,
+    echo_cmd = FALSE,
+    echo = !quiet,
+    spinner = quiet,
+    error_on_status = FALSE,
+    stderr_line_callback = function(x,p) { if(quiet) message(x) }
+  )
+  # remove main_.*.o files and model_header_.*.hpp.gch files
+  files_to_remove <- c(
+    list.files(
+      path = file.path(cmdstan_path(), "src", "cmdstan"),
+      pattern = "main_.*\\.o$",
+      full.names = TRUE
+    ),
+    list.files(
+      path = file.path(cmdstan_path(), "stan", "src", "stan", "model"),
+      pattern = "model_header_.*\\.hpp.gch$",
+      full.names = TRUE
+    )
+  )
+  file.remove(files_to_remove)
 }
 
 build_example <- function(dir, cores, quiet, timeout) {

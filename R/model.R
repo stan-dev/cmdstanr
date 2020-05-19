@@ -217,7 +217,9 @@ compile_method <- function(quiet = TRUE,
                            include_paths = NULL,
                            cpp_options = list(),
                            stanc_options = list(),
-                           force_recompile = FALSE) {
+                           force_recompile = FALSE,
+                           #deprecated
+                           threads = FALSE) {
   if (all(nzchar(self$exe_file()))) {
     exe <- cmdstan_ext(strip_ext(self$stan_file()))
   } else {
@@ -236,6 +238,11 @@ compile_method <- function(quiet = TRUE,
   } else if (file.exists(self$stan_file())
              && file.mtime(exe) < file.mtime(self$stan_file())) {
     force_recompile <- TRUE
+  }
+  # temporary deprecation warnings
+  if (isTRUE(threads)) {
+    warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
+    cpp_options[["stan_threads"]] <- TRUE
   }
   if (!force_recompile) {
     message("Model executable is up to date!")

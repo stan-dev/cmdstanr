@@ -54,7 +54,7 @@ test_that("install_cmdstan() errors if it times out", {
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
                       release_url = test_release_url()),
-      if (dir_exists) "* Removing the existing installation" else "* Latest CmdStan release",
+      if (dir_exists) "* Removing the existing installation" else "* * Installing Cmdstan from https://github.com",
       fixed = TRUE
     ),
     "increasing the value of the 'timeout' argument and running again with 'quiet=FALSE'",
@@ -66,10 +66,43 @@ test_that("install_cmdstan() errors if it times out", {
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
                       release_url = test_release_url()),
-      if (dir_exists) "* Removing the existing installation" else "* Latest CmdStan release",
+      if (dir_exists) "* Removing the existing installation" else "* * Installing Cmdstan from https://github.com",
       fixed = TRUE
     ),
     "Try increasing the value of the 'timeout' argument.",
     fixed = TRUE
   )
 })
+
+test_that("prepare_precompiled() works", {
+  main_noflags_o <- file.path(cmdstan_path(), "src", "cmdstan", paste0("main_noflags.o"))
+  main_threads_o <- file.path(cmdstan_path(), "src", "cmdstan", paste0("main_threads.o"))
+  if (file.exists(main_noflags_o)) {
+    file.remove(main_noflags_o)
+  }
+  if (file.exists(main_threads_o)) {
+    file.remove(main_threads_o)
+  }
+  prepare_precompiled(cpp_options = list(), quiet = TRUE)
+  expect_true(file.exists(main_noflags_o))
+  expect_false(file.exists(main_threads_o))
+  no_flags_time = file.mtime(main_noflags_o)
+  prepare_precompiled(cpp_options = list(stan_threads = TRUE), quiet = TRUE)
+  expect_true(file.exists(main_noflags_o))
+  expect_true(file.exists(main_threads_o))
+  threads_time = file.mtime(main_threads_o)
+  prepare_precompiled(cpp_options = list(), quiet = TRUE)
+  expect_true(file.exists(main_noflags_o))
+  expect_true(file.exists(main_threads_o))
+  expect_equal(file.mtime(main_noflags_o), no_flags_time)
+  expect_equal(file.mtime(main_threads_o), threads_time)
+  prepare_precompiled(cpp_options = list(stan_threads = TRUE), quiet = TRUE)
+  expect_true(file.exists(main_noflags_o))
+  expect_true(file.exists(main_threads_o))
+  expect_equal(file.mtime(main_noflags_o), no_flags_time)
+  expect_equal(file.mtime(main_threads_o), threads_time)
+
+  file.remove(main_noflags_o)
+  file.remove(main_threads_o)
+})
+
