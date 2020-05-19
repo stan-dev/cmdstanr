@@ -133,6 +133,9 @@ read_sample_info_csv <- function(csv_file) {
   } else if (csv_file_info$method != "sample") {
     stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
   }
+  if (length(sampling_info$sampler_diagnostics) == 0 && length(sampling_info$model_params) == 0) {
+    stop("The supplied csv file does not contain any parameter names or data!")
+  }
   if (inverse_metric_rows > 0) {
     rows <- inverse_metric_rows
     cols <- length(csv_file_info$inverse_metric)/inverse_metric_rows
@@ -246,23 +249,13 @@ read_sample_csv <- function(files,
     }
     repaired_model_params <- repair_variable_names(sampling_info$model_params)
     repaired_sampler_diagnostics <- repair_variable_names(sampling_info$sampler_diagnostics)
-    if (!is.null(parameters)) {
-      for (p in parameters) {
-        if (!(p %in% repaired_model_params)) {
-          stop("The specified parameter ", p, " was not found in the sampling output!")
-        }
-      }
+    not_found <- parameters[!parameters %in% repaired_model_params]
+    if (length(not_found)) {
+      stop("Can't find parameter(s) ", paste(not_found, collapse = ", "), " in the sampling output!")
     }
-    if (!is.null(sampler_diagnostics)) {
-      for (p in sampler_diagnostics) {
-        if (!(p %in% repaired_sampler_diagnostics)) {
-          if (p == "lp__") {
-            stop("lp__ is a part of model parameters not sampler diagnostics.")
-          } else {
-            stop("The specified sampler diagnostic ", p, " was not found in the sampling output!")
-          }
-        }
-      }
+    not_found <- sampler_diagnostics[!sampler_diagnostics %in% repaired_sampler_diagnostics]
+    if (length(not_found)) {
+      stop("Can't find sampler diagnostic(s) ", paste(not_found, collapse = ", "), " in the sampling output!")
     }
     if (is.null(col_select)) {
       col_select <- "lp__"
@@ -280,9 +273,6 @@ read_sample_csv <- function(files,
       }
       selected_sampler_diagnostics <- sampling_info$sampler_diagnostics[sampling_info$sampler_diagnostics %in% col_select]
       selected_model_params <- sampling_info$model_params[sampling_info$model_params %in% col_select]
-    }
-    if (length(sampling_info$sampler_diagnostics) == 0 && length(sampling_info$model_params) == 0) {
-      stop("The supplied csv file does not contain any parameter names or data!")
     }
     suppressWarnings(
     draws <- vroom::vroom(output_file,
