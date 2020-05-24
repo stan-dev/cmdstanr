@@ -29,6 +29,18 @@ if (not_on_cran()) {
     init_alpha = -20,
     save_latent_dynamics = "NOT_LOGICAL"
   )
+
+
+  ok_arg_sci_nota_values <- list(
+    data = data_list,
+    refresh = 5,
+    init = NULL,
+    seed = 12345,
+    algorithm = "lbfgs",
+    iter = 100000,
+    init_alpha = 0.002,
+    save_latent_dynamics = FALSE
+  )
 }
 
 
@@ -42,6 +54,14 @@ test_that("optimize() method runs when all arguments specified validly", {
   # leaving all at default (except 'data')
   expect_optim_output(fit2 <- mod$optimize(data = data_list))
   expect_is(fit2, "CmdStanMLE")
+})
+
+test_that("optimize() method runs arguments are specified in scientific notation", {
+  skip_on_cran()
+
+  # specifying all arguments validly
+  expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_sci_nota_values))
+  expect_is(fit1, "CmdStanMLE")
 })
 
 test_that("optimize() method errors for any invalid argument before calling cmdstan", {
