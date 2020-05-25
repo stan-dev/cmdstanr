@@ -132,3 +132,30 @@ test_that("name in STANCFLAGS is set correctly", {
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))
   expect_output(print(out), out_name)
 })
+
+
+test_that("switching threads on and off works without rebuild", {
+  skip_on_cran()
+  main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
+  mod$compile(force_recompile = TRUE)
+
+  before_mtime <- file.mtime(main_path_o)
+  mod$compile(force_recompile = TRUE)
+  after_mtime <- file.mtime(main_path_o)
+  expect_equal(before_mtime, after_mtime)
+
+  before_mtime <- file.mtime(main_path_o)
+  mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
+  after_mtime <- file.mtime(main_path_o)
+  expect_gt(after_mtime, before_mtime)
+
+  before_mtime <- file.mtime(main_path_o)
+  mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
+  after_mtime <- file.mtime(main_path_o)
+  expect_equal(before_mtime, after_mtime)
+
+  before_mtime <- file.mtime(main_path_o)
+  mod$compile(force_recompile = TRUE)
+  after_mtime <- file.mtime(main_path_o)
+  expect_gt(after_mtime, before_mtime)
+})

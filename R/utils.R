@@ -285,27 +285,15 @@ prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
   }
   main_path_w_flags <- file.path(cmdstan_path(), "src", "cmdstan", paste0("main_", flags, ".o"))
   main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-  main_path_d <- file.path(cmdstan_path(), "src", "cmdstan", "main.d")
   model_header_path_w_flags <- file.path(cmdstan_path(), "stan", "src", "stan", "model", paste0("model_header_", flags, ".hpp.gch"))
   model_header_path_gch <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.hpp.gch")
-  model_header_path_d <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.d")
-  model_header_path_hpp <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.d")
   if (file.exists(model_header_path_gch)) {
     model_header_gch_used <- TRUE
   } else {
     model_header_gch_used <- FALSE
   }
   if (!file.exists(main_path_w_flags)) {
-
-    files_to_remove <- c(
-      main_path_o,
-      main_path_d,
-      model_header_path_gch,
-      model_header_path_d
-    )
-    for (file in files_to_remove) if (file.exists(file)) {
-      file.remove(file)
-    }
+    clean_compile_helper_files()
     run_log <- processx::run(
       command = make_cmd(),
       args = c(cpp_options_to_compile_flags(cpp_options),
@@ -330,14 +318,7 @@ prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
         stderr_line_callback = function(x,p) { if (!quiet) message(x) },
         error_on_status = TRUE
       )
-      if (file.exists(model_header_path_gch)) {
-        file.copy(model_header_path_gch, model_header_path_w_flags)
-      }
-    }
-  } else {
-    file.copy(main_path_w_flags, main_path_o, overwrite=TRUE)
-    if (model_header_gch_used && file.exists(model_header_path_w_flags)) {
-      file.copy(model_header_path_w_flags, model_header_path_gch, overwrite=TRUE)
+      file.copy(model_header_path_gch, model_header_path_w_flags)
     }
   }
 }
