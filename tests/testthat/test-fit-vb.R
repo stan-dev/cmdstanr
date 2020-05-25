@@ -3,6 +3,7 @@ context("fitted-vb")
 if (not_on_cran()) {
   set_cmdstan_path()
   fit_vb <- testing_fit("logistic", method = "variational", seed = 123)
+  fit_vb_sci_not <- testing_fit("logistic", method = "variational", seed = 123, iter = 200000, adapt_iter = 100000)
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
@@ -34,4 +35,16 @@ test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
   expect_type(lg, "double")
   expect_equal(length(lp), nrow(fit_vb$draws()))
   expect_equal(length(lg), length(lp))
+})
+
+test_that("vb works with scientific notation args", {
+  skip_on_cran()
+  x <- fit_vb_sci_not$summary()
+  expect_s3_class(x, "draws_summary")
+  expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
+
+  x <- fit_vb_sci_not$summary(c("mean", "sd"))
+  expect_s3_class(x, "draws_summary")
+  expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
+  expect_equal(colnames(x), c("variable", "mean", "sd"))
 })

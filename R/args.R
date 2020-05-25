@@ -421,6 +421,9 @@ validate_cmdstan_args = function(self) {
 
   checkmate::assert_flag(self$save_latent_dynamics)
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
+  if (!is.null(self$refresh)) {
+    self$refresh <- as.integer(self$refresh)
+  }
   if (!is.null(self$data_file)) {
     checkmate::assert_file_exists(self$data_file, access = "r")
   }
@@ -442,24 +445,32 @@ validate_sample_args <- function(self, num_runs) {
                                len = 1,
                                any.missing = FALSE,
                                .var.name = "Number of chains")
-
+  self$num_runs <- as.integer(self$num_runs)
   checkmate::assert_integerish(self$thin,
                                lower = 1,
                                len = 1,
                                null.ok = TRUE)
+  if (!is.null(self$thin)) {
+    self$thin <- as.integer(self$thin)
+  }  
   checkmate::assert_integerish(self$iter_sampling,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)
+  if (!is.null(self$iter_sampling)) {
+    self$iter_sampling <- as.integer(self$iter_sampling)
+  }
   checkmate::assert_integerish(self$iter_warmup,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)
+  if (!is.null(self$iter_warmup)) {
+    self$iter_warmup <- as.integer(self$iter_warmup)
+  }
   checkmate::assert_integerish(self$save_warmup,
                                lower = 0, upper = 1,
                                len = 1,
                                null.ok = TRUE)
-
   checkmate::assert_integerish(self$adapt_engaged,
                                lower = 0, upper = 1,
                                len = 1,
@@ -472,18 +483,30 @@ validate_sample_args <- function(self, num_runs) {
                                lower = 1,
                                len = 1,
                                null.ok = TRUE)
+  if (!is.null(self$max_treedepth)) {
+    self$max_treedepth <- as.integer(self$max_treedepth)
+  }
   checkmate::assert_integerish(self$init_buffer,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)
+  if (!is.null(self$init_buffer)) {
+    self$init_buffer <- as.integer(self$init_buffer)
+  }
   checkmate::assert_integerish(self$term_buffer,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)
+  if (!is.null(self$term_buffer)) {
+    self$term_buffer <- as.integer(self$term_buffer)
+  }
   checkmate::assert_integerish(self$window,
                                lower = 0,
                                len = 1,
                                null.ok = TRUE)
+  if (!is.null(self$window)) {
+    self$window <- as.integer(self$window)
+  }
 
   if (length(self$step_size) == 1) {
     checkmate::assert_number(self$step_size, lower = .Machine$double.eps)
@@ -510,6 +533,9 @@ validate_optimize_args <- function(self) {
   checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
                            choices = c("bfgs", "lbfgs", "newton"))
   checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE, len = 1)
+  if (!is.null(self$iter)) {
+    self$iter <- as.integer(self$iter)
+  }  
   checkmate::assert_number(self$init_alpha, lower = 0, null.ok = TRUE)
   if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
     stop("'init_alpha' can't be used when algorithm is 'newton'.",
@@ -528,19 +554,37 @@ validate_variational_args <- function(self) {
                            choices = c("meanfield", "fullrank"))
   checkmate::assert_integerish(self$iter, null.ok = TRUE,
                                lower = 1, len = 1)
+  if (!is.null(self$iter)) {
+    self$iter <- as.integer(self$iter)
+  }
   checkmate::assert_integerish(self$grad_samples, null.ok = TRUE,
                                lower = 1, len = 1)
+  if (!is.null(self$grad_samples)) {
+    self$grad_samples <- as.integer(self$grad_samples)
+  }
   checkmate::assert_integerish(self$elbo_samples,  null.ok = TRUE,
                                lower = 1, len = 1)
+  if (!is.null(self$elbo_samples)) {
+    self$elbo_samples <- as.integer(self$elbo_samples)
+  }
   checkmate::assert_integerish(self$eval_elbo, null.ok = TRUE,
                                lower = 1, len = 1)
+  if (!is.null(self$eval_elbo)) {
+    self$eval_elbo <- as.integer(self$eval_elbo)
+  }
   checkmate::assert_integerish(self$output_samples, null.ok = TRUE,
                                lower = 1, len = 1)
+  if (!is.null(self$output_samples)) {
+    self$output_samples <- as.integer(self$output_samples)
+  }
   checkmate::assert_integerish(self$adapt_engaged, null.ok = TRUE,
                                lower = 0, upper = 1, len = 1)
   checkmate::assert_integerish(self$adapt_iter,
                                lower = 1, len = 1,
                                null.ok = TRUE)
+  if (!is.null(self$adapt_iter)) {
+    self$adapt_iter <- as.integer(self$adapt_iter)
+  }
   checkmate::assert_number(self$eta, null.ok = TRUE,
                            lower = .Machine$double.eps)
   checkmate::assert_number(self$tol_rel_obj, null.ok = TRUE,
@@ -727,6 +771,5 @@ compose_arg <- function(self, arg_name, cmdstan_arg_name = NULL, idx = NULL) {
   }
   # e.g. adapt_delta -> delta (to deal with weird hierarchical arg structure in CmdStan 2)
   cmdstan_arg_name <- sub("adapt_", "", cmdstan_arg_name)
-
   paste0(cmdstan_arg_name, "=", val)
 }
