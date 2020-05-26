@@ -95,7 +95,7 @@ read_sample_info_csv <- function(csv_file) {
       } else {
         # after adaptation terminated read in the step size and inverse metrics
         if (regexpr("# Step size = ", line, perl = TRUE) > 0) {
-          csv_file_info$step_size <- as.numeric(strsplit(line, " = ")[[1]][2])
+          csv_file_info$stepsize_adaptation <- as.numeric(strsplit(line, " = ")[[1]][2])
         } else if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
           inverse_metric_diagonal_next <- TRUE
         } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
@@ -190,8 +190,8 @@ read_sample_csv <- function(output_files) {
       if (!is.null(sampling_info$inverse_metric)) {
         inverse_metric[[sampling_info$id]] <- sampling_info$inverse_metric
       }
-      if (!is.null(sampling_info$step_size)) {
-        step_size[[sampling_info$id]] <- sampling_info$step_size
+      if (!is.null(sampling_info$stepsize_adaptation)) {
+        step_size[[sampling_info$id]] <- sampling_info$stepsize_adaptation
       }
       id <- sampling_info$id
     } else {
@@ -207,8 +207,8 @@ read_sample_csv <- function(output_files) {
       if (!is.null(csv_file_info$inverse_metric)) {
         inverse_metric[[csv_file_info$id]] <- csv_file_info$inverse_metric
       }
-      if (!is.null(csv_file_info$step_size)) {
-        step_size[[csv_file_info$id]] <- csv_file_info$step_size
+      if (!is.null(csv_file_info$stepsize_adaptation)) {
+        step_size[[csv_file_info$id]] <- csv_file_info$stepsize_adaptation
       }
       id <- csv_file_info$id
     }
