@@ -68,11 +68,11 @@ CmdStanFit <- R6::R6Class(
       self$runset$run_cmdstan_tool("diagnose", ...)
     },
 
-    output_files = function() {
-      self$runset$output_files()
+    output_files = function(include_failed = TRUE) {
+      self$runset$output_files(include_failed)
     },
-    latent_dynamics_files = function() {
-      self$runset$latent_dynamics_files()
+    latent_dynamics_files = function(include_failed = TRUE) {
+      self$runset$latent_dynamics_files(include_failed)
     },
     data_file = function() {
       self$runset$data_file()
@@ -80,14 +80,16 @@ CmdStanFit <- R6::R6Class(
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE,
-                                 random = TRUE) {
-      self$runset$save_output_files(dir, basename, timestamp, random)
+                                 random = TRUE,
+                                 include_failed = TRUE) {
+      self$runset$save_output_files(dir, basename, timestamp, random, include_failed)
     },
     save_latent_dynamics_files = function(dir = ".",
                                      basename = NULL,
                                      timestamp = TRUE,
-                                     random = TRUE) {
-      self$runset$save_latent_dynamics_files(dir, basename, timestamp, random)
+                                     random = TRUE,
+                                     include_failed = TRUE) {
+      self$runset$save_latent_dynamics_files(dir, basename, timestamp, random, include_failed)
     },
     save_data_file = function(dir = ".",
                               basename = NULL,
@@ -244,7 +246,9 @@ NULL
 #' * `basename` is the user's provided `basename` argument;
 #' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
 #' * `id` is the MCMC chain id (or `1` for non MCMC);
-#' * `random` contains six random alphanumeric characters.
+#' * `random` contains six random alphanumeric characters;
+#' * `include_failed` specifies if files produced by chains that failed to finish
+#'    are included. By default its set to TRUE.
 #'
 #' For `$save_latent_dynamics_files()` everything is the same as for
 #' `$save_output_files()` except `"-diagnostic-"` is included in the new
@@ -315,12 +319,8 @@ CmdStanMCMC <- R6::R6Class(
   public = list(
     initialize = function(runset) {
       super$initialize(runset)
-      if (!length(self$output_files())) {
-        warning("No chains finished successfully. Unable to retrieve the fit.")
-      } else {
-        if (self$runset$args$validate_csv) {
-          private$read_csv_(diagnostic_warnings = !runset$args$method_args$fixed_param)
-        }
+      if (self$runset$args$validate_csv) {
+        private$read_csv_(diagnostic_warnings = !runset$args$method_args$fixed_param)
       }
     },
     num_chains = function() {
@@ -335,6 +335,9 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     draws = function(inc_warmup = FALSE) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("No chains finished successfully. Unable to retrieve the draws.")
+      }
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
@@ -349,6 +352,9 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     sampler_diagnostics = function(inc_warmup = FALSE) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.")
+      }
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
@@ -368,11 +374,7 @@ CmdStanMCMC <- R6::R6Class(
     warmup_draws_ = NULL,
     draws_ = NULL,
     read_csv_ = function(diagnostic_warnings = FALSE) {
-      if (!length(self$output_files())) {
-        stop("No chains finished successfully. Unable to retrieve the fit.",
-             call. = FALSE)
-      }
-      data_csv <- read_sample_csv(self$output_files())
+      data_csv <- read_sample_csv(self$output_files(include_failed = FALSE))
       if (diagnostic_warnings) {
         check_divergences(data_csv)
         check_sampler_transitions_treedepth(data_csv)

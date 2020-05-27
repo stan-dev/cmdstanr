@@ -23,7 +23,7 @@ if (not_on_cran()) {
           save_latent_dynamics = TRUE
         )
       )
-      num_files <- length(check_some_fail$output_files())
+      num_files <- length(check_some_fail$output_files(include_failed = FALSE))
     }
     check_some_fail
   }
@@ -52,7 +52,7 @@ test_that("correct warnings are thrown when some chains fail", {
   skip_on_cran()
   expect_warning(
      fit_tmp <- make_some_fail(mod),
-     paste(4 - length(fit_tmp$output_files()), "chain(s) finished unexpectedly"),
+     paste(4 - length(fit_tmp$output_files(include_failed = FALSE)), "chain(s) finished unexpectedly"),
      fixed = TRUE
   )
 
@@ -62,8 +62,37 @@ test_that("correct warnings are thrown when some chains fail", {
   }
 })
 
+test_that("$output_files() and latent_dynamic_files() returns path to all files regardless of chain failure", {
+  skip_on_cran()
+  expect_equal(
+    length(fit_all_fail$output_files()),
+    4
+  )
+  expect_equal(
+    length(fit_all_fail$output_files(include_failed = FALSE)),
+    0
+  )
+  expect_equal(
+    length(fit_some_fail$output_files()),
+    4
+  )
+  expect_equal(
+    length(fit_all_fail$latent_dynamics_files()),
+    4
+  )
+  expect_equal(
+    length(fit_all_fail$latent_dynamics_files(include_failed = FALSE)),
+    0
+  )
+  expect_equal(
+    length(fit_some_fail$latent_dynamics_files()),
+    4
+  )
+})
+
 test_that("$save_* methods save all files regardless of chain failure", {
   skip_on_cran()
+  fit_all_fail$save_output_files(dir = tempdir())
   expect_message(
     fit_all_fail$save_output_files(dir = tempdir()),
     "Moved 4 files"
