@@ -204,18 +204,23 @@ CmdStanRun <- R6::R6Class(
 .run_sample <- function() {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-
-  cat("Running MCMC with", procs$num_runs(), "chain(s) on", procs$num_cores(),
+  if (is.null(procs$threads_per_chain())) {
+    cat("Running MCMC with", procs$num_runs(), "chain(s) on", procs$num_cores(),
       "core(s)...\n\n")
-
+  } else {
+    cat("Running MCMC with", procs$num_runs(), "chain(s) on", procs$num_cores(),
+      "core(s) with", procs$threads_per_chain(), " thread(s) per chain...\n\n")
+  }
+  if (!is.null(procs$threads_per_chain())) {
+    Sys.setenv("STAN_NUM_THREADS" = procs$threads_per_chain())
+  }  
   start_time <- Sys.time()
   chains <- procs$run_ids()
   chain_ind <- 1
-
   while (!procs$all_finished()) {
 
     # if we have free cores and any leftover chains
-    while (procs$active_cores() != procs$num_cores() &&
+    while (procs$active_cores() != procs$simultaneous_chains() &&
            procs$any_queued()) {
       chain_id <- chains[chain_ind]
       procs$new_proc(
@@ -277,12 +282,23 @@ CmdStanProcs <- R6::R6Class(
     #   chains. Currently for other methods this must be set to 1.
     # @param num_cores The number of cores for running MCMC chains in parallel.
     #   Currently for other method this must be set to 1.
-    initialize = function(num_runs, num_cores) {
+    # @param threads_per_chain The number of threads to use per MCMC chaing
+    #   to run parallel sections of model. 
+    initialize = function(num_runs, num_cores, threads_per_chain = NULL) {
       checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(num_cores, lower = 1, len = 1, any.missing = FALSE,
                                    .var.name = "cores")
+      checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE,
+                                   .var.name = "threads_per_chain")
       private$num_runs_ <- as.integer(num_runs)
       private$num_cores_ <- as.integer(num_cores)
+      if (is.null(threads_per_chain)) {
+        private$threads_per_chain_ <- NULL
+        private$simultaneous_chains_ <- as.integer(private$num_cores_)
+      } else {
+        private$threads_per_chain_ <- as.integer(threads_per_chain)
+        private$simultaneous_chains_ <- as.integer(floor(private$num_cores_/private$threads_per_chain_))
+      }      
       private$active_cores_ <- 0
       private$run_ids_ <- seq_len(num_runs)
       zeros <- rep(0, num_runs)
@@ -302,6 +318,12 @@ CmdStanProcs <- R6::R6Class(
     },
     num_cores = function() {
       private$num_cores_
+    },
+    threads_per_chain = function() {
+      private$threads_per_chain_
+    },
+    simultaneous_chains = function() {
+      private$simultaneous_chains_
     },
     run_ids = function() {
       private$run_ids_
@@ -557,6 +579,8 @@ CmdStanProcs <- R6::R6Class(
     run_ids_ = integer(),
     num_runs_ = integer(),
     num_cores_ = integer(),
+    threads_per_chain_ = integer(),
+    simultaneous_chains_ = integer(),
     active_cores_ = integer(),
     chain_info_ = data.frame(),
     chain_output_ = list(),

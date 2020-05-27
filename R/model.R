@@ -113,7 +113,9 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     stan_file_ = character(),
-    exe_file_ = character()
+    exe_file_ = character(),
+    cpp_options_ = list(),
+    stanc_options_ = list()
   ),
   public = list(
     initialize = function(stan_file, exe_file, compile, ...) {
@@ -131,6 +133,8 @@ CmdStanModel <- R6::R6Class(
       invisible(self)
     },
     stan_file = function() private$stan_file_,
+    cpp_options = function() private$cpp_options_,
+    stanc_options = function() private$stanc_options_,
     exe_file = function(path = NULL) {
       if (!is.null(path)) {
         private$exe_file_ = path
@@ -300,6 +304,8 @@ compile_method <- function(quiet = TRUE,
   )
 
   file.copy(tmp_exe, exe, overwrite = TRUE)
+  private$stanc_options_ <- stanc_options
+  private$cpp_options_ <- cpp_options
   private$exe_file_ <- exe
   invisible(self)
 }
@@ -419,7 +425,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `validate_csv`: (logical) When `TRUE` (the default), validate the
 #'   sampling results in the csv files. Disable if you wish to manually read in
 #'   the sampling results and validate them.
-#'
+#'   * `threads_per_chain`: (positive integer) The number of threads to use per MCMC chaing
+#'   to run parallel sections of model.
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
@@ -451,6 +458,7 @@ sample_method <- function(data = NULL,
                           window = NULL,
                           fixed_param = FALSE,
                           validate_csv = TRUE,
+                          threads_per_chain = NULL,
                           # deprecated
                           num_cores = NULL,
                           num_chains = NULL,
@@ -495,8 +503,24 @@ sample_method <- function(data = NULL,
     warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
     save_latent_dynamics <- save_extra_diagnostics
   }
-
   checkmate::assert_integerish(chains, lower = 1, len = 1)
+  checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
+  # check if model was not compiled with threading
+  if (is.null(self$cpp_options()[["stan_threads"]])) {
+    if (!is.null(threads_per_chain)) {
+      warning("'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!")
+      threads_per_chain <- NULL
+    }    
+  } else {
+    # TODO(Rok): remove the use of .cmdstanr$NUM_THREADS once stan_num_threads() is removed
+    if (is.null(threads_per_chain)) {
+      if (!is.null(.cmdstanr$NUM_THREADS)) {
+        threads_per_chain <- .cmdstanr$NUM_THREADS
+      } else {
+        warning("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but the number of threads per chain was not set! The sampling with run with one thread per chain. Use 'threads_per_chain' to set the number of threads.")
+      }
+    }
+  }  
 
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
@@ -528,7 +552,7 @@ sample_method <- function(data = NULL,
     output_dir = output_dir,
     validate_csv = validate_csv
   )
-  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = cores)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = cores, threads_per_chain = threads_per_chain)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)

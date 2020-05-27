@@ -77,6 +77,9 @@ cmdstan_version <- function() {
 .cmdstanr$VERSION <- NULL
 .cmdstanr$TEMP_DIR <- NULL
 
+# TODO(Rok): remove once set_num_threads() is removed
+.cmdstanr$NUM_THREADS <- NULL
+
 # path to temp directory
 cmdstan_tempdir <- function() {
   .cmdstanr$TEMP_DIR

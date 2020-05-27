@@ -145,6 +145,7 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info$step_size <- csv_file_info$stepsize
   csv_file_info$iter_warmup <- csv_file_info$num_warmup
   csv_file_info$iter_sampling <- csv_file_info$num_samples
+  csv_file_info$threads_per_chain <- csv_file_info$num_threads
   csv_file_info$model <- NULL
   csv_file_info$engaged <- NULL
   csv_file_info$delta <- NULL
@@ -155,6 +156,7 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info$file <- NULL
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
+  csv_file_info$num_threads <- NULL
 
   csv_file_info
 }
