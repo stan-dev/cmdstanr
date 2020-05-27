@@ -92,7 +92,6 @@ test_that("$output_files() and latent_dynamic_files() returns path to all files 
 
 test_that("$save_* methods save all files regardless of chain failure", {
   skip_on_cran()
-  fit_all_fail$save_output_files(dir = tempdir())
   expect_message(
     fit_all_fail$save_output_files(dir = tempdir()),
     "Moved 4 files"
