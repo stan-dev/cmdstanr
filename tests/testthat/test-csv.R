@@ -335,3 +335,18 @@ test_that("remaining_columns_to_read() works", {
   expect_equal(remaining_columns_to_read(list("a", "b", "c"), NULL, c("a", "b", "c")), list("a", "b", "c"))
 })
 
+test_that("read_sample_csv() reads adaptation step size correctly", {
+  skip_on_cran()
+
+  csv_files <- test_path("resources", "csv", "model1-2-no-warmup.csv")
+
+  csv_out <- read_sample_csv(csv_files)
+  expect_equal(csv_out$step_size[[2]], 0.672434)
+
+  csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"),
+                 test_path("resources", "csv", "model1-2-dense_e_metric.csv"))
+
+  csv_out <- read_sample_csv(csv_files)
+  expect_equal(csv_out$step_size[[1]], 0.11757)
+  expect_equal(csv_out$step_size[[2]], 0.232778)
+})

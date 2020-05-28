@@ -10,6 +10,10 @@ if (not_on_cran()) {
   fit_mcmc_1 <- testing_fit("logistic", method = "sample",
                             seed = 123, chains = 2,
                             refresh = 0, save_warmup = TRUE)
+  fit_mcmc_2 <- testing_fit("logistic", method = "sample",
+                            seed = 123, chains = 1,
+                            iter_sampling = 100000,
+                            refresh = 0)
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
@@ -93,4 +97,14 @@ test_that("inc_warmup in draws() works", {
                "Warmup sampler diagnostics were requested from a fit object without them!")
   expect_equal(dim(y1), c(1000, 2, 6))
   expect_equal(dim(y2), c(2000, 2, 6))
+})
+
+test_that("inc_warmup in draws() works", {
+  skip_on_cran()
+  x3 <- fit_mcmc_2$draws(inc_warmup = FALSE)
+  expect_equal(dim(x3), c(100000, 1, 5))
+  expect_error(fit_mcmc_2$draws(inc_warmup = TRUE),
+               "Warmup draws were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+  y3 <- fit_mcmc_2$sampler_diagnostics(inc_warmup = FALSE)
+  expect_equal(dim(y3), c(100000, 1, 6))
 })
