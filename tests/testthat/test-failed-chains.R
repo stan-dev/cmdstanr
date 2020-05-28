@@ -65,7 +65,7 @@ test_that("correct warnings are thrown when some chains fail", {
 test_that("$output_files() and latent_dynamic_files() returns path to all files regardless of chain failure", {
   skip_on_cran()
   expect_equal(
-    length(fit_all_fail$output_files()),
+    length(fit_all_fail$output_files(include_failed = TRUE)),
     4
   )
   expect_equal(
@@ -73,11 +73,11 @@ test_that("$output_files() and latent_dynamic_files() returns path to all files 
     0
   )
   expect_equal(
-    length(fit_some_fail$output_files()),
+    length(fit_some_fail$output_files(include_failed = TRUE)),
     4
   )
   expect_equal(
-    length(fit_all_fail$latent_dynamics_files()),
+    length(fit_all_fail$latent_dynamics_files(include_failed = TRUE)),
     4
   )
   expect_equal(
@@ -85,8 +85,16 @@ test_that("$output_files() and latent_dynamic_files() returns path to all files 
     0
   )
   expect_equal(
-    length(fit_some_fail$latent_dynamics_files()),
+    length(fit_some_fail$latent_dynamics_files(include_failed = TRUE)),
     4
+  )
+  expect_equal(
+    length(fit_all_fail$output_files()),
+    0
+  )
+  expect_equal(
+    length(fit_all_fail$latent_dynamics_files()),
+    0
   )
 })
 

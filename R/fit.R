@@ -68,10 +68,10 @@ CmdStanFit <- R6::R6Class(
       self$runset$run_cmdstan_tool("diagnose", ...)
     },
 
-    output_files = function(include_failed = TRUE) {
+    output_files = function(include_failed = FALSE) {
       self$runset$output_files(include_failed)
     },
-    latent_dynamics_files = function(include_failed = TRUE) {
+    latent_dynamics_files = function(include_failed = FALSE) {
       self$runset$latent_dynamics_files(include_failed)
     },
     data_file = function() {
@@ -80,16 +80,14 @@ CmdStanFit <- R6::R6Class(
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE,
-                                 random = TRUE,
-                                 include_failed = TRUE) {
-      self$runset$save_output_files(dir, basename, timestamp, random, include_failed)
+                                 random = TRUE) {
+      self$runset$save_output_files(dir, basename, timestamp, random)
     },
     save_latent_dynamics_files = function(dir = ".",
                                      basename = NULL,
                                      timestamp = TRUE,
-                                     random = TRUE,
-                                     include_failed = TRUE) {
-      self$runset$save_latent_dynamics_files(dir, basename, timestamp, random, include_failed)
+                                     random = TRUE) {
+      self$runset$save_latent_dynamics_files(dir, basename, timestamp, random)
     },
     save_data_file = function(dir = ".",
                               basename = NULL,
@@ -247,8 +245,6 @@ NULL
 #' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
 #' * `id` is the MCMC chain id (or `1` for non MCMC);
 #' * `random` contains six random alphanumeric characters;
-#' * `include_failed` specifies if files produced by chains that failed to finish
-#'    are included. By default its set to TRUE.
 #'
 #' For `$save_latent_dynamics_files()` everything is the same as for
 #' `$save_output_files()` except `"-diagnostic-"` is included in the new

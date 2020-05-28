@@ -33,7 +33,7 @@ CmdStanRun <- R6::R6Class(
     new_latent_dynamics_files = function() {
       self$args$new_files(type = "diagnostic")
     },
-    latent_dynamics_files = function(include_failed = TRUE) {
+    latent_dynamics_files = function(include_failed = FALSE) {
       if (!length(private$latent_dynamics_files_)) {
         stop(
           "No latent dynamics files found. ",
@@ -48,7 +48,7 @@ CmdStanRun <- R6::R6Class(
         private$latent_dynamics_files_[ok]
       }            
     },
-    output_files = function(include_failed = TRUE) {
+    output_files = function(include_failed = FALSE) {
       if (include_failed) {
         private$output_files_
       } else {
@@ -59,9 +59,8 @@ CmdStanRun <- R6::R6Class(
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE,
-                                 random = TRUE,
-                                 include_failed = TRUE) {
-      current_files <- self$output_files(include_failed = include_failed)
+                                 random = TRUE) {
+      current_files <- self$output_files(include_failed = TRUE)
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -81,9 +80,8 @@ CmdStanRun <- R6::R6Class(
     save_latent_dynamics_files = function(dir = ".",
                                      basename = NULL,
                                      timestamp = TRUE,
-                                     random = TRUE,
-                                     include_failed = TRUE) {
-      current_files <- self$latent_dynamics_files(include_failed = include_failed) # used so we get error if 0 files
+                                     random = TRUE) {
+      current_files <- self$latent_dynamics_files(include_failed = TRUE) # used so we get error if 0 files
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
