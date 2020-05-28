@@ -114,8 +114,7 @@ CmdStanModel <- R6::R6Class(
   private = list(
     stan_file_ = character(),
     exe_file_ = character(),
-    cpp_options_ = list(),
-    stanc_options_ = list()
+    cpp_options_ = list()
   ),
   public = list(
     initialize = function(stan_file, exe_file, compile, ...) {
@@ -134,7 +133,6 @@ CmdStanModel <- R6::R6Class(
     },
     stan_file = function() private$stan_file_,
     cpp_options = function() private$cpp_options_,
-    stanc_options = function() private$stanc_options_,
     exe_file = function(path = NULL) {
       if (!is.null(path)) {
         private$exe_file_ = path
@@ -304,7 +302,6 @@ compile_method <- function(quiet = TRUE,
   )
 
   file.copy(tmp_exe, exe, overwrite = TRUE)
-  private$stanc_options_ <- stanc_options
   private$cpp_options_ <- cpp_options
   private$exe_file_ <- exe
   invisible(self)
