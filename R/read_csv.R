@@ -133,7 +133,7 @@ read_sample_info_csv <- function(csv_file) {
   } else if (csv_file_info$method != "sample") {
     stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
   }
-  if (length(sampling_info$sampler_diagnostics) == 0 && length(sampling_info$model_params) == 0) {
+  if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
     stop("The supplied csv file does not contain any parameter names or data!")
   }
   if (inverse_metric_rows > 0) {
@@ -197,15 +197,15 @@ read_sample_info_csv <- function(csv_file) {
 #' # Read all draws
 #' d <- read_sample_csv(fit$output_files())
 #' # Read only model parameter draws
-#' d <- read_sample_csv(fit$output_files(), parameters = NULL, sampler_diagnostics = list())
+#' d <- read_sample_csv(fit$output_files(), pars = NULL, sampler_diagnostics = "")
 #' # Read only specific parameter draws
-#' d <- read_sample_csv(fit$output_files(), parameters = list("beta", "theta"), sampler_diagnostics = list())
+#' d <- read_sample_csv(fit$output_files(), pars = c("beta", "theta"), sampler_diagnostics = "")
 #' # Read only specific sampler diagnostic
-#' d <- read_sample_csv(fit$output_files(), parameters = list(), sampler_diagnostics = c("divergent__"))
+#' d <- read_sample_csv(fit$output_files(), pars = "", sampler_diagnostics = c("divergent__"))
 #' }
 #'
 read_sample_csv <- function(files,
-                            parameters = NULL,
+                            pars = NULL,
                             sampler_diagnostics = NULL,
                             cores = getOption("mc.cores", 1)) {
   sampling_info <- NULL
@@ -247,32 +247,49 @@ read_sample_csv <- function(files,
       }
       id <- csv_file_info$id
     }
-    repaired_model_params <- repair_variable_names(sampling_info$model_params)
-    repaired_sampler_diagnostics <- repair_variable_names(sampling_info$sampler_diagnostics)
-    not_found <- parameters[!parameters %in% repaired_model_params]
-    if (length(not_found)) {
-      stop("Can't find parameter(s) ", paste(not_found, collapse = ", "), " in the sampling output!")
-    }
-    not_found <- sampler_diagnostics[!sampler_diagnostics %in% repaired_sampler_diagnostics]
-    if (length(not_found)) {
-      stop("Can't find sampler diagnostic(s) ", paste(not_found, collapse = ", "), " in the sampling output!")
-    }
     if (is.null(col_select)) {
-      col_select <- "lp__"
-      # filter out lp__ to not repeat it
-      parameters <- parameters[parameters!="lp__"]
+      if (is.null(pars)) { # pars = NULL returns all parameters
+        pars <- sampling_info$model_params
+      } else if (!any(nzchar(pars))) { # if pars = "" returns no parameters
+        pars <- NULL
+      } else { # filter using pars
+        pars <- unrepair_variable_names(pars)
+        selected_pars <- rep(FALSE, length(sampling_info$model_params))
+        not_found <- NULL
+        for (p in pars) {
+          matches <- sampling_info$model_params == p | startsWith(sampling_info$model_params, paste0(p,"."))
+          if (!any(matches)) {
+            not_found <- c(not_found, p)
+          }
+          selected_pars <- selected_pars | matches
+        }
+        if (length(not_found)) {
+          stop("Can't find parameter(s): ", paste(not_found, collapse = ", "), " in the sampling output!")
+        }
+        pars <- sampling_info$model_params[selected_pars]
+      }
       if (is.null(sampler_diagnostics)) {
-        col_select <- c(col_select, sampling_info$sampler_diagnostics)
+        sampler_diagnostics <- sampling_info$sampler_diagnostics
+      } else if (!any(nzchar(sampler_diagnostics))) { # if sampler_diagnostics = "" dont return any sampler_diagnostics
+        sampler_diagnostics <- NULL
       } else {
-        col_select <- c(col_select, unrepair_variable_names(unlist(sampler_diagnostics, use.names=FALSE)))
+        selected_sampler_diag <- rep(FALSE, length(sampling_info$sampler_diagnostics))
+        not_found <- NULL
+        for (p in sampler_diagnostics) {
+          matches <- sampling_info$sampler_diagnostics == p | startsWith(sampling_info$sampler_diagnostics, paste0(p,"."))
+          if (!any(matches)) {
+            not_found <- c(not_found, p)
+          }
+          selected_sampler_diag <- selected_sampler_diag | matches
+        }
+        if (length(not_found)) {
+          stop("Can't find sampler diagnostic(s): ", paste(not_found, collapse = ", "), " in the sampling output!")
+        }
+        sampler_diagnostics <- sampling_info$sampler_diagnostics[selected_sampler_diag]
       }
-      if (is.null(parameters)) {
-        col_select <- c(col_select, sampling_info$model_params[sampling_info$model_params!="lp__"])
-      } else {
-        col_select <- c(col_select, unrepair_variable_names(unlist(parameters, use.names=FALSE)))
-      }
-      selected_sampler_diagnostics <- sampling_info$sampler_diagnostics[sampling_info$sampler_diagnostics %in% col_select]
-      selected_model_params <- sampling_info$model_params[sampling_info$model_params %in% col_select]
+      col_select <- "lp__"
+      col_select <- c(col_select, pars[pars!="lp__"])
+      col_select <- c(col_select, sampler_diagnostics)
     }
     suppressWarnings(
     draws <- vroom::vroom(output_file,
@@ -292,8 +309,8 @@ read_sample_csv <- function(files,
       num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
       if (sampling_info$save_warmup == 1) {
-        if (length(selected_model_params) > 0) {
-          new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, selected_model_params])
+        if (length(pars) > 0) {
+          new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, pars])
           if (is.null(warmup_draws)) {
             warmup_draws <- new_warmup_draws
           } else {
@@ -302,8 +319,8 @@ read_sample_csv <- function(files,
                                                   along="chain")
           }
         }
-        if (length(selected_sampler_diagnostics) > 0) {
-          new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, selected_sampler_diagnostics])
+        if (length(sampler_diagnostics) > 0) {
+          new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics])
           if (is.null(warmup_sampler_diagnostics_draws)) {
             warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
           } else {
@@ -312,16 +329,16 @@ read_sample_csv <- function(files,
                                                                       along="chain")
           }
         }
-        if (length(selected_model_params) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, selected_model_params])
+        if (length(pars) > 0) {
+          new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, pars])
           if (is.null(post_warmup_draws)) {
             post_warmup_draws <- new_post_warmup_draws
           } else {
             post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
           }
         }
-        if (length(selected_sampler_diagnostics) > 0) {
-          new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, selected_sampler_diagnostics])
+        if (length(sampler_diagnostics) > 0) {
+          new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics])
           if (is.null(post_warmup_sampler_diagnostics_draws)) {
             post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
           } else {
@@ -333,8 +350,8 @@ read_sample_csv <- function(files,
       } else {
         warmup_draws <- NULL
         warmup_sampler_diagnostics_draws <- NULL
-        if (length(selected_model_params) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[, selected_model_params])
+        if (length(pars) > 0) {
+          new_post_warmup_draws <- posterior::as_draws_array(draws[, pars])
           if (is.null(post_warmup_draws)) {
             post_warmup_draws <- new_post_warmup_draws
           } else {
@@ -344,8 +361,8 @@ read_sample_csv <- function(files,
           }
         }
         if (sampling_info$algorithm != "fixed_param") {
-          if (length(selected_sampler_diagnostics) > 0) {
-            new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, selected_sampler_diagnostics])
+          if (length(sampler_diagnostics) > 0) {
+            new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampler_diagnostics])
             if (is.null(post_warmup_sampler_diagnostics_draws)) {
               post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
             } else {
@@ -358,11 +375,12 @@ read_sample_csv <- function(files,
       }
     }
   }
+  repaired_model_params <- repair_variable_names(pars)
   if (!is.null(warmup_draws)) {
-    posterior::variables(warmup_draws) <- repair_variable_names(selected_model_params)
+    posterior::variables(warmup_draws) <- repaired_model_params
   }
   if (!is.null(post_warmup_draws)) {
-    posterior::variables(post_warmup_draws) <- repair_variable_names(selected_model_params)
+    posterior::variables(post_warmup_draws) <- repaired_model_params
   }
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
@@ -438,14 +456,23 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     }
     requested <- all
   }
-  if (length(requested) == 0) {
-    return(list())
+  if (!any(nzchar(requested))) {
+    return(requested)
   }
-  unread <- list()
-  for (p in requested) {
-    if (!(p %in% currently_read)) {
-      unread <- append(unread, p)
-    }
+  if (is.null(all)) {
+    unread <- requested[!(requested %in% currently_read)]
+  } else {
+    all_remaining <- all[!(all %in% currently_read)]
+    unread <- c()
+    for (p in requested) {
+      if (any(all_remaining == p) || any(startsWith(all_remaining, paste0(p,".")))) {
+        unread <- c(unread, p)
+      }
+    }  
   }
-  unread
+  if (length(unread)) {
+    unread
+  } else {
+    ""
+  }  
 }
