@@ -168,10 +168,10 @@ read_sample_info_csv <- function(csv_file) {
 #'
 #' @export
 #' @param files Paths to the CSV files to read.
-#' @param parameters (list) When `NULL`, the function will return
+#' @param pars (character vector) When `NULL`, the function will return
 #' draws for all model parameters. When supplied a list, the function
 #' will return  draws from the listed model parameters.
-#' @param sampler_diagnostics (list) When `NULL`, the function will return
+#' @param sampler_diagnostics (character vector) When `NULL`, the function will return
 #' draws for all sampler diagnostics . When supplied a list, the function
 #' will return  draws from the listed sampler diagnostics .
 #' @param cores The number of cores to use to read and process the output files
