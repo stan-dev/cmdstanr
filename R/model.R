@@ -422,8 +422,11 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `validate_csv`: (logical) When `TRUE` (the default), validate the
 #'   sampling results in the csv files. Disable if you wish to manually read in
 #'   the sampling results and validate them.
-#'   * `threads_per_chain`: (positive integer) The number of threads to use per MCMC chaing
-#'   to run parallel sections of model.
+#'   * `threads_per_chain`: (positive integer) The number of threads to use in 
+#'   parallel sections (for example reduce_sum or map_rect) of a MCMC chain.
+#'   This is contrast with `cores` that specifies the maximum amount of CPU cores
+#'   used across all chains.
+#'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs

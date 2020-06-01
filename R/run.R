@@ -282,7 +282,7 @@ CmdStanProcs <- R6::R6Class(
     #   chains. Currently for other methods this must be set to 1.
     # @param num_cores The number of cores for running MCMC chains in parallel.
     #   Currently for other method this must be set to 1.
-    # @param threads_per_chain The number of threads to use per MCMC chaing
+    # @param threads_per_chain The number of threads to use per MCMC chain
     #   to run parallel sections of model. 
     initialize = function(num_runs, num_cores, threads_per_chain = NULL) {
       checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
