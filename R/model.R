@@ -424,8 +424,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   the sampling results and validate them.
 #'   * `threads_per_chain`: (positive integer) The number of threads to use in 
 #'   parallel sections (for example reduce_sum or map_rect) of a MCMC chain.
-#'   This is contrast with `cores` that specifies the maximum amount of CPU cores
-#'   used across all chains.
+#'   This is contrast with `cores` that specifies the maximum amount of CPU
+#'   cores used across all chains.
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
