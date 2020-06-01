@@ -386,7 +386,7 @@ read_sample_csv <- function(files,
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
   }
-  sampling_info$model_params <- repaired_model_params
+  sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
   sampling_info$inverse_metric <- NULL
   list(
     sampling_info = sampling_info,

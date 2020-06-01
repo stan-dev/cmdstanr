@@ -6,7 +6,7 @@
 \usage{
 read_sample_csv(
   files,
-  parameters = NULL,
+  pars = NULL,
   sampler_diagnostics = NULL,
   cores = getOption("mc.cores", 1)
 )
@@ -14,15 +14,15 @@ read_sample_csv(
 \arguments{
 \item{files}{Paths to the CSV files to read.}
 
-\item{parameters}{(list) When \code{NULL}, the function will return
-draws for all model parameters. When supplied a list, the function
-will return  draws from the listed model parameters.}
-
 \item{sampler_diagnostics}{(list) When \code{NULL}, the function will return
 draws for all sampler diagnostics . When supplied a list, the function
 will return  draws from the listed sampler diagnostics .}
 
 \item{cores}{The number of cores to use to read and process the output files}
+
+\item{parameters}{(list) When \code{NULL}, the function will return
+draws for all model parameters. When supplied a list, the function
+will return  draws from the listed model parameters.}
 }
 \value{
 A named list containing:
@@ -51,11 +51,11 @@ fit <- mod$sample(data = list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1)))
 # Read all draws
 d <- read_sample_csv(fit$output_files())
 # Read only model parameter draws
-d <- read_sample_csv(fit$output_files(), parameters = NULL, sampler_diagnostics = list())
+d <- read_sample_csv(fit$output_files(), pars = NULL, sampler_diagnostics = "")
 # Read only specific parameter draws
-d <- read_sample_csv(fit$output_files(), parameters = list("beta", "theta"), sampler_diagnostics = list())
+d <- read_sample_csv(fit$output_files(), pars = c("beta", "theta"), sampler_diagnostics = "")
 # Read only specific sampler diagnostic
-d <- read_sample_csv(fit$output_files(), parameters = list(), sampler_diagnostics = c("divergent__"))
+d <- read_sample_csv(fit$output_files(), pars = "", sampler_diagnostics = c("divergent__"))
 }
 
 }

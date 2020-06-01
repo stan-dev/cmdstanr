@@ -321,7 +321,7 @@ CmdStanMCMC <- R6::R6Class(
         if (self$runset$args$validate_csv && !runset$args$method_args$fixed_param) {
           data_csv <- read_sample_csv(self$output_files(),
                                       pars = "",
-                                      sampler_diagnostics = list("treedepth__", "divergent__"),
+                                      sampler_diagnostics = c("treedepth__", "divergent__"),
                                       cores = self$runset$procs$num_cores()
           )
           check_divergences(data_csv)
@@ -345,12 +345,10 @@ CmdStanMCMC <- R6::R6Class(
       }
       to_read <- remaining_columns_to_read(pars, dimnames(private$draws_)$variable, private$sampling_info_$model_params)
       if (is.null(to_read) || (length(to_read) > 0)) {
-        private$read_csv_(pars = pars, sampler_diagnostics = list())
+        private$read_csv_(pars = pars, sampler_diagnostics = "")
       }
       if (is.null(pars)) {
         pars <- private$sampling_info_$model_params
-      } else {
-        pars <- unlist(pars)
       }
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
@@ -363,14 +361,13 @@ CmdStanMCMC <- R6::R6Class(
         private$draws_[,,pars]
       }
     },
-
     sampler_diagnostics = function(inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.")
       }
       to_read <- remaining_columns_to_read(NULL, dimnames(private$sampler_diagnostics_)$variable, private$sampling_info_$sampler_diagnostics)
       if (is.null(to_read) || (length(to_read) > 0)) {
-        private$read_csv_(parameters = list(), sampler_diagnostics = NULL)
+        private$read_csv_(pars = "", sampler_diagnostics = NULL)
       }
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
@@ -390,14 +387,12 @@ CmdStanMCMC <- R6::R6Class(
     draws_ = NULL,
     sampling_info_ = NULL,
     read_csv_ = function(pars = NULL, sampler_diagnostics = NULL) {
-      parameters_to_read <- remaining_columns_to_read(parameters, dimnames(private$draws_)$variable, private$sampling_info_$model_params)
+      parameters_to_read <- remaining_columns_to_read(pars, dimnames(private$draws_)$variable, private$sampling_info_$model_params)
       sampler_diagnostics_to_read <- remaining_columns_to_read(sampler_diagnostics, dimnames(private$sampler_diagnostics_)$variable, private$sampling_info_$sampler_diagnostics)
       data_csv <- read_sample_csv(self$output_files(include_failed = FALSE),
                                   pars = parameters_to_read,
                                   sampler_diagnostics = sampler_diagnostics_to_read,
                                   cores = self$runset$procs$num_cores())
-      private$draws_ <- data_csv$post_warmup_draws
-      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
       private$sampling_info_ <- data_csv$sampling_info
       if (!is.null(data_csv$post_warmup_draws)) {
         if (is.null(private$draws_)) {

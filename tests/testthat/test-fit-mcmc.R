@@ -104,7 +104,7 @@ test_that("inc_warmup in draws() works", {
   x3 <- fit_mcmc_2$draws(inc_warmup = FALSE)
   expect_equal(dim(x3), c(100000, 1, 5))
   expect_error(fit_mcmc_2$draws(inc_warmup = TRUE),
-               "Warmup draws were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+               "Warmup draws were requested from a fit object without them! Please rerun the model with save_warmup = TRUE.")
   y3 <- fit_mcmc_2$sampler_diagnostics(inc_warmup = FALSE)
   expect_equal(dim(y3), c(100000, 1, 6))
 })
