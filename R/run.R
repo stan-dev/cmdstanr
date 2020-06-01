@@ -33,7 +33,7 @@ CmdStanRun <- R6::R6Class(
     new_latent_dynamics_files = function() {
       self$args$new_files(type = "diagnostic")
     },
-    latent_dynamics_files = function() {
+    latent_dynamics_files = function(include_failed = FALSE) {
       if (!length(private$latent_dynamics_files_)) {
         stop(
           "No latent dynamics files found. ",
@@ -41,20 +41,26 @@ CmdStanRun <- R6::R6Class(
           call. = FALSE
         )
       }
-      private$latent_dynamics_files_
+      if (include_failed) {
+        private$latent_dynamics_files_
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        private$latent_dynamics_files_[ok]
+      }            
     },
-    output_files = function() {
-      # if we are using background processes only output the file if
-      # the process finished normally
-      ok <- self$procs$is_finished() | self$procs$is_queued()
-      private$output_files_[ok]
+    output_files = function(include_failed = FALSE) {
+      if (include_failed) {
+        private$output_files_
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        private$output_files_[ok]
+      }      
     },
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE,
                                  random = TRUE) {
-      # FIXME use self$output_files(include_failed=TRUE) once #76 is fixed
-      current_files <- private$output_files_
+      current_files <- self$output_files(include_failed = TRUE)
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -75,9 +81,7 @@ CmdStanRun <- R6::R6Class(
                                      basename = NULL,
                                      timestamp = TRUE,
                                      random = TRUE) {
-      # FIXME use self$latent_dynamics_files(include_failed=TRUE) once #76 is fixed
-      current_files <- self$latent_dynamics_files() # used so we get error if 0 files
-      current_files <- private$latent_dynamics_files_ # used so we still save all of them
+      current_files <- self$latent_dynamics_files(include_failed = TRUE) # used so we get error if 0 files
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -149,7 +153,7 @@ CmdStanRun <- R6::R6Class(
         stop("Not available for optimize method.", call. = FALSE)
       }
       tool <- match.arg(tool)
-      if (!length(self$output_files())) {
+      if (!length(self$output_files(include_failed = FALSE))) {
         stop("No CmdStan runs finished successfully. ",
              "Unable to run bin/", tool, ".", call. = FALSE)
       }
@@ -157,7 +161,7 @@ CmdStanRun <- R6::R6Class(
       check_target_exe(target_exe)
       run_log <- processx::run(
         command = target_exe,
-        args = c(self$output_files(), flags),
+        args = c(self$output_files(include_failed = FALSE), flags),
         wd = cmdstan_path(),
         echo_cmd = TRUE,
         echo = TRUE,
@@ -540,6 +544,9 @@ CmdStanProcs <- R6::R6Class(
               "seconds.\n")
         } else if (num_failed == num_chains) {
           warning("All chains finished unexpectedly!\n", call. = FALSE)
+          warning("Use read_sample_csv() to read the results of the failed chains.",
+                  immediate. = TRUE,
+                  call. = FALSE)
         } else {
           warning(num_failed, " chain(s) finished unexpectedly!",
                   immediate. = TRUE,
@@ -547,6 +554,9 @@ CmdStanProcs <- R6::R6Class(
           cat("The remaining chains had a mean execution time of",
               format(round(mean(self$total_time()), 1), nsmall = 1),
               "seconds.\n")
+          warning("The returned fit object will only read in results of succesful chains. Please use read_sample_csv() to read the results of the failed chains separately.",
+                  immediate. = TRUE,
+                  call. = FALSE)
         }
       }
       invisible(self)
