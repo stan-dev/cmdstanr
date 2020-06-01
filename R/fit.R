@@ -68,11 +68,11 @@ CmdStanFit <- R6::R6Class(
       self$runset$run_cmdstan_tool("diagnose", ...)
     },
 
-    output_files = function() {
-      self$runset$output_files()
+    output_files = function(include_failed = FALSE) {
+      self$runset$output_files(include_failed)
     },
-    latent_dynamics_files = function() {
-      self$runset$latent_dynamics_files()
+    latent_dynamics_files = function(include_failed = FALSE) {
+      self$runset$latent_dynamics_files(include_failed)
     },
     data_file = function() {
       self$runset$data_file()
@@ -244,7 +244,7 @@ NULL
 #' * `basename` is the user's provided `basename` argument;
 #' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
 #' * `id` is the MCMC chain id (or `1` for non MCMC);
-#' * `random` contains six random alphanumeric characters.
+#' * `random` contains six random alphanumeric characters;
 #'
 #' For `$save_latent_dynamics_files()` everything is the same as for
 #' `$save_output_files()` except `"-diagnostic-"` is included in the new
@@ -339,8 +339,10 @@ CmdStanMCMC <- R6::R6Class(
         cat(paste(self$runset$procs$chain_output(id), collapse="\n"))
       }
     },
-
     draws = function(inc_warmup = FALSE, pars = NULL) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("No chains finished successfully. Unable to retrieve the draws.")
+      }
       to_read <- remaining_columns_to_read(pars, dimnames(private$draws_)$variable, private$sampling_info_$model_params)
       if (is.null(to_read) || (length(to_read) > 0)) {
         private$read_csv_(pars = pars, sampler_diagnostics = list())
@@ -363,6 +365,9 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     sampler_diagnostics = function(inc_warmup = FALSE) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.")
+      }
       to_read <- remaining_columns_to_read(NULL, dimnames(private$sampler_diagnostics_)$variable, private$sampling_info_$sampler_diagnostics)
       if (is.null(to_read) || (length(to_read) > 0)) {
         private$read_csv_(parameters = list(), sampler_diagnostics = NULL)
@@ -384,17 +389,15 @@ CmdStanMCMC <- R6::R6Class(
     warmup_draws_ = NULL,
     draws_ = NULL,
     sampling_info_ = NULL,
-    read_csv_ = function(parameters = NULL, sampler_diagnostics = NULL) {
+    read_csv_ = function(pars = NULL, sampler_diagnostics = NULL) {
       parameters_to_read <- remaining_columns_to_read(parameters, dimnames(private$draws_)$variable, private$sampling_info_$model_params)
       sampler_diagnostics_to_read <- remaining_columns_to_read(sampler_diagnostics, dimnames(private$sampler_diagnostics_)$variable, private$sampling_info_$sampler_diagnostics)
-      if (!length(self$output_files())) {
-        stop("No chains finished successfully. Unable to retrieve the fit.",
-             call. = FALSE)
-      }
-      data_csv <- read_sample_csv(self$output_files(),
+      data_csv <- read_sample_csv(self$output_files(include_failed = FALSE),
                                   pars = parameters_to_read,
                                   sampler_diagnostics = sampler_diagnostics_to_read,
                                   cores = self$runset$procs$num_cores())
+      private$draws_ <- data_csv$post_warmup_draws
+      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
       private$sampling_info_ <- data_csv$sampling_info
       if (!is.null(data_csv$post_warmup_draws)) {
         if (is.null(private$draws_)) {
