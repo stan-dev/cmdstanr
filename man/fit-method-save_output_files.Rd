@@ -7,12 +7,6 @@
 \alias{fit-method-output_files}
 \alias{fit-method-data_file}
 \alias{fit-method-latent_dynamics_files}
-\alias{save_output_files}
-\alias{save_data_file}
-\alias{save_latent_dynamics_files}
-\alias{output_files}
-\alias{data_file}
-\alias{latent_dynamics_files}
 \title{Save output and data files}
 \description{
 All fitted model objects have methods for saving (moving to a
@@ -56,7 +50,7 @@ the form \code{basename-timestamp-id-random}, where
 \item \code{basename} is the user's provided \code{basename} argument;
 \item \code{timestamp} is of the form \code{format(Sys.time(), "\%Y\%m\%d\%H\%M")};
 \item \code{id} is the MCMC chain id (or \code{1} for non MCMC);
-\item \code{random} contains six random alphanumeric characters;
+\item \code{random} contains six random alphanumeric characters.
 }
 
 For \verb{$save_latent_dynamics_files()} everything is the same as for

@@ -3,8 +3,6 @@
 \name{fit-method-cmdstan_summary}
 \alias{fit-method-cmdstan_summary}
 \alias{fit-method-cmdstan_diagnose}
-\alias{cmdstan_summary}
-\alias{cmdstan_diagnose}
 \title{Run CmdStan's \code{bin/stansummary} and \code{bin/diagnose}}
 \description{
 Run CmdStan's \code{bin/stansummary} and \code{bin/diagnose}
@@ -21,13 +19,6 @@ $cmdstan_diagnose()
 }
 }
 
-\examples{
-\dontrun{
-fit$cmdstan_summary()
-fit$cmdstan_diagnose()
-}
-
-}
 \seealso{
 \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
 }

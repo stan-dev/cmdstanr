@@ -2,7 +2,6 @@
 % Please edit documentation in R/fit.R
 \name{fit-method-sampler_diagnostics}
 \alias{fit-method-sampler_diagnostics}
-\alias{sampler_diagnostics}
 \title{Extract sampler diagnostics}
 \description{
 Extract the values of sampler diagnostics for each iteration and

@@ -2,7 +2,6 @@
 % Please edit documentation in R/model.R
 \name{model-method-compile}
 \alias{model-method-compile}
-\alias{compile}
 \title{Compile a Stan program or get the Stan code}
 \description{
 The \verb{$compile()} method of a \code{\link{CmdStanModel}} object calls
