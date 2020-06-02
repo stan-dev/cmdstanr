@@ -108,6 +108,7 @@ CmdStanFit <- R6::R6Class(
 #' Extract posterior draws
 #'
 #' @name fit-method-draws
+#' @aliases draws
 #' @description Extract posterior draws after MCMC or approximate posterior
 #'   draws after variational approximation using formats provided by the
 #'   \pkg{posterior} package.
@@ -141,6 +142,7 @@ NULL
 #' Extract sampler diagnostics
 #'
 #' @name fit-method-sampler_diagnostics
+#' @aliases sampler_diagnostics
 #' @description Extract the values of sampler diagnostics for each iteration and
 #'   chain of MCMC.
 #'
@@ -165,6 +167,7 @@ NULL
 #' Run `posterior::summarise_draws()`
 #'
 #' @name fit-method-summary
+#' @aliases summary
 #' @description Run [posterior::summarise_draws()] from the \pkg{posterior}
 #'   package.
 #'
@@ -180,13 +183,18 @@ NULL
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
+#' @examples
+#' \dontrun{
+#' fit$summary()
+#' }
+#'
 NULL
 
 
 #' Run CmdStan's `bin/stansummary` and `bin/diagnose`
 #'
 #' @name fit-method-cmdstan_summary
-#' @aliases fit-method-cmdstan_diagnose
+#' @aliases fit-method-cmdstan_diagnose cmdstan_summary cmdstan_diagnose
 #' @note Although these methods also work for models fit using the
 #'   [`$variational()`][model-method-variational] method, much of the output is
 #'   only relevant for models fit using the [`$sample()`][model-method-sample]
@@ -200,6 +208,12 @@ NULL
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
+#' @examples
+#' \dontrun{
+#' fit$cmdstan_summary()
+#' fit$cmdstan_diagnose()
+#' }
+#'
 NULL
 
 
@@ -208,6 +222,8 @@ NULL
 #' @name fit-method-save_output_files
 #' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
 #'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files
+#'   save_output_files save_data_file save_latent_dynamics_files
+#'   output_files data_file latent_dynamics_files
 #'
 #' @description All fitted model objects have methods for saving (moving to a
 #'   specified location) the files created by CmdStanR to hold CmdStan output
@@ -302,7 +318,7 @@ NULL
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
 #'  `$time()` \tab Return a list containing the total time and a data frame of
-#'    execution times of all chains. \cr
+#'    execution times of all chains (in seconds). \cr
 #'  `$output()` \tab Return the stdout and stderr of all chains as a list of
 #'    character vectors, or pretty print the output for a single chain if
 #'    `id` argument is specified. \cr
