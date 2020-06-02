@@ -2,6 +2,7 @@
 % Please edit documentation in R/fit.R
 \name{fit-method-draws}
 \alias{fit-method-draws}
+\alias{draws}
 \title{Extract posterior draws}
 \description{
 Extract posterior draws after MCMC or approximate posterior
@@ -41,3 +42,27 @@ stored in the \code{draws_matrix} format.
 }
 }
 
+\examples{
+\dontrun{
+library(cmdstanr)
+library(posterior)
+
+stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+mod <- cmdstan_model(stan_program)
+fit <- mod$sample(
+  data = list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1)),
+  seed = 123,
+  chains = 2,
+  cores = 2
+)
+draws_array <- fit$draws()
+str(draws_array)
+
+draws_matrix <- as_draws_matrix(draws_array)
+str(draws_matrix)
+
+draws_df <- as_draws_df(draws_array)
+str(draws_df)
+}
+
+}

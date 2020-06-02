@@ -2,6 +2,7 @@
 % Please edit documentation in R/model.R
 \name{model-method-variational}
 \alias{model-method-variational}
+\alias{variational}
 \title{Run Stan's variational approximation algorithms}
 \description{
 The \verb{$variational()} method of a \code{\link{CmdStanModel}} object runs
@@ -150,6 +151,10 @@ fit_mcmc <- mod$sample(
 
 # Use 'posterior' package for summaries
 fit_mcmc$summary()
+
+# Get posterior draws
+draws <- fit_mcmc$draws()
+print(draws)
 
 # Call CmdStan's diagnose and stansummary utilities
 fit_mcmc$cmdstan_diagnose()
