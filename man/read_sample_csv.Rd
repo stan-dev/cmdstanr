@@ -14,15 +14,15 @@ read_sample_csv(
 \arguments{
 \item{files}{Paths to the CSV files to read.}
 
-\item{sampler_diagnostics}{(list) When \code{NULL}, the function will return
+\item{pars}{(character vector) When \code{NULL}, the function will return
+draws for all model parameters. When supplied a list, the function
+will return  draws from the listed model parameters.}
+
+\item{sampler_diagnostics}{(character vector) When \code{NULL}, the function will return
 draws for all sampler diagnostics . When supplied a list, the function
 will return  draws from the listed sampler diagnostics .}
 
 \item{cores}{The number of cores to use to read and process the output files}
-
-\item{parameters}{(list) When \code{NULL}, the function will return
-draws for all model parameters. When supplied a list, the function
-will return  draws from the listed model parameters.}
 }
 \value{
 A named list containing:
