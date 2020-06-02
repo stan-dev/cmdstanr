@@ -164,6 +164,10 @@ adaptation interval.
 \item \code{validate_csv}: (logical) When \code{TRUE} (the default), validate the
 sampling results in the csv files. Disable if you wish to manually read in
 the sampling results and validate them.
+\item \code{threads_per_chain}: (positive integer) The number of threads to use in
+parallel sections (for example reduce_sum or map_rect) of a MCMC chain.
+This is contrast with \code{cores} that specifies the maximum amount of CPU
+cores used across all chains.
 }
 }
 

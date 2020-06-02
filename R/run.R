@@ -209,11 +209,14 @@ CmdStanRun <- R6::R6Class(
       "core(s)...\n\n")
   } else {
     cat("Running MCMC with", procs$num_runs(), "chain(s) on", procs$num_cores(),
-      "core(s) with", procs$threads_per_chain(), " thread(s) per chain...\n\n")
+      "core(s) with", procs$threads_per_chain(), "thread(s) per chain...\n\n")
   }
   if (!is.null(procs$threads_per_chain())) {
     Sys.setenv("STAN_NUM_THREADS" = procs$threads_per_chain())
-  }  
+  } else {
+    Sys.setenv("STAN_NUM_THREADS" = 1)
+  }
+
   start_time <- Sys.time()
   chains <- procs$run_ids()
   chain_ind <- 1

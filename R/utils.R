@@ -326,7 +326,6 @@ prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
 #' Set or get the number of threads used to execute Stan models
 #'
 #' @name stan_threads
-#' @deprecated
 #' @description These functions set or get the `STAN_NUM_THREADS` environment
 #'   variable, which will be read by CmdStan at run-time if threading support
 #'   was enabled when [compiled][model-method-compile]. For details on how this
@@ -337,7 +336,6 @@ prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
 NULL
 
 #' @rdname stan_threads
-#' @deprecated
 #' @export
 #' @return The value of the environment variable `STAN_NUM_THREADS`.
 num_threads <- function() {
@@ -347,13 +345,10 @@ num_threads <- function() {
 }
 
 #' @rdname stan_threads
-#' @deprecated
 #' @export
 #' @param num_threads (positive integer) The number of threads to set.
 set_num_threads <- function(num_threads) {
-  warning("'set_num_threads()' is deprecated. Please use the 'threads_per_chain' argument in the $sample() method.")
-  checkmate::assert_integerish(num_threads, lower = 1, len = 1)
-  .cmdstanr$NUM_THREADS <- num_threads
+  stop("'set_num_threads()' is deprecated. Please use the 'threads_per_chain' argument in the $sample() method.")
 }
 
 check_divergences <- function(data_csv) {
