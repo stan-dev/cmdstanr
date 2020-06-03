@@ -173,6 +173,11 @@ NULL
 #'   variational inference the log density of the variational approximation to
 #'   the posterior is also available via the `$lp_approx()` method.
 #'
+#'   See the [Log Probability Increment vs. Sampling
+#'   Statement](https://mc-stan.org/docs/2_23/reference-manual/sampling-statements-section.html)
+#'   section of the Stan Reference Manual for details on when normalizing
+#'   constants are dropped from log probability calculations.
+#'
 #' @section Usage:
 #'   ```
 #'   $lp()
