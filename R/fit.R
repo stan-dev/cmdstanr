@@ -164,6 +164,27 @@ NULL
 #'
 NULL
 
+#' Extract log probability (target)
+#'
+#' @name fit-method-lp
+#' @aliases lp lp_approx
+#' @description The `$lp()` method extracts `lp__`, the total log probability
+#'   (`target`) accumulated in the `model` block of a Stan program. For
+#'   variational inference the log density of the variational approximation to
+#'   the posterior is also available via the `$lp_approx()` method.
+#'
+#' @section Usage:
+#'   ```
+#'   $lp()
+#'   $lp_approx()
+#'   ```
+#'
+#' @section Value:
+#' A numeric vector with length equal to the number of draws for MCMC and
+#' variational inference, and length equal to `1` for optimization.
+#'
+NULL
+
 #' Run `posterior::summarise_draws()`
 #'
 #' @name fit-method-summary
@@ -307,6 +328,9 @@ NULL
 #'    \tab Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. \cr
 #'  [`$summary()`][fit-method-summary]
 #'    \tab Run [posterior::summarise_draws()]. \cr
+#'  [`$lp()`][fit-method-lp]
+#'    \tab Return the total log probability density (`target`) computed in the
+#'  model block of the Stan program. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]
@@ -424,8 +448,8 @@ CmdStanMCMC <- R6::R6Class(
 #'  [`draws()`][fit-method-draws] \tab Return the point estimate as a 1-row
 #'  [`draws_matrix`][posterior::draws_matrix]. \cr
 #'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
-#'  `$lp()` \tab Return the total log probability density (`target`) computed
-#'  in the model block of the Stan program. \cr
+#'  [`$lp()`][fit-method-lp] \tab Return the total log probability density
+#'  (`target`) computed in the model block of the Stan program. \cr
 #'  `$mle()` \tab Return the penalized maximum likelihod estimate (posterior
 #'  mode) as a numeric vector with one element per variable (excluding `lp()`). \cr
 #'  [`$save_output_files()`][fit-method-save_output_files] \tab Save output CSV
@@ -476,10 +500,10 @@ CmdStanMLE <- R6::R6Class(
 #'  [`$draws()`][fit-method-draws] \tab Return approximate posterior draws
 #'  as a [`draws_matrix`][posterior::draws_matrix]. \cr
 #'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
-#'  `$lp()` \tab Return a numeric vector containing the target
-#'  (log-posterior) evaluated at each of the draws. \cr
-#'  `$lp_approx()` \tab Return a numeric vector containing the log density of the
-#'  variational approximation to the posterior evaluated at each of the draws. \cr
+#'  [`$lp()`][fit-method-lp] \tab Return the total log probability density
+#'  (`target`) computed in the model block of the Stan program. \cr
+#'  [`$lp_approx()`][fit-method-lp] \tab Return the log density of the
+#'  variational approximation to the posterior. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]

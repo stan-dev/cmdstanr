@@ -20,6 +20,9 @@ objects.
 \tab Return sampler diagnostics as a \code{\link[posterior:draws_array]{draws_array}}. \cr
 \code{\link[=fit-method-summary]{$summary()}}
 \tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
+\code{\link[=fit-method-lp]{$lp()}}
+\tab Return the total log probability density (\code{target}) computed in the
+model block of the Stan program. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}}
 \tab Run and print CmdStan's \code{bin/stansummary}. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}}
