@@ -18,17 +18,17 @@ test_that("threading works", {
 
   expect_output(
     mod$sample(data = data_file_json, cores = 4, threads_per_chain = 1),
-    "Running MCMC with 4 chain(s) on 4 core(s) with 1  thread(s) per chain..",
+    "Running MCMC with 4 chain(s) on 4 core(s) with 1 thread(s) per chain..",
     fixed = TRUE
   )
   expect_output(
     mod$sample(data = data_file_json,  cores = 4, threads_per_chain = 2),
-    "Running MCMC with 4 chain(s) on 4 core(s) with 2  thread(s) per chain..",
+    "Running MCMC with 4 chain(s) on 4 core(s) with 2 thread(s) per chain..",
     fixed = TRUE
   )
   expect_output(
     mod$sample(data = data_file_json,  cores = 4, threads_per_chain = 4),
-    "Running MCMC with 4 chain(s) on 4 core(s) with 4  thread(s) per chain..",
+    "Running MCMC with 4 chain(s) on 4 core(s) with 4 thread(s) per chain..",
     fixed = TRUE
   )
 
