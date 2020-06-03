@@ -50,7 +50,7 @@ the form \code{basename-timestamp-id-random}, where
 \item \code{basename} is the user's provided \code{basename} argument;
 \item \code{timestamp} is of the form \code{format(Sys.time(), "\%Y\%m\%d\%H\%M")};
 \item \code{id} is the MCMC chain id (or \code{1} for non MCMC);
-\item \code{random} contains six random alphanumeric characters.
+\item \code{random} contains six random alphanumeric characters;
 }
 
 For \verb{$save_latent_dynamics_files()} everything is the same as for
