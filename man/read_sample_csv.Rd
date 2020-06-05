@@ -4,12 +4,7 @@
 \alias{read_sample_csv}
 \title{Read CmdStan CSV files into \R}
 \usage{
-read_sample_csv(
-  files,
-  variables = NULL,
-  sampler_diagnostics = NULL,
-  cores = getOption("mc.cores", 1)
-)
+read_sample_csv(files, variables = NULL, sampler_diagnostics = NULL)
 }
 \arguments{
 \item{files}{A character vector of paths to the CSV files to read.}
@@ -28,8 +23,6 @@ and generated quantities) to read in.
 
 \item{sampler_diagnostics}{Works the same way as \code{variables} but for sampler
 diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).}
-
-\item{cores}{The number of cores to use to read and process the output files.}
 }
 \value{
 A named list with the following components:

@@ -313,8 +313,8 @@ read_vb_csv <- function(files) {
 #'
 #' @noRd
 #' @param csv_file A CSV file containing results from sampling.
-#' @return A list containing all sampling parameters and the
-#' diagonal of the inverse mass matrix.
+#' @return A list containing all sampler settings and the inverse mass matrix
+#'   (or its diagonal depending on the metric).
 #'
 read_sample_info_csv <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
