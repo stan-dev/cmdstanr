@@ -234,7 +234,7 @@ github_download_url <- function(version_number) {
 # get version number of latest release
 latest_released_version <- function() {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("Please install the jsonlite package.", call. = FALSE)
+    stop("Please install the 'jsonlite' package.", call. = FALSE)
   }
   dest_file <- tempfile(pattern = "releases-", fileext = ".json")
   download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
