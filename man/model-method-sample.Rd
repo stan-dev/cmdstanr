@@ -2,6 +2,7 @@
 % Please edit documentation in R/model.R
 \name{model-method-sample}
 \alias{model-method-sample}
+\alias{sample}
 \title{Run Stan's MCMC algorithms}
 \description{
 The \verb{$sample()} method of a \code{\link{CmdStanModel}} object runs the
@@ -200,6 +201,10 @@ fit_mcmc <- mod$sample(
 
 # Use 'posterior' package for summaries
 fit_mcmc$summary()
+
+# Get posterior draws
+draws <- fit_mcmc$draws()
+print(draws)
 
 # Call CmdStan's diagnose and stansummary utilities
 fit_mcmc$cmdstan_diagnose()

@@ -82,7 +82,7 @@ CmdStanModel object." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9001</span>
       </span>
     </div>
 
@@ -181,10 +181,10 @@ CmdStanModel object." />
 <tr><td><code><a href='fit-method-draws.html'>$draws()</a></code></td><td>Return approximate posterior draws
 as a <code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code>.</td></tr>
 <tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
-<tr><td><code>$lp()</code></td><td>Return a numeric vector containing the target
-(log-posterior) evaluated at each of the draws.</td></tr>
-<tr><td><code>$lp_approx()</code></td><td>Return a numeric vector containing the log density of the
-variational approximation to the posterior evaluated at each of the draws.</td></tr>
+<tr><td><code><a href='fit-method-lp.html'>$lp()</a></code></td><td>Return the total log probability density
+(<code>target</code>) computed in the model block of the Stan program.</td></tr>
+<tr><td><code><a href='fit-method-lp.html'>$lp_approx()</a></code></td><td>Return the log density of the
+variational approximation to the posterior.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV files to a specified location.</td></tr>
