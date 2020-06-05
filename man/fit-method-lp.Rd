@@ -16,15 +16,15 @@ section of the Stan Reference Manual for details on when normalizing
 constants are dropped from log probability calculations.
 }
 \details{
-\code{lp} is the unnormalized log density on Stan's \href{https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html}{unconstrained space}.
+\code{lp__} is the unnormalized log density on Stan's \href{https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html}{unconstrained space}.
 This will in general be different than the unnormalized model log density
-evaluated at a posterior sample (which is on the constrained space). \code{lp} is
+evaluated at a posterior draw (which is on the constrained space). \code{lp__} is
 intended to diagnose sampling efficiency and evaluate approximations.
 
-\code{lp_approx} is the log density of the variational approximation to \code{lp} (also
-on the unconstrained space). It is exposed in the variational method for
-performing the checks described in Yao et al. (2018) and implemented in the
-\pkg{loo} package.
+\code{lp_approx__} is the log density of the variational approximation to \code{lp__}
+(also on the unconstrained space). It is exposed in the variational method
+for performing the checks described in Yao et al. (2018) and implemented in
+the \pkg{loo} package.
 }
 \section{Usage}{
 \preformatted{$lp()

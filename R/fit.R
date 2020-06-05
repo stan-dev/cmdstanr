@@ -185,16 +185,16 @@ NULL
 #'   ```
 #'
 #' @details
-#' `lp` is the unnormalized log density on Stan's [unconstrained
+#' `lp__` is the unnormalized log density on Stan's [unconstrained
 #' space](https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html).
 #' This will in general be different than the unnormalized model log density
-#' evaluated at a posterior sample (which is on the constrained space). `lp` is
+#' evaluated at a posterior draw (which is on the constrained space). `lp__` is
 #' intended to diagnose sampling efficiency and evaluate approximations.
 #'
-#' `lp_approx` is the log density of the variational approximation to `lp` (also
-#' on the unconstrained space). It is exposed in the variational method for
-#' performing the checks described in Yao et al. (2018) and implemented in the
-#' \pkg{loo} package.
+#' `lp_approx__` is the log density of the variational approximation to `lp__`
+#' (also on the unconstrained space). It is exposed in the variational method
+#' for performing the checks described in Yao et al. (2018) and implemented in
+#' the \pkg{loo} package.
 #'
 #' @section Value:
 #' A numeric vector with length equal to the number of draws for MCMC and
