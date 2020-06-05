@@ -32,7 +32,7 @@ test_that("read_sample_csv() fails for different model names", {
   csv_files <- c(fit_bernoulli_thin_1$output_files(),
                  fit_logistic_thin_1$output_files())
   expect_error(read_sample_csv(csv_files),
-               "Supplied CSV files were not generated wtih the same model!")
+               "Supplied CSV files were not generated with the same model!")
 })
 
 test_that("read_sample_csv() fails for different number of samples in csv", {

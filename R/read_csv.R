@@ -449,7 +449,7 @@ read_sample_info_csv <- function(csv_file) {
 #'
 check_sampling_csv_info_matches <- function(a, b) {
   if (a$model_name != b$model_name) {
-    return(list(error = "Supplied CSV files were not generated wtih the same model!"))
+    return(list(error = "Supplied CSV files were not generated with the same model!"))
   }
   if ((length(a$model_params) != length(b$model_params)) ||
       !(all(a$model_params == b$model_params) &&
