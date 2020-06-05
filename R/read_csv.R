@@ -1,207 +1,80 @@
-#' Check that the sampling information from two CSV files matches.
-#' Will throw errors if the sampling informations dont match. If
-#' it returns, the sampling informations match.
+#' Read CmdStan CSV files into \R
 #'
-#' @noRd
-#' @param a the first sampling info to check
-#' @param b the second sampling info to check
-#'
-check_sampling_csv_info_matches <- function(a, b) {
-  if (a$model_name != b$model_name) {
-    return(list(error = "Supplied CSV files were not generated wtih the same model!"))
-  }
-  if ((length(a$model_params) != length(b$model_params)) ||
-      !(all(a$model_params == b$model_params) &&
-        all(a$sampler_diagnostics == b$sampler_diagnostics))) {
-    return(list(error = "Supplied CSV files have samples for different parameters!"))
-  }
-  if (a$iter_sampling != b$iter_sampling ||
-      a$thin != b$thin ||
-      a$save_warmup != b$save_warmup ||
-      (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
-    return(list(error = "Supplied CSV files dont match in the number of stored samples!"))
-  }
-  match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
-                  "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_treedepth",
-                  "metric", "step_size", "stepsize_jitter", "adapt_engaged", "adapt_delta", "iter_warmup")
-  not_matching <- c()
-  for (name in names(a)) {
-    if ((name %in% match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
-      not_matching <- c(not_matching, name)
-    }
-  }
-  list(not_matching = not_matching)
-}
-
-#' Reads the sampling arguments and the diagonal of the
-#' inverse mass matrix from the comments in a CSV file.
-#'
-#' @noRd
-#' @param csv_file A CSV file containing results from sampling
-#' @return A list containing all sampling parameters and the
-#' diagonal of the inverse mass matrix
-#'
-read_sample_info_csv <- function(csv_file) {
-  checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
-  adaptation_terminated <- FALSE
-  param_names_read <- FALSE
-  inverse_metric_next <- FALSE
-  inverse_metric_diagonal_next <- FALSE
-  csv_file_info = list()
-  con  <- file(csv_file, open = "r")
-  csv_file_info[["inverse_metric"]] <- NULL
-  inverse_metric_rows <- 0
-  parsing_done <- FALSE
-  while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0 && !parsing_done) {
-    if (!startsWith(line, "#")) {
-      if (!param_names_read) {
-        param_names_read <- TRUE
-        all_names <- strsplit(line, ",")[[1]]
-        csv_file_info[["sampler_diagnostics"]] <- c()
-        csv_file_info[["model_params"]] <- c()
-        for(x in all_names) {
-          if (csv_file_info$algorithm != "fixed_param") {
-            if (endsWith(x, "__") && x != "lp__") {
-              csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
-            } else {
-              csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
-            }
-          } else {
-            if (!endsWith(x, "__")) {
-              csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
-            }
-          }
-        }
-      }
-    } else {
-      if (!adaptation_terminated) {
-        if (regexpr("# Adaptation terminated", line, perl = TRUE) > 0) {
-          adaptation_terminated <- TRUE
-        } else {
-          tmp <- gsub("#", "", line, fixed = TRUE)
-          tmp <- gsub("(Default)", "", tmp, fixed = TRUE)
-          key_val <- grep("=", tmp, fixed = TRUE, value = TRUE)
-          key_val <- strsplit(key_val, split = "=", fixed = TRUE)
-          key_val <- rapply(key_val, trimws)
-          if (length(key_val) == 2) {
-            numeric_val <- suppressWarnings(as.numeric(key_val[2]))
-            if (!is.na(numeric_val)) {
-              csv_file_info[[key_val[1]]] <- numeric_val
-            } else {
-              if (nzchar(key_val[2])) {
-                csv_file_info[[key_val[1]]] <- key_val[2]
-              }
-            }
-          }
-        }
-      } else {
-        # after adaptation terminated read in the step size and inverse metrics
-        if (regexpr("# Step size = ", line, perl = TRUE) > 0) {
-          csv_file_info$stepsize_adaptation <- as.numeric(strsplit(line, " = ")[[1]][2])
-        } else if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
-          inverse_metric_diagonal_next <- TRUE
-        } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
-          inverse_metric_next <- TRUE
-        } else if (inverse_metric_diagonal_next) {
-          inv_metric_split <- strsplit(gsub("# ", "", line), ",")
-          if ((length(inv_metric_split) == 0) ||
-              ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
-            break;
-          }
-          csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
-          parsing_done <- TRUE
-        } else if (inverse_metric_next) {
-          inv_metric_split <- strsplit(gsub("# ", "", line), ",")
-          if ((length(inv_metric_split) == 0) ||
-              ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
-            parsing_done <- TRUE
-            break;
-          }
-          if (inverse_metric_rows == 0) {
-            csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
-          } else {
-            csv_file_info$inverse_metric <- c(csv_file_info$inverse_metric, rapply(inv_metric_split, as.numeric))
-          }
-          inverse_metric_rows <- inverse_metric_rows + 1
-        }
-      }
-    }
-  }
-  close(con)
-  if (is.null(csv_file_info$method)) {
-    stop("Supplied CSV file is corrupt!")
-  } else if (csv_file_info$method != "sample") {
-    stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
-  }
-  if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
-    stop("The supplied csv file does not contain any parameter names or data!")
-  }
-  if (inverse_metric_rows > 0) {
-    rows <- inverse_metric_rows
-    cols <- length(csv_file_info$inverse_metric)/inverse_metric_rows
-    dim(csv_file_info$inverse_metric) <- c(rows,cols)
-  }
-
-  # rename from old cmdstan names to new cmdstanX names
-  csv_file_info$model_name <- csv_file_info$model
-  csv_file_info$adapt_engaged <- csv_file_info$engaged
-  csv_file_info$adapt_delta <- csv_file_info$delta
-  csv_file_info$max_treedepth <- csv_file_info$max_depth
-  csv_file_info$step_size <- csv_file_info$stepsize
-  csv_file_info$iter_warmup <- csv_file_info$num_warmup
-  csv_file_info$iter_sampling <- csv_file_info$num_samples
-  csv_file_info$model <- NULL
-  csv_file_info$engaged <- NULL
-  csv_file_info$delta <- NULL
-  csv_file_info$max_depth <- NULL
-  csv_file_info$stepsize <- NULL
-  csv_file_info$num_warmup <- NULL
-  csv_file_info$num_samples <- NULL
-  csv_file_info$file <- NULL
-  csv_file_info$diagnostic_file <- NULL
-  csv_file_info$metric_file <- NULL
-
-  csv_file_info
-}
-
-#' Read samples from CmdStan CSV files into \R
+#' `read_sample_csv()` is used internally by CmdStanR to read CmdStan's CSV
+#' files into \R after MCMC. It can also be used by CmdStan users as a more
+#' flexible and efficient alternative to `rstan::read_stan_csv()`.
 #'
 #' @export
-#' @param files Paths to the CSV files to read.
-#' @param pars (character vector) When `NULL`, the function will return
-#' draws for all model parameters. When supplied a list, the function
-#' will return  draws from the listed model parameters.
-#' @param sampler_diagnostics (character vector) When `NULL`, the function will return
-#' draws for all sampler diagnostics . When supplied a list, the function
-#' will return  draws from the listed sampler diagnostics .
-#' @param cores The number of cores to use to read and process the output files
+#' @param files A character vector of paths to the CSV files to read.
+#' @param pars Optionally, a character vector naming the variables (parameters
+#'   and generated quantities) to read in.
+#'   * If `NULL` (the default) then the draws of all variables are included.
+#'   * If an empty string (`pars=""`) then none are included.
+#'   * For non-scalar variables all elements or specific elements can be selected:
+#'     - `pars = "theta"` selects all elements of `theta`;
+#'     - `pars = c("theta[1]", "theta[3]")` selects only the 1st and 3rd elements.
+#' @param sampler_diagnostics Works the same way as `pars` but for sampler
+#'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
+#' @param cores The number of cores to use to read and process the output files.
 #'
-#' @return A named list containing:
+#' @return A named list with the following components:
 #' * `sampling_info`: A list of the arguments used to run the sampler.
 #' * `inverse_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
+#' * `step_size`: A list (one element per chain) of the step sizes used.
 #' * `warmup_draws`:  If `save_warmup` was `TRUE` then the warmup samples (iter
 #' x chain x variable array).
-#' * `post_warmup_draws`: The post-warmup samples (iter x chain x variable array).
-#' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` then the values
-#' of the sampler parameters during warmup (iter x chain x variable array).
-#' * `sampler_diagnostics`: The post-warmup sampler parameters (iter x chain x
-#' variable array).
+#' * `post_warmup_draws`: The post-warmup draws (iter x chain x variable array).
+#' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` then warmup
+#' draws of the sampler diagnostic variables (iter x chain x variable array).
+#' * `sampler_diagnostics`: The post-warmup draws of the sampler diagnostic
+#' variables (iter x chain x variable array).
 #'
 #' @examples
 #' \dontrun{
-#' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#' mod <- cmdstan_model(stan_program)
-#' fit <- mod$sample(data = list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1)))
+#' stan_program <- tempfile(fileext=".stan")
+#' cat("
+#' parameters {
+#'   real alpha_scalar;
+#'   vector[2] theta_vector;
+#'   matrix[2,2] tau_matrix;
+#' }
+#' model {
+#'   alpha_scalar ~ std_normal();
+#'   theta_vector ~ std_normal();
+#'   to_vector(tau_matrix) ~ std_normal();
+#' }
+#' ", file = stan_program)
 #'
-#' # Read all draws
-#' d <- read_sample_csv(fit$output_files())
-#' # Read only model parameter draws
-#' d <- read_sample_csv(fit$output_files(), pars = NULL, sampler_diagnostics = "")
-#' # Read only specific parameter draws
-#' d <- read_sample_csv(fit$output_files(), pars = c("beta", "theta"), sampler_diagnostics = "")
-#' # Read only specific sampler diagnostic
-#' d <- read_sample_csv(fit$output_files(), pars = "", sampler_diagnostics = c("divergent__"))
+#' # only using capture.output to avoid too much printed output in example
+#' out <- utils::capture.output(
+#'   mod <- cmdstan_model(stan_program),
+#'   fit <- mod$sample(save_warmup=TRUE)
+#' )
+#'
+#' # Read in everything
+#' x <- read_sample_csv(fit$output_files())
+#' str(x)
+#'
+#' # Don't read in any of the sampler diagnostic variables
+#' x <- read_sample_csv(fit$output_files(), sampler_diagnostics = "")
+#'
+#' # Don't read in any of the parameters or generated quantities
+#' x <- read_sample_csv(fit$output_files(), pars = "")
+#'
+#' # Read in only specific parameters and sampler diagnostics
+#' x <- read_sample_csv(
+#'   fit$output_files(),
+#'   pars = c("alpha_scalar", "theta_vector[2]"),
+#'   sampler_diagnostics = c("n_leapfrog__", "accept_stat__")
+#' )
+#'
+#' # For non-scalar parameters all elements can be selected or only some elements,
+#' # e.g. all of "theta_vector" but only one element of "tau_matrix"
+#' x <- read_sample_csv(
+#'   fit$output_files(),
+#'   pars = c("theta_vector", "tau_matrix[2,1]")
+#' )
 #' }
 #'
 read_sample_csv <- function(files,
@@ -432,6 +305,177 @@ read_vb_csv <- function(output_file) {
   list(draws = draws)
 }
 
+
+# internal ----------------------------------------------------------------
+
+#' Reads the sampling arguments and the diagonal of the
+#' inverse mass matrix from the comments in a CSV file.
+#'
+#' @noRd
+#' @param csv_file A CSV file containing results from sampling
+#' @return A list containing all sampling parameters and the
+#' diagonal of the inverse mass matrix
+#'
+read_sample_info_csv <- function(csv_file) {
+  checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
+  adaptation_terminated <- FALSE
+  param_names_read <- FALSE
+  inverse_metric_next <- FALSE
+  inverse_metric_diagonal_next <- FALSE
+  csv_file_info = list()
+  con  <- file(csv_file, open = "r")
+  csv_file_info[["inverse_metric"]] <- NULL
+  inverse_metric_rows <- 0
+  parsing_done <- FALSE
+  while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0 && !parsing_done) {
+    if (!startsWith(line, "#")) {
+      if (!param_names_read) {
+        param_names_read <- TRUE
+        all_names <- strsplit(line, ",")[[1]]
+        csv_file_info[["sampler_diagnostics"]] <- c()
+        csv_file_info[["model_params"]] <- c()
+        for(x in all_names) {
+          if (csv_file_info$algorithm != "fixed_param") {
+            if (endsWith(x, "__") && x != "lp__") {
+              csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
+            } else {
+              csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
+            }
+          } else {
+            if (!endsWith(x, "__")) {
+              csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
+            }
+          }
+        }
+      }
+    } else {
+      if (!adaptation_terminated) {
+        if (regexpr("# Adaptation terminated", line, perl = TRUE) > 0) {
+          adaptation_terminated <- TRUE
+        } else {
+          tmp <- gsub("#", "", line, fixed = TRUE)
+          tmp <- gsub("(Default)", "", tmp, fixed = TRUE)
+          key_val <- grep("=", tmp, fixed = TRUE, value = TRUE)
+          key_val <- strsplit(key_val, split = "=", fixed = TRUE)
+          key_val <- rapply(key_val, trimws)
+          if (length(key_val) == 2) {
+            numeric_val <- suppressWarnings(as.numeric(key_val[2]))
+            if (!is.na(numeric_val)) {
+              csv_file_info[[key_val[1]]] <- numeric_val
+            } else {
+              if (nzchar(key_val[2])) {
+                csv_file_info[[key_val[1]]] <- key_val[2]
+              }
+            }
+          }
+        }
+      } else {
+        # after adaptation terminated read in the step size and inverse metrics
+        if (regexpr("# Step size = ", line, perl = TRUE) > 0) {
+          csv_file_info$stepsize_adaptation <- as.numeric(strsplit(line, " = ")[[1]][2])
+        } else if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
+          inverse_metric_diagonal_next <- TRUE
+        } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
+          inverse_metric_next <- TRUE
+        } else if (inverse_metric_diagonal_next) {
+          inv_metric_split <- strsplit(gsub("# ", "", line), ",")
+          if ((length(inv_metric_split) == 0) ||
+              ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
+            break;
+          }
+          csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
+          parsing_done <- TRUE
+        } else if (inverse_metric_next) {
+          inv_metric_split <- strsplit(gsub("# ", "", line), ",")
+          if ((length(inv_metric_split) == 0) ||
+              ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
+            parsing_done <- TRUE
+            break;
+          }
+          if (inverse_metric_rows == 0) {
+            csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
+          } else {
+            csv_file_info$inverse_metric <- c(csv_file_info$inverse_metric, rapply(inv_metric_split, as.numeric))
+          }
+          inverse_metric_rows <- inverse_metric_rows + 1
+        }
+      }
+    }
+  }
+  close(con)
+  if (is.null(csv_file_info$method)) {
+    stop("Supplied CSV file is corrupt!")
+  } else if (csv_file_info$method != "sample") {
+    stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
+  }
+  if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
+    stop("The supplied csv file does not contain any parameter names or data!")
+  }
+  if (inverse_metric_rows > 0) {
+    rows <- inverse_metric_rows
+    cols <- length(csv_file_info$inverse_metric)/inverse_metric_rows
+    dim(csv_file_info$inverse_metric) <- c(rows,cols)
+  }
+
+  # rename from old cmdstan names to new cmdstanX names
+  csv_file_info$model_name <- csv_file_info$model
+  csv_file_info$adapt_engaged <- csv_file_info$engaged
+  csv_file_info$adapt_delta <- csv_file_info$delta
+  csv_file_info$max_treedepth <- csv_file_info$max_depth
+  csv_file_info$step_size <- csv_file_info$stepsize
+  csv_file_info$iter_warmup <- csv_file_info$num_warmup
+  csv_file_info$iter_sampling <- csv_file_info$num_samples
+  csv_file_info$model <- NULL
+  csv_file_info$engaged <- NULL
+  csv_file_info$delta <- NULL
+  csv_file_info$max_depth <- NULL
+  csv_file_info$stepsize <- NULL
+  csv_file_info$num_warmup <- NULL
+  csv_file_info$num_samples <- NULL
+  csv_file_info$file <- NULL
+  csv_file_info$diagnostic_file <- NULL
+  csv_file_info$metric_file <- NULL
+
+  csv_file_info
+}
+
+#' Check that the sampling information from two CSV files matches.
+#' Will throw errors if the sampling information doesn't match. If
+#' it returns, the sampling information matches.
+#'
+#' @noRd
+#' @param a the first sampling info to check
+#' @param b the second sampling info to check
+#'
+check_sampling_csv_info_matches <- function(a, b) {
+  if (a$model_name != b$model_name) {
+    return(list(error = "Supplied CSV files were not generated wtih the same model!"))
+  }
+  if ((length(a$model_params) != length(b$model_params)) ||
+      !(all(a$model_params == b$model_params) &&
+        all(a$sampler_diagnostics == b$sampler_diagnostics))) {
+    return(list(error = "Supplied CSV files have samples for different parameters!"))
+  }
+  if (a$iter_sampling != b$iter_sampling ||
+      a$thin != b$thin ||
+      a$save_warmup != b$save_warmup ||
+      (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
+    return(list(error = "Supplied CSV files dont match in the number of stored samples!"))
+  }
+  match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
+                  "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_treedepth",
+                  "metric", "step_size", "stepsize_jitter", "adapt_engaged", "adapt_delta", "iter_warmup")
+  not_matching <- c()
+  for (name in names(a)) {
+    if ((name %in% match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
+      not_matching <- c(not_matching, name)
+    }
+  }
+  list(not_matching = not_matching)
+}
+
+
+
 # convert names like beta.1.1 to beta[1,1]
 repair_variable_names <- function(names) {
   names <- sub("\\.", "[", names)
@@ -468,11 +512,11 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
       if (any(all_remaining == p) || any(startsWith(all_remaining, paste0(p,".")))) {
         unread <- c(unread, p)
       }
-    }  
+    }
   }
   if (length(unread)) {
     unread
   } else {
     ""
-  }  
+  }
 }
