@@ -15,7 +15,6 @@
 #'     - `variables = c("theta[1]", "theta[3]")` selects only the 1st and 3rd elements.
 #' @param sampler_diagnostics Works the same way as `variables` but for sampler
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
-#' @param cores The number of cores to use to read and process the output files.
 #'
 #' @return A named list with the following components:
 #' * `sampling_info`: A list of the arguments used to run the sampler.
@@ -79,8 +78,7 @@
 #'
 read_sample_csv <- function(files,
                             variables = NULL,
-                            sampler_diagnostics = NULL,
-                            cores = getOption("mc.cores", 1)) {
+                            sampler_diagnostics = NULL) {
   sampling_info <- NULL
   warmup_draws <- NULL
   warmup_sampler_diagnostics_draws <- NULL

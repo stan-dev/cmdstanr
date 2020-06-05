@@ -383,9 +383,7 @@ CmdStanMCMC <- R6::R6Class(
         if (self$runset$args$validate_csv && !runset$args$method_args$fixed_param) {
           data_csv <- read_sample_csv(self$output_files(),
                                       variables = "",
-                                      sampler_diagnostics = c("treedepth__", "divergent__"),
-                                      cores = self$runset$procs$num_cores()
-          )
+                                      sampler_diagnostics = c("treedepth__", "divergent__"))
           check_divergences(data_csv)
           check_sampler_transitions_treedepth(data_csv)
         }
@@ -453,8 +451,7 @@ CmdStanMCMC <- R6::R6Class(
       sampler_diagnostics_to_read <- remaining_columns_to_read(sampler_diagnostics, dimnames(private$sampler_diagnostics_)$variable, private$sampling_info_$sampler_diagnostics)
       data_csv <- read_sample_csv(self$output_files(include_failed = FALSE),
                                   variables = parameters_to_read,
-                                  sampler_diagnostics = sampler_diagnostics_to_read,
-                                  cores = self$runset$procs$num_cores())
+                                  sampler_diagnostics = sampler_diagnostics_to_read)
       private$sampling_info_ <- data_csv$sampling_info
       if (!is.null(data_csv$post_warmup_draws)) {
         if (is.null(private$draws_)) {
