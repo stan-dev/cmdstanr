@@ -7,6 +7,12 @@
 \alias{fit-method-output_files}
 \alias{fit-method-data_file}
 \alias{fit-method-latent_dynamics_files}
+\alias{save_output_files}
+\alias{save_data_file}
+\alias{save_latent_dynamics_files}
+\alias{output_files}
+\alias{data_file}
+\alias{latent_dynamics_files}
 \title{Save output and data files}
 \description{
 All fitted model objects have methods for saving (moving to a

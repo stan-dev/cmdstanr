@@ -6,7 +6,7 @@
 #'
 #' @description
 #' \if{html}{
-#'    \figure{logo.png}{options: width="50px" alt="https://mc-stan.org/about/logo/"}
+#'    \figure{logo.png}{options: width="50" alt="https://mc-stan.org/about/logo/"}
 #'    \emph{Stan Development Team}
 #' }
 #'
@@ -21,6 +21,8 @@
 #' @section Getting started: CmdStanR requires a working version of CmdStan. If
 #'   you already have CmdStan installed see [cmdstan_model()] to get
 #'   started, otherwise see [install_cmdstan()] for help with installation.
+#'   The vignette [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
+#'   demonstrates the basic functionality of the package.
 #'
 #' @section Comparison with RStan: The RStan interface (\pkg{rstan} package) is
 #'   an in-memory interface to Stan and relies on \R packages like \pkg{Rcpp}
@@ -37,8 +39,8 @@
 #'   requiring new CRAN releases of \pkg{rstan} and \pkg{StanHeaders}. With
 #'   CmdStanR, the latest features in Stan will be available from \R immediately
 #'   after updating CmdStan, which can be done with the [install_cmdstan()]
-#'   function. We also anticipate that running Stan via external processes will 
-#'   have the advantage of playing nicer with R (and RStudio) and result in fewer 
+#'   function. We also anticipate that running Stan via external processes will
+#'   have the advantage of playing nicer with R (and RStudio) and result in fewer
 #'   unexpected crashes than when using RStan.
 #'
 #'   Another difference between RStan and CmdStanR is the license. RStan is

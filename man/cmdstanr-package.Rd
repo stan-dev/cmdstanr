@@ -8,7 +8,7 @@
 \title{CmdStanR: the \R interface to CmdStan}
 \description{
 \if{html}{
-   \figure{logo.png}{options: width="50px" alt="https://mc-stan.org/about/logo/"}
+   \figure{logo.png}{options: width="50" alt="https://mc-stan.org/about/logo/"}
    \emph{Stan Development Team}
 }
 
@@ -25,6 +25,8 @@ algorithms from \R via CmdStan, the shell interface to Stan
  CmdStanR requires a working version of CmdStan. If
 you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
 started, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} for help with installation.
+The vignette \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
+demonstrates the basic functionality of the package.
 }
 
 \section{Comparison with RStan}{
@@ -81,6 +83,10 @@ fit_mcmc <- mod$sample(
 
 # Use 'posterior' package for summaries
 fit_mcmc$summary()
+
+# Get posterior draws
+draws <- fit_mcmc$draws()
+print(draws)
 
 # Call CmdStan's diagnose and stansummary utilities
 fit_mcmc$cmdstan_diagnose()

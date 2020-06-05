@@ -2,6 +2,7 @@
 % Please edit documentation in R/fit.R
 \name{fit-method-draws}
 \alias{fit-method-draws}
+\alias{draws}
 \title{Extract posterior draws}
 \description{
 Extract posterior draws after MCMC or approximate posterior

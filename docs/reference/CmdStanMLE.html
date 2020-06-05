@@ -81,7 +81,7 @@ $optimize() method of a CmdStanModel object." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9001</span>
       </span>
     </div>
 
@@ -179,10 +179,10 @@ $optimize() method of a CmdStanModel object." />
 <tr><td><code><a href='fit-method-draws.html'>draws()</a></code></td><td>Return the point estimate as a 1-row
 <code><a href='https://rdrr.io/pkg/posterior/man/draws_matrix.html'>draws_matrix</a></code>.</td></tr>
 <tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
-<tr><td><code>$lp()</code></td><td>Return the total log probability density (<code>target</code>) computed
-in the model block of the Stan program.</td></tr>
+<tr><td><code><a href='fit-method-lp.html'>$lp()</a></code></td><td>Return the total log probability density
+(<code>target</code>) computed in the model block of the Stan program.</td></tr>
 <tr><td><code>$mle()</code></td><td>Return the penalized maximum likelihod estimate (posterior
-mode) as a numeric vector with one element per variable (excluding <code>lp()</code>).</td></tr>
+mode) as a numeric vector with one element per variable (excluding <code><a href='fit-method-lp.html'>lp()</a></code>).</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV
 files to a specified location.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file
