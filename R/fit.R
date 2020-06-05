@@ -184,9 +184,26 @@ NULL
 #'   $lp_approx()
 #'   ```
 #'
+#' @details
+#' `lp` is the unnormalized log density on Stan's [unconstrained
+#' space](https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html).
+#' This will in general be different than the unnormalized model log density
+#' evaluated at a posterior sample (which is on the constrained space). `lp` is
+#' intended to diagnose sampling efficiency and evaluate approximations.
+#'
+#' `lp_approx` is the log density of the variational approximation to `lp` (also
+#' on the unconstrained space). It is exposed in the variational method for
+#' performing the checks described in Yao et al. (2018) and implemented in the
+#' \pkg{loo} package.
+#'
 #' @section Value:
 #' A numeric vector with length equal to the number of draws for MCMC and
 #' variational inference, and length equal to `1` for optimization.
+#'
+#' @references
+#' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
+#' work?: Evaluating variational inference. *Proceedings of the 35th
+#' International Conference on Machine Learning*, PMLR 80:5581–5590.
 #'
 NULL
 

@@ -15,6 +15,17 @@ See the \href{https://mc-stan.org/docs/2_23/reference-manual/sampling-statements
 section of the Stan Reference Manual for details on when normalizing
 constants are dropped from log probability calculations.
 }
+\details{
+\code{lp} is the unnormalized log density on Stan's \href{https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html}{unconstrained space}.
+This will in general be different than the unnormalized model log density
+evaluated at a posterior sample (which is on the constrained space). \code{lp} is
+intended to diagnose sampling efficiency and evaluate approximations.
+
+\code{lp_approx} is the log density of the variational approximation to \code{lp} (also
+on the unconstrained space). It is exposed in the variational method for
+performing the checks described in Yao et al. (2018) and implemented in the
+\pkg{loo} package.
+}
 \section{Usage}{
 \preformatted{$lp()
 $lp_approx()
@@ -27,3 +38,8 @@ A numeric vector with length equal to the number of draws for MCMC and
 variational inference, and length equal to \code{1} for optimization.
 }
 
+\references{
+Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
+work?: Evaluating variational inference. \emph{Proceedings of the 35th
+International Conference on Machine Learning}, PMLR 80:5581–5590.
+}
