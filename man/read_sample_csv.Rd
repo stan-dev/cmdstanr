@@ -6,7 +6,7 @@
 \usage{
 read_sample_csv(
   files,
-  pars = NULL,
+  variables = NULL,
   sampler_diagnostics = NULL,
   cores = getOption("mc.cores", 1)
 )
@@ -14,19 +14,19 @@ read_sample_csv(
 \arguments{
 \item{files}{A character vector of paths to the CSV files to read.}
 
-\item{pars}{Optionally, a character vector naming the variables (parameters
+\item{variables}{Optionally, a character vector naming the variables (parameters
 and generated quantities) to read in.
 \itemize{
 \item If \code{NULL} (the default) then the draws of all variables are included.
-\item If an empty string (\code{pars=""}) then none are included.
+\item If an empty string (\code{variables=""}) then none are included.
 \item For non-scalar variables all elements or specific elements can be selected:
 \itemize{
-\item \code{pars = "theta"} selects all elements of \code{theta};
-\item \code{pars = c("theta[1]", "theta[3]")} selects only the 1st and 3rd elements.
+\item \code{variables = "theta"} selects all elements of \code{theta};
+\item \code{variables = c("theta[1]", "theta[3]")} selects only the 1st and 3rd elements.
 }
 }}
 
-\item{sampler_diagnostics}{Works the same way as \code{pars} but for sampler
+\item{sampler_diagnostics}{Works the same way as \code{variables} but for sampler
 diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).}
 
 \item{cores}{The number of cores to use to read and process the output files.}
@@ -82,12 +82,12 @@ str(x)
 x <- read_sample_csv(fit$output_files(), sampler_diagnostics = "")
 
 # Don't read in any of the parameters or generated quantities
-x <- read_sample_csv(fit$output_files(), pars = "")
+x <- read_sample_csv(fit$output_files(), variables = "")
 
 # Read in only specific parameters and sampler diagnostics
 x <- read_sample_csv(
   fit$output_files(),
-  pars = c("alpha_scalar", "theta_vector[2]"),
+  variables = c("alpha_scalar", "theta_vector[2]"),
   sampler_diagnostics = c("n_leapfrog__", "accept_stat__")
 )
 
@@ -95,7 +95,7 @@ x <- read_sample_csv(
 # e.g. all of "theta_vector" but only one element of "tau_matrix"
 x <- read_sample_csv(
   fit$output_files(),
-  pars = c("theta_vector", "tau_matrix[2,1]")
+  variables = c("theta_vector", "tau_matrix[2,1]")
 )
 }
 

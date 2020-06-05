@@ -6,14 +6,14 @@
 #'
 #' @export
 #' @param files A character vector of paths to the CSV files to read.
-#' @param pars Optionally, a character vector naming the variables (parameters
+#' @param variables Optionally, a character vector naming the variables (parameters
 #'   and generated quantities) to read in.
 #'   * If `NULL` (the default) then the draws of all variables are included.
-#'   * If an empty string (`pars=""`) then none are included.
+#'   * If an empty string (`variables=""`) then none are included.
 #'   * For non-scalar variables all elements or specific elements can be selected:
-#'     - `pars = "theta"` selects all elements of `theta`;
-#'     - `pars = c("theta[1]", "theta[3]")` selects only the 1st and 3rd elements.
-#' @param sampler_diagnostics Works the same way as `pars` but for sampler
+#'     - `variables = "theta"` selects all elements of `theta`;
+#'     - `variables = c("theta[1]", "theta[3]")` selects only the 1st and 3rd elements.
+#' @param sampler_diagnostics Works the same way as `variables` but for sampler
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #' @param cores The number of cores to use to read and process the output files.
 #'
@@ -60,12 +60,12 @@
 #' x <- read_sample_csv(fit$output_files(), sampler_diagnostics = "")
 #'
 #' # Don't read in any of the parameters or generated quantities
-#' x <- read_sample_csv(fit$output_files(), pars = "")
+#' x <- read_sample_csv(fit$output_files(), variables = "")
 #'
 #' # Read in only specific parameters and sampler diagnostics
 #' x <- read_sample_csv(
 #'   fit$output_files(),
-#'   pars = c("alpha_scalar", "theta_vector[2]"),
+#'   variables = c("alpha_scalar", "theta_vector[2]"),
 #'   sampler_diagnostics = c("n_leapfrog__", "accept_stat__")
 #' )
 #'
@@ -73,12 +73,12 @@
 #' # e.g. all of "theta_vector" but only one element of "tau_matrix"
 #' x <- read_sample_csv(
 #'   fit$output_files(),
-#'   pars = c("theta_vector", "tau_matrix[2,1]")
+#'   variables = c("theta_vector", "tau_matrix[2,1]")
 #' )
 #' }
 #'
 read_sample_csv <- function(files,
-                            pars = NULL,
+                            variables = NULL,
                             sampler_diagnostics = NULL,
                             cores = getOption("mc.cores", 1)) {
   sampling_info <- NULL
@@ -121,25 +121,25 @@ read_sample_csv <- function(files,
       id <- csv_file_info$id
     }
     if (is.null(col_select)) {
-      if (is.null(pars)) { # pars = NULL returns all parameters
-        pars <- sampling_info$model_params
-      } else if (!any(nzchar(pars))) { # if pars = "" returns no parameters
-        pars <- NULL
-      } else { # filter using pars
-        pars <- unrepair_variable_names(pars)
-        selected_pars <- rep(FALSE, length(sampling_info$model_params))
+      if (is.null(variables)) { # variables = NULL returns all parameters
+        variables <- sampling_info$model_params
+      } else if (!any(nzchar(variables))) { # if variables = "" returns no parameters
+        variables <- NULL
+      } else { # filter using variables
+        variables <- unrepair_variable_names(variables)
+        selected_variables <- rep(FALSE, length(sampling_info$model_params))
         not_found <- NULL
-        for (p in pars) {
-          matches <- sampling_info$model_params == p | startsWith(sampling_info$model_params, paste0(p,"."))
+        for (p in variables) {
+          matches <- sampling_info$model_params == p | startsWith(sampling_info$model_params, paste0(p, "."))
           if (!any(matches)) {
             not_found <- c(not_found, p)
           }
-          selected_pars <- selected_pars | matches
+          selected_variables <- selected_variables | matches
         }
         if (length(not_found)) {
           stop("Can't find parameter(s): ", paste(not_found, collapse = ", "), " in the sampling output!")
         }
-        pars <- sampling_info$model_params[selected_pars]
+        variables <- sampling_info$model_params[selected_variables]
       }
       if (is.null(sampler_diagnostics)) {
         sampler_diagnostics <- sampling_info$sampler_diagnostics
@@ -161,7 +161,7 @@ read_sample_csv <- function(files,
         sampler_diagnostics <- sampling_info$sampler_diagnostics[selected_sampler_diag]
       }
       col_select <- "lp__"
-      col_select <- c(col_select, pars[pars!="lp__"])
+      col_select <- c(col_select, variables[variables!="lp__"])
       col_select <- c(col_select, sampler_diagnostics)
     }
     suppressWarnings(
@@ -182,8 +182,8 @@ read_sample_csv <- function(files,
       num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
       if (sampling_info$save_warmup == 1) {
-        if (length(pars) > 0) {
-          new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, pars])
+        if (length(variables) > 0) {
+          new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, variables])
           if (is.null(warmup_draws)) {
             warmup_draws <- new_warmup_draws
           } else {
@@ -202,8 +202,8 @@ read_sample_csv <- function(files,
                                                                       along="chain")
           }
         }
-        if (length(pars) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, pars])
+        if (length(variables) > 0) {
+          new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables])
           if (is.null(post_warmup_draws)) {
             post_warmup_draws <- new_post_warmup_draws
           } else {
@@ -223,8 +223,8 @@ read_sample_csv <- function(files,
       } else {
         warmup_draws <- NULL
         warmup_sampler_diagnostics_draws <- NULL
-        if (length(pars) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[, pars])
+        if (length(variables) > 0) {
+          new_post_warmup_draws <- posterior::as_draws_array(draws[, variables])
           if (is.null(post_warmup_draws)) {
             post_warmup_draws <- new_post_warmup_draws
           } else {
@@ -248,7 +248,7 @@ read_sample_csv <- function(files,
       }
     }
   }
-  repaired_model_params <- repair_variable_names(pars)
+  repaired_model_params <- repair_variable_names(variables)
   if (!is.null(warmup_draws)) {
     posterior::variables(warmup_draws) <- repaired_model_params
   }
