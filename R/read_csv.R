@@ -273,9 +273,10 @@ read_sample_csv <- function(files,
 }
 
 # FIXME: also parse the csv header
-read_optim_csv <- function(output_file) {
+read_optim_csv <- function(files) {
+  stopifnot(length(files) == 1)
   csv_no_comments <- utils::read.csv(
-    output_file,
+    files,
     comment.char = "#",
     colClasses = "numeric"
   )
@@ -290,9 +291,10 @@ read_optim_csv <- function(output_file) {
 }
 
 # FIXME: also parse the csv header
-read_vb_csv <- function(output_file) {
+read_vb_csv <- function(files) {
+  stopifnot(length(files) == 1)
   csv_no_comments <- utils::read.csv(
-    output_file,
+    files,
     comment.char = "#",
     colClasses = "numeric"
   )
@@ -312,9 +314,9 @@ read_vb_csv <- function(output_file) {
 #' inverse mass matrix from the comments in a CSV file.
 #'
 #' @noRd
-#' @param csv_file A CSV file containing results from sampling
+#' @param csv_file A CSV file containing results from sampling.
 #' @return A list containing all sampling parameters and the
-#' diagonal of the inverse mass matrix
+#' diagonal of the inverse mass matrix.
 #'
 read_sample_info_csv <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
@@ -444,8 +446,7 @@ read_sample_info_csv <- function(csv_file) {
 #' it returns, the sampling information matches.
 #'
 #' @noRd
-#' @param a the first sampling info to check
-#' @param b the second sampling info to check
+#' @param a,b Two lists returned by `read_sample_info_csv()` to compare.
 #'
 check_sampling_csv_info_matches <- function(a, b) {
   if (a$model_name != b$model_name) {

@@ -75,7 +75,7 @@ out <- utils::capture.output(
 )
 
 # Read in everything
-x <- read_sample_csv(fit$output_files(), cores = 2)
+x <- read_sample_csv(fit$output_files())
 str(x)
 
 # Don't read in any of the sampler diagnostic variables
