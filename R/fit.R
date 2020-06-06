@@ -410,8 +410,9 @@ CmdStanMCMC <- R6::R6Class(
         currently_read = dimnames(private$draws_)$variable,
         all = private$sampling_info_$model_params
       )
+      
       if (is.null(to_read) || (length(to_read) > 0)) {
-        private$read_csv_(variables = variables, sampler_diagnostics = "")
+        private$read_csv_(variables = to_read, sampler_diagnostics = "")
       }
       if (is.null(variables)) {
         variables <- private$sampling_info_$model_params
@@ -485,7 +486,7 @@ CmdStanMCMC <- R6::R6Class(
         } else {
           private$draws_ <-
             posterior::bind_draws(
-              data_csv$post_warmup_draws[,,-1],
+              data_csv$post_warmup_draws,
               private$draws_,
               along="variable"
             )
@@ -511,7 +512,7 @@ CmdStanMCMC <- R6::R6Class(
           } else {
             private$warmup_draws_ <-
               posterior::bind_draws(
-                data_csv$warmup_draws[,,-1],
+                data_csv$warmup_draws,
                 private$warmup_draws_,
                 along="variable"
               )
