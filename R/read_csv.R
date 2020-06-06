@@ -124,20 +124,11 @@ read_sample_csv <- function(files,
       } else if (!any(nzchar(variables))) { # if variables = "" returns no parameters
         variables <- NULL
       } else { # filter using variables
-        variables <- unrepair_variable_names(variables)
-        selected_variables <- rep(FALSE, length(sampling_info$model_params))
-        not_found <- NULL
-        for (p in variables) {
-          matches <- sampling_info$model_params == p | startsWith(sampling_info$model_params, paste0(p, "."))
-          if (!any(matches)) {
-            not_found <- c(not_found, p)
-          }
-          selected_variables <- selected_variables | matches
+        res <- matching_variables(variables, sampling_info$model_params)
+        if (length(res$not_found)) {
+          stop("Can't find parameter(s): ", paste(res$not_found, collapse = ", "), " in the sampling output!")
         }
-        if (length(not_found)) {
-          stop("Can't find parameter(s): ", paste(not_found, collapse = ", "), " in the sampling output!")
-        }
-        variables <- sampling_info$model_params[selected_variables]
+        variables <- res$matching
       }
       if (is.null(sampler_diagnostics)) {
         sampler_diagnostics <- sampling_info$sampler_diagnostics

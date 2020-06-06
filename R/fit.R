@@ -416,6 +416,7 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(variables)) {
         variables <- private$sampling_info_$model_params
       }
+      variables <- repair_variable_names(matching_variables(variables, private$sampling_info_$model_params)$matching)
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
           stop("Warmup draws were requested from a fit object without them! ",
