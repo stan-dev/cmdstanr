@@ -212,7 +212,7 @@ NULL
 #' @name fit-method-summary
 #' @aliases summary
 #' @description Run [posterior::summarise_draws()] from the \pkg{posterior}
-#'   package.
+#'   package. For MCMC only post-warmup draws are included in the summary.
 #'
 #' @section Usage:
 #'   ```
