@@ -512,6 +512,17 @@ sample_method <- function(data = NULL,
   }
   checkmate::assert_integerish(chains, lower = 1, len = 1)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
+  # check if model was not compiled with threading
+  if (is.null(self$cpp_options()[["stan_threads"]])) {
+    if (!is.null(threads_per_chain)) {
+      warning("'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!")
+      threads_per_chain <- NULL
+    }
+  } else {
+    if (is.null(threads_per_chain)) {
+      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!")
+    }
+  }  
 
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,

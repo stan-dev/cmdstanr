@@ -217,10 +217,7 @@ CmdStanRun <- R6::R6Class(
   }
   if (!is.null(procs$threads_per_chain())) {
     Sys.setenv("STAN_NUM_THREADS" = procs$threads_per_chain())
-  } else {
-    Sys.setenv("STAN_NUM_THREADS" = 1)
-  }
-
+  }  
   start_time <- Sys.time()
   chains <- procs$run_ids()
   chain_ind <- 1
@@ -304,7 +301,11 @@ CmdStanProcs <- R6::R6Class(
         private$simultaneous_chains_ <- as.integer(private$num_cores_)
       } else {
         private$threads_per_chain_ <- as.integer(threads_per_chain)
+        if (private$threads_per_chain_ > private$num_cores_) {
+          stop("'cores' should be larger or equal to 'threads_per_chain'.")
+        }
         private$simultaneous_chains_ <- as.integer(floor(private$num_cores_/private$threads_per_chain_))
+        
       }      
       private$active_cores_ <- 0
       private$run_ids_ <- seq_len(num_runs)
