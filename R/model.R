@@ -70,8 +70,8 @@
 #' fit_vb$summary()
 #' }
 #'
-cmdstan_model <- function(stan_file = character(), exe_file = character(), compile = TRUE, ...) {
-  CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
+cmdstan_model <- function(stan_file, compile = TRUE, ...) {
+  CmdStanModel$new(stan_file = stan_file, compile = compile, ...)
 }
 
 
@@ -121,7 +121,6 @@ CmdStanModel <- R6::R6Class(
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
-      private$exe_file_ <- exe_file
       if (compile) {
         self$compile(...)
       }
@@ -131,7 +130,7 @@ CmdStanModel <- R6::R6Class(
     cpp_options = function() private$cpp_options_,
     exe_file = function(path = NULL) {
       if (!is.null(path)) {
-        private$exe_file_ = path
+        private$exe_file_ <- path
       }
       private$exe_file_
     },
@@ -234,16 +233,15 @@ compile_method <- function(quiet = TRUE,
   if (!is.null(cpp_options$stan_opencl)) {
     exe_suffix <- c(exe_suffix, "opencl")
   }
+  exe_suffix <- paste0(exe_suffix, collapse = "_")
+  if (nzchar(exe_suffix)) {
+    exe_suffix <- paste0("_", exe_suffix)
+  }
   if (all(nzchar(self$exe_file()))) {
-    exe <- cmdstan_ext(strip_ext(self$stan_file()))
+    exe <- cmdstan_ext(paste0(strip_ext(self$stan_file()), exe_suffix))
   }
 
-  if (is.null(self$stan_file())) {
-    model_name <- basename(strip_ext(self$exe_file()))
-  } else {
-    model_name <- sub(" ", "_",
-                        paste0(strip_ext(basename(self$stan_file())), "_model"))
-  }
+  model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   # compile if the user forced compilation,
   # the executable does not exist or the stan model was changed since last compilation
@@ -256,6 +254,7 @@ compile_method <- function(quiet = TRUE,
   
   if (!force_recompile) {
     message("Model executable is up to date!")
+    private$cpp_options_ <- cpp_options
     self$exe_file(exe)
     return(invisible(self))
   } else {
