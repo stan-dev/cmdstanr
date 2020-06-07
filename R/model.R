@@ -117,12 +117,8 @@ CmdStanModel <- R6::R6Class(
     cpp_options_ = list()
   ),
   public = list(
-    initialize = function(stan_file, exe_file, compile, ...) {
-      if (all(exe_file == character())) {
-        checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
-      } else {
-        checkmate::assert_file_exists(exe_file, access = "r", extension = cmdstan_ext())
-      }
+    initialize = function(stan_file, compile, ...) {
+      checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
       private$exe_file_ <- exe_file
@@ -222,17 +218,33 @@ compile_method <- function(quiet = TRUE,
                            force_recompile = FALSE,
                            #deprecated
                            threads = FALSE) {
+  # temporary deprecation warnings
+  if (isTRUE(threads)) {
+    warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
+    cpp_options[["stan_threads"]] <- TRUE
+  }
+
+  exe_suffix <- NULL
+  if (!is.null(cpp_options$stan_threads)) {
+    exe_suffix <- c(exe_suffix, "threads")
+  }
+  if (!is.null(cpp_options$stan_mpi)) {
+    exe_suffix <- c(exe_suffix, "mpi")
+  }
+  if (!is.null(cpp_options$stan_opencl)) {
+    exe_suffix <- c(exe_suffix, "opencl")
+  }
   if (all(nzchar(self$exe_file()))) {
     exe <- cmdstan_ext(strip_ext(self$stan_file()))
-  } else {
-    exe <- cmdstan_ext(strip_ext(self$exe_file()))
   }
+
   if (is.null(self$stan_file())) {
     model_name <- basename(strip_ext(self$exe_file()))
   } else {
     model_name <- sub(" ", "_",
                         paste0(strip_ext(basename(self$stan_file())), "_model"))
   }
+
   # compile if the user forced compilation,
   # the executable does not exist or the stan model was changed since last compilation
   if (!file.exists(exe)) {
@@ -241,11 +253,7 @@ compile_method <- function(quiet = TRUE,
              && file.mtime(exe) < file.mtime(self$stan_file())) {
     force_recompile <- TRUE
   }
-  # temporary deprecation warnings
-  if (isTRUE(threads)) {
-    warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
-    cpp_options[["stan_threads"]] <- TRUE
-  }
+  
   if (!force_recompile) {
     message("Model executable is up to date!")
     self$exe_file(exe)
