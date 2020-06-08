@@ -178,19 +178,19 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
                                append = TRUE) {
   make_local_path <- file.path(dir, "make", "local")
-  if (!is.null(flags)) {
+  if (!is.null(cpp_options)) {
     built_flags = c()
-    for (i in seq_len(length(flags))) {
-      option_name <- names(flags)[i]
-      if (isTRUE(as.logical(flags[[i]]))) {
+    for (i in seq_len(length(cpp_options))) {
+      option_name <- names(cpp_options)[i]
+      if (isTRUE(as.logical(cpp_options[[i]]))) {
         built_flags = c(built_flags, paste0(option_name, "=true"))
-      } else if (isFALSE(as.logical(flags[[i]]))) {
+      } else if (isFALSE(as.logical(cpp_options[[i]]))) {
         built_flags = c(built_flags, paste0(option_name, "=false"))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
-          built_flags = c(built_flags, paste0(flags[[i]]))
+          built_flags = c(built_flags, paste0(cpp_options[[i]]))
         } else {
-          built_flags = c(built_flags, paste0(option_name, "=", flags[[i]]))
+          built_flags = c(built_flags, paste0(option_name, "=", cpp_options[[i]]))
         }
       }
     }
