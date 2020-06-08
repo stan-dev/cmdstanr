@@ -269,10 +269,13 @@ compile_method <- function(quiet = TRUE,
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   tmp_exe <- cmdstan_ext(strip_ext(temp_stan_file)) # adds .exe on Windows
 
-  # add path to the build tbb library to the PATH variable to avoid copying the dll file
+  # add path to the TBB library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+    current_path <- Sys.getenv("PATH")
+    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+    }    
   }
 
   stancflags_val <- ""
