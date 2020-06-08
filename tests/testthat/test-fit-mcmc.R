@@ -18,6 +18,18 @@ if (not_on_cran()) {
 }
 
 
+test_that("draws() stops for unkown variables", {
+  expect_error(
+    draws_betas <- fit_mcmc$draws(variables = "ABCD"),
+    "Can't find parameter\\(s\\): ABCD in the sampling output!"
+  )
+  fit_mcmc$draws()
+  expect_error(
+    draws_betas <- fit_mcmc$draws(variables = "ABCD"),
+    "Can't find parameter\\(s\\): ABCD in the sampling output!"
+  )
+})
+
 test_that("draws() method returns draws_array (reading csv works)", {
   skip_on_cran()
   draws <- fit_mcmc$draws()

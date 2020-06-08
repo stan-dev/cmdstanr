@@ -421,7 +421,11 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(variables)) {
         variables <- private$sampling_info_$model_params
       }
-      variables <- repair_variable_names(matching_variables(variables, private$sampling_info_$model_params)$matching)
+      matching_res <- matching_variables(variables, private$sampling_info_$model_params)
+      if (length(matching_res$not_found)) {
+        stop("Can't find parameter(s): ", paste(matching_res$not_found, collapse = ", "), " in the sampling output!")
+      }
+      variables <- repair_variable_names(matching_res$matching)
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
           stop("Warmup draws were requested from a fit object without them! ",
