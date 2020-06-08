@@ -15,8 +15,6 @@ method.}
 
 \item{...}{Optionally, additional arguments to pass to the
 \code{\link[=model-method-compile]{$compile()}} method if \code{compile=TRUE}.}
-
-\item{exe_file}{Optionally, a path to an existing executable.}
 }
 \value{
 A \code{\link{CmdStanModel}} object.

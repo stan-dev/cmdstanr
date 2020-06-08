@@ -6,7 +6,6 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program.
-#' @param exe_file Optionally, a path to an existing executable.
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
