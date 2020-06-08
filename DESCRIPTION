@@ -1,6 +1,6 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
@@ -22,9 +22,10 @@ Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: 'CmdStan' <https://mc-stan.org/users/interfaces/cmdstan>
 Imports: 
     checkmate,
-    posterior (>= 0.0.2),
+    posterior (>= 0.0.3),
     processx,
-    R6
+    R6,
+    vroom
 Suggests: 
     jsonlite (>= 1.2.0),
     knitr,

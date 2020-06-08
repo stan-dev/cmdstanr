@@ -19,15 +19,16 @@ CmdStanFit <- R6::R6Class(
       self$runset$time()
     },
 
-    draws = function() {
+    draws = function(variables = NULL) {
+      # CmdStanMCMC has its own implementation, this is used for VB and MLE
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
-      private$draws_
+      posterior::subset_draws(private$draws_, variable = variables)
     },
 
     lp = function() {
-      lp__ <- posterior::subset_draws(self$draws(), variable = "lp__")
+      lp__ <- self$draws(variables = "lp__")
       lp__ <- posterior::as_draws_matrix(lp__) # if mcmc this combines all chains, otherwise does nothing
       as.numeric(lp__)
     },
@@ -119,11 +120,14 @@ CmdStanFit <- R6::R6Class(
 #'
 #' @section Usage:
 #'   ```
-#'   $draws(inc_warmup = FALSE, ...)
+#'   $draws(variables = NULL, inc_warmup = FALSE, ...)
 #'   ```
 #' @section Arguments:
-#' * `inc_warmup`: Should warmup draws be included? Defaults to `FALSE`. Only
-#' applicable for MCMC.
+#' * `variables`: (character vector) The variables (parameters and generated
+#' quantities) to read in. If `NULL` (the default) then the draws of all
+#' variables are included.
+#' * `inc_warmup`: (logical) For MCMC only, should warmup draws be included?
+#' Defaults to `FALSE`.
 #' * `...`: Arguments passed on to [posterior::as_draws()].
 #'
 #' @section Value:
@@ -136,6 +140,46 @@ CmdStanFit <- R6::R6Class(
 #' * For optimization, a 1-row [`draws_matrix`][posterior::draws_matrix] with
 #' one column per variable. These are *not* actually draws, just point estimates
 #' stored in the `draws_matrix` format.
+#'
+#'
+#' @examples
+#' \dontrun{
+#' stan_program <- tempfile(fileext=".stan")
+#' cat("
+#' parameters {
+#'   real<lower=0> alpha;
+#'   vector[6] beta;
+#' }
+#' model {
+#'  alpha ~ exponential(1);
+#'  beta ~ std_normal();
+#' }
+#' ", file = stan_program)
+#'
+#' # only using capture.output to avoid too much printed output in example
+#' out <- utils::capture.output(
+#'   mod <- cmdstan_model(stan_program),
+#'   fit <- mod$sample(save_warmup=TRUE)
+#' )
+#'
+#' # returned as 3-D array (see ?posterior::draws_array)
+#' draws <- fit$draws()
+#' dim(draws)
+#' str(draws)
+#'
+#' # can easily convert to other formats that have chains combined,
+#' # e.g. matrix, data frame, list
+#' library("posterior")
+#' draws <- fit$draws()
+#' as_draws_matrix(draws)
+#' as_draws_df(draws)
+#' as_draws_list(draws)
+#'
+#' # can select specific parameters
+#' fit$draws("alpha")
+#' fit$draws("beta")  # selects entire vector beta
+#' fit$draws(c("alpha", "beta[2]"))
+#' }
 #'
 NULL
 
@@ -151,7 +195,7 @@ NULL
 #'   $sampler_diagnostics(inc_warmup = FALSE, ...)
 #'   ```
 #' @section Arguments:
-#' * `inc_warmup`: Should warmup draws be included? Defaults to `FALSE`.
+#' * `inc_warmup`: (logical) Should warmup draws be included? Defaults to `FALSE`.
 #' * `...`: Optional arguments to pass to [posterior::as_draws_array()].
 #'
 #' @section Value:
@@ -197,8 +241,8 @@ NULL
 #' the \pkg{loo} package.
 #'
 #' @section Value:
-#' A numeric vector with length equal to the number of draws for MCMC and
-#' variational inference, and length equal to `1` for optimization.
+#' A numeric vector with length equal to the number of (post-warmup) draws for
+#' MCMC and variational inference, and length equal to `1` for optimization.
 #'
 #' @references
 #' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
@@ -377,8 +421,18 @@ CmdStanMCMC <- R6::R6Class(
   public = list(
     initialize = function(runset) {
       super$initialize(runset)
-      if (self$runset$args$validate_csv) {
-        private$read_csv_(diagnostic_warnings = !runset$args$method_args$fixed_param)
+      if (!length(self$output_files())) {
+        warning("No chains finished successfully. Unable to retrieve the fit.")
+      } else {
+        if (self$runset$args$validate_csv && !runset$args$method_args$fixed_param) {
+          data_csv <- read_sample_csv(
+            self$output_files(),
+            variables = "",
+            sampler_diagnostics = c("treedepth__", "divergent__")
+          )
+          check_divergences(data_csv)
+          check_sampler_transitions_treedepth(data_csv)
+        }
       }
     },
     num_chains = function() {
@@ -391,36 +445,60 @@ CmdStanMCMC <- R6::R6Class(
         cat(paste(self$runset$procs$chain_output(id), collapse="\n"))
       }
     },
-
-    draws = function(inc_warmup = FALSE) {
+    draws = function(variables = NULL, inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.")
       }
-      if (is.null(private$draws_)) {
-        private$read_csv_()
+      to_read <- remaining_columns_to_read(
+        requested = variables,
+        currently_read = dimnames(private$draws_)$variable,
+        all = private$sampling_info_$model_params
+      )
+
+      if (is.null(to_read) || (length(to_read) > 0)) {
+        private$read_csv_(variables = to_read, sampler_diagnostics = "")
       }
+      if (is.null(variables)) {
+        variables <- private$sampling_info_$model_params
+      }
+      matching_res <- matching_variables(variables, private$sampling_info_$model_params)
+      if (length(matching_res$not_found)) {
+        stop("Can't find the following variable(s) in the sampling output: ",
+             paste(matching_res$not_found, collapse = ", "))
+      }
+      variables <- repair_variable_names(matching_res$matching)
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
-          stop("Warmup draws were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+          stop("Warmup draws were requested from a fit object without them! ",
+               "Please rerun the model with save_warmup = TRUE.")
         }
-        posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")
+        posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")[,,variables]
       } else {
-        private$draws_
+        private$draws_[,,variables]
       }
     },
-
     sampler_diagnostics = function(inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.")
       }
-      if (is.null(private$draws_)) {
-        private$read_csv_()
+      to_read <- remaining_columns_to_read(
+        requested = NULL,
+        currently_read = dimnames(private$sampler_diagnostics_)$variable,
+        all = private$sampling_info_$sampler_diagnostics
+      )
+      if (is.null(to_read) || (length(to_read) > 0)) {
+        private$read_csv_(variables = "", sampler_diagnostics = NULL)
       }
       if (inc_warmup) {
         if (!private$sampling_info_$save_warmup) {
-          stop("Warmup sampler diagnostics were requested from a fit object without them! Please restart the sampling with save_warmup = TRUE.")
+          stop("Warmup sampler diagnostics were requested from a fit object without them! ",
+               "Please rerun the model with save_warmup = TRUE.")
         }
-        posterior::bind_draws(private$warmup_sampler_diagnostics_, private$sampler_diagnostics_, along="iteration")
+        posterior::bind_draws(
+          private$warmup_sampler_diagnostics_,
+          private$sampler_diagnostics_,
+          along="iteration"
+        )
       } else {
         private$sampler_diagnostics_
       }
@@ -431,19 +509,76 @@ CmdStanMCMC <- R6::R6Class(
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     draws_ = NULL,
-    read_csv_ = function(diagnostic_warnings = FALSE) {
-      data_csv <- read_sample_csv(self$output_files(include_failed = FALSE))
-      if (diagnostic_warnings) {
-        check_divergences(data_csv)
-        check_sampler_transitions_treedepth(data_csv)
-      }
-      private$draws_ <- data_csv$post_warmup_draws
-      private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
+    sampling_info_ = NULL,
+    read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
+      variables_to_read <-
+        remaining_columns_to_read(
+          variables,
+          dimnames(private$draws_)$variable,
+          private$sampling_info_$model_params
+        )
+      sampler_diagnostics_to_read <-
+        remaining_columns_to_read(
+          sampler_diagnostics,
+          dimnames(private$sampler_diagnostics_)$variable,
+          private$sampling_info_$sampler_diagnostics
+        )
+      data_csv <- read_sample_csv(
+        files = self$output_files(include_failed = FALSE),
+        variables = variables_to_read,
+        sampler_diagnostics = sampler_diagnostics_to_read
+      )
       private$sampling_info_ <- data_csv$sampling_info
+      if (!is.null(data_csv$post_warmup_draws)) {
+        if (is.null(private$draws_)) {
+          private$draws_ <- data_csv$post_warmup_draws
+        } else {
+          private$draws_ <-
+            posterior::bind_draws(
+              data_csv$post_warmup_draws,
+              private$draws_,
+              along="variable"
+            )
+        }
+      }
+      if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
+        if (is.null(private$sampler_diagnostics_)) {
+          private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
+        } else {
+          private$sampler_diagnostics_ <-
+            posterior::bind_draws(
+              data_csv$post_warmup_sampler_diagnostics,
+              private$sampler_diagnostics_,
+              along="variable"
+            )
+        }
+      }
       if (!is.null(data_csv$sampling_info$save_warmup)
          && data_csv$sampling_info$save_warmup) {
-        private$warmup_draws_ <- data_csv$warmup_draws
-        private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+        if (!is.null(data_csv$warmup_draws)) {
+          if (is.null(private$warmup_draws_)) {
+            private$warmup_draws_ <- data_csv$warmup_draws
+          } else {
+            private$warmup_draws_ <-
+              posterior::bind_draws(
+                data_csv$warmup_draws,
+                private$warmup_draws_,
+                along="variable"
+              )
+          }
+        }
+        if (!is.null(data_csv$warmup_sampler_diagnostics)) {
+          if (is.null(private$warmup_sampler_diagnostics_)) {
+            private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+          } else {
+            private$warmup_sampler_diagnostics_ <-
+              posterior::bind_draws(
+                data_csv$warmup_sampler_diagnostics,
+                private$warmup_sampler_diagnostics_,
+                along="variable"
+              )
+          }
+        }
       }
       invisible(self)
     }

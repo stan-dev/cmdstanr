@@ -389,3 +389,20 @@ check_sampler_transitions_treedepth <- function(data_csv) {
   }
 }
 
+matching_variables <- function(variable_filters, variables) {
+  not_found <- NULL
+  variable_filters <- unrepair_variable_names(variable_filters)
+  variables <- unrepair_variable_names(variables)
+  selected <- rep(FALSE, length(variables))
+  for (p in variable_filters) {
+      matches <- variables == p | startsWith(variables, paste0(p, "."))
+      if (!any(matches)) {
+        not_found <- c(not_found, p)
+      }
+      selected <- selected | matches
+  }
+  list(
+    matching = variables[selected],
+    not_found = not_found
+  )
+}

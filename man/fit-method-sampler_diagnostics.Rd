@@ -16,7 +16,7 @@ chain of MCMC.
 \section{Arguments}{
 
 \itemize{
-\item \code{inc_warmup}: Should warmup draws be included? Defaults to \code{FALSE}.
+\item \code{inc_warmup}: (logical) Should warmup draws be included? Defaults to \code{FALSE}.
 \item \code{...}: Optional arguments to pass to \code{\link[posterior:as_draws_array]{posterior::as_draws_array()}}.
 }
 }
