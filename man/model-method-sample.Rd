@@ -2,6 +2,7 @@
 % Please edit documentation in R/model.R
 \name{model-method-sample}
 \alias{model-method-sample}
+\alias{sample}
 \title{Run Stan's MCMC algorithms}
 \description{
 The \verb{$sample()} method of a \code{\link{CmdStanModel}} object runs the
@@ -118,7 +119,9 @@ run per chain.
 \item \code{iter_warmup}: (positive integer) The number of warmup iterations to run
 per chain.
 \item \code{save_warmup}: (logical) Should warmup iterations be saved? The default
-is \code{FALSE}.
+is \code{FALSE}. If \code{save_warmup=TRUE} then you can use
+\link[=fit-method-draws]{$draws(inc_warmup=TRUE)} to include warmup when
+accessing the draws.
 \item \code{thin}: (positive integer) The period between saved samples. This should
 typically be left at its default (no thinning) unless memory is a problem.
 \item \code{max_treedepth}: (positive integer) The maximum allowed tree depth for the
@@ -204,6 +207,10 @@ fit_mcmc <- mod$sample(
 
 # Use 'posterior' package for summaries
 fit_mcmc$summary()
+
+# Get posterior draws
+draws <- fit_mcmc$draws()
+print(draws)
 
 # Call CmdStan's diagnose and stansummary utilities
 fit_mcmc$cmdstan_diagnose()

@@ -48,6 +48,10 @@
 #' # Use 'posterior' package for summaries
 #' fit_mcmc$summary()
 #'
+#' # Get posterior draws
+#' draws <- fit_mcmc$draws()
+#' print(draws)
+#'
 #' # Call CmdStan's diagnose and stansummary utilities
 #' fit_mcmc$cmdstan_diagnose()
 #' fit_mcmc$cmdstan_summary()
@@ -151,6 +155,7 @@ CmdStanModel <- R6::R6Class(
 #' Compile a Stan program or get the Stan code
 #'
 #' @name model-method-compile
+#' @aliases compile
 #' @family CmdStanModel methods
 #'
 #' @description The `$compile()` method of a [`CmdStanModel`] object calls
@@ -319,6 +324,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' Run Stan's MCMC algorithms
 #'
 #' @name model-method-sample
+#' @aliases sample
 #' @family CmdStanModel methods
 #'
 #' @description The `$sample()` method of a [`CmdStanModel`] object runs the
@@ -383,7 +389,9 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `iter_warmup`: (positive integer) The number of warmup iterations to run
 #'   per chain.
 #'   * `save_warmup`: (logical) Should warmup iterations be saved? The default
-#'   is `FALSE`.
+#'   is `FALSE`. If `save_warmup=TRUE` then you can use
+#'   [$draws(inc_warmup=TRUE)][fit-method-draws] to include warmup when
+#'   accessing the draws.
 #'   * `thin`: (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning) unless memory is a problem.
 #'   * `max_treedepth`: (positive integer) The maximum allowed tree depth for the
@@ -565,6 +573,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' Run Stan's optimization algorithms
 #'
 #' @name model-method-optimize
+#' @aliases optimize
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
@@ -658,6 +667,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #' Run Stan's variational approximation algorithms
 #'
 #' @name model-method-variational
+#' @aliases variational
 #' @family CmdStanModel methods
 #'
 #' @description The `$variational()` method of a [`CmdStanModel`] object runs

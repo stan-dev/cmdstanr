@@ -2,10 +2,11 @@
 % Please edit documentation in R/fit.R
 \name{fit-method-summary}
 \alias{fit-method-summary}
+\alias{summary}
 \title{Run \code{posterior::summarise_draws()}}
 \description{
 Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}} from the \pkg{posterior}
-package.
+package. For MCMC only post-warmup draws are included in the summary.
 }
 \section{Usage}{
 \preformatted{$summary(...)
@@ -24,6 +25,12 @@ package.
 The data frame returned by \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}.
 }
 
+\examples{
+\dontrun{
+fit$summary()
+}
+
+}
 \seealso{
 \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
 }

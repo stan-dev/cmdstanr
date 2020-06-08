@@ -108,6 +108,7 @@ CmdStanFit <- R6::R6Class(
 #' Extract posterior draws
 #'
 #' @name fit-method-draws
+#' @aliases draws
 #' @description Extract posterior draws after MCMC or approximate posterior
 #'   draws after variational approximation using formats provided by the
 #'   \pkg{posterior} package.
@@ -141,6 +142,7 @@ NULL
 #' Extract sampler diagnostics
 #'
 #' @name fit-method-sampler_diagnostics
+#' @aliases sampler_diagnostics
 #' @description Extract the values of sampler diagnostics for each iteration and
 #'   chain of MCMC.
 #'
@@ -162,11 +164,55 @@ NULL
 #'
 NULL
 
+#' Extract log probability (target)
+#'
+#' @name fit-method-lp
+#' @aliases lp lp_approx
+#' @description The `$lp()` method extracts `lp__`, the total log probability
+#'   (`target`) accumulated in the `model` block of a Stan program. For
+#'   variational inference the log density of the variational approximation to
+#'   the posterior is also available via the `$lp_approx()` method.
+#'
+#'   See the [Log Probability Increment vs. Sampling
+#'   Statement](https://mc-stan.org/docs/2_23/reference-manual/sampling-statements-section.html)
+#'   section of the Stan Reference Manual for details on when normalizing
+#'   constants are dropped from log probability calculations.
+#'
+#' @section Usage:
+#'   ```
+#'   $lp()
+#'   $lp_approx()
+#'   ```
+#'
+#' @details
+#' `lp__` is the unnormalized log density on Stan's [unconstrained
+#' space](https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html).
+#' This will in general be different than the unnormalized model log density
+#' evaluated at a posterior draw (which is on the constrained space). `lp__` is
+#' intended to diagnose sampling efficiency and evaluate approximations.
+#'
+#' `lp_approx__` is the log density of the variational approximation to `lp__`
+#' (also on the unconstrained space). It is exposed in the variational method
+#' for performing the checks described in Yao et al. (2018) and implemented in
+#' the \pkg{loo} package.
+#'
+#' @section Value:
+#' A numeric vector with length equal to the number of draws for MCMC and
+#' variational inference, and length equal to `1` for optimization.
+#'
+#' @references
+#' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
+#' work?: Evaluating variational inference. *Proceedings of the 35th
+#' International Conference on Machine Learning*, PMLR 80:5581–5590.
+#'
+NULL
+
 #' Run `posterior::summarise_draws()`
 #'
 #' @name fit-method-summary
+#' @aliases summary
 #' @description Run [posterior::summarise_draws()] from the \pkg{posterior}
-#'   package.
+#'   package. For MCMC only post-warmup draws are included in the summary.
 #'
 #' @section Usage:
 #'   ```
@@ -180,13 +226,18 @@ NULL
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
+#' @examples
+#' \dontrun{
+#' fit$summary()
+#' }
+#'
 NULL
 
 
 #' Run CmdStan's `bin/stansummary` and `bin/diagnose`
 #'
 #' @name fit-method-cmdstan_summary
-#' @aliases fit-method-cmdstan_diagnose
+#' @aliases fit-method-cmdstan_diagnose cmdstan_summary cmdstan_diagnose
 #' @note Although these methods also work for models fit using the
 #'   [`$variational()`][model-method-variational] method, much of the output is
 #'   only relevant for models fit using the [`$sample()`][model-method-sample]
@@ -200,6 +251,12 @@ NULL
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
+#' @examples
+#' \dontrun{
+#' fit$cmdstan_summary()
+#' fit$cmdstan_diagnose()
+#' }
+#'
 NULL
 
 
@@ -208,6 +265,8 @@ NULL
 #' @name fit-method-save_output_files
 #' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
 #'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files
+#'   save_output_files save_data_file save_latent_dynamics_files
+#'   output_files data_file latent_dynamics_files
 #'
 #' @description All fitted model objects have methods for saving (moving to a
 #'   specified location) the files created by CmdStanR to hold CmdStan output
@@ -291,6 +350,9 @@ NULL
 #'    \tab Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. \cr
 #'  [`$summary()`][fit-method-summary]
 #'    \tab Run [posterior::summarise_draws()]. \cr
+#'  [`$lp()`][fit-method-lp]
+#'    \tab Return the total log probability density (`target`) computed in the
+#'  model block of the Stan program. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]
@@ -302,7 +364,7 @@ NULL
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
 #'  `$time()` \tab Return a list containing the total time and a data frame of
-#'    execution times of all chains. \cr
+#'    execution times of all chains (in seconds). \cr
 #'  `$output()` \tab Return the stdout and stderr of all chains as a list of
 #'    character vectors, or pretty print the output for a single chain if
 #'    `id` argument is specified. \cr
@@ -408,8 +470,8 @@ CmdStanMCMC <- R6::R6Class(
 #'  [`draws()`][fit-method-draws] \tab Return the point estimate as a 1-row
 #'  [`draws_matrix`][posterior::draws_matrix]. \cr
 #'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
-#'  `$lp()` \tab Return the total log probability density (`target`) computed
-#'  in the model block of the Stan program. \cr
+#'  [`$lp()`][fit-method-lp] \tab Return the total log probability density
+#'  (`target`) computed in the model block of the Stan program. \cr
 #'  `$mle()` \tab Return the penalized maximum likelihod estimate (posterior
 #'  mode) as a numeric vector with one element per variable (excluding `lp()`). \cr
 #'  [`$save_output_files()`][fit-method-save_output_files] \tab Save output CSV
@@ -460,10 +522,10 @@ CmdStanMLE <- R6::R6Class(
 #'  [`$draws()`][fit-method-draws] \tab Return approximate posterior draws
 #'  as a [`draws_matrix`][posterior::draws_matrix]. \cr
 #'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
-#'  `$lp()` \tab Return a numeric vector containing the target
-#'  (log-posterior) evaluated at each of the draws. \cr
-#'  `$lp_approx()` \tab Return a numeric vector containing the log density of the
-#'  variational approximation to the posterior evaluated at each of the draws. \cr
+#'  [`$lp()`][fit-method-lp] \tab Return the total log probability density
+#'  (`target`) computed in the model block of the Stan program. \cr
+#'  [`$lp_approx()`][fit-method-lp] \tab Return the log density of the
+#'  variational approximation to the posterior. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]

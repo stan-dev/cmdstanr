@@ -51,7 +51,7 @@ test_that("compile() method forces recompilation if model modified", {
   if (!file.exists(exe)) {
     mod$compile(quiet = TRUE)
   }
-  Sys.setFileTime(mod$stan_file(), Sys.time()) #touch file to trigger recompile
+  Sys.setFileTime(mod$stan_file(), Sys.time() + 1) #touch file to trigger recompile
   expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
 })
 
