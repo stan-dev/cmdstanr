@@ -208,6 +208,15 @@ CmdStanRun <- R6::R6Class(
 .run_sample <- function() {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
+  
+  # add path to the TBB library to the PATH variable
+  if (cmdstan_version() >= "2.21" && os_is_windows()) {
+    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
+    current_path <- Sys.getenv("PATH")
+    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+    }    
+  }
 
   cat("Running MCMC with", procs$num_runs(), "chain(s) on", procs$num_cores(),
       "core(s)...\n\n")
@@ -255,6 +264,14 @@ CmdStanRun <- R6::R6Class(
 CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 
 .run_other <- function() {
+  # add path to the TBB library to the PATH variable
+  if (cmdstan_version() >= "2.21" && os_is_windows()) {
+    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
+    current_path <- Sys.getenv("PATH")
+    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+    }    
+  }
   # FIXME for consistency we should use a CmdStanProcs object
   # for optimize and variational too, but for now this is fine
   run_log <- processx::run(
