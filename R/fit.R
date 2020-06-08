@@ -19,15 +19,16 @@ CmdStanFit <- R6::R6Class(
       self$runset$time()
     },
 
-    draws = function() {
+    draws = function(variables = NULL) {
+      # CmdStanMCMC has its own implementation, this is used for VB and MLE
       if (is.null(private$draws_)) {
         private$read_csv_()
       }
-      private$draws_
+      posterior::subset_draws(private$draws_, variable = variables)
     },
 
     lp = function() {
-      lp__ <- posterior::subset_draws(self$draws(), variable = "lp__")
+      lp__ <- self$draws(variables = "lp__")
       lp__ <- posterior::as_draws_matrix(lp__) # if mcmc this combines all chains, otherwise does nothing
       as.numeric(lp__)
     },
@@ -119,11 +120,14 @@ CmdStanFit <- R6::R6Class(
 #'
 #' @section Usage:
 #'   ```
-#'   $draws(inc_warmup = FALSE, ...)
+#'   $draws(variables = NULL, inc_warmup = FALSE, ...)
 #'   ```
 #' @section Arguments:
-#' * `inc_warmup`: Should warmup draws be included? Defaults to `FALSE`. Only
-#' applicable for MCMC.
+#' * `variables`: (character vector) The variables (parameters and generated
+#' quantities) to read in. If `NULL` (the default) then the draws of all
+#' variables are included.
+#' * `inc_warmup`: (logical) For MCMC only, should warmup draws be included?
+#' Defaults to `FALSE`.
 #' * `...`: Arguments passed on to [posterior::as_draws()].
 #'
 #' @section Value:
@@ -151,7 +155,7 @@ NULL
 #'   $sampler_diagnostics(inc_warmup = FALSE, ...)
 #'   ```
 #' @section Arguments:
-#' * `inc_warmup`: Should warmup draws be included? Defaults to `FALSE`.
+#' * `inc_warmup`: (logical) Should warmup draws be included? Defaults to `FALSE`.
 #' * `...`: Optional arguments to pass to [posterior::as_draws_array()].
 #'
 #' @section Value:
@@ -197,8 +201,8 @@ NULL
 #' the \pkg{loo} package.
 #'
 #' @section Value:
-#' A numeric vector with length equal to the number of draws for MCMC and
-#' variational inference, and length equal to `1` for optimization.
+#' A numeric vector with length equal to the number of (post-warmup) draws for
+#' MCMC and variational inference, and length equal to `1` for optimization.
 #'
 #' @references
 #' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
@@ -410,7 +414,7 @@ CmdStanMCMC <- R6::R6Class(
         currently_read = dimnames(private$draws_)$variable,
         all = private$sampling_info_$model_params
       )
-      
+
       if (is.null(to_read) || (length(to_read) > 0)) {
         private$read_csv_(variables = to_read, sampler_diagnostics = "")
       }

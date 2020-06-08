@@ -14,15 +14,18 @@ The variables include the \code{parameters}, \verb{transformed parameters}, and
 log probability (\code{target}) accumulated in the \code{model} block.
 }
 \section{Usage}{
-\preformatted{$draws(inc_warmup = FALSE, ...)
+\preformatted{$draws(variables = NULL, inc_warmup = FALSE, ...)
 }
 }
 
 \section{Arguments}{
 
 \itemize{
-\item \code{inc_warmup}: Should warmup draws be included? Defaults to \code{FALSE}. Only
-applicable for MCMC.
+\item \code{variables}: (character vector) The variables (parameters and generated
+quantities) to read in. If \code{NULL} (the default) then the draws of all
+variables are included.
+\item \code{inc_warmup}: (logical) For MCMC only, should warmup draws be included?
+Defaults to \code{FALSE}.
 \item \code{...}: Arguments passed on to \code{\link[posterior:as_draws]{posterior::as_draws()}}.
 }
 }

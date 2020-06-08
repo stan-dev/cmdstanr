@@ -34,8 +34,8 @@ $lp_approx()
 
 \section{Value}{
 
-A numeric vector with length equal to the number of draws for MCMC and
-variational inference, and length equal to \code{1} for optimization.
+A numeric vector with length equal to the number of (post-warmup) draws for
+MCMC and variational inference, and length equal to \code{1} for optimization.
 }
 
 \references{
