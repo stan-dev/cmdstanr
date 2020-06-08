@@ -423,7 +423,8 @@ CmdStanMCMC <- R6::R6Class(
       }
       matching_res <- matching_variables(variables, private$sampling_info_$model_params)
       if (length(matching_res$not_found)) {
-        stop("Can't find parameter(s): ", paste(matching_res$not_found, collapse = ", "), " in the sampling output!")
+        stop("Can't find the following variable(s) in the sampling output: ",
+             paste(matching_res$not_found, collapse = ", "))
       }
       variables <- repair_variable_names(matching_res$matching)
       if (inc_warmup) {

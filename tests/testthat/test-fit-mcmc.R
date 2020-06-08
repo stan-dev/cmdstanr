@@ -21,12 +21,14 @@ if (not_on_cran()) {
 test_that("draws() stops for unkown variables", {
   expect_error(
     draws_betas <- fit_mcmc$draws(variables = "ABCD"),
-    "Can't find parameter\\(s\\): ABCD in the sampling output!"
+    "Can't find the following variable(s) in the sampling output: ABCD",
+    fixed = TRUE
   )
   fit_mcmc$draws()
   expect_error(
-    draws_betas <- fit_mcmc$draws(variables = "ABCD"),
-    "Can't find parameter\\(s\\): ABCD in the sampling output!"
+    draws_betas <- fit_mcmc$draws(variables = c("ABCD", "EFGH")),
+    "Can't find the following variable(s) in the sampling output: ABCD, EFGH",
+    fixed = TRUE
   )
 })
 

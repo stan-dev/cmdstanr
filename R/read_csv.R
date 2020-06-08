@@ -119,20 +119,21 @@ read_sample_csv <- function(files,
       id <- csv_file_info$id
     }
     if (is.null(col_select)) {
-      if (is.null(variables)) { # variables = NULL returns all parameters
+      if (is.null(variables)) { # variables = NULL returns all
         variables <- sampling_info$model_params
-      } else if (!any(nzchar(variables))) { # if variables = "" returns no parameters
+      } else if (!any(nzchar(variables))) { # if variables = "" returns none
         variables <- NULL
       } else { # filter using variables
         res <- matching_variables(variables, sampling_info$model_params)
         if (length(res$not_found)) {
-          stop("Can't find parameter(s): ", paste(res$not_found, collapse = ", "), " in the sampling output!")
+          stop("Can't find the following variable(s) in the sampling output: ",
+               paste(res$not_found, collapse = ", "))
         }
         variables <- res$matching
       }
       if (is.null(sampler_diagnostics)) {
         sampler_diagnostics <- sampling_info$sampler_diagnostics
-      } else if (!any(nzchar(sampler_diagnostics))) { # if sampler_diagnostics = "" dont return any sampler_diagnostics
+      } else if (!any(nzchar(sampler_diagnostics))) { # if sampler_diagnostics = "" returns none
         sampler_diagnostics <- NULL
       } else {
         selected_sampler_diag <- rep(FALSE, length(sampling_info$sampler_diagnostics))
@@ -145,7 +146,8 @@ read_sample_csv <- function(files,
           selected_sampler_diag <- selected_sampler_diag | matches
         }
         if (length(not_found)) {
-          stop("Can't find sampler diagnostic(s): ", paste(not_found, collapse = ", "), " in the sampling output!")
+          stop("Can't find the following sampler diagnostic(s) in the sampling output: ",
+               paste(not_found, collapse = ", "))
         }
         sampler_diagnostics <- sampling_info$sampler_diagnostics[selected_sampler_diag]
       }
@@ -400,7 +402,7 @@ read_sample_info_csv <- function(csv_file) {
     stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
   }
   if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
-    stop("The supplied csv file does not contain any parameter names or data!")
+    stop("The supplied csv file does not contain any variable names or data!")
   }
   if (inverse_metric_rows > 0) {
     rows <- inverse_metric_rows
@@ -444,7 +446,7 @@ check_sampling_csv_info_matches <- function(a, b) {
   if ((length(a$model_params) != length(b$model_params)) ||
       !(all(a$model_params == b$model_params) &&
         all(a$sampler_diagnostics == b$sampler_diagnostics))) {
-    return(list(error = "Supplied CSV files have samples for different parameters!"))
+    return(list(error = "Supplied CSV files have samples for different variables!"))
   }
   if (a$iter_sampling != b$iter_sampling ||
       a$thin != b$thin ||
