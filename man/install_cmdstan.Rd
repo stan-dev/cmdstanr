@@ -13,7 +13,7 @@ install_cmdstan(
   overwrite = FALSE,
   timeout = 1200,
   release_url = NULL,
-  flags = list()
+  cpp_options = list()
 )
 
 rebuild_cmdstan(
@@ -23,7 +23,7 @@ rebuild_cmdstan(
   timeout = 600
 )
 
-cmdstan_make_local(dir = cmdstan_path(), flags = NULL, append = TRUE)
+cmdstan_make_local(dir = cmdstan_path(), cpp_options = NULL, append = TRUE)
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
@@ -51,7 +51,7 @@ installation process.}
 installed. By default set to \code{NULL}, which downloads the latest stable
 release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}.}
 
-\item{flags}{A list specifying any makefile flags/variables to be
+\item{cpp_options}{A list specifying any makefile flags/variables to be
 written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
 will force the use of clang for compilation.}
 
@@ -60,7 +60,7 @@ appended to the end of the existing make/local file? The default is \code{TRUE}.
 If \code{FALSE} the file is overwritten.}
 }
 \value{
-For \code{cmdstan_make_local()}, if \code{flags=NULL} then the existing
+For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
 contents of \code{make/local} are returned without writing anything, otherwise
 the updated contents are returned.
 }
@@ -87,12 +87,12 @@ should typically be followed by calling \code{rebuild_cmdstan()}.
 \examples{
 # install_cmdstan(cores = 4)
 
-flags <- list(
+cpp_options <- list(
   "CXX" = "clang++",
   "CXXFLAGS+= -march-native",
   PRECOMPILED_HEADERS = TRUE
 )
-# cmdstan_make_local(flags = flags)
+# cmdstan_make_local(cpp_options = cpp_options)
 # rebuild_cmdstan()
 
 }

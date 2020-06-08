@@ -39,7 +39,7 @@
 #' @param release_url Specifies the URL to a specific Cmdstan release to be
 #'   installed. By default set to `NULL`, which downloads the latest stable
 #'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases).
-#' @param flags A list specifying any makefile flags/variables to be
+#' @param cpp_options A list specifying any makefile flags/variables to be
 #'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
 #'   will force the use of clang for compilation.
 #'
@@ -52,7 +52,7 @@ install_cmdstan <- function(dir = NULL,
                             overwrite = FALSE,
                             timeout = 1200,
                             release_url = NULL,
-                            flags = list()) {
+                            cpp_options = list()) {
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
@@ -107,12 +107,13 @@ install_cmdstan <- function(dir = NULL,
           call. = FALSE)
   }
   file.remove(dest_file)
-  cmdstan_make_local(dir = dir_cmdstan, flags = flags, append = TRUE)
+  cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
+  version <- read_cmdstan_version(dir_cmdstan)
   if (os_is_windows()) {
-    if (cmdstan_ver < "2.24") {
+    if (version < "2.24") {
       cmdstan_make_local(
         dir = dir_cmdstan,
-        flags = list(
+        cpp_options = list(
           "ifeq (gcc,$(CXX_TYPE))",
           "CXXFLAGS_WARNINGS+= -Wno-int-in-bool-context -Wno-attributes",
           "endif"
@@ -120,11 +121,11 @@ install_cmdstan <- function(dir = NULL,
         append = TRUE
       )
     }
-    if (cmdstan_ver > "2.22" && cmdstan_ver < "2.24") {
+    if (version > "2.22" && version < "2.24") {
       windows_stanc <- file.path(dir_cmdstan, "bin", "windows-stanc")
       bin_stanc_exe <- file.path(dir_cmdstan, "bin", "stanc.exe")
       if (file.exists(windows_stanc)) {
-        file.rename(windows_stanc, bin_stanc_exe)
+        file.copy(windows_stanc, bin_stanc_exe)
       }
     }
   }
@@ -161,35 +162,35 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @param append For `cmdstan_make_local()`, should the listed makefile flags be
 #'   appended to the end of the existing make/local file? The default is `TRUE`.
 #'   If `FALSE` the file is overwritten.
-#' @return For `cmdstan_make_local()`, if `flags=NULL` then the existing
+#' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
 #'   contents of `make/local` are returned without writing anything, otherwise
 #'   the updated contents are returned.
 #' @examples
-#' flags <- list(
+#' cpp_options <- list(
 #'   "CXX" = "clang++",
 #'   "CXXFLAGS+= -march-native",
 #'   PRECOMPILED_HEADERS = TRUE
 #' )
-#' # cmdstan_make_local(flags = flags)
+#' # cmdstan_make_local(cpp_options = cpp_options)
 #' # rebuild_cmdstan()
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
-                               flags = NULL,
+                               cpp_options = NULL,
                                append = TRUE) {
   make_local_path <- file.path(dir, "make", "local")
-  if (!is.null(flags)) {
+  if (!is.null(cpp_options)) {
     built_flags = c()
-    for (i in seq_len(length(flags))) {
-      option_name <- names(flags)[i]
-      if (isTRUE(as.logical(flags[[i]]))) {
+    for (i in seq_len(length(cpp_options))) {
+      option_name <- names(cpp_options)[i]
+      if (isTRUE(as.logical(cpp_options[[i]]))) {
         built_flags = c(built_flags, paste0(option_name, "=true"))
-      } else if (isFALSE(as.logical(flags[[i]]))) {
+      } else if (isFALSE(as.logical(cpp_options[[i]]))) {
         built_flags = c(built_flags, paste0(option_name, "=false"))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
-          built_flags = c(built_flags, paste0(flags[[i]]))
+          built_flags = c(built_flags, paste0(cpp_options[[i]]))
         } else {
-          built_flags = c(built_flags, paste0(option_name, "=", flags[[i]]))
+          built_flags = c(built_flags, paste0(option_name, "=", cpp_options[[i]]))
         }
       }
     }
