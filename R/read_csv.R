@@ -156,13 +156,14 @@ read_sample_csv <- function(files,
       col_select <- c(col_select, sampler_diagnostics)
     }
     suppressWarnings(
-    draws <- vroom::vroom(output_file,
+      draws <- vroom::vroom(output_file,
                             comment = "# ",
                             delim = ',',
                             trim_ws = TRUE,
                             col_select = col_select,
                             col_types = c("lp__" = "d"),
-                            altrep = FALSE)
+                            altrep = FALSE,
+                            progress = FALSE)
     )
     if (ncol(draws) == 0) {
       stop("The supplied csv file does not contain any sampling data!")
