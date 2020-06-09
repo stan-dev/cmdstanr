@@ -117,7 +117,9 @@ CmdStanModel <- R6::R6Class(
   private = list(
     stan_file_ = character(),
     exe_file_ = character(),
-    cpp_options_ = list()
+    cpp_options_ = list(),
+    stanc_options_ = list(),
+    include_paths_ = NULL
   ),
   public = list(
     initialize = function(stan_file, compile, ...) {
@@ -128,6 +130,14 @@ CmdStanModel <- R6::R6Class(
       cpp_options_exists <- "cpp_options" %in% names(args)
       if (cpp_options_exists) {
         private$cpp_options_ = args$cpp_options
+      }
+      stanc_options_exists <- "stanc_options" %in% names(args)
+      if (stanc_options_exists) {
+        private$stanc_options_ = args$stanc_options
+      }
+      include_paths_exists <- "include_paths" %in% names(args)
+      if (include_paths_exists) {
+        private$include_paths_ = args$include_paths
       }
       if (compile) {
         self$compile(...)
@@ -229,6 +239,16 @@ compile_method <- function(quiet = TRUE,
   if (length(cpp_options) == 0) {
     if (!is.null(private$cpp_options_)) {
       cpp_options = private$cpp_options_
+    }
+  }
+  if (length(stanc_options) == 0) {
+    if (!is.null(private$stanc_options_)) {
+      stanc_options = private$stanc_options_
+    }
+  }
+  if (is.null(include_paths)) {
+    if (!is.null(private$include_paths_)) {
+      include_paths = private$include_paths_
     }
   }
   # temporary deprecation warnings
