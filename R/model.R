@@ -207,8 +207,8 @@ CmdStanModel <- R6::R6Class(
 #' mod$exe_file()
 #'
 #' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#' mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), compile = FALSE)
-#' mod$compile()
+#' mod <- cmdstan_model(stan_program, compile = FALSE)
+#' mod$compile(cpp_options = list(stan_threads = TRUE))
 #' mod$exe_file()
 #' }
 #'
@@ -255,7 +255,7 @@ compile_method <- function(quiet = TRUE,
              && file.mtime(exe) < file.mtime(self$stan_file())) {
     force_recompile <- TRUE
   }
-  
+
   if (!force_recompile) {
     message("Model executable is up to date!")
     private$cpp_options_ <- cpp_options
@@ -275,7 +275,7 @@ compile_method <- function(quiet = TRUE,
     current_path <- Sys.getenv("PATH")
     if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }    
+    }
   }
 
   stancflags_val <- ""
@@ -345,6 +345,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     output_dir = NULL,
 #'     chains = 4,
 #'     cores = getOption("mc.cores", 1),
+#'     threads_per_chain = NULL,
 #'     iter_warmup = NULL,
 #'     iter_sampling = NULL,
 #'     save_warmup = FALSE,
@@ -368,23 +369,33 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @section Arguments unique to the `sample` method: In addition to the
 #'   arguments above, the `$sample()` method also has its own set of arguments.
 #'
-#'   The following two arguments are offered by CmdStanR but do not correspond
-#'   to arguments in CmdStan because all CmdStan arguments pertain to the
-#'   execution of a single run only.
+#'   The following three arguments are offered by CmdStanR but do not correspond
+#'   to arguments in CmdStan:
 #'
 #'   * `chains`: (positive integer) The number of Markov chains to run. The
 #'   default is 4.
 #'
-#'   * `cores`: (positive integer) The maximum number of cores to use for
-#'   running parallel chains. If `cores` is not specified then the default is
-#'   to look for the option `"mc.cores"`,
-#'   which can be set for an entire \R session by `options(mc.cores=value)`.
-#'   If the `"mc.cores"` option has not been set then the default is `1`.
+#'   * `cores`: (positive integer) The _maximum_ number of cores to use for
+#'   running parallel MCMC chains. If `cores` is not specified then the default
+#'   is to look for the option `"mc.cores"`, which can be set for an entire \R
+#'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
+#'   been set then the default is `1`.
 #'
-#'   The rest of the arguments correspond to arguments offered by CmdStan. They
-#'   are described briefly here and in greater detail in the CmdStan manual.
-#'   Arguments left at `NULL` default to the default used by the installed
-#'   version of CmdStan.
+#'   * `threads_per_chain`: (positive integer) If the model was
+#'   [compiled][model-method-compile] with threading support, the number of
+#'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
+#'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
+#'   contrast with `cores`, which specifies the maximum number of CPU cores
+#'   allowed to be used across all chains. The actual number of chains that will
+#'   run simultaneously is `floor(cores/threads_per_chain)`. For an example of
+#'   using threading see the Stan case study [Reduce Sum: A Minimal
+#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'
+#'
+#'   The rest of the arguments correspond to arguments offered by CmdStan,
+#'   although some names are slightly different. They are described briefly here
+#'   and in greater detail in the CmdStan manual. Arguments left at `NULL`
+#'   default to the default used by the installed version of CmdStan.
 #'
 #'   * `iter_sampling`: (positive integer) The number of post-warmup iterations to
 #'   run per chain.
@@ -439,10 +450,6 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `validate_csv`: (logical) When `TRUE` (the default), validate the
 #'   sampling results in the csv files. Disable if you wish to manually read in
 #'   the sampling results and validate them.
-#'   * `threads_per_chain`: (positive integer) The number of threads to use in 
-#'   parallel sections (for example reduce_sum or map_rect) of a MCMC chain.
-#'   This is contrast with `cores` that specifies the maximum amount of CPU
-#'   cores used across all chains.
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -459,6 +466,7 @@ sample_method <- function(data = NULL,
                           output_dir = NULL,
                           chains = 4,
                           cores = getOption("mc.cores", 1),
+                          threads_per_chain = NULL,
                           iter_warmup = NULL,
                           iter_sampling = NULL,
                           save_warmup = FALSE,
@@ -475,7 +483,6 @@ sample_method <- function(data = NULL,
                           window = NULL,
                           fixed_param = FALSE,
                           validate_csv = TRUE,
-                          threads_per_chain = NULL,
                           # deprecated
                           num_cores = NULL,
                           num_chains = NULL,
@@ -532,7 +539,7 @@ sample_method <- function(data = NULL,
     if (is.null(threads_per_chain)) {
       stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!")
     }
-  }  
+  }
 
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
