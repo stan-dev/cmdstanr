@@ -14,15 +14,18 @@ The variables include the \code{parameters}, \verb{transformed parameters}, and
 log probability (\code{target}) accumulated in the \code{model} block.
 }
 \section{Usage}{
-\preformatted{$draws(inc_warmup = FALSE, ...)
+\preformatted{$draws(variables = NULL, inc_warmup = FALSE, ...)
 }
 }
 
 \section{Arguments}{
 
 \itemize{
-\item \code{inc_warmup}: Should warmup draws be included? Defaults to \code{FALSE}. Only
-applicable for MCMC.
+\item \code{variables}: (character vector) The variables (parameters and generated
+quantities) to read in. If \code{NULL} (the default) then the draws of all
+variables are included.
+\item \code{inc_warmup}: (logical) For MCMC only, should warmup draws be included?
+Defaults to \code{FALSE}.
 \item \code{...}: Arguments passed on to \code{\link[posterior:as_draws]{posterior::as_draws()}}.
 }
 }
@@ -42,3 +45,43 @@ stored in the \code{draws_matrix} format.
 }
 }
 
+\examples{
+\dontrun{
+stan_program <- tempfile(fileext=".stan")
+cat("
+parameters {
+  real<lower=0> alpha;
+  vector[6] beta;
+}
+model {
+ alpha ~ exponential(1);
+ beta ~ std_normal();
+}
+", file = stan_program)
+
+# only using capture.output to avoid too much printed output in example
+out <- utils::capture.output(
+  mod <- cmdstan_model(stan_program),
+  fit <- mod$sample(save_warmup=TRUE)
+)
+
+# returned as 3-D array (see ?posterior::draws_array)
+draws <- fit$draws()
+dim(draws)
+str(draws)
+
+# can easily convert to other formats that have chains combined,
+# e.g. matrix, data frame, list
+library("posterior")
+draws <- fit$draws()
+as_draws_matrix(draws)
+as_draws_df(draws)
+as_draws_list(draws)
+
+# can select specific parameters
+fit$draws("alpha")
+fit$draws("beta")  # selects entire vector beta
+fit$draws(c("alpha", "beta[2]"))
+}
+
+}

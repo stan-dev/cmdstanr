@@ -32,7 +32,7 @@ test_that("read_sample_csv() fails for different model names", {
   csv_files <- c(fit_bernoulli_thin_1$output_files(),
                  fit_logistic_thin_1$output_files())
   expect_error(read_sample_csv(csv_files),
-               "Supplied CSV files were not generated wtih the same model!")
+               "Supplied CSV files were not generated with the same model!")
 })
 
 test_that("read_sample_csv() fails for different number of samples in csv", {
@@ -55,12 +55,12 @@ test_that("read_sample_csv() fails for different number of samples in csv", {
                  "Supplied CSV files dont match in the number of stored samples!")
 })
 
-test_that("read_sample_csv() fails for different parameters", {
+test_that("read_sample_csv() fails for different variables", {
   skip_on_cran()
   csv_files <- c(fit_bernoulli_thin_1$output_files(),
                  test_path("resources", "csv", "bernoulli-3-diff_params.csv"))
   expect_error(read_sample_csv(csv_files),
-               "Supplied CSV files have samples for different parameters!")
+               "Supplied CSV files have samples for different variables!")
 })
 
 test_that("read_sample_csv() fails if the file does not exist", {
@@ -89,7 +89,7 @@ test_that("read_sample_csv() fails with the no params listed", {
   skip_on_cran()
   file_path <- test_path("resources", "csv", "model1-3-no-params.csv")
   expect_error(read_sample_csv(file_path),
-               "no lines available in input")
+               "The supplied csv file does not contain any variable names or data!")
 })
 
 test_that("read_sample_csv() matches rstan::read_stan_csv()", {
@@ -275,6 +275,40 @@ test_that("read_sample_csv() works with thin", {
   expect_equal(dim(csv_output_10_with_warmup$warmup_draws), c(100, 2, 5))
 })
 
+test_that("read_sample_csv() works with filtered variables", {
+  skip_on_cran()
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = NULL, sampler_diagnostics = list())
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 5))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = "")
+  expect_equal(dim(csv_output_1$post_warmup_draws), NULL)
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = NULL)
+  expect_equal(dim(csv_output_1$post_warmup_draws), NULL)
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 6))
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "alpha"), sampler_diagnostics = "")
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta[1]"), sampler_diagnostics = "")
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta"), sampler_diagnostics = "")
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 4))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = c("n_leapfrog__", "divergent__"))
+  expect_equal(dim(csv_output_1$post_warmup_draws), NULL)
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "alpha"), sampler_diagnostics = c("n_leapfrog__", "divergent__"))
+  expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
+  expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
+  expect_error(read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("NOPE"), sampler_diagnostics = list("n_leapfrog__", "divergent__")),
+               "Can't find the following variable(s) in the sampling output: NOPE",
+               fixed = TRUE)
+  expect_error(read_sample_csv(fit_logistic_thin_1$output_files(), sampler_diagnostics = list("BAD_1", "BAD_2")),
+               "Can't find the following sampler diagnostic(s) in the sampling output: BAD_1, BAD_2",
+               fixed = TRUE)
+})
+
 test_that("read_sample_csv() works with no samples", {
   skip_on_cran()
 
@@ -292,6 +326,20 @@ test_that("read_sample_csv() reads values up to adaptation", {
   csv_out <- read_sample_csv(csv_files)
   expect_equal(csv_out$sampling_info$pi, 3.14)
   expect_true(is.null(csv_out$sampling_info$pi_square))
+})
+
+test_that("remaining_columns_to_read() works", {
+  expect_equal(remaining_columns_to_read(NULL, NULL, NULL), NULL)
+  expect_equal(remaining_columns_to_read(NULL, c("a"), NULL), NULL)
+  expect_equal(remaining_columns_to_read(NULL, NULL, c("a")), c("a"))
+  expect_equal(remaining_columns_to_read(c("a"), c("a"), NULL), "")
+  expect_equal(remaining_columns_to_read(c("a"), NULL, c("a")), c("a"))
+  expect_equal(remaining_columns_to_read(c("a"), c("a", "b", "c"), NULL), "")
+  expect_equal(remaining_columns_to_read(c("a"), NULL, c("a", "b", "c")), c("a"))
+  expect_equal(remaining_columns_to_read(NULL, c("a", "b", "c"), NULL), NULL)
+  expect_equal(remaining_columns_to_read(NULL, NULL, c("a", "b", "c")), c("a", "b", "c"))
+  expect_equal(remaining_columns_to_read(c("a", "b", "c"), c("a", "b", "c"), NULL), "")
+  expect_equal(remaining_columns_to_read(c("a", "b", "c"), NULL, c("a", "b", "c")), c("a", "b", "c"))
 })
 
 test_that("read_sample_csv() reads adaptation step size correctly", {

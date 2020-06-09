@@ -33,13 +33,16 @@ license required for RStan.
 
 ### Installation
 
-CmdStanR is not released yet, but will eventually be released as the
-**cmdstanr** R package. Currently you can install the development version from
-GitHub, but expect frequent changes until an official release.
+Currently you can install the pre-beta release of the **cmdstanr** R package with 
+
+```r
+install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+```
+
+or you can install the development version from GitHub:
 
 ```r
 # install.packages("devtools")
-# devtools::install_github("jgabry/posterior")
 devtools::install_github("stan-dev/cmdstanr")
 ```
 

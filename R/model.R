@@ -124,6 +124,11 @@ CmdStanModel <- R6::R6Class(
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
+      args <- list(...)
+      cpp_options_exists <- "cpp_options" %in% names(args)
+      if (cpp_options_exists) {
+        private$cpp_options_ = args$cpp_options
+      }
       if (compile) {
         self$compile(...)
       }
@@ -221,6 +226,11 @@ compile_method <- function(quiet = TRUE,
                            force_recompile = FALSE,
                            #deprecated
                            threads = FALSE) {
+  if (length(cpp_options) == 0) {
+    if (!is.null(private$cpp_options_)) {
+      cpp_options = private$cpp_options_
+    }
+  }
   # temporary deprecation warnings
   if (isTRUE(threads)) {
     warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")

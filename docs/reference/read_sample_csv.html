@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Read sampling results from the supplied CSV files — read_sample_csv • cmdstanr</title>
+<title>Read CmdStan CSV files into <span style="R">R</span> — read_sample_csv • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,11 +46,10 @@
 
 
 
-<meta property="og:title" content="Read sampling results from the supplied CSV files — read_sample_csv" />
-<meta property="og:description" content="Read sampling results from the supplied CSV files. Returns a list containing
-sampling arguments, the diagonal of the inverse mass matrix, the post-warmup
-samples, the sampling parameters and optionally samples produced during
-warmup." />
+<meta property="og:title" content="Read CmdStan CSV files into <span style="R">R</span> — read_sample_csv" />
+<meta property="og:description" content="read_sample_csv() is used internally by CmdStanR to read CmdStan's CSV
+files into R after MCMC. It can also be used by CmdStan users as a more
+flexible and efficient alternative to rstan::read_stan_csv()." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -83,7 +82,7 @@ warmup." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9001</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9002</span>
       </span>
     </div>
 
@@ -161,35 +160,167 @@ warmup." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Read sampling results from the supplied CSV files</h1>
+    <h1>Read CmdStan CSV files into <span style="R">R</span></h1>
     <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/read_csv.R'><code>R/read_csv.R</code></a></small>
     <div class="hidden name"><code>read_sample_csv.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Read sampling results from the supplied CSV files. Returns a list containing
-sampling arguments, the diagonal of the inverse mass matrix, the post-warmup
-samples, the sampling parameters and optionally samples produced during
-warmup.</p>
+    <p><code>read_sample_csv()</code> is used internally by CmdStanR to read CmdStan's CSV
+files into <span style="R">R</span> after MCMC. It can also be used by CmdStan users as a more
+flexible and efficient alternative to <code><a href='https://rdrr.io/pkg/rstan/man/stan_csv.html'>rstan::read_stan_csv()</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>read_sample_csv</span>(<span class='no'>output_files</span>)</pre>
+    <pre class="usage"><span class='fu'>read_sample_csv</span>(<span class='no'>files</span>, <span class='kw'>variables</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>output_files</th>
-      <td><p>Paths to the CSV files to read.</p></td>
+      <th>files</th>
+      <td><p>A character vector of paths to the CSV files to read.</p></td>
+    </tr>
+    <tr>
+      <th>variables</th>
+      <td><p>Optionally, a character vector naming the variables (parameters
+and generated quantities) to read in.</p><ul>
+<li><p>If <code>NULL</code> (the default) then the draws of all variables are included.</p></li>
+<li><p>If an empty string (<code>variables=""</code>) then none are included.</p></li>
+<li><p>For non-scalar variables all elements or specific elements can be selected:</p><ul>
+<li><p><code>variables = "theta"</code> selects all elements of <code>theta</code>;</p></li>
+<li><p><code>variables = c("theta[1]", "theta[3]")</code> selects only the 1st and 3rd elements.</p></li>
+</ul></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>sampler_diagnostics</th>
+      <td><p>Works the same way as <code>variables</code> but for sampler
+diagnostic variables (e.g., <code>"treedepth__"</code>, <code>"accept_stat__"</code>, etc.).</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The list of sampling arguments, the diagonal of the inverse mass
-matrix, the post-warmup samples, the sampling parameters and warmup samples
-if the run was run with <code>save_warmup = 1</code>.</p>
+    <p>A named list with the following components:</p><ul>
+<li><p><code>sampling_info</code>: A list of the arguments used to run the sampler.</p></li>
+<li><p><code>inverse_metric</code>: A list (one element per chain) of inverse mass matrices
+or their diagonals, depending on the type of metric used.</p></li>
+<li><p><code>step_size</code>: A list (one element per chain) of the step sizes used.</p></li>
+<li><p><code>warmup_draws</code>:  If <code>save_warmup</code> was <code>TRUE</code> then the warmup samples (iter
+x chain x variable array).</p></li>
+<li><p><code>post_warmup_draws</code>: The post-warmup draws (iter x chain x variable array).</p></li>
+<li><p><code>warmup_sampler_diagnostics</code>:  If <code>save_warmup</code> was <code>TRUE</code> then warmup
+draws of the sampler diagnostic variables (iter x chain x variable array).</p></li>
+<li><p><code>sampler_diagnostics</code>: The post-warmup draws of the sampler diagnostic
+variables (iter x chain x variable array).</p></li>
+</ul>
 
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>(<span class='kw'>fileext</span><span class='kw'>=</span><span class='st'>".stan"</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='st'>"
+parameters {
+  real alpha_scalar;
+  vector[2] theta_vector;
+  matrix[2,2] tau_matrix;
+}
+model {
+  alpha_scalar ~ std_normal();
+  theta_vector ~ std_normal();
+  to_vector(tau_matrix) ~ std_normal();
+}
+"</span>, <span class='kw'>file</span> <span class='kw'>=</span> <span class='no'>stan_program</span>)
+
+<span class='co'># only using capture.output to avoid too much printed output in example</span>
+<span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>utils</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/r/utils/capture.output.html'>capture.output</a></span>(
+  <span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>stan_program</span>),
+  <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(<span class='kw'>save_warmup</span><span class='kw'>=</span><span class='fl'>TRUE</span>)
+)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'>
+<span class='co'># Read in everything</span>
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_sample_csv</span>(<span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>())
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; List of 7
+#&gt;  $ sampling_info                  :List of 30
+#&gt;   ..$ stan_version_major : num 2
+#&gt;   ..$ stan_version_minor : num 23
+#&gt;   ..$ stan_version_patch : num 0
+#&gt;   ..$ method             : chr "sample"
+#&gt;   ..$ save_warmup        : num 1
+#&gt;   ..$ thin               : num 1
+#&gt;   ..$ gamma              : num 0.05
+#&gt;   ..$ kappa              : num 0.75
+#&gt;   ..$ t0                 : num 10
+#&gt;   ..$ init_buffer        : num 75
+#&gt;   ..$ term_buffer        : num 50
+#&gt;   ..$ window             : num 25
+#&gt;   ..$ algorithm          : chr "hmc"
+#&gt;   ..$ engine             : chr "nuts"
+#&gt;   ..$ metric             : chr "diag_e"
+#&gt;   ..$ stepsize_jitter    : num 0
+#&gt;   ..$ id                 : num [1:4] 1 2 3 4
+#&gt;   ..$ init               : num 2
+#&gt;   ..$ seed               : num [1:4] 1.44e+09 1.61e+09 1.67e+09 8.10e+05
+#&gt;   ..$ refresh            : num 100
+#&gt;   ..$ model_params       : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
+#&gt;   ..$ sampler_diagnostics: chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
+#&gt;   ..$ stepsize_adaptation: num 0.719
+#&gt;   ..$ model_name         : chr "file868451e39688_model"
+#&gt;   ..$ adapt_engaged      : num 1
+#&gt;   ..$ adapt_delta        : num 0.8
+#&gt;   ..$ max_treedepth      : num 10
+#&gt;   ..$ step_size          : num 1
+#&gt;   ..$ iter_warmup        : num 1000
+#&gt;   ..$ iter_sampling      : num 1000
+#&gt;  $ inverse_metric                 :List of 4
+#&gt;   ..$ : num [1:7] 0.953 0.828 0.961 0.966 0.815 ...
+#&gt;   ..$ : num [1:7] 1.095 0.886 1.019 0.969 0.998 ...
+#&gt;   ..$ : num [1:7] 0.93 0.958 0.952 1.095 1.058 ...
+#&gt;   ..$ : num [1:7] 0.915 0.94 0.854 1.051 1.048 ...
+#&gt;  $ step_size                      :List of 4
+#&gt;   ..$ : num 0.719
+#&gt;   ..$ : num 0.744
+#&gt;   ..$ : num 0.711
+#&gt;   ..$ : num 0.796
+#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:8] -5.63 -5.63 -2.41 -4.97 -3.9 ...
+#&gt;   ..- attr(*, "dimnames")=List of 3
+#&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
+#&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
+#&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
+#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:8] -5.22 -5.269 -2.464 -0.823 -1.646 ...
+#&gt;   ..- attr(*, "dimnames")=List of 3
+#&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
+#&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
+#&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
+#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 7.26e-03 2.13e-13 9.86e-01 9.75e-01 9.98e-01 ...
+#&gt;   ..- attr(*, "dimnames")=List of 3
+#&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
+#&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
+#&gt;   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
+#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.986 1 0.981 1 0.935 ...
+#&gt;   ..- attr(*, "dimnames")=List of 3
+#&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
+#&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
+#&gt;   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</div><div class='input'>
+<span class='co'># Don't read in any of the sampler diagnostic variables</span>
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_sample_csv</span>(<span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>(), <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='st'>""</span>)
+
+<span class='co'># Don't read in any of the parameters or generated quantities</span>
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_sample_csv</span>(<span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>(), <span class='kw'>variables</span> <span class='kw'>=</span> <span class='st'>""</span>)
+
+<span class='co'># Read in only specific parameters and sampler diagnostics</span>
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_sample_csv</span>(
+  <span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>(),
+  <span class='kw'>variables</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha_scalar"</span>, <span class='st'>"theta_vector[2]"</span>),
+  <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"n_leapfrog__"</span>, <span class='st'>"accept_stat__"</span>)
+)
+
+<span class='co'># For non-scalar parameters all elements can be selected or only some elements,</span>
+<span class='co'># e.g. all of "theta_vector" but only one element of "tau_matrix"</span>
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_sample_csv</span>(
+  <span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>(),
+  <span class='kw'>variables</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"theta_vector"</span>, <span class='st'>"tau_matrix[2,1]"</span>)
+)
+<span class='co'># }</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
