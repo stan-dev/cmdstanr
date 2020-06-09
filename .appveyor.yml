@@ -64,6 +64,7 @@ install:
   - Rscript -e "sessionInfo()"
   - Rscript -e "install.packages(c('remotes', 'covr', 'knitr', 'xml2'), repos = 'https://cloud.r-project.org')"
   - Rscript -e "options(repos = c('https://mc-stan.org/r-packages', CRAN = 'https://cloud.r-project.org'), download.file.method = 'auto')"
+  - Rscript -e "install.packages('posterior', repos = c('https://mc-stan.org/r-packages', CRAN = 'https://cloud.r-project.org'))"
   - Rscript -e "remotes::install_deps(dependencies = TRUE, type='win.binary')"
   - echo "Finished installing R dependencies"
 
