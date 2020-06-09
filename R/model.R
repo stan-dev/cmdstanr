@@ -236,20 +236,14 @@ compile_method <- function(quiet = TRUE,
                            force_recompile = FALSE,
                            #deprecated
                            threads = FALSE) {
-  if (length(cpp_options) == 0) {
-    if (!is.null(private$cpp_options_)) {
-      cpp_options = private$cpp_options_
-    }
+  if (!length(cpp_options) && length(private$cpp_options_)) {
+    cpp_options <- private$cpp_options_
   }
-  if (length(stanc_options) == 0) {
-    if (!is.null(private$stanc_options_)) {
-      stanc_options = private$stanc_options_
-    }
+  if (!length(stanc_options) && length(private$stanc_options_)) {
+    stanc_options <- private$stanc_options_
   }
-  if (is.null(include_paths)) {
-    if (!is.null(private$include_paths_)) {
-      include_paths = private$include_paths_
-    }
+  if (is.null(include_paths) && !is.null(private$include_paths_)) {
+    include_paths <- private$include_paths_
   }
   # temporary deprecation warnings
   if (isTRUE(threads)) {
