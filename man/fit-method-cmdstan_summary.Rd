@@ -22,10 +22,8 @@ $cmdstan_diagnose()
 }
 
 \examples{
-\dontrun{
-fit$cmdstan_summary()
-fit$cmdstan_diagnose()
-}
+# fit$cmdstan_summary()
+# fit$cmdstan_diagnose()
 
 }
 \seealso{

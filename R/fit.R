@@ -251,7 +251,10 @@ NULL
 #'
 NULL
 
-#' Run `posterior::summarise_draws()`
+#' Compute a summary table of MCMC estimates and diagnostics
+#'
+#' Run `posterior::summarise_draws()` to compute a summary table of MCMC
+#' estimates and diagnostics.
 #'
 #' @name fit-method-summary
 #' @aliases summary
@@ -266,14 +269,12 @@ NULL
 #' * `...`: Optional arguments to pass to [posterior::summarise_draws()].
 #'
 #' @section Value:
-#' The data frame returned by [posterior::summarise_draws()].
+#' See [posterior::summarise_draws()].
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
 #' @examples
-#' \dontrun{
-#' fit$summary()
-#' }
+#' # fit$summary()
 #'
 NULL
 
@@ -296,10 +297,8 @@ NULL
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
 #' @examples
-#' \dontrun{
-#' fit$cmdstan_summary()
-#' fit$cmdstan_diagnose()
-#' }
+#' # fit$cmdstan_summary()
+#' # fit$cmdstan_diagnose()
 #'
 NULL
 
