@@ -1,6 +1,6 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.0.0.9002
+Version: 0.0.0.9003
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
@@ -32,6 +32,8 @@ Suggests:
     rmarkdown,
     rstan,
     testthat (>= 2.1.0)
+Additional_repositories:
+        https://mc-stan.org/r-packages/
 VignetteBuilder: knitr
 Remotes: 
     jgabry/posterior
