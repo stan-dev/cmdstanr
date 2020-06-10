@@ -31,11 +31,11 @@ provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
 interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
 later in this vignette for more details on how the two inferfaces differ.
 
-**CmdStanR is unreleased and user facing functions are still subject to change**, 
-but the development version can be installed from GitHub (requires the `devtools` R package):
+**CmdStanR is not on CRAN yet and user facing functions are still subject to change**, 
+but the latest pre-beta release can be installed via:
 
-```{r install_github, eval=FALSE}
-devtools::install_github("stan-dev/cmdstanr")
+```{r install, eval=FALSE}
+install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
 CmdStanR (the **cmdstanr** R package) can now be loaded like any other R package:
@@ -57,7 +57,7 @@ if (!dir.exists(cmdstan_default_path())) {
 }
 ```
 ```{r, eval=FALSE}
-install_cmdstan()
+install_cmdstan(cores = 2)
 ```
 
 Before CmdStanR can be used it needs to know where the CmdStan installation is
@@ -167,10 +167,16 @@ The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
 method can be used to extract the posterior draws as a 3-D array (iteration x
 chain x variable):
 
-```{r draws}
+```{r draws, message=FALSE}
 # this is a draws_array object from the posterior package
-draws <- fit$draws()
-str(draws)
+draws_array <- fit$draws()
+str(draws_array)
+
+# load posterior package and convert to matrix (or data frame)
+# with all chains merged
+library(posterior)
+draws_matrix <- as_draws_matrix(draws_array) # as_draws_df() for data frame
+print(draws_matrix)
 ```
 
 The

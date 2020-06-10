@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9001</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9003</span>
       </span>
     </div>
 
@@ -131,8 +131,8 @@
 <h2 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h2>
 <p>CmdStanR is a lightweight interface to <a href="https://mc-stan.org">Stan</a> for R users (see <a href="https://github.com/stan-dev/cmdstanpy">CmdStanPy</a> for Python) that provides an alternative to the traditional <a href="https://mc-stan.org/rstan">RStan</a> interface. See the <a href="#comparison-with-rstan"><em>Comparison with RStan</em></a> section later in this vignette for more details on how the two inferfaces differ.</p>
-<p><strong>CmdStanR is unreleased and user facing functions are still subject to change</strong>, but the development version can be installed from GitHub (requires the <code>devtools</code> R package):</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">install_github</a></span>(<span class="st">"stan-dev/cmdstanr"</span>)</pre></body></html></div>
+<p><strong>CmdStanR is not on CRAN yet and user facing functions are still subject to change</strong>, but the latest pre-beta release can be installed via:</p>
+<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"cmdstanr"</span>, <span class="kw">repos</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span>(<span class="st">"repos"</span>)))</pre></body></html></div>
 <p>CmdStanR (the <strong>cmdstanr</strong> R package) can now be loaded like any other R package:</p>
 <div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">cmdstanr</span>)</pre></body></html></div>
 </div>
@@ -140,7 +140,7 @@
 <h2 class="hasAnchor">
 <a href="#installing-cmdstan" class="anchor"></a>Installing CmdStan</h2>
 <p>CmdStanR requires a working installation of <a href="https://mc-stan.org/users/interfaces/cmdstan">CmdStan</a>, the shell interface to Stan. If you don’t have CmdStan installed you can install it yourself or use the <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> function provided by CmdStanR.</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="../reference/install_cmdstan.html">install_cmdstan</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="../reference/install_cmdstan.html">install_cmdstan</a></span>(<span class="kw">cores</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
 <p>Before CmdStanR can be used it needs to know where the CmdStan installation is located. When the package is loaded it tries to help automate this to avoid having to manually set the path every session:</p>
 <ol style="list-style-type: decimal">
 <li><p>If the environment variable <code>"CMDSTAN"</code> exists at load time then its value will be automatically set as the default path to CmdStan for the R session. This is useful if your CmdStan installation is not located in the default directory that would have been used by <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> (see #2).</p></li>
@@ -199,15 +199,15 @@ model {
 <pre><code>Running MCMC with 2 chain(s) on 2 core(s)...
 
 Running ./bernoulli 'id=1' random 'seed=123' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/standata-33696563abe9.json' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/standata-d0c46200c4c2.json' \
   output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/bernoulli-202006051137-1-ab81ff.csv' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-1-75ced2.csv' \
   'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt \
   'engaged=1'
 Running ./bernoulli 'id=2' random 'seed=124' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/standata-33696563abe9.json' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/standata-d0c46200c4c2.json' \
   output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/bernoulli-202006051137-2-ab81ff.csv' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-2-75ced2.csv' \
   'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt \
   'engaged=1'
 Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
@@ -261,7 +261,7 @@ Both chains finished successfully.
 Mean chain execution time: 0.2 seconds.
 Total execution time: 0.3 seconds.</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a> method creates <a href="https://r6.r-lib.org/">R6</a> <a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>CmdStanMCMC</code></a> objects.</p>
-<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-summary.html"><code>$summary()</code></a> method calls <code>summarise_draws()</code> from the <strong>posterior</strong> package:</p>
+<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-summary.html"><code>$summary()</code></a> method calls <code><a href="https://rdrr.io/pkg/posterior/man/draws_summary.html">summarise_draws()</a></code> from the <strong>posterior</strong> package:</p>
 <div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-summary.html">summary</a></span>()</pre></body></html></div>
 <pre><code># A tibble: 2 x 10
   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
@@ -270,15 +270,34 @@ Total execution time: 0.3 seconds.</code></pre>
 2 theta     0.254  0.235 0.123 0.123  0.0809  0.485  1.00     752.     589.</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-draws.html"><code>$draws()</code></a> method can be used to extract the posterior draws as a 3-D array (iteration x chain x variable):</p>
 <div class="sourceCode" id="cb19"><html><body><pre class="r"><span class="co"># this is a draws_array object from the posterior package</span>
-<span class="no">draws</span> <span class="kw">&lt;-</span> <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-draws.html">draws</a></span>()
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">draws</span>)</pre></body></html></div>
+<span class="no">draws_array</span> <span class="kw">&lt;-</span> <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-draws.html">draws</a></span>()
+<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">draws_array</span>)</pre></body></html></div>
 <pre><code> 'draws_array' num [1:1000, 1:2, 1:2] -6.82 -7.32 -7.05 -7.13 -7.11 ...
  - attr(*, "dimnames")=List of 3
   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   ..$ chain    : chr [1:2] "1" "2"
   ..$ variable : chr [1:2] "lp__" "theta"</code></pre>
+<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="co"># load posterior package and convert to matrix (or data frame)</span>
+<span class="co"># with all chains merged</span>
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">posterior</span>)
+<span class="no">draws_matrix</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/posterior/man/draws_matrix.html">as_draws_matrix</a></span>(<span class="no">draws_array</span>) <span class="co"># as_draws_df() for data frame</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">draws_matrix</span>)</pre></body></html></div>
+<pre><code># A draws_matrix: 2000 draws, and 2 variables
+    variable
+draw lp__ theta
+  1  -6.8  0.30
+  2  -7.3  0.13
+  3  -7.1  0.16
+  4  -7.1  0.37
+  5  -7.1  0.15
+  6  -7.5  0.12
+  7  -7.2  0.38
+  8  -6.8  0.22
+  9  -7.0  0.34
+  10 -6.8  0.22
+# ... with 1990 more draws</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html"><code>$sampler_diagnostics()</code></a> method extracts the values of the sampler parameters (<code>treedepth__</code>, <code>divergent__</code>, etc.) as a 3-D array (iteration x chain x variable):</p>
-<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="co"># this is a draws_array object from the posterior package</span>
+<div class="sourceCode" id="cb23"><html><body><pre class="r"><span class="co"># this is a draws_array object from the posterior package</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-sampler_diagnostics.html">sampler_diagnostics</a></span>())</pre></body></html></div>
 <pre><code> 'draws_array' num [1:1000, 1:2, 1:6] 1 0.801 0.989 0.92 1 ...
  - attr(*, "dimnames")=List of 3
@@ -286,11 +305,11 @@ Total execution time: 0.3 seconds.</code></pre>
   ..$ chain    : chr [1:2] "1" "2"
   ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_diagnose()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_summary()</code></a> methods call CmdStan’s <code>diagnose</code> and <code>stansummary</code> utilities, respectively:</p>
-<div class="sourceCode" id="cb23"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_diagnose</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_diagnose</a></span>()</pre></body></html></div>
 <pre><code>Running bin/diagnose \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/bernoulli-202006051137-1-ab81ff.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/bernoulli-202006051137-2-ab81ff.csv
-Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/bernoulli-202006051137-1-ab81ff.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/bernoulli-202006051137-2-ab81ff.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-1-75ced2.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-2-75ced2.csv
+Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-1-75ced2.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-2-75ced2.csv
 
 Checking sampler transitions treedepth.
 Treedepth satisfactory for all transitions.
@@ -306,34 +325,34 @@ Effective sample size satisfactory.
 Split R-hat values satisfactory all parameters.
 
 Processing complete, no problems detected.</code></pre>
-<div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_summary</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_summary</a></span>()</pre></body></html></div>
 <pre><code>Running bin/stansummary \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/bernoulli-202006051137-1-ab81ff.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeP8T4p/bernoulli-202006051137-2-ab81ff.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-1-75ced2.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-2-75ced2.csv
 Inference for Stan model: bernoulli_model
 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 
-Warmup took (0.0075, 0.0075) seconds, 0.015 seconds total
-Sampling took (0.017, 0.017) seconds, 0.035 seconds total
+Warmup took (0.0060, 0.0059) seconds, 0.012 seconds total
+Sampling took (0.014, 0.013) seconds, 0.026 seconds total
 
                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
-lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8  5.9e+02  1.7e+04  1.0e+00
-accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.1e+04  1.0e+00
-stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  2.9e+01  2.6e+13
-treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  5.4e+04  1.0e+00
-n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  4.0e+02  1.0e+00
+lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8  5.9e+02  2.2e+04  1.0e+00
+accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.8e+04  1.0e+00
+stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  3.8e+01  2.6e+13
+treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  7.0e+04  1.0e+00
+n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  5.3e+02  1.0e+00
 divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  2.0e+04  1.0e+00
-theta           0.25  4.5e-03    0.12  0.081  0.23  0.49  7.6e+02  2.2e+04  1.0e+00
+energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  2.6e+04  1.0e+00
+theta           0.25  4.5e-03    0.12  0.081  0.23  0.49  7.6e+02  2.9e+04  1.0e+00
 
 Samples were drawn using hmc with nuts.
 For each parameter, N_Eff is a crude measure of effective sample size,
 and R_hat is the potential scale reduction factor on split chains (at 
 convergence, R_hat=1).</code></pre>
 <p>It is also possible to create a stanfit object (from RStan) from the csv output files written by CmdStan. This can be done by using <code><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">rstan::read_stan_csv()</a></code> in combination with the <code>$output_files()</code> method of the <code>CmdStanMCMC</code> object.</p>
-<div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="no">stanfit</span> <span class="kw">&lt;-</span> <span class="kw pkg">rstan</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">read_stan_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())
+<div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="no">stanfit</span> <span class="kw">&lt;-</span> <span class="kw pkg">rstan</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">read_stan_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">stanfit</span>)</pre></body></html></div>
-<pre><code>Inference for Stan model: bernoulli-202006051137-1-ab81ff.
+<pre><code>Inference for Stan model: bernoulli-202006101849-1-75ced2.
 2 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=2000.
 
@@ -341,7 +360,7 @@ post-warmup draws per chain=1000, total post-warmup draws=2000.
 theta  0.25    0.00 0.12  0.06  0.16  0.23  0.33  0.53   754    1
 lp__  -7.28    0.03 0.74 -9.50 -7.45 -7.00 -6.80 -6.75   586    1
 
-Samples were drawn using NUTS(diag_e) at Fri Jun 05 11:37:24 2020.
+Samples were drawn using NUTS(diag_e) at Wed Jun 10 18:49:51 2020.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
