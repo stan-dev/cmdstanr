@@ -12,19 +12,6 @@
 }
 
 .onLoad <- function(...) {
-  # TODO: Remove once posterior is on CRAN
-  if (!requireNamespace("posterior", quietly = TRUE)) {
-    ver_posterior <- utils::packageVersion("posterior")
-    if(ver_posterior < "0.0.2") {
-      warning(
-        paste0(
-          "posterior is version ",
-          ver_posterior, 
-          ", but should be >= 0.0.2. Please upgrade the posterior package using devtools::install_github(\"jgabry/posterior\")"
-        )
-      )
-    }
-  }
   cmdstanr_initialize()
 }
 
