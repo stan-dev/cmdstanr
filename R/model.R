@@ -119,7 +119,10 @@ CmdStanModel <- R6::R6Class(
     exe_file_ = character(),
     cpp_options_ = list(),
     stanc_options_ = list(),
-    include_paths_ = NULL
+    include_paths_ = NULL,
+    precompile_cpp_options_ = NULL,
+    precompile_stanc_options_ = NULL,
+    precompile_include_paths_ = NULL
   ),
   public = list(
     initialize = function(stan_file, compile, ...) {
@@ -129,15 +132,15 @@ CmdStanModel <- R6::R6Class(
       args <- list(...)
       cpp_options_exists <- "cpp_options" %in% names(args)
       if (cpp_options_exists) {
-        private$cpp_options_ = args$cpp_options
+        private$precompile_cpp_options_ = args$cpp_options
       }
       stanc_options_exists <- "stanc_options" %in% names(args)
       if (stanc_options_exists) {
-        private$stanc_options_ = args$stanc_options
+        private$precompile_stanc_options_ = args$stanc_options
       }
       include_paths_exists <- "include_paths" %in% names(args)
       if (include_paths_exists) {
-        private$include_paths_ = args$include_paths
+        private$precompile_include_paths_ = args$include_paths
       }
       if (compile) {
         self$compile(...)
@@ -236,14 +239,14 @@ compile_method <- function(quiet = TRUE,
                            force_recompile = FALSE,
                            #deprecated
                            threads = FALSE) {
-  if (!length(cpp_options) && length(private$cpp_options_)) {
-    cpp_options <- private$cpp_options_
+  if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
+    cpp_options = private$precompile_cpp_options_
   }
-  if (!length(stanc_options) && length(private$stanc_options_)) {
-    stanc_options <- private$stanc_options_
+  if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
+    stanc_options = private$precompile_stanc_options_
   }
-  if (is.null(include_paths) && !is.null(private$include_paths_)) {
-    include_paths <- private$include_paths_
+  if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
+    include_paths = private$precompile_include_paths_
   }
   # temporary deprecation warnings
   if (isTRUE(threads)) {
@@ -283,6 +286,9 @@ compile_method <- function(quiet = TRUE,
   if (!force_recompile) {
     message("Model executable is up to date!")
     private$cpp_options_ <- cpp_options
+    private$precompile_cpp_options_ <- NULL
+    private$precompile_stanc_options_ <- NULL
+    private$precompile_include_paths_ <- NULL
     self$exe_file(exe)
     return(invisible(self))
   } else {
@@ -341,6 +347,9 @@ compile_method <- function(quiet = TRUE,
 
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$cpp_options_ <- cpp_options
+  private$precompile_cpp_options_ <- NULL
+  private$precompile_stanc_options_ <- NULL
+  private$precompile_include_paths_ <- NULL
   private$exe_file_ <- exe
   invisible(self)
 }
