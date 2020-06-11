@@ -102,8 +102,8 @@ to arguments in CmdStan:
 \itemize{
 \item \code{chains}: (positive integer) The number of Markov chains to run. The
 default is 4.
-\item \code{parallel_chains}: (positive integer) The \emph{maximum} number of MCMC chains to
-run in parallel. If \code{parallel_chains} is not specified then the default
+\item \code{parallel_chains}: (positive integer) The \emph{maximum} number of MCMC chains
+to run in parallel. If \code{parallel_chains} is not specified then the default
 is to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
 been set then the default is \code{1}.
@@ -111,10 +111,10 @@ been set then the default is \code{1}.
 \link[=model-method-compile]{compiled} with threading support, the number of
 threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
-contrast with \code{parallel_chains}, which specifies the number of chains
-we wish to run in parallal. The actual number of CPU cores we will
-use is \code{parallel_chains*threads_per_chain}. For an example of
-using threading see the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
+contrast with \code{parallel_chains}, which specifies the number of chains to
+run in parallel. The actual number of CPU cores used use is
+\code{parallel_chains*threads_per_chain}. For an example of using threading see
+the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
 }
 
 The rest of the arguments correspond to arguments offered by CmdStan,

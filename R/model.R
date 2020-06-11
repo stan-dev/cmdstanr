@@ -408,8 +408,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `chains`: (positive integer) The number of Markov chains to run. The
 #'   default is 4.
 #'
-#'   * `parallel_chains`: (positive integer) The _maximum_ number of MCMC chains to 
-#'   run in parallel. If `parallel_chains` is not specified then the default
+#'   * `parallel_chains`: (positive integer) The _maximum_ number of MCMC chains
+#'   to run in parallel. If `parallel_chains` is not specified then the default
 #'   is to look for the option `"mc.cores"`, which can be set for an entire \R
 #'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
 #'   been set then the default is `1`.
@@ -418,10 +418,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
-#'   contrast with `parallel_chains`, which specifies the number of chains
-#'   we wish to run in parallal. The actual number of CPU cores we will
-#'   use is `parallel_chains*threads_per_chain`. For an example of
-#'   using threading see the Stan case study [Reduce Sum: A Minimal
+#'   contrast with `parallel_chains`, which specifies the number of chains to
+#'   run in parallel. The actual number of CPU cores used use is
+#'   `parallel_chains*threads_per_chain`. For an example of using threading see
+#'   the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #'
 #'
