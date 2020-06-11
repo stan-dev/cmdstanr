@@ -38,10 +38,13 @@ but the latest pre-beta release can be installed via:
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
-CmdStanR (the **cmdstanr** R package) can now be loaded like any other R package:
+CmdStanR (the **cmdstanr** R package) can now be loaded like any other R package. 
+We'll also load the **bayesplot** and **posterior** packages.
 
 ```{r library, message=FALSE}
 library(cmdstanr)
+library(bayesplot)
+library(posterior)
 ```
 
 ## Installing CmdStan
@@ -172,11 +175,12 @@ chain x variable):
 draws_array <- fit$draws()
 str(draws_array)
 
-# load posterior package and convert to matrix (or data frame)
-# with all chains merged
-library(posterior)
-draws_matrix <- as_draws_matrix(draws_array) # as_draws_df() for data frame
-print(draws_matrix)
+# can be passed directly to bayesplot to plot posterior distribution
+mcmc_hist(fit$draws("theta"))
+
+# convert to matrix or data frame 
+draws_df <- as_draws_df(draws_array) # as_draws_matrix() for matrix
+print(draws_df)
 ```
 
 The
@@ -187,23 +191,25 @@ method extracts the values of the sampler parameters (`treedepth__`,
 ```{r sampler_diagnostics}
 # this is a draws_array object from the posterior package
 str(fit$sampler_diagnostics())
+
+# convert to matrix or data frame using posterior package
+diagnostics_df <- as_draws_df(fit$sampler_diagnostics())
+print(diagnostics_df)
 ```
 
 
 The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-methods call CmdStan's `diagnose` and `stansummary` utilities, respectively:
+`$cmdstan_summary()` methods call CmdStan's `diagnose` and `stansummary` utilities:
 
 ```{r summary-and-diagnose}
 fit$cmdstan_diagnose()
-fit$cmdstan_summary()
 ```
 
 
-It is also possible to create a stanfit object (from RStan) from the csv
-output	files written by CmdStan. This can be done by using
+If you have RStan installed then it is also possible to create a `stanfit` 
+object from the csv output files written by CmdStan. This can be done by using
 `rstan::read_stan_csv()` in combination with the `$output_files()` method of the
-`CmdStanMCMC` object.
+`CmdStanMCMC` object:
 
 ```{r stanfit}
 stanfit <- rstan::read_stan_csv(fit$output_files())

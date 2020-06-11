@@ -20,15 +20,12 @@ To get started see the vignette
 * A clean interface to Stan services so that CmdStanR can keep up with Stan
 releases.
 
-* Minimal dependencies:
-  - depend on few other R packages
-  - R code doesn't interface directly with c++, only calls compiled executables 
+* R code that doesn't interface directly with c++, only calls compiled executables.
       
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
 
-* More flexible license: CmdStanR uses the BSD-3 license rather than the GPL-3
-license required for RStan.
+* Flexible [BSD-3 license](https://opensource.org/licenses/BSD-3-Clause)
 
 
 ### Installation

@@ -27,6 +27,7 @@ Imports:
     R6,
     vroom
 Suggests: 
+    bayesplot,
     jsonlite (>= 1.2.0),
     knitr,
     rmarkdown,
