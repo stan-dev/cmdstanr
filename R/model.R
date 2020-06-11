@@ -41,7 +41,7 @@
 #'   data = stan_data,
 #'   seed = 123,
 #'   chains = 2,
-#'   cores = 2
+#'   parallel_chains = 2
 #' )
 #'
 #' # Use 'posterior' package for summaries
@@ -377,7 +377,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
 #'     chains = 4,
-#'     cores = getOption("mc.cores", 1),
+#'     parallel_chains = getOption("mc.cores", 1),
 #'     threads_per_chain = NULL,
 #'     iter_warmup = NULL,
 #'     iter_sampling = NULL,
@@ -408,8 +408,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `chains`: (positive integer) The number of Markov chains to run. The
 #'   default is 4.
 #'
-#'   * `cores`: (positive integer) The _maximum_ number of cores to use for
-#'   running parallel MCMC chains. If `cores` is not specified then the default
+#'   * `parallel_chains`: (positive integer) The _maximum_ number of MCMC chains to 
+#'   run in parallel. If `parallel_chains` is not specified then the default
 #'   is to look for the option `"mc.cores"`, which can be set for an entire \R
 #'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
 #'   been set then the default is `1`.
@@ -418,9 +418,9 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
-#'   contrast with `cores`, which specifies the maximum number of CPU cores
-#'   allowed to be used across all chains. The actual number of chains that will
-#'   run simultaneously is `floor(cores/threads_per_chain)`. For an example of
+#'   contrast with `parallel_chains`, which specifies the number of chains
+#'   we wish to run in parallal. The actual number of CPU cores we will
+#'   use is `parallel_chains*threads_per_chain`. For an example of
 #'   using threading see the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #'
@@ -498,7 +498,7 @@ sample_method <- function(data = NULL,
                           save_latent_dynamics = FALSE,
                           output_dir = NULL,
                           chains = 4,
-                          cores = getOption("mc.cores", 1),
+                          parallel_chains = getOption("mc.cores", 1),
                           threads_per_chain = NULL,
                           iter_warmup = NULL,
                           iter_sampling = NULL,
@@ -517,6 +517,7 @@ sample_method <- function(data = NULL,
                           fixed_param = FALSE,
                           validate_csv = TRUE,
                           # deprecated
+                          cores = NULL,
                           num_cores = NULL,
                           num_chains = NULL,
                           num_warmup = NULL,
@@ -527,13 +528,16 @@ sample_method <- function(data = NULL,
 
   if (fixed_param) {
     chains <- 1
-    cores <- 1
+    parallel_chains <- 1
     save_warmup <- FALSE
   }
-
   # temporary deprecation warnings
+  if (!is.null(cores)) {
+    warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
+    parallel_chains <- cores
+  }
   if (!is.null(num_cores)) {
-    warning("'num_cores' is deprecated. Please use 'cores' instead.")
+    warning("'num_cores' is deprecated. Please use 'parallel_chains' instead.")
     cores <- num_cores
   }
   if (!is.null(num_chains)) {
@@ -604,7 +608,7 @@ sample_method <- function(data = NULL,
     output_dir = output_dir,
     validate_csv = validate_csv
   )
-  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = cores, threads_per_chain = threads_per_chain)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = parallel_chains, threads_per_chain = threads_per_chain)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)

@@ -48,7 +48,7 @@ fit_mcmc <- mod$sample(
   data = stan_data,
   seed = 123,
   chains = 2,
-  cores = 2
+  parallel_chains = 2
 )
 
 # Use 'posterior' package for summaries

@@ -217,24 +217,29 @@ CmdStanRun <- R6::R6Class(
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
     }    
   }
-
-  if (is.null(procs$threads_per_chain())) {
-      cat("Running MCMC with", procs$num_runs(), "chain(s) on", procs$num_cores(),
-      "core(s)...\n\n")
+  if (procs$num_runs() == 1) {
+    start_msg <- "Running MCMC with one chain"
+  } else if (procs$num_runs() == procs$num_cores()) {
+    start_msg <- paste0("Running MCMC with ", procs$num_runs(), " parallel chains")
   } else {
-    cat("Running MCMC with", procs$num_runs(), "chain(s) on", procs$num_cores(),
-      "core(s) with", procs$threads_per_chain(), "thread(s) per chain...\n\n")
+    if (procs$num_cores() == 1) {
+      start_msg <- paste0("Running MCMC with ", procs$num_runs(), " sequential chains")
+    } else {
+      start_msg <- paste0("Running MCMC with ", procs$num_runs(), " chains, at most ", procs$num_cores(), " in parallel")
+    }
   }
-  if (!is.null(procs$threads_per_chain())) {
-    Sys.setenv("STAN_NUM_THREADS" = procs$threads_per_chain())
-  }  
+  if (is.null(procs$threads_per_chain())) {
+    cat(paste0(start_msg, "...\n\n"))
+  } else {
+    cat(paste0(start_msg, ", with ", procs$threads_per_chain(), " thread(s) per chain...\n\n"))
+  }
   start_time <- Sys.time()
   chains <- procs$run_ids()
   chain_ind <- 1
   while (!procs$all_finished()) {
 
     # if we have free cores and any leftover chains
-    while (procs$active_cores() != procs$simultaneous_chains() &&
+    while (procs$active_cores() != procs$num_cores() &&
            procs$any_queued()) {
       chain_id <- chains[chain_ind]
       procs$new_proc(
@@ -314,17 +319,7 @@ CmdStanProcs <- R6::R6Class(
                                    .var.name = "threads_per_chain")
       private$num_runs_ <- as.integer(num_runs)
       private$num_cores_ <- as.integer(num_cores)
-      if (is.null(threads_per_chain)) {
-        private$threads_per_chain_ <- NULL
-        private$simultaneous_chains_ <- as.integer(private$num_cores_)
-      } else {
-        private$threads_per_chain_ <- as.integer(threads_per_chain)
-        if (private$threads_per_chain_ > private$num_cores_) {
-          stop("'cores' should be larger or equal to 'threads_per_chain'.")
-        }
-        private$simultaneous_chains_ <- as.integer(floor(private$num_cores_/private$threads_per_chain_))
-        
-      }      
+      private$threads_per_chain_ <- as.integer(threads_per_chain)
       private$active_cores_ <- 0
       private$run_ids_ <- seq_len(num_runs)
       zeros <- rep(0, num_runs)
@@ -347,9 +342,6 @@ CmdStanProcs <- R6::R6Class(
     },
     threads_per_chain = function() {
       private$threads_per_chain_
-    },
-    simultaneous_chains = function() {
-      private$simultaneous_chains_
     },
     run_ids = function() {
       private$run_ids_
@@ -612,7 +604,6 @@ CmdStanProcs <- R6::R6Class(
     num_runs_ = integer(),
     num_cores_ = integer(),
     threads_per_chain_ = integer(),
-    simultaneous_chains_ = integer(),
     active_cores_ = integer(),
     chain_info_ = data.frame(),
     chain_output_ = list(),

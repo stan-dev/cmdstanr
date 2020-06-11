@@ -160,7 +160,7 @@ test_that("sampling in parallel works", {
   skip_on_cran()
   expect_output(
     mod$sample(data = data_list, chains = 2, cores = 2),
-    "Running MCMC with 2 chain(s) on 2 core(s)",
+    "Running MCMC with 2 parallel chains",
     fixed = TRUE
   )
 
@@ -177,14 +177,14 @@ test_that("mc.cores option detected", {
   options(mc.cores = 3)
   expect_output(
     mod$sample(data = data_list, chains = 3),
-    "Running MCMC with 3 chain(s) on 3 core(s)",
+    "Running MCMC with 3 parallel chains",
     fixed = TRUE
   )
 
   options(mc.cores = NULL)
   expect_output(
     mod$sample(data = data_list, chains = 2),
-    "Running MCMC with 2 chain(s) on 1 core(s)",
+    "Running MCMC with 2 sequential chains ",
     fixed = TRUE
   )
 })

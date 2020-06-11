@@ -13,7 +13,7 @@ test_that("using threads_per_chain without stan_threads set in compile() warns",
   expect_warning(
     expect_output(
       mod$sample(data = data_file_json, threads_per_chain = 4),
-      "Running MCMC with 4 chain(s) on 1 core(s)",
+      "Running MCMC with 4 sequential chains",
       fixed = TRUE
     ),
     "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
@@ -30,25 +30,19 @@ test_that("threading works", {
     fixed = TRUE
   )
 
-  expect_error(
-    mod$sample(data = data_file_json, cores = 1, threads_per_chain = 4),
-    "'cores' should be larger or equal to 'threads_per_chain'.",
-    fixed = TRUE
-  )
-
   expect_output(
-    mod$sample(data = data_file_json, cores = 4, threads_per_chain = 1),
-    "Running MCMC with 4 chain(s) on 4 core(s) with 1 thread(s) per chain..",
+    mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
+    "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
     fixed = TRUE
   )
   expect_output(
-    mod$sample(data = data_file_json,  cores = 4, threads_per_chain = 2),
-    "Running MCMC with 4 chain(s) on 4 core(s) with 2 thread(s) per chain..",
+    mod$sample(data = data_file_json,  parallel_chains = 4, threads_per_chain = 2),
+    "Running MCMC with 4 parallel chains, with 2 thread(s) per chain..",
     fixed = TRUE
   )
   expect_output(
-    mod$sample(data = data_file_json,  cores = 4, threads_per_chain = 4),
-    "Running MCMC with 4 chain(s) on 4 core(s) with 4 thread(s) per chain..",
+    mod$sample(data = data_file_json,  parallel_chains = 4, threads_per_chain = 4),
+    "Running MCMC with 4 parallel chains, with 4 thread(s) per chain..",
     fixed = TRUE
   )
 })
