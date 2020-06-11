@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9003</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9004</span>
       </span>
     </div>
 
@@ -77,6 +77,9 @@
     </li>
     <li>
       <a href="https://mc-stan.org/rstantools">rstantools</a>
+    </li>
+    <li>
+      <a href="https://mc-stan.org/posterior">posterior</a>
     </li>
   </ul>
 </li>
@@ -133,8 +136,10 @@
 <p>CmdStanR is a lightweight interface to <a href="https://mc-stan.org">Stan</a> for R users (see <a href="https://github.com/stan-dev/cmdstanpy">CmdStanPy</a> for Python) that provides an alternative to the traditional <a href="https://mc-stan.org/rstan">RStan</a> interface. See the <a href="#comparison-with-rstan"><em>Comparison with RStan</em></a> section later in this vignette for more details on how the two inferfaces differ.</p>
 <p><strong>CmdStanR is not on CRAN yet and user facing functions are still subject to change</strong>, but the latest pre-beta release can be installed via:</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"cmdstanr"</span>, <span class="kw">repos</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span>(<span class="st">"repos"</span>)))</pre></body></html></div>
-<p>CmdStanR (the <strong>cmdstanr</strong> R package) can now be loaded like any other R package:</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">cmdstanr</span>)</pre></body></html></div>
+<p>CmdStanR (the <strong>cmdstanr</strong> R package) can now be loaded like any other R package. We’ll also load the <strong>bayesplot</strong> and <strong>posterior</strong> packages.</p>
+<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">cmdstanr</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">bayesplot</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">posterior</span>)</pre></body></html></div>
 </div>
 <div id="installing-cmdstan" class="section level2">
 <h2 class="hasAnchor">
@@ -154,12 +159,9 @@
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_version</a></span>()</pre></body></html></div>
 <pre><code>[1] "2.23.0"</code></pre>
 </div>
-<div id="running-cmdstan-from-r" class="section level2">
+<div id="compiling-a-model" class="section level2">
 <h2 class="hasAnchor">
-<a href="#running-cmdstan-from-r" class="anchor"></a>Running CmdStan from R</h2>
-<div id="compilation" class="section level3">
-<h3 class="hasAnchor">
-<a href="#compilation" class="anchor"></a>Compilation</h3>
+<a href="#compiling-a-model" class="anchor"></a>Compiling a model</h2>
 <p>The <code><a href="../reference/cmdstan_model.html">cmdstan_model()</a></code> function creates a new <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a> object from a file containing a Stan program. Here we’ll use the example Stan program that comes with the CmdStan installation:</p>
 <div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="no">file</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span>(<span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span>(), <span class="st">"examples"</span>, <span class="st">"bernoulli"</span>, <span class="st">"bernoulli.stan"</span>)
 <span class="no">mod</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span>(<span class="no">file</span>)</pre></body></html></div>
@@ -182,32 +184,32 @@ model {
 <div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">mod</span>$<span class="fu">exe_file</span>()</pre></body></html></div>
 <pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.23.0/examples/bernoulli/bernoulli"</code></pre>
 </div>
-<div id="model-fitting" class="section level3">
+<div id="fitting-a-model" class="section level2">
+<h2 class="hasAnchor">
+<a href="#fitting-a-model" class="anchor"></a>Fitting a model</h2>
+<div id="mcmc" class="section level3">
 <h3 class="hasAnchor">
-<a href="#model-fitting" class="anchor"></a>Model fitting</h3>
-<div id="mcmc" class="section level4">
-<h4 class="hasAnchor">
-<a href="#mcmc" class="anchor"></a>MCMC</h4>
+<a href="#mcmc" class="anchor"></a>MCMC</h3>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a> method for <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a> objects runs Stan’s default MCMC algorithm. Data can be passed in as a named list of R objects (like for RStan) or as a path to a data file compatible with CmdStan (JSON or R dump).</p>
 <div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="no">data_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">N</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span>))
 <span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(
   <span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>,
   <span class="kw">seed</span> <span class="kw">=</span> <span class="fl">123</span>,
   <span class="kw">chains</span> <span class="kw">=</span> <span class="fl">2</span>,
-  <span class="kw">cores</span> <span class="kw">=</span> <span class="fl">2</span>
+  <span class="kw">parallel_chains</span> <span class="kw">=</span> <span class="fl">2</span>
 )</pre></body></html></div>
-<pre><code>Running MCMC with 2 chain(s) on 2 core(s)...
+<pre><code>Running MCMC with 2 parallel chains, with  thread(s) per chain...
 
 Running ./bernoulli 'id=1' random 'seed=123' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/standata-d0c46200c4c2.json' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/standata-1008d6a4ff298.json' \
   output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-1-75ced2.csv' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/bernoulli-202006111947-1-c00faf.csv' \
   'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt \
   'engaged=1'
 Running ./bernoulli 'id=2' random 'seed=124' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/standata-d0c46200c4c2.json' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/standata-1008d6a4ff298.json' \
   output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-2-75ced2.csv' \
+  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/bernoulli-202006111947-2-c00faf.csv' \
   'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt \
   'engaged=1'
 Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
@@ -261,13 +263,20 @@ Both chains finished successfully.
 Mean chain execution time: 0.2 seconds.
 Total execution time: 0.3 seconds.</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a> method creates <a href="https://r6.r-lib.org/">R6</a> <a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>CmdStanMCMC</code></a> objects.</p>
-<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-summary.html"><code>$summary()</code></a> method calls <code><a href="https://rdrr.io/pkg/posterior/man/draws_summary.html">summarise_draws()</a></code> from the <strong>posterior</strong> package:</p>
+<div id="posterior-summary-statistics" class="section level4">
+<h4 class="hasAnchor">
+<a href="#posterior-summary-statistics" class="anchor"></a>Posterior summary statistics</h4>
+<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-summary.html"><code>$summary()</code></a> method calls <code><a href="https://mc-stan.org/posterior/reference/draws_summary.html">summarise_draws()</a></code> from the <strong>posterior</strong> package:</p>
 <div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-summary.html">summary</a></span>()</pre></body></html></div>
 <pre><code># A tibble: 2 x 10
   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
   &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
 1 lp__     -7.28  -7.00  0.739 0.342 -8.80   -6.75   1.00     815.     621.
 2 theta     0.254  0.235 0.123 0.123  0.0809  0.485  1.00     752.     589.</code></pre>
+</div>
+<div id="posterior-draws" class="section level4">
+<h4 class="hasAnchor">
+<a href="#posterior-draws" class="anchor"></a>Posterior draws</h4>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-draws.html"><code>$draws()</code></a> method can be used to extract the posterior draws as a 3-D array (iteration x chain x variable):</p>
 <div class="sourceCode" id="cb19"><html><body><pre class="r"><span class="co"># this is a draws_array object from the posterior package</span>
 <span class="no">draws_array</span> <span class="kw">&lt;-</span> <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-draws.html">draws</a></span>()
@@ -277,39 +286,65 @@ Total execution time: 0.3 seconds.</code></pre>
   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   ..$ chain    : chr [1:2] "1" "2"
   ..$ variable : chr [1:2] "lp__" "theta"</code></pre>
-<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="co"># load posterior package and convert to matrix (or data frame)</span>
-<span class="co"># with all chains merged</span>
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">posterior</span>)
-<span class="no">draws_matrix</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/posterior/man/draws_matrix.html">as_draws_matrix</a></span>(<span class="no">draws_array</span>) <span class="co"># as_draws_df() for data frame</span>
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">draws_matrix</span>)</pre></body></html></div>
-<pre><code># A draws_matrix: 2000 draws, and 2 variables
-    variable
-draw lp__ theta
-  1  -6.8  0.30
-  2  -7.3  0.13
-  3  -7.1  0.16
-  4  -7.1  0.37
-  5  -7.1  0.15
-  6  -7.5  0.12
-  7  -7.2  0.38
-  8  -6.8  0.22
-  9  -7.0  0.34
-  10 -6.8  0.22
-# ... with 1990 more draws</code></pre>
+<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="co"># can be passed directly to bayesplot to plot posterior distribution</span>
+<span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html">mcmc_hist</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-draws.html">draws</a></span>(<span class="st">"theta"</span>))</pre></body></html></div>
+<p><img src="cmdstanr_files/figure-html/draws-1.png" width="60%" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb22"><html><body><pre class="r"><span class="co"># convert to matrix or data frame </span>
+<span class="no">draws_df</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html">as_draws_df</a></span>(<span class="no">draws_array</span>) <span class="co"># as_draws_matrix() for matrix</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">draws_df</span>)</pre></body></html></div>
+<pre><code># A draws_df: 1000 iterations, 2 chains, and 2 variables
+   lp__ theta
+1  -6.8  0.30
+2  -7.3  0.13
+3  -7.1  0.16
+4  -7.1  0.37
+5  -7.1  0.15
+6  -7.5  0.12
+7  -7.2  0.38
+8  -6.8  0.22
+9  -7.0  0.34
+10 -6.8  0.22
+# ... with 1990 more draws
+# ... hidden meta-columns {'.chain', '.iteration', '.draw'}</code></pre>
+</div>
+<div id="sampler-diagnostics" class="section level4">
+<h4 class="hasAnchor">
+<a href="#sampler-diagnostics" class="anchor"></a>Sampler diagnostics</h4>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html"><code>$sampler_diagnostics()</code></a> method extracts the values of the sampler parameters (<code>treedepth__</code>, <code>divergent__</code>, etc.) as a 3-D array (iteration x chain x variable):</p>
-<div class="sourceCode" id="cb23"><html><body><pre class="r"><span class="co"># this is a draws_array object from the posterior package</span>
+<div class="sourceCode" id="cb24"><html><body><pre class="r"><span class="co"># this is a draws_array object from the posterior package</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-sampler_diagnostics.html">sampler_diagnostics</a></span>())</pre></body></html></div>
 <pre><code> 'draws_array' num [1:1000, 1:2, 1:6] 1 0.801 0.989 0.92 1 ...
  - attr(*, "dimnames")=List of 3
   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   ..$ chain    : chr [1:2] "1" "2"
   ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</code></pre>
-<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_diagnose()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_summary()</code></a> methods call CmdStan’s <code>diagnose</code> and <code>stansummary</code> utilities, respectively:</p>
-<div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_diagnose</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb26"><html><body><pre class="r"><span class="co"># convert to matrix or data frame using posterior package</span>
+<span class="no">diagnostics_df</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html">as_draws_df</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-sampler_diagnostics.html">sampler_diagnostics</a></span>())
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">diagnostics_df</span>)</pre></body></html></div>
+<pre><code># A draws_df: 1000 iterations, 2 chains, and 6 variables
+   accept_stat__ stepsize__ treedepth__ n_leapfrog__ divergent__ energy__
+1           1.00       0.93           1            1           0      6.9
+2           0.80       0.93           1            3           0      8.1
+3           0.99       0.93           2            3           0      7.5
+4           0.92       0.93           1            3           0      8.1
+5           1.00       0.93           2            7           0      7.1
+6           0.95       0.93           2            3           0      7.8
+7           0.88       0.93           1            3           0      9.3
+8           1.00       0.93           2            3           0      7.1
+9           0.95       0.93           1            3           0      7.2
+10          0.97       0.93           1            3           0      7.2
+# ... with 1990 more draws
+# ... hidden meta-columns {'.chain', '.iteration', '.draw'}</code></pre>
+</div>
+<div id="cmdstan-utilities" class="section level4">
+<h4 class="hasAnchor">
+<a href="#cmdstan-utilities" class="anchor"></a>CmdStan utilities</h4>
+<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_diagnose()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_summary()</code></a> methods call CmdStan’s <code>diagnose</code> and <code>stansummary</code> utilities:</p>
+<div class="sourceCode" id="cb28"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_diagnose</a></span>()</pre></body></html></div>
 <pre><code>Running bin/diagnose \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-1-75ced2.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-2-75ced2.csv
-Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-1-75ced2.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-2-75ced2.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/bernoulli-202006111947-1-c00faf.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/bernoulli-202006111947-2-c00faf.csv
+Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/bernoulli-202006111947-1-c00faf.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/bernoulli-202006111947-2-c00faf.csv
 
 Checking sampler transitions treedepth.
 Treedepth satisfactory for all transitions.
@@ -325,34 +360,38 @@ Effective sample size satisfactory.
 Split R-hat values satisfactory all parameters.
 
 Processing complete, no problems detected.</code></pre>
-<div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_summary</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb30"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_summary</a></span>()</pre></body></html></div>
 <pre><code>Running bin/stansummary \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-1-75ced2.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyK0gwJ/bernoulli-202006101849-2-75ced2.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/bernoulli-202006111947-1-c00faf.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpjRH7RO/bernoulli-202006111947-2-c00faf.csv
 Inference for Stan model: bernoulli_model
 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 
-Warmup took (0.0060, 0.0059) seconds, 0.012 seconds total
-Sampling took (0.014, 0.013) seconds, 0.026 seconds total
+Warmup took (0.0061, 0.0061) seconds, 0.012 seconds total
+Sampling took (0.014, 0.013) seconds, 0.027 seconds total
 
                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
 lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8  5.9e+02  2.2e+04  1.0e+00
-accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.8e+04  1.0e+00
+accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.7e+04  1.0e+00
 stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  3.8e+01  2.6e+13
 treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  7.0e+04  1.0e+00
 n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  5.3e+02  1.0e+00
 divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
 energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  2.6e+04  1.0e+00
-theta           0.25  4.5e-03    0.12  0.081  0.23  0.49  7.6e+02  2.9e+04  1.0e+00
+theta           0.25  4.5e-03    0.12  0.081  0.23  0.49  7.6e+02  2.8e+04  1.0e+00
 
 Samples were drawn using hmc with nuts.
 For each parameter, N_Eff is a crude measure of effective sample size,
 and R_hat is the potential scale reduction factor on split chains (at 
 convergence, R_hat=1).</code></pre>
-<p>It is also possible to create a stanfit object (from RStan) from the csv output files written by CmdStan. This can be done by using <code><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">rstan::read_stan_csv()</a></code> in combination with the <code>$output_files()</code> method of the <code>CmdStanMCMC</code> object.</p>
-<div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="no">stanfit</span> <span class="kw">&lt;-</span> <span class="kw pkg">rstan</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">read_stan_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())
+</div>
+<div id="create-a-stanfit-object" class="section level4">
+<h4 class="hasAnchor">
+<a href="#create-a-stanfit-object" class="anchor"></a>Create a <code>stanfit</code> object</h4>
+<p>If you have RStan installed then it is also possible to create a <code>stanfit</code> object from the csv output files written by CmdStan. This can be done by using <code><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">rstan::read_stan_csv()</a></code> in combination with the <code>$output_files()</code> method of the <code>CmdStanMCMC</code> object:</p>
+<div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="no">stanfit</span> <span class="kw">&lt;-</span> <span class="kw pkg">rstan</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">read_stan_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="no">stanfit</span>)</pre></body></html></div>
-<pre><code>Inference for Stan model: bernoulli-202006101849-1-75ced2.
+<pre><code>Inference for Stan model: bernoulli-202006111947-1-c00faf.
 2 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=2000.
 
@@ -360,20 +399,20 @@ post-warmup draws per chain=1000, total post-warmup draws=2000.
 theta  0.25    0.00 0.12  0.06  0.16  0.23  0.33  0.53   754    1
 lp__  -7.28    0.03 0.74 -9.50 -7.45 -7.00 -6.80 -6.75   586    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jun 10 18:49:51 2020.
+Samples were drawn using NUTS(diag_e) at Thu Jun 11 19:47:49 2020.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
 </div>
-<div id="optimization-and-variational-inference" class="section level4">
-<h4 class="hasAnchor">
-<a href="#optimization-and-variational-inference" class="anchor"></a>Optimization and variational inference</h4>
+</div>
+<div id="optimization-and-variational-inference" class="section level3">
+<h3 class="hasAnchor">
+<a href="#optimization-and-variational-inference" class="anchor"></a>Optimization and variational inference</h3>
 <p>CmdStanR also supports running Stan’s optimization algorithms and its algorithms for variational approximation of full Bayesian inference. These are run via the <code>$optimize()</code> and <code>$variational()</code> methods, which are called in a similar way to the <code>$sample()</code> method demonstrated above. For more details follow these links to the individual documentation pages:</p>
 <ul>
 <li><a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a></li>
 <li><a href="https://mc-stan.org/cmdstanr/reference/model-method-variational.html"><code>$variational()</code></a></li>
 </ul>
-</div>
 </div>
 </div>
 <div id="comparison-with-rstan" class="section level2">

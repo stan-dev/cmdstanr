@@ -81,7 +81,7 @@ chain of MCMC." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9002</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9004</span>
       </span>
     </div>
 
@@ -120,6 +120,9 @@ chain of MCMC." />
     </li>
     <li>
       <a href="https://mc-stan.org/rstantools">rstantools</a>
+    </li>
+    <li>
+      <a href="https://mc-stan.org/posterior">posterior</a>
     </li>
   </ul>
 </li>
@@ -183,14 +186,15 @@ chain of MCMC.</p>
 
 <ul>
 <li><p><code>inc_warmup</code>: (logical) Should warmup draws be included? Defaults to <code>FALSE</code>.</p></li>
-<li><p><code>...</code>: Optional arguments to pass to <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>posterior::as_draws_array()</a></code>.</p></li>
+<li><p><code>...</code>: Arguments passed on to
+<code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>posterior::as_draws_array()</a></code>.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     
 
-<p>A 3-D <code><a href='https://rdrr.io/pkg/posterior/man/draws_array.html'>draws_array</a></code> object (iteration x chain x
+<p>A 3-D <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> object (iteration x chain x
 variable). The variables for Stan's default MCMC algorithm are
 <code>"accept_stat__"</code>, <code>"stepsize__"</code>, <code>"treedepth__"</code>, <code>"n_leapfrog__"</code>,
 <code>"divergent__"</code>, <code>"energy__"</code>.</p>

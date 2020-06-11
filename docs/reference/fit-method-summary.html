@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Run <code>posterior::summarise_draws()</code> — fit-method-summary • cmdstanr</title>
+<title>Compute a summary table of MCMC estimates and diagnostics — fit-method-summary • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,9 +46,10 @@
 
 
 
-<meta property="og:title" content="Run <code>posterior::summarise_draws()</code> — fit-method-summary" />
-<meta property="og:description" content="Run posterior::summarise_draws() from the posterior
-package. For MCMC only post-warmup draws are included in the summary." />
+<meta property="og:title" content="Compute a summary table of MCMC estimates and diagnostics — fit-method-summary" />
+<meta property="og:description" content="Run summarise_draws()
+from the posterior package. For MCMC only post-warmup draws are
+included in the summary." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -81,7 +82,7 @@ package. For MCMC only post-warmup draws are included in the summary." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9001</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9004</span>
       </span>
     </div>
 
@@ -121,6 +122,9 @@ package. For MCMC only post-warmup draws are included in the summary." />
     <li>
       <a href="https://mc-stan.org/rstantools">rstantools</a>
     </li>
+    <li>
+      <a href="https://mc-stan.org/posterior">posterior</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -159,14 +163,15 @@ package. For MCMC only post-warmup draws are included in the summary." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Run <code>posterior::summarise_draws()</code></h1>
+    <h1>Compute a summary table of MCMC estimates and diagnostics</h1>
     <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
     <div class="hidden name"><code>fit-method-summary.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Run <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code> from the <span class="pkg">posterior</span>
-package. For MCMC only post-warmup draws are included in the summary.</p>
+    <p>Run <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>summarise_draws()</a></code>
+from the <span class="pkg">posterior</span> package. For MCMC only post-warmup draws are
+included in the summary.</p>
     </div>
 
 
@@ -182,22 +187,23 @@ package. For MCMC only post-warmup draws are included in the summary.</p>
     
 
 <ul>
-<li><p><code>...</code>: Optional arguments to pass to <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</p></li>
+<li><p><code>...</code>: Optional arguments to pass to
+<code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     
 
-<p>The data frame returned by <code><a href='https://rdrr.io/pkg/posterior/man/draws_summary.html'>posterior::summarise_draws()</a></code>.</p>
+<p>See <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>fit</span>$<span class='fu'>summary</span>()
-}</div></pre>
+    <pre class="examples"><div class='input'># fit$summary()
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

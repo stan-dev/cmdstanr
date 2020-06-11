@@ -325,14 +325,9 @@ prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
 
 #' Set or get the number of threads used to execute Stan models
 #'
-#' @name stan_threads
-#' @description These functions set or get the `STAN_NUM_THREADS` environment
-#'   variable, which will be read by CmdStan at run-time if threading support
-#'   was enabled when [compiled][model-method-compile]. For details on how this
-#'   is used by CmdStan see the
-#'   [Threading Support](https://github.com/stan-dev/math/wiki/Threading-Support)
-#'   wiki on GitHub.
+#' DEPRECATED. Please use the `threads_per_chain` argument when fitting the model.
 #'
+#' @name stan_threads
 NULL
 
 #' @rdname stan_threads
@@ -340,15 +335,14 @@ NULL
 #' @return The value of the environment variable `STAN_NUM_THREADS`.
 num_threads <- function() {
   warning("'num_threads()' is deprecated. Please use the 'sampling_info()' method of the fit object to obtain the number of threads used.")
-  num_threads <- Sys.getenv("STAN_NUM_THREADS")
-  as.integer(num_threads)
+  as.integer(Sys.getenv("STAN_NUM_THREADS"))
 }
 
 #' @rdname stan_threads
 #' @export
 #' @param num_threads (positive integer) The number of threads to set.
 set_num_threads <- function(num_threads) {
-  stop("'set_num_threads()' is deprecated. Please use the 'threads_per_chain' argument in the $sample() method.")
+  stop("Please use the 'threads_per_chain' argument in the $sample() method instead of set_num_threads().")
 }
 
 check_divergences <- function(data_csv) {

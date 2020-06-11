@@ -17,6 +17,13 @@ vignette: >
 stopifnot(require(knitr))
 opts_chunk$set(
   # collapse = TRUE,
+  dev = "png",
+  dpi = 150,
+  fig.asp = 0.618,
+  fig.width = 5,
+  out.width = "60%",
+  fig.align = "center",
+  comment = NA,
   comment=NA,
   eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
 )
@@ -96,9 +103,7 @@ cmdstan_path()
 cmdstan_version()
 ```
 
-## Running CmdStan from R
-
-### Compilation 
+## Compiling a model
 
 The `cmdstan_model()` function creates a new
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
@@ -131,9 +136,9 @@ method:
 mod$exe_file()
 ```
 
-### Model fitting
+## Fitting a model
 
-#### MCMC
+### MCMC
 
 The
 [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
@@ -159,12 +164,15 @@ method creates [R6](https://r6.r-lib.org/)
 [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 objects.
 
+#### Posterior summary statistics
+
 The [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
 method calls `summarise_draws()` from the **posterior** package: 
 
 ```{r summary}
 fit$summary()
 ```
+#### Posterior draws
 
 The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
 method can be used to extract the posterior draws as a 3-D array (iteration x
@@ -183,6 +191,8 @@ draws_df <- as_draws_df(draws_array) # as_draws_matrix() for matrix
 print(draws_df)
 ```
 
+#### Sampler diagnostics
+
 The
 [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html)
 method extracts the values of the sampler parameters (`treedepth__`,
@@ -197,14 +207,19 @@ diagnostics_df <- as_draws_df(fit$sampler_diagnostics())
 print(diagnostics_df)
 ```
 
+#### CmdStan utilities
 
 The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-`$cmdstan_summary()` methods call CmdStan's `diagnose` and `stansummary` utilities:
+and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
+methods call CmdStan's `diagnose` and `stansummary` utilities:
 
 ```{r summary-and-diagnose}
 fit$cmdstan_diagnose()
+fit$cmdstan_summary()
 ```
 
+
+#### Create a `stanfit` object
 
 If you have RStan installed then it is also possible to create a `stanfit` 
 object from the csv output files written by CmdStan. This can be done by using
@@ -216,7 +231,7 @@ stanfit <- rstan::read_stan_csv(fit$output_files())
 print(stanfit)
 ```
 
-#### Optimization and variational inference
+### Optimization and variational inference
 
 CmdStanR also supports running Stan's optimization algorithms and its algorithms
 for variational approximation of full Bayesian inference. These are run via the
