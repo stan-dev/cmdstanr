@@ -380,7 +380,7 @@ NULL
 #'
 #' @description A `CmdStanMCMC` object is the fitted model object returned by
 #'   the [`$sample()`][model-method-sample] method of a [`CmdStanModel`] object.
-#'   Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6class]
+#'   Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6Class]
 #'   objects.
 #'
 #' @details
