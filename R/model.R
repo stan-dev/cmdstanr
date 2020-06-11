@@ -83,10 +83,10 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #' CmdStanModel objects
 #'
 #' @name CmdStanModel
-#' @description A `CmdStanModel` object is an [R6][R6::R6] object created by the
-#'   [cmdstan_model()] function. The object stores the path to a Stan program
-#'   and compiled executable (once created), and provides methods for fitting
-#'   the model using Stan's algorithms. See the **Details** section for
+#' @description A `CmdStanModel` object is an [R6][R6::R6Class] object created
+#'   by the [cmdstan_model()] function. The object stores the path to a Stan
+#'   program and compiled executable (once created), and provides methods for
+#'   fitting the model using Stan's algorithms. See the **Details** section for
 #'   available methods.
 #'
 #' @details

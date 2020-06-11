@@ -6,7 +6,7 @@
 \description{
 A \code{CmdStanMCMC} object is the fitted model object returned by
 the \code{\link[=model-method-sample]{$sample()}} method of a \code{\link{CmdStanModel}} object.
-Like \code{CmdStanModel} objects, \code{CmdStanMCMC} objects are \link[R6:R6]{R6}
+Like \code{CmdStanModel} objects, \code{CmdStanMCMC} objects are \link[R6:R6class]{R6}
 objects.
 }
 \details{
@@ -19,7 +19,7 @@ objects.
 \code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}}
 \tab Return sampler diagnostics as a \code{\link[posterior:draws_array]{draws_array}}. \cr
 \code{\link[=fit-method-summary]{$summary()}}
-\tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
+\tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 \code{\link[=fit-method-lp]{$lp()}}
 \tab Return the total log probability density (\code{target}) computed in the
 model block of the Stan program. \cr
