@@ -17,7 +17,7 @@ if (not_on_cran()) {
     data = data_list,
     output_dir = tempdir(),
     chains = 2,
-    cores = 1,
+    parallel_chains = 1,
     iter_warmup = 50,
     iter_sampling = 100,
     save_warmup = FALSE,
@@ -41,7 +41,7 @@ if (not_on_cran()) {
     data = "NOT_A_FILE",
     output_dir = "NOT_A_DIRECTORY",
     chains = -1,
-    cores = -1,
+    parallel_chains = -1,
     iter_warmup = -1,
     iter_sampling = -1,
     save_warmup = "NO",
@@ -64,7 +64,7 @@ if (not_on_cran()) {
     data = matrix(1:10),
     output_dir = 1,
     chains = "NOT_A_NUMBER",
-    cores = "NOT_A_NUMBER",
+    parallel_chains = "NOT_A_NUMBER",
     init = "NOT_A_FILE",
     seed = 1:10,
     step_size = 1:10,
@@ -159,13 +159,13 @@ test_that("sample works for warmup-only run", {
 test_that("sampling in parallel works", {
   skip_on_cran()
   expect_output(
-    mod$sample(data = data_list, chains = 2, cores = 2),
+    mod$sample(data = data_list, chains = 2, parallel_chains = 2),
     "Running MCMC with 2 parallel chains",
     fixed = TRUE
   )
 
   expect_output(
-    mod$sample(data = data_list, chains = 2, cores = 2),
+    mod$sample(data = data_list, chains = 2, parallel_chains = 2),
     "Both chains finished successfully",
     fixed = TRUE
   )
