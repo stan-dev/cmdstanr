@@ -184,7 +184,7 @@ test_that("mc.cores option detected", {
   options(mc.cores = NULL)
   expect_output(
     mod$sample(data = data_list, chains = 2),
-    "Running MCMC with 2 sequential chains ",
+    "Running MCMC with 2 sequential chains",
     fixed = TRUE
   )
 })

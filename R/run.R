@@ -218,7 +218,7 @@ CmdStanRun <- R6::R6Class(
     }    
   }
   if (procs$num_runs() == 1) {
-    start_msg <- "Running MCMC with one chain"
+    start_msg <- "Running MCMC with 1 chain"
   } else if (procs$num_runs() == procs$num_cores()) {
     start_msg <- paste0("Running MCMC with ", procs$num_runs(), " parallel chains")
   } else {
@@ -314,7 +314,7 @@ CmdStanProcs <- R6::R6Class(
     initialize = function(num_runs, num_cores, threads_per_chain = NULL) {
       checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(num_cores, lower = 1, len = 1, any.missing = FALSE,
-                                   .var.name = "cores")
+                                   .var.name = "parallel_chains")
       checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE,
                                    .var.name = "threads_per_chain")
       private$num_runs_ <- as.integer(num_runs)
