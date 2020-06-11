@@ -6,9 +6,14 @@ expect_experimental_message <- function(object) {
 }
 
 expect_sample_output <- function(object, num_chains = NULL) {
+  
   output <- "Running MCMC with"
   if (!is.null(num_chains)) {
-    output <- paste(output, num_chains, "chain")
+    if (num_chains == 1) {
+      output <- paste(output, num_chains, "chain")
+    } else {
+      output <- paste(output, num_chains, "sequential chain")
+    }
   }
   expect_output(object, output)
 }

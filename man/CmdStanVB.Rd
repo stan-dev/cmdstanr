@@ -15,7 +15,8 @@ A \code{CmdStanVB} object is the fitted model object returned by the
 \strong{Method} \tab \strong{Description} \cr
 \code{\link[=fit-method-draws]{$draws()}} \tab Return approximate posterior draws
 as a \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
-\code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
+\code{\link[=fit-method-summary]{$summary()}} \tab
+Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density
 (\code{target}) computed in the model block of the Stan program. \cr
 \code{\link[=fit-method-lp]{$lp_approx()}} \tab Return the log density of the
