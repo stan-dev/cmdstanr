@@ -339,6 +339,7 @@ NULL
 #' @export
 #' @return The value of the environment variable `STAN_NUM_THREADS`.
 num_threads <- function() {
+  warning("'num_threads()' is deprecated. Please use the 'sampling_info()' method of the fit object to obtain the number of threads used.")
   num_threads <- Sys.getenv("STAN_NUM_THREADS")
   as.integer(num_threads)
 }
@@ -347,12 +348,7 @@ num_threads <- function() {
 #' @export
 #' @param num_threads (positive integer) The number of threads to set.
 set_num_threads <- function(num_threads) {
-  if (is.numeric(num_threads) && num_threads%%1==0 && num_threads > 0) {
-    Sys.setenv("STAN_NUM_THREADS" = num_threads)
-  } else {
-    stop("Please set a valid number of threads. Valid values are integers > 0.",
-         call. = FALSE)
-  }
+  stop("'set_num_threads()' is deprecated. Please use the 'threads_per_chain' argument in the $sample() method.")
 }
 
 check_divergences <- function(data_csv) {

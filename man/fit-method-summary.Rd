@@ -5,12 +5,9 @@
 \alias{summary}
 \title{Compute a summary table of MCMC estimates and diagnostics}
 \description{
-Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}} from the \pkg{posterior}
-package. For MCMC only post-warmup draws are included in the summary.
-}
-\details{
-Run \code{posterior::summarise_draws()} to compute a summary table of MCMC
-estimates and diagnostics.
+Run \code{\link[posterior:draws_summary]{summarise_draws()}}
+from the \pkg{posterior} package. For MCMC only post-warmup draws are
+included in the summary.
 }
 \section{Usage}{
 \preformatted{$summary(...)
@@ -20,13 +17,14 @@ estimates and diagnostics.
 \section{Arguments}{
 
 \itemize{
-\item \code{...}: Optional arguments to pass to \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}.
+\item \code{...}: Optional arguments to pass to
+\code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
 }
 }
 
 \section{Value}{
 
-See \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}.
+See \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
 }
 
 \examples{

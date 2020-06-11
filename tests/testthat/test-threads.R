@@ -1,24 +1,49 @@
-context("threads")
+context("model-sample")
 
-Sys.unsetenv("STAN_NUM_THREADS")
+if (not_on_cran()) {
+  set_cmdstan_path()
+  stan_program <- testing_stan_file("bernoulli")
+  data_file_json <- test_path("resources", "data", "bernoulli.data.json")
+}
 
-test_that("num_threads() is NA if not set", {
-  expect_identical(num_threads(), NA_integer_)
+test_that("using threads_per_chain without stan_threads set in compile() warns", {
+  skip_on_cran()
+  mod <- cmdstan_model(stan_program)
+
+  expect_warning(
+    expect_output(
+      mod$sample(data = data_file_json, threads_per_chain = 4),
+      "Running MCMC with 4 sequential chains",
+      fixed = TRUE
+    ),
+    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+    fixed = TRUE)
 })
 
-test_that("Setting STAN_NUM_THREADS", {
-  set_num_threads(10)
-  threads <- Sys.getenv("STAN_NUM_THREADS")
-  expect_identical(threads, "10")
-  expect_identical(as.integer(threads), num_threads())
+test_that("threading works", {
+  skip_on_cran()
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
 
-  set_num_threads(4)
-  expect_equal(num_threads(), 4)
+  expect_error(
+    mod$sample(data = data_file_json),
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!",
+    fixed = TRUE
+  )
+
+  expect_output(
+    mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
+    "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
+    fixed = TRUE
+  )
+  expect_output(
+    mod$sample(data = data_file_json,  parallel_chains = 4, threads_per_chain = 2),
+    "Running MCMC with 4 parallel chains, with 2 thread(s) per chain..",
+    fixed = TRUE
+  )
+  expect_output(
+    mod$sample(data = data_file_json,  parallel_chains = 4, threads_per_chain = 4),
+    "Running MCMC with 4 parallel chains, with 4 thread(s) per chain..",
+    fixed = TRUE
+  )
 })
 
-test_that("set_num_threads() throws correct errors", {
-  bad <- list("10", 1.5, -1, FALSE)
-  for (j in seq_along(bad)) {
-    expect_error(set_num_threads(!! bad[[j]]), "valid number of threads")
-  }
-})

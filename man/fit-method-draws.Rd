@@ -26,7 +26,8 @@ quantities) to read in. If \code{NULL} (the default) then the draws of all
 variables are included.
 \item \code{inc_warmup}: (logical) For MCMC only, should warmup draws be included?
 Defaults to \code{FALSE}.
-\item \code{...}: Arguments passed on to \code{\link[posterior:as_draws]{posterior::as_draws()}}.
+\item \code{...}: Arguments passed on to
+\code{\link[posterior:draws_array]{posterior::as_draws_array()}}.
 }
 }
 

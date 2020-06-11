@@ -6,7 +6,6 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program.
-#' @param exe_file Optionally, a path to an existing executable.
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -42,7 +41,7 @@
 #'   data = stan_data,
 #'   seed = 123,
 #'   chains = 2,
-#'   cores = 2
+#'   parallel_chains = 2
 #' )
 #'
 #' # Use 'posterior' package for summaries
@@ -74,8 +73,8 @@
 #' fit_vb$summary()
 #' }
 #'
-cmdstan_model <- function(stan_file = character(), exe_file = character(), compile = TRUE, ...) {
-  CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
+cmdstan_model <- function(stan_file, compile = TRUE, ...) {
+  CmdStanModel$new(stan_file = stan_file, compile = compile, ...)
 }
 
 
@@ -84,10 +83,10 @@ cmdstan_model <- function(stan_file = character(), exe_file = character(), compi
 #' CmdStanModel objects
 #'
 #' @name CmdStanModel
-#' @description A `CmdStanModel` object is an [R6][R6::R6] object created by the
-#'   [cmdstan_model()] function. The object stores the path to a Stan program
-#'   and compiled executable (once created), and provides methods for fitting
-#'   the model using Stan's algorithms. See the **Details** section for
+#' @description A `CmdStanModel` object is an [R6][R6::R6Class] object created
+#'   by the [cmdstan_model()] function. The object stores the path to a Stan
+#'   program and compiled executable (once created), and provides methods for
+#'   fitting the model using Stan's algorithms. See the **Details** section for
 #'   available methods.
 #'
 #' @details
@@ -117,27 +116,42 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     stan_file_ = character(),
-    exe_file_ = character()
+    exe_file_ = character(),
+    cpp_options_ = list(),
+    stanc_options_ = list(),
+    include_paths_ = NULL,
+    precompile_cpp_options_ = NULL,
+    precompile_stanc_options_ = NULL,
+    precompile_include_paths_ = NULL
   ),
   public = list(
-    initialize = function(stan_file, exe_file, compile, ...) {
-      if (all(exe_file == character())) {
-        checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
-      } else {
-        checkmate::assert_file_exists(exe_file, access = "r", extension = cmdstan_ext())
-      }
+    initialize = function(stan_file, compile, ...) {
+      checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
-      private$exe_file_ <- exe_file
+      args <- list(...)
+      cpp_options_exists <- "cpp_options" %in% names(args)
+      if (cpp_options_exists) {
+        private$precompile_cpp_options_ = args$cpp_options
+      }
+      stanc_options_exists <- "stanc_options" %in% names(args)
+      if (stanc_options_exists) {
+        private$precompile_stanc_options_ = args$stanc_options
+      }
+      include_paths_exists <- "include_paths" %in% names(args)
+      if (include_paths_exists) {
+        private$precompile_include_paths_ = args$include_paths
+      }
       if (compile) {
         self$compile(...)
       }
       invisible(self)
     },
     stan_file = function() private$stan_file_,
+    cpp_options = function() private$cpp_options_,
     exe_file = function(path = NULL) {
       if (!is.null(path)) {
-        private$exe_file_ = path
+        private$exe_file_ <- path
       }
       private$exe_file_
     },
@@ -211,8 +225,8 @@ CmdStanModel <- R6::R6Class(
 #' mod$exe_file()
 #'
 #' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#' mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), compile = FALSE)
-#' mod$compile()
+#' mod <- cmdstan_model(stan_program, compile = FALSE)
+#' mod$compile(cpp_options = list(stan_threads = TRUE))
 #' mod$exe_file()
 #' }
 #'
@@ -225,17 +239,41 @@ compile_method <- function(quiet = TRUE,
                            force_recompile = FALSE,
                            #deprecated
                            threads = FALSE) {
+  if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
+    cpp_options = private$precompile_cpp_options_
+  }
+  if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
+    stanc_options = private$precompile_stanc_options_
+  }
+  if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
+    include_paths = private$precompile_include_paths_
+  }
+  # temporary deprecation warnings
+  if (isTRUE(threads)) {
+    warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
+    cpp_options[["stan_threads"]] <- TRUE
+  }
+
+  exe_suffix <- NULL
+  if (!is.null(cpp_options$stan_threads)) {
+    exe_suffix <- c(exe_suffix, "threads")
+  }
+  if (!is.null(cpp_options$stan_mpi)) {
+    exe_suffix <- c(exe_suffix, "mpi")
+  }
+  if (!is.null(cpp_options$stan_opencl)) {
+    exe_suffix <- c(exe_suffix, "opencl")
+  }
+  exe_suffix <- paste0(exe_suffix, collapse = "_")
+  if (nzchar(exe_suffix)) {
+    exe_suffix <- paste0("_", exe_suffix)
+  }
   if (all(nzchar(self$exe_file()))) {
-    exe <- cmdstan_ext(strip_ext(self$stan_file()))
-  } else {
-    exe <- cmdstan_ext(strip_ext(self$exe_file()))
+    exe <- cmdstan_ext(paste0(strip_ext(self$stan_file()), exe_suffix))
   }
-  if (is.null(self$stan_file())) {
-    model_name <- basename(strip_ext(self$exe_file()))
-  } else {
-    model_name <- sub(" ", "_",
-                        paste0(strip_ext(basename(self$stan_file())), "_model"))
-  }
+
+  model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
+
   # compile if the user forced compilation,
   # the executable does not exist or the stan model was changed since last compilation
   if (!file.exists(exe)) {
@@ -244,13 +282,13 @@ compile_method <- function(quiet = TRUE,
              && file.mtime(exe) < file.mtime(self$stan_file())) {
     force_recompile <- TRUE
   }
-  # temporary deprecation warnings
-  if (isTRUE(threads)) {
-    warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
-    cpp_options[["stan_threads"]] <- TRUE
-  }
+
   if (!force_recompile) {
     message("Model executable is up to date!")
+    private$cpp_options_ <- cpp_options
+    private$precompile_cpp_options_ <- NULL
+    private$precompile_stanc_options_ <- NULL
+    private$precompile_include_paths_ <- NULL
     self$exe_file(exe)
     return(invisible(self))
   } else {
@@ -267,7 +305,7 @@ compile_method <- function(quiet = TRUE,
     current_path <- Sys.getenv("PATH")
     if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }    
+    }
   }
 
   stancflags_val <- ""
@@ -308,6 +346,10 @@ compile_method <- function(quiet = TRUE,
   )
 
   file.copy(tmp_exe, exe, overwrite = TRUE)
+  private$cpp_options_ <- cpp_options
+  private$precompile_cpp_options_ <- NULL
+  private$precompile_stanc_options_ <- NULL
+  private$precompile_include_paths_ <- NULL
   private$exe_file_ <- exe
   invisible(self)
 }
@@ -335,7 +377,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
 #'     chains = 4,
-#'     cores = getOption("mc.cores", 1),
+#'     parallel_chains = getOption("mc.cores", 1),
+#'     threads_per_chain = NULL,
 #'     iter_warmup = NULL,
 #'     iter_sampling = NULL,
 #'     save_warmup = FALSE,
@@ -359,23 +402,33 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @section Arguments unique to the `sample` method: In addition to the
 #'   arguments above, the `$sample()` method also has its own set of arguments.
 #'
-#'   The following two arguments are offered by CmdStanR but do not correspond
-#'   to arguments in CmdStan because all CmdStan arguments pertain to the
-#'   execution of a single run only.
+#'   The following three arguments are offered by CmdStanR but do not correspond
+#'   to arguments in CmdStan:
 #'
 #'   * `chains`: (positive integer) The number of Markov chains to run. The
 #'   default is 4.
 #'
-#'   * `cores`: (positive integer) The maximum number of cores to use for
-#'   running parallel chains. If `cores` is not specified then the default is
-#'   to look for the option `"mc.cores"`,
-#'   which can be set for an entire \R session by `options(mc.cores=value)`.
-#'   If the `"mc.cores"` option has not been set then the default is `1`.
+#'   * `parallel_chains`: (positive integer) The _maximum_ number of MCMC chains
+#'   to run in parallel. If `parallel_chains` is not specified then the default
+#'   is to look for the option `"mc.cores"`, which can be set for an entire \R
+#'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
+#'   been set then the default is `1`.
 #'
-#'   The rest of the arguments correspond to arguments offered by CmdStan. They
-#'   are described briefly here and in greater detail in the CmdStan manual.
-#'   Arguments left at `NULL` default to the default used by the installed
-#'   version of CmdStan.
+#'   * `threads_per_chain`: (positive integer) If the model was
+#'   [compiled][model-method-compile] with threading support, the number of
+#'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
+#'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
+#'   contrast with `parallel_chains`, which specifies the number of chains to
+#'   run in parallel. The actual number of CPU cores used use is
+#'   `parallel_chains*threads_per_chain`. For an example of using threading see
+#'   the Stan case study [Reduce Sum: A Minimal
+#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'
+#'
+#'   The rest of the arguments correspond to arguments offered by CmdStan,
+#'   although some names are slightly different. They are described briefly here
+#'   and in greater detail in the CmdStan manual. Arguments left at `NULL`
+#'   default to the default used by the installed version of CmdStan.
 #'
 #'   * `iter_sampling`: (positive integer) The number of post-warmup iterations to
 #'   run per chain.
@@ -445,7 +498,8 @@ sample_method <- function(data = NULL,
                           save_latent_dynamics = FALSE,
                           output_dir = NULL,
                           chains = 4,
-                          cores = getOption("mc.cores", 1),
+                          parallel_chains = getOption("mc.cores", 1),
+                          threads_per_chain = NULL,
                           iter_warmup = NULL,
                           iter_sampling = NULL,
                           save_warmup = FALSE,
@@ -463,6 +517,7 @@ sample_method <- function(data = NULL,
                           fixed_param = FALSE,
                           validate_csv = TRUE,
                           # deprecated
+                          cores = NULL,
                           num_cores = NULL,
                           num_chains = NULL,
                           num_warmup = NULL,
@@ -473,13 +528,16 @@ sample_method <- function(data = NULL,
 
   if (fixed_param) {
     chains <- 1
-    cores <- 1
+    parallel_chains <- 1
     save_warmup <- FALSE
   }
-
   # temporary deprecation warnings
+  if (!is.null(cores)) {
+    warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
+    parallel_chains <- cores
+  }
   if (!is.null(num_cores)) {
-    warning("'num_cores' is deprecated. Please use 'cores' instead.")
+    warning("'num_cores' is deprecated. Please use 'parallel_chains' instead.")
     cores <- num_cores
   }
   if (!is.null(num_chains)) {
@@ -506,8 +564,19 @@ sample_method <- function(data = NULL,
     warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
     save_latent_dynamics <- save_extra_diagnostics
   }
-
   checkmate::assert_integerish(chains, lower = 1, len = 1)
+  checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
+  # check if model was not compiled with threading
+  if (is.null(self$cpp_options()[["stan_threads"]])) {
+    if (!is.null(threads_per_chain)) {
+      warning("'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!")
+      threads_per_chain <- NULL
+    }
+  } else {
+    if (is.null(threads_per_chain)) {
+      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!")
+    }
+  }
 
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
@@ -539,7 +608,7 @@ sample_method <- function(data = NULL,
     output_dir = output_dir,
     validate_csv = validate_csv
   )
-  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = cores)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = parallel_chains, threads_per_chain = threads_per_chain)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)

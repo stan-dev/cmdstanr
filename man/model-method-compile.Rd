@@ -59,8 +59,8 @@ mod$compile()
 mod$exe_file()
 
 stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), compile = FALSE)
-mod$compile()
+mod <- cmdstan_model(stan_program, compile = FALSE)
+mod$compile(cpp_options = list(stan_threads = TRUE))
 mod$exe_file()
 }
 

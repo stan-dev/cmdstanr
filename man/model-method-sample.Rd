@@ -19,7 +19,8 @@ some data.
   save_latent_dynamics = FALSE,
   output_dir = NULL,
   chains = 4,
-  cores = getOption("mc.cores", 1),
+  parallel_chains = getOption("mc.cores", 1),
+  threads_per_chain = NULL,
   iter_warmup = NULL,
   iter_sampling = NULL,
   save_warmup = FALSE,
@@ -96,23 +97,30 @@ methods like \verb{$save_latent_dynamics_files()}).
  In addition to the
 arguments above, the \verb{$sample()} method also has its own set of arguments.
 
-The following two arguments are offered by CmdStanR but do not correspond
-to arguments in CmdStan because all CmdStan arguments pertain to the
-execution of a single run only.
+The following three arguments are offered by CmdStanR but do not correspond
+to arguments in CmdStan:
 \itemize{
 \item \code{chains}: (positive integer) The number of Markov chains to run. The
 default is 4.
-\item \code{cores}: (positive integer) The maximum number of cores to use for
-running parallel chains. If \code{cores} is not specified then the default is
-to look for the option \code{"mc.cores"},
-which can be set for an entire \R session by \code{options(mc.cores=value)}.
-If the \code{"mc.cores"} option has not been set then the default is \code{1}.
+\item \code{parallel_chains}: (positive integer) The \emph{maximum} number of MCMC chains
+to run in parallel. If \code{parallel_chains} is not specified then the default
+is to look for the option \code{"mc.cores"}, which can be set for an entire \R
+session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
+been set then the default is \code{1}.
+\item \code{threads_per_chain}: (positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
+using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
+contrast with \code{parallel_chains}, which specifies the number of chains to
+run in parallel. The actual number of CPU cores used use is
+\code{parallel_chains*threads_per_chain}. For an example of using threading see
+the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
 }
 
-The rest of the arguments correspond to arguments offered by CmdStan. They
-are described briefly here and in greater detail in the CmdStan manual.
-Arguments left at \code{NULL} default to the default used by the installed
-version of CmdStan.
+The rest of the arguments correspond to arguments offered by CmdStan,
+although some names are slightly different. They are described briefly here
+and in greater detail in the CmdStan manual. Arguments left at \code{NULL}
+default to the default used by the installed version of CmdStan.
 \itemize{
 \item \code{iter_sampling}: (positive integer) The number of post-warmup iterations to
 run per chain.
@@ -198,7 +206,7 @@ fit_mcmc <- mod$sample(
   data = stan_data,
   seed = 123,
   chains = 2,
-  cores = 2
+  parallel_chains = 2
 )
 
 # Use 'posterior' package for summaries

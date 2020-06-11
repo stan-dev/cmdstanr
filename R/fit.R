@@ -128,7 +128,8 @@ CmdStanFit <- R6::R6Class(
 #' variables are included.
 #' * `inc_warmup`: (logical) For MCMC only, should warmup draws be included?
 #' Defaults to `FALSE`.
-#' * `...`: Arguments passed on to [posterior::as_draws()].
+#' * `...`: Arguments passed on to
+#' [`posterior::as_draws_array()`][posterior::draws_array].
 #'
 #' @section Value:
 #' * For MCMC, a 3-D [`draws_array`][posterior::draws_array] object (iteration x
@@ -196,7 +197,8 @@ NULL
 #'   ```
 #' @section Arguments:
 #' * `inc_warmup`: (logical) Should warmup draws be included? Defaults to `FALSE`.
-#' * `...`: Optional arguments to pass to [posterior::as_draws_array()].
+#' * `...`: Arguments passed on to
+#' [`posterior::as_draws_array()`][posterior::draws_array].
 #'
 #' @section Value:
 #' A 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
@@ -253,23 +255,22 @@ NULL
 
 #' Compute a summary table of MCMC estimates and diagnostics
 #'
-#' Run `posterior::summarise_draws()` to compute a summary table of MCMC
-#' estimates and diagnostics.
-#'
 #' @name fit-method-summary
 #' @aliases summary
-#' @description Run [posterior::summarise_draws()] from the \pkg{posterior}
-#'   package. For MCMC only post-warmup draws are included in the summary.
+#' @description Run [`summarise_draws()`][posterior::draws_summary]
+#'   from the \pkg{posterior} package. For MCMC only post-warmup draws are
+#'   included in the summary.
 #'
 #' @section Usage:
 #'   ```
 #'   $summary(...)
 #'   ```
 #' @section Arguments:
-#' * `...`: Optional arguments to pass to [posterior::summarise_draws()].
+#' * `...`: Optional arguments to pass to
+#' [`posterior::summarise_draws()`][posterior::draws_summary].
 #'
 #' @section Value:
-#' See [posterior::summarise_draws()].
+#' See [`posterior::summarise_draws()`][posterior::draws_summary].
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
@@ -379,7 +380,7 @@ NULL
 #'
 #' @description A `CmdStanMCMC` object is the fitted model object returned by
 #'   the [`$sample()`][model-method-sample] method of a [`CmdStanModel`] object.
-#'   Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6]
+#'   Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6Class]
 #'   objects.
 #'
 #' @details
@@ -392,7 +393,7 @@ NULL
 #'  [`$sampler_diagnostics()`][fit-method-sampler_diagnostics]
 #'    \tab Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. \cr
 #'  [`$summary()`][fit-method-summary]
-#'    \tab Run [posterior::summarise_draws()]. \cr
+#'    \tab Run [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
 #'  [`$lp()`][fit-method-lp]
 #'    \tab Return the total log probability density (`target`) computed in the
 #'  model block of the Stan program. \cr
@@ -603,7 +604,8 @@ CmdStanMCMC <- R6::R6Class(
 #'  **Method** \tab **Description** \cr
 #'  [`draws()`][fit-method-draws] \tab Return the point estimate as a 1-row
 #'  [`draws_matrix`][posterior::draws_matrix]. \cr
-#'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
+#'  [`$summary()`][fit-method-summary] \tab Run
+#'  [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
 #'  [`$lp()`][fit-method-lp] \tab Return the total log probability density
 #'  (`target`) computed in the model block of the Stan program. \cr
 #'  `$mle()` \tab Return the penalized maximum likelihod estimate (posterior
@@ -655,7 +657,8 @@ CmdStanMLE <- R6::R6Class(
 #'  **Method** \tab **Description** \cr
 #'  [`$draws()`][fit-method-draws] \tab Return approximate posterior draws
 #'  as a [`draws_matrix`][posterior::draws_matrix]. \cr
-#'  [`$summary()`][fit-method-summary] \tab Run [posterior::summarise_draws()]. \cr
+#'  [`$summary()`][fit-method-summary] \tab
+#'  Run [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
 #'  [`$lp()`][fit-method-lp] \tab Return the total log probability density
 #'  (`target`) computed in the model block of the Stan program. \cr
 #'  [`$lp_approx()`][fit-method-lp] \tab Return the log density of the

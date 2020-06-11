@@ -147,7 +147,8 @@ test_that("switching threads on and off works without rebuild", {
   before_mtime <- file.mtime(main_path_o)
   mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
   after_mtime <- file.mtime(main_path_o)
-  expect_gt(after_mtime, before_mtime)
+  time_diff <- as.double((after_mtime - before_mtime), units = "secs")
+  expect_gt(time_diff, 0)
 
   before_mtime <- file.mtime(main_path_o)
   mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
@@ -157,5 +158,6 @@ test_that("switching threads on and off works without rebuild", {
   before_mtime <- file.mtime(main_path_o)
   mod$compile(force_recompile = TRUE)
   after_mtime <- file.mtime(main_path_o)
-  expect_gt(after_mtime, before_mtime)
+  time_diff <- as.double((after_mtime - before_mtime), units = "secs")
+  expect_gt(time_diff, 0)
 })

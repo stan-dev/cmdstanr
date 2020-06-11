@@ -14,7 +14,8 @@ A \code{CmdStanMLE} object is the fitted model object returned by the
 \strong{Method} \tab \strong{Description} \cr
 \code{\link[=fit-method-draws]{draws()}} \tab Return the point estimate as a 1-row
 \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
-\code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:summarise_draws]{posterior::summarise_draws()}}. \cr
+\code{\link[=fit-method-summary]{$summary()}} \tab Run
+\code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density
 (\code{target}) computed in the model block of the Stan program. \cr
 \verb{$mle()} \tab Return the penalized maximum likelihod estimate (posterior
