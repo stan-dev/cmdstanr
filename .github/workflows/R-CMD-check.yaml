@@ -20,9 +20,9 @@ jobs:
         config:
           - {os: macOS-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-18.04,   r: 'release'}
-          - {os: ubuntu-18.04,   r: 'oldrel'}
-          - {os: ubuntu-18.04,   r: '3.5'}
+          - {os: ubuntu-16.04,   r: 'release'}
+          - {os: ubuntu-16.04,   r: 'oldrel'}
+          - {os: ubuntu-16.04,   r: '3.5'}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -52,15 +52,14 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
           restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
 
-      #- name: Install system dependencies
-      #  if: runner.os == 'Linux'
-      #  env:
-      #    RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
-      #  run: |
-      #    Rscript -e "remotes::install_github('r-hub/sysreqs')"
-      #    sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
-      #    sudo -s eval "$sysreqs"
-      #    sudo apt install r-cran-stringi
+      - name: Install system dependencies
+        if: runner.os == 'Linux'
+        env:
+          RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
+        run: |
+          Rscript -e "remotes::install_github('r-hub/sysreqs')"
+          sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
+          sudo -s eval "$sysreqs"
 
       - name: Install dependencies
         run: |
