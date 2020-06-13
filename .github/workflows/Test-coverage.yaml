@@ -35,9 +35,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("remotes"))
-          remotes::install_github("stan-dev/posterior")
-          remotes::install_github("stan-dev/cmdstanr")
+          install.packages(c("posterior, cmdstanr, remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.0/cmdstan-2.23.0.tar.gz")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
