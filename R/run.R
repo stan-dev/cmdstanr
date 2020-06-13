@@ -230,7 +230,6 @@ CmdStanRun <- R6::R6Class(
   }
   if (is.null(procs$threads_per_chain())) {
     cat(paste0(start_msg, "...\n\n"))
-    Sys.setenv("STAN_NUM_THREADS" = "")
   } else {
     cat(paste0(start_msg, ", with ", procs$threads_per_chain(), " thread(s) per chain...\n\n"))
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_chain()))
