@@ -1,0 +1,48 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+name: test-coverage
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-16.04
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/setup-r@master
+
+      - uses: r-lib/actions/setup-pandoc@master
+      
+      - name: Install Ubuntu dependencies
+        run: sudo apt-get install libcurl4-openssl-dev
+      - name: Query dependencies
+        run: |
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+        shell: Rscript {0}
+
+      - name: Cache R packages
+        uses: actions/cache@v1
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ubuntu-r-4.0-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ubuntu-r-4.0-1-
+
+      - name: Install dependencies
+        run: |
+          install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.0/cmdstan-2.23.0.tar.gz")
+          remotes::install_deps(dependencies = TRUE)
+          remotes::install_cran("covr")
+        shell: Rscript {0}
+
+      - name: Test coverage
+        run: covr::codecov()
+        shell: Rscript {0}
