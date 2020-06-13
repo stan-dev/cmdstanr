@@ -102,6 +102,12 @@ test_that("cmdstan_ext() works", {
   }
 })
 
+test_that("is_release_candidate() works", {
+  expect_true(is_release_candidate("cmdstan-2.23.0-rc1/"))
+  expect_true(is_release_candidate("cmdstan-2.23.0-rc1"))
+  expect_false(is_release_candidate("cmdstan-2.23.0"))
+})
+
 # cleanup -----------------------------------------------------------------
 Sys.unsetenv("CMDSTAN")
 unset_cmdstan_path()
