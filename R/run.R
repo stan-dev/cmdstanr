@@ -215,7 +215,7 @@ CmdStanRun <- R6::R6Class(
     current_path <- Sys.getenv("PATH")
     if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }    
+    }
   }
   if (procs$num_runs() == 1) {
     start_msg <- "Running MCMC with 1 chain"
@@ -232,6 +232,7 @@ CmdStanRun <- R6::R6Class(
     cat(paste0(start_msg, "...\n\n"))
   } else {
     cat(paste0(start_msg, ", with ", procs$threads_per_chain(), " thread(s) per chain...\n\n"))
+    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_chain()))
   }
   start_time <- Sys.time()
   chains <- procs$run_ids()
@@ -319,7 +320,7 @@ CmdStanProcs <- R6::R6Class(
                                    .var.name = "threads_per_chain")
       private$num_runs_ <- as.integer(num_runs)
       private$num_cores_ <- as.integer(num_cores)
-      private$threads_per_chain_ <- as.integer(threads_per_chain)
+      private$threads_per_chain_ <- threads_per_chain
       private$active_cores_ <- 0
       private$run_ids_ <- seq_len(num_runs)
       zeros <- rep(0, num_runs)
