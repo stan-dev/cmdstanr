@@ -142,6 +142,8 @@ CmdStanRun <- R6::R6Class(
         private$run_optimize_()
       } else if (self$method() == "variational") {
         private$run_variational_()
+      } else if (self$method() == "generate_quantities") {
+        private$run_generate_quantities_()
       }
     },
 
@@ -275,6 +277,76 @@ CmdStanRun <- R6::R6Class(
 }
 CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 
+.run_gq <- function() {
+  procs <- self$procs
+  on.exit(procs$cleanup(), add = TRUE)
+  
+  # add path to the TBB library to the PATH variable
+  if (cmdstan_version() >= "2.21" && os_is_windows()) {
+    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
+    current_path <- Sys.getenv("PATH")
+    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+    }
+  }
+  # if (procs$num_runs() == 1) {
+  #   start_msg <- "Running MCMC with 1 chain"
+  # } else if (procs$num_runs() == procs$num_cores()) {
+  #   start_msg <- paste0("Running MCMC with ", procs$num_runs(), " parallel chains")
+  # } else {
+  #   if (procs$num_cores() == 1) {
+  #     start_msg <- paste0("Running MCMC with ", procs$num_runs(), " sequential chains")
+  #   } else {
+  #     start_msg <- paste0("Running MCMC with ", procs$num_runs(), " chains, at most ", procs$num_cores(), " in parallel")
+  #   }
+  # }
+  # if (is.null(procs$threads_per_chain())) {
+  #   cat(paste0(start_msg, "...\n\n"))
+  # } else {
+  #   cat(paste0(start_msg, ", with ", procs$threads_per_chain(), " thread(s) per chain...\n\n"))
+  #   Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_chain()))
+  # }
+  start_time <- Sys.time()
+  chains <- procs$run_ids()
+  chain_ind <- 1
+  while (!procs$all_finished()) {
+
+    # if we have free cores and any leftover chains
+    while (procs$active_cores() != procs$num_cores() &&
+           procs$any_queued()) {
+      chain_id <- chains[chain_ind]
+      procs$new_proc(
+        id = chain_id,
+        command = self$command(),
+        args = self$command_args()[[chain_id]],
+        wd = dirname(self$exe_file())
+      )
+      procs$mark_chain_start(chain_id)
+      procs$set_active_cores(procs$active_cores() + 1)
+      chain_ind <- chain_ind + 1
+    }
+    start_active_cores <- procs$active_cores()
+
+    while (procs$active_cores() == start_active_cores &&
+           procs$active_cores() > 0) {
+      procs$wait(0.1)
+      procs$poll(0)
+      # for (chain_id in chains) {
+      #   if (!procs$is_queued(chain_id)) {
+      #     output <- procs$get_proc(chain_id)$read_output_lines()
+      #     procs$process_sample_output(output, chain_id)
+      #     error_output <- procs$get_proc(chain_id)$read_error_lines()
+      #     procs$process_error_output(error_output, chain_id)
+      #   }
+      # }
+      procs$set_active_cores(procs$num_alive())
+    }
+  }
+  procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
+  procs$report_time()
+}
+CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_gq)
+
 .run_other <- function() {
   # add path to the TBB library to the PATH variable
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
@@ -402,6 +474,7 @@ CmdStanProcs <- R6::R6Class(
             # if the chain just finished make sure we process all
             # input and mark the chain finished
             output <- self$get_proc(id)$read_output_lines()
+            
             self$process_sample_output(output, id)
             error_output <- self$get_proc(id)$read_error_lines()
             self$process_error_output(error_output, id)

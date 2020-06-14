@@ -694,3 +694,22 @@ CmdStanVB <- R6::R6Class(
   )
 )
 
+# CmdStanGQ <- R6::R6Class(
+#   classname = "CmdStanGQ",
+#   inherit = CmdStanFit,
+#   public = list(
+#     generated_quantities = function() {
+#       x <- self$draws()
+#       x <- x[, colnames(x) != "lp__"]
+#       estimate <- setNames(as.numeric(x), nm = posterior::variables(x))
+#       estimate
+#     }
+#   ),
+#   private = list(
+#     read_csv_ = function() {
+#       optim_output <- read_optim_csv(self$output_files())
+#       private$draws_ <- optim_output[["draws"]]
+#       invisible(self)
+#     }
+#   )
+# )

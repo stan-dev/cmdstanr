@@ -834,6 +834,63 @@ variational_method <- function(data = NULL,
 }
 CmdStanModel$set("public", name = "variational", value = variational_method)
 
+#' Run Stan's standalone generated quantities method
+#'
+#' @name model-method-generate-quantities
+#' @aliases generate_quantities
+#' @family CmdStanModel methods
+#'
+#' @description The `$generate_quantities()` method of a [`CmdStanModel`] object runs
+#'   Stan's standalone generated quantites to obtain generated quantities based on
+#'   previously fitted parameters.
+#'
+#' @details 
+#'
+#'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
+#'
+#' @section Usage:
+#'   ```
+#'   $generate_quantities(
+#'     fitted_params = NULL,
+#'     data = NULL
+#'   )
+#'   ```
+#'
+#' @template model-common-args
+#' @section 
+#'
+#' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
+#'
+#' @template seealso-docs
+#' @inherit cmdstan_model examples
+#'
+NULL
+
+generate_quantities_method <- function(fitted_params = NULL,
+                            data = NULL,
+                            seed = NULL,
+                            refresh = NULL,
+                            output_dir = NULL) {
+  generate_quantities_args <- GenerateQuantitiesArgs$new(
+    fitted_params = fitted_params # TODO(process_fitted_params)
+  )
+  cmdstan_args <- CmdStanArgs$new(
+    method_args = generate_quantities_args,
+    model_name = strip_ext(basename(self$exe_file())),
+    exe_file = self$exe_file(),
+    run_ids = 1,
+    data_file = data, #process_data(data),
+    seed = seed,
+    refresh = refresh,
+    output_dir = output_dir
+  )
+
+  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  print(runset$run_cmdstan())
+  #CmdStanMLE$new(runset)
+}
+CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities_method)
 
 # Internals ---------------------------------------------------------------
 
