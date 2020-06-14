@@ -565,6 +565,7 @@ sample_method <- function(data = NULL,
     save_latent_dynamics <- save_extra_diagnostics
   }
   checkmate::assert_integerish(chains, lower = 1, len = 1)
+  checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
   # check if model was not compiled with threading
   if (is.null(self$cpp_options()[["stan_threads"]])) {
@@ -608,7 +609,7 @@ sample_method <- function(data = NULL,
     output_dir = output_dir,
     validate_csv = validate_csv
   )
-  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = parallel_chains, threads_per_chain = threads_per_chain)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, parallel_runs = parallel_chains, threads_per_run = threads_per_chain)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
@@ -697,7 +698,7 @@ optimize_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
 
@@ -822,7 +823,7 @@ variational_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
 

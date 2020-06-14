@@ -175,15 +175,12 @@ CmdStanRun <- R6::R6Class(
         stop("Not yet implemented for ", self$method(), " method.",
              call. = FALSE)
       }
-
-      procs <- self$procs
-      info <- procs$chain_info()
-      info <- info[procs$is_finished(), ]
+     
       chain_time <- data.frame(
-        chain_id = info$id,
-        warmup = info$warmup_time,
-        sampling = info$sampling_time,
-        total = info$total_time
+        chain_id = self$procs$run_ids()[self$procs$is_finished()],
+        warmup = self$procs$chain_warmup_time()[self$procs$is_finished()],
+        sampling = self$procs$chain_sampling_time()[self$procs$is_finished()],
+        total = self$procs$chain_total_time()[self$procs$is_finished()]
       )
 
       if (isTRUE(self$args$refresh == 0)) {
@@ -193,7 +190,7 @@ CmdStanRun <- R6::R6Class(
         chain_time$sampling <- NA_real_
       }
 
-      list(total = procs$total_time(), chains = chain_time)
+      list(total = self$procs$total_time(), chains = chain_time)
     }
   ),
   private = list(
@@ -219,28 +216,27 @@ CmdStanRun <- R6::R6Class(
   }
   if (procs$num_runs() == 1) {
     start_msg <- "Running MCMC with 1 chain"
-  } else if (procs$num_runs() == procs$num_cores()) {
+  } else if (procs$num_runs() == procs$parallel_runs()) {
     start_msg <- paste0("Running MCMC with ", procs$num_runs(), " parallel chains")
   } else {
-    if (procs$num_cores() == 1) {
+    if (procs$parallel_runs() == 1) {
       start_msg <- paste0("Running MCMC with ", procs$num_runs(), " sequential chains")
     } else {
-      start_msg <- paste0("Running MCMC with ", procs$num_runs(), " chains, at most ", procs$num_cores(), " in parallel")
+      start_msg <- paste0("Running MCMC with ", procs$num_runs(), " chains, at most ", procs$parallel_runs(), " in parallel")
     }
   }
-  if (is.null(procs$threads_per_chain())) {
+  if (is.null(procs$threads_per_run())) {
     cat(paste0(start_msg, "...\n\n"))
   } else {
-    cat(paste0(start_msg, ", with ", procs$threads_per_chain(), " thread(s) per chain...\n\n"))
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_chain()))
+    cat(paste0(start_msg, ", with ", procs$threads_per_run(), " thread(s) per chain...\n\n"))
+    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_run()))
   }
   start_time <- Sys.time()
   chains <- procs$run_ids()
   chain_ind <- 1
   while (!procs$all_finished()) {
-
     # if we have free cores and any leftover chains
-    while (procs$active_cores() != procs$num_cores() &&
+    while (procs$active_runs() != procs$parallel_runs() &&
            procs$any_queued()) {
       chain_id <- chains[chain_ind]
       procs$new_proc(
@@ -250,13 +246,13 @@ CmdStanRun <- R6::R6Class(
         wd = dirname(self$exe_file())
       )
       procs$mark_chain_start(chain_id)
-      procs$set_active_cores(procs$active_cores() + 1)
+      procs$set_active_runs(procs$active_runs() + 1)
       chain_ind <- chain_ind + 1
     }
-    start_active_cores <- procs$active_cores()
+    start_active_runs <- procs$active_runs()
 
-    while (procs$active_cores() == start_active_cores &&
-           procs$active_cores() > 0) {
+    while (procs$active_runs() == start_active_runs &&
+           procs$active_runs() > 0) {
       procs$wait(0.1)
       procs$poll(0)
       for (chain_id in chains) {
@@ -267,7 +263,7 @@ CmdStanRun <- R6::R6Class(
           procs$process_error_output(error_output, chain_id)
         }
       }
-      procs$set_active_cores(procs$num_alive())
+      procs$set_active_runs(procs$num_alive())
     }
   }
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
@@ -308,41 +304,43 @@ CmdStanProcs <- R6::R6Class(
   public = list(
     # @param num_runs The number of CmdStan runs. For MCMC this is the number of
     #   chains. Currently for other methods this must be set to 1.
-    # @param num_cores The number of cores for running MCMC chains in parallel.
-    #   Currently for other method this must be set to 1.
-    # @param threads_per_chain The number of threads to use per MCMC chain
-    #   to run parallel sections of model. 
-    initialize = function(num_runs, num_cores, threads_per_chain = NULL) {
+    # @param parallel_runs The maximum number of run to run in parallel.
+    #   Currently for non-sampling this must be set to 1.
+    # @param threads_per_run The number of threads to use in each run
+    #   for its parallel sections.
+    initialize = function(num_runs, parallel_runs = NULL, threads_per_run = NULL) {
       checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
-      checkmate::assert_integerish(num_cores, lower = 1, len = 1, any.missing = FALSE,
-                                   .var.name = "parallel_chains")
-      checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE,
-                                   .var.name = "threads_per_chain")
+      checkmate::assert_integerish(parallel_runs, lower = 1, len = 1, any.missing = FALSE,
+                                   .var.name = "parallel_runs", null.ok = TRUE)
+      checkmate::assert_integerish(threads_per_run, lower = 1, len = 1, null.ok = TRUE,
+                                   .var.name = "threads_per_run")
       private$num_runs_ <- as.integer(num_runs)
-      private$num_cores_ <- as.integer(num_cores)
-      private$threads_per_chain_ <- threads_per_chain
-      private$active_cores_ <- 0
+      if (is.null(parallel_runs)) {
+        private$parallel_runs_ <- private$num_runs_
+      } else {
+        private$parallel_runs_ <- as.integer(parallel_runs)
+      }
+      private$threads_per_run_ <- threads_per_run
+      private$active_runs_ <- 0
       private$run_ids_ <- seq_len(num_runs)
       zeros <- rep(0, num_runs)
-      private$chain_info_ <- data.frame(
-        id = private$run_ids_,
-        state = zeros,
-        start_time = zeros,
-        warmup_time = zeros,
-        sampling_time = zeros,
-        total_time = zeros,
-        last_section_start_time = zeros
-      )
+      names(zeros) <- private$run_ids_
+      private$chain_state_ = zeros
+      private$chain_start_time_ = zeros
+      private$chain_total_time_ = zeros
+      private$chain_warmup_time_ = zeros
+      private$chain_sampling_time_ = zeros
+      private$chain_last_section_start_time_ = zeros
       invisible(self)
     },
     num_runs = function() {
       private$num_runs_
     },
-    num_cores = function() {
-      private$num_cores_
+    parallel_runs = function() {
+      private$parallel_runs_
     },
-    threads_per_chain = function() {
-      private$threads_per_chain_
+    threads_per_run = function() {
+      private$threads_per_run_
     },
     run_ids = function() {
       private$run_ids_
@@ -373,17 +371,30 @@ CmdStanProcs <- R6::R6Class(
       )
       invisible(self)
     },
-    active_cores = function() {
-      private$active_cores_
+    active_runs = function() {
+      private$active_runs_
     },
-    set_active_cores = function(cores) {
-      private$active_cores_ <- cores
-      invisible(self)
+    set_active_runs = function(runs) {
+      private$active_runs_ <- runs
+      invisible(NULL)
     },
-    total_chain_times = function() {
-      # vector of total times (length is number of chains)
-      info <- self$chain_info()
-      info[self$is_finished(), "total_time"]
+    chain_total_time = function(id = NULL) {
+      if (is.null(id)) {
+        return(private$chain_total_time_[self$is_finished()])
+      }
+      private$chain_total_time_[[id]]
+    },
+    chain_warmup_time = function(id = NULL) {
+      if (is.null(id)) {
+        return(private$chain_warmup_time_[self$is_finished()])
+      }
+      private$chain_warmup_time_[[id]]
+    },
+    chain_sampling_time = function(id = NULL) {
+      if (is.null(id)) {
+        return(private$chain_sampling_time_[self$is_finished()])
+      }
+      private$chain_sampling_time_[[id]]
     },
     total_time = function() {
       # scalar overall time
@@ -438,9 +449,6 @@ CmdStanProcs <- R6::R6Class(
     any_queued = function() {
       any(self$is_queued())
     },
-    chain_info = function() {
-      private$chain_info_
-    },
     chain_output = function(id = NULL) {
       out <- private$chain_output_
       if (is.null(id)) {
@@ -449,29 +457,25 @@ CmdStanProcs <- R6::R6Class(
       out[[id]]
     },
     chain_state = function(id = NULL) {
-      states <- self$chain_info()$state
       if (is.null(id)) {
-        return(states)
+        return(private$chain_state_)
       }
-      states[id]
+      private$chain_state_[[id]]
     },
     mark_chain_start = function(id) {
-      id <- as.character(id)
-      private$chain_info_[id,"start_time"] <- Sys.time()
-      private$chain_info_[id,"state"] <- 1
-      private$chain_info_[id,"last_section_start_time"] <- private$chain_info_[id,"start_time"]
+      private$chain_start_time_[[id]] <- Sys.time()
+      private$chain_state_[[id]] <- 1
+      private$chain_last_section_start_time_[[id]] <- private$chain_start_time_[[id]]
       private$chain_output_[[id]] <- c("")
       invisible(self)
     },
     mark_chain_stop = function(id) {
-      id <- as.character(id)
-      if (private$chain_info_[id,"state"] == 5) {
-        private$chain_info_[id,"state"] <- 6
-        private$chain_info_[id,"total_time"] <- as.double((Sys.time() - private$chain_info_[id,"start_time"]), units = "secs")
-
+      if (private$chain_state_[[id]] == 5) {
+        private$chain_state_[[id]] <- 6
+        private$chain_total_time_[[id]] <- as.double((Sys.time() - private$chain_start_time_[[id]]), units = "secs")
         self$report_time(id)
       } else {
-        private$chain_info_[id,"state"] <- 7
+        private$chain_state_[[id]] <- 7
         warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
       }
       invisible(self)
@@ -490,15 +494,14 @@ CmdStanProcs <- R6::R6Class(
       }
     },
     process_sample_output = function(out, id) {
-      id <- as.character(id)
       if (length(out) == 0) {
         return(NULL)
       }
       for (line in out) {
         private$chain_output_[[id]] <- c(private$chain_output_[[id]], line)
         if (nzchar(line)) {
-          last_section_start_time <- private$chain_info_[id,"last_section_start_time"]
-          state <- private$chain_info_[id,"state"]
+          last_section_start_time <- private$chain_last_section_start_time_[[id]]
+          state <- private$chain_state_[[id]]
           # State machine for reading stdout.
           # 0 - chain has not started yet
           # 1 - chain is initializing (before iterations) and no output is printed
@@ -517,23 +520,23 @@ CmdStanProcs <- R6::R6Class(
           if (state < 3 && regexpr("Iteration:", line, perl = TRUE) > 0) {
             state <- 3 # 3 =  warmup
             next_state <- 3
-            private$chain_info_[id,"last_section_start_time"] <- Sys.time()
+            private$chain_last_section_start_time_[[id]] <- Sys.time()
           }
           if (state < 3 && regexpr("Elapsed Time:", line, perl = TRUE) > 0) {
             state <- 5 # 5 = end of samp+ling
             next_state <- 5
           }
-          if (private$chain_info_[id,"state"] == 3 &&
+          if (private$chain_state_[[id]] == 3 &&
               regexpr("(Sampling)", line, perl = TRUE) > 0) {
             next_state <- 4 # 4 = sampling
-            private$chain_info_[id,"warmup_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
-            private$chain_info_[id,"last_section_start_time"] <- Sys.time()
+            private$chain_warmup_time_[[id]] <- as.double((Sys.time() - last_section_start_time), units = "secs")
+            private$chain_last_section_start_time_[[id]] <- Sys.time()
           }
           if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
             if (state == 3) { #warmup only run
-              private$chain_info_[id,"warmup_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
+              private$chain_warmup_time_[[id]] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             } else if (state == 4) { # sampling
-              private$chain_info_[id,"sampling_time"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
+              private$chain_sampling_time_[[id]] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             }
             next_state <- 5 # writing csv and finishing
           }
@@ -551,7 +554,7 @@ CmdStanProcs <- R6::R6Class(
             }
             message("Chain ", id, " ", line)
           }
-          private$chain_info_[id,"state"] <- next_state
+          private$chain_state_[[id]] <- next_state
         }
       }
       invisible(self)
@@ -559,7 +562,7 @@ CmdStanProcs <- R6::R6Class(
     report_time = function(id = NULL) {
       if (!is.null(id)) {
         cat("Chain", id, "finished in",
-            format(round(mean(self$chain_info()[id,"total_time"]), 1), nsmall = 1),
+            format(round(self$chain_total_time(id), 1), nsmall = 1),
             "seconds.\n")
         return(invisible(self))
       }
@@ -574,7 +577,7 @@ CmdStanProcs <- R6::R6Class(
             cat("\nAll", num_chains, "chains finished successfully.\n")
           }
           cat("Mean chain execution time:",
-              format(round(mean(self$total_chain_times()), 1), nsmall = 1),
+              format(round(mean(self$chain_total_time()), 1), nsmall = 1),
               "seconds.\n")
           cat("Total execution time:",
               format(round(self$total_time(), 1), nsmall = 1),
@@ -603,10 +606,15 @@ CmdStanProcs <- R6::R6Class(
     processes_ = NULL, # will be list of processx::process objects
     run_ids_ = integer(),
     num_runs_ = integer(),
-    num_cores_ = integer(),
-    threads_per_chain_ = integer(),
-    active_cores_ = integer(),
-    chain_info_ = data.frame(),
+    parallel_runs_ = integer(),
+    threads_per_run_ = integer(),
+    active_runs_ = integer(),
+    chain_state_ = NULL,
+    chain_start_time_ = NULL,
+    chain_total_time_ = NULL,
+    chain_warmup_time_ = NULL,
+    chain_sampling_time_ = NULL,
+    chain_last_section_start_time_ = NULL,
     chain_output_ = list(),
     total_time_ = numeric()
   )
