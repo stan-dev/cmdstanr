@@ -63,6 +63,20 @@ CmdStanFit <- R6::R6Class(
       }
       summary
     },
+
+    print = function(variables = NULL, ..., digits = 2) {
+      # print summary table without using tibbles
+      out <- self$summary(variables, ...)
+      out <- as.data.frame(out)
+      rownames(out) <- out$variable
+      out$variable <- NULL
+      out <- format(round(out, digits = digits), nsmall = digits)
+      for (col in c("rhat", "ess_bulk", "ess_tail")) {
+        if (col %in% colnames(out)) out[[col]] <- as.integer(out[[col]])
+      }
+      print(out)
+    },
+
     cmdstan_summary = function(...) {
       self$runset$run_cmdstan_tool("stansummary", ...)
     },
@@ -265,13 +279,20 @@ NULL
 #'   from the \pkg{posterior} package. For MCMC only post-warmup draws are
 #'   included in the summary.
 #'
+#'   The `$print()` method is a wrapper around the `$summary()` method that
+#'   removes the extra formatting used for printing tibbles.
+#'
 #' @section Usage:
 #'   ```
-#'   $summary(...)
+#'   $summary(variables = NULL, ...)
+#'   $print(variables = NULL, ..., digits = 2)
 #'   ```
 #' @section Arguments:
+#' * `variables`: (character vector) The variables to include.
 #' * `...`: Optional arguments to pass to
 #' [`posterior::summarise_draws()`][posterior::draws_summary].
+#' * `digits`: (integer) For `print` only, the number of digits to use for
+#' rounding.
 #'
 #' @section Value:
 #' See [`posterior::summarise_draws()`][posterior::draws_summary].
@@ -282,7 +303,14 @@ NULL
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic")
 #' fit$summary()
-#' fit$summary(c("mean", "sd"))
+#' fit$print()
+#'
+#' # include only certain variables
+#' fit$summary("beta")
+#' fit$print(c("alpha", "beta[2]"))
+#'
+#' # include all variables but only certain summaries
+#' fit$summary(NULL, c("mean", "sd"))
 #' }
 #'
 NULL
