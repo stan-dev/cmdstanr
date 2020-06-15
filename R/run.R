@@ -225,11 +225,11 @@ CmdStanRun <- R6::R6Class(
       start_msg <- paste0("Running MCMC with ", procs$num_runs(), " chains, at most ", procs$parallel_runs(), " in parallel")
     }
   }
-  if (is.null(procs$threads_per_run())) {
+  if (is.null(self$threads_per_chain())) {
     cat(paste0(start_msg, "...\n\n"))
   } else {
-    cat(paste0(start_msg, ", with ", procs$threads_per_run(), " thread(s) per chain...\n\n"))
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_run()))
+    cat(paste0(start_msg, ", with ", self$threads_per_chain(), " thread(s) per chain...\n\n"))
+    Sys.setenv("STAN_NUM_THREADS" = as.integer(self$threads_per_chain()))
   }
   start_time <- Sys.time()
   chains <- procs$run_ids()
@@ -308,19 +308,16 @@ CmdStanProcs <- R6::R6Class(
     #   Currently for non-sampling this must be set to 1.
     # @param threads_per_run The number of threads to use in each run
     #   for its parallel sections.
-    initialize = function(num_runs, parallel_runs = NULL, threads_per_run = NULL) {
+    initialize = function(num_runs, parallel_runs = NULL) {
       checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_runs, lower = 1, len = 1, any.missing = FALSE,
                                    .var.name = "parallel_runs", null.ok = TRUE)
-      checkmate::assert_integerish(threads_per_run, lower = 1, len = 1, null.ok = TRUE,
-                                   .var.name = "threads_per_run")
       private$num_runs_ <- as.integer(num_runs)
       if (is.null(parallel_runs)) {
         private$parallel_runs_ <- private$num_runs_
       } else {
         private$parallel_runs_ <- as.integer(parallel_runs)
       }
-      private$threads_per_run_ <- threads_per_run
       private$active_runs_ <- 0
       private$run_ids_ <- seq_len(num_runs)
       zeros <- rep(0, num_runs)
@@ -338,9 +335,6 @@ CmdStanProcs <- R6::R6Class(
     },
     parallel_runs = function() {
       private$parallel_runs_
-    },
-    threads_per_run = function() {
-      private$threads_per_run_
     },
     run_ids = function() {
       private$run_ids_
@@ -607,7 +601,6 @@ CmdStanProcs <- R6::R6Class(
     run_ids_ = integer(),
     num_runs_ = integer(),
     parallel_runs_ = integer(),
-    threads_per_run_ = integer(),
     active_runs_ = integer(),
     chain_state_ = NULL,
     chain_start_time_ = NULL,

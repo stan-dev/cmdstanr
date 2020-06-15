@@ -594,7 +594,8 @@ sample_method <- function(data = NULL,
     init_buffer = init_buffer,
     term_buffer = term_buffer,
     window = window,
-    fixed_param = fixed_param
+    fixed_param = fixed_param,
+    threads_per_chain = threads_per_chain
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = sample_args,
@@ -607,9 +608,9 @@ sample_method <- function(data = NULL,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
-    validate_csv = validate_csv
+    validate_csv = validate_csv    
   )
-  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, parallel_runs = parallel_chains, threads_per_run = threads_per_chain)
+  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, parallel_runs = parallel_chains)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
