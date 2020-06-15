@@ -82,13 +82,19 @@ included in the summary." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9004</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9005</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
+  <a href="../index.html">
+    <span class="fa fa-home fa-lg"></span>
+     
+  </a>
+</li>
+<li>
   <a href="../articles/index.html">Vignettes</a>
 </li>
 <li>
@@ -201,9 +207,24 @@ included in the summary.</p>
     <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'># fit$summary()
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>summary</span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 5 x 10</span><span>
+#&gt;   variable    mean  median    sd   mad       q5      q95  rhat ess_bulk ess_tail
+#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__     -</span><span style='color: #BB0000;'>65.9</span><span>   -</span><span style='color: #BB0000;'>65.6</span><span>   1.41  1.23  -</span><span style='color: #BB0000;'>68.7</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>     1.00    </span><span style='text-decoration: underline;'>2</span><span>201.    </span><span style='text-decoration: underline;'>2</span><span>896.
+#&gt; </span><span style='color: #BCBCBC;'>2</span><span> alpha      0.378   0.377 0.215 0.212   0.025</span><span style='text-decoration: underline;'>7</span><span>   0.738   1.00    </span><span style='text-decoration: underline;'>4</span><span>068.    </span><span style='text-decoration: underline;'>2</span><span>995.
+#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.664</span><span>  -</span><span style='color: #BB0000;'>0.662</span><span> 0.250 0.244  -</span><span style='color: #BB0000;'>1.09</span><span>    -</span><span style='color: #BB0000;'>0.265</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>421.    </span><span style='text-decoration: underline;'>3</span><span>013.
+#&gt; </span><span style='color: #BCBCBC;'>4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.276</span><span>  -</span><span style='color: #BB0000;'>0.274</span><span> 0.226 0.232  -</span><span style='color: #BB0000;'>0.653</span><span>    0.088</span><span style='text-decoration: underline;'>3</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>042.    </span><span style='text-decoration: underline;'>3</span><span>181.
+#&gt; </span><span style='color: #BCBCBC;'>5</span><span> beta[3]    0.688   0.681 0.266 0.263   0.253    1.14    1.00    </span><span style='text-decoration: underline;'>4</span><span>212.    </span><span style='text-decoration: underline;'>3</span><span>444.</div><div class='input'><span class='no'>fit</span>$<span class='fu'>summary</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"mean"</span>, <span class='st'>"sd"</span>))</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 5 x 3</span><span>
+#&gt;   variable    mean    sd
+#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__     -</span><span style='color: #BB0000;'>65.9</span><span>   1.41 
+#&gt; </span><span style='color: #BCBCBC;'>2</span><span> alpha      0.378 0.215
+#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.664</span><span> 0.250
+#&gt; </span><span style='color: #BCBCBC;'>4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.276</span><span> 0.226
+#&gt; </span><span style='color: #BCBCBC;'>5</span><span> beta[3]    0.688 0.266</div><div class='input'># }
 
-</div></pre>
+</div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
