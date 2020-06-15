@@ -13,10 +13,21 @@ test_that("summary() method works after vb", {
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
 
-  x <- fit_vb$summary(c("mean", "sd"))
+  x <- fit_vb$summary(variables = NULL, c("mean", "sd"))
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
   expect_equal(colnames(x), c("variable", "mean", "sd"))
+})
+
+test_that("print() method works after vb", {
+  skip_on_cran()
+  x <- fit_vb$print()
+  expect_s3_class(x, "data.frame")
+  expect_equal(rownames(x), c("lp__", "lp_approx__", PARAM_NAMES))
+
+  x <- fit_vb$print(c("lp__", "lp_approx__"), c("mean", "sd"))
+  expect_equal(rownames(x), c("lp__", "lp_approx__"))
+  expect_equal(colnames(x), c("mean", "sd"))
 })
 
 test_that("draws() method returns posterior sample (reading csv works)", {
@@ -43,7 +54,7 @@ test_that("vb works with scientific notation args", {
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
 
-  x <- fit_vb_sci_not$summary(c("mean", "sd"))
+  x <- fit_vb_sci_not$summary(variables = NULL, c("mean", "sd"))
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
   expect_equal(colnames(x), c("variable", "mean", "sd"))

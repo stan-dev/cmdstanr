@@ -14,9 +14,24 @@ test_that("mle and lp methods work after optimization", {
 
 test_that("summary method doesn't error for optimization", {
   skip_on_cran()
-  # summary method for optimization isn't fully designed yet
   x <- fit_mle$summary()
   expect_s3_class(x, "draws_summary")
   expect_equal(colnames(x), c("variable", "estimate"))
   expect_equal(x$variable, c("lp__", PARAM_NAMES))
+
+  x <- fit_mle$summary("lp__")
+  expect_equal(colnames(x), c("variable", "estimate"))
+  expect_equal(x$variable, "lp__")
+})
+
+test_that("print method works error for optimization", {
+  skip_on_cran()
+  x <- fit_mle$print()
+  expect_s3_class(x, "data.frame")
+  expect_equal(colnames(x), "estimate")
+  expect_equal(rownames(x), c("lp__", PARAM_NAMES))
+
+  x <- fit_mle$print("lp__")
+  expect_equal(colnames(x), c("estimate"))
+  expect_equal(rownames(x), "lp__")
 })
