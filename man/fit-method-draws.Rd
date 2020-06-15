@@ -48,36 +48,17 @@ stored in the \code{draws_matrix} format.
 
 \examples{
 \dontrun{
-stan_program <- tempfile(fileext=".stan")
-cat("
-parameters {
-  real<lower=0> alpha;
-  vector[6] beta;
-}
-model {
- alpha ~ exponential(1);
- beta ~ std_normal();
-}
-", file = stan_program)
-
-# only using capture.output to avoid too much printed output in example
-out <- utils::capture.output(
-  mod <- cmdstan_model(stan_program),
-  fit <- mod$sample(save_warmup=TRUE)
-)
+# logistic regression with intercept alpha and coefficients beta
+fit <- cmdstanr_example("logistic")
 
 # returned as 3-D array (see ?posterior::draws_array)
 draws <- fit$draws()
 dim(draws)
 str(draws)
 
-# can easily convert to other formats that have chains combined,
-# e.g. matrix, data frame, list
+# can easily convert to other formats (data frame, matrix, list)
 library("posterior")
-draws <- fit$draws()
-as_draws_matrix(draws)
-as_draws_df(draws)
-as_draws_list(draws)
+as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
 
 # can select specific parameters
 fit$draws("alpha")

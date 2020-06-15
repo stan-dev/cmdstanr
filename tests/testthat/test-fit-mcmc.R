@@ -19,6 +19,7 @@ if (not_on_cran()) {
 
 
 test_that("draws() stops for unkown variables", {
+  skip_on_cran()
   expect_error(
     draws_betas <- fit_mcmc$draws(variables = "ABCD"),
     "Can't find the following variable(s) in the sampling output: ABCD",

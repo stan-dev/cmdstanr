@@ -1,12 +1,5 @@
-expect_experimental_message <- function(object) {
-  expect_message(
-    object,
-    regexp = "experimental and the structure of returned object may change"
-  )
-}
-
 expect_sample_output <- function(object, num_chains = NULL) {
-  
+
   output <- "Running MCMC with"
   if (!is.null(num_chains)) {
     if (num_chains == 1) {
@@ -19,19 +12,15 @@ expect_sample_output <- function(object, num_chains = NULL) {
 }
 
 expect_optim_output <- function(object) {
-  expect_experimental_message(
-    expect_output(
-      object,
-      regexp = "Initial log joint probability"
-    )
+  expect_output(
+    object,
+    regexp = "Initial log joint probability"
   )
 }
 
 expect_vb_output <- function(object) {
-  expect_experimental_message(
-    expect_output(
-      object,
-      regexp = "Drawing a sample of size"
-    )
+  expect_output(
+    object,
+    regexp = "Drawing a sample of size"
   )
 }

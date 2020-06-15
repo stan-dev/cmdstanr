@@ -28,7 +28,11 @@ See \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
 }
 
 \examples{
-# fit$summary()
+\dontrun{
+fit <- cmdstanr_example("logistic")
+fit$summary()
+fit$summary(c("mean", "sd"))
+}
 
 }
 \seealso{

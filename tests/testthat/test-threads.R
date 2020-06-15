@@ -1,4 +1,4 @@
-context("model-sample")
+context("threading")
 
 if (not_on_cran()) {
   set_cmdstan_path()
