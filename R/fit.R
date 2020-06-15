@@ -432,7 +432,8 @@ CmdStanMCMC <- R6::R6Class(
     initialize = function(runset) {
       super$initialize(runset)
       if (!length(self$output_files())) {
-        warning("No chains finished successfully. Unable to retrieve the fit.")
+        warning("No chains finished successfully. Unable to retrieve the fit.",
+                call. = FALSE)
       } else {
         if (self$runset$args$validate_csv && !runset$args$method_args$fixed_param) {
           data_csv <- read_sample_csv(
