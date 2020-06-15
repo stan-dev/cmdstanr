@@ -11,4 +11,7 @@ test_that("cmdstanr_example works", {
 
   fit_vb <- cmdstanr_example("logistic", method = "variational")
   checkmate::expect_r6(fit_vb, "CmdStanVB")
+
+  expect_output(print_example_program("schools"), "vector[J] theta", fixed=TRUE)
+  expect_output(print_example_program("schools_ncp"), "vector[J] theta_raw", fixed=TRUE)
 })
