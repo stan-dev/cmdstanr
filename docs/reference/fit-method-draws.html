@@ -85,13 +85,19 @@ log probability (target) accumulated in the model block." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9004</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9005</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
+  <a href="../index.html">
+    <span class="fa fa-home fa-lg"></span>
+     
+  </a>
+</li>
+<li>
   <a href="../articles/index.html">Vignettes</a>
 </li>
 <li>
@@ -221,165 +227,96 @@ stored in the <code>draws_matrix</code> format.</p></li>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>(<span class='kw'>fileext</span><span class='kw'>=</span><span class='st'>".stan"</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='st'>"
-parameters {
-  real&lt;lower=0&gt; alpha;
-  vector[6] beta;
-}
-model {
- alpha ~ exponential(1);
- beta ~ std_normal();
-}
-"</span>, <span class='kw'>file</span> <span class='kw'>=</span> <span class='no'>stan_program</span>)
-
-<span class='co'># only using capture.output to avoid too much printed output in example</span>
-<span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>utils</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/r/utils/capture.output.html'>capture.output</a></span>(
-  <span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>stan_program</span>),
-  <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(<span class='kw'>save_warmup</span><span class='kw'>=</span><span class='fl'>TRUE</span>)
-)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'>
+<span class='co'># logistic regression with intercept alpha and coefficients beta</span>
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'>
 <span class='co'># returned as 3-D array (see ?posterior::draws_array)</span>
 <span class='no'>draws</span> <span class='kw'>&lt;-</span> <span class='no'>fit</span>$<span class='fu'>draws</span>()
-<span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; [1] 1000    4    8</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:8] -5.62 -3.52 -3.37 -2.78 -2.23 ...
+<span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; [1] 1000    4    5</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:5] -66.9 -64.7 -66.7 -66.1 -65.3 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
-#&gt;   ..$ variable : chr [1:8] "lp__" "alpha" "beta[1]" "beta[2]" ...</div><div class='input'>
-<span class='co'># can easily convert to other formats that have chains combined,</span>
-<span class='co'># e.g. matrix, data frame, list</span>
+#&gt;   ..$ variable : chr [1:5] "lp__" "alpha" "beta[1]" "beta[2]" ...</div><div class='input'>
+<span class='co'># can easily convert to other formats (data frame, matrix, list)</span>
 <span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='st'>"posterior"</span>)</div><div class='output co'>#&gt; <span class='message'>This is posterior version 0.1.0</span></div><div class='output co'>#&gt; <span class='message'></span>
 #&gt; <span class='message'>Attaching package: ‘posterior’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:rstan’:</span>
 #&gt; <span class='message'></span>
-#&gt; <span class='message'>    ess_bulk, ess_tail</span></div><div class='input'><span class='no'>draws</span> <span class='kw'>&lt;-</span> <span class='no'>fit</span>$<span class='fu'>draws</span>()
-<span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_matrix.html'>as_draws_matrix</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; # A draws_matrix: 4000 draws, and 8 variables
-#&gt;     variable
-#&gt; draw lp__ alpha beta[1] beta[2] beta[3] beta[4] beta[5] beta[6]
-#&gt;   1  -5.6  4.46  -1.141    0.61   0.679  -0.858  -1.484   0.484
-#&gt;   2  -3.5  0.44  -0.385   -0.41   1.506  -0.764  -0.340  -1.105
-#&gt;   3  -3.4  1.19  -0.933   -1.01  -0.449  -0.619  -1.489   0.016
-#&gt;   4  -2.8  0.77   0.948    1.01   0.449   0.559   1.032   0.058
-#&gt;   5  -2.2  0.30   1.058   -0.56  -0.099   0.134  -0.107  -0.015
-#&gt;   6  -3.4  0.26   0.286    1.32   0.795  -0.880  -0.088   0.563
-#&gt;   7  -3.8  2.05  -0.056   -1.04  -1.941   0.141   0.064  -0.309
-#&gt;   8  -6.8  4.52  -0.737   -0.83  -0.478   0.082   2.464  -0.115
-#&gt;   9  -4.0  3.77   0.325   -1.22  -0.039  -0.683   1.060   0.175
-#&gt;   10 -5.4  4.81  -1.206   -0.73   0.394  -0.991   1.017   0.490
-#&gt; # ... with 3990 more draws</div><div class='input'><span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 8 variables
-#&gt;    lp__ alpha beta[1] beta[2] beta[3] beta[4] beta[5] beta[6]
-#&gt; 1  -5.6  4.46  -1.141    0.61   0.679  -0.858  -1.484   0.484
-#&gt; 2  -3.5  0.44  -0.385   -0.41   1.506  -0.764  -0.340  -1.105
-#&gt; 3  -3.4  1.19  -0.933   -1.01  -0.449  -0.619  -1.489   0.016
-#&gt; 4  -2.8  0.77   0.948    1.01   0.449   0.559   1.032   0.058
-#&gt; 5  -2.2  0.30   1.058   -0.56  -0.099   0.134  -0.107  -0.015
-#&gt; 6  -3.4  0.26   0.286    1.32   0.795  -0.880  -0.088   0.563
-#&gt; 7  -3.8  2.05  -0.056   -1.04  -1.941   0.141   0.064  -0.309
-#&gt; 8  -6.8  4.52  -0.737   -0.83  -0.478   0.082   2.464  -0.115
-#&gt; 9  -4.0  3.77   0.325   -1.22  -0.039  -0.683   1.060   0.175
-#&gt; 10 -5.4  4.81  -1.206   -0.73   0.394  -0.991   1.017   0.490
+#&gt; <span class='message'>    ess_bulk, ess_tail</span></div><div class='input'><span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>draws</span>)  <span class='co'># see also as_draws_matrix, as_draws_list</span></div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 5 variables
+#&gt;    lp__  alpha beta[1] beta[2] beta[3]
+#&gt; 1   -67  0.387   -1.07   -0.41    0.32
+#&gt; 2   -65  0.463   -0.54   -0.32    0.93
+#&gt; 3   -67  0.408   -0.63   -0.79    0.66
+#&gt; 4   -66  0.616   -0.95   -0.41    0.46
+#&gt; 5   -65  0.449   -0.31   -0.15    0.45
+#&gt; 6   -67  0.393   -1.23   -0.42    0.82
+#&gt; 7   -67  0.806   -0.79   -0.42    1.05
+#&gt; 8   -68  0.860   -0.57   -0.41    1.13
+#&gt; 9   -70 -0.077   -0.99   -0.20    0.12
+#&gt; 10  -65  0.283   -0.52   -0.38    0.28
 #&gt; # ... with 3990 more draws
-#&gt; # ... hidden meta-columns {'.chain', '.iteration', '.draw'}</div><div class='input'><span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_list.html'>as_draws_list</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; # A draws_list: 1000 iterations, 4 chains, and 8 variables
-#&gt; 
-#&gt; [chain = 1]
-#&gt; $lp__
-#&gt;  [1] -5.6 -3.5 -3.4 -2.8 -2.2 -3.4 -3.8 -6.8 -4.0 -5.4
-#&gt; 
-#&gt; $alpha
-#&gt;  [1] 4.46 0.44 1.19 0.77 0.30 0.26 2.05 4.52 3.77 4.81
-#&gt; 
-#&gt; $`beta[1]`
-#&gt;  [1] -1.141 -0.385 -0.933  0.948  1.058  0.286 -0.056 -0.737  0.325 -1.206
-#&gt; 
-#&gt; $`beta[2]`
-#&gt;  [1]  0.61 -0.41 -1.01  1.01 -0.56  1.32 -1.04 -0.83 -1.22 -0.73
-#&gt; 
-#&gt; 
-#&gt; [chain = 2]
-#&gt; $lp__
-#&gt;  [1] -2.9 -2.6 -5.8 -3.0 -6.4 -3.9 -4.3 -3.5 -4.4 -3.4
-#&gt; 
-#&gt; $alpha
-#&gt;  [1] 0.44 0.94 0.75 0.78 1.38 0.81 0.21 0.12 1.30 0.13
-#&gt; 
-#&gt; $`beta[1]`
-#&gt;  [1] -0.307  0.618 -1.855  0.098  0.177 -1.024  1.261  0.263 -1.078  0.156
-#&gt; 
-#&gt; $`beta[2]`
-#&gt;  [1]  0.094  1.421 -0.305  1.030  0.106  0.493 -0.277  0.111 -1.189  0.901
-#&gt; 
-#&gt; # ... with 990 more iterations, and 2 more chains, and 4 more variables</div><div class='input'>
+#&gt; # ... hidden meta-columns {'.chain', '.iteration', '.draw'}</div><div class='input'>
 <span class='co'># can select specific parameters</span>
 <span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='st'>"alpha"</span>)</div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 4 chains, and 1 variables
 #&gt; , , variable = alpha
 #&gt; 
 #&gt;          chain
 #&gt; iteration    1    2    3    4
-#&gt;         1 4.46 0.44 2.85 1.80
-#&gt;         2 0.44 0.94 0.26 0.84
-#&gt;         3 1.19 0.75 2.73 1.09
-#&gt;         4 0.77 0.78 0.23 0.58
-#&gt;         5 0.30 1.38 0.62 1.15
+#&gt;         1 0.39 0.30 0.22 0.48
+#&gt;         2 0.46 0.35 0.28 0.56
+#&gt;         3 0.41 0.26 0.30 0.46
+#&gt;         4 0.62 0.28 0.33 0.60
+#&gt;         5 0.45 0.41 0.62 0.14
 #&gt; 
-#&gt; # ... with 995 more iterations</div><div class='input'><span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='st'>"beta"</span>)  <span class='co'># selects entire vector beta</span></div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 4 chains, and 6 variables
+#&gt; # ... with 995 more iterations</div><div class='input'><span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='st'>"beta"</span>)  <span class='co'># selects entire vector beta</span></div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 4 chains, and 3 variables
 #&gt; , , variable = beta[1]
 #&gt; 
 #&gt;          chain
-#&gt; iteration     1      2     3     4
-#&gt;         1 -1.14 -0.307 -0.51  1.19
-#&gt;         2 -0.38  0.618  0.13 -0.32
-#&gt;         3 -0.93 -1.855 -0.29 -0.59
-#&gt;         4  0.95  0.098  0.32  0.14
-#&gt;         5  1.06  0.177 -0.75 -0.27
+#&gt; iteration     1     2     3     4
+#&gt;         1 -1.07 -0.82 -0.69 -0.52
+#&gt;         2 -0.54 -0.74 -0.50 -0.80
+#&gt;         3 -0.63 -0.56 -0.68 -0.84
+#&gt;         4 -0.95 -0.73 -0.47 -0.88
+#&gt;         5 -0.31 -0.55 -1.11 -0.57
 #&gt; 
 #&gt; , , variable = beta[2]
 #&gt; 
 #&gt;          chain
-#&gt; iteration     1      2     3     4
-#&gt;         1  0.61  0.094 -0.41  0.52
-#&gt;         2 -0.41  1.421 -1.33 -1.00
-#&gt;         3 -1.01 -0.305  1.16  2.27
-#&gt;         4  1.01  1.030 -1.09 -2.03
-#&gt;         5 -0.56  0.106  1.50  2.14
+#&gt; iteration     1      2     3       4
+#&gt;         1 -0.41  0.205 -0.79  0.0799
+#&gt;         2 -0.32 -0.562 -0.76 -0.2266
+#&gt;         3 -0.79 -0.158 -0.65 -0.3127
+#&gt;         4 -0.41 -0.363 -0.77 -0.6677
+#&gt;         5 -0.15 -0.011 -0.17 -0.0065
 #&gt; 
 #&gt; , , variable = beta[3]
 #&gt; 
 #&gt;          chain
-#&gt; iteration      1     2     3      4
-#&gt;         1  0.679 -0.77 -0.64 -0.687
-#&gt;         2  1.506 -0.48  1.09  0.045
-#&gt;         3 -0.449  1.81 -0.86  1.183
-#&gt;         4  0.449  0.16  0.73 -1.663
-#&gt;         5 -0.099  0.59 -0.43  1.801
+#&gt; iteration    1    2    3    4
+#&gt;         1 0.32 0.26 1.19 0.65
+#&gt;         2 0.93 1.05 1.04 1.16
+#&gt;         3 0.66 0.37 1.12 0.20
+#&gt;         4 0.46 0.77 0.42 0.90
+#&gt;         5 0.45 1.01 0.84 0.79
 #&gt; 
-#&gt; , , variable = beta[4]
-#&gt; 
-#&gt;          chain
-#&gt; iteration     1      2     3      4
-#&gt;         1 -0.86 -0.017  0.74 -0.414
-#&gt;         2 -0.76 -0.120  1.58  0.054
-#&gt;         3 -0.62 -0.585 -1.46 -0.595
-#&gt;         4  0.56  1.238  1.61  0.990
-#&gt;         5  0.13  1.437 -2.12 -1.089
-#&gt; 
-#&gt; # ... with 995 more iterations, and 2 more variables</div><div class='input'><span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta[2]"</span>))</div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 4 chains, and 2 variables
+#&gt; # ... with 995 more iterations</div><div class='input'><span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta[2]"</span>))</div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 4 chains, and 2 variables
 #&gt; , , variable = alpha
 #&gt; 
 #&gt;          chain
 #&gt; iteration    1    2    3    4
-#&gt;         1 4.46 0.44 2.85 1.80
-#&gt;         2 0.44 0.94 0.26 0.84
-#&gt;         3 1.19 0.75 2.73 1.09
-#&gt;         4 0.77 0.78 0.23 0.58
-#&gt;         5 0.30 1.38 0.62 1.15
+#&gt;         1 0.39 0.30 0.22 0.48
+#&gt;         2 0.46 0.35 0.28 0.56
+#&gt;         3 0.41 0.26 0.30 0.46
+#&gt;         4 0.62 0.28 0.33 0.60
+#&gt;         5 0.45 0.41 0.62 0.14
 #&gt; 
 #&gt; , , variable = beta[2]
 #&gt; 
 #&gt;          chain
-#&gt; iteration     1      2     3     4
-#&gt;         1  0.61  0.094 -0.41  0.52
-#&gt;         2 -0.41  1.421 -1.33 -1.00
-#&gt;         3 -1.01 -0.305  1.16  2.27
-#&gt;         4  1.01  1.030 -1.09 -2.03
-#&gt;         5 -0.56  0.106  1.50  2.14
+#&gt; iteration     1      2     3       4
+#&gt;         1 -0.41  0.205 -0.79  0.0799
+#&gt;         2 -0.32 -0.562 -0.76 -0.2266
+#&gt;         3 -0.79 -0.158 -0.65 -0.3127
+#&gt;         4 -0.41 -0.363 -0.77 -0.6677
+#&gt;         5 -0.15 -0.011 -0.17 -0.0065
 #&gt; 
 #&gt; # ... with 995 more iterations</div><div class='input'># }
 

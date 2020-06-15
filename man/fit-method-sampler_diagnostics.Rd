@@ -30,6 +30,17 @@ variable). The variables for Stan's default MCMC algorithm are
 \code{"divergent__"}, \code{"energy__"}.
 }
 
+\examples{
+\dontrun{
+fit <- cmdstanr_example("logistic")
+sampler_diagnostics <- fit$sampler_diagnostics()
+str(sampler_diagnostics)
+
+library(posterior)
+as_draws_df(sampler_diagnostics)
+}
+
+}
 \seealso{
 \code{\link{CmdStanMCMC}}
 }

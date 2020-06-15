@@ -73,6 +73,7 @@ reference:
       - cmdstan_model
       - CmdStanModel
       - starts_with("model-method")
+      - cmdstanr_example
   - title: "Fitted model objects and methods"
     contents:
       - CmdStanMCMC

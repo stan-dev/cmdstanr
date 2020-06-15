@@ -701,11 +701,6 @@ optimize_method <- function(data = NULL,
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
-
-  message(
-    "Optimization method is experimental and ",
-    "the structure of returned object may change."
-  )
   CmdStanMLE$new(runset)
 }
 CmdStanModel$set("public", name = "optimize", value = optimize_method)
@@ -826,11 +821,6 @@ variational_method <- function(data = NULL,
   cmdstan_procs <- CmdStanProcs$new(num_runs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
-
-  message(
-    "Variational method is experimental and ",
-    "the structure of returned object may change."
-  )
   CmdStanVB$new(runset)
 }
 CmdStanModel$set("public", name = "variational", value = variational_method)
