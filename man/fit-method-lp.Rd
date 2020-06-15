@@ -15,7 +15,14 @@ See the \href{https://mc-stan.org/docs/2_23/reference-manual/sampling-statements
 section of the Stan Reference Manual for details on when normalizing
 constants are dropped from log probability calculations.
 }
-\details{
+\section{Usage}{
+\preformatted{$lp()
+$lp_approx()
+}
+}
+
+\section{Details}{
+
 \code{lp__} is the unnormalized log density on Stan's \href{https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html}{unconstrained space}.
 This will in general be different than the unnormalized model log density
 evaluated at a posterior draw (which is on the constrained space). \code{lp__} is
@@ -26,11 +33,6 @@ intended to diagnose sampling efficiency and evaluate approximations.
 for performing the checks described in Yao et al. (2018) and implemented in
 the \pkg{loo} package.
 }
-\section{Usage}{
-\preformatted{$lp()
-$lp_approx()
-}
-}
 
 \section{Value}{
 
@@ -38,6 +40,19 @@ A numeric vector with length equal to the number of (post-warmup) draws for
 MCMC and variational inference, and length equal to \code{1} for optimization.
 }
 
+\examples{
+\dontrun{
+fit_mcmc <- cmdstanr_example("logistic")
+head(fit_mcmc$lp())
+
+fit_mle <- cmdstanr_example("logistic", method = "optimize")
+fit_mle$lp()
+
+fit_vb <- cmdstanr_example("logistic", method = "variational")
+plot(fit_vb$lp(), fit_vb$lp_approx())
+}
+
+}
 \references{
 Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
 work?: Evaluating variational inference. \emph{Proceedings of the 35th

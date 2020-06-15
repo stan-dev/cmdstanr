@@ -22,8 +22,11 @@ $cmdstan_diagnose()
 }
 
 \examples{
-# fit$cmdstan_summary()
-# fit$cmdstan_diagnose()
+\dontrun{
+fit <- cmdstanr_example("logistic")
+fit$cmdstan_diagnose()
+fit$cmdstan_summary()
+}
 
 }
 \seealso{
