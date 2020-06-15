@@ -34,9 +34,11 @@
 #'
 #' print_example_program("schools")
 #' fit_schools_mcmc <- cmdstanr_example("schools")
+#' fit_schools_mcmc$summary()
 #'
 #' print_example_program("schools_ncp")
-#' fit_schools_mcmc <- cmdstanr_example("schools_ncp")
+#' fit_schools_ncp_mcmc <- cmdstanr_example("schools_ncp")
+#' fit_schools_ncp_mcmc$summary()
 #'
 #' # optimization fails for hierarchical model
 #' cmdstanr_example("schools", "optimize", quiet = FALSE)
