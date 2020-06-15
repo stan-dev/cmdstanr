@@ -8,17 +8,24 @@
 Run \code{\link[posterior:draws_summary]{summarise_draws()}}
 from the \pkg{posterior} package. For MCMC only post-warmup draws are
 included in the summary.
+
+The \verb{$print()} method is a wrapper around the \verb{$summary()} method that
+removes the extra formatting used for printing tibbles.
 }
 \section{Usage}{
-\preformatted{$summary(...)
+\preformatted{$summary(variables = NULL, ...)
+$print(variables = NULL, ..., digits = 2)
 }
 }
 
 \section{Arguments}{
 
 \itemize{
+\item \code{variables}: (character vector) The variables to include.
 \item \code{...}: Optional arguments to pass to
 \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
+\item \code{digits}: (integer) For \code{print} only, the number of digits to use for
+rounding.
 }
 }
 
@@ -31,7 +38,14 @@ See \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
 \dontrun{
 fit <- cmdstanr_example("logistic")
 fit$summary()
-fit$summary(c("mean", "sd"))
+fit$print()
+
+# include only certain variables
+fit$summary("beta")
+fit$print(c("alpha", "beta[2]"))
+
+# include all variables but only certain summaries
+fit$summary(NULL, c("mean", "sd"))
 }
 
 }

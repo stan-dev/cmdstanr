@@ -40,20 +40,21 @@ CmdStanFit <- R6::R6Class(
       private$sampling_info_
     },
 
-    summary = function(...) {
+    summary = function(variables = NULL, ...) {
+      draws <- self$draws(variables)
       if (self$runset$method() == "sample") {
-        summary <- posterior::summarise_draws(self$draws(), ...)
+        summary <- posterior::summarise_draws(draws, ...)
       } else {
         if (!length(list(...))) {
           # if user didn't supply any args use default summary measures,
           # which don't include MCMC-specific things
           summary <- posterior::summarise_draws(
-            self$draws(),
+            draws,
             posterior::default_summary_measures()
           )
         } else {
           # otherwise use whatever the user specified via ...
-          summary <- posterior::summarise_draws(self$draws(), ...)
+          summary <- posterior::summarise_draws(draws, ...)
         }
       }
       if (self$runset$method() == "optimize") {
