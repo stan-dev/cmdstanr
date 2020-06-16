@@ -456,6 +456,43 @@ NULL
 NULL
 
 
+#' Report timing of CmdStan runs
+#'
+#' @name fit-method-time
+#' @aliases time
+#' @description Report the run time in seconds. For MCMC additional information
+#'   is provided about the run times of individual chains and the warmup and
+#'   sampling phases.
+#'
+#' @section Usage:
+#'   ```
+#'   $time()
+#'   ```
+#'
+#' @section Value:
+#' A list with elements
+#' * `total`: (scalar) the total run time.
+#' * `chains`: (data frame) for MCMC only, timing info for the individual
+#' chains. The data frame has columns `"chain_id"`, `"warmup"`, `"sampling"`,
+#' and `"total"`.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$time()
+#'
+#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
+#' fit_mle$time()
+#'
+#' fit_vb <- cmdstanr_example("logistic", method = "variational")
+#' fit_vb$time()
+#' }
+#'
+NULL
+
+
 # CmdStanMCMC -------------------------------------------------------------
 
 #' CmdStanMCMC objects
@@ -495,8 +532,7 @@ NULL
 #'    \tab Save JSON data file to a specified location. \cr
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
-#'  `$time()` \tab Return a list containing the total time and a data frame of
-#'    execution times of all chains (in seconds). \cr
+#'  [`$time()`][fit-method-time] \tab Report total and chain-specific run times. \cr
 #'  `$output()` \tab Return the stdout and stderr of all chains as a list of
 #'    character vectors, or pretty print the output for a single chain if
 #'    `id` argument is specified. \cr
@@ -720,6 +756,7 @@ CmdStanMCMC <- R6::R6Class(
 #'  files to a specified location. \cr
 #'  [`$save_data_file()`][fit-method-save_data_file] \tab Save JSON data file
 #'  to a specified location. \cr
+#'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
 #' }
 #'
 NULL
@@ -779,6 +816,7 @@ CmdStanMLE <- R6::R6Class(
 #'    \tab Save JSON data file to a specified location. \cr
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
+#'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
 #' }
 #'
 NULL

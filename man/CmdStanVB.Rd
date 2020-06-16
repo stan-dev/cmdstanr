@@ -31,6 +31,7 @@ variational approximation to the posterior. \cr
 \tab Save JSON data file to a specified location. \cr
 \code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
 \tab Save diagnostic CSV files to a specified location. \cr
+\code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
 }
 }
 \seealso{

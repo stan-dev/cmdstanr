@@ -29,3 +29,11 @@ test_that("print() method works after optimization", {
   expect_output(expect_s3_class(fit_mle$print(), "CmdStanMLE"), "estimate")
   expect_output(fit_mle$print(max_rows = 1), "# showing 1 of 5 rows")
 })
+
+test_that("time() method works after optimization", {
+  skip_on_cran()
+  run_times <- fit_mle$time()
+  checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
+  testthat::expect_named(run_times, c("total"))
+  checkmate::expect_number(run_times$total, finite = TRUE)
+})
