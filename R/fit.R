@@ -40,20 +40,21 @@ CmdStanFit <- R6::R6Class(
       private$sampling_info_
     },
 
-    summary = function(...) {
+    summary = function(variables = NULL, ...) {
+      draws <- self$draws(variables)
       if (self$runset$method() == "sample") {
-        summary <- posterior::summarise_draws(self$draws(), ...)
+        summary <- posterior::summarise_draws(draws, ...)
       } else {
         if (!length(list(...))) {
           # if user didn't supply any args use default summary measures,
           # which don't include MCMC-specific things
           summary <- posterior::summarise_draws(
-            self$draws(),
+            draws,
             posterior::default_summary_measures()
           )
         } else {
           # otherwise use whatever the user specified via ...
-          summary <- posterior::summarise_draws(self$draws(), ...)
+          summary <- posterior::summarise_draws(draws, ...)
         }
       }
       if (self$runset$method() == "optimize") {
@@ -62,6 +63,27 @@ CmdStanFit <- R6::R6Class(
       }
       summary
     },
+
+    print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
+      # print summary table without using tibbles
+      out <- self$summary(variables, ...)
+      out <- as.data.frame(out)
+      rows <- nrow(out)
+      print_rows <- seq_len(min(rows, max_rows))
+      out <- out[print_rows, ]
+      out[, 1] <- format(out[, 1], justify = "left")
+      out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
+      for (col in grep("ess_", colnames(out), value = TRUE)) {
+        out[[col]] <- as.integer(out[[col]])
+      }
+
+      print(out, row.names=FALSE)
+      if (max_rows < rows) {
+        cat("\n # showing", max_rows, "of", rows, "rows (change via 'max_rows' argument)")
+      }
+      invisible(self)
+    },
+
     cmdstan_summary = function(...) {
       self$runset$run_cmdstan_tool("stansummary", ...)
     },
@@ -293,21 +315,33 @@ NULL
 #' Compute a summary table of MCMC estimates and diagnostics
 #'
 #' @name fit-method-summary
-#' @aliases summary
-#' @description Run [`summarise_draws()`][posterior::draws_summary]
-#'   from the \pkg{posterior} package. For MCMC only post-warmup draws are
-#'   included in the summary.
+#' @aliases summary print.CmdStanMCMC print.CmdStanMLE print.CmdStanVB
+#' @description The `$summary()` method runs
+#'   [`summarise_draws()`][posterior::draws_summary] from the \pkg{posterior}
+#'   package. For MCMC only post-warmup draws are included in the summary.
+#'
+#'   The `$print()` method prints the same summary but removes the extra
+#'   formatting used for printing tibbles.
 #'
 #' @section Usage:
 #'   ```
-#'   $summary(...)
+#'   $summary(variables = NULL, ...)
+#'   $print(variables = NULL, ..., digits = 2, max_rows = 10)
 #'   ```
 #' @section Arguments:
+#' * `variables`: (character vector) The variables to include.
 #' * `...`: Optional arguments to pass to
 #' [`posterior::summarise_draws()`][posterior::draws_summary].
+#' * `digits`: (integer) For `print` only, the number of digits to use for
+#' rounding.
+#' * `max_rows`: (integer) For `print` only, the maximum number of rows to print.
 #'
 #' @section Value:
-#' See [`posterior::summarise_draws()`][posterior::draws_summary].
+#' The `$summary()` method returns the tibble created by
+#' [`posterior::summarise_draws()`][posterior::draws_summary].
+#'
+#' The `$print()` method returns the fitted model object itself (invisibly),
+#' which is the standard behavior for print methods in \R.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
@@ -315,7 +349,15 @@ NULL
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic")
 #' fit$summary()
-#' fit$summary(c("mean", "sd"))
+#' fit$print()
+#' fit$print(max_rows = 2) # same as print(fit, max_rows = 2)
+#'
+#' # include only certain variables
+#' fit$summary("beta")
+#' fit$print(c("alpha", "beta[2]"))
+#'
+#' # include all variables but only certain summaries
+#' fit$summary(NULL, c("mean", "sd"))
 #' }
 #'
 NULL

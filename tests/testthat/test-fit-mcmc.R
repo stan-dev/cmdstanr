@@ -84,9 +84,21 @@ test_that("summary() method works after mcmc", {
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", PARAM_NAMES))
 
-  x <- fit_mcmc$summary(c("rhat", "sd"))
+  x <- fit_mcmc$summary(NULL, c("rhat", "sd"))
   expect_equal(colnames(x), c("variable", "rhat", "sd"))
+
+  x <- fit_mcmc$summary("lp__", c("median", "mad"))
+  expect_equal(x$variable, "lp__")
+  expect_equal(colnames(x), c("variable", "median", "mad"))
 })
+
+test_that("print() method works after mcmc", {
+  skip_on_cran()
+  expect_output(expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"), "variable")
+  expect_output(fit_mcmc$print(max_rows = 1), "# showing 1 of 5 rows")
+  expect_output(fit_mcmc$print(NULL, c("ess_sd")), "ess_sd")
+})
+
 
 test_that("output() method works after mcmc", {
   skip_on_cran()

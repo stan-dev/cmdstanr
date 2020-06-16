@@ -140,7 +140,7 @@ test_that("init warnings are shown", {
   suppressWarnings(
     expect_message(
       utils::capture.output(
-        mod_init_warnings$sample(chains = 1)
+        fit <- mod_init_warnings$sample(chains = 1)
       ),
       "Rejecting initial value"
     )
