@@ -21,13 +21,8 @@ test_that("summary() method works after vb", {
 
 test_that("print() method works after vb", {
   skip_on_cran()
-  x <- fit_vb$print()
-  expect_s3_class(x, "data.frame")
-  expect_equal(rownames(x), c("lp__", "lp_approx__", PARAM_NAMES))
-
-  x <- fit_vb$print(c("lp__", "lp_approx__"), c("mean", "sd"))
-  expect_equal(rownames(x), c("lp__", "lp_approx__"))
-  expect_equal(colnames(x), c("mean", "sd"))
+  expect_output(expect_s3_class(fit_vb$print(), "CmdStanVB"), "variable")
+  expect_output(fit_vb$print(max_rows = 1), "# showing 1 of 6 rows")
 })
 
 test_that("draws() method returns posterior sample (reading csv works)", {

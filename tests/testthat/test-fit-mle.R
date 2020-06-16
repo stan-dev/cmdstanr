@@ -12,7 +12,7 @@ test_that("mle and lp methods work after optimization", {
   checkmate::expect_numeric(fit_mle$lp(), len = 1)
 })
 
-test_that("summary method doesn't error for optimization", {
+test_that("summary method works after optimization", {
   skip_on_cran()
   x <- fit_mle$summary()
   expect_s3_class(x, "draws_summary")
@@ -24,14 +24,8 @@ test_that("summary method doesn't error for optimization", {
   expect_equal(x$variable, "lp__")
 })
 
-test_that("print method works error for optimization", {
+test_that("print() method works after optimization", {
   skip_on_cran()
-  x <- fit_mle$print()
-  expect_s3_class(x, "data.frame")
-  expect_equal(colnames(x), "estimate")
-  expect_equal(rownames(x), c("lp__", PARAM_NAMES))
-
-  x <- fit_mle$print("lp__")
-  expect_equal(colnames(x), c("estimate"))
-  expect_equal(rownames(x), "lp__")
+  expect_output(expect_s3_class(fit_mle$print(), "CmdStanMLE"), "estimate")
+  expect_output(fit_mle$print(max_rows = 1), "# showing 1 of 5 rows")
 })

@@ -74,17 +74,9 @@ test_that("summary() method works after mcmc", {
 
 test_that("print() method works after mcmc", {
   skip_on_cran()
-  x <- fit_mcmc$print()
-  expect_s3_class(x, "data.frame")
-  expect_equal(rownames(x), c("lp__", PARAM_NAMES))
-
-  x <- fit_mcmc$print(NULL, c("rhat", "sd"))
-  expect_equal(rownames(x), c("lp__", PARAM_NAMES))
-  expect_equal(colnames(x), c("rhat", "sd"))
-
-  x <- fit_mcmc$print("lp__", c("median", "mad"))
-  expect_equal(rownames(x), "lp__")
-  expect_equal(colnames(x), c("median", "mad"))
+  expect_output(expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"), "variable")
+  expect_output(fit_mcmc$print(max_rows = 1), "# showing 1 of 5 rows")
+  expect_output(fit_mcmc$print(NULL, c("ess_sd")), "ess_sd")
 })
 
 
