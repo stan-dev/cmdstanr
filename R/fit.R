@@ -64,15 +64,24 @@ CmdStanFit <- R6::R6Class(
       summary
     },
 
-    print = function(variables = NULL, ..., digits = 2) {
+    print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
       # print summary table without using tibbles
       out <- self$summary(variables, ...)
       out <- as.data.frame(out)
+      rows <- nrow(out)
+      print_rows <- seq_len(min(rows, max_rows))
+      out <- out[print_rows, ]
+      out[, 1] <- format(out[, 1], justify = "left")
       out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
-      for (col in c("rhat", "ess_bulk", "ess_tail")) {
-        if (col %in% colnames(out)) out[[col]] <- as.integer(out[[col]])
+      for (col in grep("ess_", colnames(out), value = TRUE)) {
+        out[[col]] <- as.integer(out[[col]])
       }
+
       print(out, row.names=FALSE)
+      if (max_rows < rows) {
+        cat("\n # showing", max_rows, "of", rows, "rows (change via 'max_rows' argument)")
+      }
+      invisible(self)
     },
 
     cmdstan_summary = function(...) {
