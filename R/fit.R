@@ -104,7 +104,7 @@ CmdStanFit <- R6::R6Class(
 )
 
 
-# Document shared methods ----------------------------------------------------------
+# Document methods ----------------------------------------------------------
 
 #' Extract posterior draws
 #'
@@ -197,6 +197,40 @@ NULL
 #'
 #' library(posterior)
 #' as_draws_df(sampler_diagnostics)
+#' }
+#'
+NULL
+
+#' Extract inverse metric (mass matrix)
+#'
+#' @name fit-method-inverse_metric
+#' @aliases inverse_metric
+#' @description Extract the inverse metric (mass matrix) for each chain.
+#'
+#' @section Usage:
+#'   ```
+#'   $inverse_metric(matrix = TRUE)
+#'   ```
+#' @section Arguments:
+#' * `matrix`: (logical) Should a list of matrices be returned? By default a
+#' list of matrices is always returned, even if a diagonal metric was used when
+#' fitting the model. If a diagonal metric was used then setting `matrix=FALSE`
+#' will return a list of vectors instead, which uses less memory.
+#'
+#' @section Value:
+#' A list of length equal to the number of MCMC chains. See the `matrix`
+#' argument for details.
+#'
+#' @seealso [`CmdStanMCMC`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic")
+#' fit$inverse_metric()
+#' fit$inverse_metric(matrix=FALSE)
+#'
+#' fit <- cmdstanr_example("logistic", metric = "dense_e")
+#' fit$inverse_metric()
 #' }
 #'
 NULL
@@ -407,6 +441,8 @@ NULL
 #'  [`$lp()`][fit-method-lp]
 #'    \tab Return the total log probability density (`target`) computed in the
 #'  model block of the Stan program. \cr
+#'  [`$inverse_metric()`][fit-method-inverse_metric]
+#'    \tab Return the inverse metric for each chain. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]
@@ -456,6 +492,7 @@ CmdStanMCMC <- R6::R6Class(
         cat(paste(self$runset$procs$chain_output(id), collapse="\n"))
       }
     },
+
     draws = function(variables = NULL, inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.")
@@ -513,6 +550,19 @@ CmdStanMCMC <- R6::R6Class(
       } else {
         private$sampler_diagnostics_
       }
+    },
+
+    # returns list of inverse metrics
+    inverse_metric = function(matrix = TRUE) {
+      if (is.null(private$inverse_metric_)) {
+        private$read_csv_(variables = "", sampler_diagnostics = "")
+      }
+      out <- private$inverse_metric_
+      if (matrix && !is.matrix(out[[1]])) {
+        # convert each vector to a diagonal matrix
+        out <- lapply(out, diag)
+      }
+      out
     }
   ),
   private = list(
@@ -521,6 +571,7 @@ CmdStanMCMC <- R6::R6Class(
     warmup_draws_ = NULL,
     draws_ = NULL,
     sampling_info_ = NULL,
+    inverse_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
       variables_to_read <-
         remaining_columns_to_read(
@@ -539,7 +590,9 @@ CmdStanMCMC <- R6::R6Class(
         variables = variables_to_read,
         sampler_diagnostics = sampler_diagnostics_to_read
       )
+      private$inverse_metric_ <- data_csv$inverse_metric
       private$sampling_info_ <- data_csv$sampling_info
+
       if (!is.null(data_csv$post_warmup_draws)) {
         if (is.null(private$draws_)) {
           private$draws_ <- data_csv$post_warmup_draws
