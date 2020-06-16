@@ -47,7 +47,8 @@
 
 
 <meta property="og:title" content="Extract inverse metric (mass matrix) — fit-method-inv_metric" />
-<meta property="og:description" content="Extract the inverse metric (mass matrix) for each chain." />
+<meta property="og:description" content="Return a list containing the inverse metric (mass matrix) for
+each chain." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -173,7 +174,8 @@
     </div>
 
     <div class="ref-description">
-    <p>Extract the inverse metric (mass matrix) for each chain.</p>
+    <p>Return a list containing the inverse metric (mass matrix) for
+each chain.</p>
     </div>
 
 
@@ -189,10 +191,9 @@
     
 
 <ul>
-<li><p><code>matrix</code>: (logical) Should a list of matrices be returned? By default a
-list of matrices is always returned, even if a diagonal metric was used when
-fitting the model. If a diagonal metric was used then setting <code>matrix=FALSE</code>
-will return a list of vectors instead, which uses less memory.</p></li>
+<li><p><code>matrix</code>: (logical) If a diagonal metric was used, setting <code>matrix = FALSE</code>
+returns a list containing just the diagonals of the matrices instead of the
+full matrices. Setting <code>matrix = FALSE</code> has no effect for dense metrics.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>

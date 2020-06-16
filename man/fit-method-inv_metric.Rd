@@ -5,7 +5,8 @@
 \alias{inv_metric}
 \title{Extract inverse metric (mass matrix)}
 \description{
-Extract the inverse metric (mass matrix) for each chain.
+Return a list containing the inverse metric (mass matrix) for
+each chain.
 }
 \section{Usage}{
 \preformatted{$inv_metric(matrix = TRUE)
@@ -15,10 +16,9 @@ Extract the inverse metric (mass matrix) for each chain.
 \section{Arguments}{
 
 \itemize{
-\item \code{matrix}: (logical) Should a list of matrices be returned? By default a
-list of matrices is always returned, even if a diagonal metric was used when
-fitting the model. If a diagonal metric was used then setting \code{matrix=FALSE}
-will return a list of vectors instead, which uses less memory.
+\item \code{matrix}: (logical) If a diagonal metric was used, setting \code{matrix = FALSE}
+returns a list containing just the diagonals of the matrices instead of the
+full matrices. Setting \code{matrix = FALSE} has no effect for dense metrics.
 }
 }
 

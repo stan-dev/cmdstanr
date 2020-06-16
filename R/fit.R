@@ -205,17 +205,17 @@ NULL
 #'
 #' @name fit-method-inv_metric
 #' @aliases inv_metric
-#' @description Extract the inverse metric (mass matrix) for each chain.
+#' @description Return a list containing the inverse metric (mass matrix) for
+#'   each chain.
 #'
 #' @section Usage:
 #'   ```
 #'   $inv_metric(matrix = TRUE)
 #'   ```
 #' @section Arguments:
-#' * `matrix`: (logical) Should a list of matrices be returned? By default a
-#' list of matrices is always returned, even if a diagonal metric was used when
-#' fitting the model. If a diagonal metric was used then setting `matrix=FALSE`
-#' will return a list of vectors instead, which uses less memory.
+#' * `matrix`: (logical) If a diagonal metric was used, setting `matrix = FALSE`
+#' returns a list containing just the diagonals of the matrices instead of the
+#' full matrices. Setting `matrix = FALSE` has no effect for dense metrics.
 #'
 #' @section Value:
 #' A list of length equal to the number of MCMC chains. See the `matrix`
