@@ -59,6 +59,7 @@ test_that("draws() method returns draws_array (reading csv works)", {
 })
 
 test_that("inv_metric method works after mcmc", {
+  skip_on_cran()
   x <- fit_mcmc_1$inv_metric()
   expect_length(x, fit_mcmc_1$num_chains())
   checkmate::expect_matrix(x[[1]])
