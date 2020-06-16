@@ -48,3 +48,11 @@ test_that("vb works with scientific notation args", {
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
   expect_equal(colnames(x), c("variable", "mean", "sd"))
 })
+
+test_that("time() method works after vb", {
+  skip_on_cran()
+  run_times <- fit_vb$time()
+  checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
+  testthat::expect_named(run_times, c("total"))
+  checkmate::expect_number(run_times$total, finite = TRUE)
+})

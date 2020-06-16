@@ -170,30 +170,28 @@ CmdStanRun <- R6::R6Class(
     },
 
     time = function() {
-      if (self$method() != "sample") {
-        # FIXME add time for other methods?
-        stop("Not yet implemented for ", self$method(), " method.",
-             call. = FALSE)
-      }
+      if (self$method() == "sample") {
+        procs <- self$procs
+        info <- procs$chain_info()
+        info <- info[procs$is_finished(), ]
+        chain_time <- data.frame(
+          chain_id = info$id,
+          warmup = info$warmup_time,
+          sampling = info$sampling_time,
+          total = info$total_time
+        )
 
-      procs <- self$procs
-      info <- procs$chain_info()
-      info <- info[procs$is_finished(), ]
-      chain_time <- data.frame(
-        chain_id = info$id,
-        warmup = info$warmup_time,
-        sampling = info$sampling_time,
-        total = info$total_time
-      )
+        if (isTRUE(self$args$refresh == 0)) {
+          warning("Separate warmup and sampling times are not available ",
+                  "after running with 'refresh=0'.", call. = FALSE)
+          chain_time$warmup <- NA_real_
+          chain_time$sampling <- NA_real_
+        }
 
-      if (isTRUE(self$args$refresh == 0)) {
-        warning("Separate warmup and sampling times are not available ",
-                "after running with 'refresh=0'.", call. = FALSE)
-        chain_time$warmup <- NA_real_
-        chain_time$sampling <- NA_real_
-      }
-
-      list(total = procs$total_time(), chains = chain_time)
+        list(total = procs$total_time(), chains = chain_time)
+      } else {
+        list(total = self$procs$total_time())
+      }      
     }
   ),
   private = list(
@@ -276,6 +274,7 @@ CmdStanRun <- R6::R6Class(
 CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 
 .run_other <- function() {
+  procs <- self$procs
   # add path to the TBB library to the PATH variable
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
@@ -286,6 +285,7 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
   }
   # FIXME for consistency we should use a CmdStanProcs object
   # for optimize and variational too, but for now this is fine
+  start_time <- Sys.time()
   run_log <- processx::run(
     command = self$command(),
     args = self$command_args()[[1]],
@@ -294,6 +294,8 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     echo = TRUE,
     error_on_status = TRUE
   )
+  procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
+  procs$report_time()
 }
 CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
 CmdStanRun$set("private", name = "run_variational_", value = .run_other)
