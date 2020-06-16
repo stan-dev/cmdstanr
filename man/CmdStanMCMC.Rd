@@ -35,8 +35,7 @@ model block of the Stan program. \cr
 \tab Save JSON data file to a specified location. \cr
 \code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
 \tab Save diagnostic CSV files to a specified location. \cr
-\verb{$time()} \tab Return a list containing the total time and a data frame of
-execution times of all chains (in seconds). \cr
+\code{\link[=fit-method-time]{$time()}} \tab Report total and chain-specific run times. \cr
 \verb{$output()} \tab Return the stdout and stderr of all chains as a list of
 character vectors, or pretty print the output for a single chain if
 \code{id} argument is specified. \cr
