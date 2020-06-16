@@ -203,13 +203,13 @@ NULL
 
 #' Extract inverse metric (mass matrix)
 #'
-#' @name fit-method-inverse_metric
-#' @aliases inverse_metric
+#' @name fit-method-inv_metric
+#' @aliases inv_metric
 #' @description Extract the inverse metric (mass matrix) for each chain.
 #'
 #' @section Usage:
 #'   ```
-#'   $inverse_metric(matrix = TRUE)
+#'   $inv_metric(matrix = TRUE)
 #'   ```
 #' @section Arguments:
 #' * `matrix`: (logical) Should a list of matrices be returned? By default a
@@ -226,11 +226,11 @@ NULL
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic")
-#' fit$inverse_metric()
-#' fit$inverse_metric(matrix=FALSE)
+#' fit$inv_metric()
+#' fit$inv_metric(matrix=FALSE)
 #'
 #' fit <- cmdstanr_example("logistic", metric = "dense_e")
-#' fit$inverse_metric()
+#' fit$inv_metric()
 #' }
 #'
 NULL
@@ -441,7 +441,7 @@ NULL
 #'  [`$lp()`][fit-method-lp]
 #'    \tab Return the total log probability density (`target`) computed in the
 #'  model block of the Stan program. \cr
-#'  [`$inverse_metric()`][fit-method-inverse_metric]
+#'  [`$inv_metric()`][fit-method-inv_metric]
 #'    \tab Return the inverse metric for each chain. \cr
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
@@ -553,11 +553,11 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     # returns list of inverse metrics
-    inverse_metric = function(matrix = TRUE) {
-      if (is.null(private$inverse_metric_)) {
+    inv_metric = function(matrix = TRUE) {
+      if (is.null(private$inv_metric_)) {
         private$read_csv_(variables = "", sampler_diagnostics = "")
       }
-      out <- private$inverse_metric_
+      out <- private$inv_metric_
       if (matrix && !is.matrix(out[[1]])) {
         # convert each vector to a diagonal matrix
         out <- lapply(out, diag)
@@ -571,7 +571,7 @@ CmdStanMCMC <- R6::R6Class(
     warmup_draws_ = NULL,
     draws_ = NULL,
     sampling_info_ = NULL,
-    inverse_metric_ = NULL,
+    inv_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
       variables_to_read <-
         remaining_columns_to_read(
@@ -590,7 +590,7 @@ CmdStanMCMC <- R6::R6Class(
         variables = variables_to_read,
         sampler_diagnostics = sampler_diagnostics_to_read
       )
-      private$inverse_metric_ <- data_csv$inverse_metric
+      private$inv_metric_ <- data_csv$inv_metric
       private$sampling_info_ <- data_csv$sampling_info
 
       if (!is.null(data_csv$post_warmup_draws)) {

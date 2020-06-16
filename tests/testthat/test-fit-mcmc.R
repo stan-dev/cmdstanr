@@ -58,20 +58,20 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_equal(posterior::nchains(draws_all_after), fit_mcmc$num_chains())
 })
 
-test_that("inverse_metric method works after mcmc", {
-  x <- fit_mcmc_1$inverse_metric()
+test_that("inv_metric method works after mcmc", {
+  x <- fit_mcmc_1$inv_metric()
   expect_length(x, fit_mcmc_1$num_chains())
   checkmate::expect_matrix(x[[1]])
   checkmate::expect_matrix(x[[2]])
   expect_equal(x[[1]], diag(diag(x[[1]])))
 
-  x <- fit_mcmc_1$inverse_metric(matrix=FALSE)
+  x <- fit_mcmc_1$inv_metric(matrix=FALSE)
   expect_length(x, fit_mcmc_1$num_chains())
   expect_null(dim(x[[1]]))
   checkmate::expect_numeric(x[[1]])
   checkmate::expect_numeric(x[[2]])
 
-  x <- fit_mcmc_2$inverse_metric()
+  x <- fit_mcmc_2$inv_metric()
   expect_length(x, fit_mcmc_2$num_chains())
   checkmate::expect_matrix(x[[1]])
   expect_false(x[[1]][1,2] == 0) # dense
