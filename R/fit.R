@@ -68,13 +68,11 @@ CmdStanFit <- R6::R6Class(
       # print summary table without using tibbles
       out <- self$summary(variables, ...)
       out <- as.data.frame(out)
-      rownames(out) <- out$variable
-      out$variable <- NULL
-      out <- format(round(out, digits = digits), nsmall = digits)
+      out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
       for (col in c("rhat", "ess_bulk", "ess_tail")) {
         if (col %in% colnames(out)) out[[col]] <- as.integer(out[[col]])
       }
-      print(out)
+      print(out, row.names=FALSE)
     },
 
     cmdstan_summary = function(...) {
