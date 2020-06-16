@@ -46,7 +46,7 @@ CmdStanRun <- R6::R6Class(
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
         private$latent_dynamics_files_[ok]
-      }            
+      }
     },
     output_files = function(include_failed = FALSE) {
       if (include_failed) {
@@ -54,7 +54,7 @@ CmdStanRun <- R6::R6Class(
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
         private$output_files_[ok]
-      }      
+      }
     },
     save_output_files = function(dir = ".",
                                  basename = NULL,
@@ -170,7 +170,9 @@ CmdStanRun <- R6::R6Class(
     },
 
     time = function() {
-      if (self$method() == "sample") {
+      if (self$method() != "sample") {
+        time <- list(total = self$procs$total_time())
+      } else {
         procs <- self$procs
         info <- procs$chain_info()
         info <- info[procs$is_finished(), ]
@@ -188,10 +190,9 @@ CmdStanRun <- R6::R6Class(
           chain_time$sampling <- NA_real_
         }
 
-        list(total = procs$total_time(), chains = chain_time)
-      } else {
-        list(total = self$procs$total_time())
-      }      
+        time <- list(total = procs$total_time(), chains = chain_time)
+      }
+      time
     }
   ),
   private = list(
@@ -206,7 +207,7 @@ CmdStanRun <- R6::R6Class(
 .run_sample <- function() {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-  
+
   # add path to the TBB library to the PATH variable
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
@@ -281,7 +282,7 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     current_path <- Sys.getenv("PATH")
     if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }    
+    }
   }
   # FIXME for consistency we should use a CmdStanProcs object
   # for optimize and variational too, but for now this is fine
@@ -313,7 +314,7 @@ CmdStanProcs <- R6::R6Class(
     # @param num_cores The number of cores for running MCMC chains in parallel.
     #   Currently for other method this must be set to 1.
     # @param threads_per_chain The number of threads to use per MCMC chain
-    #   to run parallel sections of model. 
+    #   to run parallel sections of model.
     initialize = function(num_runs, num_cores, threads_per_chain = NULL) {
       checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(num_cores, lower = 1, len = 1, any.missing = FALSE,
