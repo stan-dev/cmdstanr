@@ -18,7 +18,7 @@
 #'
 #' @return A named list with the following components:
 #' * `sampling_info`: A list of the arguments used to run the sampler.
-#' * `inverse_metric`: A list (one element per chain) of inverse mass matrices
+#' * `inv_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
 #' * `step_size`: A list (one element per chain) of the step sizes used.
 #' * `warmup_draws`:  If `save_warmup` was `TRUE` then the warmup samples (iter
@@ -84,7 +84,7 @@ read_sample_csv <- function(files,
   warmup_sampler_diagnostics_draws <- NULL
   post_warmup_draws <- NULL
   post_warmup_sampler_diagnostics_draws <- NULL
-  inverse_metric <- list()
+  inv_metric <- list()
   step_size <- list()
   col_types <- NULL
   col_select <- NULL
@@ -93,8 +93,8 @@ read_sample_csv <- function(files,
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
     if (is.null(sampling_info)) {
       sampling_info <- read_sample_info_csv(output_file)
-      if (!is.null(sampling_info$inverse_metric)) {
-        inverse_metric[[sampling_info$id]] <- sampling_info$inverse_metric
+      if (!is.null(sampling_info$inv_metric)) {
+        inv_metric[[sampling_info$id]] <- sampling_info$inv_metric
       }
       if (!is.null(sampling_info$stepsize_adaptation)) {
         step_size[[sampling_info$id]] <- sampling_info$stepsize_adaptation
@@ -110,8 +110,8 @@ read_sample_csv <- function(files,
       sampling_info$id <- c(sampling_info$id, csv_file_info$id)
       sampling_info$seed <- c(sampling_info$seed, csv_file_info$seed)
 
-      if (!is.null(csv_file_info$inverse_metric)) {
-        inverse_metric[[csv_file_info$id]] <- csv_file_info$inverse_metric
+      if (!is.null(csv_file_info$inv_metric)) {
+        inv_metric[[csv_file_info$id]] <- csv_file_info$inv_metric
       }
       if (!is.null(csv_file_info$stepsize_adaptation)) {
         step_size[[csv_file_info$id]] <- csv_file_info$stepsize_adaptation
@@ -252,10 +252,10 @@ read_sample_csv <- function(files,
     warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
   }
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
-  sampling_info$inverse_metric <- NULL
+  sampling_info$inv_metric <- NULL
   list(
     sampling_info = sampling_info,
-    inverse_metric = inverse_metric,
+    inv_metric = inv_metric,
     step_size = step_size,
     warmup_draws = warmup_draws,
     post_warmup_draws = post_warmup_draws,
@@ -314,12 +314,12 @@ read_sample_info_csv <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
   adaptation_terminated <- FALSE
   param_names_read <- FALSE
-  inverse_metric_next <- FALSE
-  inverse_metric_diagonal_next <- FALSE
+  inv_metric_next <- FALSE
+  inv_metric_diagonal_next <- FALSE
   csv_file_info = list()
   con  <- file(csv_file, open = "r")
-  csv_file_info[["inverse_metric"]] <- NULL
-  inverse_metric_rows <- 0
+  csv_file_info[["inv_metric"]] <- NULL
+  inv_metric_rows <- 0
   parsing_done <- FALSE
   while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0 && !parsing_done) {
     if (!startsWith(line, "#")) {
@@ -368,30 +368,30 @@ read_sample_info_csv <- function(csv_file) {
         if (regexpr("# Step size = ", line, perl = TRUE) > 0) {
           csv_file_info$stepsize_adaptation <- as.numeric(strsplit(line, " = ")[[1]][2])
         } else if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
-          inverse_metric_diagonal_next <- TRUE
+          inv_metric_diagonal_next <- TRUE
         } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
-          inverse_metric_next <- TRUE
-        } else if (inverse_metric_diagonal_next) {
+          inv_metric_next <- TRUE
+        } else if (inv_metric_diagonal_next) {
           inv_metric_split <- strsplit(gsub("# ", "", line), ",")
           if ((length(inv_metric_split) == 0) ||
               ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
             break;
           }
-          csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
+          csv_file_info$inv_metric <- rapply(inv_metric_split, as.numeric)
           parsing_done <- TRUE
-        } else if (inverse_metric_next) {
+        } else if (inv_metric_next) {
           inv_metric_split <- strsplit(gsub("# ", "", line), ",")
           if ((length(inv_metric_split) == 0) ||
               ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
             parsing_done <- TRUE
             break;
           }
-          if (inverse_metric_rows == 0) {
-            csv_file_info$inverse_metric <- rapply(inv_metric_split, as.numeric)
+          if (inv_metric_rows == 0) {
+            csv_file_info$inv_metric <- rapply(inv_metric_split, as.numeric)
           } else {
-            csv_file_info$inverse_metric <- c(csv_file_info$inverse_metric, rapply(inv_metric_split, as.numeric))
+            csv_file_info$inv_metric <- c(csv_file_info$inv_metric, rapply(inv_metric_split, as.numeric))
           }
-          inverse_metric_rows <- inverse_metric_rows + 1
+          inv_metric_rows <- inv_metric_rows + 1
         }
       }
     }
@@ -405,10 +405,10 @@ read_sample_info_csv <- function(csv_file) {
   if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
     stop("The supplied csv file does not contain any variable names or data!")
   }
-  if (inverse_metric_rows > 0) {
-    rows <- inverse_metric_rows
-    cols <- length(csv_file_info$inverse_metric)/inverse_metric_rows
-    dim(csv_file_info$inverse_metric) <- c(rows,cols)
+  if (inv_metric_rows > 0) {
+    rows <- inv_metric_rows
+    cols <- length(csv_file_info$inv_metric)/inv_metric_rows
+    dim(csv_file_info$inv_metric) <- c(rows,cols)
   }
 
   # rename from old cmdstan names to new cmdstanX names

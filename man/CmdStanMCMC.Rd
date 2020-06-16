@@ -23,6 +23,8 @@ objects.
 \code{\link[=fit-method-lp]{$lp()}}
 \tab Return the total log probability density (\code{target}) computed in the
 model block of the Stan program. \cr
+\code{\link[=fit-method-inv_metric]{$inv_metric()}}
+\tab Return the inverse metric for each chain. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}}
 \tab Run and print CmdStan's \code{bin/stansummary}. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}}

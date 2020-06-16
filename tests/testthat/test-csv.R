@@ -157,13 +157,13 @@ test_that("read_sample_csv() returns correct diagonal of inverse mass matrix", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_sample_csv(csv_files)
-  expect_equal(as.vector(csv_output$inverse_metric[[2]]),
+  expect_equal(as.vector(csv_output$inv_metric[[2]]),
                c(0.909635, 0.066384))
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_sample_csv(csv_files)
-  expect_equal(as.vector(csv_output$inverse_metric[[1]]),
+  expect_equal(as.vector(csv_output$inv_metric[[1]]),
                c(1.00098, 0.068748))
-  expect_equal(as.vector(csv_output$inverse_metric[[2]]),
+  expect_equal(as.vector(csv_output$inv_metric[[2]]),
                c(0.909635, 0.066384))
 })
 
@@ -171,7 +171,7 @@ test_that("read_sample_csv() returns correct dense inverse mass matrix", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"))
   csv_output <- read_sample_csv(csv_files)
-  expect_equal(as.vector(csv_output$inverse_metric[[1]]),
+  expect_equal(as.vector(csv_output$inv_metric[[1]]),
                c(10.2742, -0.189148, 5.92065, 8.2658, 10.9931, 8.67196, 9.75007, 8.30008, 6.3396, 8.75422,
                 -0.189148, 0.552614, 2.28054, 0.587285, -0.557112, 0.0689745, -1.06614, -0.502288, 1.49863, 0.450733,
                 5.92065, 2.28054, 52.7011, 7.89278, 3.9639, 5.71556, 2.16445, 1.88834, 13.8962, 15.1166,
@@ -189,7 +189,7 @@ test_that("read_sample_csv() returns correct dense inverse mass matrix for 2 csv
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"),
                  test_path("resources", "csv", "model1-2-dense_e_metric.csv"))
   csv_output <- read_sample_csv(csv_files)
-  expect_equal(as.vector(csv_output$inverse_metric[[1]]),
+  expect_equal(as.vector(csv_output$inv_metric[[1]]),
              c(10.2742, -0.189148, 5.92065, 8.2658, 10.9931, 8.67196, 9.75007, 8.30008, 6.3396, 8.75422,
                 -0.189148, 0.552614, 2.28054, 0.587285, -0.557112, 0.0689745, -1.06614, -0.502288, 1.49863, 0.450733,
                 5.92065, 2.28054, 52.7011, 7.89278, 3.9639, 5.71556, 2.16445, 1.88834, 13.8962, 15.1166,
@@ -200,7 +200,7 @@ test_that("read_sample_csv() returns correct dense inverse mass matrix for 2 csv
                 8.30008, -0.502288, 1.88834, 9.96521, 9.80744, 8.3289, 10.1908, 26.5846, 3.7247, 4.26521,
                 6.3396, 1.49863, 13.8962, 7.58758, 6.28594, 8.76294, 2.76266, 3.7247, 28.8872, 8.43035,
                 8.75422, 0.450733, 15.1166, 7.8403, 6.77034, 5.63637, 4.56938, 4.26521, 8.43035, 42.5438))
-  expect_equal(as.vector(csv_output$inverse_metric[[2]]),
+  expect_equal(as.vector(csv_output$inv_metric[[2]]),
              c( 11.08, -0.305763, 5.27013, 7.33046, 7.31263, 6.93229, 10.1923, 7.46852, 7.51557, 7.78791,
                 -0.305763, 0.678461, 1.70598, 0.337143, -0.69887, 0.423236, -0.974023, -0.605539, 1.83794, 0.0780934,
                 5.27013, 1.70598, 36.2726, 7.9386, 3.88642, 12.0214, 4.2487, 3.84886, 12.9738, 4.34037,
