@@ -341,7 +341,9 @@ compile_method <- function(quiet = TRUE,
     echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet && interactive(),
-    stderr_line_callback = function(x,p) { message(x) },
+    stderr_line_callback = function(x,p) {
+        if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
+    },
     error_on_status = FALSE
   )
   if (run_log$status != 0) {
