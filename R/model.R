@@ -341,9 +341,12 @@ compile_method <- function(quiet = TRUE,
     echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet,
-    stderr_line_callback = function(x,p) { if (!quiet) message(x) },
-    error_on_status = TRUE
+    stderr_line_callback = function(x,p) { message(x) },
+    error_on_status = FALSE
   )
+  if (run_log$status != 0) {
+    stop("An error occured during compilation! See the message above for more information.")
+  }
 
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$cpp_options_ <- cpp_options
