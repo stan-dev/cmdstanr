@@ -3,35 +3,58 @@
 \name{fit-method-summary}
 \alias{fit-method-summary}
 \alias{summary}
+\alias{print.CmdStanMCMC}
+\alias{print.CmdStanMLE}
+\alias{print.CmdStanVB}
 \title{Compute a summary table of MCMC estimates and diagnostics}
 \description{
-Run \code{\link[posterior:draws_summary]{summarise_draws()}}
-from the \pkg{posterior} package. For MCMC only post-warmup draws are
-included in the summary.
+The \verb{$summary()} method runs
+\code{\link[posterior:draws_summary]{summarise_draws()}} from the \pkg{posterior}
+package. For MCMC only post-warmup draws are included in the summary.
+
+The \verb{$print()} method prints the same summary but removes the extra
+formatting used for printing tibbles.
 }
 \section{Usage}{
-\preformatted{$summary(...)
+\preformatted{$summary(variables = NULL, ...)
+$print(variables = NULL, ..., digits = 2, max_rows = 10)
 }
 }
 
 \section{Arguments}{
 
 \itemize{
+\item \code{variables}: (character vector) The variables to include.
 \item \code{...}: Optional arguments to pass to
 \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
+\item \code{digits}: (integer) For \code{print} only, the number of digits to use for
+rounding.
+\item \code{max_rows}: (integer) For \code{print} only, the maximum number of rows to print.
 }
 }
 
 \section{Value}{
 
-See \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
+The \verb{$summary()} method returns the tibble created by
+\code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
+
+The \verb{$print()} method returns the fitted model object itself (invisibly),
+which is the standard behavior for print methods in \R.
 }
 
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")
 fit$summary()
-fit$summary(c("mean", "sd"))
+fit$print()
+fit$print(max_rows = 2) # same as print(fit, max_rows = 2)
+
+# include only certain variables
+fit$summary("beta")
+fit$print(c("alpha", "beta[2]"))
+
+# include all variables but only certain summaries
+fit$summary(NULL, c("mean", "sd"))
 }
 
 }

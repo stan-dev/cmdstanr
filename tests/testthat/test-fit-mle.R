@@ -12,11 +12,28 @@ test_that("mle and lp methods work after optimization", {
   checkmate::expect_numeric(fit_mle$lp(), len = 1)
 })
 
-test_that("summary method doesn't error for optimization", {
+test_that("summary method works after optimization", {
   skip_on_cran()
-  # summary method for optimization isn't fully designed yet
   x <- fit_mle$summary()
   expect_s3_class(x, "draws_summary")
   expect_equal(colnames(x), c("variable", "estimate"))
   expect_equal(x$variable, c("lp__", PARAM_NAMES))
+
+  x <- fit_mle$summary("lp__")
+  expect_equal(colnames(x), c("variable", "estimate"))
+  expect_equal(x$variable, "lp__")
+})
+
+test_that("print() method works after optimization", {
+  skip_on_cran()
+  expect_output(expect_s3_class(fit_mle$print(), "CmdStanMLE"), "estimate")
+  expect_output(fit_mle$print(max_rows = 1), "# showing 1 of 5 rows")
+})
+
+test_that("time() method works after optimization", {
+  skip_on_cran()
+  run_times <- fit_mle$time()
+  checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
+  testthat::expect_named(run_times, c("total"))
+  checkmate::expect_number(run_times$total, finite = TRUE)
 })

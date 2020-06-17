@@ -13,7 +13,7 @@ if (not_on_cran()) {
   fit_mcmc_2 <- testing_fit("logistic", method = "sample",
                             seed = 123, chains = 1,
                             iter_sampling = 100000,
-                            refresh = 0)
+                            refresh = 0, metric = "dense_e")
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
@@ -58,15 +58,47 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_equal(posterior::nchains(draws_all_after), fit_mcmc$num_chains())
 })
 
+test_that("inv_metric method works after mcmc", {
+  skip_on_cran()
+  x <- fit_mcmc_1$inv_metric()
+  expect_length(x, fit_mcmc_1$num_chains())
+  checkmate::expect_matrix(x[[1]])
+  checkmate::expect_matrix(x[[2]])
+  expect_equal(x[[1]], diag(diag(x[[1]])))
+
+  x <- fit_mcmc_1$inv_metric(matrix=FALSE)
+  expect_length(x, fit_mcmc_1$num_chains())
+  expect_null(dim(x[[1]]))
+  checkmate::expect_numeric(x[[1]])
+  checkmate::expect_numeric(x[[2]])
+
+  x <- fit_mcmc_2$inv_metric()
+  expect_length(x, fit_mcmc_2$num_chains())
+  checkmate::expect_matrix(x[[1]])
+  expect_false(x[[1]][1,2] == 0) # dense
+})
+
 test_that("summary() method works after mcmc", {
   skip_on_cran()
   x <- fit_mcmc$summary()
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", PARAM_NAMES))
 
-  x <- fit_mcmc$summary(c("rhat", "sd"))
+  x <- fit_mcmc$summary(NULL, c("rhat", "sd"))
   expect_equal(colnames(x), c("variable", "rhat", "sd"))
+
+  x <- fit_mcmc$summary("lp__", c("median", "mad"))
+  expect_equal(x$variable, "lp__")
+  expect_equal(colnames(x), c("variable", "median", "mad"))
 })
+
+test_that("print() method works after mcmc", {
+  skip_on_cran()
+  expect_output(expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"), "variable")
+  expect_output(fit_mcmc$print(max_rows = 1), "# showing 1 of 5 rows")
+  expect_output(fit_mcmc$print(NULL, c("ess_sd")), "ess_sd")
+})
+
 
 test_that("output() method works after mcmc", {
   skip_on_cran()
