@@ -340,7 +340,7 @@ compile_method <- function(quiet = TRUE,
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
-    spinner = quiet,
+    spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) { message(x) },
     error_on_status = FALSE
   )
