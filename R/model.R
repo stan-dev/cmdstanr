@@ -345,7 +345,8 @@ compile_method <- function(quiet = TRUE,
     error_on_status = FALSE
   )
   if (run_log$status != 0) {
-    stop("An error occured during compilation! See the message above for more information.")
+    stop("An error occured during compilation! See the message above for more information.",
+         call. = FALSE)
   }
 
   file.copy(tmp_exe, exe, overwrite = TRUE)
