@@ -340,10 +340,16 @@ compile_method <- function(quiet = TRUE,
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
-    spinner = quiet,
-    stderr_line_callback = function(x,p) { if (!quiet) message(x) },
-    error_on_status = TRUE
+    spinner = quiet && interactive(),
+    stderr_line_callback = function(x,p) {
+        if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
+    },
+    error_on_status = FALSE
   )
+  if (run_log$status != 0) {
+    stop("An error occured during compilation! See the message above for more information.",
+         call. = FALSE)
+  }
 
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$cpp_options_ <- cpp_options
