@@ -177,7 +177,7 @@ CmdStanRun <- R6::R6Class(
           chain_id = self$procs$proc_ids()[self$procs$is_finished()],
           warmup = self$procs$chain_warmup_time()[self$procs$is_finished()],
           sampling = self$procs$chain_sampling_time()[self$procs$is_finished()],
-          total = self$procs$chain_total_time()[self$procs$is_finished()]
+          total = self$procs$proc_total_time()[self$procs$is_finished()]
         )
 
         if (isTRUE(self$args$refresh == 0)) {
@@ -243,7 +243,7 @@ CmdStanRun <- R6::R6Class(
         args = self$command_args()[[chain_id]],
         wd = dirname(self$exe_file())
       )
-      procs$mark_chain_start(chain_id)
+      procs$mark_proc_start(chain_id)
       procs$set_active_procs(procs$active_procs() + 1)
       chain_ind <- chain_ind + 1
     }
@@ -330,8 +330,8 @@ CmdStanProcs <- R6::R6Class(
       zeros <- rep(0, num_procs)
       names(zeros) <- private$proc_ids_
       private$proc_state_ = zeros
-      private$chain_start_time_ = zeros
-      private$chain_total_time_ = zeros
+      private$proc_start_time_ = zeros
+      private$proc_total_time_ = zeros
       private$chain_warmup_time_ = zeros
       private$chain_sampling_time_ = zeros
       private$chain_last_section_start_time_ = zeros
@@ -382,11 +382,11 @@ CmdStanProcs <- R6::R6Class(
       private$active_procs_ <- procs
       invisible(NULL)
     },
-    chain_total_time = function(id = NULL) {
+    proc_total_time = function(id = NULL) {
       if (is.null(id)) {
-        return(private$chain_total_time_[self$is_finished()])
+        return(private$proc_total_time_[self$is_finished()])
       }
-      private$chain_total_time_[[id]]
+      private$proc_total_time_[[id]]
     },
     chain_warmup_time = function(id = NULL) {
       if (is.null(id)) {
@@ -421,7 +421,7 @@ CmdStanProcs <- R6::R6Class(
             error_output <- self$get_proc(id)$read_error_lines()
             self$process_error_output(error_output, id)
 
-            self$mark_chain_stop(id)
+            self$mark_proc_stop(id)
           } else {
             finished <- FALSE
           }
@@ -453,8 +453,8 @@ CmdStanProcs <- R6::R6Class(
     any_queued = function() {
       any(self$is_queued())
     },
-    chain_output = function(id = NULL) {
-      out <- private$chain_output_
+    proc_output = function(id = NULL) {
+      out <- private$proc_output_
       if (is.null(id)) {
         return(out)
       }
@@ -466,17 +466,17 @@ CmdStanProcs <- R6::R6Class(
       }
       private$proc_state_[[id]]
     },
-    mark_chain_start = function(id) {
-      private$chain_start_time_[[id]] <- Sys.time()
+    mark_proc_start = function(id) {
+      private$proc_start_time_[[id]] <- Sys.time()
       private$proc_state_[[id]] <- 1
-      private$chain_last_section_start_time_[[id]] <- private$chain_start_time_[[id]]
-      private$chain_output_[[id]] <- c("")
+      private$chain_last_section_start_time_[[id]] <- private$proc_start_time_[[id]]
+      private$proc_output_[[id]] <- c("")
       invisible(self)
     },
-    mark_chain_stop = function(id) {
+    mark_proc_stop = function(id) {
       if (private$proc_state_[[id]] == 5) {
         private$proc_state_[[id]] <- 6
-        private$chain_total_time_[[id]] <- as.double((Sys.time() - private$chain_start_time_[[id]]), units = "secs")
+        private$proc_total_time_[[id]] <- as.double((Sys.time() - private$proc_start_time_[[id]]), units = "secs")
         self$report_time(id)
       } else {
         private$proc_state_[[id]] <- 7
@@ -502,7 +502,7 @@ CmdStanProcs <- R6::R6Class(
         return(NULL)
       }
       for (line in out) {
-        private$chain_output_[[id]] <- c(private$chain_output_[[id]], line)
+        private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
           last_section_start_time <- private$chain_last_section_start_time_[[id]]
           state <- private$proc_state_[[id]]
@@ -566,7 +566,7 @@ CmdStanProcs <- R6::R6Class(
     report_time = function(id = NULL) {
       if (!is.null(id)) {
         cat("Chain", id, "finished in",
-            format(round(self$chain_total_time(id), 1), nsmall = 1),
+            format(round(self$proc_total_time(id), 1), nsmall = 1),
             "seconds.\n")
         return(invisible(self))
       }
@@ -581,7 +581,7 @@ CmdStanProcs <- R6::R6Class(
             cat("\nAll", num_chains, "chains finished successfully.\n")
           }
           cat("Mean chain execution time:",
-              format(round(mean(self$chain_total_time()), 1), nsmall = 1),
+              format(round(mean(self$proc_total_time()), 1), nsmall = 1),
               "seconds.\n")
           cat("Total execution time:",
               format(round(self$total_time(), 1), nsmall = 1),
@@ -614,12 +614,12 @@ CmdStanProcs <- R6::R6Class(
     active_procs_ = integer(),
     threads_per_proc_ = integer(),
     proc_state_ = NULL,
-    chain_start_time_ = NULL,
-    chain_total_time_ = NULL,
+    proc_start_time_ = NULL,
+    proc_total_time_ = NULL,
     chain_warmup_time_ = NULL,
     chain_sampling_time_ = NULL,
     chain_last_section_start_time_ = NULL,
-    chain_output_ = list(),
+    proc_output_ = list(),
     total_time_ = numeric()
   )
 )
