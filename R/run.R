@@ -21,7 +21,7 @@ CmdStanRun <- R6::R6Class(
       invisible(self)
     },
 
-    num_runs = function() self$procs$num_runs(),
+    num_procs = function() self$procs$num_procs(),
     run_ids = function() self$args$run_ids,
     exe_file = function() self$args$exe_file,
     model_name = function() self$args$model_name,
@@ -215,15 +215,15 @@ CmdStanRun <- R6::R6Class(
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
     }
   }
-  if (procs$num_runs() == 1) {
+  if (procs$num_procs() == 1) {
     start_msg <- "Running MCMC with 1 chain"
-  } else if (procs$num_runs() == procs$parallel_runs()) {
-    start_msg <- paste0("Running MCMC with ", procs$num_runs(), " parallel chains")
+  } else if (procs$num_procs() == procs$parallel_runs()) {
+    start_msg <- paste0("Running MCMC with ", procs$num_procs(), " parallel chains")
   } else {
     if (procs$parallel_runs() == 1) {
-      start_msg <- paste0("Running MCMC with ", procs$num_runs(), " sequential chains")
+      start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
     } else {
-      start_msg <- paste0("Running MCMC with ", procs$num_runs(), " chains, at most ", procs$parallel_runs(), " in parallel")
+      start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_runs(), " in parallel")
     }
   }
   if (is.null(self$threads_per_chain())) {
@@ -307,23 +307,24 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
 CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
-    # @param num_runs The number of CmdStan runs. For MCMC this is the number of
-    #   chains. Currently for other methods this must be set to 1.
-    # @param parallel_runs The maximum number of run to run in parallel.
+    # @param num_procs The number of CmdStan processes to start for a run. 
+    #   For MCMC this is the number of chains. Currently for other methods
+    #   this must be set to 1.
+    # @param parallel_procs The maximum number of processes to run in parallel.
     #   Currently for non-sampling this must be set to 1.
-    initialize = function(num_runs, parallel_runs = NULL) {
-      checkmate::assert_integerish(num_runs, lower = 1, len = 1, any.missing = FALSE)
-      checkmate::assert_integerish(parallel_runs, lower = 1, len = 1, any.missing = FALSE,
-                                   .var.name = "parallel_runs", null.ok = TRUE)
-      private$num_runs_ <- as.integer(num_runs)
+    initialize = function(num_procs, parallel_procs = NULL) {
+      checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
+      checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE,
+                                   .var.name = "parallel_procs", null.ok = TRUE)
+      private$num_procs_ <- as.integer(num_procs)
       if (is.null(parallel_runs)) {
-        private$parallel_runs_ <- private$num_runs_
+        private$parallel_procs_ <- private$num_procs_
       } else {
-        private$parallel_runs_ <- as.integer(parallel_runs)
+        private$parallel_procs_ <- as.integer(parallel_runs)
       }
-      private$active_runs_ <- 0
-      private$run_ids_ <- seq_len(num_runs)
-      zeros <- rep(0, num_runs)
+      private$active_procs_ <- 0
+      private$run_ids_ <- seq_len(num_procs)
+      zeros <- rep(0, num_procs)
       names(zeros) <- private$run_ids_
       private$chain_state_ = zeros
       private$chain_start_time_ = zeros
@@ -333,11 +334,11 @@ CmdStanProcs <- R6::R6Class(
       private$chain_last_section_start_time_ = zeros
       invisible(self)
     },
-    num_runs = function() {
-      private$num_runs_
+    num_procs = function() {
+      private$num_procs_
     },
     parallel_runs = function() {
-      private$parallel_runs_
+      private$parallel_procs_
     },
     run_ids = function() {
       private$run_ids_
@@ -564,7 +565,7 @@ CmdStanProcs <- R6::R6Class(
         return(invisible(self))
       }
 
-      num_chains <- self$num_runs()
+      num_chains <- self$num_procs()
       if (num_chains > 1) {
         num_failed <- self$num_failed()
         if (num_failed == 0) {
@@ -602,8 +603,8 @@ CmdStanProcs <- R6::R6Class(
   private = list(
     processes_ = NULL, # will be list of processx::process objects
     run_ids_ = integer(),
-    num_runs_ = integer(),
-    parallel_runs_ = integer(),
+    num_procs_ = integer(),
+    parallel_procs_ = integer(),
     active_runs_ = integer(),
     chain_state_ = NULL,
     chain_start_time_ = NULL,

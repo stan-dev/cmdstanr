@@ -616,7 +616,7 @@ sample_method <- function(data = NULL,
     output_dir = output_dir,
     validate_csv = validate_csv    
   )
-  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, parallel_runs = parallel_chains)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = chains, parallel_runs = parallel_chains)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
@@ -705,7 +705,7 @@ optimize_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_runs = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
@@ -825,7 +825,7 @@ variational_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_runs = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanVB$new(runset)

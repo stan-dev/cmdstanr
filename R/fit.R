@@ -11,8 +11,8 @@ CmdStanFit <- R6::R6Class(
       invisible(self)
     },
 
-    num_runs = function() {
-      self$runset$num_runs()
+    num_procs = function() {
+      self$runset$num_procs()
     },
 
     time = function() {
@@ -561,7 +561,7 @@ CmdStanMCMC <- R6::R6Class(
       }
     },
     num_chains = function() {
-      super$num_runs()
+      super$num_procs()
     },
     output = function(id = NULL) {
       if (is.null(id)) {
