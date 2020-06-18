@@ -173,8 +173,7 @@ SampleArgs <- R6::R6Class(
                           init_buffer = NULL,
                           term_buffer = NULL,
                           window = NULL,
-                          fixed_param = FALSE,
-                          threads_per_chain = NULL) {
+                          fixed_param = FALSE) {
 
       self$iter_warmup <- iter_warmup
       self$iter_sampling <- iter_sampling
@@ -187,7 +186,6 @@ SampleArgs <- R6::R6Class(
       self$metric <- metric
       self$inv_metric <- inv_metric
       self$fixed_param <- fixed_param
-      sefl$threads_per_chain <- threads_per_chain
       if (!is.null(inv_metric)) {
         if (!is.null(metric_file)) {
           stop("Only one of inv_metric and metric_file can be specified.",

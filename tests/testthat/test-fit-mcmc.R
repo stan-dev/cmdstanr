@@ -17,7 +17,6 @@ if (not_on_cran()) {
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
-
 test_that("draws() stops for unkown variables", {
   skip_on_cran()
   expect_error(
