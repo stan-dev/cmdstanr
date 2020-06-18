@@ -13,7 +13,6 @@ CmdStanRun <- R6::R6Class(
       checkmate::assert_r6(args, classes = "CmdStanArgs")
       checkmate::assert_r6(procs, classes = "CmdStanProcs")
       self$args <- args
-      print(self$args$proc_ids)
       self$procs <- procs
       private$output_files_ <- self$new_output_files()
       if (self$args$save_latent_dynamics) {
@@ -23,7 +22,7 @@ CmdStanRun <- R6::R6Class(
     },
 
     num_procs = function() self$procs$num_procs(),
-    proc_ids = function() self$args$proc_ids,
+    proc_ids = function() self$procs$proc_ids(),
     exe_file = function() self$args$exe_file,
     model_name = function() self$args$model_name,
     method = function() self$args$method,
@@ -66,7 +65,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
-        ids = self$proc_ids(),
+        ids = self$procs$proc_ids(),
         ext = ".csv",
         timestamp = timestamp,
         random = random
@@ -125,7 +124,7 @@ CmdStanRun <- R6::R6Class(
     command_args = function() {
       if (!length(private$command_args_)) {
         # create a list of character vectors (one per run/chain) of cmdstan arguments
-        private$command_args_ <- lapply(self$proc_ids(), function(j) {
+        private$command_args_ <- lapply(self$procs$proc_ids(), function(j) {
           self$args$compose_all_args(
             idx = j,
             output_file = private$output_files_[j],
@@ -187,7 +186,7 @@ CmdStanRun <- R6::R6Class(
           chain_time$warmup <- NA_real_
           chain_time$sampling <- NA_real_
         }
-        time <- list(total = procs$total_time(), chains = chain_time)
+        time <- list(total = self$procs$total_time(), chains = chain_time)
       }
       time
     }
@@ -232,8 +231,6 @@ CmdStanRun <- R6::R6Class(
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
-  print(chains)
-  print(self$command_args())
   chain_ind <- 1
   while (!procs$all_finished()) {
     # if we have free cores and any leftover chains
@@ -329,6 +326,7 @@ CmdStanProcs <- R6::R6Class(
       private$threads_per_proc_ <- threads_per_proc
       private$active_procs_ <- 0
       private$proc_ids_ <- seq_len(num_procs)
+      print(private$proc_ids_)
       zeros <- rep(0, num_procs)
       names(zeros) <- private$proc_ids_
       private$proc_state_ = zeros
@@ -412,7 +410,7 @@ CmdStanProcs <- R6::R6Class(
     },
     all_finished = function() {
       finished <- TRUE
-      for (id in self$proc_ids()) {
+      for (id in private$proc_ids_) {
         # if chain is not finished yet
         if (self$is_still_working(id)) {
           if (!self$is_queued(id) && !self$is_alive(id)) {

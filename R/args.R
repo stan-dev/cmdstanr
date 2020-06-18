@@ -28,7 +28,7 @@ CmdStanArgs <- R6::R6Class(
     method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
     initialize = function(model_name,
                           exe_file,
-                          run_ids,
+                          proc_ids,
                           method_args,
                           data_file = NULL,
                           save_latent_dynamics = FALSE,
@@ -40,7 +40,7 @@ CmdStanArgs <- R6::R6Class(
 
       self$model_name <- model_name
       self$exe_file <- exe_file
-      self$run_ids <- run_ids
+      self$proc_ids <- proc_ids
       self$data_file <- data_file
       self$seed <- seed
       self$init <- init
@@ -55,7 +55,7 @@ CmdStanArgs <- R6::R6Class(
         self$output_dir <- output_dir %||% tempdir(check = TRUE)
       }
 
-      self$method_args$validate(num_procs = length(self$run_ids))
+      self$method_args$validate(num_procs = length(self$proc_ids))
       self$validate()
     },
     validate = function() {
@@ -67,8 +67,8 @@ CmdStanArgs <- R6::R6Class(
       if (is.character(self$init)) {
         self$init <- absolute_path(self$init)
       }
-      self$init <- maybe_recycle_init(self$init, length(self$run_ids))
-      self$seed <- maybe_generate_seed(self$seed, length(self$run_ids))
+      self$init <- maybe_recycle_init(self$init, length(self$proc_ids))
+      self$seed <- maybe_generate_seed(self$seed, length(self$proc_ids))
       invisible(self)
     },
 
@@ -81,7 +81,7 @@ CmdStanArgs <- R6::R6Class(
       generate_file_names( # defined in utils.R
         basename = basename,
         ext = ".csv",
-        ids = self$run_ids,
+        ids = self$proc_ids,
         timestamp = TRUE,
         random = TRUE
       )
@@ -111,15 +111,15 @@ CmdStanArgs <- R6::R6Class(
           data = NULL,
           output = NULL
         )
-
+      print(self$proc_ids)
       idx <- idx %||% 1
-      if (!is.null(self$run_ids)) {
-        if (idx < 0 || idx > length(self$run_ids)) {
+      if (!is.null(self$proc_ids)) {
+        if (idx < 0 || idx > length(self$proc_ids)) {
           stop("Index (", idx, ") exceeds number of CmdStan processes",
-               " (", length(self$run_ids), ").",
+               " (", length(self$proc_ids), ").",
                call. = FALSE)
         }
-        args$id <- paste0("id=", self$run_ids[idx])
+        args$id <- paste0("id=", self$proc_ids[idx])
       }
 
       if (!is.null(self$seed)) {
@@ -413,7 +413,7 @@ validate_cmdstan_args = function(self) {
   checkmate::assert_directory_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
-  checkmate::assert_integerish(self$run_ids,
+  checkmate::assert_integerish(self$proc_ids,
                                lower = 1,
                                min.len = 1,
                                any.missing = FALSE,
@@ -427,7 +427,7 @@ validate_cmdstan_args = function(self) {
   if (!is.null(self$data_file)) {
     checkmate::assert_file_exists(self$data_file, access = "r")
   }
-  num_procs <- length(self$run_ids)
+  num_procs <- length(self$proc_ids)
   validate_init(self$init, num_procs)
   validate_seed(self$seed, num_procs)
 
@@ -452,7 +452,7 @@ validate_sample_args <- function(self, num_procs) {
                                null.ok = TRUE)
   if (!is.null(self$thin)) {
     self$thin <- as.integer(self$thin)
-  }  
+  }
   checkmate::assert_integerish(self$iter_sampling,
                                lower = 0,
                                len = 1,
@@ -535,7 +535,7 @@ validate_optimize_args <- function(self) {
   checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE, len = 1)
   if (!is.null(self$iter)) {
     self$iter <- as.integer(self$iter)
-  }  
+  }
   checkmate::assert_number(self$init_alpha, lower = 0, null.ok = TRUE)
   if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
     stop("'init_alpha' can't be used when algorithm is 'newton'.",
