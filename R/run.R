@@ -217,13 +217,13 @@ CmdStanRun <- R6::R6Class(
   }
   if (procs$num_procs() == 1) {
     start_msg <- "Running MCMC with 1 chain"
-  } else if (procs$num_procs() == procs$parallel_runs()) {
+  } else if (procs$num_procs() == procs$parallel_procs()) {
     start_msg <- paste0("Running MCMC with ", procs$num_procs(), " parallel chains")
   } else {
-    if (procs$parallel_runs() == 1) {
+    if (procs$parallel_procs() == 1) {
       start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
     } else {
-      start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_runs(), " in parallel")
+      start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_procs(), " in parallel")
     }
   }
   if (is.null(self$threads_per_chain())) {
@@ -237,7 +237,7 @@ CmdStanRun <- R6::R6Class(
   chain_ind <- 1
   while (!procs$all_finished()) {
     # if we have free cores and any leftover chains
-    while (procs$active_runs() != procs$parallel_runs() &&
+    while (procs$active_procs() != procs$parallel_procs() &&
            procs$any_queued()) {
       chain_id <- chains[chain_ind]
       procs$new_proc(
@@ -247,13 +247,13 @@ CmdStanRun <- R6::R6Class(
         wd = dirname(self$exe_file())
       )
       procs$mark_chain_start(chain_id)
-      procs$set_active_runs(procs$active_runs() + 1)
+      procs$set_active_procs(procs$active_procs() + 1)
       chain_ind <- chain_ind + 1
     }
-    start_active_runs <- procs$active_runs()
+    start_active_procs <- procs$active_procs()
 
-    while (procs$active_runs() == start_active_runs &&
-           procs$active_runs() > 0) {
+    while (procs$active_procs() == start_active_procs &&
+           procs$active_procs() > 0) {
       procs$wait(0.1)
       procs$poll(0)
       for (chain_id in chains) {
@@ -264,7 +264,7 @@ CmdStanRun <- R6::R6Class(
           procs$process_error_output(error_output, chain_id)
         }
       }
-      procs$set_active_runs(procs$num_alive())
+      procs$set_active_procs(procs$num_alive())
     }
   }
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
@@ -317,10 +317,10 @@ CmdStanProcs <- R6::R6Class(
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE,
                                    .var.name = "parallel_procs", null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
-      if (is.null(parallel_runs)) {
+      if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
       } else {
-        private$parallel_procs_ <- as.integer(parallel_runs)
+        private$parallel_procs_ <- as.integer(parallel_procs)
       }
       private$active_procs_ <- 0
       private$run_ids_ <- seq_len(num_procs)
@@ -337,7 +337,7 @@ CmdStanProcs <- R6::R6Class(
     num_procs = function() {
       private$num_procs_
     },
-    parallel_runs = function() {
+    parallel_procs = function() {
       private$parallel_procs_
     },
     run_ids = function() {
@@ -369,11 +369,11 @@ CmdStanProcs <- R6::R6Class(
       )
       invisible(self)
     },
-    active_runs = function() {
-      private$active_runs_
+    active_procs = function() {
+      private$active_procs_
     },
-    set_active_runs = function(runs) {
-      private$active_runs_ <- runs
+    set_active_procs = function(procs) {
+      private$active_procs_ <- procs
       invisible(NULL)
     },
     chain_total_time = function(id = NULL) {
@@ -605,7 +605,7 @@ CmdStanProcs <- R6::R6Class(
     run_ids_ = integer(),
     num_procs_ = integer(),
     parallel_procs_ = integer(),
-    active_runs_ = integer(),
+    active_procs_ = integer(),
     chain_state_ = NULL,
     chain_start_time_ = NULL,
     chain_total_time_ = NULL,
