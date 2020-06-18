@@ -23,7 +23,7 @@ jobs:
           - {os: macOS-latest,   r: 'release'}
           - {os: windows-latest, r: 'devel'}
           - {os: windows-latest, r: 'release'}
-          - {os: windows-latest,   r: 'oldrel'}
+          # - {os: windows-latest,   r: 'oldrel'}
           - {os: ubuntu-16.04,   r: 'release'}
           - {os: ubuntu-16.04,   r: 'oldrel'}
           #- {os: ubuntu-16.04,   r: '3.5'}
