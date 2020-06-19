@@ -38,8 +38,8 @@ provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
 interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
 later in this vignette for more details on how the two inferfaces differ.
 
-**CmdStanR is not on CRAN yet and user facing functions are still subject to change**, 
-but the latest pre-beta release can be installed via:
+**CmdStanR is not on CRAN yet**, but the latest pre-beta release can be
+installed via:
 
 ```{r install, eval=FALSE}
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
@@ -50,8 +50,9 @@ We'll also load the **bayesplot** and **posterior** packages.
 
 ```{r library, message=FALSE}
 library(cmdstanr)
-library(bayesplot)
 library(posterior)
+library(bayesplot)
+color_scheme_set("brightblue")
 ```
 
 ## Installing CmdStan
@@ -107,8 +108,9 @@ cmdstan_version()
 
 The `cmdstan_model()` function creates a new
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
-object from a file containing a Stan program. Here we'll use the example Stan
-program that comes with the CmdStan installation:
+object from a file containing a Stan program. Under the hood, CmdStan is called
+to translate a Stan program to C++ and create a compiled executable. Here we'll
+use the example Stan program that comes with the CmdStan installation:
 
 ```{r cmdstan_model}
 file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
@@ -117,7 +119,7 @@ mod <- cmdstan_model(file)
 
 The object `mod` is an [R6](https://r6.r-lib.org/) reference object of class
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html) and
-behaves similarly to to R's reference class objects and those in object oriented
+behaves similarly to R's reference class objects and those in object oriented
 programming languages. Methods are accessed using the `$` operator. This design
 choice allows for CmdStanR and
 [CmdStanPy](https://github.com/stan-dev/cmdstanpy) to provide a similar user
@@ -126,7 +128,7 @@ experience and share many implementation details.
 The Stan program can be printed using the `$print()` method: 
 
 ```{r compile}
-mod$print()  # print the Stan program
+mod$print()
 ```
 
 The path to the compiled executable is returned by the `$exe_file()`
@@ -144,12 +146,14 @@ The
 [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
 method for
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
-objects runs Stan's default MCMC algorithm. Data can be passed in as a named
-list of R objects (like for RStan) or as a path to a data file compatible with
+objects runs Stan's default MCMC algorithm. The `data` argument accepts a named
+list of R objects (like for RStan) or a path to a data file compatible with
 CmdStan (JSON or R dump).
 
 ```{r sample}
+# names correspond to the data block in the Stan program
 data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+
 fit <- mod$sample(
   data = data_list, 
   seed = 123, 
@@ -158,37 +162,50 @@ fit <- mod$sample(
 )
 ```
 
-The
-[`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
-method creates [R6](https://r6.r-lib.org/)
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
-objects.
+There are many more arguments that can be passed to the `$sample()` method. 
+For details follow this link to its separate documentation page: 
+
+* [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
+
+The `$sample()` method creates [R6](https://r6.r-lib.org/) `CmdStanMCMC`
+objects, which have many associated methods. Below we will demonstrate some
+of the most important methods. For a full list, follow this link to the `CmdStanMCMC` documentation: 
+
+* [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 
 #### Posterior summary statistics
 
-The [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
-method calls `summarise_draws()` from the **posterior** package: 
+The
+[`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
+method calls `summarise_draws()` from the **posterior** package:
 
 ```{r summary}
 fit$summary()
 ```
+
 #### Posterior draws
 
 The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
 method can be used to extract the posterior draws as a 3-D array (iteration x
-chain x variable):
+chain x variable). The **posterior** package can then be used to easily convert
+to other formats, like data frames and matrices of draws.
 
 ```{r draws, message=FALSE}
 # this is a draws_array object from the posterior package
 draws_array <- fit$draws()
 str(draws_array)
 
-# can be passed directly to bayesplot to plot posterior distribution
-mcmc_hist(fit$draws("theta"))
-
 # convert to matrix or data frame 
 draws_df <- as_draws_df(draws_array) # as_draws_matrix() for matrix
 print(draws_df)
+```
+
+Plotting posterior distributions is as easy as passing the object returned
+by the `$draws()` method directly to plotting functions in **bayesplot**, 
+for example `mcmc_hist()`:
+
+```{r plots, message=FALSE}
+mcmc_hist(fit$draws("theta"))
 ```
 
 #### Sampler diagnostics
@@ -231,17 +248,61 @@ stanfit <- rstan::read_stan_csv(fit$output_files())
 print(stanfit)
 ```
 
+
 ### Optimization and variational inference
 
 CmdStanR also supports running Stan's optimization algorithms and its algorithms
 for variational approximation of full Bayesian inference. These are run via the
 `$optimize()` and `$variational()` methods, which are called in a similar way to
-the `$sample()` method demonstrated above. For more details follow these links
-to the individual documentation pages:
+the `$sample()` method demonstrated above.
+
+#### Optimization
+
+We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html):
+
+```{r optimize}
+fit_mle <- mod$optimize(data = data_list, seed = 123) 
+fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
+fit_mle$mle() 
+```
+
+Here's a plot comparing the MLE to the posterior distribution of `theta`:
+
+```{r, message = FALSE}
+mcmc_hist(fit$draws("theta")) + 
+  vline_at(fit_mle$mle(), size = 1.5)
+```
+
+#### Variational Bayes
+
+We can run Stan's experimental variational Bayes algorithm using the 
+[`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html) method:
+
+```{r variational}
+fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 2000) 
+fit_vb$summary()
+```
+The `$draws()` method can be used to access the approximate posterior draws.
+Let's extract the draws, make the same plot we made after MCMC, and compare the
+two. In this trivial example the distributions look quite similar, although
+the variational approximation still slightly underestimates the posterior 
+standard deviation:
+
+```{r plot-variational, message = FALSE}
+bayesplot_grid(
+  mcmc_hist(fit$draws("theta")),    # MCMC
+  mcmc_hist(fit_vb$draws("theta")), # VB
+  titles = c("Posterior distributionn from MCMC", "Approximate posterior from VB"),
+  xlim = c(0, 1)
+)
+```
+
+
+For more details on the `$optimize()` and `$variational()` methods, follow
+these thinks to their documentation pages:
 
 * [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
 * [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
-
 
 ## Comparison with RStan
 
