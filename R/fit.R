@@ -765,8 +765,8 @@ CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
   inherit = CmdStanFit,
   public = list(
-    mle = function() {
-      x <- self$draws()
+    mle = function(variables = NULL) {
+      x <- self$draws(variables)
       x <- x[, colnames(x) != "lp__"]
       estimate <- setNames(as.numeric(x), nm = posterior::variables(x))
       estimate
