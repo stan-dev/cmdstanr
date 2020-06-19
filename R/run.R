@@ -175,16 +175,15 @@ CmdStanRun <- R6::R6Class(
       } else {
         chain_time <- data.frame(
           chain_id = self$procs$proc_ids()[self$procs$is_finished()],
-          warmup = self$procs$chain_warmup_time()[self$procs$is_finished()],
-          sampling = self$procs$chain_sampling_time()[self$procs$is_finished()],
+          warmup = self$procs$proc_section_time("warmup")[self$procs$is_finished()],
+          sampling = self$procs$proc_section_time("sampling")[self$procs$is_finished()],
           total = self$procs$proc_total_time()[self$procs$is_finished()]
         )
-
+        
+        
         if (isTRUE(self$args$refresh == 0)) {
           warning("Separate warmup and sampling times are not available ",
                   "after running with 'refresh=0'.", call. = FALSE)
-          chain_time$warmup <- NA_real_
-          chain_time$sampling <- NA_real_
         }
         time <- list(total = self$procs$total_time(), chains = chain_time)
       }
@@ -390,6 +389,16 @@ CmdStanProcs <- R6::R6Class(
       private$active_procs_ <- procs
       invisible(NULL)
     },
+    proc_section_time = function(section, id = NULL) {
+      if (section %in% colnames(private$proc_section_time_)) {
+        if (is.null(id)) {
+          return(private$proc_section_time_[, section])
+        }
+        private$proc_section_time_[id, section]
+      }else {
+        NA_real_
+      }      
+    },
     proc_total_time = function(id = NULL) {
       if (is.null(id)) {
         return(private$proc_total_time_[self$is_finished()])
@@ -474,7 +483,7 @@ CmdStanProcs <- R6::R6Class(
     mark_proc_start = function(id) {
       private$proc_start_time_[[id]] <- Sys.time()
       private$proc_state_[[id]] <- 1
-      private$chain_last_section_start_time_[[id]] <- private$proc_start_time_[[id]]
+      private$proc_section_time_[id, "last_section_start"] <- private$proc_start_time_[[id]]
       private$proc_output_[[id]] <- c("")
       invisible(self)
     },
@@ -521,6 +530,7 @@ CmdStanProcs <- R6::R6Class(
     proc_state_ = NULL,
     proc_start_time_ = NULL,
     proc_total_time_ = NULL,
+    proc_section_time_ = data.frame(),
     proc_output_ = list(),
     total_time_ = numeric()
   )
@@ -531,34 +541,6 @@ CmdStanMCMCProcs <- R6::R6Class(
   classname = "CmdStanMCMCProcs",
   inherit = CmdStanProcs,
   public = list(
-    # @param num_procs The number of CmdStan processes to start for a run. 
-    #   For MCMC this is the number of chains. Currently for other methods
-    #   this must be set to 1.
-    # @param parallel_procs The maximum number of processes to run in parallel.
-    #   Currently for non-sampling this must be set to 1.
-    # @param threads_per_proc The number of threads to use per MCMC chain
-    #   to run parallel sections of model.
-    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL) {
-      super$initialize(num_procs, parallel_procs, threads_per_proc)
-      zeros <- rep(0, num_procs)
-      names(zeros) <- private$proc_ids_
-      private$chain_warmup_time_ = zeros
-      private$chain_sampling_time_ = zeros
-      private$chain_last_section_start_time_ = zeros
-      invisible(self)
-    },
-    chain_warmup_time = function(id = NULL) {
-       if (is.null(id)) {
-        return(private$chain_warmup_time_[self$is_finished()])
-      }
-      private$chain_warmup_time_[[id]]
-    },
-    chain_sampling_time = function(id = NULL) {
-      if (is.null(id)) {
-        return(private$chain_sampling_time_[self$is_finished()])
-      }
-      private$chain_sampling_time_[[id]]
-    },
     process_output = function(out, id) {
       if (length(out) == 0) {
         return(NULL)
@@ -566,7 +548,7 @@ CmdStanMCMCProcs <- R6::R6Class(
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
-          last_section_start_time <- private$chain_last_section_start_time_[[id]]
+          last_section_start_time <- private$proc_section_time_[id, "last_section_start"]
           state <- private$proc_state_[[id]]
           # State machine for reading stdout.
           # 0 - chain has not started yet
@@ -586,7 +568,7 @@ CmdStanMCMCProcs <- R6::R6Class(
           if (state < 3 && regexpr("Iteration:", line, perl = TRUE) > 0) {
             state <- 3 # 3 =  warmup
             next_state <- 3
-            private$chain_last_section_start_time_[[id]] <- Sys.time()
+            private$proc_section_time_[id, "last_section_start"] <- Sys.time()
           }
           if (state < 3 && regexpr("Elapsed Time:", line, perl = TRUE) > 0) {
             state <- 5 # 5 = end of samp+ling
@@ -595,14 +577,14 @@ CmdStanMCMCProcs <- R6::R6Class(
           if (private$proc_state_[[id]] == 3 &&
               regexpr("(Sampling)", line, perl = TRUE) > 0) {
             next_state <- 4 # 4 = sampling
-            private$chain_warmup_time_[[id]] <- as.double((Sys.time() - last_section_start_time), units = "secs")
-            private$chain_last_section_start_time_[[id]] <- Sys.time()
+            private$proc_section_time_[id, "warmup"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
+            private$proc_section_time_[id, "last_section_start"] <- Sys.time()
           }
           if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
             if (state == 3) { #warmup only run
-              private$chain_warmup_time_[[id]] <- as.double((Sys.time() - last_section_start_time), units = "secs")
+              private$proc_section_time_[id, "warmup"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             } else if (state == 4) { # sampling
-              private$chain_sampling_time_[[id]] <- as.double((Sys.time() - last_section_start_time), units = "secs")
+              private$proc_section_time_[id, "sampling"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
             }
             next_state <- 5 # writing csv and finishing
           }
@@ -625,11 +607,6 @@ CmdStanMCMCProcs <- R6::R6Class(
       }
       invisible(self)
     }    
-  ),
-  private = list(
-    chain_warmup_time_ = NULL,
-    chain_sampling_time_ = NULL,
-    chain_last_section_start_time_ = NULL
   )
 )
 
