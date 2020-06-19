@@ -333,7 +333,7 @@ CmdStanProcs <- R6::R6Class(
       } else {
         private$parallel_procs_ <- as.integer(parallel_procs)
       }
-      private$threads_per_proc_ <- threads_per_proc
+      private$threads_per_proc_ <- as.integer(threads_per_proc)
       private$active_procs_ <- 0
       private$proc_ids_ <- seq_len(num_procs)
       zeros <- rep(0, num_procs)
@@ -413,8 +413,6 @@ CmdStanProcs <- R6::R6Class(
       invisible(self)
     },
     check_finished = function() {
-      new_failed_procs = NULL
-      new_successful_procs = NULL
       for (id in private$proc_ids_) {
         # if process is not finished yet
         if (self$is_still_working(id)) {
@@ -430,10 +428,7 @@ CmdStanProcs <- R6::R6Class(
           }
         }
       }
-      list(
-        failed = new_failed_procs,
-        success = new_successful_procs
-      )
+      invisible(self)
     },
     is_alive = function(id = NULL) {
       if (!is.null(id)) {
@@ -519,7 +514,7 @@ CmdStanProcs <- R6::R6Class(
     },
     report_time = function(id = NULL) {
       cat("Finished in ",
-              format(round(mean(self$total_time()), 1), nsmall = 1),
+              format(round(self$total_time(), 1), nsmall = 1),
               "seconds.\n")  
     }
   ),
