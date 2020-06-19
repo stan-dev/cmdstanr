@@ -111,7 +111,6 @@ CmdStanArgs <- R6::R6Class(
           data = NULL,
           output = NULL
         )
-      print(self$proc_ids)
       idx <- idx %||% 1
       if (!is.null(self$proc_ids)) {
         if (idx < 0 || idx > length(self$proc_ids)) {
