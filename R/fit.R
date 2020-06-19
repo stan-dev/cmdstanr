@@ -760,7 +760,7 @@ CmdStanMCMC <- R6::R6Class(
 #'  [`$save_data_file()`][fit-method-save_data_file] \tab Save JSON data file
 #'  to a specified location. \cr
 #'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
-#'  `$output()` \tab Pretty print the output that was printed during optimization \cr
+#'  `$output()` \tab Pretty print the output that was printed during optimization. \cr
 #' }
 #'
 NULL
@@ -821,7 +821,7 @@ CmdStanMLE <- R6::R6Class(
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
 #'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
-#'  `$output()` \tab Pretty print the output that was printed during fitting.' \cr
+#'  `$output()` \tab Pretty print the output that was printed during fitting. \cr
 #' }
 #'
 NULL
