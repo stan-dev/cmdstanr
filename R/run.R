@@ -232,10 +232,8 @@ CmdStanRun <- R6::R6Class(
   start_time <- Sys.time()
   chains <- procs$proc_ids()
   chain_ind <- 1
-  while (!procs$all_finished()) {
-    # if we have free cores and any leftover chains
-    while (procs$active_procs() != procs$parallel_procs() &&
-           procs$any_queued()) {
+  while (!all(procs$is_finished() | procs$is_failed())) {
+    while (procs$active_procs() != procs$parallel_procs() && procs$any_queued()) {
       chain_id <- chains[chain_ind]
       procs$new_proc(
         id = chain_id,
@@ -256,16 +254,29 @@ CmdStanRun <- R6::R6Class(
       for (chain_id in chains) {
         if (!procs$is_queued(chain_id)) {
           output <- procs$get_proc(chain_id)$read_output_lines()
-          procs$process_sample_output(output, chain_id)
+          procs$process_output(output, chain_id)
           error_output <- procs$get_proc(chain_id)$read_error_lines()
           procs$process_error_output(error_output, chain_id)
         }
       }
       procs$set_active_procs(procs$num_alive())
     }
+    new_finished = procs$check_new_finished()
+    sapply(
+      new_finished$failed,
+      function(x) {
+        warning("Chain ", x, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+      }
+    )
+    sapply(
+      new_finished$success,
+      function(x) {
+        cat("Chain", x, "finished in", format(round(procs$proc_total_time(x), 1), nsmall = 1), "seconds.\n")
+      }
+    )
   }
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
-  procs$report_time()
+  report_sampling_time(procs)
 }
 CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 
@@ -291,7 +302,9 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     error_on_status = TRUE
   )
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
-  procs$report_time()
+  cat("Finished in ",
+          format(round(mean(procs$total_time()), 1), nsmall = 1),
+          "seconds.\n")  
 }
 CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
 CmdStanRun$set("private", name = "run_variational_", value = .run_other)
@@ -299,8 +312,7 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
 
 # CmdStanProcs ------------------------------------------------------------
 
-# System processes for model fitting
-# Currently only used to run sampling in parallel
+# System processes for model fitting 
 CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
@@ -326,15 +338,11 @@ CmdStanProcs <- R6::R6Class(
       private$threads_per_proc_ <- threads_per_proc
       private$active_procs_ <- 0
       private$proc_ids_ <- seq_len(num_procs)
-      print(private$proc_ids_)
       zeros <- rep(0, num_procs)
       names(zeros) <- private$proc_ids_
       private$proc_state_ = zeros
       private$proc_start_time_ = zeros
       private$proc_total_time_ = zeros
-      private$chain_warmup_time_ = zeros
-      private$chain_sampling_time_ = zeros
-      private$chain_last_section_start_time_ = zeros
       invisible(self)
     },
     num_procs = function() {
@@ -388,18 +396,6 @@ CmdStanProcs <- R6::R6Class(
       }
       private$proc_total_time_[[id]]
     },
-    chain_warmup_time = function(id = NULL) {
-      if (is.null(id)) {
-        return(private$chain_warmup_time_[self$is_finished()])
-      }
-      private$chain_warmup_time_[[id]]
-    },
-    chain_sampling_time = function(id = NULL) {
-      if (is.null(id)) {
-        return(private$chain_sampling_time_[self$is_finished()])
-      }
-      private$chain_sampling_time_[[id]]
-    },
     total_time = function() {
       # scalar overall time
       private$total_time_
@@ -408,26 +404,32 @@ CmdStanProcs <- R6::R6Class(
       private$total_time_ <- as.numeric(time)
       invisible(self)
     },
-    all_finished = function() {
-      finished <- TRUE
+    check_new_finished = function() {
+      new_failed_procs = NULL
+      new_successful_procs = NULL
       for (id in private$proc_ids_) {
-        # if chain is not finished yet
+        # if process is not finished yet
         if (self$is_still_working(id)) {
           if (!self$is_queued(id) && !self$is_alive(id)) {
-            # if the chain just finished make sure we process all
-            # input and mark the chain finished
+            # if the process just finished make sure we process all
+            # input and mark the process finished
             output <- self$get_proc(id)$read_output_lines()
-            self$process_sample_output(output, id)
+            self$process_output(output, id)
             error_output <- self$get_proc(id)$read_error_lines()
             self$process_error_output(error_output, id)
-
             self$mark_proc_stop(id)
-          } else {
-            finished <- FALSE
+            if (self$proc_state(id) == 7) {
+              new_failed_procs <- c(new_failed_procs, id)
+            } else {
+              new_successful_procs <- c(new_successful_procs, id)
+            }
           }
         }
       }
-      finished
+      list(
+        failed = new_failed_procs,
+        success = new_successful_procs
+      )
     },
     is_alive = function(id = NULL) {
       if (!is.null(id)) {
@@ -441,6 +443,9 @@ CmdStanProcs <- R6::R6Class(
     is_finished = function(id = NULL) {
       self$proc_state(id) == 6
     },
+    is_failed = function(id = NULL) {
+      self$proc_state(id) == 7
+    },
     is_queued = function(id = NULL) {
       self$proc_state(id) == 0
     },
@@ -448,7 +453,7 @@ CmdStanProcs <- R6::R6Class(
       sum(self$is_alive())
     },
     num_failed = function() {
-      length(self$proc_ids()) - sum(self$is_finished())
+      sum(self$proc_state() == 7)
     },
     any_queued = function() {
       any(self$is_queued())
@@ -477,10 +482,8 @@ CmdStanProcs <- R6::R6Class(
       if (private$proc_state_[[id]] == 5) {
         private$proc_state_[[id]] <- 6
         private$proc_total_time_[[id]] <- as.double((Sys.time() - private$proc_start_time_[[id]]), units = "secs")
-        self$report_time(id)
       } else {
         private$proc_state_[[id]] <- 7
-        warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
       }
       invisible(self)
     },
@@ -497,7 +500,66 @@ CmdStanProcs <- R6::R6Class(
         }
       }
     },
-    process_sample_output = function(out, id) {
+    process_output = function(out, id) {
+      if (length(out) == 0) {
+        return(NULL)
+      }
+      for (line in out) {
+        private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
+        print(line)
+      }
+      invisible(self)
+    }
+  ),
+  private = list(
+    processes_ = NULL, # will be list of processx::process objects
+    proc_ids_ = integer(),
+    num_procs_ = integer(),
+    parallel_procs_ = integer(),
+    active_procs_ = integer(),
+    threads_per_proc_ = integer(),
+    proc_state_ = NULL,
+    proc_start_time_ = NULL,
+    proc_total_time_ = NULL,
+    proc_output_ = list(),
+    total_time_ = numeric()
+  )
+)
+
+# System processes for model fitting with MCMC
+CmdStanMCMCProcs <- R6::R6Class(
+  classname = "CmdStanMCMCProcs",
+  inherit = CmdStanProcs,
+  public = list(
+    # @param num_procs The number of CmdStan processes to start for a run. 
+    #   For MCMC this is the number of chains. Currently for other methods
+    #   this must be set to 1.
+    # @param parallel_procs The maximum number of processes to run in parallel.
+    #   Currently for non-sampling this must be set to 1.
+    # @param threads_per_proc The number of threads to use per MCMC chain
+    #   to run parallel sections of model.
+    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL) {
+      super$initialize(num_procs, parallel_procs, threads_per_proc)
+      zeros <- rep(0, num_procs)
+      names(zeros) <- private$proc_ids_
+      private$chain_warmup_time_ = zeros
+      private$chain_sampling_time_ = zeros
+      private$chain_last_section_start_time_ = zeros
+      invisible(self)
+    },
+    chain_warmup_time = function(id = NULL) {
+       if (is.null(id)) {
+        return(private$chain_warmup_time_[self$is_finished()])
+      }
+      private$chain_warmup_time_[[id]]
+    },
+    chain_sampling_time = function(id = NULL) {
+      if (is.null(id)) {
+        return(private$chain_sampling_time_[self$is_finished()])
+      }
+      private$chain_sampling_time_[[id]]
+    },
+    process_output = function(out, id) {
       if (length(out) == 0) {
         return(NULL)
       }
@@ -562,64 +624,47 @@ CmdStanProcs <- R6::R6Class(
         }
       }
       invisible(self)
-    },
-    report_time = function(id = NULL) {
-      if (!is.null(id)) {
-        cat("Chain", id, "finished in",
-            format(round(self$proc_total_time(id), 1), nsmall = 1),
-            "seconds.\n")
-        return(invisible(self))
-      }
-
-      num_chains <- self$num_procs()
-      if (num_chains > 1) {
-        num_failed <- self$num_failed()
-        if (num_failed == 0) {
-          if (num_chains == 2) {
-            cat("\nBoth chains finished successfully.\n")
-          } else {
-            cat("\nAll", num_chains, "chains finished successfully.\n")
-          }
-          cat("Mean chain execution time:",
-              format(round(mean(self$proc_total_time()), 1), nsmall = 1),
-              "seconds.\n")
-          cat("Total execution time:",
-              format(round(self$total_time(), 1), nsmall = 1),
-              "seconds.\n")
-        } else if (num_failed == num_chains) {
-          warning("All chains finished unexpectedly!\n", call. = FALSE)
-          warning("Use read_sample_csv() to read the results of the failed chains.",
-                  immediate. = TRUE,
-                  call. = FALSE)
-        } else {
-          warning(num_failed, " chain(s) finished unexpectedly!",
-                  immediate. = TRUE,
-                  call. = FALSE)
-          cat("The remaining chains had a mean execution time of",
-              format(round(mean(self$total_time()), 1), nsmall = 1),
-              "seconds.\n")
-          warning("The returned fit object will only read in results of succesful chains. Please use read_sample_csv() to read the results of the failed chains separately.",
-                  immediate. = TRUE,
-                  call. = FALSE)
-        }
-      }
-      invisible(self)
-    }
+    }    
   ),
   private = list(
-    processes_ = NULL, # will be list of processx::process objects
-    proc_ids_ = integer(),
-    num_procs_ = integer(),
-    parallel_procs_ = integer(),
-    active_procs_ = integer(),
-    threads_per_proc_ = integer(),
-    proc_state_ = NULL,
-    proc_start_time_ = NULL,
-    proc_total_time_ = NULL,
     chain_warmup_time_ = NULL,
     chain_sampling_time_ = NULL,
-    chain_last_section_start_time_ = NULL,
-    proc_output_ = list(),
-    total_time_ = numeric()
+    chain_last_section_start_time_ = NULL
   )
 )
+
+report_sampling_time = function(procs) {
+  num_chains <- procs$num_procs()
+  if (num_chains > 1) {
+    num_failed <- procs$num_failed()
+    if (num_failed == 0) {
+      if (num_chains == 2) {
+        cat("\nBoth chains finished successfully.\n")
+      } else {
+        cat("\nAll", num_chains, "chains finished successfully.\n")
+      }
+      cat("Mean chain execution time:",
+          format(round(mean(procs$proc_total_time()), 1), nsmall = 1),
+          "seconds.\n")
+      cat("Total execution time:",
+          format(round(procs$total_time(), 1), nsmall = 1),
+          "seconds.\n")
+    } else if (num_failed == num_chains) {
+      warning("All chains finished unexpectedly!\n", call. = FALSE)
+      warning("Use read_sample_csv() to read the results of the failed chains.",
+              immediate. = TRUE,
+              call. = FALSE)
+    } else {
+      warning(num_failed, " chain(s) finished unexpectedly!",
+              immediate. = TRUE,
+              call. = FALSE)
+      cat("The remaining chains had a mean execution time of",
+          format(round(mean(procs$total_time()), 1), nsmall = 1),
+          "seconds.\n")
+      warning("The returned fit object will only read in results of succesful chains. Please use read_sample_csv() to read the results of the failed chains separately.",
+              immediate. = TRUE,
+              call. = FALSE)
+    }
+  }
+  return(invisible(NULL))
+}
