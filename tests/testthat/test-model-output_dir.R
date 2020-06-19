@@ -28,7 +28,7 @@ test_that("all fitting methods work with output_dir", {
     fit <- testing_fit("bernoulli", method = method, seed = 123,
                         output_dir = method_dir)
     expect_equal(fit$runset$args$output_dir, absolute_path(method_dir))
-    expect_equal(length(list.files(method_dir)), fit$num_runs())
+    expect_equal(length(list.files(method_dir)), fit$num_procs())
   }
 
   # specifying output_dir and save_latent_dynamics
@@ -39,7 +39,7 @@ test_that("all fitting methods work with output_dir", {
   files <- list.files(file.path(sandbox, "sample"))
   expect_equal(
     sum(grepl("diagnostic", files)),
-    fit$num_runs()
+    fit$num_procs()
   )
 })
 

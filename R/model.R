@@ -571,6 +571,7 @@ sample_method <- function(data = NULL,
     save_latent_dynamics <- save_extra_diagnostics
   }
   checkmate::assert_integerish(chains, lower = 1, len = 1)
+  checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
   # check if model was not compiled with threading
   if (is.null(self$cpp_options()[["stan_threads"]])) {
@@ -605,16 +606,16 @@ sample_method <- function(data = NULL,
     method_args = sample_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    run_ids = seq_len(chains),
+    proc_ids = seq_len(chains),
     data_file = process_data(data),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
-    validate_csv = validate_csv
+    validate_csv = validate_csv    
   )
-  cmdstan_procs <- CmdStanProcs$new(num_runs = chains, num_cores = parallel_chains, threads_per_chain = threads_per_chain)
+  cmdstan_procs <- CmdStanMCMCProcs$new(num_procs = chains, parallel_procs = parallel_chains, threads_per_proc = threads_per_chain)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
@@ -694,7 +695,7 @@ optimize_method <- function(data = NULL,
     method_args = optimize_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    run_ids = 1,
+    proc_ids = 1,
     data_file = process_data(data),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
@@ -703,7 +704,7 @@ optimize_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
@@ -814,7 +815,7 @@ variational_method <- function(data = NULL,
     method_args = variational_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    run_ids = 1,
+    proc_ids = 1,
     data_file = process_data(data),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
@@ -823,7 +824,7 @@ variational_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanVB$new(runset)

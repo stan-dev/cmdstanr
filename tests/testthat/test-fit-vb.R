@@ -4,6 +4,8 @@ if (not_on_cran()) {
   set_cmdstan_path()
   fit_vb <- testing_fit("logistic", method = "variational", seed = 123)
   fit_vb_sci_not <- testing_fit("logistic", method = "variational", seed = 123, iter = 200000, adapt_iter = 100000)
+  mod <- testing_model("bernoulli")
+  data_list <- testing_data("bernoulli")
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
@@ -62,3 +64,16 @@ test_that("time() method works after vb", {
   testthat::expect_named(run_times, c("total"))
   checkmate::expect_number(run_times$total, finite = TRUE)
 })
+
+test_that("output() works for vb", {
+  skip_on_cran()
+  expect_output(fit_vb$output(),
+                "method = variational")
+})
+
+test_that("time is reported after vb", {
+  skip_on_cran()
+  expect_output(mod$variational(data = data_list),
+                "Finished in")
+})
+

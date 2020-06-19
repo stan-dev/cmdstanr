@@ -11,8 +11,8 @@ CmdStanFit <- R6::R6Class(
       invisible(self)
     },
 
-    num_runs = function() {
-      self$runset$num_runs()
+    num_procs = function() {
+      self$runset$num_procs()
     },
 
     time = function() {
@@ -90,7 +90,11 @@ CmdStanFit <- R6::R6Class(
     cmdstan_diagnose = function(...) {
       self$runset$run_cmdstan_tool("diagnose", ...)
     },
-
+    output = function(id = NULL) {
+      # non-MCMC fit is obtained with one process only
+      # so fit$output() prints the output of that process
+      cat(paste(self$runset$procs$proc_output(1), collapse="\n"))
+    },
     output_files = function(include_failed = FALSE) {
       self$runset$output_files(include_failed)
     },
@@ -561,16 +565,15 @@ CmdStanMCMC <- R6::R6Class(
       }
     },
     num_chains = function() {
-      super$num_runs()
+      super$num_procs()
     },
     output = function(id = NULL) {
       if (is.null(id)) {
-        self$runset$procs$chain_output()
+        self$runset$procs$proc_output()
       } else {
-        cat(paste(self$runset$procs$chain_output(id), collapse="\n"))
+        cat(paste(self$runset$procs$proc_output(id), collapse="\n"))
       }
     },
-
     draws = function(variables = NULL, inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.")
@@ -757,6 +760,7 @@ CmdStanMCMC <- R6::R6Class(
 #'  [`$save_data_file()`][fit-method-save_data_file] \tab Save JSON data file
 #'  to a specified location. \cr
 #'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
+#'  `$output()` \tab Pretty print the output that was printed during optimization. \cr
 #' }
 #'
 NULL
@@ -817,6 +821,7 @@ CmdStanMLE <- R6::R6Class(
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
 #'    \tab Save diagnostic CSV files to a specified location. \cr
 #'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
+#'  `$output()` \tab Pretty print the output that was printed during fitting. \cr
 #' }
 #'
 NULL

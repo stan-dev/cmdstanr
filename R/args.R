@@ -28,7 +28,7 @@ CmdStanArgs <- R6::R6Class(
     method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
     initialize = function(model_name,
                           exe_file,
-                          run_ids,
+                          proc_ids,
                           method_args,
                           data_file = NULL,
                           save_latent_dynamics = FALSE,
@@ -40,7 +40,7 @@ CmdStanArgs <- R6::R6Class(
 
       self$model_name <- model_name
       self$exe_file <- exe_file
-      self$run_ids <- run_ids
+      self$proc_ids <- proc_ids
       self$data_file <- data_file
       self$seed <- seed
       self$init <- init
@@ -55,7 +55,7 @@ CmdStanArgs <- R6::R6Class(
         self$output_dir <- output_dir %||% tempdir(check = TRUE)
       }
 
-      self$method_args$validate(num_runs = length(self$run_ids))
+      self$method_args$validate(num_procs = length(self$proc_ids))
       self$validate()
     },
     validate = function() {
@@ -67,8 +67,8 @@ CmdStanArgs <- R6::R6Class(
       if (is.character(self$init)) {
         self$init <- absolute_path(self$init)
       }
-      self$init <- maybe_recycle_init(self$init, length(self$run_ids))
-      self$seed <- maybe_generate_seed(self$seed, length(self$run_ids))
+      self$init <- maybe_recycle_init(self$init, length(self$proc_ids))
+      self$seed <- maybe_generate_seed(self$seed, length(self$proc_ids))
       invisible(self)
     },
 
@@ -81,7 +81,7 @@ CmdStanArgs <- R6::R6Class(
       generate_file_names( # defined in utils.R
         basename = basename,
         ext = ".csv",
-        ids = self$run_ids,
+        ids = self$proc_ids,
         timestamp = TRUE,
         random = TRUE
       )
@@ -111,15 +111,14 @@ CmdStanArgs <- R6::R6Class(
           data = NULL,
           output = NULL
         )
-
       idx <- idx %||% 1
-      if (!is.null(self$run_ids)) {
-        if (idx < 0 || idx > length(self$run_ids)) {
-          stop("Index (", idx, ") exceeds number of CmdStan runs",
-               " (", length(self$run_ids), ").",
+      if (!is.null(self$proc_ids)) {
+        if (idx < 0 || idx > length(self$proc_ids)) {
+          stop("Index (", idx, ") exceeds number of CmdStan processes",
+               " (", length(self$proc_ids), ").",
                call. = FALSE)
         }
-        args$id <- paste0("id=", self$run_ids[idx])
+        args$id <- paste0("id=", self$proc_ids[idx])
       }
 
       if (!is.null(self$seed)) {
@@ -224,9 +223,9 @@ SampleArgs <- R6::R6Class(
       }
       invisible(self)
     },
-    validate = function(num_runs) {
-      validate_sample_args(self, num_runs)
-      self$metric_file <- maybe_recycle_metric_file(self$metric_file, num_runs)
+    validate = function(num_procs) {
+      validate_sample_args(self, num_procs)
+      self$metric_file <- maybe_recycle_metric_file(self$metric_file, num_procs)
       invisible(self)
     },
 
@@ -308,7 +307,7 @@ OptimizeArgs <- R6::R6Class(
       self$iter <- iter
       invisible(self)
     },
-    validate = function(num_runs) {
+    validate = function(num_procs) {
       validate_optimize_args(self)
       invisible(self)
     },
@@ -368,7 +367,7 @@ VariationalArgs <- R6::R6Class(
       invisible(self)
     },
 
-    validate = function(num_runs) {
+    validate = function(num_procs) {
       validate_variational_args(self)
     },
 
@@ -413,7 +412,7 @@ validate_cmdstan_args = function(self) {
   checkmate::assert_directory_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
-  checkmate::assert_integerish(self$run_ids,
+  checkmate::assert_integerish(self$proc_ids,
                                lower = 1,
                                min.len = 1,
                                any.missing = FALSE,
@@ -427,9 +426,9 @@ validate_cmdstan_args = function(self) {
   if (!is.null(self$data_file)) {
     checkmate::assert_file_exists(self$data_file, access = "r")
   }
-  num_runs <- length(self$run_ids)
-  validate_init(self$init, num_runs)
-  validate_seed(self$seed, num_runs)
+  num_procs <- length(self$proc_ids)
+  validate_init(self$init, num_procs)
+  validate_seed(self$seed, num_procs)
 
   invisible(TRUE)
 }
@@ -437,22 +436,22 @@ validate_cmdstan_args = function(self) {
 #' Validate arguments for sampling
 #' @noRd
 #' @param self A `SampleArgs` object.
-#' @param num_runs The number of CmdStan runs (number of MCMC chains).
+#' @param num_procs The number of CmdStan processes (number of MCMC chains).
 #' @return `TRUE` invisibly unless an error is thrown.
-validate_sample_args <- function(self, num_runs) {
-  checkmate::assert_integerish(num_runs,
+validate_sample_args <- function(self, num_procs) {
+  checkmate::assert_integerish(num_procs,
                                lower = 1,
                                len = 1,
                                any.missing = FALSE,
                                .var.name = "Number of chains")
-  self$num_runs <- as.integer(self$num_runs)
+  self$num_procs <- as.integer(self$num_procs)
   checkmate::assert_integerish(self$thin,
                                lower = 1,
                                len = 1,
                                null.ok = TRUE)
   if (!is.null(self$thin)) {
     self$thin <- as.integer(self$thin)
-  }  
+  }
   checkmate::assert_integerish(self$iter_sampling,
                                lower = 0,
                                len = 1,
@@ -513,14 +512,14 @@ validate_sample_args <- function(self, num_runs) {
   } else {
     checkmate::assert_numeric(self$step_size,
                               lower = .Machine$double.eps,
-                              len = num_runs,
+                              len = num_procs,
                               null.ok = TRUE)
   }
 
   # TODO: implement other checks for metric from cmdstanpy:
   # https://github.com/stan-dev/cmdstanpy/blob/master/cmdstanpy/cmdstan_args.py#L130
   validate_metric(self$metric)
-  validate_metric_file(self$metric_file, num_runs)
+  validate_metric_file(self$metric_file, num_procs)
 
   invisible(TRUE)
 }
@@ -535,7 +534,7 @@ validate_optimize_args <- function(self) {
   checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE, len = 1)
   if (!is.null(self$iter)) {
     self$iter <- as.integer(self$iter)
-  }  
+  }
   checkmate::assert_number(self$init_alpha, lower = 0, null.ok = TRUE)
   if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
     stop("'init_alpha' can't be used when algorithm is 'newton'.",
@@ -617,9 +616,9 @@ validate_exe_file <- function(exe_file) {
 #'
 #' @noRd
 #' @param init User's `init` argument.
-#' @param num_runs Number of CmdStan runs (number of chains if MCMC)
+#' @param num_procs Number of CmdStan processes (number of chains if MCMC)
 #' @return Either throws an error or returns `invisible(TRUE)`.
-validate_init <- function(init, num_runs) {
+validate_init <- function(init, num_procs) {
   if (is.null(init)) {
     return(invisible(TRUE))
   }
@@ -631,7 +630,7 @@ validate_init <- function(init, num_runs) {
     stop("If 'init' is numeric it must be a single real number >= 0.",
          call. = FALSE)
   } else if (is.character(init)) {
-    if (length(init) != 1 && length(init) != num_runs) {
+    if (length(init) != 1 && length(init) != num_procs) {
       stop("If 'init' is specified as a character vector it must have ",
            "length 1 or number of chains.",
            call. = FALSE)
@@ -645,14 +644,14 @@ validate_init <- function(init, num_runs) {
 #' Recycle init if numeric and length 1
 #' @noRd
 #' @param init Already validated `init` argument.
-#' @param num_runs Number of CmdStan runs.
-#' @return `init`, unless numeric and length 1, in which case `rep(init, num_runs)`.
-maybe_recycle_init <- function(init, num_runs) {
+#' @param num_procs Number of CmdStan processes.
+#' @return `init`, unless numeric and length 1, in which case `rep(init, num_procs)`.
+maybe_recycle_init <- function(init, num_procs) {
   if (is.null(init) ||
-      length(init) == num_runs) {
+      length(init) == num_procs) {
     return(init)
   }
-  rep(init, num_runs)
+  rep(init, num_procs)
 }
 
 
@@ -663,14 +662,14 @@ maybe_recycle_init <- function(init, num_runs) {
 #'
 #' @noRd
 #' @param seed User's `seed` argument.
-#' @param num_runs Number of CmdStan runs (number of chains if MCMC)
+#' @param num_procs Number of CmdStan processes (number of chains if MCMC)
 #' @return Either throws an error or returns `invisible(TRUE)`.
-validate_seed <- function(seed, num_runs) {
+validate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
     return(invisible(TRUE))
   }
   checkmate::assert_integerish(seed, lower = 1)
-  if (length(seed) > 1 && length(seed) != num_runs) {
+  if (length(seed) > 1 && length(seed) != num_procs) {
     stop("If 'seed' is specified it must be a single integer or one per chain.",
          call. = FALSE)
   }
@@ -680,14 +679,14 @@ validate_seed <- function(seed, num_runs) {
 #' Generate seed(s) if missing
 #' @noRd
 #' @param seed Already validated `seed` argument.
-#' @param num_runs Number of CmdStan runs.
-#' @return An integer vector of length `num_runs`.
-maybe_generate_seed <- function(seed, num_runs) {
+#' @param num_procs Number of CmdStan processes.
+#' @return An integer vector of length `num_procs`.
+maybe_generate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
-    seed <- sample(.Machine$integer.max, num_runs)
-  } else if (length(seed) == 1 && num_runs > 1) {
+    seed <- sample(.Machine$integer.max, num_procs)
+  } else if (length(seed) == 1 && num_procs > 1) {
     seed <- as.integer(seed)
-    seed <- c(seed, seed + 1:(num_runs -1))
+    seed <- c(seed, seed + 1:(num_procs -1))
   }
   seed
 }
@@ -695,7 +694,7 @@ maybe_generate_seed <- function(seed, num_runs) {
 #' Validate metric
 #' @noRd
 #' @param metric User's `metric` argument.
-#' @param num_runs Number of CmdStan runs (number of MCMC chains).
+#' @param num_procs Number of CmdStan processes (number of MCMC chains).
 #' @return Either throws an error or returns `invisible(TRUE)`.
 #'
 validate_metric <- function(metric) {
@@ -712,20 +711,20 @@ validate_metric <- function(metric) {
 #' Validate metric file
 #' @noRd
 #' @param metric_file User's `metric_file` argument.
-#' @param num_runs Number of CmdStan runs (number of MCMC chains).
+#' @param num_procs Number of CmdStan processes (number of MCMC chains).
 #' @return Either throws an error or returns `invisible(TRUE)`.
 #'
-validate_metric_file <- function(metric_file, num_runs) {
+validate_metric_file <- function(metric_file, num_procs) {
   if (is.null(metric_file)) {
     return(invisible(TRUE))
   }
 
   checkmate::assert_file_exists(metric_file, access = "r")
 
-  if (length(metric_file) != 1 && length(metric_file) != num_runs) {
+  if (length(metric_file) != 1 && length(metric_file) != num_procs) {
     stop(length(metric_file), " metric(s) provided. Must provide ",
-         if (num_runs > 1) "1 or ", num_runs, " metric(s) for ",
-         num_runs, " chain(s).")
+         if (num_procs > 1) "1 or ", num_procs, " metric(s) for ",
+         num_procs, " chain(s).")
   }
 
   invisible(TRUE)
@@ -734,15 +733,15 @@ validate_metric_file <- function(metric_file, num_runs) {
 #' Recycle metric_file if not NULL
 #' @noRd
 #' @param metric_file Path to already validated `metric_file` argument.
-#' @param num_runs Number of CmdStan runs.
-#' @return `rep(metric_file, num_runs)` if metric_file is a single path, otherwise
+#' @param num_procs Number of CmdStan processes.
+#' @return `rep(metric_file, num_procs)` if metric_file is a single path, otherwise
 #'    return `metric_file`.
-maybe_recycle_metric_file <- function(metric_file, num_runs) {
+maybe_recycle_metric_file <- function(metric_file, num_procs) {
   if (is.null(metric_file) ||
-      length(metric_file) == num_runs) {
+      length(metric_file) == num_procs) {
     return(metric_file)
   }
-  rep(metric_file, num_runs)
+  rep(metric_file, num_procs)
 }
 
 available_metrics <- function() {

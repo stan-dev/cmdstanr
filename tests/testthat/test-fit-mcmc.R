@@ -17,7 +17,6 @@ if (not_on_cran()) {
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
-
 test_that("draws() stops for unkown variables", {
   skip_on_cran()
   expect_error(
@@ -106,7 +105,7 @@ test_that("output() method works after mcmc", {
     fit_mcmc$output(),
     types = "character",
     any.missing = FALSE,
-    len = fit_mcmc$runset$num_runs()
+    len = fit_mcmc$runset$num_procs()
   )
   expect_output(fit_mcmc$output(id = 1), "Gradient evaluation took")
 })
@@ -121,7 +120,7 @@ test_that("time() method works after mcmc", {
     run_times$chains,
     any.missing = FALSE,
     types = c("integer", "numeric"),
-    nrows = fit_mcmc$runset$num_runs(),
+    nrows = fit_mcmc$runset$num_procs(),
     ncols = 4
   )
 
@@ -134,7 +133,7 @@ test_that("time() method works after mcmc", {
   checkmate::expect_data_frame(run_times_0$chains,
                                any.missing = TRUE,
                                types = c("integer", "numeric"),
-                               nrows = fit_mcmc_0$runset$num_runs(),
+                               nrows = fit_mcmc_0$runset$num_procs(),
                                ncols = 4)
   for (j in 1:nrow(run_times_0$chains)) {
     checkmate::expect_scalar_na(run_times_0$chains$warmup[j])
