@@ -319,7 +319,7 @@ CmdStanProcs <- R6::R6Class(
     #   this must be set to 1.
     # @param parallel_procs The maximum number of processes to run in parallel.
     #   Currently for non-sampling this must be set to 1.
-    # @param threads_per_proc The number of threads to use per MCMC chain
+    # @param threads_per_proc The number of threads to use per process
     #   to run parallel sections of model.
     initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
