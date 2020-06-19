@@ -179,8 +179,7 @@ CmdStanRun <- R6::R6Class(
           sampling = self$procs$proc_section_time("sampling")[self$procs$is_finished()],
           total = self$procs$proc_total_time()[self$procs$is_finished()]
         )
-        
-        
+
         if (isTRUE(self$args$refresh == 0)) {
           warning("Separate warmup and sampling times are not available ",
                   "after running with 'refresh=0'.", call. = FALSE)
@@ -334,6 +333,7 @@ CmdStanProcs <- R6::R6Class(
         private$parallel_procs_ <- as.integer(parallel_procs)
       }
       private$threads_per_proc_ <- as.integer(threads_per_proc)
+      private$threads_per_proc_ <- threads_per_proc
       private$active_procs_ <- 0
       private$proc_ids_ <- seq_len(num_procs)
       zeros <- rep(0, num_procs)
