@@ -3,6 +3,8 @@ context("fitted-mle")
 if (not_on_cran()) {
   set_cmdstan_path()
   fit_mle <- testing_fit("logistic", method = "optimize", seed = 123)
+  mod <- testing_model("bernoulli")
+  data_list <- testing_data("bernoulli")
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
@@ -36,4 +38,17 @@ test_that("time() method works after optimization", {
   checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
   testthat::expect_named(run_times, c("total"))
   checkmate::expect_number(run_times$total, finite = TRUE)
+})
+
+
+test_that("output() works for optimization", {
+  skip_on_cran()
+  expect_output(fit_mle$output(),
+                "method = optimize")
+})
+
+test_that("time is reported after optimization", {
+  skip_on_cran()
+  expect_output(mod$optimize(data = data_list),
+                "Finished in")
 })
