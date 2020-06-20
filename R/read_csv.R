@@ -168,7 +168,7 @@ read_sample_csv <- function(files,
     if (ncol(draws) == 0) {
       stop("The supplied csv file does not contain any sampling data!")
     }
-    draws <- draws[!is.na(draws[,1]),]
+    draws <- draws[!is.na(draws$lp__), ]
     if (nrow(draws) > 0) {
       num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
       num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
