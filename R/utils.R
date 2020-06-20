@@ -383,16 +383,17 @@ matching_variables <- function(variable_filters, variables) {
   not_found <- NULL
   variable_filters <- unrepair_variable_names(variable_filters)
   variables <- unrepair_variable_names(variables)
-  selected <- rep(FALSE, length(variables))
+  selected <- c()
   for (p in variable_filters) {
-      matches <- variables == p | startsWith(variables, paste0(p, "."))
-      if (!any(matches)) {
-        not_found <- c(not_found, p)
-      }
-      selected <- selected | matches
+    matches <- which(variables == p | startsWith(variables, paste0(p, ".")))
+    if (length(matches)) {
+      selected <- c(selected, matches)
+    } else {
+      not_found <- c(not_found, p)
+    }
   }
   list(
-    matching = variables[selected],
+    matching = variables[unique(selected)],
     not_found = not_found
   )
 }
