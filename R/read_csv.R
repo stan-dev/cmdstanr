@@ -1,6 +1,6 @@
 #' Read CmdStan CSV files into \R
 #'
-#' `read_sample_csv()` is used internally by CmdStanR to read CmdStan's CSV
+#' `read_cmdstan_csv()` is used internally by CmdStanR to read CmdStan's CSV
 #' files into \R after MCMC. It can also be used by CmdStan users as a more
 #' flexible and efficient alternative to `rstan::read_stan_csv()`.
 #'
@@ -52,17 +52,17 @@
 #' )
 #'
 #' # Read in everything
-#' x <- read_sample_csv(fit$output_files())
+#' x <- read_cmdstan_csv(fit$output_files())
 #' str(x)
 #'
 #' # Don't read in any of the sampler diagnostic variables
-#' x <- read_sample_csv(fit$output_files(), sampler_diagnostics = "")
+#' x <- read_cmdstan_csv(fit$output_files(), sampler_diagnostics = "")
 #'
 #' # Don't read in any of the parameters or generated quantities
-#' x <- read_sample_csv(fit$output_files(), variables = "")
+#' x <- read_cmdstan_csv(fit$output_files(), variables = "")
 #'
 #' # Read in only specific parameters and sampler diagnostics
-#' x <- read_sample_csv(
+#' x <- read_cmdstan_csv(
 #'   fit$output_files(),
 #'   variables = c("alpha_scalar", "theta_vector[2]"),
 #'   sampler_diagnostics = c("n_leapfrog__", "accept_stat__")
@@ -70,13 +70,13 @@
 #'
 #' # For non-scalar parameters all elements can be selected or only some elements,
 #' # e.g. all of "theta_vector" but only one element of "tau_matrix"
-#' x <- read_sample_csv(
+#' x <- read_cmdstan_csv(
 #'   fit$output_files(),
 #'   variables = c("theta_vector", "tau_matrix[2,1]")
 #' )
 #' }
 #'
-read_sample_csv <- function(files,
+read_cmdstan_csv <- function(files,
                             variables = NULL,
                             sampler_diagnostics = NULL) {
   sampling_info <- NULL
@@ -169,75 +169,45 @@ read_sample_csv <- function(files,
       stop("The supplied csv file does not contain any sampling data!")
     }
     draws <- draws[!is.na(draws[,1]),]
-    if (nrow(draws) > 0) {
-      num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
-      num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
-      all_draws <- num_warmup_draws + num_post_warmup_draws
-      if (sampling_info$save_warmup == 1) {
-        if (length(variables) > 0) {
-          new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, variables])
-          if (is.null(warmup_draws)) {
-            warmup_draws <- new_warmup_draws
-          } else {
+    if (sampling_info$method == "sample") {
+      if (nrow(draws) > 0) {
+        num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
+        num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
+        all_draws <- num_warmup_draws + num_post_warmup_draws
+        if (sampling_info$save_warmup == 1) {
+          if (length(variables) > 0) {
             warmup_draws <- posterior::bind_draws(warmup_draws,
-                                                  new_warmup_draws,
+                                                  posterior::as_draws_array(draws[1:num_warmup_draws, variables]),
                                                   along="chain")
-          }
-        }
-        if (length(sampler_diagnostics) > 0) {
-          new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics])
-          if (is.null(warmup_sampler_diagnostics_draws)) {
-            warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
-          } else {
-            warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
-                                                                      new_warmup_sampler_diagnostics_draws,
-                                                                      along="chain")
-          }
-        }
-        if (length(variables) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables])
-          if (is.null(post_warmup_draws)) {
-            post_warmup_draws <- new_post_warmup_draws
-          } else {
-            post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
-          }
-        }
-        if (length(sampler_diagnostics) > 0) {
-          new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics])
-          if (is.null(post_warmup_sampler_diagnostics_draws)) {
-            post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
-          } else {
-            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                          new_post_warmup_sampler_diagnostics_draws,
-                                                                          along="chain")
-          }
-        }
-      } else {
-        warmup_draws <- NULL
-        warmup_sampler_diagnostics_draws <- NULL
-        if (length(variables) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[, variables])
-          if (is.null(post_warmup_draws)) {
-            post_warmup_draws <- new_post_warmup_draws
-          } else {
             post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
-                                                      new_post_warmup_draws,
-                                                      along="chain")
+                                                       posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
+                                                       along="chain")
           }
-        }
-        if (sampling_info$algorithm != "fixed_param") {
           if (length(sampler_diagnostics) > 0) {
-            new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampler_diagnostics])
-            if (is.null(post_warmup_sampler_diagnostics_draws)) {
-              post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
-            } else {
-              post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                            new_post_warmup_sampler_diagnostics_draws,
+            warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
+                                                                      posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics]),
+                                                                      along="chain")
+            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
+                                                                           posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
+                                                                           along="chain")
+          }
+        } else {
+          warmup_draws <- NULL
+          warmup_sampler_diagnostics_draws <- NULL
+          if (length(variables) > 0) {
+            post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
+                                                       posterior::as_draws_array(draws[, variables]),
+                                                       along="chain")
+          }
+          if (length(sampler_diagnostics) > 0 && sampling_info$algorithm != "fixed_param") {
+            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
+                                                                            posterior::as_draws_array(draws[, sampler_diagnostics]),
                                                                             along="chain")
-            }
           }
         }
       }
+    } else if (sampling_info$method == "optimize") {
+
     }
   }
   repaired_model_params <- repair_variable_names(variables)
@@ -297,6 +267,39 @@ read_vb_csv <- function(files) {
   draws <- posterior::as_draws_matrix(mat)
   draws <- posterior::rename_variables(draws, lp__ = "log_p__", lp_approx__ = "log_g__")
   list(draws = draws)
+}
+
+#'
+#' @export
+#' @param files A character vector of paths to the CSV files to read.
+#' @param variables Optionally, a character vector naming the variables (parameters
+#'   and generated quantities) to read in.
+#'   * If `NULL` (the default) then the draws of all variables are included.
+#'   * If an empty string (`variables=""`) then none are included.
+#'   * For non-scalar variables all elements or specific elements can be selected:
+#'     - `variables = "theta"` selects all elements of `theta`;
+#'     - `variables = c("theta[1]", "theta[3]")` selects only the 1st and 3rd elements.
+#' @param sampler_diagnostics Works the same way as `variables` but for sampler
+#'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
+#'
+#' @return A named list with the following components:
+#' * `sampling_info`: A list of the arguments used to run the sampler.
+#' * `inv_metric`: A list (one element per chain) of inverse mass matrices
+#' or their diagonals, depending on the type of metric used.
+#' * `step_size`: A list (one element per chain) of the step sizes used.
+#' * `warmup_draws`:  If `save_warmup` was `TRUE` then the warmup samples (iter
+#' x chain x variable array).
+#' * `post_warmup_draws`: The post-warmup draws (iter x chain x variable array).
+#' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` then warmup
+#' draws of the sampler diagnostic variables (iter x chain x variable array).
+#' * `sampler_diagnostics`: The post-warmup draws of the sampler diagnostic
+#' variables (iter x chain x variable array).
+#'
+read_sample_csv <- function(files,
+                            variables = NULL,
+                            sampler_diagnostics = NULL) {
+  warning("read_cmdstan_csv() is deprecated. Please use read_cmdstan_csv().")
+  read_cmdstan_csv(files, variables, sampler_diagnostics)
 }
 
 
@@ -399,8 +402,6 @@ read_sample_info_csv <- function(csv_file) {
   close(con)
   if (is.null(csv_file_info$method)) {
     stop("Supplied CSV file is corrupt!")
-  } else if (csv_file_info$method != "sample") {
-    stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
   }
   if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
     stop("The supplied csv file does not contain any variable names or data!")

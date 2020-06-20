@@ -82,6 +82,6 @@ reference:
       - starts_with("fit-method")
   - title: "Other tools for working with CmdStan"
     contents:
-      - read_sample_csv
+      - read_cmdstan_csv
       - write_stan_json
 

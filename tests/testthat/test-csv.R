@@ -27,79 +27,79 @@ if (not_on_cran()) {
                           seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 1)
 }
 
-test_that("read_sample_csv() fails for different model names", {
+test_that("read_cmdstan_csv() fails for different model names", {
   skip_on_cran()
   csv_files <- c(fit_bernoulli_thin_1$output_files(),
                  fit_logistic_thin_1$output_files())
-  expect_error(read_sample_csv(csv_files),
+  expect_error(read_cmdstan_csv(csv_files),
                "Supplied CSV files were not generated with the same model!")
 })
 
-test_that("read_sample_csv() fails for different number of samples in csv", {
+test_that("read_cmdstan_csv() fails for different number of samples in csv", {
   skip_on_cran()
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_10$output_files())
-  expect_error(read_sample_csv(csv_files),
+  expect_error(read_cmdstan_csv(csv_files),
                "Supplied CSV files dont match in the number of stored samples!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1a$output_files())
-  expect_error(read_sample_csv(csv_files),
+  expect_error(read_cmdstan_csv(csv_files),
                "Supplied CSV files dont match in the number of stored samples!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1b$output_files())
-  expect_warning(read_sample_csv(csv_files),
+  expect_warning(read_cmdstan_csv(csv_files),
                "The supplied csv files do not match in the following arguments: iter_warmup!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1_with_warmup$output_files())
-  expect_error(read_sample_csv(csv_files),
+  expect_error(read_cmdstan_csv(csv_files),
                  "Supplied CSV files dont match in the number of stored samples!")
 })
 
-test_that("read_sample_csv() fails for different variables", {
+test_that("read_cmdstan_csv() fails for different variables", {
   skip_on_cran()
   csv_files <- c(fit_bernoulli_thin_1$output_files(),
                  test_path("resources", "csv", "bernoulli-3-diff_params.csv"))
-  expect_error(read_sample_csv(csv_files),
+  expect_error(read_cmdstan_csv(csv_files),
                "Supplied CSV files have samples for different variables!")
 })
 
-test_that("read_sample_csv() fails if the file does not exist", {
+test_that("read_cmdstan_csv() fails if the file does not exist", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-doesntexist.csv"))
-  expect_error(read_sample_csv(csv_files),
+  expect_error(read_cmdstan_csv(csv_files),
                "Assertion on 'output_file' failed: File does not exist: 'resources/csv/model1-1-doesntexist.csv'.")
 })
 
-test_that("read_sample_csv() fails for non-sampling csv", {
-  skip_on_cran()
-  expect_error(read_sample_csv(fit_bernoulli_optimize$output_files()),
-               "Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
-})
+# test_that("read_cmdstan_csv() fails for non-sampling csv", {
+#   skip_on_cran()
+#   expect_error(read_cmdstan_csv(fit_bernoulli_optimize$output_files()),
+#                "Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
+# })
 
-test_that("read_sample_csv() fails with empty csv file", {
+test_that("read_cmdstan_csv() fails with empty csv file", {
   skip_on_cran()
   file_path <- test_path("resources", "csv", "empty.csv")
   file.create(file_path)
-  expect_error(read_sample_csv(file_path),
+  expect_error(read_cmdstan_csv(file_path),
                "Supplied CSV file is corrupt!")
   file.remove(file_path)
 })
 
-test_that("read_sample_csv() fails with the no params listed", {
+test_that("read_cmdstan_csv() fails with the no params listed", {
   skip_on_cran()
   file_path <- test_path("resources", "csv", "model1-3-no-params.csv")
-  expect_error(read_sample_csv(file_path),
+  expect_error(read_cmdstan_csv(file_path),
                "The supplied csv file does not contain any variable names or data!")
 })
 
-test_that("read_sample_csv() matches rstan::read_stan_csv()", {
+test_that("read_cmdstan_csv() matches rstan::read_stan_csv()", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
                  test_path("resources", "csv", "model1-2-warmup.csv"))
 
   draws_array <- readRDS(test_path("answers", "rstan-read-stan-csv-no-warmup.rds"))
   draws_array <- posterior::as_draws_array(draws_array)
-  csv_output <- read_sample_csv(csv_files)
+  csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(csv_output$post_warmup_draws[,, "mu"],
                draws_array[,,"mu"])
   expect_equal(csv_output$post_warmup_draws[,, "sigma"],
@@ -108,14 +108,14 @@ test_that("read_sample_csv() matches rstan::read_stan_csv()", {
                draws_array[,,"lp__"])
 })
 
-test_that("read_sample_csv() matches rstan::read_stan_csv() with save_warmup", {
+test_that("read_cmdstan_csv() matches rstan::read_stan_csv() with save_warmup", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
                  test_path("resources", "csv", "model1-2-warmup.csv"))
 
   draws_array <- readRDS(test_path("answers", "rstan-read-stan-csv-warmup.rds"))
   draws_array <- posterior::as_draws_array(draws_array)
-  csv_output <- read_sample_csv(csv_files)
+  csv_output <- read_cmdstan_csv(csv_files)
 
   warmup_iter <- csv_output$sampling_info$iter_warmup
   num_iter <- csv_output$sampling_info$iter_sampling + csv_output$sampling_info$iter_warmup
@@ -137,13 +137,13 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() with save_warmup", {
                posterior::extract_variable_matrix(draws_array_warmup, "lp__"))
 })
 
-test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file without warmup", {
+test_that("read_cmdstan_csv() matches rstan::read_stan_csv() for csv file without warmup", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
 
   draws_array <- readRDS(test_path("answers", "rstan-read-stan-csv-no-warmup-file.rds"))
   draws_array <- posterior::as_draws_array(draws_array)
-  csv_output <- read_sample_csv(csv_files)
+  csv_output <- read_cmdstan_csv(csv_files)
 
   expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "mu"),
                posterior::extract_variable_matrix(draws_array, "mu"))
@@ -153,24 +153,24 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file without
                posterior::extract_variable_matrix(draws_array, "lp__"))
 })
 
-test_that("read_sample_csv() returns correct diagonal of inverse mass matrix", {
+test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
-  csv_output <- read_sample_csv(csv_files)
+  csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(as.vector(csv_output$inv_metric[[2]]),
                c(0.909635, 0.066384))
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),test_path("resources", "csv", "model1-2-warmup.csv"))
-  csv_output <- read_sample_csv(csv_files)
+  csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(as.vector(csv_output$inv_metric[[1]]),
                c(1.00098, 0.068748))
   expect_equal(as.vector(csv_output$inv_metric[[2]]),
                c(0.909635, 0.066384))
 })
 
-test_that("read_sample_csv() returns correct dense inverse mass matrix", {
+test_that("read_cmdstan_csv() returns correct dense inverse mass matrix", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"))
-  csv_output <- read_sample_csv(csv_files)
+  csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(as.vector(csv_output$inv_metric[[1]]),
                c(10.2742, -0.189148, 5.92065, 8.2658, 10.9931, 8.67196, 9.75007, 8.30008, 6.3396, 8.75422,
                 -0.189148, 0.552614, 2.28054, 0.587285, -0.557112, 0.0689745, -1.06614, -0.502288, 1.49863, 0.450733,
@@ -184,11 +184,11 @@ test_that("read_sample_csv() returns correct dense inverse mass matrix", {
                 8.75422, 0.450733, 15.1166, 7.8403, 6.77034, 5.63637, 4.56938, 4.26521, 8.43035, 42.5438))
 })
 
-test_that("read_sample_csv() returns correct dense inverse mass matrix for 2 csv files ", {
+test_that("read_cmdstan_csv() returns correct dense inverse mass matrix for 2 csv files ", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"),
                  test_path("resources", "csv", "model1-2-dense_e_metric.csv"))
-  csv_output <- read_sample_csv(csv_files)
+  csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(as.vector(csv_output$inv_metric[[1]]),
              c(10.2742, -0.189148, 5.92065, 8.2658, 10.9931, 8.67196, 9.75007, 8.30008, 6.3396, 8.75422,
                 -0.189148, 0.552614, 2.28054, 0.587285, -0.557112, 0.0689745, -1.06614, -0.502288, 1.49863, 0.450733,
@@ -213,13 +213,13 @@ test_that("read_sample_csv() returns correct dense inverse mass matrix for 2 csv
                 7.78791, 0.0780934, 4.34037, 8.13132, 7.53072, 5.61617, 4.72335, 8.10162, 7.75486, 35.6602))
 })
 
-test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file", {
+test_that("read_cmdstan_csv() matches rstan::read_stan_csv() for csv file", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
 
   sampler_diagnostics <- readRDS(test_path("answers", "rstan-read-stan-csv-sampler-params.rds"))
   sampler_diagnostics <- posterior::as_draws_array(sampler_diagnostics[[1]])
-  csv_output <- read_sample_csv(csv_files)
+  csv_output <- read_cmdstan_csv(csv_files)
   num_warmup <- csv_output$sampling_info$iter_warmup/csv_output$sampling_info$thin
   if(csv_output$sampling_info$save_warmup) {
     num_iter <- csv_output$sampling_info$iter_sampling + csv_output$sampling_info$iter_warmup
@@ -255,15 +255,15 @@ test_that("read_sample_csv() matches rstan::read_stan_csv() for csv file", {
                posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "energy__"))
 })
 
-test_that("read_sample_csv() works with thin", {
+test_that("read_cmdstan_csv() works with thin", {
   skip_on_cran()
 
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files())
-  csv_output_3 <- read_sample_csv(fit_logistic_thin_3$output_files())
-  csv_output_10 <- read_sample_csv(fit_logistic_thin_10$output_files())
-  csv_output_1_with_warmup <- read_sample_csv(fit_logistic_thin_1_with_warmup$output_files())
-  csv_output_3_with_warmup <- read_sample_csv(fit_logistic_thin_3_with_warmup$output_files())
-  csv_output_10_with_warmup <- read_sample_csv(fit_logistic_thin_10_with_warmup$output_files())
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files())
+  csv_output_3 <- read_cmdstan_csv(fit_logistic_thin_3$output_files())
+  csv_output_10 <- read_cmdstan_csv(fit_logistic_thin_10$output_files())
+  csv_output_1_with_warmup <- read_cmdstan_csv(fit_logistic_thin_1_with_warmup$output_files())
+  csv_output_3_with_warmup <- read_cmdstan_csv(fit_logistic_thin_3_with_warmup$output_files())
+  csv_output_10_with_warmup <- read_cmdstan_csv(fit_logistic_thin_10_with_warmup$output_files())
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 5))
   expect_equal(dim(csv_output_3$post_warmup_draws), c(334, 2, 5))
   expect_equal(dim(csv_output_10$post_warmup_draws), c(100, 2, 5))
@@ -275,55 +275,55 @@ test_that("read_sample_csv() works with thin", {
   expect_equal(dim(csv_output_10_with_warmup$warmup_draws), c(100, 2, 5))
 })
 
-test_that("read_sample_csv() works with filtered variables", {
+test_that("read_cmdstan_csv() works with filtered variables", {
   skip_on_cran()
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = NULL, sampler_diagnostics = list())
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = NULL, sampler_diagnostics = list())
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 5))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = "")
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = "")
   expect_equal(dim(csv_output_1$post_warmup_draws), NULL)
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = NULL)
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = NULL)
   expect_equal(dim(csv_output_1$post_warmup_draws), NULL)
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 6))
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "alpha"), sampler_diagnostics = "")
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "alpha"), sampler_diagnostics = "")
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta[1]"), sampler_diagnostics = "")
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta[1]"), sampler_diagnostics = "")
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta"), sampler_diagnostics = "")
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta"), sampler_diagnostics = "")
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 4))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = c("n_leapfrog__", "divergent__"))
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = "", sampler_diagnostics = c("n_leapfrog__", "divergent__"))
   expect_equal(dim(csv_output_1$post_warmup_draws), NULL)
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "alpha"), sampler_diagnostics = c("n_leapfrog__", "divergent__"))
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "alpha"), sampler_diagnostics = c("n_leapfrog__", "divergent__"))
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
-  expect_error(read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("NOPE"), sampler_diagnostics = list("n_leapfrog__", "divergent__")),
+  expect_error(read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = c("NOPE"), sampler_diagnostics = list("n_leapfrog__", "divergent__")),
                "Can't find the following variable(s) in the sampling output: NOPE",
                fixed = TRUE)
-  expect_error(read_sample_csv(fit_logistic_thin_1$output_files(), sampler_diagnostics = list("BAD_1", "BAD_2")),
+  expect_error(read_cmdstan_csv(fit_logistic_thin_1$output_files(), sampler_diagnostics = list("BAD_1", "BAD_2")),
                "Can't find the following sampler diagnostic(s) in the sampling output: BAD_1, BAD_2",
                fixed = TRUE)
 })
 
-test_that("read_sample_csv() works with no samples", {
+test_that("read_cmdstan_csv() works with no samples", {
   skip_on_cran()
 
-  csv_output_diag_e_0 <- read_sample_csv(fit_bernoulli_diag_e_no_samples$output_files())
+  csv_output_diag_e_0 <- read_cmdstan_csv(fit_bernoulli_diag_e_no_samples$output_files())
   expect_equal(csv_output_diag_e_0$post_warmup_draws, NULL)
-  csv_output_dense_e_0 <- read_sample_csv(fit_bernoulli_dense_e_no_samples$output_files())
+  csv_output_dense_e_0 <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples$output_files())
   expect_equal(csv_output_dense_e_0$post_warmup_draws, NULL)
 })
 
-test_that("read_sample_csv() reads values up to adaptation", {
+test_that("read_cmdstan_csv() reads values up to adaptation", {
   skip_on_cran()
 
   csv_files <- test_path("resources", "csv", "bernoulli-3-diff_params.csv")
 
-  csv_out <- read_sample_csv(csv_files)
+  csv_out <- read_cmdstan_csv(csv_files)
   expect_equal(csv_out$sampling_info$pi, 3.14)
   expect_true(is.null(csv_out$sampling_info$pi_square))
 })
@@ -342,18 +342,18 @@ test_that("remaining_columns_to_read() works", {
   expect_equal(remaining_columns_to_read(c("a", "b", "c"), NULL, c("a", "b", "c")), c("a", "b", "c"))
 })
 
-test_that("read_sample_csv() reads adaptation step size correctly", {
+test_that("read_cmdstan_csv() reads adaptation step size correctly", {
   skip_on_cran()
 
   csv_files <- test_path("resources", "csv", "model1-2-no-warmup.csv")
 
-  csv_out <- read_sample_csv(csv_files)
+  csv_out <- read_cmdstan_csv(csv_files)
   expect_equal(csv_out$step_size[[2]], 0.672434)
 
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"),
                  test_path("resources", "csv", "model1-2-dense_e_metric.csv"))
 
-  csv_out <- read_sample_csv(csv_files)
+  csv_out <- read_cmdstan_csv(csv_files)
   expect_equal(csv_out$step_size[[1]], 0.11757)
   expect_equal(csv_out$step_size[[2]], 0.232778)
 })

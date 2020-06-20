@@ -554,7 +554,7 @@ CmdStanMCMC <- R6::R6Class(
                 call. = FALSE)
       } else {
         if (self$runset$args$validate_csv && !runset$args$method_args$fixed_param) {
-          data_csv <- read_sample_csv(
+          data_csv <- read_cmdstan_csv(
             self$output_files(),
             variables = "",
             sampler_diagnostics = c("treedepth__", "divergent__")
@@ -666,7 +666,7 @@ CmdStanMCMC <- R6::R6Class(
           dimnames(private$sampler_diagnostics_)$variable,
           private$sampling_info_$sampler_diagnostics
         )
-      data_csv <- read_sample_csv(
+      data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables_to_read,
         sampler_diagnostics = sampler_diagnostics_to_read
