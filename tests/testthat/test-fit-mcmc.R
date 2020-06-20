@@ -38,6 +38,7 @@ test_that("draws() method returns draws_array (reading csv works)", {
   draws_betas <- fit_mcmc$draws(variables = "beta")
   draws_beta <- fit_mcmc$draws(variables = "beta[1]")
   draws_alpha_beta <- fit_mcmc$draws(variables = c("alpha", "beta"))
+  draws_beta_alpha <- fit_mcmc$draws(variables = c("beta", "alpha"))
   draws_all_after <- fit_mcmc$draws()
   expect_type(draws, "double")
   expect_s3_class(draws, "draws_array")
@@ -55,6 +56,10 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_s3_class(draws_all_after, "draws_array")
   expect_equal(posterior::nvariables(draws_all_after), 5)
   expect_equal(posterior::nchains(draws_all_after), fit_mcmc$num_chains())
+
+  # check the order of the draws
+  expect_equal(posterior::variables(draws_alpha_beta), c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(posterior::variables(draws_beta_alpha), c("beta[1]", "beta[2]", "beta[3]", "alpha"))
 })
 
 test_that("inv_metric method works after mcmc", {
