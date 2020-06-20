@@ -11,7 +11,7 @@ if (not_on_cran()) {
                             seed = 123, chains = 2,
                             refresh = 0, save_warmup = TRUE)
   fit_mcmc_2 <- testing_fit("logistic", method = "sample",
-                            seed = 123, chains = 1,
+                            seed = 1234, chains = 1,
                             iter_sampling = 100000,
                             refresh = 0, metric = "dense_e")
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
