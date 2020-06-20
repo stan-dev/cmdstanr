@@ -161,3 +161,12 @@ test_that("switching threads on and off works without rebuild", {
   time_diff <- as.double((after_mtime - before_mtime), units = "secs")
   expect_gt(time_diff, 0)
 })
+
+test_that("compile errors are shown", {
+  skip_on_cran()
+  stan_file <- testing_stan_file("fail")
+  expect_error(
+    cmdstan_model(stan_file),
+    "An error occured during compilation! See the message above for more information."
+  )
+})

@@ -16,10 +16,10 @@ if (not_on_cran()) {
 test_that("*_files() methods return the right number of paths", {
   skip_on_cran()
   for (method in all_methods) {
-    expect_length(fits[[method]]$output_files(), fits[[method]]$num_runs())
+    expect_length(fits[[method]]$output_files(), fits[[method]]$num_procs())
     expect_length(fits[[method]]$data_file(), 1)
     if (method != "optimize") {
-      expect_length(fits[[method]]$latent_dynamics_files(), fits[[method]]$num_runs())
+      expect_length(fits[[method]]$latent_dynamics_files(), fits[[method]]$num_procs())
     }
   }
 })
@@ -34,7 +34,7 @@ test_that("saving csv output files works", {
 
     expect_message(
       paths <- fit$save_output_files(tempdir(), basename = "testing-output"),
-      paste("Moved", fit$num_runs(), "files and set internal paths")
+      paste("Moved", fit$num_procs(), "files and set internal paths")
     )
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
@@ -42,7 +42,7 @@ test_that("saving csv output files works", {
     should_match <- paste0("testing-output-",
                            format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
-                           seq_len(fit$num_runs()))
+                           seq_len(fit$num_procs()))
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
     }
@@ -71,7 +71,7 @@ test_that("saving diagnostic csv output works", {
 
     expect_message(
       paths <- fit$save_latent_dynamics_files(tempdir(), basename = "testing-output"),
-      paste("Moved", fit$num_runs(), "files and set internal paths")
+      paste("Moved", fit$num_procs(), "files and set internal paths")
     )
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
@@ -79,7 +79,7 @@ test_that("saving diagnostic csv output works", {
     should_match <- paste0("testing-output-diagnostic-",
                            format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
-                           seq_len(fit$num_runs()))
+                           seq_len(fit$num_procs()))
 
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
@@ -136,13 +136,3 @@ test_that("draws() method returns a 'draws' object", {
   }
 })
 
-test_that("time() method errors for optimization and variational", {
-  skip_on_cran()
-
-  # further testing for time() for mcmc in test-fit-mcmc.R
-  expect_silent(fits[["sample"]]$time())
-
-  # error for now until this method is implemented
-  expect_error(fits[["optimize"]]$time(), "Not yet implemented")
-  expect_error(fits[["variational"]]$time(), "Not yet implemented")
-})

@@ -83,13 +83,19 @@ objects." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9004</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9005</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
+  <a href="../index.html">
+    <span class="fa fa-home fa-lg"></span>
+     
+  </a>
+</li>
+<li>
   <a href="../articles/index.html">Vignettes</a>
 </li>
 <li>
@@ -188,13 +194,13 @@ objects.</p>
 <tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
 <tr><td><code><a href='fit-method-lp.html'>$lp()</a></code></td><td>Return the total log probability density (<code>target</code>) computed in the
 model block of the Stan program.</td></tr>
+<tr><td><code><a href='fit-method-inv_metric.html'>$inv_metric()</a></code></td><td>Return the inverse metric for each chain.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV files to a specified location.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file to a specified location.</td></tr>
 <tr><td><code><a href='fit-method-save_output_files.html'>$save_latent_dynamics_files()</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
-<tr><td><code>$time()</code></td><td>Return a list containing the total time and a data frame of
-execution times of all chains (in seconds).</td></tr>
+<tr><td><code><a href='fit-method-time.html'>$time()</a></code></td><td>Report total and chain-specific run times.</td></tr>
 <tr><td><code>$output()</code></td><td>Return the stdout and stderr of all chains as a list of
 character vectors, or pretty print the output for a single chain if
 <code>id</code> argument is specified.</td></tr>

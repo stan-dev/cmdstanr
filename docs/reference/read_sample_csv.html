@@ -82,13 +82,19 @@ flexible and efficient alternative to rstan::read_stan_csv()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9004</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9006</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
+  <a href="../index.html">
+    <span class="fa fa-home fa-lg"></span>
+     
+  </a>
+</li>
+<li>
   <a href="../articles/index.html">Vignettes</a>
 </li>
 <li>
@@ -206,7 +212,7 @@ diagnostic variables (e.g., <code>"treedepth__"</code>, <code>"accept_stat__"</c
 
     <p>A named list with the following components:</p><ul>
 <li><p><code>sampling_info</code>: A list of the arguments used to run the sampler.</p></li>
-<li><p><code>inverse_metric</code>: A list (one element per chain) of inverse mass matrices
+<li><p><code>inv_metric</code>: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.</p></li>
 <li><p><code>step_size</code>: A list (one element per chain) of the step sizes used.</p></li>
 <li><p><code>warmup_draws</code>:  If <code>save_warmup</code> was <code>TRUE</code> then the warmup samples (iter
@@ -262,44 +268,44 @@ model {
 #&gt;   ..$ stepsize_jitter    : num 0
 #&gt;   ..$ id                 : num [1:4] 1 2 3 4
 #&gt;   ..$ init               : num 2
-#&gt;   ..$ seed               : num [1:4] 4.73e+08 1.65e+09 1.24e+09 5.00e+08
+#&gt;   ..$ seed               : num [1:4] 1.67e+09 1.25e+09 1.01e+09 2.06e+09
 #&gt;   ..$ refresh            : num 100
 #&gt;   ..$ model_params       : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
 #&gt;   ..$ sampler_diagnostics: chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#&gt;   ..$ stepsize_adaptation: num 0.741
-#&gt;   ..$ model_name         : chr "filefd1179ff064e_model"
+#&gt;   ..$ stepsize_adaptation: num 0.701
+#&gt;   ..$ model_name         : chr "file284e2606d856_model"
 #&gt;   ..$ adapt_engaged      : num 1
 #&gt;   ..$ adapt_delta        : num 0.8
 #&gt;   ..$ max_treedepth      : num 10
 #&gt;   ..$ step_size          : num 1
 #&gt;   ..$ iter_warmup        : num 1000
 #&gt;   ..$ iter_sampling      : num 1000
-#&gt;  $ inverse_metric                 :List of 4
-#&gt;   ..$ : num [1:7] 0.995 0.844 1.024 0.998 0.916 ...
-#&gt;   ..$ : num [1:7] 0.895 1 1.002 1.041 0.91 ...
-#&gt;   ..$ : num [1:7] 0.913 1.048 1.115 0.983 1.033 ...
-#&gt;   ..$ : num [1:7] 1.005 0.885 0.931 0.994 1.012 ...
+#&gt;  $ inv_metric                     :List of 4
+#&gt;   ..$ : num [1:7] 1.001 1.076 0.996 0.886 1.113 ...
+#&gt;   ..$ : num [1:7] 0.884 0.986 0.916 1.014 0.943 ...
+#&gt;   ..$ : num [1:7] 0.928 0.889 1.069 1.153 1.052 ...
+#&gt;   ..$ : num [1:7] 0.89 1.179 1.148 0.926 0.879 ...
 #&gt;  $ step_size                      :List of 4
-#&gt;   ..$ : num 0.741
-#&gt;   ..$ : num 0.623
-#&gt;   ..$ : num 0.788
-#&gt;   ..$ : num 0.748
-#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:8] -3.57 -3.57 -1.84 -1.46 -5.22 ...
+#&gt;   ..$ : num 0.701
+#&gt;   ..$ : num 0.692
+#&gt;   ..$ : num 0.759
+#&gt;   ..$ : num 0.687
+#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:8] -6.39 -6.39 -6.39 -5.12 -6.04 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:8] -3.072 -1.271 -1.954 -0.831 -1.019 ...
+#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:8] -3.97 -2.41 -3.78 -3.52 -3.88 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 4.32e-09 3.85e-22 1.00 9.98e-01 9.57e-01 ...
+#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 9.68e-01 0.00 1.62e-05 9.89e-01 9.94e-01 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.767 0.922 0.925 0.889 0.691 ...
+#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.993 1 0.923 1 0.961 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"

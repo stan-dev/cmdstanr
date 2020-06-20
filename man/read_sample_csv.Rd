@@ -28,7 +28,7 @@ diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).
 A named list with the following components:
 \itemize{
 \item \code{sampling_info}: A list of the arguments used to run the sampler.
-\item \code{inverse_metric}: A list (one element per chain) of inverse mass matrices
+\item \code{inv_metric}: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.
 \item \code{step_size}: A list (one element per chain) of the step sizes used.
 \item \code{warmup_draws}:  If \code{save_warmup} was \code{TRUE} then the warmup samples (iter

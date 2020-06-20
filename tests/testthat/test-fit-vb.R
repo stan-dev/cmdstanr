@@ -4,6 +4,8 @@ if (not_on_cran()) {
   set_cmdstan_path()
   fit_vb <- testing_fit("logistic", method = "variational", seed = 123)
   fit_vb_sci_not <- testing_fit("logistic", method = "variational", seed = 123, iter = 200000, adapt_iter = 100000)
+  mod <- testing_model("bernoulli")
+  data_list <- testing_data("bernoulli")
   PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 }
 
@@ -13,10 +15,16 @@ test_that("summary() method works after vb", {
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
 
-  x <- fit_vb$summary(c("mean", "sd"))
+  x <- fit_vb$summary(variables = NULL, c("mean", "sd"))
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
   expect_equal(colnames(x), c("variable", "mean", "sd"))
+})
+
+test_that("print() method works after vb", {
+  skip_on_cran()
+  expect_output(expect_s3_class(fit_vb$print(), "CmdStanVB"), "variable")
+  expect_output(fit_vb$print(max_rows = 1), "# showing 1 of 6 rows")
 })
 
 test_that("draws() method returns posterior sample (reading csv works)", {
@@ -43,8 +51,29 @@ test_that("vb works with scientific notation args", {
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
 
-  x <- fit_vb_sci_not$summary(c("mean", "sd"))
+  x <- fit_vb_sci_not$summary(variables = NULL, c("mean", "sd"))
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
   expect_equal(colnames(x), c("variable", "mean", "sd"))
 })
+
+test_that("time() method works after vb", {
+  skip_on_cran()
+  run_times <- fit_vb$time()
+  checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
+  testthat::expect_named(run_times, c("total"))
+  checkmate::expect_number(run_times$total, finite = TRUE)
+})
+
+test_that("output() works for vb", {
+  skip_on_cran()
+  expect_output(fit_vb$output(),
+                "method = variational")
+})
+
+test_that("time is reported after vb", {
+  skip_on_cran()
+  expect_output(mod$variational(data = data_list),
+                "Finished in")
+})
+
