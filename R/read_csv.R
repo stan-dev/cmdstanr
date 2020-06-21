@@ -155,24 +155,26 @@ read_sample_csv <- function(files,
       col_select <- c(col_select, variables[variables!="lp__"])
       col_select <- c(col_select, sampler_diagnostics)
     }
-    suppressWarnings(
+    num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
+    num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
+    all_draws <- num_warmup_draws + num_post_warmup_draws
+    suppressWarnings(      
       draws <- vroom::vroom(output_file,
-                            comment = "# ",
-                            delim = ',',
-                            trim_ws = TRUE,
-                            col_select = col_select,
-                            col_types = c("lp__" = "d"),
-                            altrep = FALSE,
-                            progress = FALSE)
+                  comment = "#",
+                  delim = ',',
+                  trim_ws = TRUE,
+                  col_select = col_select,
+                  col_types = c("lp__" = "d"),
+                  altrep = FALSE,
+                  progress = FALSE,
+                  skip = sampling_info$lines_to_skip,
+                  n_max = all_draws*2)
     )
     if (ncol(draws) == 0) {
       stop("The supplied csv file does not contain any sampling data!")
     }
-    draws <- draws[!is.na(draws[,1]),]
+    draws <- draws[!is.na(draws$lp__), ]
     if (nrow(draws) > 0) {
-      num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
-      num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
-      all_draws <- num_warmup_draws + num_post_warmup_draws
       if (sampling_info$save_warmup == 1) {
         if (length(variables) > 0) {
           new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, variables])
@@ -321,6 +323,7 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info[["inv_metric"]] <- NULL
   inv_metric_rows <- 0
   parsing_done <- FALSE
+  lines_before_param_names <- 0
   while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0 && !parsing_done) {
     if (!startsWith(line, "#")) {
       if (!param_names_read) {
@@ -343,6 +346,9 @@ read_sample_info_csv <- function(csv_file) {
         }
       }
     } else {
+      if (!param_names_read) {
+        lines_before_param_names <- lines_before_param_names + 1
+      }
       if (!adaptation_terminated) {
         if (regexpr("# Adaptation terminated", line, perl = TRUE) > 0) {
           adaptation_terminated <- TRUE
@@ -431,6 +437,7 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
   csv_file_info$num_threads <- NULL
+  csv_file_info$lines_to_skip <- lines_before_param_names
 
   csv_file_info
 }
