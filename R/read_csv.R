@@ -514,7 +514,7 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     }
   }
   if (length(unread)) {
-    unread
+    unique(unread)
   } else {
     ""
   }
