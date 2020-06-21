@@ -19,12 +19,16 @@
 #'
 #' @examples
 #' \dontrun{
+#' library(cmdstanr)
+#' library(posterior)
+#' library(bayesplot)
+#' color_scheme_set("brightblue")
+#'
 #' # Set path to cmdstan
 #' # (Note: if you installed CmdStan via install_cmdstan() with default settings
 #' # then setting the path is unnecessary but the default below should still work.
 #' # Otherwise use the `path` argument to specify the location of your
 #' # CmdStan installation.)
-#'
 #' set_cmdstan_path(path = NULL)
 #'
 #' # Create a CmdStanModel object from a Stan program,
@@ -51,6 +55,12 @@
 #' draws <- fit_mcmc$draws()
 #' print(draws)
 #'
+#' # Convert to data frame using posterior::as_draws_df
+#' as_draws_df(draws)
+#'
+#' # Plot posterior using bayesplot (ggplot2)
+#' mcmc_hist(fit_mcmc$draws("theta"))
+#'
 #' # Call CmdStan's diagnose and stansummary utilities
 #' fit_mcmc$cmdstan_diagnose()
 #' fit_mcmc$cmdstan_summary()
@@ -66,11 +76,16 @@
 #' # and also demonstrate specifying data as a path to a file instead of a list
 #' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
 #' fit_optim <- mod$optimize(data = my_data_file, seed = 123)
+#'
 #' fit_optim$summary()
 #'
 #' # Run 'variational' to approximate the posterior (default is meanfield ADVI)
 #' fit_vb <- mod$variational(data = stan_data, seed = 123)
+#'
 #' fit_vb$summary()
+#'
+#' # Plot approximate posterior using bayesplot
+#' mcmc_hist(fit_vb$draws("theta"))
 #' }
 #'
 cmdstan_model <- function(stan_file, compile = TRUE, ...) {
@@ -613,7 +628,7 @@ sample_method <- function(data = NULL,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
-    validate_csv = validate_csv    
+    validate_csv = validate_csv
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(num_procs = chains, parallel_procs = parallel_chains, threads_per_proc = threads_per_chain)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)

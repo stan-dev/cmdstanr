@@ -55,6 +55,10 @@ fit$print(c("alpha", "beta[2]"))
 
 # include all variables but only certain summaries
 fit$summary(NULL, c("mean", "sd"))
+
+# can use functions created from formulas
+# for example, calculate Pr(beta > 0)
+fit$summary("beta", prob_gt_0 = ~ mean(. > 0))
 }
 
 }

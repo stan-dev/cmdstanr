@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9005</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9006</span>
       </span>
     </div>
 
@@ -338,37 +338,55 @@ fixes the problem with divergences.</p></li>
 #&gt; </span><span style='color: #BCBCBC;'>18</span><span> theta[7]   8.69     8.11   5.75  5.06    0.135  18.9  1.00     </span><span style='text-decoration: underline;'>3</span><span>579.    </span><span style='text-decoration: underline;'>2</span><span>975.
 #&gt; </span><span style='color: #BCBCBC;'>19</span><span> theta[8]   6.98     6.91   6.44  5.38   -</span><span style='color: #BB0000;'>3.33</span><span>   17.5  1.00     </span><span style='text-decoration: underline;'>3</span><span>626.    </span><span style='text-decoration: underline;'>2</span><span>605.</div><div class='input'>
 <span class='co'># optimization fails for hierarchical model</span>
-<span class='fu'>cmdstanr_example</span>(<span class='st'>"schools"</span>, <span class='st'>"optimize"</span>, <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='output co'>#&gt; method = optimize
-#&gt;   optimize
-#&gt;     algorithm = lbfgs (Default)
-#&gt;       lbfgs
-#&gt;         init_alpha = 0.001 (Default)
-#&gt;         tol_obj = 9.9999999999999998e-13 (Default)
-#&gt;         tol_rel_obj = 10000 (Default)
-#&gt;         tol_grad = 1e-08 (Default)
-#&gt;         tol_rel_grad = 10000000 (Default)
-#&gt;         tol_param = 1e-08 (Default)
-#&gt;         history_size = 5 (Default)
-#&gt;     iter = 2000 (Default)
-#&gt;     save_iterations = 0 (Default)
-#&gt; id = 1
-#&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpiX7M4F/temp_libpath1565047f7dc58/cmdstanr/schools.data.json
-#&gt; init = 2 (Default)
-#&gt; random
-#&gt;   seed = 1998422484
-#&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpKbdtzw/schools-202006151402-1-73f8f5.csv
-#&gt;   diagnostic_file =  (Default)
-#&gt;   refresh = 100 (Default)
+<span class='fu'>cmdstanr_example</span>(<span class='st'>"schools"</span>, <span class='st'>"optimize"</span>, <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='output co'>#&gt; Running ./schools 'id=1' random 'seed=1998422484' data \
+#&gt;   'file=/private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpqBHDtM/temp_libpathc581544c57b1/cmdstanr/schools.data.json' \
+#&gt;   output \
+#&gt;   'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/schools-202006202308-1-1205a3.csv' \
+#&gt;   'method=optimize'
+#&gt; method = optimize 
+#&gt;   optimize 
+#&gt;     algorithm = lbfgs (Default) 
+#&gt;       lbfgs 
+#&gt;         init_alpha = 0.001 (Default) 
+#&gt;         tol_obj = 9.9999999999999998e-13 (Default) 
+#&gt;         tol_rel_obj = 10000 (Default) 
+#&gt;         tol_grad = 1e-08 (Default) 
+#&gt;         tol_rel_grad = 10000000 (Default) 
+#&gt;         tol_param = 1e-08 (Default) 
+#&gt;         history_size = 5 (Default) 
+#&gt;     iter = 2000 (Default) 
+#&gt;     save_iterations = 0 (Default) 
+#&gt; id = 1 
+#&gt; data 
+#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpqBHDtM/temp_libpathc581544c57b1/cmdstanr/schools.data.json 
+#&gt; init = 2 (Default) 
+#&gt; random 
+#&gt;   seed = 1998422484 
+#&gt; output 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/schools-202006202308-1-1205a3.csv 
+#&gt;   diagnostic_file =  (Default) 
+#&gt;   refresh = 100 (Default) 
+#&gt;  
+#&gt; Initial log joint probability = -472.235 
+#&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
+#&gt;       99        106.99      0.162734   4.09264e+08      0.2769      0.2769      176    
+#&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
+#&gt;      194       245.522       0.18154   2.16497e+16       1e-12       0.001      395  LS failed, Hessian reset  
+#&gt; Optimization terminated with error:  
+#&gt;   Line search failed to achieve a sufficient decrease, no more progress can be made 
+#&gt; Finished in  0.1 seconds.</div><div class='output co'>#&gt;  variable estimate
+#&gt;  lp__       245.52
+#&gt;  mu           0.58
+#&gt;  tau          0.00
+#&gt;  theta[1]     0.58
+#&gt;  theta[2]     0.58
+#&gt;  theta[3]     0.58
+#&gt;  theta[4]     0.58
+#&gt;  theta[5]     0.58
+#&gt;  theta[6]     0.58
+#&gt;  theta[7]     0.58
 #&gt; 
-#&gt; Initial log joint probability = -472.235
-#&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes 
-#&gt;       99        106.99      0.162734   4.09264e+08      0.2769      0.2769      176   
-#&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes 
-#&gt;      194       245.522       0.18154   2.16497e+16       1e-12       0.001      395  LS failed, Hessian reset 
-#&gt; Optimization terminated with error: 
-#&gt;   Line search failed to achieve a sufficient decrease, no more progress can be made</div><div class='output co'>#&gt; <span class='error'>Error in processx::run(command = self$command(), args = self$command_args()[[1]],     wd = dirname(self$exe_file()), echo_cmd = FALSE, echo = TRUE,     error_on_status = TRUE): System command 'schools' failed</span></div><div class='input'># }
+#&gt;  # showing 10 of 11 rows (change via 'max_rows' argument)</div><div class='input'># }
 
 </div></span></pre>
   </div>

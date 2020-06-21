@@ -168,9 +168,12 @@ CmdStanFit <- R6::R6Class(
 #' one column per variable. These are *not* actually draws, just point estimates
 #' stored in the `draws_matrix` format.
 #'
-#'
 #' @examples
 #' \dontrun{
+#' library(posterior)
+#' library(bayesplot)
+#' color_scheme_set("brightblue")
+#'
 #' # logistic regression with intercept alpha and coefficients beta
 #' fit <- cmdstanr_example("logistic")
 #'
@@ -180,13 +183,16 @@ CmdStanFit <- R6::R6Class(
 #' str(draws)
 #'
 #' # can easily convert to other formats (data frame, matrix, list)
-#' library("posterior")
 #' as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
 #'
 #' # can select specific parameters
 #' fit$draws("alpha")
 #' fit$draws("beta")  # selects entire vector beta
 #' fit$draws(c("alpha", "beta[2]"))
+#'
+#' # can be passed directly to bayesplot plotting functions
+#' mcmc_dens(fit$draws(c("alpha", "beta")))
+#' mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
 #' }
 #'
 NULL
@@ -362,6 +368,10 @@ NULL
 #'
 #' # include all variables but only certain summaries
 #' fit$summary(NULL, c("mean", "sd"))
+#'
+#' # can use functions created from formulas
+#' # for example, calculate Pr(beta > 0)
+#' fit$summary("beta", prob_gt_0 = ~ mean(. > 0))
 #' }
 #'
 NULL
