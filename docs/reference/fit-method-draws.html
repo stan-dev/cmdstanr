@@ -85,7 +85,7 @@ log probability (target) accumulated in the model block." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9005</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9006</span>
       </span>
     </div>
 
@@ -227,6 +227,10 @@ stored in the <code>draws_matrix</code> format.</p></li>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>bayesplot</span>)
+<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/bayesplot-colors.html'>color_scheme_set</a></span>(<span class='st'>"brightblue"</span>)
+
 <span class='co'># logistic regression with intercept alpha and coefficients beta</span>
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'>
 <span class='co'># returned as 3-D array (see ?posterior::draws_array)</span>
@@ -237,10 +241,7 @@ stored in the <code>draws_matrix</code> format.</p></li>
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   ..$ variable : chr [1:5] "lp__" "alpha" "beta[1]" "beta[2]" ...</div><div class='input'>
 <span class='co'># can easily convert to other formats (data frame, matrix, list)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='st'>"posterior"</span>)</div><div class='output co'>#&gt; <span class='message'>This is posterior version 0.1.0</span></div><div class='output co'>#&gt; <span class='message'></span>
-#&gt; <span class='message'>Attaching package: ‘posterior’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:rstan’:</span>
-#&gt; <span class='message'></span>
-#&gt; <span class='message'>    ess_bulk, ess_tail</span></div><div class='input'><span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>draws</span>)  <span class='co'># see also as_draws_matrix, as_draws_list</span></div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 5 variables
+<span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>draws</span>)  <span class='co'># see also as_draws_matrix, as_draws_list</span></div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 5 variables
 #&gt;    lp__  alpha beta[1] beta[2] beta[3]
 #&gt; 1   -67  0.387   -1.07   -0.41    0.32
 #&gt; 2   -65  0.463   -0.54   -0.32    0.93
@@ -318,7 +319,9 @@ stored in the <code>draws_matrix</code> format.</p></li>
 #&gt;         4 -0.41 -0.363 -0.77 -0.6677
 #&gt;         5 -0.15 -0.011 -0.17 -0.0065
 #&gt; 
-#&gt; # ... with 995 more iterations</div><div class='input'># }
+#&gt; # ... with 995 more iterations</div><div class='input'>
+<span class='co'># can be passed directly to bayesplot plotting functions</span>
+<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_dens</a></span>(<span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta"</span>)))</div><div class='img'><img src='fit-method-draws-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-scatterplots.html'>mcmc_scatter</a></span>(<span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"beta[1]"</span>, <span class='st'>"beta[2]"</span>)), <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.3</span>)</div><div class='img'><img src='fit-method-draws-2.png' alt='' width='700' height='433' /></div><div class='input'># }
 
 </div></pre>
   </div>

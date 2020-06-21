@@ -157,8 +157,9 @@ data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit <- mod$sample(
   data = data_list, 
   seed = 123, 
-  chains = 2, 
-  parallel_chains = 2
+  chains = 4, 
+  parallel_chains = 2,
+  refresh = 500
 )
 ```
 
@@ -181,7 +182,12 @@ method calls `summarise_draws()` from the **posterior** package:
 
 ```{r summary}
 fit$summary()
+fit$summary("theta", "mean", "sd")
+
+# use a formula to summarize arbitrary functions, e.g. Pr(theta <= 0.5)
+fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 ```
+
 
 #### Posterior draws
 
@@ -200,9 +206,9 @@ draws_df <- as_draws_df(draws_array) # as_draws_matrix() for matrix
 print(draws_df)
 ```
 
-Plotting posterior distributions is as easy as passing the object returned
-by the `$draws()` method directly to plotting functions in **bayesplot**, 
-for example `mcmc_hist()`:
+Plotting posterior distributions is as easy as passing the object returned by
+the `$draws()` method directly to plotting functions in
+[**bayesplot**](https://mc-stan.org/bayesplot):
 
 ```{r plots, message=FALSE}
 mcmc_hist(fit$draws("theta"))
@@ -268,7 +274,7 @@ fit_mle$mle()
 
 Here's a plot comparing the MLE to the posterior distribution of `theta`:
 
-```{r, message = FALSE}
+```{r plot-mle, message = FALSE}
 mcmc_hist(fit$draws("theta")) + 
   vline_at(fit_mle$mle(), size = 1.5)
 ```
@@ -276,23 +282,24 @@ mcmc_hist(fit$draws("theta")) +
 #### Variational Bayes
 
 We can run Stan's experimental variational Bayes algorithm using the 
-[`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html) method:
+[`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html) 
+method:
 
 ```{r variational}
-fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 2000) 
-fit_vb$summary()
+fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000) 
+fit_vb$summary("theta")
 ```
 The `$draws()` method can be used to access the approximate posterior draws.
 Let's extract the draws, make the same plot we made after MCMC, and compare the
 two. In this trivial example the distributions look quite similar, although
-the variational approximation still slightly underestimates the posterior 
+the variational approximation slightly underestimates the posterior 
 standard deviation:
 
 ```{r plot-variational, message = FALSE}
 bayesplot_grid(
-  mcmc_hist(fit$draws("theta")),    # MCMC
-  mcmc_hist(fit_vb$draws("theta")), # VB
-  titles = c("Posterior distributionn from MCMC", "Approximate posterior from VB"),
+  mcmc_hist(fit$draws("theta"), binwidth = 0.025),    
+  mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025),
+  titles = c("Posterior distribution from MCMC", "Approximate posterior from VB"),
   xlim = c(0, 1)
 )
 ```

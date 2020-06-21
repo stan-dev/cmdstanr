@@ -48,6 +48,10 @@ stored in the \code{draws_matrix} format.
 
 \examples{
 \dontrun{
+library(posterior)
+library(bayesplot)
+color_scheme_set("brightblue")
+
 # logistic regression with intercept alpha and coefficients beta
 fit <- cmdstanr_example("logistic")
 
@@ -57,13 +61,16 @@ dim(draws)
 str(draws)
 
 # can easily convert to other formats (data frame, matrix, list)
-library("posterior")
 as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
 
 # can select specific parameters
 fit$draws("alpha")
 fit$draws("beta")  # selects entire vector beta
 fit$draws(c("alpha", "beta[2]"))
+
+# can be passed directly to bayesplot plotting functions
+mcmc_dens(fit$draws(c("alpha", "beta")))
+mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
 }
 
 }

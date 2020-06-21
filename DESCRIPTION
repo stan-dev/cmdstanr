@@ -7,11 +7,11 @@ Authors@R:
       person(given = "Rok", family = "Češnovar", role = c("aut"), 
            email = "rok.cesnovar@fri.uni-lj.si"),     
       person(given = "Ben", family = "Bales", role = c("ctb")),     
-      person(given = "Mitzi", family = "Morris", role = c("ctb"), 
-           comment = "CmdStanPy"))
+      person(given = "Mitzi", family = "Morris", role = c("ctb"), comment = "CmdStanPy"))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
-    The 'CmdStanR' interface is an alternative to 'RStan' that calls 'CmdStan' 
-    (the shell interface) for compilation and running algorithms.
+    The 'CmdStanR' interface is an alternative to 'RStan' that calls the command line interface 
+    for compilation and running algorithms instead of interfacing with C++ via 'Rcpp'.
+    Methods are provided for conveniently reading the results into R.
 License: BSD_3_clause + file LICENSE
 URL: https://mc-stan.org/cmdstanr, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues
@@ -19,7 +19,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.0
 Roxygen: list(markdown = TRUE, r6 = FALSE)
-SystemRequirements: 'CmdStan' <https://mc-stan.org/users/interfaces/cmdstan>
+SystemRequirements: CmdStan (https://mc-stan.org/users/interfaces/cmdstan)
 Imports: 
     checkmate,
     posterior (>= 0.0.3),
@@ -34,6 +34,6 @@ Suggests:
     rstan,
     testthat (>= 2.1.0)
 Additional_repositories:
-        https://mc-stan.org/r-packages/
+    https://mc-stan.org/r-packages/
 VignetteBuilder: knitr
 Remotes: stan-dev/posterior
