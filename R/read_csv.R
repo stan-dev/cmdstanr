@@ -539,13 +539,17 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     all_remaining <- all[!(all %in% currently_read)]
     unread <- c()
     for (p in requested) {
-      if (any(all_remaining == p) || any(startsWith(all_remaining, paste0(p,".")))) {
+      if (any(all_remaining == p)) {
         unread <- c(unread, p)
+      }
+      is_unread_element <- startsWith(all_remaining, paste0(p,"["))
+      if (any(is_unread_element)) {
+        unread <- c(unread, all_remaining[is_unread_element])
       }
     }
   }
   if (length(unread)) {
-    unread
+    unique(unread)
   } else {
     ""
   }

@@ -588,6 +588,11 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.")
       }
+      if (inc_warmup && !private$sampling_info_$save_warmup) {
+        stop("Warmup draws were requested from a fit object without them! ",
+             "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
+      }
+
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = dimnames(private$draws_)$variable,
@@ -607,10 +612,6 @@ CmdStanMCMC <- R6::R6Class(
       }
       variables <- repair_variable_names(matching_res$matching)
       if (inc_warmup) {
-        if (!private$sampling_info_$save_warmup) {
-          stop("Warmup draws were requested from a fit object without them! ",
-               "Please rerun the model with save_warmup = TRUE.")
-        }
         posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")[,,variables]
       } else {
         private$draws_[,,variables]
