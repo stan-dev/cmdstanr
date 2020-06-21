@@ -302,7 +302,7 @@ GenerateQuantitiesArgs <- R6::R6Class(
       self$fitted_params <- fitted_params
       invisible(self)
     },
-    validate = function(num_runs) {
+    validate = function(num_procs) {
       validate_generate_quantities_args(self)
       invisible(self)
     },

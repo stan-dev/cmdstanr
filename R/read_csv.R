@@ -158,78 +158,71 @@ read_sample_csv <- function(files,
     num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
     num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
     all_draws <- num_warmup_draws + num_post_warmup_draws
-    suppressWarnings(      
-      draws <- vroom::vroom(output_file,
-                  comment = "#",
-                  delim = ',',
-                  trim_ws = TRUE,
-                  col_select = col_select,
-                  col_types = c("lp__" = "d"),
-                  altrep = FALSE,
-                  progress = FALSE,
-                  skip = sampling_info$lines_to_skip,
-                  n_max = all_draws*2)
-    )
+    if(sampling_info$method == "generate_quantities") {
+      print(sampling_info$lines_to_skip)
+      print(all_draws*2)
+      suppressWarnings(      
+        draws <- vroom::vroom(output_file,
+                    comment = "#",
+                    delim = ',',
+                    trim_ws = TRUE,
+                    # col_select = col_select,
+                    # col_types = c("lp__" = "d"),
+                    altrep = FALSE,
+                    progress = FALSE,
+                    skip = sampling_info$lines_to_skip)
+      )
+    } else {
+      suppressWarnings(      
+        draws <- vroom::vroom(output_file,
+                    comment = "#",
+                    delim = ',',
+                    trim_ws = TRUE,
+                    col_select = col_select,
+                    col_types = c("lp__" = "d"),
+                    altrep = FALSE,
+                    progress = FALSE,
+                    skip = sampling_info$lines_to_skip,
+                    n_max = all_draws*2)
+      )
+      draws <- draws[!is.na(draws$lp__), ]
+    }
     if (ncol(draws) == 0) {
       stop("The supplied csv file does not contain any sampling data!")
-    }
-    draws <- draws[!is.na(draws$lp__), ]
+    }    
     if (nrow(draws) > 0) {
-      if (sampling_info$save_warmup == 1) {
-        if (length(variables) > 0) {
-          new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, variables])
-          if (is.null(warmup_draws)) {
-            warmup_draws <- new_warmup_draws
-          } else {
-            warmup_draws <- posterior::bind_draws(warmup_draws,
-                                                  new_warmup_draws,
-                                                  along="chain")
+      if(sampling_info$method == "sample") {
+        if (sampling_info$save_warmup == 1) {
+          if (length(variables) > 0) {
+            new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, variables])
+            if (is.null(warmup_draws)) {
+              warmup_draws <- new_warmup_draws
+            } else {
+              warmup_draws <- posterior::bind_draws(warmup_draws,
+                                                    new_warmup_draws,
+                                                    along="chain")
+            }
           }
-        }
-        if (length(sampler_diagnostics) > 0) {
-          new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics])
-          if (is.null(warmup_sampler_diagnostics_draws)) {
-            warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
-          } else {
-            warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
-                                                                      new_warmup_sampler_diagnostics_draws,
-                                                                      along="chain")
-          }
-        }
-        if (length(variables) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables])
-          if (is.null(post_warmup_draws)) {
-            post_warmup_draws <- new_post_warmup_draws
-          } else {
-            post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
-          }
-        }
-        if (length(sampler_diagnostics) > 0) {
-          new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics])
-          if (is.null(post_warmup_sampler_diagnostics_draws)) {
-            post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
-          } else {
-            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                          new_post_warmup_sampler_diagnostics_draws,
-                                                                          along="chain")
-          }
-        }
-      } else {
-        warmup_draws <- NULL
-        warmup_sampler_diagnostics_draws <- NULL
-        if (length(variables) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[, variables])
-          if (is.null(post_warmup_draws)) {
-            post_warmup_draws <- new_post_warmup_draws
-          } else {
-            post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
-                                                      new_post_warmup_draws,
-                                                      along="chain")
-          }
-        }
-        if (sampling_info$algorithm != "fixed_param") {
           if (length(sampler_diagnostics) > 0) {
-            new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampler_diagnostics])
+            new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics])
+            if (is.null(warmup_sampler_diagnostics_draws)) {
+              warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
+            } else {
+              warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
+                                                                        new_warmup_sampler_diagnostics_draws,
+                                                                        along="chain")
+            }
+          }
+          if (length(variables) > 0) {
+            new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables])
+            if (is.null(post_warmup_draws)) {
+              post_warmup_draws <- new_post_warmup_draws
+            } else {
+              post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
+            }
+          }
+          if (length(sampler_diagnostics) > 0) {
+            new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics])
             if (is.null(post_warmup_sampler_diagnostics_draws)) {
               post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
             } else {
@@ -238,32 +231,67 @@ read_sample_csv <- function(files,
                                                                             along="chain")
             }
           }
+        } else {
+          warmup_draws <- NULL
+          warmup_sampler_diagnostics_draws <- NULL
+          if (length(variables) > 0) {
+            new_post_warmup_draws <- posterior::as_draws_array(draws[, variables])
+            if (is.null(post_warmup_draws)) {
+              post_warmup_draws <- new_post_warmup_draws
+            } else {
+              post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
+                                                        new_post_warmup_draws,
+                                                        along="chain")
+            }
+          }
+          if (sampling_info$algorithm != "fixed_param") {
+            if (length(sampler_diagnostics) > 0) {
+              new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampler_diagnostics])
+              if (is.null(post_warmup_sampler_diagnostics_draws)) {
+                post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
+              } else {
+                post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
+                                                                              new_post_warmup_sampler_diagnostics_draws,
+                                                                              along="chain")
+              }
+            }
+          }
         }
+      } else if (sampling_info$method == "generate_quantities") {
+
       }
+      
     }
   }
-  repaired_model_params <- repair_variable_names(variables)
-  if (!is.null(warmup_draws)) {
-    posterior::variables(warmup_draws) <- repaired_model_params
+  if (sampling_info$method == "generate_quantities") {
+    list(
+      generated_quantities = draws
+    )
+  } else if(sampling_info$method == "sample"){
+    repaired_model_params <- repair_variable_names(variables)
+    if (!is.null(warmup_draws)) {
+      posterior::variables(warmup_draws) <- repaired_model_params
+    }
+    if (!is.null(post_warmup_draws)) {
+      posterior::variables(post_warmup_draws) <- repaired_model_params
+    }
+    if (length(not_matching) > 0) {
+      not_matching_list <- paste(unique(not_matching), collapse = ", ")
+      warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
+    }
+    sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
+    sampling_info$inv_metric <- NULL
+    list(
+      sampling_info = sampling_info,
+      inv_metric = inv_metric,
+      step_size = step_size,
+      warmup_draws = warmup_draws,
+      post_warmup_draws = post_warmup_draws,
+      warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
+      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
+    )
   }
-  if (!is.null(post_warmup_draws)) {
-    posterior::variables(post_warmup_draws) <- repaired_model_params
-  }
-  if (length(not_matching) > 0) {
-    not_matching_list <- paste(unique(not_matching), collapse = ", ")
-    warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
-  }
-  sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
-  sampling_info$inv_metric <- NULL
-  list(
-    sampling_info = sampling_info,
-    inv_metric = inv_metric,
-    step_size = step_size,
-    warmup_draws = warmup_draws,
-    post_warmup_draws = post_warmup_draws,
-    warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
-    post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
-  )
+  
 }
 
 # FIXME: also parse the csv header
@@ -332,7 +360,7 @@ read_sample_info_csv <- function(csv_file) {
         csv_file_info[["sampler_diagnostics"]] <- c()
         csv_file_info[["model_params"]] <- c()
         for(x in all_names) {
-          if (csv_file_info$algorithm != "fixed_param") {
+          if (all(csv_file_info$algorithm != "fixed_param")) {
             if (endsWith(x, "__") && x != "lp__") {
               csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
             } else {
@@ -405,7 +433,7 @@ read_sample_info_csv <- function(csv_file) {
   close(con)
   if (is.null(csv_file_info$method)) {
     stop("Supplied CSV file is corrupt!")
-  } else if (csv_file_info$method != "sample") {
+  } else if (!(csv_file_info$method %in% c("sample", "generate_quantities"))) {
     stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
   }
   if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {

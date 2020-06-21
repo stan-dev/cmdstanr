@@ -853,22 +853,93 @@ CmdStanVB <- R6::R6Class(
   )
 )
 
-# CmdStanGQ <- R6::R6Class(
-#   classname = "CmdStanGQ",
-#   inherit = CmdStanFit,
-#   public = list(
-#     generated_quantities = function() {
-#       x <- self$draws()
-#       x <- x[, colnames(x) != "lp__"]
-#       estimate <- setNames(as.numeric(x), nm = posterior::variables(x))
-#       estimate
-#     }
-#   ),
-#   private = list(
-#     read_csv_ = function() {
-#       optim_output <- read_optim_csv(self$output_files())
-#       private$draws_ <- optim_output[["draws"]]
-#       invisible(self)
-#     }
-#   )
-# )
+CmdStanGQ <- R6::R6Class(
+  classname = "CmdStanGQ",
+  inherit = CmdStanFit,
+  public = list(
+    generated_quantities = function() {
+      if (is.null(generated_quantities_)) {
+        private$read_csv_()
+      }
+      private$generated_quantities_
+    }
+  ),
+  private = list(
+    generated_quantities_ = NULL,
+    read_csv_ = function(variables = NULL) {
+      # variables_to_read <-
+      #   remaining_columns_to_read(
+      #     variables,
+      #     dimnames(private$draws_)$variable,
+      #     private$sampling_info_$model_params
+      #   )
+      # sampler_diagnostics_to_read <-
+      #   remaining_columns_to_read(
+      #     sampler_diagnostics,
+      #     dimnames(private$sampler_diagnostics_)$variable,
+      #     private$sampling_info_$sampler_diagnostics
+      #   )
+      data_csv <- read_sample_csv(
+        files = self$output_files(include_failed = FALSE),
+        # variables = variables_to_read,
+        # sampler_diagnostics = sampler_diagnostics_to_read
+      )
+      generated_quantities_ <- data_csv
+      # private$inv_metric_ <- data_csv$inv_metric
+      # private$sampling_info_ <- data_csv$sampling_info
+
+      # if (!is.null(data_csv$post_warmup_draws)) {
+      #   if (is.null(private$draws_)) {
+      #     private$draws_ <- data_csv$post_warmup_draws
+      #   } else {
+      #     private$draws_ <-
+      #       posterior::bind_draws(
+      #         data_csv$post_warmup_draws,
+      #         private$draws_,
+      #         along="variable"
+      #       )
+      #   }
+      # }
+      # if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
+      #   if (is.null(private$sampler_diagnostics_)) {
+      #     private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
+      #   } else {
+      #     private$sampler_diagnostics_ <-
+      #       posterior::bind_draws(
+      #         data_csv$post_warmup_sampler_diagnostics,
+      #         private$sampler_diagnostics_,
+      #         along="variable"
+      #       )
+      #   }
+      # }
+      # if (!is.null(data_csv$sampling_info$save_warmup)
+      #    && data_csv$sampling_info$save_warmup) {
+      #   if (!is.null(data_csv$warmup_draws)) {
+      #     if (is.null(private$warmup_draws_)) {
+      #       private$warmup_draws_ <- data_csv$warmup_draws
+      #     } else {
+      #       private$warmup_draws_ <-
+      #         posterior::bind_draws(
+      #           data_csv$warmup_draws,
+      #           private$warmup_draws_,
+      #           along="variable"
+      #         )
+      #     }
+      #   }
+      #   if (!is.null(data_csv$warmup_sampler_diagnostics)) {
+      #     if (is.null(private$warmup_sampler_diagnostics_)) {
+      #       private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
+      #     } else {
+      #       private$warmup_sampler_diagnostics_ <-
+      #         posterior::bind_draws(
+      #           data_csv$warmup_sampler_diagnostics,
+      #           private$warmup_sampler_diagnostics_,
+      #           along="variable"
+      #         )
+      #     }
+      #   }
+      # }
+      invisible(self)
+    }
+  )
+)

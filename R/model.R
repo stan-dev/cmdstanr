@@ -890,17 +890,17 @@ generate_quantities_method <- function(fitted_params = NULL,
     method_args = generate_quantities_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    run_ids = 1,
+    proc_ids = 1,
     data_file = data, #process_data(data),
     seed = seed,
     refresh = refresh,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_runs = 1, num_cores = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
-  print(runset$run_cmdstan())
-  #CmdStanMLE$new(runset)
+  runset$run_cmdstan()
+  CmdStanGQ$new(runset)
 }
 CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities_method)
 
