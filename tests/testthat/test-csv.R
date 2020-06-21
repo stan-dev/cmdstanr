@@ -70,12 +70,6 @@ test_that("read_cmdstan_csv() fails if the file does not exist", {
                "Assertion on 'output_file' failed: File does not exist: 'resources/csv/model1-1-doesntexist.csv'.")
 })
 
-# test_that("read_cmdstan_csv() fails for non-sampling csv", {
-#   skip_on_cran()
-#   expect_error(read_cmdstan_csv(fit_bernoulli_optimize$output_files()),
-#                "Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
-# })
-
 test_that("read_cmdstan_csv() fails with empty csv file", {
   skip_on_cran()
   file_path <- test_path("resources", "csv", "empty.csv")

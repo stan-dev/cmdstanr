@@ -155,9 +155,13 @@ read_cmdstan_csv <- function(files,
       col_select <- c(col_select, variables[variables!="lp__"])
       col_select <- c(col_select, sampler_diagnostics)
     }
-    num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
-    num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
-    all_draws <- num_warmup_draws + num_post_warmup_draws
+    if (sampling_info$method == "sample") {
+      num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
+      num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
+      all_draws <- num_warmup_draws + num_post_warmup_draws
+    } else if (sampling_info$method == "optimize") {
+      all_draws <- 1
+    }
     suppressWarnings(      
       draws <- vroom::vroom(output_file,
                   comment = "#",
@@ -207,8 +211,10 @@ read_cmdstan_csv <- function(files,
                                                                               along="chain")
             }
         }
+      } else if (sampling_info$method == "variational") {
+        
       } else if (sampling_info$method == "optimize") {
-        post_warmup_draws <- draws
+        point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])
       }
     }
   }
@@ -216,42 +222,42 @@ read_cmdstan_csv <- function(files,
   if (!is.null(warmup_draws)) {
     posterior::variables(warmup_draws) <- repaired_model_params
   }
-  if (!is.null(post_warmup_draws)) {
-    posterior::variables(post_warmup_draws) <- repaired_model_params
-  }
+  # if (!is.null(post_warmup_draws)) {
+  #   posterior::variables(post_warmup_draws) <- repaired_model_params
+  # }
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
   }
   sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
   sampling_info$inv_metric <- NULL
-  list(
-    sampling_info = sampling_info,
-    inv_metric = inv_metric,
-    step_size = step_size,
-    warmup_draws = warmup_draws,
-    post_warmup_draws = post_warmup_draws,
-    warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
-    post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
-  )
-}
-
-# FIXME: also parse the csv header
-read_optim_csv <- function(files) {
-  stopifnot(length(files) == 1)
-  csv_no_comments <- utils::read.csv(
-    files,
-    comment.char = "#",
-    colClasses = "numeric"
-  )
-  mat <- as.matrix(csv_no_comments)
-  colnames(mat) <- repair_variable_names(colnames(mat))
-
-  # not really draws (just point estimate) but this is consistent with
-  # names and format for mcmc and vb
-  list(
-    draws = posterior::as_draws_matrix(mat[1,, drop=FALSE])
-  )
+  if (sampling_info$method == "sample") {
+    list(
+      sampling_info = sampling_info,
+      inv_metric = inv_metric,
+      step_size = step_size,
+      warmup_draws = warmup_draws,
+      post_warmup_draws = post_warmup_draws,
+      warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
+      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
+    )
+  } else if (sampling_info$method == "variational") {
+    list(
+      variational_info = sampling_info,
+      inv_metric = inv_metric,
+      step_size = step_size,
+      warmup_draws = warmup_draws,
+      post_warmup_draws = post_warmup_draws,
+      warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
+      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
+    )
+  } else if (sampling_info$method == "optimize") {
+    list(
+      optimization_info = sampling_info,
+      point_estimates = point_estimates
+    )
+  }
+  
 }
 
 # FIXME: also parse the csv header
