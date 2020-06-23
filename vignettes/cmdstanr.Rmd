@@ -24,7 +24,6 @@ opts_chunk$set(
   out.width = "60%",
   fig.align = "center",
   comment = NA,
-  comment=NA,
   eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
 )
 ```
