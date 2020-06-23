@@ -1,0 +1,286 @@
+---
+title: "How does CmdStanR work?"
+author: "Jonah Gabry and Rok Češnovar"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+vignette: >
+  %\VignetteIndexEntry{How does CmdStanR work?}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r settings-knitr, include=FALSE}
+stopifnot(require(knitr))
+opts_chunk$set(
+  # collapse = TRUE,
+  dev = "png",
+  dpi = 150,
+  fig.asp = 0.618,
+  fig.width = 5,
+  out.width = "60%",
+  fig.align = "center",
+  comment = NA,
+  eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
+)
+```
+
+
+## Introduction
+
+```{r setup, message=FALSE}
+library(cmdstanr)
+```
+
+This vignette is intended to be read after the [_Getting started with CmdStanR_](http://mc-stan.org/cmdstanr/articles/cmdstanr.html) 
+vignette. Please read that first for important background. In this document we
+provide additional details about compiling models, allowed formats for passing
+in data, and how CmdStan output is saved and read back into R.
+
+We will use only the `$sample()` method in examples, but all model fitting
+methods work the in a similar way under the hood.
+
+## Compilation
+
+### Immediate compilation
+
+The `cmdstan_model()` function creates a new `CmdStanModel` object. The
+`CmdStanModel` object stores the path to a Stan program as well as the 
+path to a compiled executable: 
+
+```{r start-clean, include=FALSE}
+exe <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli")
+unlink(exe)
+```
+
+```{r compile}
+stan_file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+mod <- cmdstan_model(stan_file)
+mod$print()
+mod$stan_file()
+mod$exe_file()
+```
+
+Subsequently, if you create a `CmdStanModel` object from the same Stan file
+then compilation will be skipped (assuming the file hasn't changed):
+
+```{r already-compiled}
+mod <- cmdstan_model(stan_file)
+```
+ 
+Internally, `cmdstan_model()` first creates the `CmdStanModel` object from
+just the Stan file and then calls its [`$compile()`](http://mc-stan.org/cmdstanr/reference/model-method-compile.html) 
+method. Optional arguments to the `$compile()` method can be passed via `...`, 
+for example:
+
+```{r compile-options}
+mod <- cmdstan_model(stan_file, force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
+```
+
+### Delayed compilation
+
+It is also possible to delay compilation when creating the `CmdStanModel` object
+by specifying `compile=FALSE`. You can later call the `$compile()` method
+directly:
+
+```{r compile-method}
+unlink(mod$exe_file())
+mod <- cmdstan_model(stan_file, compile = FALSE)
+mod$exe_file() # not yet created
+mod$compile()
+mod$exe_file()
+```
+
+In all cases the executable is created in the same directory as the file
+containing the Stan program.
+
+
+## Processing data
+
+There are three data formats that CmdStanR allows when fitting a model:
+
+* named list of R objects 
+* JSON file
+* R dump file
+
+### Named list of R objects
+
+Like the RStan interface, CmdStanR accepts a named list of R objects where the
+names correspond to variables declared in the `data` block of the Stan program:
+
+```{r data-list, eval=FALSE}
+# data block has 'N' and 'y'
+data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+fit <- mod$sample(data = data_list)
+```
+
+Because CmdStan doesn't accept lists of R objects, CmdStanR will first write the
+data to a temporary JSON file using `write_stan_json()`. This happens
+internally, but it is also possible to call `write_stan_json()` directly:
+
+```{r write_stan_json}
+data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+json_file <- tempfile(fileext = ".json")
+write_stan_json(data_list, json_file)
+cat(readLines(json_file), sep = "\n")
+```
+
+### JSON file
+
+If you already have your data in a JSON file you can just pass that file
+directly to CmdStanR instead of using a list of R objects. For example, we could
+pass in the JSON file we created above using `write_stan_json()`:
+
+```{r data-json, eval=FALSE}
+fit <- mod$sample(data = json_file)
+```
+
+
+### R dump file
+
+Finally, it is also possible to use the R dump file format. This is *not*
+recommended because CmdStan can process JSON faster than R dump, but CmdStanR
+allows it because CmdStan will accept files created by `rstan::stan_rdump()`:
+
+```{r data-rdump, eval=FALSE}
+rdump_file <- tempfile(fileext = ".data.R")
+rstan::stan_rdump(names(data_list), file = rdump_file, envir = list2env(data_list))
+cat(readLines(rdump_file), sep = "\n")
+fit <- mod$sample(data = rdump_file)
+```
+
+
+## Writing CmdStan output to CSV
+
+### Default temporary files
+
+```{r sample-tempdir, results = "hide"}
+data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+fit <- mod$sample(data = data_list)
+```
+
+When fitting a model, the default behavior is to write the output from CmdStan 
+to CSV files in a temporary directory:
+
+```{r output_files}
+fit$output_files()
+```
+
+These files will be lost if you end your R session or if you remove the 
+`fit` object and force (or wait for) garbage collection. 
+
+
+```{r gc}
+files <- fit$output_files()
+file.exists(files)
+
+rm(fit)
+gc()
+
+file.exists(files)
+```
+
+### Non-temporary files
+
+To save these files to a non-temporary location there are two options. You 
+can either specify the `output_dir` argument to `mod$sample()` or use 
+`fit$save_output_files()` after fitting the model: 
+
+
+```{r save_output_files, eval=FALSE}
+# see ?save_output_files for info on optional arguments
+fit$save_output_files(dir = "path/to/directory")
+```
+
+```{r output_dir, eval = FALSE}
+fit <- mod$sample(
+  data = data_list, 
+  output_dir = "path/to/directory"
+)
+```
+
+
+## Reading CmdStan output into R
+
+### Lazy CSV reading 
+
+With the exception of some diagnostic information, the CSV files are not read
+into R until their contents are requested by calling a method that requires them
+(e.g., `fit$draws()`, `fit$summary()`, etc.). If we examine the structure of the
+`fit` object, notice how the `Private` slot `draws_` is `NULL`, indicating that
+the CSV files haven't yet been read into R:
+
+```{r refit, include=FALSE}
+fit <- mod$sample(data = data_list)
+```
+```{r csv-not-read}
+str(fit)
+```
+
+After we call a method that requires the draws then if we reexamine the 
+structure of the object we will see that the `draws_` slot in `Private` 
+is no longer empty: 
+
+```{r for-csv-reading}
+draws <- fit$draws() # force CSVs to be read into R
+str(fit)
+```
+
+For models with many parameters, if only some parameters are requested (e.g., by
+specifying the `variables` argument to `fit$draws()`) then CmdStanR will only
+read in the requested variables (unless they have already been read in).
+
+### read_sample_csv()
+
+Internally, the `read_sample_csv()` function is used to read the CmdStan CSV
+files into R. This function is exposed to users, so you can also call it
+directly:
+
+```{r read_sample_csv}
+# see ?read_sample_csv for info on optional arguments controlling 
+# what information is read in
+csv_contents <- read_sample_csv(fit$output_files())
+str(csv_contents)
+```
+
+
+### Saving and accessing advanced algorithm info (latent dynamics)
+
+If `save_latent_dynamics` is set to `TRUE` when running the `$sample()` method
+then additional CSV files are created (one per chain) that provide access to
+quantities used under the hood by Stan's implementation of dynamic Hamiltonian
+Monte Carlo.
+
+CmdStanR does not yet provide a special method for processing these files but
+they can be read into R using R's standard CSV reading functions:
+
+
+```{r save_latent_dynamics, results = "hide"}
+fit <- mod$sample(data = data_list, save_latent_dynamics = TRUE)
+```
+```{r read-latent-dynamics}
+fit$latent_dynamics_files()
+
+# read one of the files in
+x <- utils::read.csv(fit$latent_dynamics_files()[1], comment.char = "#")
+head(x)
+```
+
+The column `lp__` is also provided via `fit$draws()`, and the columns
+`accept_stat__`, `stepsize__`, `treedepth__`, `n_leapfrog__`, `divergent__`, and
+`energy__` are also provided by `fit$sampler_diagnostics()`, but there are 
+several columns unique to the latent dynamics file:
+
+```{r explore-latent-dynamics}
+head(x[, c("theta", "p_theta", "g_theta")])
+```
+
+Our model has a single parameter `theta` and the three columns above correspond
+to `theta` in the _unconstrained_ space (`theta` on the constrained space is
+accessed via `fit$draws()`), the auxiliary momentum `p_theta`, and the gradient
+`g_theta`. In general, each of these three columns will exist for _every_
+parameter in the model.
+

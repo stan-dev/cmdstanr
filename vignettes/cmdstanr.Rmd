@@ -168,8 +168,9 @@ For details follow this link to its separate documentation page:
 * [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
 
 The `$sample()` method creates [R6](https://r6.r-lib.org/) `CmdStanMCMC`
-objects, which have many associated methods. Below we will demonstrate some
-of the most important methods. For a full list, follow this link to the `CmdStanMCMC` documentation: 
+objects, which have many associated methods. Below we will demonstrate some of
+the most important methods. For a full list, follow this link to the
+`CmdStanMCMC` documentation:
 
 * [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 
