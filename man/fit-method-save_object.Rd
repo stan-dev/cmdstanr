@@ -30,9 +30,10 @@ fit <- cmdstanr_example("logistic")
 
 temp_rds_file <- tempfile(fileext = ".RDS")
 fit$save_object(file = temp_rds_file)
-
 rm(fit)
+
 fit <- readRDS(temp_rds_file)
+fit$summary()
 }
 
 }

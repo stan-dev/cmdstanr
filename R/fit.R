@@ -166,9 +166,10 @@ CmdStanFit <- R6::R6Class(
 #'
 #' temp_rds_file <- tempfile(fileext = ".RDS")
 #' fit$save_object(file = temp_rds_file)
-#'
 #' rm(fit)
+#'
 #' fit <- readRDS(temp_rds_file)
+#' fit$summary()
 #' }
 #'
 NULL
@@ -650,7 +651,7 @@ CmdStanMCMC <- R6::R6Class(
         all = private$sampling_info_$model_params
       )
 
-      if (is.null(to_read) || (length(to_read) > 0)) {
+      if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = to_read, sampler_diagnostics = "")
       }
       if (is.null(variables)) {
@@ -678,7 +679,7 @@ CmdStanMCMC <- R6::R6Class(
         currently_read = dimnames(private$sampler_diagnostics_)$variable,
         all = private$sampling_info_$sampler_diagnostics
       )
-      if (is.null(to_read) || (length(to_read) > 0)) {
+      if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = "", sampler_diagnostics = NULL)
       }
       if (inc_warmup) {
