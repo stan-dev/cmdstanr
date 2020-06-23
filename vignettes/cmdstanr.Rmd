@@ -249,10 +249,10 @@ object from the csv output files written by CmdStan. This can be done by using
 `rstan::read_stan_csv()` in combination with the `$output_files()` method of the
 `CmdStanMCMC` object:
 
-```{r stanfit}
+```{r stanfit, eval=FALSE}
 stanfit <- rstan::read_stan_csv(fit$output_files())
-print(stanfit)
 ```
+
 
 
 ### Optimization and variational inference
