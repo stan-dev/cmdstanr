@@ -31,7 +31,6 @@ Suggests:
     jsonlite (>= 1.2.0),
     knitr,
     rmarkdown,
-    rstan,
     testthat (>= 2.1.0)
 Additional_repositories:
     https://mc-stan.org/r-packages/

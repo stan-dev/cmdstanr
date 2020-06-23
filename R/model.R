@@ -67,10 +67,9 @@
 #'
 #' # For models fit using MCMC, if you like working with RStan's stanfit objects
 #' # then you can create one with rstan::read_stan_csv()
-#' if (require(rstan, quietly = TRUE)) {
-#'   stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
-#'   print(stanfit)
-#' }
+#'
+#' # stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
+#'
 #'
 #' # Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
 #' # and also demonstrate specifying data as a path to a file instead of a list
@@ -845,33 +844,3 @@ variational_method <- function(data = NULL,
   CmdStanVB$new(runset)
 }
 CmdStanModel$set("public", name = "variational", value = variational_method)
-
-
-# Internals ---------------------------------------------------------------
-
-#' Write data to a temporary `.json` file if necessary
-#' @noRd
-#' @param data If not `NULL`, then either a path to a data file compatible with
-#'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
-#' @return Path to data file.
-process_data <- function(data) {
-  if (is.null(data)) {
-    path <- data
-  } else if (is.character(data)) {
-    path <- absolute_path(data)
-  } else if (is.list(data) && !is.data.frame(data)) {
-    if (cmdstan_version() >= "2.22") {
-      path <- tempfile(pattern = "standata-", fileext = ".json")
-      write_stan_json(data = data, file = path)
-    } else {
-      path <- tempfile(pattern = "standata-", fileext = ".dat")
-      if (!requireNamespace("rstan", quietly = TRUE)) {
-        stop("For CmdStan < 2.22 the rstan package is required for writing data.")
-      }
-      rstan::stan_rdump(names(data), file = path, env = list2env(data))
-    }
-  } else {
-    stop("'data' should be a path or a named list.", call. = FALSE)
-  }
-  path
-}
