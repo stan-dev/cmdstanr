@@ -31,17 +31,17 @@ opts_chunk$set(
 
 ## Introduction
 
+This vignette is intended to be read after the [_Getting started with CmdStanR_](http://mc-stan.org/cmdstanr/articles/cmdstanr.html) 
+vignette. Please read that first for important background. In this document we
+provide additional details about compiling models, passing in data, and how
+CmdStan output is saved and read back into R.
+
+We will only use the `$sample()` method in examples, but all model fitting
+methods work in a similar way under the hood.
+
 ```{r setup, message=FALSE}
 library(cmdstanr)
 ```
-
-This vignette is intended to be read after the [_Getting started with CmdStanR_](http://mc-stan.org/cmdstanr/articles/cmdstanr.html) 
-vignette. Please read that first for important background. In this document we
-provide additional details about compiling models, allowed formats for passing
-in data, and how CmdStan output is saved and read back into R.
-
-We will use only the `$sample()` method in examples, but all model fitting
-methods work the in a similar way under the hood.
 
 ## Compilation
 
@@ -76,9 +76,16 @@ just the Stan file and then calls its [`$compile()`](http://mc-stan.org/cmdstanr
 method. Optional arguments to the `$compile()` method can be passed via `...`, 
 for example:
 
-```{r compile-options}
-mod <- cmdstan_model(stan_file, force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
+```{r compile-options, eval=FALSE}
+mod <- cmdstan_model(
+  stan_file, 
+  force_recompile = TRUE, 
+  include_paths = "paths/to/directories/with/included/files", 
+  cpp_options = list(stan_threads = TRUE, STANC2 = TRUE)
+)
 ```
+
+
 
 ### Delayed compilation
 

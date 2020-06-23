@@ -35,7 +35,7 @@ CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python) that
 provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
 interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
-later in this vignette for more details on how the two inferfaces differ.
+later in this vignette for more details on how the two interfaces differ.
 
 **CmdStanR is not on CRAN yet**, but the latest pre-beta release can be
 installed via:
@@ -333,4 +333,3 @@ R (and RStudio) and result in fewer unexpected crashes than when using RStan.
 Finally, RStan and CmdStanR have different open source licenses. RStan uses the 
 GPL-3 license while the license for CmdStanR (like Stan) is BSD-3, which is a bit 
 more permissive.
-
