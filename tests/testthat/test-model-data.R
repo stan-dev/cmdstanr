@@ -7,7 +7,7 @@ if (not_on_cran()) {
   data_list <- testing_data("logistic")
 }
 
-test_that("error if data is list and CmdStan < 2.22", {
+test_that("error if CmdStan < 2.22 and any 0-dimensional data objects", {
   skip_on_cran()
   ver <- cmdstan_version()
   .cmdstanr$VERSION <- "2.21.0"
@@ -15,16 +15,22 @@ test_that("error if data is list and CmdStan < 2.22", {
     fit <- mod$sample(data = data_list)
   )
 
+  data_list$X <- array(1, dim = 0)
+  expect_error(
+    fit <- mod$sample(data = data_list),
+    "Data includes 0-dimensional data structures."
+  )
+
   data_list$X <- array(1, dim = c(100, 0))
   expect_error(
     fit <- mod$sample(data = data_list),
-    "To use a named list please update your CmdStan installation"
+    "Data includes 0-dimensional data structures."
   )
 
   data_list$X <- array(1, dim = c(100, 3, 0))
   expect_error(
     fit <- mod$sample(data = data_list),
-    "To use a named list please update your CmdStan installation"
+    "Data includes 0-dimensional data structures"
   )
   .cmdstanr$VERSION <- ver
 })

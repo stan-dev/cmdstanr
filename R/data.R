@@ -89,11 +89,11 @@ process_data <- function(data) {
   } else if (is.character(data)) {
     path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {
-    if (cmdstan_version() < "2.22" && has_any_zero_dims(data)) {
+    if (cmdstan_version() < "2.22" && any_zero_dims(data)) {
       stop(
-        "For CmdStan < 2.22, if there are any data objects with a dimension with ",
-        "zero elements then 'data' must be a file created by rstan::stan_rdump(). ",
-        "To use a named list please update your CmdStan installation using install_cmdstan().",
+        "Data includes 0-dimensional data structures. To use this data please ",
+        "either update your CmdStan installation with install_cmdstan() ",
+        "or specify data as a file created by rstan::stan_rdump().",
         call. = FALSE
       )
     }
@@ -105,7 +105,8 @@ process_data <- function(data) {
   path
 }
 
-has_any_zero_dims <- function(data) {
+# check if any objects in the data list have zero
+any_zero_dims <- function(data) {
   has_zero_dims <- sapply(data, function(x) {
     any(dim(x) == 0)
   })
