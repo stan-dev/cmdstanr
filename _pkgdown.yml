@@ -53,6 +53,8 @@ home:
   - text: Ask a question
     href: https://discourse.mc-stan.org/
 
+toc:
+  depth: 4
 
 articles:
   - title: "Getting started"

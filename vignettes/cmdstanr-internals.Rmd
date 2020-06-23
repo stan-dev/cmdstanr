@@ -236,9 +236,10 @@ draws <- fit$draws() # force CSVs to be read into R
 str(fit)
 ```
 
-For models with many parameters, if only some parameters are requested (e.g., by
-specifying the `variables` argument to `fit$draws()`) then CmdStanR will only
-read in the requested variables (unless they have already been read in).
+For models with many parameters, transformed parameters, or generated
+quantities, if only some are requested (e.g., by specifying the `variables`
+argument to `fit$draws()`) then CmdStanR will only read in the requested
+variables (unless they have already been read in).
 
 ### read_sample_csv()
 
@@ -290,4 +291,31 @@ to `theta` in the _unconstrained_ space (`theta` on the constrained space is
 accessed via `fit$draws()`), the auxiliary momentum `p_theta`, and the gradient
 `g_theta`. In general, each of these three columns will exist for _every_
 parameter in the model.
+
+
+## Saving fitted model objects
+
+As described above, the contents of the CSV files are only read into R when they
+are needed. This means that in order to save a fitted model object containing
+_all_ of the posterior draws and sampler diagnostics you should either make sure
+to call `fit$draws()` and `fit$sampler_diagnostics()` before saving the object
+`fit`, or use the special `$save_object()` method provided by CmdStanR, which
+will ensure that everything has been read into R before saving the object using
+`saveRDS()`:
+
+```{r save-fit}
+temp_rds_file <- tempfile(fileext = ".RDS") # temporary file just for demonstration
+fit$save_object(file = temp_rds_file)
+```
+
+We can check that this worked by removing `fit` and loading it back in from
+the save file:
+
+```{r load-fit}
+rm(fit); gc()
+
+fit <- readRDS(temp_rds_file)
+fit$summary()
+```
+
 

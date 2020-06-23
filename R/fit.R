@@ -11,6 +11,13 @@ CmdStanFit <- R6::R6Class(
       invisible(self)
     },
 
+    save_object = function(file, ...) {
+      # CmdStanMCMC has its own implementation
+      self$draws()
+      saveRDS(self, file = file, ...)
+      invisible(self)
+    },
+
     num_procs = function() {
       self$runset$num_procs()
     },
@@ -131,6 +138,40 @@ CmdStanFit <- R6::R6Class(
 
 
 # Document methods ----------------------------------------------------------
+
+#' Save fitted model object to a file
+#'
+#' @name fit-method-save_object
+#' @aliases save_object
+#' @description This method is a wrapper around [base::saveRDS()] that ensures
+#'   that all posterior draws and diagnostics are saved when saving a fitted
+#'   model object. Because the contents of the CmdStan output CSV files are only
+#'   read into R lazily (i.e., as needed), the `$save_object()` method is the
+#'   safest way to guarantee that everything has been read in before saving.
+#'
+#' @section Usage:
+#'   ```
+#'   $save_object(file, ...)
+#'   ```
+#'
+#' @section Arguments:
+#' * `file`: (string) Path where the file should be saved.
+#' * `...`: Other arguments to pass to [base::saveRDS()] besides `object` and `file`.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic")
+#'
+#' temp_rds_file <- tempfile(fileext = ".RDS")
+#' fit$save_object(file = temp_rds_file)
+#'
+#' rm(fit)
+#' fit <- readRDS(temp_rds_file)
+#' }
+#'
+NULL
 
 #' Extract posterior draws
 #'
@@ -540,6 +581,8 @@ NULL
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/diagnose`. \cr
+#'  [`$save_object()`][fit-method-save_object]
+#'    \tab Save fitted model object to a file. \cr
 #'  [`$save_output_files()`][fit-method-save_output_files]
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`$save_data_file()`][fit-method-save_data_file]
@@ -574,9 +617,16 @@ CmdStanMCMC <- R6::R6Class(
         }
       }
     },
+
+    save_object = function(file, ...) {
+      self$sampler_diagnostics() # super method calls draws()
+      super$save_object(file, ...)
+    },
+
     num_chains = function() {
       super$num_procs()
     },
+
     output = function(id = NULL) {
       if (is.null(id)) {
         self$runset$procs$proc_output()
@@ -584,6 +634,7 @@ CmdStanMCMC <- R6::R6Class(
         cat(paste(self$runset$procs$proc_output(id), collapse="\n"))
       }
     },
+
     draws = function(variables = NULL, inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.")
@@ -617,6 +668,7 @@ CmdStanMCMC <- R6::R6Class(
         private$draws_[,,variables]
       }
     },
+
     sampler_diagnostics = function(inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.")
@@ -766,6 +818,8 @@ CmdStanMCMC <- R6::R6Class(
 #'  (`target`) computed in the model block of the Stan program. \cr
 #'  `$mle()` \tab Return the penalized maximum likelihod estimate (posterior
 #'  mode) as a numeric vector with one element per variable (excluding `lp()`). \cr
+#'  [`$save_object()`][fit-method-save_object]
+#'    \tab Save fitted model object to a file. \cr
 #'  [`$save_output_files()`][fit-method-save_output_files] \tab Save output CSV
 #'  files to a specified location. \cr
 #'  [`$save_data_file()`][fit-method-save_data_file] \tab Save JSON data file
@@ -825,6 +879,8 @@ CmdStanMLE <- R6::R6Class(
 #'    \tab Run and print CmdStan's `bin/stansummary`. \cr
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]
 #'    \tab Run and print CmdStan's `bin/diagnose`. \cr
+#'  [`$save_object()`][fit-method-save_object]
+#'    \tab Save fitted model object to a file. \cr
 #'  [`$save_output_files()`][fit-method-save_output_files]
 #'    \tab Save output CSV files to a specified location. \cr
 #'  [`$save_data_file()`][fit-method-save_data_file]
