@@ -49,6 +49,7 @@ CmdStanArgs <- R6::R6Class(
       self$method <- self$method_args$method
       self$save_latent_dynamics <- save_latent_dynamics
       self$validate_csv <- validate_csv
+      self$using_tempdir <- is.null(output_dir)
       if (getRversion() < '3.5.0') {
         self$output_dir <- output_dir %||% tempdir()
       } else {

@@ -192,7 +192,18 @@ CmdStanRun <- R6::R6Class(
   private = list(
     output_files_ = character(),
     latent_dynamics_files_ = NULL,
-    command_args_ = list()
+    command_args_ = list(),
+    finalize = function() {
+      if (self$args$using_tempdir) {
+        message("Cleaning up CmdStanR temporary files")
+        temp_files <- c(
+          self$output_files(include_failed = TRUE),
+          if (self$args$save_latent_dynamics)
+            self$latent_dynamics_files(include_failed = TRUE)
+        )
+        unlink(temp_files)
+      }
+    }
   )
 )
 
