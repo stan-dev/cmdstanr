@@ -388,7 +388,7 @@ CmdStanProcs <- R6::R6Class(
         command = command,
         args = args,
         wd = wd,
-        echo_cmd = TRUE,
+        echo_cmd = FALSE,
         stdout = "|",
         stderr = "|"
       )
