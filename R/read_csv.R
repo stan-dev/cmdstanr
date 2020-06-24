@@ -181,25 +181,27 @@ read_cmdstan_csv <- function(files,
       col_select <- c(col_select, sampler_diagnostics)
     }
     if (metadata$method == "sample") {
-      num_warmup_draws <- ceiling(metadata$iter_warmup/metadata$thin)
-      num_post_warmup_draws <- ceiling(metadata$iter_sampling/metadata$thin)
+      num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
+      num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
     } else if (metadata$method == "variational") {
       all_draws <- metadata$output_samples
     } else if (metadata$method == "optimize") {
       all_draws <- 1
     }
-    suppressWarnings(      
-      draws <- vroom::vroom(output_file,
-                  comment = "#",
-                  delim = ',',
-                  trim_ws = TRUE,
-                  col_select = col_select,
-                  col_types = c("lp__" = "d"),
-                  altrep = FALSE,
-                  progress = FALSE,
-                  skip = metadata$lines_to_skip,
-                  n_max = all_draws*2)
+    suppressWarnings(
+      draws <- vroom::vroom(
+        output_file,
+        comment = "#",
+        delim = ',',
+        trim_ws = TRUE,
+        col_select = col_select,
+        col_types = c("lp__" = "d"),
+        altrep = FALSE,
+        progress = FALSE,
+        skip = metadata$lines_to_skip,
+        n_max = all_draws * 2
+      )
     )
     if (ncol(draws) == 0) {
       stop("The supplied csv file does not contain any data!", call. = FALSE)
@@ -209,39 +211,57 @@ read_cmdstan_csv <- function(files,
       if (metadata$method == "sample") {
         if (metadata$save_warmup == 1) {
           if (length(variables) > 0) {
-            warmup_draws <- posterior::bind_draws(warmup_draws,
-                                                  posterior::as_draws_array(draws[1:num_warmup_draws, variables]),
-                                                  along="chain")
-            post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
-                                                        posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
-                                                        along="chain")
+            warmup_draws <- posterior::bind_draws(
+              warmup_draws,
+              posterior::as_draws_array(draws[1:num_warmup_draws, variables]),
+              along="chain"
+            )
+            post_warmup_draws <- posterior::bind_draws(
+              post_warmup_draws,
+              posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
+              along="chain"
+            )
           }
           if (length(sampler_diagnostics) > 0) {
-            warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
-                                                                      posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics]),
-                                                                      along="chain")
-            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                            posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
-                                                                            along="chain")
+            warmup_sampler_diagnostics_draws <- posterior::bind_draws(
+              warmup_sampler_diagnostics_draws,
+              posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics]),
+              along="chain"
+            )
+            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
+              post_warmup_sampler_diagnostics_draws,
+              posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
+              along="chain"
+            )
           }
         } else {
             warmup_draws <- NULL
             warmup_sampler_diagnostics_draws <- NULL
             if (length(variables) > 0) {
-              post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
-                                                        posterior::as_draws_array(draws[, variables]),
-                                                        along="chain")
+              post_warmup_draws <- posterior::bind_draws(
+                post_warmup_draws,
+                posterior::as_draws_array(draws[, variables]),
+                along="chain"
+              )
             }
             if (length(sampler_diagnostics) > 0 && metadata$algorithm != "fixed_param") {
-              post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                              posterior::as_draws_array(draws[, sampler_diagnostics]),
-                                                                              along="chain")
+              post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
+                post_warmup_sampler_diagnostics_draws,
+                posterior::as_draws_array(draws[, sampler_diagnostics]),
+                along="chain"
+              )
             }
         }
       } else if (metadata$method == "variational") {
-        # ignore first line as its just the mean and lp__ as its always 0
-        variational_draws <- posterior::as_draws_matrix(draws[-1, colnames(draws) != "lp__", drop=FALSE])
-        variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__", lp_approx__ = "log_g__")
+        # ignore first line as it's just the mean and lp__ as it's always 0
+        variational_draws <- posterior::as_draws_matrix(
+          draws[-1, colnames(draws) != "lp__", drop=FALSE]
+        )
+        variational_draws <- posterior::rename_variables(
+          variational_draws,
+          lp__ = "log_p__",
+          lp_approx__ = "log_g__"
+        )
       } else if (metadata$method == "optimize") {
         point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])
       }
