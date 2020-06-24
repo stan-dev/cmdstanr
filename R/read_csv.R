@@ -129,7 +129,7 @@ read_cmdstan_csv <- function(files,
       csv_file_info <- read_csv_metadata(output_file)
       check <- check_csv_metadata_matches(metadata, csv_file_info)
       if (!is.null(check$error)) {
-        stop(check$error)
+        stop(check$error, call. = FALSE)
       }
       not_matching <- c(not_matching, check$not_matching)
       metadata$id <- c(metadata$id, csv_file_info$id)
@@ -152,7 +152,7 @@ read_cmdstan_csv <- function(files,
         res <- matching_variables(variables, metadata$model_params)
         if (length(res$not_found)) {
           stop("Can't find the following variable(s) in the sampling output: ",
-               paste(res$not_found, collapse = ", "))
+               paste(res$not_found, collapse = ", "), call. = FALSE)
         }
         variables <- res$matching
       }
@@ -172,7 +172,7 @@ read_cmdstan_csv <- function(files,
         }
         if (length(not_found)) {
           stop("Can't find the following sampler diagnostic(s) in the sampling output: ",
-               paste(not_found, collapse = ", "))
+               paste(not_found, collapse = ", "), call. = FALSE)
         }
         sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
       }
@@ -202,7 +202,7 @@ read_cmdstan_csv <- function(files,
                   n_max = all_draws*2)
     )
     if (ncol(draws) == 0) {
-      stop("The supplied csv file does not contain any sampling data!")
+      stop("The supplied csv file does not contain any data!", call. = FALSE)
     }
     draws <- draws[!is.na(draws$lp__), ]
     if (nrow(draws) > 0) {
@@ -250,7 +250,8 @@ read_cmdstan_csv <- function(files,
   repaired_model_params <- repair_variable_names(variables)
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
-    warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
+    warning("The supplied csv files do not match in the following arguments: ",
+            paste(not_matching_list, collapse = ", "), call. = FALSE)
   }
   metadata$model_params <- repair_variable_names(metadata$model_params)
   metadata$inv_metric <- NULL
@@ -412,10 +413,10 @@ read_csv_metadata <- function(csv_file) {
   }
   close(con)
   if (is.null(csv_file_info$method)) {
-    stop("Supplied CSV file is corrupt!")
+    stop("Supplied CSV file is corrupt!", call. = FALSE)
   }
   if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
-    stop("The supplied csv file does not contain any variable names or data!")
+    stop("The supplied csv file does not contain any variable names or data!", call. = FALSE)
   }
   if (inv_metric_rows > 0) {
     rows <- inv_metric_rows
