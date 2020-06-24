@@ -247,21 +247,23 @@ read_cmdstan_csv <- function(files,
       }
     }
   }
-  repaired_model_params <- repair_variable_names(variables)
+
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("The supplied csv files do not match in the following arguments: ",
             paste(not_matching_list, collapse = ", "), call. = FALSE)
   }
-  metadata$model_params <- repair_variable_names(metadata$model_params)
+
   metadata$inv_metric <- NULL
   metadata$lines_to_skip <- NULL
+  metadata$model_params <- repair_variable_names(metadata$model_params)
+  repaired_variables <- repair_variable_names(variables)
   if (metadata$method == "sample") {
     if (!is.null(warmup_draws)) {
-      posterior::variables(warmup_draws) <- repaired_model_params
+      posterior::variables(warmup_draws) <- repaired_variables
     }
     if (!is.null(post_warmup_draws)) {
-      posterior::variables(post_warmup_draws) <- repaired_model_params
+      posterior::variables(post_warmup_draws) <- repaired_variables
     }
     list(
       metadata = metadata,
@@ -273,9 +275,9 @@ read_cmdstan_csv <- function(files,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
     )
   } else if (metadata$method == "variational") {
-    metadata$model_params <- metadata$model_params[-1]
+    metadata$model_params <- metadata$model_params[metadata$model_params != "lp__"]
     metadata$model_params <- gsub("log_p__", "lp__", metadata$model_params)
-    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)    
+    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)
     if (!is.null(variational_draws)) {
       posterior::variables(variational_draws) <- metadata$model_params
     }
@@ -285,14 +287,14 @@ read_cmdstan_csv <- function(files,
     )
   } else if (metadata$method == "optimize") {
     if (!is.null(point_estimates)) {
-      posterior::variables(point_estimates) <- repaired_model_params
+      posterior::variables(point_estimates) <- repaired_variables
     }
     list(
       metadata = metadata,
       point_estimates = point_estimates
     )
   }
-  
+
 }
 
 #' Read CmdStan CSV files from sampling into \R
