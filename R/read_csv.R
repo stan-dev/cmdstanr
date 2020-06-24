@@ -84,6 +84,7 @@ read_sample_csv <- function(files,
   warmup_sampler_diagnostics_draws <- NULL
   post_warmup_draws <- NULL
   post_warmup_sampler_diagnostics_draws <- NULL
+  generated_quantities <- NULL
   inv_metric <- list()
   step_size <- list()
   col_types <- NULL
@@ -151,23 +152,29 @@ read_sample_csv <- function(files,
         }
         sampler_diagnostics <- sampling_info$sampler_diagnostics[selected_sampler_diag]
       }
-      col_select <- "lp__"
-      col_select <- c(col_select, variables[variables!="lp__"])
-      col_select <- c(col_select, sampler_diagnostics)
+      if(sampling_info$method == "generate_quantities") {
+        col_select <- c(col_select, variables)
+      } else {
+        col_select <- "lp__"
+        col_select <- c(col_select, variables[variables!="lp__"])
+        col_select <- c(col_select, sampler_diagnostics)
+      }
     }
     num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
     num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
     all_draws <- num_warmup_draws + num_post_warmup_draws
     if(sampling_info$method == "generate_quantities") {
-      print(sampling_info$lines_to_skip)
-      print(all_draws*2)
+      col_types = list()
+      # set the first arg as double
+      # to silence the type detection info
+      col_types[[col_select[1]]] = "d"
       suppressWarnings(      
         draws <- vroom::vroom(output_file,
                     comment = "#",
                     delim = ',',
+                    col_select = col_select,
+                    col_types = col_types,
                     trim_ws = TRUE,
-                    # col_select = col_select,
-                    # col_types = c("lp__" = "d"),
                     altrep = FALSE,
                     progress = FALSE,
                     skip = sampling_info$lines_to_skip)
@@ -258,17 +265,24 @@ read_sample_csv <- function(files,
           }
         }
       } else if (sampling_info$method == "generate_quantities") {
-
+          generated_quantities <- posterior::bind_draws(generated_quantities,
+                                                        posterior::as_draws_array(draws),#[, variables]),
+                                                        along="chain")          
       }
       
     }
   }
-  if (sampling_info$method == "generate_quantities") {
+  repaired_model_params <- repair_variable_names(variables)
+  sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
+  if (sampling_info$method == "generate_quantities") {    
+    if (!is.null(generated_quantities)) {
+      posterior::variables(generated_quantities) <- repaired_model_params
+    }
     list(
-      generated_quantities = draws
+      info = sampling_info,
+      generated_quantities = generated_quantities
     )
   } else if(sampling_info$method == "sample"){
-    repaired_model_params <- repair_variable_names(variables)
     if (!is.null(warmup_draws)) {
       posterior::variables(warmup_draws) <- repaired_model_params
     }
@@ -279,7 +293,6 @@ read_sample_csv <- function(files,
       not_matching_list <- paste(unique(not_matching), collapse = ", ")
       warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
     }
-    sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
     sampling_info$inv_metric <- NULL
     list(
       sampling_info = sampling_info,
@@ -290,8 +303,7 @@ read_sample_csv <- function(files,
       warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
     )
-  }
-  
+  }  
 }
 
 # FIXME: also parse the csv header
