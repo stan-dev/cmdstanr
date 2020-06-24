@@ -53,6 +53,22 @@ home:
   - text: Ask a question
     href: https://discourse.mc-stan.org/
 
+toc:
+  depth: 4
+
+articles:
+  - title: "Getting started"
+    desc: >
+      Installing CmdStan, fitting models, and accessing results.
+    contents:
+      - cmdstanr
+  - title: "More details"
+    desc: >
+      More information about compilation, passing in data,
+      and how CmdStan ouput is written to CSV and read back into R.
+    contents:
+      - cmdstanr-internals
+
 reference:
   - title: "Package description"
     desc: >
