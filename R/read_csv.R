@@ -1,49 +1,57 @@
 #' Read CmdStan CSV files into \R
 #'
-#' `read_cmdstan_csv()` is used internally by CmdStanR to read CmdStan's CSV
-#' files into \R after MCMC. It can also be used by CmdStan users as a more
-#' flexible and efficient alternative to `rstan::read_stan_csv()`.
+#' `read_cmdstan_csv()` is used internally by CmdStanR to read CmdStan's output
+#' CSV files into \R. It can also be used by CmdStan users as a more flexible
+#' and efficient alternative to `rstan::read_stan_csv()`.
 #'
 #' @export
 #' @param files A character vector of paths to the CSV files to read.
-#' @param variables Optionally, a character vector naming the variables (parameters
-#'   and generated quantities) to read in.
-#'   * If `NULL` (the default) then the draws of all variables are included.
+#' @param variables Optionally, a character vector naming the variables
+#'   (parameters, transformed parameters, and generated quantities) to read in.
+#'   * If `NULL` (the default) then all variables are included.
 #'   * If an empty string (`variables=""`) then none are included.
 #'   * For non-scalar variables all elements or specific elements can be selected:
 #'     - `variables = "theta"` selects all elements of `theta`;
 #'     - `variables = c("theta[1]", "theta[3]")` selects only the 1st and 3rd elements.
 #' @param sampler_diagnostics Works the same way as `variables` but for sampler
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
+#'   Ignored if the model was not fit using MCMC.
 #'
 #' @return A named list with the following components:
-#' * `metadata`: A list of the meta information of the fitting run that produced the
-#' input CSV file(s).
-#' Other components differ on the method that produced the input CSV file(s).
-#' 
-#' For CSV input file(s) produced by sampling the returned list also includes
-#' the following components:
 #'
-#' * `inv_metric`: A list (one element per chain) of inverse mass matrices
-#' or their diagonals, depending on the type of metric used. 
-#' * `step_size`: A list (one element per chain) of the step sizes used. 
-#' * `warmup_draws`:  If `save_warmup` was `TRUE` then the warmup samples (iter
-#' x chain x variable array).
-#' * `post_warmup_draws`: The post-warmup draws (iter x chain x variable array).
-#' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` then warmup
-#' draws of the sampler diagnostic variables (iter x chain x variable array).
-#' * `sampler_diagnostics`: The post-warmup draws of the sampler diagnostic
-#' variables (iter x chain x variable array).
-#' 
-#' For CSV input file(s) produced by optimization the returned list also
-#' includes the following components:
+#' * `metadata`: A list of the meta information from the run that produced the
+#' CSV file(s). See **Examples** below.
 #'
-#' * `point_estimates`: Point estimates for the model parameters.
+#' The other components in the returned list depend on the method that produced
+#' the CSV file(s).
 #'
-#' For CSV input file(s) produced by variational inference the returned list
+#' For [sampling][model-method-sample] the returned list
 #' also includes the following components:
 #'
+#' * `inv_metric`: A list (one element per chain) of inverse mass matrices
+#' or their diagonals, depending on the type of metric used.
+#' * `step_size`: A list (one element per chain) of the step sizes used.
+#' * `warmup_draws`:  If `save_warmup` was `TRUE` when fitting the model then a
+#' [`draws_array`][posterior::draws_array] of warmup draws.
+#' * `post_warmup_draws`: A [`draws_array`][posterior::draws_array] of
+#' post-warmup draws.
+#' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` when fitting the
+#' model then a [`draws_array`][posterior::draws_array] of warmup draws of the
+#' sampler diagnostic variables.
+#' * `sampler_diagnostics`: A [`draws_array`][posterior::draws_array] of
+#' post-warmup draws of the sampler diagnostic variables.
+#'
+#' For [optimization][model-method-optimize] the returned list also includes the
+#' following components:
+#'
 #' * `point_estimates`: Point estimates for the model parameters.
+#'
+#' For [variational inference][model-method-variational] the returned list also
+#' includes the following components:
+#'
+#' * `draws`: A [`draws_matrix`][posterior::draws_matrix] of draws from the
+#' approximate posterior distribution.
+#'
 #' @examples
 #' \dontrun{
 #' stan_program <- tempfile(fileext=".stan")

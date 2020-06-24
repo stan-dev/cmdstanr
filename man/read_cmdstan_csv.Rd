@@ -9,10 +9,10 @@ read_cmdstan_csv(files, variables = NULL, sampler_diagnostics = NULL)
 \arguments{
 \item{files}{A character vector of paths to the CSV files to read.}
 
-\item{variables}{Optionally, a character vector naming the variables (parameters
-and generated quantities) to read in.
+\item{variables}{Optionally, a character vector naming the variables
+(parameters, transformed parameters, and generated quantities) to read in.
 \itemize{
-\item If \code{NULL} (the default) then the draws of all variables are included.
+\item If \code{NULL} (the default) then all variables are included.
 \item If an empty string (\code{variables=""}) then none are included.
 \item For non-scalar variables all elements or specific elements can be selected:
 \itemize{
@@ -22,47 +22,53 @@ and generated quantities) to read in.
 }}
 
 \item{sampler_diagnostics}{Works the same way as \code{variables} but for sampler
-diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).}
+diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).
+Ignored if the model was not fit using MCMC.}
 }
 \value{
 A named list with the following components:
 \itemize{
-\item \code{metadata}: A list of the meta information of the fitting run that produced the
-input CSV file(s).
-Other components differ on the method that produced the input CSV file(s).
+\item \code{metadata}: A list of the meta information from the run that produced the
+CSV file(s). See \strong{Examples} below.
 }
 
-For CSV input file(s) produced by sampling the returned list also includes
-the following components:
+The other components in the returned list depend on the method that produced
+the CSV file(s).
+
+For \link[=model-method-sample]{sampling} the returned list
+also includes the following components:
 \itemize{
 \item \code{inv_metric}: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.
 \item \code{step_size}: A list (one element per chain) of the step sizes used.
-\item \code{warmup_draws}:  If \code{save_warmup} was \code{TRUE} then the warmup samples (iter
-x chain x variable array).
-\item \code{post_warmup_draws}: The post-warmup draws (iter x chain x variable array).
-\item \code{warmup_sampler_diagnostics}:  If \code{save_warmup} was \code{TRUE} then warmup
-draws of the sampler diagnostic variables (iter x chain x variable array).
-\item \code{sampler_diagnostics}: The post-warmup draws of the sampler diagnostic
-variables (iter x chain x variable array).
+\item \code{warmup_draws}:  If \code{save_warmup} was \code{TRUE} when fitting the model then a
+\code{\link[posterior:draws_array]{draws_array}} of warmup draws.
+\item \code{post_warmup_draws}: A \code{\link[posterior:draws_array]{draws_array}} of
+post-warmup draws.
+\item \code{warmup_sampler_diagnostics}:  If \code{save_warmup} was \code{TRUE} when fitting the
+model then a \code{\link[posterior:draws_array]{draws_array}} of warmup draws of the
+sampler diagnostic variables.
+\item \code{sampler_diagnostics}: A \code{\link[posterior:draws_array]{draws_array}} of
+post-warmup draws of the sampler diagnostic variables.
 }
 
-For CSV input file(s) produced by optimization the returned list also
+For \link[=model-method-optimize]{optimization} the returned list also includes the
+following components:
+\itemize{
+\item \code{point_estimates}: Point estimates for the model parameters.
+}
+
+For \link[=model-method-variational]{variational inference} the returned list also
 includes the following components:
 \itemize{
-\item \code{point_estimates}: Point estimates for the model parameters.
-}
-
-For CSV input file(s) produced by variational inference the returned list
-also includes the following components:
-\itemize{
-\item \code{point_estimates}: Point estimates for the model parameters.
+\item \code{draws}: A \code{\link[posterior:draws_matrix]{draws_matrix}} of draws from the
+approximate posterior distribution.
 }
 }
 \description{
-\code{read_cmdstan_csv()} is used internally by CmdStanR to read CmdStan's CSV
-files into \R after MCMC. It can also be used by CmdStan users as a more
-flexible and efficient alternative to \code{rstan::read_stan_csv()}.
+\code{read_cmdstan_csv()} is used internally by CmdStanR to read CmdStan's output
+CSV files into \R. It can also be used by CmdStan users as a more flexible
+and efficient alternative to \code{rstan::read_stan_csv()}.
 }
 \examples{
 \dontrun{
