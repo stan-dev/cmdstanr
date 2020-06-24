@@ -202,7 +202,6 @@ CmdStanRun <- R6::R6Class(
           if (self$args$save_latent_dynamics)
             self$latent_dynamics_files(include_failed = TRUE)
         )
-        message("Cleaning up CmdStanR temporary files")
         unlink(temp_files)
       }
     }
@@ -388,7 +387,7 @@ CmdStanProcs <- R6::R6Class(
         command = command,
         args = args,
         wd = wd,
-        echo_cmd = TRUE,
+        echo_cmd = FALSE,
         stdout = "|",
         stderr = "|"
       )
