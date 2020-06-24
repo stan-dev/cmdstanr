@@ -121,8 +121,8 @@ read_cmdstan_csv <- function(files,
       if (!is.null(metadata$inv_metric)) {
         inv_metric[[metadata$id]] <- metadata$inv_metric
       }
-      if (!is.null(metadata$stepsize_adaptation)) {
-        step_size[[metadata$id]] <- metadata$stepsize_adaptation
+      if (!is.null(metadata$step_size_adaptation)) {
+        step_size[[metadata$id]] <- metadata$step_size_adaptation
       }
       id <- metadata$id
     } else {
@@ -134,12 +134,13 @@ read_cmdstan_csv <- function(files,
       not_matching <- c(not_matching, check$not_matching)
       metadata$id <- c(metadata$id, csv_file_info$id)
       metadata$seed <- c(metadata$seed, csv_file_info$seed)
+      metadata$step_size_adaptation <- c(metadata$step_size_adaptation, csv_file_info$step_size_adaptation)
 
       if (!is.null(csv_file_info$inv_metric)) {
         inv_metric[[csv_file_info$id]] <- csv_file_info$inv_metric
       }
-      if (!is.null(csv_file_info$stepsize_adaptation)) {
-        step_size[[csv_file_info$id]] <- csv_file_info$stepsize_adaptation
+      if (!is.null(csv_file_info$step_size_adaptation)) {
+        step_size[[csv_file_info$id]] <- csv_file_info$step_size_adaptation
       }
       id <- csv_file_info$id
     }
@@ -456,6 +457,7 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$adapt_delta <- csv_file_info$delta
   csv_file_info$max_treedepth <- csv_file_info$max_depth
   csv_file_info$step_size <- csv_file_info$stepsize
+  csv_file_info$step_size_adaptation <- csv_file_info$stepsize_adaptation
   csv_file_info$iter_warmup <- csv_file_info$num_warmup
   csv_file_info$iter_sampling <- csv_file_info$num_samples
   csv_file_info$threads_per_chain <- csv_file_info$num_threads
@@ -464,6 +466,7 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$delta <- NULL
   csv_file_info$max_depth <- NULL
   csv_file_info$stepsize <- NULL
+  csv_file_info$stepsize_adaptation <- NULL
   csv_file_info$num_warmup <- NULL
   csv_file_info$num_samples <- NULL
   csv_file_info$file <- NULL
