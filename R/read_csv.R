@@ -17,10 +17,16 @@
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #'
 #' @return A named list with the following components:
-#' * `metadata`: A list of the arguments used to run the sampler.
+#' * `metadata`: A list of the meta information of the fitting run that produced the
+#' input CSV file(s).
+#' Other components differ on the method that produced the input CSV file(s).
+#' 
+#' For CSV input file(s) produced by sampling the returned list also includes
+#' the following components:
+#'
 #' * `inv_metric`: A list (one element per chain) of inverse mass matrices
-#' or their diagonals, depending on the type of metric used.
-#' * `step_size`: A list (one element per chain) of the step sizes used.
+#' or their diagonals, depending on the type of metric used. 
+#' * `step_size`: A list (one element per chain) of the step sizes used. 
 #' * `warmup_draws`:  If `save_warmup` was `TRUE` then the warmup samples (iter
 #' x chain x variable array).
 #' * `post_warmup_draws`: The post-warmup draws (iter x chain x variable array).
@@ -28,7 +34,16 @@
 #' draws of the sampler diagnostic variables (iter x chain x variable array).
 #' * `sampler_diagnostics`: The post-warmup draws of the sampler diagnostic
 #' variables (iter x chain x variable array).
+#' 
+#' For CSV input file(s) produced by optimization the returned list also
+#' includes the following components:
 #'
+#' * `point_estimates`: Point estimates for the model parameters.
+#'
+#' For CSV input file(s) produced by variational inference the returned list
+#' also includes the following components:
+#'
+#' * `point_estimates`: Point estimates for the model parameters.
 #' @examples
 #' \dontrun{
 #' stan_program <- tempfile(fileext=".stan")
@@ -92,7 +107,7 @@ read_cmdstan_csv <- function(files,
   for (output_file in files) {
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
     if (is.null(metadata)) {
-      metadata <- read_sample_info_csv(output_file)
+      metadata <- read_csv_metadata(output_file)
       if (!is.null(metadata$inv_metric)) {
         inv_metric[[metadata$id]] <- metadata$inv_metric
       }
@@ -101,8 +116,8 @@ read_cmdstan_csv <- function(files,
       }
       id <- metadata$id
     } else {
-      csv_file_info <- read_sample_info_csv(output_file)
-      check <- check_sampling_csv_info_matches(metadata, csv_file_info)
+      csv_file_info <- read_csv_metadata(output_file)
+      check <- check_csv_metadata_matches(metadata, csv_file_info)
       if (!is.null(check$error)) {
         stop(check$error)
       }
@@ -243,7 +258,7 @@ read_cmdstan_csv <- function(files,
     )
   } else if (metadata$method == "variational") {
     list(
-      variational_info = metadata,
+      metadata = metadata,
       inv_metric = inv_metric,
       step_size = step_size,
       warmup_draws = warmup_draws,
@@ -253,7 +268,7 @@ read_cmdstan_csv <- function(files,
     )
   } else if (metadata$method == "optimize") {
     list(
-      optimization_info = metadata,
+      metadata = metadata,
       point_estimates = point_estimates
     )
   }
@@ -279,6 +294,8 @@ read_vb_csv <- function(files) {
 
 #'
 #' @export
+#' DEPRECATED: Please use read_cmdstan_csv instead.
+#'
 #' @param files A character vector of paths to the CSV files to read.
 #' @param variables Optionally, a character vector naming the variables (parameters
 #'   and generated quantities) to read in.
@@ -291,7 +308,7 @@ read_vb_csv <- function(files) {
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #'
 #' @return A named list with the following components:
-#' * `metadata`: A list of the arguments used to run the sampler.
+#' * `metadata`: A list of the meta information of the sampler run.
 #' * `inv_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
 #' * `step_size`: A list (one element per chain) of the step sizes used.
@@ -321,7 +338,7 @@ read_sample_csv <- function(files,
 #' @return A list containing all sampler settings and the inverse mass matrix
 #'   (or its diagonal depending on the metric).
 #'
-read_sample_info_csv <- function(csv_file) {
+read_csv_metadata <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
   adaptation_terminated <- FALSE
   param_names_read <- FALSE
@@ -454,9 +471,9 @@ read_sample_info_csv <- function(csv_file) {
 #' it returns, the sampling information matches.
 #'
 #' @noRd
-#' @param a,b Two lists returned by `read_sample_info_csv()` to compare.
+#' @param a,b Two lists returned by `read_csv_metadata()` to compare.
 #'
-check_sampling_csv_info_matches <- function(a, b) {
+check_csv_metadata_matches <- function(a, b) {
   if (a$model_name != b$model_name) {
     return(list(error = "Supplied CSV files were not generated with the same model!"))
   }
