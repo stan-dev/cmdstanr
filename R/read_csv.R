@@ -286,32 +286,13 @@ read_cmdstan_csv <- function(files,
   
 }
 
-#' Read CmdStan CSV files into \R
+#' Read CmdStan CSV files from sampling into \R
+#'
+#' Deprecated. Use [read_cmdstan_csv()] instead.
 #'
 #' @export
-#' @param files A character vector of paths to the CSV files to read.
-#' @param variables Optionally, a character vector naming the variables (parameters
-#'   and generated quantities) to read in.
-#'   * If `NULL` (the default) then the draws of all variables are included.
-#'   * If an empty string (`variables=""`) then none are included.
-#'   * For non-scalar variables all elements or specific elements can be selected:
-#'     - `variables = "theta"` selects all elements of `theta`;
-#'     - `variables = c("theta[1]", "theta[3]")` selects only the 1st and 3rd elements.
-#' @param sampler_diagnostics Works the same way as `variables` but for sampler
-#'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
-#'
-#' @return A named list with the following components:
-#' * `metadata`: A list of the meta information of the sampler run.
-#' * `inv_metric`: A list (one element per chain) of inverse mass matrices
-#' or their diagonals, depending on the type of metric used.
-#' * `step_size`: A list (one element per chain) of the step sizes used.
-#' * `warmup_draws`:  If `save_warmup` was `TRUE` then the warmup samples (iter
-#' x chain x variable array).
-#' * `post_warmup_draws`: The post-warmup draws (iter x chain x variable array).
-#' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` then warmup
-#' draws of the sampler diagnostic variables (iter x chain x variable array).
-#' * `sampler_diagnostics`: The post-warmup draws of the sampler diagnostic
-#' variables (iter x chain x variable array).
+#' @param files,variables,sampler_diagnostics Deprecated. Use
+#'   [read_cmdstan_csv()] instead.
 #'
 read_sample_csv <- function(files,
                             variables = NULL,
