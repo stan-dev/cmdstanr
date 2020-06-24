@@ -904,7 +904,7 @@ CmdStanVB <- R6::R6Class(
   private = list(
     read_csv_ = function() {
       vb_output <- read_cmdstan_csv(self$output_files())
-      private$draws_ <- vb_output[["optimization_result"]]
+      private$draws_ <- vb_output$draws
       invisible(self)
     }
   )

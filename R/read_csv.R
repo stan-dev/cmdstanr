@@ -99,6 +99,8 @@ read_cmdstan_csv <- function(files,
   warmup_sampler_diagnostics_draws <- NULL
   post_warmup_draws <- NULL
   post_warmup_sampler_diagnostics_draws <- NULL
+  variational_draws <- NULL
+  point_estimates <- NULL
   inv_metric <- list()
   step_size <- list()
   col_types <- NULL
@@ -230,20 +232,14 @@ read_cmdstan_csv <- function(files,
         }
       } else if (metadata$method == "variational") {
         # ignore first line as its just the mean and lp__ as its always 0
-        draws <- posterior::as_draws_matrix(draws[-1, colnames(draws) != "lp__", drop=FALSE])
-        draws <- posterior::rename_variables(draws, lp__ = "log_p__", lp_approx__ = "log_g__")
+        variational_draws <- posterior::as_draws_matrix(draws[-1, colnames(draws) != "lp__", drop=FALSE])
+        variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__", lp_approx__ = "log_g__")
       } else if (metadata$method == "optimize") {
         point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])
       }
     }
   }
   repaired_model_params <- repair_variable_names(variables)
-  if (!is.null(warmup_draws)) {
-    posterior::variables(warmup_draws) <- repaired_model_params
-  }
-  if (!is.null(post_warmup_draws)) {
-    posterior::variables(post_warmup_draws) <- repaired_model_params
-  }
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
@@ -252,6 +248,12 @@ read_cmdstan_csv <- function(files,
   metadata$inv_metric <- NULL
   metadata$lines_to_skip <- NULL
   if (metadata$method == "sample") {
+    if (!is.null(warmup_draws)) {
+      posterior::variables(warmup_draws) <- repaired_model_params
+    }
+    if (!is.null(post_warmup_draws)) {
+      posterior::variables(post_warmup_draws) <- repaired_model_params
+    }
     list(
       metadata = metadata,
       inv_metric = inv_metric,
@@ -264,12 +266,18 @@ read_cmdstan_csv <- function(files,
   } else if (metadata$method == "variational") {
     metadata$model_params <- metadata$model_params[-1]
     metadata$model_params <- gsub("log_p__", "lp__", metadata$model_params)
-    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)
+    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)    
+    if (!is.null(variational_draws)) {
+      posterior::variables(variational_draws) <- metadata$model_params
+    }
     list(
       metadata = metadata,
-      draws = draws
+      draws = variational_draws
     )
   } else if (metadata$method == "optimize") {
+    if (!is.null(point_estimates)) {
+      posterior::variables(point_estimates) <- repaired_model_params
+    }
     list(
       metadata = metadata,
       point_estimates = point_estimates
