@@ -174,6 +174,8 @@ read_cmdstan_csv <- function(files,
       num_warmup_draws <- ceiling(metadata$iter_warmup/metadata$thin)
       num_post_warmup_draws <- ceiling(metadata$iter_sampling/metadata$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
+    } else if (metadata$method == "variational") {
+      all_draws <- metadata$output_samples
     } else if (metadata$method == "optimize") {
       all_draws <- 1
     }
@@ -227,7 +229,9 @@ read_cmdstan_csv <- function(files,
             }
         }
       } else if (metadata$method == "variational") {
-        
+        # ignore first line as its just the mean and lp__ as its always 0
+        draws <- posterior::as_draws_matrix(draws[-1, colnames(draws) != "lp__", drop=FALSE])
+        draws <- posterior::rename_variables(draws, lp__ = "log_p__", lp_approx__ = "log_g__")
       } else if (metadata$method == "optimize") {
         point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])
       }
@@ -246,6 +250,7 @@ read_cmdstan_csv <- function(files,
   }
   metadata$model_params <- repair_variable_names(metadata$model_params)
   metadata$inv_metric <- NULL
+  metadata$lines_to_skip <- NULL
   if (metadata$method == "sample") {
     list(
       metadata = metadata,
@@ -257,14 +262,12 @@ read_cmdstan_csv <- function(files,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
     )
   } else if (metadata$method == "variational") {
+    metadata$model_params <- metadata$model_params[-1]
+    metadata$model_params <- gsub("log_p__", "lp__", metadata$model_params)
+    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)
     list(
       metadata = metadata,
-      inv_metric = inv_metric,
-      step_size = step_size,
-      warmup_draws = warmup_draws,
-      post_warmup_draws = post_warmup_draws,
-      warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
-      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
+      draws = draws
     )
   } else if (metadata$method == "optimize") {
     list(
@@ -273,23 +276,6 @@ read_cmdstan_csv <- function(files,
     )
   }
   
-}
-
-# FIXME: also parse the csv header
-read_vb_csv <- function(files) {
-  stopifnot(length(files) == 1)
-  csv_no_comments <- utils::read.csv(
-    files,
-    comment.char = "#",
-    colClasses = "numeric"
-  )
-  # drop first row since according to CmdStan manual it's just the mean
-  mat <- as.matrix(csv_no_comments)[-1,, drop=FALSE]
-  colnames(mat) <- repair_variable_names(colnames(mat))
-  mat <- mat[, colnames(mat) != "lp__", drop=FALSE]
-  draws <- posterior::as_draws_matrix(mat)
-  draws <- posterior::rename_variables(draws, lp__ = "log_p__", lp_approx__ = "log_g__")
-  list(draws = draws)
 }
 
 #' Read CmdStan CSV files into \R
@@ -358,7 +344,7 @@ read_csv_metadata <- function(csv_file) {
         csv_file_info[["model_params"]] <- c()
         for(x in all_names) {
           if (csv_file_info$algorithm != "fixed_param") {
-            if (endsWith(x, "__") && x != "lp__") {
+            if (endsWith(x, "__") && !(x %in% c("lp__", "log_p__", "log_g__"))) {
               csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
             } else {
               csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)

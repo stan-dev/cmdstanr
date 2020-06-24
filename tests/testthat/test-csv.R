@@ -3,6 +3,10 @@ context("read-sample-csv")
 if (not_on_cran()) {
   set_cmdstan_path()
   fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize")
+  fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational")
+  fit_logistic_optimize <- testing_fit("logistic", method = "optimize")
+  fit_logistic_variational <- testing_fit("logistic", method = "variational")
+
   fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
                           seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
   fit_bernoulli_dense_e_no_samples <- testing_fit("bernoulli", method = "sample",
@@ -370,4 +374,34 @@ test_that("read_cmdstan_csv() reads adaptation step size correctly", {
   csv_out <- read_cmdstan_csv(csv_files)
   expect_equal(csv_out$step_size[[1]], 0.11757)
   expect_equal(csv_out$step_size[[2]], 0.232778)
+})
+
+test_that("read_cmdstan_csv() works for optimize", {
+  skip_on_cran()
+
+  csv_output_1 <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
+  csv_output_2 <- read_cmdstan_csv(fit_logistic_optimize$output_files())
+  expect_equal(dim(csv_output_1$point_estimates), c(1, 2))
+  expect_equal(dim(csv_output_2$point_estimates), c(1, 5))
+
+  csv_file <- test_path("resources", "csv", "bernoulli-1-optimize.csv")
+  csv_output_3 <- read_cmdstan_csv(csv_file)
+  expect_equal(as.numeric(csv_output_3$point_estimates[1,"lp__"]), -12.2173)
+  expect_equal(as.numeric(csv_output_3$point_estimates[1,"theta"]), 0.300001)
+})
+
+
+test_that("read_cmdstan_csv() works for variational", {
+  skip_on_cran()
+
+  csv_output_1 <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
+  csv_output_2 <- read_cmdstan_csv(fit_logistic_variational$output_files())
+  expect_equal(dim(csv_output_1$draws), c(1000, 3))
+  expect_equal(dim(csv_output_2$draws), c(1000, 6))
+
+  csv_file <- test_path("resources", "csv", "bernoulli-1-variational.csv")
+  csv_output_3 <- read_cmdstan_csv(csv_file)
+  expect_equal(as.numeric(csv_output_3$draws[1,"theta"]), 0.230751)
+  expect_equal(dim(csv_output_3$draws), c(50, 3))
+  expect_equal(csv_output_3$metadata$model_params, c("lp__", "lp_approx__", "theta"))
 })
