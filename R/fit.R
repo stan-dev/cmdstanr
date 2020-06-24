@@ -40,7 +40,7 @@ CmdStanFit <- R6::R6Class(
       as.numeric(lp__)
     },
 
-    sampling_info = function() {
+    metadata = function() {
       if (is.null(private$metadata_)) {
         private$read_csv_()
       }
@@ -132,7 +132,7 @@ CmdStanFit <- R6::R6Class(
   ),
   private = list(
     draws_ = NULL,
-    sampling_info_ = NULL
+    metadata_ = NULL
   )
 )
 

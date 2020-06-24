@@ -257,7 +257,7 @@ NULL
 #' @export
 #' @return The value of the environment variable `STAN_NUM_THREADS`.
 num_threads <- function() {
-  warning("'num_threads()' is deprecated. Please use the 'sampling_info()' method of the fit object to obtain the number of threads used.")
+  warning("'num_threads()' is deprecated. Please use the 'metadata()' method of the fit object to obtain the number of threads used.")
   as.integer(Sys.getenv("STAN_NUM_THREADS"))
 }
 
