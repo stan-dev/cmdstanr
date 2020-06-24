@@ -711,11 +711,10 @@ CmdStanMCMC <- R6::R6Class(
     }
   ),
   private = list(
+    # also inherits draws_ and metadata_ from CmdStanFit
     sampler_diagnostics_ = NULL,
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
-    draws_ = NULL,
-    metadata_ = NULL,
     inv_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
       variables_to_read <-
@@ -843,6 +842,7 @@ CmdStanMLE <- R6::R6Class(
     }
   ),
   private = list(
+    # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function() {
       optim_output <- read_cmdstan_csv(self$output_files())
       private$draws_ <- optim_output$point_estimates
@@ -904,6 +904,7 @@ CmdStanVB <- R6::R6Class(
     }
   ),
   private = list(
+    # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function() {
       vb_output <- read_cmdstan_csv(self$output_files())
       private$draws_ <- vb_output$draws
