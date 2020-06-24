@@ -844,7 +844,9 @@ CmdStanMLE <- R6::R6Class(
   ),
   private = list(
     read_csv_ = function() {
-      private$draws_ <- read_cmdstan_csv(self$output_files())[["point_estimates"]]
+      optim_output <- read_cmdstan_csv(self$output_files())
+      private$draws_ <- optim_output$point_estimates
+      private$metadata_ <- optim_output$metadata
       invisible(self)
     }
   )
@@ -905,6 +907,7 @@ CmdStanVB <- R6::R6Class(
     read_csv_ = function() {
       vb_output <- read_cmdstan_csv(self$output_files())
       private$draws_ <- vb_output$draws
+      private$metadata_ <- vb_output$metadata
       invisible(self)
     }
   )
