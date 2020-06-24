@@ -311,6 +311,23 @@ these thinks to their documentation pages:
 * [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
 * [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
 
+
+## Saving fitted model objects
+
+In order to save a fitted model object to disk and ensure that all of the
+contents are available when reading the object back into R, we recommend using the
+[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+method provided by CmdStanR. The reason for this is discussed in detail in the vignette
+[_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html), 
+so here we just demonstrate how to use the method:
+
+```{r save_object, eval=FALSE}
+fit$save_object(file = "fit.RDS")
+
+# can be read back in using readRDS
+fit2 <- readRDS("fit.RDS")
+```
+
 ## Comparison with RStan
 
 The RStan interface ([**rstan**](https://mc-stan.org/rstan) package) is an

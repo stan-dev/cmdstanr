@@ -2,8 +2,9 @@ pandoc: 2.7.3
 pkgdown: 1.5.1
 pkgdown_sha: ~
 articles:
+  cmdstanr-internals: cmdstanr-internals.html
   cmdstanr: cmdstanr.html
-last_built: 2020-06-21T03:08Z
+last_built: 2020-06-24T17:23Z
 urls:
   reference: https://mc-stan.org/cmdstanr/reference
   article: https://mc-stan.org/cmdstanr/articles
