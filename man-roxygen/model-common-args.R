@@ -33,11 +33,12 @@
 #'   `NULL` (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
 #'   posterior draws and diagnostics) available in \R via methods of the fitted
 #'   model objects. The behavior of `output_dir` is as follows:
-#'     - If `NULL` (the default) then the CSV files are written to a temporary
+#'     - If `NULL` (the default), then the CSV files are written to a temporary
 #'       directory and only saved permanently if the user calls one of the
 #'       `$save_*` methods of the fitted model object (e.g.,
-#'       [`$save_output_files()`][fit-method-save_output_files]).
-#'     - If a path then the files are created in `output_dir` with names
+#'       [`$save_output_files()`][fit-method-save_output_files]). These temporary
+#'       files are removed when the fitted model object is garbage collected.
+#'     - If a path, then the files are created in `output_dir` with names
 #'       corresponding the defaults used by `$save_output_files()` (and similar
 #'       methods like `$save_latent_dynamics_files()`).
 #'

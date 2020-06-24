@@ -29,6 +29,8 @@ model block of the Stan program. \cr
 \tab Run and print CmdStan's \code{bin/stansummary}. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}}
 \tab Run and print CmdStan's \code{bin/diagnose}. \cr
+\code{\link[=fit-method-save_object]{$save_object()}}
+\tab Save fitted model object to a file. \cr
 \code{\link[=fit-method-save_output_files]{$save_output_files()}}
 \tab Save output CSV files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{$save_data_file()}}

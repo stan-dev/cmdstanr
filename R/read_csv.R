@@ -17,7 +17,7 @@
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #'
 #' @return A named list with the following components:
-#' * `sampling_info`: A list of the arguments used to run the sampler.
+#' * `metadata`: A list of the arguments used to run the sampler.
 #' * `inv_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
 #' * `step_size`: A list (one element per chain) of the step sizes used.
@@ -79,7 +79,7 @@
 read_cmdstan_csv <- function(files,
                             variables = NULL,
                             sampler_diagnostics = NULL) {
-  sampling_info <- NULL
+  metadata <- NULL
   warmup_draws <- NULL
   warmup_sampler_diagnostics_draws <- NULL
   post_warmup_draws <- NULL
@@ -91,24 +91,24 @@ read_cmdstan_csv <- function(files,
   not_matching <- c()
   for (output_file in files) {
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
-    if (is.null(sampling_info)) {
-      sampling_info <- read_sample_info_csv(output_file)
-      if (!is.null(sampling_info$inv_metric)) {
-        inv_metric[[sampling_info$id]] <- sampling_info$inv_metric
+    if (is.null(metadata)) {
+      metadata <- read_sample_info_csv(output_file)
+      if (!is.null(metadata$inv_metric)) {
+        inv_metric[[metadata$id]] <- metadata$inv_metric
       }
-      if (!is.null(sampling_info$stepsize_adaptation)) {
-        step_size[[sampling_info$id]] <- sampling_info$stepsize_adaptation
+      if (!is.null(metadata$stepsize_adaptation)) {
+        step_size[[metadata$id]] <- metadata$stepsize_adaptation
       }
-      id <- sampling_info$id
+      id <- metadata$id
     } else {
       csv_file_info <- read_sample_info_csv(output_file)
-      check <- check_sampling_csv_info_matches(sampling_info, csv_file_info)
+      check <- check_sampling_csv_info_matches(metadata, csv_file_info)
       if (!is.null(check$error)) {
         stop(check$error)
       }
       not_matching <- c(not_matching, check$not_matching)
-      sampling_info$id <- c(sampling_info$id, csv_file_info$id)
-      sampling_info$seed <- c(sampling_info$seed, csv_file_info$seed)
+      metadata$id <- c(metadata$id, csv_file_info$id)
+      metadata$seed <- c(metadata$seed, csv_file_info$seed)
 
       if (!is.null(csv_file_info$inv_metric)) {
         inv_metric[[csv_file_info$id]] <- csv_file_info$inv_metric
@@ -120,11 +120,11 @@ read_cmdstan_csv <- function(files,
     }
     if (is.null(col_select)) {
       if (is.null(variables)) { # variables = NULL returns all
-        variables <- sampling_info$model_params
+        variables <- metadata$model_params
       } else if (!any(nzchar(variables))) { # if variables = "" returns none
         variables <- NULL
       } else { # filter using variables
-        res <- matching_variables(variables, sampling_info$model_params)
+        res <- matching_variables(variables, metadata$model_params)
         if (length(res$not_found)) {
           stop("Can't find the following variable(s) in the sampling output: ",
                paste(res$not_found, collapse = ", "))
@@ -132,14 +132,14 @@ read_cmdstan_csv <- function(files,
         variables <- res$matching
       }
       if (is.null(sampler_diagnostics)) {
-        sampler_diagnostics <- sampling_info$sampler_diagnostics
+        sampler_diagnostics <- metadata$sampler_diagnostics
       } else if (!any(nzchar(sampler_diagnostics))) { # if sampler_diagnostics = "" returns none
         sampler_diagnostics <- NULL
       } else {
-        selected_sampler_diag <- rep(FALSE, length(sampling_info$sampler_diagnostics))
+        selected_sampler_diag <- rep(FALSE, length(metadata$sampler_diagnostics))
         not_found <- NULL
         for (p in sampler_diagnostics) {
-          matches <- sampling_info$sampler_diagnostics == p | startsWith(sampling_info$sampler_diagnostics, paste0(p,"."))
+          matches <- metadata$sampler_diagnostics == p | startsWith(metadata$sampler_diagnostics, paste0(p,"."))
           if (!any(matches)) {
             not_found <- c(not_found, p)
           }
@@ -149,17 +149,17 @@ read_cmdstan_csv <- function(files,
           stop("Can't find the following sampler diagnostic(s) in the sampling output: ",
                paste(not_found, collapse = ", "))
         }
-        sampler_diagnostics <- sampling_info$sampler_diagnostics[selected_sampler_diag]
+        sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
       }
       col_select <- "lp__"
       col_select <- c(col_select, variables[variables!="lp__"])
       col_select <- c(col_select, sampler_diagnostics)
     }
-    if (sampling_info$method == "sample") {
-      num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
-      num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
+    if (metadata$method == "sample") {
+      num_warmup_draws <- ceiling(metadata$iter_warmup/metadata$thin)
+      num_post_warmup_draws <- ceiling(metadata$iter_sampling/metadata$thin)
       all_draws <- num_warmup_draws + num_post_warmup_draws
-    } else if (sampling_info$method == "optimize") {
+    } else if (metadata$method == "optimize") {
       all_draws <- 1
     }
     suppressWarnings(      
@@ -171,7 +171,7 @@ read_cmdstan_csv <- function(files,
                   col_types = c("lp__" = "d"),
                   altrep = FALSE,
                   progress = FALSE,
-                  skip = sampling_info$lines_to_skip,
+                  skip = metadata$lines_to_skip,
                   n_max = all_draws*2)
     )
     if (ncol(draws) == 0) {
@@ -179,8 +179,8 @@ read_cmdstan_csv <- function(files,
     }
     draws <- draws[!is.na(draws$lp__), ]
     if (nrow(draws) > 0) {
-      if (sampling_info$method == "sample") {
-        if (sampling_info$save_warmup == 1) {
+      if (metadata$method == "sample") {
+        if (metadata$save_warmup == 1) {
           if (length(variables) > 0) {
             warmup_draws <- posterior::bind_draws(warmup_draws,
                                                   posterior::as_draws_array(draws[1:num_warmup_draws, variables]),
@@ -205,15 +205,15 @@ read_cmdstan_csv <- function(files,
                                                         posterior::as_draws_array(draws[, variables]),
                                                         along="chain")
             }
-            if (length(sampler_diagnostics) > 0 && sampling_info$algorithm != "fixed_param") {
+            if (length(sampler_diagnostics) > 0 && metadata$algorithm != "fixed_param") {
               post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
                                                                               posterior::as_draws_array(draws[, sampler_diagnostics]),
                                                                               along="chain")
             }
         }
-      } else if (sampling_info$method == "variational") {
+      } else if (metadata$method == "variational") {
         
-      } else if (sampling_info$method == "optimize") {
+      } else if (metadata$method == "optimize") {
         point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])
       }
     }
@@ -229,11 +229,11 @@ read_cmdstan_csv <- function(files,
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
   }
-  sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
-  sampling_info$inv_metric <- NULL
-  if (sampling_info$method == "sample") {
+  metadata$model_params <- repair_variable_names(metadata$model_params)
+  metadata$inv_metric <- NULL
+  if (metadata$method == "sample") {
     list(
-      sampling_info = sampling_info,
+      metadata = metadata,
       inv_metric = inv_metric,
       step_size = step_size,
       warmup_draws = warmup_draws,
@@ -241,9 +241,9 @@ read_cmdstan_csv <- function(files,
       warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
     )
-  } else if (sampling_info$method == "variational") {
+  } else if (metadata$method == "variational") {
     list(
-      variational_info = sampling_info,
+      variational_info = metadata,
       inv_metric = inv_metric,
       step_size = step_size,
       warmup_draws = warmup_draws,
@@ -251,9 +251,9 @@ read_cmdstan_csv <- function(files,
       warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
     )
-  } else if (sampling_info$method == "optimize") {
+  } else if (metadata$method == "optimize") {
     list(
-      optimization_info = sampling_info,
+      optimization_info = metadata,
       point_estimates = point_estimates
     )
   }
@@ -291,7 +291,7 @@ read_vb_csv <- function(files) {
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #'
 #' @return A named list with the following components:
-#' * `sampling_info`: A list of the arguments used to run the sampler.
+#' * `metadata`: A list of the arguments used to run the sampler.
 #' * `inv_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
 #' * `step_size`: A list (one element per chain) of the step sizes used.
@@ -518,13 +518,17 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     all_remaining <- all[!(all %in% currently_read)]
     unread <- c()
     for (p in requested) {
-      if (any(all_remaining == p) || any(startsWith(all_remaining, paste0(p,".")))) {
+      if (any(all_remaining == p)) {
         unread <- c(unread, p)
+      }
+      is_unread_element <- startsWith(all_remaining, paste0(p,"["))
+      if (any(is_unread_element)) {
+        unread <- c(unread, all_remaining[is_unread_element])
       }
     }
   }
   if (length(unread)) {
-    unread
+    unique(unread)
   } else {
     ""
   }

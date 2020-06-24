@@ -303,7 +303,14 @@ test_that("read_cmdstan_csv() works with filtered variables", {
                fixed = TRUE)
 })
 
-test_that("read_cmdstan_csv() works with no samples", {
+test_that("read_sample_csv returned filtered variables in correct order", {
+  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta[1]"), sampler_diagnostics = "")
+  expect_equal(posterior::variables(csv_output_1$post_warmup_draws), c("lp__", "beta[1]"))
+  csv_output_2 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("beta[1]", "lp__"), sampler_diagnostics = "")
+  expect_equal(posterior::variables(csv_output_2$post_warmup_draws), c("beta[1]", "lp__"))
+})
+
+test_that("read_sample_csv() works with no samples", {
   skip_on_cran()
 
   csv_output_diag_e_0 <- read_cmdstan_csv(fit_bernoulli_diag_e_no_samples$output_files())
@@ -334,6 +341,19 @@ test_that("remaining_columns_to_read() works", {
   expect_equal(remaining_columns_to_read(NULL, NULL, c("a", "b", "c")), c("a", "b", "c"))
   expect_equal(remaining_columns_to_read(c("a", "b", "c"), c("a", "b", "c"), NULL), "")
   expect_equal(remaining_columns_to_read(c("a", "b", "c"), NULL, c("a", "b", "c")), c("a", "b", "c"))
+
+  # with vector and matrix variables
+  b_vec <- paste0("b[", 1:4, "]")
+  c_mat <- paste0("c[", c(1,2,1,2), ",", c(1,1,2,2), "]")
+  all_vars <- c("a", b_vec, c_mat)
+  expect_equal(
+    remaining_columns_to_read(c("a", "b[2]"), c("a", c_mat), all_vars),
+    "b[2]"
+  )
+  expect_equal(
+    remaining_columns_to_read(c("a", "b", "c"), c(paste0("b[", c(1,4), "]"), "c[1,2]"), all_vars),
+    c("a", "b[2]", "b[3]", "c[1,1]", "c[2,1]", "c[2,2]")
+  )
 })
 
 test_that("read_cmdstan_csv() reads adaptation step size correctly", {
