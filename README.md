@@ -11,8 +11,11 @@
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).
 
-To get started see the vignette 
-[_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html).
+If you are new to CmdStanR we recommend starting with these vignettes:
+
+* [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
+
+* [_How does CmdStanR work?_](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html)
 
 ### Goals
 
@@ -24,12 +27,12 @@ releases.
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
 
-* Flexible [BSD-3 license](https://opensource.org/licenses/BSD-3-Clause)
+* Flexible [BSD-3 license](https://opensource.org/licenses/BSD-3-Clause).
 
 
 ### Installation
 
-Currently you can install the pre-beta release of the **cmdstanr** R package with 
+Currently you can install the latest pre-beta release of the **cmdstanr** R package with 
 
 ```r
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
