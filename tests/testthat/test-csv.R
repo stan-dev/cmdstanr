@@ -111,8 +111,8 @@ test_that("read_cmdstan_csv() matches rstan::read_stan_csv() with save_warmup", 
   draws_array <- posterior::as_draws_array(draws_array)
   csv_output <- read_cmdstan_csv(csv_files)
 
-  warmup_iter <- csv_output$sampling_info$iter_warmup
-  num_iter <- csv_output$sampling_info$iter_sampling + csv_output$sampling_info$iter_warmup
+  warmup_iter <- csv_output$metadata$iter_warmup
+  num_iter <- csv_output$metadata$iter_sampling + csv_output$metadata$iter_warmup
 
   draws_array_post_warmup <- draws_array[(warmup_iter+1):num_iter,,]
   draws_array_warmup <- draws_array[1:warmup_iter,,]
@@ -214,11 +214,11 @@ test_that("read_cmdstan_csv() matches rstan::read_stan_csv() for csv file", {
   sampler_diagnostics <- readRDS(test_path("answers", "rstan-read-stan-csv-sampler-params.rds"))
   sampler_diagnostics <- posterior::as_draws_array(sampler_diagnostics[[1]])
   csv_output <- read_cmdstan_csv(csv_files)
-  num_warmup <- csv_output$sampling_info$iter_warmup/csv_output$sampling_info$thin
-  if(csv_output$sampling_info$save_warmup) {
-    num_iter <- csv_output$sampling_info$iter_sampling + csv_output$sampling_info$iter_warmup
+  num_warmup <- csv_output$metadata$iter_warmup/csv_output$metadata$thin
+  if(csv_output$metadata$save_warmup) {
+    num_iter <- csv_output$metadata$iter_sampling + csv_output$metadata$iter_warmup
   } else {
-    num_iter <- csv_output$sampling_info$iter_sampling
+    num_iter <- csv_output$metadata$iter_sampling
   }
 
   # match warmup sampler info
@@ -303,14 +303,14 @@ test_that("read_cmdstan_csv() works with filtered variables", {
                fixed = TRUE)
 })
 
-test_that("read_sample_csv returned filtered variables in correct order", {
-  csv_output_1 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta[1]"), sampler_diagnostics = "")
+test_that("read_cmdstan_csv returned filtered variables in correct order", {
+  csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = c("lp__", "beta[1]"), sampler_diagnostics = "")
   expect_equal(posterior::variables(csv_output_1$post_warmup_draws), c("lp__", "beta[1]"))
-  csv_output_2 <- read_sample_csv(fit_logistic_thin_1$output_files(), variables = c("beta[1]", "lp__"), sampler_diagnostics = "")
+  csv_output_2 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = c("beta[1]", "lp__"), sampler_diagnostics = "")
   expect_equal(posterior::variables(csv_output_2$post_warmup_draws), c("beta[1]", "lp__"))
 })
 
-test_that("read_sample_csv() works with no samples", {
+test_that("read_cmdstan_csv() works with no samples", {
   skip_on_cran()
 
   csv_output_diag_e_0 <- read_cmdstan_csv(fit_bernoulli_diag_e_no_samples$output_files())
@@ -325,8 +325,8 @@ test_that("read_cmdstan_csv() reads values up to adaptation", {
   csv_files <- test_path("resources", "csv", "bernoulli-3-diff_params.csv")
 
   csv_out <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_out$sampling_info$pi, 3.14)
-  expect_true(is.null(csv_out$sampling_info$pi_square))
+  expect_equal(csv_out$metadata$pi, 3.14)
+  expect_true(is.null(csv_out$metadata$pi_square))
 })
 
 test_that("remaining_columns_to_read() works", {

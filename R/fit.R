@@ -41,10 +41,10 @@ CmdStanFit <- R6::R6Class(
     },
 
     sampling_info = function() {
-      if (is.null(private$sampling_info_)) {
+      if (is.null(private$metadata_)) {
         private$read_csv_()
       }
-      private$sampling_info_
+      private$metadata_
     },
 
     summary = function(variables = NULL, ...) {
@@ -640,7 +640,7 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.")
       }
-      if (inc_warmup && !private$sampling_info_$save_warmup) {
+      if (inc_warmup && !private$metadata_$save_warmup) {
         stop("Warmup draws were requested from a fit object without them! ",
              "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
       }
@@ -648,16 +648,16 @@ CmdStanMCMC <- R6::R6Class(
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = dimnames(private$draws_)$variable,
-        all = private$sampling_info_$model_params
+        all = private$metadata_$model_params
       )
 
       if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = to_read, sampler_diagnostics = "")
       }
       if (is.null(variables)) {
-        variables <- private$sampling_info_$model_params
+        variables <- private$metadata_$model_params
       }
-      matching_res <- matching_variables(variables, private$sampling_info_$model_params)
+      matching_res <- matching_variables(variables, private$metadata_$model_params)
       if (length(matching_res$not_found)) {
         stop("Can't find the following variable(s) in the sampling output: ",
              paste(matching_res$not_found, collapse = ", "))
@@ -677,13 +677,13 @@ CmdStanMCMC <- R6::R6Class(
       to_read <- remaining_columns_to_read(
         requested = NULL,
         currently_read = dimnames(private$sampler_diagnostics_)$variable,
-        all = private$sampling_info_$sampler_diagnostics
+        all = private$metadata_$sampler_diagnostics
       )
       if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = "", sampler_diagnostics = NULL)
       }
       if (inc_warmup) {
-        if (!private$sampling_info_$save_warmup) {
+        if (!private$metadata_$save_warmup) {
           stop("Warmup sampler diagnostics were requested from a fit object without them! ",
                "Please rerun the model with save_warmup = TRUE.")
         }
@@ -715,20 +715,20 @@ CmdStanMCMC <- R6::R6Class(
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     draws_ = NULL,
-    sampling_info_ = NULL,
+    metadata_ = NULL,
     inv_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
       variables_to_read <-
         remaining_columns_to_read(
           variables,
           dimnames(private$draws_)$variable,
-          private$sampling_info_$model_params
+          private$metadata_$model_params
         )
       sampler_diagnostics_to_read <-
         remaining_columns_to_read(
           sampler_diagnostics,
           dimnames(private$sampler_diagnostics_)$variable,
-          private$sampling_info_$sampler_diagnostics
+          private$metadata_$sampler_diagnostics
         )
       data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
@@ -736,7 +736,7 @@ CmdStanMCMC <- R6::R6Class(
         sampler_diagnostics = sampler_diagnostics_to_read
       )
       private$inv_metric_ <- data_csv$inv_metric
-      private$sampling_info_ <- data_csv$sampling_info
+      private$metadata_ <- data_csv$metadata
 
       if (!is.null(data_csv$post_warmup_draws)) {
         if (is.null(private$draws_)) {
@@ -762,8 +762,8 @@ CmdStanMCMC <- R6::R6Class(
             )
         }
       }
-      if (!is.null(data_csv$sampling_info$save_warmup)
-         && data_csv$sampling_info$save_warmup) {
+      if (!is.null(data_csv$metadata$save_warmup)
+         && data_csv$metadata$save_warmup) {
         if (!is.null(data_csv$warmup_draws)) {
           if (is.null(private$warmup_draws_)) {
             private$warmup_draws_ <- data_csv$warmup_draws

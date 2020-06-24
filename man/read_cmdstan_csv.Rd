@@ -27,7 +27,14 @@ diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).
 \value{
 A named list with the following components:
 \itemize{
-\item \code{sampling_info}: A list of the arguments used to run the sampler.
+\item \code{metadata}: A list of the meta information of the fitting run that produced the
+input CSV file(s).
+Other components differ on the method that produced the input CSV file(s).
+}
+
+For CSV input file(s) produced by sampling the returned list also includes
+the following components:
+\itemize{
 \item \code{inv_metric}: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.
 \item \code{step_size}: A list (one element per chain) of the step sizes used.
@@ -38,6 +45,18 @@ x chain x variable array).
 draws of the sampler diagnostic variables (iter x chain x variable array).
 \item \code{sampler_diagnostics}: The post-warmup draws of the sampler diagnostic
 variables (iter x chain x variable array).
+}
+
+For CSV input file(s) produced by optimization the returned list also
+includes the following components:
+\itemize{
+\item \code{point_estimates}: Point estimates for the model parameters.
+}
+
+For CSV input file(s) produced by variational inference the returned list
+also includes the following components:
+\itemize{
+\item \code{point_estimates}: Point estimates for the model parameters.
 }
 }
 \description{

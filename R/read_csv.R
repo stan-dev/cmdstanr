@@ -237,9 +237,9 @@ read_cmdstan_csv <- function(files,
   if (!is.null(warmup_draws)) {
     posterior::variables(warmup_draws) <- repaired_model_params
   }
-  # if (!is.null(post_warmup_draws)) {
-  #   posterior::variables(post_warmup_draws) <- repaired_model_params
-  # }
+  if (!is.null(post_warmup_draws)) {
+    posterior::variables(post_warmup_draws) <- repaired_model_params
+  }
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
@@ -292,10 +292,9 @@ read_vb_csv <- function(files) {
   list(draws = draws)
 }
 
+#' Read CmdStan CSV files into \R
 #'
 #' @export
-#' DEPRECATED: Please use read_cmdstan_csv instead.
-#'
 #' @param files A character vector of paths to the CSV files to read.
 #' @param variables Optionally, a character vector naming the variables (parameters
 #'   and generated quantities) to read in.
@@ -323,7 +322,7 @@ read_vb_csv <- function(files) {
 read_sample_csv <- function(files,
                             variables = NULL,
                             sampler_diagnostics = NULL) {
-  warning("read_cmdstan_csv() is deprecated. Please use read_cmdstan_csv().")
+  warning("read_sample_csv() is deprecated. Please use read_cmdstan_csv().")
   read_cmdstan_csv(files, variables, sampler_diagnostics)
 }
 
