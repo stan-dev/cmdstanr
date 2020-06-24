@@ -56,6 +56,7 @@ CmdStanRun <- R6::R6Class(
         private$output_files_[ok]
       }
     },
+
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE,
@@ -194,7 +195,19 @@ CmdStanRun <- R6::R6Class(
   private = list(
     output_files_ = character(),
     latent_dynamics_files_ = NULL,
-    command_args_ = list()
+    command_args_ = list(),
+
+    finalize = function() {
+      if (self$args$using_tempdir) {
+        temp_files <- c(
+          self$output_files(include_failed = TRUE),
+          if (self$args$save_latent_dynamics)
+            self$latent_dynamics_files(include_failed = TRUE)
+        )
+        message("Cleaning up CmdStanR temporary files")
+        unlink(temp_files)
+      }
+    }
   )
 )
 
@@ -261,7 +274,7 @@ CmdStanRun <- R6::R6Class(
       }
       procs$set_active_procs(procs$num_alive())
     }
-    procs$check_finished()    
+    procs$check_finished()
   }
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
   procs$report_time()
@@ -381,11 +394,11 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_other)
 
 # CmdStanProcs ------------------------------------------------------------
 
-# System processes for model fitting 
+# System processes for model fitting
 CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
-    # @param num_procs The number of CmdStan processes to start for a run. 
+    # @param num_procs The number of CmdStan processes to start for a run.
     #   For MCMC this is the number of chains. Currently for other methods
     #   this must be set to 1.
     # @param parallel_procs The maximum number of processes to run in parallel.
@@ -468,7 +481,7 @@ CmdStanProcs <- R6::R6Class(
         private$proc_section_time_[id, section]
       }else {
         NA_real_
-      }      
+      }
     },
     proc_total_time = function(id = NULL) {
       if (is.null(id)) {
@@ -496,7 +509,7 @@ CmdStanProcs <- R6::R6Class(
             error_output <- self$get_proc(id)$read_error_lines()
             self$process_error_output(error_output, id)
             self$mark_proc_stop(id)
-            self$report_time(id)            
+            self$report_time(id)
           }
         }
       }
@@ -587,7 +600,7 @@ CmdStanProcs <- R6::R6Class(
     report_time = function(id = NULL) {
       cat("Finished in ",
               format(round(self$total_time(), 1), nsmall = 1),
-              "seconds.\n")  
+              "seconds.\n")
     }
   ),
   private = list(
@@ -720,7 +733,7 @@ CmdStanMCMCProcs <- R6::R6Class(
           }
         }
         return(invisible(NULL))
-      }      
+      }
     }
   )
 )

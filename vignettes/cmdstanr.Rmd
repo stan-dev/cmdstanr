@@ -24,7 +24,6 @@ opts_chunk$set(
   out.width = "60%",
   fig.align = "center",
   comment = NA,
-  comment=NA,
   eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
 )
 ```
@@ -36,7 +35,7 @@ CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python) that
 provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
 interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
-later in this vignette for more details on how the two inferfaces differ.
+later in this vignette for more details on how the two interfaces differ.
 
 **CmdStanR is not on CRAN yet**, but the latest pre-beta release can be
 installed via:
@@ -169,8 +168,9 @@ For details follow this link to its separate documentation page:
 * [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
 
 The `$sample()` method creates [R6](https://r6.r-lib.org/) `CmdStanMCMC`
-objects, which have many associated methods. Below we will demonstrate some
-of the most important methods. For a full list, follow this link to the `CmdStanMCMC` documentation: 
+objects, which have many associated methods. Below we will demonstrate some of
+the most important methods. For a full list, follow this link to the
+`CmdStanMCMC` documentation:
 
 * [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 
@@ -249,10 +249,10 @@ object from the csv output files written by CmdStan. This can be done by using
 `rstan::read_stan_csv()` in combination with the `$output_files()` method of the
 `CmdStanMCMC` object:
 
-```{r stanfit}
+```{r stanfit, eval=FALSE}
 stanfit <- rstan::read_stan_csv(fit$output_files())
-print(stanfit)
 ```
+
 
 
 ### Optimization and variational inference
@@ -333,4 +333,3 @@ R (and RStudio) and result in fewer unexpected crashes than when using RStan.
 Finally, RStan and CmdStanR have different open source licenses. RStan uses the 
 GPL-3 license while the license for CmdStanR (like Stan) is BSD-3, which is a bit 
 more permissive.
-

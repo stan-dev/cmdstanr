@@ -12,7 +12,6 @@ if (not_on_cran()) {
   all_methods <- c("sample", "optimize", "variational")
 }
 
-
 test_that("*_files() methods return the right number of paths", {
   skip_on_cran()
   for (method in all_methods) {
@@ -134,5 +133,25 @@ test_that("draws() method returns a 'draws' object", {
     expect_type(draws, "double")
     expect_s3_class(draws, "draws")
   }
+})
+
+test_that("save_object() method works", {
+  skip_on_cran()
+  for (method in all_methods) {
+    fit <- fits[[method]]
+    temp_rds_file <- tempfile(fileext = ".RDS")
+    fit$save_object(temp_rds_file)
+    fit2 <- readRDS(temp_rds_file)
+    expect_identical(fit2$summary(), fit$summary())
+  }
+
+  # check after garbage collection too
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  fit <- testing_fit("logistic", method = "sample", seed = 123)
+  fit$save_object(temp_rds_file)
+  s <- fit$summary()
+  rm(fit); gc()
+  fit <- readRDS(temp_rds_file)
+  expect_identical(fit$summary(), s)
 })
 

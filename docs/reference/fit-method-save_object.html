@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • cmdstanr</title>
+<title>Save fitted model object to a file — fit-method-save_object • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,12 @@
 
 
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Save fitted model object to a file — fit-method-save_object" />
+<meta property="og:description" content="This method is a wrapper around base::saveRDS() that ensures
+that all posterior draws and diagnostics are saved when saving a fitted
+model object. Because the contents of the CmdStan output CSV files are only
+read into R lazily (i.e., as needed), the $save_object() method is the
+safest way to guarantee that everything has been read in before saving." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -66,7 +71,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-article-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -166,27 +171,54 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+    <h1>Save fitted model object to a file</h1>
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
+    <div class="hidden name"><code>fit-method-save_object.Rd</code></div>
     </div>
 
-    <div class="section ">
-      <h3>Getting started</h3>
-      <p class="section-desc"><p>Installing CmdStan, fitting models, and accessing results.</p></p>
-
-      <dl>
-        <dt><a href="cmdstanr.html">Getting started with CmdStanR</a></dt>
-        <dd></dt>
-      </dl>
+    <div class="ref-description">
+    <p>This method is a wrapper around <code><a href='https://rdrr.io/r/base/readRDS.html'>base::saveRDS()</a></code> that ensures
+that all posterior draws and diagnostics are saved when saving a fitted
+model object. Because the contents of the CmdStan output CSV files are only
+read into R lazily (i.e., as needed), the <code>$save_object()</code> method is the
+safest way to guarantee that everything has been read in before saving.</p>
     </div>
-    <div class="section ">
-      <h3>More details</h3>
-      <p class="section-desc"><p>More information about compilation, passing in data, and how CmdStan ouput is written to CSV and read back into R.</p></p>
 
-      <dl>
-        <dt><a href="cmdstanr-internals.html">How does CmdStanR work?</a></dt>
-        <dd></dt>
-      </dl>
-    </div>
+
+
+    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
+
+    
+<pre>$save_object(file, ...)
+</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+
+    
+
+<ul>
+<li><p><code>file</code>: (string) Path where the file should be saved.</p></li>
+<li><p><code>...</code>: Other arguments to pass to <code><a href='https://rdrr.io/r/base/readRDS.html'>base::saveRDS()</a></code> besides <code>object</code> and <code>file</code>.</p></li>
+</ul>
+
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'>
+<span class='no'>temp_rds_file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>(<span class='kw'>fileext</span> <span class='kw'>=</span> <span class='st'>".RDS"</span>)
+<span class='no'>fit</span>$<span class='fu'>save_object</span>(<span class='kw'>file</span> <span class='kw'>=</span> <span class='no'>temp_rds_file</span>)
+
+<span class='fu'><a href='https://rdrr.io/r/base/rm.html'>rm</a></span>(<span class='no'>fit</span>)
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span>(<span class='no'>temp_rds_file</span>)
+<span class='co'># }</span></div></pre>
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
 

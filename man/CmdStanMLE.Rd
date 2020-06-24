@@ -20,6 +20,8 @@ A \code{CmdStanMLE} object is the fitted model object returned by the
 (\code{target}) computed in the model block of the Stan program. \cr
 \verb{$mle()} \tab Return the penalized maximum likelihod estimate (posterior
 mode) as a numeric vector with one element per variable (excluding \code{lp()}). \cr
+\code{\link[=fit-method-save_object]{$save_object()}}
+\tab Save fitted model object to a file. \cr
 \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV
 files to a specified location. \cr
 \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file

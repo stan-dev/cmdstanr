@@ -81,11 +81,12 @@ its output CSV files. For interactive use this can typically be left at
 posterior draws and diagnostics) available in \R via methods of the fitted
 model objects. The behavior of \code{output_dir} is as follows:
 \itemize{
-\item If \code{NULL} (the default) then the CSV files are written to a temporary
+\item If \code{NULL} (the default), then the CSV files are written to a temporary
 directory and only saved permanently if the user calls one of the
 \verb{$save_*} methods of the fitted model object (e.g.,
-\code{\link[=fit-method-save_output_files]{$save_output_files()}}).
-\item If a path then the files are created in \code{output_dir} with names
+\code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
+files are removed when the fitted model object is garbage collected.
+\item If a path, then the files are created in \code{output_dir} with names
 corresponding the defaults used by \verb{$save_output_files()} (and similar
 methods like \verb{$save_latent_dynamics_files()}).
 }
@@ -172,10 +173,9 @@ fit_mcmc$cmdstan_summary()
 
 # For models fit using MCMC, if you like working with RStan's stanfit objects
 # then you can create one with rstan::read_stan_csv()
-if (require(rstan, quietly = TRUE)) {
-  stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
-  print(stanfit)
-}
+
+# stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
+
 
 # Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
 # and also demonstrate specifying data as a path to a file instead of a list
