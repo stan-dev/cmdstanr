@@ -257,13 +257,14 @@ read_cmdstan_csv <- function(files,
         variational_draws <- posterior::as_draws_matrix(
           draws[-1, colnames(draws) != "lp__", drop=FALSE]
         )
-        variational_draws <- posterior::rename_variables(
-          variational_draws,
-          lp__ = "log_p__",
-          lp_approx__ = "log_g__"
-        )
+        if ("log_p__" %in% posterior::variables(variational_draws)) {
+          variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
+        }
+        if ("log_g__" %in% posterior::variables(variational_draws)) {
+          variational_draws <- posterior::rename_variables(variational_draws, lp_approx__ = "log_g__")
+        }
       } else if (metadata$method == "optimize") {
-        point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])
+        point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])[, variables]
       }
     }
   }
@@ -298,8 +299,11 @@ read_cmdstan_csv <- function(files,
     metadata$model_params <- metadata$model_params[metadata$model_params != "lp__"]
     metadata$model_params <- gsub("log_p__", "lp__", metadata$model_params)
     metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)
+    repaired_variables <- repaired_variables[repaired_variables != "lp__"]
+    repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
+    repaired_variables <- gsub("log_g__", "lp_approx__", repaired_variables)
     if (!is.null(variational_draws)) {
-      posterior::variables(variational_draws) <- metadata$model_params
+      posterior::variables(variational_draws) <- repaired_variables
     }
     list(
       metadata = metadata,

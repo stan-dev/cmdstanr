@@ -52,7 +52,7 @@ test_that("read_cmdstan_csv() fails for different number of samples in csv", {
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1b$output_files())
   expect_warning(read_cmdstan_csv(csv_files),
-               "The supplied csv files do not match in the following arguments: iter_warmup!")
+               "The supplied csv files do not match in the following arguments: iter_warmup")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1_with_warmup$output_files())
   expect_error(read_cmdstan_csv(csv_files),
@@ -388,6 +388,12 @@ test_that("read_cmdstan_csv() works for optimize", {
   csv_output_3 <- read_cmdstan_csv(csv_file)
   expect_equal(as.numeric(csv_output_3$point_estimates[1,"lp__"]), -12.2173)
   expect_equal(as.numeric(csv_output_3$point_estimates[1,"theta"]), 0.300001)
+
+  # variable filtering
+  csv_output_4 <- read_cmdstan_csv(fit_logistic_optimize$output_files(), variables = "beta")
+  expect_equal(posterior::variables(csv_output_4$point_estimates), c("beta[1]", "beta[2]", "beta[3]"))
+  csv_output_5 <- read_cmdstan_csv(fit_logistic_optimize$output_files(), variables = c("alpha", "lp__", "beta[2]"))
+  expect_equal(posterior::variables(csv_output_5$point_estimates), c("alpha", "lp__", "beta[2]"))
 })
 
 
@@ -404,4 +410,10 @@ test_that("read_cmdstan_csv() works for variational", {
   expect_equal(as.numeric(csv_output_3$draws[1,"theta"]), 0.230751)
   expect_equal(dim(csv_output_3$draws), c(50, 3))
   expect_equal(csv_output_3$metadata$model_params, c("lp__", "lp_approx__", "theta"))
+
+  # variable filtering
+  csv_output_4 <- read_cmdstan_csv(fit_logistic_variational$output_files(), variables = "beta")
+  expect_equal(posterior::variables(csv_output_4$draws), c("beta[1]", "beta[2]", "beta[3]"))
+  csv_output_5 <- read_cmdstan_csv(fit_logistic_variational$output_files(), variables = c("alpha", "beta[2]"))
+  expect_equal(posterior::variables(csv_output_5$draws), c("alpha", "beta[2]"))
 })
