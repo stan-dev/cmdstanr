@@ -25,6 +25,22 @@ test_that("print() method works after vb", {
   skip_on_cran()
   expect_output(expect_s3_class(fit_vb$print(), "CmdStanVB"), "variable")
   expect_output(fit_vb$print(max_rows = 1), "# showing 1 of 6 rows")
+
+  # test on model with more parameters
+  fit <- cmdstanr_example("schools_ncp", method = "variational", seed = 123)
+  expect_output(fit$print(), "lp_approx__")
+  expect_output(fit$print(), "showing 10 of 20 rows")
+  expect_output(fit$print(max_rows = 20), "theta[8]", fixed = TRUE) # last parameter
+
+  out <- capture.output(fit$print(c("theta", "tau", "lp__", "lp_approx__")))
+  expect_length(out, 13) # columns names + 8 thetas + tau + lp__ + lp_approx__ + empty + message
+  expect_match(out[1], " variable")
+  expect_match(out[2], " theta[1]", fixed = TRUE)
+  expect_match(out[9], " theta[8]", fixed = TRUE)
+  expect_match(out[10], " tau")
+  expect_match(out[11], " lp__")
+  expect_false(nzchar(out[12])) # empty line
+  expect_match(out[13], "10 of 11 rows")
 })
 
 test_that("draws() method returns posterior sample (reading csv works)", {

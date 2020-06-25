@@ -71,22 +71,49 @@ CmdStanFit <- R6::R6Class(
       summary
     },
 
+    # print summary table without using tibbles
     print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
-      # print summary table without using tibbles
-      out <- self$summary(variables, ...)
+      # FIXME: treat sample and other methods the same once we have
+      # self$metadata() (or equivalent) for all methods
+      if (self$runset$method() == "sample") {
+        all_variables <- self$sampling_info()$model_params
+      } else {
+        all_variables <- posterior::variables(self$draws())
+      }
+
+      # filter variables before passing to summary to avoid computing anything
+      # that won't be printed because of max_rows
+      if (is.null(variables)) {
+        total_rows <- length(all_variables)
+        variables_to_print <- all_variables[seq_len(max_rows)]
+      } else {
+        matches <- matching_variables(variables, all_variables)
+        if (length(matches$not_found) > 0) {
+          stop("Can't find the following variable(s): ",
+               paste(matches$not_found, collapse = ", "))
+        }
+        total_rows <- length(matches$matching)
+        variables_to_print <- matches$matching[seq_len(max_rows)]
+        variables_to_print <- repair_variable_names(variables_to_print)
+      }
+
+      # if max_rows > length(variables_to_print) some will be NA
+      variables_to_print <- variables_to_print[!is.na(variables_to_print)]
+
+      out <- self$summary(variables_to_print, ...)
       out <- as.data.frame(out)
-      rows <- nrow(out)
-      print_rows <- seq_len(min(rows, max_rows))
-      out <- out[print_rows, ]
       out[, 1] <- format(out[, 1], justify = "left")
       out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
       for (col in grep("ess_", colnames(out), value = TRUE)) {
         out[[col]] <- as.integer(out[[col]])
       }
 
+      opts <- options(max.print = prod(dim(out)))
+      on.exit(options(max.print = opts$max.print), add = TRUE)
       print(out, row.names=FALSE)
-      if (max_rows < rows) {
-        cat("\n # showing", max_rows, "of", rows, "rows (change via 'max_rows' argument)")
+      if (max_rows < total_rows) {
+        cat("\n # showing", max_rows, "of", total_rows,
+            "rows (change via 'max_rows' argument)")
       }
       invisible(self)
     },
