@@ -155,3 +155,11 @@ test_that("save_object() method works", {
   expect_identical(fit$summary(), s)
 })
 
+test_that("metadata() returns list", {
+  for (method in all_methods) {
+    fit <- fits[[method]]
+    expect_type(fit$metadata(), "list")
+    expect_equal(fit$metadata()$method, method)
+  }
+})
+

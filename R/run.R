@@ -204,7 +204,6 @@ CmdStanRun <- R6::R6Class(
           if (self$args$save_latent_dynamics)
             self$latent_dynamics_files(include_failed = TRUE)
         )
-        message("Cleaning up CmdStanR temporary files")
         unlink(temp_files)
       }
     }
@@ -391,7 +390,7 @@ CmdStanProcs <- R6::R6Class(
         command = command,
         args = args,
         wd = wd,
-        echo_cmd = TRUE,
+        echo_cmd = FALSE,
         stdout = "|",
         stderr = "|"
       )
@@ -648,7 +647,7 @@ CmdStanMCMCProcs <- R6::R6Class(
                 "seconds.\n")
           } else if (num_failed == num_chains) {
             warning("All chains finished unexpectedly!\n", call. = FALSE)
-            warning("Use read_sample_csv() to read the results of the failed chains.",
+            warning("Use read_cmdstan_csv() to read the results of the failed chains.",
                     immediate. = TRUE,
                     call. = FALSE)
           } else {
@@ -658,7 +657,7 @@ CmdStanMCMCProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of succesful chains. Please use read_sample_csv() to read the results of the failed chains separately.",
+            warning("The returned fit object will only read in results of succesful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
                     immediate. = TRUE,
                     call. = FALSE)
           }

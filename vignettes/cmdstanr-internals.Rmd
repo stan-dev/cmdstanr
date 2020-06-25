@@ -241,16 +241,16 @@ quantities, if only some are requested (e.g., by specifying the `variables`
 argument to `fit$draws()`) then CmdStanR will only read in the requested
 variables (unless they have already been read in).
 
-### read_sample_csv()
+### read_cmdstan_csv()
 
-Internally, the `read_sample_csv()` function is used to read the CmdStan CSV
+Internally, the `read_cmdstan_csv()` function is used to read the CmdStan CSV
 files into R. This function is exposed to users, so you can also call it
 directly:
 
-```{r read_sample_csv}
-# see ?read_sample_csv for info on optional arguments controlling 
+```{r read_cmdstan_csv}
+# see ?read_cmdstan_csv for info on optional arguments controlling 
 # what information is read in
-csv_contents <- read_sample_csv(fit$output_files())
+csv_contents <- read_cmdstan_csv(fit$output_files())
 str(csv_contents)
 ```
 

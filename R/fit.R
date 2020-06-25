@@ -40,11 +40,11 @@ CmdStanFit <- R6::R6Class(
       as.numeric(lp__)
     },
 
-    sampling_info = function() {
-      if (is.null(private$sampling_info_)) {
+    metadata = function() {
+      if (is.null(private$metadata_)) {
         private$read_csv_()
       }
-      private$sampling_info_
+      private$metadata_
     },
 
     summary = function(variables = NULL, ...) {
@@ -71,22 +71,42 @@ CmdStanFit <- R6::R6Class(
       summary
     },
 
+    # print summary table without using tibbles
     print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
-      # print summary table without using tibbles
-      out <- self$summary(variables, ...)
+      # filter variables before passing to summary to avoid computing anything
+      # that won't be printed because of max_rows
+      all_variables <- self$metadata()$model_params
+      if (is.null(variables)) {
+        total_rows <- length(all_variables)
+        variables_to_print <- all_variables[seq_len(max_rows)]
+      } else {
+        matches <- matching_variables(variables, all_variables)
+        if (length(matches$not_found) > 0) {
+          stop("Can't find the following variable(s): ",
+               paste(matches$not_found, collapse = ", "))
+        }
+        total_rows <- length(matches$matching)
+        variables_to_print <- matches$matching[seq_len(max_rows)]
+        variables_to_print <- repair_variable_names(variables_to_print)
+      }
+
+      # if max_rows > length(variables_to_print) some will be NA
+      variables_to_print <- variables_to_print[!is.na(variables_to_print)]
+
+      out <- self$summary(variables_to_print, ...)
       out <- as.data.frame(out)
-      rows <- nrow(out)
-      print_rows <- seq_len(min(rows, max_rows))
-      out <- out[print_rows, ]
       out[, 1] <- format(out[, 1], justify = "left")
       out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
       for (col in grep("ess_", colnames(out), value = TRUE)) {
         out[[col]] <- as.integer(out[[col]])
       }
 
+      opts <- options(max.print = prod(dim(out)))
+      on.exit(options(max.print = opts$max.print), add = TRUE)
       print(out, row.names=FALSE)
-      if (max_rows < rows) {
-        cat("\n # showing", max_rows, "of", rows, "rows (change via 'max_rows' argument)")
+      if (max_rows < total_rows) {
+        cat("\n # showing", max_rows, "of", total_rows,
+            "rows (change via 'max_rows' argument)")
       }
       invisible(self)
     },
@@ -132,7 +152,7 @@ CmdStanFit <- R6::R6Class(
   ),
   private = list(
     draws_ = NULL,
-    sampling_info_ = NULL
+    metadata_ = NULL
   )
 )
 
@@ -608,7 +628,7 @@ CmdStanMCMC <- R6::R6Class(
                 call. = FALSE)
       } else {
         if (self$runset$args$validate_csv && !runset$args$method_args$fixed_param) {
-          data_csv <- read_sample_csv(
+          data_csv <- read_cmdstan_csv(
             self$output_files(),
             variables = "",
             sampler_diagnostics = c("treedepth__", "divergent__")
@@ -640,7 +660,7 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.")
       }
-      if (inc_warmup && !private$sampling_info_$save_warmup) {
+      if (inc_warmup && !private$metadata_$save_warmup) {
         stop("Warmup draws were requested from a fit object without them! ",
              "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
       }
@@ -648,15 +668,15 @@ CmdStanMCMC <- R6::R6Class(
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = dimnames(private$draws_)$variable,
-        all = private$sampling_info_$model_params
+        all = private$metadata_$model_params
       )
       if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = to_read, sampler_diagnostics = "")
       }
       if (is.null(variables)) {
-        variables <- private$sampling_info_$model_params
+        variables <- private$metadata_$model_params
       }
-      matching_res <- matching_variables(variables, private$sampling_info_$model_params)
+      matching_res <- matching_variables(variables, private$metadata_$model_params)
       if (length(matching_res$not_found)) {
         stop("Can't find the following variable(s) in the sampling output: ",
              paste(matching_res$not_found, collapse = ", "))
@@ -676,13 +696,13 @@ CmdStanMCMC <- R6::R6Class(
       to_read <- remaining_columns_to_read(
         requested = NULL,
         currently_read = dimnames(private$sampler_diagnostics_)$variable,
-        all = private$sampling_info_$sampler_diagnostics
+        all = private$metadata_$sampler_diagnostics
       )
       if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = "", sampler_diagnostics = NULL)
       }
       if (inc_warmup) {
-        if (!private$sampling_info_$save_warmup) {
+        if (!private$metadata_$save_warmup) {
           stop("Warmup sampler diagnostics were requested from a fit object without them! ",
                "Please rerun the model with save_warmup = TRUE.")
         }
@@ -710,32 +730,31 @@ CmdStanMCMC <- R6::R6Class(
     }
   ),
   private = list(
+    # also inherits draws_ and metadata_ from CmdStanFit
     sampler_diagnostics_ = NULL,
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
-    draws_ = NULL,
-    sampling_info_ = NULL,
     inv_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
       variables_to_read <-
         remaining_columns_to_read(
           variables,
           dimnames(private$draws_)$variable,
-          private$sampling_info_$model_params
+          private$metadata_$model_params
         )
       sampler_diagnostics_to_read <-
         remaining_columns_to_read(
           sampler_diagnostics,
           dimnames(private$sampler_diagnostics_)$variable,
-          private$sampling_info_$sampler_diagnostics
+          private$metadata_$sampler_diagnostics
         )
-      data_csv <- read_sample_csv(
+      data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables_to_read,
         sampler_diagnostics = sampler_diagnostics_to_read
       )
       private$inv_metric_ <- data_csv$inv_metric
-      private$sampling_info_ <- data_csv$sampling_info
+      private$metadata_ <- data_csv$metadata
 
       if (!is.null(data_csv$post_warmup_draws)) {
         if (is.null(private$draws_)) {
@@ -761,8 +780,8 @@ CmdStanMCMC <- R6::R6Class(
             )
         }
       }
-      if (!is.null(data_csv$sampling_info$save_warmup)
-         && data_csv$sampling_info$save_warmup) {
+      if (!is.null(data_csv$metadata$save_warmup)
+         && data_csv$metadata$save_warmup) {
         if (!is.null(data_csv$warmup_draws)) {
           if (is.null(private$warmup_draws_)) {
             private$warmup_draws_ <- data_csv$warmup_draws
@@ -842,9 +861,11 @@ CmdStanMLE <- R6::R6Class(
     }
   ),
   private = list(
+    # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function() {
-      optim_output <- read_optim_csv(self$output_files())
-      private$draws_ <- optim_output[["draws"]]
+      optim_output <- read_cmdstan_csv(self$output_files())
+      private$draws_ <- optim_output$point_estimates
+      private$metadata_ <- optim_output$metadata
       invisible(self)
     }
   )
@@ -902,9 +923,11 @@ CmdStanVB <- R6::R6Class(
     }
   ),
   private = list(
+    # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function() {
-      vb_output <- read_vb_csv(self$output_files())
-      private$draws_ <- vb_output[["draws"]]
+      vb_output <- read_cmdstan_csv(self$output_files())
+      private$draws_ <- vb_output$draws
+      private$metadata_ <- vb_output$metadata
       invisible(self)
     }
   )
@@ -914,9 +937,9 @@ CmdStanGQ <- R6::R6Class(
   classname = "CmdStanGQ",
   inherit = CmdStanFit,
   public = list(
-    generated_quantities = function(variables = NULL) {
+    draws = function(variables = NULL) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("No chains finished successfully. Unable to retrieve the generated quantities.")
+        stop("No chains finished successfully. Unable to retrieve the generated quantities.", call. = FALSE)
       }
       to_read <- remaining_columns_to_read(
         requested = variables,
@@ -932,20 +955,19 @@ CmdStanGQ <- R6::R6Class(
       matching_res <- matching_variables(variables, private$info_$model_params)
       if (length(matching_res$not_found)) {
         stop("Can't find the following variable(s) in the output: ",
-             paste(matching_res$not_found, collapse = ", "))
+             paste(matching_res$not_found, collapse = ", "), call. = FALSE)
       }
       variables <- repair_variable_names(matching_res$matching)
-      private$generated_quantities_[,,variables]
+      private$draws_[,,variables]
     }
   ),
   private = list(
-    generated_quantities_ = NULL,
-    info_ = NULL,
+    # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(variables = NULL) {
       variables_to_read <-
       remaining_columns_to_read(
         variables,
-        dimnames(private$generated_quantities_)$variable,
+        dimnames(private$draws_)$variable,
         private$info$model_params
       )
       data_csv <- read_sample_csv(
@@ -953,15 +975,14 @@ CmdStanGQ <- R6::R6Class(
         variables = variables_to_read,
         sampler_diagnostics = ""
       )
-      generated_quantities_ <- data_csv$generated_quantities
       private$info_ <- data_csv$info
       if (!is.null(data_csv$generated_quantities)) {
         if (is.null(private$generated_quantities_)) {
-          private$generated_quantities_ <- data_csv$generated_quantities
+          private$draws_ <- data_csv$generated_quantities
         } else {
-          private$generated_quantities_ <-
+          private$draws_ <-
             posterior::bind_draws(
-              private$generated_quantities_,
+              private$draws_,
               data_csv$generated_quantities,
               along="variable"
             )

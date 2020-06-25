@@ -46,6 +46,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-save_object.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html</loc>
   </url>
   <url>
@@ -80,6 +83,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/write_stan_json.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/articles/cmdstanr.html</loc>

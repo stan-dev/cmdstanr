@@ -257,7 +257,7 @@ NULL
 #' @export
 #' @return The value of the environment variable `STAN_NUM_THREADS`.
 num_threads <- function() {
-  warning("'num_threads()' is deprecated. Please use the 'sampling_info()' method of the fit object to obtain the number of threads used.")
+  warning("'num_threads()' is deprecated. Please use the 'metadata()' method of the fit object to obtain the number of threads used.")
   as.integer(Sys.getenv("STAN_NUM_THREADS"))
 }
 
@@ -288,7 +288,7 @@ check_sampler_transitions_treedepth <- function(data_csv) {
   if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
     treedepth <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
     num_of_draws <- length(treedepth)
-    max_treedepth <- data_csv$sampling_info$max_treedepth
+    max_treedepth <- data_csv$metadata$max_treedepth
     max_treedepth_hit <- sum(treedepth >= max_treedepth)
     if (max_treedepth_hit > 0) {
       percentage_max_treedepth <- (max_treedepth_hit)/num_of_draws*100
