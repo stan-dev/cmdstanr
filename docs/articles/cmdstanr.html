@@ -210,18 +210,6 @@ model {
 )</pre></body></html></div>
 <pre><code>Running MCMC with 4 chains, at most 2 in parallel...
 
-Running ./bernoulli 'id=1' random 'seed=123' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/standata-1615e2b1d30bf.json' \
-  output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-1-6b61b6.csv' \
-  'refresh=500' 'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' \
-  adapt 'engaged=1'
-Running ./bernoulli 'id=2' random 'seed=124' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/standata-1615e2b1d30bf.json' \
-  output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-2-6b61b6.csv' \
-  'refresh=500' 'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' \
-  adapt 'engaged=1'
 Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
 Chain 1 Iteration:  500 / 2000 [ 25%]  (Warmup) 
 Chain 1 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
@@ -236,18 +224,6 @@ Chain 2 Iteration: 1500 / 2000 [ 75%]  (Sampling)
 Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
 Chain 1 finished in 0.2 seconds.
 Chain 2 finished in 0.2 seconds.
-Running ./bernoulli 'id=3' random 'seed=125' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/standata-1615e2b1d30bf.json' \
-  output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-3-6b61b6.csv' \
-  'refresh=500' 'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' \
-  adapt 'engaged=1'
-Running ./bernoulli 'id=4' random 'seed=126' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/standata-1615e2b1d30bf.json' \
-  output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-4-6b61b6.csv' \
-  'refresh=500' 'method=sample' 'save_warmup=0' 'algorithm=hmc' 'engine=nuts' \
-  adapt 'engaged=1'
 Chain 3 Iteration:    1 / 2000 [  0%]  (Warmup) 
 Chain 3 Iteration:  500 / 2000 [ 25%]  (Warmup) 
 Chain 3 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
@@ -364,11 +340,11 @@ Total execution time: 0.4 seconds.</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_diagnose()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_summary()</code></a> methods call CmdStan’s <code>diagnose</code> and <code>stansummary</code> utilities:</p>
 <div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_diagnose</a></span>()</pre></body></html></div>
 <pre><code>Running bin/diagnose \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-1-6b61b6.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-2-6b61b6.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-3-6b61b6.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-4-6b61b6.csv
-Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-1-6b61b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-2-6b61b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-3-6b61b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-4-6b61b6.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-1-2fd0ad.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-2-2fd0ad.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-3-2fd0ad.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-4-2fd0ad.csv
+Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-1-2fd0ad.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-2-2fd0ad.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-3-2fd0ad.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-4-2fd0ad.csv
 
 Checking sampler transitions treedepth.
 Treedepth satisfactory for all transitions.
@@ -386,25 +362,25 @@ Split R-hat values satisfactory all parameters.
 Processing complete, no problems detected.</code></pre>
 <div class="sourceCode" id="cb34"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_summary</a></span>()</pre></body></html></div>
 <pre><code>Running bin/stansummary \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-1-6b61b6.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-2-6b61b6.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-3-6b61b6.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-4-6b61b6.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-1-2fd0ad.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-2-2fd0ad.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-3-2fd0ad.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-4-2fd0ad.csv
 Inference for Stan model: bernoulli_model
 4 chains: each with iter=(1000,1000,1000,1000); warmup=(0,0,0,0); thin=(1,1,1,1); 4000 iterations saved.
 
-Warmup took (0.0060, 0.0059, 0.0062, 0.0062) seconds, 0.024 seconds total
-Sampling took (0.014, 0.012, 0.014, 0.014) seconds, 0.054 seconds total
+Warmup took (0.0059, 0.0059, 0.0062, 0.0057) seconds, 0.024 seconds total
+Sampling took (0.015, 0.014, 0.016, 0.017) seconds, 0.062 seconds total
 
                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
-lp__            -7.3  2.0e-02    0.76   -8.8  -7.0  -6.8  1.4e+03  2.6e+04  1.0e+00
-accept_stat__   0.90  2.5e-03    0.15   0.57  0.97   1.0  3.7e+03  6.8e+04  1.0e+00
-stepsize__       1.1  8.8e-02    0.12   0.93   1.2   1.3  2.0e+00  3.7e+01  3.5e+13
-treedepth__      1.4  8.2e-03    0.51    1.0   1.0   2.0  3.8e+03  7.0e+04  1.0e+00
-n_leapfrog__     2.5  1.9e-01     1.3    1.0   3.0   3.0  4.3e+01  8.0e+02  1.0e+00
+lp__            -7.3  2.0e-02    0.76   -8.8  -7.0  -6.8  1.4e+03  2.3e+04  1.0e+00
+accept_stat__   0.90  2.5e-03    0.15   0.57  0.97   1.0  3.7e+03  6.0e+04  1.0e+00
+stepsize__       1.1  8.8e-02    0.12   0.93   1.2   1.3  2.0e+00  3.2e+01  3.5e+13
+treedepth__      1.4  8.2e-03    0.51    1.0   1.0   2.0  3.8e+03  6.1e+04  1.0e+00
+n_leapfrog__     2.5  1.9e-01     1.3    1.0   3.0   3.0  4.3e+01  7.0e+02  1.0e+00
 divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-energy__         7.8  2.7e-02     1.0    6.8   7.4   9.9  1.5e+03  2.7e+04  1.0e+00
-theta           0.25  3.1e-03    0.12  0.080  0.24  0.48  1.5e+03  2.8e+04  1.0e+00
+energy__         7.8  2.7e-02     1.0    6.8   7.4   9.9  1.5e+03  2.4e+04  1.0e+00
+theta           0.25  3.1e-03    0.12  0.080  0.24  0.48  1.5e+03  2.5e+04  1.0e+00
 
 Samples were drawn using hmc with nuts.
 For each parameter, N_Eff is a crude measure of effective sample size,
@@ -427,12 +403,7 @@ convergence, R_hat=1).</code></pre>
 <a href="#optimization" class="anchor"></a>Optimization</h4>
 <p>We can find the (penalized) maximum likelihood estimate (MLE) using <a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a>:</p>
 <div class="sourceCode" id="cb37"><html><body><pre class="r"><span class="no">fit_mle</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-optimize.html">optimize</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>, <span class="kw">seed</span> <span class="kw">=</span> <span class="fl">123</span>)</pre></body></html></div>
-<pre><code>Running ./bernoulli 'id=1' random 'seed=123' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/standata-1615e312d5913.json' \
-  output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-1-33079e.csv' \
-  'method=optimize'
-method = optimize 
+<pre><code>method = optimize 
   optimize 
     algorithm = lbfgs (Default) 
       lbfgs 
@@ -447,12 +418,12 @@ method = optimize
     save_iterations = 0 (Default) 
 id = 1 
 data 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/standata-1615e312d5913.json 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/standata-3e32fce685.json 
 init = 2 (Default) 
 random 
   seed = 123 
 output 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-1-33079e.csv 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-1-82274b.csv 
   diagnostic_file =  (Default) 
   refresh = 100 (Default) 
  
@@ -481,12 +452,7 @@ Finished in  0.1 seconds.</code></pre>
 <a href="#variational-bayes" class="anchor"></a>Variational Bayes</h4>
 <p>We can run Stan’s experimental variational Bayes algorithm using the <a href="https://mc-stan.org/cmdstanr/reference/model-method-variational.html"><code>$variational()</code></a> method:</p>
 <div class="sourceCode" id="cb44"><html><body><pre class="r"><span class="no">fit_vb</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-variational.html">variational</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>, <span class="kw">seed</span> <span class="kw">=</span> <span class="fl">123</span>, <span class="kw">output_samples</span> <span class="kw">=</span> <span class="fl">4000</span>)</pre></body></html></div>
-<pre><code>Running ./bernoulli 'id=1' random 'seed=123' data \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/standata-1615e109a9c47.json' \
-  output \
-  'file=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-1-8a01d5.csv' \
-  'method=variational' 'output_samples=4000'
-method = variational 
+<pre><code>method = variational 
   variational 
     algorithm = meanfield (Default) 
       meanfield 
@@ -502,12 +468,12 @@ method = variational
     output_samples = 4000 
 id = 1 
 data 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/standata-1615e109a9c47.json 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/standata-3e377b3e02c.json 
 init = 2 (Default) 
 random 
   seed = 123 
 output 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRcAOaI/bernoulli-202006241323-1-8a01d5.csv 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp4D2gwt/bernoulli-202006242132-1-42a619.csv 
   diagnostic_file =  (Default) 
   refresh = 100 (Default) 
  
