@@ -76,6 +76,7 @@ CmdStanRun <- R6::R6Class(
       message("Moved ", length(current_files),
               " files and set internal paths to new locations:\n",
               paste("-", new_paths, collapse = "\n"))
+      private$output_files_saved_ <- TRUE
       invisible(new_paths)
     },
     save_latent_dynamics_files = function(dir = ".",
@@ -97,6 +98,7 @@ CmdStanRun <- R6::R6Class(
       message("Moved ", length(current_files),
               " files and set internal paths to new locations:\n",
               paste("-", new_paths, collapse = "\n"))
+      private$latent_dynamics_files_saved_ <- TRUE
       invisible(new_paths)
     },
     save_data_file = function(dir = ".",
@@ -192,14 +194,17 @@ CmdStanRun <- R6::R6Class(
   ),
   private = list(
     output_files_ = character(),
+    output_files_saved_ = FALSE,
     latent_dynamics_files_ = NULL,
+    latent_dynamics_files_saved_ = FALSE,
     command_args_ = list(),
 
     finalize = function() {
       if (self$args$using_tempdir) {
         temp_files <- c(
-          self$output_files(include_failed = TRUE),
-          if (self$args$save_latent_dynamics)
+          if (!private$output_files_saved_)
+            self$output_files(include_failed = TRUE),
+          if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
             self$latent_dynamics_files(include_failed = TRUE)
         )
         unlink(temp_files)
