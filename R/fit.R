@@ -73,16 +73,9 @@ CmdStanFit <- R6::R6Class(
 
     # print summary table without using tibbles
     print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
-      # FIXME: treat sample and other methods the same once we have
-      # self$metadata() (or equivalent) for all methods
-      if (self$runset$method() == "sample") {
-        all_variables <- self$sampling_info()$model_params
-      } else {
-        all_variables <- posterior::variables(self$draws())
-      }
-
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
+      all_variables <- self$metadata()$model_params
       if (is.null(variables)) {
         total_rows <- length(all_variables)
         variables_to_print <- all_variables[seq_len(max_rows)]
