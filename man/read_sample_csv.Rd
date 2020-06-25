@@ -2,94 +2,14 @@
 % Please edit documentation in R/read_csv.R
 \name{read_sample_csv}
 \alias{read_sample_csv}
-\title{Read CmdStan CSV files into \R}
+\title{Read CmdStan CSV files from sampling into \R}
 \usage{
 read_sample_csv(files, variables = NULL, sampler_diagnostics = NULL)
 }
 \arguments{
-\item{files}{A character vector of paths to the CSV files to read.}
-
-\item{variables}{Optionally, a character vector naming the variables (parameters
-and generated quantities) to read in.
-\itemize{
-\item If \code{NULL} (the default) then the draws of all variables are included.
-\item If an empty string (\code{variables=""}) then none are included.
-\item For non-scalar variables all elements or specific elements can be selected:
-\itemize{
-\item \code{variables = "theta"} selects all elements of \code{theta};
-\item \code{variables = c("theta[1]", "theta[3]")} selects only the 1st and 3rd elements.
-}
-}}
-
-\item{sampler_diagnostics}{Works the same way as \code{variables} but for sampler
-diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).}
-}
-\value{
-A named list with the following components:
-\itemize{
-\item \code{sampling_info}: A list of the arguments used to run the sampler.
-\item \code{inv_metric}: A list (one element per chain) of inverse mass matrices
-or their diagonals, depending on the type of metric used.
-\item \code{step_size}: A list (one element per chain) of the step sizes used.
-\item \code{warmup_draws}:  If \code{save_warmup} was \code{TRUE} then the warmup samples (iter
-x chain x variable array).
-\item \code{post_warmup_draws}: The post-warmup draws (iter x chain x variable array).
-\item \code{warmup_sampler_diagnostics}:  If \code{save_warmup} was \code{TRUE} then warmup
-draws of the sampler diagnostic variables (iter x chain x variable array).
-\item \code{sampler_diagnostics}: The post-warmup draws of the sampler diagnostic
-variables (iter x chain x variable array).
-}
+\item{files, variables, sampler_diagnostics}{Deprecated. Use
+\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}} instead.}
 }
 \description{
-\code{read_sample_csv()} is used internally by CmdStanR to read CmdStan's CSV
-files into \R after MCMC. It can also be used by CmdStan users as a more
-flexible and efficient alternative to \code{rstan::read_stan_csv()}.
-}
-\examples{
-\dontrun{
-stan_program <- tempfile(fileext=".stan")
-cat("
-parameters {
-  real alpha_scalar;
-  vector[2] theta_vector;
-  matrix[2,2] tau_matrix;
-}
-model {
-  alpha_scalar ~ std_normal();
-  theta_vector ~ std_normal();
-  to_vector(tau_matrix) ~ std_normal();
-}
-", file = stan_program)
-
-# only using capture.output to avoid too much printed output in example
-out <- utils::capture.output(
-  mod <- cmdstan_model(stan_program),
-  fit <- mod$sample(save_warmup=TRUE)
-)
-
-# Read in everything
-x <- read_sample_csv(fit$output_files())
-str(x)
-
-# Don't read in any of the sampler diagnostic variables
-x <- read_sample_csv(fit$output_files(), sampler_diagnostics = "")
-
-# Don't read in any of the parameters or generated quantities
-x <- read_sample_csv(fit$output_files(), variables = "")
-
-# Read in only specific parameters and sampler diagnostics
-x <- read_sample_csv(
-  fit$output_files(),
-  variables = c("alpha_scalar", "theta_vector[2]"),
-  sampler_diagnostics = c("n_leapfrog__", "accept_stat__")
-)
-
-# For non-scalar parameters all elements can be selected or only some elements,
-# e.g. all of "theta_vector" but only one element of "tau_matrix"
-x <- read_sample_csv(
-  fit$output_files(),
-  variables = c("theta_vector", "tau_matrix[2,1]")
-)
-}
-
+Deprecated. Use \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}} instead.
 }

@@ -1,33 +1,56 @@
 #' Read CmdStan CSV files into \R
 #'
-#' `read_sample_csv()` is used internally by CmdStanR to read CmdStan's CSV
-#' files into \R after MCMC. It can also be used by CmdStan users as a more
-#' flexible and efficient alternative to `rstan::read_stan_csv()`.
+#' `read_cmdstan_csv()` is used internally by CmdStanR to read CmdStan's output
+#' CSV files into \R. It can also be used by CmdStan users as a more flexible
+#' and efficient alternative to `rstan::read_stan_csv()`.
 #'
 #' @export
 #' @param files A character vector of paths to the CSV files to read.
-#' @param variables Optionally, a character vector naming the variables (parameters
-#'   and generated quantities) to read in.
-#'   * If `NULL` (the default) then the draws of all variables are included.
+#' @param variables Optionally, a character vector naming the variables
+#'   (parameters, transformed parameters, and generated quantities) to read in.
+#'   * If `NULL` (the default) then all variables are included.
 #'   * If an empty string (`variables=""`) then none are included.
 #'   * For non-scalar variables all elements or specific elements can be selected:
 #'     - `variables = "theta"` selects all elements of `theta`;
 #'     - `variables = c("theta[1]", "theta[3]")` selects only the 1st and 3rd elements.
 #' @param sampler_diagnostics Works the same way as `variables` but for sampler
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
+#'   Ignored if the model was not fit using MCMC.
 #'
 #' @return A named list with the following components:
-#' * `sampling_info`: A list of the arguments used to run the sampler.
+#'
+#' * `metadata`: A list of the meta information from the run that produced the
+#' CSV file(s). See **Examples** below.
+#'
+#' The other components in the returned list depend on the method that produced
+#' the CSV file(s).
+#'
+#' For [sampling][model-method-sample] the returned list
+#' also includes the following components:
+#'
 #' * `inv_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
 #' * `step_size`: A list (one element per chain) of the step sizes used.
-#' * `warmup_draws`:  If `save_warmup` was `TRUE` then the warmup samples (iter
-#' x chain x variable array).
-#' * `post_warmup_draws`: The post-warmup draws (iter x chain x variable array).
-#' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` then warmup
-#' draws of the sampler diagnostic variables (iter x chain x variable array).
-#' * `sampler_diagnostics`: The post-warmup draws of the sampler diagnostic
-#' variables (iter x chain x variable array).
+#' * `warmup_draws`:  If `save_warmup` was `TRUE` when fitting the model then a
+#' [`draws_array`][posterior::draws_array] of warmup draws.
+#' * `post_warmup_draws`: A [`draws_array`][posterior::draws_array] of
+#' post-warmup draws.
+#' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` when fitting the
+#' model then a [`draws_array`][posterior::draws_array] of warmup draws of the
+#' sampler diagnostic variables.
+#' * `sampler_diagnostics`: A [`draws_array`][posterior::draws_array] of
+#' post-warmup draws of the sampler diagnostic variables.
+#'
+#' For [optimization][model-method-optimize] the returned list also includes the
+#' following components:
+#'
+#' * `point_estimates`: Point estimates for the model parameters.
+#'
+#' For [variational inference][model-method-variational] the returned list also
+#' includes the following components:
+#'
+#' * `draws`: A [`draws_matrix`][posterior::draws_matrix] of draws from the
+#' approximate posterior distribution.
 #'
 #' @examples
 #' \dontrun{
@@ -52,17 +75,17 @@
 #' )
 #'
 #' # Read in everything
-#' x <- read_sample_csv(fit$output_files())
+#' x <- read_cmdstan_csv(fit$output_files())
 #' str(x)
 #'
 #' # Don't read in any of the sampler diagnostic variables
-#' x <- read_sample_csv(fit$output_files(), sampler_diagnostics = "")
+#' x <- read_cmdstan_csv(fit$output_files(), sampler_diagnostics = "")
 #'
 #' # Don't read in any of the parameters or generated quantities
-#' x <- read_sample_csv(fit$output_files(), variables = "")
+#' x <- read_cmdstan_csv(fit$output_files(), variables = "")
 #'
 #' # Read in only specific parameters and sampler diagnostics
-#' x <- read_sample_csv(
+#' x <- read_cmdstan_csv(
 #'   fit$output_files(),
 #'   variables = c("alpha_scalar", "theta_vector[2]"),
 #'   sampler_diagnostics = c("n_leapfrog__", "accept_stat__")
@@ -70,20 +93,22 @@
 #'
 #' # For non-scalar parameters all elements can be selected or only some elements,
 #' # e.g. all of "theta_vector" but only one element of "tau_matrix"
-#' x <- read_sample_csv(
+#' x <- read_cmdstan_csv(
 #'   fit$output_files(),
 #'   variables = c("theta_vector", "tau_matrix[2,1]")
 #' )
 #' }
 #'
-read_sample_csv <- function(files,
+read_cmdstan_csv <- function(files,
                             variables = NULL,
                             sampler_diagnostics = NULL) {
-  sampling_info <- NULL
+  metadata <- NULL
   warmup_draws <- NULL
   warmup_sampler_diagnostics_draws <- NULL
   post_warmup_draws <- NULL
   post_warmup_sampler_diagnostics_draws <- NULL
+  variational_draws <- NULL
+  point_estimates <- NULL
   inv_metric <- list()
   step_size <- list()
   col_types <- NULL
@@ -91,55 +116,56 @@ read_sample_csv <- function(files,
   not_matching <- c()
   for (output_file in files) {
     checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
-    if (is.null(sampling_info)) {
-      sampling_info <- read_sample_info_csv(output_file)
-      if (!is.null(sampling_info$inv_metric)) {
-        inv_metric[[sampling_info$id]] <- sampling_info$inv_metric
+    if (is.null(metadata)) {
+      metadata <- read_csv_metadata(output_file)
+      if (!is.null(metadata$inv_metric)) {
+        inv_metric[[metadata$id]] <- metadata$inv_metric
       }
-      if (!is.null(sampling_info$stepsize_adaptation)) {
-        step_size[[sampling_info$id]] <- sampling_info$stepsize_adaptation
+      if (!is.null(metadata$step_size_adaptation)) {
+        step_size[[metadata$id]] <- metadata$step_size_adaptation
       }
-      id <- sampling_info$id
+      id <- metadata$id
     } else {
-      csv_file_info <- read_sample_info_csv(output_file)
-      check <- check_sampling_csv_info_matches(sampling_info, csv_file_info)
+      csv_file_info <- read_csv_metadata(output_file)
+      check <- check_csv_metadata_matches(metadata, csv_file_info)
       if (!is.null(check$error)) {
-        stop(check$error)
+        stop(check$error, call. = FALSE)
       }
       not_matching <- c(not_matching, check$not_matching)
-      sampling_info$id <- c(sampling_info$id, csv_file_info$id)
-      sampling_info$seed <- c(sampling_info$seed, csv_file_info$seed)
+      metadata$id <- c(metadata$id, csv_file_info$id)
+      metadata$seed <- c(metadata$seed, csv_file_info$seed)
+      metadata$step_size_adaptation <- c(metadata$step_size_adaptation, csv_file_info$step_size_adaptation)
 
       if (!is.null(csv_file_info$inv_metric)) {
         inv_metric[[csv_file_info$id]] <- csv_file_info$inv_metric
       }
-      if (!is.null(csv_file_info$stepsize_adaptation)) {
-        step_size[[csv_file_info$id]] <- csv_file_info$stepsize_adaptation
+      if (!is.null(csv_file_info$step_size_adaptation)) {
+        step_size[[csv_file_info$id]] <- csv_file_info$step_size_adaptation
       }
       id <- csv_file_info$id
     }
     if (is.null(col_select)) {
       if (is.null(variables)) { # variables = NULL returns all
-        variables <- sampling_info$model_params
+        variables <- metadata$model_params
       } else if (!any(nzchar(variables))) { # if variables = "" returns none
         variables <- NULL
       } else { # filter using variables
-        res <- matching_variables(variables, sampling_info$model_params)
+        res <- matching_variables(variables, metadata$model_params)
         if (length(res$not_found)) {
           stop("Can't find the following variable(s) in the sampling output: ",
-               paste(res$not_found, collapse = ", "))
+               paste(res$not_found, collapse = ", "), call. = FALSE)
         }
         variables <- res$matching
       }
       if (is.null(sampler_diagnostics)) {
-        sampler_diagnostics <- sampling_info$sampler_diagnostics
+        sampler_diagnostics <- metadata$sampler_diagnostics
       } else if (!any(nzchar(sampler_diagnostics))) { # if sampler_diagnostics = "" returns none
         sampler_diagnostics <- NULL
       } else {
-        selected_sampler_diag <- rep(FALSE, length(sampling_info$sampler_diagnostics))
+        selected_sampler_diag <- rep(FALSE, length(metadata$sampler_diagnostics))
         not_found <- NULL
         for (p in sampler_diagnostics) {
-          matches <- sampling_info$sampler_diagnostics == p | startsWith(sampling_info$sampler_diagnostics, paste0(p,"."))
+          matches <- metadata$sampler_diagnostics == p | startsWith(metadata$sampler_diagnostics, paste0(p,"."))
           if (!any(matches)) {
             not_found <- c(not_found, p)
           }
@@ -147,158 +173,168 @@ read_sample_csv <- function(files,
         }
         if (length(not_found)) {
           stop("Can't find the following sampler diagnostic(s) in the sampling output: ",
-               paste(not_found, collapse = ", "))
+               paste(not_found, collapse = ", "), call. = FALSE)
         }
-        sampler_diagnostics <- sampling_info$sampler_diagnostics[selected_sampler_diag]
+        sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
       }
       col_select <- "lp__"
       col_select <- c(col_select, variables[variables!="lp__"])
       col_select <- c(col_select, sampler_diagnostics)
     }
-    num_warmup_draws <- ceiling(sampling_info$iter_warmup/sampling_info$thin)
-    num_post_warmup_draws <- ceiling(sampling_info$iter_sampling/sampling_info$thin)
-    all_draws <- num_warmup_draws + num_post_warmup_draws
-    suppressWarnings(      
-      draws <- vroom::vroom(output_file,
-                  comment = "#",
-                  delim = ',',
-                  trim_ws = TRUE,
-                  col_select = col_select,
-                  col_types = c("lp__" = "d"),
-                  altrep = FALSE,
-                  progress = FALSE,
-                  skip = sampling_info$lines_to_skip,
-                  n_max = all_draws*2)
+    if (metadata$method == "sample") {
+      num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
+      num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
+      all_draws <- num_warmup_draws + num_post_warmup_draws
+    } else if (metadata$method == "variational") {
+      all_draws <- metadata$output_samples
+    } else if (metadata$method == "optimize") {
+      all_draws <- 1
+    }
+    suppressWarnings(
+      draws <- vroom::vroom(
+        output_file,
+        comment = "#",
+        delim = ',',
+        trim_ws = TRUE,
+        col_select = col_select,
+        col_types = c("lp__" = "d"),
+        altrep = FALSE,
+        progress = FALSE,
+        skip = metadata$lines_to_skip,
+        n_max = all_draws * 2
+      )
     )
     if (ncol(draws) == 0) {
-      stop("The supplied csv file does not contain any sampling data!")
+      stop("The supplied csv file does not contain any data!", call. = FALSE)
     }
     draws <- draws[!is.na(draws$lp__), ]
     if (nrow(draws) > 0) {
-      if (sampling_info$save_warmup == 1) {
-        if (length(variables) > 0) {
-          new_warmup_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, variables])
-          if (is.null(warmup_draws)) {
-            warmup_draws <- new_warmup_draws
-          } else {
-            warmup_draws <- posterior::bind_draws(warmup_draws,
-                                                  new_warmup_draws,
-                                                  along="chain")
+      if (metadata$method == "sample") {
+        if (metadata$save_warmup == 1) {
+          if (length(variables) > 0) {
+            warmup_draws <- posterior::bind_draws(
+              warmup_draws,
+              posterior::as_draws_array(draws[1:num_warmup_draws, variables]),
+              along="chain"
+            )
+            post_warmup_draws <- posterior::bind_draws(
+              post_warmup_draws,
+              posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
+              along="chain"
+            )
           }
-        }
-        if (length(sampler_diagnostics) > 0) {
-          new_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics])
-          if (is.null(warmup_sampler_diagnostics_draws)) {
-            warmup_sampler_diagnostics_draws <- new_warmup_sampler_diagnostics_draws
-          } else {
-            warmup_sampler_diagnostics_draws <- posterior::bind_draws(warmup_sampler_diagnostics_draws,
-                                                                      new_warmup_sampler_diagnostics_draws,
-                                                                      along="chain")
-          }
-        }
-        if (length(variables) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables])
-          if (is.null(post_warmup_draws)) {
-            post_warmup_draws <- new_post_warmup_draws
-          } else {
-            post_warmup_draws <- posterior::bind_draws(post_warmup_draws, new_post_warmup_draws, along="chain")
-          }
-        }
-        if (length(sampler_diagnostics) > 0) {
-          new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics])
-          if (is.null(post_warmup_sampler_diagnostics_draws)) {
-            post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
-          } else {
-            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                          new_post_warmup_sampler_diagnostics_draws,
-                                                                          along="chain")
-          }
-        }
-      } else {
-        warmup_draws <- NULL
-        warmup_sampler_diagnostics_draws <- NULL
-        if (length(variables) > 0) {
-          new_post_warmup_draws <- posterior::as_draws_array(draws[, variables])
-          if (is.null(post_warmup_draws)) {
-            post_warmup_draws <- new_post_warmup_draws
-          } else {
-            post_warmup_draws <- posterior::bind_draws(post_warmup_draws,
-                                                      new_post_warmup_draws,
-                                                      along="chain")
-          }
-        }
-        if (sampling_info$algorithm != "fixed_param") {
           if (length(sampler_diagnostics) > 0) {
-            new_post_warmup_sampler_diagnostics_draws <- posterior::as_draws_array(draws[, sampler_diagnostics])
-            if (is.null(post_warmup_sampler_diagnostics_draws)) {
-              post_warmup_sampler_diagnostics_draws <- new_post_warmup_sampler_diagnostics_draws
-            } else {
-              post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(post_warmup_sampler_diagnostics_draws,
-                                                                            new_post_warmup_sampler_diagnostics_draws,
-                                                                            along="chain")
-            }
+            warmup_sampler_diagnostics_draws <- posterior::bind_draws(
+              warmup_sampler_diagnostics_draws,
+              posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics]),
+              along="chain"
+            )
+            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
+              post_warmup_sampler_diagnostics_draws,
+              posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
+              along="chain"
+            )
           }
+        } else {
+            warmup_draws <- NULL
+            warmup_sampler_diagnostics_draws <- NULL
+            if (length(variables) > 0) {
+              post_warmup_draws <- posterior::bind_draws(
+                post_warmup_draws,
+                posterior::as_draws_array(draws[, variables]),
+                along="chain"
+              )
+            }
+            if (length(sampler_diagnostics) > 0 && metadata$algorithm != "fixed_param") {
+              post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
+                post_warmup_sampler_diagnostics_draws,
+                posterior::as_draws_array(draws[, sampler_diagnostics]),
+                along="chain"
+              )
+            }
         }
+      } else if (metadata$method == "variational") {
+        # ignore first line as it's just the mean and lp__ as it's always 0
+        variational_draws <- posterior::as_draws_matrix(
+          draws[-1, colnames(draws) != "lp__", drop=FALSE]
+        )
+        if ("log_p__" %in% posterior::variables(variational_draws)) {
+          variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
+        }
+        if ("log_g__" %in% posterior::variables(variational_draws)) {
+          variational_draws <- posterior::rename_variables(variational_draws, lp_approx__ = "log_g__")
+        }
+      } else if (metadata$method == "optimize") {
+        point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])[, variables]
       }
     }
   }
-  repaired_model_params <- repair_variable_names(variables)
-  if (!is.null(warmup_draws)) {
-    posterior::variables(warmup_draws) <- repaired_model_params
-  }
-  if (!is.null(post_warmup_draws)) {
-    posterior::variables(post_warmup_draws) <- repaired_model_params
-  }
+
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
-    warning("The supplied csv files do not match in the following arguments: ", not_matching_list, "!")
+    warning("The supplied csv files do not match in the following arguments: ",
+            paste(not_matching_list, collapse = ", "), call. = FALSE)
   }
-  sampling_info$model_params <- repair_variable_names(sampling_info$model_params)
-  sampling_info$inv_metric <- NULL
-  list(
-    sampling_info = sampling_info,
-    inv_metric = inv_metric,
-    step_size = step_size,
-    warmup_draws = warmup_draws,
-    post_warmup_draws = post_warmup_draws,
-    warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
-    post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
-  )
+
+  metadata$inv_metric <- NULL
+  metadata$lines_to_skip <- NULL
+  metadata$model_params <- repair_variable_names(metadata$model_params)
+  repaired_variables <- repair_variable_names(variables)
+  if (metadata$method == "sample") {
+    if (!is.null(warmup_draws)) {
+      posterior::variables(warmup_draws) <- repaired_variables
+    }
+    if (!is.null(post_warmup_draws)) {
+      posterior::variables(post_warmup_draws) <- repaired_variables
+    }
+    list(
+      metadata = metadata,
+      inv_metric = inv_metric,
+      step_size = step_size,
+      warmup_draws = warmup_draws,
+      post_warmup_draws = post_warmup_draws,
+      warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
+      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
+    )
+  } else if (metadata$method == "variational") {
+    metadata$model_params <- metadata$model_params[metadata$model_params != "lp__"]
+    metadata$model_params <- gsub("log_p__", "lp__", metadata$model_params)
+    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)
+    repaired_variables <- repaired_variables[repaired_variables != "lp__"]
+    repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
+    repaired_variables <- gsub("log_g__", "lp_approx__", repaired_variables)
+    if (!is.null(variational_draws)) {
+      posterior::variables(variational_draws) <- repaired_variables
+    }
+    list(
+      metadata = metadata,
+      draws = variational_draws
+    )
+  } else if (metadata$method == "optimize") {
+    if (!is.null(point_estimates)) {
+      posterior::variables(point_estimates) <- repaired_variables
+    }
+    list(
+      metadata = metadata,
+      point_estimates = point_estimates
+    )
+  }
+
 }
 
-# FIXME: also parse the csv header
-read_optim_csv <- function(files) {
-  stopifnot(length(files) == 1)
-  csv_no_comments <- utils::read.csv(
-    files,
-    comment.char = "#",
-    colClasses = "numeric"
-  )
-  mat <- as.matrix(csv_no_comments)
-  colnames(mat) <- repair_variable_names(colnames(mat))
-
-  # not really draws (just point estimate) but this is consistent with
-  # names and format for mcmc and vb
-  list(
-    draws = posterior::as_draws_matrix(mat[1,, drop=FALSE])
-  )
-}
-
-# FIXME: also parse the csv header
-read_vb_csv <- function(files) {
-  stopifnot(length(files) == 1)
-  csv_no_comments <- utils::read.csv(
-    files,
-    comment.char = "#",
-    colClasses = "numeric"
-  )
-  # drop first row since according to CmdStan manual it's just the mean
-  mat <- as.matrix(csv_no_comments)[-1,, drop=FALSE]
-  colnames(mat) <- repair_variable_names(colnames(mat))
-  mat <- mat[, colnames(mat) != "lp__", drop=FALSE]
-  draws <- posterior::as_draws_matrix(mat)
-  draws <- posterior::rename_variables(draws, lp__ = "log_p__", lp_approx__ = "log_g__")
-  list(draws = draws)
+#' Read CmdStan CSV files from sampling into \R
+#'
+#' Deprecated. Use [read_cmdstan_csv()] instead.
+#'
+#' @export
+#' @param files,variables,sampler_diagnostics Deprecated. Use
+#'   [read_cmdstan_csv()] instead.
+#'
+read_sample_csv <- function(files,
+                            variables = NULL,
+                            sampler_diagnostics = NULL) {
+  warning("read_sample_csv() is deprecated. Please use read_cmdstan_csv().")
+  read_cmdstan_csv(files, variables, sampler_diagnostics)
 }
 
 
@@ -312,7 +348,7 @@ read_vb_csv <- function(files) {
 #' @return A list containing all sampler settings and the inverse mass matrix
 #'   (or its diagonal depending on the metric).
 #'
-read_sample_info_csv <- function(csv_file) {
+read_csv_metadata <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
   adaptation_terminated <- FALSE
   param_names_read <- FALSE
@@ -333,7 +369,7 @@ read_sample_info_csv <- function(csv_file) {
         csv_file_info[["model_params"]] <- c()
         for(x in all_names) {
           if (csv_file_info$algorithm != "fixed_param") {
-            if (endsWith(x, "__") && x != "lp__") {
+            if (endsWith(x, "__") && !(x %in% c("lp__", "log_p__", "log_g__"))) {
               csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
             } else {
               csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
@@ -404,12 +440,10 @@ read_sample_info_csv <- function(csv_file) {
   }
   close(con)
   if (is.null(csv_file_info$method)) {
-    stop("Supplied CSV file is corrupt!")
-  } else if (csv_file_info$method != "sample") {
-    stop("Supplied CSV file was not generated with sampling. Consider using read_optim_csv or read_vb_csv!")
+    stop("Supplied CSV file is corrupt!", call. = FALSE)
   }
   if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
-    stop("The supplied csv file does not contain any variable names or data!")
+    stop("The supplied csv file does not contain any variable names or data!", call. = FALSE)
   }
   if (inv_metric_rows > 0) {
     rows <- inv_metric_rows
@@ -423,6 +457,7 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info$adapt_delta <- csv_file_info$delta
   csv_file_info$max_treedepth <- csv_file_info$max_depth
   csv_file_info$step_size <- csv_file_info$stepsize
+  csv_file_info$step_size_adaptation <- csv_file_info$stepsize_adaptation
   csv_file_info$iter_warmup <- csv_file_info$num_warmup
   csv_file_info$iter_sampling <- csv_file_info$num_samples
   csv_file_info$threads_per_chain <- csv_file_info$num_threads
@@ -431,6 +466,7 @@ read_sample_info_csv <- function(csv_file) {
   csv_file_info$delta <- NULL
   csv_file_info$max_depth <- NULL
   csv_file_info$stepsize <- NULL
+  csv_file_info$stepsize_adaptation <- NULL
   csv_file_info$num_warmup <- NULL
   csv_file_info$num_samples <- NULL
   csv_file_info$file <- NULL
@@ -447,9 +483,9 @@ read_sample_info_csv <- function(csv_file) {
 #' it returns, the sampling information matches.
 #'
 #' @noRd
-#' @param a,b Two lists returned by `read_sample_info_csv()` to compare.
+#' @param a,b Two lists returned by `read_csv_metadata()` to compare.
 #'
-check_sampling_csv_info_matches <- function(a, b) {
+check_csv_metadata_matches <- function(a, b) {
   if (a$model_name != b$model_name) {
     return(list(error = "Supplied CSV files were not generated with the same model!"))
   }

@@ -1,0 +1,29 @@
+# stan_version_major = 2
+# stan_version_minor = 23
+# stan_version_patch = 0
+# model = bernoulli_model
+# method = optimize
+#   optimize
+#     algorithm = lbfgs (Default)
+#       lbfgs
+#         init_alpha = 0.001 (Default)
+#         tol_obj = 9.9999999999999998e-13 (Default)
+#         tol_rel_obj = 10000 (Default)
+#         tol_grad = 1e-08 (Default)
+#         tol_rel_grad = 10000000 (Default)
+#         tol_param = 1e-08 (Default)
+#         history_size = 5 (Default)
+#     iter = 2000 (Default)
+#     save_iterations = 0 (Default)
+# id = 1
+# data
+#   file = /tmp/Rtmp61AV95/standata-730c65138d15.json
+# init = 2 (Default)
+# random
+#   seed = 1393588279
+# output
+#   file = /tmp/Rtmp61AV95/bernoulli-202006242136-1-ceffba.csv
+#   diagnostic_file =  (Default)
+#   refresh = 100 (Default)
+lp__,theta
+-12.2173,0.300001
