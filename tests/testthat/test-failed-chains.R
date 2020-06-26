@@ -123,6 +123,7 @@ test_that("errors when using draws after all chains fail", {
   skip_on_cran()
   expect_error(fit_all_fail$summary(), "No chains finished successfully")
   expect_error(fit_all_fail$draws(), "No chains finished successfully")
+  expect_error(fit_all_fail$sampler_diagnostics(), "No chains finished successfully")
   expect_error(fit_all_fail$cmdstan_summary(), "Unable to run bin/stansummary")
   expect_error(fit_all_fail$cmdstan_diagnose(), "Unable to run bin/diagnose")
 })

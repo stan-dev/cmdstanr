@@ -215,3 +215,20 @@ test_that("output and latent dynamics files are cleaned up correctly", {
     file.remove(latent_dynamics_files)
   }
 })
+
+test_that("CmdStanArgs erorrs if idx is out of proc_ids range", {
+  skip_on_cran()
+  data_file <- test_path("resources", "data", "bernoulli.data.json")
+  mod <- testing_model("bernoulli")
+  arg <- CmdStanArgs$new(
+    method_args = SampleArgs$new(),
+    model_name = "bernoulli",
+    exe_file = mod$exe_file(),
+    data_file = data_file,
+    proc_ids = c(1,2,3,4)
+  )
+  expect_error(
+    arg$compose_all_args(idx = 5),
+    "Index \\(5\\) exceeds number of CmdStan processes \\(4\\)."
+  )
+})

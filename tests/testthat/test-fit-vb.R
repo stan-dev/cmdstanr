@@ -31,6 +31,11 @@ test_that("print() method works after vb", {
   expect_output(fit$print(), "lp_approx__")
   expect_output(fit$print(), "showing 10 of 20 rows")
   expect_output(fit$print(max_rows = 20), "theta[8]", fixed = TRUE) # last parameter
+  expect_error(
+    fit$print(variable = "unknown", max_rows = 20),
+    "Can't find the following variable(s): unknown",
+    fixed = TRUE
+  ) # unknown parameter
 
   out <- capture.output(fit$print(c("theta", "tau", "lp__", "lp_approx__")))
   expect_length(out, 13) # columns names + 8 thetas + tau + lp__ + lp_approx__ + empty + message
