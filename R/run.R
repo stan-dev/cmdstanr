@@ -157,6 +157,9 @@ CmdStanRun <- R6::R6Class(
       if (self$method() == "optimize") {
         stop("Not available for optimize method.", call. = FALSE)
       }
+      if (self$method() == "generate_quantities") {
+        stop("Not available for generate_quantities method.", call. = FALSE)
+      }
       tool <- match.arg(tool)
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No CmdStan runs finished successfully. ",
