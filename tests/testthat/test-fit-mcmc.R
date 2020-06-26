@@ -108,6 +108,11 @@ test_that("print() method works after mcmc", {
   expect_output(fit$print(max_rows = 2), "showing 2 of 19 rows")
   expect_output(fit$print(max_rows = 19), "theta[8]", fixed=TRUE) # last parameter
   expect_output(fit$print("theta", max_rows = 2), "showing 2 of 8 rows")
+  expect_error(
+    fit$print(variable = "unknown", max_rows = 20),
+    "Can't find the following variable(s): unknown",
+    fixed = TRUE
+  ) # unknown parameter
 
   out <- capture.output(fit$print("theta"))
   expect_length(out, 9) # columns names + 8 thetas
