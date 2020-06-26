@@ -385,10 +385,10 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     }
     procs$set_active_procs(procs$num_alive())
   }
-  if (self$get_proc(id)$get_exit_status() == 0) {
-    self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
+  if (procs$get_proc(id)$get_exit_status() == 0) {
+    procs$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
   } else {
-    self$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
+    procs$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
   }
   procs$mark_proc_stop(id)
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
