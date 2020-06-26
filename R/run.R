@@ -327,7 +327,6 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
         wd = dirname(self$exe_file())
       )
       procs$mark_proc_start(chain_id)
-      procs$set_proc_state(id = chain_id, new_state = 2) # active process
       procs$set_active_procs(procs$active_procs() + 1)
       chain_ind <- chain_ind + 1
     }
@@ -336,6 +335,15 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     while (procs$active_procs() == start_active_procs &&
            procs$active_procs() > 0) {
       procs$wait(0.1)
+      procs$poll(0)
+      for (chain_id in chains) {
+        if (!procs$is_queued(chain_id)) {
+          output <- procs$get_proc(chain_id)$read_output_lines()
+          procs$process_output(output, chain_id)
+          error_output <- procs$get_proc(chain_id)$read_error_lines()
+          procs$process_error_output(error_output, chain_id)
+        }
+      }
       procs$set_active_procs(procs$num_alive())
     }
     procs$check_finished()
@@ -377,7 +385,11 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     }
     procs$set_active_procs(procs$num_alive())
   }
-  procs$set_proc_state(id = id, new_state = 5) # successful process
+  if (self$get_proc(id)$get_exit_status() == 0) {
+    self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
+  } else {
+    self$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
+  }
   procs$mark_proc_stop(id)
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
   procs$report_time()
@@ -588,9 +600,13 @@ CmdStanProcs <- R6::R6Class(
       invisible(self)
     },
     report_time = function(id = NULL) {
-      cat("Finished in ",
-              format(round(self$total_time(), 1), nsmall = 1),
-              "seconds.\n")
+      if (self$proc_state(id) == 7) {
+        warning("Fitting finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+      } else {        
+        cat("Finished in ",
+                format(round(self$total_time(), 1), nsmall = 1),
+                "seconds.\n")
+      }
     }
   ),
   private = list(
@@ -729,7 +745,7 @@ CmdStanMCMCProcs <- R6::R6Class(
 )
 
 CmdStanGQProcs <- R6::R6Class(
-  classname = "CmdStanMCMCProcs",
+  classname = "CmdStanGQProcs",
   inherit = CmdStanProcs,
   public = list(
     check_finished = function() {
@@ -738,7 +754,11 @@ CmdStanGQProcs <- R6::R6Class(
         if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
           # if the process just finished make sure we process all
           # input and mark the process finished
-          self$set_proc_state(id = id, new_state = 5) # all gq process are marked successful
+          if (self$get_proc(id)$get_exit_status() == 0) {
+            self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
+          } else {
+            self$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
+          }          
           self$mark_proc_stop(id)
           self$report_time(id)
         }
@@ -746,21 +766,61 @@ CmdStanGQProcs <- R6::R6Class(
       invisible(self)
     },
     process_output = function(out, id) {
+      if (length(out) == 0) {
+        return(NULL)
+      }
+      for (line in out) {
+        private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
+        if (nzchar(line)) {
+          if (self$proc_state(id) == 1 && regexpr("refresh = ", line, perl = TRUE) > 0) {
+            self$set_proc_state(id, new_state = 2)
+          } else if (self$proc_state(id) >= 2) {
+            cat("Chain", id, line, "\n")
+          }
+        }
+      }
       invisible(self)
     },
     report_time = function(id = NULL) {
       if (!is.null(id)) {
-        cat("Chain", id, "finished in", format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+        if (self$proc_state(id) == 7) {
+          warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+        } else {
+          cat("Chain", id, "finished in", format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+        }        
         return(invisible(NULL))
       } else {
         num_chains <- self$num_procs()
         if (num_chains > 1) {
+          num_failed <- self$num_failed()
+          if (num_failed == 0) {
+            if (num_chains == 2) {
+              cat("\nBoth chains finished successfully.\n")
+            } else {
+              cat("\nAll", num_chains, "chains finished successfully.\n")
+            }
             cat("Mean chain execution time:",
                 format(round(mean(self$proc_total_time()), 1), nsmall = 1),
                 "seconds.\n")
             cat("Total execution time:",
                 format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n")
+          } else if (num_failed == num_chains) {
+            warning("All chains finished unexpectedly!\n", call. = FALSE)
+            warning("Use read_cmdstan_csv() to read the results of the failed chains.",
+                    immediate. = TRUE,
+                    call. = FALSE)
+          } else {
+            warning(num_failed, " chain(s) finished unexpectedly!",
+                    immediate. = TRUE,
+                    call. = FALSE)
+            cat("The remaining chains had a mean execution time of",
+                format(round(mean(self$total_time()), 1), nsmall = 1),
+                "seconds.\n")
+            warning("The returned fit object will only read in results of succesful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
+                    immediate. = TRUE,
+                    call. = FALSE)
+          }
         }
         return(invisible(NULL))
       }
