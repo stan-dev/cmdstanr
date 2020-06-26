@@ -178,7 +178,7 @@ read_cmdstan_csv <- function(files,
         }
         sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
       }
-      if(sampling_info$method == "generate_quantities") {
+      if(metadata$method == "generate_quantities") {
         col_select <- c(col_select, variables)
       } else {
         col_select <- "lp__"
@@ -194,25 +194,44 @@ read_cmdstan_csv <- function(files,
       all_draws <- metadata$output_samples
     } else if (metadata$method == "optimize") {
       all_draws <- 1
-    } 
-    suppressWarnings(
-      draws <- vroom::vroom(
-        output_file,
-        comment = "#",
-        delim = ',',
-        trim_ws = TRUE,
-        col_select = col_select,
-        col_types = c("lp__" = "d"),
-        altrep = FALSE,
-        progress = FALSE,
-        skip = metadata$lines_to_skip,
-        n_max = all_draws * 2
+    }  
+    
+    if (metadata$method == "generate_quantities") {
+      col_types = list()
+      # set the first arg as double
+      # to silence the type detection info
+      col_types[[col_select[1]]] = "d"
+      suppressWarnings(      
+        draws <- vroom::vroom(
+          output_file,
+          comment = "#",
+          delim = ',',
+          col_types = col_types,
+          trim_ws = TRUE,
+          altrep = FALSE,
+          progress = FALSE,
+          skip = metadata$lines_to_skip)
       )
-    )
+    } else {
+      suppressWarnings(
+        draws <- vroom::vroom(
+          output_file,
+          comment = "#",
+          delim = ',',
+          trim_ws = TRUE,
+          col_select = col_select,
+          col_types = c("lp__" = "d"),
+          altrep = FALSE,
+          progress = FALSE,
+          skip = metadata$lines_to_skip,
+          n_max = all_draws * 2
+        )
+      )
+      draws <- draws[!is.na(draws$lp__), ]
+    }    
     if (ncol(draws) == 0) {
       stop("The supplied csv file does not contain any data!", call. = FALSE)
     }
-    draws <- draws[!is.na(draws$lp__), ]
     if (nrow(draws) > 0) {
       if (metadata$method == "sample") {
         if (metadata$save_warmup == 1) {
@@ -250,7 +269,7 @@ read_cmdstan_csv <- function(files,
                 along="chain"
               )
             }
-            if (length(sampler_diagnostics) > 0 && metadata$algorithm != "fixed_param") {
+            if (length(sampler_diagnostics) > 0 && all(metadata$algorithm != "fixed_param")) {
               post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
                 post_warmup_sampler_diagnostics_draws,
                 posterior::as_draws_array(draws[, sampler_diagnostics]),
@@ -271,7 +290,7 @@ read_cmdstan_csv <- function(files,
         }
       } else if (metadata$method == "optimize") {
         point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])[, variables]
-      } else if (sampling_info$method == "generate_quantities") {
+      } else if (metadata$method == "generate_quantities") {
           generated_quantities <- posterior::bind_draws(generated_quantities,
                                                         posterior::as_draws_array(draws),
                                                         along="chain")
@@ -384,7 +403,7 @@ read_csv_metadata <- function(csv_file) {
         csv_file_info[["sampler_diagnostics"]] <- c()
         csv_file_info[["model_params"]] <- c()
         for(x in all_names) {
-          if (csv_file_info$algorithm != "fixed_param") {
+          if (all(csv_file_info$algorithm != "fixed_param")) {
             if (endsWith(x, "__") && !(x %in% c("lp__", "log_p__", "log_g__"))) {
               csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
             } else {
@@ -510,11 +529,20 @@ check_csv_metadata_matches <- function(a, b) {
         all(a$sampler_diagnostics == b$sampler_diagnostics))) {
     return(list(error = "Supplied CSV files have samples for different variables!"))
   }
-  if (a$iter_sampling != b$iter_sampling ||
-      a$thin != b$thin ||
-      a$save_warmup != b$save_warmup ||
-      (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
-    return(list(error = "Supplied CSV files dont match in the number of stored samples!"))
+  if (a$method != b$method) {
+    return(list(error = "Supplied CSV files were produced by different methods and need to be read in separately!"))
+  }
+  if (a$method == "sample") {  
+    if (a$iter_sampling != b$iter_sampling ||
+        a$thin != b$thin ||
+        a$save_warmup != b$save_warmup ||
+        (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
+      return(list(error = "Supplied CSV files dont match in the number of output samples!"))
+    }
+  } else if (a$method == "variational") {  
+    if (a$output_samples != b$output_samples) {
+      return(list(error = "Supplied CSV files dont match in the number of output samples!"))
+    }
   }
   match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
                   "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_treedepth",

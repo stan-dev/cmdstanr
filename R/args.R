@@ -312,12 +312,12 @@ GenerateQuantitiesArgs <- R6::R6Class(
     # non-default arguments. Works the same way as compose for sampler args,
     # but `idx` is ignored (no multiple chains for optimize or variational)
     compose = function(idx = NULL, args = NULL) {
-      .make_arg <- function(arg_name) {
-        compose_arg(self, arg_name, idx = NULL)
+      .make_arg <- function(arg_name, cmdstan_arg_name = NULL, idx = NULL) {
+        compose_arg(self, arg_name = arg_name, cmdstan_arg_name = cmdstan_arg_name, idx = idx)
       }
       new_args <- list(
         "method=generate_quantities",
-        .make_arg("fitted_params")
+        .make_arg("fitted_params", idx = idx)
       )
       new_args <- do.call(c, new_args)
       c(args, new_args)

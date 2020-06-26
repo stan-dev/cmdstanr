@@ -943,16 +943,16 @@ CmdStanGQ <- R6::R6Class(
       }
       to_read <- remaining_columns_to_read(
         requested = variables,
-        currently_read = dimnames(private$generated_quantities_)$variable,
-        all = private$info_$model_params
+        currently_read = dimnames(private$draws_)$variable,
+        all = private$metadata_$model_params
       )
       if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = to_read)
       }
       if (is.null(variables)) {
-        variables <- private$info_$model_params
+        variables <- private$metadata_$model_params
       }
-      matching_res <- matching_variables(variables, private$info_$model_params)
+      matching_res <- matching_variables(variables, private$metadata_$model_params)
       if (length(matching_res$not_found)) {
         stop("Can't find the following variable(s) in the output: ",
              paste(matching_res$not_found, collapse = ", "), call. = FALSE)
@@ -968,16 +968,16 @@ CmdStanGQ <- R6::R6Class(
       remaining_columns_to_read(
         variables,
         dimnames(private$draws_)$variable,
-        private$info$model_params
+        private$metadata_$model_params
       )
-      data_csv <- read_sample_csv(
+      data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables_to_read,
         sampler_diagnostics = ""
       )
-      private$info_ <- data_csv$info
+      private$metadata_ <- data_csv$metadata
       if (!is.null(data_csv$generated_quantities)) {
-        if (is.null(private$generated_quantities_)) {
+        if (is.null(private$draws_)) {
           private$draws_ <- data_csv$generated_quantities
         } else {
           private$draws_ <-
