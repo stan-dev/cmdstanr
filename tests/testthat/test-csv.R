@@ -44,11 +44,11 @@ test_that("read_cmdstan_csv() fails for different number of samples in csv", {
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_10$output_files())
   expect_error(read_cmdstan_csv(csv_files),
-               "Supplied CSV files dont match in the number of stored samples!")
+               "Supplied CSV files dont match in the number of output samples!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1a$output_files())
   expect_error(read_cmdstan_csv(csv_files),
-               "Supplied CSV files dont match in the number of stored samples!")
+               "Supplied CSV files dont match in the number of output samples!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1b$output_files())
   expect_warning(read_cmdstan_csv(csv_files),
@@ -56,7 +56,7 @@ test_that("read_cmdstan_csv() fails for different number of samples in csv", {
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1_with_warmup$output_files())
   expect_error(read_cmdstan_csv(csv_files),
-                 "Supplied CSV files dont match in the number of stored samples!")
+                 "Supplied CSV files dont match in the number of output samples!")
 })
 
 test_that("read_cmdstan_csv() fails for different variables", {
