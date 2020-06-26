@@ -116,20 +116,55 @@ process_fitted_params <- function(fitted_params) {
     path <- fitted_params
   } else if (is.character(fitted_params)) {
     path <- absolute_path(fitted_params)
-  } else if (checkmate::test_r6(fitted_params, classes = ("CmdStanFit"))) {
+  } else if (checkmate::test_r6(fitted_params, classes = ("CmdStanMCMC"))) {
     if (all(file.exists(fitted_params$output_files()))) {
       path <- absolute_path(fitted_params$output_files())
     } else {
       # write to a temporary CSV file
-      draws <- fitted_params$draws()
+      draws <- posterior::as_draws_array(fitted_params$draws())
+      sampler_diagnostics <- posterior::as_draws_array(fitted_params$sampler_diagnostics())
       if (!is.null(draws)) {
-        
+        variables <- dimnames(draws)$variable
+        non_lp_variables <- variables[variables != "lp__"]
+        draws <- posterior::bind_draws(
+          posterior::subset_draws(draws, variable = "lp__"),
+          sampler_diagnostics,
+          draws[,,non_lp_variables],
+          along="variable"
+        )
+        variables <- dimnames(draws)$variable
+        chains <- dimnames(draws)$chain
+        iterations <- length(dimnames(draws)$iteration)
+        paths <- generate_file_names(
+            basename = "fittedParams-",
+            ids = chains
+        )        
+        chain <- 1
+        for (path in paths) {
+          chain_draws <- as.data.frame(posterior::subset_draws(draws, chain = chain))
+          colnames(chain_draws) <- unrepair_variable_names(variables)
+          write(
+            paste0("# num_samples = ", iterations),
+            file = path,
+            append = FALSE
+          )
+          vroom::vroom_write(
+            chain_draws,
+            delim = ",",
+            path = path,
+            col_names = TRUE,
+            progress = FALSE,
+            append = TRUE
+          )
+          chain <- chain + 1
+        }
+        return(paths)
       } else {
-        stop("No draws found in the CmdstanFit object.", call. = FALSE)    
+        stop("No draws found in the fit (CmdStanMCMC) object.", call. = FALSE)    
       }
     }
   } else {
-    stop("'data' should be a path, a vector of paths or a CmdstanFit object.", call. = FALSE)
+    stop("'data' should be a path, a vector of paths or a sampling fit object (CmdStanMCMC).", call. = FALSE)
   }
   path
 }
