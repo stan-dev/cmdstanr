@@ -758,54 +758,34 @@ CmdStanMCMC <- R6::R6Class(
       private$metadata_ <- data_csv$metadata
 
       if (!is.null(data_csv$post_warmup_draws)) {
-        if (is.null(private$draws_)) {
-          private$draws_ <- data_csv$post_warmup_draws
-        } else {
-          private$draws_ <-
-            posterior::bind_draws(
-              data_csv$post_warmup_draws,
-              private$draws_,
-              along="variable"
-            )
-        }
+        private$draws_ <- posterior::bind_draws(
+          private$draws_,
+          data_csv$post_warmup_draws,
+          along="variable"
+        )
       }
       if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-        if (is.null(private$sampler_diagnostics_)) {
-          private$sampler_diagnostics_ <- data_csv$post_warmup_sampler_diagnostics
-        } else {
-          private$sampler_diagnostics_ <-
-            posterior::bind_draws(
-              data_csv$post_warmup_sampler_diagnostics,
-              private$sampler_diagnostics_,
-              along="variable"
-            )
-        }
+        private$sampler_diagnostics_ <- posterior::bind_draws(
+          private$sampler_diagnostics_,
+          data_csv$post_warmup_sampler_diagnostics,
+          along="variable"
+        )
       }
       if (!is.null(data_csv$metadata$save_warmup)
          && data_csv$metadata$save_warmup) {
         if (!is.null(data_csv$warmup_draws)) {
-          if (is.null(private$warmup_draws_)) {
-            private$warmup_draws_ <- data_csv$warmup_draws
-          } else {
-            private$warmup_draws_ <-
-              posterior::bind_draws(
-                data_csv$warmup_draws,
-                private$warmup_draws_,
-                along="variable"
-              )
-          }
+          private$warmup_draws_ <- posterior::bind_draws(
+            private$warmup_draws_,
+            data_csv$warmup_draws,
+            along="variable"
+          )
         }
         if (!is.null(data_csv$warmup_sampler_diagnostics)) {
-          if (is.null(private$warmup_sampler_diagnostics_)) {
-            private$warmup_sampler_diagnostics_ <- data_csv$warmup_sampler_diagnostics
-          } else {
-            private$warmup_sampler_diagnostics_ <-
-              posterior::bind_draws(
-                data_csv$warmup_sampler_diagnostics,
-                private$warmup_sampler_diagnostics_,
-                along="variable"
-              )
-          }
+          private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
+            private$warmup_sampler_diagnostics_,
+            data_csv$warmup_sampler_diagnostics,
+            along="variable"
+          )
         }
       }
       invisible(self)
