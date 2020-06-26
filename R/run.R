@@ -453,7 +453,7 @@ CmdStanProcs <- R6::R6Class(
         command = command,
         args = args,
         wd = wd,
-        echo_cmd = TRUE,
+        echo_cmd = FALSE,
         stdout = "|",
         stderr = "|"
       )
@@ -492,18 +492,15 @@ CmdStanProcs <- R6::R6Class(
     },
     check_finished = function() {
       for (id in private$proc_ids_) {
-        # if process is not finished yet
-        if (self$is_still_working(id)) {
-          if (!self$is_queued(id) && !self$is_alive(id)) {
-            # if the process just finished make sure we process all
-            # input and mark the process finished
-            output <- self$get_proc(id)$read_output_lines()
-            self$process_output(output, id)
-            error_output <- self$get_proc(id)$read_error_lines()
-            self$process_error_output(error_output, id)
-            self$mark_proc_stop(id)
-            self$report_time(id)
-          }
+        if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
+          # if the process just finished make sure we process all
+          # input and mark the process finished
+          output <- self$get_proc(id)$read_output_lines()
+          self$process_output(output, id)
+          error_output <- self$get_proc(id)$read_error_lines()
+          self$process_error_output(error_output, id)
+          self$mark_proc_stop(id)
+          self$report_time(id)
         }
       }
       invisible(self)
@@ -738,7 +735,7 @@ CmdStanGQProcs <- R6::R6Class(
     check_finished = function() {
       for (id in private$proc_ids_) {
         # if process is not finished yet
-        if (!self$is_queued(id) && !self$is_alive(id)) {
+        if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
           # if the process just finished make sure we process all
           # input and mark the process finished
           self$set_proc_state(id = id, new_state = 5) # all gq process are marked successful

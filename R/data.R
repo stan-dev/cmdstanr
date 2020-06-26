@@ -105,6 +105,35 @@ process_data <- function(data) {
   path
 }
 
+#' Process fitted params for the generate quantities method
+#'
+#' @noRd
+#' @param data If not `NULL`, then either a path to a CSV file compatible with
+#'   CmdStan or a fit object.
+#' @return Path to data file.
+process_fitted_params <- function(fitted_params) {
+  if (is.null(fitted_params)) {
+    path <- fitted_params
+  } else if (is.character(fitted_params)) {
+    path <- absolute_path(fitted_params)
+  } else if (checkmate::test_r6(fitted_params, classes = ("CmdStanFit"))) {
+    if (all(file.exists(fitted_params$output_files()))) {
+      path <- absolute_path(fitted_params$output_files())
+    } else {
+      # write to a temporary CSV file
+      draws <- fitted_params$draws()
+      if (!is.null(draws)) {
+        
+      } else {
+        stop("No draws found in the CmdstanFit object.", call. = FALSE)    
+      }
+    }
+  } else {
+    stop("'data' should be a path, a vector of paths or a CmdstanFit object.", call. = FALSE)
+  }
+  path
+}
+
 # check if any objects in the data list have zero
 any_zero_dims <- function(data) {
   has_zero_dims <- sapply(data, function(x) {

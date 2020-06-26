@@ -885,8 +885,9 @@ generate_quantities_method <- function(fitted_params = NULL,
                             parallel_chains = getOption("mc.cores", 1),
                             threads_per_chain = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
+  fitted_params = process_fitted_params(fitted_params)
   generate_quantities_args <- GenerateQuantitiesArgs$new(
-    fitted_params = fitted_params # TODO(process_fitted_params)
+    fitted_params = fitted_params
   )
   chains = length(fitted_params)
   cmdstan_args <- CmdStanArgs$new(
