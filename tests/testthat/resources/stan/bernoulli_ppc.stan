@@ -11,6 +11,8 @@ model {
 }
 generated quantities {
   int y_rep[N];
+  int sum_y;
   for (n in 1:N)
     y_rep[n] = bernoulli_rng(theta);
+  sum_y = sum(y_rep);
 }

@@ -178,8 +178,15 @@ CmdStanRun <- R6::R6Class(
     },
 
     time = function() {
-      if (self$method() != "sample") {
+      if (self$method() %in% c("optimize", "variational")) {
         time <- list(total = self$procs$total_time())
+      } else if (self$method() == "generate_quantities") {
+        chain_time <- data.frame(
+          chain_id = self$procs$proc_ids()[self$procs$is_finished()],
+          total = self$procs$proc_total_time()[self$procs$is_finished()]
+        )
+
+        time <- list(total = self$procs$total_time(), chains = chain_time)
       } else {
         chain_time <- data.frame(
           chain_id = self$procs$proc_ids()[self$procs$is_finished()],
@@ -194,8 +201,8 @@ CmdStanRun <- R6::R6Class(
         }
         time <- list(total = self$procs$total_time(), chains = chain_time)
       }
-      time
-    }
+      time 
+    }   
   ),
   private = list(
     output_files_ = character(),

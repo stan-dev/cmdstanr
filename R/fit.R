@@ -917,6 +917,9 @@ CmdStanGQ <- R6::R6Class(
   classname = "CmdStanGQ",
   inherit = CmdStanFit,
   public = list(
+    num_chains = function() {
+      super$num_procs()
+    },
     draws = function(variables = NULL) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the generated quantities.", call. = FALSE)
@@ -939,6 +942,13 @@ CmdStanGQ <- R6::R6Class(
       }
       variables <- repair_variable_names(matching_res$matching)
       private$draws_[,,variables]
+    },
+    output = function(id = NULL) {
+      if (is.null(id)) {
+        self$runset$procs$proc_output()
+      } else {
+        cat(paste(self$runset$procs$proc_output(id), collapse="\n"))
+      }
     }
   ),
   private = list(

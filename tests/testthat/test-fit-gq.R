@@ -7,7 +7,7 @@ if (not_on_cran()) {
   mod <- testing_model("bernoulli_ppc")
   data_list <- testing_data("bernoulli_ppc")
   PARAM_NAMES <- c("y_rep[1]", "y_rep[2]", "y_rep[3]", "y_rep[4]", "y_rep[5]",
-                   "y_rep[6]", "y_rep[7]", "y_rep[8]", "y_rep[9]", "y_rep[10]")
+                   "y_rep[6]", "y_rep[7]", "y_rep[8]", "y_rep[9]", "y_rep[10]", "sum_y")
 }
 
 test_that("draws() stops for unkown variables", {
@@ -25,179 +25,106 @@ test_that("draws() stops for unkown variables", {
   )
 })
 
-# test_that("draws() method returns draws_array (reading csv works)", {
-#   skip_on_cran()
-#   draws <- fit_mcmc$draws()
-#   draws_betas <- fit_mcmc$draws(variables = "beta")
-#   draws_beta <- fit_mcmc$draws(variables = "beta[1]")
-#   draws_alpha_beta <- fit_mcmc$draws(variables = c("alpha", "beta"))
-#   draws_beta_alpha <- fit_mcmc$draws(variables = c("beta", "alpha"))
-#   draws_all_after <- fit_mcmc$draws()
-#   expect_type(draws, "double")
-#   expect_s3_class(draws, "draws_array")
-#   expect_equal(posterior::variables(draws), c("lp__", PARAM_NAMES))
-#   expect_equal(posterior::nchains(draws), fit_mcmc$num_chains())
-#   expect_s3_class(draws_betas, "draws_array")
-#   expect_equal(posterior::nvariables(draws_betas), 3)
-#   expect_equal(posterior::nchains(draws_betas), fit_mcmc$num_chains())
-#   expect_s3_class(draws_beta, "draws_array")
-#   expect_equal(posterior::nvariables(draws_beta), 1)
-#   expect_equal(posterior::nchains(draws_beta), fit_mcmc$num_chains())
-#   expect_s3_class(draws_alpha_beta, "draws_array")
-#   expect_equal(posterior::nvariables(draws_alpha_beta), 4)
-#   expect_equal(posterior::nchains(draws_alpha_beta), fit_mcmc$num_chains())
-#   expect_s3_class(draws_all_after, "draws_array")
-#   expect_equal(posterior::nvariables(draws_all_after), 5)
-#   expect_equal(posterior::nchains(draws_all_after), fit_mcmc$num_chains())
-#
-#   # check the order of the draws
-#   expect_equal(posterior::variables(draws_alpha_beta), c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-#   expect_equal(posterior::variables(draws_beta_alpha), c("beta[1]", "beta[2]", "beta[3]", "alpha"))
-# })
-#
-# test_that("inv_metric method works after mcmc", {
-#   skip_on_cran()
-#   x <- fit_mcmc_1$inv_metric()
-#   expect_length(x, fit_mcmc_1$num_chains())
-#   checkmate::expect_matrix(x[[1]])
-#   checkmate::expect_matrix(x[[2]])
-#   expect_equal(x[[1]], diag(diag(x[[1]])))
-#
-#   x <- fit_mcmc_1$inv_metric(matrix=FALSE)
-#   expect_length(x, fit_mcmc_1$num_chains())
-#   expect_null(dim(x[[1]]))
-#   checkmate::expect_numeric(x[[1]])
-#   checkmate::expect_numeric(x[[2]])
-#
-#   x <- fit_mcmc_2$inv_metric()
-#   expect_length(x, fit_mcmc_2$num_chains())
-#   checkmate::expect_matrix(x[[1]])
-#   expect_false(x[[1]][1,2] == 0) # dense
-# })
-#
-# test_that("summary() method works after mcmc", {
-#   skip_on_cran()
-#   x <- fit_mcmc$summary()
-#   expect_s3_class(x, "draws_summary")
-#   expect_equal(x$variable, c("lp__", PARAM_NAMES))
-#
-#   x <- fit_mcmc$summary(NULL, c("rhat", "sd"))
-#   expect_equal(colnames(x), c("variable", "rhat", "sd"))
-#
-#   x <- fit_mcmc$summary("lp__", c("median", "mad"))
-#   expect_equal(x$variable, "lp__")
-#   expect_equal(colnames(x), c("variable", "median", "mad"))
-# })
-#
-# test_that("print() method works after mcmc", {
-#   skip_on_cran()
-#   expect_output(expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"), "variable")
-#   expect_output(fit_mcmc$print(max_rows = 1), "# showing 1 of 5 rows")
-#   expect_output(fit_mcmc$print(NULL, c("ess_sd")), "ess_sd")
-#
-#   # test on model with more parameters
-#   fit <- cmdstanr_example("schools_ncp")
-#   expect_output(fit$print(), "showing 10 of 19 rows")
-#   expect_output(fit$print(max_rows = 2), "showing 2 of 19 rows")
-#   expect_output(fit$print(max_rows = 19), "theta[8]", fixed=TRUE) # last parameter
-#   expect_output(fit$print("theta", max_rows = 2), "showing 2 of 8 rows")
-#   expect_error(
-#     fit$print(variable = "unknown", max_rows = 20),
-#     "Can't find the following variable(s): unknown",
-#     fixed = TRUE
-#   ) # unknown parameter
-#
-#   out <- capture.output(fit$print("theta"))
-#   expect_length(out, 9) # columns names + 8 thetas
-#   expect_match(out[1], "variable")
-#   expect_match(out[2], "theta[1]", fixed = TRUE)
-#   expect_match(out[9], "theta[8]", fixed = TRUE)
-#   expect_false(any(grepl("mu|tau|theta_raw", out)))
-#
-#   # make sure the row order is correct
-#   out <- capture.output(fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")))
-#   expect_length(out, 5)
-#   expect_match(out[1], " variable", out[1])
-#   expect_match(out[2], " theta[1]", fixed = TRUE)
-#   expect_match(out[3], " tau")
-#   expect_match(out[4], " mu")
-#   expect_match(out[5], " theta_raw[3]", fixed = TRUE)
-# })
-#
-# test_that("output() method works after mcmc", {
-#   skip_on_cran()
-#   checkmate::expect_list(
-#     fit_mcmc$output(),
-#     types = "character",
-#     any.missing = FALSE,
-#     len = fit_mcmc$runset$num_procs()
-#   )
-#   expect_output(fit_mcmc$output(id = 1), "Gradient evaluation took")
-# })
-#
-# test_that("time() method works after mcmc", {
-#   skip_on_cran()
-#   run_times <- fit_mcmc$time()
-#   checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
-#   testthat::expect_named(run_times, c("total", "chains"))
-#   checkmate::expect_number(run_times$total, finite = TRUE)
-#   checkmate::expect_data_frame(
-#     run_times$chains,
-#     any.missing = FALSE,
-#     types = c("integer", "numeric"),
-#     nrows = fit_mcmc$runset$num_procs(),
-#     ncols = 4
-#   )
-#
-#   # after refresh=0 warmup and sampling times should be NA
-#   testthat::expect_warning(
-#     run_times_0 <- fit_mcmc_0$time(),
-#     "Separate warmup and sampling times are not available"
-#   )
-#   checkmate::expect_number(run_times_0$total, finite = TRUE)
-#   checkmate::expect_data_frame(run_times_0$chains,
-#                                any.missing = TRUE,
-#                                types = c("integer", "numeric"),
-#                                nrows = fit_mcmc_0$runset$num_procs(),
-#                                ncols = 4)
-#   for (j in 1:nrow(run_times_0$chains)) {
-#     checkmate::expect_scalar_na(run_times_0$chains$warmup[j])
-#     checkmate::expect_scalar_na(run_times_0$chains$sampling[j])
-#   }
-# })
-#
-# test_that("inc_warmup in draws() works", {
-#   skip_on_cran()
-#   x0 <- fit_mcmc_0$draws(inc_warmup = FALSE)
-#   x1 <- fit_mcmc_1$draws(inc_warmup = FALSE)
-#   x2 <- fit_mcmc_1$draws(inc_warmup = TRUE)
-#   x2_a <- fit_mcmc_1$draws(inc_warmup = TRUE, variables = c("alpha"))
-#   x2_b <- fit_mcmc_1$draws(inc_warmup = TRUE, variables = c("beta"))
-#   x2_after <- fit_mcmc_1$draws(inc_warmup = TRUE)
-#   expect_equal(dim(x0), c(1000, 2, 5))
-#   expect_error(fit_mcmc_0$draws(inc_warmup = TRUE),
-#                "Warmup draws were requested from a fit object without them!")
-#   expect_equal(dim(x1), c(1000, 2, 5))
-#   expect_equal(dim(x2), c(2000, 2, 5))
-#   expect_equal(dim(x2_a), c(2000, 2, 1))
-#   expect_equal(dim(x2_b), c(2000, 2, 3))
-#   expect_equal(dim(x2_after), c(2000, 2, 5))
-#   y0 <- fit_mcmc_0$sampler_diagnostics(inc_warmup = FALSE)
-#   y1 <- fit_mcmc_1$sampler_diagnostics(inc_warmup = FALSE)
-#   y2 <- fit_mcmc_1$sampler_diagnostics(inc_warmup = TRUE)
-#   expect_equal(dim(y0), c(1000, 2, 6))
-#   expect_error(fit_mcmc_0$sampler_diagnostics(inc_warmup = TRUE),
-#                "Warmup sampler diagnostics were requested from a fit object without them!")
-#   expect_equal(dim(y1), c(1000, 2, 6))
-#   expect_equal(dim(y2), c(2000, 2, 6))
-# })
-#
-# test_that("inc_warmup in draws() works", {
-#   skip_on_cran()
-#   x3 <- fit_mcmc_2$draws(inc_warmup = FALSE)
-#   expect_equal(dim(x3), c(100000, 1, 5))
-#   expect_error(fit_mcmc_2$draws(inc_warmup = TRUE),
-#                "Warmup draws were requested from a fit object without them! Please rerun the model with save_warmup = TRUE.")
-#   y3 <- fit_mcmc_2$sampler_diagnostics(inc_warmup = FALSE)
-#   expect_equal(dim(y3), c(100000, 1, 6))
-# })
+test_that("draws() method returns draws_array (reading csv works)", {
+  skip_on_cran()
+  draws <- fit_gq$draws()
+  draws_ys <- fit_gq$draws(variables = "y_rep")
+  draws_y <- fit_gq$draws(variables = "y_rep[1]")
+  draws_sum_y <- fit_gq$draws(variables = c("sum_y", "y_rep"))
+  draws_y_sum <- fit_gq$draws(variables = c("y_rep", "sum_y"))
+  draws_all_after <- fit_gq$draws()
+  expect_type(draws, "double")
+  expect_s3_class(draws, "draws_array")
+  expect_equal(posterior::variables(draws), PARAM_NAMES)
+  expect_equal(posterior::nchains(draws), fit_gq$num_chains())
+  expect_s3_class(draws_ys, "draws_array")
+  expect_equal(posterior::nvariables(draws_ys), 10)
+  expect_equal(posterior::nchains(draws_ys), fit_gq$num_chains())
+  expect_s3_class(draws_y, "draws_array")
+  expect_equal(posterior::nvariables(draws_y), 1)
+  expect_equal(posterior::nchains(draws_y), fit_gq$num_chains())
+  expect_s3_class(draws_sum_y, "draws_array")
+  expect_equal(posterior::nvariables(draws_sum_y), 11)
+  expect_equal(posterior::nchains(draws_sum_y), fit_gq$num_chains())
+  expect_s3_class(draws_all_after, "draws_array")
+  expect_equal(posterior::nvariables(draws_all_after), 11)
+  expect_equal(posterior::nchains(draws_all_after), fit_gq$num_chains())
+
+  expect_equal(dim(draws), c(1000, 4, 11))
+  expect_equal(dim(draws_ys), c(1000, 4, 10))
+  expect_equal(dim(draws_y), c(1000, 4, 1))
+  expect_equal(dim(draws_all_after), c(1000, 4, 11))
+
+  # check the order of the draws
+  expect_equal(posterior::variables(draws_sum_y), c("sum_y", PARAM_NAMES[1:(length(PARAM_NAMES)-1)]))
+  expect_equal(posterior::variables(draws_y_sum), PARAM_NAMES)
+})
+
+test_that("summary() method works after gq", {
+  skip_on_cran()
+  x <- fit_gq$summary()
+  expect_s3_class(x, "draws_summary")
+  expect_equal(x$variable, PARAM_NAMES)
+
+  x <- fit_gq$summary("sum_y", c("median", "mad"))
+  expect_equal(x$variable, "sum_y")
+  expect_equal(colnames(x), c("variable", "median", "mad"))
+})
+
+test_that("print() method works after mcmc", {
+  skip_on_cran()
+  expect_output(expect_s3_class(fit_gq$print(), "CmdStanGQ"), "variable")
+  expect_output(fit_gq$print(max_rows = 1), "# showing 1 of 11 rows")
+  expect_output(fit_gq$print(NULL, c("mad")), "mad")
+
+  expect_output(fit_gq$print(), "showing 10 of 11 rows")
+  expect_output(fit_gq$print(max_rows = 2), "showing 2 of 11 rows")
+  expect_output(fit_gq$print(max_rows = 11), "sum_y", fixed=TRUE) # last parameter
+  expect_output(fit_gq$print("y_rep", max_rows = 2), "showing 2 of 10 rows")
+  expect_error(
+    fit_gq$print(variable = "unknown", max_rows = 20),
+    "Can't find the following variable(s): unknown",
+    fixed = TRUE
+  ) # unknown parameter
+
+  out <- capture.output(fit_gq$print("y_rep"))
+  expect_length(out, 11) # columns names + 1 y_rep
+  expect_match(out[1], "variable")
+  expect_match(out[2], "y_rep[1]", fixed = TRUE)
+  expect_match(out[9], "y_rep[8]", fixed = TRUE)
+  expect_false(any(grepl("sum_y|theta", out)))
+
+  # make sure the row order is correct
+  out <- capture.output(fit_gq$print(c("y_rep[1]", "sum_y", "y_rep[3]")))
+  expect_length(out, 4)
+  expect_match(out[1], " variable", out[1])
+  expect_match(out[2], " y_rep[1]", fixed = TRUE)
+  expect_match(out[3], " sum_y")
+  expect_match(out[4], " y_rep[3]", fixed = TRUE)
+})
+
+test_that("output() method works after gq", {
+  skip_on_cran()
+  checkmate::expect_list(
+    fit_gq$output(),
+    types = "character",
+    any.missing = FALSE,
+    len = fit_gq$runset$num_procs()
+  )
+  expect_output(fit_gq$output(id = 1), "method = generate_quantities")
+})
+
+test_that("time() method works after mcmc", {
+  skip_on_cran()
+  run_times <- fit_gq$time()
+  checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
+  testthat::expect_named(run_times, c("total", "chains"))
+  checkmate::expect_number(run_times$total, finite = TRUE)
+  checkmate::expect_data_frame(
+    run_times$chains,
+    any.missing = FALSE,
+    types = c("integer", "numeric"),
+    nrows = fit_gq$runset$num_procs(),
+    ncols = 2
+  )
+})
