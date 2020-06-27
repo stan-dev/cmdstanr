@@ -6,6 +6,7 @@ if (not_on_cran()) {
   fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational")
   fit_logistic_optimize <- testing_fit("logistic", method = "optimize")
   fit_logistic_variational <- testing_fit("logistic", method = "variational")
+  fit_logistic_variational_short <- testing_fit("logistic", method = "variational", output_samples = 100)
 
   fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
                           seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
@@ -418,6 +419,13 @@ test_that("read_cmdstan_csv() works for variational", {
   expect_equal(posterior::variables(csv_output_4$draws), c("beta[1]", "beta[2]", "beta[3]"))
   csv_output_5 <- read_cmdstan_csv(fit_logistic_variational$output_files(), variables = c("alpha", "beta[2]"))
   expect_equal(posterior::variables(csv_output_5$draws), c("alpha", "beta[2]"))
+
+  diff_samples_variational <- c(fit_logistic_variational$output_files(),
+                                fit_logistic_variational_short$output_files())
+  expect_error(
+    read_cmdstan_csv(diff_samples_variational),
+    "Supplied CSV files dont match in the number of output samples!"
+  )
 })
 
 test_that("read_cmdstan_csv() works for generate_quantities", {
