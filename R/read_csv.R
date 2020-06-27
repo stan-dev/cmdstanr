@@ -229,9 +229,6 @@ read_cmdstan_csv <- function(files,
         )
       )
       draws <- draws[!is.na(draws$lp__), ]
-    }    
-    if (ncol(draws) == 0) {
-      stop("The supplied csv file does not contain any data!", call. = FALSE)
     }
     if (nrow(draws) > 0) {
       if (metadata$method == "sample") {
