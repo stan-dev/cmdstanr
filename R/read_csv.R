@@ -153,7 +153,7 @@ read_cmdstan_csv <- function(files,
       } else { # filter using variables
         res <- matching_variables(variables, metadata$model_params)
         if (length(res$not_found)) {
-          stop("Can't find the following variable(s) in the sampling output: ",
+          stop("Can't find the following variable(s) in the output: ",
                paste(res$not_found, collapse = ", "), call. = FALSE)
         }
         variables <- res$matching
@@ -173,7 +173,7 @@ read_cmdstan_csv <- function(files,
           selected_sampler_diag <- selected_sampler_diag | matches
         }
         if (length(not_found)) {
-          stop("Can't find the following sampler diagnostic(s) in the sampling output: ",
+          stop("Can't find the following sampler diagnostic(s) in the output: ",
                paste(not_found, collapse = ", "), call. = FALSE)
         }
         sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]

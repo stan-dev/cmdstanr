@@ -678,7 +678,7 @@ CmdStanMCMC <- R6::R6Class(
       }
       matching_res <- matching_variables(variables, private$metadata_$model_params)
       if (length(matching_res$not_found)) {
-        stop("Can't find the following variable(s) in the sampling output: ",
+        stop("Can't find the following variable(s) in the output: ",
              paste(matching_res$not_found, collapse = ", "))
       }
       variables <- repair_variable_names(matching_res$matching)

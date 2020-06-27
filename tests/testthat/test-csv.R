@@ -300,10 +300,10 @@ test_that("read_cmdstan_csv() works with filtered variables", {
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 2))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), c(1000, 2, 2))
   expect_error(read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = c("NOPE"), sampler_diagnostics = list("n_leapfrog__", "divergent__")),
-               "Can't find the following variable(s) in the sampling output: NOPE",
+               "Can't find the following variable(s) in the output: NOPE",
                fixed = TRUE)
   expect_error(read_cmdstan_csv(fit_logistic_thin_1$output_files(), sampler_diagnostics = list("BAD_1", "BAD_2")),
-               "Can't find the following sampler diagnostic(s) in the sampling output: BAD_1, BAD_2",
+               "Can't find the following sampler diagnostic(s) in the output: BAD_1, BAD_2",
                fixed = TRUE)
 })
 
