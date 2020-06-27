@@ -52,6 +52,12 @@
 #' * `draws`: A [`draws_matrix`][posterior::draws_matrix] of draws from the
 #' approximate posterior distribution.
 #'
+#' For [standalone generated quantities][model-method-generate-quantities] the returned list also
+#' includes the following components:
+#'
+#' * `generated quantities`: A [`draws_matrix`][posterior::draws_matrix] of 
+#' the generated quantities.
+#' 
 #' @examples
 #' \dontrun{
 #' stan_program <- tempfile(fileext=".stan")

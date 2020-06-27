@@ -64,6 +64,13 @@ includes the following components:
 \item \code{draws}: A \code{\link[posterior:draws_matrix]{draws_matrix}} of draws from the
 approximate posterior distribution.
 }
+
+For \link[=model-method-generate-quantities]{standalone generated quantities} the returned list also
+includes the following components:
+\itemize{
+\item \verb{generated quantities}: A \code{\link[posterior:draws_matrix]{draws_matrix}} of
+the generated quantities.
+}
 }
 \description{
 \code{read_cmdstan_csv()} is used internally by CmdStanR to read CmdStan's output

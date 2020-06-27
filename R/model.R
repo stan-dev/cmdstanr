@@ -119,6 +119,8 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. \cr
 #'  [`$variational()`][model-method-variational]
 #'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. \cr
+#'  [`$generate_quantities()`][model-method-generate-quantities]
+#'    \tab Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`] object. \cr
 #' }
 #'
 #' @template seealso-docs
@@ -874,13 +876,12 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #' @section Usage:
 #'   ```
 #'   $generate_quantities(
-#'     fitted_params = NULL,
+#'     fitted_params,
 #'     data = NULL
 #'   )
 #'   ```
 #'
 #' @template model-common-args
-#' @section 
 #'
 #' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
 #'

@@ -918,6 +918,37 @@ CmdStanVB <- R6::R6Class(
   )
 )
 
+# CmdStanGQ ---------------------------------------------------------------
+
+#' CmdStanGQ objects
+#'
+#' @name CmdStanGQ
+#' @family fitted model objects
+#' @template seealso-docs
+#'
+#' @description A `CmdStanGQ` object is the fitted model object returned by the
+#'   [`$generate_quantities()`][model-method-generate-quantities] method of a
+#'   [`CmdStanModel`] object.
+#'
+#' @details
+#' `CmdStanGQ` objects have the following methods:
+#'
+#' \tabular{ll}{
+#'  **Method** \tab **Description** \cr
+#'  [`$draws()`][fit-method-draws] \tab Returns the generated quantities
+#'  as a [`draws_matrix`][posterior::draws_matrix]. \cr
+#'  [`$summary()`][fit-method-summary] \tab
+#'  Run [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
+#'  [`$save_object()`][fit-method-save_object]
+#'    \tab Save fitted model object to a file. \cr
+#'  [`$save_output_files()`][fit-method-save_output_files]
+#'    \tab Save output CSV files to a specified location. \cr
+#'  [`$save_data_file()`][fit-method-save_data_file]
+#'    \tab Save JSON data file to a specified location. \cr
+#'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
+#'  `$output()` \tab Pretty print the output that was printed during generating quantities. \cr
+#' }
+#'
 CmdStanGQ <- R6::R6Class(
   classname = "CmdStanGQ",
   inherit = CmdStanFit,
