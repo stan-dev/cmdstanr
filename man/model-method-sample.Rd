@@ -132,7 +132,7 @@ is \code{FALSE}. If \code{save_warmup=TRUE} then you can use
 \link[=fit-method-draws]{$draws(inc_warmup=TRUE)} to include warmup when
 accessing the draws.
 \item \code{thin}: (positive integer) The period between saved samples. This should
-typically be left at its default (no thinning) unless memory is a problem.
+be left at its default (no thinning) unless memory is a problem.
 \item \code{max_treedepth}: (positive integer) The maximum allowed tree depth for the
 NUTS engine. See the \emph{Tree Depth} section of the CmdStan manual for more
 details.
