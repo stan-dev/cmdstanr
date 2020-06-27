@@ -201,8 +201,8 @@ CmdStanRun <- R6::R6Class(
         }
         time <- list(total = self$procs$total_time(), chains = chain_time)
       }
-      time 
-    }   
+      time
+    }
   ),
   private = list(
     output_files_ = character(),

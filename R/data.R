@@ -108,8 +108,7 @@ process_data <- function(data) {
 #' Process fitted params for the generate quantities method
 #'
 #' @noRd
-#' @param data If not `NULL`, then either a path to a CSV file compatible with
-#'   CmdStan or a fit object.
+#' @param data A path to a CSV file compatible with CmdStan or a sampling fit object (CmdstanMCMC).
 #' @return Path to data file.
 process_fitted_params <- function(fitted_params) {
   if (is.character(fitted_params)) {
