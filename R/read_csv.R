@@ -206,6 +206,7 @@ read_cmdstan_csv <- function(files,
           output_file,
           comment = "#",
           delim = ',',
+          col_select = col_select,
           col_types = col_types,
           trim_ws = TRUE,
           altrep = FALSE,
@@ -524,13 +525,13 @@ check_csv_metadata_matches <- function(a, b) {
   if (a$model_name != b$model_name) {
     return(list(error = "Supplied CSV files were not generated with the same model!"))
   }
+  if (a$method != b$method) {
+    return(list(error = "Supplied CSV files were produced by different methods and need to be read in separately!"))
+  }
   if ((length(a$model_params) != length(b$model_params)) ||
       !(all(a$model_params == b$model_params) &&
         all(a$sampler_diagnostics == b$sampler_diagnostics))) {
     return(list(error = "Supplied CSV files have samples for different variables!"))
-  }
-  if (a$method != b$method) {
-    return(list(error = "Supplied CSV files were produced by different methods and need to be read in separately!"))
   }
   if (a$method == "sample") {  
     if (a$iter_sampling != b$iter_sampling ||

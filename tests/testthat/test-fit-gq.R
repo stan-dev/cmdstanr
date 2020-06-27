@@ -128,3 +128,11 @@ test_that("time() method works after mcmc", {
     ncols = 2
   )
 })
+
+test_that("fitted_params_files() method works", {
+  skip_on_cran()
+  expect_equal(
+    fit_gq$fitted_params_files(),
+    fit$output_files()
+  )
+})

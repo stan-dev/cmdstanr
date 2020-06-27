@@ -29,6 +29,8 @@ if (not_on_cran()) {
                           seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 0)
   fit_logistic_thin_10_with_warmup <- testing_fit("logistic", method = "sample",
                           seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 1)
+
+  fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit_bernoulli_thin_1)
 }
 
 test_that("read_cmdstan_csv() fails for different model names", {
@@ -416,4 +418,50 @@ test_that("read_cmdstan_csv() works for variational", {
   expect_equal(posterior::variables(csv_output_4$draws), c("beta[1]", "beta[2]", "beta[3]"))
   csv_output_5 <- read_cmdstan_csv(fit_logistic_variational$output_files(), variables = c("alpha", "beta[2]"))
   expect_equal(posterior::variables(csv_output_5$draws), c("alpha", "beta[2]"))
+})
+
+test_that("read_cmdstan_csv() works for generate_quantities", {
+  skip_on_cran()
+
+  csv_output_1 <- read_cmdstan_csv(fit_gq$output_files())
+  expect_equal(dim(csv_output_1$generated_quantities), c(1000, 2, 11))
+  y_rep_params <- c("y_rep[1]", "y_rep[2]", "y_rep[3]", "y_rep[4]", "y_rep[5]",
+                    "y_rep[6]", "y_rep[7]", "y_rep[8]", "y_rep[9]", "y_rep[10]")
+  csv_file <- test_path("resources", "csv", "bernoulli_ppc-1-gq.csv")
+  csv_output_3 <- read_cmdstan_csv(csv_file)
+  expect_equal(as.numeric(csv_output_3$generated_quantities[1,1,"y_rep[1]"]), 0)
+  expect_equal(as.numeric(csv_output_3$generated_quantities[2,1,"y_rep[2]"]), 1)
+  expect_equal(as.numeric(csv_output_3$generated_quantities[4,1,]), c(0,0,0,0,0,1,0,0,0,1))
+  expect_equal(dim(csv_output_3$generated_quantities), c(5, 1, 10))
+  expect_equal(csv_output_3$metadata$model_params, y_rep_params)
+
+  # variable filtering
+  csv_output_4 <- read_cmdstan_csv(fit_gq$output_files(), variables = "y_rep")
+  expect_equal(posterior::variables(csv_output_4$generated_quantities), y_rep_params)
+  csv_output_5 <- read_cmdstan_csv(fit_gq$output_files(), variables = c("sum_y", "y_rep"))
+  expect_equal(posterior::variables(csv_output_5$generated_quantities), c("sum_y", y_rep_params))
+})
+
+test_that("read_cmdstan_csv() errors for files from different methods", {
+  skip_on_cran()
+  files <- c(fit_bernoulli_variational$output_files(),fit_bernoulli_optimize$output_files())
+  expect_error(
+    read_cmdstan_csv(files),
+    "Supplied CSV files were produced by different methods and need to be read in separately!"
+  )
+  files <- c(fit_bernoulli_thin_1$output_files(),fit_bernoulli_optimize$output_files())
+  expect_error(
+    read_cmdstan_csv(files),
+    "Supplied CSV files were produced by different methods and need to be read in separately!"
+  )
+  files <- c(fit_bernoulli_variational$output_files(),fit_bernoulli_thin_1$output_files())
+  expect_error(
+    read_cmdstan_csv(files),
+    "Supplied CSV files were produced by different methods and need to be read in separately!"
+  )
+  files <- c(fit_bernoulli_variational$output_files(),fit_bernoulli_optimize$output_files())
+  expect_error(
+    read_cmdstan_csv(files),
+    "Supplied CSV files were produced by different methods and need to be read in separately!"
+  )
 })
