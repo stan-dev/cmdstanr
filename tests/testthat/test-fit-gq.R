@@ -114,7 +114,7 @@ test_that("output() method works after gq", {
   expect_output(fit_gq$output(id = 1), "method = generate_quantities")
 })
 
-test_that("time() method works after mcmc", {
+test_that("time() works after mcmc", {
   skip_on_cran()
   run_times <- fit_gq$time()
   checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
@@ -129,10 +129,33 @@ test_that("time() method works after mcmc", {
   )
 })
 
-test_that("fitted_params_files() method works", {
+test_that("fitted_params_files() works", {
   skip_on_cran()
   expect_equal(
     fit_gq$fitted_params_files(),
     fit$output_files()
+  )
+})
+
+test_that("generate_quantities work for different chains and parallel_chains", {
+  skip_on_cran()
+  fit_1_chain <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
+  fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
+  expect_gq_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain)
+  )
+  expect_gq_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 2)
+  )
+  expect_gq_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
+  )
+  expect_gq_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2)
+  )
+  expect_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
+    "2 thread(s) per chain",
+    fixed = TRUE
   )
 })
