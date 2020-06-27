@@ -1,4 +1,4 @@
-#' Read CmdStan CSV files into \R
+#' Read CmdStan CSV files into R
 #'
 #' `read_cmdstan_csv()` is used internally by CmdStanR to read CmdStan's output
 #' CSV files into \R. It can also be used by CmdStan users as a more flexible
@@ -38,8 +38,8 @@
 #' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` when fitting the
 #' model then a [`draws_array`][posterior::draws_array] of warmup draws of the
 #' sampler diagnostic variables.
-#' * `sampler_diagnostics`: A [`draws_array`][posterior::draws_array] of
-#' post-warmup draws of the sampler diagnostic variables.
+#' * `post_warmup_sampler_diagnostics`: A [`draws_array`][posterior::draws_array]
+#' of post-warmup draws of the sampler diagnostic variables.
 #'
 #' For [optimization][model-method-optimize] the returned list also includes the
 #' following components:

@@ -2,7 +2,7 @@
 % Please edit documentation in R/read_csv.R
 \name{read_cmdstan_csv}
 \alias{read_cmdstan_csv}
-\title{Read CmdStan CSV files into \R}
+\title{Read CmdStan CSV files into R}
 \usage{
 read_cmdstan_csv(files, variables = NULL, sampler_diagnostics = NULL)
 }
@@ -48,8 +48,8 @@ post-warmup draws.
 \item \code{warmup_sampler_diagnostics}:  If \code{save_warmup} was \code{TRUE} when fitting the
 model then a \code{\link[posterior:draws_array]{draws_array}} of warmup draws of the
 sampler diagnostic variables.
-\item \code{sampler_diagnostics}: A \code{\link[posterior:draws_array]{draws_array}} of
-post-warmup draws of the sampler diagnostic variables.
+\item \code{post_warmup_sampler_diagnostics}: A \code{\link[posterior:draws_array]{draws_array}}
+of post-warmup draws of the sampler diagnostic variables.
 }
 
 For \link[=model-method-optimize]{optimization} the returned list also includes the
