@@ -112,17 +112,24 @@ process_data <- function(data) {
 #'   CmdStan or a fit object.
 #' @return Path to data file.
 process_fitted_params <- function(fitted_params) {
-  if (is.null(fitted_params)) {
-    path <- fitted_params
-  } else if (is.character(fitted_params)) {
-    path <- absolute_path(fitted_params)
+  if (is.character(fitted_params)) {
+    paths <- absolute_path(fitted_params)
   } else if (checkmate::test_r6(fitted_params, classes = ("CmdStanMCMC"))) {
     if (all(file.exists(fitted_params$output_files()))) {
-      path <- absolute_path(fitted_params$output_files())
+      paths <- absolute_path(fitted_params$output_files())
     } else {
-      # write to a temporary CSV file
-      draws <- posterior::as_draws_array(fitted_params$draws())
-      sampler_diagnostics <- posterior::as_draws_array(fitted_params$sampler_diagnostics())
+      draws <- tryCatch( posterior::as_draws_array(fitted_params$draws()),
+        error=function(cond) {
+            stop("Unable to obtain draws from the fit (CmdStanMCMC) object.", call. = FALSE)   
+            return(NA)
+        }
+      )
+      sampler_diagnostics <- tryCatch(posterior::as_draws_array(fitted_params$sampler_diagnostics()),
+        error=function(cond) {
+            stop("Unable to obtain sampler diagnostics from the fit (CmdStanMCMC) object.", call. = FALSE)   
+            return(NA)
+        }
+      ) 
       if (!is.null(draws)) {
         variables <- dimnames(draws)$variable
         non_lp_variables <- variables[variables != "lp__"]
@@ -136,7 +143,7 @@ process_fitted_params <- function(fitted_params) {
         chains <- dimnames(draws)$chain
         iterations <- length(dimnames(draws)$iteration)
         paths <- generate_file_names(
-            basename = "fittedParams-",
+            basename = "fittedParams",
             ids = chains
         )
         paths <- file.path(tempdir(), paths)
@@ -159,15 +166,12 @@ process_fitted_params <- function(fitted_params) {
           )
           chain <- chain + 1
         }
-        return(paths)
-      } else {
-        stop("No draws found in the fit (CmdStanMCMC) object.", call. = FALSE)    
       }
     }
   } else {
-    stop("'data' should be a path, a vector of paths or a sampling fit object (CmdStanMCMC).", call. = FALSE)
+    stop("'fitted_params' should be a vector of paths or a sampling fit object (CmdStanMCMC).", call. = FALSE)
   }
-  path
+  paths
 }
 
 # check if any objects in the data list have zero

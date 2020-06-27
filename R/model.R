@@ -889,7 +889,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'
 NULL
 
-generate_quantities_method <- function(fitted_params = NULL,
+generate_quantities_method <- function(fitted_params,
                             data = NULL,
                             seed = NULL,
                             refresh = NULL,

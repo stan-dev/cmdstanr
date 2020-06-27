@@ -922,6 +922,9 @@ CmdStanGQ <- R6::R6Class(
   classname = "CmdStanGQ",
   inherit = CmdStanFit,
   public = list(
+    fitted_params_files = function() {
+      self$runset$args$method_args$fitted_params
+    },
     num_chains = function() {
       super$num_procs()
     },
