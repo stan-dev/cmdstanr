@@ -5,7 +5,7 @@
 \alias{cmdstanr-package}
 \alias{cmdstanr}
 \alias{CmdStanR}
-\title{CmdStanR: the \R interface to CmdStan}
+\title{CmdStanR: the R interface to CmdStan}
 \description{
 \if{html}{
    \figure{logo.png}{options: width="50" alt="https://mc-stan.org/about/logo/"}

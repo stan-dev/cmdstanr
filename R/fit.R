@@ -627,14 +627,19 @@ CmdStanMCMC <- R6::R6Class(
         warning("No chains finished successfully. Unable to retrieve the fit.",
                 call. = FALSE)
       } else {
-        if (self$runset$args$validate_csv && !runset$args$method_args$fixed_param) {
+        if (self$runset$args$validate_csv) {
+          fixed_param <- runset$args$method_args$fixed_param
           data_csv <- read_cmdstan_csv(
             self$output_files(),
             variables = "",
-            sampler_diagnostics = c("treedepth__", "divergent__")
+            sampler_diagnostics =
+             if (!fixed_param) c("treedepth__", "divergent__") else ""
           )
-          check_divergences(data_csv)
-          check_sampler_transitions_treedepth(data_csv)
+          if (!fixed_param) {
+            check_divergences(data_csv)
+            check_sampler_transitions_treedepth(data_csv)
+          }
+          private$metadata_ <- data_csv$metadata
         }
       }
     },

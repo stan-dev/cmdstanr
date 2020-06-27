@@ -1,4 +1,4 @@
-#' CmdStanR: the \R interface to CmdStan
+#' CmdStanR: the R interface to CmdStan
 #'
 #' @docType package
 #' @name cmdstanr-package

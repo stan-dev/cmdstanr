@@ -459,7 +459,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   [$draws(inc_warmup=TRUE)][fit-method-draws] to include warmup when
 #'   accessing the draws.
 #'   * `thin`: (positive integer) The period between saved samples. This should
-#'   typically be left at its default (no thinning) unless memory is a problem.
+#'   be left at its default (no thinning) unless memory is a problem.
 #'   * `max_treedepth`: (positive integer) The maximum allowed tree depth for the
 #'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
 #'   details.
@@ -499,10 +499,17 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   * `window`: (nonnegative integer) Initial width of slow timestep/metric
 #'   adaptation interval.
 #'   * `fixed_param`: (logical) When `TRUE`, call CmdStan with argument
-#'   `"algorithm=fixed_param"`. The default is `FALSE`.
+#'   `"algorithm=fixed_param"`. The default is `FALSE`. The fixed parameter
+#'   sampler generates a new sample without changing the current state of the
+#'   Markov chain; only generated quantities may change. This can be useful
+#'   when, for example, trying to generate pseudo-data using the generated
+#'   quantities block. If the parameters block is empty then using
+#'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
+#'   `parallel_chains` arguments will be set to `1`.
 #'   * `validate_csv`: (logical) When `TRUE` (the default), validate the
 #'   sampling results in the csv files. Disable if you wish to manually read in
-#'   the sampling results and validate them.
+#'   the sampling results and validate them yourself, for example using
+#'   [read_cmdstan_csv()].
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -546,11 +553,6 @@ sample_method <- function(data = NULL,
                           max_depth = NULL,
                           stepsize = NULL) {
 
-  if (fixed_param) {
-    chains <- 1
-    parallel_chains <- 1
-    save_warmup <- FALSE
-  }
   # temporary deprecation warnings
   if (!is.null(cores)) {
     warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
@@ -584,18 +586,28 @@ sample_method <- function(data = NULL,
     warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
     save_latent_dynamics <- save_extra_diagnostics
   }
+
+  if (fixed_param) {
+    chains <- 1
+    parallel_chains <- 1
+    save_warmup <- FALSE
+  }
+
   checkmate::assert_integerish(chains, lower = 1, len = 1)
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
-  # check if model was not compiled with threading
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads_per_chain)) {
-      warning("'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!")
+      warning("'threads_per_chain' is set but the model was not compiled with ",
+              "'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+              call. = FALSE)
       threads_per_chain <- NULL
     }
   } else {
     if (is.null(threads_per_chain)) {
-      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!")
+      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
+           "but 'threads_per_chain' was not set!",
+           call. = FALSE)
     }
   }
 
