@@ -172,10 +172,17 @@ adaptation interval during warmup.
 \item \code{window}: (nonnegative integer) Initial width of slow timestep/metric
 adaptation interval.
 \item \code{fixed_param}: (logical) When \code{TRUE}, call CmdStan with argument
-\code{"algorithm=fixed_param"}. The default is \code{FALSE}.
+\code{"algorithm=fixed_param"}. The default is \code{FALSE}. The fixed parameter
+sampler generates a new sample without changing the current state of the
+Markov chain; only generated quantities may change. This can be useful
+when, for example, trying to generate pseudo-data using the generated
+quantities block. If the parameters block is empty then using
+\code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
+\code{parallel_chains} arguments will be set to \code{1}.
 \item \code{validate_csv}: (logical) When \code{TRUE} (the default), validate the
 sampling results in the csv files. Disable if you wish to manually read in
-the sampling results and validate them.
+the sampling results and validate them yourself, for example using
+\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.
 }
 }
 
