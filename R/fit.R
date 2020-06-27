@@ -967,16 +967,12 @@ CmdStanGQ <- R6::R6Class(
       )
       private$metadata_ <- data_csv$metadata
       if (!is.null(data_csv$generated_quantities)) {
-        if (is.null(private$draws_)) {
-          private$draws_ <- data_csv$generated_quantities
-        } else {
-          private$draws_ <-
-            posterior::bind_draws(
-              private$draws_,
-              data_csv$generated_quantities,
-              along="variable"
-            )
-        }
+        private$draws_ <-
+          posterior::bind_draws(
+            private$draws_,
+            data_csv$generated_quantities,
+            along="variable"
+          )
       }
       invisible(self)
     }

@@ -138,7 +138,8 @@ process_fitted_params <- function(fitted_params) {
         paths <- generate_file_names(
             basename = "fittedParams-",
             ids = chains
-        )        
+        )
+        paths <- file.path(tempdir(), paths)
         chain <- 1
         for (path in paths) {
           chain_draws <- as.data.frame(posterior::subset_draws(draws, chain = chain))
