@@ -120,14 +120,12 @@ process_fitted_params <- function(fitted_params) {
     } else {
       draws <- tryCatch( posterior::as_draws_array(fitted_params$draws()),
         error=function(cond) {
-            stop("Unable to obtain draws from the fit (CmdStanMCMC) object.", call. = FALSE)   
-            return(NA)
+            stop("Unable to obtain draws from the fit (CmdStanMCMC) object.", call. = FALSE)
         }
       )
       sampler_diagnostics <- tryCatch(posterior::as_draws_array(fitted_params$sampler_diagnostics()),
         error=function(cond) {
-            stop("Unable to obtain sampler diagnostics from the fit (CmdStanMCMC) object.", call. = FALSE)   
-            return(NA)
+            stop("Unable to obtain sampler diagnostics from the fit (CmdStanMCMC) object.", call. = FALSE)
         }
       ) 
       if (!is.null(draws)) {
