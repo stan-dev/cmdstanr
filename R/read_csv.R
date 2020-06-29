@@ -142,6 +142,7 @@ read_cmdstan_csv <- function(files,
       metadata$id <- c(metadata$id, csv_file_info$id)
       metadata$seed <- c(metadata$seed, csv_file_info$seed)
       metadata$step_size_adaptation <- c(metadata$step_size_adaptation, csv_file_info$step_size_adaptation)
+      metadata$fitted_params <- c(metadata$fitted_params, csv_file_info$fitted_params)
 
       if (!is.null(csv_file_info$inv_metric)) {
         inv_metric[[csv_file_info$id]] <- csv_file_info$inv_metric
