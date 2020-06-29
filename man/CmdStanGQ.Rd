@@ -24,7 +24,9 @@ Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 \code{\link[=fit-method-save_data_file]{$save_data_file()}}
 \tab Save JSON data file to a specified location. \cr
 \code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
-\verb{$output()} \tab Pretty print the output that was printed during generating quantities. \cr
+\verb{$output()} \tab Return the stdout and stderr of all chains as a list of
+character vectors, or pretty print the output for a single chain if
+\code{id} argument is specified. \cr
 }
 }
 \seealso{

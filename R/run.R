@@ -612,7 +612,7 @@ CmdStanProcs <- R6::R6Class(
     report_time = function(id = NULL) {
       if (self$proc_state(id) == 7) {
         warning("Fitting finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
-      } else {        
+      } else {
         cat("Finished in ",
                 format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n")
@@ -743,7 +743,7 @@ CmdStanMCMCProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of succesful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
+            warning("The returned fit object will only read in results of successful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
                     immediate. = TRUE,
                     call. = FALSE)
           }
@@ -768,7 +768,7 @@ CmdStanGQProcs <- R6::R6Class(
             self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
           } else {
             self$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
-          }          
+          }
           self$mark_proc_stop(id)
           self$report_time(id)
         }
@@ -797,7 +797,7 @@ CmdStanGQProcs <- R6::R6Class(
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
         } else {
           cat("Chain", id, "finished in", format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
-        }        
+        }
         return(invisible(NULL))
       } else {
         num_chains <- self$num_procs()
@@ -827,7 +827,7 @@ CmdStanGQProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of succesful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
+            warning("The returned fit object will only read in results of successful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
                     immediate. = TRUE,
                     call. = FALSE)
           }

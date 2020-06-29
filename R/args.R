@@ -13,8 +13,7 @@
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
-#' * `GQArgs`: not yet implemented.
-#' * `FixedParamArgs`: not yet implemented.
+#' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`.
 #'
 NULL
 
@@ -308,9 +307,7 @@ GenerateQuantitiesArgs <- R6::R6Class(
       invisible(self)
     },
 
-    # Compose arguments to CmdStan command for optimization-specific
-    # non-default arguments. Works the same way as compose for sampler args,
-    # but `idx` is ignored (no multiple chains for optimize or variational)
+    # Compose arguments to CmdStan command for generate_quantities method
     compose = function(idx = NULL, args = NULL) {
       .make_arg <- function(arg_name, cmdstan_arg_name = NULL, idx = NULL) {
         compose_arg(self, arg_name = arg_name, cmdstan_arg_name = cmdstan_arg_name, idx = idx)
@@ -581,7 +578,7 @@ validate_optimize_args <- function(self) {
 
 #' Validate arguments for standalone generated quantities
 #' @noRd
-#' @param self An `GenerateQuantitiesArgs` object.
+#' @param self A `GenerateQuantitiesArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_generate_quantities_args <- function(self) {
   if (!is.null(self$fitted_params)) {

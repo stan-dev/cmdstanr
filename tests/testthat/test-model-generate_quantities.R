@@ -39,7 +39,7 @@ test_that("generate_quantities() method runs when all arguments specified validl
   expect_is(fit2, "CmdStanGQ")
 })
 
-test_that("optimize() method errors for any invalid argument before calling cmdstan", {
+test_that("generate_quantities() method errors for any invalid argument before calling cmdstan", {
   skip_on_cran()
 
   for (nm in names(bad_arg_values)) {

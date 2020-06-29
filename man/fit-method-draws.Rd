@@ -34,15 +34,21 @@ Defaults to \code{FALSE}.
 \section{Value}{
 
 \itemize{
-\item For MCMC, a 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x
-chain x variable).
-\item For variational inference, a 2-D \code{\link[posterior:draws_matrix]{draws_matrix}}
-object (draw x variable). An additional variable \code{lp_approx__} is also
-included, which is the log density of the variational approximation to the
-posterior evaluated at each of the draws.
-\item For optimization, a 1-row \code{\link[posterior:draws_matrix]{draws_matrix}} with
-one column per variable. These are \emph{not} actually draws, just point estimates
-stored in the \code{draws_matrix} format.
+\item For \link[=model-method-sample]{MCMC}, a 3-D
+\code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
+variable).
+\item For \link[=model-method-generate-quantities]{standalone generated quantities}, a
+3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
+variable).
+\item For \link[=model-method-variational]{variational inference}, a 2-D
+\code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable). An
+additional variable \code{lp_approx__} is also included, which is the log density
+of the variational approximation to the posterior evaluated at each of the
+draws.
+\item For \link[=model-method-optimize]{optimization}, a 1-row
+\code{\link[posterior:draws_matrix]{draws_matrix}} with one column per variable. These
+are \emph{not} actually draws, just point estimates stored in the \code{draws_matrix}
+format.
 }
 }
 

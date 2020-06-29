@@ -220,15 +220,21 @@ NULL
 #' [`posterior::as_draws_array()`][posterior::draws_array].
 #'
 #' @section Value:
-#' * For MCMC, a 3-D [`draws_array`][posterior::draws_array] object (iteration x
-#' chain x variable).
-#' * For variational inference, a 2-D [`draws_matrix`][posterior::draws_matrix]
-#' object (draw x variable). An additional variable `lp_approx__` is also
-#' included, which is the log density of the variational approximation to the
-#' posterior evaluated at each of the draws.
-#' * For optimization, a 1-row [`draws_matrix`][posterior::draws_matrix] with
-#' one column per variable. These are *not* actually draws, just point estimates
-#' stored in the `draws_matrix` format.
+#' * For [MCMC][model-method-sample], a 3-D
+#' [`draws_array`][posterior::draws_array] object (iteration x chain x
+#' variable).
+#' * For [standalone generated quantities][model-method-generate-quantities], a
+#' 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
+#' variable).
+#' * For [variational inference][model-method-variational], a 2-D
+#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable). An
+#' additional variable `lp_approx__` is also included, which is the log density
+#' of the variational approximation to the posterior evaluated at each of the
+#' draws.
+#' * For [optimization][model-method-optimize], a 1-row
+#' [`draws_matrix`][posterior::draws_matrix] with one column per variable. These
+#' are *not* actually draws, just point estimates stored in the `draws_matrix`
+#' format.
 #'
 #' @examples
 #' \dontrun{
@@ -946,7 +952,9 @@ CmdStanVB <- R6::R6Class(
 #'  [`$save_data_file()`][fit-method-save_data_file]
 #'    \tab Save JSON data file to a specified location. \cr
 #'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
-#'  `$output()` \tab Pretty print the output that was printed during generating quantities. \cr
+#'  `$output()` \tab Return the stdout and stderr of all chains as a list of
+#'    character vectors, or pretty print the output for a single chain if
+#'    `id` argument is specified. \cr
 #' }
 #'
 CmdStanGQ <- R6::R6Class(

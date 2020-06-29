@@ -71,7 +71,7 @@ test_that("summary() method works after gq", {
   expect_equal(colnames(x), c("variable", "median", "mad"))
 })
 
-test_that("print() method works after mcmc", {
+test_that("print() method works after gq", {
   skip_on_cran()
   expect_output(expect_s3_class(fit_gq$print(), "CmdStanGQ"), "variable")
   expect_output(fit_gq$print(max_rows = 1), "# showing 1 of 11 rows")
@@ -114,7 +114,7 @@ test_that("output() method works after gq", {
   expect_output(fit_gq$output(id = 1), "method = generate_quantities")
 })
 
-test_that("time() works after mcmc", {
+test_that("time() works after gq", {
   skip_on_cran()
   run_times <- fit_gq$time()
   checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)

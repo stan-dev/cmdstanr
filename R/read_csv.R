@@ -25,8 +25,8 @@
 #' The other components in the returned list depend on the method that produced
 #' the CSV file(s).
 #'
-#' For [sampling][model-method-sample] the returned list
-#' also includes the following components:
+#' For [sampling][model-method-sample] the returned list also includes the
+#' following components:
 #'
 #' * `inv_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
@@ -52,12 +52,12 @@
 #' * `draws`: A [`draws_matrix`][posterior::draws_matrix] of draws from the
 #' approximate posterior distribution.
 #'
-#' For [standalone generated quantities][model-method-generate-quantities] the returned list also
-#' includes the following components:
+#' For [standalone generated quantities][model-method-generate-quantities] the
+#' returned list also includes the following components:
 #'
-#' * `generated quantities`: A [`draws_matrix`][posterior::draws_matrix] of 
+#' * `generated_quantities`: A [`draws_matrix`][posterior::draws_matrix] of
 #' the generated quantities.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' stan_program <- tempfile(fileext=".stan")
@@ -185,7 +185,7 @@ read_cmdstan_csv <- function(files,
         }
         sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
       }
-      if(metadata$method == "generate_quantities") {
+      if (metadata$method == "generate_quantities") {
         col_select <- c(col_select, variables)
       } else {
         col_select <- "lp__"
@@ -201,14 +201,14 @@ read_cmdstan_csv <- function(files,
       all_draws <- metadata$output_samples
     } else if (metadata$method == "optimize") {
       all_draws <- 1
-    }  
-    
+    }
+
     if (metadata$method == "generate_quantities") {
-      col_types = list()
       # set the first arg as double
       # to silence the type detection info
+      col_types <- list()
       col_types[[col_select[1]]] = "d"
-      suppressWarnings(      
+      suppressWarnings(
         draws <- vroom::vroom(
           output_file,
           comment = "#",
@@ -218,7 +218,8 @@ read_cmdstan_csv <- function(files,
           trim_ws = TRUE,
           altrep = FALSE,
           progress = FALSE,
-          skip = metadata$lines_to_skip)
+          skip = metadata$lines_to_skip
+        )
       )
     } else {
       suppressWarnings(
@@ -384,18 +385,18 @@ read_sample_csv <- function(files,
 #' inverse mass matrix from the comments in a CSV file.
 #'
 #' @noRd
-#' @param csv_file A CSV file containing results from sampling.
-#' @return A list containing all sampler settings and the inverse mass matrix
-#'   (or its diagonal depending on the metric).
+#' @param csv_file A CSV file containing results from CmdStan.
+#' @return A list containing all CmdStan settings and, for sampling, the inverse
+#'   mass matrix (or its diagonal depending on the metric).
 #'
 read_csv_metadata <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
+  con  <- file(csv_file, open = "r")
   adaptation_terminated <- FALSE
   param_names_read <- FALSE
   inv_metric_next <- FALSE
   inv_metric_diagonal_next <- FALSE
-  csv_file_info = list()
-  con  <- file(csv_file, open = "r")
+  csv_file_info <- list()
   csv_file_info[["inv_metric"]] <- NULL
   inv_metric_rows <- 0
   parsing_done <- FALSE
@@ -537,14 +538,14 @@ check_csv_metadata_matches <- function(a, b) {
         all(a$sampler_diagnostics == b$sampler_diagnostics))) {
     return(list(error = "Supplied CSV files have samples for different variables!"))
   }
-  if (a$method == "sample") {  
+  if (a$method == "sample") {
     if (a$iter_sampling != b$iter_sampling ||
         a$thin != b$thin ||
         a$save_warmup != b$save_warmup ||
         (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
       return(list(error = "Supplied CSV files dont match in the number of output samples!"))
     }
-  } else if (a$method == "variational") {  
+  } else if (a$method == "variational") {
     if (a$output_samples != b$output_samples) {
       return(list(error = "Supplied CSV files dont match in the number of output samples!"))
     }

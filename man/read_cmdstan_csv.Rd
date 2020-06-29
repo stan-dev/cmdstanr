@@ -35,8 +35,8 @@ CSV file(s). See \strong{Examples} below.
 The other components in the returned list depend on the method that produced
 the CSV file(s).
 
-For \link[=model-method-sample]{sampling} the returned list
-also includes the following components:
+For \link[=model-method-sample]{sampling} the returned list also includes the
+following components:
 \itemize{
 \item \code{inv_metric}: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.
@@ -65,10 +65,10 @@ includes the following components:
 approximate posterior distribution.
 }
 
-For \link[=model-method-generate-quantities]{standalone generated quantities} the returned list also
-includes the following components:
+For \link[=model-method-generate-quantities]{standalone generated quantities} the
+returned list also includes the following components:
 \itemize{
-\item \verb{generated quantities}: A \code{\link[posterior:draws_matrix]{draws_matrix}} of
+\item \code{generated_quantities}: A \code{\link[posterior:draws_matrix]{draws_matrix}} of
 the generated quantities.
 }
 }

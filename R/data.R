@@ -108,8 +108,9 @@ process_data <- function(data) {
 #' Process fitted params for the generate quantities method
 #'
 #' @noRd
-#' @param data A path to a CSV file compatible with CmdStan or a sampling fit object (CmdstanMCMC).
-#' @return Path to data file.
+#' @param fitted_params Paths to CSV files compatible with CmdStan or a CmdStanMCMC object.
+#' @return Paths to CSV files containing parameter values.
+#'
 process_fitted_params <- function(fitted_params) {
   if (is.character(fitted_params)) {
     paths <- absolute_path(fitted_params)
@@ -117,7 +118,7 @@ process_fitted_params <- function(fitted_params) {
     if (all(file.exists(fitted_params$output_files()))) {
       paths <- absolute_path(fitted_params$output_files())
     } else {
-      draws <- tryCatch( posterior::as_draws_array(fitted_params$draws()),
+      draws <- tryCatch(posterior::as_draws_array(fitted_params$draws()),
         error=function(cond) {
             stop("Unable to obtain draws from the fit (CmdStanMCMC) object.", call. = FALSE)
         }
@@ -126,7 +127,7 @@ process_fitted_params <- function(fitted_params) {
         error=function(cond) {
             stop("Unable to obtain sampler diagnostics from the fit (CmdStanMCMC) object.", call. = FALSE)
         }
-      ) 
+      )
       if (!is.null(draws)) {
         variables <- dimnames(draws)$variable
         non_lp_variables <- variables[variables != "lp__"]
@@ -134,15 +135,12 @@ process_fitted_params <- function(fitted_params) {
           posterior::subset_draws(draws, variable = "lp__"),
           sampler_diagnostics,
           draws[,,non_lp_variables],
-          along="variable"
+          along = "variable"
         )
         variables <- dimnames(draws)$variable
         chains <- dimnames(draws)$chain
         iterations <- length(dimnames(draws)$iteration)
-        paths <- generate_file_names(
-            basename = "fittedParams",
-            ids = chains
-        )
+        paths <- generate_file_names(basename = "fittedParams", ids = chains)
         paths <- file.path(tempdir(), paths)
         chain <- 1
         for (path in paths) {

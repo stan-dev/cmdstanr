@@ -865,44 +865,56 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #' @aliases generate_quantities
 #' @family CmdStanModel methods
 #'
-#' @description The `$generate_quantities()` method of a [`CmdStanModel`] object runs
-#'   Stan's standalone generated quantites to obtain generated quantities based on
-#'   previously fitted parameters.
-#'
-#' @details 
-#'
-#'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
+#' @description The `$generate_quantities()` method of a [`CmdStanModel`] object
+#'   runs Stan's standalone generated quantities to obtain generated quantities
+#'   based on previously fitted parameters.
 #'
 #' @section Usage:
 #'   ```
 #'   $generate_quantities(
 #'     fitted_params,
-#'     data = NULL
+#'     data = NULL,
+#'     seed = NULL,
+#'     refresh = NULL,
+#'     output_dir = NULL,
+#'     parallel_chains = getOption("mc.cores", 1),
+#'     threads_per_chain = NULL
 #'   )
 #'   ```
 #'
-#' @template model-common-args
+#' @section Arguments:
+#'   * `fitted_params`: (multiple options) The parameter draws to use. One of the following:
+#'     - A [CmdStanMCMC] fitted model object.
+#'     - A character vector of paths to CmdStan CSV output files containing
+#'     parameter draws.
+#'   * `data`, `seed`, `refresh`, `output_dir`, `parallel_chains`,
+#'   `threads_per_chain`: Same as for the [`$sample()`][model-method-sample]
+#'   method.
 #'
 #' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
 #'
 #' @template seealso-docs
-#' @inherit cmdstan_model examples
+#'
+#' @examples
+#' \dontrun{
+#'
+#' }
 #'
 NULL
 
 generate_quantities_method <- function(fitted_params,
-                            data = NULL,
-                            seed = NULL,
-                            refresh = NULL,
-                            output_dir = NULL,
-                            parallel_chains = getOption("mc.cores", 1),
-                            threads_per_chain = NULL) {
+                                       data = NULL,
+                                       seed = NULL,
+                                       refresh = NULL,
+                                       output_dir = NULL,
+                                       parallel_chains = getOption("mc.cores", 1),
+                                       threads_per_chain = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
-  fitted_params = process_fitted_params(fitted_params)
+  fitted_params <- process_fitted_params(fitted_params)
+  chains <- length(fitted_params)
   generate_quantities_args <- GenerateQuantitiesArgs$new(
     fitted_params = fitted_params
   )
-  chains = length(fitted_params)
   cmdstan_args <- CmdStanArgs$new(
     method_args = generate_quantities_args,
     model_name = strip_ext(basename(self$exe_file())),
@@ -913,7 +925,11 @@ generate_quantities_method <- function(fitted_params,
     refresh = refresh,
     output_dir = output_dir
   )
-  cmdstan_procs <- CmdStanGQProcs$new(num_procs = chains, parallel_procs = parallel_chains, threads_per_proc = threads_per_chain)
+  cmdstan_procs <- CmdStanGQProcs$new(
+    num_procs = chains,
+    parallel_procs = parallel_chains,
+    threads_per_proc = threads_per_chain
+  )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanGQ$new(runset)

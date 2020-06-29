@@ -5,71 +5,35 @@
 \alias{generate_quantities}
 \title{Run Stan's standalone generated quantities method}
 \description{
-The \verb{$generate_quantities()} method of a \code{\link{CmdStanModel}} object runs
-Stan's standalone generated quantites to obtain generated quantities based on
-previously fitted parameters.
-}
-\details{
--- \href{https://github.com/stan-dev/cmdstan/releases/latest}{\emph{CmdStan Interface User's Guide}}
+The \verb{$generate_quantities()} method of a \code{\link{CmdStanModel}} object
+runs Stan's standalone generated quantities to obtain generated quantities
+based on previously fitted parameters.
 }
 \section{Usage}{
 \preformatted{$generate_quantities(
   fitted_params,
-  data = NULL
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  output_dir = NULL,
+  parallel_chains = getOption("mc.cores", 1),
+  threads_per_chain = NULL
 )
 }
 }
 
-\section{Arguments shared by all fitting methods}{
- The following arguments can
-be specified for any of the fitting methods (\code{sample}, \code{optimize},
-\code{variational}). Arguments left at \code{NULL} default to the default used by the
-installed version of CmdStan.
+\section{Arguments}{
+
 \itemize{
-\item \code{data}: (multiple options) The data to use. One of the following:
+\item \code{fitted_params}: (multiple options) The parameter draws to use. One of the following:
 \itemize{
-\item A named list of \R objects (like for RStan). Internally this list is
-then written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
-\item A path to a data file compatible with CmdStan (JSON or \R dump). See
-the appendices in the CmdStan manual for details on using these formats.
+\item A \link{CmdStanMCMC} fitted model object.
+\item A character vector of paths to CmdStan CSV output files containing
+parameter draws.
 }
-\item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
-\item \code{refresh}: (non-negative integer) The number of iterations between
-printed screen updates.
-\item \code{init}: (multiple options) The initialization method:
-\itemize{
-\item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
-\emph{unconstrained} parameter space);
-\item \code{0} initializes to \code{0};
-\item A character vector of paths (one per chain) to JSON or Rdump files. See
-\code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
-CmdStan.
-}
-\item \code{save_latent_dynamics}: (logical) Should auxiliary diagnostic information
-about the latent dynamics be written to temporary diagnostic CSV files?
-This argument replaces CmdStan's \code{diagnostic_file} argument and the content
-written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (and for some algorithms no content may be written). The default
-is \code{save_latent_dynamics=FALSE}, which is appropriate for almost every use case
-(all diagnostics recommended for users to check are \emph{always} saved, e.g.,
-divergences for HMC). To save the temporary files created when
-\code{save_latent_dynamics=TRUE} see the
-\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}} method.
-\item \code{output_dir}: (string) A path to a directory where CmdStan should write
-its output CSV files. For interactive use this can typically be left at
-\code{NULL} (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
-posterior draws and diagnostics) available in \R via methods of the fitted
-model objects. The behavior of \code{output_dir} is as follows:
-\itemize{
-\item If \code{NULL} (the default), then the CSV files are written to a temporary
-directory and only saved permanently if the user calls one of the
-\verb{$save_*} methods of the fitted model object (e.g.,
-\code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
-files are removed when the fitted model object is garbage collected.
-\item If a path, then the files are created in \code{output_dir} with names
-corresponding the defaults used by \verb{$save_output_files()} (and similar
-methods like \verb{$save_latent_dynamics_files()}).
-}
+\item \code{data}, \code{seed}, \code{refresh}, \code{output_dir}, \code{parallel_chains},
+\code{threads_per_chain}: Same as for the \code{\link[=model-method-sample]{$sample()}}
+method.
 }
 }
 
@@ -79,72 +43,7 @@ methods like \verb{$save_latent_dynamics_files()}).
 
 \examples{
 \dontrun{
-library(cmdstanr)
-library(posterior)
-library(bayesplot)
-color_scheme_set("brightblue")
 
-# Set path to cmdstan
-# (Note: if you installed CmdStan via install_cmdstan() with default settings
-# then setting the path is unnecessary but the default below should still work.
-# Otherwise use the `path` argument to specify the location of your
-# CmdStan installation.)
-set_cmdstan_path(path = NULL)
-
-# Create a CmdStanModel object from a Stan program,
-# here using the example model that comes with CmdStan
-stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-mod <- cmdstan_model(stan_program)
-mod$print()
-
-# data as a named list (like RStan)
-stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
-
-# run MCMC using the 'sample' method
-fit_mcmc <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  parallel_chains = 2
-)
-
-# Use 'posterior' package for summaries
-fit_mcmc$summary()
-
-# Get posterior draws
-draws <- fit_mcmc$draws()
-print(draws)
-
-# Convert to data frame using posterior::as_draws_df
-as_draws_df(draws)
-
-# Plot posterior using bayesplot (ggplot2)
-mcmc_hist(fit_mcmc$draws("theta"))
-
-# Call CmdStan's diagnose and stansummary utilities
-fit_mcmc$cmdstan_diagnose()
-fit_mcmc$cmdstan_summary()
-
-# For models fit using MCMC, if you like working with RStan's stanfit objects
-# then you can create one with rstan::read_stan_csv()
-
-# stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
-
-
-# Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
-# and also demonstrate specifying data as a path to a file instead of a list
-my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
-fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-
-fit_optim$summary()
-
-# Run 'variational' to approximate the posterior (default is meanfield ADVI)
-fit_vb <- mod$variational(data = stan_data, seed = 123)
-
-fit_vb$summary()
-
-# Plot approximate posterior using bayesplot
-mcmc_hist(fit_vb$draws("theta"))
 }
 
 }
