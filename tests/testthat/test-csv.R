@@ -1,4 +1,4 @@
-context("read-sample-csv")
+context("read_cmdstan_csv")
 
 if (not_on_cran()) {
   set_cmdstan_path()
@@ -448,6 +448,9 @@ test_that("read_cmdstan_csv() works for generate_quantities", {
   expect_equal(posterior::variables(csv_output_4$generated_quantities), y_rep_params)
   csv_output_5 <- read_cmdstan_csv(fit_gq$output_files(), variables = c("sum_y", "y_rep"))
   expect_equal(posterior::variables(csv_output_5$generated_quantities), c("sum_y", y_rep_params))
+
+  # metadata$fitted_params has correct number of files
+  expect_length(csv_output_5$metadata$fitted_params, fit_gq$num_chains())
 })
 
 test_that("read_cmdstan_csv() errors for files from different methods", {
