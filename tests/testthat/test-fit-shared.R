@@ -9,7 +9,9 @@ if (not_on_cran()) {
   fits[["variational"]] <- testing_fit("logistic", method = "variational",
                                        seed = 123, save_latent_dynamics = TRUE)
   fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
-  all_methods <- c("sample", "optimize", "variational")
+  fit_bern <- testing_fit("bernoulli", method = "sample", seed = 123)
+  fits[["generate_quantities"]] <- testing_fit("bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern, seed = 123)
+  all_methods <- c("sample", "optimize", "variational", "generate_quantities")
 }
 
 test_that("*_files() methods return the right number of paths", {
@@ -17,7 +19,7 @@ test_that("*_files() methods return the right number of paths", {
   for (method in all_methods) {
     expect_length(fits[[method]]$output_files(), fits[[method]]$num_procs())
     expect_length(fits[[method]]$data_file(), 1)
-    if (method != "optimize") {
+    if (method %in% c("sample", "variational")) {
       expect_length(fits[[method]]$latent_dynamics_files(), fits[[method]]$num_procs())
     }
   }
@@ -56,7 +58,7 @@ test_that("saving diagnostic csv output works", {
 
   for (method in all_methods) {
     fit <- fits[[method]]
-    if (method == "optimize") {
+    if (!(method %in% c("sample", "variational"))) {
       expect_error(
         fit$save_latent_dynamics_files(),
         "No latent dynamics files found. Set 'save_latent_dynamics=TRUE' when fitting the model",
@@ -104,8 +106,11 @@ test_that("saving data file works", {
     )
     checkmate::expect_file_exists(path, extension = "json")
     expect_true(file.size(path) > 0)
-    expect_equal(basename(path), "logistic.json")
-
+    if(method == "generate_quantities") {
+      expect_equal(basename(path), "bernoulli_ppc.json")
+    } else {
+      expect_equal(basename(path), "logistic.json")
+    }
     expect_false(file.exists(old_path))
     expect_equal(fit$data_file(), path)
   }
@@ -118,6 +123,9 @@ test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
     if (method == "optimize") {
       expect_error(fit$cmdstan_summary(), "Not available for optimize method")
       expect_error(fit$cmdstan_diagnose(), "Not available for optimize method")
+    } else if (method == "generate_quantities") {
+      expect_error(fit$cmdstan_summary(), "Not available for generate_quantities method")
+      expect_error(fit$cmdstan_diagnose(), "Not available for generate_quantities method")
     } else {
       expect_output(fit$cmdstan_summary(), "Inference for Stan model")
       expect_output(fit$cmdstan_diagnose(), "Processing complete")

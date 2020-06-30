@@ -35,8 +35,8 @@ CSV file(s). See \strong{Examples} below.
 The other components in the returned list depend on the method that produced
 the CSV file(s).
 
-For \link[=model-method-sample]{sampling} the returned list
-also includes the following components:
+For \link[=model-method-sample]{sampling} the returned list also includes the
+following components:
 \itemize{
 \item \code{inv_metric}: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.
@@ -64,6 +64,13 @@ includes the following components:
 \item \code{draws}: A \code{\link[posterior:draws_matrix]{draws_matrix}} of draws from the
 approximate posterior distribution.
 }
+
+For \link[=model-method-generate-quantities]{standalone generated quantities} the
+returned list also includes the following components:
+\itemize{
+\item \code{generated_quantities}: A \code{\link[posterior:draws_array]{draws_array}} of
+the generated quantities.
+}
 }
 \description{
 \code{read_cmdstan_csv()} is used internally by CmdStanR to read CmdStan's output
@@ -72,19 +79,18 @@ and efficient alternative to \code{rstan::read_stan_csv()}.
 }
 \examples{
 \dontrun{
-stan_program <- tempfile(fileext=".stan")
-cat("
-parameters {
-  real alpha_scalar;
-  vector[2] theta_vector;
-  matrix[2,2] tau_matrix;
-}
-model {
-  alpha_scalar ~ std_normal();
-  theta_vector ~ std_normal();
-  to_vector(tau_matrix) ~ std_normal();
-}
-", file = stan_program)
+stan_program <- write_stan_tempfile(
+  "parameters {
+    real alpha_scalar;
+    vector[2] theta_vector;
+    matrix[2,2] tau_matrix;
+  }
+  model {
+    alpha_scalar ~ std_normal();
+    theta_vector ~ std_normal();
+    to_vector(tau_matrix) ~ std_normal();
+  }"
+)
 
 # only using capture.output to avoid too much printed output in example
 out <- utils::capture.output(

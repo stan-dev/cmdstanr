@@ -147,3 +147,61 @@ test_that("init warnings are shown", {
     )
   )
 })
+
+test_that("optimize error on bad data", {
+  mod <- testing_model("bernoulli")
+
+  suppressWarnings(
+    expect_output(
+      mod$optimize(data = list(a = c(1,2,3))),
+      "Exception: variable does not exist"
+    )
+  )
+  expect_warning(
+    utils::capture.output(
+      fit <- mod$optimize(data = list(a = c(1,2,3)))
+    ),
+    "Fitting finished unexpectedly!"
+  )
+})
+
+test_that("gq chains error on wrong input CSV", {
+  skip_on_cran()
+  fit_bernoulli <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2)
+  fit_logistic <- testing_fit("logistic", method = "sample", seed = 123, chains = 4)
+  mod <- testing_model("bernoulli_ppc")
+  data_list <- testing_data("bernoulli_ppc")
+  suppressWarnings(
+    expect_output(
+      mod$generate_quantities(data = data_list, fitted_params = fit_logistic$output_files()),
+      "Mismatch between model and fitted_parameters csv"
+    )
+  )
+  suppressWarnings(
+    expect_output(
+      mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv")),
+      "Error reading fitted param names"
+    )
+  )
+  expect_warning(
+    utils::capture.output(
+      fit <- mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv"))
+    ),
+    "Chain 1 finished unexpectedly"
+  )
+
+  expect_error(
+    fit$draws(),
+    "No chains finished successfully. Unable to retrieve the generated quantities."
+  )
+  expect_warning(
+    utils::capture.output(
+      fit <- mod$generate_quantities(data = data_list, fitted_params = c(fit_bernoulli$output_files(), fit_logistic$output_files()))
+    ),
+    "4 chain(s) finished unexpectedly",
+    fixed = TRUE
+  )
+})
+
+
+

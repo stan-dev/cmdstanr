@@ -220,15 +220,21 @@ NULL
 #' [`posterior::as_draws_array()`][posterior::draws_array].
 #'
 #' @section Value:
-#' * For MCMC, a 3-D [`draws_array`][posterior::draws_array] object (iteration x
-#' chain x variable).
-#' * For variational inference, a 2-D [`draws_matrix`][posterior::draws_matrix]
-#' object (draw x variable). An additional variable `lp_approx__` is also
-#' included, which is the log density of the variational approximation to the
-#' posterior evaluated at each of the draws.
-#' * For optimization, a 1-row [`draws_matrix`][posterior::draws_matrix] with
-#' one column per variable. These are *not* actually draws, just point estimates
-#' stored in the `draws_matrix` format.
+#' * For [MCMC][model-method-sample], a 3-D
+#' [`draws_array`][posterior::draws_array] object (iteration x chain x
+#' variable).
+#' * For [standalone generated quantities][model-method-generate-quantities], a
+#' 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
+#' variable).
+#' * For [variational inference][model-method-variational], a 2-D
+#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable). An
+#' additional variable `lp_approx__` is also included, which is the log density
+#' of the variational approximation to the posterior evaluated at each of the
+#' draws.
+#' * For [optimization][model-method-optimize], a 1-row
+#' [`draws_matrix`][posterior::draws_matrix] with one column per variable. These
+#' are *not* actually draws, just point estimates stored in the `draws_matrix`
+#' format.
 #'
 #' @examples
 #' \dontrun{
@@ -675,7 +681,6 @@ CmdStanMCMC <- R6::R6Class(
         currently_read = dimnames(private$draws_)$variable,
         all = private$metadata_$model_params
       )
-
       if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = to_read, sampler_diagnostics = "")
       }
@@ -684,7 +689,7 @@ CmdStanMCMC <- R6::R6Class(
       }
       matching_res <- matching_variables(variables, private$metadata_$model_params)
       if (length(matching_res$not_found)) {
-        stop("Can't find the following variable(s) in the sampling output: ",
+        stop("Can't find the following variable(s) in the output: ",
              paste(matching_res$not_found, collapse = ", "))
       }
       variables <- repair_variable_names(matching_res$matching)
@@ -742,22 +747,10 @@ CmdStanMCMC <- R6::R6Class(
     warmup_draws_ = NULL,
     inv_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
-      variables_to_read <-
-        remaining_columns_to_read(
-          variables,
-          dimnames(private$draws_)$variable,
-          private$metadata_$model_params
-        )
-      sampler_diagnostics_to_read <-
-        remaining_columns_to_read(
-          sampler_diagnostics,
-          dimnames(private$sampler_diagnostics_)$variable,
-          private$metadata_$sampler_diagnostics
-        )
       data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
-        variables = variables_to_read,
-        sampler_diagnostics = sampler_diagnostics_to_read
+        variables = variables,
+        sampler_diagnostics = sampler_diagnostics
       )
       private$inv_metric_ <- data_csv$inv_metric
       private$metadata_ <- data_csv$metadata
@@ -919,3 +912,100 @@ CmdStanVB <- R6::R6Class(
   )
 )
 
+# CmdStanGQ ---------------------------------------------------------------
+
+#' CmdStanGQ objects
+#'
+#' @name CmdStanGQ
+#' @family fitted model objects
+#' @template seealso-docs
+#'
+#' @description A `CmdStanGQ` object is the fitted model object returned by the
+#'   [`$generate_quantities()`][model-method-generate-quantities] method of a
+#'   [`CmdStanModel`] object.
+#'
+#' @details
+#' `CmdStanGQ` objects have the following methods:
+#'
+#' \tabular{ll}{
+#'  **Method** \tab **Description** \cr
+#'  [`$draws()`][fit-method-draws] \tab Returns the generated quantities
+#'  as a [`draws_array`][posterior::draws_array]. \cr
+#'  [`$summary()`][fit-method-summary] \tab
+#'  Run [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
+#'  [`$save_object()`][fit-method-save_object]
+#'    \tab Save fitted model object to a file. \cr
+#'  [`$save_output_files()`][fit-method-save_output_files]
+#'    \tab Save output CSV files to a specified location. \cr
+#'  [`$save_data_file()`][fit-method-save_data_file]
+#'    \tab Save JSON data file to a specified location. \cr
+#'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
+#'  `$output()` \tab Return the stdout and stderr of all chains as a list of
+#'    character vectors, or pretty print the output for a single chain if
+#'    `id` argument is specified. \cr
+#' }
+#'
+#' @inherit model-method-generate-quantities examples
+#'
+CmdStanGQ <- R6::R6Class(
+  classname = "CmdStanGQ",
+  inherit = CmdStanFit,
+  public = list(
+    fitted_params_files = function() {
+      self$runset$args$method_args$fitted_params
+    },
+    num_chains = function() {
+      super$num_procs()
+    },
+    draws = function(variables = NULL) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("No chains finished successfully. Unable to retrieve the generated quantities.", call. = FALSE)
+      }
+      to_read <- remaining_columns_to_read(
+        requested = variables,
+        currently_read = dimnames(private$draws_)$variable,
+        all = private$metadata_$model_params
+      )
+      if (is.null(to_read) || any(nzchar(to_read))) {
+        private$read_csv_(variables = to_read)
+      }
+      if (is.null(variables)) {
+        variables <- private$metadata_$model_params
+      }
+      matching_res <- matching_variables(variables, private$metadata_$model_params)
+      if (length(matching_res$not_found)) {
+        stop("Can't find the following variable(s) in the output: ",
+             paste(matching_res$not_found, collapse = ", "), call. = FALSE)
+      }
+      variables <- repair_variable_names(matching_res$matching)
+      private$draws_[,,variables]
+    },
+    output = function(id = NULL) {
+      if (is.null(id)) {
+        self$runset$procs$proc_output()
+      } else {
+        cat(paste(self$runset$procs$proc_output(id), collapse="\n"))
+      }
+    }
+  ),
+  private = list(
+    # inherits draws_ and metadata_ slots from CmdStanFit
+    read_csv_ = function(variables = NULL) {
+      data_csv <- read_cmdstan_csv(
+        files = self$output_files(include_failed = FALSE),
+        variables = variables,
+        sampler_diagnostics = ""
+      )
+      private$metadata_ <- data_csv$metadata
+      if (!is.null(data_csv$generated_quantities)) {
+        private$draws_ <-
+          posterior::bind_draws(
+            private$draws_,
+            data_csv$generated_quantities,
+            along="variable"
+          )
+      }
+      invisible(self)
+    }
+  )
+)

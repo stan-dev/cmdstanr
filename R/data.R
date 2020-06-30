@@ -113,3 +113,67 @@ any_zero_dims <- function(data) {
   any(has_zero_dims)
 }
 
+
+#' Process fitted params for the generate quantities method
+#'
+#' @noRd
+#' @param fitted_params Paths to CSV files compatible with CmdStan or a CmdStanMCMC object.
+#' @return Paths to CSV files containing parameter values.
+#'
+process_fitted_params <- function(fitted_params) {
+  if (is.character(fitted_params)) {
+    paths <- absolute_path(fitted_params)
+  } else if (checkmate::test_r6(fitted_params, classes = ("CmdStanMCMC"))) {
+    if (all(file.exists(fitted_params$output_files()))) {
+      paths <- absolute_path(fitted_params$output_files())
+    } else {
+      draws <- tryCatch(posterior::as_draws_array(fitted_params$draws()),
+        error=function(cond) {
+            stop("Unable to obtain draws from the fit (CmdStanMCMC) object.", call. = FALSE)
+        }
+      )
+      sampler_diagnostics <- tryCatch(posterior::as_draws_array(fitted_params$sampler_diagnostics()),
+        error=function(cond) {
+            stop("Unable to obtain sampler diagnostics from the fit (CmdStanMCMC) object.", call. = FALSE)
+        }
+      )
+      if (!is.null(draws)) {
+        variables <- posterior::variables(draws)
+        non_lp_variables <- variables[variables != "lp__"]
+        draws <- posterior::bind_draws(
+          posterior::subset_draws(draws, variable = "lp__"),
+          sampler_diagnostics,
+          posterior::subset_draws(draws, variable = non_lp_variables),
+          along = "variable"
+        )
+        variables <- posterior::variables(draws)
+        chains <- posterior::chain_ids(draws)
+        iterations <- posterior::niterations(draws)
+        paths <- generate_file_names(basename = "fittedParams", ids = chains)
+        paths <- file.path(tempdir(), paths)
+        chain <- 1
+        for (path in paths) {
+          chain_draws <- posterior::as_draws_df(posterior::subset_draws(draws, chain = chain))
+          colnames(chain_draws) <- unrepair_variable_names(variables)
+          write(
+            paste0("# num_samples = ", iterations),
+            file = path,
+            append = FALSE
+          )
+          vroom::vroom_write(
+            chain_draws,
+            delim = ",",
+            path = path,
+            col_names = TRUE,
+            progress = FALSE,
+            append = TRUE
+          )
+          chain <- chain + 1
+        }
+      }
+    }
+  } else {
+    stop("'fitted_params' should be a vector of paths or a CmdStanMCMC object.", call. = FALSE)
+  }
+  paths
+}

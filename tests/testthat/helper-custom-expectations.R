@@ -24,3 +24,16 @@ expect_vb_output <- function(object) {
     regexp = "Drawing a sample of size"
   )
 }
+
+expect_gq_output <- function(object, num_chains = NULL) {
+
+  output <- "Running standalone generated quantities after "
+  if (!is.null(num_chains)) {
+    if (num_chains == 1) {
+      output <- paste(output, num_chains, "chain")
+    } else {
+      output <- paste(output, num_chains, "sequential chain")
+    }
+  }
+  expect_output(object, output)
+}

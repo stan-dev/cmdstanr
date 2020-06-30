@@ -119,6 +119,8 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. \cr
 #'  [`$variational()`][model-method-variational]
 #'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. \cr
+#'  [`$generate_quantities()`][model-method-generate-quantities]
+#'    \tab Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`] object. \cr
 #' }
 #'
 #' @template seealso-docs
@@ -856,3 +858,114 @@ variational_method <- function(data = NULL,
   CmdStanVB$new(runset)
 }
 CmdStanModel$set("public", name = "variational", value = variational_method)
+
+#' Run Stan's standalone generated quantities method
+#'
+#' @name model-method-generate-quantities
+#' @aliases generate_quantities
+#' @family CmdStanModel methods
+#'
+#' @description The `$generate_quantities()` method of a [`CmdStanModel`] object
+#'   runs Stan's standalone generated quantities to obtain generated quantities
+#'   based on previously fitted parameters.
+#'
+#' @section Usage:
+#'   ```
+#'   $generate_quantities(
+#'     fitted_params,
+#'     data = NULL,
+#'     seed = NULL,
+#'     output_dir = NULL,
+#'     parallel_chains = getOption("mc.cores", 1),
+#'     threads_per_chain = NULL
+#'   )
+#'   ```
+#'
+#' @section Arguments:
+#'   * `fitted_params`: (multiple options) The parameter draws to use. One of the following:
+#'     - A [CmdStanMCMC] fitted model object.
+#'     - A character vector of paths to CmdStan CSV output files containing
+#'     parameter draws.
+#'   * `data`, `seed`, `output_dir`, `parallel_chains`, `threads_per_chain`:
+#'   Same as for the [`$sample()`][model-method-sample] method.
+#'
+#' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
+#'
+#' @template seealso-docs
+#'
+#' @examples
+#' \dontrun{
+#' # first fit a model using MCMC
+#' mcmc_program <- write_stan_tempfile(
+#'   "data {
+#'     int<lower=0> N;
+#'     int<lower=0,upper=1> y[N];
+#'   }
+#'   parameters {
+#'     real<lower=0,upper=1> theta;
+#'   }
+#'   model {
+#'     y ~ bernoulli(theta);
+#'   }"
+#' )
+#' mod_mcmc <- cmdstan_model(mcmc_program)
+#'
+#' data <- list(N = 10, y = c(1,1,0,0,0,1,0,1,0,0))
+#' fit_mcmc <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
+#'
+#' # stan program for standalone generated quantities
+#' # (could keep model block, but not necessary so removing it)
+#' gq_program <- write_stan_tempfile(
+#'   "data {
+#'     int<lower=0> N;
+#'     int<lower=0,upper=1> y[N];
+#'   }
+#'   parameters {
+#'     real<lower=0,upper=1> theta;
+#'   }
+#'   generated quantities {
+#'     int y_rep[N] = bernoulli_rng(rep_vector(theta, N));
+#'   }"
+#' )
+#'
+#' mod_gq <- cmdstan_model(gq_program)
+#' fit_gq <- mod_gq$generate_quantities(fit_mcmc, data = data, seed = 123)
+#' str(fit_gq$draws())
+#'
+#' library(posterior)
+#' as_draws_df(fit_gq$draws())
+#' }
+#'
+NULL
+
+generate_quantities_method <- function(fitted_params,
+                                       data = NULL,
+                                       seed = NULL,
+                                       output_dir = NULL,
+                                       parallel_chains = getOption("mc.cores", 1),
+                                       threads_per_chain = NULL) {
+  checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
+  fitted_params <- process_fitted_params(fitted_params)
+  chains <- length(fitted_params)
+  generate_quantities_args <- GenerateQuantitiesArgs$new(
+    fitted_params = fitted_params
+  )
+  cmdstan_args <- CmdStanArgs$new(
+    method_args = generate_quantities_args,
+    model_name = strip_ext(basename(self$exe_file())),
+    exe_file = self$exe_file(),
+    proc_ids = seq_len(chains),
+    data_file = process_data(data),
+    seed = seed,
+    output_dir = output_dir
+  )
+  cmdstan_procs <- CmdStanGQProcs$new(
+    num_procs = chains,
+    parallel_procs = parallel_chains,
+    threads_per_proc = threads_per_chain
+  )
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset$run_cmdstan()
+  CmdStanGQ$new(runset)
+}
+CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities_method)

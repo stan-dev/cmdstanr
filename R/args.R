@@ -13,8 +13,7 @@
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
-#' * `GQArgs`: not yet implemented.
-#' * `FixedParamArgs`: not yet implemented.
+#' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`.
 #'
 NULL
 
@@ -292,6 +291,38 @@ SampleArgs <- R6::R6Class(
   )
 )
 
+# GenerateQuantitiesArgs -------------------------------------------------------------
+
+GenerateQuantitiesArgs <- R6::R6Class(
+  "GenerateQuantitiesArgs",
+  lock_objects = FALSE,
+  public = list(
+    method = "generate_quantities",
+    initialize = function(fitted_params = NULL) {
+      self$fitted_params <- fitted_params
+      invisible(self)
+    },
+    validate = function(num_procs) {
+      validate_generate_quantities_args(self)
+      invisible(self)
+    },
+
+    # Compose arguments to CmdStan command for generate_quantities method
+    compose = function(idx = NULL, args = NULL) {
+      .make_arg <- function(arg_name, cmdstan_arg_name = NULL, idx = NULL) {
+        compose_arg(self, arg_name = arg_name, cmdstan_arg_name = cmdstan_arg_name, idx = idx)
+      }
+      new_args <- list(
+        "method=generate_quantities",
+        .make_arg("fitted_params", idx = idx)
+      )
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
+    }
+  )
+)
+
+
 
 # OptimizeArgs -------------------------------------------------------------
 
@@ -540,6 +571,18 @@ validate_optimize_args <- function(self) {
   if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
     stop("'init_alpha' can't be used when algorithm is 'newton'.",
          call. = FALSE)
+  }
+
+  invisible(TRUE)
+}
+
+#' Validate arguments for standalone generated quantities
+#' @noRd
+#' @param self A `GenerateQuantitiesArgs` object.
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_generate_quantities_args <- function(self) {
+  if (!is.null(self$fitted_params)) {
+    checkmate::assert_file_exists(self$fitted_params, access = "r")
   }
 
   invisible(TRUE)
