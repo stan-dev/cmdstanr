@@ -52,19 +52,19 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   fit_1_chain <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
   fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
   expect_gq_output(
-    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain)
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain)
   )
   expect_gq_output(
-    mod$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 2)
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 2)
   )
   expect_gq_output(
-    mod$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
   )
   expect_gq_output(
-    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2)
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2)
   )
   expect_output(
-    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
     "2 thread(s) per chain",
     fixed = TRUE
   )

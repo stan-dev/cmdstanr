@@ -4,8 +4,6 @@ if (not_on_cran()) {
   set_cmdstan_path()
   fit <- testing_fit("bernoulli", method = "sample", seed = 123)
   fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
-  mod <- testing_model("bernoulli_ppc")
-  data_list <- testing_data("bernoulli_ppc")
   PARAM_NAMES <- c("y_rep[1]", "y_rep[2]", "y_rep[3]", "y_rep[4]", "y_rep[5]",
                    "y_rep[6]", "y_rep[7]", "y_rep[8]", "y_rep[9]", "y_rep[10]", "sum_y")
 }
