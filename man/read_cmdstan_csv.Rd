@@ -68,7 +68,7 @@ approximate posterior distribution.
 For \link[=model-method-generate-quantities]{standalone generated quantities} the
 returned list also includes the following components:
 \itemize{
-\item \code{generated_quantities}: A \code{\link[posterior:draws_matrix]{draws_matrix}} of
+\item \code{generated_quantities}: A \code{\link[posterior:draws_array]{draws_array}} of
 the generated quantities.
 }
 }
@@ -79,19 +79,18 @@ and efficient alternative to \code{rstan::read_stan_csv()}.
 }
 \examples{
 \dontrun{
-stan_program <- tempfile(fileext=".stan")
-cat("
-parameters {
-  real alpha_scalar;
-  vector[2] theta_vector;
-  matrix[2,2] tau_matrix;
-}
-model {
-  alpha_scalar ~ std_normal();
-  theta_vector ~ std_normal();
-  to_vector(tau_matrix) ~ std_normal();
-}
-", file = stan_program)
+stan_program <- write_stan_tempfile(
+  "parameters {
+    real alpha_scalar;
+    vector[2] theta_vector;
+    matrix[2,2] tau_matrix;
+  }
+  model {
+    alpha_scalar ~ std_normal();
+    theta_vector ~ std_normal();
+    to_vector(tau_matrix) ~ std_normal();
+  }"
+)
 
 # only using capture.output to avoid too much printed output in example
 out <- utils::capture.output(

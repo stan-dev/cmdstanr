@@ -14,7 +14,7 @@ A \code{CmdStanGQ} object is the fitted model object returned by the
 \tabular{ll}{
 \strong{Method} \tab \strong{Description} \cr
 \code{\link[=fit-method-draws]{$draws()}} \tab Returns the generated quantities
-as a \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
+as a \code{\link[posterior:draws_array]{draws_array}}. \cr
 \code{\link[=fit-method-summary]{$summary()}} \tab
 Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 \code{\link[=fit-method-save_object]{$save_object()}}
@@ -28,6 +28,50 @@ Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 character vectors, or pretty print the output for a single chain if
 \code{id} argument is specified. \cr
 }
+}
+\examples{
+\dontrun{
+# first fit a model using MCMC
+mcmc_program <- write_stan_tempfile(
+  "data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  model {
+    y ~ bernoulli(theta);
+  }"
+)
+mod_mcmc <- cmdstan_model(mcmc_program)
+
+data <- list(N = 10, y = c(1,1,0,0,0,1,0,1,0,0))
+fit_mcmc <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
+
+# stan program for standalone generated quantities
+# (could keep model block, but not necessary so removing it)
+gq_program <- write_stan_tempfile(
+  "data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  generated quantities {
+    int y_rep[N] = bernoulli_rng(rep_vector(theta, N));
+  }"
+)
+
+mod_gq <- cmdstan_model(gq_program)
+fit_gq <- mod_gq$generate_quantities(fit_mcmc, data = data, seed = 123)
+str(fit_gq$draws())
+
+library(posterior)
+as_draws_df(fit_gq$draws())
+}
+
 }
 \seealso{
 The CmdStanR website (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr})

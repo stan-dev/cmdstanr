@@ -105,6 +105,15 @@ process_data <- function(data) {
   path
 }
 
+# check if any objects in the data list have zero
+any_zero_dims <- function(data) {
+  has_zero_dims <- sapply(data, function(x) {
+    any(dim(x) == 0)
+  })
+  any(has_zero_dims)
+}
+
+
 #' Process fitted params for the generate quantities method
 #'
 #' @noRd
@@ -168,12 +177,3 @@ process_fitted_params <- function(fitted_params) {
   }
   paths
 }
-
-# check if any objects in the data list have zero
-any_zero_dims <- function(data) {
-  has_zero_dims <- sapply(data, function(x) {
-    any(dim(x) == 0)
-  })
-  any(has_zero_dims)
-}
-

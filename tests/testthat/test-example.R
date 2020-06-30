@@ -18,3 +18,28 @@ test_that("cmdstanr_example works", {
   expect_output(print_example_program("schools"), "vector[J] theta", fixed=TRUE)
   expect_output(print_example_program("schools_ncp"), "vector[J] theta_raw", fixed=TRUE)
 })
+
+test_that("write_stan_tempfile works", {
+  stan_program <- "
+  data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  model {
+    y ~ bernoulli(theta);
+  }
+  "
+
+  f1 <- write_stan_tempfile(stan_program)
+  checkmate::expect_file_exists(f1, extension = "stan")
+  f1_lines <- readLines(f1)
+
+  f2 <- write_stan_tempfile(f1_lines)
+  checkmate::expect_file_exists(f2, extension = "stan")
+  f2_lines <- readLines(f2)
+
+  expect_identical(f1_lines, f2_lines)
+})

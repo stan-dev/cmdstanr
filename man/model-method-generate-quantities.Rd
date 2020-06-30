@@ -14,7 +14,6 @@ based on previously fitted parameters.
   fitted_params,
   data = NULL,
   seed = NULL,
-  refresh = NULL,
   output_dir = NULL,
   parallel_chains = getOption("mc.cores", 1),
   threads_per_chain = NULL
@@ -31,9 +30,8 @@ based on previously fitted parameters.
 \item A character vector of paths to CmdStan CSV output files containing
 parameter draws.
 }
-\item \code{data}, \code{seed}, \code{refresh}, \code{output_dir}, \code{parallel_chains},
-\code{threads_per_chain}: Same as for the \code{\link[=model-method-sample]{$sample()}}
-method.
+\item \code{data}, \code{seed}, \code{output_dir}, \code{parallel_chains}, \code{threads_per_chain}:
+Same as for the \code{\link[=model-method-sample]{$sample()}} method.
 }
 }
 
@@ -43,7 +41,45 @@ method.
 
 \examples{
 \dontrun{
+# first fit a model using MCMC
+mcmc_program <- write_stan_tempfile(
+  "data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  model {
+    y ~ bernoulli(theta);
+  }"
+)
+mod_mcmc <- cmdstan_model(mcmc_program)
 
+data <- list(N = 10, y = c(1,1,0,0,0,1,0,1,0,0))
+fit_mcmc <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
+
+# stan program for standalone generated quantities
+# (could keep model block, but not necessary so removing it)
+gq_program <- write_stan_tempfile(
+  "data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  generated quantities {
+    int y_rep[N] = bernoulli_rng(rep_vector(theta, N));
+  }"
+)
+
+mod_gq <- cmdstan_model(gq_program)
+fit_gq <- mod_gq$generate_quantities(fit_mcmc, data = data, seed = 123)
+str(fit_gq$draws())
+
+library(posterior)
+as_draws_df(fit_gq$draws())
 }
 
 }

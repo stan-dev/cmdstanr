@@ -60,19 +60,18 @@
 #'
 #' @examples
 #' \dontrun{
-#' stan_program <- tempfile(fileext=".stan")
-#' cat("
-#' parameters {
-#'   real alpha_scalar;
-#'   vector[2] theta_vector;
-#'   matrix[2,2] tau_matrix;
-#' }
-#' model {
-#'   alpha_scalar ~ std_normal();
-#'   theta_vector ~ std_normal();
-#'   to_vector(tau_matrix) ~ std_normal();
-#' }
-#' ", file = stan_program)
+#' stan_program <- write_stan_tempfile(
+#'   "parameters {
+#'     real alpha_scalar;
+#'     vector[2] theta_vector;
+#'     matrix[2,2] tau_matrix;
+#'   }
+#'   model {
+#'     alpha_scalar ~ std_normal();
+#'     theta_vector ~ std_normal();
+#'     to_vector(tau_matrix) ~ std_normal();
+#'   }"
+#' )
 #'
 #' # only using capture.output to avoid too much printed output in example
 #' out <- utils::capture.output(

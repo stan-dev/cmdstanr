@@ -945,6 +945,8 @@ CmdStanVB <- R6::R6Class(
 #'    `id` argument is specified. \cr
 #' }
 #'
+#' @inherit model-method-generate-quantities examples
+#'
 CmdStanGQ <- R6::R6Class(
   classname = "CmdStanGQ",
   inherit = CmdStanFit,
