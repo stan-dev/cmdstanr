@@ -875,7 +875,6 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'     fitted_params,
 #'     data = NULL,
 #'     seed = NULL,
-#'     refresh = NULL,
 #'     output_dir = NULL,
 #'     parallel_chains = getOption("mc.cores", 1),
 #'     threads_per_chain = NULL
@@ -905,7 +904,6 @@ NULL
 generate_quantities_method <- function(fitted_params,
                                        data = NULL,
                                        seed = NULL,
-                                       refresh = NULL,
                                        output_dir = NULL,
                                        parallel_chains = getOption("mc.cores", 1),
                                        threads_per_chain = NULL) {
@@ -922,7 +920,6 @@ generate_quantities_method <- function(fitted_params,
     proc_ids = seq_len(chains),
     data_file = process_data(data),
     seed = seed,
-    refresh = refresh,
     output_dir = output_dir
   )
   cmdstan_procs <- CmdStanGQProcs$new(

@@ -55,7 +55,7 @@
 #' For [standalone generated quantities][model-method-generate-quantities] the
 #' returned list also includes the following components:
 #'
-#' * `generated_quantities`: A [`draws_matrix`][posterior::draws_matrix] of
+#' * `generated_quantities`: A [`draws_array`][posterior::draws_array] of
 #' the generated quantities.
 #'
 #' @examples

@@ -94,7 +94,7 @@ test_that("process_fitted_params() works if output_files in fit do not exist", {
     )
     expect_equal(
       posterior::subset_draws(fit_ref$sampler_diagnostics(), chain = chain),
-      posterior::subset_draws(tmp_file_gq, variable = dimnames(fit_ref$sampler_diagnostics())$variable)
+      posterior::subset_draws(tmp_file_gq, variable = posterior::variables(fit_ref$sampler_diagnostics()))
     )
     chain <- chain + 1
   }

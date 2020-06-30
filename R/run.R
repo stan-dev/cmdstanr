@@ -308,14 +308,14 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     }
   }
   if (procs$num_procs() == 1) {
-    start_msg <- "Running standalone generated quantities with 1 chain"
+    start_msg <- "Running standalone generated quantities after 1 MCMC chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
-    start_msg <- paste0("Running standalone generated quantities with ", procs$num_procs(), " parallel chains")
+    start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, for all chains in parallel ")
   } else {
     if (procs$parallel_procs() == 1) {
-      start_msg <- paste0("Running standalone generated quantities with ", procs$num_procs(), " sequential chains")
+      start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, for 1 chain at a time ")
     } else {
-      start_msg <- paste0("Running standalone generated quantities with ", procs$num_procs(), " chains, at most ", procs$parallel_procs(), " in parallel")
+      start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, for ", procs$parallel_procs(), " chains at a time ")
     }
   }
   if (is.null(procs$threads_per_proc())) {

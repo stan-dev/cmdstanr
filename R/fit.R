@@ -942,7 +942,7 @@ CmdStanVB <- R6::R6Class(
 #' \tabular{ll}{
 #'  **Method** \tab **Description** \cr
 #'  [`$draws()`][fit-method-draws] \tab Returns the generated quantities
-#'  as a [`draws_matrix`][posterior::draws_matrix]. \cr
+#'  as a [`draws_array`][posterior::draws_array]. \cr
 #'  [`$summary()`][fit-method-summary] \tab
 #'  Run [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
 #'  [`$save_object()`][fit-method-save_object]

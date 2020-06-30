@@ -129,22 +129,22 @@ process_fitted_params <- function(fitted_params) {
         }
       )
       if (!is.null(draws)) {
-        variables <- dimnames(draws)$variable
+        variables <- posterior::variables(draws)
         non_lp_variables <- variables[variables != "lp__"]
         draws <- posterior::bind_draws(
           posterior::subset_draws(draws, variable = "lp__"),
           sampler_diagnostics,
-          draws[,,non_lp_variables],
+          posterior::subset_draws(draws, variable = non_lp_variables),
           along = "variable"
         )
-        variables <- dimnames(draws)$variable
-        chains <- dimnames(draws)$chain
-        iterations <- length(dimnames(draws)$iteration)
+        variables <- posterior::variables(draws)
+        chains <- posterior::chain_ids(draws)
+        iterations <- posterior::niterations(draws)
         paths <- generate_file_names(basename = "fittedParams", ids = chains)
         paths <- file.path(tempdir(), paths)
         chain <- 1
         for (path in paths) {
-          chain_draws <- as.data.frame(posterior::subset_draws(draws, chain = chain))
+          chain_draws <- posterior::as_draws_df(posterior::subset_draws(draws, chain = chain))
           colnames(chain_draws) <- unrepair_variable_names(variables)
           write(
             paste0("# num_samples = ", iterations),
@@ -164,7 +164,7 @@ process_fitted_params <- function(fitted_params) {
       }
     }
   } else {
-    stop("'fitted_params' should be a vector of paths or a sampling fit object (CmdStanMCMC).", call. = FALSE)
+    stop("'fitted_params' should be a vector of paths or a CmdStanMCMC object.", call. = FALSE)
   }
   paths
 }

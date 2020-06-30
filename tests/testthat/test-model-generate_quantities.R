@@ -11,7 +11,6 @@ if (not_on_cran()) {
   ok_arg_values <- list(
     fitted_params = fit,
     data = data_list,
-    refresh = 5,
     seed = 12345,
     parallel_chains = 1
   )
@@ -20,7 +19,6 @@ if (not_on_cran()) {
   bad_arg_values <- list(
     fitter_params = "NOT_A_FILE",
     data = "NOT_A_FILE",
-    refresh = -20,
     seed = "NOT_A_SEED",
     parallel_chains = -20
   )
@@ -47,4 +45,27 @@ test_that("generate_quantities() method errors for any invalid argument before c
     args[[nm]] <- bad_arg_values[[nm]]
     expect_error(do.call(mod_gq$generate_quantities, args), regexp = nm)
   }
+})
+
+test_that("generate_quantities work for different chains and parallel_chains", {
+  skip_on_cran()
+  fit_1_chain <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
+  fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
+  expect_gq_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain)
+  )
+  expect_gq_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 2)
+  )
+  expect_gq_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
+  )
+  expect_gq_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2)
+  )
+  expect_output(
+    mod$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
+    "2 thread(s) per chain",
+    fixed = TRUE
+  )
 })

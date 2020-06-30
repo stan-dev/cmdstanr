@@ -27,7 +27,7 @@ expect_vb_output <- function(object) {
 
 expect_gq_output <- function(object, num_chains = NULL) {
 
-  output <- "Running standalone generated quantities with "
+  output <- "Running standalone generated quantities after "
   if (!is.null(num_chains)) {
     if (num_chains == 1) {
       output <- paste(output, num_chains, "chain")
