@@ -20,19 +20,19 @@ test_that("process_fitted_params() works with basic input types", {
 test_that("process_fitted_params() errors with bad args", {
   expect_error(
     process_fitted_params(5),
-    "'fitted_params' should be a vector of paths or a sampling fit object \\(CmdStanMCMC\\)."
+    "'fitted_params' should be a vector of paths or a CmdStanMCMC object."
   )
   expect_error(
     process_fitted_params(NULL),
-    "'fitted_params' should be a vector of paths or a sampling fit object \\(CmdStanMCMC\\)."
+    "'fitted_params' should be a vector of paths or a CmdStanMCMC object."
   )
   expect_error(
     process_fitted_params(fit_vb),
-    "'fitted_params' should be a vector of paths or a sampling fit object \\(CmdStanMCMC\\)."
+    "'fitted_params' should be a vector of paths or a CmdStanMCMC object."
   )
   expect_error(
     process_fitted_params(fit_optimize),
-    "'fitted_params' should be a vector of paths or a sampling fit object \\(CmdStanMCMC\\)."
+    "'fitted_params' should be a vector of paths or a CmdStanMCMC object."
   )
 
   fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
