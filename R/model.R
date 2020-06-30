@@ -131,6 +131,7 @@ CmdStanModel <- R6::R6Class(
   private = list(
     stan_file_ = character(),
     exe_file_ = character(),
+    hpp_file_ = character(),
     cpp_options_ = list(),
     stanc_options_ = list(),
     include_paths_ = NULL,
@@ -172,6 +173,9 @@ CmdStanModel <- R6::R6Class(
     code = function() {
       # Get Stan code as a string
       readLines(self$stan_file())
+    },
+    hpp_file = function() {
+      private$hpp_file_
     },
     print = function() {
       # Print readable version of Stan code
@@ -311,7 +315,9 @@ compile_method <- function(quiet = TRUE,
 
   temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
-  tmp_exe <- cmdstan_ext(strip_ext(temp_stan_file)) # adds .exe on Windows
+  temp_file_no_ext <- strip_ext(temp_stan_file)
+  tmp_exe <- cmdstan_ext(temp_file_no_ext) # adds .exe on Windows
+  private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
 
   # add path to the TBB library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {

@@ -10,6 +10,7 @@ test_that("object initialized correctly", {
   skip_on_cran()
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
+  expect_equal(mod$hpp_file(), character(0))
 })
 
 test_that("error if no compile() before model fitting", {
@@ -30,7 +31,8 @@ test_that("compile() method works", {
   }
   expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
   expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
-
+  print(mod$hpp_file())
+  expect_true(file.exists(mod$hpp_file()))
   if (file.exists(exe)) {
     file.remove(exe)
   }

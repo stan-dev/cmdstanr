@@ -216,6 +216,7 @@ prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
     model_header_gch_used <- FALSE
   }
   if (!file.exists(main_path_w_flags)) {
+    message("Re-compiling the main object file and precompiled headers. This might take up to a few minutes ...")
     clean_compile_helper_files()
     run_log <- processx::run(
       command = make_cmd(),
