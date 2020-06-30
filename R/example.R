@@ -80,3 +80,47 @@ print_example_program <-
     cat(code, sep = "\n")
   }
 
+
+
+# including write_stan_tempfile in example.R since it will be mostly used
+# in examples
+
+#' Write Stan code to a temporary file
+#'
+#' @export
+#' @param code A single string containing a Stan program or a character vector
+#'   containing the individual lines of a Stan program. See **Examples**.
+#' @return The path to the temporary file.
+#'
+#' @examples
+#' # stan program as a single string
+#' stan_program <- "
+#' data {
+#'   int<lower=0> N;
+#'   int<lower=0,upper=1> y[N];
+#' }
+#' parameters {
+#'   real<lower=0,upper=1> theta;
+#' }
+#' model {
+#'   y ~ bernoulli(theta);
+#' }
+#' "
+#'
+#' f <- write_stan_tempfile(stan_program)
+#' print(f)
+#'
+#' lines <- readLines(f)
+#' print(lines)
+#' cat(lines, sep = "\n")
+#'
+#' # stan program as character vector of lines
+#' f2 <- write_stan_tempfile(lines)
+#' identical(readLines(f), readLines(f2))
+#'
+write_stan_tempfile <- function(code) {
+  tmp <- tempfile(fileext = ".stan")
+  cat(code, file = tmp, sep = "\n")
+  tmp
+}
+

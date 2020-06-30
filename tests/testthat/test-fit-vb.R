@@ -94,7 +94,14 @@ test_that("output() works for vb", {
 
 test_that("time is reported after vb", {
   skip_on_cran()
-  expect_output(mod$variational(data = data_list),
-                "Finished in")
+  expect_output(
+    mod$variational(data = data_list,
+                    seed = 123,
+                    elbo_samples = 1000,
+                    iter = 2000,
+                    output_samples = 50
+                    ),
+    "Finished in"
+  )
 })
 

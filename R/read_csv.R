@@ -25,8 +25,8 @@
 #' The other components in the returned list depend on the method that produced
 #' the CSV file(s).
 #'
-#' For [sampling][model-method-sample] the returned list
-#' also includes the following components:
+#' For [sampling][model-method-sample] the returned list also includes the
+#' following components:
 #'
 #' * `inv_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
@@ -52,21 +52,26 @@
 #' * `draws`: A [`draws_matrix`][posterior::draws_matrix] of draws from the
 #' approximate posterior distribution.
 #'
+#' For [standalone generated quantities][model-method-generate-quantities] the
+#' returned list also includes the following components:
+#'
+#' * `generated_quantities`: A [`draws_array`][posterior::draws_array] of
+#' the generated quantities.
+#'
 #' @examples
 #' \dontrun{
-#' stan_program <- tempfile(fileext=".stan")
-#' cat("
-#' parameters {
-#'   real alpha_scalar;
-#'   vector[2] theta_vector;
-#'   matrix[2,2] tau_matrix;
-#' }
-#' model {
-#'   alpha_scalar ~ std_normal();
-#'   theta_vector ~ std_normal();
-#'   to_vector(tau_matrix) ~ std_normal();
-#' }
-#' ", file = stan_program)
+#' stan_program <- write_stan_tempfile(
+#'   "parameters {
+#'     real alpha_scalar;
+#'     vector[2] theta_vector;
+#'     matrix[2,2] tau_matrix;
+#'   }
+#'   model {
+#'     alpha_scalar ~ std_normal();
+#'     theta_vector ~ std_normal();
+#'     to_vector(tau_matrix) ~ std_normal();
+#'   }"
+#' )
 #'
 #' # only using capture.output to avoid too much printed output in example
 #' out <- utils::capture.output(
@@ -107,6 +112,7 @@ read_cmdstan_csv <- function(files,
   warmup_sampler_diagnostics_draws <- NULL
   post_warmup_draws <- NULL
   post_warmup_sampler_diagnostics_draws <- NULL
+  generated_quantities <- NULL
   variational_draws <- NULL
   point_estimates <- NULL
   inv_metric <- list()
@@ -135,6 +141,7 @@ read_cmdstan_csv <- function(files,
       metadata$id <- c(metadata$id, csv_file_info$id)
       metadata$seed <- c(metadata$seed, csv_file_info$seed)
       metadata$step_size_adaptation <- c(metadata$step_size_adaptation, csv_file_info$step_size_adaptation)
+      metadata$fitted_params <- c(metadata$fitted_params, csv_file_info$fitted_params)
 
       if (!is.null(csv_file_info$inv_metric)) {
         inv_metric[[csv_file_info$id]] <- csv_file_info$inv_metric
@@ -152,7 +159,7 @@ read_cmdstan_csv <- function(files,
       } else { # filter using variables
         res <- matching_variables(variables, metadata$model_params)
         if (length(res$not_found)) {
-          stop("Can't find the following variable(s) in the sampling output: ",
+          stop("Can't find the following variable(s) in the output: ",
                paste(res$not_found, collapse = ", "), call. = FALSE)
         }
         variables <- res$matching
@@ -172,14 +179,18 @@ read_cmdstan_csv <- function(files,
           selected_sampler_diag <- selected_sampler_diag | matches
         }
         if (length(not_found)) {
-          stop("Can't find the following sampler diagnostic(s) in the sampling output: ",
+          stop("Can't find the following sampler diagnostic(s) in the output: ",
                paste(not_found, collapse = ", "), call. = FALSE)
         }
         sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
       }
-      col_select <- "lp__"
-      col_select <- c(col_select, variables[variables!="lp__"])
-      col_select <- c(col_select, sampler_diagnostics)
+      if (metadata$method == "generate_quantities") {
+        col_select <- c(col_select, variables)
+      } else {
+        col_select <- "lp__"
+        col_select <- c(col_select, variables[variables!="lp__"])
+        col_select <- c(col_select, sampler_diagnostics)
+      }
     }
     if (metadata$method == "sample") {
       num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
@@ -190,24 +201,42 @@ read_cmdstan_csv <- function(files,
     } else if (metadata$method == "optimize") {
       all_draws <- 1
     }
-    suppressWarnings(
-      draws <- vroom::vroom(
-        output_file,
-        comment = "#",
-        delim = ',',
-        trim_ws = TRUE,
-        col_select = col_select,
-        col_types = c("lp__" = "d"),
-        altrep = FALSE,
-        progress = FALSE,
-        skip = metadata$lines_to_skip,
-        n_max = all_draws * 2
+
+    if (metadata$method == "generate_quantities") {
+      # set the first arg as double
+      # to silence the type detection info
+      col_types <- list()
+      col_types[[col_select[1]]] = "d"
+      suppressWarnings(
+        draws <- vroom::vroom(
+          output_file,
+          comment = "#",
+          delim = ',',
+          col_select = col_select,
+          col_types = col_types,
+          trim_ws = TRUE,
+          altrep = FALSE,
+          progress = FALSE,
+          skip = metadata$lines_to_skip
+        )
       )
-    )
-    if (ncol(draws) == 0) {
-      stop("The supplied csv file does not contain any data!", call. = FALSE)
+    } else {
+      suppressWarnings(
+        draws <- vroom::vroom(
+          output_file,
+          comment = "#",
+          delim = ',',
+          trim_ws = TRUE,
+          col_select = col_select,
+          col_types = c("lp__" = "d"),
+          altrep = FALSE,
+          progress = FALSE,
+          skip = metadata$lines_to_skip,
+          n_max = all_draws * 2
+        )
+      )
+      draws <- draws[!is.na(draws$lp__), ]
     }
-    draws <- draws[!is.na(draws$lp__), ]
     if (nrow(draws) > 0) {
       if (metadata$method == "sample") {
         if (metadata$save_warmup == 1) {
@@ -245,7 +274,7 @@ read_cmdstan_csv <- function(files,
                 along="chain"
               )
             }
-            if (length(sampler_diagnostics) > 0 && metadata$algorithm != "fixed_param") {
+            if (length(sampler_diagnostics) > 0 && all(metadata$algorithm != "fixed_param")) {
               post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
                 post_warmup_sampler_diagnostics_draws,
                 posterior::as_draws_array(draws[, sampler_diagnostics]),
@@ -266,6 +295,10 @@ read_cmdstan_csv <- function(files,
         }
       } else if (metadata$method == "optimize") {
         point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])[, variables]
+      } else if (metadata$method == "generate_quantities") {
+          generated_quantities <- posterior::bind_draws(generated_quantities,
+                                                        posterior::as_draws_array(draws),
+                                                        along="chain")
       }
     }
   }
@@ -318,8 +351,15 @@ read_cmdstan_csv <- function(files,
       metadata = metadata,
       point_estimates = point_estimates
     )
+  } else if (metadata$method == "generate_quantities") {
+    if (!is.null(generated_quantities)) {
+      posterior::variables(generated_quantities) <- repaired_variables
+    }
+    list(
+      metadata = metadata,
+      generated_quantities = generated_quantities
+    )
   }
-
 }
 
 #' Read CmdStan CSV files from sampling into \R
@@ -344,18 +384,18 @@ read_sample_csv <- function(files,
 #' inverse mass matrix from the comments in a CSV file.
 #'
 #' @noRd
-#' @param csv_file A CSV file containing results from sampling.
-#' @return A list containing all sampler settings and the inverse mass matrix
-#'   (or its diagonal depending on the metric).
+#' @param csv_file A CSV file containing results from CmdStan.
+#' @return A list containing all CmdStan settings and, for sampling, the inverse
+#'   mass matrix (or its diagonal depending on the metric).
 #'
 read_csv_metadata <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
+  con  <- file(csv_file, open = "r")
   adaptation_terminated <- FALSE
   param_names_read <- FALSE
   inv_metric_next <- FALSE
   inv_metric_diagonal_next <- FALSE
-  csv_file_info = list()
-  con  <- file(csv_file, open = "r")
+  csv_file_info <- list()
   csv_file_info[["inv_metric"]] <- NULL
   inv_metric_rows <- 0
   parsing_done <- FALSE
@@ -368,7 +408,7 @@ read_csv_metadata <- function(csv_file) {
         csv_file_info[["sampler_diagnostics"]] <- c()
         csv_file_info[["model_params"]] <- c()
         for(x in all_names) {
-          if (csv_file_info$algorithm != "fixed_param") {
+          if (all(csv_file_info$algorithm != "fixed_param")) {
             if (endsWith(x, "__") && !(x %in% c("lp__", "log_p__", "log_g__"))) {
               csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
             } else {
@@ -489,16 +529,25 @@ check_csv_metadata_matches <- function(a, b) {
   if (a$model_name != b$model_name) {
     return(list(error = "Supplied CSV files were not generated with the same model!"))
   }
+  if (a$method != b$method) {
+    return(list(error = "Supplied CSV files were produced by different methods and need to be read in separately!"))
+  }
   if ((length(a$model_params) != length(b$model_params)) ||
       !(all(a$model_params == b$model_params) &&
         all(a$sampler_diagnostics == b$sampler_diagnostics))) {
     return(list(error = "Supplied CSV files have samples for different variables!"))
   }
-  if (a$iter_sampling != b$iter_sampling ||
-      a$thin != b$thin ||
-      a$save_warmup != b$save_warmup ||
-      (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
-    return(list(error = "Supplied CSV files dont match in the number of stored samples!"))
+  if (a$method == "sample") {
+    if (a$iter_sampling != b$iter_sampling ||
+        a$thin != b$thin ||
+        a$save_warmup != b$save_warmup ||
+        (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
+      return(list(error = "Supplied CSV files dont match in the number of output samples!"))
+    }
+  } else if (a$method == "variational") {
+    if (a$output_samples != b$output_samples) {
+      return(list(error = "Supplied CSV files dont match in the number of output samples!"))
+    }
   }
   match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
                   "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_treedepth",

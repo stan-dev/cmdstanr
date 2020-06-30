@@ -145,6 +145,8 @@ CmdStanRun <- R6::R6Class(
         private$run_optimize_()
       } else if (self$method() == "variational") {
         private$run_variational_()
+      } else if (self$method() == "generate_quantities") {
+        private$run_generate_quantities_()
       }
     },
 
@@ -154,6 +156,9 @@ CmdStanRun <- R6::R6Class(
     run_cmdstan_tool = function(tool = c("stansummary", "diagnose"), flags = NULL) {
       if (self$method() == "optimize") {
         stop("Not available for optimize method.", call. = FALSE)
+      }
+      if (self$method() == "generate_quantities") {
+        stop("Not available for generate_quantities method.", call. = FALSE)
       }
       tool <- match.arg(tool)
       if (!length(self$output_files(include_failed = FALSE))) {
@@ -173,8 +178,15 @@ CmdStanRun <- R6::R6Class(
     },
 
     time = function() {
-      if (self$method() != "sample") {
+      if (self$method() %in% c("optimize", "variational")) {
         time <- list(total = self$procs$total_time())
+      } else if (self$method() == "generate_quantities") {
+        chain_time <- data.frame(
+          chain_id = self$procs$proc_ids()[self$procs$is_finished()],
+          total = self$procs$proc_total_time()[self$procs$is_finished()]
+        )
+
+        time <- list(total = self$procs$total_time(), chains = chain_time)
       } else {
         chain_time <- data.frame(
           chain_id = self$procs$proc_ids()[self$procs$is_finished()],
@@ -283,6 +295,74 @@ CmdStanRun <- R6::R6Class(
 }
 CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 
+.run_generate_quantities <- function() {
+  procs <- self$procs
+  on.exit(procs$cleanup(), add = TRUE)
+
+  # add path to the TBB library to the PATH variable
+  if (cmdstan_version() >= "2.21" && os_is_windows()) {
+    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
+    current_path <- Sys.getenv("PATH")
+    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+    }
+  }
+  if (procs$num_procs() == 1) {
+    start_msg <- "Running standalone generated quantities after 1 MCMC chain"
+  } else if (procs$num_procs() == procs$parallel_procs()) {
+    start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, all chains in parallel ")
+  } else {
+    if (procs$parallel_procs() == 1) {
+      start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, 1 chain at a time ")
+    } else {
+      start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, ", procs$parallel_procs(), " chains at a time ")
+    }
+  }
+  if (is.null(procs$threads_per_proc())) {
+    cat(paste0(start_msg, "...\n\n"))
+  } else {
+    cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+  }
+  start_time <- Sys.time()
+  chains <- procs$proc_ids()
+  chain_ind <- 1
+  while (!all(procs$is_finished() | procs$is_failed())) {
+    while (procs$active_procs() != procs$parallel_procs() && procs$any_queued()) {
+      chain_id <- chains[chain_ind]
+      procs$new_proc(
+        id = chain_id,
+        command = self$command(),
+        args = self$command_args()[[chain_id]],
+        wd = dirname(self$exe_file())
+      )
+      procs$mark_proc_start(chain_id)
+      procs$set_active_procs(procs$active_procs() + 1)
+      chain_ind <- chain_ind + 1
+    }
+    start_active_procs <- procs$active_procs()
+
+    while (procs$active_procs() == start_active_procs &&
+           procs$active_procs() > 0) {
+      procs$wait(0.1)
+      procs$poll(0)
+      for (chain_id in chains) {
+        if (!procs$is_queued(chain_id)) {
+          output <- procs$get_proc(chain_id)$read_output_lines()
+          procs$process_output(output, chain_id)
+          error_output <- procs$get_proc(chain_id)$read_error_lines()
+          procs$process_error_output(error_output, chain_id)
+        }
+      }
+      procs$set_active_procs(procs$num_alive())
+    }
+    procs$check_finished()
+  }
+  procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
+  procs$report_time()
+}
+CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_generate_quantities)
+
 .run_other <- function() {
   procs <- self$procs
   # add path to the TBB library to the PATH variable
@@ -315,14 +395,17 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     }
     procs$set_active_procs(procs$num_alive())
   }
-  procs$set_proc_state(id = id, new_state = 5) # successful process
+  if (procs$get_proc(id)$get_exit_status() == 0) {
+    procs$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
+  } else {
+    procs$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
+  }
   procs$mark_proc_stop(id)
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
   procs$report_time()
 }
 CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
 CmdStanRun$set("private", name = "run_variational_", value = .run_other)
-
 
 # CmdStanProcs ------------------------------------------------------------
 
@@ -431,18 +514,15 @@ CmdStanProcs <- R6::R6Class(
     },
     check_finished = function() {
       for (id in private$proc_ids_) {
-        # if process is not finished yet
-        if (self$is_still_working(id)) {
-          if (!self$is_queued(id) && !self$is_alive(id)) {
-            # if the process just finished make sure we process all
-            # input and mark the process finished
-            output <- self$get_proc(id)$read_output_lines()
-            self$process_output(output, id)
-            error_output <- self$get_proc(id)$read_error_lines()
-            self$process_error_output(error_output, id)
-            self$mark_proc_stop(id)
-            self$report_time(id)
-          }
+        if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
+          # if the process just finished make sure we process all
+          # input and mark the process finished
+          output <- self$get_proc(id)$read_output_lines()
+          self$process_output(output, id)
+          error_output <- self$get_proc(id)$read_error_lines()
+          self$process_error_output(error_output, id)
+          self$mark_proc_stop(id)
+          self$report_time(id)
         }
       }
       invisible(self)
@@ -530,9 +610,13 @@ CmdStanProcs <- R6::R6Class(
       invisible(self)
     },
     report_time = function(id = NULL) {
-      cat("Finished in ",
-              format(round(self$total_time(), 1), nsmall = 1),
-              "seconds.\n")
+      if (self$proc_state(id) == 7) {
+        warning("Fitting finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+      } else {
+        cat("Finished in ",
+                format(round(self$total_time(), 1), nsmall = 1),
+                "seconds.\n")
+      }
     }
   ),
   private = list(
@@ -659,7 +743,91 @@ CmdStanMCMCProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of succesful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
+            warning("The returned fit object will only read in results of successful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
+                    immediate. = TRUE,
+                    call. = FALSE)
+          }
+        }
+        return(invisible(NULL))
+      }
+    }
+  )
+)
+
+CmdStanGQProcs <- R6::R6Class(
+  classname = "CmdStanGQProcs",
+  inherit = CmdStanProcs,
+  public = list(
+    check_finished = function() {
+      for (id in private$proc_ids_) {
+        # if process is not finished yet
+        if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
+          # if the process just finished make sure we process all
+          # input and mark the process finished
+          if (self$get_proc(id)$get_exit_status() == 0) {
+            self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
+          } else {
+            self$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
+          }
+          self$mark_proc_stop(id)
+          self$report_time(id)
+        }
+      }
+      invisible(self)
+    },
+    process_output = function(out, id) {
+      if (length(out) == 0) {
+        return(NULL)
+      }
+      for (line in out) {
+        private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
+        if (nzchar(line)) {
+          if (self$proc_state(id) == 1 && regexpr("refresh = ", line, perl = TRUE) > 0) {
+            self$set_proc_state(id, new_state = 2)
+          } else if (self$proc_state(id) >= 2) {
+            cat("Chain", id, line, "\n")
+          }
+        }
+      }
+      invisible(self)
+    },
+    report_time = function(id = NULL) {
+      if (!is.null(id)) {
+        if (self$proc_state(id) == 7) {
+          warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+        } else {
+          cat("Chain", id, "finished in", format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+        }
+        return(invisible(NULL))
+      } else {
+        num_chains <- self$num_procs()
+        if (num_chains > 1) {
+          num_failed <- self$num_failed()
+          if (num_failed == 0) {
+            if (num_chains == 2) {
+              cat("\nBoth chains finished successfully.\n")
+            } else {
+              cat("\nAll", num_chains, "chains finished successfully.\n")
+            }
+            cat("Mean chain execution time:",
+                format(round(mean(self$proc_total_time()), 1), nsmall = 1),
+                "seconds.\n")
+            cat("Total execution time:",
+                format(round(self$total_time(), 1), nsmall = 1),
+                "seconds.\n")
+          } else if (num_failed == num_chains) {
+            warning("All chains finished unexpectedly!\n", call. = FALSE)
+            warning("Use read_cmdstan_csv() to read the results of the failed chains.",
+                    immediate. = TRUE,
+                    call. = FALSE)
+          } else {
+            warning(num_failed, " chain(s) finished unexpectedly!",
+                    immediate. = TRUE,
+                    call. = FALSE)
+            cat("The remaining chains had a mean execution time of",
+                format(round(mean(self$total_time()), 1), nsmall = 1),
+                "seconds.\n")
+            warning("The returned fit object will only read in results of successful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
                     immediate. = TRUE,
                     call. = FALSE)
           }

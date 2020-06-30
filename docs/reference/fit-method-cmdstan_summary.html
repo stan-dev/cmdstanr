@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9006</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
       </span>
     </div>
 
@@ -198,11 +198,11 @@ $cmdstan_diagnose()
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>cmdstan_diagnose</span>()</div><div class='output co'>#&gt; Running bin/diagnose \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-1-30494d.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-2-30494d.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-3-30494d.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-4-30494d.csv
-#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-1-30494d.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-2-30494d.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-3-30494d.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-4-30494d.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-1-9ebaef.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-2-9ebaef.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-3-9ebaef.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-4-9ebaef.csv
+#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-1-9ebaef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-2-9ebaef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-3-9ebaef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-4-9ebaef.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -218,28 +218,28 @@ $cmdstan_diagnose()
 #&gt; Split R-hat values satisfactory all parameters.
 #&gt; 
 #&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit</span>$<span class='fu'>cmdstan_summary</span>()</div><div class='output co'>#&gt; Running bin/stansummary \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-1-30494d.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-2-30494d.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-3-30494d.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpahDDBq/logistic-202006202308-4-30494d.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-1-9ebaef.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-2-9ebaef.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-3-9ebaef.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-4-9ebaef.csv
 #&gt; Inference for Stan model: logistic_model
 #&gt; 4 chains: each with iter=(1000,1000,1000,1000); warmup=(0,0,0,0); thin=(1,1,1,1); 4000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.032, 0.032, 0.033, 0.032) seconds, 0.13 seconds total
-#&gt; Sampling took (0.036, 0.044, 0.044, 0.041) seconds, 0.17 seconds total
+#&gt; Warmup took (0.034, 0.032, 0.034, 0.035) seconds, 0.13 seconds total
+#&gt; Sampling took (0.055, 0.049, 0.043, 0.052) seconds, 0.20 seconds total
 #&gt; 
 #&gt;                  Mean     MCSE  StdDev     5%    50%    95%    N_Eff  N_Eff/s    R_hat
-#&gt; lp__              -66  3.1e-02     1.4    -69    -66    -64  2.2e+03  1.3e+04  1.0e+00
-#&gt; accept_stat__    0.90  1.2e-02    0.11   0.66   0.94    1.0  9.9e+01  6.0e+02  1.0e+00
-#&gt; stepsize__       0.77  1.8e-03   0.080   0.67   0.78   0.89  2.0e+03  1.2e+04  3.6e+13
-#&gt; treedepth__       2.3  1.2e-01    0.52    2.0    2.0    3.0  2.0e+01  1.2e+02  1.1e+00
-#&gt; n_leapfrog__      5.0  3.9e-01     2.0    3.0    7.0    7.0  2.7e+01  1.7e+02  1.0e+00
+#&gt; lp__              -66  3.3e-02     1.5    -69    -66    -64  2.0e+03  1.0e+04  1.0e+00
+#&gt; accept_stat__    0.92  1.3e-03   0.094   0.73   0.96    1.0  5.1e+03  2.6e+04  1.0e+00
+#&gt; stepsize__       0.70  2.7e-02   0.038   0.66   0.70   0.76  2.0e+00  1.0e+01  1.6e+13
+#&gt; treedepth__       2.5  8.7e-03    0.52    2.0    3.0    3.0  3.6e+03  1.8e+04  1.0e+00
+#&gt; n_leapfrog__      5.6  3.2e-02     1.9    3.0    7.0    7.0  3.7e+03  1.9e+04  1.0e+00
 #&gt; divergent__      0.00      nan    0.00   0.00   0.00   0.00      nan      nan      nan
-#&gt; energy__           68  4.6e-02     2.0     65     68     72  1.8e+03  1.1e+04  1.0e+00
-#&gt; alpha            0.38  3.4e-03    0.22  0.012   0.37   0.73  4.3e+03  2.6e+04  1.0e+00
-#&gt; beta[1]         -0.67  3.8e-03    0.25   -1.1  -0.66  -0.28  4.4e+03  2.6e+04  1.0e+00
-#&gt; beta[2]         -0.27  3.4e-03    0.22  -0.63  -0.26  0.092  4.3e+03  2.6e+04  1.0e+00
-#&gt; beta[3]          0.68  4.2e-03    0.27   0.25   0.67    1.1  4.2e+03  2.5e+04  1.0e+00
+#&gt; energy__           68  4.9e-02     2.0     65     68     72  1.7e+03  8.6e+03  1.0e+00
+#&gt; alpha            0.39  3.5e-03    0.22  0.021   0.38   0.75  3.9e+03  2.0e+04  1.0e+00
+#&gt; beta[1]         -0.68  4.2e-03    0.25   -1.1  -0.67  -0.28  3.6e+03  1.8e+04  1.0e+00
+#&gt; beta[2]         -0.27  3.7e-03    0.23  -0.65  -0.27   0.12  3.9e+03  2.0e+04  1.0e+00
+#&gt; beta[3]          0.68  4.5e-03    0.27   0.25   0.68    1.1  3.6e+03  1.8e+04  1.0e+00
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,

@@ -26,6 +26,8 @@ available methods.
 \tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object. \cr
 \code{\link[=model-method-variational]{$variational()}}
 \tab Run CmdStan's \code{"variational"} method, return \code{\link{CmdStanVB}} object. \cr
+\code{\link[=model-method-generate-quantities]{$generate_quantities()}}
+\tab Run CmdStan's \code{"generate quantities"} method, return \code{\link{CmdStanGQ}} object. \cr
 }
 }
 \examples{

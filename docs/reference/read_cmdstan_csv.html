@@ -82,7 +82,7 @@ and efficient alternative to rstan::read_stan_csv()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9006</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
       </span>
     </div>
 
@@ -218,8 +218,8 @@ CSV file(s). See <strong>Examples</strong> below.</p></li>
 
 <p>The other components in the returned list depend on the method that produced
 the CSV file(s).</p>
-<p>For <a href='model-method-sample.html'>sampling</a> the returned list
-also includes the following components:</p><ul>
+<p>For <a href='model-method-sample.html'>sampling</a> the returned list also includes the
+following components:</p><ul>
 <li><p><code>inv_metric</code>: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.</p></li>
 <li><p><code>step_size</code>: A list (one element per chain) of the step sizes used.</p></li>
@@ -245,22 +245,27 @@ includes the following components:</p><ul>
 approximate posterior distribution.</p></li>
 </ul>
 
+<p>For <a href='model-method-generate-quantities.html'>standalone generated quantities</a> the
+returned list also includes the following components:</p><ul>
+<li><p><code>generated_quantities</code>: A <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> of
+the generated quantities.</p></li>
+</ul>
+
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>(<span class='kw'>fileext</span><span class='kw'>=</span><span class='st'>".stan"</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='st'>"
-parameters {
-  real alpha_scalar;
-  vector[2] theta_vector;
-  matrix[2,2] tau_matrix;
-}
-model {
-  alpha_scalar ~ std_normal();
-  theta_vector ~ std_normal();
-  to_vector(tau_matrix) ~ std_normal();
-}
-"</span>, <span class='kw'>file</span> <span class='kw'>=</span> <span class='no'>stan_program</span>)
+<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_tempfile.html'>write_stan_tempfile</a></span>(
+  <span class='st'>"parameters {
+    real alpha_scalar;
+    vector[2] theta_vector;
+    matrix[2,2] tau_matrix;
+  }
+  model {
+    alpha_scalar ~ std_normal();
+    theta_vector ~ std_normal();
+    to_vector(tau_matrix) ~ std_normal();
+  }"</span>
+)
 
 <span class='co'># only using capture.output to avoid too much printed output in example</span>
 <span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>utils</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/r/utils/capture.output.html'>capture.output</a></span>(
@@ -289,44 +294,44 @@ model {
 #&gt;   ..$ stepsize_jitter     : num 0
 #&gt;   ..$ id                  : num [1:4] 1 2 3 4
 #&gt;   ..$ init                : num 2
-#&gt;   ..$ seed                : num [1:4] 1.67e+09 1.25e+09 1.01e+09 2.06e+09
+#&gt;   ..$ seed                : num [1:4] 3.00e+08 9.19e+08 1.79e+09 7.26e+08
 #&gt;   ..$ refresh             : num 100
 #&gt;   ..$ model_params        : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
 #&gt;   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#&gt;   ..$ model_name          : chr "file372528de0950_model"
+#&gt;   ..$ model_name          : chr "file6aac4a66980_model"
 #&gt;   ..$ adapt_engaged       : num 1
 #&gt;   ..$ adapt_delta         : num 0.8
 #&gt;   ..$ max_treedepth       : num 10
 #&gt;   ..$ step_size           : num 1
-#&gt;   ..$ step_size_adaptation: num [1:4] 0.701 0.692 0.759 0.687
+#&gt;   ..$ step_size_adaptation: num [1:4] 0.812 0.724 0.736 0.733
 #&gt;   ..$ iter_warmup         : num 1000
 #&gt;   ..$ iter_sampling       : num 1000
 #&gt;  $ inv_metric                     :List of 4
-#&gt;   ..$ : num [1:7] 1.001 1.076 0.996 0.886 1.113 ...
-#&gt;   ..$ : num [1:7] 0.884 0.986 0.916 1.014 0.943 ...
-#&gt;   ..$ : num [1:7] 0.928 0.889 1.069 1.153 1.052 ...
-#&gt;   ..$ : num [1:7] 0.89 1.179 1.148 0.926 0.879 ...
+#&gt;   ..$ : num [1:7] 0.985 1.03 0.966 0.8 0.999 ...
+#&gt;   ..$ : num [1:7] 0.96 1.033 0.993 0.8 0.896 ...
+#&gt;   ..$ : num [1:7] 0.963 0.949 1.024 0.961 1.004 ...
+#&gt;   ..$ : num [1:7] 0.934 0.881 0.947 1.026 0.941 ...
 #&gt;  $ step_size                      :List of 4
-#&gt;   ..$ : num 0.701
-#&gt;   ..$ : num 0.692
-#&gt;   ..$ : num 0.759
-#&gt;   ..$ : num 0.687
-#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:8] -6.39 -6.39 -6.39 -5.12 -6.04 ...
+#&gt;   ..$ : num 0.812
+#&gt;   ..$ : num 0.724
+#&gt;   ..$ : num 0.736
+#&gt;   ..$ : num 0.733
+#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:8] -5.62 -5.62 -2.48 -2.51 -2 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:8] -3.97 -2.41 -3.78 -3.52 -3.88 ...
+#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:8] -4.92 -3.24 -3.73 -3.38 -2.57 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 9.68e-01 0.00 1.62e-05 9.89e-01 9.94e-01 ...
+#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 1.19e-08 6.53e-22 1.00 9.82e-01 9.85e-01 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.993 1 0.923 1 0.961 ...
+#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.816 0.996 0.825 1 0.801 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"

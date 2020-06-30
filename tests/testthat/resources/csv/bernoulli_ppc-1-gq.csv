@@ -1,0 +1,23 @@
+# stan_version_major = 2
+# stan_version_minor = 23
+# stan_version_patch = 0
+# model = bernoulli_ppc_model
+# method = generate_quantities
+#   generate_quantities
+#     fitted_params = /tmp/RtmpCvOIQ1/fittedParams-202006271227-1-b85b52.csv
+# id = 1
+# data
+#   file = /home/rok/.cmdstanr/cmdstan-2.23.0/examples/bernoulli/bernoulli.data.json
+# init = 2 (Default)
+# random
+#   seed = 123
+# output
+#   file = /tmp/RtmpCvOIQ1/bernoulli_ppc-202006271227-1-986540.csv
+#   diagnostic_file =  (Default)
+#   refresh = 250
+y_rep.1,y_rep.2,y_rep.3,y_rep.4,y_rep.5,y_rep.6,y_rep.7,y_rep.8,y_rep.9,y_rep.10
+0,0,0,0,0,0,0,0,0,0
+0,1,1,0,1,0,1,1,0,0
+0,0,0,0,0,0,0,0,0,0
+0,0,0,0,0,1,0,0,0,1
+1,0,0,0,0,0,0,0,0,0

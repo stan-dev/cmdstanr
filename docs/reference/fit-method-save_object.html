@@ -84,7 +84,7 @@ safest way to guarantee that everything has been read in before saving." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9006</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
       </span>
     </div>
 
@@ -210,10 +210,19 @@ safest way to guarantee that everything has been read in before saving.</p>
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'>
 <span class='no'>temp_rds_file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>(<span class='kw'>fileext</span> <span class='kw'>=</span> <span class='st'>".RDS"</span>)
 <span class='no'>fit</span>$<span class='fu'>save_object</span>(<span class='kw'>file</span> <span class='kw'>=</span> <span class='no'>temp_rds_file</span>)
-
 <span class='fu'><a href='https://rdrr.io/r/base/rm.html'>rm</a></span>(<span class='no'>fit</span>)
+
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span>(<span class='no'>temp_rds_file</span>)
-<span class='co'># }</span></div></pre>
+<span class='no'>fit</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 5 x 10</span><span>
+#&gt;   variable    mean  median    sd   mad       q5      q95  rhat ess_bulk ess_tail
+#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__     -</span><span style='color: #BB0000;'>66.0</span><span>   -</span><span style='color: #BB0000;'>65.7</span><span>   1.48  1.25  -</span><span style='color: #BB0000;'>68.9</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>     1.00    </span><span style='text-decoration: underline;'>2</span><span>100.    </span><span style='text-decoration: underline;'>2</span><span>600.
+#&gt; </span><span style='color: #BCBCBC;'>2</span><span> alpha      0.382   0.379 0.222 0.223   0.012</span><span style='text-decoration: underline;'>4</span><span>   0.745   1.00    </span><span style='text-decoration: underline;'>4</span><span>400.    </span><span style='text-decoration: underline;'>2</span><span>789.
+#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.668</span><span>  -</span><span style='color: #BB0000;'>0.664</span><span> 0.253 0.255  -</span><span style='color: #BB0000;'>1.08</span><span>    -</span><span style='color: #BB0000;'>0.254</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>994.    </span><span style='text-decoration: underline;'>2</span><span>862.
+#&gt; </span><span style='color: #BCBCBC;'>4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.275</span><span>  -</span><span style='color: #BB0000;'>0.271</span><span> 0.226 0.220  -</span><span style='color: #BB0000;'>0.650</span><span>    0.097</span><span style='text-decoration: underline;'>2</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>375.    </span><span style='text-decoration: underline;'>3</span><span>135.
+#&gt; </span><span style='color: #BCBCBC;'>5</span><span> beta[3]    0.677   0.674 0.270 0.272   0.240    1.13    1.00    </span><span style='text-decoration: underline;'>4</span><span>116.    </span><span style='text-decoration: underline;'>3</span><span>059.</div><div class='input'># }
+
+</div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

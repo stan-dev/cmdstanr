@@ -4,6 +4,9 @@
     <loc>https://mc-stan.org/cmdstanr/index.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanGQ.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html</loc>
   </url>
   <url>
@@ -64,6 +67,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-compile.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-optimize.html</loc>
   </url>
   <url>
@@ -71,6 +77,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-variational.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/read_sample_csv.html</loc>
@@ -83,6 +92,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/write_stan_json.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/write_stan_tempfile.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html</loc>
