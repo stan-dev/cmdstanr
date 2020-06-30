@@ -50,7 +50,7 @@ the appendices in the CmdStan manual for details on using these formats.
 \item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 \item \code{refresh}: (non-negative integer) The number of iterations between
 printed screen updates.
-\item \code{init}: (multiple options) The initialization method:
+\item \code{init}: (multiple options) The initialization method for the parameters block:
 \itemize{
 \item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
 \emph{unconstrained} parameter space);
@@ -58,6 +58,16 @@ printed screen updates.
 \item A character vector of paths (one per chain) to JSON or Rdump files. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
+\item A list of lists. For MCMC the list should contain a sublist for each
+chain. For optimization and variational inference there should be just one
+sublist. The sublists should have named elements corresponding to the
+parameters for which you are specifying initial values. See \strong{Examples}.
+\item A function that returns a single list with names corresponding to the
+parameters for which you are specifying initial values. The function
+can take no arguments or a single argument \code{chain_id}. For MCMC, if the
+function has argument \code{chain_id} it will be supplied with the chain id
+(from 1 to number of chains) when called to generate the initial
+values. See \strong{Examples}.
 }
 \item \code{save_latent_dynamics}: (logical) Should auxiliary diagnostic information
 about the latent dynamics be written to temporary diagnostic CSV files?
@@ -126,10 +136,10 @@ stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(stan_program)
 mod$print()
 
-# data as a named list (like RStan)
+# Data as a named list (like RStan)
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 
-# run MCMC using the 'sample' method
+# Run MCMC using the 'sample' method
 fit_mcmc <- mod$sample(
   data = stan_data,
   seed = 123,
@@ -167,13 +177,50 @@ fit_optim <- mod$optimize(data = my_data_file, seed = 123)
 
 fit_optim$summary()
 
-# Run 'variational' to approximate the posterior (default is meanfield ADVI)
+
+# Run 'variational' method to approximate the posterior (default is meanfield ADVI)
 fit_vb <- mod$variational(data = stan_data, seed = 123)
 
 fit_vb$summary()
 
 # Plot approximate posterior using bayesplot
 mcmc_hist(fit_vb$draws("theta"))
+
+
+# Specifying initial values as a list of lists
+fit_mcmc_w_init_list <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  chains = 2,
+  init = list(
+    list(theta = 0.75), # chain 1
+    list(theta = 0.25)  # chain 2
+  )
+)
+fit_optim_w_init_list <- mod$optimize(
+  data = stan_data,
+  seed = 123,
+  init = list(
+    list(theta = 0.75)
+  )
+)
+
+# Specifying initial values as a function
+fit_mcmc_w_init_fun <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  chains = 2,
+  init = function() list(theta = runif(1))
+)
+fit_mcmc_w_init_fun_2 <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  chains = 2,
+  init = function(chain_id) {
+    # silly but demonstrates optional use of chain_id
+    list(theta = 1 / (chain_id + 1))
+  }
+)
 }
 
 }

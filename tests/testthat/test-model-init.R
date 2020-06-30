@@ -88,6 +88,11 @@ test_that("init can be a list of lists", {
       beta = c(-2, 1, 2)
     )
   )
+  expect_optim_output(
+    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_list[1])
+  )
+  expect_length(fit$metadata()$init, 1)
+
   expect_sample_output(
     fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
     num_chains = 2
@@ -103,6 +108,19 @@ test_that("init can be a list of lists", {
   expect_equal(
     jsonlite::read_json(init_paths[2], simplifyVector = TRUE),
     init_list[[2]]
+  )
+
+  # partial inits ok
+  init_list <- list(list(alpha = 0))
+  expect_sample_output(
+    fit <- mod_logistic$sample(data = data_list_logistic, chains = 1, init = init_list),
+    num_chains = 1
+  )
+  init_paths <- fit$metadata()$init
+  expect_length(init_paths, 1)
+  expect_equal(
+    jsonlite::read_json(init_paths, simplifyVector = TRUE),
+    init_list[[1]]
   )
 })
 
@@ -120,6 +138,15 @@ test_that("error if init list is specified incorrectly", {
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
     "'init' has the wrong length"
   )
+
+  init_list <- list(
+    list(alpha = 1, beta = 1:3),
+    list(alpha = 1, beta = 1:3)
+  )
+  expect_error(
+    mod_logistic$optimize(data = data_list_logistic, init = init_list),
+    "'init' has the wrong length"
+  )
 })
 
 test_that("init can be a function", {
@@ -127,6 +154,9 @@ test_that("init can be a function", {
   init_fun <- function() {
     list(alpha = 0, beta = 1:3)
   }
+  expect_optim_output(
+    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_fun)
+  )
   expect_sample_output(
     fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
     num_chains = 2
@@ -146,6 +176,9 @@ test_that("init can be a function", {
   init_fun <- function(chain_id) {
     list(alpha = 0, beta = 1:3)
   }
+  expect_optim_output(
+    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_fun)
+  )
   expect_sample_output(
     fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
     num_chains = 2
@@ -170,7 +203,15 @@ test_that("error if init function specified incorrectly", {
   )
 
   init_fun <- function() {
-    list(list(a = 1), list(b = 2))
+    c(a = 1, b = 1:3)
+  }
+  expect_error(
+    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
+    "If 'init' is a function it must return a single list"
+  )
+
+  init_fun <- function() {
+    data.frame(a = 1, b = 1:3)
   }
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),

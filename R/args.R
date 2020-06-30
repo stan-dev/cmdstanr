@@ -56,7 +56,7 @@ CmdStanArgs <- R6::R6Class(
 
       if (is.function(init)) {
         init <- process_init_function(init, length(self$proc_ids))
-      } else if (is.list(init)) {
+      } else if (is.list(init) && !is.data.frame(init)) {
         init <- process_init_list(init, length(self$proc_ids))
       }
       self$init <- init
@@ -663,11 +663,11 @@ validate_exe_file <- function(exe_file) {
 #' @param num_procs Number of CmdStan processes.
 #' @return A character vector of file paths.
 process_init_list <- function(init, num_procs) {
+  if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
+    stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
+  }
   if (length(init) != num_procs) {
     stop("'init' has the wrong length. See documentation of 'init' argument.", call. = FALSE)
-  }
-  if (!all(sapply(init, is.list))) {
-    stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
   }
 
   init_paths <-
@@ -691,9 +691,6 @@ process_init_function <- function(init, num_procs) {
   args <- formals(init)
   if (is.null(args)) {
     fn_test <- init()
-    if (!is.list(fn_test) || length(fn_test) != 1) {
-      stop("If 'init' is a function it must return a single list.")
-    }
     init_list <- lapply(seq_len(num_procs), function(i) init())
   } else {
     if (!identical(names(args), "chain_id")) {
@@ -701,10 +698,10 @@ process_init_function <- function(init, num_procs) {
            "or only argument 'chain_id'.", call. = FALSE)
     }
     fn_test <- init(1)
-    if (!is.list(fn_test) || length(fn_test) != 1) {
-      stop("If 'init' is a function it must return a single list.")
-    }
     init_list <- lapply(seq_len(num_procs), function(i) init(i))
+  }
+  if (!is.list(fn_test) || is.data.frame(fn_test)) {
+    stop("If 'init' is a function it must return a single list.")
   }
   process_init_list(init_list, num_procs)
 }
