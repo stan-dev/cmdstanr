@@ -4,6 +4,9 @@ if (not_on_cran()) {
   set_cmdstan_path()
   mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
+
+  mod_logistic <- testing_model("logistic")
+  data_list_logistic <- testing_data("logistic")
 }
 
 # these create _relative_ paths to init files
@@ -52,7 +55,7 @@ test_that("sample method throws error for invalid init argument", {
 
   expect_error(
     mod$sample(data = data_list, init = data.frame(x = 10)),
-    "If specified 'init' must be numeric or a character vector",
+    "Invalid 'init' specification",
     fixed = TRUE
   )
 
@@ -69,5 +72,108 @@ test_that("sample method throws error for invalid init argument", {
   expect_error(
     mod$sample(data = data_list, chains = 3, init = c(init_json_1, init_json_2)),
     "length 1 or number of chains"
+  )
+})
+
+test_that("init can be a list of lists", {
+  skip_on_cran()
+
+  init_list <- list(
+    list(
+      alpha = 1,
+      beta = c(-1, 0, 1)
+    ),
+    list(
+      alpha = 0,
+      beta = c(-2, 1, 2)
+    )
+  )
+  expect_sample_output(
+    fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
+    num_chains = 2
+  )
+
+  init_paths <- fit$metadata()$init
+  expect_length(init_paths, 2)
+
+  expect_equal(
+    jsonlite::read_json(init_paths[1], simplifyVector = TRUE),
+    init_list[[1]]
+  )
+  expect_equal(
+    jsonlite::read_json(init_paths[2], simplifyVector = TRUE),
+    init_list[[2]]
+  )
+})
+
+test_that("error if init list is specified incorrectly", {
+  skip_on_cran()
+
+  init_list <- list(alpha = 1, beta = c(1,1))
+  expect_error(
+    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
+    "If 'init' is a list it must be a list of lists"
+  )
+
+  init_list <- list(init_list)
+  expect_error(
+    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
+    "'init' has the wrong length"
+  )
+})
+
+test_that("init can be a function", {
+  skip_on_cran()
+  init_fun <- function() {
+    list(alpha = 0, beta = 1:3)
+  }
+  expect_sample_output(
+    fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
+    num_chains = 2
+  )
+  init_paths <- fit$metadata()$init
+  expect_length(init_paths, 2)
+  expect_equal(
+    jsonlite::read_json(init_paths[1], simplifyVector = TRUE),
+    list(alpha = 0, beta = 1:3)
+  )
+  expect_equal(
+    jsonlite::read_json(init_paths[2], simplifyVector = TRUE),
+    list(alpha = 0, beta = 1:3)
+  )
+
+  # check that chain_id argument is allowed
+  init_fun <- function(chain_id) {
+    list(alpha = 0, beta = 1:3)
+  }
+  expect_sample_output(
+    fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
+    num_chains = 2
+  )
+  init_paths <- fit$metadata()$init
+  expect_length(init_paths, 2)
+  expect_equal(
+    jsonlite::read_json(init_paths[1], simplifyVector = TRUE),
+    list(alpha = 0, beta = 1:3)
+  )
+  expect_equal(
+    jsonlite::read_json(init_paths[2], simplifyVector = TRUE),
+    list(alpha = 0, beta = 1:3)
+  )
+})
+
+test_that("error if init function specified incorrectly", {
+  init_fun <- function(a, b) list(a, b)
+  expect_error(
+    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
+    "If 'init' is a function it must have zero arguments or only argument 'chain_id'"
+  )
+
+  init_fun <- function() {
+    list(list(a = 1), list(b = 2))
+  }
+  expect_error(
+    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
+    "If 'init' is a function it must return a single list"
   )
 })
