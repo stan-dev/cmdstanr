@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract log probability (target) — fit-method-lp • cmdstanr</title>
+<title>Write Stan code to a temporary file — write_stan_tempfile • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,14 +46,8 @@
 
 
 
-<meta property="og:title" content="Extract log probability (target) — fit-method-lp" />
-<meta property="og:description" content="The $lp() method extracts lp__, the total log probability
-(target) accumulated in the model block of a Stan program. For
-variational inference the log density of the variational approximation to
-the posterior is also available via the $lp_approx() method.
-See the Log Probability Increment vs. Sampling Statement
-section of the Stan Reference Manual for details on when normalizing
-constants are dropped from log probability calculations." />
+<meta property="og:title" content="Write Stan code to a temporary file — write_stan_tempfile" />
+<meta property="og:description" content="Write Stan code to a temporary file" />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -173,60 +167,69 @@ constants are dropped from log probability calculations." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract log probability (target)</h1>
-    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
-    <div class="hidden name"><code>fit-method-lp.Rd</code></div>
+    <h1>Write Stan code to a temporary file</h1>
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/example.R'><code>R/example.R</code></a></small>
+    <div class="hidden name"><code>write_stan_tempfile.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The <code>$lp()</code> method extracts <code>lp__</code>, the total log probability
-(<code>target</code>) accumulated in the <code>model</code> block of a Stan program. For
-variational inference the log density of the variational approximation to
-the posterior is also available via the <code>$lp_approx()</code> method.</p>
-<p>See the <a href='https://mc-stan.org/docs/2_23/reference-manual/sampling-statements-section.html'>Log Probability Increment vs. Sampling Statement</a>
-section of the Stan Reference Manual for details on when normalizing
-constants are dropped from log probability calculations.</p>
+    <p>Write Stan code to a temporary file</p>
     </div>
 
+    <pre class="usage"><span class='fu'>write_stan_tempfile</span>(<span class='no'>code</span>)</pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>code</th>
+      <td><p>A single string containing a Stan program or a character vector
+containing the individual lines of a Stan program. See <strong>Examples</strong>.</p></td>
+    </tr>
+    </table>
 
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$lp()
-$lp_approx()
-</pre>
-
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    
-
-<p><code>lp__</code> is the unnormalized log density on Stan's <a href='https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html'>unconstrained space</a>.
-This will in general be different than the unnormalized model log density
-evaluated at a posterior draw (which is on the constrained space). <code>lp__</code> is
-intended to diagnose sampling efficiency and evaluate approximations.</p>
-<p><code>lp_approx__</code> is the log density of the variational approximation to <code>lp__</code>
-(also on the unconstrained space). It is exposed in the variational method
-for performing the checks described in Yao et al. (2018) and implemented in
-the <span class="pkg">loo</span> package.</p>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
-
-<p>A numeric vector with length equal to the number of (post-warmup) draws for
-MCMC and variational inference, and length equal to <code>1</code> for optimization.</p>
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
-
-    <p>Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
-work?: Evaluating variational inference. <em>Proceedings of the 35th
-International Conference on Machine Learning</em>, PMLR 80:5581–5590.</p>
+    <p>The path to the temporary file.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'>lp</span>())</div><div class='output co'>#&gt; [1] -65.7376 -68.5421 -67.2571 -69.1499 -66.2693 -64.7370</div><div class='input'>
-<span class='no'>fit_mle</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit_mle</span>$<span class='fu'>lp</span>()</div><div class='output co'>#&gt; [1] -63.9218</div><div class='input'>
-<span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"variational"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>(<span class='no'>fit_vb</span>$<span class='fu'>lp</span>(), <span class='no'>fit_vb</span>$<span class='fu'>lp_approx</span>())</div><div class='img'><img src='fit-method-lp-1.png' alt='' width='700' height='433' /></div><div class='input'># }
+    <pre class="examples"><div class='input'><span class='co'># stan program as a single string</span>
+<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='st'>"
+data {
+  int&lt;lower=0&gt; N;
+  int&lt;lower=0,upper=1&gt; y[N];
+}
+parameters {
+  real&lt;lower=0,upper=1&gt; theta;
+}
+model {
+  y ~ bernoulli(theta);
+}
+"</span>
 
+<span class='no'>f</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_tempfile</span>(<span class='no'>stan_program</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>f</span>)</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpXEch8A/file6aac29e14a90.stan"</div><div class='input'>
+<span class='no'>lines</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>lines</span>)</div><div class='output co'>#&gt;  [1] ""                               "data {"                        
+#&gt;  [3] "  int&lt;lower=0&gt; N;"              "  int&lt;lower=0,upper=1&gt; y[N];"  
+#&gt;  [5] "}"                              "parameters {"                  
+#&gt;  [7] "  real&lt;lower=0,upper=1&gt; theta;" "}"                             
+#&gt;  [9] "model {"                        "  y ~ bernoulli(theta);"       
+#&gt; [11] "}"                              ""                              </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='no'>lines</span>, <span class='kw'>sep</span> <span class='kw'>=</span> <span class='st'>"\n"</span>)</div><div class='output co'>#&gt; 
+#&gt; data {
+#&gt;   int&lt;lower=0&gt; N;
+#&gt;   int&lt;lower=0,upper=1&gt; y[N];
+#&gt; }
+#&gt; parameters {
+#&gt;   real&lt;lower=0,upper=1&gt; theta;
+#&gt; }
+#&gt; model {
+#&gt;   y ~ bernoulli(theta);
+#&gt; }
+#&gt; </div><div class='input'>
+<span class='co'># stan program as character vector of lines</span>
+<span class='no'>f2</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_tempfile</span>(<span class='no'>lines</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/identical.html'>identical</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>), <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f2</span>))</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

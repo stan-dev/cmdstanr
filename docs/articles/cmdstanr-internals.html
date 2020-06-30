@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9006</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
       </span>
     </div>
 
@@ -247,10 +247,10 @@ model {
 <span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>)</pre></body></html></div>
 <p>When fitting a model, the default behavior is to write the output from CmdStan to CSV files in a temporary directory:</p>
 <div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>()</pre></body></html></div>
-<pre><code>[1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRtIdGY/bernoulli-202006231807-1-ecaa20.csv"
-[2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRtIdGY/bernoulli-202006231807-2-ecaa20.csv"
-[3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRtIdGY/bernoulli-202006231807-3-ecaa20.csv"
-[4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRtIdGY/bernoulli-202006231807-4-ecaa20.csv"</code></pre>
+<pre><code>[1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-202006301359-1-be8edc.csv"
+[2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-202006301359-2-be8edc.csv"
+[3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-202006301359-3-be8edc.csv"
+[4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-202006301359-4-be8edc.csv"</code></pre>
 <p>These files will be lost if you end your R session or if you remove the <code>fit</code> object and force (or wait for) garbage collection.</p>
 <div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="no">files</span> <span class="kw">&lt;-</span> <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>()
 <span class="fu"><a href="https://rdrr.io/r/base/files.html">file.exists</a></span>(<span class="no">files</span>)</pre></body></html></div>
@@ -258,8 +258,8 @@ model {
 <div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/rm.html">rm</a></span>(<span class="no">fit</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/gc.html">gc</a></span>()</pre></body></html></div>
 <pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-Ncells  913849 48.9    1821450 97.3         NA  1245551 66.6
-Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
+Ncells  895491 47.9    1767474 94.4         NA  1248614 66.7
+Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
 <div class="sourceCode" id="cb31"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.exists</a></span>(<span class="no">files</span>)</pre></body></html></div>
 <pre><code>[1] FALSE FALSE FALSE FALSE</code></pre>
 </div>
@@ -295,6 +295,7 @@ Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
     inv_metric: function (matrix = TRUE) 
     latent_dynamics_files: function (include_failed = FALSE) 
     lp: function () 
+    metadata: function () 
     num_chains: function () 
     num_procs: function () 
     output: function (id = NULL) 
@@ -302,7 +303,6 @@ Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
     print: function (variables = NULL, ..., digits = 2, max_rows = 10) 
     runset: CmdStanRun, R6
     sampler_diagnostics: function (inc_warmup = FALSE) 
-    sampling_info: function () 
     save_data_file: function (dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) 
     save_latent_dynamics_files: function (dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) 
     save_object: function (file, ...) 
@@ -312,9 +312,9 @@ Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
   Private:
     draws_: NULL
     inv_metric_: NULL
+    metadata_: list
     read_csv_: function (variables = NULL, sampler_diagnostics = NULL) 
     sampler_diagnostics_: NULL
-    sampling_info_: NULL
     warmup_draws_: NULL
     warmup_sampler_diagnostics_: NULL </code></pre>
 <p>After we call a method that requires the draws then if we reexamine the structure of the object we will see that the <code>draws_</code> slot in <code>Private</code> is no longer empty:</p>
@@ -332,6 +332,7 @@ Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
     inv_metric: function (matrix = TRUE) 
     latent_dynamics_files: function (include_failed = FALSE) 
     lp: function () 
+    metadata: function () 
     num_chains: function () 
     num_procs: function () 
     output: function (id = NULL) 
@@ -339,7 +340,6 @@ Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
     print: function (variables = NULL, ..., digits = 2, max_rows = 10) 
     runset: CmdStanRun, R6
     sampler_diagnostics: function (inc_warmup = FALSE) 
-    sampling_info: function () 
     save_data_file: function (dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) 
     save_latent_dynamics_files: function (dir = ".", basename = NULL, timestamp = TRUE, random = TRUE) 
     save_object: function (file, ...) 
@@ -347,74 +347,73 @@ Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
     summary: function (variables = NULL, ...) 
     time: function () 
   Private:
-    draws_: -6.76479 -6.92299 -7.21979 -7.66959 -6.92109 -7.26711 -6 ...
+    draws_: -7.09789 -7.09789 -6.86022 -6.8793 -6.74951 -6.98002 -7. ...
     inv_metric_: list
+    metadata_: list
     read_csv_: function (variables = NULL, sampler_diagnostics = NULL) 
     sampler_diagnostics_: NULL
-    sampling_info_: list
     warmup_draws_: NULL
     warmup_sampler_diagnostics_: NULL </code></pre>
 <p>For models with many parameters, transformed parameters, or generated quantities, if only some are requested (e.g., by specifying the <code>variables</code> argument to <code>fit$draws()</code>) then CmdStanR will only read in the requested variables (unless they have already been read in).</p>
 </div>
-<div id="read_sample_csv" class="section level3">
+<div id="read_cmdstan_csv" class="section level3">
 <h3 class="hasAnchor">
-<a href="#read_sample_csv" class="anchor"></a>read_sample_csv()</h3>
-<p>Internally, the <code><a href="../reference/read_sample_csv.html">read_sample_csv()</a></code> function is used to read the CmdStan CSV files into R. This function is exposed to users, so you can also call it directly:</p>
-<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="co"># see ?read_sample_csv for info on optional arguments controlling </span>
+<a href="#read_cmdstan_csv" class="anchor"></a>read_cmdstan_csv()</h3>
+<p>Internally, the <code><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv()</a></code> function is used to read the CmdStan CSV files into R. This function is exposed to users, so you can also call it directly:</p>
+<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="co"># see ?read_cmdstan_csv for info on optional arguments controlling </span>
 <span class="co"># what information is read in</span>
-<span class="no">csv_contents</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/read_sample_csv.html">read_sample_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())
+<span class="no">csv_contents</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())
 <span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">csv_contents</span>)</pre></body></html></div>
 <pre><code>List of 7
- $ sampling_info                  :List of 31
-  ..$ stan_version_major : num 2
-  ..$ stan_version_minor : num 23
-  ..$ stan_version_patch : num 0
-  ..$ method             : chr "sample"
-  ..$ save_warmup        : num 0
-  ..$ thin               : num 1
-  ..$ gamma              : num 0.05
-  ..$ kappa              : num 0.75
-  ..$ t0                 : num 10
-  ..$ init_buffer        : num 75
-  ..$ term_buffer        : num 50
-  ..$ window             : num 25
-  ..$ algorithm          : chr "hmc"
-  ..$ engine             : chr "nuts"
-  ..$ metric             : chr "diag_e"
-  ..$ stepsize_jitter    : num 0
-  ..$ id                 : num [1:4] 1 2 3 4
-  ..$ init               : num 2
-  ..$ seed               : num [1:4] 2.48e+08 1.13e+09 1.05e+09 1.18e+09
-  ..$ refresh            : num 100
-  ..$ model_params       : chr [1:2] "lp__" "theta"
-  ..$ sampler_diagnostics: chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-  ..$ stepsize_adaptation: num 1.03
-  ..$ model_name         : chr "bernoulli_model"
-  ..$ adapt_engaged      : num 1
-  ..$ adapt_delta        : num 0.8
-  ..$ max_treedepth      : num 10
-  ..$ step_size          : num 1
-  ..$ iter_warmup        : num 1000
-  ..$ iter_sampling      : num 1000
-  ..$ lines_to_skip      : num 38
+ $ metadata                       :List of 30
+  ..$ stan_version_major  : num 2
+  ..$ stan_version_minor  : num 23
+  ..$ stan_version_patch  : num 0
+  ..$ method              : chr "sample"
+  ..$ save_warmup         : num 0
+  ..$ thin                : num 1
+  ..$ gamma               : num 0.05
+  ..$ kappa               : num 0.75
+  ..$ t0                  : num 10
+  ..$ init_buffer         : num 75
+  ..$ term_buffer         : num 50
+  ..$ window              : num 25
+  ..$ algorithm           : chr "hmc"
+  ..$ engine              : chr "nuts"
+  ..$ metric              : chr "diag_e"
+  ..$ stepsize_jitter     : num 0
+  ..$ id                  : num [1:4] 1 2 3 4
+  ..$ init                : num 2
+  ..$ seed                : num [1:4] 4.19e+08 1.05e+09 1.03e+09 9.86e+08
+  ..$ refresh             : num 100
+  ..$ model_params        : chr [1:2] "lp__" "theta"
+  ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
+  ..$ model_name          : chr "bernoulli_model"
+  ..$ adapt_engaged       : num 1
+  ..$ adapt_delta         : num 0.8
+  ..$ max_treedepth       : num 10
+  ..$ step_size           : num 1
+  ..$ step_size_adaptation: num [1:4] 1.098 0.994 1.093 0.897
+  ..$ iter_warmup         : num 1000
+  ..$ iter_sampling       : num 1000
  $ inv_metric                     :List of 4
-  ..$ : num 0.543
-  ..$ : num 0.551
-  ..$ : num 0.474
-  ..$ : num 0.49
+  ..$ : num 0.459
+  ..$ : num 0.586
+  ..$ : num 0.406
+  ..$ : num 0.566
  $ step_size                      :List of 4
-  ..$ : num 1.03
-  ..$ : num 0.951
-  ..$ : num 1.16
-  ..$ : num 0.912
+  ..$ : num 1.1
+  ..$ : num 0.994
+  ..$ : num 1.09
+  ..$ : num 0.897
  $ warmup_draws                   : NULL
- $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:2] -6.76 -6.92 -7.22 -7.67 -6.92 ...
+ $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:2] -7.1 -7.1 -6.86 -6.88 -6.75 ...
   ..- attr(*, "dimnames")=List of 3
   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
   .. ..$ variable : chr [1:2] "lp__" "theta"
  $ warmup_sampler_diagnostics     : NULL
- $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.788 0.966 0.977 0.972 1 ...
+ $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.874 0.673 1 0.995 1 ...
   ..- attr(*, "dimnames")=List of 3
   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
@@ -427,36 +426,36 @@ Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
 <p>CmdStanR does not yet provide a special method for processing these files but they can be read into R using R’s standard CSV reading functions:</p>
 <div class="sourceCode" id="cb41"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>, <span class="kw">save_latent_dynamics</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
 <div class="sourceCode" id="cb42"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">latent_dynamics_files</a></span>()</pre></body></html></div>
-<pre><code>[1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRtIdGY/bernoulli-diagnostic-202006231807-1-0068a8.csv"
-[2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRtIdGY/bernoulli-diagnostic-202006231807-2-0068a8.csv"
-[3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRtIdGY/bernoulli-diagnostic-202006231807-3-0068a8.csv"
-[4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRtIdGY/bernoulli-diagnostic-202006231807-4-0068a8.csv"</code></pre>
+<pre><code>[1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-diagnostic-202006301359-1-a16760.csv"
+[2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-diagnostic-202006301359-2-a16760.csv"
+[3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-diagnostic-202006301359-3-a16760.csv"
+[4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-diagnostic-202006301359-4-a16760.csv"</code></pre>
 <div class="sourceCode" id="cb44"><html><body><pre class="r"><span class="co"># read one of the files in</span>
 <span class="no">x</span> <span class="kw">&lt;-</span> <span class="kw pkg">utils</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">latent_dynamics_files</a></span>()[<span class="fl">1</span>], <span class="kw">comment.char</span> <span class="kw">=</span> <span class="st">"#"</span>)
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">x</span>)</pre></body></html></div>
 <pre><code>      lp__ accept_stat__ stepsize__ treedepth__ n_leapfrog__ divergent__
-1 -7.10114      0.995261   0.836241           1            1           0
-2 -6.74803      0.994965   0.836241           1            3           0
-3 -6.74802      1.000000   0.836241           2            3           0
-4 -7.05039      0.845968   0.836241           2            3           0
-5 -7.83290      0.900421   0.836241           1            3           0
-6 -7.71554      1.000000   0.836241           2            3           0
-  energy__    theta     p_theta      g_theta
-1  7.15462 -1.68919 -0.42150200 -1.129420000
-2  7.16006 -1.10162 -1.16996000 -0.006763980
-3  6.74803 -1.09872 -0.00576005 -0.000234225
-4  7.71661 -1.64273  1.48771000 -1.054880000
-5  7.86549 -2.18434 -0.32905300 -1.786010000
-6  7.93231 -2.11723  0.84862400 -1.710800000</code></pre>
+1 -7.47145      0.848978    1.04012           1            3           0
+2 -7.99588      0.823969    1.04012           1            1           0
+3 -7.21727      1.000000    1.04012           2            3           0
+4 -7.29052      0.986838    1.04012           1            1           0
+5 -6.74827      0.980879    1.04012           1            3           0
+6 -6.75943      0.996859    1.04012           1            3           0
+  energy__     theta    p_theta    g_theta
+1  7.47286 -0.339441  0.0781753  1.9913400
+2  8.18841 -0.113762  0.9130850  2.6590800
+3  7.78543 -1.785660 -1.5685700 -1.2767300
+4  7.37091 -1.841260  0.5900520 -1.3571800
+5  7.30981 -1.083820  1.5594100  0.0334045
+6  6.76312 -1.200170 -0.1264070 -0.2226560</code></pre>
 <p>The column <code>lp__</code> is also provided via <code>fit$draws()</code>, and the columns <code>accept_stat__</code>, <code>stepsize__</code>, <code>treedepth__</code>, <code>n_leapfrog__</code>, <code>divergent__</code>, and <code>energy__</code> are also provided by <code>fit$sampler_diagnostics()</code>, but there are several columns unique to the latent dynamics file:</p>
 <div class="sourceCode" id="cb46"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">x</span>[, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"theta"</span>, <span class="st">"p_theta"</span>, <span class="st">"g_theta"</span>)])</pre></body></html></div>
-<pre><code>     theta     p_theta      g_theta
-1 -1.68919 -0.42150200 -1.129420000
-2 -1.10162 -1.16996000 -0.006763980
-3 -1.09872 -0.00576005 -0.000234225
-4 -1.64273  1.48771000 -1.054880000
-5 -2.18434 -0.32905300 -1.786010000
-6 -2.11723  0.84862400 -1.710800000</code></pre>
+<pre><code>      theta    p_theta    g_theta
+1 -0.339441  0.0781753  1.9913400
+2 -0.113762  0.9130850  2.6590800
+3 -1.785660 -1.5685700 -1.2767300
+4 -1.841260  0.5900520 -1.3571800
+5 -1.083820  1.5594100  0.0334045
+6 -1.200170 -0.1264070 -0.2226560</code></pre>
 <p>Our model has a single parameter <code>theta</code> and the three columns above correspond to <code>theta</code> in the <em>unconstrained</em> space (<code>theta</code> on the constrained space is accessed via <code>fit$draws()</code>), the auxiliary momentum <code>p_theta</code>, and the gradient <code>g_theta</code>. In general, each of these three columns will exist for <em>every</em> parameter in the model.</p>
 </div>
 </div>
@@ -469,15 +468,15 @@ Vcells 1678942 12.9    8388608 64.0      16384  2460758 18.8</code></pre>
 <p>We can check that this worked by removing <code>fit</code> and loading it back in from the save file:</p>
 <div class="sourceCode" id="cb49"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/rm.html">rm</a></span>(<span class="no">fit</span>); <span class="fu"><a href="https://rdrr.io/r/base/gc.html">gc</a></span>()</pre></body></html></div>
 <pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-Ncells  930843 49.8    1821450 97.3         NA  1821450 97.3
-Vcells 1769173 13.5    8388608 64.0      16384  3443682 26.3</code></pre>
+Ncells  911641 48.7    1767474 94.4         NA  1767474 94.4
+Vcells 1731811 13.3    8388608 64.0      16384  3054325 23.4</code></pre>
 <div class="sourceCode" id="cb51"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span>(<span class="no">temp_rds_file</span>)
 <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-summary.html">summary</a></span>()</pre></body></html></div>
 <pre><code># A tibble: 2 x 10
   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
   &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
-1 lp__     -7.29  -7.00  0.742 0.344 -8.77   -6.75   1.00    1704.    1707.
-2 theta     0.249  0.233 0.121 0.124  0.0777  0.471  1.00    1398.    1523.</code></pre>
+1 lp__     -7.31  -6.99  0.822 0.332 -9.02   -6.75   1.01    1625.    1326.
+2 theta     0.252  0.238 0.123 0.124  0.0729  0.475  1.01    1195.    1098.</code></pre>
 </div>
   </div>
 
