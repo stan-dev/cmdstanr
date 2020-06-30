@@ -747,22 +747,10 @@ CmdStanMCMC <- R6::R6Class(
     warmup_draws_ = NULL,
     inv_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
-      variables_to_read <-
-        remaining_columns_to_read(
-          variables,
-          dimnames(private$draws_)$variable,
-          private$metadata_$model_params
-        )
-      sampler_diagnostics_to_read <-
-        remaining_columns_to_read(
-          sampler_diagnostics,
-          dimnames(private$sampler_diagnostics_)$variable,
-          private$metadata_$sampler_diagnostics
-        )
       data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
-        variables = variables_to_read,
-        sampler_diagnostics = sampler_diagnostics_to_read
+        variables = variables,
+        sampler_diagnostics = sampler_diagnostics
       )
       private$inv_metric_ <- data_csv$inv_metric
       private$metadata_ <- data_csv$metadata
@@ -1001,15 +989,9 @@ CmdStanGQ <- R6::R6Class(
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(variables = NULL) {
-      variables_to_read <-
-      remaining_columns_to_read(
-        variables,
-        dimnames(private$draws_)$variable,
-        private$metadata_$model_params
-      )
       data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
-        variables = variables_to_read,
+        variables = variables,
         sampler_diagnostics = ""
       )
       private$metadata_ <- data_csv$metadata
