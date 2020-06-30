@@ -31,7 +31,6 @@ test_that("compile() method works", {
   }
   expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
   expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
-  print(mod$hpp_file())
   expect_true(file.exists(mod$hpp_file()))
   if (file.exists(exe)) {
     file.remove(exe)
@@ -162,6 +161,20 @@ test_that("switching threads on and off works without rebuild", {
   after_mtime <- file.mtime(main_path_o)
   time_diff <- as.double((after_mtime - before_mtime), units = "secs")
   expect_gt(time_diff, 0)
+})
+
+test_that("message is shown on building main.o", {
+  skip_on_cran()
+  main_o_files <- c(
+    file.path(cmdstan_path(), "src", "cmdstan", "main.o"),
+    file.path(cmdstan_path(), "src", "cmdstan", "main_noflags.o")
+  )
+  for (f in main_o_files) {
+    if (file.exists(f))
+      file.remove(f)
+  }
+  expect_message(mod$compile(force_recompile = TRUE),
+                 "Re-compiling the main object file and precompiled headers. This might take up to a few minutes ...")
 })
 
 test_that("compile errors are shown", {
