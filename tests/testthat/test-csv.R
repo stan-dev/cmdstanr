@@ -47,19 +47,19 @@ test_that("read_cmdstan_csv() fails for different number of samples in csv", {
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_10$output_files())
   expect_error(read_cmdstan_csv(csv_files),
-               "Supplied CSV files dont match in the number of output samples!")
+               "Supplied CSV files do not match in the number of output samples!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1a$output_files())
   expect_error(read_cmdstan_csv(csv_files),
-               "Supplied CSV files dont match in the number of output samples!")
+               "Supplied CSV files do not match in the number of output samples!")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1b$output_files())
   expect_warning(read_cmdstan_csv(csv_files),
-               "The supplied csv files do not match in the following arguments: iter_warmup")
+               "Supplied CSV files do not match in the following arguments: iter_warmup")
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_1_with_warmup$output_files())
   expect_error(read_cmdstan_csv(csv_files),
-                 "Supplied CSV files dont match in the number of output samples!")
+                 "Supplied CSV files do not match in the number of output samples!")
 })
 
 test_that("read_cmdstan_csv() fails for different variables", {
@@ -90,7 +90,7 @@ test_that("read_cmdstan_csv() fails with the no params listed", {
   skip_on_cran()
   file_path <- test_path("resources", "csv", "model1-3-no-params.csv")
   expect_error(read_cmdstan_csv(file_path),
-               "The supplied csv file does not contain any variable names or data!")
+               "Supplied CSV file does not contain any variable names or data!")
 })
 
 test_that("read_cmdstan_csv() matches rstan::read_stan_csv()", {
@@ -424,7 +424,7 @@ test_that("read_cmdstan_csv() works for variational", {
                                 fit_logistic_variational_short$output_files())
   expect_error(
     read_cmdstan_csv(diff_samples_variational),
-    "Supplied CSV files dont match in the number of output samples!"
+    "Supplied CSV files do not match in the number of output samples!"
   )
 })
 

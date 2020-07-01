@@ -593,8 +593,8 @@ CmdStanProcs <- R6::R6Class(
       (regexpr("is not a valid value for", line, perl = TRUE) > 0)
     },
     process_error_output = function(err_out, id) {
-      if(length(err_out)) {
-        for(err_line in err_out) {
+      if (length(err_out)) {
+        for (err_line in err_out) {
           message("Chain ", id, " ", err_line)
         }
       }
@@ -689,7 +689,7 @@ CmdStanMCMCProcs <- R6::R6Class(
             next_state <- 5 # writing csv and finishing
           }
           if (state > 1 && state < 5) {
-            if(state == 2) {
+            if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
               cat("Chain", id, line, "\n")
@@ -697,7 +697,7 @@ CmdStanMCMCProcs <- R6::R6Class(
           }
           if (self$is_error_message(line)) {
             # will print all remaining output in case of exceptions
-            if(state == 1) {
+            if (state == 1) {
               state <- 2;
             }
             message("Chain ", id, " ", line)

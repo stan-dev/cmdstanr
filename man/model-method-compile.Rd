@@ -37,7 +37,7 @@ output.
 look for files specified in \verb{#include} directives in the Stan program.
 \item \code{cpp_options}: (list) Any makefile options to be
 used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
-Anything you would otherwise write in the make/local file.
+Anything you would otherwise write in the \code{make/local} file.
 \item \code{stanc_options}: (list) Any Stan-to-C++ transpiler options to be
 used when compiling the model.
 \item \code{force_recompile}: (logical) Should the model be recompiled

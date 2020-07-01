@@ -56,7 +56,7 @@ written to the \code{make/local} file. For example, \code{list("CXX" = "clang++"
 will force the use of clang for compilation.}
 
 \item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
-appended to the end of the existing make/local file? The default is \code{TRUE}.
+appended to the end of the existing \code{make/local} file? The default is \code{TRUE}.
 If \code{FALSE} the file is overwritten.}
 }
 \value{
@@ -79,9 +79,9 @@ models.
 
 The \code{cmdstan_make_local()} function is used to read/write makefile flags
 and variables from/to the \code{make/local} file of a CmdStan installation.
-Writing to the make/local file can be used to permanently add makefile
+Writing to the \code{make/local} file can be used to permanently add makefile
 flags/variables to an installation. For example adding specific compiler
-switches, changing the C++ compiler, etc. A change to the make/local file
+switches, changing the C++ compiler, etc. A change to the \code{make/local} file
 should typically be followed by calling \code{rebuild_cmdstan()}.
 }
 \examples{

@@ -140,6 +140,7 @@ read_cmdstan_csv <- function(files,
       not_matching <- c(not_matching, check$not_matching)
       metadata$id <- c(metadata$id, csv_file_info$id)
       metadata$seed <- c(metadata$seed, csv_file_info$seed)
+      metadata$step_size <- c(metadata$step_size, csv_file_info$step_size)
       metadata$step_size_adaptation <- c(metadata$step_size_adaptation, csv_file_info$step_size_adaptation)
       metadata$fitted_params <- c(metadata$fitted_params, csv_file_info$fitted_params)
 
@@ -305,7 +306,7 @@ read_cmdstan_csv <- function(files,
 
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
-    warning("The supplied csv files do not match in the following arguments: ",
+    warning("Supplied CSV files do not match in the following arguments: ",
             paste(not_matching_list, collapse = ", "), call. = FALSE)
   }
 
@@ -407,7 +408,7 @@ read_csv_metadata <- function(csv_file) {
         all_names <- strsplit(line, ",")[[1]]
         csv_file_info[["sampler_diagnostics"]] <- c()
         csv_file_info[["model_params"]] <- c()
-        for(x in all_names) {
+        for (x in all_names) {
           if (all(csv_file_info$algorithm != "fixed_param")) {
             if (endsWith(x, "__") && !(x %in% c("lp__", "log_p__", "log_g__"))) {
               csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
@@ -483,7 +484,7 @@ read_csv_metadata <- function(csv_file) {
     stop("Supplied CSV file is corrupt!", call. = FALSE)
   }
   if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
-    stop("The supplied csv file does not contain any variable names or data!", call. = FALSE)
+    stop("Supplied CSV file does not contain any variable names or data!", call. = FALSE)
   }
   if (inv_metric_rows > 0) {
     rows <- inv_metric_rows
@@ -542,16 +543,16 @@ check_csv_metadata_matches <- function(a, b) {
         a$thin != b$thin ||
         a$save_warmup != b$save_warmup ||
         (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
-      return(list(error = "Supplied CSV files dont match in the number of output samples!"))
+      return(list(error = "Supplied CSV files do not match in the number of output samples!"))
     }
   } else if (a$method == "variational") {
     if (a$output_samples != b$output_samples) {
-      return(list(error = "Supplied CSV files dont match in the number of output samples!"))
+      return(list(error = "Supplied CSV files do not match in the number of output samples!"))
     }
   }
   match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
                   "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_treedepth",
-                  "metric", "step_size", "stepsize_jitter", "adapt_engaged", "adapt_delta", "iter_warmup")
+                  "metric", "stepsize_jitter", "adapt_engaged", "adapt_delta", "iter_warmup")
   not_matching <- c()
   for (name in names(a)) {
     if ((name %in% match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {

@@ -270,7 +270,7 @@ set_num_threads <- function(num_threads) {
 }
 
 check_divergences <- function(data_csv) {
-  if(!is.null(data_csv$post_warmup_sampler_diagnostics)) {
+  if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
     divergences <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
     num_of_draws <- length(divergences)
     num_of_divergences <- sum(divergences)
