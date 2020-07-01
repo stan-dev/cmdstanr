@@ -147,6 +147,12 @@ test_that("error if init list is specified incorrectly", {
     mod_logistic$optimize(data = data_list_logistic, init = init_list),
     "'init' has the wrong length"
   )
+
+  init_list <- list(list(), list())
+  expect_error(
+    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
+    "'init' contains empty lists."
+  )
 })
 
 test_that("init can be a function", {
@@ -216,5 +222,11 @@ test_that("error if init function specified incorrectly", {
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
     "If 'init' is a function it must return a single list"
+  )
+
+  init_fun <- function() list()
+  expect_error(
+    mod_logistic$sample(data = data_list_logistic, chains = 1, init = init_fun),
+    "'init' contains empty lists."
   )
 })

@@ -669,6 +669,9 @@ process_init_list <- function(init, num_procs) {
   if (length(init) != num_procs) {
     stop("'init' has the wrong length. See documentation of 'init' argument.", call. = FALSE)
   }
+  if (any(sapply(init, function(x) length(x) == 0))) {
+    stop("'init' contains empty lists.", call. = FALSE)
+  }
 
   init_paths <-
     tempfile(
