@@ -177,7 +177,8 @@ test_that("message is shown on building main.o", {
     mod$compile(force_recompile = TRUE),
     "Compiling the main object file and precompiled headers (may take up to a few minutes). ",
     "This is only necessary for the first compilation after installation or when ",
-    "threading, MPI or OpenCL are used for the first time."
+    "threading, MPI or OpenCL are used for the first time.",
+    fixed = TRUE
   )
 })
 
