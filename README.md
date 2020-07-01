@@ -22,7 +22,7 @@ If you are new to CmdStanR we recommend starting with these vignettes:
 * A clean interface to Stan services so that CmdStanR can keep up with Stan
 releases.
 
-* R code that doesn't interface directly with c++, only calls compiled executables.
+* R code that doesn't interface directly with C++, only calls compiled executables.
       
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
