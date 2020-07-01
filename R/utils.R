@@ -216,6 +216,11 @@ prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
     model_header_gch_used <- FALSE
   }
   if (!file.exists(main_path_w_flags)) {
+    message(
+      "Compiling the main object file and precompiled headers (may take up to a few minutes). ",
+      "This is only necessary the first time a model is compiled after installation or when ",
+      "threading, MPI or OpenCL are used for the first time."
+    )
     clean_compile_helper_files()
     run_log <- processx::run(
       command = make_cmd(),

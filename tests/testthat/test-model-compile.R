@@ -10,6 +10,7 @@ test_that("object initialized correctly", {
   skip_on_cran()
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
+  expect_equal(mod$hpp_file(), character(0))
 })
 
 test_that("error if no compile() before model fitting", {
@@ -30,7 +31,7 @@ test_that("compile() method works", {
   }
   expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
   expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
-
+  expect_true(file.exists(mod$hpp_file()))
   if (file.exists(exe)) {
     file.remove(exe)
   }
@@ -160,6 +161,25 @@ test_that("switching threads on and off works without rebuild", {
   after_mtime <- file.mtime(main_path_o)
   time_diff <- as.double((after_mtime - before_mtime), units = "secs")
   expect_gt(time_diff, 0)
+})
+
+test_that("message is shown on building main.o", {
+  skip_on_cran()
+  main_o_files <- c(
+    file.path(cmdstan_path(), "src", "cmdstan", "main.o"),
+    file.path(cmdstan_path(), "src", "cmdstan", "main_noflags.o")
+  )
+  for (f in main_o_files) {
+    if (file.exists(f))
+      file.remove(f)
+  }
+  expect_message(
+    mod$compile(force_recompile = TRUE),
+    "Compiling the main object file and precompiled headers (may take up to a few minutes). ",
+    "This is only necessary for the first compilation after installation or when ",
+    "threading, MPI or OpenCL are used for the first time.",
+    fixed = TRUE
+  )
 })
 
 test_that("compile errors are shown", {
