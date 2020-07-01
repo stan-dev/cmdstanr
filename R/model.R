@@ -37,10 +37,10 @@
 #' mod <- cmdstan_model(stan_program)
 #' mod$print()
 #'
-#' # data as a named list (like RStan)
+#' # Data as a named list (like RStan)
 #' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 #'
-#' # run MCMC using the 'sample' method
+#' # Run MCMC using the 'sample' method
 #' fit_mcmc <- mod$sample(
 #'   data = stan_data,
 #'   seed = 123,
@@ -78,13 +78,50 @@
 #'
 #' fit_optim$summary()
 #'
-#' # Run 'variational' to approximate the posterior (default is meanfield ADVI)
+#'
+#' # Run 'variational' method to approximate the posterior (default is meanfield ADVI)
 #' fit_vb <- mod$variational(data = stan_data, seed = 123)
 #'
 #' fit_vb$summary()
 #'
 #' # Plot approximate posterior using bayesplot
 #' mcmc_hist(fit_vb$draws("theta"))
+#'
+#'
+#' # Specifying initial values as a list of lists
+#' fit_mcmc_w_init_list <- mod$sample(
+#'   data = stan_data,
+#'   seed = 123,
+#'   chains = 2,
+#'   init = list(
+#'     list(theta = 0.75), # chain 1
+#'     list(theta = 0.25)  # chain 2
+#'   )
+#' )
+#' fit_optim_w_init_list <- mod$optimize(
+#'   data = stan_data,
+#'   seed = 123,
+#'   init = list(
+#'     list(theta = 0.75)
+#'   )
+#' )
+#'
+#' # Specifying initial values as a function
+#' fit_mcmc_w_init_fun <- mod$sample(
+#'   data = stan_data,
+#'   seed = 123,
+#'   chains = 2,
+#'   init = function() list(theta = runif(1))
+#' )
+#' fit_mcmc_w_init_fun_2 <- mod$sample(
+#'   data = stan_data,
+#'   seed = 123,
+#'   chains = 2,
+#'   init = function(chain_id) {
+#'     # silly but demonstrates optional use of chain_id
+#'     list(theta = 1 / (chain_id + 1))
+#'   }
+#' )
 #' }
 #'
 cmdstan_model <- function(stan_file, compile = TRUE, ...) {

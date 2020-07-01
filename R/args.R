@@ -42,7 +42,6 @@ CmdStanArgs <- R6::R6Class(
       self$proc_ids <- proc_ids
       self$data_file <- data_file
       self$seed <- seed
-      self$init <- init
       self$refresh <- refresh
       self$method_args <- method_args
       self$method <- self$method_args$method
@@ -54,6 +53,13 @@ CmdStanArgs <- R6::R6Class(
       } else {
         self$output_dir <- output_dir %||% tempdir(check = TRUE)
       }
+
+      if (is.function(init)) {
+        init <- process_init_function(init, length(self$proc_ids))
+      } else if (is.list(init) && !is.data.frame(init)) {
+        init <- process_init_list(init, length(self$proc_ids))
+      }
+      self$init <- init
 
       self$method_args$validate(num_procs = length(self$proc_ids))
       self$validate()
@@ -548,8 +554,6 @@ validate_sample_args <- function(self, num_procs) {
                               null.ok = TRUE)
   }
 
-  # TODO: implement other checks for metric from cmdstanpy:
-  # https://github.com/stan-dev/cmdstanpy/blob/master/cmdstanpy/cmdstan_args.py#L130
   validate_metric(self$metric)
   validate_metric_file(self$metric_file, num_procs)
 
@@ -653,22 +657,73 @@ validate_exe_file <- function(exe_file) {
   invisible(TRUE)
 }
 
+#' Write initial values to files if provided as list of lists
+#' @noRd
+#' @param init List of init lists.
+#' @param num_procs Number of CmdStan processes.
+#' @return A character vector of file paths.
+process_init_list <- function(init, num_procs) {
+  if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
+    stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
+  }
+  if (length(init) != num_procs) {
+    stop("'init' has the wrong length. See documentation of 'init' argument.", call. = FALSE)
+  }
+  if (any(sapply(init, function(x) length(x) == 0))) {
+    stop("'init' contains empty lists.", call. = FALSE)
+  }
+
+  init_paths <-
+    tempfile(
+      pattern = paste0("init-", seq_along(init), "-"),
+      tmpdir = cmdstan_tempdir(),
+      fileext = ".json"
+    )
+  for (i in seq_along(init)) {
+    write_stan_json(init[[i]], init_paths[i])
+  }
+  init_paths
+}
+
+#' Write initial values to files if provided as function
+#' @noRd
+#' @param init Function generating a single list of initial values.
+#' @param num_procs Number of CmdStan processes.
+#' @return A character vector of file paths.
+process_init_function <- function(init, num_procs) {
+  args <- formals(init)
+  if (is.null(args)) {
+    fn_test <- init()
+    init_list <- lapply(seq_len(num_procs), function(i) init())
+  } else {
+    if (!identical(names(args), "chain_id")) {
+      stop("If 'init' is a function it must have zero arguments ",
+           "or only argument 'chain_id'.", call. = FALSE)
+    }
+    fn_test <- init(1)
+    init_list <- lapply(seq_len(num_procs), function(i) init(i))
+  }
+  if (!is.list(fn_test) || is.data.frame(fn_test)) {
+    stop("If 'init' is a function it must return a single list.")
+  }
+  process_init_list(init_list, num_procs)
+}
+
 #' Validate initial values
 #'
 #' For CmdStan `init` must be `NULL`, a single real number >= 0, or paths to
 #' init files for each chain.
 #'
 #' @noRd
-#' @param init User's `init` argument.
+#' @param init User's `init` argument or output from `process_init_*()`.
 #' @param num_procs Number of CmdStan processes (number of chains if MCMC)
 #' @return Either throws an error or returns `invisible(TRUE)`.
 validate_init <- function(init, num_procs) {
   if (is.null(init)) {
     return(invisible(TRUE))
   }
-
   if (!is.numeric(init) && !is.character(init)) {
-    stop("If specified 'init' must be numeric or a character vector.",
+    stop("Invalid 'init' specification. See documentation of 'init' argument.",
          call. = FALSE)
   } else if (is.numeric(init) && (length(init) > 1 || init < 0)) {
     stop("If 'init' is numeric it must be a single real number >= 0.",

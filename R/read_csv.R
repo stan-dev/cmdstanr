@@ -140,6 +140,7 @@ read_cmdstan_csv <- function(files,
       not_matching <- c(not_matching, check$not_matching)
       metadata$id <- c(metadata$id, csv_file_info$id)
       metadata$seed <- c(metadata$seed, csv_file_info$seed)
+      metadata$init <- c(metadata$init, csv_file_info$init)
       metadata$step_size <- c(metadata$step_size, csv_file_info$step_size)
       metadata$step_size_adaptation <- c(metadata$step_size_adaptation, csv_file_info$step_size_adaptation)
       metadata$fitted_params <- c(metadata$fitted_params, csv_file_info$fitted_params)

@@ -171,6 +171,14 @@ test_that("metadata() returns list", {
   }
 })
 
+test_that("init() errors if no inits specified", {
+  # only checking for errors, correct behavior tested in test-model-init.R
+  for (method in all_methods) {
+    fit <- fits[[method]]
+    expect_error(fit$init(), "Can't find initial values files")
+  }
+})
+
 test_that("output and latent dynamics files are cleaned up correctly", {
   skip_on_cran()
   for (method in c("sample", "variational")) {

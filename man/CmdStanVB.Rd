@@ -21,6 +21,8 @@ Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 (\code{target}) computed in the model block of the Stan program. \cr
 \code{\link[=fit-method-lp]{$lp_approx()}} \tab Return the log density of the
 variational approximation to the posterior. \cr
+\code{\link[=fit-method-init]{$init()}}
+\tab Return user-specified initial values. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}}
 \tab Run and print CmdStan's \code{bin/stansummary}. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}}

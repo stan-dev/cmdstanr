@@ -10,13 +10,23 @@
 #'   * `seed`: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 #'   * `refresh`: (non-negative integer) The number of iterations between
 #'   printed screen updates.
-#'   * `init`: (multiple options) The initialization method:
+#'   * `init`: (multiple options) The initialization method for the parameters block:
 #'     - A real number `x>0` initializes randomly between `[-x,x]` (on the
 #'       *unconstrained* parameter space);
 #'     - `0` initializes to `0`;
 #'     - A character vector of paths (one per chain) to JSON or Rdump files. See
 #'       [write_stan_json()] to write \R objects to JSON files compatible with
 #'       CmdStan.
+#'     - A list of lists. For MCMC the list should contain a sublist for each
+#'       chain. For optimization and variational inference there should be just one
+#'       sublist. The sublists should have named elements corresponding to the
+#'       parameters for which you are specifying initial values. See **Examples**.
+#'     - A function that returns a single list with names corresponding to the
+#'       parameters for which you are specifying initial values. The function
+#'       can take no arguments or a single argument `chain_id`. For MCMC, if the
+#'       function has argument `chain_id` it will be supplied with the chain id
+#'       (from 1 to number of chains) when called to generate the initial
+#'       values. See **Examples**.
 #'   * `save_latent_dynamics`: (logical) Should auxiliary diagnostic information
 #'   about the latent dynamics be written to temporary diagnostic CSV files?
 #'   This argument replaces CmdStan's `diagnostic_file` argument and the content
