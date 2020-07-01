@@ -173,8 +173,12 @@ test_that("message is shown on building main.o", {
     if (file.exists(f))
       file.remove(f)
   }
-  expect_message(mod$compile(force_recompile = TRUE),
-                 "Re-compiling the main object file and precompiled headers. This might take up to a few minutes ...")
+  expect_message(
+    mod$compile(force_recompile = TRUE),
+    "Compiling the main object file and precompiled headers (may take up to a few minutes). ",
+    "This is only necessary for the first compilation after installation or when ",
+    "threading, MPI or OpenCL are used for the first time."
+  )
 })
 
 test_that("compile errors are shown", {
