@@ -408,7 +408,7 @@ read_csv_metadata <- function(csv_file) {
         all_names <- strsplit(line, ",")[[1]]
         csv_file_info[["sampler_diagnostics"]] <- c()
         csv_file_info[["model_params"]] <- c()
-        for(x in all_names) {
+        for (x in all_names) {
           if (all(csv_file_info$algorithm != "fixed_param")) {
             if (endsWith(x, "__") && !(x %in% c("lp__", "log_p__", "log_g__"))) {
               csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)

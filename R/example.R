@@ -87,6 +87,9 @@ print_example_program <-
 
 #' Write Stan code to a temporary file
 #'
+#' Convenience function for writing Stan code to a
+#' [temporary file][base::tempfile] with a `.stan` extension.
+#'
 #' @export
 #' @param code A single string containing a Stan program or a character vector
 #'   containing the individual lines of a Stan program. See **Examples**.
