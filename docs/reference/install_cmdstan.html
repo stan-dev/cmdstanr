@@ -200,9 +200,9 @@ installation. Use this function in case of any issues when compiling
 models.</p>
 <p>The <code>cmdstan_make_local()</code> function is used to read/write makefile flags
 and variables from/to the <code>make/local</code> file of a CmdStan installation.
-Writing to the make/local file can be used to permanently add makefile
+Writing to the <code>make/local</code> file can be used to permanently add makefile
 flags/variables to an installation. For example adding specific compiler
-switches, changing the C++ compiler, etc. A change to the make/local file
+switches, changing the C++ compiler, etc. A change to the <code>make/local</code> file
 should typically be followed by calling <code>rebuild_cmdstan()</code>.</p>
     </div>
 
@@ -274,7 +274,7 @@ will force the use of clang for compilation.</p></td>
     <tr>
       <th>append</th>
       <td><p>For <code>cmdstan_make_local()</code>, should the listed makefile flags be
-appended to the end of the existing make/local file? The default is <code>TRUE</code>.
+appended to the end of the existing <code>make/local</code> file? The default is <code>TRUE</code>.
 If <code>FALSE</code> the file is overwritten.</p></td>
     </tr>
     </table>

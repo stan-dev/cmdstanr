@@ -80,3 +80,6 @@ mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
 }
 
 }
+\seealso{
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
+}

@@ -40,6 +40,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-draws.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-init.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-inv_metric.html</loc>
   </url>
   <url>

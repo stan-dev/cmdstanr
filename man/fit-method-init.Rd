@@ -32,7 +32,7 @@ init_list <- list(
   list(mu = 10, tau = 2),
   list(mu = -10, tau = 1)
 )
-fit <- cmdstanr_example("schools_ncp", init = init_list, chains = 2)
+fit <- cmdstanr_example("schools_ncp", init = init_list, chains = 2, adapt_delta = 0.9)
 
 # only user-specified inits returned
 str(fit$init())
@@ -40,5 +40,5 @@ str(fit$init())
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
 }

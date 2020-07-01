@@ -101,11 +101,32 @@ fit_vb$summary()
 mcmc_hist(fit_vb$draws("theta"))
 
 
+# Specifying initial values as a function
+fit_mcmc_w_init_fun <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  chains = 2,
+  refresh = 0,
+  init = function() list(theta = runif(1))
+)
+fit_mcmc_w_init_fun_2 <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  chains = 2,
+  refresh = 0,
+  init = function(chain_id) {
+    # silly but demonstrates optional use of chain_id
+    list(theta = 1 / (chain_id + 1))
+  }
+)
+fit_mcmc_w_init_fun_2$init()
+
 # Specifying initial values as a list of lists
 fit_mcmc_w_init_list <- mod$sample(
   data = stan_data,
   seed = 123,
   chains = 2,
+  refresh = 0,
   init = list(
     list(theta = 0.75), # chain 1
     list(theta = 0.25)  # chain 2
@@ -118,23 +139,7 @@ fit_optim_w_init_list <- mod$optimize(
     list(theta = 0.75)
   )
 )
-
-# Specifying initial values as a function
-fit_mcmc_w_init_fun <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  init = function() list(theta = runif(1))
-)
-fit_mcmc_w_init_fun_2 <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  init = function(chain_id) {
-    # silly but demonstrates optional use of chain_id
-    list(theta = 1 / (chain_id + 1))
-  }
-)
+fit_optim_w_init_list$init()
 }
 
 }

@@ -227,13 +227,23 @@ the appendices in the CmdStan manual for details on using these formats.</p></li
 <li><p><code>seed</code>: (positive integer) A seed for the (P)RNG to pass to CmdStan.</p></li>
 <li><p><code>refresh</code>: (non-negative integer) The number of iterations between
 printed screen updates.</p></li>
-<li><p><code>init</code>: (multiple options) The initialization method:</p><ul>
+<li><p><code>init</code>: (multiple options) The initialization method for the parameters block:</p><ul>
 <li><p>A real number <code>x&gt;0</code> initializes randomly between <code>[-x,x]</code> (on the
 <em>unconstrained</em> parameter space);</p></li>
 <li><p><code>0</code> initializes to <code>0</code>;</p></li>
 <li><p>A character vector of paths (one per chain) to JSON or Rdump files. See
 <code><a href='write_stan_json.html'>write_stan_json()</a></code> to write <span style="R">R</span> objects to JSON files compatible with
 CmdStan.</p></li>
+<li><p>A list of lists. For MCMC the list should contain a sublist for each
+chain. For optimization and variational inference there should be just one
+sublist. The sublists should have named elements corresponding to the
+parameters for which you are specifying initial values. See <strong>Examples</strong>.</p></li>
+<li><p>A function that returns a single list with names corresponding to the
+parameters for which you are specifying initial values. The function
+can take no arguments or a single argument <code>chain_id</code>. For MCMC, if the
+function has argument <code>chain_id</code> it will be supplied with the chain id
+(from 1 to number of chains) when called to generate the initial
+values. See <strong>Examples</strong>.</p></li>
 </ul></li>
 <li><p><code>save_latent_dynamics</code>: (logical) Should auxiliary diagnostic information
 about the latent dynamics be written to temporary diagnostic CSV files?

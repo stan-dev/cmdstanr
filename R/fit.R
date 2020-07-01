@@ -249,6 +249,9 @@ NULL
 #' are *not* actually draws, just point estimates stored in the `draws_matrix`
 #' format.
 #'
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
 #' @examples
 #' \dontrun{
 #' library(posterior)
@@ -366,7 +369,7 @@ NULL
 #' @section Value:
 #' A list of lists. See **Examples**.
 #'
-#' @seealso [`CmdStanMCMC`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
 #' @examples
 #' \dontrun{
@@ -379,7 +382,7 @@ NULL
 #'   list(mu = 10, tau = 2),
 #'   list(mu = -10, tau = 1)
 #' )
-#' fit <- cmdstanr_example("schools_ncp", init = init_list, chains = 2)
+#' fit <- cmdstanr_example("schools_ncp", init = init_list, chains = 2, adapt_delta = 0.9)
 #'
 #' # only user-specified inits returned
 #' str(fit$init())
@@ -427,6 +430,8 @@ NULL
 #' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
 #' work?: Evaluating variational inference. *Proceedings of the 35th
 #' International Conference on Machine Learning*, PMLR 80:5581–5590.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
 #' @examples
 #' \dontrun{
@@ -677,6 +682,7 @@ NULL
 #' }
 #'
 NULL
+
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
