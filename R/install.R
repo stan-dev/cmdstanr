@@ -14,9 +14,9 @@
 #'
 #'   The `cmdstan_make_local()` function is used to read/write makefile flags
 #'   and variables from/to the `make/local` file of a CmdStan installation.
-#'   Writing to the make/local file can be used to permanently add makefile
+#'   Writing to the `make/local` file can be used to permanently add makefile
 #'   flags/variables to an installation. For example adding specific compiler
-#'   switches, changing the C++ compiler, etc. A change to the make/local file
+#'   switches, changing the C++ compiler, etc. A change to the `make/local` file
 #'   should typically be followed by calling `rebuild_cmdstan()`.
 #'
 #' @export
@@ -160,7 +160,7 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @rdname install_cmdstan
 #' @export
 #' @param append For `cmdstan_make_local()`, should the listed makefile flags be
-#'   appended to the end of the existing make/local file? The default is `TRUE`.
+#'   appended to the end of the existing `make/local` file? The default is `TRUE`.
 #'   If `FALSE` the file is overwritten.
 #' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
 #'   contents of `make/local` are returned without writing anything, otherwise
@@ -282,7 +282,7 @@ build_cmdstan <- function(dir,
     echo = !quiet,
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    stderr_line_callback = function(x,p) { if (quiet) message(x) },
     timeout = timeout
   )
 }
@@ -329,7 +329,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     echo = !quiet,
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) }
+    stderr_line_callback = function(x,p) { if (quiet) message(x) }
   )
   clean_compile_helper_files()
 }
@@ -343,7 +343,7 @@ build_example <- function(dir, cores, quiet, timeout) {
     echo = !quiet,
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if(quiet) message(x) },
+    stderr_line_callback = function(x,p) { if (quiet) message(x) },
     timeout = timeout
   )
 }

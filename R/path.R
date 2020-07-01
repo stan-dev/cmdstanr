@@ -109,7 +109,7 @@ cmdstan_default_install_path <- function() {
 #' @export
 cmdstan_default_path <- function() {
   installs_path <- file.path(Sys.getenv("HOME"), ".cmdstanr")
-  if(dir.exists(installs_path)) {
+  if (dir.exists(installs_path)) {
     cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
     is_rc <- sapply(cmdstan_installs, is_release_candidate)
     cmdstan_installs <- cmdstan_installs[!is_rc]
@@ -122,10 +122,10 @@ cmdstan_default_path <- function() {
       file.rename(old_path, new_path)
       cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
     }
-    if(length(cmdstan_installs) > 0) {
+    if (length(cmdstan_installs) > 0) {
       return(file.path(installs_path,sort(cmdstan_installs, decreasing = TRUE)[1]))
     }
-  }  
+  }
   return(NULL)
 }
 
@@ -190,10 +190,10 @@ read_cmdstan_version <- function(path) {
 #' @param path Path to installation.
 #' @return TRUE if the installation in the supplied path is a release candidate
 is_release_candidate <- function(path) {
-  if(endsWith(path,"/")) {
-    path <- substr(path,1,nchar(path)-1)
+  if (endsWith(path, "/")) {
+    path <- substr(path, 1, nchar(path) - 1)
   }
-  if(length(grep(pattern="-rc[0-9]*$", x=path)) > 0){
+  if (length(grep(pattern = "-rc[0-9]*$", x = path)) > 0) {
     TRUE
   } else{
     FALSE

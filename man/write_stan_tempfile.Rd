@@ -14,7 +14,8 @@ containing the individual lines of a Stan program. See \strong{Examples}.}
 The path to the temporary file.
 }
 \description{
-Write Stan code to a temporary file
+Convenience function for writing Stan code to a
+\link[base:tempfile]{temporary file} with a \code{.stan} extension.
 }
 \examples{
 # stan program as a single string

@@ -258,7 +258,7 @@ CmdStanModel <- R6::R6Class(
 #'   look for files specified in `#include` directives in the Stan program.
 #'   * `cpp_options`: (list) Any makefile options to be
 #'   used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
-#'   Anything you would otherwise write in the make/local file.
+#'   Anything you would otherwise write in the `make/local` file.
 #'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be
 #'     used when compiling the model.
 #'   * `force_recompile`: (logical) Should the model be recompiled
@@ -293,13 +293,13 @@ compile_method <- function(quiet = TRUE,
                            #deprecated
                            threads = FALSE) {
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
-    cpp_options = private$precompile_cpp_options_
+    cpp_options <- private$precompile_cpp_options_
   }
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
-    stanc_options = private$precompile_stanc_options_
+    stanc_options <- private$precompile_stanc_options_
   }
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
-    include_paths = private$precompile_include_paths_
+    include_paths <- private$precompile_include_paths_
   }
   # temporary deprecation warnings
   if (isTRUE(threads)) {
@@ -327,8 +327,10 @@ compile_method <- function(quiet = TRUE,
 
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
-  # compile if the user forced compilation,
-  # the executable does not exist or the stan model was changed since last compilation
+  # compile if:
+  # - the user forced compilation,
+  # - the executable does not exist
+  # - the stan model was changed since last compilation
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
@@ -395,7 +397,7 @@ compile_method <- function(quiet = TRUE,
     echo = !quiet,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
-        if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
+      if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
     },
     error_on_status = FALSE
   )
