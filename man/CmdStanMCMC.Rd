@@ -25,6 +25,8 @@ objects.
 model block of the Stan program. \cr
 \code{\link[=fit-method-inv_metric]{$inv_metric()}}
 \tab Return the inverse metric for each chain. \cr
+\code{\link[=fit-method-init]{$init()}}
+\tab Return user-specified initial values. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}}
 \tab Run and print CmdStan's \code{bin/stansummary}. \cr
 \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}}

@@ -18,8 +18,10 @@ A \code{CmdStanMLE} object is the fitted model object returned by the
 \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density
 (\code{target}) computed in the model block of the Stan program. \cr
-\verb{$mle()} \tab Return the penalized maximum likelihod estimate (posterior
+\verb{$mle()} \tab Return the penalized maximum likelihood estimate (posterior
 mode) as a numeric vector with one element per variable (excluding \code{lp()}). \cr
+\code{\link[=fit-method-init]{$init()}}
+\tab Return user-specified initial values. \cr
 \code{\link[=fit-method-save_object]{$save_object()}}
 \tab Save fitted model object to a file. \cr
 \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV

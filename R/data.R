@@ -19,9 +19,6 @@
 #' cat(readLines(file), sep = "\n")
 #'
 write_stan_json <- function(data, file) {
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("Please install the 'jsonlite' package.", call. = FALSE)
-  }
   if (!is.character(file) || !nzchar(file)) {
     stop("The supplied filename is invalid!", call. = FALSE)
   }

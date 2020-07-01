@@ -22,13 +22,13 @@ Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: CmdStan (https://mc-stan.org/users/interfaces/cmdstan)
 Imports: 
     checkmate,
+    jsonlite (>= 1.2.0),
     posterior (>= 0.0.3),
     processx,
     R6 (>= 2.4.0),
     vroom
 Suggests: 
     bayesplot,
-    jsonlite (>= 1.2.0),
     knitr,
     rmarkdown,
     testthat (>= 2.1.0)

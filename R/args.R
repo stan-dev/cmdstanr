@@ -722,7 +722,6 @@ validate_init <- function(init, num_procs) {
   if (is.null(init)) {
     return(invisible(TRUE))
   }
-
   if (!is.numeric(init) && !is.character(init)) {
     stop("Invalid 'init' specification. See documentation of 'init' argument.",
          call. = FALSE)

@@ -28,7 +28,14 @@ test_that("all fitting methods work with provided init files", {
 
   # broadcasting
   expect_sample_output(
-    mod$sample(data = data_list, chains = 2, init = init_json_1)
+    fit <- mod$sample(data = data_list, chains = 2, init = init_json_1)
+  )
+  expect_identical(
+    fit$init(),
+    list(
+      jsonlite::read_json(init_json_1, simplifyVector = TRUE),
+      jsonlite::read_json(init_json_1, simplifyVector = TRUE)
+    )
   )
 })
 
@@ -98,16 +105,13 @@ test_that("init can be a list of lists", {
     num_chains = 2
   )
 
-  init_paths <- fit$metadata()$init
-  expect_length(init_paths, 2)
-
-  expect_equal(
-    jsonlite::read_json(init_paths[1], simplifyVector = TRUE),
-    init_list[[1]]
-  )
-  expect_equal(
-    jsonlite::read_json(init_paths[2], simplifyVector = TRUE),
-    init_list[[2]]
+  expect_length(fit$init(), 2)
+  expect_identical(
+    fit$init(),
+    list(
+      jsonlite::read_json(fit$metadata()$init[1], simplifyVector = TRUE),
+      jsonlite::read_json(fit$metadata()$init[2], simplifyVector = TRUE)
+    )
   )
 
   # partial inits ok
@@ -116,11 +120,10 @@ test_that("init can be a list of lists", {
     fit <- mod_logistic$sample(data = data_list_logistic, chains = 1, init = init_list),
     num_chains = 1
   )
-  init_paths <- fit$metadata()$init
-  expect_length(init_paths, 1)
-  expect_equal(
-    jsonlite::read_json(init_paths, simplifyVector = TRUE),
-    init_list[[1]]
+  expect_length(fit$init(), 1)
+  expect_identical(
+    fit$init(),
+    list(jsonlite::read_json(fit$metadata()$init[1], simplifyVector = TRUE))
   )
 })
 
@@ -167,15 +170,13 @@ test_that("init can be a function", {
     fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
     num_chains = 2
   )
-  init_paths <- fit$metadata()$init
-  expect_length(init_paths, 2)
-  expect_equal(
-    jsonlite::read_json(init_paths[1], simplifyVector = TRUE),
-    list(alpha = 0, beta = 1:3)
-  )
-  expect_equal(
-    jsonlite::read_json(init_paths[2], simplifyVector = TRUE),
-    list(alpha = 0, beta = 1:3)
+  expect_length(fit$init(), 2)
+  expect_identical(
+    fit$init(),
+    list(
+      jsonlite::read_json(fit$metadata()$init[1], simplifyVector = TRUE),
+      jsonlite::read_json(fit$metadata()$init[2], simplifyVector = TRUE)
+    )
   )
 
   # check that chain_id argument is allowed
@@ -189,15 +190,13 @@ test_that("init can be a function", {
     fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
     num_chains = 2
   )
-  init_paths <- fit$metadata()$init
-  expect_length(init_paths, 2)
-  expect_equal(
-    jsonlite::read_json(init_paths[1], simplifyVector = TRUE),
-    list(alpha = 0, beta = 1:3)
-  )
-  expect_equal(
-    jsonlite::read_json(init_paths[2], simplifyVector = TRUE),
-    list(alpha = 0, beta = 1:3)
+  expect_length(fit$init(), 2)
+  expect_identical(
+    fit$init(),
+    list(
+      jsonlite::read_json(fit$metadata()$init[1], simplifyVector = TRUE),
+      jsonlite::read_json(fit$metadata()$init[2], simplifyVector = TRUE)
+    )
   )
 })
 
