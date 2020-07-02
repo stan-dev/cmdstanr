@@ -60,6 +60,7 @@ CmdStanArgs <- R6::R6Class(
         init <- process_init_list(init, length(self$proc_ids))
       }
       self$init <- init
+
       self$method_args$validate(num_procs = length(self$proc_ids))
       self$validate()
     },
