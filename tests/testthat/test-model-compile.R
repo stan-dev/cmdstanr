@@ -190,3 +190,23 @@ test_that("compile errors are shown", {
     "An error occured during compilation! See the message above for more information."
   )
 })
+
+test_that("dir arg works for cmdstan_model", {
+  skip_on_cran()
+  tmp_dir <- tempdir()
+  mod_dir <- cmdstan_model(stan_program, dir = tmp_dir)
+  expect_equal(dirname(mod_dir$exe_file()), tmp_dir)
+  expect_true(file.exists(mod_dir$exe_file()))
+  file.remove(mod_dir$exe_file())
+
+  mod_dir <- cmdstan_model(stan_program, dir = tmp_dir, compile = FALSE)
+  mod_dir$compile()
+  expect_equal(dirname(mod_dir$exe_file()), tmp_dir)
+  expect_true(file.exists(mod_dir$exe_file()))
+  file.remove(mod_dir$exe_file())
+
+  expect_error(
+    cmdstan_model(stan_program, dir = "ABCD"),
+    "Assertion on 'dir' failed: Directory 'ABCD' does not exists."
+  )
+})

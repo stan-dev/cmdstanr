@@ -129,8 +129,8 @@
 #' fit_optim_w_init_list$init()
 #' }
 #'
-cmdstan_model <- function(stan_file, compile = TRUE, ...) {
-  CmdStanModel$new(stan_file = stan_file, compile = compile, ...)
+cmdstan_model <- function(stan_file, dir = NULL, compile = TRUE, ...) {
+  CmdStanModel$new(stan_file = stan_file, dir = dir, compile = compile, ...)
 }
 
 
@@ -176,6 +176,7 @@ CmdStanModel <- R6::R6Class(
     stan_file_ = character(),
     exe_file_ = character(),
     hpp_file_ = character(),
+    dir_ = NULL,
     cpp_options_ = list(),
     stanc_options_ = list(),
     include_paths_ = NULL,
@@ -184,8 +185,12 @@ CmdStanModel <- R6::R6Class(
     precompile_include_paths_ = NULL
   ),
   public = list(
-    initialize = function(stan_file, compile, ...) {
+    initialize = function(stan_file, dir, compile, ...) {
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
+      if (!is.null(dir)) {
+        checkmate::assert_directory_exists(dir, access = "r")
+      }
+      private$dir_ <- dir
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
       args <- list(...)
@@ -331,9 +336,13 @@ compile_method <- function(quiet = TRUE,
     exe_suffix <- paste0("_", exe_suffix)
   }
   if (all(nzchar(self$exe_file()))) {
-    exe <- cmdstan_ext(paste0(strip_ext(self$stan_file()), exe_suffix))
+    if (is.null(private$dir_)) {
+      stan_file <- self$stan_file()
+    } else {
+      stan_file <- file.path(private$dir_, basename(self$stan_file()))
+    }
+    exe <- cmdstan_ext(paste0(strip_ext(stan_file), exe_suffix))   
   }
-
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   # compile if:
