@@ -595,6 +595,7 @@ CmdStanProcs <- R6::R6Class(
     process_error_output = function(err_out, id) {
       if (length(err_out)) {
         for (err_line in err_out) {
+          private$proc_output_[[id]] <- c(private$proc_output_[[id]], err_line)
           message("Chain ", id, " ", err_line)
         }
       }
