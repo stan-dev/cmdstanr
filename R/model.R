@@ -778,8 +778,7 @@ optimize_method <- function(data = NULL,
                             output_dir = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
-                            iter = NULL,
-                            show_messages = TRUE) {
+                            iter = NULL) {
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
@@ -798,7 +797,7 @@ optimize_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_messages = show_messages)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
@@ -892,8 +891,7 @@ variational_method <- function(data = NULL,
                                adapt_iter = NULL,
                                tol_rel_obj = NULL,
                                eval_elbo = NULL,
-                               output_samples = NULL,
-                               show_messages = TRUE) {
+                               output_samples = NULL) {
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -919,7 +917,7 @@ variational_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_messages = show_messages)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanVB$new(runset)
@@ -1010,8 +1008,7 @@ generate_quantities_method <- function(fitted_params,
                                        seed = NULL,
                                        output_dir = NULL,
                                        parallel_chains = getOption("mc.cores", 1),
-                                       threads_per_chain = NULL,
-                                       show_messages = TRUE) {
+                                       threads_per_chain = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   fitted_params <- process_fitted_params(fitted_params)
   chains <- length(fitted_params)
@@ -1030,8 +1027,7 @@ generate_quantities_method <- function(fitted_params,
   cmdstan_procs <- CmdStanGQProcs$new(
     num_procs = chains,
     parallel_procs = parallel_chains,
-    threads_per_proc = threads_per_chain,
-    show_messages = show_messages
+    threads_per_proc = threads_per_chain
   )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
