@@ -36,7 +36,8 @@ some data.
   term_buffer = NULL,
   window = NULL,
   fixed_param = FALSE,
-  validate_csv = TRUE
+  validate_csv = TRUE,
+  show_messages = TRUE
 )
 }
 }
@@ -101,10 +102,6 @@ files are removed when the fitted model object is garbage collected.
 corresponding the defaults used by \verb{$save_output_files()} (and similar
 methods like \verb{$save_latent_dynamics_files()}).
 }
-\item \code{show_messages}: (logical) When \code{TRUE} (the default), prints all informational
-messages, for example rejection of the current Metropolis proposal, during fitting.
-Disable if you wish silence these messages. In case of issues, use the \verb{$output()}
-function on the resulting fit object to display all the silenced messages.
 }
 }
 
@@ -130,6 +127,16 @@ contrast with \code{parallel_chains}, which specifies the number of chains to
 run in parallel. The actual number of CPU cores used use is
 \code{parallel_chains*threads_per_chain}. For an example of using threading see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
+\item \code{show_messages}: (logical) When \code{TRUE} (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish silence these messages, but this is not recommended
+unless you are very sure that the model is correct up to numerical error.
+If the messages are silenced then the \verb{$output()} method of the resulting
+fit object can be used to display all the silenced messages.
+\item \code{validate_csv}: (logical) When \code{TRUE} (the default), validate the
+sampling results in the csv files. Disable if you wish to manually read in
+the sampling results and validate them yourself, for example using
+\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.
 }
 
 The rest of the arguments correspond to arguments offered by CmdStan,
@@ -193,10 +200,6 @@ when, for example, trying to generate pseudo-data using the generated
 quantities block. If the parameters block is empty then using
 \code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
 \code{parallel_chains} arguments will be set to \code{1}.
-\item \code{validate_csv}: (logical) When \code{TRUE} (the default), validate the
-sampling results in the csv files. Disable if you wish to manually read in
-the sampling results and validate them yourself, for example using
-\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.
 }
 }
 
