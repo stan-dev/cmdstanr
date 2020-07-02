@@ -420,7 +420,7 @@ CmdStanProcs <- R6::R6Class(
     #   Currently for non-sampling this must be set to 1.
     # @param threads_per_proc The number of threads to use per process
     #   to run parallel sections of model.
-    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL) {
+    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL, show_messages = TRUE) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE,
                                    .var.name = "parallel_procs", null.ok = TRUE)
@@ -441,6 +441,7 @@ CmdStanProcs <- R6::R6Class(
       private$proc_state_ = zeros
       private$proc_start_time_ = zeros
       private$proc_total_time_ = zeros
+      private$show_messages_ = show_messages
       invisible(self)
     },
     num_procs = function() {
@@ -595,7 +596,10 @@ CmdStanProcs <- R6::R6Class(
     process_error_output = function(err_out, id) {
       if (length(err_out)) {
         for (err_line in err_out) {
-          message("Chain ", id, " ", err_line)
+          private$proc_output_[[id]] <- c(private$proc_output_[[id]], err_line)
+          if (private$show_messages_) {
+            message("Chain ", id, " ", err_line)
+          }
         }
       }
     },
@@ -631,7 +635,9 @@ CmdStanProcs <- R6::R6Class(
     proc_total_time_ = NULL,
     proc_section_time_ = data.frame(),
     proc_output_ = list(),
-    total_time_ = numeric()
+    proc_error_ouput_ = list(),
+    total_time_ = numeric(),
+    show_messages_ = TRUE
   )
 )
 

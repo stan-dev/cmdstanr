@@ -107,6 +107,7 @@
 read_cmdstan_csv <- function(files,
                             variables = NULL,
                             sampler_diagnostics = NULL) {
+  checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
   warmup_draws <- NULL
   warmup_sampler_diagnostics_draws <- NULL
@@ -121,7 +122,6 @@ read_cmdstan_csv <- function(files,
   col_select <- NULL
   not_matching <- c()
   for (output_file in files) {
-    checkmate::assert_file_exists(output_file, access = "r", extension = "csv")
     if (is.null(metadata)) {
       metadata <- read_csv_metadata(output_file)
       if (!is.null(metadata$inv_metric)) {

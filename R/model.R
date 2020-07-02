@@ -466,7 +466,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'     term_buffer = NULL,
 #'     window = NULL,
 #'     fixed_param = FALSE,
-#'     validate_csv = TRUE
+#'     validate_csv = TRUE,
+#'     show_messages = TRUE
 #'   )
 #'   ```
 #'
@@ -495,6 +496,18 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   `parallel_chains*threads_per_chain`. For an example of using threading see
 #'   the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'
+#'   * `show_messages`: (logical) When `TRUE` (the default), prints all
+#'   informational messages, for example rejection of the current proposal.
+#'   Disable if you wish silence these messages, but this is not recommended
+#'   unless you are very sure that the model is correct up to numerical error.
+#'   If the messages are silenced then the `$output()` method of the resulting
+#'   fit object can be used to display all the silenced messages.
+#'
+#'   * `validate_csv`: (logical) When `TRUE` (the default), validate the
+#'   sampling results in the csv files. Disable if you wish to manually read in
+#'   the sampling results and validate them yourself, for example using
+#'   [read_cmdstan_csv()].
 #'
 #'
 #'   The rest of the arguments correspond to arguments offered by CmdStan,
@@ -558,10 +571,6 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   quantities block. If the parameters block is empty then using
 #'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
 #'   `parallel_chains` arguments will be set to `1`.
-#'   * `validate_csv`: (logical) When `TRUE` (the default), validate the
-#'   sampling results in the csv files. Disable if you wish to manually read in
-#'   the sampling results and validate them yourself, for example using
-#'   [read_cmdstan_csv()].
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -595,6 +604,7 @@ sample_method <- function(data = NULL,
                           window = NULL,
                           fixed_param = FALSE,
                           validate_csv = TRUE,
+                          show_messages = TRUE,
                           # deprecated
                           cores = NULL,
                           num_cores = NULL,
@@ -693,7 +703,12 @@ sample_method <- function(data = NULL,
     output_dir = output_dir,
     validate_csv = validate_csv
   )
-  cmdstan_procs <- CmdStanMCMCProcs$new(num_procs = chains, parallel_procs = parallel_chains, threads_per_proc = threads_per_chain)
+  cmdstan_procs <- CmdStanMCMCProcs$new(
+    num_procs = chains,
+    parallel_procs = parallel_chains,
+    threads_per_proc = threads_per_chain,
+    show_messages = show_messages
+  )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
