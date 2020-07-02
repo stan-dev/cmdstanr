@@ -6,6 +6,8 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program.
+#' @param dir The path to the folder in which to store the cmdstan executable. If not
+#' set, the cmdstan executable is placed in the folder of the Stan program (`stan_file`).
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
