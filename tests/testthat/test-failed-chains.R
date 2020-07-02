@@ -126,6 +126,7 @@ test_that("errors when using draws after all chains fail", {
   expect_error(fit_all_fail$sampler_diagnostics(), "No chains finished successfully")
   expect_error(fit_all_fail$cmdstan_summary(), "Unable to run bin/stansummary")
   expect_error(fit_all_fail$cmdstan_diagnose(), "Unable to run bin/diagnose")
+  expect_error(fit_all_fail$print(), "No chains finished successfully")
 })
 
 test_that("can use draws after some chains fail", {
@@ -134,6 +135,7 @@ test_that("can use draws after some chains fail", {
   expect_s3_class(fit_some_fail$draws(), "draws_array")
   expect_output(fit_some_fail$cmdstan_summary(), "Inference for Stan model")
   expect_output(fit_some_fail$cmdstan_diagnose(), "Processing complete")
+  expect_output(fit_some_fail$print(), "variable")
 })
 
 test_that("init warnings are shown", {
@@ -163,6 +165,23 @@ test_that("optimize error on bad data", {
     ),
     "Fitting finished unexpectedly!"
   )
+  expect_error(fit$print(), "Fitting failed. Unable to print.")
+  expect_error(fit$summary(), "Fitting failed. Unable to retrieve the draws.")
+  expect_error(fit$draws(), "Fitting failed. Unable to retrieve the draws.")
+})
+
+test_that("errors when using draws after variational fais", {
+  expect_warning(
+    utils::capture.output(
+      fit <- mod$variational(data = list(pr_fail = 1))
+    ),
+    "Fitting finished unexpectedly!"
+  )
+  expect_error(fit$print(), "Fitting failed. Unable to print.")
+  expect_error(fit$summary(), "Fitting failed. Unable to retrieve the draws.")
+  expect_error(fit$draws(), "Fitting failed. Unable to retrieve the draws.")
+  expect_error(fit$cmdstan_summary(), "Unable to run bin/stansummary")
+  expect_error(fit$cmdstan_diagnose(), "Unable to run bin/diagnose")
 })
 
 test_that("gq chains error on wrong input CSV", {
@@ -192,7 +211,7 @@ test_that("gq chains error on wrong input CSV", {
 
   expect_error(
     fit$draws(),
-    "No chains finished successfully. Unable to retrieve the generated quantities."
+    "Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities."
   )
   expect_warning(
     utils::capture.output(
