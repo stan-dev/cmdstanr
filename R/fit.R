@@ -28,6 +28,9 @@ CmdStanFit <- R6::R6Class(
     },
 
     draws = function(variables = NULL) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("Fitting failed. Unable to retrieve the draws.")
+      }
       # CmdStanMCMC has its own implementation, this is used for VB and MLE
       if (is.null(private$draws_)) {
         private$read_csv_()
@@ -42,6 +45,15 @@ CmdStanFit <- R6::R6Class(
     },
 
     metadata = function() {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        if (self$runset$method() == "sample") {
+          stop("No chains finished successfully. Unable to retrieve the metadata.")
+        } else if (self$runset$method() == "generate_quantities") {
+          stop("Generating quantities for all MCMC chains failed. Unable to retrieve the metadata.", call. = FALSE)
+        } else {
+          stop("Fitting failed. Unable to retrieve the metadata.")
+        }
+      }
       if (is.null(private$metadata_)) {
         private$read_csv_()
       }
@@ -85,6 +97,15 @@ CmdStanFit <- R6::R6Class(
 
     # print summary table without using tibbles
     print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        if (self$runset$method() == "sample") {
+          stop("No chains finished successfully. Unable to print.")
+        } else if (self$runset$method() == "generate_quantities") {
+          stop("Generating quantities for all MCMC chains failed. Unable to print.", call. = FALSE)
+        } else {
+          stop("Fitting failed. Unable to print.")
+        }
+      }
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
       all_variables <- self$metadata()$model_params
@@ -784,6 +805,9 @@ CmdStanMCMC <- R6::R6Class(
 
     # returns list of inverse metrics
     inv_metric = function(matrix = TRUE) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("No chains finished successfully. Unable to retrieve the inverse metrics.")
+      }
       if (is.null(private$inv_metric_)) {
         private$read_csv_(variables = "", sampler_diagnostics = "")
       }
@@ -802,6 +826,9 @@ CmdStanMCMC <- R6::R6Class(
     warmup_draws_ = NULL,
     inv_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("No chains finished successfully. Unable to retrieve the draws.")
+      }
       data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
@@ -899,6 +926,9 @@ CmdStanMLE <- R6::R6Class(
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function() {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("Optimization failed. Unable to retrieve the draws and metadata.")
+      }
       optim_output <- read_cmdstan_csv(self$output_files())
       private$draws_ <- optim_output$point_estimates
       private$metadata_ <- optim_output$metadata
@@ -963,6 +993,9 @@ CmdStanVB <- R6::R6Class(
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function() {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("Variational inference failed. Unable to retrieve the draws.")
+      }
       vb_output <- read_cmdstan_csv(self$output_files())
       private$draws_ <- vb_output$draws
       private$metadata_ <- vb_output$metadata
@@ -1018,7 +1051,7 @@ CmdStanGQ <- R6::R6Class(
     },
     draws = function(variables = NULL) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("No chains finished successfully. Unable to retrieve the generated quantities.", call. = FALSE)
+        stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
       to_read <- remaining_columns_to_read(
         requested = variables,
@@ -1050,6 +1083,9 @@ CmdStanGQ <- R6::R6Class(
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(variables = NULL) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("Generating quantities for all input MCMC chains failed. Unable to retrieve the generated quantities.")
+      }
       data_csv <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
