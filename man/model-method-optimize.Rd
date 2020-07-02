@@ -94,6 +94,10 @@ files are removed when the fitted model object is garbage collected.
 corresponding the defaults used by \verb{$save_output_files()} (and similar
 methods like \verb{$save_latent_dynamics_files()}).
 }
+\item \code{show_messages}: (logical) When \code{TRUE} (the default), prints all informational
+messages, for example rejection of the current Metropolis proposal, during fitting.
+Disable if you wish silence these messages. In case of issues, use the \verb{$output()}
+function on the resulting fit object to display all the silenced messages.
 }
 }
 

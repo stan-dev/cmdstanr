@@ -51,4 +51,8 @@
 #'     - If a path, then the files are created in `output_dir` with names
 #'       corresponding the defaults used by `$save_output_files()` (and similar
 #'       methods like `$save_latent_dynamics_files()`).
+#'   * `show_messages`: (logical) When `TRUE` (the default), prints all informational
+#'   messages, for example rejection of the current Metropolis proposal, during fitting.
+#'   Disable if you wish silence these messages. In case of issues, use the `$output()`
+#'   function on the resulting fit object to display all the silenced messages.
 #'
