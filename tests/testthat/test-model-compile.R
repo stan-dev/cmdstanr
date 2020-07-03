@@ -10,7 +10,11 @@ test_that("object initialized correctly", {
   skip_on_cran()
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
-  expect_equal(mod$hpp_file(), character(0))
+  expect_error(
+    mod$hpp_file(),
+    "The .hpp file does not exists. Please (e)compile the model.",
+    fixed = TRUE
+  )
 })
 
 test_that("error if no compile() before model fitting", {

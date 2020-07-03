@@ -219,7 +219,7 @@ CmdStanModel <- R6::R6Class(
     },
     hpp_file = function() {
       if (!length(private$hpp_file_)) {
-        stop("The .hpp file no longer exists. Please recompile the model with 'force_recompile=TRUE'", call. = FALSE)
+        stop("The .hpp file does not exists. Please (e)compile the model.", call. = FALSE)
       }
       private$hpp_file_
     },
