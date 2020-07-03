@@ -3,13 +3,17 @@
 \name{model-method-compile}
 \alias{model-method-compile}
 \alias{compile}
-\title{Compile a Stan program or get the Stan code}
+\title{Compile a Stan program}
 \description{
-The \verb{$compile()} method of a \code{\link{CmdStanModel}} object calls
-CmdStan to translate a Stan program to C++ and create a compiled
-executable. The resulting files are placed in the same directory as the
-Stan program associated with the \code{CmdStanModel} object. After compilation
-the path to the executable can be accessed via the \verb{$exe_file()} method.
+The \verb{$compile()} method of a \code{\link{CmdStanModel}} object
+translates the Stan program to C++ and creates a compiled executable.
+
+After compilation, the paths to the executable and the \code{.hpp} file
+containing the generated C++ code are available via the \verb{$exe_file()} and
+\verb{$hpp_file()} methods. The default is to create the executable in the same
+directory as the Stan program and to write the generated C++ code in a
+temporary directory. To save the C++ code to a non-temporary location use
+\verb{$save_hpp_file()}.
 }
 \section{Usage}{
 \preformatted{$compile(
@@ -21,6 +25,8 @@ the path to the executable can be accessed via the \verb{$exe_file()} method.
   force_recompile = FALSE
 )
 $exe_file()
+$hpp_file()
+$save_hpp_file(dir = NULL)
 }
 }
 
@@ -35,8 +41,8 @@ compilation be suppressed? The default is \code{TRUE}, but if you encounter an
 error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.
 \item \code{dir}: (string) The path to the directory in which to store the CmdStan
-executable. If not set, the executable is placed in the same location as
-the Stan program.
+executable (or \code{.hpp} file if using \verb{$save_hpp_file()}). The default is the
+same location as the Stan program.
 \item \code{include_paths}: (character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
 program.
@@ -51,9 +57,12 @@ not modified since last compiled. The default is \code{FALSE}.
 }
 
 \section{Value}{
- This method is called for its side effect of creating the
-executable and adding its path to the \code{\link{CmdStanModel}} object, but it also
-returns the \code{\link{CmdStanModel}} object invisibly.
+ The \verb{$compile()} method is called for its side effect of
+creating the executable and adding its path to the \code{\link{CmdStanModel}} object,
+but it also returns the \code{\link{CmdStanModel}} object invisibly.
+
+The \verb{$exe_file()}, \verb{$hpp_file()}, and \verb{$save_hpp_file()} methods all return
+file paths.
 }
 
 \examples{

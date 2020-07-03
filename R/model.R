@@ -142,29 +142,36 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #' @description A `CmdStanModel` object is an [R6][R6::R6Class] object created
 #'   by the [cmdstan_model()] function. The object stores the path to a Stan
 #'   program and compiled executable (once created), and provides methods for
-#'   fitting the model using Stan's algorithms. See the **Details** section for
-#'   available methods.
+#'   fitting the model using Stan's algorithms.
 #'
-#' @details
-#' `CmdStanModel` objects have the following associated methods:
+#' @section Methods: `CmdStanModel` objects have the following associated
+#'   methods, many of which have their own (linked) documentation pages:
 #'
-#' \tabular{ll}{
-#'  **Method** \tab **Description** \cr
-#'  `$code()` \tab Return Stan program as a string. \cr
-#'  `$print()` \tab Print readable version of Stan program. \cr
-#'  `$stan_file()` \tab Return the file path to the Stan program. \cr
-#'  `$exe_file()` \tab Return the file path to the compiled executable. \cr
-#'  `$hpp_file()` \tab Return the file path to the `.hpp` file containing the generated C++ code. \cr
-#'  [`$compile()`][model-method-compile] \tab Compile Stan program. \cr
-#'  [`$sample()`][model-method-sample]
-#'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
-#'  [`$optimize()`][model-method-optimize]
-#'    \tab Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. \cr
-#'  [`$variational()`][model-method-variational]
-#'    \tab Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. \cr
-#'  [`$generate_quantities()`][model-method-generate-quantities]
-#'    \tab Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`] object. \cr
-#' }
+#'  ## Stan code
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  |`$stan_file()` | Return the file path to the Stan program. |
+#'  |`$code()` | Return Stan program as a string. |
+#'  |`$print()`|  Print readable version of Stan program. |
+#'
+#'  ## Compilation
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$compile()`][model-method-compile]  |  Compile Stan program. |
+#'  [`$exe_file()`][model-method-compile] |  Return the file path to the compiled executable. |
+#'  [`$hpp_file()`][model-method-compile] |  Return the file path to the `.hpp` file containing the generated C++ code. |
+#'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
+#'
+#'  ## Model fitting
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$sample()`][model-method-sample] |  Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. |
+#'  [`$optimize()`][model-method-optimize] |  Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. |
+#'  [`$variational()`][model-method-variational] |  Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. |
+#'  [`$generate_quantities()`][model-method-generate-quantities] |  Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`] object. |
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -203,6 +210,13 @@ CmdStanModel <- R6::R6Class(
       invisible(self)
     },
 
+    code = function() {
+      readLines(self$stan_file())
+    },
+    print = function() {
+      cat(self$code(), sep = "\n")
+      invisible(self)
+    },
     stan_file = function() {
       private$stan_file_
     },
@@ -216,33 +230,44 @@ CmdStanModel <- R6::R6Class(
       private$cpp_options_
     },
     hpp_file = function() {
+      if (!length(private$hpp_file_)) {
+        stop("The .hpp file does not exists. Please (re)compile the model.", call. = FALSE)
+      }
       private$hpp_file_
     },
-    code = function() {
-      # Get Stan code as a string
-      readLines(self$stan_file())
-    },
-    print = function() {
-      # Print readable version of Stan code
-      cat(self$code(), sep = "\n")
-      invisible(self)
+    save_hpp_file = function(dir = NULL) {
+      if (is.null(dir)) {
+        dir <- dirname(private$stan_file_)
+      }
+      checkmate::assert_directory_exists(dir, access = "r")
+      new_hpp_loc <- file.path(dir, paste0(strip_ext(basename(private$stan_file_)), ".hpp"))
+      file.copy(self$hpp_file(), new_hpp_loc, overwrite = TRUE)
+      file.remove(self$hpp_file())
+      message("Moved .hpp file and set internal path to new location:\n",
+              "- ", new_hpp_loc)
+      private$hpp_file_ <- new_hpp_loc
+      invisible(private$hpp_file_)
     }
   )
 )
 
 # CmdStanModel methods -----------------------------------
 
-#' Compile a Stan program or get the Stan code
+#' Compile a Stan program
 #'
 #' @name model-method-compile
 #' @aliases compile
 #' @family CmdStanModel methods
 #'
-#' @description The `$compile()` method of a [`CmdStanModel`] object calls
-#'   CmdStan to translate a Stan program to C++ and create a compiled
-#'   executable. The resulting files are placed in the same directory as the
-#'   Stan program associated with the `CmdStanModel` object. After compilation
-#'   the path to the executable can be accessed via the `$exe_file()` method.
+#' @description The `$compile()` method of a [`CmdStanModel`] object
+#'   translates the Stan program to C++ and creates a compiled executable.
+#'
+#'   After compilation, the paths to the executable and the `.hpp` file
+#'   containing the generated C++ code are available via the `$exe_file()` and
+#'   `$hpp_file()` methods. The default is to create the executable in the same
+#'   directory as the Stan program and to write the generated C++ code in a
+#'   temporary directory. To save the C++ code to a non-temporary location use
+#'   `$save_hpp_file()`.
 #'
 #' @section Usage:
 #'   ```
@@ -255,6 +280,8 @@ CmdStanModel <- R6::R6Class(
 #'     force_recompile = FALSE
 #'   )
 #'   $exe_file()
+#'   $hpp_file()
+#'   $save_hpp_file(dir = NULL)
 #'   ```
 #'
 #' @section Arguments:
@@ -266,8 +293,8 @@ CmdStanModel <- R6::R6Class(
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
 #'   output.
 #'   * `dir`: (string) The path to the directory in which to store the CmdStan
-#'   executable. If not set, the executable is placed in the same location as
-#'   the Stan program.
+#'   executable (or `.hpp` file if using `$save_hpp_file()`). The default is the
+#'   same location as the Stan program.
 #'   * `include_paths`: (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -279,9 +306,12 @@ CmdStanModel <- R6::R6Class(
 #'   * `force_recompile`: (logical) Should the model be recompiled even if was
 #'   not modified since last compiled. The default is `FALSE`.
 #'
-#' @section Value: This method is called for its side effect of creating the
-#'   executable and adding its path to the [`CmdStanModel`] object, but it also
-#'   returns the [`CmdStanModel`] object invisibly.
+#' @section Value: The `$compile()` method is called for its side effect of
+#'   creating the executable and adding its path to the [`CmdStanModel`] object,
+#'   but it also returns the [`CmdStanModel`] object invisibly.
+#'
+#'   The `$exe_file()`, `$hpp_file()`, and `$save_hpp_file()` methods all return
+#'   file paths.
 #'
 #' @template seealso-docs
 #'
