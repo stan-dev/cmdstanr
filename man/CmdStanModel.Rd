@@ -19,6 +19,7 @@ available methods.
 \verb{$print()} \tab Print readable version of Stan program. \cr
 \verb{$stan_file()} \tab Return the file path to the Stan program. \cr
 \verb{$exe_file()} \tab Return the file path to the compiled executable. \cr
+\verb{$hpp_file()} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
 \code{\link[=model-method-compile]{$compile()}} \tab Compile Stan program. \cr
 \code{\link[=model-method-sample]{$sample()}}
 \tab Run CmdStan's \code{"sample"} method, return \code{\link{CmdStanMCMC}} object. \cr

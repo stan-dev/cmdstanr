@@ -4,13 +4,10 @@
 \alias{cmdstan_model}
 \title{Create a new CmdStanModel object}
 \usage{
-cmdstan_model(stan_file, dir = NULL, compile = TRUE, ...)
+cmdstan_model(stan_file, compile = TRUE, ...)
 }
 \arguments{
 \item{stan_file}{The path to a \code{.stan} file containing a Stan program.}
-
-\item{dir}{The path to the folder in which to store the cmdstan executable. If not
-set, the cmdstan executable is placed in the folder of the Stan program (\code{stan_file}).}
 
 \item{compile}{Do compilation? The default is \code{TRUE}. If \code{FALSE}
 compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}

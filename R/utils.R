@@ -7,12 +7,13 @@ os_is_windows <- function() {
   isTRUE(.Platform$OS.type == "windows")
 }
 
-#' Famous helper for switching on `NULL`
-#' @param x,y Any \R objects.
-#' @return `x` if not `NULL`, otherwise `y` regardless of whether `y` is `NULL`.
+#' Famous helper for switching on `NULL` or zero length
 #' @noRd
+#' @param x,y Any \R objects.
+#' @return `x` if not `NULL` or length zero, otherwise `y` regardless of whether
+#'   `y` is `NULL`.
 `%||%` <- function(x, y) {
-  if (!is.null(x)) x else y
+  if (is.null(x) || length(x) == 0) y else x
 }
 
 #' Returns the type of make command to use to compile

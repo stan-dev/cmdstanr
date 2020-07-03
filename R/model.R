@@ -154,6 +154,7 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'  `$print()` \tab Print readable version of Stan program. \cr
 #'  `$stan_file()` \tab Return the file path to the Stan program. \cr
 #'  `$exe_file()` \tab Return the file path to the compiled executable. \cr
+#'  `$hpp_file()` \tab Return the file path to the `.hpp` file containing the generated C++ code. \cr
 #'  [`$compile()`][model-method-compile] \tab Compile Stan program. \cr
 #'  [`$sample()`][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
@@ -189,44 +190,37 @@ CmdStanModel <- R6::R6Class(
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
+
       args <- list(...)
-      cpp_options_exists <- "cpp_options" %in% names(args)
-      if (cpp_options_exists) {
-        private$precompile_cpp_options_ = args$cpp_options
-      }
-      stanc_options_exists <- "stanc_options" %in% names(args)
-      if (stanc_options_exists) {
-        private$precompile_stanc_options_ = args$stanc_options
-      }
-      include_paths_exists <- "include_paths" %in% names(args)
-      if (include_paths_exists) {
-        private$precompile_include_paths_ = args$include_paths
-      }
-      dir_arg_exists <- "dir" %in% names(args)
-      if (dir_arg_exists) {
-        dir <- args$dir
-        checkmate::assert_directory_exists(dir, access = "r")
-        private$dir_ <- dir
-      }      
+      private$precompile_cpp_options_ <- args$cpp_options %||% list()
+      private$precompile_stanc_options_ <- args$stanc_options %||% list()
+      private$precompile_include_paths_ <- args$include_paths
+      private$dir_ <- args$dir
+
       if (compile) {
         self$compile(...)
       }
       invisible(self)
     },
-    stan_file = function() private$stan_file_,
-    cpp_options = function() private$cpp_options_,
+
+    stan_file = function() {
+      private$stan_file_
+    },
     exe_file = function(path = NULL) {
       if (!is.null(path)) {
         private$exe_file_ <- path
       }
       private$exe_file_
     },
-    code = function() {
-      # Get Stan code as a string
-      readLines(self$stan_file())
+    cpp_options = function() {
+      private$cpp_options_
     },
     hpp_file = function() {
       private$hpp_file_
+    },
+    code = function() {
+      # Get Stan code as a string
+      readLines(self$stan_file())
     },
     print = function() {
       # Print readable version of Stan code
@@ -248,12 +242,13 @@ CmdStanModel <- R6::R6Class(
 #'   CmdStan to translate a Stan program to C++ and create a compiled
 #'   executable. The resulting files are placed in the same directory as the
 #'   Stan program associated with the `CmdStanModel` object. After compilation
-#'   the path to the executable can be accesed via the `$exe_file()` method.
+#'   the path to the executable can be accessed via the `$exe_file()` method.
 #'
 #' @section Usage:
 #'   ```
 #'   $compile(
 #'     quiet = TRUE,
+#'     dir = NULL,
 #'     include_paths = NULL,
 #'     cpp_options = list(),
 #'     stanc_options = list(),
@@ -270,18 +265,20 @@ CmdStanModel <- R6::R6Class(
 #'   compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
 #'   output.
-#'   * `include_paths`: (character vector) Paths to directories where Stan should
-#'   look for files specified in `#include` directives in the Stan program.
-#'   * `cpp_options`: (list) Any makefile options to be
-#'   used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
-#'   Anything you would otherwise write in the `make/local` file.
-#'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be
-#'     used when compiling the model.
-#'   * `force_recompile`: (logical) Should the model be recompiled
-#'     even if was not modified since last compiled. The default is `FALSE`.
-#'   * `dir` The path to the folder in which to store the cmdstan executable. If not
-#'   set, the cmdstan executable is placed in the folder of the Stan model.
-#' 
+#'   * `dir`: (string) The path to the directory in which to store the CmdStan
+#'   executable. If not set, the executable is placed in the same location as
+#'   the Stan program.
+#'   * `include_paths`: (character vector) Paths to directories where Stan
+#'   should look for files specified in `#include` directives in the Stan
+#'   program.
+#'   * `cpp_options`: (list) Any makefile options to be used when compiling the
+#'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
+#'   otherwise write in the `make/local` file.
+#'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be used
+#'   when compiling the model.
+#'   * `force_recompile`: (logical) Should the model be recompiled even if was
+#'   not modified since last compiled. The default is `FALSE`.
+#'
 #' @section Value: This method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
 #'   returns the [`CmdStanModel`] object invisibly.
@@ -304,11 +301,11 @@ CmdStanModel <- R6::R6Class(
 NULL
 
 compile_method <- function(quiet = TRUE,
+                           dir = NULL,
                            include_paths = NULL,
                            cpp_options = list(),
                            stanc_options = list(),
                            force_recompile = FALSE,
-                           dir = NULL,
                            #deprecated
                            threads = FALSE) {
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
@@ -322,9 +319,13 @@ compile_method <- function(quiet = TRUE,
   }
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
-  } else if(!is.null(dir)) {
+  } else if (!is.null(dir)) {
     dir <- absolute_path(dir)
   }
+  if (!is.null(dir)) {
+    checkmate::assert_directory_exists(dir, access = "rw")
+  }
+
   # temporary deprecation warnings
   if (isTRUE(threads)) {
     warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
@@ -347,11 +348,11 @@ compile_method <- function(quiet = TRUE,
   }
 
   if (is.null(dir)) {
-    stan_file <- self$stan_file()
+    exe_base <- self$stan_file()
   } else {
-    stan_file <- file.path(dir, basename(self$stan_file()))
+    exe_base <- file.path(dir, basename(self$stan_file()))
   }
-  exe <- cmdstan_ext(paste0(strip_ext(stan_file), exe_suffix))
+  exe <- cmdstan_ext(paste0(strip_ext(exe_base), exe_suffix))
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   # compile if:
@@ -436,11 +437,11 @@ compile_method <- function(quiet = TRUE,
   }
 
   file.copy(tmp_exe, exe, overwrite = TRUE)
+  private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
   private$precompile_cpp_options_ <- NULL
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
-  private$exe_file_ <- exe
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile_method)
