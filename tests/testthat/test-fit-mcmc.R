@@ -208,3 +208,17 @@ test_that("inc_warmup in draws() works", {
   y3 <- fit_mcmc_2$sampler_diagnostics(inc_warmup = FALSE)
   expect_equal(dim(y3), c(100000, 1, 6))
 })
+
+test_that("output() shows informational messages depening on show_messages", {
+  skip_on_cran()
+  fit_info_msg <- testing_fit("info_message")
+  expect_output(
+    fit_info_msg$output(1),
+    "Informational Message: The current Metropolis proposal is about to be rejected"
+  )
+  fit_info_msg <- testing_fit("info_message", show_messages = FALSE)
+  expect_output(
+    fit_info_msg$output(1),
+    "Informational Message: The current Metropolis proposal is about to be rejected"
+  )
+})
