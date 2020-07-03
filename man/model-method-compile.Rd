@@ -9,11 +9,12 @@ The \verb{$compile()} method of a \code{\link{CmdStanModel}} object calls
 CmdStan to translate a Stan program to C++ and create a compiled
 executable. The resulting files are placed in the same directory as the
 Stan program associated with the \code{CmdStanModel} object. After compilation
-the path to the executable can be accesed via the \verb{$exe_file()} method.
+the path to the executable can be accessed via the \verb{$exe_file()} method.
 }
 \section{Usage}{
 \preformatted{$compile(
   quiet = TRUE,
+  dir = NULL,
   include_paths = NULL,
   cpp_options = list(),
   stanc_options = list(),
@@ -33,15 +34,19 @@ Math library). See the CmdStan manual for more details.
 compilation be suppressed? The default is \code{TRUE}, but if you encounter an
 error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.
-\item \code{include_paths}: (character vector) Paths to directories where Stan should
-look for files specified in \verb{#include} directives in the Stan program.
-\item \code{cpp_options}: (list) Any makefile options to be
-used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
-Anything you would otherwise write in the \code{make/local} file.
-\item \code{stanc_options}: (list) Any Stan-to-C++ transpiler options to be
-used when compiling the model.
-\item \code{force_recompile}: (logical) Should the model be recompiled
-even if was not modified since last compiled. The default is \code{FALSE}.
+\item \code{dir}: (string) The path to the directory in which to store the CmdStan
+executable. If not set, the executable is placed in the same location as
+the Stan program.
+\item \code{include_paths}: (character vector) Paths to directories where Stan
+should look for files specified in \verb{#include} directives in the Stan
+program.
+\item \code{cpp_options}: (list) Any makefile options to be used when compiling the
+model (\code{STAN_THREADS}, \code{STAN_MPI}, \code{STAN_OPENCL}, etc.). Anything you would
+otherwise write in the \code{make/local} file.
+\item \code{stanc_options}: (list) Any Stan-to-C++ transpiler options to be used
+when compiling the model.
+\item \code{force_recompile}: (logical) Should the model be recompiled even if was
+not modified since last compiled. The default is \code{FALSE}.
 }
 }
 
