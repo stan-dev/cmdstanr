@@ -155,6 +155,8 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'  `$stan_file()` \tab Return the file path to the Stan program. \cr
 #'  `$exe_file()` \tab Return the file path to the compiled executable. \cr
 #'  `$hpp_file()` \tab Return the file path to the `.hpp` file containing the generated C++ code. \cr
+#'  `$save_hpp_file(dir = NULL)` \tab Stores the `.hpp` file containing the generated C++ code in the folder
+#'  of the Stan program or the foldier specified by `dir`. \cr
 #'  [`$compile()`][model-method-compile] \tab Compile Stan program. \cr
 #'  [`$sample()`][model-method-sample]
 #'    \tab Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. \cr
@@ -216,7 +218,20 @@ CmdStanModel <- R6::R6Class(
       private$cpp_options_
     },
     hpp_file = function() {
+      if (!length(private$hpp_file_)) {
+        stop("The .hpp file no longer exists. Please recompile the model with 'force_recompile=TRUE'", call. = FALSE)
+      }
       private$hpp_file_
+    },
+    save_hpp_file = function(dir = NULL) {
+      if (is.null(dir)) {
+        dir <- dirname(private$stan_file_)
+      }
+      checkmate::assert_directory_exists(dir, access = "r")
+      new_hpp_loc <- file.path(dir, paste0(strip_ext(basename(private$stan_file_)), ".hpp"))
+      file.copy(self$hpp_file(), new_hpp_loc, overwrite = TRUE)
+      file.remove(self$hpp_file())
+      private$hpp_file_ <- new_hpp_loc
     },
     code = function() {
       # Get Stan code as a string
