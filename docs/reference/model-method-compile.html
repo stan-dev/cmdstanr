@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Compile a Stan program or get the Stan code — model-method-compile • cmdstanr</title>
+<title>Compile a Stan program — model-method-compile • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,12 +46,15 @@
 
 
 
-<meta property="og:title" content="Compile a Stan program or get the Stan code — model-method-compile" />
-<meta property="og:description" content="The $compile() method of a CmdStanModel object calls
-CmdStan to translate a Stan program to C++ and create a compiled
-executable. The resulting files are placed in the same directory as the
-Stan program associated with the CmdStanModel object. After compilation
-the path to the executable can be accesed via the $exe_file() method." />
+<meta property="og:title" content="Compile a Stan program — model-method-compile" />
+<meta property="og:description" content="The $compile() method of a CmdStanModel object
+translates the Stan program to C++ and creates a compiled executable.
+After compilation, the paths to the executable and the .hpp file
+containing the generated C++ code are available via the $exe_file() and
+$hpp_file() methods. The default is to create the executable in the same
+directory as the Stan program and to write the generated C++ code in a
+temporary directory. To save the C++ code to a non-temporary location use
+$save_hpp_file()." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -84,7 +87,7 @@ the path to the executable can be accesed via the $exe_file() method." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9008</span>
       </span>
     </div>
 
@@ -171,17 +174,20 @@ the path to the executable can be accesed via the $exe_file() method." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Compile a Stan program or get the Stan code</h1>
+    <h1>Compile a Stan program</h1>
     <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/model.R'><code>R/model.R</code></a></small>
     <div class="hidden name"><code>model-method-compile.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The <code>$compile()</code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object calls
-CmdStan to translate a Stan program to C++ and create a compiled
-executable. The resulting files are placed in the same directory as the
-Stan program associated with the <code>CmdStanModel</code> object. After compilation
-the path to the executable can be accesed via the <code>$exe_file()</code> method.</p>
+    <p>The <code>$compile()</code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object
+translates the Stan program to C++ and creates a compiled executable.</p>
+<p>After compilation, the paths to the executable and the <code>.hpp</code> file
+containing the generated C++ code are available via the <code>$exe_file()</code> and
+<code>$hpp_file()</code> methods. The default is to create the executable in the same
+directory as the Stan program and to write the generated C++ code in a
+temporary directory. To save the C++ code to a non-temporary location use
+<code>$save_hpp_file()</code>.</p>
     </div>
 
 
@@ -191,12 +197,15 @@ the path to the executable can be accesed via the <code>$exe_file()</code> metho
     
 <pre>$compile(
   quiet = TRUE,
+  dir = NULL,
   include_paths = NULL,
   cpp_options = list(),
   stanc_options = list(),
   force_recompile = FALSE
 )
 $exe_file()
+$hpp_file()
+$save_hpp_file(dir = NULL)
 </pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -210,22 +219,28 @@ Math library). See the CmdStan manual for more details.</p><ul>
 compilation be suppressed? The default is <code>TRUE</code>, but if you encounter an
 error we recommend trying again with <code>quiet=FALSE</code> to see more of the
 output.</p></li>
-<li><p><code>include_paths</code>: (character vector) Paths to directories where Stan should
-look for files specified in <code>#include</code> directives in the Stan program.</p></li>
-<li><p><code>cpp_options</code>: (list) Any makefile options to be
-used when compiling the model (STAN_THREADS, STAN_MPI, STAN_OPENCL, ...).
-Anything you would otherwise write in the <code>make/local</code> file.</p></li>
-<li><p><code>stanc_options</code>: (list) Any Stan-to-C++ transpiler options to be
-used when compiling the model.</p></li>
-<li><p><code>force_recompile</code>: (logical) Should the model be recompiled
-even if was not modified since last compiled. The default is <code>FALSE</code>.</p></li>
+<li><p><code>dir</code>: (string) The path to the directory in which to store the CmdStan
+executable (or <code>.hpp</code> file if using <code>$save_hpp_file()</code>). The default is the
+same location as the Stan program.</p></li>
+<li><p><code>include_paths</code>: (character vector) Paths to directories where Stan
+should look for files specified in <code>#include</code> directives in the Stan
+program.</p></li>
+<li><p><code>cpp_options</code>: (list) Any makefile options to be used when compiling the
+model (<code>STAN_THREADS</code>, <code>STAN_MPI</code>, <code>STAN_OPENCL</code>, etc.). Anything you would
+otherwise write in the <code>make/local</code> file.</p></li>
+<li><p><code>stanc_options</code>: (list) Any Stan-to-C++ transpiler options to be used
+when compiling the model.</p></li>
+<li><p><code>force_recompile</code>: (logical) Should the model be recompiled even if was
+not modified since last compiled. The default is <code>FALSE</code>.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>This method is called for its side effect of creating the
-executable and adding its path to the <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object, but it also
-returns the <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object invisibly.</p>
+    <p>The <code>$compile()</code> method is called for its side effect of
+creating the executable and adding its path to the <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object,
+but it also returns the <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object invisibly.</p>
+<p>The <code>$exe_file()</code>, <code>$hpp_file()</code>, and <code>$save_hpp_file()</code> methods all return
+file paths.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>The CmdStanR website (<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>)

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>CmdStanMCMC objects — CmdStanMCMC • cmdstanr</title>
+<title>Extract metadata from CmdStan CSV files — fit-method-metadata • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,11 +46,10 @@
 
 
 
-<meta property="og:title" content="CmdStanMCMC objects — CmdStanMCMC" />
-<meta property="og:description" content="A CmdStanMCMC object is the fitted model object returned by
-the $sample() method of a CmdStanModel object.
-Like CmdStanModel objects, CmdStanMCMC objects are R6
-objects." />
+<meta property="og:title" content="Extract metadata from CmdStan CSV files — fit-method-metadata" />
+<meta property="og:description" content="The $metadata() method returns a list of information gathered
+from the CSV output files, including the CmdStan configuration used when
+fitting the model. See Examples and read_cmdstan_csv()." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -170,84 +169,105 @@ objects." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>CmdStanMCMC objects</h1>
+    <h1>Extract metadata from CmdStan CSV files</h1>
     <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
-    <div class="hidden name"><code>CmdStanMCMC.Rd</code></div>
+    <div class="hidden name"><code>fit-method-metadata.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>A <code>CmdStanMCMC</code> object is the fitted model object returned by
-the <code><a href='model-method-sample.html'>$sample()</a></code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.
-Like <code>CmdStanModel</code> objects, <code>CmdStanMCMC</code> objects are <a href='https://rdrr.io/pkg/R6/man/R6Class.html'>R6</a>
-objects.</p>
+    <p>The <code>$metadata()</code> method returns a list of information gathered
+from the CSV output files, including the CmdStan configuration used when
+fitting the model. See <strong>Examples</strong> and <code><a href='read_cmdstan_csv.html'>read_cmdstan_csv()</a></code>.</p>
     </div>
 
 
 
-    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
+    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
 
-    <p><code>CmdStanMCMC</code> objects have the following associated
-methods, all of which have their own (linked) documentation pages.</p><h3>Extract contents of fitted model object</h3>
-<table class='table'>
-<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code><a href='fit-method-draws.html'>$draws()</a></code></td><td>Return posterior draws as a <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-sampler_diagnostics.html'>$sampler_diagnostics()</a></code></td><td>Return sampler diagnostics as a <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-lp.html'>$lp()</a></code></td><td>Return the total log probability density (<code>target</code>).</td></tr>
-<tr><td><code><a href='fit-method-inv_metric.html'>$inv_metric()</a></code></td><td>Return the inverse metric for each chain.</td></tr>
-<tr><td><code><a href='fit-method-init.html'>$init()</a></code></td><td>Return user-specified initial values.</td></tr>
-<tr><td><code><a href='fit-method-metadata.html'>$metadata()</a></code></td><td>Return a list of metadata gathered from the CmdStan CSV files.</td></tr>
-</table>
-
-
-
-
-<h3>Summarize inferences and diagnostics</h3>
-<table class='table'>
-<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
-<tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
-</table>
-
-
-
-
-<h3>Save fitted model object and temporary files</h3>
-<table class='table'>
-<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code><a href='fit-method-save_object.html'>$save_object()</a></code></td><td>Save fitted model object to a file.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV files to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>$save_latent_dynamics_files()</a></code></td><td>Save diagnostic CSV files to a specified location.</td></tr>
-</table>
-
-
-
-
-<h3>Report run times and console output</h3>
-<table class='table'>
-<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code><a href='fit-method-time.html'>$time()</a></code></td><td>Report total and chain-specific run times.</td></tr>
-<tr><td><code><a href='fit-method-output.html'>$output()</a></code></td><td>Return the stdout and stderr of all chains or pretty print the output for a single chain.</td></tr>
-</table>
-
-
-
+    
+<pre>$metadata()
+</pre>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>The CmdStanR website (<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>)
-for online documentation and tutorials.</p>
-<p>The Stan and CmdStan documentation:</p><ul>
-<li><p>Stan doc (html or pdf): <a href='https://mc-stan.org/users/documentation/'>mc-stan.org/users/documentation/</a></p></li>
-<li><p>CmdStan doc (pdf): (<a href='https://github.com/stan-dev/cmdstan/releases/latest'>github.com/stan-dev/cmdstan/releases/</a>).</p></li>
-</ul>
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code>, <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code></p></div>
 
-<p>Other fitted model objects: 
-<code><a href='CmdStanGQ.html'>CmdStanGQ</a></code>,
-<code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>,
-<code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"sample"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'>metadata</span>())</div><div class='output co'>#&gt; List of 30
+#&gt;  $ stan_version_major  : num 2
+#&gt;  $ stan_version_minor  : num 23
+#&gt;  $ stan_version_patch  : num 0
+#&gt;  $ method              : chr "sample"
+#&gt;  $ save_warmup         : num 0
+#&gt;  $ thin                : num 1
+#&gt;  $ gamma               : num 0.05
+#&gt;  $ kappa               : num 0.75
+#&gt;  $ t0                  : num 10
+#&gt;  $ init_buffer         : num 75
+#&gt;  $ term_buffer         : num 50
+#&gt;  $ window              : num 25
+#&gt;  $ algorithm           : chr "hmc"
+#&gt;  $ engine              : chr "nuts"
+#&gt;  $ metric              : chr "diag_e"
+#&gt;  $ stepsize_jitter     : num 0
+#&gt;  $ id                  : num [1:4] 1 2 3 4
+#&gt;  $ init                : num [1:4] 2 2 2 2
+#&gt;  $ seed                : num [1:4] 2.05e+09 7.58e+08 6.22e+08 1.64e+08
+#&gt;  $ refresh             : num 100
+#&gt;  $ model_params        : chr [1:5] "lp__" "alpha" "beta[1]" "beta[2]" ...
+#&gt;  $ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
+#&gt;  $ model_name          : chr "logistic_model"
+#&gt;  $ adapt_engaged       : num 1
+#&gt;  $ adapt_delta         : num 0.8
+#&gt;  $ max_treedepth       : num 10
+#&gt;  $ step_size           : num [1:4] 1 1 1 1
+#&gt;  $ step_size_adaptation: num [1:4] 0.755 0.716 0.84 0.747
+#&gt;  $ iter_warmup         : num 1000
+#&gt;  $ iter_sampling       : num 1000</div><div class='input'>
+<span class='no'>fit_mle</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_mle</span>$<span class='fu'>metadata</span>())</div><div class='output co'>#&gt; List of 20
+#&gt;  $ stan_version_major: num 2
+#&gt;  $ stan_version_minor: num 23
+#&gt;  $ stan_version_patch: num 0
+#&gt;  $ method            : chr "optimize"
+#&gt;  $ algorithm         : chr "lbfgs"
+#&gt;  $ init_alpha        : num 0.001
+#&gt;  $ tol_obj           : num 1e-12
+#&gt;  $ tol_rel_obj       : num 10000
+#&gt;  $ tol_grad          : num 1e-08
+#&gt;  $ tol_rel_grad      : num 1e+07
+#&gt;  $ tol_param         : num 1e-08
+#&gt;  $ history_size      : num 5
+#&gt;  $ iter              : num 2000
+#&gt;  $ save_iterations   : num 0
+#&gt;  $ id                : num 1
+#&gt;  $ init              : num 2
+#&gt;  $ seed              : num 1.11e+09
+#&gt;  $ refresh           : num 100
+#&gt;  $ model_params      : chr [1:5] "lp__" "alpha" "beta[1]" "beta[2]" ...
+#&gt;  $ model_name        : chr "logistic_model"</div><div class='input'>
+<span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"variational"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_vb</span>$<span class='fu'>metadata</span>())</div><div class='output co'>#&gt; List of 19
+#&gt;  $ stan_version_major: num 2
+#&gt;  $ stan_version_minor: num 23
+#&gt;  $ stan_version_patch: num 0
+#&gt;  $ method            : chr "variational"
+#&gt;  $ algorithm         : chr "meanfield"
+#&gt;  $ iter              : num 50
+#&gt;  $ grad_samples      : num 1
+#&gt;  $ elbo_samples      : num 100
+#&gt;  $ eta               : num 1
+#&gt;  $ tol_rel_obj       : num 0.01
+#&gt;  $ eval_elbo         : num 100
+#&gt;  $ output_samples    : num 1000
+#&gt;  $ id                : num 1
+#&gt;  $ init              : num 2
+#&gt;  $ seed              : num 2.08e+09
+#&gt;  $ refresh           : num 100
+#&gt;  $ model_params      : chr [1:6] "lp__" "lp_approx__" "alpha" "beta[1]" ...
+#&gt;  $ model_name        : chr "logistic_model"
+#&gt;  $ adapt_engaged     : num 1</div><div class='input'># }
 
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
