@@ -31,10 +31,9 @@ test_that("compile() method works", {
   }
   expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
   expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
-  expect_true(file.exists(mod$hpp_file()))
-  if (file.exists(exe)) {
-    file.remove(exe)
-  }
+  checkmate::expect_file_exists(mod$hpp_file())
+  checkmate::expect_file_exists(exe)
+  file.remove(exe)
   out <- utils::capture.output(mod$compile(quiet = FALSE))
   expect_output(print(out), "Translating Stan model")
 })
@@ -196,13 +195,13 @@ test_that("dir arg works for cmdstan_model", {
   tmp_dir <- tempdir()
   mod_dir <- cmdstan_model(stan_program, dir = tmp_dir)
   expect_equal(dirname(mod_dir$exe_file()), tmp_dir)
-  expect_true(file.exists(mod_dir$exe_file()))
+  checkmate::expect_file_exists(mod_dir$exe_file())
   file.remove(mod_dir$exe_file())
 
   mod_dir <- cmdstan_model(stan_program, dir = tmp_dir, compile = FALSE)
   mod_dir$compile()
   expect_equal(dirname(mod_dir$exe_file()), tmp_dir)
-  expect_true(file.exists(mod_dir$exe_file()))
+  checkmate::expect_file_exists(mod_dir$exe_file())
   file.remove(mod_dir$exe_file())
 
   expect_error(
