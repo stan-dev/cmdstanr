@@ -196,30 +196,30 @@ test_that("dir arg works for cmdstan_model and $compile()", {
   tmp_dir_2 <- tempdir()
 
   mod_dir <- cmdstan_model(stan_program, dir = tmp_dir)
-  expect_equal(dirname(mod_dir$exe_file()), tmp_dir)
+  expect_equal(repair_path(dirname(mod_dir$exe_file())), repair_path(tmp_dir))
   checkmate::expect_file_exists(mod_dir$exe_file())
   file.remove(mod_dir$exe_file())
 
   mod_dir_1 <- cmdstan_model(stan_program, dir = tmp_dir, compile = FALSE)
   mod_dir_1$compile()
-  expect_equal(dirname(mod_dir_1$exe_file()), tmp_dir)
+  expect_equal(repair_path(dirname(mod_dir_1$exe_file())), repair_path(tmp_dir))
   checkmate::expect_file_exists(mod_dir_1$exe_file())
   file.remove(mod_dir_1$exe_file())
 
   mod_dir_1$compile(dir = tmp_dir_2) #dir in compile overwrites dir in cmdstan_model
-  expect_equal(dirname(mod_dir_1$exe_file()), tmp_dir_2)
+  expect_equal(repair_path(dirname(mod_dir_1$exe_file())), repair_path(tmp_dir))
   checkmate::expect_file_exists(mod_dir_1$exe_file())
   file.remove(mod_dir_1$exe_file())
 
   mod_dir_2 <- cmdstan_model(stan_program, compile = FALSE)
   mod_dir_2$compile(dir = tmp_dir)
-  expect_equal(dirname(mod_dir_2$exe_file()), tmp_dir)
+  expect_equal(repair_path(dirname(mod_dir_2$exe_file())), repair_path(tmp_dir))
   checkmate::expect_file_exists(mod_dir_2$exe_file())
   file.remove(mod_dir_2$exe_file())
 
   mod_dir_3 <- cmdstan_model(stan_program)
   mod_dir_3$compile(dir = tmp_dir) #dir in compile overwrites dir in cmdstan_model
-  expect_equal(dirname(mod_dir_3$exe_file()), tmp_dir)
+  expect_equal(repair_path(dirname(mod_dir_3$exe_file())), repair_path(tmp_dir))
   checkmate::expect_file_exists(mod_dir_3$exe_file())
   file.remove(mod_dir_3$exe_file())
 
