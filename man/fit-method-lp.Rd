@@ -7,7 +7,7 @@
 \title{Extract log probability (target)}
 \description{
 The \verb{$lp()} method extracts \code{lp__}, the total log probability
-(\code{target}) accumulated in the \code{model} block of a Stan program. For
+(\code{target}) accumulated in the \code{model} block of the Stan program. For
 variational inference the log density of the variational approximation to
 the posterior is also available via the \verb{$lp_approx()} method.
 

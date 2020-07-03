@@ -7,31 +7,23 @@
 A \code{CmdStanMLE} object is the fitted model object returned by the
 \code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object.
 }
-\details{
-\code{CmdStanMLE} objects have the following methods:
+\section{Methods}{
+ \code{CmdStanMLE} objects have the following associated methods,
+all of which have their own (linked) documentation pages.\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-draws]{draws()}} \tab Return the point estimate as a 1-row \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
+   \code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
+   \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}) computed in the model block of the Stan program. \cr
+   \code{\link[=fit-method-mle]{$mle()}} \tab Return the penalized maximum likelihood estimate (posterior mode) as a numeric vector with one element per variable (excluding \code{lp()}). \cr
+   \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
+   \code{\link[=fit-method-save_object]{$save_object()}} \tab Save fitted model object to a file. \cr
+   \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
+   \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file to a specified location. \cr
+   \code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
+   \code{\link[=fit-method-output]{$output()}} \tab Pretty print the output that was printed during optimization. \cr
+}
+}
 
-\tabular{ll}{
-\strong{Method} \tab \strong{Description} \cr
-\code{\link[=fit-method-draws]{draws()}} \tab Return the point estimate as a 1-row
-\code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
-\code{\link[=fit-method-summary]{$summary()}} \tab Run
-\code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
-\code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density
-(\code{target}) computed in the model block of the Stan program. \cr
-\verb{$mle()} \tab Return the penalized maximum likelihood estimate (posterior
-mode) as a numeric vector with one element per variable (excluding \code{lp()}). \cr
-\code{\link[=fit-method-init]{$init()}}
-\tab Return user-specified initial values. \cr
-\code{\link[=fit-method-save_object]{$save_object()}}
-\tab Save fitted model object to a file. \cr
-\code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV
-files to a specified location. \cr
-\code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file
-to a specified location. \cr
-\code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
-\verb{$output()} \tab Pretty print the output that was printed during optimization. \cr
-}
-}
 \seealso{
 The CmdStanR website (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr})
 for online documentation and tutorials.

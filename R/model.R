@@ -151,9 +151,9 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  |`$stan_file()` | Return the file path to the Stan program. |
-#'  |`$code()` | Return Stan program as a string. |
-#'  |`$print()`|  Print readable version of Stan program. |
+#'  `$stan_file()` | Return the file path to the Stan program. |
+#'  `$code()` | Return Stan program as a string. |
+#'  `$print()`|  Print readable version of Stan program. |
 #'
 #'  ## Compilation
 #'

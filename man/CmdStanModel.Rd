@@ -26,8 +26,7 @@ methods, many of which have their own (linked) documentation pages:
    \code{\link[=model-method-compile]{$compile()}} \tab Compile Stan program. \cr
    \code{\link[=model-method-compile]{$exe_file()}} \tab Return the file path to the compiled executable. \cr
    \code{\link[=model-method-compile]{$hpp_file()}} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
-   \code{\link[=model-method-compile]{$save_hpp_file()}} \tab  \cr
-   Save the \code{.hpp} file containing the generated C++ code. \tab  \cr
+   \code{\link[=model-method-compile]{$save_hpp_file()}} \tab Save the \code{.hpp} file containing the generated C++ code. \cr
 }
 
 }

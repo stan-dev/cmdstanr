@@ -256,7 +256,7 @@ NULL
 #' * For [optimization][model-method-optimize], a 1-row
 #' [`draws_matrix`][posterior::draws_matrix] with one column per variable. These
 #' are *not* actually draws, just point estimates stored in the `draws_matrix`
-#' format.
+#' format. See [`$mle()`][fit-method-mle] to extract them as a numeric vector.
 #'
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
@@ -404,7 +404,7 @@ NULL
 #' @name fit-method-lp
 #' @aliases lp lp_approx
 #' @description The `$lp()` method extracts `lp__`, the total log probability
-#'   (`target`) accumulated in the `model` block of a Stan program. For
+#'   (`target`) accumulated in the `model` block of the Stan program. For
 #'   variational inference the log density of the variational approximation to
 #'   the posterior is also available via the `$lp_approx()` method.
 #'
@@ -452,6 +452,43 @@ NULL
 #'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' plot(fit_vb$lp(), fit_vb$lp_approx())
+#' }
+#'
+NULL
+
+#' Extract (penalized) maximum likelihood estimate after optimization
+#'
+#' @name fit-method-mle
+#' @aliases mle
+#' @description The `$mle()` method is only available for [`CmdStanMLE`] objects.
+#' It returns the penalized maximum likelihood estimate (posterior mode) as a
+#' numeric vector with one element per variable. The returned vector does not
+#' include `lp__`, the total log probability (`target`) accumulated in the
+#' `model` block of the Stan program, which is available via the
+#' [`$lp()`][fit-method-lp] method and also included in the
+#' [`$draws()`][fit-method-draws] method.
+#'
+#' @section Usage:
+#'   ```
+#'   $mle(variables = NULL)
+#'   ```
+#' @section Arguments:
+#' * `variables`: (character vector) The variables (parameters and generated
+#' quantities) to include. If NULL (the default) then all variables are
+#' included.
+#'
+#' @section Value:
+#' A numeric vector. See **Examples**.
+#'
+#' @seealso [`CmdStanMLE`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic", method = "optimize")
+#' fit$mle()
+#' fit$mle("alpha")
+#' fit$mle("beta")
+#' fit$mle("beta[2]")
 #' }
 #'
 NULL
@@ -603,7 +640,6 @@ NULL
 #'
 NULL
 
-
 #' Report timing of CmdStan runs
 #'
 #' @name fit-method-time
@@ -640,6 +676,43 @@ NULL
 #'
 NULL
 
+#' Access console output
+#'
+#' @name fit-method-output
+#' @aliases output
+#' @description For MCMC the `$output()` method returns the stdout and stderr of
+#' all chains as a list of character vectors. If the `id` argument is specified
+#' it pretty prints the console output for a single chain.
+#'
+#' For optimization and variational inference `$output()` just pretty prints the
+#' console output.
+#'
+#' @section Usage:
+#'   ```
+#'   $output(id = NULL)
+#'   ```
+#'
+#' @section Arguments:
+#' * `id`: (integer) For MCMC only, the chain id.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$output(1)
+#' out <- fit_mcmc$output()
+#' str(out)
+#'
+#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
+#' fit_mle$output()
+#'
+#' fit_vb <- cmdstanr_example("logistic", method = "variational")
+#' fit_vb$output()
+#' }
+#'
+NULL
+
 
 # CmdStanMCMC -------------------------------------------------------------
 
@@ -654,41 +727,25 @@ NULL
 #'   Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6Class]
 #'   objects.
 #'
-#' @details
-#' `CmdStanMCMC` objects have the following methods:
+#' @section Methods: `CmdStanMCMC` objects have the following associated
+#'   methods, all of which have their own (linked) documentation pages.
 #'
-#' \tabular{ll}{
-#'  **Method** \tab **Description** \cr
-#'  [`$draws()`][fit-method-draws]
-#'    \tab Return posterior draws as a [`draws_array`][posterior::draws_array]. \cr
-#'  [`$sampler_diagnostics()`][fit-method-sampler_diagnostics]
-#'    \tab Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. \cr
-#'  [`$summary()`][fit-method-summary]
-#'    \tab Run [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
-#'  [`$lp()`][fit-method-lp]
-#'    \tab Return the total log probability density (`target`) computed in the
-#'  model block of the Stan program. \cr
-#'  [`$inv_metric()`][fit-method-inv_metric]
-#'    \tab Return the inverse metric for each chain. \cr
-#'  [`$init()`][fit-method-init]
-#'    \tab Return user-specified initial values. \cr
-#'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
-#'    \tab Run and print CmdStan's `bin/stansummary`. \cr
-#'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]
-#'    \tab Run and print CmdStan's `bin/diagnose`. \cr
-#'  [`$save_object()`][fit-method-save_object]
-#'    \tab Save fitted model object to a file. \cr
-#'  [`$save_output_files()`][fit-method-save_output_files]
-#'    \tab Save output CSV files to a specified location. \cr
-#'  [`$save_data_file()`][fit-method-save_data_file]
-#'    \tab Save JSON data file to a specified location. \cr
-#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
-#'    \tab Save diagnostic CSV files to a specified location. \cr
-#'  [`$time()`][fit-method-time] \tab Report total and chain-specific run times. \cr
-#'  `$output()` \tab Return the stdout and stderr of all chains as a list of
-#'    character vectors, or pretty print the output for a single chain if
-#'    `id` argument is specified. \cr
-#' }
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$draws()`][fit-method-draws] |  Return posterior draws as a [`draws_array`][posterior::draws_array]. |
+#'  [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] |  Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. |
+#'  [`$summary()`][fit-method-summary] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
+#'  [`$lp()`][fit-method-lp] |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
+#'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
+#'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
+#'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
+#'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
+#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
+#'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
+#'  [`$output()`][fit-method-output]  |  Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'
 NULL
 
@@ -873,30 +930,21 @@ CmdStanMCMC <- R6::R6Class(
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
 #'
-#' @details
-#' `CmdStanMLE` objects have the following methods:
+#' @section Methods: `CmdStanMLE` objects have the following associated methods,
+#'   all of which have their own (linked) documentation pages.
 #'
-#' \tabular{ll}{
-#'  **Method** \tab **Description** \cr
-#'  [`draws()`][fit-method-draws] \tab Return the point estimate as a 1-row
-#'  [`draws_matrix`][posterior::draws_matrix]. \cr
-#'  [`$summary()`][fit-method-summary] \tab Run
-#'  [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
-#'  [`$lp()`][fit-method-lp] \tab Return the total log probability density
-#'  (`target`) computed in the model block of the Stan program. \cr
-#'  `$mle()` \tab Return the penalized maximum likelihood estimate (posterior
-#'  mode) as a numeric vector with one element per variable (excluding `lp()`). \cr
-#'  [`$init()`][fit-method-init]
-#'    \tab Return user-specified initial values. \cr
-#'  [`$save_object()`][fit-method-save_object]
-#'    \tab Save fitted model object to a file. \cr
-#'  [`$save_output_files()`][fit-method-save_output_files] \tab Save output CSV
-#'  files to a specified location. \cr
-#'  [`$save_data_file()`][fit-method-save_data_file] \tab Save JSON data file
-#'  to a specified location. \cr
-#'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
-#'  `$output()` \tab Pretty print the output that was printed during optimization. \cr
-#' }
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`draws()`][fit-method-draws]  |  Return the point estimate as a 1-row [`draws_matrix`][posterior::draws_matrix]. |
+#'  [`$summary()`][fit-method-summary]  |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
+#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$mle()`][fit-method-mle]  |  Return the penalized maximum likelihood estimate (posterior mode) as a numeric vector with one element per variable (excluding `lp()`). |
+#'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
+#'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$save_output_files()`][fit-method-save_output_files]  |  Save output CSV files to a specified location. |
+#'  [`$save_data_file()`][fit-method-save_data_file]  |  Save JSON data file to a specified location. |
+#'  [`$time()`][fit-method-time]  |  Report the total run time. |
+#'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed during optimization. |
 #'
 NULL
 
@@ -937,36 +985,24 @@ CmdStanMLE <- R6::R6Class(
 #'   [`$variational()`][model-method-variational] method of a
 #'   [`CmdStanModel`] object.
 #'
-#' @details
-#' `CmdStanVB` objects have the following methods:
+#' @section Methods: `CmdStanVB` objects have the following associated methods,
+#'   all of which have their own (linked) documentation pages.
 #'
-#' \tabular{ll}{
-#'  **Method** \tab **Description** \cr
-#'  [`$draws()`][fit-method-draws] \tab Return approximate posterior draws
-#'  as a [`draws_matrix`][posterior::draws_matrix]. \cr
-#'  [`$summary()`][fit-method-summary] \tab
-#'  Run [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
-#'  [`$lp()`][fit-method-lp] \tab Return the total log probability density
-#'  (`target`) computed in the model block of the Stan program. \cr
-#'  [`$lp_approx()`][fit-method-lp] \tab Return the log density of the
-#'  variational approximation to the posterior. \cr
-#'  [`$init()`][fit-method-init]
-#'    \tab Return user-specified initial values. \cr
-#'  [`$cmdstan_summary()`][fit-method-cmdstan_summary]
-#'    \tab Run and print CmdStan's `bin/stansummary`. \cr
-#'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]
-#'    \tab Run and print CmdStan's `bin/diagnose`. \cr
-#'  [`$save_object()`][fit-method-save_object]
-#'    \tab Save fitted model object to a file. \cr
-#'  [`$save_output_files()`][fit-method-save_output_files]
-#'    \tab Save output CSV files to a specified location. \cr
-#'  [`$save_data_file()`][fit-method-save_data_file]
-#'    \tab Save JSON data file to a specified location. \cr
-#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
-#'    \tab Save diagnostic CSV files to a specified location. \cr
-#'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
-#'  `$output()` \tab Pretty print the output that was printed during fitting. \cr
-#' }
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
+#'  [`$summary()`][fit-method-summary]  | Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
+#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the variational approximation to the posterior. |
+#'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
+#'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
+#'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
+#'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
+#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
+#'  [`$time()`][fit-method-time]  |  Report the total run time. |
+#'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed during fitting. |
 #'
 NULL
 
@@ -1004,26 +1040,18 @@ CmdStanVB <- R6::R6Class(
 #'   [`$generate_quantities()`][model-method-generate-quantities] method of a
 #'   [`CmdStanModel`] object.
 #'
-#' @details
-#' `CmdStanGQ` objects have the following methods:
+#' @section Methods: `CmdStanGQ` objects have the following associated methods,
+#'   all of which have their own (linked) documentation pages.
 #'
-#' \tabular{ll}{
-#'  **Method** \tab **Description** \cr
-#'  [`$draws()`][fit-method-draws] \tab Returns the generated quantities
-#'  as a [`draws_array`][posterior::draws_array]. \cr
-#'  [`$summary()`][fit-method-summary] \tab
-#'  Run [`posterior::summarise_draws()`][posterior::draws_summary]. \cr
-#'  [`$save_object()`][fit-method-save_object]
-#'    \tab Save fitted model object to a file. \cr
-#'  [`$save_output_files()`][fit-method-save_output_files]
-#'    \tab Save output CSV files to a specified location. \cr
-#'  [`$save_data_file()`][fit-method-save_data_file]
-#'    \tab Save JSON data file to a specified location. \cr
-#'  [`$time()`][fit-method-time] \tab Report the total run time. \cr
-#'  `$output()` \tab Return the stdout and stderr of all chains as a list of
-#'    character vectors, or pretty print the output for a single chain if
-#'    `id` argument is specified. \cr
-#' }
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$draws()`][fit-method-draws] | Return the generated quantities as a [`draws_array`][posterior::draws_array]. |
+#'  [`$summary()`][fit-method-summary] | Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
+#'  [`$save_object()`][fit-method-save_object] | Save fitted model object to a file. |
+#'  [`$save_output_files()`][fit-method-save_output_files] | Save output CSV files to a specified location. |
+#'  [`$save_data_file()`][fit-method-save_data_file] | Save JSON data file to a specified location. |
+#'  [`$time()`][fit-method-time] | Report the total run time. |
+#'  [`$output()`][fit-method-output] | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'
 #' @inherit model-method-generate-quantities examples
 #'
