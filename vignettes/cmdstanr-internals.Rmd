@@ -104,8 +104,8 @@ mod$exe_file()
 ### Executable location
 
 By default, the executable is created in the same directory as the file
-containing the Stan program. You can also specify a different location with the 
-`dir` argument of the `cmdstan_model` function.
+containing the Stan program. You can also specify a different location with the
+`dir` argument:
 
 ```{r compile-with-dir, eval = FALSE}
 mod <- cmdstan_model(stan_file, dir = "path/to/directory/for/executable")

@@ -225,6 +225,6 @@ test_that("dir arg works for cmdstan_model and $compile()", {
 
   expect_error(
     cmdstan_model(stan_program, dir = "ABCD"),
-    "Assertion on 'dir' failed: Directory 'ABCD' does not exists."
+    "Assertion on 'dir' failed"
   )
 })
