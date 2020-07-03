@@ -42,6 +42,8 @@ Anything you would otherwise write in the \code{make/local} file.
 used when compiling the model.
 \item \code{force_recompile}: (logical) Should the model be recompiled
 even if was not modified since last compiled. The default is \code{FALSE}.
+\item \code{dir} The path to the folder in which to store the cmdstan executable. If not
+set, the cmdstan executable is placed in the folder of the Stan model.
 }
 }
 
