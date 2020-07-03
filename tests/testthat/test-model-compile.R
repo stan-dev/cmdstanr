@@ -190,19 +190,38 @@ test_that("compile errors are shown", {
   )
 })
 
-test_that("dir arg works for cmdstan_model", {
+test_that("dir arg works for cmdstan_model and $compile()", {
   skip_on_cran()
   tmp_dir <- tempdir()
+  tmp_dir_2 <- tempdir()
+
   mod_dir <- cmdstan_model(stan_program, dir = tmp_dir)
   expect_equal(dirname(mod_dir$exe_file()), tmp_dir)
   checkmate::expect_file_exists(mod_dir$exe_file())
   file.remove(mod_dir$exe_file())
 
-  mod_dir <- cmdstan_model(stan_program, dir = tmp_dir, compile = FALSE)
-  mod_dir$compile()
-  expect_equal(dirname(mod_dir$exe_file()), tmp_dir)
-  checkmate::expect_file_exists(mod_dir$exe_file())
-  file.remove(mod_dir$exe_file())
+  mod_dir_1 <- cmdstan_model(stan_program, dir = tmp_dir, compile = FALSE)
+  mod_dir_1$compile()
+  expect_equal(dirname(mod_dir_1$exe_file()), tmp_dir)
+  checkmate::expect_file_exists(mod_dir_1$exe_file())
+  file.remove(mod_dir_1$exe_file())
+
+  mod_dir_1$compile(dir = tmp_dir_2) #dir in compile overwrites dir in cmdstan_model
+  expect_equal(dirname(mod_dir_1$exe_file()), tmp_dir_2)
+  checkmate::expect_file_exists(mod_dir_1$exe_file())
+  file.remove(mod_dir_1$exe_file())
+
+  mod_dir_2 <- cmdstan_model(stan_program, compile = FALSE)
+  mod_dir_2$compile(dir = tmp_dir)
+  expect_equal(dirname(mod_dir_2$exe_file()), tmp_dir)
+  checkmate::expect_file_exists(mod_dir_2$exe_file())
+  file.remove(mod_dir_2$exe_file())
+
+  mod_dir_3 <- cmdstan_model(stan_program)
+  mod_dir_3$compile(dir = tmp_dir) #dir in compile overwrites dir in cmdstan_model
+  expect_equal(dirname(mod_dir_3$exe_file()), tmp_dir)
+  checkmate::expect_file_exists(mod_dir_3$exe_file())
+  file.remove(mod_dir_3$exe_file())
 
   expect_error(
     cmdstan_model(stan_program, dir = "ABCD"),

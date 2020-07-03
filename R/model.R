@@ -6,8 +6,6 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program.
-#' @param dir The path to the folder in which to store the cmdstan executable. If not
-#' set, the cmdstan executable is placed in the folder of the Stan program (`stan_file`).
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -131,8 +129,8 @@
 #' fit_optim_w_init_list$init()
 #' }
 #'
-cmdstan_model <- function(stan_file, dir = NULL, compile = TRUE, ...) {
-  CmdStanModel$new(stan_file = stan_file, dir = dir, compile = compile, ...)
+cmdstan_model <- function(stan_file, compile = TRUE, ...) {
+  CmdStanModel$new(stan_file = stan_file, compile = compile, ...)
 }
 
 
@@ -187,12 +185,8 @@ CmdStanModel <- R6::R6Class(
     precompile_include_paths_ = NULL
   ),
   public = list(
-    initialize = function(stan_file, dir, compile, ...) {
+    initialize = function(stan_file, compile, ...) {
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
-      if (!is.null(dir)) {
-        checkmate::assert_directory_exists(dir, access = "r")
-      }
-      private$dir_ <- dir
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
       args <- list(...)
@@ -208,6 +202,12 @@ CmdStanModel <- R6::R6Class(
       if (include_paths_exists) {
         private$precompile_include_paths_ = args$include_paths
       }
+      dir_arg_exists <- "dir" %in% names(args)
+      if (dir_arg_exists) {
+        dir <- args$dir
+        checkmate::assert_directory_exists(dir, access = "r")
+        private$dir_ <- dir
+      }      
       if (compile) {
         self$compile(...)
       }
@@ -279,7 +279,9 @@ CmdStanModel <- R6::R6Class(
 #'     used when compiling the model.
 #'   * `force_recompile`: (logical) Should the model be recompiled
 #'     even if was not modified since last compiled. The default is `FALSE`.
-#'
+#'   * `dir` The path to the folder in which to store the cmdstan executable. If not
+#'   set, the cmdstan executable is placed in the folder of the Stan model.
+#' 
 #' @section Value: This method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
 #'   returns the [`CmdStanModel`] object invisibly.
@@ -306,6 +308,7 @@ compile_method <- function(quiet = TRUE,
                            cpp_options = list(),
                            stanc_options = list(),
                            force_recompile = FALSE,
+                           dir = NULL,
                            #deprecated
                            threads = FALSE) {
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
@@ -316,6 +319,11 @@ compile_method <- function(quiet = TRUE,
   }
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
+  }
+  if (is.null(dir) && !is.null(private$dir_)) {
+    dir <- absolute_path(private$dir_)
+  } else if(!is.null(dir)) {
+    dir <- absolute_path(dir)
   }
   # temporary deprecation warnings
   if (isTRUE(threads)) {
@@ -337,14 +345,13 @@ compile_method <- function(quiet = TRUE,
   if (nzchar(exe_suffix)) {
     exe_suffix <- paste0("_", exe_suffix)
   }
-  if (all(nzchar(self$exe_file()))) {
-    if (is.null(private$dir_)) {
-      stan_file <- self$stan_file()
-    } else {
-      stan_file <- file.path(private$dir_, basename(self$stan_file()))
-    }
-    exe <- cmdstan_ext(paste0(strip_ext(stan_file), exe_suffix))   
+
+  if (is.null(dir)) {
+    stan_file <- self$stan_file()
+  } else {
+    stan_file <- file.path(dir, basename(self$stan_file()))
   }
+  exe <- cmdstan_ext(paste0(strip_ext(stan_file), exe_suffix))
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   # compile if:
