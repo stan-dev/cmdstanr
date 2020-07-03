@@ -128,7 +128,10 @@ test_that("sample() prints informational messages depening on show_messages", {
   skip_on_cran()
   mod_info_msg <- testing_model("info_message")
   expect_sample_output(
-    expect_message(mod_info_msg$sample(), "Informational Message: The current Metropolis proposal is about to be rejected")
+    expect_message(
+      mod_info_msg$sample(),
+      "Informational Message: The current Metropolis proposal is about to be rejected"
+    )
   )
   expect_sample_output(
     expect_message(mod_info_msg$sample(show_messages = FALSE), regexp = NA)
