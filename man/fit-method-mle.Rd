@@ -10,7 +10,8 @@ It returns the penalized maximum likelihood estimate (posterior mode) as a
 numeric vector with one element per variable. The returned vector does not
 include \code{lp__}, the total log probability (\code{target}) accumulated in the
 \code{model} block of the Stan program, which is available via the
-\code{\link[=fit-method-lp]{$lp()}} method.
+\code{\link[=fit-method-lp]{$lp()}} method and also included in the
+\code{\link[=fit-method-draws]{$draws()}} method.
 }
 \section{Usage}{
 \preformatted{$mle(variables = NULL)

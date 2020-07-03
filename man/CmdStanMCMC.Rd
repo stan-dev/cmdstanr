@@ -11,22 +11,44 @@ objects.
 }
 \section{Methods}{
  \code{CmdStanMCMC} objects have the following associated
-methods, all of which have their own (linked) documentation pages.\tabular{ll}{
+methods, all of which have their own (linked) documentation pages.
+\subsection{Extract contents of fitted model object}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return posterior draws as a \code{\link[posterior:draws_array]{draws_array}}. \cr
    \code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}} \tab Return sampler diagnostics as a \code{\link[posterior:draws_array]{draws_array}}. \cr
-   \code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
-   \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}) computed in the model block of the Stan program. \cr
+   \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}). \cr
    \code{\link[=fit-method-inv_metric]{$inv_metric()}} \tab Return the inverse metric for each chain. \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
+   \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+}
+
+}
+
+\subsection{Summarize inferences and diagnostics}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}} \tab Run and print CmdStan's \code{bin/stansummary}. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}} \tab Run and print CmdStan's \code{bin/diagnose}. \cr
+}
+
+}
+
+\subsection{Save fitted model object and temporary files}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-save_object]{$save_object()}} \tab Save fitted model object to a file. \cr
    \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
    \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file to a specified location. \cr
    \code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}} \tab Save diagnostic CSV files to a specified location. \cr
+}
+
+}
+
+\subsection{Report run times and console output}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-time]{$time()}} \tab Report total and chain-specific run times. \cr
    \code{\link[=fit-method-output]{$output()}} \tab Return the stdout and stderr of all chains or pretty print the output for a single chain. \cr
+}
+
 }
 }
 

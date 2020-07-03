@@ -37,7 +37,7 @@ Defaults to \code{FALSE}.
 \item For \link[=model-method-sample]{MCMC}, a 3-D
 \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
 variable).
-\item For \link[=model-method-generate-quantities]{standalone generated quantities}, a
+\item For standalone \link[=model-method-generate-quantities]{generated quantities}, a
 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
 variable).
 \item For \link[=model-method-variational]{variational inference}, a 2-D
@@ -48,7 +48,7 @@ draws.
 \item For \link[=model-method-optimize]{optimization}, a 1-row
 \code{\link[posterior:draws_matrix]{draws_matrix}} with one column per variable. These
 are \emph{not} actually draws, just point estimates stored in the \code{draws_matrix}
-format.
+format. See \code{\link[=fit-method-mle]{$mle()}} to extract them as a numeric vector.
 }
 }
 
@@ -81,5 +81,5 @@ mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }
