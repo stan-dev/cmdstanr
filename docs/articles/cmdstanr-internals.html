@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9008</span>
       </span>
     </div>
 
@@ -192,7 +192,12 @@ model {
 <pre><code>Compiling Stan program...</code></pre>
 <div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="no">mod</span>$<span class="fu">exe_file</span>()</pre></body></html></div>
 <pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.23.0/examples/bernoulli/bernoulli"</code></pre>
-<p>In all cases the executable is created in the same directory as the file containing the Stan program.</p>
+</div>
+<div id="executable-location" class="section level3">
+<h3 class="hasAnchor">
+<a href="#executable-location" class="anchor"></a>Executable location</h3>
+<p>By default, the executable is created in the same directory as the file containing the Stan program. You can also specify a different location with the <code>dir</code> argument:</p>
+<div class="sourceCode" id="cb19"><html><body><pre class="r"><span class="no">mod</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span>(<span class="no">stan_file</span>, <span class="kw">dir</span> <span class="kw">=</span> <span class="st">"path/to/directory/for/executable"</span>)</pre></body></html></div>
 </div>
 </div>
 <div id="processing-data" class="section level2">
@@ -208,11 +213,11 @@ model {
 <h3 class="hasAnchor">
 <a href="#named-list-of-r-objects" class="anchor"></a>Named list of R objects</h3>
 <p>Like the RStan interface, CmdStanR accepts a named list of R objects where the names correspond to variables declared in the <code>data</code> block of the Stan program:</p>
-<div class="sourceCode" id="cb19"><html><body><pre class="r"><span class="co"># data block has 'N' and 'y'</span>
+<div class="sourceCode" id="cb20"><html><body><pre class="r"><span class="co"># data block has 'N' and 'y'</span>
 <span class="no">data_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">N</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span>))
 <span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>)</pre></body></html></div>
 <p>Because CmdStan doesn’t accept lists of R objects, CmdStanR will first write the data to a temporary JSON file using <code><a href="../reference/write_stan_json.html">write_stan_json()</a></code>. This happens internally, but it is also possible to call <code><a href="../reference/write_stan_json.html">write_stan_json()</a></code> directly:</p>
-<div class="sourceCode" id="cb20"><html><body><pre class="r"><span class="no">data_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">N</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span>))
+<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="no">data_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">N</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span>))
 <span class="no">json_file</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span>(<span class="kw">fileext</span> <span class="kw">=</span> <span class="st">".json"</span>)
 <span class="fu"><a href="../reference/write_stan_json.html">write_stan_json</a></span>(<span class="no">data_list</span>, <span class="no">json_file</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/readLines.html">readLines</a></span>(<span class="no">json_file</span>), <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\n"</span>)</pre></body></html></div>
@@ -225,13 +230,13 @@ model {
 <h3 class="hasAnchor">
 <a href="#json-file" class="anchor"></a>JSON file</h3>
 <p>If you already have your data in a JSON file you can just pass that file directly to CmdStanR instead of using a list of R objects. For example, we could pass in the JSON file we created above using <code><a href="../reference/write_stan_json.html">write_stan_json()</a></code>:</p>
-<div class="sourceCode" id="cb22"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">json_file</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb23"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">json_file</span>)</pre></body></html></div>
 </div>
 <div id="r-dump-file" class="section level3">
 <h3 class="hasAnchor">
 <a href="#r-dump-file" class="anchor"></a>R dump file</h3>
 <p>Finally, it is also possible to use the R dump file format. This is <em>not</em> recommended because CmdStan can process JSON faster than R dump, but CmdStanR allows it because CmdStan will accept files created by <code><a href="https://rdrr.io/pkg/rstan/man/stan_rdump.html">rstan::stan_rdump()</a></code>:</p>
-<div class="sourceCode" id="cb23"><html><body><pre class="r"><span class="no">rdump_file</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span>(<span class="kw">fileext</span> <span class="kw">=</span> <span class="st">".data.R"</span>)
+<div class="sourceCode" id="cb24"><html><body><pre class="r"><span class="no">rdump_file</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span>(<span class="kw">fileext</span> <span class="kw">=</span> <span class="st">".data.R"</span>)
 <span class="kw pkg">rstan</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/rstan/man/stan_rdump.html">stan_rdump</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span>(<span class="no">data_list</span>), <span class="kw">file</span> <span class="kw">=</span> <span class="no">rdump_file</span>, <span class="kw">envir</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list2env.html">list2env</a></span>(<span class="no">data_list</span>))
 <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/readLines.html">readLines</a></span>(<span class="no">rdump_file</span>), <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\n"</span>)
 <span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">rdump_file</span>)</pre></body></html></div>
@@ -243,33 +248,33 @@ model {
 <div id="default-temporary-files" class="section level3">
 <h3 class="hasAnchor">
 <a href="#default-temporary-files" class="anchor"></a>Default temporary files</h3>
-<div class="sourceCode" id="cb24"><html><body><pre class="r"><span class="no">data_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">N</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span>))
+<div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="no">data_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">N</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span>))
 <span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>)</pre></body></html></div>
 <p>When fitting a model, the default behavior is to write the output from CmdStan to CSV files in a temporary directory:</p>
-<div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>()</pre></body></html></div>
-<pre><code>[1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-202006301359-1-be8edc.csv"
-[2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-202006301359-2-be8edc.csv"
-[3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-202006301359-3-be8edc.csv"
-[4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-202006301359-4-be8edc.csv"</code></pre>
+<div class="sourceCode" id="cb26"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>()</pre></body></html></div>
+<pre><code>[1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpfiDwas/bernoulli-202007031747-1-6bffbb.csv"
+[2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpfiDwas/bernoulli-202007031747-2-6bffbb.csv"
+[3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpfiDwas/bernoulli-202007031747-3-6bffbb.csv"
+[4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpfiDwas/bernoulli-202007031747-4-6bffbb.csv"</code></pre>
 <p>These files will be lost if you end your R session or if you remove the <code>fit</code> object and force (or wait for) garbage collection.</p>
-<div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="no">files</span> <span class="kw">&lt;-</span> <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>()
+<div class="sourceCode" id="cb28"><html><body><pre class="r"><span class="no">files</span> <span class="kw">&lt;-</span> <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>()
 <span class="fu"><a href="https://rdrr.io/r/base/files.html">file.exists</a></span>(<span class="no">files</span>)</pre></body></html></div>
 <pre><code>[1] TRUE TRUE TRUE TRUE</code></pre>
-<div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/rm.html">rm</a></span>(<span class="no">fit</span>)
+<div class="sourceCode" id="cb30"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/rm.html">rm</a></span>(<span class="no">fit</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/gc.html">gc</a></span>()</pre></body></html></div>
 <pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-Ncells  895491 47.9    1767474 94.4         NA  1248614 66.7
-Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
-<div class="sourceCode" id="cb31"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.exists</a></span>(<span class="no">files</span>)</pre></body></html></div>
+Ncells  900726 48.2    1775681 94.9         NA  1262111 67.5
+Vcells 1652249 12.7    8388608 64.0      16384  2405585 18.4</code></pre>
+<div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.exists</a></span>(<span class="no">files</span>)</pre></body></html></div>
 <pre><code>[1] FALSE FALSE FALSE FALSE</code></pre>
 </div>
 <div id="non-temporary-files" class="section level3">
 <h3 class="hasAnchor">
 <a href="#non-temporary-files" class="anchor"></a>Non-temporary files</h3>
 <p>To save these files to a non-temporary location there are two options. You can either specify the <code>output_dir</code> argument to <code>mod$sample()</code> or use <code>fit$save_output_files()</code> after fitting the model:</p>
-<div class="sourceCode" id="cb33"><html><body><pre class="r"><span class="co"># see ?save_output_files for info on optional arguments</span>
+<div class="sourceCode" id="cb34"><html><body><pre class="r"><span class="co"># see ?save_output_files for info on optional arguments</span>
 <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">save_output_files</a></span>(<span class="kw">dir</span> <span class="kw">=</span> <span class="st">"path/to/directory"</span>)</pre></body></html></div>
-<div class="sourceCode" id="cb34"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(
+<div class="sourceCode" id="cb35"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(
   <span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>,
   <span class="kw">output_dir</span> <span class="kw">=</span> <span class="st">"path/to/directory"</span>
 )</pre></body></html></div>
@@ -282,7 +287,7 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
 <h3 class="hasAnchor">
 <a href="#lazy-csv-reading" class="anchor"></a>Lazy CSV reading</h3>
 <p>With the exception of some diagnostic information, the CSV files are not read into R until their contents are requested by calling a method that requires them (e.g., <code>fit$draws()</code>, <code>fit$summary()</code>, etc.). If we examine the structure of the <code>fit</code> object, notice how the <code>Private</code> slot <code>draws_</code> is <code>NULL</code>, indicating that the CSV files haven’t yet been read into R:</p>
-<div class="sourceCode" id="cb35"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">fit</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb36"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">fit</span>)</pre></body></html></div>
 <pre><code>Classes 'CmdStanMCMC', 'CmdStanFit', 'R6' &lt;CmdStanMCMC&gt;
   Inherits from: &lt;CmdStanFit&gt;
   Public:
@@ -291,6 +296,7 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
     cmdstan_summary: function (...) 
     data_file: function () 
     draws: function (variables = NULL, inc_warmup = FALSE) 
+    init: function () 
     initialize: function (runset) 
     inv_metric: function (matrix = TRUE) 
     latent_dynamics_files: function (include_failed = FALSE) 
@@ -311,6 +317,7 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
     time: function () 
   Private:
     draws_: NULL
+    init_: NULL
     inv_metric_: NULL
     metadata_: list
     read_csv_: function (variables = NULL, sampler_diagnostics = NULL) 
@@ -318,7 +325,7 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
     warmup_draws_: NULL
     warmup_sampler_diagnostics_: NULL </code></pre>
 <p>After we call a method that requires the draws then if we reexamine the structure of the object we will see that the <code>draws_</code> slot in <code>Private</code> is no longer empty:</p>
-<div class="sourceCode" id="cb37"><html><body><pre class="r"><span class="no">draws</span> <span class="kw">&lt;-</span> <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-draws.html">draws</a></span>() <span class="co"># force CSVs to be read into R</span>
+<div class="sourceCode" id="cb38"><html><body><pre class="r"><span class="no">draws</span> <span class="kw">&lt;-</span> <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-draws.html">draws</a></span>() <span class="co"># force CSVs to be read into R</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">fit</span>)</pre></body></html></div>
 <pre><code>Classes 'CmdStanMCMC', 'CmdStanFit', 'R6' &lt;CmdStanMCMC&gt;
   Inherits from: &lt;CmdStanFit&gt;
@@ -328,6 +335,7 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
     cmdstan_summary: function (...) 
     data_file: function () 
     draws: function (variables = NULL, inc_warmup = FALSE) 
+    init: function () 
     initialize: function (runset) 
     inv_metric: function (matrix = TRUE) 
     latent_dynamics_files: function (include_failed = FALSE) 
@@ -347,7 +355,8 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
     summary: function (variables = NULL, ...) 
     time: function () 
   Private:
-    draws_: -7.09789 -7.09789 -6.86022 -6.8793 -6.74951 -6.98002 -7. ...
+    draws_: -6.75737 -6.77532 -6.93749 -7.07795 -6.89678 -7.22791 -6 ...
+    init_: NULL
     inv_metric_: list
     metadata_: list
     read_csv_: function (variables = NULL, sampler_diagnostics = NULL) 
@@ -360,7 +369,7 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
 <h3 class="hasAnchor">
 <a href="#read_cmdstan_csv" class="anchor"></a>read_cmdstan_csv()</h3>
 <p>Internally, the <code><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv()</a></code> function is used to read the CmdStan CSV files into R. This function is exposed to users, so you can also call it directly:</p>
-<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="co"># see ?read_cmdstan_csv for info on optional arguments controlling </span>
+<div class="sourceCode" id="cb40"><html><body><pre class="r"><span class="co"># see ?read_cmdstan_csv for info on optional arguments controlling </span>
 <span class="co"># what information is read in</span>
 <span class="no">csv_contents</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())
 <span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">csv_contents</span>)</pre></body></html></div>
@@ -383,8 +392,8 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
   ..$ metric              : chr "diag_e"
   ..$ stepsize_jitter     : num 0
   ..$ id                  : num [1:4] 1 2 3 4
-  ..$ init                : num 2
-  ..$ seed                : num [1:4] 4.19e+08 1.05e+09 1.03e+09 9.86e+08
+  ..$ init                : num [1:4] 2 2 2 2
+  ..$ seed                : num [1:4] 1.89e+09 2.39e+08 2.70e+07 1.61e+09
   ..$ refresh             : num 100
   ..$ model_params        : chr [1:2] "lp__" "theta"
   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
@@ -392,28 +401,28 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
   ..$ adapt_engaged       : num 1
   ..$ adapt_delta         : num 0.8
   ..$ max_treedepth       : num 10
-  ..$ step_size           : num 1
-  ..$ step_size_adaptation: num [1:4] 1.098 0.994 1.093 0.897
+  ..$ step_size           : num [1:4] 1 1 1 1
+  ..$ step_size_adaptation: num [1:4] 0.805 0.875 0.996 0.844
   ..$ iter_warmup         : num 1000
   ..$ iter_sampling       : num 1000
  $ inv_metric                     :List of 4
-  ..$ : num 0.459
-  ..$ : num 0.586
-  ..$ : num 0.406
-  ..$ : num 0.566
+  ..$ : num 0.652
+  ..$ : num 0.478
+  ..$ : num 0.398
+  ..$ : num 0.551
  $ step_size                      :List of 4
-  ..$ : num 1.1
-  ..$ : num 0.994
-  ..$ : num 1.09
-  ..$ : num 0.897
+  ..$ : num 0.805
+  ..$ : num 0.875
+  ..$ : num 0.996
+  ..$ : num 0.844
  $ warmup_draws                   : NULL
- $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:2] -7.1 -7.1 -6.86 -6.88 -6.75 ...
+ $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:2] -6.76 -6.78 -6.94 -7.08 -6.9 ...
   ..- attr(*, "dimnames")=List of 3
   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
   .. ..$ variable : chr [1:2] "lp__" "theta"
  $ warmup_sampler_diagnostics     : NULL
- $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.874 0.673 1 0.995 1 ...
+ $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 1 0.996 0.972 0.975 0.948 ...
   ..- attr(*, "dimnames")=List of 3
   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
@@ -424,38 +433,38 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
 <a href="#saving-and-accessing-advanced-algorithm-info-latent-dynamics" class="anchor"></a>Saving and accessing advanced algorithm info (latent dynamics)</h3>
 <p>If <code>save_latent_dynamics</code> is set to <code>TRUE</code> when running the <code>$sample()</code> method then additional CSV files are created (one per chain) that provide access to quantities used under the hood by Stan’s implementation of dynamic Hamiltonian Monte Carlo.</p>
 <p>CmdStanR does not yet provide a special method for processing these files but they can be read into R using R’s standard CSV reading functions:</p>
-<div class="sourceCode" id="cb41"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>, <span class="kw">save_latent_dynamics</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
-<div class="sourceCode" id="cb42"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">latent_dynamics_files</a></span>()</pre></body></html></div>
-<pre><code>[1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-diagnostic-202006301359-1-a16760.csv"
-[2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-diagnostic-202006301359-2-a16760.csv"
-[3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-diagnostic-202006301359-3-a16760.csv"
-[4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpRlpuz2/bernoulli-diagnostic-202006301359-4-a16760.csv"</code></pre>
-<div class="sourceCode" id="cb44"><html><body><pre class="r"><span class="co"># read one of the files in</span>
+<div class="sourceCode" id="cb42"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-sample.html">sample</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>, <span class="kw">save_latent_dynamics</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb43"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">latent_dynamics_files</a></span>()</pre></body></html></div>
+<pre><code>[1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpfiDwas/bernoulli-diagnostic-202007031747-1-a3c6d8.csv"
+[2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpfiDwas/bernoulli-diagnostic-202007031747-2-a3c6d8.csv"
+[3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpfiDwas/bernoulli-diagnostic-202007031747-3-a3c6d8.csv"
+[4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpfiDwas/bernoulli-diagnostic-202007031747-4-a3c6d8.csv"</code></pre>
+<div class="sourceCode" id="cb45"><html><body><pre class="r"><span class="co"># read one of the files in</span>
 <span class="no">x</span> <span class="kw">&lt;-</span> <span class="kw pkg">utils</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">latent_dynamics_files</a></span>()[<span class="fl">1</span>], <span class="kw">comment.char</span> <span class="kw">=</span> <span class="st">"#"</span>)
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">x</span>)</pre></body></html></div>
 <pre><code>      lp__ accept_stat__ stepsize__ treedepth__ n_leapfrog__ divergent__
-1 -7.47145      0.848978    1.04012           1            3           0
-2 -7.99588      0.823969    1.04012           1            1           0
-3 -7.21727      1.000000    1.04012           2            3           0
-4 -7.29052      0.986838    1.04012           1            1           0
-5 -6.74827      0.980879    1.04012           1            3           0
-6 -6.75943      0.996859    1.04012           1            3           0
-  energy__     theta    p_theta    g_theta
-1  7.47286 -0.339441  0.0781753  1.9913400
-2  8.18841 -0.113762  0.9130850  2.6590800
-3  7.78543 -1.785660 -1.5685700 -1.2767300
-4  7.37091 -1.841260  0.5900520 -1.3571800
-5  7.30981 -1.083820  1.5594100  0.0334045
-6  6.76312 -1.200170 -0.1264070 -0.2226560</code></pre>
+1 -6.77360      0.976615   0.849461           1            3           0
+2 -6.76425      0.992854   0.849461           1            3           0
+3 -6.95402      0.974378   0.849461           2            3           0
+4 -6.82605      0.959642   0.849461           2            7           0
+5 -6.93090      0.932476   0.849461           1            3           0
+6 -7.19083      0.977452   0.849461           2            7           0
+  energy__     theta   p_theta   g_theta
+1  7.35829 -0.949658 -1.481300  0.347443
+2  6.82684 -1.219950  0.484646 -0.264653
+3  6.99806 -1.543620 -0.406546 -0.887888
+4  7.27008 -0.840627  1.290880  0.616832
+5  7.27514 -1.516870  1.136610 -0.840934
+6  7.21622 -0.498759  0.308721  1.533990</code></pre>
 <p>The column <code>lp__</code> is also provided via <code>fit$draws()</code>, and the columns <code>accept_stat__</code>, <code>stepsize__</code>, <code>treedepth__</code>, <code>n_leapfrog__</code>, <code>divergent__</code>, and <code>energy__</code> are also provided by <code>fit$sampler_diagnostics()</code>, but there are several columns unique to the latent dynamics file:</p>
-<div class="sourceCode" id="cb46"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">x</span>[, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"theta"</span>, <span class="st">"p_theta"</span>, <span class="st">"g_theta"</span>)])</pre></body></html></div>
-<pre><code>      theta    p_theta    g_theta
-1 -0.339441  0.0781753  1.9913400
-2 -0.113762  0.9130850  2.6590800
-3 -1.785660 -1.5685700 -1.2767300
-4 -1.841260  0.5900520 -1.3571800
-5 -1.083820  1.5594100  0.0334045
-6 -1.200170 -0.1264070 -0.2226560</code></pre>
+<div class="sourceCode" id="cb47"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">x</span>[, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"theta"</span>, <span class="st">"p_theta"</span>, <span class="st">"g_theta"</span>)])</pre></body></html></div>
+<pre><code>      theta   p_theta   g_theta
+1 -0.949658 -1.481300  0.347443
+2 -1.219950  0.484646 -0.264653
+3 -1.543620 -0.406546 -0.887888
+4 -0.840627  1.290880  0.616832
+5 -1.516870  1.136610 -0.840934
+6 -0.498759  0.308721  1.533990</code></pre>
 <p>Our model has a single parameter <code>theta</code> and the three columns above correspond to <code>theta</code> in the <em>unconstrained</em> space (<code>theta</code> on the constrained space is accessed via <code>fit$draws()</code>), the auxiliary momentum <code>p_theta</code>, and the gradient <code>g_theta</code>. In general, each of these three columns will exist for <em>every</em> parameter in the model.</p>
 </div>
 </div>
@@ -463,20 +472,20 @@ Vcells 1644040 12.6    8388608 64.0      16384  2354819 18.0</code></pre>
 <h2 class="hasAnchor">
 <a href="#saving-fitted-model-objects" class="anchor"></a>Saving fitted model objects</h2>
 <p>As described above, the contents of the CSV files are only read into R when they are needed. This means that in order to save a fitted model object containing <em>all</em> of the posterior draws and sampler diagnostics you should either make sure to call <code>fit$draws()</code> and <code>fit$sampler_diagnostics()</code> before saving the object <code>fit</code>, or use the special <code>$save_object()</code> method provided by CmdStanR, which will ensure that everything has been read into R before saving the object using <code><a href="https://rdrr.io/r/base/readRDS.html">saveRDS()</a></code>:</p>
-<div class="sourceCode" id="cb48"><html><body><pre class="r"><span class="no">temp_rds_file</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span>(<span class="kw">fileext</span> <span class="kw">=</span> <span class="st">".RDS"</span>) <span class="co"># temporary file just for demonstration</span>
+<div class="sourceCode" id="cb49"><html><body><pre class="r"><span class="no">temp_rds_file</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span>(<span class="kw">fileext</span> <span class="kw">=</span> <span class="st">".RDS"</span>) <span class="co"># temporary file just for demonstration</span>
 <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_object.html">save_object</a></span>(<span class="kw">file</span> <span class="kw">=</span> <span class="no">temp_rds_file</span>)</pre></body></html></div>
 <p>We can check that this worked by removing <code>fit</code> and loading it back in from the save file:</p>
-<div class="sourceCode" id="cb49"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/rm.html">rm</a></span>(<span class="no">fit</span>); <span class="fu"><a href="https://rdrr.io/r/base/gc.html">gc</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb50"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/rm.html">rm</a></span>(<span class="no">fit</span>); <span class="fu"><a href="https://rdrr.io/r/base/gc.html">gc</a></span>()</pre></body></html></div>
 <pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-Ncells  911641 48.7    1767474 94.4         NA  1767474 94.4
-Vcells 1731811 13.3    8388608 64.0      16384  3054325 23.4</code></pre>
-<div class="sourceCode" id="cb51"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span>(<span class="no">temp_rds_file</span>)
+Ncells  916937 49.0    1775681 94.9         NA  1775681 94.9
+Vcells 1740283 13.3    8388608 64.0      16384  3106728 23.8</code></pre>
+<div class="sourceCode" id="cb52"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span>(<span class="no">temp_rds_file</span>)
 <span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-summary.html">summary</a></span>()</pre></body></html></div>
 <pre><code># A tibble: 2 x 10
   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
   &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
-1 lp__     -7.31  -6.99  0.822 0.332 -9.02   -6.75   1.01    1625.    1326.
-2 theta     0.252  0.238 0.123 0.124  0.0729  0.475  1.01    1195.    1098.</code></pre>
+1 lp__     -7.28  -7.00  0.773 0.335 -8.71   -6.75   1.00    1688.    1680.
+2 theta     0.248  0.233 0.119 0.121  0.0810  0.465  1.00    1456.    1537.</code></pre>
 </div>
   </div>
 

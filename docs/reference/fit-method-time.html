@@ -82,7 +82,7 @@ sampling phases." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9008</span>
       </span>
     </div>
 
@@ -201,25 +201,25 @@ and <code>"total"</code>.</p></li>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code>, <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"sample"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'>time</span>()</div><div class='output co'>#&gt; $total
-#&gt; [1] 0.5019541
+#&gt; [1] 0.5347641
 #&gt; 
 #&gt; $chains
-#&gt;   chain_id      warmup    sampling    total
-#&gt; 1        1 0.002279043 0.001897097 0.116786
-#&gt; 2        2 0.002177000 0.001591921 0.118093
-#&gt; 3        3 0.001992941 0.001574039 0.119684
-#&gt; 4        4 0.001976013 0.001501083 0.120122
+#&gt;   chain_id      warmup    sampling     total
+#&gt; 1        1 0.002167225 0.001737833 0.1156979
+#&gt; 2        2 0.002118111 0.001594067 0.1318438
+#&gt; 3        3 0.009976864 0.001543999 0.1271491
+#&gt; 4        4 0.003404140 0.001681089 0.1218250
 #&gt; </div><div class='input'>
 <span class='no'>fit_mle</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit_mle</span>$<span class='fu'>time</span>()</div><div class='output co'>#&gt; $total
-#&gt; [1] 0.128705
+#&gt; [1] 0.1130049
 #&gt; </div><div class='input'>
 <span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"variational"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit_vb</span>$<span class='fu'>time</span>()</div><div class='output co'>#&gt; $total
-#&gt; [1] 0.1102169
+#&gt; [1] 0.1149828
 #&gt; </div><div class='input'># }
 
 </div></pre>

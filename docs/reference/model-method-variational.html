@@ -81,7 +81,7 @@ Stan's variational Bayes (ADVI) algorithms." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9008</span>
       </span>
     </div>
 
@@ -341,10 +341,10 @@ for online documentation and tutorials.</p>
 #&gt;   theta ~ beta(1,1);  // uniform prior on interval 0,1
 #&gt;   y ~ bernoulli(theta);
 #&gt; }</div><div class='input'>
-<span class='co'># data as a named list (like RStan)</span>
+<span class='co'># Data as a named list (like RStan)</span>
 <span class='no'>stan_data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>))
 
-<span class='co'># run MCMC using the 'sample' method</span>
+<span class='co'># Run MCMC using the 'sample' method</span>
 <span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
   <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
@@ -451,9 +451,9 @@ for online documentation and tutorials.</p>
 <span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='model-method-variational-1.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># Call CmdStan's diagnose and stansummary utilities</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></span>()</div><div class='output co'>#&gt; Running bin/diagnose \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/bernoulli-202006301358-1-06ee0d.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/bernoulli-202006301358-2-06ee0d.csv
-#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/bernoulli-202006301358-1-06ee0d.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/bernoulli-202006301358-2-06ee0d.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-1-ebc600.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-2-ebc600.csv
+#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-1-ebc600.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-2-ebc600.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -469,23 +469,23 @@ for online documentation and tutorials.</p>
 #&gt; Split R-hat values satisfactory all parameters.
 #&gt; 
 #&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></span>()</div><div class='output co'>#&gt; Running bin/stansummary \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/bernoulli-202006301358-1-06ee0d.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/bernoulli-202006301358-2-06ee0d.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-1-ebc600.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-2-ebc600.csv
 #&gt; Inference for Stan model: bernoulli_model
 #&gt; 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.0082, 0.0077) seconds, 0.016 seconds total
-#&gt; Sampling took (0.018, 0.017) seconds, 0.034 seconds total
+#&gt; Warmup took (0.0097, 0.0096) seconds, 0.019 seconds total
+#&gt; Sampling took (0.021, 0.019) seconds, 0.040 seconds total
 #&gt; 
 #&gt;                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
-#&gt; lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8  5.9e+02  1.7e+04  1.0e+00
-#&gt; accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.1e+04  1.0e+00
-#&gt; stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  2.9e+01  2.6e+13
-#&gt; treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  5.4e+04  1.0e+00
-#&gt; n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  4.1e+02  1.0e+00
+#&gt; lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8  5.9e+02  1.5e+04  1.0e+00
+#&gt; accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  1.8e+04  1.0e+00
+#&gt; stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  2.5e+01  2.6e+13
+#&gt; treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  4.6e+04  1.0e+00
+#&gt; n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  3.5e+02  1.0e+00
 #&gt; divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-#&gt; energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  2.0e+04  1.0e+00
-#&gt; theta           0.25  4.5e-03    0.12  0.081  0.23  0.49  7.6e+02  2.2e+04  1.0e+00
+#&gt; energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  1.7e+04  1.0e+00
+#&gt; theta           0.25  4.5e-03    0.12  0.081  0.23  0.49  7.6e+02  1.9e+04  1.0e+00
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,
@@ -521,7 +521,7 @@ for online documentation and tutorials.</p>
 #&gt; random 
 #&gt;   seed = 123 
 #&gt; output 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/bernoulli-202006301358-1-f6c10a.csv 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-1-143331.csv 
 #&gt;   diagnostic_file =  (Default) 
 #&gt;   refresh = 100 (Default) 
 #&gt;  
@@ -536,7 +536,8 @@ for online documentation and tutorials.</p>
 #&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>       </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
 #&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__        -</span><span style='color: #BB0000;'>5.00</span><span>
 #&gt; </span><span style='color: #BCBCBC;'>2</span><span> theta        0.2 </div><div class='input'>
-<span class='co'># Run 'variational' to approximate the posterior (default is meanfield ADVI)</span>
+
+<span class='co'># Run 'variational' method to approximate the posterior (default is meanfield ADVI)</span>
 <span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'>variational</span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; method = variational 
 #&gt;   variational 
 #&gt;     algorithm = meanfield (Default) 
@@ -553,12 +554,12 @@ for online documentation and tutorials.</p>
 #&gt;     output_samples = 1000 (Default) 
 #&gt; id = 1 
 #&gt; data 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/standata-6aac32fb86e4.json 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/standata-123c9502cdd2f.json 
 #&gt; init = 2 (Default) 
 #&gt; random 
 #&gt;   seed = 123 
 #&gt; output 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/bernoulli-202006301358-1-54fce2.csv 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-1-6d61c8.csv 
 #&gt;   diagnostic_file =  (Default) 
 #&gt;   refresh = 100 (Default) 
 #&gt;  
@@ -570,8 +571,8 @@ for online documentation and tutorials.</p>
 #&gt;  
 #&gt;  
 #&gt;  
-#&gt; Gradient evaluation took 2.1e-05 seconds 
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.21 seconds. 
+#&gt; Gradient evaluation took 2e-05 seconds 
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds. 
 #&gt; Adjust your expectations accordingly! 
 #&gt;  
 #&gt;  
@@ -599,7 +600,105 @@ for online documentation and tutorials.</p>
 #&gt; </span><span style='color: #BCBCBC;'>2</span><span> lp_approx__ -</span><span style='color: #BB0000;'>0.515</span><span> -</span><span style='color: #BB0000;'>0.221</span><span> 0.692 0.303 -</span><span style='color: #BB0000;'>2.06</span><span>  -</span><span style='color: #BB0000;'>0.002</span><span style='color: #BB0000;text-decoration: underline;'>57</span><span>
 #&gt; </span><span style='color: #BCBCBC;'>3</span><span> theta        0.263  0.246 0.115 0.113  0.106  0.481  </div><div class='input'>
 <span class='co'># Plot approximate posterior using bayesplot</span>
-<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_vb</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='model-method-variational-2.png' alt='' width='700' height='433' /></div><div class='input'># }
+<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_vb</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='model-method-variational-2.png' alt='' width='700' height='433' /></div><div class='input'>
+
+<span class='co'># Specifying initial values as a function</span>
+<span class='no'>fit_mcmc_w_init_fun</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
+  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
+  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>init</span> <span class='kw'>=</span> <span class='kw'>function</span>() <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span>(<span class='fl'>1</span>))
+)</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
+#&gt; 
+#&gt; Chain 1 finished in 0.1 seconds.
+#&gt; Chain 2 finished in 0.1 seconds.
+#&gt; 
+#&gt; Both chains finished successfully.
+#&gt; Mean chain execution time: 0.1 seconds.
+#&gt; Total execution time: 0.3 seconds.</div><div class='input'><span class='no'>fit_mcmc_w_init_fun_2</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
+  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
+  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>init</span> <span class='kw'>=</span> <span class='kw'>function</span>(<span class='no'>chain_id</span>) {
+    <span class='co'># silly but demonstrates optional use of chain_id</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>1</span> / (<span class='no'>chain_id</span> + <span class='fl'>1</span>))
+  }
+)</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
+#&gt; 
+#&gt; Chain 1 finished in 0.1 seconds.
+#&gt; Chain 2 finished in 0.1 seconds.
+#&gt; 
+#&gt; Both chains finished successfully.
+#&gt; Mean chain execution time: 0.1 seconds.
+#&gt; Total execution time: 0.3 seconds.</div><div class='input'><span class='no'>fit_mcmc_w_init_fun_2</span>$<span class='fu'><a href='fit-method-init.html'>init</a></span>()</div><div class='output co'>#&gt; [[1]]
+#&gt; [[1]]$theta
+#&gt; [1] 0.5
+#&gt; 
+#&gt; 
+#&gt; [[2]]
+#&gt; [[2]]$theta
+#&gt; [1] 0.3333333
+#&gt; 
+#&gt; </div><div class='input'>
+<span class='co'># Specifying initial values as a list of lists</span>
+<span class='no'>fit_mcmc_w_init_list</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
+  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
+  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>init</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>0.75</span>), <span class='co'># chain 1</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>0.25</span>)  <span class='co'># chain 2</span>
+  )
+)</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
+#&gt; 
+#&gt; Chain 1 finished in 0.1 seconds.
+#&gt; Chain 2 finished in 0.1 seconds.
+#&gt; 
+#&gt; Both chains finished successfully.
+#&gt; Mean chain execution time: 0.1 seconds.
+#&gt; Total execution time: 0.2 seconds.</div><div class='input'><span class='no'>fit_optim_w_init_list</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-optimize.html'>optimize</a></span>(
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
+  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
+  <span class='kw'>init</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>0.75</span>)
+  )
+)</div><div class='output co'>#&gt; method = optimize 
+#&gt;   optimize 
+#&gt;     algorithm = lbfgs (Default) 
+#&gt;       lbfgs 
+#&gt;         init_alpha = 0.001 (Default) 
+#&gt;         tol_obj = 9.9999999999999998e-13 (Default) 
+#&gt;         tol_rel_obj = 10000 (Default) 
+#&gt;         tol_grad = 1e-08 (Default) 
+#&gt;         tol_rel_grad = 10000000 (Default) 
+#&gt;         tol_param = 1e-08 (Default) 
+#&gt;         history_size = 5 (Default) 
+#&gt;     iter = 2000 (Default) 
+#&gt;     save_iterations = 0 (Default) 
+#&gt; id = 1 
+#&gt; data 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/standata-123c9376c0efc.json 
+#&gt; init = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/init-1-123c9174bded1.json 
+#&gt; random 
+#&gt;   seed = 123 
+#&gt; output 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpBQdg2G/bernoulli-202007031746-1-117749.csv 
+#&gt;   diagnostic_file =  (Default) 
+#&gt;   refresh = 100 (Default) 
+#&gt;  
+#&gt; Initial log joint probability = -11.6657 
+#&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
+#&gt;        6      -5.00402   0.000237915   9.55309e-07           1           1        9    
+#&gt; Optimization terminated normally:  
+#&gt;   Convergence detected: relative gradient magnitude is below tolerance 
+#&gt; Finished in  0.1 seconds.</div><div class='input'><span class='no'>fit_optim_w_init_list</span>$<span class='fu'><a href='fit-method-init.html'>init</a></span>()</div><div class='output co'>#&gt; [[1]]
+#&gt; [[1]]$theta
+#&gt; [1] 0.75
+#&gt; 
+#&gt; </div><div class='input'># }
 
 </div></span></pre>
   </div>

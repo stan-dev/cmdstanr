@@ -269,7 +269,7 @@ We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize(
 ```{r optimize}
 fit_mle <- mod$optimize(data = data_list, seed = 123) 
 fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
-fit_mle$mle() 
+fit_mle$mle("theta") 
 ```
 
 Here's a plot comparing the MLE to the posterior distribution of `theta`:

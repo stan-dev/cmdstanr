@@ -12,7 +12,7 @@ test_that("object initialized correctly", {
   expect_equal(mod$exe_file(), character(0))
   expect_error(
     mod$hpp_file(),
-    "The .hpp file does not exists. Please (e)compile the model.",
+    "The .hpp file does not exists. Please (re)compile the model.",
     fixed = TRUE
   )
 })

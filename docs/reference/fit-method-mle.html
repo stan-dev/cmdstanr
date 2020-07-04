@@ -6,15 +6,15 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>NA • cmdstanr</title>
+<title>Extract (penalized) maximum likelihood estimate after optimization — fit-method-mle • cmdstanr</title>
 
 <!-- favicons -->
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png" />
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png" />
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png" />
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
@@ -25,8 +25,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
 <!-- bootstrap-toc -->
-<link rel="stylesheet" href="bootstrap-toc.css">
-<script src="bootstrap-toc.js"></script>
+<link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script>
 
 <!-- Font Awesome icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous" />
@@ -40,13 +40,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
-<link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script>
+<link href="../pkgdown.css" rel="stylesheet">
+<script src="../pkgdown.js"></script>
 
 
 
 
-<meta property="og:title" content="NA" />
+<meta property="og:title" content="Extract (penalized) maximum likelihood estimate after optimization — fit-method-mle" />
+<meta property="og:description" content="The $mle() method is only available for CmdStanMLE objects.
+It returns the penalized maximum likelihood estimate (posterior mode) as a
+numeric vector with one element per variable. The returned vector does not
+include lp__, the total log probability (target) accumulated in the
+model block of the Stan program, which is available via the
+$lp() method and also included in the
+$draws() method." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -66,7 +73,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-title-body">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -78,7 +85,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="index.html">cmdstanr</a>
+        <a class="navbar-link" href="../index.html">cmdstanr</a>
         <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9008</span>
       </span>
     </div>
@@ -86,16 +93,16 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="index.html">
+  <a href="../index.html">
     <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
 <li>
-  <a href="articles/index.html">Vignettes</a>
+  <a href="../articles/index.html">Vignettes</a>
 </li>
 <li>
-  <a href="reference/index.html">Functions</a>
+  <a href="../reference/index.html">Functions</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -164,50 +171,66 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>NA</h1>
+    <h1>Extract (penalized) maximum likelihood estimate after optimization</h1>
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
+    <div class="hidden name"><code>fit-method-mle.Rd</code></div>
+    </div>
+
+    <div class="ref-description">
+    <p>The <code>$mle()</code> method is only available for <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code> objects.
+It returns the penalized maximum likelihood estimate (posterior mode) as a
+numeric vector with one element per variable. The returned vector does not
+include <code>lp__</code>, the total log probability (<code>target</code>) accumulated in the
+<code>model</code> block of the Stan program, which is available via the
+<code><a href='fit-method-lp.html'>$lp()</a></code> method and also included in the
+<code><a href='fit-method-draws.html'>$draws()</a></code> method.</p>
     </div>
 
 
-<div id="submission-checklist" class="section level4">
-<h4 class="hasAnchor">
-<a href="#submission-checklist" class="anchor"></a>Submission Checklist</h4>
-<ul>
-<li>
-<input type="checkbox" disabled>
-Run unit tests</li>
-<li>
-<input type="checkbox" disabled>
-Declare copyright holder and agree to license (see below)</li>
-</ul>
-</div>
-<div id="summary" class="section level4">
-<h4 class="hasAnchor">
-<a href="#summary" class="anchor"></a>Summary</h4>
-<p>Please describe the purpose of the pull request.</p>
-</div>
-<div id="copyright-and-licensing" class="section level4">
-<h4 class="hasAnchor">
-<a href="#copyright-and-licensing" class="anchor"></a>Copyright and Licensing</h4>
-<p>Please list the copyright holder for the work you are submitting (this will be you or your assignee, such as a university or company): <strong>INSERT COPYRIGHT HOLDER HERE</strong></p>
-<p>By submitting this pull request, the copyright holder is agreeing to license the submitted work under the following licenses:</p>
-<ul>
-<li>Code: BSD 3-clause (<a href="https://opensource.org/licenses/BSD-3-Clause" class="uri">https://opensource.org/licenses/BSD-3-Clause</a>)</li>
-</ul>
-</div>
 
+    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
 
+    
+<pre>$mle(variables = NULL)
+</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+
+    
+
+<ul>
+<li><p><code>variables</code>: (character vector) The variables (parameters and generated
+quantities) to include. If NULL (the default) then all variables are
+included.</p></li>
+</ul>
+
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    
+
+<p>A numeric vector. See <strong>Examples</strong>.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>()</div><div class='output co'>#&gt;     alpha   beta[1]   beta[2]   beta[3] 
+#&gt;  0.364490 -0.631559 -0.258942  0.648488 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"alpha"</span>)</div><div class='output co'>#&gt;   alpha 
+#&gt; 0.36449 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt;   beta[1]   beta[2]   beta[3] 
+#&gt; -0.631559 -0.258942  0.648488 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta[2]"</span>)</div><div class='output co'>#&gt;   beta[2] 
+#&gt; -0.258942 </div><div class='input'># }
+
+</div></pre>
   </div>
-
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>
     </nav>
   </div>
-
 </div>
-
 
 
       <footer>

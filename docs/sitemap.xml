@@ -49,6 +49,15 @@
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-lp.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-metadata.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-mle.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-output.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html</loc>
   </url>
   <url>

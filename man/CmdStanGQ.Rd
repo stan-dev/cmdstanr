@@ -8,27 +8,42 @@ A \code{CmdStanGQ} object is the fitted model object returned by the
 \code{\link[=model-method-generate-quantities]{$generate_quantities()}} method of a
 \code{\link{CmdStanModel}} object.
 }
-\details{
-\code{CmdStanGQ} objects have the following methods:
+\section{Methods}{
+ \code{CmdStanGQ} objects have the following associated methods,
+all of which have their own (linked) documentation pages.
+\subsection{Extract contents of generated quantities object}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-draws]{$draws()}} \tab Return the generated quantities as a \code{\link[posterior:draws_array]{draws_array}}. \cr
+   \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+}
 
-\tabular{ll}{
-\strong{Method} \tab \strong{Description} \cr
-\code{\link[=fit-method-draws]{$draws()}} \tab Returns the generated quantities
-as a \code{\link[posterior:draws_array]{draws_array}}. \cr
-\code{\link[=fit-method-summary]{$summary()}} \tab
-Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
-\code{\link[=fit-method-save_object]{$save_object()}}
-\tab Save fitted model object to a file. \cr
-\code{\link[=fit-method-save_output_files]{$save_output_files()}}
-\tab Save output CSV files to a specified location. \cr
-\code{\link[=fit-method-save_data_file]{$save_data_file()}}
-\tab Save JSON data file to a specified location. \cr
-\code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
-\verb{$output()} \tab Return the stdout and stderr of all chains as a list of
-character vectors, or pretty print the output for a single chain if
-\code{id} argument is specified. \cr
+}
+
+\subsection{Summarize inferences}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
+}
+
+}
+
+\subsection{Save fitted model object and temporary files}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-save_object]{$save_object()}} \tab Save fitted model object to a file. \cr
+   \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
+   \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file to a specified location. \cr
+}
+
+}
+
+\subsection{Report run times and console output}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
+   \code{\link[=fit-method-output]{$output()}} \tab Return the stdout and stderr of all chains or pretty print the output for a single chain. \cr
+}
+
 }
 }
+
 \examples{
 \dontrun{
 # first fit a model using MCMC

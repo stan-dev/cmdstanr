@@ -85,7 +85,7 @@ log probability (target) accumulated in the model block." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9008</span>
       </span>
     </div>
 
@@ -216,7 +216,7 @@ Defaults to <code>FALSE</code>.</p></li>
 <li><p>For <a href='model-method-sample.html'>MCMC</a>, a 3-D
 <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> object (iteration x chain x
 variable).</p></li>
-<li><p>For <a href='model-method-generate-quantities.html'>standalone generated quantities</a>, a
+<li><p>For standalone <a href='model-method-generate-quantities.html'>generated quantities</a>, a
 3-D <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> object (iteration x chain x
 variable).</p></li>
 <li><p>For <a href='model-method-variational.html'>variational inference</a>, a 2-D
@@ -227,9 +227,12 @@ draws.</p></li>
 <li><p>For <a href='model-method-optimize.html'>optimization</a>, a 1-row
 <code><a href='https://mc-stan.org/posterior/reference/draws_matrix.html'>draws_matrix</a></code> with one column per variable. These
 are <em>not</em> actually draws, just point estimates stored in the <code>draws_matrix</code>
-format.</p></li>
+format. See <code><a href='fit-method-mle.html'>$mle()</a></code> to extract them as a numeric vector.</p></li>
 </ul>
 
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code>, <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
@@ -238,27 +241,27 @@ format.</p></li>
 <span class='fu'><a href='https://mc-stan.org/bayesplot/reference/bayesplot-colors.html'>color_scheme_set</a></span>(<span class='st'>"brightblue"</span>)
 
 <span class='co'># logistic regression with intercept alpha and coefficients beta</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'>
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'>
 <span class='co'># returned as 3-D array (see ?posterior::draws_array)</span>
 <span class='no'>draws</span> <span class='kw'>&lt;-</span> <span class='no'>fit</span>$<span class='fu'>draws</span>()
-<span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; [1] 1000    4    5</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:5] -65 -65.1 -65.3 -65.4 -68.7 ...
+<span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; [1] 1000    4    5</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:5] -69.6 -67.9 -67.3 -64.4 -64.9 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   ..$ variable : chr [1:5] "lp__" "alpha" "beta[1]" "beta[2]" ...</div><div class='input'>
 <span class='co'># can easily convert to other formats (data frame, matrix, list)</span>
 <span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>draws</span>)  <span class='co'># see also as_draws_matrix, as_draws_list</span></div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 5 variables
-#&gt;    lp__ alpha beta[1] beta[2] beta[3]
-#&gt; 1   -65 0.616   -0.66 -0.3815  0.5227
-#&gt; 2   -65 0.532   -0.61 -0.3777  0.3704
-#&gt; 3   -65 0.666   -0.52 -0.1367  0.5360
-#&gt; 4   -65 0.418   -0.42  0.0059  0.7303
-#&gt; 5   -69 0.084   -0.37 -0.2434 -0.0093
-#&gt; 6   -64 0.284   -0.53 -0.1376  0.5247
-#&gt; 7   -68 0.740   -0.24 -0.0275  0.9066
-#&gt; 8   -66 0.749   -0.46 -0.0666  0.5645
-#&gt; 9   -66 0.559   -1.05 -0.4111  0.8094
-#&gt; 10  -65 0.189   -0.94 -0.3172  0.7602
+#&gt;    lp__  alpha beta[1] beta[2] beta[3]
+#&gt; 1   -70  0.987   -0.93 -0.6392    1.00
+#&gt; 2   -68 -0.164   -0.63 -0.0014    0.55
+#&gt; 3   -67 -0.057   -0.78  0.0674    0.52
+#&gt; 4   -64  0.216   -0.61 -0.1837    0.47
+#&gt; 5   -65  0.196   -0.61 -0.0431    0.71
+#&gt; 6   -65  0.204   -0.66 -0.0160    0.55
+#&gt; 7   -65  0.406   -0.55 -0.2439    0.36
+#&gt; 8   -65  0.451   -0.56 -0.1934    1.00
+#&gt; 9   -67  0.494   -0.63 -0.2534    1.32
+#&gt; 10  -65  0.586   -0.40 -0.1524    0.72
 #&gt; # ... with 3990 more draws
 #&gt; # ... hidden meta-columns {'.chain', '.iteration', '.draw'}</div><div class='input'>
 <span class='co'># can select specific parameters</span>
@@ -266,64 +269,64 @@ format.</p></li>
 #&gt; , , variable = alpha
 #&gt; 
 #&gt;          chain
-#&gt; iteration     1    2    3      4
-#&gt;         1 0.616 0.59 0.67 -0.037
-#&gt;         2 0.532 0.51 0.60  0.517
-#&gt;         3 0.666 0.43 0.66  0.387
-#&gt;         4 0.418 0.57 0.83  0.645
-#&gt;         5 0.084 0.58 0.37  0.420
+#&gt; iteration      1    2    3     4
+#&gt;         1  0.987 0.49 0.24 0.771
+#&gt;         2 -0.164 0.27 0.33 0.035
+#&gt;         3 -0.057 0.23 0.38 0.094
+#&gt;         4  0.216 0.81 0.34 0.183
+#&gt;         5  0.196 0.57 0.50 0.453
 #&gt; 
 #&gt; # ... with 995 more iterations</div><div class='input'><span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='st'>"beta"</span>)  <span class='co'># selects entire vector beta</span></div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 4 chains, and 3 variables
 #&gt; , , variable = beta[1]
 #&gt; 
 #&gt;          chain
 #&gt; iteration     1     2     3     4
-#&gt;         1 -0.66 -0.92 -0.26 -0.71
-#&gt;         2 -0.61 -0.91 -0.62 -0.58
-#&gt;         3 -0.52 -0.85 -0.59 -0.80
-#&gt;         4 -0.42 -0.55 -0.35 -0.44
-#&gt;         5 -0.37 -0.73 -0.67 -0.66
+#&gt;         1 -0.93 -0.60 -0.54 -1.19
+#&gt;         2 -0.63 -0.28 -0.74 -0.25
+#&gt;         3 -0.78 -0.61 -0.46 -0.27
+#&gt;         4 -0.61 -1.00 -0.70 -0.61
+#&gt;         5 -0.61 -1.03 -0.46 -0.43
 #&gt; 
 #&gt; , , variable = beta[2]
 #&gt; 
 #&gt;          chain
-#&gt; iteration       1      2      3     4
-#&gt;         1 -0.3815 -0.724 -0.124 -0.13
-#&gt;         2 -0.3777 -0.339  0.026 -0.56
-#&gt;         3 -0.1367 -0.600  0.035 -0.26
-#&gt;         4  0.0059  0.064  0.074 -0.40
-#&gt;         5 -0.2434  0.053 -0.578 -0.32
+#&gt; iteration       1       2      3      4
+#&gt;         1 -0.6392 -0.2497 -0.740 -0.431
+#&gt;         2 -0.0014 -0.0226 -0.129  0.002
+#&gt;         3  0.0674 -0.0024 -0.540 -0.222
+#&gt;         4 -0.1837 -0.7685 -0.054 -0.195
+#&gt;         5 -0.0431 -0.5211 -0.518 -0.190
 #&gt; 
 #&gt; , , variable = beta[3]
 #&gt; 
 #&gt;          chain
-#&gt; iteration       1    2    3    4
-#&gt;         1  0.5227 0.70 0.67 1.17
-#&gt;         2  0.3704 0.84 0.66 0.38
-#&gt;         3  0.5360 0.94 0.58 0.68
-#&gt;         4  0.7303 0.54 0.11 0.72
-#&gt;         5 -0.0093 1.09 0.52 0.75
+#&gt; iteration    1    2    3    4
+#&gt;         1 1.00 0.67 0.77 0.97
+#&gt;         2 0.55 0.49 0.39 0.57
+#&gt;         3 0.52 0.59 1.07 0.36
+#&gt;         4 0.47 0.72 0.38 0.25
+#&gt;         5 0.71 0.83 1.06 0.54
 #&gt; 
 #&gt; # ... with 995 more iterations</div><div class='input'><span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta[2]"</span>))</div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 4 chains, and 2 variables
 #&gt; , , variable = alpha
 #&gt; 
 #&gt;          chain
-#&gt; iteration     1    2    3      4
-#&gt;         1 0.616 0.59 0.67 -0.037
-#&gt;         2 0.532 0.51 0.60  0.517
-#&gt;         3 0.666 0.43 0.66  0.387
-#&gt;         4 0.418 0.57 0.83  0.645
-#&gt;         5 0.084 0.58 0.37  0.420
+#&gt; iteration      1    2    3     4
+#&gt;         1  0.987 0.49 0.24 0.771
+#&gt;         2 -0.164 0.27 0.33 0.035
+#&gt;         3 -0.057 0.23 0.38 0.094
+#&gt;         4  0.216 0.81 0.34 0.183
+#&gt;         5  0.196 0.57 0.50 0.453
 #&gt; 
 #&gt; , , variable = beta[2]
 #&gt; 
 #&gt;          chain
-#&gt; iteration       1      2      3     4
-#&gt;         1 -0.3815 -0.724 -0.124 -0.13
-#&gt;         2 -0.3777 -0.339  0.026 -0.56
-#&gt;         3 -0.1367 -0.600  0.035 -0.26
-#&gt;         4  0.0059  0.064  0.074 -0.40
-#&gt;         5 -0.2434  0.053 -0.578 -0.32
+#&gt; iteration       1       2      3      4
+#&gt;         1 -0.6392 -0.2497 -0.740 -0.431
+#&gt;         2 -0.0014 -0.0226 -0.129  0.002
+#&gt;         3  0.0674 -0.0024 -0.540 -0.222
+#&gt;         4 -0.1837 -0.7685 -0.054 -0.195
+#&gt;         5 -0.0431 -0.5211 -0.518 -0.190
 #&gt; 
 #&gt; # ... with 995 more iterations</div><div class='input'>
 <span class='co'># can be passed directly to bayesplot plotting functions</span>

@@ -81,7 +81,7 @@ $optimize() method of a CmdStanModel object." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9008</span>
       </span>
     </div>
 
@@ -180,28 +180,50 @@ $optimize() method of a CmdStanModel object." />
 
 
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
-    <p><code>CmdStanMLE</code> objects have the following methods:</p>
+    <p><code>CmdStanMLE</code> objects have the following associated methods,
+all of which have their own (linked) documentation pages.</p><h3>Extract contents of fitted model object</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code><a href='fit-method-draws.html'>draws()</a></code></td><td>Return the point estimate as a 1-row
-<code><a href='https://mc-stan.org/posterior/reference/draws_matrix.html'>draws_matrix</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run
-<code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
-<tr><td><code><a href='fit-method-lp.html'>$lp()</a></code></td><td>Return the total log probability density
-(<code>target</code>) computed in the model block of the Stan program.</td></tr>
-<tr><td><code>$mle()</code></td><td>Return the penalized maximum likelihood estimate (posterior
-mode) as a numeric vector with one element per variable (excluding <code><a href='fit-method-lp.html'>lp()</a></code>).</td></tr>
+<tr><td><code><a href='fit-method-draws.html'>draws()</a></code></td><td>Return the point estimate as a 1-row <code><a href='https://mc-stan.org/posterior/reference/draws_matrix.html'>draws_matrix</a></code>.</td></tr>
+<tr><td><code><a href='fit-method-mle.html'>$mle()</a></code></td><td>Return the point estimate as a numeric vector.</td></tr>
+<tr><td><code><a href='fit-method-lp.html'>$lp()</a></code></td><td>Return the total log probability density (<code>target</code>).</td></tr>
 <tr><td><code><a href='fit-method-init.html'>$init()</a></code></td><td>Return user-specified initial values.</td></tr>
-<tr><td><code><a href='fit-method-save_object.html'>$save_object()</a></code></td><td>Save fitted model object to a file.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV
-files to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file
-to a specified location.</td></tr>
-<tr><td><code><a href='fit-method-time.html'>$time()</a></code></td><td>Report the total run time.</td></tr>
-<tr><td><code>$output()</code></td><td>Pretty print the output that was printed during optimization.</td></tr>
+<tr><td><code><a href='fit-method-metadata.html'>$metadata()</a></code></td><td>Return a list of metadata gathered from the CmdStan CSV files.</td></tr>
 </table>
+
+
+
+
+<h3>Summarize inferences</h3>
+<table class='table'>
+<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
+<tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
+</table>
+
+
+
+
+<h3>Save fitted model object and temporary files</h3>
+<table class='table'>
+<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
+<tr><td><code><a href='fit-method-save_object.html'>$save_object()</a></code></td><td>Save fitted model object to a file.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code></td><td>Save output CSV files to a specified location.</td></tr>
+<tr><td><code><a href='fit-method-save_output_files.html'>$save_data_file()</a></code></td><td>Save JSON data file to a specified location.</td></tr>
+</table>
+
+
+
+
+<h3>Report run times and console output</h3>
+<table class='table'>
+<tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
+<tr><td><code><a href='fit-method-time.html'>$time()</a></code></td><td>Report the total run time.</td></tr>
+<tr><td><code><a href='fit-method-output.html'>$output()</a></code></td><td>Pretty print the output that was printed to the console.</td></tr>
+</table>
+
+
 
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>

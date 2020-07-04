@@ -7,30 +7,41 @@
 A \code{CmdStanModel} object is an \link[R6:R6Class]{R6} object created
 by the \code{\link[=cmdstan_model]{cmdstan_model()}} function. The object stores the path to a Stan
 program and compiled executable (once created), and provides methods for
-fitting the model using Stan's algorithms. See the \strong{Details} section for
-available methods.
+fitting the model using Stan's algorithms.
 }
-\details{
-\code{CmdStanModel} objects have the following associated methods:
+\section{Methods}{
+ \code{CmdStanModel} objects have the following associated
+methods, many of which have their own (linked) documentation pages:
+\subsection{Stan code}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \verb{$stan_file()} \tab Return the file path to the Stan program. \cr
+   \verb{$code()} \tab Return Stan program as a string. \cr
+   \verb{$print()} \tab Print readable version of Stan program. \cr
+}
 
-\tabular{ll}{
-\strong{Method} \tab \strong{Description} \cr
-\verb{$code()} \tab Return Stan program as a string. \cr
-\verb{$print()} \tab Print readable version of Stan program. \cr
-\verb{$stan_file()} \tab Return the file path to the Stan program. \cr
-\verb{$exe_file()} \tab Return the file path to the compiled executable. \cr
-\verb{$hpp_file()} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
-\code{\link[=model-method-compile]{$compile()}} \tab Compile Stan program. \cr
-\code{\link[=model-method-sample]{$sample()}}
-\tab Run CmdStan's \code{"sample"} method, return \code{\link{CmdStanMCMC}} object. \cr
-\code{\link[=model-method-optimize]{$optimize()}}
-\tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object. \cr
-\code{\link[=model-method-variational]{$variational()}}
-\tab Run CmdStan's \code{"variational"} method, return \code{\link{CmdStanVB}} object. \cr
-\code{\link[=model-method-generate-quantities]{$generate_quantities()}}
-\tab Run CmdStan's \code{"generate quantities"} method, return \code{\link{CmdStanGQ}} object. \cr
+}
+
+\subsection{Compilation}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=model-method-compile]{$compile()}} \tab Compile Stan program. \cr
+   \code{\link[=model-method-compile]{$exe_file()}} \tab Return the file path to the compiled executable. \cr
+   \code{\link[=model-method-compile]{$hpp_file()}} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
+   \code{\link[=model-method-compile]{$save_hpp_file()}} \tab Save the \code{.hpp} file containing the generated C++ code. \cr
+}
+
+}
+
+\subsection{Model fitting}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=model-method-sample]{$sample()}} \tab Run CmdStan's \code{"sample"} method, return \code{\link{CmdStanMCMC}} object. \cr
+   \code{\link[=model-method-optimize]{$optimize()}} \tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object. \cr
+   \code{\link[=model-method-variational]{$variational()}} \tab Run CmdStan's \code{"variational"} method, return \code{\link{CmdStanVB}} object. \cr
+   \code{\link[=model-method-generate-quantities]{$generate_quantities()}} \tab Run CmdStan's \code{"generate quantities"} method, return \code{\link{CmdStanGQ}} object. \cr
+}
+
 }
 }
+
 \examples{
 \dontrun{
 library(cmdstanr)
