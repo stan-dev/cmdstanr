@@ -50,13 +50,14 @@ all of which have their own (linked) documentation pages.
 }
 
 \seealso{
-The CmdStanR website (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr})
-for online documentation and tutorials.
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
 
 The Stan and CmdStan documentation:
 \itemize{
-\item Stan doc (html or pdf): \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation/}
-\item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
+\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
+\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
 Other fitted model objects: 
