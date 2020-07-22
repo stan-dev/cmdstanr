@@ -124,7 +124,7 @@ cmdstan_default_path <- function() {
       latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
       if (is_release_candidate(latest_cmdstan)) {
         non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
-        if (dir.exists(file.path(installs_path,latest_cmdstan))) {
+        if (dir.exists(file.path(installs_path,non_rc_path))) {
           latest_cmdstan <- non_rc_path
         }
       }
