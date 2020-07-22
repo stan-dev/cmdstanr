@@ -111,8 +111,6 @@ cmdstan_default_path <- function() {
   installs_path <- file.path(Sys.getenv("HOME"), ".cmdstanr")
   if (dir.exists(installs_path)) {
     cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-    is_rc <- sapply(cmdstan_installs, is_release_candidate)
-    cmdstan_installs <- cmdstan_installs[!is_rc]
     # if installed in folder cmdstan, with no version
     # move to cmdstan-version folder
     if ("cmdstan" %in% cmdstan_installs) {
@@ -123,7 +121,14 @@ cmdstan_default_path <- function() {
       cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
     }
     if (length(cmdstan_installs) > 0) {
-      return(file.path(installs_path,sort(cmdstan_installs, decreasing = TRUE)[1]))
+      latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
+      if (is_release_candidate(latest_cmdstan)) {
+        non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
+        if (dir.exists(file.path(installs_path,latest_cmdstan))) {
+          latest_cmdstan <- non_rc_path
+        }
+      }
+      return(file.path(installs_path,latest_cmdstan))
     }
   }
   return(NULL)
