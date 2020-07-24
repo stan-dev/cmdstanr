@@ -228,7 +228,9 @@ read_cmdstan_csv <- function(files,
     draws <- try(silent = TRUE, expr = {
       suppressWarnings(do.call(vroom::vroom, vroom_args))
     })
-    if (inherits(draws, "try-error")) {
+    if (!inherits(draws, "try-error")) {
+      draws <- draws[!is.na(draws$lp__), ]
+    } else {
       if (vroom_warnings == 0) { # only warn the first time instead of for every csv file
         warning(
           "Fast CSV reading with vroom::vroom() failed. Using utils::read.csv() instead. ",
@@ -241,8 +243,6 @@ read_cmdstan_csv <- function(files,
       draws <- utils::read.csv(output_file, comment.char = "#", skip = metadata$lines_to_skip)
       draws <- draws[, col_select]
     }
-    draws <- draws[!is.na(draws$lp__), ]
-
 
     if (nrow(draws) > 0) {
       if (metadata$method == "sample") {
