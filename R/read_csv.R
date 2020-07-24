@@ -229,7 +229,9 @@ read_cmdstan_csv <- function(files,
       suppressWarnings(do.call(vroom::vroom, vroom_args))
     })
     if (!inherits(draws, "try-error")) {
-      draws <- draws[!is.na(draws$lp__), ]
+      if (metadata$method != "generate_quantities") {
+        draws <- draws[!is.na(draws$lp__), ]
+      }
     } else {
       if (vroom_warnings == 0) { # only warn the first time instead of for every csv file
         warning(
