@@ -121,6 +121,8 @@ read_cmdstan_csv <- function(files,
   col_types <- NULL
   col_select <- NULL
   not_matching <- c()
+  vroom_warnings <- 0
+
   for (output_file in files) {
     if (is.null(metadata)) {
       metadata <- read_csv_metadata(output_file)
@@ -204,41 +206,44 @@ read_cmdstan_csv <- function(files,
       all_draws <- 1
     }
 
+    vroom_args <- list(
+      file = output_file,
+      comment = "#",
+      delim = ",",
+      trim_ws = TRUE,
+      altrep = FALSE,
+      progress = FALSE,
+      skip = metadata$lines_to_skip,
+      col_select = col_select
+    )
     if (metadata$method == "generate_quantities") {
-      # set the first arg as double
-      # to silence the type detection info
-      col_types <- list()
-      col_types[[col_select[1]]] = "d"
-      suppressWarnings(
-        draws <- vroom::vroom(
-          output_file,
-          comment = "#",
-          delim = ',',
-          col_select = col_select,
-          col_types = col_types,
-          trim_ws = TRUE,
-          altrep = FALSE,
-          progress = FALSE,
-          skip = metadata$lines_to_skip
-        )
-      )
+      # set the first arg as double to silence the type detection info
+      vroom_args$col_types <- list()
+      vroom_args$col_types[[col_select[1]]] <- "d"
     } else {
-      suppressWarnings(
-        draws <- vroom::vroom(
-          output_file,
-          comment = "#",
-          delim = ',',
-          trim_ws = TRUE,
-          col_select = col_select,
-          col_types = c("lp__" = "d"),
-          altrep = FALSE,
-          progress = FALSE,
-          skip = metadata$lines_to_skip,
-          n_max = all_draws * 2
-        )
-      )
-      draws <- draws[!is.na(draws$lp__), ]
+      vroom_args$col_types <- c("lp__" = "d")
+      vroom_args$n_max <- all_draws * 2
     }
+
+    draws <- try(silent = TRUE, expr = {
+      suppressWarnings(do.call(vroom::vroom, vroom_args))
+    })
+    if (inherits(draws, "try-error")) {
+      if (vroom_warnings == 0) { # only warn the first time instead of for every csv file
+        warning(
+          "Fast CSV reading with vroom::vroom() failed. Using utils::read.csv() instead. ",
+          "\nTo help avoid this in the future, please report this issue at github.com/stan-dev/cmdstanr/issues ",
+          "and include the output from sessionInfo(). Thank you!",
+          call. = FALSE
+        )
+      }
+      vroom_warnings <- vroom_warnings + 1
+      draws <- utils::read.csv(output_file, comment.char = "#", skip = metadata$lines_to_skip)
+      draws <- draws[, col_select]
+    }
+    draws <- draws[!is.na(draws$lp__), ]
+
+
     if (nrow(draws) > 0) {
       if (metadata$method == "sample") {
         if (metadata$save_warmup == 1) {
