@@ -1,6 +1,7 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.0.0.9008
+Version: 0.0.0.9009
+Date: 2020-07-24
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
@@ -23,7 +24,7 @@ SystemRequirements: CmdStan (https://mc-stan.org/users/interfaces/cmdstan)
 Imports: 
     checkmate,
     jsonlite (>= 1.2.0),
-    posterior (>= 0.0.3),
+    posterior (>= 0.1.0),
     processx,
     R6 (>= 2.4.0),
     vroom
