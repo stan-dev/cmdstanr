@@ -4,9 +4,9 @@
 #'   install the latest release of
 #'   [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest) or a
 #'   development version from a repository. Currently the necessary C++ tool
-#'   chain is assumed to be available (see Appendix B of the CmdStan
-#'   [guide](https://github.com/stan-dev/cmdstan/releases/latest)), but in the
-#'   future CmdStanR may help install the requirements.
+#'   chain is assumed to be available (see the the CmdStan
+#'   [installation guide](https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html)),
+#'   but in the future CmdStanR may help install the requirements.
 #'
 #'   The `rebuild_cmdstan()` function cleans and rebuilds the cmdstan
 #'   installation. Use this function in case of any issues when compiling

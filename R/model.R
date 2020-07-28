@@ -430,8 +430,14 @@ compile_method <- function(quiet = TRUE,
     checkmate::assert_directory_exists(include_paths, access = "r")
     include_paths <- absolute_path(include_paths)
     include_paths <- paste0(include_paths, collapse = ",")
-    stancflags_val <- paste0(stancflags_val, " --include_paths=", include_paths, " ")
+    if (cmdstan_version() >= "2.24") {
+      include_paths_flag <- " --include-paths="
+    } else {
+      include_paths_flag <- " --include_paths="
+    }
+    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
   }
+
   if (!is.null(cpp_options$stan_opencl)) {
     stanc_options[["use-opencl"]] <- TRUE
   }
@@ -448,7 +454,9 @@ compile_method <- function(quiet = TRUE,
     }
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
-  prepare_precompiled(cpp_options, quiet)
+  if (cmdstan_version() < "2.24") {
+    prepare_precompiled(cpp_options, quiet)
+  }
   run_log <- processx::run(
     command = make_cmd(),
     args = c(tmp_exe,

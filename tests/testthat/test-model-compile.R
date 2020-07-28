@@ -141,48 +141,30 @@ test_that("name in STANCFLAGS is set correctly", {
 test_that("switching threads on and off works without rebuild", {
   skip_on_cran()
   main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-  mod$compile(force_recompile = TRUE)
-
-  before_mtime <- file.mtime(main_path_o)
-  mod$compile(force_recompile = TRUE)
-  after_mtime <- file.mtime(main_path_o)
-  expect_equal(before_mtime, after_mtime)
-
-  before_mtime <- file.mtime(main_path_o)
-  mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-  after_mtime <- file.mtime(main_path_o)
-  time_diff <- as.double((after_mtime - before_mtime), units = "secs")
-  expect_gt(time_diff, 0)
-
-  before_mtime <- file.mtime(main_path_o)
-  mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-  after_mtime <- file.mtime(main_path_o)
-  expect_equal(before_mtime, after_mtime)
-
-  before_mtime <- file.mtime(main_path_o)
-  mod$compile(force_recompile = TRUE)
-  after_mtime <- file.mtime(main_path_o)
-  time_diff <- as.double((after_mtime - before_mtime), units = "secs")
-  expect_gt(time_diff, 0)
-})
-
-test_that("message is shown on building main.o", {
-  skip_on_cran()
-  main_o_files <- c(
-    file.path(cmdstan_path(), "src", "cmdstan", "main.o"),
-    file.path(cmdstan_path(), "src", "cmdstan", "main_noflags.o")
-  )
-  for (f in main_o_files) {
-    if (file.exists(f))
-      file.remove(f)
+  main_path_threads_o <- file.path(cmdstan_path(), "src", "cmdstan", "main_threads.o")
+  if (file.exists(main_path_threads_o)) {
+    file.remove(main_path_threads_o)
   }
-  expect_message(
-    mod$compile(force_recompile = TRUE),
-    "Compiling the main object file and precompiled headers (may take up to a few minutes). ",
-    "This is only necessary for the first compilation after installation or when ",
-    "threading, MPI or OpenCL are used for the first time.",
-    fixed = TRUE
-  )
+  mod$compile(force_recompile = TRUE)
+
+  before_mtime <- file.mtime(main_path_o)
+  mod$compile(force_recompile = TRUE)
+  after_mtime <- file.mtime(main_path_o)
+  expect_equal(before_mtime, after_mtime)
+  expect_false(file.exists(main_path_threads_o))
+
+  mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
+  checkmate::expect_file_exists(main_path_threads_o)
+
+  before_mtime <- file.mtime(main_path_o)
+  mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
+  after_mtime <- file.mtime(main_path_o)
+  expect_equal(before_mtime, after_mtime)
+
+  before_mtime <- file.mtime(main_path_o)
+  mod$compile(force_recompile = TRUE)
+  after_mtime <- file.mtime(main_path_o)
+  expect_equal(before_mtime, after_mtime)
 })
 
 test_that("compile errors are shown", {
