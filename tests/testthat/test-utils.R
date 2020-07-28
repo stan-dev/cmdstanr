@@ -130,11 +130,11 @@ test_that("cmdstan_make_local() works", {
 
 test_that("variable_dims() works", {
   vars <- c("a", "b[1]", "b[2]", "b[3]", "c[1,1]", "c[1,2]")
-  vars_dims <- list(a = 0, b = 3, c = c(1,2))
+  vars_dims <- list(a = 1, b = 3, c = c(1,2))
   expect_equal(variable_dims(vars), vars_dims)
 
   vars <- c("a", "b")
-  vars_dims <- list(a = 0, b = 0)
+  vars_dims <- list(a = 1, b = 1)
   expect_equal(variable_dims(vars), vars_dims)
 
   vars <- c()
