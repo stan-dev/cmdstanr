@@ -321,6 +321,9 @@ read_cmdstan_csv <- function(files,
   metadata$inv_metric <- NULL
   metadata$lines_to_skip <- NULL
   metadata$model_params <- repair_variable_names(metadata$model_params)
+  model_param_dims <- variable_dims(metadata$model_params)
+  metadata$model_params_dims <- model_param_dims
+  metadata$model_params_named <- names(model_param_dims)
   repaired_variables <- repair_variable_names(variables)
   if (metadata$method == "sample") {
     if (!is.null(warmup_draws)) {

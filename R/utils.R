@@ -326,3 +326,28 @@ matching_variables <- function(variable_filters, variables) {
     not_found = not_found
   )
 }
+
+#' Returns a list of dimensions for the input variables.
+#' For this function to return the true dimensions of the variables, 
+#' the indexed variables must be listed in ascending order of indices.
+variable_dims <- function(variable_names = NULL) {
+  if(is.null(variable_names)) {
+    dims <- NULL
+  } else {
+    dims <- list()
+    uniq_variable_names <- unique(gsub("\\[.*\\]", "", variable_names))
+    var_names <- gsub("\\]", "", variable_names)
+    for(var in uniq_variable_names) {
+      pattern <- paste0(var, "\\[")
+      var_indices <- var_names[grep(pattern, var_names)]
+      var_indices <- gsub(pattern, "", var_indices)
+      if(length(var_indices)) {
+        var_indices <- strsplit(var_indices[length(var_indices)], ",")[[1]]
+        dims[[var]] <- as.numeric(var_indices)
+      } else {
+        dims[[var]] <- 0
+      }
+    }
+  }
+  dims
+}

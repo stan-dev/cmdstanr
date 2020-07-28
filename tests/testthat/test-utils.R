@@ -128,3 +128,25 @@ test_that("cmdstan_make_local() works", {
   cmdstan_make_local(cpp_options = as.list(exisiting_make_local), append = FALSE)
 })
 
+test_that("variable_dims() works", {
+  vars <- c("a", "b[1]", "b[2]", "b[3]", "c[1,1]", "c[1,2]")
+  vars_dims <- list(a = 0, b = 3, c = c(1,2))
+  expect_equal(variable_dims(vars), vars_dims)
+
+  vars <- c("a", "b")
+  vars_dims <- list(a = 0, b = 0)
+  expect_equal(variable_dims(vars), vars_dims)
+
+  vars <- c()
+  vars_dims <- NULL
+  expect_equal(variable_dims(vars), vars_dims)
+
+  vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,1]", "c[2,2]", "c[2,3]", "b[1]", "b[2]", "b[3]", "b[4]")
+  vars_dims <- list(c = c(2,3), b = 4)
+  expect_equal(variable_dims(vars), vars_dims)
+
+  # wrong dimensions for descending order
+  vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,3]", "c[2,2]", "c[2,1]", "b[4]", "b[2]", "b[3]", "b[1]")
+  vars_dims <- list(c = c(2,1), b = 1)
+  expect_equal(variable_dims(vars), vars_dims)
+})
