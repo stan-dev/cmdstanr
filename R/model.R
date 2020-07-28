@@ -5,7 +5,9 @@
 #' file containing a Stan program.
 #'
 #' @export
-#' @param stan_file The path to a `.stan` file containing a Stan program.
+#' @param stan_file The path to a `.stan` file containing a Stan program. The
+#'   helper function [write_stan_tempfile()] is provided for cases when it is
+#'   more convenient to specify the Stan program as a string.
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.

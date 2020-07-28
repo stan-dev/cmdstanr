@@ -1,5 +1,6 @@
 # CmdStanFit superclass ---------------------------------------------------
-# CmdStanMCMC, CmdStanMLE, and CmdStanVB all share the methods of the
+
+# CmdStanMCMC, CmdStanMLE, CmdStanVB, and CmdStanGQ all share the methods of the
 # superclass CmdStanFit and also have their own unique methods
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",

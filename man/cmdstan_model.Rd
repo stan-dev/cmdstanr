@@ -7,7 +7,9 @@
 cmdstan_model(stan_file, compile = TRUE, ...)
 }
 \arguments{
-\item{stan_file}{The path to a \code{.stan} file containing a Stan program.}
+\item{stan_file}{The path to a \code{.stan} file containing a Stan program. The
+helper function \code{\link[=write_stan_tempfile]{write_stan_tempfile()}} is provided for cases when it is
+more convenient to specify the Stan program as a string.}
 
 \item{compile}{Do compilation? The default is \code{TRUE}. If \code{FALSE}
 compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}
@@ -140,12 +142,13 @@ fit_optim_w_init_list$init()
 \seealso{
 \code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=cmdstan_path]{cmdstan_path()}}
 
-The CmdStanR website (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr})
-for online documentation and tutorials.
+The CmdStanR website
+(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
+documentation and tutorials.
 
 The Stan and CmdStan documentation:
 \itemize{
-\item Stan doc (html or pdf): \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation/}
-\item CmdStan doc (pdf): (\href{https://github.com/stan-dev/cmdstan/releases/latest}{github.com/stan-dev/cmdstan/releases/}).
+\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
+\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 }
