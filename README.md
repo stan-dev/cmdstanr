@@ -32,13 +32,13 @@ analysis.
 
 ### Installation
 
-Currently you can install the latest pre-beta release of the **cmdstanr** R package with 
+You can install the beta release of the **cmdstanr** R package with 
 
 ```r
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
-or you can install the development version from GitHub:
+or you can install the latest development version from GitHub:
 
 ```r
 # install.packages("devtools")
