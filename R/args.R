@@ -2,7 +2,7 @@
 #'
 #' These objects store arguments for creating the call to CmdStan and provide a
 #' `compose()` method for creating a character vector of arguments that can be
-#' passed to the `args` argument of [processx::process$new()].
+#' passed to the `args` argument of `processx::process$new()`.
 #'
 #' @noRd
 #' @details

@@ -82,7 +82,7 @@ and efficient alternative to rstan::read_stan_csv()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9010</span>
       </span>
     </div>
 
@@ -177,7 +177,7 @@ and efficient alternative to rstan::read_stan_csv()." />
     <div class="ref-description">
     <p><code>read_cmdstan_csv()</code> is used internally by CmdStanR to read CmdStan's output
 CSV files into <span style="R">R</span>. It can also be used by CmdStan users as a more flexible
-and efficient alternative to <code><a href='https://rdrr.io/pkg/rstan/man/stan_csv.html'>rstan::read_stan_csv()</a></code>.</p>
+and efficient alternative to <code><a href='https://mc-stan.org/rstan/reference/stan_csv.html'>rstan::read_stan_csv()</a></code>.</p>
     </div>
 
     <pre class="usage"><span class='fu'>read_cmdstan_csv</span>(<span class='no'>files</span>, <span class='kw'>variables</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
@@ -277,7 +277,7 @@ the generated quantities.</p></li>
 <span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; List of 7
 #&gt;  $ metadata                       :List of 30
 #&gt;   ..$ stan_version_major  : num 2
-#&gt;   ..$ stan_version_minor  : num 23
+#&gt;   ..$ stan_version_minor  : num 24
 #&gt;   ..$ stan_version_patch  : num 0
 #&gt;   ..$ method              : chr "sample"
 #&gt;   ..$ save_warmup         : num 1
@@ -293,45 +293,45 @@ the generated quantities.</p></li>
 #&gt;   ..$ metric              : chr "diag_e"
 #&gt;   ..$ stepsize_jitter     : num 0
 #&gt;   ..$ id                  : num [1:4] 1 2 3 4
-#&gt;   ..$ init                : num 2
-#&gt;   ..$ seed                : num [1:4] 3.00e+08 9.19e+08 1.79e+09 7.26e+08
+#&gt;   ..$ init                : num [1:4] 2 2 2 2
+#&gt;   ..$ seed                : num [1:4] 2.05e+09 1.78e+09 1.47e+09 1.07e+09
 #&gt;   ..$ refresh             : num 100
 #&gt;   ..$ model_params        : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
 #&gt;   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#&gt;   ..$ model_name          : chr "file6aac4a66980_model"
+#&gt;   ..$ model_name          : chr "file8f0a11117ce6_model"
 #&gt;   ..$ adapt_engaged       : num 1
 #&gt;   ..$ adapt_delta         : num 0.8
 #&gt;   ..$ max_treedepth       : num 10
-#&gt;   ..$ step_size           : num 1
-#&gt;   ..$ step_size_adaptation: num [1:4] 0.812 0.724 0.736 0.733
+#&gt;   ..$ step_size           : num [1:4] 1 1 1 1
+#&gt;   ..$ step_size_adaptation: num [1:4] 0.59 0.702 0.766 0.718
 #&gt;   ..$ iter_warmup         : num 1000
 #&gt;   ..$ iter_sampling       : num 1000
 #&gt;  $ inv_metric                     :List of 4
-#&gt;   ..$ : num [1:7] 0.985 1.03 0.966 0.8 0.999 ...
-#&gt;   ..$ : num [1:7] 0.96 1.033 0.993 0.8 0.896 ...
-#&gt;   ..$ : num [1:7] 0.963 0.949 1.024 0.961 1.004 ...
-#&gt;   ..$ : num [1:7] 0.934 0.881 0.947 1.026 0.941 ...
+#&gt;   ..$ : num [1:7] 0.922 1.141 1.016 0.953 0.878 ...
+#&gt;   ..$ : num [1:7] 0.996 0.986 1.035 1.029 0.861 ...
+#&gt;   ..$ : num [1:7] 0.97 1.08 0.91 1 0.99 ...
+#&gt;   ..$ : num [1:7] 1.053 1.07 0.991 0.842 0.921 ...
 #&gt;  $ step_size                      :List of 4
-#&gt;   ..$ : num 0.812
-#&gt;   ..$ : num 0.724
-#&gt;   ..$ : num 0.736
-#&gt;   ..$ : num 0.733
-#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:8] -5.62 -5.62 -2.48 -2.51 -2 ...
+#&gt;   ..$ : num 0.59
+#&gt;   ..$ : num 0.702
+#&gt;   ..$ : num 0.766
+#&gt;   ..$ : num 0.718
+#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:8] -3.237 -3.237 -3.237 -3.858 -0.721 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:8] -4.92 -3.24 -3.73 -3.38 -2.57 ...
+#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:8] -3.363 -0.699 -0.771 -4.415 -4.175 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 1.19e-08 6.53e-22 1.00 9.82e-01 9.85e-01 ...
+#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 9.86e-01 0.00 2.69e-24 9.96e-01 9.94e-01 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.816 0.996 0.825 1 0.801 ...
+#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.931 1 0.8 0.787 0.999 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"

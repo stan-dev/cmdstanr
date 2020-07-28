@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9008</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9010</span>
       </span>
     </div>
 
@@ -122,7 +122,7 @@
 
       
 
-      </header><div class="row">
+      </header><script src="cmdstanr_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Getting started with CmdStanR</h1>
@@ -162,9 +162,9 @@
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="../reference/set_cmdstan_path.html">set_cmdstan_path</a></span>(<span class="no">PATH_TO_CMDSTAN</span>)</pre></body></html></div>
 <p>To check the path to the CmdStan installation and the CmdStan version number you can use <code><a href="../reference/set_cmdstan_path.html">cmdstan_path()</a></code> and <code><a href="../reference/set_cmdstan_path.html">cmdstan_version()</a></code>:</p>
 <div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span>()</pre></body></html></div>
-<pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.23.0"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.24.0"</code></pre>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_version</a></span>()</pre></body></html></div>
-<pre><code>[1] "2.23.0"</code></pre>
+<pre><code>[1] "2.24.0"</code></pre>
 </div>
 <div id="compiling-a-model" class="section level2">
 <h2 class="hasAnchor">
@@ -189,7 +189,7 @@ model {
 }</code></pre>
 <p>The path to the compiled executable is returned by the <code>$exe_file()</code> method:</p>
 <div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">mod</span>$<span class="fu">exe_file</span>()</pre></body></html></div>
-<pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.23.0/examples/bernoulli/bernoulli"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.24.0/examples/bernoulli/bernoulli"</code></pre>
 </div>
 <div id="fitting-a-model" class="section level2">
 <h2 class="hasAnchor">
@@ -340,11 +340,11 @@ Total execution time: 0.4 seconds.</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_diagnose()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_summary()</code></a> methods call CmdStan’s <code>diagnose</code> and <code>stansummary</code> utilities:</p>
 <div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_diagnose</a></span>()</pre></body></html></div>
 <pre><code>Running bin/diagnose \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-1-b02782.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-2-b02782.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-3-b02782.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-4-b02782.csv
-Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-1-b02782.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-2-b02782.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-3-b02782.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-4-b02782.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-1-5460ef.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-2-5460ef.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-3-5460ef.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-4-5460ef.csv
+Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-1-5460ef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-2-5460ef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-3-5460ef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-4-5460ef.csv
 
 Checking sampler transitions treedepth.
 Treedepth satisfactory for all transitions.
@@ -362,25 +362,28 @@ Split R-hat values satisfactory all parameters.
 Processing complete, no problems detected.</code></pre>
 <div class="sourceCode" id="cb34"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_summary</a></span>()</pre></body></html></div>
 <pre><code>Running bin/stansummary \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-1-b02782.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-2-b02782.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-3-b02782.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-4-b02782.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-1-5460ef.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-2-5460ef.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-3-5460ef.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-4-5460ef.csv
+Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-1-5460ef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-2-5460ef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-3-5460ef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-4-5460ef.csv
 Inference for Stan model: bernoulli_model
 4 chains: each with iter=(1000,1000,1000,1000); warmup=(0,0,0,0); thin=(1,1,1,1); 4000 iterations saved.
 
-Warmup took (0.0073, 0.0073, 0.0072, 0.0072) seconds, 0.029 seconds total
-Sampling took (0.015, 0.014, 0.015, 0.014) seconds, 0.059 seconds total
+Warmup took (0.0050, 0.0050, 0.0060, 0.0050) seconds, 0.021 seconds total
+Sampling took (0.013, 0.012, 0.013, 0.014) seconds, 0.052 seconds total
 
                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
-lp__            -7.3  2.0e-02    0.76   -8.8  -7.0  -6.8  1.4e+03  2.4e+04  1.0e+00
-accept_stat__   0.90  2.5e-03    0.15   0.57  0.97   1.0  3.7e+03  6.3e+04  1.0e+00
-stepsize__       1.1  8.8e-02    0.12   0.93   1.2   1.3  2.0e+00  3.4e+01  3.5e+13
-treedepth__      1.4  8.2e-03    0.51    1.0   1.0   2.0  3.8e+03  6.5e+04  1.0e+00
-n_leapfrog__     2.5  1.9e-01     1.3    1.0   3.0   3.0  4.3e+01  7.4e+02  1.0e+00
+
+lp__            -7.3  2.0e-02    0.76   -8.8  -7.0  -6.8     1431    27515      1.0
+accept_stat__   0.90  2.5e-03    0.15   0.57  0.97   1.0  3.7e+03  7.1e+04  1.0e+00
+stepsize__       1.1  8.8e-02    0.12   0.93   1.2   1.3  2.0e+00  3.9e+01  3.5e+13
+treedepth__      1.4  8.2e-03    0.51    1.0   1.0   2.0  3.8e+03  7.3e+04  1.0e+00
+n_leapfrog__     2.5  1.9e-01     1.3    1.0   3.0   3.0  4.3e+01  8.3e+02  1.0e+00
 divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-energy__         7.8  2.7e-02     1.0    6.8   7.4   9.9  1.5e+03  2.5e+04  1.0e+00
-theta           0.25  3.1e-03    0.12  0.080  0.24  0.48  1.5e+03  2.6e+04  1.0e+00
+energy__         7.8  2.7e-02     1.0    6.8   7.4   9.9  1.5e+03  2.8e+04  1.0e+00
+
+theta           0.25  3.1e-03    0.12  0.080  0.24  0.48     1542    29660      1.0
 
 Samples were drawn using hmc with nuts.
 For each parameter, N_Eff is a crude measure of effective sample size,
@@ -390,8 +393,8 @@ convergence, R_hat=1).</code></pre>
 <div id="create-a-stanfit-object" class="section level4">
 <h4 class="hasAnchor">
 <a href="#create-a-stanfit-object" class="anchor"></a>Create a <code>stanfit</code> object</h4>
-<p>If you have RStan installed then it is also possible to create a <code>stanfit</code> object from the csv output files written by CmdStan. This can be done by using <code><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">rstan::read_stan_csv()</a></code> in combination with the <code>$output_files()</code> method of the <code>CmdStanMCMC</code> object:</p>
-<div class="sourceCode" id="cb36"><html><body><pre class="r"><span class="no">stanfit</span> <span class="kw">&lt;-</span> <span class="kw pkg">rstan</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/rstan/man/stan_csv.html">read_stan_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())</pre></body></html></div>
+<p>If you have RStan installed then it is also possible to create a <code>stanfit</code> object from the csv output files written by CmdStan. This can be done by using <code><a href="https://mc-stan.org/rstan/reference/stan_csv.html">rstan::read_stan_csv()</a></code> in combination with the <code>$output_files()</code> method of the <code>CmdStanMCMC</code> object:</p>
+<div class="sourceCode" id="cb36"><html><body><pre class="r"><span class="no">stanfit</span> <span class="kw">&lt;-</span> <span class="kw pkg">rstan</span><span class="kw ns">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_csv.html">read_stan_csv</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-save_output_files.html">output_files</a></span>())</pre></body></html></div>
 </div>
 </div>
 <div id="optimization-and-variational-inference" class="section level3">
@@ -418,12 +421,12 @@ convergence, R_hat=1).</code></pre>
     save_iterations = 0 (Default) 
 id = 1 
 data 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/standata-125541f3966cb.json 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/standata-91833b4a552e.json 
 init = 2 (Default) 
 random 
   seed = 123 
 output 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-1-8ba970.csv 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-1-1e5d6b.csv 
   diagnostic_file =  (Default) 
   refresh = 100 (Default) 
  
@@ -468,12 +471,12 @@ Finished in  0.1 seconds.</code></pre>
     output_samples = 4000 
 id = 1 
 data 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/standata-12554a158e05.json 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/standata-918376e7ace3.json 
 init = 2 (Default) 
 random 
   seed = 123 
 output 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp2V4xXD/bernoulli-202007031747-1-1eef6f.csv 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/Rtmp8jOHAr/bernoulli-202007281339-1-07a811.csv 
   diagnostic_file =  (Default) 
   refresh = 100 (Default) 
  
@@ -485,8 +488,8 @@ EXPERIMENTAL ALGORITHM:
  
  
  
-Gradient evaluation took 2.2e-05 seconds 
-1000 transitions using 10 leapfrog steps per transition would take 0.22 seconds. 
+Gradient evaluation took 1.1e-05 seconds 
+1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds. 
 Adjust your expectations accordingly! 
  
  
@@ -541,7 +544,7 @@ Finished in  0.1 seconds.</code></pre>
 <h2 class="hasAnchor">
 <a href="#comparison-with-rstan" class="anchor"></a>Comparison with RStan</h2>
 <p>The RStan interface (<a href="https://mc-stan.org/rstan"><strong>rstan</strong></a> package) is an in-memory interface to Stan and relies on R packages like <strong>Rcpp</strong> and <strong>inline</strong> to call C++ code from R. On the other hand, the CmdStanR interface does not directly call any C++ code from R, instead relying on CmdStan for compilation, running algorithms, and writing results to output files.</p>
-<p>Both forms of interfacing with Stan have advantages and disadvantages. An in-memory interface like RStan is able to offer more advanced features than CmdStanR (for example the <code><a href="https://rdrr.io/pkg/rstan/man/stanfit-method-logprob.html">rstan::log_prob()</a></code> and <code><a href="https://rdrr.io/pkg/rstan/man/stanfit-method-logprob.html">rstan::grad_log_prob()</a></code> methods) but keeping up with Stan releases is more complicated for RStan, often requiring non-trivial changes to the <strong>rstan</strong> package and requiring new CRAN releases of <strong>rstan</strong> and <strong>StanHeaders</strong>. On the other hand, with CmdStanR, the latest features in Stan will be available from R immediately after updating CmdStan, without an update to the <strong>cmdstanr</strong> package. We also anticipate that running Stan via external processes will have the advantage of playing nicer with R (and RStudio) and result in fewer unexpected crashes than when using RStan.</p>
+<p>Both forms of interfacing with Stan have advantages and disadvantages. An in-memory interface like RStan is able to offer more advanced features than CmdStanR (for example the <code><a href="https://mc-stan.org/rstan/reference/stanfit-method-logprob.html">rstan::log_prob()</a></code> and <code><a href="https://mc-stan.org/rstan/reference/stanfit-method-logprob.html">rstan::grad_log_prob()</a></code> methods) but keeping up with Stan releases is more complicated for RStan, often requiring non-trivial changes to the <strong>rstan</strong> package and requiring new CRAN releases of <strong>rstan</strong> and <strong>StanHeaders</strong>. On the other hand, with CmdStanR, the latest features in Stan will be available from R immediately after updating CmdStan, without an update to the <strong>cmdstanr</strong> package. We also anticipate that running Stan via external processes will have the advantage of playing nicer with R (and RStudio) and result in fewer unexpected crashes than when using RStan.</p>
 <p>Finally, RStan and CmdStanR have different open source licenses. RStan uses the GPL-3 license while the license for CmdStanR (like Stan) is BSD-3, which is a bit more permissive.</p>
 </div>
   </div>

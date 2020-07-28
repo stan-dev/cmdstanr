@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9010</span>
       </span>
     </div>
 
@@ -198,11 +198,11 @@ $cmdstan_diagnose()
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>cmdstan_diagnose</span>()</div><div class='output co'>#&gt; Running bin/diagnose \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-1-9ebaef.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-2-9ebaef.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-3-9ebaef.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-4-9ebaef.csv
-#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-1-9ebaef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-2-9ebaef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-3-9ebaef.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-4-9ebaef.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-1-0970b6.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-2-0970b6.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-3-0970b6.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-4-0970b6.csv
+#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-1-0970b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-2-0970b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-3-0970b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-4-0970b6.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -218,34 +218,36 @@ $cmdstan_diagnose()
 #&gt; Split R-hat values satisfactory all parameters.
 #&gt; 
 #&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit</span>$<span class='fu'>cmdstan_summary</span>()</div><div class='output co'>#&gt; Running bin/stansummary \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-1-9ebaef.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-2-9ebaef.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-3-9ebaef.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpXEch8A/logistic-202006301358-4-9ebaef.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-1-0970b6.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-2-0970b6.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-3-0970b6.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-4-0970b6.csv
+#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-1-0970b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-2-0970b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-3-0970b6.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-4-0970b6.csv
 #&gt; Inference for Stan model: logistic_model
 #&gt; 4 chains: each with iter=(1000,1000,1000,1000); warmup=(0,0,0,0); thin=(1,1,1,1); 4000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.034, 0.032, 0.034, 0.035) seconds, 0.13 seconds total
-#&gt; Sampling took (0.055, 0.049, 0.043, 0.052) seconds, 0.20 seconds total
+#&gt; Warmup took (0.026, 0.026, 0.026, 0.032) seconds, 0.11 seconds total
+#&gt; Sampling took (0.035, 0.036, 0.039, 0.047) seconds, 0.16 seconds total
 #&gt; 
 #&gt;                  Mean     MCSE  StdDev     5%    50%    95%    N_Eff  N_Eff/s    R_hat
-#&gt; lp__              -66  3.3e-02     1.5    -69    -66    -64  2.0e+03  1.0e+04  1.0e+00
-#&gt; accept_stat__    0.92  1.3e-03   0.094   0.73   0.96    1.0  5.1e+03  2.6e+04  1.0e+00
-#&gt; stepsize__       0.70  2.7e-02   0.038   0.66   0.70   0.76  2.0e+00  1.0e+01  1.6e+13
-#&gt; treedepth__       2.5  8.7e-03    0.52    2.0    3.0    3.0  3.6e+03  1.8e+04  1.0e+00
-#&gt; n_leapfrog__      5.6  3.2e-02     1.9    3.0    7.0    7.0  3.7e+03  1.9e+04  1.0e+00
+#&gt; 
+#&gt; lp__              -66  3.2e-02     1.5    -69    -66    -64     2091    13320      1.0
+#&gt; accept_stat__    0.90  1.6e-03    0.12   0.66   0.94    1.0  5.5e+03  3.5e+04  1.0e+00
+#&gt; stepsize__       0.78  1.3e-02   0.018   0.75   0.79   0.79  2.0e+00  1.3e+01  5.7e+12
+#&gt; treedepth__       2.4  8.8e-03    0.52    2.0    2.0    3.0  3.5e+03  2.2e+04  1.0e+00
+#&gt; n_leapfrog__      5.0  3.3e-02     2.0    3.0    7.0    7.0  3.7e+03  2.4e+04  1.0e+00
 #&gt; divergent__      0.00      nan    0.00   0.00   0.00   0.00      nan      nan      nan
-#&gt; energy__           68  4.9e-02     2.0     65     68     72  1.7e+03  8.6e+03  1.0e+00
-#&gt; alpha            0.39  3.5e-03    0.22  0.021   0.38   0.75  3.9e+03  2.0e+04  1.0e+00
-#&gt; beta[1]         -0.68  4.2e-03    0.25   -1.1  -0.67  -0.28  3.6e+03  1.8e+04  1.0e+00
-#&gt; beta[2]         -0.27  3.7e-03    0.23  -0.65  -0.27   0.12  3.9e+03  2.0e+04  1.0e+00
-#&gt; beta[3]          0.68  4.5e-03    0.27   0.25   0.68    1.1  3.6e+03  1.8e+04  1.0e+00
+#&gt; energy__           68  4.8e-02     2.0     65     68     72  1.8e+03  1.1e+04  1.0e+00
+#&gt; 
+#&gt; alpha            0.38  3.3e-03    0.22  0.024   0.39   0.74     4269    27192     1.00
+#&gt; beta[1]         -0.67  3.9e-03    0.25   -1.1  -0.66  -0.27     4232    26956     1.00
+#&gt; beta[2]         -0.27  3.5e-03    0.22  -0.64  -0.27   0.10     4198    26741      1.0
+#&gt; beta[3]          0.68  4.3e-03    0.27   0.23   0.67    1.1     3983    25370      1.0
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,
 #&gt; and R_hat is the potential scale reduction factor on split chains (at 
-#&gt; convergence, R_hat=1).
-#&gt; </div><div class='input'># }
+#&gt; convergence, R_hat=1).</div><div class='input'># }
 
 </div></pre>
   </div>

@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   cmdstanr-internals: cmdstanr-internals.html
   cmdstanr: cmdstanr.html
-last_built: 2020-07-03T21:45Z
+last_built: 2020-07-28T19:36Z
 urls:
   reference: https://mc-stan.org/cmdstanr/reference
   article: https://mc-stan.org/cmdstanr/articles
