@@ -347,7 +347,7 @@ variable_dims <- function(variable_names = NULL) {
   uniq_variable_names <- unique(gsub("\\[.*\\]", "", variable_names))
   var_names <- gsub("\\]", "", variable_names)
   for (var in uniq_variable_names) {
-    pattern <- paste0(var, "\\[")
+    pattern <- paste0("^", var, "\\[")
     var_indices <- var_names[grep(pattern, var_names)]
     var_indices <- gsub(pattern, "", var_indices)
     if (length(var_indices)) {
