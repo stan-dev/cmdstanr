@@ -167,34 +167,6 @@ test_that("switching threads on and off works without rebuild", {
   expect_equal(before_mtime, after_mtime)
 })
 
-test_that("message is shown on building main.o", {
-  skip_on_cran()
-  if (cmdstan_version() > "2.23") {
-    expect_message(
-      mod$compile(force_recompile = TRUE),
-      "Compiling Stan program...",
-      fixed = TRUE
-    )
-    return(invisible(NULL))
-  } else {
-    main_o_files <- c(
-      file.path(cmdstan_path(), "src", "cmdstan", "main.o"),
-      file.path(cmdstan_path(), "src", "cmdstan", "main_noflags.o")
-    )
-    for (f in main_o_files) {
-      if (file.exists(f))
-        file.remove(f)
-    }
-    expect_message(
-      mod$compile(force_recompile = TRUE),
-      "Compiling the main object file and precompiled headers (may take up to a few minutes). ",
-      "This is only necessary for the first compilation after installation or when ",
-      "threading, MPI or OpenCL are used for the first time.",
-      fixed = TRUE
-    )
-  }
-})
-
 test_that("compile errors are shown", {
   skip_on_cran()
   stan_file <- testing_stan_file("fail")
