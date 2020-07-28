@@ -82,7 +82,7 @@ CmdStanModel object." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9010</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
       </span>
     </div>
 
@@ -99,6 +99,9 @@ CmdStanModel object." />
 </li>
 <li>
   <a href="../reference/index.html">Functions</a>
+</li>
+<li>
+  <a href="../news/index.html">News</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -284,14 +287,14 @@ documentation and tutorials.</p>
 
 <span class='no'>mod_gq</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>gq_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'><span class='no'>fit_gq</span> <span class='kw'>&lt;-</span> <span class='no'>mod_gq</span>$<span class='fu'><a href='model-method-generate-quantities.html'>generate_quantities</a></span>(<span class='no'>fit_mcmc</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...
 #&gt; 
-#&gt; Chain 1 finished in 0.2 seconds.
+#&gt; Chain 1 finished in 0.3 seconds.
 #&gt; Chain 2 finished in 0.1 seconds.
 #&gt; Chain 3 finished in 0.1 seconds.
 #&gt; Chain 4 finished in 0.1 seconds.
 #&gt; 
 #&gt; All 4 chains finished successfully.
-#&gt; Mean chain execution time: 0.1 seconds.
-#&gt; Total execution time: 0.6 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
+#&gt; Mean chain execution time: 0.2 seconds.
+#&gt; Total execution time: 0.7 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
