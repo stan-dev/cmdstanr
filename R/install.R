@@ -111,7 +111,19 @@ install_cmdstan <- function(dir = NULL,
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   version <- read_cmdstan_version(dir_cmdstan)
   if (os_is_windows()) {
+    if (version >= "2.24" && R.version$major >= "4") {
+      # cmdstan 2.24 can use precompiled headers with RTools 4.0 to speedup compiling
+      cmdstan_make_local(
+        dir = dir_cmdstan,
+        cpp_options = list(
+          PRECOMPILED_HEADERS = TRUE
+        ),
+        append = TRUE
+      )
+    }
     if (version < "2.24") {
+      # cmdstan 2.23 and earlier prints a lot of warnings with RTools 4.0 on Windows
+      # this disables them
       cmdstan_make_local(
         dir = dir_cmdstan,
         cpp_options = list(
@@ -123,6 +135,8 @@ install_cmdstan <- function(dir = NULL,
       )
     }
     if (version > "2.22" && version < "2.24") {
+      # cmdstan 2.23 unnecessarily required chmod after moving the windows-stanc
+      # this moves the exe file so the make command that requires chmod is not used
       windows_stanc <- file.path(dir_cmdstan, "bin", "windows-stanc")
       bin_stanc_exe <- file.path(dir_cmdstan, "bin", "stanc.exe")
       if (file.exists(windows_stanc)) {
