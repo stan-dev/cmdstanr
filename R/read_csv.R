@@ -332,7 +332,7 @@ read_cmdstan_csv <- function(files,
   }
 
   model_param_dims <- variable_dims(metadata$model_params)
-  metadata$stan_var_dims <- model_param_dims
+  metadata$stan_variable_dims <- model_param_dims
   metadata$stan_variables <- names(model_param_dims)
 
   if (metadata$method == "sample") {
