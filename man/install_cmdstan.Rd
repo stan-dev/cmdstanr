@@ -69,9 +69,10 @@ The \code{install_cmdstan()} function attempts to download and
 install the latest release of
 \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan} or a
 development version from a repository. Currently the necessary C++ tool
-chain is assumed to be available (see Appendix B of the CmdStan
-\href{https://github.com/stan-dev/cmdstan/releases/latest}{guide}), but in the
-future CmdStanR may help install the requirements.
+chain is assumed to be available, but in the future CmdStanR may help
+install the requirements. See the first few sections of the CmdStan
+\href{https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html}{installation guide}
+for details on the required toolchain.
 
 The \code{rebuild_cmdstan()} function cleans and rebuilds the cmdstan
 installation. Use this function in case of any issues when compiling

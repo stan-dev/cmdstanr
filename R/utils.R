@@ -281,11 +281,16 @@ check_divergences <- function(data_csv) {
     num_of_divergences <- sum(divergences)
     if (num_of_divergences > 0) {
       percentage_divergences <- (num_of_divergences)/num_of_draws*100
-      message(num_of_divergences, " of ", num_of_draws, " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
-              " transitions ended with a divergence.\n",
-              "These divergent transitions indicate that HMC is not fully able to explore the posterior distribution.\n",
-              "Try increasing adapt delta closer to 1.\n",
-              "If this doesn't remove all divergences, try to reparameterize the model.\n")
+      message(
+        "\nWarning: ", num_of_divergences, " of ", num_of_draws,
+        " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
+        " transitions ended with a divergence.\n",
+        "This may indicate insufficient exploration of the posterior distribution.\n",
+        "Possible remedies include: \n",
+        "  * Increasing adapt_delta closer to 1 (default is 0.8) \n",
+        "  * Reparameterizing the model (e.g. using a non-centered parameterization)\n",
+        "  * Using informative or weakly informative prior distributions \n"
+      )
     }
   }
 }

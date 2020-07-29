@@ -82,7 +82,7 @@ based on previously fitted parameters." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9007</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9010</span>
       </span>
     </div>
 
@@ -214,11 +214,12 @@ Same as for the <code><a href='model-method-sample.html'>$sample()</a></code> me
     <p>The <code>$generate_quantities()</code> method returns a <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code> object.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>The CmdStanR website (<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>)
-for online documentation and tutorials.</p>
+    <div class='dont-index'><p>The CmdStanR website
+(<a href='https://mc-stan.org/cmdstanr/'>mc-stan.org/cmdstanr</a>) for online
+documentation and tutorials.</p>
 <p>The Stan and CmdStan documentation:</p><ul>
-<li><p>Stan doc (html or pdf): <a href='https://mc-stan.org/users/documentation/'>mc-stan.org/users/documentation/</a></p></li>
-<li><p>CmdStan doc (pdf): (<a href='https://github.com/stan-dev/cmdstan/releases/latest'>github.com/stan-dev/cmdstan/releases/</a>).</p></li>
+<li><p>Stan documentation: <a href='https://mc-stan.org/users/documentation/'>mc-stan.org/users/documentation</a></p></li>
+<li><p>CmdStan User’s Guide: <a href='https://mc-stan.org/docs/cmdstan-guide/'>mc-stan.org/docs/cmdstan-guide</a></p></li>
 </ul>
 
 <p>Other CmdStanModel methods: 
@@ -246,14 +247,14 @@ for online documentation and tutorials.</p>
 <span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>))
 <span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='no'>mod_mcmc</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>, <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>)</div><div class='output co'>#&gt; Running MCMC with 4 sequential chains...
 #&gt; 
-#&gt; Chain 1 finished in 0.1 seconds.
+#&gt; Chain 1 finished in 0.3 seconds.
 #&gt; Chain 2 finished in 0.1 seconds.
 #&gt; Chain 3 finished in 0.1 seconds.
 #&gt; Chain 4 finished in 0.1 seconds.
 #&gt; 
 #&gt; All 4 chains finished successfully.
-#&gt; Mean chain execution time: 0.1 seconds.
-#&gt; Total execution time: 0.5 seconds.</div><div class='input'>
+#&gt; Mean chain execution time: 0.2 seconds.
+#&gt; Total execution time: 0.7 seconds.</div><div class='input'>
 <span class='co'># stan program for standalone generated quantities</span>
 <span class='co'># (could keep model block, but not necessary so removing it)</span>
 <span class='no'>gq_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_tempfile.html'>write_stan_tempfile</a></span>(
@@ -271,14 +272,14 @@ for online documentation and tutorials.</p>
 
 <span class='no'>mod_gq</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>gq_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'><span class='no'>fit_gq</span> <span class='kw'>&lt;-</span> <span class='no'>mod_gq</span>$<span class='fu'>generate_quantities</span>(<span class='no'>fit_mcmc</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...
 #&gt; 
-#&gt; Chain 1 finished in 0.1 seconds.
+#&gt; Chain 1 finished in 0.2 seconds.
 #&gt; Chain 2 finished in 0.1 seconds.
 #&gt; Chain 3 finished in 0.1 seconds.
 #&gt; Chain 4 finished in 0.1 seconds.
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.1 seconds.
-#&gt; Total execution time: 0.4 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
+#&gt; Total execution time: 0.6 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
