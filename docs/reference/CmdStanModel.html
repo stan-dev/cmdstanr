@@ -83,7 +83,7 @@ fitting the model using Stan's algorithms." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9010</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
       </span>
     </div>
 
@@ -100,6 +100,9 @@ fitting the model using Stan's algorithms." />
 </li>
 <li>
   <a href="../reference/index.html">Functions</a>
+</li>
+<li>
+  <a href="../news/index.html">News</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -317,12 +320,12 @@ documentation and tutorials.</p>
 #&gt; Chain 2 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
 #&gt; Chain 2 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
 #&gt; Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
-#&gt; Chain 1 finished in 0.2 seconds.
-#&gt; Chain 2 finished in 0.2 seconds.
+#&gt; Chain 1 finished in 0.1 seconds.
+#&gt; Chain 2 finished in 0.1 seconds.
 #&gt; 
 #&gt; Both chains finished successfully.
-#&gt; Mean chain execution time: 0.2 seconds.
-#&gt; Total execution time: 0.2 seconds.</div><div class='input'>
+#&gt; Mean chain execution time: 0.1 seconds.
+#&gt; Total execution time: 0.1 seconds.</div><div class='input'>
 <span class='co'># Use 'posterior' package for summaries</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 2 x 10</span><span>
 #&gt;   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
@@ -372,9 +375,9 @@ documentation and tutorials.</p>
 <span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='CmdStanModel-1.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># Call CmdStan's diagnose and stansummary utilities</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></span>()</div><div class='output co'>#&gt; Running bin/diagnose \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-1-d726e1.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-2-d726e1.csv
-#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-1-d726e1.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-2-d726e1.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-e4cbc8.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-2-e4cbc8.csv
+#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-e4cbc8.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-2-e4cbc8.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -390,13 +393,13 @@ documentation and tutorials.</p>
 #&gt; Split R-hat values satisfactory all parameters.
 #&gt; 
 #&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></span>()</div><div class='output co'>#&gt; Running bin/stansummary \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-1-d726e1.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-2-d726e1.csv
-#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-1-d726e1.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-2-d726e1.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-e4cbc8.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-2-e4cbc8.csv
+#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-e4cbc8.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-2-e4cbc8.csv
 #&gt; Inference for Stan model: bernoulli_model
 #&gt; 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.0090, 0.0090) seconds, 0.018 seconds total
+#&gt; Warmup took (0.0080, 0.0070) seconds, 0.015 seconds total
 #&gt; Sampling took (0.019, 0.018) seconds, 0.037 seconds total
 #&gt; 
 #&gt;                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
@@ -444,7 +447,7 @@ documentation and tutorials.</p>
 #&gt; random 
 #&gt;   seed = 123 
 #&gt; output 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-1-39b079.csv 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-fede65.csv 
 #&gt;   diagnostic_file =  (Default) 
 #&gt;   refresh = 100 (Default) 
 #&gt;  
@@ -477,12 +480,12 @@ documentation and tutorials.</p>
 #&gt;     output_samples = 1000 (Default) 
 #&gt; id = 1 
 #&gt; data 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/standata-8f0a6870e5e5.json 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/standata-95a72bbac638.json 
 #&gt; init = 2 (Default) 
 #&gt; random 
 #&gt;   seed = 123 
 #&gt; output 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-1-0552f4.csv 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-2b9cf5.csv 
 #&gt;   diagnostic_file =  (Default) 
 #&gt;   refresh = 100 (Default) 
 #&gt;  
@@ -494,8 +497,8 @@ documentation and tutorials.</p>
 #&gt;  
 #&gt;  
 #&gt;  
-#&gt; Gradient evaluation took 8e-06 seconds 
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds. 
+#&gt; Gradient evaluation took 1e-05 seconds 
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds. 
 #&gt; Adjust your expectations accordingly! 
 #&gt;  
 #&gt;  
@@ -603,12 +606,12 @@ documentation and tutorials.</p>
 #&gt;     save_iterations = 0 (Default) 
 #&gt; id = 1 
 #&gt; data 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/standata-8f0a5c8e3504.json 
-#&gt; init = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/init-1-8f0a7c3ac914.json 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/standata-95a76397ec57.json 
+#&gt; init = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/init-1-95a7b1d76d6.json 
 #&gt; random 
 #&gt;   seed = 123 
 #&gt; output 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/bernoulli-202007281336-1-677fc3.csv 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-64e14d.csv 
 #&gt;   diagnostic_file =  (Default) 
 #&gt;   refresh = 100 (Default) 
 #&gt;  

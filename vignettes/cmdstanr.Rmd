@@ -37,8 +37,7 @@ provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
 interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
 later in this vignette for more details on how the two interfaces differ.
 
-**CmdStanR is not on CRAN yet**, but the latest pre-beta release can be
-installed via:
+**CmdStanR is not on CRAN yet**, but the beta release can be installed via:
 
 ```{r install, eval=FALSE}
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
