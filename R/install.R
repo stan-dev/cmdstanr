@@ -135,7 +135,7 @@ install_cmdstan <- function(dir = NULL,
       )
     }
     if (version > "2.22" && version < "2.24") {
-      # cmdstan 2.23 unnecesserily required chmod after moving the windows-stanc
+      # cmdstan 2.23 unnecessarily required chmod after moving the windows-stanc
       # this moves the exe file so the make command that requires chmod is not used
       windows_stanc <- file.path(dir_cmdstan, "bin", "windows-stanc")
       bin_stanc_exe <- file.path(dir_cmdstan, "bin", "stanc.exe")
