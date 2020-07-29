@@ -2,11 +2,12 @@
 #'
 #' @description The `install_cmdstan()` function attempts to download and
 #'   install the latest release of
-#'   [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest) or a
-#'   development version from a repository. Currently the necessary C++ tool
+#'   [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest). Installing
+#'   a previous release or a new release candidate is also possible by
+#'   specifying the `release_url` argument. Currently the necessary C++ tool
 #'   chain is assumed to be available, but in the future CmdStanR may help
-#'   install the requirements. See the first few sections of the CmdStan
-#'   [installation guide](https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html)
+#'   install the requirements. See the first few sections of the
+#'   CmdStan [installation guide](https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html)
 #'   for details on the required toolchain.
 #'
 #'   The `rebuild_cmdstan()` function cleans and rebuilds the cmdstan
