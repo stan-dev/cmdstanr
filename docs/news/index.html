@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Write data to a JSON file readable by CmdStan — write_stan_json • cmdstanr</title>
+<title>Changelog • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,7 @@
 
 
 
-<meta property="og:title" content="Write data to a JSON file readable by CmdStan — write_stan_json" />
-<meta property="og:description" content="Write data to a JSON file readable by CmdStan" />
+<meta property="og:title" content="Changelog" />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -67,7 +66,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-topic">
+    <div class="container template-news">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -170,63 +169,25 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Write data to a JSON file readable by CmdStan</h1>
-    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/data.R'><code>R/data.R</code></a></small>
-    <div class="hidden name"><code>write_stan_json.Rd</code></div>
+      <h1 data-toc-skip>Changelog <small></small></h1>
+      <small>Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div class="ref-description">
-    <p>Write data to a JSON file readable by CmdStan</p>
-    </div>
-
-    <pre class="usage"><span class='fu'>write_stan_json</span>(<span class='no'>data</span>, <span class='no'>file</span>)</pre>
-
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>data</th>
-      <td><p>A named list of <span style="R">R</span> objects.</p></td>
-    </tr>
-    <tr>
-      <th>file</th>
-      <td><p>A string specifying the path to where the data file should be
-written.</p></td>
-    </tr>
-    </table>
-
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fl'>10</span>), <span class='fl'>5</span>, <span class='fl'>2</span>)
-<span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Poisson.html'>rpois</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>x</span>), <span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>10</span>)
-<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>TRUE</span>, <span class='fl'>FALSE</span>)
-<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>x</span>), <span class='kw'>K</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='no'>x</span>), <span class='kw'>x</span> <span class='kw'>=</span> <span class='no'>x</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='no'>y</span>, <span class='kw'>z</span> <span class='kw'>=</span> <span class='no'>z</span>)
-
-<span class='co'># write data to json file</span>
-<span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>(<span class='kw'>fileext</span> <span class='kw'>=</span> <span class='st'>".json"</span>)
-<span class='fu'>write_stan_json</span>(<span class='no'>data</span>, <span class='no'>file</span>)
-
-<span class='co'># check the contents of the file</span>
-<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>file</span>), <span class='kw'>sep</span> <span class='kw'>=</span> <span class='st'>"\n"</span>)</div><div class='output co'>#&gt; {
-#&gt;   "N": 5,
-#&gt;   "K": 2,
-#&gt;   "x": [
-#&gt;     [0.269578863177791, -0.55663076339161],
-#&gt;     [0.131799250869177, 0.551848409108525],
-#&gt;     [-1.67877127038153, -1.57605151328026],
-#&gt;     [-0.525879503304054, -0.954292772391135],
-#&gt;     [-0.175124623445125, -0.44986342459853]
-#&gt;   ],
-#&gt;   "y": [14, 9, 6, 9, 10],
-#&gt;   "z": [1, 0]
-#&gt; }</div><div class='input'>
-</div></pre>
+    <div id="cmdstanr-010" class="section level1">
+<h1 class="page-header" data-toc-text="0.1.0">
+<a href="#cmdstanr-010" class="anchor"></a>cmdstanr 0.1.0</h1>
+<ul>
+<li>Beta release</li>
+</ul>
+</div>
   </div>
+
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>
     </nav>
   </div>
+
 </div>
 
 

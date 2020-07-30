@@ -49,11 +49,12 @@
 <meta property="og:title" content="Install CmdStan or clean and rebuild an existing installation — install_cmdstan" />
 <meta property="og:description" content="The install_cmdstan() function attempts to download and
 install the latest release of
-CmdStan or a
-development version from a repository. Currently the necessary C++ tool
+CmdStan. Installing
+a previous release or a new release candidate is also possible by
+specifying the release_url argument. Currently the necessary C++ tool
 chain is assumed to be available, but in the future CmdStanR may help
-install the requirements. See the first few sections of the CmdStan
-installation guide
+install the requirements. See the first few sections of the
+CmdStan installation guide
 for details on the required toolchain.
 The rebuild_cmdstan() function cleans and rebuilds the cmdstan
 installation. Use this function in case of any issues when compiling
@@ -96,7 +97,7 @@ should typically be followed by calling rebuild_cmdstan()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9010</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
       </span>
     </div>
 
@@ -113,6 +114,9 @@ should typically be followed by calling rebuild_cmdstan()." />
 </li>
 <li>
   <a href="../reference/index.html">Functions</a>
+</li>
+<li>
+  <a href="../news/index.html">News</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -191,11 +195,12 @@ should typically be followed by calling rebuild_cmdstan()." />
     <div class="ref-description">
     <p>The <code>install_cmdstan()</code> function attempts to download and
 install the latest release of
-<a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan</a> or a
-development version from a repository. Currently the necessary C++ tool
+<a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan</a>. Installing
+a previous release or a new release candidate is also possible by
+specifying the <code>release_url</code> argument. Currently the necessary C++ tool
 chain is assumed to be available, but in the future CmdStanR may help
-install the requirements. See the first few sections of the CmdStan
-<a href='https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html'>installation guide</a>
+install the requirements. See the first few sections of the
+CmdStan <a href='https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html'>installation guide</a>
 for details on the required toolchain.</p>
 <p>The <code>rebuild_cmdstan()</code> function cleans and rebuilds the cmdstan
 installation. Use this function in case of any issues when compiling

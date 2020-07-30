@@ -2,11 +2,12 @@
 #'
 #' @description The `install_cmdstan()` function attempts to download and
 #'   install the latest release of
-#'   [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest) or a
-#'   development version from a repository. Currently the necessary C++ tool
+#'   [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest). Installing
+#'   a previous release or a new release candidate is also possible by
+#'   specifying the `release_url` argument. Currently the necessary C++ tool
 #'   chain is assumed to be available, but in the future CmdStanR may help
-#'   install the requirements. See the first few sections of the CmdStan
-#'   [installation guide](https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html)
+#'   install the requirements. See the first few sections of the
+#'   CmdStan [installation guide](https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html)
 #'   for details on the required toolchain.
 #'
 #'   The `rebuild_cmdstan()` function cleans and rebuilds the cmdstan
@@ -111,7 +112,19 @@ install_cmdstan <- function(dir = NULL,
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   version <- read_cmdstan_version(dir_cmdstan)
   if (os_is_windows()) {
+    if (version >= "2.24" && R.version$major >= "4") {
+      # cmdstan 2.24 can use precompiled headers with RTools 4.0 to speedup compiling
+      cmdstan_make_local(
+        dir = dir_cmdstan,
+        cpp_options = list(
+          PRECOMPILED_HEADERS = TRUE
+        ),
+        append = TRUE
+      )
+    }
     if (version < "2.24") {
+      # cmdstan 2.23 and earlier prints a lot of warnings with RTools 4.0 on Windows
+      # this disables them
       cmdstan_make_local(
         dir = dir_cmdstan,
         cpp_options = list(
@@ -123,6 +136,8 @@ install_cmdstan <- function(dir = NULL,
       )
     }
     if (version > "2.22" && version < "2.24") {
+      # cmdstan 2.23 unnecessarily required chmod after moving the windows-stanc
+      # this moves the exe file so the make command that requires chmod is not used
       windows_stanc <- file.path(dir_cmdstan, "bin", "windows-stanc")
       bin_stanc_exe <- file.path(dir_cmdstan, "bin", "stanc.exe")
       if (file.exists(windows_stanc)) {

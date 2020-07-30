@@ -84,7 +84,7 @@ console output." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.0.0.9010</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
       </span>
     </div>
 
@@ -101,6 +101,9 @@ console output." />
 </li>
 <li>
   <a href="../reference/index.html">Functions</a>
+</li>
+<li>
+  <a href="../news/index.html">News</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -233,18 +236,18 @@ console output.</p>
 #&gt;         stepsize_jitter = 0 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyTlvaJ/temp_libpath8e7b272cfc63/cmdstanr/logistic.data.json
+#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyTlvaJ/temp_libpath8e7b5ac5cf48/cmdstanr/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
 #&gt;   seed = 1374406566
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-1-a874cc.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/logistic-202007281357-1-4a4c7d.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 2e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds.
+#&gt; Gradient evaluation took 2.1e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.21 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -271,9 +274,9 @@ console output.</p>
 #&gt; Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #&gt; Iteration: 2000 / 2000 [100%]  (Sampling)
 #&gt; 
-#&gt;  Elapsed Time: 0.032 seconds (Warm-up)
-#&gt;                0.039 seconds (Sampling)
-#&gt;                0.071 seconds (Total)</div><div class='input'><span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='no'>fit_mcmc</span>$<span class='fu'>output</span>()
+#&gt;  Elapsed Time: 0.034 seconds (Warm-up)
+#&gt;                0.045 seconds (Sampling)
+#&gt;                0.079 seconds (Total)</div><div class='input'><span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='no'>fit_mcmc</span>$<span class='fu'>output</span>()
 <span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>out</span>)</div><div class='output co'>#&gt; List of 4
 #&gt;  $ : chr [1:69] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
 #&gt;  $ : chr [1:69] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
@@ -295,12 +298,12 @@ console output.</p>
 #&gt;     save_iterations = 0 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyTlvaJ/temp_libpath8e7b272cfc63/cmdstanr/logistic.data.json
+#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyTlvaJ/temp_libpath8e7b5ac5cf48/cmdstanr/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
 #&gt;   seed = 702710690
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-1-8c3659.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/logistic-202007281357-1-e3b421.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt; 
@@ -326,12 +329,12 @@ console output.</p>
 #&gt;     output_samples = 1000 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyTlvaJ/temp_libpath8e7b272cfc63/cmdstanr/logistic.data.json
+#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpyTlvaJ/temp_libpath8e7b5ac5cf48/cmdstanr/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
 #&gt;   seed = 1761447878
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmphVxewM/logistic-202007281337-1-441bb3.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/logistic-202007281357-1-47013e.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt; 
@@ -343,8 +346,8 @@ console output.</p>
 #&gt; 
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 2e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds.
+#&gt; Gradient evaluation took 2.2e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.22 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 

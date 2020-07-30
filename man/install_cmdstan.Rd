@@ -67,11 +67,12 @@ the updated contents are returned.
 \description{
 The \code{install_cmdstan()} function attempts to download and
 install the latest release of
-\href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan} or a
-development version from a repository. Currently the necessary C++ tool
+\href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan}. Installing
+a previous release or a new release candidate is also possible by
+specifying the \code{release_url} argument. Currently the necessary C++ tool
 chain is assumed to be available, but in the future CmdStanR may help
-install the requirements. See the first few sections of the CmdStan
-\href{https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html}{installation guide}
+install the requirements. See the first few sections of the
+CmdStan \href{https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html}{installation guide}
 for details on the required toolchain.
 
 The \code{rebuild_cmdstan()} function cleans and rebuilds the cmdstan
