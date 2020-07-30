@@ -322,6 +322,19 @@ read_cmdstan_csv <- function(files,
   metadata$lines_to_skip <- NULL
   metadata$model_params <- repair_variable_names(metadata$model_params)
   repaired_variables <- repair_variable_names(variables)
+  if (metadata$method == "variational") {
+    metadata$model_params <- metadata$model_params[metadata$model_params != "lp__"]
+    metadata$model_params <- gsub("log_p__", "lp__", metadata$model_params)
+    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)
+    repaired_variables <- repaired_variables[repaired_variables != "lp__"]
+    repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
+    repaired_variables <- gsub("log_g__", "lp_approx__", repaired_variables)
+  }
+
+  model_param_dims <- variable_dims(metadata$model_params)
+  metadata$stan_variable_dims <- model_param_dims
+  metadata$stan_variables <- names(model_param_dims)
+
   if (metadata$method == "sample") {
     if (!is.null(warmup_draws)) {
       posterior::variables(warmup_draws) <- repaired_variables
@@ -339,12 +352,6 @@ read_cmdstan_csv <- function(files,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
     )
   } else if (metadata$method == "variational") {
-    metadata$model_params <- metadata$model_params[metadata$model_params != "lp__"]
-    metadata$model_params <- gsub("log_p__", "lp__", metadata$model_params)
-    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)
-    repaired_variables <- repaired_variables[repaired_variables != "lp__"]
-    repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
-    repaired_variables <- gsub("log_g__", "lp_approx__", repaired_variables)
     if (!is.null(variational_draws)) {
       posterior::variables(variational_draws) <- repaired_variables
     }
