@@ -1,7 +1,7 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.1.0
-Date: 2020-07-29
+Version: 0.1.1
+Date: 2020-07-31
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
@@ -26,13 +26,13 @@ Imports:
     jsonlite (>= 1.2.0),
     posterior (>= 0.1.0),
     processx,
-    R6 (>= 2.4.0),
-    vroom
+    R6 (>= 2.4.0)
 Suggests: 
     bayesplot,
     knitr,
     rmarkdown,
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    vroom
 Additional_repositories:
     https://mc-stan.org/r-packages/
 VignetteBuilder: knitr
