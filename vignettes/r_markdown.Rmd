@@ -1,7 +1,11 @@
 ---
 title: "R Markdown Stan Engine"
 author: "Mikhail Popov"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
 vignette: >
   %\VignetteIndexEntry{R Markdown Stan Engine}
   %\VignetteEngine{knitr::rmarkdown}
@@ -11,7 +15,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
 )
 ```
 
