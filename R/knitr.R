@@ -50,22 +50,21 @@ eng_stan <- function(options) {
     )
   }
   if (options$eval) {
-    if (options$cache)
-      dir <- knitr_valid_path(options[["cache.path"]], options$label)
-    else
+    if (options$cache) {
+      cache_path <- options$cache.path
+      if (length(cache_path) == 0L || is.na(cache_path) || cache_path == "NA") {
+        cache_path <- ""
+      }
+      dir <- paste0(cache_path, options$label)
+    } else {
       dir <- tempdir()
-    model_file <- write_stan_tempfile(options$code, dir)
-    csm <- cmdstan_model(model_file)
-    assign(output_var, csm, envir = knitr::knit_global())
+    }
+    file <- write_stan_tempfile(options$code, dir)
+    mod <- cmdstan_model(file)
+    assign(output_var, mod, envir = knitr::knit_global())
   }
   options$engine <- "stan" # for syntax highlighting
   code <- paste(options$code, collapse = "\n")
   knitr::engine_output(options, code, '')
 }
 
-# Since {knitr} does not export valid_path():
-knitr_valid_path <- function(prefix, label) {
-  if (length(prefix) == 0L || is.na(prefix) || prefix == "NA")
-    prefix <- ""
-  return(paste0(prefix, label))
-}
