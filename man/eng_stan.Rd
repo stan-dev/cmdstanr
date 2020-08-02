@@ -7,7 +7,7 @@
 eng_stan(options)
 }
 \arguments{
-\item{options}{Chunk options, as provided by \code{knitr} during chunk execution}
+\item{options}{Chunk options, as provided by \code{knitr} during chunk execution.}
 }
 \description{
 This provides a \code{stan} engine for \code{knitr}, suitable for usage when attempting

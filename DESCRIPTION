@@ -5,7 +5,7 @@ Date: 2020-07-29
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
-      person(given = "Rok", family = "Češnovar", role = "aut"), 
+      person(given = "Rok", family = "Češnovar", role = "aut", 
            email = "rok.cesnovar@fri.uni-lj.si"),     
       person(given = "Ben", family = "Bales", role = "ctb"),     
       person(given = "Mitzi", family = "Morris", role = "ctb"), 
