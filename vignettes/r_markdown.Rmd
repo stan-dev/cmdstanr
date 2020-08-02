@@ -34,7 +34,7 @@ rstan::sampling(model)
 ```
 ````
 
-CmdStanR provides a replacement `eng_stan`, which can be registered as follows:
+CmdStanR provides a replacement engine, which can be registered as follows:
 
 ```{r setup, message=FALSE}
 library(cmdstanr)

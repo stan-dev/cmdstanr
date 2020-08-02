@@ -1,6 +1,6 @@
-#' Register the knitr engine for Stan
+#' Register CmdStanR's knitr engine for Stan
 #'
-#' Registers CmdStanR's knitr engine [eng_stan()] for processing Stan chunks.
+#' Registers CmdStanR's knitr engine [eng_cmdstan()] for processing Stan chunks.
 #' Refer to the vignette "R Markdown Stan Engine" for a demonstration.
 #'
 #' @param override Override knitr's built-in, RStan-based engine for `stan`.
@@ -22,25 +22,25 @@ register_knitr_engine <- function(override = TRUE) {
     stop("Please install the knitr package.", call. = FALSE)
   }
   if (override) {
-    knitr::knit_engines$set(stan = eng_stan)
+    knitr::knit_engines$set(stan = eng_cmdstan)
   } else {
-    knitr::knit_engines$set(cmdstan = eng_stan)
+    knitr::knit_engines$set(cmdstan = eng_cmdstan)
   }
 }
 
-#' Stan knitr engine
+#' CmdStan knitr engine for Stan
 #'
-#' This provides a `stan` engine for `knitr`, suitable for usage when attempting
+#' This provides a knitr engine for Stan, suitable for usage when attempting
 #' to render Stan chunks and compile the model code within to an executable with
 #' CmdStan. Use [register_knitr_engine()] to make this the default engine for
 #' `stan` chunks.
 #'
 #' @param options Chunk options, as provided by `knitr` during chunk execution.
 #' @examples \dontrun{
-#' knitr::knit_engines$set(stan = cmdstanr::eng_stan)
+#' knitr::knit_engines$set(stan = cmdstanr::eng_cmdstan)
 #' }
 #' @export
-eng_stan <- function(options) {
+eng_cmdstan <- function(options) {
   output_var <- options$output.var
   if (!is.character(output_var) || length(output_var) != 1L) {
     stop(

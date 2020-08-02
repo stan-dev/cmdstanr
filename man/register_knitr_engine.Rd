@@ -2,7 +2,7 @@
 % Please edit documentation in R/knitr.R
 \name{register_knitr_engine}
 \alias{register_knitr_engine}
-\title{Register the knitr engine for Stan}
+\title{Register CmdStanR's knitr engine for Stan}
 \usage{
 register_knitr_engine(override = TRUE)
 }
@@ -11,7 +11,7 @@ register_knitr_engine(override = TRUE)
 See below for details.}
 }
 \description{
-Registers CmdStanR's knitr engine \code{\link[=eng_stan]{eng_stan()}} for processing Stan chunks.
+Registers CmdStanR's knitr engine \code{\link[=eng_cmdstan]{eng_cmdstan()}} for processing Stan chunks.
 Refer to the vignette "R Markdown Stan Engine" for a demonstration.
 }
 \details{
