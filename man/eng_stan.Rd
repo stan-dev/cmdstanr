@@ -12,5 +12,11 @@ eng_stan(options)
 \description{
 This provides a \code{stan} engine for \code{knitr}, suitable for usage when attempting
 to render Stan chunks and compile the model code within to an executable with
-CmdStan.
+CmdStan. Use \code{\link[=register_knitr_engine]{register_knitr_engine()}} to make this the default engine for
+\code{stan} chunks.
+}
+\examples{
+\dontrun{
+knitr::knit_engines$set(stan = cmdstanr::eng_stan)
+}
 }
