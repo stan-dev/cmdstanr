@@ -19,7 +19,7 @@
 #' @export
 register_knitr_engine <- function(override = TRUE) {
   if (!requireNamespace("knitr", quietly = TRUE)) {
-    stop("please install the knitr package")
+    stop("Please install the knitr package.", call. = FALSE)
   }
   if (override) {
     knitr::knit_engines$set(stan = eng_stan)
@@ -35,18 +35,20 @@ register_knitr_engine <- function(override = TRUE) {
 #' CmdStan. Use [register_knitr_engine()] to make this the default engine for
 #' `stan` chunks.
 #'
-#' @param options Chunk options, as provided by `knitr` during chunk execution
+#' @param options Chunk options, as provided by `knitr` during chunk execution.
 #' @examples \dontrun{
 #' knitr::knit_engines$set(stan = cmdstanr::eng_stan)
 #' }
 #' @export
 eng_stan <- function(options) {
   output_var <- options$output.var
-  if (!is.character(output_var) || length(output_var) != 1L)
+  if (!is.character(output_var) || length(output_var) != 1L) {
     stop(
-      "the chunk option output.var must be a character string ",
-      "providing a name for the returned `CmdStanModel` object"
+      "The chunk option output.var must be a character string ",
+      "providing a name for the returned `CmdStanModel` object.",
+      call. = FALSE
     )
+  }
   if (options$eval) {
     if (options$cache)
       dir <- knitr_valid_path(options[["cache.path"]], options$label)
