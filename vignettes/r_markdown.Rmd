@@ -1,0 +1,115 @@
+---
+title: "R Markdown CmdStan Engine"
+author: "Mikhail Popov"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+vignette: >
+  %\VignetteIndexEntry{R Markdown CmdStan Engine}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
+)
+```
+
+R Markdown supports a variety of languages through the use of knitr language engines. One such engine is the `stan` engine, which allows users to write Stan programs directly in their R Markdown documents by setting the language of the chunk to `stan`.
+
+Behind the scenes, the engine relies on RStan to compile the model code into an in-memory `stanmodel`, which is assigned to a variable with the name given by the `output.var` chunk option. For example:
+
+````
+`r ''````{stan, output.var="model"}
+// Stan model code
+```
+
+`r ''````{r}
+rstan::sampling(model)
+```
+````
+
+CmdStanR provides a replacement engine, which can be registered as follows:
+
+```{r setup, message=FALSE}
+library(cmdstanr)
+
+register_knitr_engine()
+```
+
+By default, this overrides knitr's built-in `stan` engine so that all `stan` chunks are processed with CmdStanR, not RStan. Of course, this also means that the variable specified by `output.var` will no longer be a `stanmodel` object, but instead a `CmdStanModel` object, so the code above would look like this:
+
+````
+`r ''````{stan, output.var="model"}
+// Stan model code
+```
+
+`r ''````{r}
+model$sample()
+```
+````
+
+## Example
+
+```{stan ex1, output.var="ex1"}
+// This stan chunk results in a CmdStanModel object called "ex1"
+parameters {
+  real y[2];
+}
+model {
+  y[1] ~ normal(0, 1);
+  y[2] ~ double_exponential(0, 2);
+}
+```
+
+```{r}
+ex1$print()
+```
+
+```{r fit}
+fit <- ex1$sample(
+  refresh = 0,
+  seed = 42L
+)
+
+print(fit)
+```
+
+## Caching chunks
+
+Use `cache=TRUE` chunk option to avoid re-compiling the Stan model code every time the R Markdown is knit/rendered.
+
+You can find the Stan model file and the compiled executable in the document's cache directory.
+
+## Using RStan and CmdStanR engines side-by-side
+
+While the default behavior is to override the built-in `stan` engine because the assumption is that the user is probably not using both RStan and CmdStanR in the same document or project, the option to use both exists. When registering CmdStanR's knitr engine, set `override = FALSE` to register the engine as a `cmdstan` engine:
+
+``` r
+register_knitr_engine(override = FALSE)
+```
+
+This will cause `stan` chunks to be processed by knitr's built-in, RStan-based engine and only use CmdStanR's knitr engine for `cmdstan` chunks:
+
+````
+`r ''````{stan, output.var="model_obj1"}
+// Results in a stanmodel object
+```
+
+`r ''````{r}
+rstan::sampling(model_obj1)
+```
+
+`r ''````{cmdstan, output.var="model_obj2"}
+// Results in a CmdStanModel object
+```
+
+`r ''````{r}
+model_obj2$sample()
+```
+````

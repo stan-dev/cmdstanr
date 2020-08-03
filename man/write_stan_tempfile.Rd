@@ -4,11 +4,15 @@
 \alias{write_stan_tempfile}
 \title{Write Stan code to a temporary file}
 \usage{
-write_stan_tempfile(code)
+write_stan_tempfile(code, dir = tempdir())
 }
 \arguments{
 \item{code}{A single string containing a Stan program or a character vector
 containing the individual lines of a Stan program. See \strong{Examples}.}
+
+\item{dir}{An optional path of the directory where the temporary file will
+be written to. If omitted, a \link[base:tempfile]{temporary directory} is used
+by default.}
 }
 \value{
 The path to the temporary file.

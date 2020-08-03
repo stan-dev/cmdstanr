@@ -1,14 +1,15 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.1.0
-Date: 2020-07-29
+Version: 0.1.1
+Date: 2020-08-03
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
-      person(given = "Rok", family = "Češnovar", role = c("aut"), 
+      person(given = "Rok", family = "Češnovar", role = "aut", 
            email = "rok.cesnovar@fri.uni-lj.si"),     
-      person(given = "Ben", family = "Bales", role = c("ctb")),     
-      person(given = "Mitzi", family = "Morris", role = c("ctb"), comment = "CmdStanPy"))
+      person(given = "Ben", family = "Bales", role = "ctb"),     
+      person(given = "Mitzi", family = "Morris", role = "ctb"), 
+      person(given = "Mikhail", family = "Popov", role = "ctb"))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command line interface 
     for compilation and running algorithms instead of interfacing with C++ via 'Rcpp'.

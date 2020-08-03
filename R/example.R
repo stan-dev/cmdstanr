@@ -93,6 +93,9 @@ print_example_program <-
 #' @export
 #' @param code A single string containing a Stan program or a character vector
 #'   containing the individual lines of a Stan program. See **Examples**.
+#' @param dir An optional path of the directory where the temporary file will
+#'   be written to. If omitted, a [temporary directory][base::tempdir] is used
+#'   by default.
 #' @return The path to the temporary file.
 #'
 #' @examples
@@ -121,8 +124,11 @@ print_example_program <-
 #' f2 <- write_stan_tempfile(lines)
 #' identical(readLines(f), readLines(f2))
 #'
-write_stan_tempfile <- function(code) {
-  tmp <- tempfile(fileext = ".stan")
+write_stan_tempfile <- function(code, dir = tempdir()) {
+  if (!dir.exists(dir)) {
+    dir.create(dir, recursive = TRUE)
+  }
+  tmp <- tempfile(fileext = ".stan", tmpdir = dir)
   cat(code, file = tmp, sep = "\n")
   tmp
 }
