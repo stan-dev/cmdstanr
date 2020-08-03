@@ -549,7 +549,13 @@ NULL
 NULL
 
 
-#' Run CmdStan's `bin/stansummary` and `bin/diagnose`
+#' Run CmdStan's `stansummary` and `diagnose`
+#'
+#' @description
+#' Run CmdStan's `stansummary` and `diagnose` utilities. These are
+#' documented in the CmdStan Guide:
+#' * https://mc-stan.org/docs/cmdstan-guide/stansummary.html
+#' * https://mc-stan.org/docs/cmdstan-guide/diagnose.html
 #'
 #' @name fit-method-cmdstan_summary
 #' @aliases fit-method-cmdstan_diagnose cmdstan_summary cmdstan_diagnose

@@ -5,9 +5,14 @@
 \alias{fit-method-cmdstan_diagnose}
 \alias{cmdstan_summary}
 \alias{cmdstan_diagnose}
-\title{Run CmdStan's \code{bin/stansummary} and \code{bin/diagnose}}
+\title{Run CmdStan's \code{stansummary} and \code{diagnose}}
 \description{
-Run CmdStan's \code{bin/stansummary} and \code{bin/diagnose}
+Run CmdStan's \code{stansummary} and \code{diagnose} utilities. These are
+documented in the CmdStan Guide:
+\itemize{
+\item https://mc-stan.org/docs/cmdstan-guide/stansummary.html
+\item https://mc-stan.org/docs/cmdstan-guide/diagnose.html
+}
 }
 \note{
 Although these methods also work for models fit using the

@@ -35,8 +35,8 @@
 #'
 #' # Create a CmdStanModel object from a Stan program,
 #' # here using the example model that comes with CmdStan
-#' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#' mod <- cmdstan_model(stan_program)
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(file)
 #' mod$print()
 #'
 #' # Data as a named list (like RStan)
@@ -261,8 +261,12 @@ CmdStanModel <- R6::R6Class(
 #' @aliases compile
 #' @family CmdStanModel methods
 #'
-#' @description The `$compile()` method of a [`CmdStanModel`] object
-#'   translates the Stan program to C++ and creates a compiled executable.
+#' @description The `$compile()` method of a [`CmdStanModel`] object translates
+#'   the Stan program to C++ and creates a compiled executable. In most cases
+#'   the user does not need to explicitly call the `$compile()` method as
+#'   compilation will occur when calling [cmdstan_model()]. However it is
+#'   possible to set `compile=FALSE` in the call to `cmdstan_model()` and
+#'   subsequently call the `$compile()` method directly.
 #'
 #'   After compilation, the paths to the executable and the `.hpp` file
 #'   containing the generated C++ code are available via the `$exe_file()` and
@@ -304,7 +308,9 @@ CmdStanModel <- R6::R6Class(
 #'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
 #'   otherwise write in the `make/local` file.
 #'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be used
-#'   when compiling the model.
+#'   when compiling the model. See the **Examples** section below as well as the
+#'   `stanc` chapter of the CmdStan Guide for more details on available options:
+#'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
 #'   * `force_recompile`: (logical) Should the model be recompiled even if was
 #'   not modified since last compiled. The default is `FALSE`.
 #'
@@ -319,15 +325,29 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @examples
 #' \dontrun{
-#' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#' mod <- cmdstan_model(stan_program, compile = FALSE)
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#'
+#' # by default compilation happens when cmdstan_model() is called.
+#' # to delay compilation until calling the $compile() method set compile=FALSE
+#' mod <- cmdstan_model(file, compile = FALSE)
 #' mod$compile()
 #' mod$exe_file()
 #'
-#' stan_program <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#' mod <- cmdstan_model(stan_program, compile = FALSE)
-#' mod$compile(cpp_options = list(stan_threads = TRUE))
+#' # turn on threading support (for using functions that support within-chain parallelization)
+#' mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 #' mod$exe_file()
+#'
+#' # turn on pedantic mode (new in Stan v2.24)
+#' file_pedantic <- write_stan_tempfile("
+#' parameters {
+#'   real sigma;  // pedantic mode will warn about missing <lower=0>
+#' }
+#' model {
+#'   sigma ~ exponential(1);
+#' }
+#' ")
+#' mod <- cmdstan_model(file_pedantic, stanc_options = list("warn-pedantic" = TRUE))
+#'
 #' }
 #'
 NULL
