@@ -1,5 +1,5 @@
 ---
-title: "R Markdown Stan Engine"
+title: "R Markdown CmdStan Engine"
 author: "Mikhail Popov"
 output: 
   rmarkdown::html_vignette:
