@@ -7,7 +7,7 @@ output:
 params:
   EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
 vignette: >
-  %\VignetteIndexEntry{R Markdown Stan Engine}
+  %\VignetteIndexEntry{R Markdown CmdStan Engine}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
