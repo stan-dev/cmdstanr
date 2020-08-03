@@ -65,9 +65,11 @@ articles:
   - title: "More details"
     desc: >
       More information about compilation, passing in data,
-      and how CmdStan ouput is written to CSV and read back into R.
+      how CmdStan ouput is written to CSV and read back into R, and
+      using CmdStanR in R Markdown documents.
     contents:
       - cmdstanr-internals
+      - r-markdown
 
 reference:
   - title: "Package description"
@@ -102,4 +104,8 @@ reference:
       - read_cmdstan_csv
       - write_stan_json
       - write_stan_tempfile
+  - title: "Knitr engine for CmdStanR"
+    contents:
+      - eng_cmdstan
+      - register_knitr_engine
 

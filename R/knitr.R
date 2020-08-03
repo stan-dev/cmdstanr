@@ -1,7 +1,9 @@
 #' Register CmdStanR's knitr engine for Stan
 #'
 #' Registers CmdStanR's knitr engine [eng_cmdstan()] for processing Stan chunks.
-#' Refer to the vignette "R Markdown CmdStan Engine" for a demonstration.
+#' Refer to the vignette
+#' [R Markdown CmdStan Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html)
+#' for a demonstration.
 #'
 #' @param override Override knitr's built-in, RStan-based engine for `stan`.
 #'   See below for details.
@@ -12,7 +14,10 @@
 #' may be used in the same R Markdown document. If there is syntax highlighting,
 #' the `cmdstan` chunks will have `stan` syntax highlighting applied to them.
 #'
-#' See the vignette "R Markdown CmdStan Engine" for an example.
+#' See the vignette
+#' [R Markdown CmdStan Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html)
+#' for an example.
+#'
 #' @references
 #' - [Register a custom language engine](https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html)
 #' - [Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
@@ -33,7 +38,9 @@ register_knitr_engine <- function(override = TRUE) {
 #' This provides a knitr engine for Stan, suitable for usage when attempting
 #' to render Stan chunks and compile the model code within to an executable with
 #' CmdStan. Use [register_knitr_engine()] to make this the default engine for
-#' `stan` chunks.
+#' `stan` chunks. See the vignette
+#' [R Markdown CmdStan Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html)
+#' for an example.
 #'
 #' @param options Chunk options, as provided by `knitr` during chunk execution.
 #' @examples \dontrun{

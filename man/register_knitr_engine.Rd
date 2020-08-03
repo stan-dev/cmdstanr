@@ -12,7 +12,9 @@ See below for details.}
 }
 \description{
 Registers CmdStanR's knitr engine \code{\link[=eng_cmdstan]{eng_cmdstan()}} for processing Stan chunks.
-Refer to the vignette "R Markdown CmdStan Engine" for a demonstration.
+Refer to the vignette
+\href{https://mc-stan.org/cmdstanr/articles/r-markdown.html}{R Markdown CmdStan Engine}
+for a demonstration.
 }
 \details{
 If \code{override = TRUE} (default), this registers CmdStanR's knitr engine as the
@@ -21,7 +23,9 @@ engine for \code{stan} chunks, replacing knitr's built-in, RStan-based engine. I
 may be used in the same R Markdown document. If there is syntax highlighting,
 the \code{cmdstan} chunks will have \code{stan} syntax highlighting applied to them.
 
-See the vignette "R Markdown CmdStan Engine" for an example.
+See the vignette
+\href{https://mc-stan.org/cmdstanr/articles/r-markdown.html}{R Markdown CmdStan Engine}
+for an example.
 }
 \references{
 \itemize{

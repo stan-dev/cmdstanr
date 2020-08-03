@@ -83,7 +83,7 @@ fitting the model using Stan's algorithms." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -239,8 +239,7 @@ documentation and tutorials.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>cmdstanr</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>bayesplot</span>)</div><div class='output co'>#&gt; <span class='message'>This is bayesplot version 1.7.2</span></div><div class='output co'>#&gt; <span class='message'>- Online documentation and vignettes at mc-stan.org/bayesplot</span></div><div class='output co'>#&gt; <span class='message'>- bayesplot theme set to bayesplot::theme_default()</span></div><div class='output co'>#&gt; <span class='message'>   * Does _not_ affect other ggplot2 plots</span></div><div class='output co'>#&gt; <span class='message'>   * See ?bayesplot_theme_set for details on theme setting</span></div><div class='output co'>#&gt; <span class='message'></span>
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)</div><div class='output co'>#&gt; <span class='message'>This is posterior version 0.1.2</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>bayesplot</span>)</div><div class='output co'>#&gt; <span class='message'>This is bayesplot version 1.7.2</span></div><div class='output co'>#&gt; <span class='message'>- Online documentation and vignettes at mc-stan.org/bayesplot</span></div><div class='output co'>#&gt; <span class='message'>- bayesplot theme set to bayesplot::theme_default()</span></div><div class='output co'>#&gt; <span class='message'>   * Does _not_ affect other ggplot2 plots</span></div><div class='output co'>#&gt; <span class='message'>   * See ?bayesplot_theme_set for details on theme setting</span></div><div class='output co'>#&gt; <span class='message'></span>
 #&gt; <span class='message'>Attaching package: ‘bayesplot’</span></div><div class='output co'>#&gt; <span class='message'>The following object is masked from ‘package:posterior’:</span>
 #&gt; <span class='message'></span>
 #&gt; <span class='message'>    rhat</span></div><div class='input'><span class='fu'><a href='https://mc-stan.org/bayesplot/reference/bayesplot-colors.html'>color_scheme_set</a></span>(<span class='st'>"brightblue"</span>)
@@ -253,8 +252,8 @@ documentation and tutorials.</p>
 <span class='fu'><a href='set_cmdstan_path.html'>set_cmdstan_path</a></span>(<span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</div><div class='output co'>#&gt; <span class='message'>CmdStan path set to: /Users/jgabry/.cmdstanr/cmdstan-2.24.0</span></div><div class='input'>
 <span class='co'># Create a CmdStanModel object from a Stan program,</span>
 <span class='co'># here using the example model that comes with CmdStan</span>
-<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
-<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>stan_program</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>mod</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</div><div class='output co'>#&gt; data { 
+<span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
+<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>mod</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</div><div class='output co'>#&gt; data { 
 #&gt;   int&lt;lower=0&gt; N; 
 #&gt;   int&lt;lower=0,upper=1&gt; y[N];
 #&gt; } 
@@ -320,12 +319,12 @@ documentation and tutorials.</p>
 #&gt; Chain 2 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
 #&gt; Chain 2 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
 #&gt; Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
-#&gt; Chain 1 finished in 0.1 seconds.
-#&gt; Chain 2 finished in 0.1 seconds.
+#&gt; Chain 1 finished in 0.3 seconds.
+#&gt; Chain 2 finished in 0.2 seconds.
 #&gt; 
 #&gt; Both chains finished successfully.
-#&gt; Mean chain execution time: 0.1 seconds.
-#&gt; Total execution time: 0.1 seconds.</div><div class='input'>
+#&gt; Mean chain execution time: 0.3 seconds.
+#&gt; Total execution time: 0.4 seconds.</div><div class='input'>
 <span class='co'># Use 'posterior' package for summaries</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 2 x 10</span><span>
 #&gt;   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
@@ -375,9 +374,9 @@ documentation and tutorials.</p>
 <span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='CmdStanModel-1.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># Call CmdStan's diagnose and stansummary utilities</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></span>()</div><div class='output co'>#&gt; Running bin/diagnose \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-e4cbc8.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-2-e4cbc8.csv
-#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-e4cbc8.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-2-e4cbc8.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-1-26eb87.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-2-26eb87.csv
+#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-1-26eb87.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-2-26eb87.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -393,26 +392,26 @@ documentation and tutorials.</p>
 #&gt; Split R-hat values satisfactory all parameters.
 #&gt; 
 #&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></span>()</div><div class='output co'>#&gt; Running bin/stansummary \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-e4cbc8.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-2-e4cbc8.csv
-#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-e4cbc8.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-2-e4cbc8.csv
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-1-26eb87.csv \
+#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-2-26eb87.csv
+#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-1-26eb87.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-2-26eb87.csv
 #&gt; Inference for Stan model: bernoulli_model
 #&gt; 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.0080, 0.0070) seconds, 0.015 seconds total
-#&gt; Sampling took (0.019, 0.018) seconds, 0.037 seconds total
+#&gt; Warmup took (0.0060, 0.0060) seconds, 0.012 seconds total
+#&gt; Sampling took (0.014, 0.013) seconds, 0.027 seconds total
 #&gt; 
 #&gt;                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
 #&gt; 
-#&gt; lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8      586    15842      1.0
-#&gt; accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.0e+04  1.0e+00
-#&gt; stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  2.7e+01  2.6e+13
-#&gt; treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  5.0e+04  1.0e+00
-#&gt; n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  3.8e+02  1.0e+00
+#&gt; lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8      586    21709      1.0
+#&gt; accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.7e+04  1.0e+00
+#&gt; stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  3.7e+01  2.6e+13
+#&gt; treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  6.9e+04  1.0e+00
+#&gt; n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  5.2e+02  1.0e+00
 #&gt; divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-#&gt; energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  1.9e+04  1.0e+00
+#&gt; energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  2.6e+04  1.0e+00
 #&gt; 
-#&gt; theta           0.25  4.5e-03    0.12  0.081  0.23  0.49      755    20411     1.00
+#&gt; theta           0.25  4.5e-03    0.12  0.081  0.23  0.49      755    27971     1.00
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,
@@ -447,7 +446,7 @@ documentation and tutorials.</p>
 #&gt; random 
 #&gt;   seed = 123 
 #&gt; output 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-fede65.csv 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-1-31240d.csv 
 #&gt;   diagnostic_file =  (Default) 
 #&gt;   refresh = 100 (Default) 
 #&gt;  
@@ -480,12 +479,12 @@ documentation and tutorials.</p>
 #&gt;     output_samples = 1000 (Default) 
 #&gt; id = 1 
 #&gt; data 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/standata-95a72bbac638.json 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/standata-205e7435dcdc.json 
 #&gt; init = 2 (Default) 
 #&gt; random 
 #&gt;   seed = 123 
 #&gt; output 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-2b9cf5.csv 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-1-372b1e.csv 
 #&gt;   diagnostic_file =  (Default) 
 #&gt;   refresh = 100 (Default) 
 #&gt;  
@@ -497,8 +496,8 @@ documentation and tutorials.</p>
 #&gt;  
 #&gt;  
 #&gt;  
-#&gt; Gradient evaluation took 1e-05 seconds 
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds. 
+#&gt; Gradient evaluation took 1.1e-05 seconds 
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds. 
 #&gt; Adjust your expectations accordingly! 
 #&gt;  
 #&gt;  
@@ -606,12 +605,12 @@ documentation and tutorials.</p>
 #&gt;     save_iterations = 0 (Default) 
 #&gt; id = 1 
 #&gt; data 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/standata-95a76397ec57.json 
-#&gt; init = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/init-1-95a7b1d76d6.json 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/standata-205e4c51b232.json 
+#&gt; init = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/init-1-205e78a17c3.json 
 #&gt; random 
 #&gt;   seed = 123 
 #&gt; output 
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpvSr5hc/bernoulli-202007281356-1-64e14d.csv 
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpAcsuBs/bernoulli-202008031244-1-1e0712.csv 
 #&gt;   diagnostic_file =  (Default) 
 #&gt;   refresh = 100 (Default) 
 #&gt;  

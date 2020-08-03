@@ -81,7 +81,7 @@ temporary file with a .stan extension." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -181,7 +181,7 @@ temporary file with a .stan extension." />
 <a href='https://rdrr.io/r/base/tempfile.html'>temporary file</a> with a <code>.stan</code> extension.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>write_stan_tempfile</span>(<span class='no'>code</span>)</pre>
+    <pre class="usage"><span class='fu'>write_stan_tempfile</span>(<span class='no'>code</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>())</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -190,6 +190,12 @@ temporary file with a .stan extension." />
       <th>code</th>
       <td><p>A single string containing a Stan program or a character vector
 containing the individual lines of a Stan program. See <strong>Examples</strong>.</p></td>
+    </tr>
+    <tr>
+      <th>dir</th>
+      <td><p>An optional path of the directory where the temporary file will
+be written to. If omitted, a <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory</a> is used
+by default.</p></td>
     </tr>
     </table>
 
@@ -213,7 +219,7 @@ model {
 "</span>
 
 <span class='no'>f</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_tempfile</span>(<span class='no'>stan_program</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>f</span>)</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpvSr5hc/file95a71d7c7aac.stan"</div><div class='input'>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>f</span>)</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpAcsuBs/file205e14e1fabb.stan"</div><div class='input'>
 <span class='no'>lines</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>)
 <span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>lines</span>)</div><div class='output co'>#&gt;  [1] ""                               "data {"                        
 #&gt;  [3] "  int&lt;lower=0&gt; N;"              "  int&lt;lower=0,upper=1&gt; y[N];"  

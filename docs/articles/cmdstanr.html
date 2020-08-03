@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -239,7 +239,7 @@ Chain 4 Iteration: 1000 / 2000 [ 50%]  (Warmup)
 Chain 4 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
 Chain 4 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
 Chain 4 Iteration: 2000 / 2000 [100%]  (Sampling) 
-Chain 3 finished in 0.1 seconds.
+Chain 3 finished in 0.2 seconds.
 Chain 4 finished in 0.1 seconds.
 
 All 4 chains finished successfully.
@@ -343,11 +343,11 @@ Total execution time: 0.4 seconds.</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_diagnose()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_summary()</code></a> methods call CmdStan’s <code>diagnose</code> and <code>stansummary</code> utilities:</p>
 <div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_diagnose</a></span>()</pre></body></html></div>
 <pre><code>Running bin/diagnose \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-1-6237db.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-2-6237db.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-3-6237db.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-4-6237db.csv
-Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-1-6237db.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-2-6237db.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-3-6237db.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-4-6237db.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8e876b.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-2-8e876b.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-3-8e876b.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-4-8e876b.csv
+Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-2-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-3-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-4-8e876b.csv
 
 Checking sampler transitions treedepth.
 Treedepth satisfactory for all transitions.
@@ -365,28 +365,28 @@ Split R-hat values satisfactory all parameters.
 Processing complete, no problems detected.</code></pre>
 <div class="sourceCode" id="cb34"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_summary</a></span>()</pre></body></html></div>
 <pre><code>Running bin/stansummary \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-1-6237db.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-2-6237db.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-3-6237db.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-4-6237db.csv
-Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-1-6237db.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-2-6237db.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-3-6237db.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-4-6237db.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8e876b.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-2-8e876b.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-3-8e876b.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-4-8e876b.csv
+Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-2-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-3-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-4-8e876b.csv
 Inference for Stan model: bernoulli_model
 4 chains: each with iter=(1000,1000,1000,1000); warmup=(0,0,0,0); thin=(1,1,1,1); 4000 iterations saved.
 
-Warmup took (0.0070, 0.0070, 0.0060, 0.0070) seconds, 0.027 seconds total
-Sampling took (0.018, 0.016, 0.018, 0.017) seconds, 0.069 seconds total
+Warmup took (0.0060, 0.0050, 0.0050, 0.0050) seconds, 0.021 seconds total
+Sampling took (0.014, 0.013, 0.013, 0.013) seconds, 0.053 seconds total
 
                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
 
-lp__            -7.3  2.0e-02    0.76   -8.8  -7.0  -6.8     1431    20736      1.0
-accept_stat__   0.90  2.5e-03    0.15   0.57  0.97   1.0  3.7e+03  5.4e+04  1.0e+00
-stepsize__       1.1  8.8e-02    0.12   0.93   1.2   1.3  2.0e+00  2.9e+01  3.5e+13
-treedepth__      1.4  8.2e-03    0.51    1.0   1.0   2.0  3.8e+03  5.5e+04  1.0e+00
-n_leapfrog__     2.5  1.9e-01     1.3    1.0   3.0   3.0  4.3e+01  6.3e+02  1.0e+00
+lp__            -7.3  2.0e-02    0.76   -8.8  -7.0  -6.8     1431    26995      1.0
+accept_stat__   0.90  2.5e-03    0.15   0.57  0.97   1.0  3.7e+03  7.0e+04  1.0e+00
+stepsize__       1.1  8.8e-02    0.12   0.93   1.2   1.3  2.0e+00  3.8e+01  3.5e+13
+treedepth__      1.4  8.2e-03    0.51    1.0   1.0   2.0  3.8e+03  7.2e+04  1.0e+00
+n_leapfrog__     2.5  1.9e-01     1.3    1.0   3.0   3.0  4.3e+01  8.2e+02  1.0e+00
 divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-energy__         7.8  2.7e-02     1.0    6.8   7.4   9.9  1.5e+03  2.1e+04  1.0e+00
+energy__         7.8  2.7e-02     1.0    6.8   7.4   9.9  1.5e+03  2.8e+04  1.0e+00
 
-theta           0.25  3.1e-03    0.12  0.080  0.24  0.48     1542    22353      1.0
+theta           0.25  3.1e-03    0.12  0.080  0.24  0.48     1542    29101      1.0
 
 Samples were drawn using hmc with nuts.
 For each parameter, N_Eff is a crude measure of effective sample size,
@@ -424,12 +424,12 @@ convergence, R_hat=1).</code></pre>
     save_iterations = 0 (Default) 
 id = 1 
 data 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/standata-97df44279520.json 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/standata-23176bb9a8e.json 
 init = 2 (Default) 
 random 
   seed = 123 
 output 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-1-af8ad5.csv 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-9fe416.csv 
   diagnostic_file =  (Default) 
   refresh = 100 (Default) 
  
@@ -474,12 +474,12 @@ Finished in  0.1 seconds.</code></pre>
     output_samples = 4000 
 id = 1 
 data 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/standata-97df585e4d45.json 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/standata-23175b828b40.json 
 init = 2 (Default) 
 random 
   seed = 123 
 output 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpeNf1J1/bernoulli-202007281359-1-231a56.csv 
+  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8445af.csv 
   diagnostic_file =  (Default) 
   refresh = 100 (Default) 
  
@@ -491,8 +491,8 @@ EXPERIMENTAL ALGORITHM:
  
  
  
-Gradient evaluation took 7e-06 seconds 
-1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds. 
+Gradient evaluation took 1e-05 seconds 
+1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds. 
 Adjust your expectations accordingly! 
  
  
