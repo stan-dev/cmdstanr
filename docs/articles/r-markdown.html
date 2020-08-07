@@ -229,6 +229,12 @@ rstan::sampling(model_obj1)
 model_obj2$sample()
 ```</code></pre>
 </div>
+<div id="running-interactively" class="section level2">
+<h2 class="hasAnchor">
+<a href="#running-interactively" class="anchor"></a>Running interactively</h2>
+<p>When running chunks interactively in RStudio (e.g. when using <a href="https://bookdown.org/yihui/rmarkdown/notebook.html">R Notebooks</a>), it has been observed that the built-in, RStan-based engine is used for <code>stan</code> chunks even when CmdStanR’s engine has been registered in the session as the engine for <code>stan</code>. As a workaround, when running chunks <em>interactively</em>, it is recommended to use the <code>override = FALSE</code> option and change <code>stan</code> chunks to be <code>cmdstan</code> chunks.</p>
+<p>Do not worry: if the template you use supports syntax highlighting for the Stan language, that syntax highlighting will be applied to <code>cmdstan</code> chunks when the document is knit/rendered.</p>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

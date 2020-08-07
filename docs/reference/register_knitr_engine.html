@@ -202,11 +202,22 @@ See below for details.</p></td>
     <p>If <code>override = TRUE</code> (default), this registers CmdStanR's knitr engine as the
 engine for <code>stan</code> chunks, replacing knitr's built-in, RStan-based engine. If
 <code>override = FALSE</code>, this registers a <code>cmdstan</code> engine so that both engines
-may be used in the same R Markdown document. If there is syntax highlighting,
-the <code>cmdstan</code> chunks will have <code>stan</code> syntax highlighting applied to them.</p>
+may be used in the same R Markdown document. If the template supports syntax
+highlighting for the Stan language, the <code>cmdstan</code> chunks will have <code>stan</code>
+syntax highlighting applied to them.</p>
 <p>See the vignette
 <a href='https://mc-stan.org/cmdstanr/articles/r-markdown.html'>R Markdown CmdStan Engine</a>
 for an example.</p>
+<p><strong>Note:</strong> When running chunks interactively in RStudio (e.g. when using
+<a href='https://bookdown.org/yihui/rmarkdown/notebook.html'>R Notebooks</a>), it has
+been observed that the built-in, RStan-based engine is used for <code>stan</code>
+chunks even when CmdStanR's engine has been registered in the session. When
+the R Markdown document is knit/rendered, the correct engine is used. As a
+workaround, when running chunks interactively, it is recommended to use the
+<code>override = FALSE</code> option and change <code>stan</code> chunks to be <code>cmdstan</code> chunks.</p>
+<p>If you would like to keep <code>stan</code> chunks as <code>stan</code> chunks, it is possible to
+specify <code>engine = "cmdstan"</code> in the chunk options after registering the
+<code>cmdstan</code> engine with <code>override = FALSE</code>.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     
