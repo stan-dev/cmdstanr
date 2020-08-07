@@ -1,7 +1,7 @@
 ---
 title: "R Markdown CmdStan Engine"
 author: "Mikhail Popov"
-output: 
+output:
   rmarkdown::html_vignette:
     toc: true
 params:
@@ -113,3 +113,9 @@ rstan::sampling(model_obj1)
 model_obj2$sample()
 ```
 ````
+
+## Running interactively
+
+When running chunks interactively in RStudio (e.g. when using [R Notebooks](https://bookdown.org/yihui/rmarkdown/notebook.html)), it has been observed that the built-in, RStan-based engine is used for `stan` chunks even when CmdStanR's engine has been registered in the session as the engine for `stan`. As a workaround, when running chunks *interactively*, it is recommended to use the `override = FALSE` option and change `stan` chunks to be `cmdstan` chunks.
+
+Do not worry: if the template you use supports syntax highlighting for the Stan language, that syntax highlighting will be applied to `cmdstan` chunks when the document is knit/rendered.

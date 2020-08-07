@@ -13,7 +13,9 @@ eng_cmdstan(options)
 This provides a knitr engine for Stan, suitable for usage when attempting
 to render Stan chunks and compile the model code within to an executable with
 CmdStan. Use \code{\link[=register_knitr_engine]{register_knitr_engine()}} to make this the default engine for
-\code{stan} chunks.
+\code{stan} chunks. See the vignette
+\href{https://mc-stan.org/cmdstanr/articles/r-markdown.html}{R Markdown CmdStan Engine}
+for an example.
 }
 \examples{
 \dontrun{
