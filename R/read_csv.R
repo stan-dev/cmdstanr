@@ -60,7 +60,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' stan_program <- write_stan_tempfile(
+#' stan_program <- write_stan_file(
 #'   "parameters {
 #'     real alpha_scalar;
 #'     vector[2] theta_vector;

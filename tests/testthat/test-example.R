@@ -19,8 +19,9 @@ test_that("cmdstanr_example works", {
   expect_output(print_example_program("schools_ncp"), "vector[J] theta_raw", fixed=TRUE)
 })
 
-test_that("write_stan_tempfile works", {
-  stan_program <- "
+
+# used in multiple tests below
+stan_program <- "
   data {
     int<lower=0> N;
     int<lower=0,upper=1> y[N];
@@ -33,13 +34,31 @@ test_that("write_stan_tempfile works", {
   }
   "
 
-  f1 <- write_stan_tempfile(stan_program)
+test_that("write_stan_file writes Stan file correctly", {
+  f1 <- write_stan_file(stan_program)
   checkmate::expect_file_exists(f1, extension = "stan")
   f1_lines <- readLines(f1)
 
-  f2 <- write_stan_tempfile(f1_lines)
+  f2 <- write_stan_file(f1_lines)
   checkmate::expect_file_exists(f2, extension = "stan")
   f2_lines <- readLines(f2)
 
   expect_identical(f1_lines, f2_lines)
 })
+
+test_that("write_stan_file writes to specified directory and filename", {
+  f1 <- write_stan_file(stan_program, dir = test_path())
+  expect_equal(dirname(f1), test_path())
+
+  f2 <- write_stan_file(stan_program, dir = test_path(), basename = "test.stan")
+  expect_equal(f2, file.path(test_path(), "test.stan"))
+
+  f3 <- write_stan_file(stan_program, dir = test_path(), basename = "test")
+  expect_equal(f3, file.path(test_path(), "test.stan"))
+
+  f4 <- write_stan_file(stan_program, dir = tempdir(), basename = "test")
+  expect_equal(basename(f4), "test.stan")
+  expect_equal(dirname(f4), tempdir())
+  try(file.remove(f1, f2, f3, f4), silent = TRUE)
+})
+

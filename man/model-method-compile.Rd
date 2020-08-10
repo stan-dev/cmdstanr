@@ -86,7 +86,7 @@ mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 mod$exe_file()
 
 # turn on pedantic mode (new in Stan v2.24)
-file_pedantic <- write_stan_tempfile("
+file_pedantic <- write_stan_file("
 parameters {
   real sigma;  // pedantic mode will warn about missing <lower=0>
 }

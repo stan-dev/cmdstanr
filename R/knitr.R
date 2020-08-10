@@ -78,7 +78,7 @@ eng_cmdstan <- function(options) {
     } else {
       dir <- tempdir()
     }
-    file <- write_stan_tempfile(options$code, dir)
+    file <- write_stan_file(options$code, dir = dir)
     mod <- cmdstan_model(file)
     assign(output_var, mod, envir = knitr::knit_global())
   }

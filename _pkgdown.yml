@@ -103,9 +103,9 @@ reference:
     contents:
       - read_cmdstan_csv
       - write_stan_json
-      - write_stan_tempfile
+      - write_stan_file
   - title: "Knitr engine for CmdStanR"
     contents:
-      - eng_cmdstan
       - register_knitr_engine
+      - eng_cmdstan
 
