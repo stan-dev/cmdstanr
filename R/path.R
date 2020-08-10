@@ -168,9 +168,5 @@ is_release_candidate <- function(path) {
   if (endsWith(path, "/")) {
     path <- substr(path, 1, nchar(path) - 1)
   }
-  if (length(grep(pattern = "-rc[0-9]*$", x = path)) > 0) {
-    TRUE
-  } else{
-    FALSE
-  }
+  grepl(pattern = "-rc[0-9]*$", x = path)
 }

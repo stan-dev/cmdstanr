@@ -1,6 +1,14 @@
 .onAttach <- function(...) {
-  ver <- utils::packageVersion("cmdstanr")
-  packageStartupMessage("This is cmdstanr version ", ver)
+  startup_messages()
+}
+
+.onLoad <- function(...) {
+  cmdstanr_initialize()
+}
+
+
+startup_messages <- function() {
+  packageStartupMessage("This is cmdstanr version ", utils::packageVersion("cmdstanr"))
   packageStartupMessage("- Online documentation and vignettes at mc-stan.org/cmdstanr")
   if (is.null(.cmdstanr$PATH)) {
     packageStartupMessage("- Use set_cmdstan_path() to set the path to CmdStan")
@@ -9,10 +17,15 @@
     packageStartupMessage("- CmdStan path set to: ", cmdstan_path(), "")
     packageStartupMessage("- Use set_cmdstan_path() to change the path")
   }
-}
 
-.onLoad <- function(...) {
-  cmdstanr_initialize()
+  latest_version <- try(suppressWarnings(latest_released_version()), silent = TRUE)
+  if (!inherits(latest_version, "try-error")
+      && latest_version > cmdstan_version()) {
+      packageStartupMessage(
+        "\nA newer version of CmdStan is available.",
+        " See ?install_cmdstan() to install it."
+      )
+  }
 }
 
 
