@@ -1,8 +1,9 @@
-# Placeholder for next tagged release
+# Items for next release
 
 * `write_stan_file()` replaces `write_stan_tempfile()`, which is now deprecated.
 With the addition of the `dir` argument, the file written is not necessarily
-temporary. (#267)
+temporary. (#267, #272)
+
 
 # cmdstanr 0.1.1
 
