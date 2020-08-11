@@ -147,6 +147,7 @@ write_stan_file <- function(code, dir = tempdir(), basename = NULL) {
 #'
 #' This function is deprecated. Please use [write_stan_file()] instead.
 #'
+#' @export
 #' @inheritParams write_stan_file
 write_stan_tempfile <- function(code, dir = tempdir()) {
   warning("write_stan_tempfile() is deprecated. Please use write_stan_file() instead.",
