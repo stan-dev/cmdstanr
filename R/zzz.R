@@ -18,10 +18,10 @@ startup_messages <- function() {
     packageStartupMessage("- Use set_cmdstan_path() to change the path")
   }
 
-  skip_version_check <- getOption(
+  skip_version_check <- isTRUE(getOption(
     "CMDSTANR_NO_VER_CHECK",
     default = identical(tolower(Sys.getenv("CMDSTANR_NO_VER_CHECK")), "true")
-  )
+  ))
   if (!skip_version_check) {
     latest_version <- try(suppressWarnings(latest_released_version()), silent = TRUE)
     if (!inherits(latest_version, "try-error")
