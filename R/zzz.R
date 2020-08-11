@@ -1,6 +1,14 @@
 .onAttach <- function(...) {
-  ver <- utils::packageVersion("cmdstanr")
-  packageStartupMessage("This is cmdstanr version ", ver)
+  startup_messages()
+}
+
+.onLoad <- function(...) {
+  cmdstanr_initialize()
+}
+
+
+startup_messages <- function() {
+  packageStartupMessage("This is cmdstanr version ", utils::packageVersion("cmdstanr"))
   packageStartupMessage("- Online documentation and vignettes at mc-stan.org/cmdstanr")
   if (is.null(.cmdstanr$PATH)) {
     packageStartupMessage("- Use set_cmdstan_path() to set the path to CmdStan")
@@ -9,10 +17,49 @@
     packageStartupMessage("- CmdStan path set to: ", cmdstan_path(), "")
     packageStartupMessage("- Use set_cmdstan_path() to change the path")
   }
+
+  skip_version_check <- isTRUE(getOption(
+    "CMDSTANR_NO_VER_CHECK",
+    default = identical(tolower(Sys.getenv("CMDSTANR_NO_VER_CHECK")), "true")
+  ))
+  if (!skip_version_check) {
+    latest_version <- try(suppressWarnings(latest_released_version()), silent = TRUE)
+    if (!inherits(latest_version, "try-error")
+        && latest_version > cmdstan_version()) {
+      packageStartupMessage(
+        "\nA newer version of CmdStan is available. See ?install_cmdstan() to install it.",
+        "\nTo disable this check set option or environment variable CMDSTANR_NO_VER_CHECK=TRUE."
+      )
+    }
+  }
 }
 
-.onLoad <- function(...) {
-  cmdstanr_initialize()
+
+cmdstanr_initialize <- function() {
+  # First check for environment variable CMDSTAN, but if not found
+  # then see if default
+  path <- Sys.getenv("CMDSTAN")
+  if (isTRUE(nzchar(path))) { # CMDSTAN environment variable found
+    if (dir.exists(path)) {
+      path <- absolute_path(path)
+      suppressMessages(set_cmdstan_path(path))
+    } else {
+      warning("Can't find directory specified by environment variable",
+              " 'CMDSTAN'. Path not set.", call. = FALSE)
+      .cmdstanr$PATH <- NULL
+    }
+
+  } else { # environment variable not found
+    path <- cmdstan_default_path()
+    if (!is.null(path)) {
+      suppressMessages(set_cmdstan_path(path))
+    }
+  }
+
+  if (getRversion() < '3.5.0') {
+    .cmdstanr$TEMP_DIR <- tempdir()
+  } else {
+    .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
+  }
+  invisible(TRUE)
 }
-
-
