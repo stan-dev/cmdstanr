@@ -47,7 +47,7 @@ all of which have their own (linked) documentation pages.
 \examples{
 \dontrun{
 # first fit a model using MCMC
-mcmc_program <- write_stan_tempfile(
+mcmc_program <- write_stan_file(
   "data {
     int<lower=0> N;
     int<lower=0,upper=1> y[N];
@@ -66,7 +66,7 @@ fit_mcmc <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
 
 # stan program for standalone generated quantities
 # (could keep model block, but not necessary so removing it)
-gq_program <- write_stan_tempfile(
+gq_program <- write_stan_file(
   "data {
     int<lower=0> N;
     int<lower=0,upper=1> y[N];

@@ -10,41 +10,9 @@ write_stan_tempfile(code, dir = tempdir())
 \item{code}{A single string containing a Stan program or a character vector
 containing the individual lines of a Stan program. See \strong{Examples}.}
 
-\item{dir}{An optional path of the directory where the temporary file will
-be written to. If omitted, a \link[base:tempfile]{temporary directory} is used
-by default.}
-}
-\value{
-The path to the temporary file.
+\item{dir}{An optional path to the directory where the file will be written.
+If omitted, a \link[base:tempfile]{temporary directory} is used by default.}
 }
 \description{
-Convenience function for writing Stan code to a
-\link[base:tempfile]{temporary file} with a \code{.stan} extension.
-}
-\examples{
-# stan program as a single string
-stan_program <- "
-data {
-  int<lower=0> N;
-  int<lower=0,upper=1> y[N];
-}
-parameters {
-  real<lower=0,upper=1> theta;
-}
-model {
-  y ~ bernoulli(theta);
-}
-"
-
-f <- write_stan_tempfile(stan_program)
-print(f)
-
-lines <- readLines(f)
-print(lines)
-cat(lines, sep = "\n")
-
-# stan program as character vector of lines
-f2 <- write_stan_tempfile(lines)
-identical(readLines(f), readLines(f2))
-
+This function is deprecated. Please use \code{\link[=write_stan_file]{write_stan_file()}} instead.
 }

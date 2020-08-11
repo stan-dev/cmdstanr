@@ -82,21 +82,23 @@ print_example_program <-
 
 
 
-# including write_stan_tempfile in example.R since it will be mostly used
+# including write_stan_file in example.R since it will be mostly used
 # in examples
 
-#' Write Stan code to a temporary file
+#' Write Stan code to a file
 #'
-#' Convenience function for writing Stan code to a
-#' [temporary file][base::tempfile] with a `.stan` extension.
+#' Convenience function for writing Stan code to a (possibly
+#' [temporary][base::tempfile]) file with a `.stan` extension.
 #'
 #' @export
 #' @param code A single string containing a Stan program or a character vector
 #'   containing the individual lines of a Stan program. See **Examples**.
-#' @param dir An optional path of the directory where the temporary file will
-#'   be written to. If omitted, a [temporary directory][base::tempdir] is used
-#'   by default.
-#' @return The path to the temporary file.
+#' @param dir An optional path to the directory where the file will be written.
+#'   If omitted, a [temporary directory][base::tempdir] is used by default.
+#' @param basename If `dir` is specified, an optional string providing the
+#'   basename for the file created. If not specified a file name is generated
+#'   via [base::tempfile()].
+#' @return The path to the file.
 #'
 #' @examples
 #' # stan program as a single string
@@ -113,7 +115,7 @@ print_example_program <-
 #' }
 #' "
 #'
-#' f <- write_stan_tempfile(stan_program)
+#' f <- write_stan_file(stan_program)
 #' print(f)
 #'
 #' lines <- readLines(f)
@@ -121,15 +123,35 @@ print_example_program <-
 #' cat(lines, sep = "\n")
 #'
 #' # stan program as character vector of lines
-#' f2 <- write_stan_tempfile(lines)
+#' f2 <- write_stan_file(lines)
 #' identical(readLines(f), readLines(f2))
 #'
-write_stan_tempfile <- function(code, dir = tempdir()) {
+write_stan_file <- function(code, dir = tempdir(), basename = NULL) {
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
   }
-  tmp <- tempfile(fileext = ".stan", tmpdir = dir)
-  cat(code, file = tmp, sep = "\n")
-  tmp
+  if (!is.null(basename)) {
+    if (!endsWith(basename, ".stan")) {
+      basename <- paste0(basename, ".stan")
+    }
+    file <- file.path(dir, basename)
+  } else {
+    file <- tempfile(fileext = ".stan", tmpdir = dir)
+  }
+  cat(code, file = file, sep = "\n")
+  file
+}
+
+
+#' Write Stan code to a temporary file
+#'
+#' This function is deprecated. Please use [write_stan_file()] instead.
+#'
+#' @export
+#' @inheritParams write_stan_file
+write_stan_tempfile <- function(code, dir = tempdir()) {
+  warning("write_stan_tempfile() is deprecated. Please use write_stan_file() instead.",
+          call. = FALSE)
+  write_stan_file(code, dir)
 }
 

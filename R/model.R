@@ -6,7 +6,7 @@
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program. The
-#'   helper function [write_stan_tempfile()] is provided for cases when it is
+#'   helper function [write_stan_file()] is provided for cases when it is
 #'   more convenient to specify the Stan program as a string.
 #' @param compile Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
@@ -338,7 +338,7 @@ CmdStanModel <- R6::R6Class(
 #' mod$exe_file()
 #'
 #' # turn on pedantic mode (new in Stan v2.24)
-#' file_pedantic <- write_stan_tempfile("
+#' file_pedantic <- write_stan_file("
 #' parameters {
 #'   real sigma;  // pedantic mode will warn about missing <lower=0>
 #' }
@@ -1040,7 +1040,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #' @examples
 #' \dontrun{
 #' # first fit a model using MCMC
-#' mcmc_program <- write_stan_tempfile(
+#' mcmc_program <- write_stan_file(
 #'   "data {
 #'     int<lower=0> N;
 #'     int<lower=0,upper=1> y[N];
@@ -1059,7 +1059,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'
 #' # stan program for standalone generated quantities
 #' # (could keep model block, but not necessary so removing it)
-#' gq_program <- write_stan_tempfile(
+#' gq_program <- write_stan_file(
 #'   "data {
 #'     int<lower=0> N;
 #'     int<lower=0,upper=1> y[N];
