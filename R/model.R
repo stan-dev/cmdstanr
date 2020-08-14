@@ -506,6 +506,114 @@ compile_method <- function(quiet = TRUE,
 }
 CmdStanModel$set("public", name = "compile", value = compile_method)
 
+#' Check syntax of a Stan program
+#'
+#' @name model-method-syntax-check
+#' @aliases syntax_check
+#' @family CmdStanModel methods
+#'
+#' @description The `$syntax_check()` method of a [`CmdStanModel`] object
+#'   checks the Stan syntax of the model and returns `TRUE` if the compilation
+#'   succeeds. In case of a syntax error, an error is thrown.
+#'   
+#' @section Usage:
+#'   ```
+#'   $syntax_check(
+#'     quiet = TRUE,
+#'     include_paths = NULL,
+#'     stanc_options = list()
+#'   )
+#'   ```
+#'
+#' @section Arguments:
+#'   * `quiet`: (logical) Should the compile command be printed.
+#'   * `include_paths`: (character vector) Paths to directories where Stan
+#'   should look for files specified in `#include` directives in the Stan
+#'   program.
+#'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be used
+#'   when compiling the model. See the **Examples** section below as well as the
+#'   `stanc` chapter of the CmdStan Guide for more details on available options:
+#'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
+#'
+#' @section Value: The `$syntax_check()` method returns `TRUE` if the model
+#'   is valid.
+#'
+#' @template seealso-docs
+#'
+#' @examples
+#' \dontrun{
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#'
+#' mod <- cmdstan_model(file, compile = FALSE)
+#' mod$syntax_check()
+#' }
+#'
+NULL
+
+syntax_check_method <- function(quiet = TRUE,
+                           include_paths = NULL,
+                           stanc_options = list()) {
+  if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
+    stanc_options <- private$precompile_stanc_options_
+  }
+  if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
+    include_paths <- private$precompile_include_paths_
+  }
+  
+  model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
+
+  message("Running syntax check of the Stan program...")
+
+  temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
+  stanc_options[["o"]] <- temp_hpp_file
+
+  stancflags_val <- ""
+  if (!is.null(include_paths)) {
+    checkmate::assert_directory_exists(include_paths, access = "r")
+    include_paths <- absolute_path(include_paths)
+    include_paths <- paste0(include_paths, collapse = ",")
+    if (cmdstan_version() >= "2.24") {
+      include_paths_flag <- " --include-paths="
+    } else {
+      include_paths_flag <- " --include_paths="
+    }
+    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
+  }
+
+  if (is.null(stanc_options[["name"]])) {
+    stanc_options[["name"]] <- model_name
+  }
+
+  stanc_built_options = c()
+  for (i in seq_len(length(stanc_options))) {
+    option_name <- names(stanc_options)[i]
+    if (isTRUE(as.logical(stanc_options[[i]]))) {
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
+    } else {
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
+    }
+  }
+  
+  run_log <- processx::run(
+    command = stanc_cmd(),
+    args = c(self$stan_file(), stanc_built_options),
+    wd = cmdstan_path(),
+    echo_cmd = !quiet,
+    echo = !quiet,
+    spinner = quiet && interactive(),
+    stderr_line_callback = function(x,p) {
+      message(x)
+    },
+    error_on_status = FALSE
+  )
+  if (run_log$status != 0) {
+    stop("Syntax error found! See the message above for more information.",
+         call. = FALSE)
+  }
+
+  invisible(TRUE)
+}
+CmdStanModel$set("public", name = "syntax_check", value = syntax_check_method)
 
 #' Run Stan's MCMC algorithms
 #'

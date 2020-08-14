@@ -231,3 +231,19 @@ test_that("*hpp_file() functions work", {
   expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))))
 })
 
+test_that("syntax_check() works", {
+  skip_on_cran()
+  stan_file <- testing_stan_file("fail")
+  mod_fail <- cmdstan_model(stan_file, compile = FALSE)
+  expect_error(
+    mod_fail$syntax_check(),
+    "Syntax error found! See the message above for more information."
+  )
+  stan_file <- testing_stan_file("bernoulli")
+  mod_ok <- cmdstan_model(stan_file, compile = FALSE)
+  expect_true(mod_ok$syntax_check())
+  expect_message(
+    mod_ok$syntax_check(),
+    "Running syntax check of the Stan program"
+  )
+})
