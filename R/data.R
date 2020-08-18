@@ -94,6 +94,9 @@ process_data <- function(data) {
         call. = FALSE
       )
     }
+    if (any_na_elements(data)) {
+      stop("Data includes NA values.", call. = FALSE)
+    }
     path <- tempfile(pattern = "standata-", fileext = ".json")
     write_stan_json(data = data, file = path)
   } else {
@@ -102,12 +105,18 @@ process_data <- function(data) {
   path
 }
 
-# check if any objects in the data list have zero
+# check if any objects in the data list have zero as one of their dimensions
 any_zero_dims <- function(data) {
   has_zero_dims <- sapply(data, function(x) {
     any(dim(x) == 0)
   })
   any(has_zero_dims)
+}
+
+# check if any objects in the data list contain NAs
+any_na_elements <- function(data) {
+  has_na_elements <- sapply(data, anyNA)
+  any(has_na_elements)
 }
 
 
