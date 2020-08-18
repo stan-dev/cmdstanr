@@ -7,6 +7,13 @@ if (not_on_cran()) {
   fit_optimize <- testing_fit("bernoulli", method = "optimize", seed = 123)
 }
 
+test_that("NAs detected in data list", {
+  expect_false(any_na_elements(list(y = 1)))
+  expect_true(any_na_elements(list(y = 1, N = NA)))
+  expect_true(any_na_elements(list(x = matrix(NA, 1, 1))))
+  expect_true(any_na_elements(list(x = list(1, NA))))
+})
+
 test_that("process_fitted_params() works with basic input types", {
   temp_file <- tempfile()
   temp_files <- c(tempfile(),
