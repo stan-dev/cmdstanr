@@ -534,7 +534,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   when compiling the model. See the documentation for the
 #'   [`$compile()`][model-method-compile] method for details.
 #'
-#' @section Value: The `$syntax_check()` method returns `TRUE` if the model
+#' @section Value: The `$syntax_check()` method returns `TRUE` (invisibly) if the model
 #'   is valid.
 #'
 #' @template seealso-docs
