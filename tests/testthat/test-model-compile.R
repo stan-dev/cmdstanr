@@ -281,7 +281,7 @@ test_that("pedantic check works", {
      ""
     )
   )
-  expect_equal(paste0(a, collapse = "\n"), "Warning:\n  The parameter x was declared but was not used in the density calculation.")
+  expect_match(paste0(a, collapse = "\n"), "The parameter x was declared but was not used in the density calculation.")
 })
 
 
