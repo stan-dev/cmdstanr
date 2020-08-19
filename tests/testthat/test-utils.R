@@ -23,6 +23,16 @@ test_that("check_divergences() works", {
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "1 of 100 \\(1.0%\\) transitions ended with a divergence."
   expect_message(check_divergences(csv_output), output)
+
+
+  fit_wramup_no_samples <- testing_fit("logistic", method = "sample",
+                          seed = 123, chains = 1,
+                          iter_sampling = 0,
+                          iter_warmup = 10,
+                          save_warmup = TRUE,
+                          validate_csv = FALSE)
+  csv_output <- read_cmdstan_csv(fit_wramup_no_samples$output_files())
+  expect_message(check_divergences(csv_output), regexp = NA)
 })
 
 test_that("check_sampler_transitions_treedepth() works", {
