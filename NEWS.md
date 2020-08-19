@@ -1,4 +1,7 @@
-# Items for next release
+# cmdstanr 0.1.2
+
+* User is notified by message at load time if a new release of CmdStan is
+available. (#265, #273)
 
 * `write_stan_file()` replaces `write_stan_tempfile()`, which is now deprecated.
 With the addition of the `dir` argument, the file written is not necessarily
