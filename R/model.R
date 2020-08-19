@@ -513,8 +513,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @family CmdStanModel methods
 #'
 #' @description The `$syntax_check()` method of a [`CmdStanModel`] object
-#'   checks the Stan syntax of the model and returns `TRUE` if the compilation
-#'   succeeds. In case of a syntax error, an error is thrown.
+#'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if 
+#'   parsing succeeds. In case of a syntax error, an error is thrown.
 #'   
 #' @section Usage:
 #'   ```
