@@ -531,9 +531,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
 #'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be used
-#'   when compiling the model. See the **Examples** section below as well as the
-#'   `stanc` chapter of the CmdStan Guide for more details on available options:
-#'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
+#'   when compiling the model. See the documentation for the
+#'   [`$compile()`][model-method-compile] method for details.
 #'
 #' @section Value: The `$syntax_check()` method returns `TRUE` if the model
 #'   is valid.
