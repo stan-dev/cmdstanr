@@ -508,17 +508,17 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 
 #' Check syntax of a Stan program
 #'
-#' @name model-method-syntax_check
-#' @aliases syntax_check
+#' @name model-method-check_syntax
+#' @aliases check_syntax
 #' @family CmdStanModel methods
 #'
-#' @description The `$syntax_check()` method of a [`CmdStanModel`] object
+#' @description The `$check_syntax()` method of a [`CmdStanModel`] object
 #'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if 
 #'   parsing succeeds. In case of a syntax error, an error is thrown.
 #'   
 #' @section Usage:
 #'   ```
-#'   $syntax_check(
+#'   $check_syntax(
 #'     quiet = TRUE,
 #'     include_paths = NULL,
 #'     stanc_options = list()
@@ -526,7 +526,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   ```
 #'
 #' @section Arguments:
-#'   * `quiet`: (logical) Should the compile command be printed.
+#'   * `quiet`: (logical) Should informational messages on compiling be printed.
+#'   Default is `TRUE`, which will print a message if the model is valid or the 
+#'   compiler error message if there are syntax errors in the model.
+#'   If `FALSE`, only the error message will be printed.
 #'   * `include_paths`: (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -534,7 +537,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   when compiling the model. See the documentation for the
 #'   [`$compile()`][model-method-compile] method for details.
 #'
-#' @section Value: The `$syntax_check()` method returns `TRUE` (invisibly) if the model
+#' @section Value: The `$check_syntax()` method returns `TRUE` (invisibly) if the model
 #'   is valid.
 #'
 #' @template seealso-docs
@@ -544,12 +547,12 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #'
 #' mod <- cmdstan_model(file, compile = FALSE)
-#' mod$syntax_check()
+#' mod$check_syntax()
 #' }
 #'
 NULL
 
-syntax_check_method <- function(quiet = TRUE,
+check_syntax_method <- function(quiet = TRUE,
                            include_paths = NULL,
                            stanc_options = list()) {
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
@@ -612,7 +615,7 @@ syntax_check_method <- function(quiet = TRUE,
 
   invisible(TRUE)
 }
-CmdStanModel$set("public", name = "syntax_check", value = syntax_check_method)
+CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 
 #' Run Stan's MCMC algorithms
 #'
