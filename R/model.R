@@ -508,7 +508,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 
 #' Check syntax of a Stan program
 #'
-#' @name model-method-syntax-check
+#' @name model-method-syntax_check
 #' @aliases syntax_check
 #' @family CmdStanModel methods
 #'
