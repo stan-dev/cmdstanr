@@ -552,7 +552,7 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'
 NULL
 
-check_syntax_method <- function(quiet = TRUE,
+check_syntax_method <- function(quiet = FALSE,
                            include_paths = NULL,
                            stanc_options = list()) {
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
@@ -563,8 +563,6 @@ check_syntax_method <- function(quiet = TRUE,
   }
   
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
-
-  message("Running syntax check of the Stan program...")
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- temp_hpp_file
@@ -600,7 +598,7 @@ check_syntax_method <- function(quiet = TRUE,
     command = stanc_cmd(),
     args = c(self$stan_file(), stanc_built_options),
     wd = cmdstan_path(),
-    echo_cmd = !quiet,
+    echo_cmd = FALSE,
     echo = !quiet,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
@@ -612,7 +610,9 @@ check_syntax_method <- function(quiet = TRUE,
     stop("Syntax error found! See the message above for more information.",
          call. = FALSE)
   }
-
+  if (!quiet) {
+    message("Stan program is syntactically correct");
+  }
   invisible(TRUE)
 }
 CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
