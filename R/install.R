@@ -396,3 +396,142 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 
   TRUE
 }
+install_mingw32_make <- function() {
+  processx::run(
+    "pacman",
+    args = c("-Syu", "mingw-w64-x86_64-make","--noconfirm"),
+    wd = file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin"),
+    error_on_status = TRUE
+  )
+  invisible(NULL)
+}
+
+install_cmdstan_toolchain <- function(check_only = FALSE) {
+  if(os_is_windows()) {
+    if (R.version$major >= "4") {
+      rtools_path <- Sys.getenv("RTOOLS40_HOME")
+      # If RTOOLS40_HOME is not set (the env. variable gets set on install)
+      # we assume that RTools 40 is not installed.
+      if (!nzchar(rtools_path)) {
+        error_message <- c(
+          "",
+          "RTools 4.0 is required to run cmdstanr with R version 4.x, but was not found.",
+          "Install RTools 4.0 and run 'cmdstanr::install_cmdstan_toolchain()'"
+        )
+        stop(paste0(error_message, collapse = "\n"), call. = FALSE)
+      }
+      # If RTools is installed in a path with spaces or brackets
+      # we error as this path is not valid
+      if (regexpr("\\(|)| ", rtools_path) > 0) {
+        error_message <- c(
+          "",
+          "RTools 4.0 is installed in a path with spaces or brackets, which is not allowed for use with cmdstanr.",
+          "Reinstall RTools 4.0 to a valid path, restart R and run 'cmdstanr::install_cmdstan_toolchain()'"
+        )
+        stop(paste0(error_message, collapse = "\n"), call. = FALSE)
+      }
+      if (!check_only) {
+        install_mingw32_make()
+      }
+      toolchain_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
+      mingw32_make_path <- dirname(Sys.which("mingw32-make"))
+      gpp_path <- dirname(Sys.which("g++"))
+      # If mingw32-make and g++ are not found
+      # we error and require that the user adds the PATH fix in .Renviron
+      if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
+        if(check_only) {
+          error_message <- c(
+            "",
+            "RTools installation found but PATH was not set properly.",
+            "Run 'cmdstanr::install_cmdstan_toolchain(check_only = FALSE)' to fix the issue."
+          )
+          stop(paste0(error_message, collapse = "\n"), call. = FALSE)
+        } else {
+          message("Writing RTools path to ~/.Renviron ...")
+          write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', path = "~/.Renviron", append = TRUE)
+          message("Restart R and run install_cmdstan_toolchain(check_only = TRUE) to confirm the installation was successful.")
+          return(invisible(NULL))
+        }
+      }
+      # If the default mingw32-make and g++ are not the RTools ones
+      # we error and require that the user adds the PATH fix in .Renviron
+      if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
+        if(check_only) {
+          error_message <- c(
+            "",
+            "Other C++ toolchains installed on your system conflict with RTools.",
+            "Run 'cmdstanr::install_cmdstan_toolchain(check_only = FALSE)' to fix the issue."
+          )
+          stop(paste0(error_message, collapse = "\n"), call. = FALSE)
+        } else {
+          message("Writing RTools path to ~/.Renviron ...")
+          write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
+          message("Restart R and run install_cmdstan_toolchain(check_only = TRUE) to confirm the installation was successful.")
+          return(invisible(NULL))
+        }
+      }
+    } else {
+      mingw32_make_path <- dirname(Sys.which("mingw32-make"))
+      gpp_path <- dirname(Sys.which("g++"))
+      # If mingw32-make and g++ are not found
+      # we check typical RTools 3.5 errors and if found fix the path,
+      # otherwise we recommend the user to install RTools 3.5
+      if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
+        rtools_path <- Sys.getenv("RTOOLS35_HOME")
+        if (!nzchar(rtools_path)) {
+          typical_paths <- c(
+            file.path("C:/", "Rtools"),
+            file.path("C:/", "Rtools35"),
+            file.path("C:/", "RTools"),
+            file.path("C:/", "RTools35")
+          )
+          for (p in typical_paths) {
+            if (dir.exists(p)) {
+              rtools_path <- p
+            }
+          }
+        }
+        if (nzchar(rtools_path)) {
+          if(check_only) {
+            error_message <- c(
+              "",
+              "A RTools installation was found, but the PATH is not properly set.",
+              "Run 'cmdstanr::install_cmdstan_toolchain(check_only = FALSE)' to fix the issue."
+            )
+            stop(paste0(error_message, collapse = "\n"), call. = FALSE)
+          }
+          message("Writing RTools path to ~/.Renviron ...")
+          if (nzchar(Sys.getenv("RTOOLS35_HOME"))) {
+            write(paste0('RTOOLS35_HOME=', rtools_path), file = "~/.Renviron", append = TRUE)
+          }
+          write('PATH="${RTOOLS35_HOME}\\bin;${RTOOLS35_HOME}\\mingw_64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
+          message("Restart R and run install_cmdstan_toolchain(check_only = TRUE) to confirm the installation was successful.")
+          return(invisible(NULL))
+        } else {
+          error_message <- c(
+            "",
+            "A toolchain was not found. Please install RTools 3.5 and run",
+            "",
+            "write(\'RTOOLS35_HOME=rtools35/install/path/\', path = \"~/.Renviron\", append = TRUE)",
+            "replacing 'rtools35/install/path/' with the actual install path of RTools 3.5.",
+            "",
+            "Then restart R and run 'cmdstanr::install_cmdstan_toolchain(check_only = FALSE)'."
+          )
+          stop(paste0(error_message, collapse = "\n"), call. = FALSE)
+        }
+      }
+    }
+  } else {
+    # On Unix systems we check for make and a suitable compiler
+    make_path <- dirname(Sys.which("make"))
+    if (!nzchar(make_path)) {
+      stop("The 'make' tool was not found. Please install 'make' and restart the R session.", call. = FALSE)
+    }
+    gpp_path <- dirname(Sys.which("g++"))
+    clang_path <- dirname(Sys.which("clang++"))
+    if (!nzchar(gpp_path) && !!nzchar(clang_path)) {
+      stop("A C++ compiler was not found. Please install the 'clang++' of 'g++' compiler and restart the R session.", call. = FALSE)
+    }
+  }
+  message("The CmdStan toolchain is setup properly!")
+}
