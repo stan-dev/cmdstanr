@@ -448,7 +448,7 @@ install_cmdstan_toolchain <- function(check_only = FALSE) {
           stop(paste0(error_message, collapse = "\n"), call. = FALSE)
         } else {
           message("Writing RTools path to ~/.Renviron ...")
-          write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', path = "~/.Renviron", append = TRUE)
+          write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
           message("Restart R and run install_cmdstan_toolchain(check_only = TRUE) to confirm the installation was successful.")
           return(invisible(NULL))
         }
@@ -512,7 +512,7 @@ install_cmdstan_toolchain <- function(check_only = FALSE) {
             "",
             "A toolchain was not found. Please install RTools 3.5 and run",
             "",
-            "write(\'RTOOLS35_HOME=rtools35/install/path/\', path = \"~/.Renviron\", append = TRUE)",
+            "write(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
             "replacing 'rtools35/install/path/' with the actual install path of RTools 3.5.",
             "",
             "Then restart R and run 'cmdstanr::install_cmdstan_toolchain(check_only = FALSE)'."
