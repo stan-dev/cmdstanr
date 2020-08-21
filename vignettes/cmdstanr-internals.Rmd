@@ -103,28 +103,34 @@ mod$exe_file()
 
 ### Pedantic check
 
-If you are using CmdStan version 2.24 or later, you can run a pedantic check for your model,
-by setting the `warn-pedantic` stanc option. You can supply the option during regular
-compilation, but a more convenient way is to use the `$check_syntax()` method of the
-`CmdStanModel` object. 
+If you are using CmdStan version 2.24 or later, you can run a pedantic check for
+your model, by setting the `stanc` (Stan transpiler) option `warn-pedantic`. You
+can supply the option during regular compilation, but a more convenient way is
+to use the `$check_syntax()` method of the `CmdStanModel` object. 
 
-This check warns you about potential issues in your model, like for example: 
-- Distribution usages issues: Distribution arguments do not match the distribution specification,
-  or some specific distribution is used in an inadvisable way.
-- Unused parameter: A parameter is defined but does not contribute to target.
-- Large or small constant in a distribution: Very large or very small constants are used
-  as distribution arguments.
-- Control flow depends on a parameter: Branching control flow (like if/else) depends
-  on a parameter value.
-- Parameter has multiple twiddles: A parameter is on the left-hand side of multiple twiddles.
-- Parameter has zero or multiple priors: A parameter has more than one prior distribution.
-- Variable is used before assignment: A variable is used before being assigned a value.
-- Strict or nonsensical parameter bounds: A parameter is given questionable bounds.
+The `$check_syntax()` method will always check that your Stan program does not
+contain any invalid syntax but with pedantic mode also enabled the check will
+warn you about other potential issues in your model, for example:
+
+- Distribution usages issues: distribution arguments do not match the
+distribution specification, or some specific distribution is used in an
+inadvisable way.
+- Unused parameter: a parameter is defined but does not contribute to target.
+- Large or small constant in a distribution: very large or very small constants
+are used as distribution arguments.
+- Control flow depends on a parameter: branching control flow (like if/else)
+depends on a parameter value.
+- Parameter has multiple twiddles: a parameter is on the left-hand side of
+multiple twiddles (i.e., multiple `~` symbols).
+- Parameter has zero or multiple priors: a parameter has zero or more than one
+prior distribution.
+- Variable is used before assignment: a variable is used before being assigned a
+value.
+- Strict or nonsensical parameter bounds: a parameter is given questionable
+bounds.
 
 ```{r pedantic-check, eval = FALSE}
-# create a model object, compilation is not required
 mod <- cmdstan_model(stan_file, compile = FALSE)
-# run a syntax check with the --warn-pedantic Stan compiler option
 mod$check_syntax(stanc_options = list("warn-pedantic" = TRUE)) 
 ```
 

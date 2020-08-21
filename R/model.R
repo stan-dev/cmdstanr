@@ -513,9 +513,9 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @family CmdStanModel methods
 #'
 #' @description The `$check_syntax()` method of a [`CmdStanModel`] object
-#'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if 
-#'   parsing succeeds. In case of a syntax error, an error is thrown.
-#'   
+#'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if
+#'   parsing succeeds. If invalid syntax in found an error is thrown.
+#'
 #' @section Usage:
 #'   ```
 #'   $check_syntax(
@@ -526,10 +526,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   ```
 #'
 #' @section Arguments:
-#'   * `quiet`: (logical) Should informational messages on compiling be printed.
-#'   Default is `TRUE`, which will print a message if the model is valid or the 
-#'   compiler error message if there are syntax errors in the model.
-#'   If `FALSE`, only the error message will be printed.
+#'   * `quiet`: (logical) Should informational messages be printed? Default is
+#'   `TRUE`, which will print a message if the model is valid or the compiler
+#'   error message if there are syntax errors in the model. If `FALSE`, only the
+#'   error message will be printed.
 #'   * `include_paths`: (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -537,8 +537,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   when compiling the model. See the documentation for the
 #'   [`$compile()`][model-method-compile] method for details.
 #'
-#' @section Value: The `$check_syntax()` method returns `TRUE` (invisibly) if the model
-#'   is valid.
+#' @section Value: The `$check_syntax()` method returns `TRUE` (invisibly) if
+#'   the model is valid.
 #'
 #' @template seealso-docs
 #'
@@ -553,15 +553,15 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 NULL
 
 check_syntax_method <- function(quiet = FALSE,
-                           include_paths = NULL,
-                           stanc_options = list()) {
+                                include_paths = NULL,
+                                stanc_options = list()) {
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
-  
+
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
@@ -593,7 +593,7 @@ check_syntax_method <- function(quiet = FALSE,
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
     }
   }
-  
+
   run_log <- processx::run(
     command = stanc_cmd(),
     args = c(self$stan_file(), stanc_built_options),
