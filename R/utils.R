@@ -279,7 +279,7 @@ check_divergences <- function(data_csv) {
     divergences <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
     num_of_draws <- length(divergences)
     num_of_divergences <- sum(divergences)
-    if (num_of_divergences > 0) {
+    if (!is.na(num_of_divergences) && num_of_divergences > 0) {
       percentage_divergences <- (num_of_divergences)/num_of_draws*100
       message(
         "\nWarning: ", num_of_divergences, " of ", num_of_draws,
@@ -301,7 +301,7 @@ check_sampler_transitions_treedepth <- function(data_csv) {
     num_of_draws <- length(treedepth)
     max_treedepth <- data_csv$metadata$max_treedepth
     max_treedepth_hit <- sum(treedepth >= max_treedepth)
-    if (max_treedepth_hit > 0) {
+    if (!is.na(max_treedepth_hit) && max_treedepth_hit > 0) {
       percentage_max_treedepth <- (max_treedepth_hit)/num_of_draws*100
       message(max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
               " transitions hit the maximum treedepth limit of ", max_treedepth,
