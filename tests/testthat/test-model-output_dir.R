@@ -68,4 +68,19 @@ test_that("error if output_dir is invalid", {
   file.remove(list.files(sandbox, full.names = TRUE, recursive = TRUE))
 })
 
+test_that("output_dir works with trailing /", {
+  skip_on_cran()
+  test_dir <- file.path(sandbox, "trailing")
+  dir.create(test_dir)
+  fit <- testing_fit(
+    "bernoulli",
+    method = "sample",
+    seed = 123,
+    output_dir = paste0(test_dir,"/")
+  )
+  expect_equal(fit$runset$args$output_dir, absolute_path(test_dir))
+  expect_equal(length(list.files(test_dir)), fit$num_procs())
+})
+
+
 
