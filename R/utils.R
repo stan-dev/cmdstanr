@@ -29,6 +29,17 @@ make_cmd <- function() {
   }
 }
 
+#' Returns the stanc exe path
+#' @return Returns "bin/stanc.exe" if running Windows, "bin/stanc" otherwise
+#' @noRd
+stanc_cmd <- function() {
+  if (os_is_windows()) {
+    "bin/stanc.exe"
+  } else {
+    "bin/stanc"
+  }
+}
+
 check_target_exe <- function(exe) {
   exe_path <- file.path(cmdstan_path(), exe)
   if (!file.exists(exe_path)) {

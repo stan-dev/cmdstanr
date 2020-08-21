@@ -231,3 +231,57 @@ test_that("*hpp_file() functions work", {
   expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))))
 })
 
+test_that("check_syntax() works", {
+  skip_on_cran()
+  stan_file <- testing_stan_file("fail")
+  mod_fail <- cmdstan_model(stan_file, compile = FALSE)
+  utils::capture.output(
+    expect_error(
+      expect_message(
+        mod_fail$check_syntax(),
+        "Ill-typed arguments supplied to assignment operator"
+      ),
+      "Syntax error found! See the message above for more information."
+    )
+  )
+  stan_file <- testing_stan_file("bernoulli")
+  mod_ok <- cmdstan_model(stan_file, compile = FALSE)
+  expect_true(mod_ok$check_syntax())
+  expect_message(
+    mod_ok$check_syntax(),
+    "Stan program is syntactically correct"
+  )
+  expect_message(
+    mod_ok$check_syntax(quiet = TRUE),
+    regexp = NA
+  )
+})
+
+test_that("pedantic check works", {
+  skip_on_cran()
+  model_code <- "
+  parameters {
+    real y;
+    real x;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file <- write_stan_file(model_code)
+  mod_pedantic_warn <- cmdstan_model(stan_file, compile = FALSE)
+  expect_message(
+    mod_pedantic_warn$check_syntax(),
+    "Stan program is syntactically correct"
+  )
+
+  a <- utils::capture.output(
+    expect_message(
+     mod_pedantic_warn$check_syntax(stanc_options = list("warn-pedantic" = TRUE)),
+     ""
+    )
+  )
+  expect_match(paste0(a, collapse = "\n"), "The parameter x was declared but was not used in the density calculation.")
+})
+
+

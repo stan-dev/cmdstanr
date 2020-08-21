@@ -1,3 +1,7 @@
+# cmdstanr 0.1.3
+
+* New `$check_syntax()` method for CmdStanModel objects (#276, #277)
+
 # cmdstanr 0.1.2
 
 * User is notified by message at load time if a new release of CmdStan is
