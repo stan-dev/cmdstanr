@@ -162,13 +162,13 @@ test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", 
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  expect_equal(as.vector(csv_output$inv_metric[[2]]),
+  expect_equal(as.vector(csv_output$inv_metric[[as.character(2)]]),
                c(0.909635, 0.066384))
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  expect_equal(as.vector(csv_output$inv_metric[[1]]),
+  expect_equal(as.vector(csv_output$inv_metric[[as.character(1)]]),
                c(1.00098, 0.068748))
-  expect_equal(as.vector(csv_output$inv_metric[[2]]),
+  expect_equal(as.vector(csv_output$inv_metric[[as.character(2)]]),
                c(0.909635, 0.066384))
 })
 
@@ -373,14 +373,14 @@ test_that("read_cmdstan_csv() reads adaptation step size correctly", {
   csv_files <- test_path("resources", "csv", "model1-2-no-warmup.csv")
 
   csv_out <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_out$step_size[[2]], 0.672434)
+  expect_equal(csv_out$step_size[[as.character(2)]], 0.672434)
 
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"),
                  test_path("resources", "csv", "model1-2-dense_e_metric.csv"))
 
   csv_out <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_out$step_size[[1]], 0.11757)
-  expect_equal(csv_out$step_size[[2]], 0.232778)
+  expect_equal(csv_out$step_size[[as.character(1)]], 0.11757)
+  expect_equal(csv_out$step_size[[as.character(2)]], 0.232778)
 })
 
 test_that("read_cmdstan_csv() works for optimize", {
