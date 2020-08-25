@@ -148,10 +148,10 @@ read_cmdstan_csv <- function(files,
       metadata$fitted_params <- c(metadata$fitted_params, csv_file_info$fitted_params)
 
       if (!is.null(csv_file_info$inv_metric)) {
-        inv_metric[[csv_file_info$id]] <- csv_file_info$inv_metric
+        inv_metric[[as.character(csv_file_info$id)]] <- csv_file_info$inv_metric
       }
       if (!is.null(csv_file_info$step_size_adaptation)) {
-        step_size[[csv_file_info$id]] <- csv_file_info$step_size_adaptation
+        step_size[[as.character(csv_file_info$id)]] <- csv_file_info$step_size_adaptation
       }
       id <- csv_file_info$id
     }
