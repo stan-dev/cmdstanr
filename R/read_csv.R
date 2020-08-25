@@ -126,13 +126,18 @@ read_cmdstan_csv <- function(files,
   for (output_file in files) {
     if (is.null(metadata)) {
       metadata <- read_csv_metadata(output_file)
+      if (metadata$id == 0) {
+          id <- "0"
+      } else {
+          id <- metadata$id
+      }
+
       if (!is.null(metadata$inv_metric)) {
-        inv_metric[[as.character(metadata$id)]] <- metadata$inv_metric
+        inv_metric[[id]] <- metadata$inv_metric
       }
       if (!is.null(metadata$step_size_adaptation)) {
-        step_size[[as.character(metadata$id)]] <- metadata$step_size_adaptation
+        step_size[[id]] <- metadata$step_size_adaptation
       }
-      id <- metadata$id
     } else {
       csv_file_info <- read_csv_metadata(output_file)
       check <- check_csv_metadata_matches(metadata, csv_file_info)
