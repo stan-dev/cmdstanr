@@ -1,6 +1,11 @@
+# Items for next tagged release
+
+* Fix potential indexing error if using `read_cmdstan_csv()` with CSV files
+created by CmdStan without CmdStanR. (#291, #292, @johnlees)
+
 # cmdstanr 0.1.3
 
-* New `$check_syntax()` method for CmdStanModel objects (#276, #277)
+* New `$check_syntax()` method for CmdStanModel objects. (#276, #277)
 
 # cmdstanr 0.1.2
 
