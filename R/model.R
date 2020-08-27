@@ -375,6 +375,7 @@ compile_method <- function(quiet = TRUE,
     dir <- absolute_path(dir)
   }
   if (!is.null(dir)) {
+    dir <- repair_path(dir)
     checkmate::assert_directory_exists(dir, access = "rw")
   }
 
