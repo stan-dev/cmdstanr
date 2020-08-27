@@ -198,14 +198,14 @@ test_that("inc_warmup in draws() works", {
   y0 <- fit_mcmc_0$sampler_diagnostics(inc_warmup = FALSE)
   y1 <- fit_mcmc_1$sampler_diagnostics(inc_warmup = FALSE)
   y2 <- fit_mcmc_1$sampler_diagnostics(inc_warmup = TRUE)
-  # y3 <- fit_mcmc_3$sampler_diagnostics(inc_warmup = TRUE)
+  y3 <- fit_mcmc_3$sampler_diagnostics(inc_warmup = TRUE)
   y4 <- fit_mcmc_3$sampler_diagnostics(inc_warmup = FALSE)
   expect_equal(dim(y0), c(1000, 2, 6))
   expect_error(fit_mcmc_0$sampler_diagnostics(inc_warmup = TRUE),
                "Warmup sampler diagnostics were requested from a fit object without them!")
   expect_equal(dim(y1), c(1000, 2, 6))
   expect_equal(dim(y2), c(2000, 2, 6))
-  # expect_equal(dim(y3), c(100, 1, 6))
+  expect_equal(dim(y3), c(100, 1, 6))
   expect_equal(dim(y4), NULL)
 })
 

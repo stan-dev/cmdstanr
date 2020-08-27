@@ -336,9 +336,9 @@ test_that("read_cmdstan_csv() works with no samples", {
   csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
   expect_equal(csv_output_dense_e_0_w$post_warmup_sampler_diagnostics, NULL)
   csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
-  expect_equal(dim(csv_output_dense_e_0_w$warmup_draws), c(100,2,2))
+  expect_equal(dim(csv_output_dense_e_0_w$warmup_draws), c(100, 2, 2))
   csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
-  expect_equal(dim(csv_output_dense_e_0_w$warmup_sampler_diagnostics), c(100,2,6))
+  expect_equal(dim(csv_output_dense_e_0_w$warmup_sampler_diagnostics), c(100, 2, 6))
 })
 
 test_that("read_cmdstan_csv() reads values up to adaptation", {
