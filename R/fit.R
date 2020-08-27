@@ -937,36 +937,32 @@ CmdStanMCMC <- R6::R6Class(
       private$metadata_ <- data_csv$metadata
 
       if (!is.null(data_csv$post_warmup_draws)) {
-        missing_variables <- !(posterior::variables(data_csv$post_warmup_draws) %in% posterior::variables(private$draws_))
         private$draws_ <- posterior::bind_draws(
           private$draws_,
-          data_csv$post_warmup_draws[,,missing_variables],
+          data_csv$post_warmup_draws,
           along="variable"
         )
       }
       if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-        missing_variables <- !(posterior::variables(data_csv$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))
         private$sampler_diagnostics_ <- posterior::bind_draws(
           private$sampler_diagnostics_,
-          data_csv$post_warmup_sampler_diagnostics[,,missing_variables],
+          data_csv$post_warmup_sampler_diagnostics,
           along="variable"
         )
       }
       if (!is.null(data_csv$metadata$save_warmup)
          && data_csv$metadata$save_warmup) {
         if (!is.null(data_csv$warmup_draws)) {
-          missing_variables <- !(posterior::variables(data_csv$warmup_draws) %in% posterior::variables(private$warmup_draws_))
           private$warmup_draws_ <- posterior::bind_draws(
             private$warmup_draws_,
-            data_csv$warmup_draws[,,missing_variables],
+            data_csv$warmup_draws,
             along="variable"
           )
         }
         if (!is.null(data_csv$warmup_sampler_diagnostics)) {
-          missing_variables <- !(posterior::variables(data_csv$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))
           private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
             private$warmup_sampler_diagnostics_,
-            data_csv$warmup_sampler_diagnostics[,,missing_variables],
+            data_csv$warmup_sampler_diagnostics,
             along="variable"
           )
         }
