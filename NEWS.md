@@ -2,6 +2,7 @@
 
 * Fix potential indexing error if using `read_cmdstan_csv()` with CSV files
 created by CmdStan without CmdStanR. (#291, #292, @johnlees)
+* Fix returning draws or sampler diagnostics with warmup and no samples (#293)
 
 # cmdstanr 0.1.3
 
