@@ -3,7 +3,7 @@
 * Fix potential indexing error if using `read_cmdstan_csv()` with CSV files
 created by CmdStan without CmdStanR. (#291, #292, @johnlees)
 * Fix trailing slashes issue for `dir` in `cmdstan_model` and `output_dir` 
-in fitting methods
+in fitting methods (#294)
 
 # cmdstanr 0.1.3
 
