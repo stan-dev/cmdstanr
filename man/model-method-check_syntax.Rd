@@ -22,8 +22,8 @@ parsing succeeds. If invalid syntax in found an error is thrown.
 
 \itemize{
 \item \code{quiet}: (logical) Should informational messages be printed? Default is
-\code{TRUE}, which will print a message if the model is valid or the compiler
-error message if there are syntax errors in the model. If \code{FALSE}, only the
+\code{FALSE}, which will print a message if the model is valid or the compiler
+error message if there are syntax errors in the model. If \code{TRUE}, only the
 error message will be printed.
 \item \code{include_paths}: (character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
