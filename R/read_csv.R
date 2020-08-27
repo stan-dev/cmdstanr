@@ -255,11 +255,13 @@ read_cmdstan_csv <- function(files,
               posterior::as_draws_array(draws[1:num_warmup_draws, variables]),
               along="chain"
             )
-            post_warmup_draws <- posterior::bind_draws(
-              post_warmup_draws,
-              posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
-              along="chain"
-            )
+            if (num_post_warmup_draws > 0) {
+              post_warmup_draws <- posterior::bind_draws(
+                post_warmup_draws,
+                posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
+                along="chain"
+              )
+            }            
           }
           if (length(sampler_diagnostics) > 0) {
             warmup_sampler_diagnostics_draws <- posterior::bind_draws(
@@ -267,11 +269,13 @@ read_cmdstan_csv <- function(files,
               posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics]),
               along="chain"
             )
-            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
-              post_warmup_sampler_diagnostics_draws,
-              posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
-              along="chain"
-            )
+            if (num_post_warmup_draws > 0) {
+              post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
+                post_warmup_sampler_diagnostics_draws,
+                posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
+                along="chain"
+              )
+            }
           }
         } else {
             warmup_draws <- NULL

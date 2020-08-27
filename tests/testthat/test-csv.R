@@ -12,6 +12,9 @@ if (not_on_cran()) {
                           seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
   fit_bernoulli_dense_e_no_samples <- testing_fit("bernoulli", method = "sample",
                           seed = 123, chains = 2, iter_sampling = 0, metric = "dense_e")
+  fit_bernoulli_dense_e_no_samples_warmup <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2,
+                                                         iter_warmup = 100, iter_sampling = 0, save_warmup = 1,
+                                                         metric = "dense_e")
   fit_bernoulli_thin_1 <- testing_fit("bernoulli", method = "sample",
                           seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
   fit_logistic_thin_1 <- testing_fit("logistic", method = "sample",
@@ -328,6 +331,14 @@ test_that("read_cmdstan_csv() works with no samples", {
   expect_equal(csv_output_diag_e_0$post_warmup_draws, NULL)
   csv_output_dense_e_0 <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples$output_files())
   expect_equal(csv_output_dense_e_0$post_warmup_draws, NULL)
+  csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
+  expect_equal(csv_output_dense_e_0_w$post_warmup_draws, NULL)
+  csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
+  expect_equal(csv_output_dense_e_0_w$post_warmup_sampler_diagnostics, NULL)
+  csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
+  expect_equal(dim(csv_output_dense_e_0_w$warmup_draws), c(100, 2, 2))
+  csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
+  expect_equal(dim(csv_output_dense_e_0_w$warmup_sampler_diagnostics), c(100, 2, 6))
 })
 
 test_that("read_cmdstan_csv() reads values up to adaptation", {
