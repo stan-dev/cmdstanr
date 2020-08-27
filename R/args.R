@@ -53,7 +53,7 @@ CmdStanArgs <- R6::R6Class(
       } else {
         self$output_dir <- output_dir %||% tempdir(check = TRUE)
       }
-
+      self$output_dir <- repair_path(self$output_dir)
       if (is.function(init)) {
         init <- process_init_function(init, length(self$proc_ids))
       } else if (is.list(init) && !is.data.frame(init)) {
@@ -66,7 +66,7 @@ CmdStanArgs <- R6::R6Class(
     },
     validate = function() {
       validate_cmdstan_args(self)
-      self$output_dir <- absolute_path(self$output_dir)
+      self$output_dir <- repair_path(absolute_path(self$output_dir))
       if (is.character(self$data_file)) {
         self$data_file <- absolute_path(self$data_file)
       }
