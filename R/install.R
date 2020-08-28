@@ -61,8 +61,8 @@ install_cmdstan <- function(dir = NULL,
       dir.create(dir, recursive = TRUE)
     }
   } else {
-    checkmate::assert_directory_exists(dir, access = "rwx")
     dir <- repair_path(dir)
+    checkmate::assert_directory_exists(dir, access = "rwx")    
   }
 
   if (!is.null(release_url)) {

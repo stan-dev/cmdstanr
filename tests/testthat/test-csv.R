@@ -12,6 +12,9 @@ if (not_on_cran()) {
                           seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
   fit_bernoulli_dense_e_no_samples <- testing_fit("bernoulli", method = "sample",
                           seed = 123, chains = 2, iter_sampling = 0, metric = "dense_e")
+  fit_bernoulli_dense_e_no_samples_warmup <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2,
+                                                         iter_warmup = 100, iter_sampling = 0, save_warmup = 1,
+                                                         metric = "dense_e")
   fit_bernoulli_thin_1 <- testing_fit("bernoulli", method = "sample",
                           seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
   fit_logistic_thin_1 <- testing_fit("logistic", method = "sample",
@@ -162,13 +165,13 @@ test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", 
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  expect_equal(as.vector(csv_output$inv_metric[[2]]),
+  expect_equal(as.vector(csv_output$inv_metric[[as.character(2)]]),
                c(0.909635, 0.066384))
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  expect_equal(as.vector(csv_output$inv_metric[[1]]),
+  expect_equal(as.vector(csv_output$inv_metric[[as.character(1)]]),
                c(1.00098, 0.068748))
-  expect_equal(as.vector(csv_output$inv_metric[[2]]),
+  expect_equal(as.vector(csv_output$inv_metric[[as.character(2)]]),
                c(0.909635, 0.066384))
 })
 
@@ -328,6 +331,14 @@ test_that("read_cmdstan_csv() works with no samples", {
   expect_equal(csv_output_diag_e_0$post_warmup_draws, NULL)
   csv_output_dense_e_0 <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples$output_files())
   expect_equal(csv_output_dense_e_0$post_warmup_draws, NULL)
+  csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
+  expect_equal(csv_output_dense_e_0_w$post_warmup_draws, NULL)
+  csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
+  expect_equal(csv_output_dense_e_0_w$post_warmup_sampler_diagnostics, NULL)
+  csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
+  expect_equal(dim(csv_output_dense_e_0_w$warmup_draws), c(100, 2, 2))
+  csv_output_dense_e_0_w <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples_warmup$output_files())
+  expect_equal(dim(csv_output_dense_e_0_w$warmup_sampler_diagnostics), c(100, 2, 6))
 })
 
 test_that("read_cmdstan_csv() reads values up to adaptation", {
@@ -373,14 +384,14 @@ test_that("read_cmdstan_csv() reads adaptation step size correctly", {
   csv_files <- test_path("resources", "csv", "model1-2-no-warmup.csv")
 
   csv_out <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_out$step_size[[2]], 0.672434)
+  expect_equal(csv_out$step_size[[as.character(2)]], 0.672434)
 
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"),
                  test_path("resources", "csv", "model1-2-dense_e_metric.csv"))
 
   csv_out <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_out$step_size[[1]], 0.11757)
-  expect_equal(csv_out$step_size[[2]], 0.232778)
+  expect_equal(csv_out$step_size[[as.character(1)]], 0.11757)
+  expect_equal(csv_out$step_size[[as.character(2)]], 0.232778)
 })
 
 test_that("read_cmdstan_csv() works for optimize", {

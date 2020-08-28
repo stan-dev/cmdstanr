@@ -81,6 +81,3 @@ test_that("output_dir works with trailing /", {
   expect_equal(fit$runset$args$output_dir, absolute_path(test_dir))
   expect_equal(length(list.files(test_dir)), fit$num_procs())
 })
-
-
-

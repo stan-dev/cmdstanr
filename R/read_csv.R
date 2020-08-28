@@ -127,10 +127,10 @@ read_cmdstan_csv <- function(files,
     if (is.null(metadata)) {
       metadata <- read_csv_metadata(output_file)
       if (!is.null(metadata$inv_metric)) {
-        inv_metric[[metadata$id]] <- metadata$inv_metric
+        inv_metric[[as.character(metadata$id)]] <- metadata$inv_metric
       }
       if (!is.null(metadata$step_size_adaptation)) {
-        step_size[[metadata$id]] <- metadata$step_size_adaptation
+        step_size[[as.character(metadata$id)]] <- metadata$step_size_adaptation
       }
       id <- metadata$id
     } else {
@@ -148,10 +148,10 @@ read_cmdstan_csv <- function(files,
       metadata$fitted_params <- c(metadata$fitted_params, csv_file_info$fitted_params)
 
       if (!is.null(csv_file_info$inv_metric)) {
-        inv_metric[[csv_file_info$id]] <- csv_file_info$inv_metric
+        inv_metric[[as.character(csv_file_info$id)]] <- csv_file_info$inv_metric
       }
       if (!is.null(csv_file_info$step_size_adaptation)) {
-        step_size[[csv_file_info$id]] <- csv_file_info$step_size_adaptation
+        step_size[[as.character(csv_file_info$id)]] <- csv_file_info$step_size_adaptation
       }
       id <- csv_file_info$id
     }
@@ -255,11 +255,13 @@ read_cmdstan_csv <- function(files,
               posterior::as_draws_array(draws[1:num_warmup_draws, variables]),
               along="chain"
             )
-            post_warmup_draws <- posterior::bind_draws(
-              post_warmup_draws,
-              posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
-              along="chain"
-            )
+            if (num_post_warmup_draws > 0) {
+              post_warmup_draws <- posterior::bind_draws(
+                post_warmup_draws,
+                posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
+                along="chain"
+              )
+            }            
           }
           if (length(sampler_diagnostics) > 0) {
             warmup_sampler_diagnostics_draws <- posterior::bind_draws(
@@ -267,11 +269,13 @@ read_cmdstan_csv <- function(files,
               posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics]),
               along="chain"
             )
-            post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
-              post_warmup_sampler_diagnostics_draws,
-              posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
-              along="chain"
-            )
+            if (num_post_warmup_draws > 0) {
+              post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
+                post_warmup_sampler_diagnostics_draws,
+                posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
+                along="chain"
+              )
+            }
           }
         } else {
             warmup_draws <- NULL

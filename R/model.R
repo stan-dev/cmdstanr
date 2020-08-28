@@ -375,6 +375,7 @@ compile_method <- function(quiet = TRUE,
     dir <- absolute_path(dir)
   }
   if (!is.null(dir)) {
+    dir <- repair_path(dir)
     checkmate::assert_directory_exists(dir, access = "rw")
   }
 
@@ -527,8 +528,8 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'
 #' @section Arguments:
 #'   * `quiet`: (logical) Should informational messages be printed? Default is
-#'   `TRUE`, which will print a message if the model is valid or the compiler
-#'   error message if there are syntax errors in the model. If `FALSE`, only the
+#'   `FALSE`, which will print a message if the model is valid or the compiler
+#'   error message if there are syntax errors in the model. If `TRUE`, only the
 #'   error message will be printed.
 #'   * `include_paths`: (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan

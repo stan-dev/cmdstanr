@@ -15,7 +15,7 @@ not_on_cran <- function() {
 }
 
 test_release_url <- function() {
-  "https://github.com/stan-dev/cmdstan/releases/download/v2.24.0/cmdstan-2.24.0.tar.gz"
+  "https://github.com/stan-dev/cmdstan/releases/download/v2.24.1/cmdstan-2.24.1.tar.gz"
 }
 
 delete_extensions <- function() {
