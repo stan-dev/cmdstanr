@@ -446,6 +446,7 @@ VariationalArgs <- R6::R6Class(
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_cmdstan_args = function(self) {
   validate_exe_file(self$exe_file)
+
   checkmate::assert_directory_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
