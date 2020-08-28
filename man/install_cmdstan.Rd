@@ -4,6 +4,7 @@
 \alias{install_cmdstan}
 \alias{rebuild_cmdstan}
 \alias{cmdstan_make_local}
+\alias{check_cmdstan_toolchain}
 \title{Install CmdStan or clean and rebuild an existing installation}
 \usage{
 install_cmdstan(
@@ -24,6 +25,8 @@ rebuild_cmdstan(
 )
 
 cmdstan_make_local(dir = cmdstan_path(), cpp_options = NULL, append = TRUE)
+
+check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
@@ -36,8 +39,9 @@ to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
 been set then the default is \code{2}.}
 
-\item{quiet}{Should the verbose output from the system processes be
-suppressed when building the CmdStan binaries? The default is \code{FALSE}.}
+\item{quiet}{For \code{check_cmdstan_toolchain()}, should the function supress
+printing informational messages? The default is \code{FALSE}.
+If \code{TRUE} the function will only print errors.}
 
 \item{overwrite}{When an existing installation is found in \code{dir}, should
 CmdStan still be downloaded and reinstalled? The default is \code{FALSE}, in
@@ -58,6 +62,11 @@ will force the use of clang for compilation.}
 \item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
 appended to the end of the existing \code{make/local} file? The default is \code{TRUE}.
 If \code{FALSE} the file is overwritten.}
+
+\item{fix}{For \code{check_cmdstan_toolchain()}, should the function install
+attempt to fix toolchain issues. This function currently only attempts
+fixing Windows toolchain issues. The default is \code{FALSE},
+If \code{FALSE}, the function will only report issues.}
 }
 \value{
 For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
@@ -96,5 +105,7 @@ cpp_options <- list(
 )
 # cmdstan_make_local(cpp_options = cpp_options)
 # rebuild_cmdstan()
+
+# check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
 }
