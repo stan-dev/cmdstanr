@@ -54,8 +54,9 @@ install_cmdstan <- function(dir = NULL,
                             overwrite = FALSE,
                             timeout = 1200,
                             release_url = NULL,
-                            cpp_options = list()) {
-  check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
+                            cpp_options = list(),
+                            check_toolchain = TRUE) {
+  if (check_toolchain) check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
