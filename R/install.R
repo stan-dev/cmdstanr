@@ -398,6 +398,7 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 
   TRUE
 }
+
 install_mingw32_make <- function() {
   processx::run(
     "pacman",
@@ -407,6 +408,11 @@ install_mingw32_make <- function() {
   )
   invisible(NULL)
 }
+
+check_compiler_version <- function(compiler = c("g++", "clang++")) {
+
+}
+
 
 #' @rdname install_cmdstan
 #' @export
@@ -556,9 +562,6 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       } else {
         stop("A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler and restart the R session.", call. = FALSE)
       }
-    }
-    if (nzchar(gpp_path)) {
-      processx::
     }
   }
   if (!quiet) message("The CmdStan toolchain is setup properly!")
