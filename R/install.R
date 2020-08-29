@@ -30,8 +30,12 @@
 #'   to look for the option `"mc.cores"`, which can be set for an entire \R
 #'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
 #'   been set then the default is `2`.
-#' @param quiet Should the verbose output from the system processes be
-#'   suppressed when building the CmdStan binaries? The default is `FALSE`.
+#' @param quiet For `install_cmdstan()`, should the verbose output from the
+#'   system processes be suppressed when building the CmdStan binaries?
+#'   The default is `FALSE`.
+#'   For `check_cmdstan_toolchain()`, should the function supress 
+#'   printing informational messages? The default is `FALSE`.
+#'   If `TRUE` `check_cmdstan_toolchain()` only output errors.
 #' @param overwrite When an existing installation is found in `dir`, should
 #'   CmdStan still be downloaded and reinstalled? The default is `FALSE`, in
 #'   which case an informative error is thrown instead of overwriting the user's
@@ -42,6 +46,9 @@
 #'   installed. By default set to `NULL`, which downloads the latest stable
 #'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases).
 #' @param cpp_options A list specifying any makefile flags/variables to be
+#'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
+#'   will force the use of clang for compilation.
+#' @param check_toolchain A list specifying any makefile flags/variables to be
 #'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
 #'   will force the use of clang for compilation.
 #'
@@ -222,9 +229,6 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
     return(NULL)
   }
 }
-
-
-
 
 # internal ----------------------------------------------------------------
 
@@ -422,9 +426,6 @@ check_compiler_version <- function(compiler = c("g++", "clang++")) {
 #'   any detected toolchain problems? Currently this option is only available on
 #'   Windows. The default is `FALSE`, in which case problems are only reported
 #'   along with suggested fixes.
-#' @param quiet For `check_cmdstan_toolchain()`, should the function supress 
-#'   printing informational messages? The default is `FALSE`.
-#'   If `TRUE` the function will only print errors.
 #' @examples
 #' # check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 #'
@@ -436,8 +437,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       # we assume that RTools 40 is not installed.
       if (!nzchar(rtools_path)) {
         error_message <- c(
-          "",
-          "RTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
+          "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
           "Please install RTools 4.0 and run check_cmdstan_toolchain()."
         )
         stop(paste0(error_message, collapse = "\n"), call. = FALSE)
@@ -446,8 +446,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       # we error as this path is not valid
       if (regexpr("\\(|)| ", rtools_path) > 0) {
         error_message <- c(
-          "",
-          "RTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
+          "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
           "Please reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain()."
         )
         stop(paste0(error_message, collapse = "\n"), call. = FALSE)
@@ -462,8 +461,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
         if (!fix) {
           error_message <- c(
-            "",
-            "RTools installation found but PATH was not properly set.",
+            "\nRTools installation found but PATH was not properly set.",
             "Run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
           )
           stop(paste0(error_message, collapse = "\n"), call. = FALSE)
@@ -477,8 +475,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
         if (!fix) {
           error_message <- c(
-            "",
-            "Other C++ toolchains installed on your system conflict with RTools.",
+            "\nOther C++ toolchains installed on your system conflict with RTools.",
             "Please run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
           )
           stop(paste0(error_message, collapse = "\n"), call. = FALSE)
@@ -519,8 +516,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
         if (nzchar(rtools_path)) {
           if (!fix) {
             error_message <- c(
-              "",
-              "RTools installation found but PATH was not properly set.",
+              "\nRTools installation found but PATH was not properly set.",
               "Run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
             )
             stop(paste0(error_message, collapse = "\n"), call. = FALSE)
@@ -535,13 +531,10 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
           stop("Please restart R and run check_cmdstan_toolchain() to confirm the installation was successful.", call. = FALSE)
         } else {
           error_message <- c(
-            "",
-            "A toolchain was not found. Please install RTools 3.5 and run",
-            "",
-            "write(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
+            "\nA toolchain was not found. Please install RTools 3.5 and run",
+            "\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
             "replacing 'rtools35/install/path/' with the actual install path of RTools 3.5.",
-            "",
-            "Then restart R and run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)'."
+            "\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)'."
           )
           stop(paste0(error_message, collapse = "\n"), call. = FALSE)
         }

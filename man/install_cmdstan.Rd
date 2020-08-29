@@ -14,7 +14,8 @@ install_cmdstan(
   overwrite = FALSE,
   timeout = 1200,
   release_url = NULL,
-  cpp_options = list()
+  cpp_options = list(),
+  check_toolchain = TRUE
 )
 
 rebuild_cmdstan(
@@ -39,9 +40,12 @@ to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
 been set then the default is \code{2}.}
 
-\item{quiet}{For \code{check_cmdstan_toolchain()}, should the function supress
+\item{quiet}{For \code{install_cmdstan()}, should the verbose output from the
+system processes be suppressed when building the CmdStan binaries?
+The default is \code{FALSE}.
+For \code{check_cmdstan_toolchain()}, should the function supress
 printing informational messages? The default is \code{FALSE}.
-If \code{TRUE} the function will only print errors.}
+If \code{TRUE} \code{check_cmdstan_toolchain()} only output errors.}
 
 \item{overwrite}{When an existing installation is found in \code{dir}, should
 CmdStan still be downloaded and reinstalled? The default is \code{FALSE}, in
@@ -59,14 +63,18 @@ release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}.}
 written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
 will force the use of clang for compilation.}
 
+\item{check_toolchain}{A list specifying any makefile flags/variables to be
+written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
+will force the use of clang for compilation.}
+
 \item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
 appended to the end of the existing \code{make/local} file? The default is \code{TRUE}.
 If \code{FALSE} the file is overwritten.}
 
-\item{fix}{For \code{check_cmdstan_toolchain()}, should the function install
-attempt to fix toolchain issues. This function currently only attempts
-fixing Windows toolchain issues. The default is \code{FALSE},
-If \code{FALSE}, the function will only report issues.}
+\item{fix}{For \code{check_cmdstan_toolchain()}, should CmdStanR attempt to fix
+any detected toolchain problems? Currently this option is only available on
+Windows. The default is \code{FALSE}, in which case problems are only reported
+along with suggested fixes.}
 }
 \value{
 For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
