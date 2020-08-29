@@ -415,11 +415,6 @@ install_mingw32_make <- function() {
   invisible(NULL)
 }
 
-check_compiler_version <- function(compiler = c("g++", "clang++")) {
-
-}
-
-
 #' @rdname install_cmdstan
 #' @export
 #' @param fix For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix
