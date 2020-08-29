@@ -436,23 +436,20 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       # If RTOOLS40_HOME is not set (the env. variable gets set on install)
       # we assume that RTools 40 is not installed.
       if (!nzchar(rtools_path)) {
-        error_message <- c(
+        stop(
           "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
-          "Please install RTools 4.0 and run check_cmdstan_toolchain()."
+          "\nPlease install RTools 4.0 and run check_cmdstan_toolchain().",
+          call. = FALSE
         )
-        stop(paste0(error_message, collapse = "\n"), call. = FALSE)
       }
       # If RTools is installed in a path with spaces or brackets
       # we error as this path is not valid
       if (regexpr("\\(|)| ", rtools_path) > 0) {
-        error_message <- c(
+        stop(
           "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
-          "Please reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain()."
+          "\nPlease reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain().",
+          call. = FALSE
         )
-        stop(paste0(error_message, collapse = "\n"), call. = FALSE)
-      }
-      if (fix) {
-        install_mingw32_make()
       }
       toolchain_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
       mingw32_make_path <- dirname(Sys.which("mingw32-make"))
@@ -460,13 +457,14 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       
       if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
         if (!fix) {
-          error_message <- c(
+          stop(
             "\nRTools installation found but PATH was not properly set.",
-            "Run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
+            "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
+            call. = FALSE
           )
-          stop(paste0(error_message, collapse = "\n"), call. = FALSE)
         } else {
-          if (!quiet) message("Writing RTools path to ~/.Renviron ...")
+          if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
+          install_mingw32_make()
           write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
           stop("Please restart R and run check_cmdstan_toolchain() to confirm the installation was successful.", call. = FALSE)
         }
@@ -474,13 +472,14 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
       if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
         if (!fix) {
-          error_message <- c(
+          stop(
             "\nOther C++ toolchains installed on your system conflict with RTools.",
-            "Please run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
+            "\nPlease run check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
+            call. = FALSE
           )
-          stop(paste0(error_message, collapse = "\n"), call. = FALSE)
         } else {
-          if (!quiet) message("Writing RTools path to ~/.Renviron ...")
+          if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
+          install_mingw32_make()
           write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
           stop("Please restart R and run check_cmdstan_toolchain() to confirm the installation was successful.", call. = FALSE)
         }
@@ -507,19 +506,29 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
             file.path("c:/", "rtools"),
             file.path("c:/", "rtools35")
           )
+          found_rtools <- FALSE
           for (p in typical_paths) {
             if (dir.exists(p)) {
-              rtools_path <- p
+              if (found_rtools) {
+                stop(
+                  "\nMultiple RTools 3.5 installations found. Please select the installation to use by running",
+                  "\n\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
+                  "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)'.",
+                  call. = FALSE
+                )
+              } else {
+                rtools_path <- p
+              }        
             }
           }
         }
         if (nzchar(rtools_path)) {
           if (!fix) {
-            error_message <- c(
+            stop(
               "\nRTools installation found but PATH was not properly set.",
-              "Run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
+              "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
+              call. = FALSE
             )
-            stop(paste0(error_message, collapse = "\n"), call. = FALSE)
           }
           if (!quiet) {
             message("Writing RTools path to ~/.Renviron ...")
@@ -530,13 +539,13 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
           write('PATH="${RTOOLS35_HOME}\\bin;${RTOOLS35_HOME}\\mingw_64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
           stop("Please restart R and run check_cmdstan_toolchain() to confirm the installation was successful.", call. = FALSE)
         } else {
-          error_message <- c(
+          stop(
             "\nA toolchain was not found. Please install RTools 3.5 and run",
-            "\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
-            "replacing 'rtools35/install/path/' with the actual install path of RTools 3.5.",
-            "\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)'."
+            "\n\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
+            "\nreplacing 'rtools35/install/path/' with the actual install path of RTools 3.5.",
+            "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)'.",
+            call. = FALSE
           )
-          stop(paste0(error_message, collapse = "\n"), call. = FALSE)
         }
       }
     }
