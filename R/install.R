@@ -56,7 +56,9 @@ install_cmdstan <- function(dir = NULL,
                             release_url = NULL,
                             cpp_options = list(),
                             check_toolchain = TRUE) {
-  if (check_toolchain) check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
+  if (check_toolchain) {
+    check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
+  }
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
@@ -416,10 +418,10 @@ check_compiler_version <- function(compiler = c("g++", "clang++")) {
 
 #' @rdname install_cmdstan
 #' @export
-#' @param fix For `check_cmdstan_toolchain()`, should the function install
-#'   attempt to fix toolchain issues. This function currently only attempts
-#'   fixing Windows toolchain issues. The default is `FALSE`,
-#'   If `FALSE`, the function will only report issues.
+#' @param fix For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix
+#'   any detected toolchain problems? Currently this option is only available on
+#'   Windows. The default is `FALSE`, in which case problems are only reported
+#'   along with suggested fixes.
 #' @param quiet For `check_cmdstan_toolchain()`, should the function supress 
 #'   printing informational messages? The default is `FALSE`.
 #'   If `TRUE` the function will only print errors.
@@ -427,7 +429,7 @@ check_compiler_version <- function(compiler = c("g++", "clang++")) {
 #' # check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
-  if(os_is_windows()) {
+  if (os_is_windows()) {
     if (R.version$major >= "4") {
       rtools_path <- Sys.getenv("RTOOLS40_HOME")
       # If RTOOLS40_HOME is not set (the env. variable gets set on install)
@@ -435,8 +437,8 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       if (!nzchar(rtools_path)) {
         error_message <- c(
           "",
-          "RTools 4.0 is required to run cmdstanr with R version 4.x, but was not found.",
-          "Install RTools 4.0 and run 'cmdstanr::check_cmdstan_toolchain()'"
+          "RTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
+          "Please install RTools 4.0 and run check_cmdstan_toolchain()."
         )
         stop(paste0(error_message, collapse = "\n"), call. = FALSE)
       }
@@ -446,7 +448,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
         error_message <- c(
           "",
           "RTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
-          "Reinstall RTools 4.0 to a valid path, restart R and run 'cmdstanr::check_cmdstan_toolchain()'"
+          "Please reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain()."
         )
         stop(paste0(error_message, collapse = "\n"), call. = FALSE)
       }
@@ -462,13 +464,13 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
           error_message <- c(
             "",
             "RTools installation found but PATH was not properly set.",
-            "Run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)' to fix the issue."
+            "Run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
           )
           stop(paste0(error_message, collapse = "\n"), call. = FALSE)
         } else {
           if (!quiet) message("Writing RTools path to ~/.Renviron ...")
           write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-          stop("Restart R and run check_cmdstan_toolchain(check_only = TRUE) to confirm the installation was successful.", call. = FALSE)
+          stop("Please restart R and run check_cmdstan_toolchain() to confirm the installation was successful.", call. = FALSE)
         }
       }
       # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
@@ -477,13 +479,13 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
           error_message <- c(
             "",
             "Other C++ toolchains installed on your system conflict with RTools.",
-            "Run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)' to fix the issue."
+            "Please run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
           )
           stop(paste0(error_message, collapse = "\n"), call. = FALSE)
         } else {
           if (!quiet) message("Writing RTools path to ~/.Renviron ...")
           write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-          stop("Restart R and run check_cmdstan_toolchain(check_only = TRUE) to confirm the installation was successful.", call. = FALSE)
+          stop("Please restart R and run check_cmdstan_toolchain() to confirm the installation was successful.", call. = FALSE)
         }
       }
     } else {
@@ -518,17 +520,19 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
           if (!fix) {
             error_message <- c(
               "",
-              "A RTools installation was found, but the PATH is not properly set.",
-              "Run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)' to fix the issue."
+              "RTools installation found but PATH was not properly set.",
+              "Run check_cmdstan_toolchain(fix = TRUE) to fix the issue."
             )
             stop(paste0(error_message, collapse = "\n"), call. = FALSE)
           }
-          if (!quiet) message("Writing RTools path to ~/.Renviron ...")
+          if (!quiet) {
+            message("Writing RTools path to ~/.Renviron ...")
+          }
           if (nzchar(Sys.getenv("RTOOLS35_HOME"))) {
             write(paste0('RTOOLS35_HOME=', rtools_path), file = "~/.Renviron", append = TRUE)
           }
           write('PATH="${RTOOLS35_HOME}\\bin;${RTOOLS35_HOME}\\mingw_64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-          stop("Restart R and run check_cmdstan_toolchain(check_only = TRUE) to confirm the installation was successful.", call. = FALSE)
+          stop("Please restart R and run check_cmdstan_toolchain() to confirm the installation was successful.", call. = FALSE)
         } else {
           error_message <- c(
             "",
@@ -548,9 +552,9 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
     make_path <- dirname(Sys.which("make"))
     if (!nzchar(make_path)) {
       if (os_is_macos()) {
-        stop("The 'make' tool was not found. Please install 'xcode' toolchains with 'xcode-select --install' or the app store and restart the R session.", call. = FALSE)
+        stop("The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain().", call. = FALSE)
       } else {
-        stop("The 'make' tool was not found. Please install 'make' and restart the R session.", call. = FALSE)
+        stop("The 'make' tool was not found. Please install 'make', restart R, and then run check_cmdstan_toolchain().", call. = FALSE)
       }
       
     }
@@ -558,12 +562,14 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
     clang_path <- dirname(Sys.which("clang++"))
     if (!nzchar(gpp_path) && !nzchar(clang_path)) {
       if (os_is_macos()) {
-        stop("A suitable C++ compiler was not found. Please install 'xcode' toolchains with 'xcode-select --install' or the app store and restart the R session.", call. = FALSE)
+        stop("A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain().", call. = FALSE)
       } else {
-        stop("A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler and restart the R session.", call. = FALSE)
+        stop("A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain().", call. = FALSE)
       }
     }
   }
-  if (!quiet) message("The CmdStan toolchain is setup properly!")
+  if (!quiet) {
+    message("The CmdStan toolchain is setup properly!")
+  }
   invisible(NULL)
 }
