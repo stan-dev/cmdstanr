@@ -513,7 +513,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
                 stop(
                   "\nMultiple RTools 3.5 installations found. Please select the installation to use by running",
                   "\n\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
-                  "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)'.",
+                  "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(fix = FALSE)'.",
                   call. = FALSE
                 )
               } else {
@@ -543,7 +543,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
             "\nA toolchain was not found. Please install RTools 3.5 and run",
             "\n\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
             "\nreplacing 'rtools35/install/path/' with the actual install path of RTools 3.5.",
-            "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(check_only = FALSE)'.",
+            "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(fix = FALSE)'.",
             call. = FALSE
           )
         }
