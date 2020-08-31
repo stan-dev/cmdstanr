@@ -12,7 +12,7 @@ if (not_on_cran()) {
                             refresh = 0, save_warmup = TRUE)
   fit_mcmc_2 <- testing_fit("logistic", method = "sample",
                             seed = 1234, chains = 1,
-                            iter_sampling = 100000,
+                            iter_sampling = 10000,
                             refresh = 0, metric = "dense_e")
   fit_mcmc_3 <- testing_fit("logistic", method = "sample",
                             seed = 1234, chains = 1,
@@ -212,11 +212,11 @@ test_that("inc_warmup in draws() works", {
 test_that("inc_warmup in draws() works", {
   skip_on_cran()
   x3 <- fit_mcmc_2$draws(inc_warmup = FALSE)
-  expect_equal(dim(x3), c(100000, 1, 5))
+  expect_equal(dim(x3), c(10000, 1, 5))
   expect_error(fit_mcmc_2$draws(inc_warmup = TRUE),
                "Warmup draws were requested from a fit object without them! Please rerun the model with save_warmup = TRUE.")
   y3 <- fit_mcmc_2$sampler_diagnostics(inc_warmup = FALSE)
-  expect_equal(dim(y3), c(100000, 1, 6))
+  expect_equal(dim(y3), c(10000, 1, 6))
 })
 
 test_that("output() shows informational messages depening on show_messages", {
