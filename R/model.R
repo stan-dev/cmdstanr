@@ -812,6 +812,7 @@ sample_method <- function(data = NULL,
                           fixed_param = FALSE,
                           validate_csv = TRUE,
                           show_messages = TRUE,
+                          chain_id = seq_len(chains),
                           # deprecated
                           cores = NULL,
                           num_cores = NULL,
@@ -865,6 +866,7 @@ sample_method <- function(data = NULL,
   checkmate::assert_integerish(chains, lower = 1, len = 1)
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
+  checkmate::assert_integerish(chain_id, lower = 1, len = chains, unique = TRUE, null.ok = FALSE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads_per_chain)) {
       warning("'threads_per_chain' is set but the model was not compiled with ",
@@ -901,7 +903,7 @@ sample_method <- function(data = NULL,
     method_args = sample_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    proc_ids = seq_len(chains),
+    proc_ids = chain_id,
     data_file = process_data(data),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
