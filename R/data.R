@@ -35,7 +35,7 @@ write_stan_json <- function(data, file) {
     } else if (is.data.frame(var)) {
       var <- data.matrix(var)
     } else if (is.list(var)) {
-      var <- list_to_array(var)
+      var <- list_to_array(var, var_name)
     }
     data[[var_name]] <- var
   }
@@ -54,22 +54,25 @@ write_stan_json <- function(data, file) {
 }
 
 
-list_to_array <- function(x) {
+list_to_array <- function(x, name) {
   list_length <- length(x)
-  if (list_length == 0 ) return(NULL)
-  element_dim <- length(x[[1]])
-  check_equal_dim <- function(x, target_dim) { !is.null(element_dim) && length(x) == target_dim }
-  all_same_size <- all(sapply(x, check_equal_dim, target_dim = element_dim))
-  if (!all_same_size) {
-    stop("All matrices/vectors in the list must be the same size!", call. = FALSE)
+  if (list_length == 0) {
+    return(NULL)
+  }
+  all_dims <- lapply(x, function(z) dim(z) %||% length(z))
+  all_equal_dim <- all(sapply(all_dims, function(d) {
+    isTRUE(all.equal(d, all_dims[[1]]))
+  }))
+  if (!all_equal_dim) {
+    stop("All matrices/vectors in list '", name, "' must be the same size!", call. = FALSE)
   }
   all_numeric <- all(sapply(x, function(a) is.numeric(a)))
   if (!all_numeric) {
-    stop("All elements of the list must be numeric!", call. = FALSE)
+    stop("All elements in list '", name,"' must be numeric!", call. = FALSE)
   }
-  element_num_of_dim <- length(element_dim)
+  element_num_of_dim <- length(all_dims[[1]])
   x <- unlist(x)
-  dim(x) <- c(element_dim, list_length)
+  dim(x) <- c(all_dims[[1]], list_length)
   aperm(x, c(element_num_of_dim + 1L, seq_len(element_num_of_dim)))
 }
 
