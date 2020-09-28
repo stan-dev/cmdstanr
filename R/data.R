@@ -59,7 +59,7 @@ list_to_array <- function(x, name) {
   if (list_length == 0) {
     return(NULL)
   }
-  all_dims <- lapply(x, function(z) dim(z) %||% length(z))
+  all_dims <- lapply(x, function(z) dim(z) %||% length(z)) # dim is null if vector
   all_equal_dim <- all(sapply(all_dims, function(d) {
     isTRUE(all.equal(d, all_dims[[1]]))
   }))
