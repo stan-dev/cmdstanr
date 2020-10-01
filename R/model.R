@@ -486,7 +486,9 @@ compile_method <- function(quiet = TRUE,
   } else {
     exe_base <- file.path(dir, basename(self$stan_file()))
   }
-  exe <- cmdstan_ext(paste0(strip_ext(exe_base), exe_suffix))
+  current_hash = digest::digest(self$code(),algo='xxhash64')
+  exe_name_without_hash = paste0(strip_ext(exe_base),exe_suffix)
+  exe <- cmdstan_ext(paste0(exe_name_without_hash,'_',current_hash))
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   # compile if:
@@ -495,9 +497,16 @@ compile_method <- function(quiet = TRUE,
   # - the stan model was changed since last compilation
   if (!file.exists(exe)) {
     force_recompile <- TRUE
-  } else if (file.exists(self$stan_file())
-             && file.mtime(exe) < file.mtime(self$stan_file())) {
-    force_recompile <- TRUE
+    regex_string = paste0('^(',basename(exe_name_without_hash),'_)[a-f0-9]{16}')
+    regex_string = cmdstan_ext(regex_string)
+    regex_string = gsub('(.exe)$','(.exe)',regex_string)
+    regex_string = paste0(regex_string,'$')
+    existing_exes = list.files(
+      path = dirname(exe_name_without_hash)
+      , pattern = regex_string
+      , full.names = T
+    )
+    file.remove(existing_exes)
   }
 
   if (!force_recompile) {
