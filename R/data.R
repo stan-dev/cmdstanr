@@ -54,7 +54,7 @@ write_stan_json <- function(data, file) {
 }
 
 
-list_to_array <- function(x, name) {
+list_to_array <- function(x, name = NULL) {
   list_length <- length(x)
   if (list_length == 0) {
     return(NULL)
