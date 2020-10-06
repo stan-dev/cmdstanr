@@ -6,12 +6,13 @@ on:
     branches:
       - master
 
-name: test-coverage
+name: Test coverage
 
 jobs:
-  test-coverage:
+  test-coverage-ubuntu:
+    name: "Linux"
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -35,6 +36,38 @@ jobs:
           path: ${{ env.R_LIBS_USER }}
           key: ubuntu-r-4.0-1-${{ hashFiles('.github/depends.Rds') }}
           restore-keys: ubuntu-r-4.0-1-
+
+      - name: Install dependencies
+        run: |
+          install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.24.1/cmdstan-2.24.1.tar.gz")
+          remotes::install_deps(dependencies = TRUE)
+          remotes::install_cran("covr")
+          remotes::install_cran("gridExtra")
+        shell: Rscript {0}
+
+      - name: Test coverage
+        run: covr::codecov(type = "all")
+        shell: Rscript {0}
+
+  test-coverage-windows:
+    name: "Windows"
+    if: "! contains(github.event.head_commit.message, '[ci skip]')"
+    runs-on: windows-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/setup-r@master
+
+      - uses: r-lib/actions/setup-pandoc@master
+
+      - name: Query dependencies
+        run: |
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+        shell: Rscript {0}
 
       - name: Install dependencies
         run: |
