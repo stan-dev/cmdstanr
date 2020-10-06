@@ -194,11 +194,6 @@ CmdStanRun <- R6::R6Class(
           sampling = self$procs$proc_section_time("sampling")[self$procs$is_finished()],
           total = self$procs$proc_total_time()[self$procs$is_finished()]
         )
-
-        if (isTRUE(self$args$refresh == 0)) {
-          warning("Separate warmup and sampling times are not available ",
-                  "after running with 'refresh=0'.", call. = FALSE)
-        }
         time <- list(total = self$procs$total_time(), chains = chain_time)
       }
       time

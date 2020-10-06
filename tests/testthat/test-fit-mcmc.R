@@ -162,20 +162,16 @@ test_that("time() method works after mcmc", {
     ncols = 4
   )
 
-  # after refresh=0 warmup and sampling times should be NA
-  testthat::expect_warning(
-    run_times_0 <- fit_mcmc_0$time(),
-    "Separate warmup and sampling times are not available"
-  )
   checkmate::expect_number(run_times_0$total, finite = TRUE)
   checkmate::expect_data_frame(run_times_0$chains,
                                any.missing = TRUE,
                                types = c("integer", "numeric"),
                                nrows = fit_mcmc_0$runset$num_procs(),
                                ncols = 4)
+  print(run_times_0)
   for (j in 1:nrow(run_times_0$chains)) {
-    checkmate::expect_scalar_na(run_times_0$chains$warmup[j])
-    checkmate::expect_scalar_na(run_times_0$chains$sampling[j])
+    checkmate::expect_number(run_times_0$chains$warmup[j], finite = TRUE)
+    checkmate::expect_number(run_times_0$chains$sampling[j], finite = TRUE)
   }
 })
 
