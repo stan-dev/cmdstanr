@@ -162,6 +162,7 @@ test_that("time() method works after mcmc", {
     ncols = 4
   )
 
+  run_times_0 <- fit_mcmc_0$time()
   checkmate::expect_number(run_times_0$total, finite = TRUE)
   checkmate::expect_data_frame(run_times_0$chains,
                                any.missing = TRUE,
@@ -170,8 +171,8 @@ test_that("time() method works after mcmc", {
                                ncols = 4)
   print(run_times_0)
   for (j in 1:nrow(run_times_0$chains)) {
-    checkmate::expect_number(run_times_0$chains$warmup[j], finite = TRUE)
-    checkmate::expect_number(run_times_0$chains$sampling[j], finite = TRUE)
+    checkmate::expect_number(run_times_0$chains$warmup[j])
+    checkmate::expect_number(run_times_0$chains$sampling[j])
   }
 })
 
