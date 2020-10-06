@@ -173,20 +173,26 @@ test_that("time() method works after mcmc", {
     checkmate::expect_number(run_times_0$chains$warmup[j])
     checkmate::expect_number(run_times_0$chains$sampling[j])
   }
+  # check that reported times match the times reported in the CSV
   for (j in 1:nrow(run_times_0$chains)) {
     sampling_time <- NULL
     warmup_time <- NULL
     total_time <- NULL
     for (l in readLines(fit_mcmc_0$output_files()[j])) {
       if (regexpr("seconds (Sampling)", l, fixed = TRUE) > 0) {
-        sampling_time <- as.double(trimws(sub("#", "", sub("seconds (Sampling)", "", l, fixed = TRUE), fixed = TRUE)))
+        l <- sub("seconds (Sampling)", "", l, fixed = TRUE)
+        l <- trimws(sub("#", "", l, fixed = TRUE))
+        sampling_time <- as.double(l)
       }
       if (regexpr("seconds (Warm-up)", l, fixed = TRUE) > 0) {
-        warmup_time <- as.double(trimws(sub("#  Elapsed Time: ", "", sub("seconds (Warm-up)", "", l, fixed = TRUE), fixed = TRUE)))
+        l <- sub("seconds (Warm-up)", "", l, fixed = TRUE)
+        l <- trimws(sub("#  Elapsed Time: ", "", l, fixed = TRUE))
+        warmup_time <- as.double(l)
       }
       if (regexpr("seconds (Total)", l, fixed = TRUE) > 0) {
-        total_time <- as.double(trimws(sub("#", "", sub("seconds (Total)", "", l, fixed = TRUE), fixed = TRUE)))
-
+        l <- sub("seconds (Total)", "", l, fixed = TRUE)
+        l <- trimws(sub("#", "", l, fixed = TRUE))
+        total_time <- as.double(l)
       }
     }
     expect_equal(run_times_0$chains$warmup[j], warmup_time)
