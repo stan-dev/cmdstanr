@@ -74,10 +74,41 @@ test_that("install_cmdstan() errors if it times out", {
   )
 })
 
-test_that("install_cmdstan() errors if installation already exists", {
+test_that("install_cmdstan() errors if invalid version or URL", {
   skip_if_offline()
-  expect_warning(
+  expect_error(
     install_cmdstan(version = "2.23.2"),
-    "cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'"
+    "Download of Cmdstan failed. Please check if the supplied version number is valid."
+  )
+  expect_error(
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz"),
+    "Download of Cmdstan failed. Please check if the supplied release URL is valid."
+  )
+})
+
+test_that("install_cmdstan() works with version and release_url", {
+  skip_if_offline()
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
+  expect_message(
+    expect_output(
+      install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.0/cmdstan-2.23.0.tar.gz"),
+      "Compiling, linking C++ code",
+      fixed = TRUE
+    ),
+    "Finished installing CmdStan"
+  )
+  expect_message(
+    expect_output(
+      install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
+                      version = "2.23.0"),
+      "Compiling, linking C++ code",
+      fixed = TRUE
+    ),
+    "Finished installing CmdStan"
   )
 })
