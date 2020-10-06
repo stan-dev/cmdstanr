@@ -60,6 +60,7 @@ install_cmdstan <- function(dir = NULL,
                             quiet = FALSE,
                             overwrite = FALSE,
                             timeout = 1200,
+                            version = NULL,
                             release_url = NULL,
                             cpp_options = list(),
                             check_toolchain = TRUE) {
@@ -75,7 +76,12 @@ install_cmdstan <- function(dir = NULL,
     dir <- repair_path(dir)
     checkmate::assert_directory_exists(dir, access = "rwx")    
   }
-
+  if (!is.null(version)) {
+    if (!is.null(release_url)) { 
+      warning("version and release_url are supplied to install_cmdstan()!\nrelease_url will be ignored.")
+    }
+    release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",version, "/cmdstan-", version, ".tar.gz")
+  }
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
@@ -105,7 +111,13 @@ install_cmdstan <- function(dir = NULL,
   }
   tar_downloaded <- download_with_retries(download_url, dest_file)
   if (!tar_downloaded) {
-    stop("GitHub download of Cmdstan failed.", call. = FALSE)
+    if (!is.null(version)) {
+      stop("Download of Cmdstan failed. Please check if the supplied version number is valid.", call. = FALSE)
+    }
+    if (!is.null(release_url)) {
+      stop("Download of Cmdstan failed. Please check if the supplied release URL is valid.", call. = FALSE)
+    }
+    stop("Download of Cmdstan failed. Please try again.", call. = FALSE)
   }
   message("* Download complete")
 
