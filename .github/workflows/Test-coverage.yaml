@@ -62,8 +62,6 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
-        if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
-
       - uses: actions/checkout@v2
 
       - uses: r-lib/actions/setup-r@master
