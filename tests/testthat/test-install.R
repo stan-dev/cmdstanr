@@ -74,5 +74,10 @@ test_that("install_cmdstan() errors if it times out", {
   )
 })
 
-
-
+test_that("install_cmdstan() errors if installation already exists", {
+  skip_if_offline()
+  expect_warning(
+    install_cmdstan(version = "2.23.2"),
+    "cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'"
+  )
+})
