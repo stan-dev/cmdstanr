@@ -288,9 +288,14 @@ download_with_retries <- function(download_url,
                                   quiet = TRUE) {
     download_rc <- 1
     while (retries > 0 && download_rc != 0) {
-      download_rc <- utils::download.file(url = download_url,
-                                          destfile = destination_file,
-                                          quiet = quiet)
+      try(
+        suppressWarnings(
+          download_rc <- utils::download.file(url = download_url,
+                                            destfile = destination_file,
+                                            quiet = quiet)
+        ),
+        silent = TRUE                                    
+      )
       if (download_rc != 0) {
         Sys.sleep(pause_sec)
       }
