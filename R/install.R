@@ -38,9 +38,13 @@
 #'   installation.
 #' @param timeout Timeout (in seconds) for the CmdStan build stage of the
 #'   installation process.
-#' @param release_url Specifies the URL to a specific Cmdstan release to be
+#' @param version Specifies the Cmdstan release version to be
 #'   installed. By default set to `NULL`, which downloads the latest stable
 #'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases).
+#' @param release_url Specifies the URL to a specific Cmdstan release to be
+#'   installed. By default set to `NULL`, which downloads the latest stable
+#'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases). If
+#'   `version` and `release_url` are set, `version` is used.
 #' @param cpp_options A list specifying any makefile flags/variables to be
 #'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
 #'   will force the use of clang for compilation.

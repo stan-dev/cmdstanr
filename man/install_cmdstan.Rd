@@ -12,6 +12,7 @@ install_cmdstan(
   quiet = FALSE,
   overwrite = FALSE,
   timeout = 1200,
+  version = NULL,
   release_url = NULL,
   cpp_options = list()
 )
@@ -47,9 +48,14 @@ installation.}
 \item{timeout}{Timeout (in seconds) for the CmdStan build stage of the
 installation process.}
 
-\item{release_url}{Specifies the URL to a specific Cmdstan release to be
+\item{version}{Specifies the Cmdstan release version to be
 installed. By default set to \code{NULL}, which downloads the latest stable
 release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}.}
+
+\item{release_url}{Specifies the URL to a specific Cmdstan release to be
+installed. By default set to \code{NULL}, which downloads the latest stable
+release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}. If
+\code{version} and \code{release_url} are set, \code{version} is used.}
 
 \item{cpp_options}{A list specifying any makefile flags/variables to be
 written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
