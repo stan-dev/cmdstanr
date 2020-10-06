@@ -169,10 +169,29 @@ test_that("time() method works after mcmc", {
                                types = c("integer", "numeric"),
                                nrows = fit_mcmc_0$runset$num_procs(),
                                ncols = 4)
-  print(run_times_0)
   for (j in 1:nrow(run_times_0$chains)) {
     checkmate::expect_number(run_times_0$chains$warmup[j])
     checkmate::expect_number(run_times_0$chains$sampling[j])
+  }
+  for (j in 1:nrow(run_times_0$chains)) {
+    sampling_time <- NULL
+    warmup_time <- NULL
+    total_time <- NULL
+    for (l in readLines(fit_mcmc_0$output_files()[j])) {
+      if (regexpr("seconds (Sampling)", l, fixed = TRUE) > 0) {
+        sampling_time <- as.double(trimws(sub("#", "", sub("seconds (Sampling)", "", l, fixed = TRUE), fixed = TRUE)))
+      }
+      if (regexpr("seconds (Warm-up)", l, fixed = TRUE) > 0) {
+        warmup_time <- as.double(trimws(sub("#  Elapsed Time: ", "", sub("seconds (Warm-up)", "", l, fixed = TRUE), fixed = TRUE)))
+      }
+      if (regexpr("seconds (Total)", l, fixed = TRUE) > 0) {
+        total_time <- as.double(trimws(sub("#", "", sub("seconds (Total)", "", l, fixed = TRUE), fixed = TRUE)))
+
+      }
+    }
+    expect_equal(run_times_0$chains$warmup[j], warmup_time)
+    expect_equal(run_times_0$chains$sampling[j], sampling_time)
+    expect_equal(run_times_0$chains$total[j], total_time)
   }
 })
 
