@@ -51,7 +51,9 @@ jobs:
           remotes::install_cran("gridExtra")
         shell: Rscript {0}
 
-      - uses: codecov/codecov-action@v1
+      - name: Test coverage
+        run: covr::codecov(type = "all")
+        shell: Rscript {0}
 
   test-coverage-windows:
     name: "Windows"
@@ -99,4 +101,8 @@ jobs:
           remotes::install_cran("gridExtra")
         shell: Rscript {0}
 
-      - uses: codecov/codecov-action@v1
+      - name: Test coverage
+        run: |
+          options(covr.gcov = 'C:/rtools40/mingw64/bin/gcov.exe');
+          covr::codecov(type = "all")
+        shell: Rscript {0}
