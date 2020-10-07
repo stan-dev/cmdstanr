@@ -2,6 +2,7 @@ context("install")
 
 test_that("install_cmdstan() successfully installs cmdstan", {
   skip_if_offline()
+  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -20,6 +21,7 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   skip_if_offline()
+  if (os_is_windows()) skip_on_covr()
   if (not_on_cran()) {
     # want to test passing NULL to install_cmdstan but need a real dir to
     # check in dir.exists() below so also create dir_check
@@ -42,6 +44,7 @@ test_that("install_cmdstan() errors if installation already exists", {
 
 test_that("install_cmdstan() errors if it times out", {
   skip_if_offline()
+  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
