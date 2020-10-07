@@ -64,10 +64,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install RTools 
+      - name: Download RTools 
+        run: Invoke-WebRequest -Uri https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe -OutFile ./R40.exe
+        shell: powershell
+      
+      - name: Download RTools 
+        run: Start-Process -FilePath ./R40.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
+        shell: powershell
+  
+      - name: Set paths
         run: |
-          Invoke-WebRequest -Uri https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe -OutFile ./R40.exe
-          Start-Process -FilePath ./R40.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
           echo "::add-path::C:/rtools40/usr/bin"
           echo "::add-path::C:/rtools40/mingw64/bin"
         shell: powershell
