@@ -51,6 +51,10 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           pacman -Syu mingw-w64-x86_64-make --noconfirm
+          g++ --version
+          Get-Command g++ | Select-Object -ExpandProperty Definition
+          mingw32-make --version
+          Get-Command mingw32-make | Select-Object -ExpandProperty Definition
         shell: powershell
 
       - uses: r-lib/actions/setup-r@master
