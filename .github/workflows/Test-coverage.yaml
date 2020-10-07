@@ -66,10 +66,10 @@ jobs:
 
       - name: Install RTools 
         run: |
-          Invoke-WebRequest -Uri https://cran.rstudio.com/bin/windows/Rtools/Rtools35.exe -OutFile ./R35.exe
-          Start-Process -FilePath ./R35.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
-          echo "::add-path::C:/Rtools/bin"
-          echo "::add-path::C:/Rtools/mingw_64/bin"
+          Invoke-WebRequest -Uri https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe -OutFile ./R40.exe
+          Start-Process -FilePath ./R40.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
+          echo "::add-path::C:/rtools40/usr/bin"
+          echo "::add-path::C:/rtools40/mingw64/bin"
         shell: powershell
       
       - name: Print g++/mingw32-make version and path
