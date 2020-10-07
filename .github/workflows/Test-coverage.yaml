@@ -63,14 +63,6 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v2
-
-      - name: Download RTools 
-        run: Invoke-WebRequest -Uri https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe -OutFile ./R40.exe
-        shell: powershell
-      
-      - name: Download RTools 
-        run: Start-Process -FilePath ./R40.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
-        shell: powershell
   
       - name: Set paths
         run: |
