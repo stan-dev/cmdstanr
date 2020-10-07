@@ -64,7 +64,25 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install RTools 
+        run: |
+          Invoke-WebRequest -Uri https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe -OutFile ./R40.exe
+          Start-Process -FilePath ./R40.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
+          echo "::add-path::C:/rtools40/usr/bin"
+          echo "::add-path::C:/rtools40/mingw64/bin"
+        shell: powershell
+      
+      - name: Print g++/mingw32-make version and path
+        run: |
+          g++ --version
+          mingw32-make --version
+          Get-Command g++ | Select-Object -ExpandProperty Definition
+          Get-Command mingw32-make | Select-Object -ExpandProperty Definition
+        shell: powershell
+
       - uses: r-lib/actions/setup-r@master
+        with:
+              r-version: 'release'
 
       - uses: r-lib/actions/setup-pandoc@master
 
