@@ -91,6 +91,7 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 
 test_that("install_cmdstan() works with version and release_url", {
   skip_if_offline()
+  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
