@@ -637,7 +637,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'     refresh = NULL,
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
-#'     output_dir = NULL,
+#'     dir = NULL,
 #'     chains = 4,
 #'     parallel_chains = getOption("mc.cores", 1),
 #'     threads_per_chain = NULL,
@@ -774,7 +774,7 @@ sample_method <- function(data = NULL,
                           refresh = NULL,
                           init = NULL,
                           save_latent_dynamics = FALSE,
-                          output_dir = NULL,
+                          dir = NULL,
                           chains = 4,
                           parallel_chains = getOption("mc.cores", 1),
                           threads_per_chain = NULL,
@@ -796,6 +796,7 @@ sample_method <- function(data = NULL,
                           validate_csv = TRUE,
                           show_messages = TRUE,
                           # deprecated
+                          output_dir = NULL,
                           cores = NULL,
                           num_cores = NULL,
                           num_chains = NULL,
@@ -804,8 +805,11 @@ sample_method <- function(data = NULL,
                           save_extra_diagnostics = NULL,
                           max_depth = NULL,
                           stepsize = NULL) {
-
   # temporary deprecation warnings
+  if (!is.null(output_dir)) {
+    warning("'output_dir' is deprecated. Please use 'dir' instead.")
+    dir <- output_dir
+  }
   if (!is.null(cores)) {
     warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
     parallel_chains <- cores
@@ -890,7 +894,7 @@ sample_method <- function(data = NULL,
     seed = seed,
     init = init,
     refresh = refresh,
-    output_dir = output_dir,
+    dir = dir,
     validate_csv = validate_csv
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(
@@ -933,7 +937,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     refresh = NULL,
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
-#'     output_dir = NULL,
+#'     dir = NULL,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
 #'     iter = NULL
@@ -965,7 +969,7 @@ optimize_method <- function(data = NULL,
                             refresh = NULL,
                             init = NULL,
                             save_latent_dynamics = FALSE,
-                            output_dir = NULL,
+                            dir = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
                             iter = NULL) {
@@ -984,7 +988,7 @@ optimize_method <- function(data = NULL,
     seed = seed,
     init = init,
     refresh = refresh,
-    output_dir = output_dir
+    dir = dir
   )
 
   cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
@@ -1021,7 +1025,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     refresh = NULL,
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
-#'     output_dir = NULL,
+#'     dir = NULL,
 #'     algorithm = NULL,
 #'     iter = NULL,
 #'     grad_samples = NULL,
@@ -1071,7 +1075,7 @@ variational_method <- function(data = NULL,
                                refresh = NULL,
                                init = NULL,
                                save_latent_dynamics = FALSE,
-                               output_dir = NULL,
+                               dir = NULL,
                                algorithm = NULL,
                                iter = NULL,
                                grad_samples = NULL,
@@ -1081,7 +1085,14 @@ variational_method <- function(data = NULL,
                                adapt_iter = NULL,
                                tol_rel_obj = NULL,
                                eval_elbo = NULL,
-                               output_samples = NULL) {
+                               output_samples = NULL,
+                               # deprecated
+                               output_dir = NULL) {
+  # temporary deprecation warnings
+  if (!is.null(output_dir)) {
+    warning("'output_dir' is deprecated. Please use 'dir' instead.")
+    dir <- output_dir
+  }
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -1104,7 +1115,7 @@ variational_method <- function(data = NULL,
     seed = seed,
     init = init,
     refresh = refresh,
-    output_dir = output_dir
+    dir = dir
   )
 
   cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
@@ -1130,7 +1141,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'     fitted_params,
 #'     data = NULL,
 #'     seed = NULL,
-#'     output_dir = NULL,
+#'     dir = NULL,
 #'     parallel_chains = getOption("mc.cores", 1),
 #'     threads_per_chain = NULL
 #'   )
@@ -1141,7 +1152,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'     - A [CmdStanMCMC] fitted model object.
 #'     - A character vector of paths to CmdStan CSV output files containing
 #'     parameter draws.
-#'   * `data`, `seed`, `output_dir`, `parallel_chains`, `threads_per_chain`:
+#'   * `data`, `seed`, `dir`, `parallel_chains`, `threads_per_chain`:
 #'   Same as for the [`$sample()`][model-method-sample] method.
 #'
 #' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
@@ -1196,9 +1207,16 @@ NULL
 generate_quantities_method <- function(fitted_params,
                                        data = NULL,
                                        seed = NULL,
-                                       output_dir = NULL,
+                                       dir = NULL,
                                        parallel_chains = getOption("mc.cores", 1),
-                                       threads_per_chain = NULL) {
+                                       threads_per_chain = NULL,
+                                       # deprecated
+                                       output_dir = NULL) {
+  # temporary deprecation warnings
+  if (!is.null(output_dir)) {
+    warning("'output_dir' is deprecated. Please use 'dir' instead.")
+    dir <- output_dir
+  }
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   fitted_params <- process_fitted_params(fitted_params)
   chains <- length(fitted_params)
@@ -1212,7 +1230,7 @@ generate_quantities_method <- function(fitted_params,
     proc_ids = seq_len(chains),
     data_file = process_data(data),
     seed = seed,
-    output_dir = output_dir
+    dir = dir
   )
   cmdstan_procs <- CmdStanGQProcs$new(
     num_procs = chains,

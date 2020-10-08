@@ -232,7 +232,7 @@ file.exists(files)
 ### Non-temporary files
 
 To save these files to a non-temporary location there are two options. You 
-can either specify the `output_dir` argument to `mod$sample()` or use 
+can either specify the `dir` argument to `mod$sample()` or use 
 `fit$save_output_files()` after fitting the model: 
 
 
@@ -241,10 +241,10 @@ can either specify the `output_dir` argument to `mod$sample()` or use
 fit$save_output_files(dir = "path/to/directory")
 ```
 
-```{r output_dir, eval = FALSE}
+```{r dir, eval = FALSE}
 fit <- mod$sample(
   data = data_list, 
-  output_dir = "path/to/directory"
+  dir = "path/to/directory"
 )
 ```
 

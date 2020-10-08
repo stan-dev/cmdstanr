@@ -20,6 +20,8 @@ in fitting methods. (#281, #294)
 * `install_cmdstan()` gains argument `version` for specifying which version of 
 CmdStan to install. (#300, #308)
 
+* Replaced `output_dir` with `dir` in `$sample()`, `$optimize()`,
+`$variational()` and `$generate_quantities()`. `output_dir` is deprecated.
 
 # cmdstanr 0.1.3
 

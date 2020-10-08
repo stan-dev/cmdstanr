@@ -1,4 +1,4 @@
-context("model-output_dir")
+context("model-dir")
 
 if (not_on_cran()) {
   set_cmdstan_path()
@@ -12,7 +12,7 @@ if (not_on_cran()) {
   }
 }
 
-test_that("all fitting methods work with output_dir", {
+test_that("all fitting methods work with dir", {
   skip_on_cran()
   for (method in c("sample", "optimize", "variational")) {
     method_dir <- file.path(sandbox, method)
@@ -20,20 +20,20 @@ test_that("all fitting methods work with output_dir", {
       dir.create(method_dir)
     }
 
-    # no output_dir means should use tempdir
+    # no dir means should use tempdir
     fit <- testing_fit("bernoulli", method = method, seed = 123)
-    expect_equal(fit$runset$args$output_dir, absolute_path(tempdir()))
+    expect_equal(fit$runset$args$dir, absolute_path(tempdir()))
 
-    # specifying output_dir
+    # specifying dir
     fit <- testing_fit("bernoulli", method = method, seed = 123,
-                        output_dir = method_dir)
-    expect_equal(fit$runset$args$output_dir, absolute_path(method_dir))
+                        dir = method_dir)
+    expect_equal(fit$runset$args$dir, absolute_path(method_dir))
     expect_equal(length(list.files(method_dir)), fit$num_procs())
   }
 
-  # specifying output_dir and save_latent_dynamics
+  # specifying dir and save_latent_dynamics
   fit <- testing_fit("bernoulli", method = "sample", seed = 123,
-                     output_dir = file.path(sandbox, "sample"),
+                     dir = file.path(sandbox, "sample"),
                      save_latent_dynamics = TRUE)
 
   files <- list.files(file.path(sandbox, "sample"))
@@ -43,16 +43,16 @@ test_that("all fitting methods work with output_dir", {
   )
 })
 
-test_that("error if output_dir is invalid", {
+test_that("error if dir is invalid", {
   skip_on_cran()
 
   expect_error(
-    testing_fit("bernoulli", output_dir = "NOT_A_DIR"),
+    testing_fit("bernoulli", dir = "NOT_A_DIR"),
     "Directory 'NOT_A_DIR' does not exist",
     fixed = TRUE
   )
   expect_error(
-    testing_fit("bernoulli", output_dir = TRUE),
+    testing_fit("bernoulli", dir = TRUE),
     "No directory provided"
   )
 
@@ -61,14 +61,14 @@ test_that("error if output_dir is invalid", {
     not_readable <- file.path(sandbox, "locked")
     dir.create(not_readable, mode = "220")
     expect_error(
-      testing_fit("bernoulli", output_dir = not_readable),
+      testing_fit("bernoulli", dir = not_readable),
       "not readable"
     )
   }
   file.remove(list.files(sandbox, full.names = TRUE, recursive = TRUE))
 })
 
-test_that("output_dir works with trailing /", {
+test_that("dir works with trailing /", {
   skip_on_cran()
   test_dir <- file.path(sandbox, "trailing")
   dir.create(test_dir)
@@ -76,8 +76,8 @@ test_that("output_dir works with trailing /", {
     "bernoulli",
     method = "sample",
     seed = 123,
-    output_dir = paste0(test_dir,"/")
+    dir = paste0(test_dir,"/")
   )
-  expect_equal(fit$runset$args$output_dir, absolute_path(test_dir))
+  expect_equal(fit$runset$args$dir, absolute_path(test_dir))
   expect_equal(length(list.files(test_dir)), fit$num_procs())
 })

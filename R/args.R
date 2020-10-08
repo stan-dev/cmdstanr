@@ -34,9 +34,16 @@ CmdStanArgs <- R6::R6Class(
                           seed = NULL,
                           init = NULL,
                           refresh = NULL,
-                          output_dir = NULL,
-                          validate_csv = TRUE) {
-
+                          dir = NULL,
+                          validate_csv = TRUE,
+                          # deprecated
+                          output_dir = NULL) {
+      # temporary deprecation warnings
+      if (!is.null(output_dir)) {
+        warning("'output_dir' is deprecated. Please use 'dir' instead.")
+        dir <- output_dir
+      }
+                     
       self$model_name <- model_name
       self$exe_file <- exe_file
       self$proc_ids <- proc_ids
@@ -47,13 +54,13 @@ CmdStanArgs <- R6::R6Class(
       self$method <- self$method_args$method
       self$save_latent_dynamics <- save_latent_dynamics
       self$validate_csv <- validate_csv
-      self$using_tempdir <- is.null(output_dir)
+      self$using_tempdir <- is.null(dir)
       if (getRversion() < '3.5.0') {
-        self$output_dir <- output_dir %||% tempdir()
+        self$dir <- dir %||% tempdir()
       } else {
-        self$output_dir <- output_dir %||% tempdir(check = TRUE)
+        self$dir <- dir %||% tempdir(check = TRUE)
       }
-      self$output_dir <- repair_path(self$output_dir)
+      self$dir <- repair_path(self$dir)
       if (is.function(init)) {
         init <- process_init_function(init, length(self$proc_ids))
       } else if (is.list(init) && !is.data.frame(init)) {
@@ -66,7 +73,7 @@ CmdStanArgs <- R6::R6Class(
     },
     validate = function() {
       validate_cmdstan_args(self)
-      self$output_dir <- repair_path(absolute_path(self$output_dir))
+      self$dir <- repair_path(absolute_path(self$dir))
       if (is.character(self$data_file)) {
         self$data_file <- absolute_path(self$data_file)
       }
@@ -93,7 +100,7 @@ CmdStanArgs <- R6::R6Class(
       )
     },
     new_files = function(type = c("output", "diagnostic")) {
-      files <- file.path(self$output_dir, self$new_file_names(type))
+      files <- file.path(self$dir, self$new_file_names(type))
       invisible(file.create(files))
       files
     },
@@ -447,7 +454,7 @@ VariationalArgs <- R6::R6Class(
 validate_cmdstan_args = function(self) {
   validate_exe_file(self$exe_file)
 
-  checkmate::assert_directory_exists(self$output_dir, access = "rw")
+  checkmate::assert_directory_exists(self$dir, access = "rw")
 
   # at least 1 run id (chain id)
   checkmate::assert_integerish(self$proc_ids,
