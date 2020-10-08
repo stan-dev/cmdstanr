@@ -35,15 +35,7 @@ CmdStanArgs <- R6::R6Class(
                           init = NULL,
                           refresh = NULL,
                           dir = NULL,
-                          validate_csv = TRUE,
-                          # deprecated
-                          output_dir = NULL) {
-      # temporary deprecation warnings
-      if (!is.null(output_dir)) {
-        warning("'output_dir' is deprecated. Please use 'dir' instead.")
-        dir <- output_dir
-      }
-                     
+                          validate_csv = TRUE) {                     
       self$model_name <- model_name
       self$exe_file <- exe_file
       self$proc_ids <- proc_ids
