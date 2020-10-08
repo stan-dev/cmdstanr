@@ -14,7 +14,7 @@ based on previously fitted parameters.
   fitted_params,
   data = NULL,
   seed = NULL,
-  output_dir = NULL,
+  dir = NULL,
   parallel_chains = getOption("mc.cores", 1),
   threads_per_chain = NULL
 )
@@ -30,7 +30,7 @@ based on previously fitted parameters.
 \item A character vector of paths to CmdStan CSV output files containing
 parameter draws.
 }
-\item \code{data}, \code{seed}, \code{output_dir}, \code{parallel_chains}, \code{threads_per_chain}:
+\item \code{data}, \code{seed}, \code{dir}, \code{parallel_chains}, \code{threads_per_chain}:
 Same as for the \code{\link[=model-method-sample]{$sample()}} method.
 }
 }

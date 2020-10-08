@@ -26,7 +26,7 @@ variables. Thus modes correspond to modes of the model as written.
   refresh = NULL,
   init = NULL,
   save_latent_dynamics = FALSE,
-  output_dir = NULL,
+  dir = NULL,
   algorithm = NULL,
   init_alpha = NULL,
   iter = NULL
@@ -79,18 +79,18 @@ is \code{save_latent_dynamics=FALSE}, which is appropriate for almost every use 
 divergences for HMC). To save the temporary files created when
 \code{save_latent_dynamics=TRUE} see the
 \code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}} method.
-\item \code{output_dir}: (string) A path to a directory where CmdStan should write
+\item \code{dir}: (string) A path to a directory where CmdStan should write
 its output CSV files. For interactive use this can typically be left at
 \code{NULL} (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
 posterior draws and diagnostics) available in \R via methods of the fitted
-model objects. The behavior of \code{output_dir} is as follows:
+model objects. The behavior of \code{dir} is as follows:
 \itemize{
 \item If \code{NULL} (the default), then the CSV files are written to a temporary
 directory and only saved permanently if the user calls one of the
 \verb{$save_*} methods of the fitted model object (e.g.,
 \code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
 files are removed when the fitted model object is garbage collected.
-\item If a path, then the files are created in \code{output_dir} with names
+\item If a path, then the files are created in \code{dir} with names
 corresponding the defaults used by \verb{$save_output_files()} (and similar
 methods like \verb{$save_latent_dynamics_files()}).
 }
