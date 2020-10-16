@@ -1,83 +1,83 @@
-context("model-optimize")
-
-# Setup -------------------------------------------------------------------
-if (not_on_cran()) {
-  set_cmdstan_path()
-  mod <- testing_model("bernoulli")
-  data_list <- testing_data("bernoulli")
-
-  # these are all valid for optimize()
-  ok_arg_values <- list(
-    data = data_list,
-    refresh = 5,
-    init = NULL,
-    seed = 12345,
-    algorithm = "lbfgs",
-    iter = 100,
-    init_alpha = 0.002,
-    save_latent_dynamics = FALSE
-  )
-
-  # using any of these should cause optimize() to error
-  bad_arg_values <- list(
-    data = "NOT_A_FILE",
-    refresh = -20,
-    init = "NOT_A_FILE",
-    seed = "NOT_A_SEED",
-    algorithm = "NOT_AN_ALGORITHM",
-    iter = -20,
-    init_alpha = -20,
-    save_latent_dynamics = "NOT_LOGICAL"
-  )
-
-
-  ok_arg_sci_nota_values <- list(
-    data = data_list,
-    refresh = 5,
-    init = NULL,
-    seed = 12345,
-    algorithm = "lbfgs",
-    iter = 100000,
-    init_alpha = 0.002,
-    save_latent_dynamics = FALSE
-  )
-}
-
-
-test_that("optimize() method runs when all arguments specified validly", {
-  skip_on_cran()
-
-  # specifying all arguments validly
-  expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_values))
-  expect_is(fit1, "CmdStanMLE")
-
-  # leaving all at default (except 'data')
-  expect_optim_output(fit2 <- mod$optimize(data = data_list))
-  expect_is(fit2, "CmdStanMLE")
-})
-
-test_that("optimize() method runs arguments are specified in scientific notation", {
-  skip_on_cran()
-
-  # specifying all arguments validly
-  expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_sci_nota_values))
-  expect_is(fit1, "CmdStanMLE")
-})
-
-test_that("optimize() method errors for any invalid argument before calling cmdstan", {
-  skip_on_cran()
-
-  for (nm in names(bad_arg_values)) {
-    args <- ok_arg_values
-    args[[nm]] <- bad_arg_values[[nm]]
-    expect_error(do.call(mod$optimize, args), regexp = nm)
-  }
-})
-
-test_that("optimize() errors when combining 'newton' with 'init_alpha'", {
-  skip_on_cran()
-  expect_error(
-      mod$optimize(data = data_list, algorithm = "newton", init_alpha = 0.1),
-    "'init_alpha' can't be used when algorithm is 'newton'"
-  )
-})
+# context("model-optimize")
+#
+# # Setup -------------------------------------------------------------------
+# if (not_on_cran()) {
+#   set_cmdstan_path()
+#   mod <- testing_model("bernoulli")
+#   data_list <- testing_data("bernoulli")
+#
+#   # these are all valid for optimize()
+#   ok_arg_values <- list(
+#     data = data_list,
+#     refresh = 5,
+#     init = NULL,
+#     seed = 12345,
+#     algorithm = "lbfgs",
+#     iter = 100,
+#     init_alpha = 0.002,
+#     save_latent_dynamics = FALSE
+#   )
+#
+#   # using any of these should cause optimize() to error
+#   bad_arg_values <- list(
+#     data = "NOT_A_FILE",
+#     refresh = -20,
+#     init = "NOT_A_FILE",
+#     seed = "NOT_A_SEED",
+#     algorithm = "NOT_AN_ALGORITHM",
+#     iter = -20,
+#     init_alpha = -20,
+#     save_latent_dynamics = "NOT_LOGICAL"
+#   )
+#
+#
+#   ok_arg_sci_nota_values <- list(
+#     data = data_list,
+#     refresh = 5,
+#     init = NULL,
+#     seed = 12345,
+#     algorithm = "lbfgs",
+#     iter = 100000,
+#     init_alpha = 0.002,
+#     save_latent_dynamics = FALSE
+#   )
+# }
+#
+#
+# test_that("optimize() method runs when all arguments specified validly", {
+#   skip_on_cran()
+#
+#   # specifying all arguments validly
+#   expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_values))
+#   expect_is(fit1, "CmdStanMLE")
+#
+#   # leaving all at default (except 'data')
+#   expect_optim_output(fit2 <- mod$optimize(data = data_list))
+#   expect_is(fit2, "CmdStanMLE")
+# })
+#
+# test_that("optimize() method runs arguments are specified in scientific notation", {
+#   skip_on_cran()
+#
+#   # specifying all arguments validly
+#   expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_sci_nota_values))
+#   expect_is(fit1, "CmdStanMLE")
+# })
+#
+# test_that("optimize() method errors for any invalid argument before calling cmdstan", {
+#   skip_on_cran()
+#
+#   for (nm in names(bad_arg_values)) {
+#     args <- ok_arg_values
+#     args[[nm]] <- bad_arg_values[[nm]]
+#     expect_error(do.call(mod$optimize, args), regexp = nm)
+#   }
+# })
+#
+# test_that("optimize() errors when combining 'newton' with 'init_alpha'", {
+#   skip_on_cran()
+#   expect_error(
+#       mod$optimize(data = data_list, algorithm = "newton", init_alpha = 0.1),
+#     "'init_alpha' can't be used when algorithm is 'newton'"
+#   )
+# })
