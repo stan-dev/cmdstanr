@@ -144,8 +144,6 @@ test_that("draws() method returns a 'draws' object", {
   for (method in all_methods) {
     fit <- fits[[method]]
     draws <- fit$draws()
-    print(draws)
-    print(typeof(draws))
     expect_type(draws, types[[method]])
     expect_s3_class(draws, "draws")
   }
