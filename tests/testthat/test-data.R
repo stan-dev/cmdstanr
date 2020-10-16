@@ -81,14 +81,9 @@ test_that("process_fitted_params() works if output_files in fit do not exist", {
   chain <- 1
   for(file in new_files) {
     suppressWarnings(
-      tmp_file_gq <- vroom::vroom(
-        file,
-        comment = "#",
-        delim = ',',
-        trim_ws = TRUE,
-        altrep = FALSE,
-        progress = FALSE,
-        skip = 1)
+      tmp_file_gq <- data.table::fread(
+        cmd = paste0("grep -v '^#' ", file)
+      )
     )
     tmp_file_gq <- posterior::as_draws_array(tmp_file_gq)
     expect_equal(

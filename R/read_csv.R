@@ -121,8 +121,6 @@ read_cmdstan_csv <- function(files,
   col_types <- NULL
   col_select <- NULL
   not_matching <- c()
-  vroom_warnings <- 0
-
   for (output_file in files) {
     if (is.null(metadata)) {
       metadata <- read_csv_metadata(output_file)
