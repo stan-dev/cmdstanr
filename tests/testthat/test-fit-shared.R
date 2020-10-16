@@ -135,10 +135,18 @@ test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
 
 test_that("draws() method returns a 'draws' object", {
   skip_on_cran()
+  types <- list(
+    "sample" = "double",
+    "optimize" = "double",
+    "variational" = "double",
+    "generate_quantities" = "integer"
+  )
   for (method in all_methods) {
     fit <- fits[[method]]
     draws <- fit$draws()
-    expect_type(draws, "double")
+    print(draws)
+    print(typeof(draws))
+    expect_type(draws, types[[method]])
     expect_s3_class(draws, "draws")
   }
 })
