@@ -84,7 +84,6 @@ test_that("inv_metric method works after mcmc", {
   # checkmate::expect_numeric(x[[1]])
   # checkmate::expect_numeric(x[[2]])
 
-  y <- fit_mcmc_2$draws()
   x <- fit_mcmc_2$inv_metric()
   print(x)
   expect_length(x, fit_mcmc_2$num_chains())

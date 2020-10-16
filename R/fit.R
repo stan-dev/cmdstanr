@@ -907,15 +907,16 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the inverse metrics.", call. = FALSE)
       }
-      if (is.null(private$inv_metric_)) {
-        private$read_csv_(variables = "", sampler_diagnostics = "")
-      }
-      out <- private$inv_metric_
-      if (matrix && !is.matrix(out[[1]])) {
-        # convert each vector to a diagonal matrix
-        out <- lapply(out, diag)
-      }
-      out
+      NULL
+      # if (is.null(private$inv_metric_)) {
+      #   private$read_csv_(variables = "", sampler_diagnostics = "")
+      # }
+      # out <- private$inv_metric_
+      # if (matrix && !is.matrix(out[[1]])) {
+      #   # convert each vector to a diagonal matrix
+      #   out <- lapply(out, diag)
+      # }
+      # out
     }
   ),
   private = list(
