@@ -203,12 +203,16 @@ read_cmdstan_csv <- function(files,
     } else if (metadata$method == "optimize") {
       all_draws <- 1
     }
-    suppressWarnings(
+    if (length(col_select) > 0) {
+      suppressWarnings(
       draws <- data.table::fread(
-        cmd = paste0("grep -v '^#' ", output_file),
-        select = col_select
+          cmd = paste0("grep -v '^#' ", output_file),
+          select = col_select
+        )
       )
-    )
+    } else {
+      draws <- NULL
+    }    
     if (nrow(draws) > 0) {
       if (metadata$method == "sample") {
         if (metadata$save_warmup == 1) {
