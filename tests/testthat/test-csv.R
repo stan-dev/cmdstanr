@@ -100,65 +100,55 @@ test_that("read_cmdstan_csv() fails with the no params listed", {
                "Supplied CSV file does not contain any variable names or data!")
 })
 
-test_that("read_cmdstan_csv() matches rstan::read_stan_csv()", {
+test_that("read_cmdstan_csv() matches utils::read.csv", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
                  test_path("resources", "csv", "model1-2-warmup.csv"))
 
-  draws_array <- readRDS(test_path("answers", "rstan-read-stan-csv-no-warmup.rds"))
-  draws_array <- posterior::as_draws_array(draws_array)
+  draws_array_1 <- utils::read.csv(test_path("resources", "csv", "model1-1-warmup.csv"), comment.char = "#")
+  draws_array_2 <- utils::read.csv(test_path("resources", "csv", "model1-2-warmup.csv"), comment.char = "#")
+  post_warmup_draws_array_1 <- posterior::as_draws_array(draws_array_1[101:200,,])
+  post_warmup_draws_array_2 <- posterior::as_draws_array(draws_array_2[101:200,,])
+  warmup_draws_array_1 <- posterior::as_draws_array(draws_array_1[1:100,,])
+  warmup_draws_array_2 <- posterior::as_draws_array(draws_array_2[1:100,,])
+
   csv_output <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_output$post_warmup_draws[,, "mu"],
-               draws_array[,,"mu"])
-  expect_equal(csv_output$post_warmup_draws[,, "sigma"],
-               draws_array[,,"sigma"])
-  expect_equal(csv_output$post_warmup_draws[,, "lp__"],
-               draws_array[,,"lp__"])
+  for (param in c("mu", "sigma", "lp__")) {
+    expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 1, variable = param),
+                 post_warmup_draws_array_1[,,param])
+    expect_equal(posterior::subset_draws(csv_output$warmup_draws, chain = 1, variable = param),
+                 warmup_draws_array_1[,,param])
+    expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 2, variable = param),
+                 post_warmup_draws_array_2[,,param])
+    expect_equal(posterior::subset_draws(csv_output$warmup_draws, chain = 2, variable = param),
+                 warmup_draws_array_2[,,param])
+  }
+  for (diagnostic in c("divergent__", "accept_stat__", "treedepth__", "stepsize__", "n_leapfrog__", "energy__")) {
+    expect_equal(posterior::subset_draws(csv_output$post_warmup_sampler_diagnostics, chain = 1, variable = diagnostic),
+                 post_warmup_draws_array_1[,,diagnostic])
+    expect_equal(posterior::subset_draws(csv_output$warmup_sampler_diagnostics, chain = 1, variable = diagnostic),
+                 warmup_draws_array_1[,,diagnostic])
+    expect_equal(posterior::subset_draws(csv_output$post_warmup_sampler_diagnostics, chain = 2, variable = diagnostic),
+                 post_warmup_draws_array_2[,,diagnostic])
+    expect_equal(posterior::subset_draws(csv_output$warmup_sampler_diagnostics, chain = 2, variable = diagnostic),
+                 warmup_draws_array_2[,,diagnostic])
+  }
 })
 
-test_that("read_cmdstan_csv() matches rstan::read_stan_csv() with save_warmup", {
-  skip_on_cran()
-  csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
-                 test_path("resources", "csv", "model1-2-warmup.csv"))
-
-  draws_array <- readRDS(test_path("answers", "rstan-read-stan-csv-warmup.rds"))
-  draws_array <- posterior::as_draws_array(draws_array)
-  csv_output <- read_cmdstan_csv(csv_files)
-
-  warmup_iter <- csv_output$metadata$iter_warmup
-  num_iter <- csv_output$metadata$iter_sampling + csv_output$metadata$iter_warmup
-
-  draws_array_post_warmup <- draws_array[(warmup_iter+1):num_iter,,]
-  draws_array_warmup <- draws_array[1:warmup_iter,,]
-
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "mu"),
-               posterior::extract_variable_matrix(draws_array_post_warmup, "mu"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "sigma"),
-               posterior::extract_variable_matrix(draws_array_post_warmup, "sigma"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "lp__"),
-               posterior::extract_variable_matrix(draws_array_post_warmup, "lp__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_draws, "mu"),
-               posterior::extract_variable_matrix(draws_array_warmup, "mu"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_draws, "sigma"),
-               posterior::extract_variable_matrix(draws_array_warmup, "sigma"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_draws, "lp__"),
-               posterior::extract_variable_matrix(draws_array_warmup, "lp__"))
-})
-
-test_that("read_cmdstan_csv() matches rstan::read_stan_csv() for csv file without warmup", {
+test_that("read_cmdstan_csv() matches utils::read.csv for csv file without warmup", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
 
-  draws_array <- readRDS(test_path("answers", "rstan-read-stan-csv-no-warmup-file.rds"))
+  draws_array <- utils::read.csv(test_path("resources", "csv", "model1-2-no-warmup.csv"), comment.char = "#")
   draws_array <- posterior::as_draws_array(draws_array)
   csv_output <- read_cmdstan_csv(csv_files)
+  expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 1, variable = "mu"),
+               draws_array[,,"mu"])
+  expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 1, variable = "sigma"),
+               draws_array[,,"sigma"])
+  expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 1, variable = "lp__"),
+               draws_array[,,"lp__"])
 
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "mu"),
-               posterior::extract_variable_matrix(draws_array, "mu"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "sigma"),
-               posterior::extract_variable_matrix(draws_array, "sigma"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_draws, "lp__"),
-               posterior::extract_variable_matrix(draws_array, "lp__"))
 })
 
 test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", {
@@ -219,48 +209,6 @@ test_that("read_cmdstan_csv() returns correct dense inverse mass matrix for 2 cs
                 7.46852, -0.605539, 3.84886, 7.78631, 8.18066, 7.194, 6.91029, 30.2862, 5.61914, 8.10162,
                 7.51557, 1.83794, 12.9738, 6.79063, 5.77239, 10.1647, 1.26095, 5.61914, 34.5498, 7.75486,
                 7.78791, 0.0780934, 4.34037, 8.13132, 7.53072, 5.61617, 4.72335, 8.10162, 7.75486, 35.6602))
-})
-
-test_that("read_cmdstan_csv() matches rstan::read_stan_csv() for csv file", {
-  skip_on_cran()
-  csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
-
-  sampler_diagnostics <- readRDS(test_path("answers", "rstan-read-stan-csv-sampler-params.rds"))
-  sampler_diagnostics <- posterior::as_draws_array(sampler_diagnostics[[1]])
-  csv_output <- read_cmdstan_csv(csv_files)
-  num_warmup <- csv_output$metadata$iter_warmup/csv_output$metadata$thin
-  if(csv_output$metadata$save_warmup) {
-    num_iter <- csv_output$metadata$iter_sampling + csv_output$metadata$iter_warmup
-  } else {
-    num_iter <- csv_output$metadata$iter_sampling
-  }
-
-  # match warmup sampler info
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "divergent__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "divergent__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "accept_stat__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "accept_stat__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "treedepth__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "treedepth__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "stepsize__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "stepsize__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "n_leapfrog__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "n_leapfrog__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$warmup_sampler_diagnostics, "energy__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[1:num_warmup,,], "energy__"))
-  # match post-warmup sampling info
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "divergent__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "divergent__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "accept_stat__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "accept_stat__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "treedepth__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "treedepth__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "stepsize__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "stepsize__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "n_leapfrog__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "n_leapfrog__"))
-  expect_equal(posterior::extract_variable_matrix(csv_output$post_warmup_sampler_diagnostics, "energy__"),
-               posterior::extract_variable_matrix(sampler_diagnostics[(num_warmup+1):num_iter,,], "energy__"))
 })
 
 test_that("read_cmdstan_csv() works with thin", {
