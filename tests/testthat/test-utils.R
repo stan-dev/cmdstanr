@@ -88,7 +88,8 @@ test_that("list_to_array works with empty list", {
 })
 
 test_that("list_to_array fails for non-numeric values", {
-  expect_error(list_to_array(list(k = "test")), "All elements of the list must be numeric!")
+  expect_error(list_to_array(list(k = "test"), name = "test-list"),
+               "All elements in list 'test-list' must be numeric!")
 })
 
 test_that("cpp_options_to_compile_flags() works", {
