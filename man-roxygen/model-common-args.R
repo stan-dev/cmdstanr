@@ -37,7 +37,6 @@
 #'   divergences for HMC). To save the temporary files created when
 #'   `save_latent_dynamics=TRUE` see the
 #'   [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] method.
-#'
 #'   * `output_dir`: (string) A path to a directory where CmdStan should write
 #'   its output CSV files. For interactive use this can typically be left at
 #'   `NULL` (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
@@ -51,4 +50,7 @@
 #'     - If a path, then the files are created in `output_dir` with names
 #'       corresponding the defaults used by `$save_output_files()` (and similar
 #'       methods like `$save_latent_dynamics_files()`).
-#'
+#'   * `sig_figs`: (positive integer) The number of significant figures used
+#'   for the output values. By default, CmdStan represent the output values with
+#'   6 significant figures. The upper limit for `sig_figs` is 18.
+#'   
