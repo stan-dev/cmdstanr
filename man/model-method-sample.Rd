@@ -200,6 +200,9 @@ when, for example, trying to generate pseudo-data using the generated
 quantities block. If the parameters block is empty then using
 \code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
 \code{parallel_chains} arguments will be set to \code{1}.
+\item \code{chain_id}: (vector) A vector of chain IDs. Must contain \code{chains} unique
+positive integers. If not set, the default chain IDs are used (integers
+starting from \code{1}).
 }
 }
 

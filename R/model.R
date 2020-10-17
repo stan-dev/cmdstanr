@@ -770,6 +770,9 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'   quantities block. If the parameters block is empty then using
 #'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
 #'   `parallel_chains` arguments will be set to `1`.
+#'   * `chain_id`: (vector) A vector of chain IDs. Must contain `chains` unique
+#'   positive integers. If not set, the default chain IDs are used (integers
+#'   starting from `1`).
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
