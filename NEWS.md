@@ -20,6 +20,9 @@ in fitting methods. (#281, #294)
 * `install_cmdstan()` gains argument `version` for specifying which version of 
 CmdStan to install. (#300, #308)
 
+* `$sample()` method for CmdStanModel objects gains argument `version` for specifying
+ custom chain IDs. (#319)
+
 
 # cmdstanr 0.1.3
 
