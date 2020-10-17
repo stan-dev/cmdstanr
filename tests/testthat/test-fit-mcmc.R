@@ -162,11 +162,7 @@ test_that("time() method works after mcmc", {
     ncols = 4
   )
 
-  # after refresh=0 warmup and sampling times should be NA
-  testthat::expect_warning(
-    run_times_0 <- fit_mcmc_0$time(),
-    "Separate warmup and sampling times are not available"
-  )
+  run_times_0 <- fit_mcmc_0$time()
   checkmate::expect_number(run_times_0$total, finite = TRUE)
   checkmate::expect_data_frame(run_times_0$chains,
                                any.missing = TRUE,
@@ -174,8 +170,34 @@ test_that("time() method works after mcmc", {
                                nrows = fit_mcmc_0$runset$num_procs(),
                                ncols = 4)
   for (j in 1:nrow(run_times_0$chains)) {
-    checkmate::expect_scalar_na(run_times_0$chains$warmup[j])
-    checkmate::expect_scalar_na(run_times_0$chains$sampling[j])
+    checkmate::expect_number(run_times_0$chains$warmup[j])
+    checkmate::expect_number(run_times_0$chains$sampling[j])
+  }
+  # check that reported times match the times reported in the CSV
+  for (j in 1:nrow(run_times_0$chains)) {
+    sampling_time <- NULL
+    warmup_time <- NULL
+    total_time <- NULL
+    for (l in readLines(fit_mcmc_0$output_files()[j])) {
+      if (regexpr("seconds (Sampling)", l, fixed = TRUE) > 0) {
+        l <- sub("seconds (Sampling)", "", l, fixed = TRUE)
+        l <- trimws(sub("#", "", l, fixed = TRUE))
+        sampling_time <- as.double(l)
+      }
+      if (regexpr("seconds (Warm-up)", l, fixed = TRUE) > 0) {
+        l <- sub("seconds (Warm-up)", "", l, fixed = TRUE)
+        l <- trimws(sub("#  Elapsed Time: ", "", l, fixed = TRUE))
+        warmup_time <- as.double(l)
+      }
+      if (regexpr("seconds (Total)", l, fixed = TRUE) > 0) {
+        l <- sub("seconds (Total)", "", l, fixed = TRUE)
+        l <- trimws(sub("#", "", l, fixed = TRUE))
+        total_time <- as.double(l)
+      }
+    }
+    expect_equal(run_times_0$chains$warmup[j], warmup_time)
+    expect_equal(run_times_0$chains$sampling[j], sampling_time)
+    expect_equal(run_times_0$chains$total[j], total_time)
   }
 })
 

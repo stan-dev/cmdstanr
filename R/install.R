@@ -42,9 +42,13 @@
 #'   installation.
 #' @param timeout Timeout (in seconds) for the CmdStan build stage of the
 #'   installation process.
-#' @param release_url Specifies the URL to a specific Cmdstan release to be
+#' @param version Specifies the Cmdstan release version to be
 #'   installed. By default set to `NULL`, which downloads the latest stable
 #'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases).
+#' @param release_url Specifies the URL to a specific Cmdstan release to be
+#'   installed. By default set to `NULL`, which downloads the latest stable
+#'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases). If
+#'   `version` and `release_url` are set, `version` is used.
 #' @param cpp_options A list specifying any makefile flags/variables to be
 #'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
 #'   will force the use of clang for compilation.
@@ -60,6 +64,7 @@ install_cmdstan <- function(dir = NULL,
                             quiet = FALSE,
                             overwrite = FALSE,
                             timeout = 1200,
+                            version = NULL,
                             release_url = NULL,
                             cpp_options = list(),
                             check_toolchain = TRUE) {
@@ -75,7 +80,12 @@ install_cmdstan <- function(dir = NULL,
     dir <- repair_path(dir)
     checkmate::assert_directory_exists(dir, access = "rwx")    
   }
-
+  if (!is.null(version)) {
+    if (!is.null(release_url)) { 
+      warning("version and release_url are supplied to install_cmdstan()!\nrelease_url will be ignored.")
+    }
+    release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",version, "/cmdstan-", version, ".tar.gz")
+  }
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
@@ -105,7 +115,13 @@ install_cmdstan <- function(dir = NULL,
   }
   tar_downloaded <- download_with_retries(download_url, dest_file)
   if (!tar_downloaded) {
-    stop("GitHub download of Cmdstan failed.", call. = FALSE)
+    if (!is.null(version)) {
+      stop("Download of Cmdstan failed. Please check if the supplied version number is valid.", call. = FALSE)
+    }
+    if (!is.null(release_url)) {
+      stop("Download of Cmdstan failed. Please check if the supplied release URL is valid.", call. = FALSE)
+    }
+    stop("Download of Cmdstan failed. Please try again.", call. = FALSE)
   }
   message("* Download complete")
 
@@ -276,9 +292,14 @@ download_with_retries <- function(download_url,
                                   quiet = TRUE) {
     download_rc <- 1
     while (retries > 0 && download_rc != 0) {
-      download_rc <- utils::download.file(url = download_url,
-                                          destfile = destination_file,
-                                          quiet = quiet)
+      try(
+        suppressWarnings(
+          download_rc <- utils::download.file(url = download_url,
+                                            destfile = destination_file,
+                                            quiet = quiet)
+        ),
+        silent = TRUE                                    
+      )
       if (download_rc != 0) {
         Sys.sleep(pause_sec)
       }

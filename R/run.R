@@ -194,11 +194,6 @@ CmdStanRun <- R6::R6Class(
           sampling = self$procs$proc_section_time("sampling")[self$procs$is_finished()],
           total = self$procs$proc_total_time()[self$procs$is_finished()]
         )
-
-        if (isTRUE(self$args$refresh == 0)) {
-          warning("Separate warmup and sampling times are not available ",
-                  "after running with 'refresh=0'.", call. = FALSE)
-        }
         time <- list(total = self$procs$total_time(), chains = chain_time)
       }
       time
@@ -572,16 +567,13 @@ CmdStanProcs <- R6::R6Class(
       private$proc_state_[[id]] <- new_state
     },
     mark_proc_start = function(id) {
-      private$proc_start_time_[[id]] <- Sys.time()
       private$proc_state_[[id]] <- 1
-      private$proc_section_time_[id, "last_section_start"] <- private$proc_start_time_[[id]]
       private$proc_output_[[id]] <- c("")
       invisible(self)
     },
     mark_proc_stop = function(id) {
       if (private$proc_state_[[id]] == 5) {
         private$proc_state_[[id]] <- 6
-        private$proc_total_time_[[id]] <- as.double((Sys.time() - private$proc_start_time_[[id]]), units = "secs")
       } else {
         private$proc_state_[[id]] <- 7
       }
@@ -674,7 +666,6 @@ CmdStanMCMCProcs <- R6::R6Class(
           if (state < 3 && regexpr("Iteration:", line, perl = TRUE) > 0) {
             state <- 3 # 3 =  warmup
             next_state <- 3
-            private$proc_section_time_[id, "last_section_start"] <- Sys.time()
           }
           if (state < 3 && regexpr("Elapsed Time:", line, perl = TRUE) > 0) {
             state <- 5 # 5 = end of samp+ling
@@ -683,16 +674,19 @@ CmdStanMCMCProcs <- R6::R6Class(
           if (private$proc_state_[[id]] == 3 &&
               regexpr("(Sampling)", line, perl = TRUE) > 0) {
             next_state <- 4 # 4 = sampling
-            private$proc_section_time_[id, "warmup"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
-            private$proc_section_time_[id, "last_section_start"] <- Sys.time()
           }
           if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
-            if (state == 3) { #warmup only run
-              private$proc_section_time_[id, "warmup"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
-            } else if (state == 4) { # sampling
-              private$proc_section_time_[id, "sampling"] <- as.double((Sys.time() - last_section_start_time), units = "secs")
-            }
             next_state <- 5 # writing csv and finishing
+          }
+          if (regexpr("seconds (Total)", line, fixed = TRUE) > 0) {
+            private$proc_total_time_[[id]] <- as.double(trimws(sub("seconds (Total)", "", line, fixed = TRUE)))
+          }
+          if (regexpr("seconds (Sampling)", line, fixed = TRUE) > 0) {
+            
+            private$proc_section_time_[id, "sampling"] <- as.double(trimws(sub("seconds (Sampling)", "", line, fixed = TRUE)))
+          }
+          if (regexpr("seconds (Warm-up)", line, fixed = TRUE) > 0) {
+            private$proc_section_time_[id, "warmup"] <- as.double(trimws(sub("Elapsed Time: ", "", sub("seconds (Warm-up)", "", line, fixed = TRUE), fixed = TRUE)))
           }
           if (state > 1 && state < 5) {
             if (state == 2) {
