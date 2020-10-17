@@ -267,3 +267,106 @@ test_that("no output with refresh = 0", {
   output <- utils::capture.output(tmp <- mod$sample(data = data_list, refresh = 0, chains = 1))
   expect_equal(length(output), 3)
 })
+
+test_that("sig_figs works with all methods", {
+  skip_on_cran()
+  m <- "parameters {
+    real y;
+  }
+  model {
+    y ~ normal(0,1);
+  }
+  generated quantities {
+    real p2 = 0.12;
+    real p5 = 0.12345;
+    real p9 = 0.123456789;
+  }"
+  mod <- cmdstan_model(write_stan_file(m))
+  utils::capture.output(
+    sample <- mod$sample(sig_figs = 2, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12, 0.12)
+  )
+  utils::capture.output(
+    sample <- mod$sample(sig_figs = 5, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12345, 0.12346)
+  )
+  utils::capture.output(
+    sample <- mod$sample(sig_figs = 10, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12345, 0.123456789)
+  )
+  utils::capture.output(
+    variational <- mod$variational(sig_figs = 2, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12, 0.12)
+  )
+  utils::capture.output(
+    variational <- mod$variational(sig_figs = 5, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12345, 0.12346)
+  )
+  utils::capture.output(
+    variational <- mod$variational(sig_figs = 10, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12345, 0.123456789)
+  )
+  utils::capture.output(
+    gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 2)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12, 0.12)
+  )
+  utils::capture.output(
+    gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 5)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12345, 0.12346)
+  )
+  utils::capture.output(
+    gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 10)
+  )
+  expect_equal(
+    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    c(0.12, 0.12345, 0.123456789)
+  )
+  utils::capture.output(
+    opt <- mod$optimize(sig_figs = 2, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(opt$mle()[2:4]),
+    c(0.12, 0.12, 0.12)
+  )
+  utils::capture.output(
+    opt <- mod$optimize(sig_figs = 5, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(opt$mle()[2:4]),
+    c(0.12, 0.12345, 0.12346)
+  )
+  utils::capture.output(
+    opt <- mod$optimize(sig_figs = 10, refresh = 0)
+  )
+  expect_equal(
+    as.numeric(opt$mle()[2:4]),
+    c(0.12, 0.12345, 0.123456789)
+  )
+})
+
+
+
