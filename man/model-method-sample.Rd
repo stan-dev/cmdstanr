@@ -37,7 +37,8 @@ some data.
   window = NULL,
   fixed_param = FALSE,
   validate_csv = TRUE,
-  show_messages = TRUE
+  show_messages = TRUE,
+  chain_id = seq_len(chains)
 )
 }
 }
