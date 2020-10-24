@@ -491,7 +491,10 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   }
 }
 
-check_rtools35_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
+check_rtools35_windows_toolchain <- function(fix = FALSE,
+                                             quiet = FALSE,
+                                             paths = NULL) {
+  if (is.null(paths)) paths <- c( file.path("C:/", "Rtools"), file.path("C:/", "Rtools35"))
   mingw32_make_path <- dirname(Sys.which("mingw32-make"))
   gpp_path <- dirname(Sys.which("g++"))
   # If mingw32-make and g++ are not found, we check typical RTools 3.5 folders.
@@ -499,12 +502,8 @@ check_rtools35_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
     rtools_path <- Sys.getenv("RTOOLS35_HOME")
     if (!nzchar(rtools_path)) {
-      typical_paths <- c(
-        file.path("C:/", "Rtools"),
-        file.path("C:/", "Rtools35")
-      )
       found_rtools <- FALSE
-      for (p in typical_paths) {
+      for (p in paths) {
         if (dir.exists(p)) {
           if (found_rtools) {
             stop(
