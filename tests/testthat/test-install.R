@@ -128,18 +128,20 @@ test_that("toolchain checks on Unix work", {
   path_backup <- Sys.getenv("PATH")
   Sys.setenv("PATH" = "")
   if (os_is_macos()) {
-    err_msg <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain()."
+    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain()."
   } else {
-    err_msg <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain()."
+    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run check_cmdstan_toolchain()."
   }
   expect_error(
     check_unix_cpp_compiler(),
-    err_msg,
+    err_msg_cpp,
     fixed = TRUE
   )
   expect_error(
     check_unix_make(),
-    "The 'make' tool was not found. Please install 'make', restart R, and then run check_cmdstan_toolchain().",
+    err_msg_make,
     fixed = TRUE
   )
   Sys.setenv("PATH" = path_backup)
