@@ -426,16 +426,18 @@ build_status_ok <- function(process_log, quiet = FALSE) {
   TRUE
 }
 
-install_mingw32_make <- function() {
+install_mingw32_make <- function(quiet = FALSE) {
+  if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
   processx::run(
     "pacman",
     args = c("-Syu", "mingw-w64-x86_64-make","--noconfirm"),
     wd = file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin"),
     error_on_status = TRUE
   )
-  invisible(NULL)
-}
-
+  write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
+  Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
+	invisible(NULL)
+}     
 
 check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   rtools_path <- Sys.getenv("RTOOLS40_HOME")
@@ -468,12 +470,9 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
         call. = FALSE
       )
     } else {
-      if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
-      install_mingw32_make()
-      write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-      Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
-	  check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
-	  return(invisible(NULL))
+      install_mingw32_make(quiet = quiet)
+      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
+	    return(invisible(NULL))
     }
   }
   # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
@@ -485,12 +484,9 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
         call. = FALSE
       )
     } else {
-      if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
-      install_mingw32_make()
-      write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-      Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
-	  check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
-	  return(invisible(NULL))
+      install_mingw32_make(quiet = quiet)
+      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
+      return(invisible(NULL))
     }
   }
 }
