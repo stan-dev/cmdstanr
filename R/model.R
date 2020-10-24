@@ -674,7 +674,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'     window = NULL,
 #'     fixed_param = FALSE,
 #'     validate_csv = TRUE,
-#'     show_messages = TRUE
+#'     show_messages = TRUE,
+#'     chain_id = seq_len(chains)
 #'   )
 #'   ```
 #'
