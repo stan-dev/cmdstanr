@@ -519,8 +519,8 @@ check_rtools35_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
             )
           } else {
             rtools_path <- p
-			found_rtools <- TRUE
-		  }
+            found_rtools <- TRUE
+          }
         }
       }
     }
@@ -537,12 +537,12 @@ check_rtools35_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       }
       if (!nzchar(Sys.getenv("RTOOLS35_HOME"))) {
         write(paste0('RTOOLS35_HOME=', rtools_path), file = "~/.Renviron", append = TRUE)
-		Sys.setenv(RTOOLS35_HOME = rtools_path)
+		    Sys.setenv(RTOOLS35_HOME = rtools_path)
       }
       write('PATH="${RTOOLS35_HOME}\\bin;${RTOOLS35_HOME}\\mingw_64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-	  Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS35_HOME"), "\\mingw_64\\bin;", Sys.getenv("PATH")))
+	    Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS35_HOME"), "\\mingw_64\\bin;", Sys.getenv("PATH")))
       check_rtools35_windows_toolchain(fix = FALSE, quiet = quiet)
-	  return(invisible(NULL))
+	    return(invisible(NULL))
     } else {
       stop(
         "\nA toolchain was not found. Please install RTools 3.5 and run",
@@ -555,7 +555,7 @@ check_rtools35_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   }
 }
 
-check_unix_toolchain <- function(fix = FALSE, quiet = FALSE) {
+check_unix_make <- function() {
   # On Unix systems we check for make and a suitable compiler
   make_path <- dirname(Sys.which("make"))
   if (!nzchar(make_path)) {
@@ -566,6 +566,9 @@ check_unix_toolchain <- function(fix = FALSE, quiet = FALSE) {
     }
     
   }
+}
+
+check_unix_cpp_compiler <- function() {
   gpp_path <- dirname(Sys.which("g++"))
   clang_path <- dirname(Sys.which("clang++"))
   if (!nzchar(gpp_path) && !nzchar(clang_path)) {
@@ -594,7 +597,8 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
       check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
     }
   } else {
-    check_unix_toolchain(fix = fix, quiet = quiet)
+    check_unix_make()
+    check_unix_cpp_compiler()
   }
   if (!quiet) {
     message("The CmdStan toolchain is setup properly!")

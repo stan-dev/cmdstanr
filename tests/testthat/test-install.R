@@ -122,3 +122,44 @@ test_that("install_cmdstan() works with version and release_url", {
   )
   expect_true(dir.exists(file.path(dir, "cmdstan-2.23.0")))
 })
+
+test_that("toolchain checks on Unix work", {
+  skip_if(os_is_windows())
+  path_backup <- Sys.getenv("PATH")
+  Sys.setenv("PATH" = "")
+  expect_error(
+    check_unix_cpp_compiler(),
+    "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain().",
+    fixed = TRUE
+  )
+  expect_error(
+    check_unix_make(),
+    "The 'make' tool was not found. Please install 'make', restart R, and then run check_cmdstan_toolchain().",
+    fixed = TRUE
+  )
+  Sys.setenv("PATH" = path_backup)
+})
+
+test_that("toolchain checks on Windows with RTools 3.5 work", {
+  skip_if_not(os_is_windows())
+  path_backup <- Sys.getenv("PATH")
+  Sys.setenv("PATH" = "")
+  expect_error(
+    check_rtools35_windows_toolchain(),
+    "\nA toolchain was not found. Please install RTools 3.5 and run",
+    fixed = TRUE
+  )
+  Sys.setenv("PATH" = path_backup)
+})
+
+test_that("toolchain checks on Windows with RTools 4.0 work", {
+  skip_if_not(os_is_windows())
+  path_backup <- Sys.getenv("PATH")
+  Sys.setenv("PATH" = "")
+  expect_error(
+    check_rtools40_windows_toolchain(),
+    "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
+    fixed = TRUE
+  )
+  Sys.setenv("PATH" = path_backup)
+})
