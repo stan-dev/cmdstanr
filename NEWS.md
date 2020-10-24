@@ -20,6 +20,8 @@ in fitting methods. (#281, #294)
 * `install_cmdstan()` gains argument `version` for specifying which version of 
 CmdStan to install. (#300, #308)
 
+* new function `check_cmdstan_toolchain()` that checks if the appropriate toolchains are 
+available
 
 # cmdstanr 0.1.3
 
