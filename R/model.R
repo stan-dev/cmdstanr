@@ -640,6 +640,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'     output_dir = NULL,
 #'     chains = 4,
 #'     parallel_chains = getOption("mc.cores", 1),
+#'     chain_ids = seq_len(chains),
 #'     threads_per_chain = NULL,
 #'     iter_warmup = NULL,
 #'     iter_sampling = NULL,
@@ -657,8 +658,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'     window = NULL,
 #'     fixed_param = FALSE,
 #'     validate_csv = TRUE,
-#'     show_messages = TRUE,
-#'     chain_id = seq_len(chains)
+#'     show_messages = TRUE
 #'   )
 #'   ```
 #'
@@ -677,6 +677,10 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'   is to look for the option `"mc.cores"`, which can be set for an entire \R
 #'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
 #'   been set then the default is `1`.
+#'
+#'   * `chain_ids`: (vector) A vector of chain IDs. Must contain `chains` unique
+#'   positive integers. If not set, the default chain IDs are used (integers
+#'   starting from `1`).
 #'
 #'   * `threads_per_chain`: (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
@@ -762,9 +766,6 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'   quantities block. If the parameters block is empty then using
 #'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
 #'   `parallel_chains` arguments will be set to `1`.
-#'   * `chain_id`: (vector) A vector of chain IDs. Must contain `chains` unique
-#'   positive integers. If not set, the default chain IDs are used (integers
-#'   starting from `1`).
 #'
 #' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
 #'
@@ -781,6 +782,7 @@ sample_method <- function(data = NULL,
                           output_dir = NULL,
                           chains = 4,
                           parallel_chains = getOption("mc.cores", 1),
+                          chain_ids = seq_len(chains),
                           threads_per_chain = NULL,
                           iter_warmup = NULL,
                           iter_sampling = NULL,
@@ -799,7 +801,6 @@ sample_method <- function(data = NULL,
                           fixed_param = FALSE,
                           validate_csv = TRUE,
                           show_messages = TRUE,
-                          chain_id = seq_len(chains),
                           # deprecated
                           cores = NULL,
                           num_cores = NULL,
@@ -853,7 +854,7 @@ sample_method <- function(data = NULL,
   checkmate::assert_integerish(chains, lower = 1, len = 1)
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
-  checkmate::assert_integerish(chain_id, lower = 1, len = chains, unique = TRUE, null.ok = FALSE)
+  checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads_per_chain)) {
       warning("'threads_per_chain' is set but the model was not compiled with ",
@@ -890,7 +891,7 @@ sample_method <- function(data = NULL,
     method_args = sample_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    proc_ids = chain_id,
+    proc_ids = chain_ids,
     data_file = process_data(data),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
