@@ -127,9 +127,14 @@ test_that("toolchain checks on Unix work", {
   skip_if(os_is_windows())
   path_backup <- Sys.getenv("PATH")
   Sys.setenv("PATH" = "")
+  if (os_is_macos()) {
+    err_msg <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain()."
+  } else {
+    err_msg <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain()."
+  }
   expect_error(
     check_unix_cpp_compiler(),
-    "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain().",
+    err_msg,
     fixed = TRUE
   )
   expect_error(
