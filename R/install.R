@@ -52,9 +52,9 @@
 #' @param cpp_options A list specifying any makefile flags/variables to be
 #'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
 #'   will force the use of clang for compilation.
-#' @param check_toolchain A list specifying any makefile flags/variables to be
-#'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
-#'   will force the use of clang for compilation.
+#' @param check_toolchain Should `install_cmdstan()` check that the
+#'   required toolchain is installed and properly configured.
+#'   The default is `TRUE`.
 #'
 #' @examples
 #' # install_cmdstan(cores = 4)

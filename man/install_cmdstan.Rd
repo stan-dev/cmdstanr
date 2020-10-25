@@ -46,7 +46,7 @@ system processes be suppressed when building the CmdStan binaries?
 The default is \code{FALSE}.
 For \code{check_cmdstan_toolchain()}, should the function supress
 printing informational messages? The default is \code{FALSE}.
-If \code{TRUE} \code{check_cmdstan_toolchain()} only output errors.}
+If \code{TRUE} \code{check_cmdstan_toolchain()} only outputs errors.}
 
 \item{overwrite}{When an existing installation is found in \code{dir}, should
 CmdStan still be downloaded and reinstalled? The default is \code{FALSE}, in
@@ -69,9 +69,9 @@ release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}. If
 written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
 will force the use of clang for compilation.}
 
-\item{check_toolchain}{A list specifying any makefile flags/variables to be
-written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
-will force the use of clang for compilation.}
+\item{check_toolchain}{Should \code{install_cmdstan()} check that the
+required toolchain is installed and properly configured.
+The default is \code{TRUE}.}
 
 \item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
 appended to the end of the existing \code{make/local} file? The default is \code{TRUE}.
