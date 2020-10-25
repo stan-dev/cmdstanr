@@ -9,7 +9,7 @@
 #'       the appendices in the CmdStan manual for details on using these formats.
 #'   * `seed`: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 #'   * `refresh`: (non-negative integer) The number of iterations between
-#'   printed screen updates.
+#'   printed screen updates. If `refresh = 0`, only error messages will be printed.
 #'   * `init`: (multiple options) The initialization method for the parameters block:
 #'     - A real number `x>0` initializes randomly between `[-x,x]` (on the
 #'       *unconstrained* parameter space);

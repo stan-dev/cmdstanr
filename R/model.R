@@ -996,7 +996,7 @@ optimize_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_messages = (is.null(refresh) || refresh != 0))
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
@@ -1116,7 +1116,7 @@ variational_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_messages = (is.null(refresh) || refresh != 0))
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanVB$new(runset)
