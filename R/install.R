@@ -35,7 +35,7 @@
 #'   The default is `FALSE`.
 #'   For `check_cmdstan_toolchain()`, should the function supress 
 #'   printing informational messages? The default is `FALSE`.
-#'   If `TRUE` `check_cmdstan_toolchain()` only output errors.
+#'   If `TRUE` `check_cmdstan_toolchain()` only outputs errors.
 #' @param overwrite When an existing installation is found in `dir`, should
 #'   CmdStan still be downloaded and reinstalled? The default is `FALSE`, in
 #'   which case an informative error is thrown instead of overwriting the user's
