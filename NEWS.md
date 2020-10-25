@@ -15,6 +15,8 @@ in fitting methods. (#281, #294)
 
 * Fix reporting of time after using `fixed_param` method. (#303, #307)
 
+* With `refresh = 0`, no output is printed wirht `$optimize()` and `$variational()`
+
 ### New features
 
 * `install_cmdstan()` gains argument `version` for specifying which version of 
