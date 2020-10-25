@@ -248,3 +248,22 @@ test_that("CmdStanArgs erorrs if idx is out of proc_ids range", {
     "Index \\(5\\) exceeds number of CmdStan processes \\(4\\)."
   )
 })
+
+test_that("no output with refresh = 0", {
+  skip_on_cran()
+  mod <- testing_model("bernoulli")
+  data_list <- testing_data("bernoulli")
+  output <- utils::capture.output(tmp <- mod$variational(data = data_list))
+  expect_gt(length(output), 1)
+  output <- utils::capture.output(tmp <- mod$optimize(data = data_list))
+  expect_gt(length(output), 1)
+  output <- utils::capture.output(tmp <- mod$sample(data = data_list, chains = 1))
+  expect_gt(length(output), 1)
+
+  output <- utils::capture.output(tmp <- mod$variational(data = data_list, refresh = 0))
+  expect_equal(length(output), 1)
+  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, refresh = 0))
+  expect_equal(length(output), 1)
+  output <- utils::capture.output(tmp <- mod$sample(data = data_list, refresh = 0, chains = 1))
+  expect_equal(length(output), 3)
+})

@@ -589,9 +589,7 @@ CmdStanProcs <- R6::R6Class(
       if (length(err_out)) {
         for (err_line in err_out) {
           private$proc_output_[[id]] <- c(private$proc_output_[[id]], err_line)
-          if (private$show_messages_) {
-            message("Chain ", id, " ", err_line)
-          }
+          message("Chain ", id, " ", err_line)
         }
       }
     },
@@ -601,7 +599,9 @@ CmdStanProcs <- R6::R6Class(
       }
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
-        cat(line, collapse = "\n")
+        if (private$show_messages_) {        
+          cat(line, collapse = "\n")
+        }
       }
       invisible(self)
     },

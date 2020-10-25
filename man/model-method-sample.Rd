@@ -57,7 +57,7 @@ the appendices in the CmdStan manual for details on using these formats.
 }
 \item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 \item \code{refresh}: (non-negative integer) The number of iterations between
-printed screen updates.
+printed screen updates. If \code{refresh = 0}, only error messages will be printed.
 \item \code{init}: (multiple options) The initialization method for the parameters block:
 \itemize{
 \item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
