@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.24.1/cmdstan-2.24.1.tar.gz")
+          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           remotes::install_cran("gridExtra")
@@ -94,7 +94,7 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.24.1/cmdstan-2.24.1.tar.gz")
+          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           remotes::install_cran("gridExtra")
