@@ -415,7 +415,7 @@ CmdStanProcs <- R6::R6Class(
     #   Currently for non-sampling this must be set to 1.
     # @param threads_per_proc The number of threads to use per process
     #   to run parallel sections of model.
-    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL, show_messages = TRUE) {
+    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL, show_stderr_messages = TRUE, show_stdout_messages = TRUE ) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE,
                                    .var.name = "parallel_procs", null.ok = TRUE)
@@ -436,7 +436,8 @@ CmdStanProcs <- R6::R6Class(
       private$proc_state_ = zeros
       private$proc_start_time_ = zeros
       private$proc_total_time_ = zeros
-      private$show_messages_ = show_messages
+      private$show_stderr_messages_ = show_stderr_messages
+      private$show_stdout_messages_ = show_stdout_messages
       invisible(self)
     },
     num_procs = function() {
@@ -589,7 +590,9 @@ CmdStanProcs <- R6::R6Class(
       if (length(err_out)) {
         for (err_line in err_out) {
           private$proc_output_[[id]] <- c(private$proc_output_[[id]], err_line)
-          message("Chain ", id, " ", err_line)
+          if (private$show_stderr_messages_) {
+            message("Chain ", id, " ", err_line)
+          }
         }
       }
     },
@@ -599,7 +602,7 @@ CmdStanProcs <- R6::R6Class(
       }
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
-        if (private$show_messages_) {        
+        if (private$show_stdout_messages_) {        
           cat(line, collapse = "\n")
         }
       }
@@ -629,7 +632,8 @@ CmdStanProcs <- R6::R6Class(
     proc_output_ = list(),
     proc_error_ouput_ = list(),
     total_time_ = numeric(),
-    show_messages_ = TRUE
+    show_stderr_messages_ = TRUE,
+    show_stdout_messages_ = TRUE
   )
 )
 
