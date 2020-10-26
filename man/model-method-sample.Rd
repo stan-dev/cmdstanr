@@ -20,6 +20,7 @@ some data.
   output_dir = NULL,
   chains = 4,
   parallel_chains = getOption("mc.cores", 1),
+  chain_ids = seq_len(chains),
   threads_per_chain = NULL,
   iter_warmup = NULL,
   iter_sampling = NULL,
@@ -119,6 +120,9 @@ to run in parallel. If \code{parallel_chains} is not specified then the default
 is to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
 been set then the default is \code{1}.
+\item \code{chain_ids}: (vector) A vector of chain IDs. Must contain \code{chains} unique
+positive integers. If not set, the default chain IDs are used (integers
+starting from \code{1}).
 \item \code{threads_per_chain}: (positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of
 threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
