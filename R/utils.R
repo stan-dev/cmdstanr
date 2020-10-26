@@ -7,6 +7,13 @@ os_is_windows <- function() {
   isTRUE(.Platform$OS.type == "windows")
 }
 
+#' Check for macOS
+#' @return `TRUE` if OS is macOS, `FALSE` if not.
+#' @noRd
+os_is_macos <- function() {
+  isTRUE(Sys.info()[["sysname"]] == "Darwin")
+}
+
 #' Famous helper for switching on `NULL` or zero length
 #' @noRd
 #' @param x,y Any \R objects.
