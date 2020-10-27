@@ -904,7 +904,7 @@ sample_method <- function(data = NULL,
     num_procs = chains,
     parallel_procs = parallel_chains,
     threads_per_proc = threads_per_chain,
-    show_messages = show_messages
+    show_stderr_messages = show_messages
   )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
@@ -994,7 +994,7 @@ optimize_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_stdout_messages = (is.null(refresh) || refresh != 0))
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
@@ -1114,7 +1114,7 @@ variational_method <- function(data = NULL,
     output_dir = output_dir
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_stdout_messages = (is.null(refresh) || refresh != 0))
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanVB$new(runset)
