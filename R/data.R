@@ -158,7 +158,7 @@ process_fitted_params <- function(fitted_params) {
         variables <- posterior::variables(draws)
         chains <- posterior::chain_ids(draws)
         iterations <- posterior::niterations(draws)
-        paths <- generate_file_names(basename = "fittedParams", ids = chains)
+        paths <- generate_file_names(basename = "fittedParams", ids = chains, pid = TRUE)
         paths <- file.path(tempdir(), paths)
         chain <- 1
         for (path in paths) {
