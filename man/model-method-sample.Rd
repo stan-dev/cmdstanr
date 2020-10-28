@@ -37,6 +37,7 @@ some data.
   term_buffer = NULL,
   window = NULL,
   fixed_param = FALSE,
+  sig_figs = NULL,
   validate_csv = TRUE,
   show_messages = TRUE
 )
@@ -103,6 +104,9 @@ files are removed when the fitted model object is garbage collected.
 corresponding the defaults used by \verb{$save_output_files()} (and similar
 methods like \verb{$save_latent_dynamics_files()}).
 }
+\item \code{sig_figs}: (positive integer) The number of significant figures used
+for the output values. By default, CmdStan represent the output values with
+6 significant figures. The upper limit for \code{sig_figs} is 18.
 }
 }
 

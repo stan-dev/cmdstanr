@@ -15,6 +15,7 @@ based on previously fitted parameters.
   data = NULL,
   seed = NULL,
   output_dir = NULL,
+  sig_figs = NULL,
   parallel_chains = getOption("mc.cores", 1),
   threads_per_chain = NULL
 )
