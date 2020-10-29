@@ -31,7 +31,7 @@ toolchains are available. (#289)
 * `$sample()` method for CmdStanModel objects gains argument `chain_ids` for
 specifying custom chain IDs. (#319)
 
-* Added support for the `sig_figs` CmdStan argument. (#327)
+* Added support for the `sig_figs` argument in CmdStan versions 2.25 and above. (#327)
 
 # cmdstanr 0.1.3
 
