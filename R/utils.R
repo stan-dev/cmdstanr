@@ -173,8 +173,7 @@ generate_file_names <-
            ext = ".csv",
            ids = NULL,
            timestamp = TRUE,
-           random = TRUE,
-           pid = FALSE) {
+           random = TRUE) {
     new_names <- basename
     if (timestamp) {
       stamp <- format(Sys.time(), "%Y%m%d%H%M")
@@ -183,12 +182,9 @@ generate_file_names <-
     if (!is.null(ids)) {
       new_names <- paste0(new_names, "-", ids)
     }
-    if (pid) {
-      new_names <- paste0(new_names, "-", as.hexmode(Sys.getpid()))
-    }
     if (random) {
-      tf <- tempfile()
-      rand <- substr(tf, nchar(tf) - 5, nchar(tf))
+      rand_num_pid <- as.integer(runif(1, min = 0, max = 1E7)) + Sys.getpid()
+      rand <- format(as.hexmode(rand_num_pid) , width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
 
