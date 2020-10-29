@@ -611,13 +611,24 @@ CmdStanProcs <- R6::R6Class(
       }
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
-        if (regexpr("Optimization terminated with error", line, perl = TRUE) > 0) {
-          self$set_proc_state(id, new_state = 3)
-        }
-        if (private$proc_state_[[id]] == 3) {
-          message(line)
-        } else if (private$show_stdout_messages_) {        
-          cat(line, collapse = "\n")
+        if (nzchar(line)) {
+          if (regexpr("Optimization terminated with error", line, perl = TRUE) > 0) {
+            self$set_proc_state(id, new_state = 3.5)
+          }
+          if (self$proc_state(id) == 2 && regexpr("refresh = ", line, perl = TRUE) > 0) {
+            self$set_proc_state(id, new_state = 2.5)
+          }
+          if (private$proc_state_[[id]] == 3.5) {
+            message(line)
+          } else if (private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) {        
+            cat(line, collapse = "\n")
+          }
+        } else {
+          # after the metadata is printed and we found a blank line
+          # this represents the start of fitting
+          if (self$proc_state(id) == 2.5) {
+              self$set_proc_state(id, new_state = 3)
+          } 
         }
       }
       invisible(self)
@@ -806,6 +817,8 @@ CmdStanGQProcs <- R6::R6Class(
             cat("Chain", id, line, "\n")
           }
         } else {
+          # after the metadata is printed and we found a blank line
+          # this represents the start of fitting
           if (self$proc_state(id) == 1.5) {
               self$set_proc_state(id, new_state = 2)
           } 
