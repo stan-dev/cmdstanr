@@ -392,8 +392,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
   }
   successful_fit = FALSE
   if (self$method() == "optimize") {
-    if (procs$get_proc(id)$get_exit_status() == 0 ||
-        procs$get_proc(id)$get_exit_status() == 70) {
+    if (procs$proc_state(id = id) > 3) {
       successful_fit = TRUE
     }
   } else if (procs$get_proc(id)$get_exit_status() == 0) {
@@ -615,6 +614,9 @@ CmdStanProcs <- R6::R6Class(
           if (regexpr("Optimization terminated with error", line, perl = TRUE) > 0) {
             self$set_proc_state(id, new_state = 3.5)
           }
+          if (regexpr("Optimization terminated normally", line, perl = TRUE) > 0) {
+            self$set_proc_state(id, new_state = 4)
+          }
           if (self$proc_state(id) == 2 && regexpr("refresh = ", line, perl = TRUE) > 0) {
             self$set_proc_state(id, new_state = 2.5)
           }
@@ -689,13 +691,13 @@ CmdStanMCMCProcs <- R6::R6Class(
           # (Note: state 2 is only used because rejection in cmdstan is printed
           # to stdout not stderr and we want to avoid printing the intial chain metadata)
           next_state <- state
-          if (state < 3 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
-            state <- 2
-            next_state <- 2
-          }
           if (state < 3 && regexpr("refresh =", line, perl = TRUE) > 0) {
             state <- 1.5
             next_state <- 1.5
+          }
+          if (state <= 3 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
+            state <- 2
+            next_state <- 2
           }
           if (state < 3 && regexpr("Iteration:", line, perl = TRUE) > 0) {
             state <- 3 # 3 =  warmup
@@ -711,7 +713,6 @@ CmdStanMCMCProcs <- R6::R6Class(
           }
           if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
             next_state <- 5 # writing csv and finishing
-            state <- 5
           }
           if (regexpr("seconds (Total)", line, fixed = TRUE) > 0) {
             private$proc_total_time_[[id]] <- as.double(trimws(sub("seconds (Total)", "", line, fixed = TRUE)))
