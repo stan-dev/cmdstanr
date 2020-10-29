@@ -35,7 +35,8 @@ matrix for the approximation.
   adapt_iter = NULL,
   tol_rel_obj = NULL,
   eval_elbo = NULL,
-  output_samples = NULL
+  output_samples = NULL,
+  sig_figs = NULL
 )
 }
 }
@@ -100,6 +101,11 @@ files are removed when the fitted model object is garbage collected.
 corresponding the defaults used by \verb{$save_output_files()} (and similar
 methods like \verb{$save_latent_dynamics_files()}).
 }
+\item \code{sig_figs}: (positive integer) The number of significant figures used
+for the output values. By default, CmdStan represent the output values with
+6 significant figures. The upper limit for \code{sig_figs} is 18. Increasing
+this value can cause an increased usage of disk space due to larger
+output CSV files.
 }
 }
 
