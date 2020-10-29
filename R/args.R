@@ -89,8 +89,7 @@ CmdStanArgs <- R6::R6Class(
         ext = ".csv",
         ids = self$proc_ids,
         timestamp = TRUE,
-        random = TRUE,
-        pid = TRUE
+        random = TRUE
       )
     },
     new_files = function(type = c("output", "diagnostic")) {
