@@ -18,6 +18,8 @@ in fitting methods. (#281, #294)
 * With `refresh = 0`, no output other than error messages is printed with
 `$optimize()` and `$variational()`. (#324)
 
+* Fix issue where names of generated files could clash. (#326, #328)
+
 ### New features
 
 * `install_cmdstan()` gains argument `version` for specifying which version of
