@@ -390,7 +390,16 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     }
     procs$set_active_procs(procs$num_alive())
   }
-  if (procs$get_proc(id)$get_exit_status() == 0) {
+  successful_fit = FALSE
+  if (self$method() == "optimize") {
+    if (procs$get_proc(id)$get_exit_status() == 0 ||
+        procs$get_proc(id)$get_exit_status() == 70) {
+      successful_fit = TRUE
+    }
+  } else if (procs$get_proc(id)$get_exit_status() == 0) {
+    successful_fit = TRUE
+  }
+  if (successful_fit) {
     procs$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
   } else {
     procs$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
@@ -602,7 +611,12 @@ CmdStanProcs <- R6::R6Class(
       }
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
-        if (private$show_stdout_messages_) {        
+        if (regexpr("Optimization terminated with error", line, perl = TRUE) > 0) {
+          self$set_proc_state(id, new_state = 3)
+        }
+        if (private$proc_state_[[id]] == 3) {
+          message(line)
+        } else if (private$show_stdout_messages_) {        
           cat(line, collapse = "\n")
         }
       }
@@ -787,10 +801,14 @@ CmdStanGQProcs <- R6::R6Class(
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
           if (self$proc_state(id) == 1 && regexpr("refresh = ", line, perl = TRUE) > 0) {
-            self$set_proc_state(id, new_state = 2)
+            self$set_proc_state(id, new_state = 1.5)
           } else if (self$proc_state(id) >= 2) {
             cat("Chain", id, line, "\n")
           }
+        } else {
+          if (self$proc_state(id) == 1.5) {
+              self$set_proc_state(id, new_state = 2)
+          } 
         }
       }
       invisible(self)
