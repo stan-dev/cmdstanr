@@ -675,6 +675,7 @@ CmdStanMCMCProcs <- R6::R6Class(
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
+          ignore_line <- FALSE
           last_section_start_time <- private$proc_section_time_[id, "last_section_start"]
           state <- private$proc_state_[[id]]
           # State machine for reading stdout.
@@ -692,6 +693,10 @@ CmdStanMCMCProcs <- R6::R6Class(
             state <- 2
             next_state <- 2
           }
+          if (state < 3 && regexpr("refresh =", line, perl = TRUE) > 0) {
+            state <- 1.5
+            next_state <- 1.5
+          }
           if (state < 3 && regexpr("Iteration:", line, perl = TRUE) > 0) {
             state <- 3 # 3 =  warmup
             next_state <- 3
@@ -706,18 +711,29 @@ CmdStanMCMCProcs <- R6::R6Class(
           }
           if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
             next_state <- 5 # writing csv and finishing
+            state <- 5
           }
           if (regexpr("seconds (Total)", line, fixed = TRUE) > 0) {
             private$proc_total_time_[[id]] <- as.double(trimws(sub("seconds (Total)", "", line, fixed = TRUE)))
+            next_state <- 5
+            state <- 5
           }
           if (regexpr("seconds (Sampling)", line, fixed = TRUE) > 0) {
-            
             private$proc_section_time_[id, "sampling"] <- as.double(trimws(sub("seconds (Sampling)", "", line, fixed = TRUE)))
+            next_state <- 5
+            state <- 5
           }
           if (regexpr("seconds (Warm-up)", line, fixed = TRUE) > 0) {
             private$proc_section_time_[id, "warmup"] <- as.double(trimws(sub("Elapsed Time: ", "", sub("seconds (Warm-up)", "", line, fixed = TRUE), fixed = TRUE)))
+            next_state <- 5
+            state <- 5
           }
-          if (state > 1 && state < 5) {
+          if (regexpr("Gradient evaluation took",line, fixed = TRUE) > 0
+              || regexpr("leapfrog steps per transition would take",line, fixed = TRUE) > 0
+              || regexpr("Adjust your expectations accordingly!",line, fixed = TRUE) > 0) {
+            ignore_line <- TRUE
+          }
+          if (state > 1.5 && state < 5 && !ignore_line) {
             if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
@@ -732,6 +748,10 @@ CmdStanMCMCProcs <- R6::R6Class(
             message("Chain ", id, " ", line)
           }
           private$proc_state_[[id]] <- next_state
+        } else {
+          if (private$proc_state_[[id]] == 1.5) {
+            private$proc_state_[[id]] <- 3
+          }
         }
       }
       invisible(self)
