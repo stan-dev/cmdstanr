@@ -121,6 +121,7 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url are supplied to install_cmdstan()"
   )
   expect_true(dir.exists(file.path(dir, "cmdstan-2.23.0")))
+  set_cmdstan_path(cmdstan_default_path())
 })
 
 test_that("toolchain checks on Unix work", {

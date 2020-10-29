@@ -182,10 +182,9 @@ generate_file_names <-
     if (!is.null(ids)) {
       new_names <- paste0(new_names, "-", ids)
     }
-
     if (random) {
-      tf <- tempfile()
-      rand <- substr(tf, nchar(tf) - 5, nchar(tf))
+      rand_num_pid <- as.integer(runif(1, min = 0, max = 1E7)) + Sys.getpid()
+      rand <- format(as.hexmode(rand_num_pid) , width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
 

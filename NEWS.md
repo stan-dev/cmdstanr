@@ -18,6 +18,8 @@ in fitting methods. (#281, #294)
 * With `refresh = 0`, no output other than error messages is printed with
 `$optimize()` and `$variational()`. (#324)
 
+* Fix issue where names of generated files could clash. (#326, #328)
+
 ### New features
 
 * `install_cmdstan()` gains argument `version` for specifying which version of
@@ -29,6 +31,7 @@ toolchains are available. (#289)
 * `$sample()` method for CmdStanModel objects gains argument `chain_ids` for
 specifying custom chain IDs. (#319)
 
+* Added support for the `sig_figs` argument in CmdStan versions 2.25 and above. (#327)
 
 # cmdstanr 0.1.3
 
