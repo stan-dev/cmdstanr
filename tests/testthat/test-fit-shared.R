@@ -251,8 +251,8 @@ test_that("CmdStanArgs erorrs if idx is out of proc_ids range", {
 
 test_that("no output with refresh = 0", {
   skip_on_cran()
-  mod <- testing_model("bernoulli")
-  data_list <- testing_data("bernoulli")
+  mod <- testing_model("logistic")
+  data_list <- testing_data("logistic")
   output <- utils::capture.output(tmp <- mod$variational(data = data_list))
   expect_gt(length(output), 1)
   output <- utils::capture.output(tmp <- mod$optimize(data = data_list))
