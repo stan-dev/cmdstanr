@@ -390,13 +390,13 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     }
     procs$set_active_procs(procs$num_alive())
   }
-  successful_fit = FALSE
+  successful_fit <- FALSE
   if (self$method() == "optimize") {
     if (procs$proc_state(id = id) > 3) {
-      successful_fit = TRUE
+      successful_fit <- TRUE
     }
   } else if (procs$get_proc(id)$get_exit_status() == 0) {
-    successful_fit = TRUE
+    successful_fit <- TRUE
   }
   if (successful_fit) {
     procs$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
