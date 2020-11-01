@@ -57,3 +57,8 @@ test_that("time is reported after optimization", {
   expect_output(mod$optimize(data = data_list),
                 "Finished in")
 })
+
+test_that("no error when checking estimates are after failure", {
+  fit <- cmdstanr_example("schools", method = "optimize") # optim ålways fails for this
+  expect_silent(fit$summary()) # no error
+})
