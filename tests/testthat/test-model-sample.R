@@ -246,3 +246,21 @@ test_that("chain_ids work with sample()", {
   expect_error(mod$sample(data = data_list, chains = 1, chain_ids = c(1,2)),
                "Assertion on 'chain_ids' failed: Must have length 1, but has length 2.")
 })
+
+test_that("print statements in transformed data work", {
+  mod <- cmdstan_model(write_stan_file(
+    'transformed data {
+    int N = 2;
+    print("*N = ", N, "*");
+  }
+  parameters {
+    real x;
+  }
+  model {
+    x ~ normal(0, 1);
+  }'
+  ))
+
+  out <- capture.output(fit <- mod$sample(iter_warmup = 1, iter_sampling = 1, chains = 1))
+  expect_true(any(grepl("*N = 2*", out)))
+})
