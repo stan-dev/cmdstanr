@@ -595,11 +595,12 @@ check_syntax_method <- function(quiet = FALSE,
     }
   }
 
+
   run_log <- processx::run(
     command = stanc_cmd(),
     args = c(self$stan_file(), stanc_built_options, stancflags_val),
     wd = cmdstan_path(),
-    echo_cmd = FALSE,
+    echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
