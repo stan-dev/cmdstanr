@@ -909,7 +909,7 @@ sample_method <- function(data = NULL,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = sample_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = strip_ext(basename(self$stan_file())),
     exe_file = self$exe_file(),
     proc_ids = chain_ids,
     data_file = process_data(data),
@@ -1006,7 +1006,7 @@ optimize_method <- function(data = NULL,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = optimize_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = strip_ext(basename(self$stan_file())),
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data),
@@ -1129,7 +1129,7 @@ variational_method <- function(data = NULL,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = variational_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = strip_ext(basename(self$stan_file())),
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data),
@@ -1243,7 +1243,7 @@ generate_quantities_method <- function(fitted_params,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = generate_quantities_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = strip_ext(basename(self$stan_file())),
     exe_file = self$exe_file(),
     proc_ids = seq_len(chains),
     data_file = process_data(data),
