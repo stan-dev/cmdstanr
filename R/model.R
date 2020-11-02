@@ -406,10 +406,24 @@ compile_method <- function(quiet = TRUE,
     exe_base <- file.path(dir, basename(self$stan_file()))
   }
 
+  stancflags_val <- ""
+  if (!is.null(include_paths)) {
+    checkmate::assert_directory_exists(include_paths, access = "r")
+    include_paths <- absolute_path(include_paths)
+    include_paths <- paste0(include_paths, collapse = ",")
+    if (cmdstan_version() >= "2.24") {
+      include_paths_flag <- " --include-paths="
+    } else {
+      include_paths_flag <- " --include_paths="
+    }
+    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
+  }
+
+
   # obtain the current hash from the auto-formatted code
   stanc3_formatted_code <- processx::run(
       command = stanc_cmd(),
-      args = c(self$stan_file(), "--auto-format"),
+      args = c(self$stan_file(), "--auto-format",trimws(stancflags_val)),
       wd = cmdstan_path(),
       echo = FALSE
   )$stdout
@@ -463,19 +477,6 @@ compile_method <- function(quiet = TRUE,
     if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
     }
-  }
-
-  stancflags_val <- ""
-  if (!is.null(include_paths)) {
-    checkmate::assert_directory_exists(include_paths, access = "r")
-    include_paths <- absolute_path(include_paths)
-    include_paths <- paste0(include_paths, collapse = ",")
-    if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- " --include-paths="
-    } else {
-      include_paths_flag <- " --include_paths="
-    }
-    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
   }
 
   if (!is.null(cpp_options$stan_opencl)) {
