@@ -578,7 +578,7 @@ check_syntax_method <- function(quiet = FALSE,
     } else {
       include_paths_flag <- " --include_paths="
     }
-    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
+    stancflags_val <- trimws(paste0(stancflags_val, include_paths_flag, include_paths, " "))
   }
 
   if (is.null(stanc_options[["name"]])) {
@@ -597,7 +597,7 @@ check_syntax_method <- function(quiet = FALSE,
 
   run_log <- processx::run(
     command = stanc_cmd(),
-    args = c(self$stan_file(), stanc_built_options),
+    args = c(self$stan_file(), stanc_built_options, stancflags_val),
     wd = cmdstan_path(),
     echo_cmd = FALSE,
     echo = !quiet,
