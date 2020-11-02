@@ -377,5 +377,14 @@ test_that("sig_figs works with all methods", {
   )
 })
 
-
-
+test_that("no output with refresh = 0", {
+  skip_on_cran()
+  mod <- testing_model("logistic")
+  data_list <- testing_data("logistic")
+  tmp <- mod$variational(data = data_list)
+  expect_equal(tmp$runset$procs$return_codes(), 0)
+  tmp <- mod$optimize(data = data_list)
+  expect_equal(tmp$runset$procs$return_codes(), 0)
+  tmp <- mod$sample(data = data_list, chains = 1)
+  expect_equal(tmp$runset$procs$return_codes(), 0)
+})

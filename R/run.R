@@ -643,7 +643,14 @@ CmdStanProcs <- R6::R6Class(
                 format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n")
       }
-    }
+    },
+    return_codes = function() {
+      ret <- c()
+      for (id in private$proc_ids_) {
+        ret <- c(ret, self$get_proc(id)$get_exit_status())
+      }
+      ret
+    }    
   ),
   private = list(
     processes_ = NULL, # will be list of processx::process objects
