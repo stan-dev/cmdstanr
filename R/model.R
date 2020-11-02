@@ -486,7 +486,17 @@ compile_method <- function(quiet = TRUE,
   } else {
     exe_base <- file.path(dir, basename(self$stan_file()))
   }
-  current_hash <- digest::digest(self$code(),algo='xxhash64')
+
+  # obtain the current hash from the auto-formatted code
+  stanc3_formatted_code <- processx::run(
+      command = stanc_cmd(),
+      args = c(self$stan_file(), "--auto-format"),
+      wd = cmdstan_path(),
+      echo = FALSE
+  )$stdout
+  current_hash <- digest::digest(stanc3_formatted_code,algo='xxhash64')
+
+  #append hash to model name
   exe_name_without_hash <- paste0(strip_ext(exe_base),exe_suffix)
   exe <- cmdstan_ext(paste0(exe_name_without_hash,'_',current_hash))
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
