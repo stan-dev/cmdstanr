@@ -622,6 +622,7 @@ check_syntax_method <- function(quiet = FALSE,
   arg_strings = self$generate_arg_strings(make_or_stanc='stanc',include_paths=include_paths,
     stanc_options=stanc_options)
 
+
   run_log <- processx::run(
     command = stanc_cmd(),
     args = c(self$stan_file(), arg_strings),
