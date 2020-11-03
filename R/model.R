@@ -444,7 +444,9 @@ compile_method <- function(quiet = TRUE,
                            #deprecated
                            threads = FALSE) {
 
-  arg_strings = self$generate_arg_strings(make_or_stanc='make',include_paths=include_paths,
+  make_arg_strings = self$generate_arg_strings(make_or_stanc='make',include_paths=include_paths,
+    cpp_options=cpp_options,stanc_options=stanc_options,threads=threads)
+  stanc_arg_strings = self$generate_arg_strings(make_or_stanc='stanc',include_paths=include_paths,
     cpp_options=cpp_options,stanc_options=stanc_options,threads=threads)
 
  # add path to the TBB library to the PATH variable to avoid copying the dll file
@@ -490,7 +492,7 @@ compile_method <- function(quiet = TRUE,
   # obtain the current hash from the auto-formatted code
   stanc3_formatted_code <- processx::run(
       command = stanc_cmd(),
-      args = c(self$stan_file(), "--auto-format"),
+      args = c(self$stan_file(), "--auto-format",stanc_arg_strings),
       wd = cmdstan_path(),
       echo = FALSE
   )$stdout
@@ -540,7 +542,7 @@ compile_method <- function(quiet = TRUE,
 
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(tmp_exe,arg_strings),
+    args = c(tmp_exe,make_arg_strings),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
