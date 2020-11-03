@@ -216,7 +216,7 @@ test_that("compile errors are shown", {
   stan_file <- testing_stan_file("fail")
   expect_error(
     cmdstan_model(stan_file),
-    "An error occured during compilation! See the message above for more information."
+    "Syntax error found! See the message above for more information."
   )
 })
 

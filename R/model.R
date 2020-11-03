@@ -437,6 +437,37 @@ generate_arg_strings_method <- function(
 }
 CmdStanModel$set("public", name = "generate_arg_strings", value = generate_arg_strings_method)
 
+run_autoformatter_method <- function(quiet = FALSE,
+                                include_paths = NULL,
+                                stanc_options = list()) {
+
+
+  temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
+  stanc_options[["o"]] <- temp_hpp_file
+
+  arg_strings = self$generate_arg_strings(make_or_stanc='stanc',include_paths=include_paths,
+    stanc_options=stanc_options)
+
+  run_log <- processx::run(
+    command = stanc_cmd(),
+    args = c(self$stan_file(), arg_strings, "--auto-format"),
+    wd = cmdstan_path(),
+    echo_cmd = !quiet,
+    echo = !quiet,
+    spinner = quiet && interactive(),
+    stderr_line_callback = function(x,p) {
+      message(x)
+    },
+    error_on_status = FALSE
+  )
+  if (run_log$status != 0) {
+    stop("Syntax error found! See the message above for more information.",
+         call. = FALSE)
+  }
+  return(run_log)
+}
+CmdStanModel$set("public", name = "run_autoformatter", value = run_autoformatter_method)
+
 compile_method <- function(quiet = TRUE,
                            dir = NULL,
                            include_paths = NULL,
@@ -446,9 +477,10 @@ compile_method <- function(quiet = TRUE,
                            #deprecated
                            threads = FALSE) {
 
+  from_autoformatter <- self$run_autoformatter(quiet=quiet,include_paths=include_paths,stanc_options=stanc_options)
+  current_hash <- digest::digest(from_autoformatter$stdout,algo='xxhash64')
+
   make_arg_strings = self$generate_arg_strings(make_or_stanc='make',include_paths=include_paths,
-    cpp_options=cpp_options,stanc_options=stanc_options,threads=threads)
-  stanc_arg_strings = self$generate_arg_strings(make_or_stanc='stanc',include_paths=include_paths,
     cpp_options=cpp_options,stanc_options=stanc_options,threads=threads)
 
  # add path to the TBB library to the PATH variable to avoid copying the dll file
@@ -491,14 +523,6 @@ compile_method <- function(quiet = TRUE,
     exe_base <- file.path(dir, basename(self$stan_file()))
   }
 
-  # obtain the current hash from the auto-formatted code
-  stanc3_formatted_code <- processx::run(
-      command = stanc_cmd(),
-      args = c(self$stan_file(), "--auto-format",stanc_arg_strings),
-      wd = cmdstan_path(),
-      echo = FALSE
-  )$stdout
-  current_hash <- digest::digest(stanc3_formatted_code,algo='xxhash64')
 
   #append hash to model name
   exe_name_without_hash <- paste0(strip_ext(exe_base),exe_suffix)
@@ -619,30 +643,7 @@ check_syntax_method <- function(quiet = FALSE,
                                 include_paths = NULL,
                                 stanc_options = list()) {
 
-
-  temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
-  stanc_options[["o"]] <- temp_hpp_file
-
-  arg_strings = self$generate_arg_strings(make_or_stanc='stanc',include_paths=include_paths,
-    stanc_options=stanc_options)
-
-
-  run_log <- processx::run(
-    command = stanc_cmd(),
-    args = c(self$stan_file(), arg_strings),
-    wd = cmdstan_path(),
-    echo_cmd = !quiet,
-    echo = !quiet,
-    spinner = quiet && interactive(),
-    stderr_line_callback = function(x,p) {
-      message(x)
-    },
-    error_on_status = FALSE
-  )
-  if (run_log$status != 0) {
-    stop("Syntax error found! See the message above for more information.",
-         call. = FALSE)
-  }
+  from_autoformatter <- self$run_autoformatter(quiet=quiet,include_paths=include_paths,stanc_options=stanc_options)
   if (!quiet) {
     message("Stan program is syntactically correct");
   }
