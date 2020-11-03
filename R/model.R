@@ -352,14 +352,19 @@ CmdStanModel <- R6::R6Class(
 #'
 NULL
 
-compile_method <- function(quiet = TRUE,
+generate_arg_strings_method <- function(
+                           make_or_stanc=list('make','stanc'),
                            dir = NULL,
                            include_paths = NULL,
                            cpp_options = list(),
                            stanc_options = list(),
-                           force_recompile = FALSE,
                            #deprecated
                            threads = FALSE) {
+
+  if (!is.null(make_or_stanc)) {
+    checkmate::assert_choice(make_or_stanc, choices=c('make','stanc'))
+  }
+
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
@@ -369,20 +374,86 @@ compile_method <- function(quiet = TRUE,
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
-  if (is.null(dir) && !is.null(private$dir_)) {
-    dir <- absolute_path(private$dir_)
-  } else if (!is.null(dir)) {
-    dir <- absolute_path(dir)
-  }
-  if (!is.null(dir)) {
-    dir <- repair_path(dir)
-    checkmate::assert_directory_exists(dir, access = "rw")
-  }
 
   # temporary deprecation warnings
   if (isTRUE(threads)) {
     warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
     cpp_options[["stan_threads"]] <- TRUE
+  }
+
+  model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
+
+  stancflags_val <- NULL
+  if (!is.null(include_paths)) {
+    checkmate::assert_directory_exists(include_paths, access = "r")
+    include_paths <- absolute_path(include_paths)
+    include_paths <- paste0(include_paths, collapse = ",")
+    if (cmdstan_version() >= "2.24") {
+      include_paths_flag <- " --include-paths="
+    } else {
+      include_paths_flag <- " --include_paths="
+    }
+    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
+  }
+
+  if (!is.null(cpp_options$stan_opencl)) {
+    stanc_options[["use-opencl"]] <- TRUE
+  }
+  if (is.null(stanc_options[["name"]])) {
+    stanc_options[["name"]] <- model_name
+  }
+  if(make_or_stanc=='make'){
+    char_for_stanc_built_options <- "'"
+  }else{
+    char_for_stanc_built_options <- ""
+  }
+
+  stanc_built_options = c()
+  for (i in seq_len(length(stanc_options))) {
+    option_name <- names(stanc_options)[i]
+    if (isTRUE(as.logical(stanc_options[[i]]))) {
+      stanc_built_options = c(stanc_built_options, paste0("--", option_name))
+    } else {
+      stanc_built_options = c(stanc_built_options, paste0("--", option_name, "=",
+        char_for_stanc_built_options, stanc_options[[i]], char_for_stanc_built_options))
+    }
+  }
+
+  if(make_or_stanc=='make'){
+    stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
+  }else{
+    stancflags_val <- trimws(c(stancflags_val, c(stanc_built_options)))
+  }
+  if (cmdstan_version() < "2.24") {
+    prepare_precompiled(cpp_options, quiet)
+  }
+  these_args = c(
+    cpp_options_to_compile_flags(cpp_options),
+    stancflags_val
+  )
+  return(these_args)
+}
+CmdStanModel$set("public", name = "generate_arg_strings", value = generate_arg_strings_method)
+
+compile_method <- function(quiet = TRUE,
+                           dir = NULL,
+                           include_paths = NULL,
+                           cpp_options = list(),
+                           stanc_options = list(),
+                           force_recompile = FALSE,
+                           #deprecated
+                           threads = FALSE) {
+
+  arg_strings = self$generate_arg_strings(make_or_stanc='make',include_paths=include_paths,
+    cpp_options=cpp_options,stanc_options=stanc_options,threads=threads)
+
+ # add path to the TBB library to the PATH variable to avoid copying the dll file
+  if (cmdstan_version() >= "2.21" && os_is_windows()) {
+    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
+    current_path <- Sys.getenv("PATH")
+    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+    }
   }
 
   exe_suffix <- NULL
@@ -398,6 +469,16 @@ compile_method <- function(quiet = TRUE,
   exe_suffix <- paste0(exe_suffix, collapse = "_")
   if (nzchar(exe_suffix)) {
     exe_suffix <- paste0("_", exe_suffix)
+  }
+
+  if (is.null(dir) && !is.null(private$dir_)) {
+    dir <- absolute_path(private$dir_)
+  } else if (!is.null(dir)) {
+    dir <- absolute_path(dir)
+  }
+  if (!is.null(dir)) {
+    dir <- repair_path(dir)
+    checkmate::assert_directory_exists(dir, access = "rw")
   }
 
   if (is.null(dir)) {
@@ -422,9 +503,9 @@ compile_method <- function(quiet = TRUE,
   if (!force_recompile) {
     message("Model executable is up to date!")
     private$cpp_options_ <- cpp_options
-    private$precompile_cpp_options_ <- NULL
-    private$precompile_stanc_options_ <- NULL
-    private$precompile_include_paths_ <- NULL
+    # private$precompile_cpp_options_ <- NULL
+    # private$precompile_stanc_options_ <- NULL
+    # private$precompile_include_paths_ <- NULL
     self$exe_file(exe)
     return(invisible(self))
   } else {
@@ -437,52 +518,10 @@ compile_method <- function(quiet = TRUE,
   tmp_exe <- cmdstan_ext(temp_file_no_ext) # adds .exe on Windows
   private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
 
-  # add path to the TBB library to the PATH variable to avoid copying the dll file
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }
-  }
 
-  stancflags_val <- ""
-  if (!is.null(include_paths)) {
-    checkmate::assert_directory_exists(include_paths, access = "r")
-    include_paths <- absolute_path(include_paths)
-    include_paths <- paste0(include_paths, collapse = ",")
-    if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- " --include-paths="
-    } else {
-      include_paths_flag <- " --include_paths="
-    }
-    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
-  }
-
-  if (!is.null(cpp_options$stan_opencl)) {
-    stanc_options[["use-opencl"]] <- TRUE
-  }
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- model_name
-  }
-  stanc_built_options = c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options = c(stanc_built_options, paste0("--", option_name))
-    } else {
-      stanc_built_options = c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
-    }
-  }
-  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
-  if (cmdstan_version() < "2.24") {
-    prepare_precompiled(cpp_options, quiet)
-  }
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(tmp_exe,
-             cpp_options_to_compile_flags(cpp_options),
-             stancflags_val),
+    args = c(tmp_exe,arg_strings),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
@@ -556,50 +595,19 @@ NULL
 check_syntax_method <- function(quiet = FALSE,
                                 include_paths = NULL,
                                 stanc_options = list()) {
-  if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
-    stanc_options <- private$precompile_stanc_options_
-  }
-  if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
-    include_paths <- private$precompile_include_paths_
-  }
 
-  model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- temp_hpp_file
 
-  stancflags_val <- ""
-  if (!is.null(include_paths)) {
-    checkmate::assert_directory_exists(include_paths, access = "r")
-    include_paths <- absolute_path(include_paths)
-    include_paths <- paste0(include_paths, collapse = ",")
-    if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- " --include-paths="
-    } else {
-      include_paths_flag <- " --include_paths="
-    }
-    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
-  }
-
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- model_name
-  }
-
-  stanc_built_options = c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
-    }
-  }
+  arg_strings = self$generate_arg_strings(make_or_stanc='stanc',include_paths=include_paths,
+    stanc_options=stanc_options)
 
   run_log <- processx::run(
     command = stanc_cmd(),
-    args = c(self$stan_file(), stanc_built_options),
+    args = c(self$stan_file(), arg_strings),
     wd = cmdstan_path(),
-    echo_cmd = FALSE,
+    echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
