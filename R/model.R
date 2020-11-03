@@ -352,7 +352,7 @@ CmdStanModel <- R6::R6Class(
 #'
 NULL
 
-generate_arg_strings_method <- function(
+generate_arg_strings_method <- function(quiet=TRUE,
                            make_or_stanc=list('make','stanc'),
                            dir = NULL,
                            include_paths = NULL,
@@ -445,7 +445,7 @@ run_autoformatter_method <- function(quiet = FALSE,
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- temp_hpp_file
 
-  arg_strings = self$generate_arg_strings(make_or_stanc='stanc',include_paths=include_paths,
+  arg_strings = self$generate_arg_strings(quiet=quiet,make_or_stanc='stanc',include_paths=include_paths,
     stanc_options=stanc_options)
 
   run_log <- processx::run(
@@ -480,7 +480,7 @@ compile_method <- function(quiet = TRUE,
   from_autoformatter <- self$run_autoformatter(quiet=quiet,include_paths=include_paths,stanc_options=stanc_options)
   current_hash <- digest::digest(from_autoformatter$stdout,algo='xxhash64')
 
-  make_arg_strings = self$generate_arg_strings(make_or_stanc='make',include_paths=include_paths,
+  make_arg_strings = self$generate_arg_strings(quiet=quiet,make_or_stanc='make',include_paths=include_paths,
     cpp_options=cpp_options,stanc_options=stanc_options,threads=threads)
 
  # add path to the TBB library to the PATH variable to avoid copying the dll file
