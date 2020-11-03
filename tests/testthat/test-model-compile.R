@@ -48,17 +48,60 @@ test_that("compile() method forces recompilation force_recompile = TRUE", {
   expect_message(mod$compile(quiet = TRUE, force_recompile = TRUE), "Compiling Stan program...")
 })
 
-# # Need to come up with replacement test here:
-# # test_that("compile() method forces recompilation if model modified", {
-# #   skip_on_cran()
-# #   # remove executable if exists
-# #   exe <- cmdstan_ext(strip_ext(mod$stan_file()))
-# #   if (!file.exists(exe)) {
-# #     mod$compile(quiet = TRUE)
-# #   }
-# #   Sys.setFileTime(mod$stan_file(), Sys.time() + 1) #touch file to trigger recompile
-# #   expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
-# # })
+test_that("compile() method forces recompilation if model modified", {
+  skip_on_cran()
+  model_code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file <- write_stan_file(model_code,basename='cmdstanr-test-model-compile-mod')
+  mod <- cmdstan_model(stan_file = stan_file)
+
+  #functional change
+  model_code <- "
+  parameters {
+    real y;
+    real x;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  cat(model_code,file=stan_file,append=F)
+  expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
+
+  #whitespace change
+  model_code <- "
+  parameters {
+
+    real y;
+    real x;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  cat(model_code,file=stan_file,append=F)
+  expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
+
+  #comment change
+  model_code <- "
+  parameters {
+    //test
+    real y;
+    real x;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  cat(model_code,file=stan_file,append=F)
+  expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
+})
 
 test_that("compile() method works with spaces in path", {
   skip_on_cran()
