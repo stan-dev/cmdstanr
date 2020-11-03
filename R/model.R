@@ -419,18 +419,20 @@ generate_arg_strings_method <- function(
     }
   }
 
-  if(make_or_stanc=='make'){
-    stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
-  }else{
-    stancflags_val <- trimws(c(stancflags_val, c(stanc_built_options)))
-  }
   if (cmdstan_version() < "2.24") {
     prepare_precompiled(cpp_options, quiet)
   }
-  these_args = c(
-    cpp_options_to_compile_flags(cpp_options),
-    stancflags_val
-  )
+
+  if(make_or_stanc=='make'){
+    stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
+    these_args = c(
+      cpp_options_to_compile_flags(cpp_options),
+      stancflags_val
+    )
+  }else{
+    stancflags_val <- trimws(c(stancflags_val, c(stanc_built_options)))
+    these_args = c(stancflags_val)
+  }
   return(these_args)
 }
 CmdStanModel$set("public", name = "generate_arg_strings", value = generate_arg_strings_method)
