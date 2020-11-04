@@ -568,7 +568,7 @@ check_syntax_method <- function(quiet = FALSE,
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- temp_hpp_file
 
-  stancflags_val <- ""
+  stancflags_val <- NULL
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
     include_paths <- absolute_path(include_paths)
@@ -595,15 +595,9 @@ check_syntax_method <- function(quiet = FALSE,
     }
   }
 
-  if(stancflags_val==''){
-    these_args = c(self$stan_file(), stanc_built_options)
-  }else{
-    these_args = c(self$stan_file(), stanc_built_options, stancflags_val)
-  }
-
   run_log <- processx::run(
     command = stanc_cmd(),
-    args = these_args,
+    args = c(self$stan_file(), stanc_built_options, stancflags_val),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
