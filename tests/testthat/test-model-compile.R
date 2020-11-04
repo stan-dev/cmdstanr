@@ -257,6 +257,17 @@ test_that("check_syntax() works", {
   )
 })
 
+test_that("check_syntax() works with include_paths", {
+  skip_on_cran()
+
+  stan_program_w_include <- testing_stan_file("bernoulli_include")
+
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=FALSE,
+                                   include_paths = test_path("resources", "stan"))
+  expect_true(mod_w_include$check_syntax())
+
+})
+
 test_that("pedantic check works", {
   skip_on_cran()
   model_code <- "
