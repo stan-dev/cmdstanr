@@ -169,7 +169,7 @@ CmdStanFit <- R6::R6Class(
                               basename = NULL,
                               timestamp = TRUE,
                               random = TRUE) {
-      self$runs,et$save_data_file(dir, basename, timestamp, random)
+      self$runset$save_data_file(dir, basename, timestamp, random)
     },
     return_codes = function() {
       self$runset$procs$return_codes()
