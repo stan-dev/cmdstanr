@@ -35,7 +35,8 @@ CmdStanArgs <- R6::R6Class(
                           init = NULL,
                           refresh = NULL,
                           output_dir = NULL,
-                          validate_csv = TRUE) {
+                          validate_csv = TRUE,
+                          sig_figs = NULL) {
 
       self$model_name <- model_name
       self$exe_file <- exe_file
@@ -43,6 +44,7 @@ CmdStanArgs <- R6::R6Class(
       self$data_file <- data_file
       self$seed <- seed
       self$refresh <- refresh
+      self$sig_figs <- sig_figs
       self$method_args <- method_args
       self$method <- self$method_args$method
       self$save_latent_dynamics <- save_latent_dynamics
@@ -145,6 +147,10 @@ CmdStanArgs <- R6::R6Class(
       }
       if (!is.null(self$refresh)) {
         args$output <- c(args$output, paste0("refresh=", self$refresh))
+      }
+
+      if (!is.null(self$sig_figs)) {
+        args$output <- c(args$output, paste0("sig_figs=", self$sig_figs))
       }
 
       args <- do.call(c, append(args, list(use.names = FALSE)))
@@ -458,6 +464,10 @@ validate_cmdstan_args = function(self) {
 
   checkmate::assert_flag(self$save_latent_dynamics)
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
+  checkmate::assert_integerish(self$sig_figs, lower = 1, upper = 18, null.ok = TRUE)
+  if (!is.null(self$sig_figs) && cmdstan_version() < "2.25") {
+    warning("The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!")
+  }
   if (!is.null(self$refresh)) {
     self$refresh <- as.integer(self$refresh)
   }

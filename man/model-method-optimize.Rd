@@ -29,7 +29,8 @@ variables. Thus modes correspond to modes of the model as written.
   output_dir = NULL,
   algorithm = NULL,
   init_alpha = NULL,
-  iter = NULL
+  iter = NULL,
+  sig_figs = NULL
 )
 }
 }
@@ -49,7 +50,7 @@ the appendices in the CmdStan manual for details on using these formats.
 }
 \item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 \item \code{refresh}: (non-negative integer) The number of iterations between
-printed screen updates.
+printed screen updates. If \code{refresh = 0}, only error messages will be printed.
 \item \code{init}: (multiple options) The initialization method for the parameters block:
 \itemize{
 \item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
@@ -94,6 +95,11 @@ files are removed when the fitted model object is garbage collected.
 corresponding the defaults used by \verb{$save_output_files()} (and similar
 methods like \verb{$save_latent_dynamics_files()}).
 }
+\item \code{sig_figs}: (positive integer) The number of significant figures used
+for the output values. By default, CmdStan represent the output values with
+6 significant figures. The upper limit for \code{sig_figs} is 18. Increasing
+this value can cause an increased usage of disk space due to larger
+output CSV files.
 }
 }
 

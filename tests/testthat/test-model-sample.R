@@ -221,3 +221,46 @@ test_that("sample() method runs when fixed_param = TRUE", {
   expect_equal(fit_500$metadata()$algorithm, "fixed_param")
   expect_equal(fit_500_w$metadata()$algorithm, "fixed_param")
 })
+
+test_that("chain_ids work with sample()", {
+  skip_on_cran()
+  mod$compile()
+  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
+  expect_is(fit12, "CmdStanMCMC")
+  expect_equal(fit12$metadata()$id, c(10,12))
+
+  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100,7)))
+  expect_is(fit12, "CmdStanMCMC")
+  expect_equal(fit12$metadata()$id, c(100,7))
+
+  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 1, chain_ids = c(6)))
+  expect_is(fit12, "CmdStanMCMC")
+  expect_equal(fit12$metadata()$id, c(6))
+
+  expect_error(mod$sample(data = data_list, chains = 1, chain_ids = c(0)),
+               "Assertion on 'chain_ids' failed: Element 1 is not >= 1.")
+
+  expect_error(mod$sample(data = data_list, chains = 2, chain_ids = c(1,1)),
+               "Assertion on 'chain_ids' failed: Contains duplicated values, position 2.")
+
+  expect_error(mod$sample(data = data_list, chains = 1, chain_ids = c(1,2)),
+               "Assertion on 'chain_ids' failed: Must have length 1, but has length 2.")
+})
+
+test_that("print statements in transformed data work", {
+  mod <- cmdstan_model(write_stan_file(
+    'transformed data {
+    int N = 2;
+    print("*N = ", N, "*");
+  }
+  parameters {
+    real x;
+  }
+  model {
+    x ~ normal(0, 1);
+  }'
+  ))
+
+  out <- capture.output(fit <- mod$sample(iter_warmup = 1, iter_sampling = 1, chains = 1))
+  expect_true(any(grepl("*N = 2*", out)))
+})

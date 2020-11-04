@@ -1,5 +1,7 @@
 # Items for next tagged release
 
+### Bug fixes
+
 * Fix potential indexing error if using `read_cmdstan_csv()` with CSV files
 created by CmdStan without CmdStanR. (#291, #292, @johnlees)
 
@@ -8,6 +10,28 @@ and no samples. (#288, #293)
 
 * Fix trailing slashes issue for `dir` in `cmdstan_model()` and `output_dir` 
 in fitting methods. (#281, #294)
+
+* Fix dimensions error when processing a list of matrices passed in as `data`. (#296, #302)
+
+* Fix reporting of time after using `fixed_param` method. (#303, #307)
+
+* With `refresh = 0`, no output other than error messages is printed with
+`$optimize()` and `$variational()`. (#324)
+
+* Fix issue where names of generated files could clash. (#326, #328)
+
+### New features
+
+* `install_cmdstan()` gains argument `version` for specifying which version of
+CmdStan to install. (#300, #308)
+
+* New function `check_cmdstan_toolchain()` that checks if the appropriate
+toolchains are available. (#289)
+
+* `$sample()` method for CmdStanModel objects gains argument `chain_ids` for
+specifying custom chain IDs. (#319)
+
+* Added support for the `sig_figs` argument in CmdStan versions 2.25 and above. (#327)
 
 # cmdstanr 0.1.3
 

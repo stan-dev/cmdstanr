@@ -214,7 +214,8 @@ read_cmdstan_csv <- function(files,
       altrep = FALSE,
       progress = FALSE,
       skip = metadata$lines_to_skip,
-      col_select = col_select
+      col_select = col_select,
+      num_threads = 1
     )
     if (metadata$method == "generate_quantities") {
       # set the first arg as double to silence the type detection info

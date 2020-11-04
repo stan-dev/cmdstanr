@@ -4,6 +4,7 @@
 \alias{install_cmdstan}
 \alias{rebuild_cmdstan}
 \alias{cmdstan_make_local}
+\alias{check_cmdstan_toolchain}
 \title{Install CmdStan or clean and rebuild an existing installation}
 \usage{
 install_cmdstan(
@@ -12,8 +13,10 @@ install_cmdstan(
   quiet = FALSE,
   overwrite = FALSE,
   timeout = 1200,
+  version = NULL,
   release_url = NULL,
-  cpp_options = list()
+  cpp_options = list(),
+  check_toolchain = TRUE
 )
 
 rebuild_cmdstan(
@@ -24,6 +27,8 @@ rebuild_cmdstan(
 )
 
 cmdstan_make_local(dir = cmdstan_path(), cpp_options = NULL, append = TRUE)
+
+check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{dir}{Path to the directory in which to install CmdStan. The default is
@@ -36,8 +41,12 @@ to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
 been set then the default is \code{2}.}
 
-\item{quiet}{Should the verbose output from the system processes be
-suppressed when building the CmdStan binaries? The default is \code{FALSE}.}
+\item{quiet}{For \code{install_cmdstan()}, should the verbose output from the
+system processes be suppressed when building the CmdStan binaries?
+The default is \code{FALSE}.
+For \code{check_cmdstan_toolchain()}, should the function supress
+printing informational messages? The default is \code{FALSE}.
+If \code{TRUE} \code{check_cmdstan_toolchain()} only outputs errors.}
 
 \item{overwrite}{When an existing installation is found in \code{dir}, should
 CmdStan still be downloaded and reinstalled? The default is \code{FALSE}, in
@@ -47,17 +56,31 @@ installation.}
 \item{timeout}{Timeout (in seconds) for the CmdStan build stage of the
 installation process.}
 
-\item{release_url}{Specifies the URL to a specific Cmdstan release to be
+\item{version}{Specifies the Cmdstan release version to be
 installed. By default set to \code{NULL}, which downloads the latest stable
 release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}.}
+
+\item{release_url}{Specifies the URL to a specific Cmdstan release to be
+installed. By default set to \code{NULL}, which downloads the latest stable
+release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}. If
+\code{version} and \code{release_url} are set, \code{version} is used.}
 
 \item{cpp_options}{A list specifying any makefile flags/variables to be
 written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
 will force the use of clang for compilation.}
 
+\item{check_toolchain}{Should \code{install_cmdstan()} check that the
+required toolchain is installed and properly configured.
+The default is \code{TRUE}.}
+
 \item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
 appended to the end of the existing \code{make/local} file? The default is \code{TRUE}.
 If \code{FALSE} the file is overwritten.}
+
+\item{fix}{For \code{check_cmdstan_toolchain()}, should CmdStanR attempt to fix
+any detected toolchain problems? Currently this option is only available on
+Windows. The default is \code{FALSE}, in which case problems are only reported
+along with suggested fixes.}
 }
 \value{
 For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
@@ -96,5 +119,7 @@ cpp_options <- list(
 )
 # cmdstan_make_local(cpp_options = cpp_options)
 # rebuild_cmdstan()
+
+# check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
 }

@@ -9,7 +9,7 @@
 #'       the appendices in the CmdStan manual for details on using these formats.
 #'   * `seed`: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 #'   * `refresh`: (non-negative integer) The number of iterations between
-#'   printed screen updates.
+#'   printed screen updates. If `refresh = 0`, only error messages will be printed.
 #'   * `init`: (multiple options) The initialization method for the parameters block:
 #'     - A real number `x>0` initializes randomly between `[-x,x]` (on the
 #'       *unconstrained* parameter space);
@@ -37,7 +37,6 @@
 #'   divergences for HMC). To save the temporary files created when
 #'   `save_latent_dynamics=TRUE` see the
 #'   [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] method.
-#'
 #'   * `output_dir`: (string) A path to a directory where CmdStan should write
 #'   its output CSV files. For interactive use this can typically be left at
 #'   `NULL` (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
@@ -51,4 +50,9 @@
 #'     - If a path, then the files are created in `output_dir` with names
 #'       corresponding the defaults used by `$save_output_files()` (and similar
 #'       methods like `$save_latent_dynamics_files()`).
-#'
+#'   * `sig_figs`: (positive integer) The number of significant figures used
+#'   for the output values. By default, CmdStan represent the output values with
+#'   6 significant figures. The upper limit for `sig_figs` is 18. Increasing 
+#'   this value can cause an increased usage of disk space due to larger 
+#'   output CSV files.
+#'   
