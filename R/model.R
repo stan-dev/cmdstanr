@@ -448,6 +448,27 @@ run_autoformatter_method <- function(quiet = FALSE,
   arg_strings = self$generate_arg_strings(quiet=quiet,make_or_stanc='stanc',include_paths=include_paths,
     stanc_options=stanc_options)
 
+  #given bug in stanc (https://github.com/stan-dev/cmdstan/issues/944),
+  # if pedantic-mode warnings have been requested, first run without --auto-format & with echo=!quiet
+  if('--warn-pedantic' %in% arg_strings){
+    pedantic_run_log <- processx::run(
+      command = stanc_cmd(),
+      args = c(self$stan_file(), arg_strings),
+      wd = cmdstan_path(),
+      echo_cmd = FALSE,
+      echo = !quiet,
+      spinner = quiet && interactive(),
+      stderr_line_callback = function(x,p) {
+        message(x)
+      },
+      error_on_status = FALSE
+    )
+    if (pedantic_run_log$status != 0) {
+      stop("Syntax error found! See the message above for more information.",
+           call. = FALSE)
+    }
+  }
+
   run_log <- processx::run(
     command = stanc_cmd(),
     args = c(self$stan_file(), arg_strings, "--auto-format"),
