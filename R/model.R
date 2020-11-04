@@ -452,8 +452,8 @@ run_autoformatter_method <- function(quiet = FALSE,
     command = stanc_cmd(),
     args = c(self$stan_file(), arg_strings, "--auto-format"),
     wd = cmdstan_path(),
-    echo_cmd = !quiet,
-    echo = !quiet,
+    echo_cmd = FALSE,
+    echo = FALSE,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
       message(x)
