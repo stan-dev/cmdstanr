@@ -20,6 +20,8 @@ in fitting methods. (#281, #294)
 
 * Fix issue where names of generated files could clash. (#326, #328)
 
+* Fix missing `include_paths` in `$syntax_check()`. (#335)
+
 ### New features
 
 * `install_cmdstan()` gains argument `version` for specifying which version of
