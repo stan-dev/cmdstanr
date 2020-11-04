@@ -499,7 +499,8 @@ compile_method <- function(quiet = TRUE,
                            threads = FALSE) {
 
   from_autoformatter <- self$run_autoformatter(quiet=quiet,include_paths=include_paths,stanc_options=stanc_options)
-  current_hash <- digest::digest(from_autoformatter$stdout,algo='xxhash64')
+  formatted_code = gsub(pattern='\r\n',replacement='\n',x=from_autoformatter$stdout,fixed=T)
+  current_hash <- digest::digest(formatted_code,algo='xxhash64')
 
   make_arg_strings = self$generate_arg_strings(quiet=quiet,make_or_stanc='make',include_paths=include_paths,
     cpp_options=cpp_options,stanc_options=stanc_options,threads=threads)
