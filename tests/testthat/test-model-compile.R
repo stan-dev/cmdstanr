@@ -29,7 +29,7 @@ test_that("error if no compile() before model fitting", {
 test_that("compile() method works", {
   skip_on_cran()
   # remove executable if exists
-  exe = cmdstan_ext(paste0(strip_ext(mod$stan_file()),'_3d600fef12d2081f')) #entered by-hand so test isn't circular
+  exe = cmdstan_ext(paste0(strip_ext(mod$stan_file()),'_d5f293b0266e270c')) #entered by-hand so test isn't circular
   if (file.exists(exe)) {
     file.remove(exe)
   }
