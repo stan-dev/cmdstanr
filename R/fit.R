@@ -752,6 +752,33 @@ NULL
 #'
 NULL
 
+#' Extract return codes from CmdStan
+#'
+#' @name fit-method-return_codes
+#' @aliases return_codes
+#' @description The `$return_codes()` method returns a vector of return codes
+#'   from the CmdStan run(s). A return code of 0 indicates a successful run.
+#'
+#' @section Usage:
+#'   ```
+#'   $return_codes()
+#'   ```
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#'
+#' @examples
+#' \dontrun{
+#' # example with return codes all zero
+#' fit_mcmc <- cmdstanr_example("schools", method = "sample")
+#' fit_mcmc$return_codes() # should be all zero
+#'
+#' # example of non-zero return code (optimization fails for hierarchical model)
+#' fit_opt <- cmdstanr_example("schools", method = "optimize")
+#' fit_opt$return_codes() # should be non-zero
+#' }
+#'
+NULL
+
 
 # CmdStanMCMC -------------------------------------------------------------
 
@@ -797,12 +824,13 @@ NULL
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
 #'
-#'  ## Report run times and console output
+#'  ## Report run times, console output, return codes
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$output()`][fit-method-output]  |  Return the stdout and stderr of all chains or pretty print the output for a single chain. |
+#'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
 NULL
 
@@ -1018,12 +1046,13 @@ CmdStanMCMC <- R6::R6Class(
 #'  [`$save_output_files()`][fit-method-save_output_files]  |  Save output CSV files to a specified location. |
 #'  [`$save_data_file()`][fit-method-save_data_file]  |  Save JSON data file to a specified location. |
 #'
-#'  ## Report run times and console output
+#'  ## Report run times, console output, return codes
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$time()`][fit-method-time]      |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
+#'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
 NULL
 
@@ -1093,12 +1122,13 @@ CmdStanMLE <- R6::R6Class(
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
 #'
-#'  ## Report run times and console output
+#'  ## Report run times, console output, return codes
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
+#'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
 NULL
 
@@ -1160,12 +1190,13 @@ CmdStanVB <- R6::R6Class(
 #'  [`$save_output_files()`][fit-method-save_output_files] | Save output CSV files to a specified location. |
 #'  [`$save_data_file()`][fit-method-save_data_file] | Save JSON data file to a specified location. |
 #'
-#'  ## Report run times and console output
+#'  ## Report run times, console output, return codes
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$time()`][fit-method-time] | Report the total run time. |
 #'  [`$output()`][fit-method-output] | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
+#'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
 #' @inherit model-method-generate-quantities examples
 #'
