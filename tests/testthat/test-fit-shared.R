@@ -179,6 +179,18 @@ test_that("init() errors if no inits specified", {
   }
 })
 
+test_that("return_codes method works properly", {
+  skip_on_cran()
+  expect_equal(fits[["variational"]]$return_codes(), 0)
+  expect_equal(fits[["optimize"]]$return_codes(), 0)
+  expect_equal(fits[["sample"]]$return_codes(), c(0,0,0,0))
+  expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
+
+  # non-zero
+  non_zero <- testing_fit("schools", method = "optimize")
+  expect_gt(non_zero$return_codes(), 0)
+})
+
 test_that("output and latent dynamics files are cleaned up correctly", {
   skip_on_cran()
   for (method in c("sample", "variational")) {
@@ -375,16 +387,4 @@ test_that("sig_figs works with all methods", {
     as.numeric(opt$mle()[c("p2","p5", "p9")]),
     c(0.12, 0.12345, 0.123456789)
   )
-})
-
-test_that("no output with refresh = 0", {
-  skip_on_cran()
-  mod <- testing_model("logistic")
-  data_list <- testing_data("logistic")
-  tmp <- mod$variational(data = data_list)
-  expect_equal(tmp$return_codes(), 0)
-  tmp <- mod$optimize(data = data_list)
-  expect_equal(tmp$return_codes(), 0)
-  tmp <- mod$sample(data = data_list, chains = 1)
-  expect_equal(tmp$return_codes(), 0)
 })
