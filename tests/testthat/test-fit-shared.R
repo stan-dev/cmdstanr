@@ -179,6 +179,18 @@ test_that("init() errors if no inits specified", {
   }
 })
 
+test_that("return_codes method works properly", {
+  skip_on_cran()
+  expect_equal(fits[["variational"]]$return_codes(), 0)
+  expect_equal(fits[["optimize"]]$return_codes(), 0)
+  expect_equal(fits[["sample"]]$return_codes(), c(0,0,0,0))
+  expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
+
+  # non-zero
+  non_zero <- testing_fit("schools", method = "optimize")
+  expect_gt(non_zero$return_codes(), 0)
+})
+
 test_that("output and latent dynamics files are cleaned up correctly", {
   skip_on_cran()
   for (method in c("sample", "variational")) {
@@ -376,6 +388,3 @@ test_that("sig_figs works with all methods", {
     c(0.12, 0.12345, 0.123456789)
   )
 })
-
-
-
