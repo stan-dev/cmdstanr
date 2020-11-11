@@ -138,7 +138,11 @@ test_that("draws() method returns a 'draws' object", {
   for (method in all_methods) {
     fit <- fits[[method]]
     draws <- fit$draws()
-    expect_type(draws, "double")
+    if (method == "generate_quantities") {
+      expect_type(draws, "integer")
+    } else {
+      expect_type(draws, "double")
+    }
     expect_s3_class(draws, "draws")
   }
 })
