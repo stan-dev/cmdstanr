@@ -54,54 +54,54 @@ jobs:
         run: covr::codecov(type = "all")
         shell: Rscript {0}
 
-  # test-coverage-windows:
-  #   name: "Windows"
-  #   if: "! contains(github.event.head_commit.message, '[ci skip]')"
-  #   runs-on: windows-latest
-  #   env:
-  #     GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-  #   steps:
-  #     - uses: actions/checkout@v2
+  test-coverage-windows:
+    name: "Windows"
+    if: "! contains(github.event.head_commit.message, '[ci skip]')"
+    runs-on: windows-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
 
-  #     - name: Set path for RTools 4.0
-  #       run: |
-  #         echo "::add-path::C:/rtools40/usr/bin"
-  #         echo "::add-path::C:/rtools40/mingw64/bin"
-  #       shell: powershell
+      - name: Set path for RTools 4.0
+        run: |
+          echo "::add-path::C:/rtools40/usr/bin"
+          echo "::add-path::C:/rtools40/mingw64/bin"
+        shell: powershell
 
-  #     - name: Install mingw32-make and check toolchain path
-  #       if: runner.os == 'Windows'
-  #       run: |
-  #         pacman -Syu mingw-w64-x86_64-make --noconfirm
-  #         g++ --version
-  #         Get-Command g++ | Select-Object -ExpandProperty Definition
-  #         mingw32-make --version
-  #         Get-Command mingw32-make | Select-Object -ExpandProperty Definition
-  #       shell: powershell
+      - name: Install mingw32-make and check toolchain path
+        if: runner.os == 'Windows'
+        run: |
+          pacman -Syu mingw-w64-x86_64-make --noconfirm
+          g++ --version
+          Get-Command g++ | Select-Object -ExpandProperty Definition
+          mingw32-make --version
+          Get-Command mingw32-make | Select-Object -ExpandProperty Definition
+        shell: powershell
 
-  #     - uses: r-lib/actions/setup-r@master
-  #       with:
-  #             r-version: 'release'
+      - uses: r-lib/actions/setup-r@master
+        with:
+              r-version: 'release'
 
-  #     - uses: r-lib/actions/setup-pandoc@master
+      - uses: r-lib/actions/setup-pandoc@master
 
-  #     - name: Query dependencies
-  #       run: |
-  #         install.packages('remotes')
-  #         saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-  #       shell: Rscript {0}
+      - name: Query dependencies
+        run: |
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+        shell: Rscript {0}
 
-  #    - name: Install dependencies
-  #      run: |
-  #        install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-  #        cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz")
-  #        remotes::install_deps(dependencies = TRUE)
-  #        remotes::install_cran("covr")
-  #        remotes::install_cran("gridExtra")
-  #      shell: Rscript {0}
+     - name: Install dependencies
+       run: |
+         install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+         cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz")
+         remotes::install_deps(dependencies = TRUE)
+         remotes::install_cran("covr")
+         remotes::install_cran("gridExtra")
+       shell: Rscript {0}
 
-  #     - name: Test coverage
-  #       run: |
-  #         options(covr.gcov = 'C:/rtools40/mingw64/bin/gcov.exe');
-  #         covr::codecov(type = "all")
-  #       shell: Rscript {0}
+      - name: Test coverage
+        run: |
+          options(covr.gcov = 'C:/rtools40/mingw64/bin/gcov.exe');
+          covr::codecov(type = "all")
+        shell: Rscript {0}
