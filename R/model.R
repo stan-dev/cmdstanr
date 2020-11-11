@@ -361,8 +361,8 @@ generate_arg_strings_method <- function(quiet=TRUE,
                            #deprecated
                            threads = FALSE) {
 
-  if (!is.null(make_or_stanc)) {
-    checkmate::assert_choice(make_or_stanc, choices = c("make", "stanc"))
+  if (is.null(make_or_stanc)) {
+    stop('Internal cmdstanr error: make_or_stanc is NULL')
   }
 
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
