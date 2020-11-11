@@ -511,7 +511,7 @@ compile_method <- function(quiet = TRUE,
       threads = threads
     )
 
- # add path to the TBB library to the PATH variable to avoid copying the dll file
+  # add path to the TBB library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     current_path <- Sys.getenv("PATH")
