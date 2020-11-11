@@ -430,7 +430,7 @@ generate_arg_strings_method <- function(quiet=TRUE,
   }
   return(these_args)
 }
-CmdStanModel$set("public", name = "generate_arg_strings", value = generate_arg_strings_method)
+CmdStanModel$set("private", name = "generate_arg_strings", value = generate_arg_strings_method)
 
 run_autoformatter_method <- function(quiet = FALSE,
                                 include_paths = NULL,
@@ -441,7 +441,7 @@ run_autoformatter_method <- function(quiet = FALSE,
   stanc_options[["o"]] <- temp_hpp_file
 
   arg_strings <-
-    self$generate_arg_strings(
+    private$generate_arg_strings(
       quiet = quiet,
       make_or_stanc = "stanc",
       include_paths = include_paths,
@@ -486,7 +486,7 @@ run_autoformatter_method <- function(quiet = FALSE,
   }
   return(run_log)
 }
-CmdStanModel$set("public", name = "run_autoformatter", value = run_autoformatter_method)
+CmdStanModel$set("private", name = "run_autoformatter", value = run_autoformatter_method)
 
 compile_method <- function(quiet = TRUE,
                            dir = NULL,
@@ -497,12 +497,12 @@ compile_method <- function(quiet = TRUE,
                            #deprecated
                            threads = FALSE) {
 
-  from_autoformatter <- self$run_autoformatter(quiet = quiet, include_paths = include_paths, stanc_options = stanc_options)
+  from_autoformatter <- private$run_autoformatter(quiet = quiet, include_paths = include_paths, stanc_options = stanc_options)
   formatted_code <- gsub(pattern = '\r\n',replacement = '\n', x = from_autoformatter$stdout, fixed = TRUE)
   current_hash <- digest::digest(formatted_code, algo = "xxhash64")
 
   make_arg_strings <-
-    self$generate_arg_strings(
+    private$generate_arg_strings(
       quiet = quiet,
       make_or_stanc = "make",
       include_paths = include_paths,
@@ -668,7 +668,7 @@ check_syntax_method <- function(quiet = FALSE,
                                 include_paths = NULL,
                                 stanc_options = list()) {
 
-  from_autoformatter <- self$run_autoformatter(quiet = quiet, include_paths = include_paths, stanc_options = stanc_options)
+  from_autoformatter <- private$run_autoformatter(quiet = quiet, include_paths = include_paths, stanc_options = stanc_options)
   if (!quiet) {
     message("Stan program is syntactically correct");
   }
