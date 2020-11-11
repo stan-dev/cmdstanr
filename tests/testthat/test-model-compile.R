@@ -12,7 +12,7 @@ test_that("object initialized correctly", {
   expect_equal(mod$exe_file(), character(0))
   expect_error(
     mod$hpp_file(),
-    "The .hpp file does not exists. Please (re)compile the model.",
+    "The .hpp file does not exist. Please (re)compile the model.",
     fixed = TRUE
   )
 })
@@ -29,7 +29,7 @@ test_that("error if no compile() before model fitting", {
 test_that("compile() method works", {
   skip_on_cran()
   # remove executable if exists
-  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
+  exe <- cmdstan_ext(paste0(strip_ext(mod$stan_file()),'_d5f293b0266e270c')) #entered by-hand so test isn't circular
   if (file.exists(exe)) {
     file.remove(exe)
   }
@@ -50,13 +50,57 @@ test_that("compile() method forces recompilation force_recompile = TRUE", {
 
 test_that("compile() method forces recompilation if model modified", {
   skip_on_cran()
-  # remove executable if exists
-  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
-  if (!file.exists(exe)) {
-    mod$compile(quiet = TRUE)
+  model_code <- "
+  parameters {
+    real y;
   }
-  Sys.setFileTime(mod$stan_file(), Sys.time() + 1) #touch file to trigger recompile
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file <- write_stan_file(model_code,basename='cmdstanr-test-model-compile-mod')
+  mod <- cmdstan_model(stan_file = stan_file)
+
+  #functional change
+  model_code <- "
+  parameters {
+    real y;
+    real x;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  cat(model_code,file=stan_file,append=F)
   expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
+
+  #whitespace change
+  model_code <- "
+  parameters {
+
+    real y;
+    real x;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  cat(model_code,file=stan_file,append=F)
+  expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
+
+  #comment change
+  model_code <- "
+  parameters {
+    //test
+    real y;
+    real x;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  cat(model_code,file=stan_file,append=F)
+  expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
 })
 
 test_that("compile() method works with spaces in path", {
@@ -71,7 +115,7 @@ test_that("compile() method works with spaces in path", {
   file.copy(stan_file, stan_model_with_spaces)
 
   mod_spaces <- cmdstan_model(stan_file = stan_model_with_spaces, compile = FALSE)
-  exe <- cmdstan_ext(strip_ext(mod_spaces$stan_file()))
+  exe <- cmdstan_ext(paste0(strip_ext(stan_model_with_spaces),'_d5f293b0266e270c')) #entered by-hand so test isn't circular
   if (file.exists(exe)) {
     file.remove(exe)
   }
@@ -94,7 +138,7 @@ test_that("compilation works with include_paths", {
   skip_on_cran()
 
   stan_program_w_include <- testing_stan_file("bernoulli_include")
-  exe <- cmdstan_ext(strip_ext(stan_program_w_include))
+  exe <- cmdstan_ext(paste0(strip_ext(stan_program_w_include),'_69554fb67cd9e770')) #entered by-hand so test isn't circular
   if(file.exists(exe)) {
     file.remove(exe)
   }
@@ -118,7 +162,7 @@ test_that("compilation works with include_paths", {
   )
   expect_equal(
     mod_w_include$exe_file(),
-    cmdstan_ext(strip_ext(absolute_path(stan_program_w_include)))
+    cmdstan_ext(paste0(strip_ext(absolute_path(stan_program_w_include)),'_69554fb67cd9e770'))
   )
 })
 
@@ -126,11 +170,11 @@ test_that("name in STANCFLAGS is set correctly", {
   skip_on_cran()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows()) {
-    out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
-    out_name <- "bin/stanc.exe --name='bernoulli2_model' --o"
+    out_no_name <- "bin/stanc.exe --name=bernoulli_model --o"
+    out_name <- "bin/stanc.exe --name=bernoulli2_model --o"
   } else {
-    out_no_name <- "bin/stanc --name='bernoulli_model' --o"
-    out_name <- "bin/stanc --name='bernoulli2_model' --o"
+    out_no_name <- "bin/stanc --name=bernoulli_model --o"
+    out_name <- "bin/stanc --name=bernoulli2_model --o"
   }
   expect_output(print(out), out_no_name)
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))
@@ -172,7 +216,7 @@ test_that("compile errors are shown", {
   stan_file <- testing_stan_file("fail")
   expect_error(
     cmdstan_model(stan_file),
-    "An error occured during compilation! See the message above for more information."
+    "Syntax error found! See the message above for more information."
   )
 })
 
@@ -294,5 +338,4 @@ test_that("pedantic check works", {
   )
   expect_match(paste0(a, collapse = "\n"), "The parameter x was declared but was not used in the density calculation.")
 })
-
 
