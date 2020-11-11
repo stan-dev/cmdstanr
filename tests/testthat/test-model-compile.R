@@ -170,11 +170,11 @@ test_that("name in STANCFLAGS is set correctly", {
   skip_on_cran()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows()) {
-    out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
-    out_name <- "bin/stanc.exe --name='bernoulli2_model' --o"
+    out_no_name <- "bin/stanc.exe --name=bernoulli_model --o"
+    out_name <- "bin/stanc.exe --name=bernoulli2_model --o"
   } else {
-    out_no_name <- "bin/stanc --name='bernoulli_model' --o"
-    out_name <- "bin/stanc --name='bernoulli2_model' --o"
+    out_no_name <- "bin/stanc --name=bernoulli_model --o"
+    out_name <- "bin/stanc --name=bernoulli2_model --o"
   }
   expect_output(print(out), out_no_name)
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))

@@ -409,8 +409,8 @@ generate_arg_strings_method <- function(quiet=TRUE,
     if (isTRUE(as.logical(stanc_options[[i]]))) {
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
     } else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "='",
-       stanc_options[[i]], "'"))
+      stanc_options[[i]] <- gsub(' ','\ ',stanc_options[[i]],fixed=TRUE)
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
     }
   }
 
