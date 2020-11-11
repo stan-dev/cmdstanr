@@ -80,9 +80,14 @@ test_that("process_fitted_params() works if output_files in fit do not exist", {
   expect_true(all(file.exists(new_files)))
   chain <- 1
   for(file in new_files) {
+    if (os_is_windows()) {
+      fread_cmd <- paste0("grep.exe -v '^#' ", file)
+    } else {
+      fread_cmd <- paste0("grep -v '^#' ", file)
+    }
     suppressWarnings(
       tmp_file_gq <- data.table::fread(
-        cmd = paste0("grep -v '^#' ", file)
+        cmd = fread_cmd
       )
     )
     tmp_file_gq <- posterior::as_draws_array(tmp_file_gq)

@@ -204,9 +204,14 @@ read_cmdstan_csv <- function(files,
       all_draws <- 1
     }
     if (length(col_select) > 0) {
+      if (os_is_windows()) {
+        fread_cmd <- paste0("grep.exe -v '^#' ", output_file)
+      } else {
+        fread_cmd <- paste0("grep -v '^#' ", output_file)
+      }      
       suppressWarnings(
       draws <- data.table::fread(
-          cmd = paste0("grep -v '^#' ", output_file),
+          cmd = fread_cmd,
           select = col_select
         )
       )
@@ -383,9 +388,14 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info <- list()
   inv_metric_rows <- 0
   parsing_done <- FALSE
+  if (os_is_windows()) {
+    fread_cmd <- paste0("grep.exe '^[#a-zA-Z]' ", csv_file)
+  } else {
+    fread_cmd <- paste0("grep '^[#a-zA-Z]' ", csv_file)
+  }
   suppressWarnings(
     metadata <- data.table::fread(
-      cmd = paste0("grep '^[#a-zA-Z]' ", csv_file),
+      cmd = fread_cmd,
       colClasses = "character",
       stringsAsFactors = FALSE,
       fill = TRUE,
