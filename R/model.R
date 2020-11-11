@@ -448,7 +448,6 @@ run_autoformatter_method <- function(quiet = FALSE,
   arg_strings = self$generate_arg_strings(quiet=quiet,make_or_stanc='stanc',include_paths=include_paths,
     stanc_options=stanc_options)
 
-  #given bug in stanc (https://github.com/stan-dev/cmdstan/issues/944),
   # if pedantic-mode warnings have been requested, first run without --auto-format & with echo=!quiet
   if('--warn-pedantic' %in% arg_strings){
     pedantic_run_log <- processx::run(
