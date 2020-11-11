@@ -611,9 +611,6 @@ compile_method <- function(quiet = TRUE,
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
-  private$precompile_cpp_options_ <- NULL
-  private$precompile_stanc_options_ <- NULL
-  private$precompile_include_paths_ <- NULL
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile_method)
