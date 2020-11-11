@@ -205,7 +205,8 @@ read_cmdstan_csv <- function(files,
     }
     if (length(col_select) > 0) {
       if (os_is_windows()) {
-        fread_cmd <- paste0("C:/rtools40/usr/bin/grep.exe -v '^#' ", output_file)
+        grep_path <- repair_path(Sys.which("grep.exe"))
+        fread_cmd <- paste0(grep_path, " -v '^#' ", output_file)
       } else {
         fread_cmd <- paste0("grep -v '^#' ", output_file)
       }      
@@ -389,7 +390,8 @@ read_csv_metadata <- function(csv_file) {
   inv_metric_rows <- 0
   parsing_done <- FALSE
   if (os_is_windows()) {
-    fread_cmd <- paste0("C:/rtools40/usr/bin/grep.exe '^[#a-zA-Z]' ", csv_file)
+    grep_path <- repair_path(Sys.which("grep.exe"))
+    fread_cmd <- paste0(grep_path, " '^[#a-zA-Z]' ", csv_file)
   } else {
     fread_cmd <- paste0("grep '^[#a-zA-Z]' ", csv_file)
   }

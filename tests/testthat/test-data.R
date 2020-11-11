@@ -81,7 +81,8 @@ test_that("process_fitted_params() works if output_files in fit do not exist", {
   chain <- 1
   for(file in new_files) {
     if (os_is_windows()) {
-      fread_cmd <- paste0("C:/rtools40/usr/bin/grep.exe -v '^#' ", file)
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' ", file)
     } else {
       fread_cmd <- paste0("grep -v '^#' ", file)
     }
