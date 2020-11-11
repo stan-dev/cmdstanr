@@ -212,7 +212,7 @@ read_cmdstan_csv <- function(files,
       )
     } else {
       draws <- NULL
-    }    
+    }
     if (nrow(draws) > 0) {
       if (metadata$method == "sample") {
         if (metadata$save_warmup == 1) {
@@ -282,7 +282,6 @@ read_cmdstan_csv <- function(files,
       }
     }
   }
-
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("Supplied CSV files do not match in the following arguments: ",
@@ -398,7 +397,7 @@ read_csv_metadata <- function(csv_file) {
     stop("Supplied CSV file is corrupt!", call. = FALSE)
   }
   for (line in metadata[[1]]) {
-    if (!startsWith(line, "#")) {
+    if (!startsWith(line, "#") && is.null(csv_file_info[["model_params"]])) {
       # if no # at the start of line, the line is the CSV header
       all_names <- strsplit(line, ",")[[1]]
       csv_file_info[["sampler_diagnostics"]] <- c()
