@@ -163,7 +163,6 @@ process_fitted_params <- function(fitted_params) {
         chain <- 1
         for (path in paths) {
           chain_draws <- posterior::subset_draws(draws, chain = chain)
-          unname(chain_draws)         
           write(
             paste0("# num_samples = ", iterations),
             file = path
@@ -178,6 +177,7 @@ process_fitted_params <- function(fitted_params) {
             file = path,
             sep = ",",
             col.names = FALSE,
+            row.names = FALSE,
             append = TRUE
           )
           chain <- chain + 1

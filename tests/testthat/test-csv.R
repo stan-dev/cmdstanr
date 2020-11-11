@@ -470,3 +470,4 @@ test_that("stan_variables and stan_variable_dims works in read_cdmstan_csv()", {
 
   expect_equal(gq$metadata$stan_variable_dims, list(y_rep = 10, sum_y = 1))
 })
+
