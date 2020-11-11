@@ -20,6 +20,7 @@ some data.
   output_dir = NULL,
   chains = 4,
   parallel_chains = getOption("mc.cores", 1),
+  chain_ids = seq_len(chains),
   threads_per_chain = NULL,
   iter_warmup = NULL,
   iter_sampling = NULL,
@@ -36,6 +37,7 @@ some data.
   term_buffer = NULL,
   window = NULL,
   fixed_param = FALSE,
+  sig_figs = NULL,
   validate_csv = TRUE,
   show_messages = TRUE
 )
@@ -57,7 +59,7 @@ the appendices in the CmdStan manual for details on using these formats.
 }
 \item \code{seed}: (positive integer) A seed for the (P)RNG to pass to CmdStan.
 \item \code{refresh}: (non-negative integer) The number of iterations between
-printed screen updates.
+printed screen updates. If \code{refresh = 0}, only error messages will be printed.
 \item \code{init}: (multiple options) The initialization method for the parameters block:
 \itemize{
 \item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
@@ -102,6 +104,11 @@ files are removed when the fitted model object is garbage collected.
 corresponding the defaults used by \verb{$save_output_files()} (and similar
 methods like \verb{$save_latent_dynamics_files()}).
 }
+\item \code{sig_figs}: (positive integer) The number of significant figures used
+for the output values. By default, CmdStan represent the output values with
+6 significant figures. The upper limit for \code{sig_figs} is 18. Increasing
+this value can cause an increased usage of disk space due to larger
+output CSV files.
 }
 }
 
@@ -119,6 +126,9 @@ to run in parallel. If \code{parallel_chains} is not specified then the default
 is to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
 been set then the default is \code{1}.
+\item \code{chain_ids}: (vector) A vector of chain IDs. Must contain \code{chains} unique
+positive integers. If not set, the default chain IDs are used (integers
+starting from \code{1}).
 \item \code{threads_per_chain}: (positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of
 threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when

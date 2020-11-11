@@ -9,7 +9,8 @@ Authors@R:
            email = "rok.cesnovar@fri.uni-lj.si"),     
       person(given = "Ben", family = "Bales", role = "ctb"),     
       person(given = "Mitzi", family = "Morris", role = "ctb"), 
-      person(given = "Mikhail", family = "Popov", role = "ctb"))
+      person(given = "Mikhail", family = "Popov", role = "ctb"), 
+      person(given = "Mike", family = "Lawrence", role = "ctb")) 
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command 
     line interface for compilation and running algorithms instead of interfacing 

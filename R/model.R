@@ -568,7 +568,7 @@ check_syntax_method <- function(quiet = FALSE,
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- temp_hpp_file
 
-  stancflags_val <- ""
+  stancflags_val <- NULL
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
     include_paths <- absolute_path(include_paths)
@@ -578,7 +578,7 @@ check_syntax_method <- function(quiet = FALSE,
     } else {
       include_paths_flag <- " --include_paths="
     }
-    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
+    stancflags_val <- trimws(paste0(include_paths_flag, include_paths, " "))
   }
 
   if (is.null(stanc_options[["name"]])) {
@@ -597,9 +597,9 @@ check_syntax_method <- function(quiet = FALSE,
 
   run_log <- processx::run(
     command = stanc_cmd(),
-    args = c(self$stan_file(), stanc_built_options),
+    args = c(self$stan_file(), stanc_built_options, stancflags_val),
     wd = cmdstan_path(),
-    echo_cmd = FALSE,
+    echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
@@ -640,6 +640,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'     output_dir = NULL,
 #'     chains = 4,
 #'     parallel_chains = getOption("mc.cores", 1),
+#'     chain_ids = seq_len(chains),
 #'     threads_per_chain = NULL,
 #'     iter_warmup = NULL,
 #'     iter_sampling = NULL,
@@ -656,6 +657,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'     term_buffer = NULL,
 #'     window = NULL,
 #'     fixed_param = FALSE,
+#'     sig_figs = NULL,
 #'     validate_csv = TRUE,
 #'     show_messages = TRUE
 #'   )
@@ -676,6 +678,10 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'   is to look for the option `"mc.cores"`, which can be set for an entire \R
 #'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
 #'   been set then the default is `1`.
+#'
+#'   * `chain_ids`: (vector) A vector of chain IDs. Must contain `chains` unique
+#'   positive integers. If not set, the default chain IDs are used (integers
+#'   starting from `1`).
 #'
 #'   * `threads_per_chain`: (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
@@ -777,6 +783,7 @@ sample_method <- function(data = NULL,
                           output_dir = NULL,
                           chains = 4,
                           parallel_chains = getOption("mc.cores", 1),
+                          chain_ids = seq_len(chains),
                           threads_per_chain = NULL,
                           iter_warmup = NULL,
                           iter_sampling = NULL,
@@ -793,6 +800,7 @@ sample_method <- function(data = NULL,
                           term_buffer = NULL,
                           window = NULL,
                           fixed_param = FALSE,
+                          sig_figs = NULL,
                           validate_csv = TRUE,
                           show_messages = TRUE,
                           # deprecated
@@ -848,6 +856,7 @@ sample_method <- function(data = NULL,
   checkmate::assert_integerish(chains, lower = 1, len = 1)
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
+  checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads_per_chain)) {
       warning("'threads_per_chain' is set but the model was not compiled with ",
@@ -862,7 +871,6 @@ sample_method <- function(data = NULL,
            call. = FALSE)
     }
   }
-
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
     iter_sampling = iter_sampling,
@@ -884,20 +892,21 @@ sample_method <- function(data = NULL,
     method_args = sample_args,
     model_name = strip_ext(basename(self$exe_file())),
     exe_file = self$exe_file(),
-    proc_ids = seq_len(chains),
+    proc_ids = chain_ids,
     data_file = process_data(data),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
-    validate_csv = validate_csv
+    validate_csv = validate_csv,
+    sig_figs = sig_figs
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(
     num_procs = chains,
     parallel_procs = parallel_chains,
     threads_per_proc = threads_per_chain,
-    show_messages = show_messages
+    show_stderr_messages = show_messages
   )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
@@ -936,7 +945,8 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     output_dir = NULL,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
-#'     iter = NULL
+#'     iter = NULL,
+#'     sig_figs = NULL
 #'   )
 #'   ```
 #'
@@ -968,7 +978,8 @@ optimize_method <- function(data = NULL,
                             output_dir = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
-                            iter = NULL) {
+                            iter = NULL,
+                            sig_figs = NULL) {
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
@@ -984,10 +995,11 @@ optimize_method <- function(data = NULL,
     seed = seed,
     init = init,
     refresh = refresh,
-    output_dir = output_dir
+    output_dir = output_dir,
+    sig_figs = sig_figs
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_stdout_messages = (is.null(refresh) || refresh != 0))
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
@@ -1031,7 +1043,8 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     adapt_iter = NULL,
 #'     tol_rel_obj = NULL,
 #'     eval_elbo = NULL,
-#'     output_samples = NULL
+#'     output_samples = NULL,
+#'     sig_figs = NULL
 #'   )
 #'   ```
 #'
@@ -1081,7 +1094,8 @@ variational_method <- function(data = NULL,
                                adapt_iter = NULL,
                                tol_rel_obj = NULL,
                                eval_elbo = NULL,
-                               output_samples = NULL) {
+                               output_samples = NULL,
+                               sig_figs = NULL) {
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -1104,10 +1118,11 @@ variational_method <- function(data = NULL,
     seed = seed,
     init = init,
     refresh = refresh,
-    output_dir = output_dir
+    output_dir = output_dir,
+    sig_figs = sig_figs
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1)
+  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_stdout_messages = (is.null(refresh) || refresh != 0))
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanVB$new(runset)
@@ -1131,6 +1146,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'     data = NULL,
 #'     seed = NULL,
 #'     output_dir = NULL,
+#'     sig_figs = NULL,
 #'     parallel_chains = getOption("mc.cores", 1),
 #'     threads_per_chain = NULL
 #'   )
@@ -1197,6 +1213,7 @@ generate_quantities_method <- function(fitted_params,
                                        data = NULL,
                                        seed = NULL,
                                        output_dir = NULL,
+                                       sig_figs = NULL,
                                        parallel_chains = getOption("mc.cores", 1),
                                        threads_per_chain = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
@@ -1212,7 +1229,8 @@ generate_quantities_method <- function(fitted_params,
     proc_ids = seq_len(chains),
     data_file = process_data(data),
     seed = seed,
-    output_dir = output_dir
+    output_dir = output_dir,
+    sig_figs = sig_figs
   )
   cmdstan_procs <- CmdStanGQProcs$new(
     num_procs = chains,

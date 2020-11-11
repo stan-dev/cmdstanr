@@ -15,11 +15,25 @@ in fitting methods. (#281, #294)
 
 * Fix reporting of time after using `fixed_param` method. (#303, #307)
 
+* With `refresh = 0`, no output other than error messages is printed with
+`$optimize()` and `$variational()`. (#324)
+
+* Fix issue where names of generated files could clash. (#326, #328)
+
+* Fix missing `include_paths` in `$syntax_check()`. (#335)
+
 ### New features
 
-* `install_cmdstan()` gains argument `version` for specifying which version of 
+* `install_cmdstan()` gains argument `version` for specifying which version of
 CmdStan to install. (#300, #308)
 
+* New function `check_cmdstan_toolchain()` that checks if the appropriate
+toolchains are available. (#289)
+
+* `$sample()` method for CmdStanModel objects gains argument `chain_ids` for
+specifying custom chain IDs. (#319)
+
+* Added support for the `sig_figs` argument in CmdStan versions 2.25 and above. (#327)
 
 # cmdstanr 0.1.3
 

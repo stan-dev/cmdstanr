@@ -390,7 +390,15 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     }
     procs$set_active_procs(procs$num_alive())
   }
-  if (procs$get_proc(id)$get_exit_status() == 0) {
+  successful_fit <- FALSE
+  if (self$method() == "optimize") {
+    if (procs$proc_state(id = id) > 3) {
+      successful_fit <- TRUE
+    }
+  } else if (procs$get_proc(id)$get_exit_status() == 0) {
+    successful_fit <- TRUE
+  }
+  if (successful_fit) {
     procs$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
   } else {
     procs$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
@@ -415,7 +423,7 @@ CmdStanProcs <- R6::R6Class(
     #   Currently for non-sampling this must be set to 1.
     # @param threads_per_proc The number of threads to use per process
     #   to run parallel sections of model.
-    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL, show_messages = TRUE) {
+    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL, show_stderr_messages = TRUE, show_stdout_messages = TRUE ) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE,
                                    .var.name = "parallel_procs", null.ok = TRUE)
@@ -436,7 +444,8 @@ CmdStanProcs <- R6::R6Class(
       private$proc_state_ = zeros
       private$proc_start_time_ = zeros
       private$proc_total_time_ = zeros
-      private$show_messages_ = show_messages
+      private$show_stderr_messages_ = show_stderr_messages
+      private$show_stdout_messages_ = show_stdout_messages
       invisible(self)
     },
     num_procs = function() {
@@ -589,7 +598,7 @@ CmdStanProcs <- R6::R6Class(
       if (length(err_out)) {
         for (err_line in err_out) {
           private$proc_output_[[id]] <- c(private$proc_output_[[id]], err_line)
-          if (private$show_messages_) {
+          if (private$show_stderr_messages_) {
             message("Chain ", id, " ", err_line)
           }
         }
@@ -601,7 +610,28 @@ CmdStanProcs <- R6::R6Class(
       }
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
-        cat(line, collapse = "\n")
+        if (nzchar(line)) {
+          if (regexpr("Optimization terminated with error", line, perl = TRUE) > 0) {
+            self$set_proc_state(id, new_state = 3.5)
+          }
+          if (regexpr("Optimization terminated normally", line, perl = TRUE) > 0) {
+            self$set_proc_state(id, new_state = 4)
+          }
+          if (self$proc_state(id) == 2 && regexpr("refresh = ", line, perl = TRUE) > 0) {
+            self$set_proc_state(id, new_state = 2.5)
+          }
+          if (private$proc_state_[[id]] == 3.5) {
+            message(line)
+          } else if (private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) {        
+            cat(line, collapse = "\n")
+          }
+        } else {
+          # after the metadata is printed and we found a blank line
+          # this represents the start of fitting
+          if (self$proc_state(id) == 2.5) {
+              self$set_proc_state(id, new_state = 3)
+          } 
+        }
       }
       invisible(self)
     },
@@ -613,7 +643,14 @@ CmdStanProcs <- R6::R6Class(
                 format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n")
       }
-    }
+    },
+    return_codes = function() {
+      ret <- c()
+      for (id in private$proc_ids_) {
+        ret <- c(ret, self$get_proc(id)$get_exit_status())
+      }
+      ret
+    }    
   ),
   private = list(
     processes_ = NULL, # will be list of processx::process objects
@@ -629,7 +666,8 @@ CmdStanProcs <- R6::R6Class(
     proc_output_ = list(),
     proc_error_ouput_ = list(),
     total_time_ = numeric(),
-    show_messages_ = TRUE
+    show_stderr_messages_ = TRUE,
+    show_stdout_messages_ = TRUE
   )
 )
 
@@ -646,6 +684,7 @@ CmdStanMCMCProcs <- R6::R6Class(
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
+          ignore_line <- FALSE
           last_section_start_time <- private$proc_section_time_[id, "last_section_start"]
           state <- private$proc_state_[[id]]
           # State machine for reading stdout.
@@ -659,7 +698,11 @@ CmdStanMCMCProcs <- R6::R6Class(
           # (Note: state 2 is only used because rejection in cmdstan is printed
           # to stdout not stderr and we want to avoid printing the intial chain metadata)
           next_state <- state
-          if (state < 3 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
+          if (state < 3 && regexpr("refresh =", line, perl = TRUE) > 0) {
+            state <- 1.5
+            next_state <- 1.5
+          }
+          if (state <= 3 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
             state <- 2
             next_state <- 2
           }
@@ -680,15 +723,25 @@ CmdStanMCMCProcs <- R6::R6Class(
           }
           if (regexpr("seconds (Total)", line, fixed = TRUE) > 0) {
             private$proc_total_time_[[id]] <- as.double(trimws(sub("seconds (Total)", "", line, fixed = TRUE)))
+            next_state <- 5
+            state <- 5
           }
           if (regexpr("seconds (Sampling)", line, fixed = TRUE) > 0) {
-            
             private$proc_section_time_[id, "sampling"] <- as.double(trimws(sub("seconds (Sampling)", "", line, fixed = TRUE)))
+            next_state <- 5
+            state <- 5
           }
           if (regexpr("seconds (Warm-up)", line, fixed = TRUE) > 0) {
             private$proc_section_time_[id, "warmup"] <- as.double(trimws(sub("Elapsed Time: ", "", sub("seconds (Warm-up)", "", line, fixed = TRUE), fixed = TRUE)))
+            next_state <- 5
+            state <- 5
           }
-          if (state > 1 && state < 5) {
+          if (regexpr("Gradient evaluation took",line, fixed = TRUE) > 0
+              || regexpr("leapfrog steps per transition would take",line, fixed = TRUE) > 0
+              || regexpr("Adjust your expectations accordingly!",line, fixed = TRUE) > 0) {
+            ignore_line <- TRUE
+          }
+          if (state > 1.5 && state < 5 && !ignore_line) {
             if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
@@ -703,6 +756,10 @@ CmdStanMCMCProcs <- R6::R6Class(
             message("Chain ", id, " ", line)
           }
           private$proc_state_[[id]] <- next_state
+        } else {
+          if (private$proc_state_[[id]] == 1.5) {
+            private$proc_state_[[id]] <- 3
+          }
         }
       }
       invisible(self)
@@ -783,10 +840,16 @@ CmdStanGQProcs <- R6::R6Class(
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
           if (self$proc_state(id) == 1 && regexpr("refresh = ", line, perl = TRUE) > 0) {
-            self$set_proc_state(id, new_state = 2)
+            self$set_proc_state(id, new_state = 1.5)
           } else if (self$proc_state(id) >= 2) {
             cat("Chain", id, line, "\n")
           }
+        } else {
+          # after the metadata is printed and we found a blank line
+          # this represents the start of fitting
+          if (self$proc_state(id) == 1.5) {
+              self$set_proc_state(id, new_state = 2)
+          } 
         }
       }
       invisible(self)
