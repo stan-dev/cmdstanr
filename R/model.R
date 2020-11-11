@@ -571,9 +571,6 @@ compile_method <- function(quiet = TRUE,
   if (!force_recompile) {
     message("Model executable is up to date!")
     private$cpp_options_ <- cpp_options
-    # private$precompile_cpp_options_ <- NULL
-    # private$precompile_stanc_options_ <- NULL
-    # private$precompile_include_paths_ <- NULL
     self$exe_file(exe)
     return(invisible(self))
   } else {
