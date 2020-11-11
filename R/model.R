@@ -402,11 +402,6 @@ generate_arg_strings_method <- function(quiet=TRUE,
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- model_name
   }
-  if (make_or_stanc == "make") {
-    char_for_stanc_built_options <- "'"
-  } else {
-    char_for_stanc_built_options <- ""
-  }
 
   stanc_built_options <- c()
   for (i in seq_len(length(stanc_options))) {
@@ -414,8 +409,8 @@ generate_arg_strings_method <- function(quiet=TRUE,
     if (isTRUE(as.logical(stanc_options[[i]]))) {
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
     } else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=",
-        char_for_stanc_built_options, stanc_options[[i]], char_for_stanc_built_options))
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "='",
+       stanc_options[[i]], "'"))
     }
   }
 
