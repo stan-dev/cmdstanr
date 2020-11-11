@@ -134,4 +134,3 @@ test_that("fitted_params_files() works", {
     fit$output_files()
   )
 })
-#
