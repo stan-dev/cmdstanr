@@ -353,7 +353,7 @@ CmdStanModel <- R6::R6Class(
 NULL
 
 generate_arg_strings_method <- function(quiet=TRUE,
-                           make_or_stanc=list('make','stanc'),
+                           make_or_stanc = c("make", "stanc"),
                            dir = NULL,
                            include_paths = NULL,
                            cpp_options = list(),
@@ -362,7 +362,7 @@ generate_arg_strings_method <- function(quiet=TRUE,
                            threads = FALSE) {
 
   if (!is.null(make_or_stanc)) {
-    checkmate::assert_choice(make_or_stanc, choices=c('make','stanc'))
+    checkmate::assert_choice(make_or_stanc, choices = c("make", "stanc"))
   }
 
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
@@ -402,19 +402,19 @@ generate_arg_strings_method <- function(quiet=TRUE,
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- model_name
   }
-  if(make_or_stanc=='make'){
+  if (make_or_stanc == "make") {
     char_for_stanc_built_options <- "'"
-  }else{
+  } else {
     char_for_stanc_built_options <- ""
   }
 
-  stanc_built_options = c()
+  stanc_built_options <- c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
     if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options = c(stanc_built_options, paste0("--", option_name))
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
     } else {
-      stanc_built_options = c(stanc_built_options, paste0("--", option_name, "=",
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=",
         char_for_stanc_built_options, stanc_options[[i]], char_for_stanc_built_options))
     }
   }
@@ -423,15 +423,15 @@ generate_arg_strings_method <- function(quiet=TRUE,
     prepare_precompiled(cpp_options, quiet)
   }
 
-  if(make_or_stanc=='make'){
+  if (make_or_stanc == "make"){
     stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
-    these_args = c(
+    these_args <- c(
       cpp_options_to_compile_flags(cpp_options),
       stancflags_val
     )
-  }else{
+  } else {
     stancflags_val <- trimws(c(stancflags_val, c(stanc_built_options)))
-    these_args = c(stancflags_val)
+    these_args <- c(stancflags_val)
   }
   return(these_args)
 }
@@ -445,11 +445,16 @@ run_autoformatter_method <- function(quiet = FALSE,
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- temp_hpp_file
 
-  arg_strings = self$generate_arg_strings(quiet=quiet,make_or_stanc='stanc',include_paths=include_paths,
-    stanc_options=stanc_options)
+  arg_strings <-
+    self$generate_arg_strings(
+      quiet = quiet,
+      make_or_stanc = "stanc",
+      include_paths = include_paths,
+      stanc_options = stanc_options
+    )
 
   # if pedantic-mode warnings have been requested, first run without --auto-format & with echo=!quiet
-  if('--warn-pedantic' %in% arg_strings){
+  if ("--warn-pedantic" %in% arg_strings) {
     pedantic_run_log <- processx::run(
       command = stanc_cmd(),
       args = c(self$stan_file(), arg_strings),
@@ -497,12 +502,19 @@ compile_method <- function(quiet = TRUE,
                            #deprecated
                            threads = FALSE) {
 
-  from_autoformatter <- self$run_autoformatter(quiet=quiet,include_paths=include_paths,stanc_options=stanc_options)
-  formatted_code = gsub(pattern='\r\n',replacement='\n',x=from_autoformatter$stdout,fixed=T)
-  current_hash <- digest::digest(formatted_code,algo='xxhash64')
+  from_autoformatter <- self$run_autoformatter(quiet = quiet, include_paths = include_paths, stanc_options = stanc_options)
+  formatted_code <- gsub(pattern = '\r\n',replacement = '\n', x = from_autoformatter$stdout, fixed = TRUE)
+  current_hash <- digest::digest(formatted_code, algo = "xxhash64")
 
-  make_arg_strings = self$generate_arg_strings(quiet=quiet,make_or_stanc='make',include_paths=include_paths,
-    cpp_options=cpp_options,stanc_options=stanc_options,threads=threads)
+  make_arg_strings <-
+    self$generate_arg_strings(
+      quiet = quiet,
+      make_or_stanc = "make",
+      include_paths = include_paths,
+      cpp_options = cpp_options,
+      stanc_options = stanc_options,
+      threads = threads
+    )
 
  # add path to the TBB library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
@@ -561,9 +573,9 @@ compile_method <- function(quiet = TRUE,
     regex_string <- gsub('(.exe)$','(.exe)',regex_string)
     regex_string <- paste0(regex_string,'$')
     existing_exes <- list.files(
-      path = dirname(exe_name_without_hash)
-      , pattern = regex_string
-      , full.names = T
+      path = dirname(exe_name_without_hash),
+      pattern = regex_string,
+      full.names = TRUE
     )
     file.remove(existing_exes)
   }
@@ -586,7 +598,7 @@ compile_method <- function(quiet = TRUE,
 
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(tmp_exe,make_arg_strings),
+    args = c(tmp_exe, make_arg_strings),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
@@ -661,7 +673,7 @@ check_syntax_method <- function(quiet = FALSE,
                                 include_paths = NULL,
                                 stanc_options = list()) {
 
-  from_autoformatter <- self$run_autoformatter(quiet=quiet,include_paths=include_paths,stanc_options=stanc_options)
+  from_autoformatter <- self$run_autoformatter(quiet = quiet, include_paths = include_paths, stanc_options = stanc_options)
   if (!quiet) {
     message("Stan program is syntactically correct");
   }

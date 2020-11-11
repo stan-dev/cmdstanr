@@ -29,7 +29,7 @@ test_that("error if no compile() before model fitting", {
 test_that("compile() method works", {
   skip_on_cran()
   # remove executable if exists
-  exe = cmdstan_ext(paste0(strip_ext(mod$stan_file()),'_d5f293b0266e270c')) #entered by-hand so test isn't circular
+  exe <- cmdstan_ext(paste0(strip_ext(mod$stan_file()),'_d5f293b0266e270c')) #entered by-hand so test isn't circular
   if (file.exists(exe)) {
     file.remove(exe)
   }
@@ -115,7 +115,7 @@ test_that("compile() method works with spaces in path", {
   file.copy(stan_file, stan_model_with_spaces)
 
   mod_spaces <- cmdstan_model(stan_file = stan_model_with_spaces, compile = FALSE)
-  exe = cmdstan_ext(paste0(strip_ext(stan_model_with_spaces),'_d5f293b0266e270c')) #entered by-hand so test isn't circular
+  exe <- cmdstan_ext(paste0(strip_ext(stan_model_with_spaces),'_d5f293b0266e270c')) #entered by-hand so test isn't circular
   if (file.exists(exe)) {
     file.remove(exe)
   }
@@ -138,7 +138,7 @@ test_that("compilation works with include_paths", {
   skip_on_cran()
 
   stan_program_w_include <- testing_stan_file("bernoulli_include")
-  exe = cmdstan_ext(paste0(strip_ext(stan_program_w_include),'_69554fb67cd9e770')) #entered by-hand so test isn't circular
+  exe <- cmdstan_ext(paste0(strip_ext(stan_program_w_include),'_69554fb67cd9e770')) #entered by-hand so test isn't circular
   if(file.exists(exe)) {
     file.remove(exe)
   }
@@ -338,5 +338,4 @@ test_that("pedantic check works", {
   )
   expect_match(paste0(a, collapse = "\n"), "The parameter x was declared but was not used in the density calculation.")
 })
-
 
