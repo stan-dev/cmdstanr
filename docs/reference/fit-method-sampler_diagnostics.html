@@ -81,7 +81,7 @@ chain of MCMC." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -214,7 +214,7 @@ variable). The variables for Stan's default MCMC algorithm are
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>sampler_diagnostics</span> <span class='kw'>&lt;-</span> <span class='no'>fit</span>$<span class='fu'>sampler_diagnostics</span>()
-<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>sampler_diagnostics</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:6] 0.841 1 0.887 0.959 0.887 ...
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>sampler_diagnostics</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:6] 1 0.783 0.876 0.911 0.984 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
@@ -222,18 +222,18 @@ variable). The variables for Stan's default MCMC algorithm are
 <span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)
 <span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>sampler_diagnostics</span>)</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 6 variables
 #&gt;    accept_stat__ stepsize__ treedepth__ n_leapfrog__ divergent__ energy__
-#&gt; 1           0.84       0.86           2            7           0       66
-#&gt; 2           1.00       0.86           2            3           0       66
-#&gt; 3           0.89       0.86           2            7           0       66
-#&gt; 4           0.96       0.86           2            7           0       66
-#&gt; 5           0.89       0.86           2            3           0       67
-#&gt; 6           0.96       0.86           2            3           0       67
-#&gt; 7           0.86       0.86           2            3           0       68
-#&gt; 8           1.00       0.86           2            3           0       69
-#&gt; 9           0.94       0.86           2            7           0       68
-#&gt; 10          0.80       0.86           2            3           0       70
+#&gt; 1           1.00       0.66           2            3           0       66
+#&gt; 2           0.78       0.66           2            3           0       68
+#&gt; 3           0.88       0.66           3            7           0       68
+#&gt; 4           0.91       0.66           2            3           0       68
+#&gt; 5           0.98       0.66           2            3           0       68
+#&gt; 6           1.00       0.66           2            3           0       69
+#&gt; 7           0.88       0.66           3            7           0       68
+#&gt; 8           0.88       0.66           3            7           0       68
+#&gt; 9           0.99       0.66           3            7           0       67
+#&gt; 10          0.79       0.66           2            7           0       71
 #&gt; # ... with 3990 more draws
-#&gt; # ... hidden meta-columns {'.chain', '.iteration', '.draw'}</div><div class='input'># }
+#&gt; # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</div><div class='input'># }
 
 </div></pre>
   </div>

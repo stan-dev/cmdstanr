@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract (penalized) maximum likelihood estimate after optimization — fit-method-mle • cmdstanr</title>
+<title>Extract return codes from CmdStan — fit-method-return_codes • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,14 +46,9 @@
 
 
 
-<meta property="og:title" content="Extract (penalized) maximum likelihood estimate after optimization — fit-method-mle" />
-<meta property="og:description" content="The $mle() method is only available for CmdStanMLE objects.
-It returns the penalized maximum likelihood estimate (posterior mode) as a
-numeric vector with one element per variable. The returned vector does not
-include lp__, the total log probability (target) accumulated in the
-model block of the Stan program, which is available via the
-$lp() method and also included in the
-$draws() method." />
+<meta property="og:title" content="Extract return codes from CmdStan — fit-method-return_codes" />
+<meta property="og:description" content="The $return_codes() method returns a vector of return codes
+from the CmdStan run(s). A return code of 0 indicates a successful run." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -176,19 +171,14 @@ $draws() method." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract (penalized) maximum likelihood estimate after optimization</h1>
+    <h1>Extract return codes from CmdStan</h1>
     <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
-    <div class="hidden name"><code>fit-method-mle.Rd</code></div>
+    <div class="hidden name"><code>fit-method-return_codes.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The <code>$mle()</code> method is only available for <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code> objects.
-It returns the penalized maximum likelihood estimate (posterior mode) as a
-numeric vector with one element per variable. The returned vector does not
-include <code>lp__</code>, the total log probability (<code>target</code>) accumulated in the
-<code>model</code> block of the Stan program, which is available via the
-<code><a href='fit-method-lp.html'>$lp()</a></code> method and also included in the
-<code><a href='fit-method-draws.html'>$draws()</a></code> method.</p>
+    <p>The <code>$return_codes()</code> method returns a vector of return codes
+from the CmdStan run(s). A return code of 0 indicates a successful run.</p>
     </div>
 
 
@@ -196,35 +186,25 @@ include <code>lp__</code>, the total log probability (<code>target</code>) accum
     <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
 
     
-<pre>$mle(variables = NULL)
+<pre>$return_codes()
 </pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>variables</code>: (character vector) The variables (parameters and generated
-quantities) to include. If NULL (the default) then all variables are
-included.</p></li>
-</ul>
-
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    
-
-<p>A numeric vector. See <strong>Examples</strong>.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code>, <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>()</div><div class='output co'>#&gt;     alpha   beta[1]   beta[2]   beta[3] 
-#&gt;  0.364454 -0.631561 -0.258958  0.648495 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"alpha"</span>)</div><div class='output co'>#&gt;    alpha 
-#&gt; 0.364454 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt;   beta[1]   beta[2]   beta[3] 
-#&gt; -0.631561 -0.258958  0.648495 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta[2]"</span>)</div><div class='output co'>#&gt;   beta[2] 
-#&gt; -0.258958 </div><div class='input'># }
+<span class='co'># example with return codes all zero</span>
+<span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"schools"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"sample"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Warning: 141 of 4000 (4.0%) transitions ended with a divergence.</span>
+#&gt; <span class='message'>This may indicate insufficient exploration of the posterior distribution.</span>
+#&gt; <span class='message'>Possible remedies include: </span>
+#&gt; <span class='message'>  * Increasing adapt_delta closer to 1 (default is 0.8) </span>
+#&gt; <span class='message'>  * Reparameterizing the model (e.g. using a non-centered parameterization)</span>
+#&gt; <span class='message'>  * Using informative or weakly informative prior distributions </span></div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'>return_codes</span>() <span class='co'># should be all zero</span></div><div class='output co'>#&gt; [1] 0 0 0 0</div><div class='input'>
+<span class='co'># example of non-zero return code (optimization fails for hierarchical model)</span>
+<span class='no'>fit_opt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"schools"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='output co'>#&gt; <span class='message'>Optimization terminated with error: </span></div><div class='output co'>#&gt; <span class='message'>  Line search failed to achieve a sufficient decrease, no more progress can be made</span></div><div class='input'><span class='no'>fit_opt</span>$<span class='fu'>return_codes</span>() <span class='co'># should be non-zero</span></div><div class='output co'>#&gt; [1] 70</div><div class='input'># }
 
 </div></pre>
   </div>

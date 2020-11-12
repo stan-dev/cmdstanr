@@ -427,11 +427,16 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 }
 
 install_mingw32_make <- function(quiet = FALSE) {
+  rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
+  if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
+    warning("No write permissions in the RTools folder. This might prevent installing mingw32-make.",
+            " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
+  }
   if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
   processx::run(
     "pacman",
     args = c("-Syu", "mingw-w64-x86_64-make","--noconfirm"),
-    wd = file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin"),
+    wd = rtools_usr_bin,
     error_on_status = TRUE
   )
   write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
@@ -594,6 +599,9 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   } else {
     check_unix_make()
     check_unix_cpp_compiler()
+  }
+  if (!checkmate::test_directory(dirname(tempdir()), access = "w")) {
+    stop("No write permissions to the temporary folder! Please change the permissions or location of the temporary folder.", call. = FALSE)
   }
   if (!quiet) {
     message("The CmdStan toolchain is setup properly!")

@@ -295,4 +295,51 @@ test_that("pedantic check works", {
   expect_match(paste0(a, collapse = "\n"), "The parameter x was declared but was not used in the density calculation.")
 })
 
+test_that("compiling stops on hyphens in stanc_options", {
+  skip_on_cran()
+  hyphens <- list("--allow-undefined")
+  hyphens2 <- list("--allow-undefined" = TRUE)
+  hyphens3 <- list("--o" = "something")
+  stan_file <- testing_stan_file("bernoulli")
+  expect_error(
+    cmdstan_model(stan_file, stanc_options = hyphens, compile = FALSE),
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    fixed = TRUE
+  )
+  expect_error(
+    cmdstan_model(stan_file, stanc_options = hyphens2, compile = FALSE),
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    fixed = TRUE
+  )
+  expect_error(
+    cmdstan_model(stan_file, stanc_options = hyphens3, compile = FALSE),
+    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    fixed = TRUE
+  )
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_error(
+    mod$compile(stanc_options = hyphens),
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    fixed = TRUE
+  )
+  expect_error(
+    mod$compile(stanc_options = hyphens2),
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    fixed = TRUE
+  )
+  expect_error(
+    mod$compile(stanc_options = hyphens3),
+    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    fixed = TRUE
+  )
+})
 
+test_that("compiling works with only names in list", {
+  skip_on_cran()
+  stan_file <- testing_stan_file("bernoulli")
+  mod <- cmdstan_model(stan_file, stanc_options = list("allow-undefined", "warn-pedantic"), force_recompile = TRUE)
+  checkmate::expect_r6(
+    mod,
+    "CmdStanModel"
+  )
+})

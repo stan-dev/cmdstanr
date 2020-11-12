@@ -41,8 +41,8 @@ install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOpt
 or you can install the latest development version from GitHub:
 
 ```r
-# install.packages("devtools")
-devtools::install_github("stan-dev/cmdstanr")
+# install.packages("remotes")
+remotes::install_github("stan-dev/cmdstanr")
 ```
 
 ### Contributing 

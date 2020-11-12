@@ -97,7 +97,7 @@ should typically be followed by calling rebuild_cmdstan()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -219,8 +219,10 @@ should typically be followed by calling <code>rebuild_cmdstan()</code>.</p>
   <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>overwrite</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>timeout</span> <span class='kw'>=</span> <span class='fl'>1200</span>,
+  <span class='kw'>version</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>release_url</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>()
+  <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>check_toolchain</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )
 
 <span class='fu'>rebuild_cmdstan</span>(
@@ -230,7 +232,9 @@ should typically be followed by calling <code>rebuild_cmdstan()</code>.</p>
   <span class='kw'>timeout</span> <span class='kw'>=</span> <span class='fl'>600</span>
 )
 
-<span class='fu'>cmdstan_make_local</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>append</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+<span class='fu'>cmdstan_make_local</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>append</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+
+<span class='fu'>check_cmdstan_toolchain</span>(<span class='kw'>fix</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -251,8 +255,12 @@ been set then the default is <code>2</code>.</p></td>
     </tr>
     <tr>
       <th>quiet</th>
-      <td><p>Should the verbose output from the system processes be
-suppressed when building the CmdStan binaries? The default is <code>FALSE</code>.</p></td>
+      <td><p>For <code>install_cmdstan()</code>, should the verbose output from the
+system processes be suppressed when building the CmdStan binaries?
+The default is <code>FALSE</code>.
+For <code>check_cmdstan_toolchain()</code>, should the function supress
+printing informational messages? The default is <code>FALSE</code>.
+If <code>TRUE</code> <code>check_cmdstan_toolchain()</code> only outputs errors.</p></td>
     </tr>
     <tr>
       <th>overwrite</th>
@@ -267,10 +275,17 @@ installation.</p></td>
 installation process.</p></td>
     </tr>
     <tr>
+      <th>version</th>
+      <td><p>Specifies the Cmdstan release version to be
+installed. By default set to <code>NULL</code>, which downloads the latest stable
+release from <a href='https://github.com/stan-dev/cmdstan/releases'>GitHub</a>.</p></td>
+    </tr>
+    <tr>
       <th>release_url</th>
       <td><p>Specifies the URL to a specific Cmdstan release to be
 installed. By default set to <code>NULL</code>, which downloads the latest stable
-release from <a href='https://github.com/stan-dev/cmdstan/releases'>GitHub</a>.</p></td>
+release from <a href='https://github.com/stan-dev/cmdstan/releases'>GitHub</a>. If
+<code>version</code> and <code>release_url</code> are set, <code>version</code> is used.</p></td>
     </tr>
     <tr>
       <th>cpp_options</th>
@@ -279,10 +294,23 @@ written to the <code>make/local</code> file. For example, <code><a href='https:/
 will force the use of clang for compilation.</p></td>
     </tr>
     <tr>
+      <th>check_toolchain</th>
+      <td><p>Should <code>install_cmdstan()</code> check that the
+required toolchain is installed and properly configured.
+The default is <code>TRUE</code>.</p></td>
+    </tr>
+    <tr>
       <th>append</th>
       <td><p>For <code>cmdstan_make_local()</code>, should the listed makefile flags be
 appended to the end of the existing <code>make/local</code> file? The default is <code>TRUE</code>.
 If <code>FALSE</code> the file is overwritten.</p></td>
+    </tr>
+    <tr>
+      <th>fix</th>
+      <td><p>For <code>check_cmdstan_toolchain()</code>, should CmdStanR attempt to fix
+any detected toolchain problems? Currently this option is only available on
+Windows. The default is <code>FALSE</code>, in which case problems are only reported
+along with suggested fixes.</p></td>
     </tr>
     </table>
 
@@ -301,7 +329,9 @@ the updated contents are returned.</p>
   <span class='kw'>PRECOMPILED_HEADERS</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )
 <span class='co'># cmdstan_make_local(cpp_options = cpp_options)</span>
-<span class='co'># rebuild_cmdstan()</span></div></pre>
+<span class='co'># rebuild_cmdstan()</span>
+
+<span class='co'># check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -173,6 +173,51 @@
       <small>Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="cmdstanr-020" class="section level1">
+<h1 class="page-header" data-toc-text="0.2.0">
+<a href="#cmdstanr-020" class="anchor"></a>cmdstanr 0.2.0</h1>
+<div id="bug-fixes" class="section level3">
+<h3 class="hasAnchor">
+<a href="#bug-fixes" class="anchor"></a>Bug fixes</h3>
+<ul>
+<li><p>Fix potential indexing error if using <code><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv()</a></code> with CSV files created by CmdStan without CmdStanR. (<a href='https://github.com/stan-dev/cmdstanr/issues/291'>#291</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/292'>#292</a>, <a href='https://github.com/johnlees'>@johnlees</a>)</p></li>
+<li><p>Fix error when returning draws or sampler diagnostics for a fit with only warmup and no samples. (<a href='https://github.com/stan-dev/cmdstanr/issues/288'>#288</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/293'>#293</a>)</p></li>
+<li><p>Fix trailing slashes issue for <code>dir</code> in <code><a href="../reference/cmdstan_model.html">cmdstan_model()</a></code> and <code>output_dir</code> in fitting methods. (<a href='https://github.com/stan-dev/cmdstanr/issues/281'>#281</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/294'>#294</a>)</p></li>
+<li><p>Fix dimensions error when processing a list of matrices passed in as <code>data</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/296'>#296</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/302'>#302</a>)</p></li>
+<li><p>Fix reporting of time after using <code>fixed_param</code> method. (<a href='https://github.com/stan-dev/cmdstanr/issues/303'>#303</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/307'>#307</a>)</p></li>
+<li><p>With <code>refresh = 0</code>, no output other than error messages is printed with <code>$optimize()</code> and <code>$variational()</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/324'>#324</a>)</p></li>
+<li><p>Fix issue where names of generated files could clash. (<a href='https://github.com/stan-dev/cmdstanr/issues/326'>#326</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/328'>#328</a>)</p></li>
+<li><p>Fix missing <code>include_paths</code> in <code>$syntax_check()</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/335'>#335</a>, <a href='https://github.com/mike-lawrence'>@mike-lawrence</a>)</p></li>
+</ul>
+</div>
+<div id="new-features" class="section level3">
+<h3 class="hasAnchor">
+<a href="#new-features" class="anchor"></a>New features</h3>
+<ul>
+<li><p>CSV reading is now faster by using <code><a href="https://Rdatatable.gitlab.io/data.table/reference/fread.html">data.table::fread()</a></code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/318'>#318</a>)</p></li>
+<li><p><code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> gains argument <code>version</code> for specifying which version of CmdStan to install. (<a href='https://github.com/stan-dev/cmdstanr/issues/300'>#300</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/308'>#308</a>)</p></li>
+<li><p>New function <code><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain()</a></code> that checks if the appropriate toolchains are available. (<a href='https://github.com/stan-dev/cmdstanr/issues/289'>#289</a>)</p></li>
+<li><p><code>$sample()</code> method for CmdStanModel objects gains argument <code>chain_ids</code> for specifying custom chain IDs. (<a href='https://github.com/stan-dev/cmdstanr/issues/319'>#319</a>)</p></li>
+<li><p>Added support for the <code>sig_figs</code> argument in CmdStan versions 2.25 and above. (<a href='https://github.com/stan-dev/cmdstanr/issues/327'>#327</a>)</p></li>
+<li><p>Added checks if the user has the necessary permissions in the RTools and temporary folders. (<a href='https://github.com/stan-dev/cmdstanr/issues/343'>#343</a>)</p></li>
+</ul>
+</div>
+</div>
+    <div id="cmdstanr-013" class="section level1">
+<h1 class="page-header" data-toc-text="0.1.3">
+<a href="#cmdstanr-013" class="anchor"></a>cmdstanr 0.1.3</h1>
+<ul>
+<li>New <code>$check_syntax()</code> method for CmdStanModel objects. (<a href='https://github.com/stan-dev/cmdstanr/issues/276'>#276</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/277'>#277</a>)</li>
+</ul>
+</div>
+    <div id="cmdstanr-012" class="section level1">
+<h1 class="page-header" data-toc-text="0.1.2">
+<a href="#cmdstanr-012" class="anchor"></a>cmdstanr 0.1.2</h1>
+<ul>
+<li><p>User is notified by message at load time if a new release of CmdStan is available. (<a href='https://github.com/stan-dev/cmdstanr/issues/265'>#265</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/273'>#273</a>)</p></li>
+<li><p><code><a href="../reference/write_stan_file.html">write_stan_file()</a></code> replaces <code><a href="../reference/write_stan_tempfile.html">write_stan_tempfile()</a></code>, which is now deprecated. With the addition of the <code>dir</code> argument, the file written is not necessarily temporary. (<a href='https://github.com/stan-dev/cmdstanr/issues/267'>#267</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/272'>#272</a>)</p></li>
+</ul>
+</div>
     <div id="cmdstanr-011" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.1">
 <a href="#cmdstanr-011" class="anchor"></a>cmdstanr 0.1.1</h1>

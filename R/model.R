@@ -201,6 +201,7 @@ CmdStanModel <- R6::R6Class(
       private$stan_file_ <- absolute_path(stan_file)
 
       args <- list(...)
+      check_stanc_options(args$stanc_options)
       private$precompile_cpp_options_ <- args$cpp_options %||% list()
       private$precompile_stanc_options_ <- args$stanc_options %||% list()
       private$precompile_include_paths_ <- args$include_paths
@@ -366,6 +367,7 @@ compile_method <- function(quiet = TRUE,
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
+  check_stanc_options(stanc_options)
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
@@ -465,19 +467,18 @@ compile_method <- function(quiet = TRUE,
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- model_name
   }
-  stanc_built_options = c()
+  stanc_built_options <- c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
     if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options = c(stanc_built_options, paste0("--", option_name))
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
+    } else if (is.null(option_name) || !nzchar(option_name)) {
+      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
     } else {
-      stanc_built_options = c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
-  if (cmdstan_version() < "2.24") {
-    prepare_precompiled(cpp_options, quiet)
-  }
   run_log <- processx::run(
     command = make_cmd(),
     args = c(tmp_exe,
