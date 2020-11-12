@@ -429,7 +429,7 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 install_mingw32_make <- function(quiet = FALSE) {
   rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
-    warning("No write permissions in the RTools folder. This might prevent installing mingw32-make."
+    warning("No write permissions in the RTools folder. This might prevent installing mingw32-make.",
             " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
   }
   if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
