@@ -162,19 +162,22 @@ process_fitted_params <- function(fitted_params) {
         paths <- file.path(tempdir(), paths)
         chain <- 1
         for (path in paths) {
-          chain_draws <- posterior::as_draws_df(posterior::subset_draws(draws, chain = chain))
-          colnames(chain_draws) <- unrepair_variable_names(variables)
+          chain_draws <- posterior::subset_draws(draws, chain = chain)
           write(
             paste0("# num_samples = ", iterations),
-            file = path,
-            append = FALSE
+            file = path
           )
-          vroom::vroom_write(
+          write(
+            paste0(unrepair_variable_names(variables), collapse = ","),
+            file = path,
+            append = TRUE
+          )
+          utils::write.table(
             chain_draws,
-            delim = ",",
-            path = path,
-            col_names = TRUE,
-            progress = FALSE,
+            file = path,
+            sep = ",",
+            col.names = FALSE,
+            row.names = FALSE,
             append = TRUE
           )
           chain <- chain + 1
