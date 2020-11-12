@@ -297,9 +297,9 @@ test_that("pedantic check works", {
 
 test_that("compiling stops on hyphens in stanc_options", {
   skip_on_cran()
-  hyphens = list("--allow-undefined")
-  hyphens2 = list("--allow-undefined" = TRUE)
-  hyphens3 = list("--o" = "something")
+  hyphens <- list("--allow-undefined")
+  hyphens2 <- list("--allow-undefined" = TRUE)
+  hyphens3 <- list("--o" = "something")
   stan_file <- testing_stan_file("bernoulli")
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens, compile = FALSE),

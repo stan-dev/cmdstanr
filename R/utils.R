@@ -211,15 +211,17 @@ cpp_options_to_compile_flags <- function(cpp_options) {
 check_stanc_options <- function(stanc_options) {
   i <- 1
   names <- names(stanc_options)
-  for(s in stanc_options){
-    if(!is.null(names[i]) && nzchar(names[i])) {
+  for (s in stanc_options){
+    if (!is.null(names[i]) && nzchar(names[i])) {
       name <- names[i]
     } else {
       name <- s
     }
     if (startsWith(name, "--")) {
-      stop("No leading hyphens allowed in stanc options (",name, "). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
-         call. = FALSE)
+      stop("No leading hyphens allowed in stanc options (", name, "). ",
+           "Use options without leading hyphens, like for example ",
+           "`stanc_options = list('allow-undefined')`",
+           call. = FALSE)
     }
     i <- i + 1
   }
