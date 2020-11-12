@@ -225,67 +225,6 @@ check_stanc_options <- function(stanc_options) {
   }
 }
 
-prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
-  flags <- NULL
-  if (!is.null(cpp_options$stan_threads)) {
-    flags <- c(flags, "threads")
-  }
-  if (!is.null(cpp_options$stan_mpi)) {
-    flags <- c(flags, "mpi")
-  }
-  if (!is.null(cpp_options$stan_opencl)) {
-    flags <- c(flags, "opencl")
-  }
-  if (is.null(flags)) {
-    flags <- "noflags"
-  } else {
-    flags <- paste0(flags, collapse = "_")
-  }
-  main_path_w_flags <- file.path(cmdstan_path(), "src", "cmdstan", paste0("main_", flags, ".o"))
-  main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-  model_header_path_w_flags <- file.path(cmdstan_path(), "stan", "src", "stan", "model", paste0("model_header_", flags, ".hpp.gch"))
-  model_header_path_gch <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.hpp.gch")
-  if (file.exists(model_header_path_gch)) {
-    model_header_gch_used <- TRUE
-  } else {
-    model_header_gch_used <- FALSE
-  }
-  if (!file.exists(main_path_w_flags)) {
-    message(
-      "Compiling the main object file and precompiled headers (may take up to a few minutes). ",
-      "This is only necessary the first time a model is compiled after installation or when ",
-      "threading, MPI or OpenCL are used for the first time."
-    )
-    clean_compile_helper_files()
-    run_log <- processx::run(
-      command = make_cmd(),
-      args = c(cpp_options_to_compile_flags(cpp_options),
-               main_path_o),
-      wd = cmdstan_path(),
-      echo_cmd = !quiet,
-      echo = !quiet,
-      spinner = quiet,
-      stderr_line_callback = function(x,p) { if (!quiet) message(x) },
-      error_on_status = TRUE
-    )
-    file.copy(main_path_o, main_path_w_flags)
-    if (model_header_gch_used) {
-      run_log <- processx::run(
-        command = make_cmd(),
-        args = c(cpp_options_to_compile_flags(cpp_options),
-                 file.path("stan", "src", "stan", "model", "model_header.hpp.gch")),
-        wd = cmdstan_path(),
-        echo_cmd = !quiet,
-        echo = !quiet,
-        spinner = quiet,
-        stderr_line_callback = function(x,p) { if (!quiet) message(x) },
-        error_on_status = TRUE
-      )
-      file.copy(model_header_path_gch, model_header_path_w_flags)
-    }
-  }
-}
-
 #' Set or get the number of threads used to execute Stan models
 #'
 #' DEPRECATED. Please use the `threads_per_chain` argument when fitting the model.

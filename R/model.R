@@ -477,9 +477,6 @@ compile_method <- function(quiet = TRUE,
     }
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
-  if (cmdstan_version() < "2.24") {
-    prepare_precompiled(cpp_options, quiet)
-  }
   run_log <- processx::run(
     command = make_cmd(),
     args = c(tmp_exe,
