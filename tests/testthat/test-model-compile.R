@@ -338,8 +338,8 @@ test_that("compiling works with only names in list", {
   skip_on_cran()
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file, stanc_options = list("allow-undefined", "warn-pedantic"), force_recompile = TRUE)
-  expect_type(
+  checkmate::expect_r6(
     mod,
-    "dada"
+    "CmdStanModel"
   )
 })

@@ -215,7 +215,7 @@ check_stanc_options <- function(stanc_options) {
     if(!is.null(names[i]) && nzchar(names[i])) {
       name <- names[i]
     } else {
-      name <- stanc_options[[i]]
+      name <- s
     }
     if (startsWith(name, "--")) {
       stop("No leading hyphens allowed in stanc options (",name, "). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
