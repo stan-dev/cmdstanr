@@ -80,15 +80,16 @@ test_that("process_fitted_params() works if output_files in fit do not exist", {
   expect_true(all(file.exists(new_files)))
   chain <- 1
   for(file in new_files) {
+    if (os_is_windows()) {
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' ", file)
+    } else {
+      fread_cmd <- paste0("grep -v '^#' ", file)
+    }
     suppressWarnings(
-      tmp_file_gq <- vroom::vroom(
-        file,
-        comment = "#",
-        delim = ',',
-        trim_ws = TRUE,
-        altrep = FALSE,
-        progress = FALSE,
-        skip = 1)
+      tmp_file_gq <- data.table::fread(
+        cmd = fread_cmd
+      )
     )
     tmp_file_gq <- posterior::as_draws_array(tmp_file_gq)
     expect_equal(

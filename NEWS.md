@@ -35,6 +35,8 @@ specifying custom chain IDs. (#319)
 
 * Added support for the `sig_figs` argument in CmdStan versions 2.25 and above. (#327)
 
+* CSV reading is now faster by using `data.table::fread()`. (#318)
+
 * Added checks if the user has the necessary permissions in the RTools and temporary folder (#343)
 
 # cmdstanr 0.1.3

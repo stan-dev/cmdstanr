@@ -121,8 +121,6 @@ read_cmdstan_csv <- function(files,
   col_types <- NULL
   col_select <- NULL
   not_matching <- c()
-  vroom_warnings <- 0
-
   for (output_file in files) {
     if (is.null(metadata)) {
       metadata <- read_csv_metadata(output_file)
@@ -205,48 +203,22 @@ read_cmdstan_csv <- function(files,
     } else if (metadata$method == "optimize") {
       all_draws <- 1
     }
-
-    vroom_args <- list(
-      file = output_file,
-      comment = "#",
-      delim = ",",
-      trim_ws = TRUE,
-      altrep = FALSE,
-      progress = FALSE,
-      skip = metadata$lines_to_skip,
-      col_select = col_select,
-      num_threads = 1
-    )
-    if (metadata$method == "generate_quantities") {
-      # set the first arg as double to silence the type detection info
-      vroom_args$col_types <- list()
-      vroom_args$col_types[[col_select[1]]] <- "d"
-    } else {
-      vroom_args$col_types <- c("lp__" = "d")
-      vroom_args$n_max <- all_draws * 2
-    }
-
-    draws <- try(silent = TRUE, expr = {
-      suppressWarnings(do.call(vroom::vroom, vroom_args))
-    })
-    if (!inherits(draws, "try-error")) {
-      if (metadata$method != "generate_quantities") {
-        draws <- draws[!is.na(draws$lp__), ]
+    if (length(col_select) > 0) {
+      if (os_is_windows()) {
+        grep_path <- repair_path(Sys.which("grep.exe"))
+        fread_cmd <- paste0(grep_path, " -v '^#' ", output_file)
+      } else {
+        fread_cmd <- paste0("grep -v '^#' ", output_file)
       }
-    } else {
-      if (vroom_warnings == 0) { # only warn the first time instead of for every csv file
-        warning(
-          "Fast CSV reading with vroom::vroom() failed. Using utils::read.csv() instead. ",
-          "\nTo help avoid this in the future, please report this issue at github.com/stan-dev/cmdstanr/issues ",
-          "and include the output from sessionInfo(). Thank you!",
-          call. = FALSE
+      suppressWarnings(
+      draws <- data.table::fread(
+          cmd = fread_cmd,
+          select = col_select
         )
-      }
-      vroom_warnings <- vroom_warnings + 1
-      draws <- utils::read.csv(output_file, comment.char = "#", skip = metadata$lines_to_skip)
-      draws <- draws[, col_select]
+      )
+    } else {
+      draws <- NULL
     }
-
     if (nrow(draws) > 0) {
       if (metadata$method == "sample") {
         if (metadata$save_warmup == 1) {
@@ -316,7 +288,6 @@ read_cmdstan_csv <- function(files,
       }
     }
   }
-
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
     warning("Supplied CSV files do not match in the following arguments: ",
@@ -411,102 +382,93 @@ read_sample_csv <- function(files,
 #'
 read_csv_metadata <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
-  con  <- file(csv_file, open = "r")
   adaptation_terminated <- FALSE
   param_names_read <- FALSE
   inv_metric_next <- FALSE
   inv_metric_diagonal_next <- FALSE
   csv_file_info <- list()
-  csv_file_info[["inv_metric"]] <- NULL
   inv_metric_rows <- 0
   parsing_done <- FALSE
-  lines_before_param_names <- 0
-  while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0 && !parsing_done) {
-    if (!startsWith(line, "#")) {
-      if (!param_names_read) {
-        param_names_read <- TRUE
-        all_names <- strsplit(line, ",")[[1]]
-        csv_file_info[["sampler_diagnostics"]] <- c()
-        csv_file_info[["model_params"]] <- c()
-        for (x in all_names) {
-          if (all(csv_file_info$algorithm != "fixed_param")) {
-            if (endsWith(x, "__") && !(x %in% c("lp__", "log_p__", "log_g__"))) {
-              csv_file_info[["sampler_diagnostics"]] <- c(csv_file_info[["sampler_diagnostics"]], x)
-            } else {
-              csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
-            }
-          } else {
-            if (!endsWith(x, "__")) {
-              csv_file_info[["model_params"]] <- c(csv_file_info[["model_params"]], x)
-            }
-          }
-        }
+  if (os_is_windows()) {
+    grep_path <- repair_path(Sys.which("grep.exe"))
+    fread_cmd <- paste0(grep_path, " '^[#a-zA-Z]' ", csv_file)
+  } else {
+    fread_cmd <- paste0("grep '^[#a-zA-Z]' ", csv_file)
+  }
+  suppressWarnings(
+    metadata <- data.table::fread(
+      cmd = fread_cmd,
+      colClasses = "character",
+      stringsAsFactors = FALSE,
+      fill = TRUE,
+      sep = "",
+      header= FALSE
+    )
+  )
+  if (is.null(metadata) || length(metadata) == 0) {
+    stop("Supplied CSV file is corrupt!", call. = FALSE)
+  }
+  for (line in metadata[[1]]) {
+    if (!startsWith(line, "#") && is.null(csv_file_info[["model_params"]])) {
+      # if no # at the start of line, the line is the CSV header
+      all_names <- strsplit(line, ",")[[1]]
+      if (all(csv_file_info$algorithm != "fixed_param")) {
+        csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
+        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__"))]
+        csv_file_info[["model_params"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
+      } else {
+        csv_file_info[["model_params"]] <- all_names[!endsWith(all_names, "__")]
       }
     } else {
-      if (!param_names_read) {
-        lines_before_param_names <- lines_before_param_names + 1
-      }
-      if (!adaptation_terminated) {
-        if (regexpr("# Adaptation terminated", line, perl = TRUE) > 0) {
-          adaptation_terminated <- TRUE
+      parse_key_val <- TRUE
+      if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0
+          || regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0) {
+        inv_metric_next <- TRUE
+        parse_key_val <- FALSE
+      } else if (inv_metric_next) {
+        inv_metric_split <- strsplit(gsub("# ", "", line), ",")
+        if ((length(inv_metric_split) == 0) ||
+            ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0))) ||
+            regexpr("[a-zA-z]", line, perl = TRUE) > 0 ||
+            inv_metric_split == "#") {
+          parsing_done <- TRUE
+          parse_key_val <- TRUE
+          break;
+        }
+        if (inv_metric_rows == 0) {
+          csv_file_info$inv_metric <- rapply(inv_metric_split, as.numeric)
         } else {
-          tmp <- gsub("#", "", line, fixed = TRUE)
-          tmp <- gsub("(Default)", "", tmp, fixed = TRUE)
-          key_val <- grep("=", tmp, fixed = TRUE, value = TRUE)
-          key_val <- strsplit(key_val, split = "=", fixed = TRUE)
-          key_val <- rapply(key_val, trimws)
-          if (length(key_val) == 2) {
-            numeric_val <- suppressWarnings(as.numeric(key_val[2]))
-            if (!is.na(numeric_val)) {
-              csv_file_info[[key_val[1]]] <- numeric_val
-            } else {
-              if (nzchar(key_val[2])) {
-                csv_file_info[[key_val[1]]] <- key_val[2]
-              }
+          csv_file_info$inv_metric <- c(csv_file_info$inv_metric, rapply(inv_metric_split, as.numeric))
+        }
+        inv_metric_rows <- inv_metric_rows + 1
+        parse_key_val <- FALSE
+      }
+      if (parse_key_val) {
+        tmp <- gsub("#", "", line, fixed = TRUE)
+        tmp <- gsub("(Default)", "", tmp, fixed = TRUE)
+        key_val <- grep("=", tmp, fixed = TRUE, value = TRUE)
+        key_val <- strsplit(key_val, split = "=", fixed = TRUE)
+        key_val <- rapply(key_val, trimws)
+        if (any(key_val[1] == "Step size")) {
+          key_val[1] <- "step_size_adaptation"
+        }
+        if (length(key_val) == 2) {
+          numeric_val <- suppressWarnings(as.numeric(key_val[2]))
+          if (!is.na(numeric_val)) {
+            csv_file_info[[key_val[1]]] <- numeric_val
+          } else {
+            if (nzchar(key_val[2])) {
+              csv_file_info[[key_val[1]]] <- key_val[2]
             }
           }
-        }
-      } else {
-        # after adaptation terminated read in the step size and inverse metrics
-        if (regexpr("# Step size = ", line, perl = TRUE) > 0) {
-          csv_file_info$stepsize_adaptation <- as.numeric(strsplit(line, " = ")[[1]][2])
-        } else if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0) {
-          inv_metric_diagonal_next <- TRUE
-        } else if (regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0){
-          inv_metric_next <- TRUE
-        } else if (inv_metric_diagonal_next) {
-          inv_metric_split <- strsplit(gsub("# ", "", line), ",")
-          if ((length(inv_metric_split) == 0) ||
-              ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
-            break;
-          }
-          csv_file_info$inv_metric <- rapply(inv_metric_split, as.numeric)
-          parsing_done <- TRUE
-        } else if (inv_metric_next) {
-          inv_metric_split <- strsplit(gsub("# ", "", line), ",")
-          if ((length(inv_metric_split) == 0) ||
-              ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0)))) {
-            parsing_done <- TRUE
-            break;
-          }
-          if (inv_metric_rows == 0) {
-            csv_file_info$inv_metric <- rapply(inv_metric_split, as.numeric)
-          } else {
-            csv_file_info$inv_metric <- c(csv_file_info$inv_metric, rapply(inv_metric_split, as.numeric))
-          }
-          inv_metric_rows <- inv_metric_rows + 1
         }
       }
     }
   }
-  close(con)
-  if (is.null(csv_file_info$method)) {
-    stop("Supplied CSV file is corrupt!", call. = FALSE)
-  }
   if (length(csv_file_info$sampler_diagnostics) == 0 && length(csv_file_info$model_params) == 0) {
     stop("Supplied CSV file does not contain any variable names or data!", call. = FALSE)
   }
-  if (inv_metric_rows > 0) {
+  if (inv_metric_rows > 0 && csv_file_info$metric == "dense_e") {
     rows <- inv_metric_rows
     cols <- length(csv_file_info$inv_metric)/inv_metric_rows
     dim(csv_file_info$inv_metric) <- c(rows,cols)
@@ -518,7 +480,6 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$adapt_delta <- csv_file_info$delta
   csv_file_info$max_treedepth <- csv_file_info$max_depth
   csv_file_info$step_size <- csv_file_info$stepsize
-  csv_file_info$step_size_adaptation <- csv_file_info$stepsize_adaptation
   csv_file_info$iter_warmup <- csv_file_info$num_warmup
   csv_file_info$iter_sampling <- csv_file_info$num_samples
   csv_file_info$threads_per_chain <- csv_file_info$num_threads
@@ -527,14 +488,12 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$delta <- NULL
   csv_file_info$max_depth <- NULL
   csv_file_info$stepsize <- NULL
-  csv_file_info$stepsize_adaptation <- NULL
   csv_file_info$num_warmup <- NULL
   csv_file_info$num_samples <- NULL
   csv_file_info$file <- NULL
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
   csv_file_info$num_threads <- NULL
-  csv_file_info$lines_to_skip <- lines_before_param_names
 
   csv_file_info
 }

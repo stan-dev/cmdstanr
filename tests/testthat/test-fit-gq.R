@@ -31,7 +31,7 @@ test_that("draws() method returns draws_array (reading csv works)", {
   draws_sum_y <- fit_gq$draws(variables = c("sum_y", "y_rep"))
   draws_y_sum <- fit_gq$draws(variables = c("y_rep", "sum_y"))
   draws_all_after <- fit_gq$draws()
-  expect_type(draws, "double")
+  expect_type(draws, "integer")
   expect_s3_class(draws, "draws_array")
   expect_equal(posterior::variables(draws), PARAM_NAMES)
   expect_equal(posterior::nchains(draws), fit_gq$num_chains())
