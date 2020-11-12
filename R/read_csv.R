@@ -412,9 +412,13 @@ read_csv_metadata <- function(csv_file) {
     if (!startsWith(line, "#") && is.null(csv_file_info[["model_params"]])) {
       # if no # at the start of line, the line is the CSV header
       all_names <- strsplit(line, ",")[[1]]
-      csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
-      csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__"))]
-      csv_file_info[["model_params"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
+      if (all(csv_file_info$algorithm != "fixed_param")) {
+        csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
+        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__"))]
+        csv_file_info[["model_params"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
+      } else {
+        csv_file_info[["model_params"]] <- all_names[!endsWith(all_names, "__")]
+      }
     } else {
       parse_key_val <- TRUE
       if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0
