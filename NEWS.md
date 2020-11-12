@@ -1,4 +1,4 @@
-# Items for next tagged release
+# cmdstanr 0.2.0
 
 ### Bug fixes
 
@@ -20,9 +20,11 @@ in fitting methods. (#281, #294)
 
 * Fix issue where names of generated files could clash. (#326, #328)
 
-* Fix missing `include_paths` in `$syntax_check()`. (#335)
+* Fix missing `include_paths` in `$syntax_check()`. (#335, @mike-lawrence)
 
 ### New features
+
+* CSV reading is now faster by using `data.table::fread()`. (#318)
 
 * `install_cmdstan()` gains argument `version` for specifying which version of
 CmdStan to install. (#300, #308)
@@ -35,9 +37,7 @@ specifying custom chain IDs. (#319)
 
 * Added support for the `sig_figs` argument in CmdStan versions 2.25 and above. (#327)
 
-* CSV reading is now faster by using `data.table::fread()`. (#318)
-
-* Added checks if the user has the necessary permissions in the RTools and temporary folder (#343)
+* Added checks if the user has the necessary permissions in the RTools and temporary folders. (#343)
 
 # cmdstanr 0.1.3
 

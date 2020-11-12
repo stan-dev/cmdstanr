@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract (penalized) maximum likelihood estimate after optimization — fit-method-mle • cmdstanr</title>
+<title>Write Stan code to a file — write_stan_file • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,14 +46,9 @@
 
 
 
-<meta property="og:title" content="Extract (penalized) maximum likelihood estimate after optimization — fit-method-mle" />
-<meta property="og:description" content="The $mle() method is only available for CmdStanMLE objects.
-It returns the penalized maximum likelihood estimate (posterior mode) as a
-numeric vector with one element per variable. The returned vector does not
-include lp__, the total log probability (target) accumulated in the
-model block of the Stan program, which is available via the
-$lp() method and also included in the
-$draws() method." />
+<meta property="og:title" content="Write Stan code to a file — write_stan_file" />
+<meta property="og:description" content="Convenience function for writing Stan code to a (possibly
+temporary) file with a .stan extension." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -176,56 +171,81 @@ $draws() method." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract (penalized) maximum likelihood estimate after optimization</h1>
-    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
-    <div class="hidden name"><code>fit-method-mle.Rd</code></div>
+    <h1>Write Stan code to a file</h1>
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/example.R'><code>R/example.R</code></a></small>
+    <div class="hidden name"><code>write_stan_file.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The <code>$mle()</code> method is only available for <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code> objects.
-It returns the penalized maximum likelihood estimate (posterior mode) as a
-numeric vector with one element per variable. The returned vector does not
-include <code>lp__</code>, the total log probability (<code>target</code>) accumulated in the
-<code>model</code> block of the Stan program, which is available via the
-<code><a href='fit-method-lp.html'>$lp()</a></code> method and also included in the
-<code><a href='fit-method-draws.html'>$draws()</a></code> method.</p>
+    <p>Convenience function for writing Stan code to a (possibly
+<a href='https://rdrr.io/r/base/tempfile.html'>temporary</a>) file with a <code>.stan</code> extension.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$mle(variables = NULL)
-</pre>
+    <pre class="usage"><span class='fu'>write_stan_file</span>(<span class='no'>code</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>(), <span class='kw'>basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>variables</code>: (character vector) The variables (parameters and generated
-quantities) to include. If NULL (the default) then all variables are
-included.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>code</th>
+      <td><p>A single string containing a Stan program or a character vector
+containing the individual lines of a Stan program. See <strong>Examples</strong>.</p></td>
+    </tr>
+    <tr>
+      <th>dir</th>
+      <td><p>An optional path to the directory where the file will be written.
+If omitted, a <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory</a> is used by default.</p></td>
+    </tr>
+    <tr>
+      <th>basename</th>
+      <td><p>If <code>dir</code> is specified, an optional string providing the
+basename for the file created. If not specified a file name is generated
+via <code><a href='https://rdrr.io/r/base/tempfile.html'>base::tempfile()</a></code>.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
-
-<p>A numeric vector. See <strong>Examples</strong>.</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
-
-    <div class='dont-index'><p><code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
+    <p>The path to the file.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>()</div><div class='output co'>#&gt;     alpha   beta[1]   beta[2]   beta[3] 
-#&gt;  0.364454 -0.631561 -0.258958  0.648495 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"alpha"</span>)</div><div class='output co'>#&gt;    alpha 
-#&gt; 0.364454 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt;   beta[1]   beta[2]   beta[3] 
-#&gt; -0.631561 -0.258958  0.648495 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta[2]"</span>)</div><div class='output co'>#&gt;   beta[2] 
-#&gt; -0.258958 </div><div class='input'># }
+    <pre class="examples"><div class='input'><span class='co'># stan program as a single string</span>
+<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='st'>"
+data {
+  int&lt;lower=0&gt; N;
+  int&lt;lower=0,upper=1&gt; y[N];
+}
+parameters {
+  real&lt;lower=0,upper=1&gt; theta;
+}
+model {
+  y ~ bernoulli(theta);
+}
+"</span>
 
+<span class='no'>f</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_file</span>(<span class='no'>stan_program</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>f</span>)</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpL7jcf4/file47547a5c526c.stan"</div><div class='input'>
+<span class='no'>lines</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>lines</span>)</div><div class='output co'>#&gt;  [1] ""                               "data {"                        
+#&gt;  [3] "  int&lt;lower=0&gt; N;"              "  int&lt;lower=0,upper=1&gt; y[N];"  
+#&gt;  [5] "}"                              "parameters {"                  
+#&gt;  [7] "  real&lt;lower=0,upper=1&gt; theta;" "}"                             
+#&gt;  [9] "model {"                        "  y ~ bernoulli(theta);"       
+#&gt; [11] "}"                              ""                              </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='no'>lines</span>, <span class='kw'>sep</span> <span class='kw'>=</span> <span class='st'>"\n"</span>)</div><div class='output co'>#&gt; 
+#&gt; data {
+#&gt;   int&lt;lower=0&gt; N;
+#&gt;   int&lt;lower=0,upper=1&gt; y[N];
+#&gt; }
+#&gt; parameters {
+#&gt;   real&lt;lower=0,upper=1&gt; theta;
+#&gt; }
+#&gt; model {
+#&gt;   y ~ bernoulli(theta);
+#&gt; }
+#&gt; </div><div class='input'>
+<span class='co'># stan program as character vector of lines</span>
+<span class='no'>f2</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_file</span>(<span class='no'>lines</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/identical.html'>identical</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>), <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f2</span>))</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

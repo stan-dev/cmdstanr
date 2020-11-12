@@ -61,6 +61,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-output.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-return_codes.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html</loc>
   </url>
   <url>
@@ -77,6 +80,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/install_cmdstan.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-compile.html</loc>
@@ -109,6 +115,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/stan_threads.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/write_stan_file.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/write_stan_json.html</loc>
   </url>
   <url>
@@ -121,6 +130,6 @@
     <loc>https://mc-stan.org/cmdstanr/articles/cmdstanr.html</loc>
   </url>
   <url>
-    <loc>https://mc-stan.org/cmdstanr/articles/r_markdown.html</loc>
+    <loc>https://mc-stan.org/cmdstanr/articles/r-markdown.html</loc>
   </url>
 </urlset>

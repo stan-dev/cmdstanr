@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -159,15 +159,15 @@
 <p>Before CmdStanR can be used it needs to know where the CmdStan installation is located. When the package is loaded it tries to help automate this to avoid having to manually set the path every session:</p>
 <ol style="list-style-type: decimal">
 <li><p>If the environment variable <code>"CMDSTAN"</code> exists at load time then its value will be automatically set as the default path to CmdStan for the R session. This is useful if your CmdStan installation is not located in the default directory that would have been used by <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> (see #2).</p></li>
-<li><p>If no environment variable is found when loaded but any directory in the form <code>".cmdstanr/cmdstan-[version]"</code>, for example <code>".cmdstanr/cmdstan-2.23.0"</code>, exists in the user’s home directory (<code><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv("HOME")</a></code>, <em>not</em> the current working directory) then the path to the cmdstan with the largest version number will be set as the path to CmdStan for the R session. This is the same as the default directory that <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> uses to install the latest version of CmdStan, so if that’s how you installed CmdStan you shouldn’t need to manually set the path to CmdStan when loading CmdStanR.</p></li>
+<li><p>If no environment variable is found when loaded but any directory in the form <code>".cmdstanr/cmdstan-[version]"</code>, for example <code>".cmdstanr/cmdstan-2.23.0"</code>, exists in the user’s home directory (<code><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv("HOME")</a></code>, <em>not</em> the current working directory) then the path to the CmdStan with the largest version number will be set as the path to CmdStan for the R session. This is the same as the default directory that <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> uses to install the latest version of CmdStan, so if that’s how you installed CmdStan you shouldn’t need to manually set the path to CmdStan when loading CmdStanR.</p></li>
 </ol>
 <p>If neither of these applies (or you want to subsequently change the path) you can use the <code><a href="../reference/set_cmdstan_path.html">set_cmdstan_path()</a></code> function:</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="../reference/set_cmdstan_path.html">set_cmdstan_path</a></span>(<span class="no">PATH_TO_CMDSTAN</span>)</pre></body></html></div>
 <p>To check the path to the CmdStan installation and the CmdStan version number you can use <code><a href="../reference/set_cmdstan_path.html">cmdstan_path()</a></code> and <code><a href="../reference/set_cmdstan_path.html">cmdstan_version()</a></code>:</p>
 <div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span>()</pre></body></html></div>
-<pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.24.0"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.25.0"</code></pre>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_version</a></span>()</pre></body></html></div>
-<pre><code>[1] "2.24.0"</code></pre>
+<pre><code>[1] "2.25.0"</code></pre>
 </div>
 <div id="compiling-a-model" class="section level2">
 <h2 class="hasAnchor">
@@ -179,20 +179,20 @@
 <p>The object <code>mod</code> is an <a href="https://r6.r-lib.org/">R6</a> reference object of class <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a> and behaves similarly to R’s reference class objects and those in object oriented programming languages. Methods are accessed using the <code><a href="https://rdrr.io/r/base/Extract.html">$</a></code> operator. This design choice allows for CmdStanR and <a href="https://github.com/stan-dev/cmdstanpy">CmdStanPy</a> to provide a similar user experience and share many implementation details.</p>
 <p>The Stan program can be printed using the <code>$print()</code> method:</p>
 <div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">mod</span>$<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>()</pre></body></html></div>
-<pre><code>data { 
-  int&lt;lower=0&gt; N; 
+<pre><code>data {
+  int&lt;lower=0&gt; N;
   int&lt;lower=0,upper=1&gt; y[N];
-} 
+}
 parameters {
   real&lt;lower=0,upper=1&gt; theta;
-} 
+}
 model {
   theta ~ beta(1,1);  // uniform prior on interval 0,1
   y ~ bernoulli(theta);
 }</code></pre>
 <p>The path to the compiled executable is returned by the <code>$exe_file()</code> method:</p>
 <div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">mod</span>$<span class="fu">exe_file</span>()</pre></body></html></div>
-<pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.24.0/examples/bernoulli/bernoulli"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstanr/cmdstan-2.25.0/examples/bernoulli/bernoulli"</code></pre>
 </div>
 <div id="fitting-a-model" class="section level2">
 <h2 class="hasAnchor">
@@ -225,8 +225,8 @@ Chain 2 Iteration: 1000 / 2000 [ 50%]  (Warmup)
 Chain 2 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
 Chain 2 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
 Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
-Chain 1 finished in 0.2 seconds.
-Chain 2 finished in 0.2 seconds.
+Chain 1 finished in 0.0 seconds.
+Chain 2 finished in 0.0 seconds.
 Chain 3 Iteration:    1 / 2000 [  0%]  (Warmup) 
 Chain 3 Iteration:  500 / 2000 [ 25%]  (Warmup) 
 Chain 3 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
@@ -239,11 +239,11 @@ Chain 4 Iteration: 1000 / 2000 [ 50%]  (Warmup)
 Chain 4 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
 Chain 4 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
 Chain 4 Iteration: 2000 / 2000 [100%]  (Sampling) 
-Chain 3 finished in 0.2 seconds.
-Chain 4 finished in 0.1 seconds.
+Chain 3 finished in 0.0 seconds.
+Chain 4 finished in 0.0 seconds.
 
 All 4 chains finished successfully.
-Mean chain execution time: 0.2 seconds.
+Mean chain execution time: 0.0 seconds.
 Total execution time: 0.4 seconds.</code></pre>
 <p>There are many more arguments that can be passed to the <code>$sample()</code> method. For details follow this link to its separate documentation page:</p>
 <ul>
@@ -303,7 +303,7 @@ Total execution time: 0.4 seconds.</code></pre>
 9  -7.0  0.34
 10 -6.8  0.22
 # ... with 3990 more draws
-# ... hidden meta-columns {'.chain', '.iteration', '.draw'}</code></pre>
+# ... hidden reserved variables {'.chain', '.iteration', '.draw'}</code></pre>
 <p>Plotting posterior distributions is as easy as passing the object returned by the <code>$draws()</code> method directly to plotting functions in <a href="https://mc-stan.org/bayesplot"><strong>bayesplot</strong></a>:</p>
 <div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html">mcmc_hist</a></span>(<span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-draws.html">draws</a></span>(<span class="st">"theta"</span>))</pre></body></html></div>
 <p><img src="cmdstanr_files/figure-html/plots-1.png" width="60%" style="display: block; margin: auto;"></p>
@@ -335,7 +335,7 @@ Total execution time: 0.4 seconds.</code></pre>
 9           0.95       0.93           1            3           0      7.2
 10          0.97       0.93           1            3           0      7.2
 # ... with 3990 more draws
-# ... hidden meta-columns {'.chain', '.iteration', '.draw'}</code></pre>
+# ... hidden reserved variables {'.chain', '.iteration', '.draw'}</code></pre>
 </div>
 <div id="cmdstan-utilities" class="section level4">
 <h4 class="hasAnchor">
@@ -343,11 +343,11 @@ Total execution time: 0.4 seconds.</code></pre>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_diagnose()</code></a> and <a href="https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html"><code>$cmdstan_summary()</code></a> methods call CmdStan’s <code>diagnose</code> and <code>stansummary</code> utilities:</p>
 <div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_diagnose</a></span>()</pre></body></html></div>
 <pre><code>Running bin/diagnose \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8e876b.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-2-8e876b.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-3-8e876b.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-4-8e876b.csv
-Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-2-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-3-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-4-8e876b.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-1-0d640e.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-2-0d640e.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-3-0d640e.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-4-0d640e.csv
+Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-1-0d640e.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-2-0d640e.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-3-0d640e.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-4-0d640e.csv
 
 Checking sampler transitions treedepth.
 Treedepth satisfactory for all transitions.
@@ -365,28 +365,28 @@ Split R-hat values satisfactory all parameters.
 Processing complete, no problems detected.</code></pre>
 <div class="sourceCode" id="cb34"><html><body><pre class="r"><span class="no">fit</span>$<span class="fu"><a href="../reference/fit-method-cmdstan_summary.html">cmdstan_summary</a></span>()</pre></body></html></div>
 <pre><code>Running bin/stansummary \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8e876b.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-2-8e876b.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-3-8e876b.csv \
-  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-4-8e876b.csv
-Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-2-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-3-8e876b.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-4-8e876b.csv
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-1-0d640e.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-2-0d640e.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-3-0d640e.csv \
+  /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-4-0d640e.csv
+Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-1-0d640e.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-2-0d640e.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-3-0d640e.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpB5I6Hr/bernoulli-202011121420-4-0d640e.csv
 Inference for Stan model: bernoulli_model
 4 chains: each with iter=(1000,1000,1000,1000); warmup=(0,0,0,0); thin=(1,1,1,1); 4000 iterations saved.
 
-Warmup took (0.0060, 0.0050, 0.0050, 0.0050) seconds, 0.021 seconds total
-Sampling took (0.014, 0.013, 0.013, 0.013) seconds, 0.053 seconds total
+Warmup took (0.0050, 0.0050, 0.0050, 0.0050) seconds, 0.020 seconds total
+Sampling took (0.014, 0.013, 0.012, 0.012) seconds, 0.051 seconds total
 
                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
 
-lp__            -7.3  2.0e-02    0.76   -8.8  -7.0  -6.8     1431    26995      1.0
-accept_stat__   0.90  2.5e-03    0.15   0.57  0.97   1.0  3.7e+03  7.0e+04  1.0e+00
-stepsize__       1.1  8.8e-02    0.12   0.93   1.2   1.3  2.0e+00  3.8e+01  3.5e+13
-treedepth__      1.4  8.2e-03    0.51    1.0   1.0   2.0  3.8e+03  7.2e+04  1.0e+00
-n_leapfrog__     2.5  1.9e-01     1.3    1.0   3.0   3.0  4.3e+01  8.2e+02  1.0e+00
+lp__            -7.3  2.0e-02    0.76   -8.8  -7.0  -6.8     1431    28054      1.0
+accept_stat__   0.90  2.5e-03    0.15   0.57  0.97   1.0  3.7e+03  7.3e+04  1.0e+00
+stepsize__       1.1  8.8e-02    0.12   0.93   1.2   1.3  2.0e+00  3.9e+01  3.5e+13
+treedepth__      1.4  8.2e-03    0.51    1.0   1.0   2.0  3.8e+03  7.4e+04  1.0e+00
+n_leapfrog__     2.5  1.9e-01     1.3    1.0   3.0   3.0  4.3e+01  8.5e+02  1.0e+00
 divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-energy__         7.8  2.7e-02     1.0    6.8   7.4   9.9  1.5e+03  2.8e+04  1.0e+00
+energy__         7.8  2.7e-02     1.0    6.8   7.4   9.9  1.5e+03  2.9e+04  1.0e+00
 
-theta           0.25  3.1e-03    0.12  0.080  0.24  0.48     1542    29101      1.0
+theta           0.25  3.1e-03    0.12  0.080  0.24  0.48     1542    30242      1.0
 
 Samples were drawn using hmc with nuts.
 For each parameter, N_Eff is a crude measure of effective sample size,
@@ -409,31 +409,7 @@ convergence, R_hat=1).</code></pre>
 <a href="#optimization" class="anchor"></a>Optimization</h4>
 <p>We can find the (penalized) maximum likelihood estimate (MLE) using <a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a>:</p>
 <div class="sourceCode" id="cb37"><html><body><pre class="r"><span class="no">fit_mle</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-optimize.html">optimize</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>, <span class="kw">seed</span> <span class="kw">=</span> <span class="fl">123</span>)</pre></body></html></div>
-<pre><code>method = optimize 
-  optimize 
-    algorithm = lbfgs (Default) 
-      lbfgs 
-        init_alpha = 0.001 (Default) 
-        tol_obj = 9.9999999999999998e-13 (Default) 
-        tol_rel_obj = 10000 (Default) 
-        tol_grad = 1e-08 (Default) 
-        tol_rel_grad = 10000000 (Default) 
-        tol_param = 1e-08 (Default) 
-        history_size = 5 (Default) 
-    iter = 2000 (Default) 
-    save_iterations = 0 (Default) 
-id = 1 
-data 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/standata-23176bb9a8e.json 
-init = 2 (Default) 
-random 
-  seed = 123 
-output 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-9fe416.csv 
-  diagnostic_file =  (Default) 
-  refresh = 100 (Default) 
- 
-Initial log joint probability = -9.51104 
+<pre><code>Initial log joint probability = -9.51104 
     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
        6      -5.00402   0.000103557   2.55661e-07           1           1        9    
 Optimization terminated normally:  
@@ -458,44 +434,14 @@ Finished in  0.1 seconds.</code></pre>
 <a href="#variational-bayes" class="anchor"></a>Variational Bayes</h4>
 <p>We can run Stan’s experimental variational Bayes algorithm using the <a href="https://mc-stan.org/cmdstanr/reference/model-method-variational.html"><code>$variational()</code></a> method:</p>
 <div class="sourceCode" id="cb44"><html><body><pre class="r"><span class="no">fit_vb</span> <span class="kw">&lt;-</span> <span class="no">mod</span>$<span class="fu"><a href="../reference/model-method-variational.html">variational</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">data_list</span>, <span class="kw">seed</span> <span class="kw">=</span> <span class="fl">123</span>, <span class="kw">output_samples</span> <span class="kw">=</span> <span class="fl">4000</span>)</pre></body></html></div>
-<pre><code>method = variational 
-  variational 
-    algorithm = meanfield (Default) 
-      meanfield 
-    iter = 10000 (Default) 
-    grad_samples = 1 (Default) 
-    elbo_samples = 100 (Default) 
-    eta = 1 (Default) 
-    adapt 
-      engaged = 1 (Default) 
-      iter = 50 (Default) 
-    tol_rel_obj = 0.01 (Default) 
-    eval_elbo = 100 (Default) 
-    output_samples = 4000 
-id = 1 
-data 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/standata-23175b828b40.json 
-init = 2 (Default) 
-random 
-  seed = 123 
-output 
-  file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpNLUl76/bernoulli-202008031257-1-8445af.csv 
-  diagnostic_file =  (Default) 
-  refresh = 100 (Default) 
- 
------------------------------------------------------------- 
+<pre><code>------------------------------------------------------------ 
 EXPERIMENTAL ALGORITHM: 
   This procedure has not been thoroughly tested and may be unstable 
   or buggy. The interface is subject to change. 
 ------------------------------------------------------------ 
- 
- 
- 
-Gradient evaluation took 1e-05 seconds 
-1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds. 
+Gradient evaluation took 1.2e-05 seconds 
+1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds. 
 Adjust your expectations accordingly! 
- 
- 
 Begin eta adaptation. 
 Iteration:   1 / 250 [  0%]  (Adaptation) 
 Iteration:  50 / 250 [ 20%]  (Adaptation) 
@@ -503,13 +449,11 @@ Iteration: 100 / 250 [ 40%]  (Adaptation)
 Iteration: 150 / 250 [ 60%]  (Adaptation) 
 Iteration: 200 / 250 [ 80%]  (Adaptation) 
 Success! Found best value [eta = 1] earlier than expected. 
- 
 Begin stochastic gradient ascent. 
   iter             ELBO   delta_ELBO_mean   delta_ELBO_med   notes  
    100           -6.262             1.000            1.000 
    200           -6.263             0.500            1.000 
    300           -6.307             0.336            0.007   MEDIAN ELBO CONVERGED 
- 
 Drawing a sample of size 4000 from the approximate posterior...  
 COMPLETED. 
 Finished in  0.1 seconds.</code></pre>

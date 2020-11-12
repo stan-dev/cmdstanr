@@ -84,7 +84,7 @@ returned." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -209,11 +209,11 @@ returned.</p>
 <span class='no'>init_fun</span> <span class='kw'>&lt;-</span> <span class='kw'>function</span>() <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fl'>1</span>), <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fl'>3</span>))
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>init</span> <span class='kw'>=</span> <span class='no'>init_fun</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit</span>$<span class='fu'>init</span>())</div><div class='output co'>#&gt; List of 2
 #&gt;  $ :List of 2
-#&gt;   ..$ alpha: num -0.161
-#&gt;   ..$ beta : num [1:3] 0.467 -1.195 -1.017
+#&gt;   ..$ alpha: num -0.209
+#&gt;   ..$ beta : num [1:3] -1.231 -0.361 -0.547
 #&gt;  $ :List of 2
-#&gt;   ..$ alpha: num -0.923
-#&gt;   ..$ beta : num [1:3] 0.48 1.78 1.26</div><div class='input'>
+#&gt;   ..$ alpha: num 0.328
+#&gt;   ..$ beta : num [1:3] -0.933 0.681 -1.164</div><div class='input'>
 <span class='co'># partial inits (only specifying for a subset of parameters)</span>
 <span class='no'>init_list</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
   <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>tau</span> <span class='kw'>=</span> <span class='fl'>2</span>),
