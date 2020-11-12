@@ -208,6 +208,23 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   paste0(cpp_built_options, collapse = " ")
 }
 
+check_stanc_options <- function(stanc_options) {
+  i <- 1
+  names <- names(stanc_options)
+  for(s in stanc_options){
+    if(!is.null(names[i]) && nzchar(names[i])) {
+      name <- names[i]
+    } else {
+      name <- stanc_options[[i]]
+    }
+    if (startsWith(name, "--")) {
+      stop("No leading hyphens allowed in stanc options (",name, "). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+         call. = FALSE)
+    }
+    i <- i + 1
+  }
+}
+
 prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
   flags <- NULL
   if (!is.null(cpp_options$stan_threads)) {
@@ -288,7 +305,8 @@ num_threads <- function() {
 #' @export
 #' @param num_threads (positive integer) The number of threads to set.
 set_num_threads <- function(num_threads) {
-  stop("Please use the 'threads_per_chain' argument in the $sample() method instead of set_num_threads().")
+  stop("Please use the 'threads_per_chain' argument in the $sample() method instead of set_num_threads().",
+       call. = FALSE)
 }
 
 check_divergences <- function(data_csv) {
@@ -381,3 +399,4 @@ variable_dims <- function(variable_names = NULL) {
   }
   dims
 }
+

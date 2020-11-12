@@ -201,6 +201,7 @@ CmdStanModel <- R6::R6Class(
       private$stan_file_ <- absolute_path(stan_file)
 
       args <- list(...)
+      check_stanc_options(args$stanc_options)
       private$precompile_cpp_options_ <- args$cpp_options %||% list()
       private$precompile_stanc_options_ <- args$stanc_options %||% list()
       private$precompile_include_paths_ <- args$include_paths
@@ -366,6 +367,7 @@ compile_method <- function(quiet = TRUE,
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
+  check_stanc_options(stanc_options)
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
