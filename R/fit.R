@@ -892,13 +892,14 @@ CmdStanMCMC <- R6::R6Class(
       }
       if (is.null(variables)) {
         variables <- private$metadata_$model_params
+      } else {
+        matching_res <- matching_variables(variables, private$metadata_$model_params)
+        if (length(matching_res$not_found)) {
+          stop("Can't find the following variable(s) in the output: ",
+              paste(matching_res$not_found, collapse = ", "), call. = FALSE)
+        }
+        variables <- repair_variable_names(matching_res$matching)
       }
-      matching_res <- matching_variables(variables, private$metadata_$model_params)
-      if (length(matching_res$not_found)) {
-        stop("Can't find the following variable(s) in the output: ",
-             paste(matching_res$not_found, collapse = ", "), call. = FALSE)
-      }
-      variables <- repair_variable_names(matching_res$matching)
       if (inc_warmup) {
         posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")[,,variables]
       } else {
