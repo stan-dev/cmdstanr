@@ -189,7 +189,7 @@ parsing succeeds. If invalid syntax in found an error is thrown.</p>
 
     
 <pre>$check_syntax(
-  quiet = TRUE,
+  quiet = FALSE,
   include_paths = NULL,
   stanc_options = list()
 )
@@ -200,10 +200,10 @@ parsing succeeds. If invalid syntax in found an error is thrown.</p>
     
 
 <ul>
-<li><p><code>quiet</code>: (logical) Should informational messages be printed? Default is
-<code>FALSE</code>, which will print a message if the model is valid or the compiler
-error message if there are syntax errors in the model. If <code>TRUE</code>, only the
-error message will be printed.</p></li>
+<li><p><code>quiet</code>: (logical) Should informational messages be suppressed? The
+default is <code>FALSE</code>, which will print a message if the Stan program is valid
+or the compiler error message if there are syntax errors. If <code>TRUE</code>, only
+the error message will be printed.</p></li>
 <li><p><code>include_paths</code>: (character vector) Paths to directories where Stan
 should look for files specified in <code>#include</code> directives in the Stan
 program.</p></li>
@@ -238,10 +238,7 @@ documentation and tutorials.</p>
 <span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
 
 <span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='no'>mod</span>$<span class='fu'>check_syntax</span>()</div><div class='output co'>#&gt; Running bin/stanc \
-#&gt;   /Users/jgabry/.cmdstanr/cmdstan-2.25.0/examples/bernoulli/bernoulli.stan \
-#&gt;   '--o=/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpL7jcf4/model-4754fa99a.hpp' \
-#&gt;   '--name=bernoulli_model'</div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'># }
+<span class='no'>mod</span>$<span class='fu'>check_syntax</span>()</div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'># }
 
 </div></pre>
   </div>

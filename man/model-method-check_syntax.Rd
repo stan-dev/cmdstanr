@@ -11,7 +11,7 @@ parsing succeeds. If invalid syntax in found an error is thrown.
 }
 \section{Usage}{
 \preformatted{$check_syntax(
-  quiet = TRUE,
+  quiet = FALSE,
   include_paths = NULL,
   stanc_options = list()
 )
@@ -21,10 +21,10 @@ parsing succeeds. If invalid syntax in found an error is thrown.
 \section{Arguments}{
 
 \itemize{
-\item \code{quiet}: (logical) Should informational messages be printed? Default is
-\code{FALSE}, which will print a message if the model is valid or the compiler
-error message if there are syntax errors in the model. If \code{TRUE}, only the
-error message will be printed.
+\item \code{quiet}: (logical) Should informational messages be suppressed? The
+default is \code{FALSE}, which will print a message if the Stan program is valid
+or the compiler error message if there are syntax errors. If \code{TRUE}, only
+the error message will be printed.
 \item \code{include_paths}: (character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
 program.

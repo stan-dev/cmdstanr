@@ -485,7 +485,6 @@ compile_method <- function(quiet = TRUE,
              cpp_options_to_compile_flags(cpp_options),
              stancflags_val),
     wd = cmdstan_path(),
-    echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
@@ -521,17 +520,17 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @section Usage:
 #'   ```
 #'   $check_syntax(
-#'     quiet = TRUE,
+#'     quiet = FALSE,
 #'     include_paths = NULL,
 #'     stanc_options = list()
 #'   )
 #'   ```
 #'
 #' @section Arguments:
-#'   * `quiet`: (logical) Should informational messages be printed? Default is
-#'   `FALSE`, which will print a message if the model is valid or the compiler
-#'   error message if there are syntax errors in the model. If `TRUE`, only the
-#'   error message will be printed.
+#'   * `quiet`: (logical) Should informational messages be suppressed? The
+#'   default is `FALSE`, which will print a message if the Stan program is valid
+#'   or the compiler error message if there are syntax errors. If `TRUE`, only
+#'   the error message will be printed.
 #'   * `include_paths`: (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -600,7 +599,6 @@ check_syntax_method <- function(quiet = FALSE,
     command = stanc_cmd(),
     args = c(self$stan_file(), stanc_built_options, stancflags_val),
     wd = cmdstan_path(),
-    echo_cmd = !quiet,
     echo = !quiet,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
