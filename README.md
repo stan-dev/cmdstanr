@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/cmdstanr)](https://CRAN.R-project.org/package=cmdstanr)
-[![R-CMD-check](https://github.com/stan-dev/cmdstanr/workflows/R-CMD-check/badge.svg)](https://github.com/stan-dev/cmdstanr/actions?workflow=R-CMD-check)
+![Unit tests](https://github.com/stan-dev/cmdstanr/workflows/Unit%20tests/badge.svg)
 [![Codecov test coverage](https://codecov.io/gh/stan-dev/cmdstanr/branch/master/graph/badge.svg)](https://codecov.io/gh/stan-dev/cmdstanr?branch=master)
 <!-- badges: end -->
 
