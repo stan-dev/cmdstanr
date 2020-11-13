@@ -255,6 +255,14 @@ test_that("check_syntax() works", {
     mod_ok$check_syntax(quiet = TRUE),
     regexp = NA
   )
+  expect_message(
+    mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic")),
+    "Stan program is syntactically correct"
+  )
+  expect_message(
+    mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic"), quiet = TRUE),
+    regexp = NA
+  )
 })
 
 test_that("check_syntax() works with include_paths", {
