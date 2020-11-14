@@ -188,4 +188,11 @@ test_that("matching_variables() works", {
     ret$not_found,
     c("theta")
   )
+
+  ret <- matching_variables(c("alpha", "beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("alpha", "beta[1]", "beta[2]", "beta[3]")
+  )
+  expect_equal(length(ret$not_found), 0)
 })
