@@ -1230,7 +1230,7 @@ CmdStanGQ <- R6::R6Class(
         stop("Can't find the following variable(s) in the output: ",
              paste(matching_res$not_found, collapse = ", "), call. = FALSE)
       }
-      private$draws_[,,variables]
+      private$draws_[,,matching_res$matching]
     },
     output = function(id = NULL) {
       if (is.null(id)) {
