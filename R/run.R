@@ -20,7 +20,8 @@ CmdStanRun <- R6::R6Class(
       }
       invisible(self)
     },
-
+    mpi = function() self$args$mpi,
+    nprocess = function() self$args$nprocess,
     num_procs = function() self$procs$num_procs(),
     proc_ids = function() self$procs$proc_ids(),
     exe_file = function() self$args$exe_file,
@@ -150,6 +151,10 @@ CmdStanRun <- R6::R6Class(
       }
     },
 
+    run_cmdstan_mpi = function(nprocess, mpicmd) {
+      private$run_sample_(nprocess, mpicmd)
+    },
+
     # run bin/stansummary or bin/diagnose
     # @param tool The name of the tool in `bin/` to run.
     # @param flags An optional character vector of flags (e.g. c("--sig_figs=1")).
@@ -222,7 +227,7 @@ CmdStanRun <- R6::R6Class(
 
 
 # run helpers -------------------------------------------------
-.run_sample <- function() {
+.run_sample <- function(nprocess = NULL, mpicmd = NULL) {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
 
@@ -261,7 +266,10 @@ CmdStanRun <- R6::R6Class(
         id = chain_id,
         command = self$command(),
         args = self$command_args()[[chain_id]],
-        wd = dirname(self$exe_file())
+        wd = dirname(self$exe_file()),
+        mpi_nprocess = nprocess,
+        mpicmd = mpicmd,
+        name = self$exe_file()
       )
       procs$mark_proc_start(chain_id)
       procs$set_active_procs(procs$active_procs() + 1)
@@ -475,12 +483,16 @@ CmdStanProcs <- R6::R6Class(
     get_proc = function(id) {
       private$processes_[[id]]
     },
-    new_proc = function(id, command, args, wd) {
+    new_proc = function(id, command, args, wd, name = NULL, mpi_nprocess = NULL, mpicmd = "mpiexec") {
+      if (!is.null(mpi_nprocess)) {
+        args = c("-n", mpi_nprocess, name, args)
+        command <- mpicmd
+      }
       private$processes_[[id]] <- processx::process$new(
         command = command,
         args = args,
         wd = wd,
-        echo_cmd = FALSE,
+        echo_cmd = TRUE,
         stdout = "|",
         stderr = "|"
       )

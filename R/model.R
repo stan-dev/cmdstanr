@@ -490,6 +490,7 @@ compile_method <- function(quiet = TRUE,
     stderr_line_callback = function(x,p) {
       if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
     },
+    echo_cmd = TRUE,
     error_on_status = FALSE
   )
   if (run_log$status != 0) {
@@ -914,6 +915,105 @@ sample_method <- function(data = NULL,
 }
 CmdStanModel$set("public", name = "sample", value = sample_method)
 
+
+mpi_sample_method <- function(data = NULL,
+                          nprocess = 1,
+                          mpicmd = "mpiexec",
+                          seed = NULL,
+                          refresh = NULL,
+                          init = NULL,
+                          save_latent_dynamics = FALSE,
+                          output_dir = NULL,
+                          chains = 4,
+                          parallel_chains = getOption("mc.cores", 1),
+                          chain_ids = seq_len(chains),
+                          threads_per_chain = NULL,
+                          iter_warmup = NULL,
+                          iter_sampling = NULL,
+                          save_warmup = FALSE,
+                          thin = NULL,
+                          max_treedepth = NULL,
+                          adapt_engaged = TRUE,
+                          adapt_delta = NULL,
+                          step_size = NULL,
+                          metric = NULL,
+                          metric_file = NULL,
+                          inv_metric = NULL,
+                          init_buffer = NULL,
+                          term_buffer = NULL,
+                          window = NULL,
+                          fixed_param = FALSE,
+                          sig_figs = NULL,
+                          validate_csv = TRUE,
+                          show_messages = TRUE) {
+
+  if (fixed_param) {
+    chains <- 1
+    parallel_chains <- 1
+    save_warmup <- FALSE
+  }
+
+  checkmate::assert_integerish(chains, lower = 1, len = 1)
+  checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
+  checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
+  checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE)
+  if (is.null(self$cpp_options()[["stan_threads"]])) {
+    if (!is.null(threads_per_chain)) {
+      warning("'threads_per_chain' is set but the model was not compiled with ",
+              "'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+              call. = FALSE)
+      threads_per_chain <- NULL
+    }
+  } else {
+    if (is.null(threads_per_chain)) {
+      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
+           "but 'threads_per_chain' was not set!",
+           call. = FALSE)
+    }
+  }
+  sample_args <- SampleArgs$new(
+    iter_warmup = iter_warmup,
+    iter_sampling = iter_sampling,
+    save_warmup = save_warmup,
+    thin = thin,
+    max_treedepth = max_treedepth,
+    adapt_engaged = adapt_engaged,
+    adapt_delta = adapt_delta,
+    step_size = step_size,
+    metric = metric,
+    metric_file = metric_file,
+    inv_metric = inv_metric,
+    init_buffer = init_buffer,
+    term_buffer = term_buffer,
+    window = window,
+    fixed_param = fixed_param
+  )
+  cmdstan_args <- CmdStanArgs$new(
+    method_args = sample_args,
+    model_name = strip_ext(basename(self$exe_file())),
+    exe_file = self$exe_file(),
+    proc_ids = chain_ids,
+    data_file = process_data(data),
+    save_latent_dynamics = save_latent_dynamics,
+    seed = seed,
+    init = init,
+    refresh = refresh,
+    output_dir = output_dir,
+    validate_csv = validate_csv,
+    sig_figs = sig_figs
+  )
+  cmdstan_args$nprocess <- nprocess
+  cmdstan_procs <- CmdStanMCMCProcs$new(
+    num_procs = chains,
+    parallel_procs = parallel_chains,
+    threads_per_proc = threads_per_chain,
+    show_stderr_messages = show_messages
+  )
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset$run_cmdstan_mpi(nprocess, mpicmd)
+  CmdStanMCMC$new(runset)
+}
+CmdStanModel$set("public", name = "mpi_sample", value = mpi_sample_method)
 
 #' Run Stan's optimization algorithms
 #'
