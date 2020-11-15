@@ -1224,13 +1224,15 @@ CmdStanGQ <- R6::R6Class(
       }
       if (is.null(variables)) {
         variables <- private$metadata_$model_params
-      }
-      matching_res <- matching_variables(variables, private$metadata_$model_params)
-      if (length(matching_res$not_found)) {
-        stop("Can't find the following variable(s) in the output: ",
-             paste(matching_res$not_found, collapse = ", "), call. = FALSE)
-      }
-      private$draws_[,,matching_res$matching]
+      } else {
+        matching_res <- matching_variables(variables, private$metadata_$model_params)
+        if (length(matching_res$not_found)) {
+          stop("Can't find the following variable(s) in the output: ",
+              paste(matching_res$not_found, collapse = ", "), call. = FALSE)
+        }
+        variables <- matching_res$matching
+      }      
+      private$draws_[,,variables]
     },
     output = function(id = NULL) {
       if (is.null(id)) {
