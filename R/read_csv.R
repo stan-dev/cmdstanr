@@ -159,12 +159,12 @@ read_cmdstan_csv <- function(files,
       } else if (!any(nzchar(variables))) { # if variables = "" returns none
         variables <- NULL
       } else { # filter using variables
-        res <- matching_variables(variables, metadata$model_params)
+        res <- matching_variables(variables, repair_variable_names(metadata$model_params))
         if (length(res$not_found)) {
           stop("Can't find the following variable(s) in the output: ",
                paste(res$not_found, collapse = ", "), call. = FALSE)
         }
-        variables <- res$matching
+        variables <- unrepair_variable_names(res$matching)
       }
       if (is.null(sampler_diagnostics)) {
         sampler_diagnostics <- metadata$sampler_diagnostics
@@ -213,7 +213,8 @@ read_cmdstan_csv <- function(files,
       suppressWarnings(
       draws <- data.table::fread(
           cmd = fread_cmd,
-          select = col_select
+          select = col_select,
+          data.table = FALSE
         )
       )
     } else {
@@ -225,13 +226,13 @@ read_cmdstan_csv <- function(files,
           if (length(variables) > 0) {
             warmup_draws <- posterior::bind_draws(
               warmup_draws,
-              posterior::as_draws_array(draws[1:num_warmup_draws, variables]),
+              posterior::as_draws_array(draws[1:num_warmup_draws, variables, drop = FALSE]),
               along="chain"
             )
             if (num_post_warmup_draws > 0) {
               post_warmup_draws <- posterior::bind_draws(
                 post_warmup_draws,
-                posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables]),
+                posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables, drop = FALSE]),
                 along="chain"
               )
             }            
@@ -239,13 +240,13 @@ read_cmdstan_csv <- function(files,
           if (length(sampler_diagnostics) > 0) {
             warmup_sampler_diagnostics_draws <- posterior::bind_draws(
               warmup_sampler_diagnostics_draws,
-              posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics]),
+              posterior::as_draws_array(draws[1:num_warmup_draws, sampler_diagnostics, drop = FALSE]),
               along="chain"
             )
             if (num_post_warmup_draws > 0) {
               post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
                 post_warmup_sampler_diagnostics_draws,
-                posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics]),
+                posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, sampler_diagnostics, drop = FALSE]),
                 along="chain"
               )
             }
@@ -256,14 +257,14 @@ read_cmdstan_csv <- function(files,
             if (length(variables) > 0) {
               post_warmup_draws <- posterior::bind_draws(
                 post_warmup_draws,
-                posterior::as_draws_array(draws[, variables]),
+                posterior::as_draws_array(draws[, variables, drop = FALSE]),
                 along="chain"
               )
             }
             if (length(sampler_diagnostics) > 0 && all(metadata$algorithm != "fixed_param")) {
               post_warmup_sampler_diagnostics_draws <- posterior::bind_draws(
                 post_warmup_sampler_diagnostics_draws,
-                posterior::as_draws_array(draws[, sampler_diagnostics]),
+                posterior::as_draws_array(draws[, sampler_diagnostics, drop = FALSE]),
                 along="chain"
               )
             }

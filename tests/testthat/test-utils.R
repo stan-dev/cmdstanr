@@ -163,3 +163,36 @@ test_that("variable_dims() works", {
   vars_dims <- list(c = c(2,1), b = 1)
   expect_equal(variable_dims(vars), vars_dims)
 })
+
+test_that("matching_variables() works", {
+  ret <- matching_variables(c("beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("beta[1]", "beta[2]", "beta[3]")
+  )
+  expect_equal(length(ret$not_found), 0)
+
+  ret <- matching_variables(c("alpha"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("alpha")
+  )
+  expect_equal(length(ret$not_found), 0)
+
+  ret <- matching_variables(c("alpha", "theta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("alpha")
+  )
+  expect_equal(
+    ret$not_found,
+    c("theta")
+  )
+
+  ret <- matching_variables(c("alpha", "beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("alpha", "beta[1]", "beta[2]", "beta[3]")
+  )
+  expect_equal(length(ret$not_found), 0)
+})

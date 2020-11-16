@@ -1,3 +1,13 @@
+# Items for next tagged release
+
+### Bug fixes
+
+* Fixed bug with processing stanc_options in `check_syntax()`.
+
+* Fixed bug on access to one variable via `draws()`.
+
+### New features
+
 # cmdstanr 0.2.0
 
 ### Bug fixes

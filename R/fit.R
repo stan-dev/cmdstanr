@@ -109,7 +109,6 @@ CmdStanFit <- R6::R6Class(
         }
         total_rows <- length(matches$matching)
         variables_to_print <- matches$matching[seq_len(max_rows)]
-        variables_to_print <- repair_variable_names(variables_to_print)
       }
 
       # if max_rows > length(variables_to_print) some will be NA
@@ -892,13 +891,14 @@ CmdStanMCMC <- R6::R6Class(
       }
       if (is.null(variables)) {
         variables <- private$metadata_$model_params
+      } else {
+        matching_res <- matching_variables(variables, private$metadata_$model_params)
+        if (length(matching_res$not_found)) {
+          stop("Can't find the following variable(s) in the output: ",
+              paste(matching_res$not_found, collapse = ", "), call. = FALSE)
+        }
+        variables <- matching_res$matching
       }
-      matching_res <- matching_variables(variables, private$metadata_$model_params)
-      if (length(matching_res$not_found)) {
-        stop("Can't find the following variable(s) in the output: ",
-             paste(matching_res$not_found, collapse = ", "), call. = FALSE)
-      }
-      variables <- repair_variable_names(matching_res$matching)
       if (inc_warmup) {
         posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")[,,variables]
       } else {
@@ -1224,13 +1224,14 @@ CmdStanGQ <- R6::R6Class(
       }
       if (is.null(variables)) {
         variables <- private$metadata_$model_params
-      }
-      matching_res <- matching_variables(variables, private$metadata_$model_params)
-      if (length(matching_res$not_found)) {
-        stop("Can't find the following variable(s) in the output: ",
-             paste(matching_res$not_found, collapse = ", "), call. = FALSE)
-      }
-      variables <- repair_variable_names(matching_res$matching)
+      } else {
+        matching_res <- matching_variables(variables, private$metadata_$model_params)
+        if (length(matching_res$not_found)) {
+          stop("Can't find the following variable(s) in the output: ",
+              paste(matching_res$not_found, collapse = ", "), call. = FALSE)
+        }
+        variables <- matching_res$matching
+      }      
       private$draws_[,,variables]
     },
     output = function(id = NULL) {
