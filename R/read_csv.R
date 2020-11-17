@@ -159,12 +159,12 @@ read_cmdstan_csv <- function(files,
       } else if (!any(nzchar(variables))) { # if variables = "" returns none
         variables <- NULL
       } else { # filter using variables
-        res <- matching_variables(variables, metadata$model_params)
+        res <- matching_variables(variables, repair_variable_names(metadata$model_params))
         if (length(res$not_found)) {
           stop("Can't find the following variable(s) in the output: ",
                paste(res$not_found, collapse = ", "), call. = FALSE)
         }
-        variables <- res$matching
+        variables <- unrepair_variable_names(res$matching)
       }
       if (is.null(sampler_diagnostics)) {
         sampler_diagnostics <- metadata$sampler_diagnostics
