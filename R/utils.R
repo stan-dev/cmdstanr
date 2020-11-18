@@ -203,9 +203,13 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   cpp_built_options = c()
   for (i in seq_len(length(cpp_options))) {
     option_name <- names(cpp_options)[i]
-    cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+    if (is.null(option_name) || !nzchar(option_name)) {
+      cpp_built_options = c(cpp_built_options, toupper(cpp_options[[i]]))
+    } else {
+      cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+    }    
   }
-  paste0(cpp_built_options, collapse = " ")
+  cpp_built_options
 }
 
 check_stanc_options <- function(stanc_options) {
