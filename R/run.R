@@ -230,7 +230,12 @@ CmdStanRun <- R6::R6Class(
 .run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-
+  if (!is.null(mpi_cmd)) {
+    if (is.null(mpi_args)) {
+      mpi_args = list()
+    }
+    mpi_args[["exe"]] <- self$exe_file()
+  }
   # add path to the TBB library to the PATH variable
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
@@ -268,8 +273,7 @@ CmdStanRun <- R6::R6Class(
         args = self$command_args()[[chain_id]],
         wd = dirname(self$exe_file()),
         mpi_cmd = mpi_cmd,
-        mpi_args = mpi_args,
-        name = self$exe_file()
+        mpi_args = mpi_args
       )
       procs$mark_proc_start(chain_id)
       procs$set_active_procs(procs$active_procs() + 1)
@@ -483,16 +487,21 @@ CmdStanProcs <- R6::R6Class(
     get_proc = function(id) {
       private$processes_[[id]]
     },
-    new_proc = function(id, command, args, wd, name = NULL, mpi_nprocess = NULL, mpicmd = "mpiexec") {
-      if (!is.null(mpi_nprocess)) {
-        args = c("-n", mpi_nprocess, name, args)
-        command <- mpicmd
+    new_proc = function(id, command, args, wd, mpi_cmd = NULL, mpi_args = NULL) {
+      if (!is.null(mpi_cmd)) {
+        exe_name <- mpi_args[["exe"]]
+        mpi_args[["exe"]] <- NULL
+        mpi_args_vector <- c()
+        for (i in names(mpi_args)) {
+          mpi_args_vector <- c(paste0("-", i), mpi_args[[i]], mpi_args_vector)
+        }
+        args = c(mpi_args_vector, exe_name, args)
+        command <- mpi_cmd
       }
       private$processes_[[id]] <- processx::process$new(
         command = command,
         args = args,
         wd = wd,
-        echo_cmd = TRUE,
         stdout = "|",
         stderr = "|"
       )
