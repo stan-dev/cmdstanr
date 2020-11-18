@@ -151,8 +151,8 @@ CmdStanRun <- R6::R6Class(
       }
     },
 
-    run_cmdstan_mpi = function(nprocess, mpicmd) {
-      private$run_sample_(nprocess, mpicmd)
+    run_cmdstan_mpi = function(mpi_cmd, mpi_args) {
+      private$run_sample_(mpi_cmd, mpi_args)
     },
 
     # run bin/stansummary or bin/diagnose
@@ -227,7 +227,7 @@ CmdStanRun <- R6::R6Class(
 
 
 # run helpers -------------------------------------------------
-.run_sample <- function(nprocess = NULL, mpicmd = NULL) {
+.run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
 
@@ -267,8 +267,8 @@ CmdStanRun <- R6::R6Class(
         command = self$command(),
         args = self$command_args()[[chain_id]],
         wd = dirname(self$exe_file()),
-        mpi_nprocess = nprocess,
-        mpicmd = mpicmd,
+        mpi_cmd = mpi_cmd,
+        mpi_args = mpi_args,
         name = self$exe_file()
       )
       procs$mark_proc_start(chain_id)

@@ -917,8 +917,8 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 
 
 mpi_sample_method <- function(data = NULL,
-                          nprocess = 1,
-                          mpicmd = "mpiexec",
+                          mpi_cmd = "mpiexec",
+                          mpi_args = NULL,
                           seed = NULL,
                           refresh = NULL,
                           init = NULL,
@@ -1002,7 +1002,6 @@ mpi_sample_method <- function(data = NULL,
     validate_csv = validate_csv,
     sig_figs = sig_figs
   )
-  cmdstan_args$nprocess <- nprocess
   cmdstan_procs <- CmdStanMCMCProcs$new(
     num_procs = chains,
     parallel_procs = parallel_chains,
@@ -1010,7 +1009,7 @@ mpi_sample_method <- function(data = NULL,
     show_stderr_messages = show_messages
   )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
-  runset$run_cmdstan_mpi(nprocess, mpicmd)
+  runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
   CmdStanMCMC$new(runset)
 }
 CmdStanModel$set("public", name = "mpi_sample", value = mpi_sample_method)
