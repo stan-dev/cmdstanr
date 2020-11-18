@@ -490,7 +490,6 @@ compile_method <- function(quiet = TRUE,
     stderr_line_callback = function(x,p) {
       if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
     },
-    echo_cmd = TRUE,
     error_on_status = FALSE
   )
   if (run_log$status != 0) {
