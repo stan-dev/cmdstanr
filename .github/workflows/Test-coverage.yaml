@@ -64,10 +64,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Set path for RTools 4.0
-        run: |
-          echo "::add-path::C:/rtools40/usr/bin"
-          echo "::add-path::C:/rtools40/mingw64/bin"
-        shell: powershell
+        if: runner.os == 'Windows'
+        run: echo "C:/rtools40/usr/bin;C:/rtools40/mingw64/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
       - name: Install mingw32-make and check toolchain path
         if: runner.os == 'Windows'
