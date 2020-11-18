@@ -31,9 +31,9 @@ opts_chunk$set(
 
 ## Introduction
 
-CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
+CmdStanR is a lightweight interface to [Stan](https://mc-stan.org/) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python) that
-provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
+provides an alternative to the traditional [RStan](https://mc-stan.org/rstan/)
 interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
 later in this vignette for more details on how the two interfaces differ.
 
@@ -56,7 +56,7 @@ color_scheme_set("brightblue")
 ## Installing CmdStan
 
 CmdStanR requires a working installation of
-[CmdStan](https://mc-stan.org/users/interfaces/cmdstan), the shell interface to
+[CmdStan](https://mc-stan.org/users/interfaces/cmdstan/), the shell interface to
 Stan. If you don't have CmdStan installed you can install it yourself or use the
 `install_cmdstan()` function provided by CmdStanR.
 
@@ -207,7 +207,7 @@ print(draws_df)
 
 Plotting posterior distributions is as easy as passing the object returned by
 the `$draws()` method directly to plotting functions in
-[**bayesplot**](https://mc-stan.org/bayesplot):
+[**bayesplot**](https://mc-stan.org/bayesplot/):
 
 ```{r plots, message=FALSE}
 mcmc_hist(fit$draws("theta"))
