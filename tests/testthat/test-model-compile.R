@@ -167,6 +167,23 @@ test_that("switching threads on and off works without rebuild", {
   expect_equal(before_mtime, after_mtime)
 })
 
+test_that("multiple cpp_options work", {
+  skip_on_cran()
+  stan_file <- testing_stan_file("bernoulli")
+  expect_message(
+    mod <- cmdstan_model(stan_file, cpp_options = list("O"="0", "TEST"="1", stan_threads = TRUE), force_recompile = TRUE),
+    "Compiling Stan program..."
+  )
+  expect_message(
+    mod$compile(cpp_options = list("O"="0", "TEST"="1", stan_threads = TRUE), force_recompile = TRUE),
+    "Compiling Stan program..."
+  )
+  expect_message(
+    mod$compile(cpp_options = list(), force_recompile = TRUE),
+    "Compiling Stan program..."
+  )
+})
+
 test_that("compile errors are shown", {
   skip_on_cran()
   stan_file <- testing_stan_file("fail")

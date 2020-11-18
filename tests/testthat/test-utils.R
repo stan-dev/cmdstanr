@@ -101,7 +101,7 @@ test_that("cpp_options_to_compile_flags() works", {
     stan_threads = TRUE,
     stanc2 = TRUE
   )
-  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE STANC2=TRUE")
+  expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=TRUE", "STANC2=TRUE"))
   options = list()
   expect_equal(cpp_options_to_compile_flags(options), NULL)
 })
