@@ -43,8 +43,9 @@ later in this vignette for more details on how the two interfaces differ.
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
-CmdStanR (the **cmdstanr** R package) can now be loaded like any other R package. 
-We'll also load the **bayesplot** and **posterior** packages.
+CmdStanR (the **cmdstanr** R package) can now be loaded like any other R
+package. We'll also load the **bayesplot** and **posterior** packages to use
+later in examples.
 
 ```{r library, message=FALSE}
 library(cmdstanr)
@@ -63,17 +64,24 @@ the CmdStan Guide:
 
 * https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html
 
+To double check that your toolchain is set up properly you can call
+the `check_cmdstan_toolchain()` function: 
+
+```{r check-toolchain}
+check_cmdstan_toolchain()
+```
+
 If your toolchain is configured correctly then CmdStan can be installed by
 calling the
 [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.html)
 function:
 
-```{r, include = FALSE}
+```{r install_cmdstan-1, include = FALSE}
 if (!dir.exists(cmdstan_default_path())) {
   install_cmdstan()
 }
 ```
-```{r, eval=FALSE}
+```{r install_cmdstan-2, eval=FALSE}
 install_cmdstan(cores = 2)
 ```
 
