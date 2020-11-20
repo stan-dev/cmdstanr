@@ -520,23 +520,29 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' @section Usage:
 #'   ```
 #'   $check_syntax(
-#'     quiet = FALSE,
+#'     pedantic = FALSE,
 #'     include_paths = NULL,
-#'     stanc_options = list()
+#'     stanc_options = list(),
+#'     quiet = FALSE
 #'   )
 #'   ```
 #'
 #' @section Arguments:
+#'   * `pedantic`: (logical) Should pedantic mode be turned on? The default is
+#'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
+#'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
+#'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
+#'   the Stan Reference Manual.
+#'   * `include_paths`: (character vector) Paths to directories where Stan
+#'   should look for files specified in `#include` directives in the Stan
+#'   program.
+#'   * `stanc_options`: (list) Any other Stan-to-C++ transpiler options to be
+#'   used when compiling the model. See the documentation for the
+#'   [`$compile()`][model-method-compile] method for details.
 #'   * `quiet`: (logical) Should informational messages be suppressed? The
 #'   default is `FALSE`, which will print a message if the Stan program is valid
 #'   or the compiler error message if there are syntax errors. If `TRUE`, only
 #'   the error message will be printed.
-#'   * `include_paths`: (character vector) Paths to directories where Stan
-#'   should look for files specified in `#include` directives in the Stan
-#'   program.
-#'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be used
-#'   when compiling the model. See the documentation for the
-#'   [`$compile()`][model-method-compile] method for details.
 #'
 #' @section Value: The `$check_syntax()` method returns `TRUE` (invisibly) if
 #'   the model is valid.
@@ -545,17 +551,35 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'
 #' @examples
 #' \dontrun{
-#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-#'
+#' file <- write_stan_file("
+#' data {
+#'   int N;
+#'   int y[N];
+#' }
+#' parameters {
+#'   // should have <lower=0> but omitting to demonstrate pedantic mode
+#'   real lambda;
+#' }
+#' model {
+#'   y ~ poisson(lambda);
+#' }
+#' ")
 #' mod <- cmdstan_model(file, compile = FALSE)
+#'
+#' # the program is syntactically correct, however...
 #' mod$check_syntax()
+#'
+#' # pedantic mode will warn that lambda should be constrained to be positive
+#' # and that lambda has no prior distribution
+#' mod$check_syntax(pedantic = TRUE)
 #' }
 #'
 NULL
 
-check_syntax_method <- function(quiet = FALSE,
+check_syntax_method <- function(pedantic = FALSE,
                                 include_paths = NULL,
-                                stanc_options = list()) {
+                                stanc_options = list(),
+                                quiet = FALSE) {
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
@@ -567,6 +591,10 @@ check_syntax_method <- function(quiet = FALSE,
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- temp_hpp_file
+
+  if (pedantic) {
+    stanc_options[["warn-pedantic"]] <- TRUE
+  }
 
   stancflags_val <- NULL
   if (!is.null(include_paths)) {
