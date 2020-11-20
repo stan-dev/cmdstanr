@@ -600,8 +600,11 @@ check_syntax_method <- function(quiet = FALSE,
     command = stanc_cmd(),
     args = c(self$stan_file(), stanc_built_options, stancflags_val),
     wd = cmdstan_path(),
-    echo = !quiet,
+    echo = FALSE,
     spinner = quiet && interactive(),
+    stdout_line_callback = function(x,p) {
+      if (!quiet) cat(x)
+    },
     stderr_line_callback = function(x,p) {
       message(x)
     },
