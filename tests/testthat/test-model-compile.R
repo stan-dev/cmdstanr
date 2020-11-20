@@ -311,13 +311,10 @@ test_that("pedantic check works", {
     "Stan program is syntactically correct"
   )
 
-  a <- utils::capture.output(
-    expect_message(
-     mod_pedantic_warn$check_syntax(stanc_options = list("warn-pedantic" = TRUE)),
-     ""
-    )
+  expect_message(
+    mod_pedantic_warn$check_syntax(pedantic = TRUE),
+    "The parameter x was declared but was not used in the density calculation."
   )
-  expect_match(paste0(a, collapse = "\n"), "The parameter x was declared but was not used in the density calculation.")
 })
 
 test_that("compiling stops on hyphens in stanc_options", {
