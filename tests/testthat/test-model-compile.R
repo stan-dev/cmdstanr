@@ -280,6 +280,37 @@ test_that("check_syntax() works", {
     mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic"), quiet = TRUE),
     regexp = NA
   )
+
+  pedantic_model <- write_stan_file("
+  data {
+    int N;
+    int y[N];
+  }
+  parameters {
+    // should have <lower=0> but omitting to demonstrate pedantic mode
+    real lambda;
+  }
+  model {
+    y ~ poisson(lambda);
+  }
+  ")
+  mod_pedantic <- cmdstan_model(pedantic_model, compile = FALSE)
+  expect_output(
+    mod_pedantic$check_syntax(stanc_options = list("warn-pedantic")),
+    regexp = NA
+  )
+  expect_message(
+    mod_pedantic$check_syntax(stanc_options = list("warn-pedantic")),
+    "The parameter lambda has no priors."
+  )
+  expect_output(
+    mod_pedantic$check_syntax(stanc_options = list("warn-pedantic"), quiet = TRUE),
+    regexp = NA
+  )
+  expect_message(
+    mod_pedantic$check_syntax(stanc_options = list("warn-pedantic"), quiet = TRUE),
+    "The parameter lambda has no priors."
+  )
 })
 
 test_that("check_syntax() works with include_paths", {
@@ -311,13 +342,10 @@ test_that("pedantic check works", {
     "Stan program is syntactically correct"
   )
 
-  a <- utils::capture.output(
-    expect_message(
-     mod_pedantic_warn$check_syntax(stanc_options = list("warn-pedantic" = TRUE)),
-     ""
-    )
+  expect_message(
+    mod_pedantic_warn$check_syntax(stanc_options = list("warn-pedantic" = TRUE)),
+    "The parameter x was declared but was not used in the density calculation."
   )
-  expect_match(paste0(a, collapse = "\n"), "The parameter x was declared but was not used in the density calculation.")
 })
 
 test_that("compiling stops on hyphens in stanc_options", {
