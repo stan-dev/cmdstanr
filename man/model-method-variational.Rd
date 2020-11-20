@@ -267,6 +267,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-compile}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-mpi-sample}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-sample}}
 }
