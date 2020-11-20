@@ -2,11 +2,14 @@
 
 ### Bug fixes
 
-* Fixed bug with processing stanc_options in `check_syntax()`.
+* Fixed bug with processing stanc_options in `check_syntax()`. (#345)
 
-* Fixed bug on access to one variable via `draws()`.
+* Fixed bug on access to one variable via `draws()`. (#348)
 
 ### New features
+
+* `check_syntax()` method gains argument `pedantic` for turning on pedantic 
+mode, which warns about issues with the model beyond syntax errors. (#361)
 
 # cmdstanr 0.2.0
 
