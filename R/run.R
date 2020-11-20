@@ -20,8 +20,6 @@ CmdStanRun <- R6::R6Class(
       }
       invisible(self)
     },
-    mpi = function() self$args$mpi,
-    nprocess = function() self$args$nprocess,
     num_procs = function() self$procs$num_procs(),
     proc_ids = function() self$procs$proc_ids(),
     exe_file = function() self$args$exe_file,
