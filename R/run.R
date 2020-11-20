@@ -171,7 +171,6 @@ CmdStanRun <- R6::R6Class(
         command = target_exe,
         args = c(self$output_files(include_failed = FALSE), flags),
         wd = cmdstan_path(),
-        echo_cmd = FALSE,
         echo = TRUE,
         error_on_status = TRUE
       )
