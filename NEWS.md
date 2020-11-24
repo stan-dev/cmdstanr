@@ -8,8 +8,9 @@
 
 ### New features
 
-* `check_syntax()` method gains argument `pedantic` for turning on pedantic 
-mode, which warns about issues with the model beyond syntax errors. (#361)
+* `compile()` and `check_syntax()` methods gain argument `pedantic` for turning
+on pedantic mode, which warns about issues with the model beyond syntax errors.
+(#361)
 
 # cmdstanr 0.2.0
 

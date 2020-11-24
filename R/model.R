@@ -308,7 +308,9 @@ CmdStanModel <- R6::R6Class(
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
-#'   the Stan Reference Manual.
+#'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
+#'   that is already compiled use the
+#'   [`$check_syntax()`][model-method-check_syntax] method instead.
 #'   * `include_paths`: (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
