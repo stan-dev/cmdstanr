@@ -17,6 +17,7 @@ methods, many of which have their own (linked) documentation pages:
    \verb{$stan_file()} \tab Return the file path to the Stan program. \cr
    \verb{$code()} \tab Return Stan program as a string. \cr
    \verb{$print()} \tab Print readable version of Stan program. \cr
+   \code{\link[=model-method-check_syntax]{$check_syntax()}} \tab Check Stan syntax without having to compile. \cr
 }
 
 }
