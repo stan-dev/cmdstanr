@@ -23,6 +23,7 @@ temporary directory. To save the C++ code to a non-temporary location use
 \preformatted{$compile(
   quiet = TRUE,
   dir = NULL,
+  pedantic = FALSE,
   include_paths = NULL,
   cpp_options = list(),
   stanc_options = list(),
@@ -47,6 +48,10 @@ output.
 \item \code{dir}: (string) The path to the directory in which to store the CmdStan
 executable (or \code{.hpp} file if using \verb{$save_hpp_file()}). The default is the
 same location as the Stan program.
+\item \code{pedantic}: (logical) Should pedantic mode be turned on? The default is
+\code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
+Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/reference-manual/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
+the Stan Reference Manual.
 \item \code{include_paths}: (character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
 program.
@@ -94,7 +99,7 @@ model {
   sigma ~ exponential(1);
 }
 ")
-mod <- cmdstan_model(file_pedantic, stanc_options = list("warn-pedantic" = TRUE))
+mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 
 }
 

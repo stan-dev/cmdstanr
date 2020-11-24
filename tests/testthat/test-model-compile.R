@@ -282,6 +282,23 @@ test_that("compiling works with only names in list", {
   )
 })
 
+test_that("compile() works with pedantic=TRUE", {
+  skip_on_cran()
+  stan_file <- write_stan_file("
+  parameters {
+    real y;
+    real x;
+  }
+  model {
+    y ~ std_normal();
+  }
+  ")
+  expect_message(
+    mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE),
+    "The parameter x was declared but was not used in the density calculation."
+  )
+})
+
 test_that("*hpp_file() functions work", {
   skip_on_cran()
   tmp_dir <- tempdir()

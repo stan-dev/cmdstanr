@@ -156,6 +156,7 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'  `$stan_file()` | Return the file path to the Stan program. |
 #'  `$code()` | Return Stan program as a string. |
 #'  `$print()`|  Print readable version of Stan program. |
+#'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
 #'
 #'  ## Compilation
 #'
@@ -281,6 +282,7 @@ CmdStanModel <- R6::R6Class(
 #'   $compile(
 #'     quiet = TRUE,
 #'     dir = NULL,
+#'     pedantic = FALSE,
 #'     include_paths = NULL,
 #'     cpp_options = list(),
 #'     stanc_options = list(),
@@ -302,6 +304,11 @@ CmdStanModel <- R6::R6Class(
 #'   * `dir`: (string) The path to the directory in which to store the CmdStan
 #'   executable (or `.hpp` file if using `$save_hpp_file()`). The default is the
 #'   same location as the Stan program.
+#'   * `pedantic`: (logical) Should pedantic mode be turned on? The default is
+#'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
+#'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
+#'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
+#'   the Stan Reference Manual.
 #'   * `include_paths`: (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -347,7 +354,7 @@ CmdStanModel <- R6::R6Class(
 #'   sigma ~ exponential(1);
 #' }
 #' ")
-#' mod <- cmdstan_model(file_pedantic, stanc_options = list("warn-pedantic" = TRUE))
+#' mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 #'
 #' }
 #'
@@ -355,6 +362,7 @@ NULL
 
 compile_method <- function(quiet = TRUE,
                            dir = NULL,
+                           pedantic = FALSE,
                            include_paths = NULL,
                            cpp_options = list(),
                            stanc_options = list(),
@@ -459,6 +467,10 @@ compile_method <- function(quiet = TRUE,
       include_paths_flag <- " --include_paths="
     }
     stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
+  }
+
+  if (pedantic) {
+    stanc_options[["warn-pedantic"]] <- TRUE
   }
 
   if (!is.null(cpp_options$stan_opencl)) {
