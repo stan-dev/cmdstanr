@@ -1062,7 +1062,6 @@ mpi_sample_method <- function(data = NULL,
                           save_latent_dynamics = FALSE,
                           output_dir = NULL,
                           chains = 1,
-                          parallel_chains = getOption("mc.cores", 1),
                           chain_ids = seq_len(chains),
                           iter_warmup = NULL,
                           iter_sampling = NULL,
@@ -1082,10 +1081,9 @@ mpi_sample_method <- function(data = NULL,
                           sig_figs = NULL,
                           validate_csv = TRUE,
                           show_messages = TRUE) {
-
+  parallel_chains <- 1
   if (fixed_param) {
     chains <- 1
-    parallel_chains <- 1
     save_warmup <- FALSE
   }
 
