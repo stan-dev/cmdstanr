@@ -182,6 +182,17 @@ install_cmdstan <- function(dir = NULL,
       ),
       append = TRUE
     )
+    try(
+      suppressWarnings(
+        macos_inc <- "https://github.com/stan-dev/math/blob/develop/lib/tbb_2019_U8/build/macos.inc"
+        dest_macos_inc <- file.path(dir_cmdstan, "stan", "lib", "stan_math", "lib", "tbb_2019_U8", "build", "macos.inc")
+        file.remove(dest_macos_inc)
+        utils::download.file(url = download_url,
+                            destfile = dest_macos_inc,
+                            quiet = quiet)
+      ),
+      silent = TRUE                                    
+    )
   }
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
