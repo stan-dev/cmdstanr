@@ -132,6 +132,10 @@ of the objective.
 \item \code{eval_elbo}: (positive integer) Evaluate ELBO every Nth iteration.
 \item \verb{output_samples:} (positive integer) Number of posterior samples to draw
 and save.
+\item \code{threads}: (positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when
+using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
 }
 }
 

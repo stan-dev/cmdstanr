@@ -115,6 +115,10 @@ by the installed version of CmdStan.
 \item \code{iter}: (positive integer) The number of iterations.
 \item \code{init_alpha}: (nonnegative real) The line search step size for first
 iteration. Not applicable if \code{algorithm="newton"}.
+\item \code{threads}: (positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when
+using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
 }
 }
 

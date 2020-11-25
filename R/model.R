@@ -1008,6 +1008,11 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   * `init_alpha`: (nonnegative real) The line search step size for first
 #'   iteration. Not applicable if `algorithm="newton"`.
 #'
+#'   * `threads`: (positive integer) If the model was
+#'   [compiled][model-method-compile] with threading support, the number of
+#'   threads to use in parallelized sections (e.g., when
+#'   using the Stan functions `reduce_sum()` or `map_rect()`).
+#' 
 #' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
 #'
 #' @template seealso-docs
@@ -1136,6 +1141,11 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   * `eval_elbo`: (positive integer) Evaluate ELBO every Nth iteration.
 #'   * `output_samples:` (positive integer) Number of posterior samples to draw
 #'   and save.
+#' 
+#'   * `threads`: (positive integer) If the model was
+#'   [compiled][model-method-compile] with threading support, the number of
+#'   threads to use in parallelized sections (e.g., when
+#'   using the Stan functions `reduce_sum()` or `map_rect()`).
 #'
 #' @section Value: The `$variational()` method returns a [`CmdStanVB`] object.
 #'

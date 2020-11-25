@@ -1,3 +1,11 @@
+# Items for next tagged release
+
+### Bug fixes
+
+### New features
+
+* Added `threads` argument for `$optimize()` and `$variational()`. (#369)
+
 # cmdstanr 0.2.1
 
 ### Bug fixes
