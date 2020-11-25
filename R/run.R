@@ -247,7 +247,20 @@ CmdStanRun <- R6::R6Class(
     start_msg <- paste0("Running MCMC with ", procs$num_procs(), " parallel chains")
   } else {
     if (procs$parallel_procs() == 1) {
-      start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
+      if (!is.null(mpi_cmd)) {
+        if (!is.null(mpi_args[["n"]])) {
+          mpi_n_process <- mpi_args[["n"]]
+        } else if (!is.null(mpi_args[["np"]])) {
+          mpi_n_process <- mpi_args[["np"]]
+        }
+        if (is.null(mpi_n_process)) {
+          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI")
+        } else {
+          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI with ", mpi_n_process, " processes")          
+        }        
+      } else {
+        start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
+      }      
     } else {
       start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_procs(), " in parallel")
     }
