@@ -32,6 +32,8 @@ analysis.
 
 ### Installation
 
+#### Installing the R package
+
 You can install the beta release of the **cmdstanr** R package with 
 
 ```r
@@ -44,6 +46,15 @@ or you can install the latest development version from GitHub:
 # install.packages("remotes")
 remotes::install_github("stan-dev/cmdstanr")
 ```
+
+#### Installing CmdStan
+
+If you don't already have CmdStan installed then, in addition to installing the
+R package, it is also necessary to install CmdStan using CmdStanR's 
+`install_cmdstan()` function. A suitable C++ toolchain is also required. 
+Instructions are provided in the [_Getting started with
+CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette. 
+
 
 ### Contributing 
 

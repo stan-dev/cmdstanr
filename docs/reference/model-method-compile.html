@@ -91,7 +91,7 @@ $save_hpp_file()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.1</span>
       </span>
     </div>
 
@@ -209,6 +209,7 @@ temporary directory. To save the C++ code to a non-temporary location use
 <pre>$compile(
   quiet = TRUE,
   dir = NULL,
+  pedantic = FALSE,
   include_paths = NULL,
   cpp_options = list(),
   stanc_options = list(),
@@ -233,6 +234,12 @@ output.</p></li>
 <li><p><code>dir</code>: (string) The path to the directory in which to store the CmdStan
 executable (or <code>.hpp</code> file if using <code>$save_hpp_file()</code>). The default is the
 same location as the Stan program.</p></li>
+<li><p><code>pedantic</code>: (logical) Should pedantic mode be turned on? The default is
+<code>FALSE</code>. Pedantic mode attempts to warn you about potential issues in your
+Stan program beyond syntax errors. For details see the <a href='https://mc-stan.org/docs/reference-manual/pedantic-mode.html'><em>Pedantic mode</em> chapter</a> in
+the Stan Reference Manual. <strong>Note:</strong> to do a pedantic check for a model
+that is already compiled use the
+<code><a href='model-method-check_syntax.html'>$check_syntax()</a></code> method instead.</p></li>
 <li><p><code>include_paths</code>: (character vector) Paths to directories where Stan
 should look for files specified in <code>#include</code> directives in the Stan
 program.</p></li>
@@ -280,7 +287,7 @@ documentation and tutorials.</p>
 <span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 <span class='no'>mod</span>$<span class='fu'>compile</span>()</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan-2.25.0/examples/bernoulli/bernoulli"</div><div class='input'>
 <span class='co'># turn on threading support (for using functions that support within-chain parallelization)</span>
-<span class='no'>mod</span>$<span class='fu'>compile</span>(<span class='kw'>force_recompile</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>stan_threads</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'><span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan-2.25.0/examples/bernoulli/bernoulli_threads"</div><div class='input'>
+<span class='no'>mod</span>$<span class='fu'>compile</span>(<span class='kw'>force_recompile</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>stan_threads</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\| </div><div class='input'><span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan-2.25.0/examples/bernoulli/bernoulli_threads"</div><div class='input'>
 <span class='co'># turn on pedantic mode (new in Stan v2.24)</span>
 <span class='no'>file_pedantic</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(<span class='st'>"
 parameters {
@@ -290,7 +297,7 @@ model {
   sigma ~ exponential(1);
 }
 "</span>)
-<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file_pedantic</span>, <span class='kw'>stanc_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='st'>"warn-pedantic"</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; <span class='message'>Warning at '/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/model-4754105c1137.stan', line 6, column 2 to column 7:</span></div><div class='output co'>#&gt; <span class='message'>  Parameter sigma is given a exponential distribution, which has strictly</span></div><div class='output co'>#&gt; <span class='message'>  positive support, but sigma was not constrained to be strictly positive.</span></div><div class='input'>
+<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file_pedantic</span>, <span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\</div><div class='output co'>#&gt; <span class='message'>Warning at '/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCe3KhV/model-1424c4676c7fd.stan', line 6, column 2 to column 7:</span></div><div class='output co'>#&gt; <span class='message'>  Parameter sigma is given a exponential distribution, which has strictly</span></div><div class='output co'>#&gt; <span class='message'>  positive support, but sigma was not constrained to be strictly positive.</span></div><div class='output co'>#&gt; |/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\| </div><div class='input'>
 # }
 
 </div></pre>
