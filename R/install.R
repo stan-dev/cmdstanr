@@ -172,7 +172,17 @@ install_cmdstan <- function(dir = NULL,
       }
     }
   }
-
+  
+  if (os_is_macos()) {
+    # missing logic to check whether its an M1
+    cmdstan_make_local(
+      dir = dir_cmdstan,
+      cpp_options = list(
+        "CXX=\"arch -arch arm64e clang++\""
+      ),
+      append = TRUE
+    )
+  }
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
   if (!build_status_ok(build_log, quiet = quiet)) {
