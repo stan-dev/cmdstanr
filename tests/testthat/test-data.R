@@ -82,9 +82,9 @@ test_that("process_fitted_params() works if output_files in fit do not exist", {
   for(file in new_files) {
     if (os_is_windows()) {
       grep_path <- repair_path(Sys.which("grep.exe"))
-      fread_cmd <- paste0(grep_path, " -v '^#' ", file)
+      fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", file)
     } else {
-      fread_cmd <- paste0("grep -v '^#' ", file)
+      fread_cmd <- paste0("grep -v '^#' --color=never ", file)
     }
     suppressWarnings(
       tmp_file_gq <- data.table::fread(
