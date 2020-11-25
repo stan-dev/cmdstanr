@@ -865,7 +865,7 @@ sample_method <- function(data = NULL,
   }
   if (!is.null(num_cores)) {
     warning("'num_cores' is deprecated. Please use 'parallel_chains' instead.")
-    cores <- num_cores
+    parallel_chains <- num_cores
   }
   if (!is.null(num_chains)) {
     warning("'num_chains' is deprecated. Please use 'chains' instead.")
@@ -1024,7 +1024,23 @@ optimize_method <- function(data = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
                             iter = NULL,
-                            sig_figs = NULL) {
+                            sig_figs = NULL,
+                            threads = NULL) {
+  checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
+  if (is.null(self$cpp_options()[["stan_threads"]])) {
+    if (!is.null(threads)) {
+      warning("'threads' is set but the model was not compiled with ",
+              "'cpp_options = list(stan_threads = TRUE)' so 'threads' will have no effect!",
+              call. = FALSE)
+      threads <- NULL
+    }
+  } else {
+    if (is.null(threads)) {
+      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
+           "but 'threads' was not set!",
+           call. = FALSE)
+    }
+  }
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
@@ -1044,7 +1060,11 @@ optimize_method <- function(data = NULL,
     sig_figs = sig_figs
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_stdout_messages = (is.null(refresh) || refresh != 0))
+  cmdstan_procs <- CmdStanProcs$new(
+    num_procs = 1,
+    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    threads_per_proc = threads
+  )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
@@ -1140,7 +1160,23 @@ variational_method <- function(data = NULL,
                                tol_rel_obj = NULL,
                                eval_elbo = NULL,
                                output_samples = NULL,
-                               sig_figs = NULL) {
+                               sig_figs = NULL,
+                               threads = NULL) {
+  checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
+  if (is.null(self$cpp_options()[["stan_threads"]])) {
+    if (!is.null(threads)) {
+      warning("'threads' is set but the model was not compiled with ",
+              "'cpp_options = list(stan_threads = TRUE)' so 'threads' will have no effect!",
+              call. = FALSE)
+      threads <- NULL
+    }
+  } else {
+    if (is.null(threads)) {
+      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
+           "but 'threads' was not set!",
+           call. = FALSE)
+    }
+  }
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -1167,7 +1203,11 @@ variational_method <- function(data = NULL,
     sig_figs = sig_figs
   )
 
-  cmdstan_procs <- CmdStanProcs$new(num_procs = 1, show_stdout_messages = (is.null(refresh) || refresh != 0))
+  cmdstan_procs <- CmdStanProcs$new(
+    num_procs = 1,
+    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    threads_per_proc = threads
+  )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
   CmdStanVB$new(runset)
@@ -1262,6 +1302,22 @@ generate_quantities_method <- function(fitted_params,
                                        parallel_chains = getOption("mc.cores", 1),
                                        threads_per_chain = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
+  checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
+  if (is.null(self$cpp_options()[["stan_threads"]])) {
+    if (!is.null(threads_per_chain)) {
+      warning("'threads_per_chain' is set but the model was not compiled with ",
+              "'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+              call. = FALSE)
+      threads_per_chain <- NULL
+    }
+  } else {
+    if (is.null(threads_per_chain)) {
+      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
+           "but 'threads_per_chain' was not set!",
+           call. = FALSE)
+    }
+  }
+
   fitted_params <- process_fitted_params(fitted_params)
   chains <- length(fitted_params)
   generate_quantities_args <- GenerateQuantitiesArgs$new(

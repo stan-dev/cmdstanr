@@ -235,7 +235,7 @@ read_cmdstan_csv <- function(files,
                 posterior::as_draws_array(draws[(num_warmup_draws+1):all_draws, variables, drop = FALSE]),
                 along="chain"
               )
-            }            
+            }
           }
           if (length(sampler_diagnostics) > 0) {
             warmup_sampler_diagnostics_draws <- posterior::bind_draws(
@@ -483,7 +483,11 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$step_size <- csv_file_info$stepsize
   csv_file_info$iter_warmup <- csv_file_info$num_warmup
   csv_file_info$iter_sampling <- csv_file_info$num_samples
-  csv_file_info$threads_per_chain <- csv_file_info$num_threads
+  if (csv_file_info$method == "variational" || csv_file_info$method == "optimize") {
+    csv_file_info$threads <- csv_file_info$num_threads
+  } else {
+    csv_file_info$threads_per_chain <- csv_file_info$num_threads
+  }
   csv_file_info$model <- NULL
   csv_file_info$engaged <- NULL
   csv_file_info$delta <- NULL
