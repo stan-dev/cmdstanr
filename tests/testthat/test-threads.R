@@ -162,6 +162,5 @@ test_that("threading works with generate_quantities()", {
   )
   expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 4)
   expect_equal(f_gq$metadata()$threads_per_chain, 4)
-  file.remove(mod_gq$exe_file())
 })
 
