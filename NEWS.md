@@ -1,3 +1,11 @@
+# Items for next tagged release
+
+### Bug fixes
+
+* Fixed bug with reading Stan CSV when grep used coloring by default (#364,#371)
+
+### New features
+
 # cmdstanr 0.2.1
 
 ### Bug fixes
