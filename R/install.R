@@ -184,7 +184,7 @@ install_cmdstan <- function(dir = NULL,
     )
     try(
       suppressWarnings({
-        macos_inc <- "https://raw.githubusercontent.com/stan-dev/math/develop/lib/tbb_2019_U8/build/macos.inc"
+        macos_inc <- "https://raw.githubusercontent.com/stan-dev/math/92fce0218c9fb15fd405ef031f488cad05c5546b/lib/tbb_2019_U8/build/macos.inc"
         dest_macos_inc <- file.path(dir_cmdstan, "stan", "lib", "stan_math", "lib", "tbb_2019_U8", "build", "macos.inc")
         file.remove(dest_macos_inc)
         utils::download.file(url = macos_inc,
