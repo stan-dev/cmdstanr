@@ -178,7 +178,7 @@ install_cmdstan <- function(dir = NULL,
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
-        "CXX=arch -arch arm64e clang++"
+        CXX="arch -arch arm64e clang++"
       ),
       append = TRUE
     )
@@ -337,23 +337,22 @@ build_cmdstan <- function(dir,
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE,
                           timeout) {
-
-  ## Apple Silicon has an intel-to-arm translation layer named Rosetta 2
-  ## We avoid using this to avoid slowdown.
-  is_rosetta2 <- try(processx::run("/usr/sbin/sysctl",
-                                   args = c("-n", "sysctl.proc_translated"),
-                                   error_on_status = FALSE)$stdout=='1\n')
-  if(is_rosetta2){
-    run_call='/usr/bin/arch'
-    first_arguments=c('-arch', 'arm64e', 'make')
-  }
-  else{
-    run_call=make_cmd()
-    first_arguments=NULL
+  args <- NULL
+  run_cmd <- make_cmd()
+  if (os_is_macos()) {
+    ## Apple Silicon has an intel-to-arm translation layer named Rosetta 2
+    ## We avoid using it with explicitly defining the arch
+    is_rosetta2_check <- processx::run("/usr/sbin/sysctl",
+                                      args = c("-n", "sysctl.proc_translated"),
+                                      error_on_status = FALSE)
+    if (is_rosetta2_check$stdout == "1\n") {
+      run_cmd <- '/usr/bin/arch'
+      args <- c('-arch', 'arm64e', 'make')
+    }
   }
   processx::run(
-    run_call,
-    args = c(first_arguments,paste0("-j", cores), "build"),
+    run_cmd,
+    args = c(args, paste0("-j", cores), "build"),
     wd = dir,
     echo_cmd = FALSE,
     echo = !quiet,
