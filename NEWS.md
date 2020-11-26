@@ -6,6 +6,8 @@
 
 * Added `threads` argument for `$optimize()` and `$variational()`. (#369)
 
+* Fixed bug with reading Stan CSV when grep used coloring by default (#364,#371)
+
 # cmdstanr 0.2.1
 
 ### Bug fixes
