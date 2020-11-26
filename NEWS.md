@@ -2,6 +2,8 @@
 
 ### Bug fixes
 
+* Fixed bug with reading Stan CSV when grep used coloring by default (#364,#371)
+
 ### New features
 
 * Added `$mpi_sample()` for MCMC sampling with MPI. (#350)
