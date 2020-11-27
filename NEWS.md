@@ -6,6 +6,8 @@
 
 ### New features
 
+* Added support for native execution on the macOS with the M1 ARM-based CPU.
+
 # cmdstanr 0.2.1
 
 ### Bug fixes
