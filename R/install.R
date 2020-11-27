@@ -172,9 +172,8 @@ install_cmdstan <- function(dir = NULL,
       }
     }
   }
-
-  if (os_is_macos()) {
-    # missing logic to check whether its an M1
+  # Setting up native M1 compilation of Cmdstan and its downstream libraries
+  if (is_rosetta2()) {
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
@@ -337,22 +336,16 @@ build_cmdstan <- function(dir,
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE,
                           timeout) {
-  args <- NULL
-  run_cmd <- make_cmd()
-  if (os_is_macos()) {
-    ## Apple Silicon has an intel-to-arm translation layer named Rosetta 2
-    ## We avoid using it with explicitly defining the arch
-    is_rosetta2_check <- processx::run("/usr/sbin/sysctl",
-                                      args = c("-n", "sysctl.proc_translated"),
-                                      error_on_status = FALSE)
-    if (is_rosetta2_check$stdout == "1\n") {
-      run_cmd <- '/usr/bin/arch'
-      args <- c('-arch', 'arm64e', 'make')
-    }
+  translation_args <- NULL
+  if (is_rosetta2()) {
+    run_cmd <- '/usr/bin/arch'
+    translation_args <- c('-arch', 'arm64e', 'make')
+  } else {
+    run_cmd <- make_cmd()
   }
   processx::run(
     run_cmd,
-    args = c(args, paste0("-j", cores), "build"),
+    args = c(translation_args, paste0("-j", cores), "build"),
     wd = dir,
     echo_cmd = FALSE,
     echo = !quiet,
