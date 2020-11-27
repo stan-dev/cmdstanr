@@ -43,6 +43,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          remotes::install_github("r-lib/processx")
           install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz")
           remotes::install_deps(dependencies = TRUE)
@@ -91,6 +92,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          remotes::install_github("r-lib/processx")
           install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz")
           remotes::install_deps(dependencies = TRUE)
