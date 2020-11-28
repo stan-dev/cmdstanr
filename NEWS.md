@@ -2,9 +2,9 @@
 
 ### Bug fixes
 
-### New features
-
 * Fixed bug with reading Stan CSV when grep used coloring by default (#364,#371)
+
+### New features
 
 * Added support for native execution on the macOS with the M1 ARM-based CPU. (#375)
 
