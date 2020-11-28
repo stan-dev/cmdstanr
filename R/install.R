@@ -33,7 +33,7 @@
 #' @param quiet For `install_cmdstan()`, should the verbose output from the
 #'   system processes be suppressed when building the CmdStan binaries?
 #'   The default is `FALSE`.
-#'   For `check_cmdstan_toolchain()`, should the function supress 
+#'   For `check_cmdstan_toolchain()`, should the function supress
 #'   printing informational messages? The default is `FALSE`.
 #'   If `TRUE` `check_cmdstan_toolchain()` only outputs errors.
 #' @param overwrite When an existing installation is found in `dir`, should
@@ -78,10 +78,10 @@ install_cmdstan <- function(dir = NULL,
     }
   } else {
     dir <- repair_path(dir)
-    checkmate::assert_directory_exists(dir, access = "rwx")    
+    checkmate::assert_directory_exists(dir, access = "rwx")
   }
   if (!is.null(version)) {
-    if (!is.null(release_url)) { 
+    if (!is.null(release_url)) {
       warning("version and release_url are supplied to install_cmdstan()!\nrelease_url will be ignored.")
     }
     release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",version, "/cmdstan-", version, ".tar.gz")
@@ -172,7 +172,27 @@ install_cmdstan <- function(dir = NULL,
       }
     }
   }
-
+  # Setting up native M1 compilation of Cmdstan and its downstream libraries
+  if (is_rosetta2()) {
+    cmdstan_make_local(
+      dir = dir_cmdstan,
+      cpp_options = list(
+        CXX="arch -arch arm64e clang++"
+      ),
+      append = TRUE
+    )
+    try(
+      suppressWarnings({
+        macos_inc <- "https://raw.githubusercontent.com/stan-dev/math/92fce0218c9fb15fd405ef031f488cad05c5546b/lib/tbb_2019_U8/build/macos.inc"
+        dest_macos_inc <- file.path(dir_cmdstan, "stan", "lib", "stan_math", "lib", "tbb_2019_U8", "build", "macos.inc")
+        file.remove(dest_macos_inc)
+        utils::download.file(url = macos_inc,
+                            destfile = dest_macos_inc,
+                            quiet = quiet)
+      }),
+      silent = TRUE
+    )
+  }
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
   if (!build_status_ok(build_log, quiet = quiet)) {
@@ -298,7 +318,7 @@ download_with_retries <- function(download_url,
                                             destfile = destination_file,
                                             quiet = quiet)
         ),
-        silent = TRUE                                    
+        silent = TRUE
       )
       if (download_rc != 0) {
         Sys.sleep(pause_sec)
@@ -316,9 +336,16 @@ build_cmdstan <- function(dir,
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE,
                           timeout) {
+  translation_args <- NULL
+  if (is_rosetta2()) {
+    run_cmd <- '/usr/bin/arch'
+    translation_args <- c('-arch', 'arm64e', 'make')
+  } else {
+    run_cmd <- make_cmd()
+  }
   processx::run(
-    make_cmd(),
-    args = c(paste0("-j", cores), "build"),
+    run_cmd,
+    args = c(translation_args, paste0("-j", cores), "build"),
     wd = dir,
     echo_cmd = FALSE,
     echo = !quiet,
@@ -442,7 +469,7 @@ install_mingw32_make <- function(quiet = FALSE) {
   write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
   Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
 	invisible(NULL)
-}     
+}
 
 check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   rtools_path <- Sys.getenv("RTOOLS40_HOME")
@@ -564,7 +591,7 @@ check_unix_make <- function() {
     } else {
       stop("The 'make' tool was not found. Please install 'make', restart R, and then run check_cmdstan_toolchain().", call. = FALSE)
     }
-    
+
   }
 }
 
