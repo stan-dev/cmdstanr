@@ -6,7 +6,9 @@
 
 ### New features
 
-* Added `$mpi_sample()` for MCMC sampling with MPI. (#350)
+* Added support for native execution on the macOS with the M1 ARM-based CPU. (#375)
+
+* Added `$sample_mpi()` for MCMC sampling with MPI. (#350)
 
 # cmdstanr 0.2.1
 

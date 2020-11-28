@@ -14,6 +14,21 @@ os_is_macos <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Darwin")
 }
 
+#' Check if running R in Rosetta 2 translation environment, which is an
+#' Intel-to-ARM translation layer.
+#' @return `TRUE` if it is running rosetta2, `FALSE` if not.
+#' @noRd
+is_rosetta2 <- function() {
+  rosetta2 <- FALSE
+  if (os_is_macos()) {
+    rosetta2_check <- processx::run("/usr/sbin/sysctl",
+                                       args = c("-n", "sysctl.proc_translated"),
+                                       error_on_status = FALSE)
+    rosetta2 <- rosetta2_check$stdout == "1\n"
+  }
+  rosetta2
+}
+
 #' Famous helper for switching on `NULL` or zero length
 #' @noRd
 #' @param x,y Any \R objects.
@@ -207,7 +222,7 @@ cpp_options_to_compile_flags <- function(cpp_options) {
       cpp_built_options = c(cpp_built_options, toupper(cpp_options[[i]]))
     } else {
       cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
-    }    
+    }
   }
   cpp_built_options
 }
