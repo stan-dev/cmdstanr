@@ -962,10 +962,10 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' Run Stan's MCMC algorithms with MPI
 #'
 #' @name model-method-mpi-sample
-#' @aliases mpi_sample
+#' @aliases sample_mpi
 #' @family CmdStanModel methods
 #'
-#' @description The `$mpi_sample()` method of a [`CmdStanModel`] object runs the
+#' @description The `$sample_mpi()` method of a [`CmdStanModel`] object runs the
 #'   default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`) with MPI 
 #'   (STAN_MPI makefile flag), to produce a set of draws from the posterior
 #'   distribution of a model conditioned on some data.
@@ -986,20 +986,20 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   - `TBB_CXX_TYPE`: The C++ compiler the MPI wrapper wraps. Typically gcc on
 #'   Linux and clang on macOS.
 #' 
-#'   In the call to the `$mpi_sample()` method, we can additionally provide
+#'   In the call to the `$sample_mpi()` method, we can additionally provide
 #'   the name of the MPI launcher (`mpi_cmd`), which defaults to "mpiexec",
 #'   and any other MPI launch arguments. In most cases, it is enough to
 #'   only define the number of processes with `mpi_args = list("n" = 4)`.
 #' 
-#'   An example of a call of `$mpi_sample()`:
+#'   An example of a call of `$sample_mpi()`:
 #'   ```
 #'   cpp_options = list(STAN_MPI = TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-#'   fit <- mod$mpi_sample(data_list, mpi_args = c("-n", 4))
+#'   fit <- mod$sample_mpi(data_list, mpi_args = c("-n", 4))
 #'   ```
 #'
 #' @section Usage:
 #'   ```
-#'   $mpi_sample(
+#'   $sample_mpi(
 #'     data = NULL,
 #'     mpi_cmd = "mpiexec",
 #'     mpi_args = NULL,
@@ -1047,13 +1047,13 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     `show_messages`:
 #'      Same as for the [`$sample()`][model-method-sample] method.
 #'
-#' @section Value: The `$mpi_sample()` method returns a [`CmdStanMCMC`] object.
+#' @section Value: The `$sample_mpi()` method returns a [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 NULL
-mpi_sample_method <- function(data = NULL,
+sample_mpi_method <- function(data = NULL,
                           mpi_cmd = "mpiexec",
                           mpi_args = NULL,
                           seed = NULL,
@@ -1130,7 +1130,7 @@ mpi_sample_method <- function(data = NULL,
   runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
   CmdStanMCMC$new(runset)
 }
-CmdStanModel$set("public", name = "mpi_sample", value = mpi_sample_method)
+CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 
 #' Run Stan's optimization algorithms
 #'

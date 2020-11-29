@@ -2,10 +2,10 @@
 % Please edit documentation in R/model.R
 \name{model-method-mpi-sample}
 \alias{model-method-mpi-sample}
-\alias{mpi_sample}
+\alias{sample_mpi}
 \title{Run Stan's MCMC algorithms with MPI}
 \description{
-The \verb{$mpi_sample()} method of a \code{\link{CmdStanModel}} object runs the
+The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object runs the
 default MCMC algorithm in CmdStan (\verb{algorithm=hmc engine=nuts}) with MPI
 (STAN_MPI makefile flag), to produce a set of draws from the posterior
 distribution of a model conditioned on some data.
@@ -27,17 +27,17 @@ The C++ options that need supplied to the compile call are:
 Linux and clang on macOS.
 }
 
-In the call to the \verb{$mpi_sample()} method, we can additionally provide
+In the call to the \verb{$sample_mpi()} method, we can additionally provide
 the name of the MPI launcher (\code{mpi_cmd}), which defaults to "mpiexec",
 and any other MPI launch arguments. In most cases, it is enough to
 only define the number of processes with \code{mpi_args = list("n" = 4)}.
 
-An example of a call of \verb{$mpi_sample()}:\preformatted{cpp_options = list(STAN_MPI = TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-fit <- mod$mpi_sample(data_list, mpi_args = c("-n", 4))
+An example of a call of \verb{$sample_mpi()}:\preformatted{cpp_options = list(STAN_MPI = TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+fit <- mod$sample_mpi(data_list, mpi_args = c("-n", 4))
 }
 }
 \section{Usage}{
-\preformatted{$mpi_sample(
+\preformatted{$sample_mpi(
   data = NULL,
   mpi_cmd = "mpiexec",
   mpi_args = NULL,
@@ -91,7 +91,7 @@ Same as for the \code{\link[=model-method-sample]{$sample()}} method.
 }
 
 \section{Value}{
- The \verb{$mpi_sample()} method returns a \code{\link{CmdStanMCMC}} object.
+ The \verb{$sample_mpi()} method returns a \code{\link{CmdStanMCMC}} object.
 }
 
 \examples{

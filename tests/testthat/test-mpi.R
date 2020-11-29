@@ -1,6 +1,6 @@
 context("mpi")
 
-test_that("mpi_sample() works", {
+test_that("sample_mpi() works", {
   skip_on_cran()
   skip_on_covr()
   skip_if(!nzchar(Sys.getenv("CMDSTANR_RUN_MPI_TESTS")))
@@ -29,7 +29,7 @@ test_that("mpi_sample() works", {
   cpp_options = list(cxx="mpicxx", stan_mpi = TRUE, tbb_cxx_type="gcc")
   mod_mpi <- cmdstan_model(mpi_file, cpp_options = cpp_options)
   utils::capture.output(
-    f <- mod_mpi$mpi_sample(chains = 1, mpi_args = list("n" = 1))
+    f <- mod_mpi$sample_mpi(chains = 1, mpi_args = list("n" = 1))
   )
   expect_equal(f$metadata()$mpi_enable, 1)
   expect_equal(
