@@ -6,7 +6,9 @@
 
 ### New features
 
-* Added support for native execution on the macOS with the M1 ARM-based CPU.
+* Added support for native execution on the macOS with the M1 ARM-based CPU. (#375)
+
+* Added `threads` argument for `$optimize()` and `$variational()`. (#369)
 
 # cmdstanr 0.2.1
 
