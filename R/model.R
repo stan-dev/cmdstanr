@@ -988,6 +988,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
+#'     threads = NULL,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
 #'     iter = NULL,
@@ -1002,17 +1003,16 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   in the CmdStan manual. Arguments left at `NULL` default to the default used
 #'   by the installed version of CmdStan.
 #'
+#'   * `threads`: (positive integer) If the model was
+#'   [compiled][model-method-compile] with threading support, the number of
+#'   threads to use in parallelized sections (e.g., when
+#'   using the Stan functions `reduce_sum()` or `map_rect()`).
 #'   * `algorithm`: (string) The optimization algorithm. One of `"lbfgs"`,
 #'   `"bfgs"`, or `"newton"`.
 #'   * `iter`: (positive integer) The number of iterations.
 #'   * `init_alpha`: (nonnegative real) The line search step size for first
 #'   iteration. Not applicable if `algorithm="newton"`.
 #'
-#'   * `threads`: (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`).
-#' 
 #' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
 #'
 #' @template seealso-docs
@@ -1026,11 +1026,11 @@ optimize_method <- function(data = NULL,
                             init = NULL,
                             save_latent_dynamics = FALSE,
                             output_dir = NULL,
+                            threads = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
                             iter = NULL,
-                            sig_figs = NULL,
-                            threads = NULL) {
+                            sig_figs = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1104,6 +1104,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
+#'     threads = NULL,
 #'     algorithm = NULL,
 #'     iter = NULL,
 #'     grad_samples = NULL,
@@ -1125,6 +1126,10 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   in the CmdStan manual. Arguments left at `NULL` default to the default used
 #'   by the installed version of CmdStan.
 #'
+#'   * `threads`: (positive integer) If the model was
+#'   [compiled][model-method-compile] with threading support, the number of
+#'   threads to use in parallelized sections (e.g., when
+#'   using the Stan functions `reduce_sum()` or `map_rect()`).
 #'   * `algorithm`: (string) The algorithm. Either `"meanfield"` or `"fullrank"`.
 #'   * `iter`: (positive integer) The _maximum_ number of iterations.
 #'   * `grad_samples`: (positive integer) The number of samples for Monte Carlo
@@ -1141,11 +1146,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   * `eval_elbo`: (positive integer) Evaluate ELBO every Nth iteration.
 #'   * `output_samples:` (positive integer) Number of posterior samples to draw
 #'   and save.
-#' 
-#'   * `threads`: (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`).
+#'
 #'
 #' @section Value: The `$variational()` method returns a [`CmdStanVB`] object.
 #'
@@ -1160,6 +1161,7 @@ variational_method <- function(data = NULL,
                                init = NULL,
                                save_latent_dynamics = FALSE,
                                output_dir = NULL,
+                               threads = NULL,
                                algorithm = NULL,
                                iter = NULL,
                                grad_samples = NULL,
@@ -1170,8 +1172,7 @@ variational_method <- function(data = NULL,
                                tol_rel_obj = NULL,
                                eval_elbo = NULL,
                                output_samples = NULL,
-                               sig_figs = NULL,
-                               threads = NULL) {
+                               sig_figs = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1241,9 +1242,9 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'     data = NULL,
 #'     seed = NULL,
 #'     output_dir = NULL,
-#'     sig_figs = NULL,
 #'     parallel_chains = getOption("mc.cores", 1),
-#'     threads_per_chain = NULL
+#'     threads_per_chain = NULL,
+#'     sig_figs = NULL
 #'   )
 #'   ```
 #'
@@ -1252,7 +1253,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'     - A [CmdStanMCMC] fitted model object.
 #'     - A character vector of paths to CmdStan CSV output files containing
 #'     parameter draws.
-#'   * `data`, `seed`, `output_dir`, `parallel_chains`, `threads_per_chain`:
+#'   * `data`, `seed`, `output_dir`, `parallel_chains`, `threads_per_chain`, `sig_figs`:
 #'   Same as for the [`$sample()`][model-method-sample] method.
 #'
 #' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
@@ -1308,9 +1309,9 @@ generate_quantities_method <- function(fitted_params,
                                        data = NULL,
                                        seed = NULL,
                                        output_dir = NULL,
-                                       sig_figs = NULL,
                                        parallel_chains = getOption("mc.cores", 1),
-                                       threads_per_chain = NULL) {
+                                       threads_per_chain = NULL,
+                                       sig_figs = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {

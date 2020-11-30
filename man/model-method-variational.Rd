@@ -26,6 +26,7 @@ matrix for the approximation.
   init = NULL,
   save_latent_dynamics = FALSE,
   output_dir = NULL,
+  threads = NULL,
   algorithm = NULL,
   iter = NULL,
   grad_samples = NULL,
@@ -116,6 +117,10 @@ arguments. These arguments are described briefly here and in greater detail
 in the CmdStan manual. Arguments left at \code{NULL} default to the default used
 by the installed version of CmdStan.
 \itemize{
+\item \code{threads}: (positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when
+using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
 \item \code{algorithm}: (string) The algorithm. Either \code{"meanfield"} or \code{"fullrank"}.
 \item \code{iter}: (positive integer) The \emph{maximum} number of iterations.
 \item \code{grad_samples}: (positive integer) The number of samples for Monte Carlo
@@ -132,10 +137,6 @@ of the objective.
 \item \code{eval_elbo}: (positive integer) Evaluate ELBO every Nth iteration.
 \item \verb{output_samples:} (positive integer) Number of posterior samples to draw
 and save.
-\item \code{threads}: (positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
 }
 }
 

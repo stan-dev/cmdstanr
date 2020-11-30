@@ -27,6 +27,7 @@ variables. Thus modes correspond to modes of the model as written.
   init = NULL,
   save_latent_dynamics = FALSE,
   output_dir = NULL,
+  threads = NULL,
   algorithm = NULL,
   init_alpha = NULL,
   iter = NULL,
@@ -110,15 +111,15 @@ arguments. These arguments are described briefly here and in greater detail
 in the CmdStan manual. Arguments left at \code{NULL} default to the default used
 by the installed version of CmdStan.
 \itemize{
+\item \code{threads}: (positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when
+using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
 \item \code{algorithm}: (string) The optimization algorithm. One of \code{"lbfgs"},
 \code{"bfgs"}, or \code{"newton"}.
 \item \code{iter}: (positive integer) The number of iterations.
 \item \code{init_alpha}: (nonnegative real) The line search step size for first
 iteration. Not applicable if \code{algorithm="newton"}.
-\item \code{threads}: (positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
 }
 }
 
