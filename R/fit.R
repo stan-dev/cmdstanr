@@ -502,7 +502,7 @@ NULL
 #' @aliases summary print.CmdStanMCMC print.CmdStanMLE print.CmdStanVB
 #' @description The `$summary()` method runs
 #'   [`summarise_draws()`][posterior::draws_summary] from the \pkg{posterior}
-#'   package and returns the ouput. For MCMC only post-warmup draws are included
+#'   package and returns the output. For MCMC only post-warmup draws are included
 #'   in the summary.
 #'
 #'   The `$print()` method prints the same summary stats but removes the extra

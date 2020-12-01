@@ -10,7 +10,7 @@
 \description{
 The \verb{$summary()} method runs
 \code{\link[posterior:draws_summary]{summarise_draws()}} from the \pkg{posterior}
-package and returns the ouput. For MCMC only post-warmup draws are included
+package and returns the output. For MCMC only post-warmup draws are included
 in the summary.
 
 The \verb{$print()} method prints the same summary stats but removes the extra
