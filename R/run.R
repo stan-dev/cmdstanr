@@ -390,6 +390,9 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
     }
   }
+  if (!is.null(procs$threads_per_proc())) {
+    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+  }
   start_time <- Sys.time()
   id <- 1
   procs$new_proc(

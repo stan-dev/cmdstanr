@@ -10,10 +10,16 @@
 \description{
 The \verb{$summary()} method runs
 \code{\link[posterior:draws_summary]{summarise_draws()}} from the \pkg{posterior}
-package. For MCMC only post-warmup draws are included in the summary.
+package and returns the output. For MCMC only post-warmup draws are included
+in the summary.
 
-The \verb{$print()} method prints the same summary but removes the extra
-formatting used for printing tibbles.
+The \verb{$print()} method prints the same summary stats but removes the extra
+formatting used for printing tibbles and returns the fitted model object
+itself. The \verb{$print()} method may also be faster than \verb{$summary()} because
+it is designed to only compute the summary statistics for the variables
+that will actually fit in the printed output (see argument \code{max_rows})
+whereas \verb{$summary()} will compute them for all of the specified variables
+in order to be able to return them to the user.
 }
 \section{Usage}{
 \preformatted{$summary(variables = NULL, ...)

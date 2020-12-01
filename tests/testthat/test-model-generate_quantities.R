@@ -60,6 +60,7 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
   )
+  mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE))
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2)
   )
