@@ -157,6 +157,9 @@ read_cmdstan_version <- function(path) {
   }
   makefile <- readLines(makefile_path)
   version_line <- grep("^CMDSTAN_VERSION :=", makefile, value = TRUE)
+  if (length(version_line) == 0) {
+    stop("CmdStan makefile is missing a version number.", call. = FALSE)
+  }
   sub("CMDSTAN_VERSION := ", "", version_line)
 }
 
