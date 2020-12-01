@@ -502,10 +502,16 @@ NULL
 #' @aliases summary print.CmdStanMCMC print.CmdStanMLE print.CmdStanVB
 #' @description The `$summary()` method runs
 #'   [`summarise_draws()`][posterior::draws_summary] from the \pkg{posterior}
-#'   package. For MCMC only post-warmup draws are included in the summary.
+#'   package and returns the output. For MCMC only post-warmup draws are included
+#'   in the summary.
 #'
-#'   The `$print()` method prints the same summary but removes the extra
-#'   formatting used for printing tibbles.
+#'   The `$print()` method prints the same summary stats but removes the extra
+#'   formatting used for printing tibbles and returns the fitted model object
+#'   itself. The `$print()` method may also be faster than `$summary()` because
+#'   it is designed to only compute the summary statistics for the variables
+#'   that will actually fit in the printed output (see argument `max_rows`)
+#'   whereas `$summary()` will compute them for all of the specified variables
+#'   in order to be able to return them to the user.
 #'
 #' @section Usage:
 #'   ```
@@ -1231,7 +1237,7 @@ CmdStanGQ <- R6::R6Class(
               paste(matching_res$not_found, collapse = ", "), call. = FALSE)
         }
         variables <- matching_res$matching
-      }      
+      }
       private$draws_[,,variables]
     },
     output = function(id = NULL) {
