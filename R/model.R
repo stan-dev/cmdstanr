@@ -172,6 +172,7 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$sample()`][model-method-sample] |  Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. |
+#'  [`$sample_mpi()`][model-method-sample_mpi] |  Run CmdStan's `"sample"` method with [MPI](https://mc-stan.org/math/mpi.html), return [`CmdStanMCMC`] object. |
 #'  [`$optimize()`][model-method-optimize] |  Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. |
 #'  [`$variational()`][model-method-variational] |  Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. |
 #'  [`$generate_quantities()`][model-method-generate-quantities] |  Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`] object. |
@@ -961,126 +962,103 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 
 #' Run Stan's MCMC algorithms with MPI
 #'
-#' @name model-method-mpi-sample
+#' @name model-method-sample_mpi
 #' @aliases sample_mpi
 #' @family CmdStanModel methods
 #'
-#' @description The `$sample_mpi()` method of a [`CmdStanModel`] object runs the
-#'   default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`) with MPI 
-#'   (STAN_MPI makefile flag), to produce a set of draws from the posterior
-#'   distribution of a model conditioned on some data.
-#' 
-#'   In order to use MPI with Stan, an MPI implementation must be installed.
-#'   For Unix systems the most commonly used implementations are MPICH and OpenMPI.
-#'   The implementations provide an MPI C++ compiler wrapper (for example mpicxx), 
-#'   which is required to compile the model.
+#' @description The `$sample_mpi()` method of a [`CmdStanModel`] object is
+#'   identical to the `$sample()` method but with support for
+#'   [MPI](https://mc-stan.org/math/mpi.html). The target audience for MPI are
+#'   those with large computer clusters. For other users, the
+#'   [`$sample()`][model-method-sample] method provides both parallelization of
+#'   chains and threading support for within-chain parallelization.
 #'
-#'   An example of compiling with STAN_MPI:
+#' @details In order to use MPI with Stan, an MPI implementation must be
+#'   installed. For Unix systems the most commonly used implementations are
+#'   MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
+#'   (for example mpicxx), which is required to compile the model.
+#'
+#'   An example of compiling with MPI:
 #'   ```
-#'   cpp_options = list(STAN_MPI = TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-#'   mod <- cmdstan_model("model.stan", cpp_options = cpp_options)
+#'   mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+#'   mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
 #'   ```
-#'   The C++ options that need supplied to the compile call are: 
-#'   - `STAN_MPI`: Enables the use of MPI with Stan
-#'   - `CXX`: The name of the MPI C++ compiler wrapper (typicall mpicxx)
-#'   - `TBB_CXX_TYPE`: The C++ compiler the MPI wrapper wraps. Typically gcc on
-#'   Linux and clang on macOS.
-#' 
-#'   In the call to the `$sample_mpi()` method, we can additionally provide
-#'   the name of the MPI launcher (`mpi_cmd`), which defaults to "mpiexec",
-#'   and any other MPI launch arguments. In most cases, it is enough to
-#'   only define the number of processes with `mpi_args = list("n" = 4)`.
-#' 
-#'   An example of a call of `$sample_mpi()`:
-#'   ```
-#'   cpp_options = list(STAN_MPI = TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-#'   fit <- mod$sample_mpi(data_list, mpi_args = c("-n", 4))
-#'   ```
+#'   The C++ options that must be supplied to the
+#'   [compile][model-method-compile] call are:
+#'   - `STAN_MPI`: Enables the use of MPI with Stan if `TRUE`.
+#'   - `CXX`: The name of the MPI C++ compiler wrapper. Typically `"mpicxx"`.
+#'   - `TBB_CXX_TYPE`: The C++ compiler the MPI wrapper wraps. Typically `"gcc"`
+#'   on Linux and `"clang"` on macOS.
+#'
+#'   In the call to the `$sample_mpi()` method we can also provide the name of
+#'   the MPI launcher (`mpi_cmd`, defaulting to `"mpiexec"`) and any other
+#'   MPI launch arguments. In most cases, it is enough to only define the number
+#'   of processes with `mpi_args = list("n" = 4)`.
 #'
 #' @section Usage:
 #'   ```
 #'   $sample_mpi(
-#'     data = NULL,
+#'     ..., # same arguments as $sample() method
 #'     mpi_cmd = "mpiexec",
-#'     mpi_args = NULL,
-#'     seed = NULL,
-#'     refresh = NULL,
-#'     init = NULL,
-#'     save_latent_dynamics = FALSE,
-#'     output_dir = NULL,
-#'     chains = 4,
-#'     parallel_chains = getOption("mc.cores", 1),
-#'     chain_ids = seq_len(chains),
-#'     iter_warmup = NULL,
-#'     iter_sampling = NULL,
-#'     save_warmup = FALSE,
-#'     thin = NULL,
-#'     max_treedepth = NULL,
-#'     adapt_engaged = TRUE,
-#'     adapt_delta = NULL,
-#'     step_size = NULL,
-#'     metric = NULL,
-#'     metric_file = NULL,
-#'     inv_metric = NULL,
-#'     init_buffer = NULL,
-#'     term_buffer = NULL,
-#'     window = NULL,
-#'     fixed_param = FALSE,
-#'     sig_figs = NULL,
-#'     validate_csv = TRUE,
-#'     show_messages = TRUE
+#'     mpi_args = NULL
 #'   )
 #'   ```
 #'
-#' @section Arguments:
+#' @section Arguments unique to the `sample_mpi` method:
 #'   * `mpi_cmd`: (character vector) The MPI launcher used for launching MPI processes.
-#'     The default launcher is `mpiexec`.
+#'     The default launcher is `"mpiexec"`.
 #'   * `mpi_args`: (list) A list of arguments to use when launching MPI processes.
-#'     For example, mpi_args = list("n" = 4) launches the executable as
+#'     For example, `mpi_args = list("n" = 4)` launches the executable as
 #'     `mpiexec -n 4 model_executable`, followed by CmdStan arguments
 #'     for the model executable.
-#'   * `data`, `seed`, `refresh`, `init`, `save_latent_dynamics`, `output_dir`,
-#'     `chains`, `parallel_chains`, `chain_ids`, `iter_warmup`, `iter_sampling`,
-#'     `save_warmup`, `thin`, `max_treedepth`, `adapt_engaged`, `adapt_delta`,
-#'     `step_size`, `metric`, `metric_file`, `inv_metric`, `init_buffer`,
-#'     `term_buffer`, `window`, `fixed_param`, `sig_figs`, `validate_csv`,
-#'     `show_messages`:
-#'      Same as for the [`$sample()`][model-method-sample] method.
+#'
+#'    All other arguments are the same as for
+#'    [`$sample()`][model-method-sample].
 #'
 #' @section Value: The `$sample_mpi()` method returns a [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
-#' @inherit cmdstan_model examples
+#' @seealso The Stan Math Library's MPI documentation
+#'   ([mc-stan.org/math/mpi](https://mc-stan.org/math/mpi.html)) for more
+#'   details on MPI support in Stan.
+#'
+#' @examples
+#' \dontrun{
+#' # mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+#' # mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
+#' # fit <- mod$sample_mpi(..., mpi_args = list("n" = 4))
+#' }
 #'
 NULL
+
 sample_mpi_method <- function(data = NULL,
-                          mpi_cmd = "mpiexec",
-                          mpi_args = NULL,
-                          seed = NULL,
-                          refresh = NULL,
-                          init = NULL,
-                          save_latent_dynamics = FALSE,
-                          output_dir = NULL,
-                          chains = 1,
-                          chain_ids = seq_len(chains),
-                          iter_warmup = NULL,
-                          iter_sampling = NULL,
-                          save_warmup = FALSE,
-                          thin = NULL,
-                          max_treedepth = NULL,
-                          adapt_engaged = TRUE,
-                          adapt_delta = NULL,
-                          step_size = NULL,
-                          metric = NULL,
-                          metric_file = NULL,
-                          inv_metric = NULL,
-                          init_buffer = NULL,
-                          term_buffer = NULL,
-                          window = NULL,
-                          fixed_param = FALSE,
-                          sig_figs = NULL,
-                          validate_csv = TRUE,
-                          show_messages = TRUE) {
+                              mpi_cmd = "mpiexec",
+                              mpi_args = NULL,
+                              seed = NULL,
+                              refresh = NULL,
+                              init = NULL,
+                              save_latent_dynamics = FALSE,
+                              output_dir = NULL,
+                              chains = 1,
+                              chain_ids = seq_len(chains),
+                              iter_warmup = NULL,
+                              iter_sampling = NULL,
+                              save_warmup = FALSE,
+                              thin = NULL,
+                              max_treedepth = NULL,
+                              adapt_engaged = TRUE,
+                              adapt_delta = NULL,
+                              step_size = NULL,
+                              metric = NULL,
+                              metric_file = NULL,
+                              inv_metric = NULL,
+                              init_buffer = NULL,
+                              term_buffer = NULL,
+                              window = NULL,
+                              fixed_param = FALSE,
+                              sig_figs = NULL,
+                              validate_csv = TRUE,
+                              show_messages = TRUE) {
   parallel_chains <- 1
   if (fixed_param) {
     chains <- 1
