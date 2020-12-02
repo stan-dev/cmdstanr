@@ -1,4 +1,4 @@
-context("mpi")
+context("model-sample_mpi")
 
 test_that("sample_mpi() works", {
   skip_on_cran()
