@@ -1038,7 +1038,9 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     `mpiexec -n 4 model_executable`, followed by CmdStan arguments
 #'     for the model executable.
 #'
-#'    All other arguments are the same as for [`$sample()`][model-method-sample].
+#'    All other arguments are the same as for [`$sample()`][model-method-sample]
+#'    except `$sample_mpi()` does not have arguments `threads_per_chain` or
+#'    `parallel_chains`.
 #'
 #' @section Value: The `$sample_mpi()` method returns a [`CmdStanMCMC`] object.
 #'

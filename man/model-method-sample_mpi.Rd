@@ -82,7 +82,9 @@ For example, \code{mpi_args = list("n" = 4)} launches the executable as
 for the model executable.
 }
 
-All other arguments are the same as for \code{\link[=model-method-sample]{$sample()}}.
+All other arguments are the same as for \code{\link[=model-method-sample]{$sample()}}
+except \verb{$sample_mpi()} does not have arguments \code{threads_per_chain} or
+\code{parallel_chains}.
 }
 
 \section{Value}{
