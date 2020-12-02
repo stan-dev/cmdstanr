@@ -38,9 +38,35 @@ of processes with \code{mpi_args = list("n" = 4)}.
 }
 \section{Usage}{
 \preformatted{$sample_mpi(
-  ..., # same arguments as $sample() method
+  data = NULL,
   mpi_cmd = "mpiexec",
-  mpi_args = NULL
+  mpi_args = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  save_latent_dynamics = FALSE,
+  output_dir = NULL,
+  chains = 4,
+  parallel_chains = getOption("mc.cores", 1),
+  chain_ids = seq_len(chains),
+  iter_warmup = NULL,
+  iter_sampling = NULL,
+  save_warmup = FALSE,
+  thin = NULL,
+  max_treedepth = NULL,
+  adapt_engaged = TRUE,
+  adapt_delta = NULL,
+  step_size = NULL,
+  metric = NULL,
+  metric_file = NULL,
+  inv_metric = NULL,
+  init_buffer = NULL,
+  term_buffer = NULL,
+  window = NULL,
+  fixed_param = FALSE,
+  sig_figs = NULL,
+  validate_csv = TRUE,
+  show_messages = TRUE
 )
 }
 }
@@ -56,8 +82,7 @@ For example, \code{mpi_args = list("n" = 4)} launches the executable as
 for the model executable.
 }
 
-All other arguments are the same as for
-\code{\link[=model-method-sample]{$sample()}}.
+All other arguments are the same as for \code{\link[=model-method-sample]{$sample()}}.
 }
 
 \section{Value}{

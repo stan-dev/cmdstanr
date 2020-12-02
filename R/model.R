@@ -998,9 +998,35 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' @section Usage:
 #'   ```
 #'   $sample_mpi(
-#'     ..., # same arguments as $sample() method
+#'     data = NULL,
 #'     mpi_cmd = "mpiexec",
-#'     mpi_args = NULL
+#'     mpi_args = NULL,
+#'     seed = NULL,
+#'     refresh = NULL,
+#'     init = NULL,
+#'     save_latent_dynamics = FALSE,
+#'     output_dir = NULL,
+#'     chains = 4,
+#'     parallel_chains = getOption("mc.cores", 1),
+#'     chain_ids = seq_len(chains),
+#'     iter_warmup = NULL,
+#'     iter_sampling = NULL,
+#'     save_warmup = FALSE,
+#'     thin = NULL,
+#'     max_treedepth = NULL,
+#'     adapt_engaged = TRUE,
+#'     adapt_delta = NULL,
+#'     step_size = NULL,
+#'     metric = NULL,
+#'     metric_file = NULL,
+#'     inv_metric = NULL,
+#'     init_buffer = NULL,
+#'     term_buffer = NULL,
+#'     window = NULL,
+#'     fixed_param = FALSE,
+#'     sig_figs = NULL,
+#'     validate_csv = TRUE,
+#'     show_messages = TRUE
 #'   )
 #'   ```
 #'
@@ -1012,8 +1038,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     `mpiexec -n 4 model_executable`, followed by CmdStan arguments
 #'     for the model executable.
 #'
-#'    All other arguments are the same as for
-#'    [`$sample()`][model-method-sample].
+#'    All other arguments are the same as for [`$sample()`][model-method-sample].
 #'
 #' @section Value: The `$sample_mpi()` method returns a [`CmdStanMCMC`] object.
 #'
