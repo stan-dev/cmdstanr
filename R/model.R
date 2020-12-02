@@ -1086,14 +1086,12 @@ sample_mpi_method <- function(data = NULL,
                               sig_figs = NULL,
                               validate_csv = TRUE,
                               show_messages = TRUE) {
-  parallel_chains <- 1
   if (fixed_param) {
     chains <- 1
     save_warmup <- FALSE
   }
 
   checkmate::assert_integerish(chains, lower = 1, len = 1)
-  checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE)
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
@@ -1128,7 +1126,7 @@ sample_mpi_method <- function(data = NULL,
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(
     num_procs = chains,
-    parallel_procs = parallel_chains,
+    parallel_procs = 1,
     show_stderr_messages = show_messages
   )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
