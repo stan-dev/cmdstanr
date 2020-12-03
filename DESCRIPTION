@@ -28,7 +28,7 @@ Imports:
     checkmate,
     jsonlite (>= 1.2.0),
     posterior (>= 0.1.0),
-    processx,
+    processx (>= 3.4.5),
     R6 (>= 2.4.0),
     data.table
 Suggests: 
