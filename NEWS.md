@@ -4,7 +4,7 @@
 
 * Fixed bug with reading Stan CSV when grep used coloring by default (#364,#371)
 
-* Depend on posterior v0.1.3 to avoid potentially error in `$summary()`. (#383)
+* Depend on posterior v0.1.3 to avoid a potential error in `$summary()`. (#383)
 
 ### New features
 
