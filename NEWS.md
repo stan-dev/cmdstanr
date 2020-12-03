@@ -1,3 +1,11 @@
+# Items for next tagged release
+
+### Bug fixes
+
+### New features
+
+* Added `$sample_mpi()` for MCMC sampling with MPI. (#350)
+
 # cmdstanr 0.2.2
 
 ### Bug fixes
