@@ -1,8 +1,10 @@
-# Items for next tagged release
+# cmdstanr 0.2.2
 
 ### Bug fixes
 
 * Fixed bug with reading Stan CSV when grep used coloring by default (#364,#371)
+
+* Depend on posterior v0.1.3 to avoid potentially error in `$summary()`. (#383)
 
 ### New features
 
