@@ -83,7 +83,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          remotes::install_github("r-lib/processx")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
