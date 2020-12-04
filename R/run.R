@@ -20,7 +20,6 @@ CmdStanRun <- R6::R6Class(
       }
       invisible(self)
     },
-
     num_procs = function() self$procs$num_procs(),
     proc_ids = function() self$procs$proc_ids(),
     exe_file = function() self$args$exe_file,
@@ -150,6 +149,10 @@ CmdStanRun <- R6::R6Class(
       }
     },
 
+    run_cmdstan_mpi = function(mpi_cmd, mpi_args) {
+      private$run_sample_(mpi_cmd, mpi_args)
+    },
+
     # run bin/stansummary or bin/diagnose
     # @param tool The name of the tool in `bin/` to run.
     # @param flags An optional character vector of flags (e.g. c("--sig_figs=1")).
@@ -221,10 +224,15 @@ CmdStanRun <- R6::R6Class(
 
 
 # run helpers -------------------------------------------------
-.run_sample <- function() {
+.run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-
+  if (!is.null(mpi_cmd)) {
+    if (is.null(mpi_args)) {
+      mpi_args = list()
+    }
+    mpi_args[["exe"]] <- self$exe_file()
+  }
   # add path to the TBB library to the PATH variable
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
@@ -239,7 +247,20 @@ CmdStanRun <- R6::R6Class(
     start_msg <- paste0("Running MCMC with ", procs$num_procs(), " parallel chains")
   } else {
     if (procs$parallel_procs() == 1) {
-      start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
+      if (!is.null(mpi_cmd)) {
+        if (!is.null(mpi_args[["n"]])) {
+          mpi_n_process <- mpi_args[["n"]]
+        } else if (!is.null(mpi_args[["np"]])) {
+          mpi_n_process <- mpi_args[["np"]]
+        }
+        if (is.null(mpi_n_process)) {
+          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI")
+        } else {
+          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI with ", mpi_n_process, " processes")          
+        }        
+      } else {
+        start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
+      }      
     } else {
       start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_procs(), " in parallel")
     }
@@ -260,7 +281,9 @@ CmdStanRun <- R6::R6Class(
         id = chain_id,
         command = self$command(),
         args = self$command_args()[[chain_id]],
-        wd = dirname(self$exe_file())
+        wd = dirname(self$exe_file()),
+        mpi_cmd = mpi_cmd,
+        mpi_args = mpi_args
       )
       procs$mark_proc_start(chain_id)
       procs$set_active_procs(procs$active_procs() + 1)
@@ -477,12 +500,21 @@ CmdStanProcs <- R6::R6Class(
     get_proc = function(id) {
       private$processes_[[id]]
     },
-    new_proc = function(id, command, args, wd) {
+    new_proc = function(id, command, args, wd, mpi_cmd = NULL, mpi_args = NULL) {
+      if (!is.null(mpi_cmd)) {
+        exe_name <- mpi_args[["exe"]]
+        mpi_args[["exe"]] <- NULL
+        mpi_args_vector <- c()
+        for (i in names(mpi_args)) {
+          mpi_args_vector <- c(paste0("-", i), mpi_args[[i]], mpi_args_vector)
+        }
+        args = c(mpi_args_vector, exe_name, args)
+        command <- mpi_cmd
+      }
       private$processes_[[id]] <- processx::process$new(
         command = command,
         args = args,
         wd = wd,
-        echo_cmd = FALSE,
         stdout = "|",
         stderr = "|"
       )

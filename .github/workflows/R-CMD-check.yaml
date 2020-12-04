@@ -53,6 +53,12 @@ jobs:
           mingw32-make --version
           Get-Command mingw32-make | Select-Object -ExpandProperty Definition
         shell: powershell
+      
+      - name: Install MPI
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y openmpi-bin
+          echo "CMDSTANR_RUN_MPI_TESTS=TRUE" >> $GITHUB_ENV
 
       - uses: r-lib/actions/setup-r@master
         with:
