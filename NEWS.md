@@ -1,3 +1,8 @@
+# Items for next release
+
+* New `loo()` method for CmdStanMCMC objects. Requires computing pointwise
+log-likelihood in Stan program. (#366)
+
 # cmdstanr 0.2.2
 
 ### Bug fixes

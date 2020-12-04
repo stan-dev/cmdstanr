@@ -34,6 +34,7 @@ Imports:
 Suggests: 
     bayesplot,
     knitr,
+    loo (>= 2.0.0),
     rmarkdown,
     testthat (>= 2.1.0)
 Additional_repositories:
