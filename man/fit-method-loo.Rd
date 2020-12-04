@@ -24,10 +24,11 @@ argument to \code{\link[loo:loo]{loo::loo.array()}}.
 \code{\link[loo:loo]{loo::loo.array()}}.}
 }
 \description{
-The \verb{$loo()} method of \link{CmdStanMCMC} objects compute approximate
-leave-one-out cross-validation using the \pkg{loo} package. This requires
-computing the pointwise log-likelihood in your Stan program. See the
-\pkg{loo} package vignettes for details.
+The \verb{$loo()} method computes approximate leave-one-out
+cross-validation using the \pkg{loo} package. This is a simple wrapper
+around \code{\link[loo:loo]{loo::loo.array()}} provided for convenience and requires computing
+the pointwise log-likelihood in your Stan program. See the \pkg{loo}
+package \href{https://mc-stan.org/loo/articles/}{vignettes} for details.
 }
 \section{Usage}{
 \preformatted{$loo(variables = "log_lik", r_eff = NULL, ...)
