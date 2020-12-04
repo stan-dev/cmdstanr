@@ -6,6 +6,8 @@
 
 * Added `$sample_mpi()` for MCMC sampling with MPI. (#350)
 
+* Added informative messages on compile errors caused by precompiled headers (PCH). (#384)
+
 # cmdstanr 0.2.2
 
 ### Bug fixes
