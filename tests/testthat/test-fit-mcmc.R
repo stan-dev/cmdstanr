@@ -263,7 +263,7 @@ test_that("loo method works if log_lik is available", {
   expect_s3_class(fit_bernoulli$loo(r_eff = FALSE), "loo")
 })
 
-test_that("loo method works if log_lik is available", {
+test_that("loo errors if it can't find log lik variables", {
   skip_on_cran()
   skip_if_not_installed("loo")
   fit_schools <- testing_fit("schools")
