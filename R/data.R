@@ -123,69 +123,96 @@ any_na_elements <- function(data) {
 }
 
 
+draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
+  sampler_diagnostic_names <- c("accept_stat__", "stepsize__", "treedepth__", "n_leapfrog__", "divergent__", "energy__")
+
+  n <- posterior::niterations(draws)
+  n_chains <- posterior::nchains(draws)
+  if (is.null(sampler_diagnostics)) {
+    # create dummy sampler diagnostics due to CmdStan requirement for all columns in GQ
+    sampler_diagnostics <- rep(0, n * length(sampler_diagnostic_names) * n_chains)
+    dim(sampler_diagnostics) <- c(n, n_chains, length(sampler_diagnostic_names))
+    sampler_diagnostics <- posterior::as_draws_array(sampler_diagnostics)
+    posterior::variables(sampler_diagnostics) <- sampler_diagnostic_names
+  }
+
+  # the columns must be in order "lp__, sampler_diagnostics, parameters"
+  variables <- posterior::variables(draws)
+  # create a dummy lp__ column if it does not exist
+  if ("lp__" %in% variables) {
+    lp__ <- NULL
+  } else {
+    lp__ <- rep(0, n * n_chains)
+    dim(lp__) <- c(n, n_chains, 1)
+    lp__ <- posterior::as_draws_array(lp__)
+    posterior::variables(lp__) <- "lp__"
+  }
+  variables <- c("lp__", sampler_diagnostic_names, variables[!(variables %in% c("lp__", "lp_approx__"))])
+  draws <- posterior::subset_draws(
+    posterior::bind_draws(draws, sampler_diagnostics, lp__, along = "variable"),
+    variable = variables
+  )
+  chains <- posterior::chain_ids(draws)
+  paths <- generate_file_names(basename = "fittedParams", ids = chains)
+  paths <- file.path(tempdir(), paths)
+  chain <- 1
+  for (path in paths) {
+    write(
+      paste0("# num_samples = ", n, "\n", paste0(unrepair_variable_names(variables), collapse = ",")),
+      file = path,
+      append = FALSE
+    )
+    utils::write.table(
+      posterior::subset_draws(draws, chain = chain),
+      sep = ",",
+      file = path,
+      col.names = FALSE,
+      row.names = FALSE,
+      append = TRUE
+    )
+    chain <- chain + 1
+  }
+  paths
+}
+
 #' Process fitted params for the generate quantities method
 #'
 #' @noRd
-#' @param fitted_params Paths to CSV files compatible with CmdStan or a CmdStanMCMC object.
+#' @param fitted_params Paths to CSV files produced by Cmdstan sampling,
+#'  a CmdStanMCMC or CmdStanVB object, a draws_array or draws_matrix.
 #' @return Paths to CSV files containing parameter values.
 #'
 process_fitted_params <- function(fitted_params) {
   if (is.character(fitted_params)) {
     paths <- absolute_path(fitted_params)
-  } else if (checkmate::test_r6(fitted_params, classes = ("CmdStanMCMC"))) {
-    if (all(file.exists(fitted_params$output_files()))) {
+  } else if (checkmate::test_r6(fitted_params, classes = "CmdStanMCMC") && 
+              all(file.exists(fitted_params$output_files()))) {
       paths <- absolute_path(fitted_params$output_files())
-    } else {
-      draws <- tryCatch(posterior::as_draws_array(fitted_params$draws()),
-        error=function(cond) {
-            stop("Unable to obtain draws from the fit (CmdStanMCMC) object.", call. = FALSE)
-        }
-      )
-      sampler_diagnostics <- tryCatch(posterior::as_draws_array(fitted_params$sampler_diagnostics()),
-        error=function(cond) {
-            stop("Unable to obtain sampler diagnostics from the fit (CmdStanMCMC) object.", call. = FALSE)
-        }
-      )
-      if (!is.null(draws)) {
-        variables <- posterior::variables(draws)
-        non_lp_variables <- variables[variables != "lp__"]
-        draws <- posterior::bind_draws(
-          posterior::subset_draws(draws, variable = "lp__"),
-          sampler_diagnostics,
-          posterior::subset_draws(draws, variable = non_lp_variables),
-          along = "variable"
-        )
-        variables <- posterior::variables(draws)
-        chains <- posterior::chain_ids(draws)
-        iterations <- posterior::niterations(draws)
-        paths <- generate_file_names(basename = "fittedParams", ids = chains)
-        paths <- file.path(tempdir(), paths)
-        chain <- 1
-        for (path in paths) {
-          chain_draws <- posterior::subset_draws(draws, chain = chain)
-          write(
-            paste0("# num_samples = ", iterations),
-            file = path
-          )
-          write(
-            paste0(unrepair_variable_names(variables), collapse = ","),
-            file = path,
-            append = TRUE
-          )
-          utils::write.table(
-            chain_draws,
-            file = path,
-            sep = ",",
-            col.names = FALSE,
-            row.names = FALSE,
-            append = TRUE
-          )
-          chain <- chain + 1
-        }
+  } else if(checkmate::test_r6(fitted_params, classes = c("CmdStanMCMC"))) {
+    draws <- tryCatch(fitted_params$draws(),
+      error=function(cond) {
+          stop("Unable to obtain draws from the fit object.", call. = FALSE)
       }
-    }
+    )
+    sampler_diagnostics <- tryCatch(fitted_params$sampler_diagnostics(),
+      error=function(cond) {
+          NULL
+      }
+    )
+    paths <- draws_to_csv(draws, sampler_diagnostics)
+  } else if(checkmate::test_r6(fitted_params, classes = c("CmdStanVB"))) {
+    draws <- tryCatch(fitted_params$draws(),
+      error=function(cond) {
+          stop("Unable to obtain draws from the fit object.", call. = FALSE)
+      }
+    )
+    paths <- draws_to_csv(posterior::as_draws_array(draws))
+  } else if (any(class(fitted_params) == "draws_array")){
+    paths <- draws_to_csv(fitted_params)
+  } else if (any(class(fitted_params) == "draws_matrix")){
+    paths <- draws_to_csv(posterior::as_draws_array(fitted_params))
   } else {
-    stop("'fitted_params' should be a vector of paths or a CmdStanMCMC object.", call. = FALSE)
+    stop("'fitted_params' must be a list of paths to CSV files, a CmdStanMCMC/CmdStanVB object, a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)
   }
   paths
 }
