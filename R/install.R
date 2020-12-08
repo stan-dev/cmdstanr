@@ -347,8 +347,8 @@ build_cmdstan <- function(dir,
     run_cmd,
     args = c(translation_args, paste0("-j", cores), "build"),
     wd = dir,
-    echo_cmd = is_verbose_mode,
-    echo = !quiet || is_verbose_mode,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) },
@@ -394,8 +394,8 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     make_cmd(),
     args = c("clean-all"),
     wd = dir,
-    echo_cmd = is_verbose_mode,
-    echo = !quiet || is_verbose_mode,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) }
@@ -408,8 +408,8 @@ build_example <- function(dir, cores, quiet, timeout) {
     make_cmd(),
     args = c(paste0("-j", cores), cmdstan_ext("examples/bernoulli/bernoulli")),
     wd = dir,
-    echo_cmd = is_verbose_mode,
-    echo = !quiet || is_verbose_mode,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) },
@@ -465,8 +465,8 @@ install_mingw32_make <- function(quiet = FALSE) {
     args = c("-Syu", "mingw-w64-x86_64-make","--noconfirm"),
     wd = rtools_usr_bin,
     error_on_status = TRUE,
-    echo_cmd = is_verbose_mode,
-    echo = is_verbose_mode
+    echo_cmd = is_verbose_mode(),
+    echo = is_verbose_mode()
   )
   write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
   Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))

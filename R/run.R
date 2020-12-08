@@ -175,7 +175,7 @@ CmdStanRun <- R6::R6Class(
         args = c(self$output_files(include_failed = FALSE), flags),
         wd = cmdstan_path(),
         echo = TRUE,
-        echo_cmd = is_verbose_mode,
+        echo_cmd = is_verbose_mode(),
         error_on_status = TRUE
       )
     },
@@ -518,7 +518,7 @@ CmdStanProcs <- R6::R6Class(
         wd = wd,
         stdout = "|",
         stderr = "|",
-        echo_cmd = is_verbose_mode
+        echo_cmd = is_verbose_mode()
       )
       invisible(self)
     },
@@ -658,7 +658,7 @@ CmdStanProcs <- R6::R6Class(
           }
           if (private$proc_state_[[id]] == 3.5) {
             message(line)
-          } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) || is_verbose_mode) {        
+          } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) || is_verbose_mode()) {        
             cat(line, collapse = "\n")
           }
         } else {
@@ -777,7 +777,7 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("Adjust your expectations accordingly!",line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          if ((state > 1.5 && state < 5 && !ignore_line) || is_verbose_mode) {
+          if ((state > 1.5 && state < 5 && !ignore_line) || is_verbose_mode()) {
             if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
