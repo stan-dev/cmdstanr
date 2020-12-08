@@ -1432,9 +1432,10 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'
 #' @section Arguments:
 #'   * `fitted_params`: (multiple options) The parameter draws to use. One of the following:
-#'     - A [CmdStanMCMC] fitted model object.
-#'     - A character vector of paths to CmdStan CSV output files containing
-#'     parameter draws.
+#'     - A [CmdStanMCMC] or [CmdStanVB] fitted model object.
+#'     - A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for VB)
+#'       object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
+#'     - A character vector of paths to CmdStan CSV output files.
 #'   * `data`, `seed`, `output_dir`, `parallel_chains`, `threads_per_chain`, `sig_figs`:
 #'   Same as for the [`$sample()`][model-method-sample] method.
 #'

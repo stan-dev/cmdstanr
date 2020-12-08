@@ -9,7 +9,11 @@
 * Added informative messages on compile errors caused by precompiled headers (PCH). (#384)
 
 * Added the `cmdstan_verbose` option for verbose mode intended for troubleshooting,
-  debugging and development.
+  debugging and development. (#392)
+
+* The `fitted_params` argument to the `$generate_quantities()` method now also
+accepts CmdStanVB, `posterior::draws_array`, and `posterior::draws_matrix`
+objects. (#390)
 
 # cmdstanr 0.2.2
 
