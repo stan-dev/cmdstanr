@@ -8,6 +8,9 @@
 
 * Added informative messages on compile errors caused by precompiled headers (PCH). (#384)
 
+* Added the `cmdstan_verbose` option for verbose mode intended for troubleshooting,
+  debugging and development.
+
 # cmdstanr 0.2.2
 
 ### Bug fixes
