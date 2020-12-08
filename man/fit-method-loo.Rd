@@ -3,7 +3,7 @@
 \name{fit-method-loo}
 \alias{fit-method-loo}
 \alias{loo}
-\title{Leave-one-out cross-validation}
+\title{Leave-one-out cross-validation (LOO-CV)}
 \arguments{
 \item{variables}{(character vector) The name(s) of the variable(s) in the
 Stan program containing the pointwise log-likelihood. The default is to
@@ -24,11 +24,11 @@ argument to \code{\link[loo:loo]{loo::loo.array()}}.
 \code{\link[loo:loo]{loo::loo.array()}}.}
 }
 \description{
-The \verb{$loo()} method computes approximate leave-one-out
-cross-validation using the \pkg{loo} package. This is a simple wrapper
-around \code{\link[loo:loo]{loo::loo.array()}} provided for convenience and requires computing
-the pointwise log-likelihood in your Stan program. See the \pkg{loo}
-package \href{https://mc-stan.org/loo/articles/}{vignettes} for details.
+The \verb{$loo()} method computes approximate LOO-CV using the
+\pkg{loo} package. This is a simple wrapper around \code{\link[loo:loo]{loo::loo.array()}}
+provided for convenience and requires computing the pointwise
+log-likelihood in your Stan program. See the \pkg{loo} package
+\href{https://mc-stan.org/loo/articles/}{vignettes} for details.
 }
 \section{Usage}{
 \preformatted{$loo(variables = "log_lik", r_eff = NULL, ...)

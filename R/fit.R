@@ -783,15 +783,15 @@ NULL
 #'
 NULL
 
-#' Leave-one-out cross-validation
+#' Leave-one-out cross-validation (LOO-CV)
 #'
 #' @name fit-method-loo
 #' @aliases loo
-#' @description The `$loo()` method computes approximate leave-one-out
-#'   cross-validation using the \pkg{loo} package. This is a simple wrapper
-#'   around [loo::loo.array()] provided for convenience and requires computing
-#'   the pointwise log-likelihood in your Stan program. See the \pkg{loo}
-#'   package [vignettes](https://mc-stan.org/loo/articles/) for details.
+#' @description The `$loo()` method computes approximate LOO-CV using the
+#'   \pkg{loo} package. This is a simple wrapper around [loo::loo.array()]
+#'   provided for convenience and requires computing the pointwise
+#'   log-likelihood in your Stan program. See the \pkg{loo} package
+#'   [vignettes](https://mc-stan.org/loo/articles/) for details.
 #'
 #' @section Usage:
 #'   ```
@@ -863,7 +863,7 @@ NULL
 #'  [`$summary()`][fit-method-summary] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
-#'  [`$loo()`][fit-method-loo]  |  Run [loo::loo.array()]. |
+#'  [`$loo()`][fit-method-loo]  |  Run [loo::loo.array()] for approximate LOO-CV |
 #'
 #'  ## Save fitted model object and temporary files
 #'
