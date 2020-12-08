@@ -179,17 +179,17 @@ test_that("time() method works after mcmc", {
     warmup_time <- NULL
     total_time <- NULL
     for (l in readLines(fit_mcmc_0$output_files()[j])) {
-      if (regexpr("seconds (Sampling)", l, fixed = TRUE) > 0) {
+      if (grepl("seconds (Sampling)", l, fixed = TRUE)) {
         l <- sub("seconds (Sampling)", "", l, fixed = TRUE)
         l <- trimws(sub("#", "", l, fixed = TRUE))
         sampling_time <- as.double(l)
       }
-      if (regexpr("seconds (Warm-up)", l, fixed = TRUE) > 0) {
+      if (grepl("seconds (Warm-up)", l, fixed = TRUE)) {
         l <- sub("seconds (Warm-up)", "", l, fixed = TRUE)
         l <- trimws(sub("#  Elapsed Time: ", "", l, fixed = TRUE))
         warmup_time <- as.double(l)
       }
-      if (regexpr("seconds (Total)", l, fixed = TRUE) > 0) {
+      if (grepl("seconds (Total)", l, fixed = TRUE)) {
         l <- sub("seconds (Total)", "", l, fixed = TRUE)
         l <- trimws(sub("#", "", l, fixed = TRUE))
         total_time <- as.double(l)

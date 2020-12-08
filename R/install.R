@@ -484,7 +484,7 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   }
   # If RTools is installed in a path with spaces or brackets
   # we error as this path is not valid
-  if (regexpr("\\(|)| ", rtools_path) > 0) {
+  if (grepl("\\(|)| ", rtools_path)) {
     stop(
       "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
       "\nPlease reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain().",

@@ -422,15 +422,15 @@ read_csv_metadata <- function(csv_file) {
       }
     } else {
       parse_key_val <- TRUE
-      if (regexpr("# Diagonal elements of inverse mass matrix:", line, perl = TRUE) > 0
-          || regexpr("# Elements of inverse mass matrix:", line, perl = TRUE) > 0) {
+      if (grepl("# Diagonal elements of inverse mass matrix:", line, perl = TRUE)
+          || grepl("# Elements of inverse mass matrix:", line, perl = TRUE)) {
         inv_metric_next <- TRUE
         parse_key_val <- FALSE
       } else if (inv_metric_next) {
         inv_metric_split <- strsplit(gsub("# ", "", line), ",")
         if ((length(inv_metric_split) == 0) ||
             ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0))) ||
-            regexpr("[a-zA-z]", line, perl = TRUE) > 0 ||
+            grepl("[a-zA-z]", line, perl = TRUE) ||
             inv_metric_split == "#") {
           parsing_done <- TRUE
           parse_key_val <- TRUE

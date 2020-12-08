@@ -454,7 +454,7 @@ compile_method <- function(quiet = TRUE,
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     current_path <- Sys.getenv("PATH")
-    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
     }
   }
@@ -504,8 +504,8 @@ compile_method <- function(quiet = TRUE,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
       if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
-      if (regexpr("PCH file uses an older PCH format that is no longer supported", x, fixed = TRUE) > 0
-          || regexpr("PCH file built from a different branch", x, fixed = TRUE) > 0) {
+      if (grepl("PCH file uses an older PCH format that is no longer supported", x, fixed = TRUE)
+          || grepl("PCH file built from a different branch", x, fixed = TRUE)) {
         warning("Cmdstan encountered an issue with an outdated precompiled header (PCH). Run rebuild_cmdstan() to rebuild the PCH files.\n",
         "If the issue persists please open a bug report.")
       }
