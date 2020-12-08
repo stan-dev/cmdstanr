@@ -8,8 +8,12 @@
 
 * Added informative messages on compile errors caused by precompiled headers (PCH). (#384)
 
-* * New `loo()` method for CmdStanMCMC objects. Requires computing pointwise
+* New `loo()` method for CmdStanMCMC objects. Requires computing pointwise
 log-likelihood in Stan program. (#366)
+
+* The `fitted_params` argument to the `$generate_quantities()` method now also
+accepts CmdStanVB, `posterior::draws_array`, and `posterior::draws_matrix`
+objects. (#390)
 
 # cmdstanr 0.2.2
 
