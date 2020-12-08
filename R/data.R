@@ -122,43 +122,49 @@ any_na_elements <- function(data) {
   any(has_na_elements)
 }
 
-
+#' Write posterior draws objects to csv files
+#' @noRd
+#' @param draws A `draws_array` from posterior pkg
+#' @param sampler_diagnostics Either `NULL` or a `draws_array` of sampler diagnostics
+#' @return Paths to CSV files (one per chain).
+#'
 draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
-  sampler_diagnostic_names <- c("accept_stat__", "stepsize__", "treedepth__", "n_leapfrog__", "divergent__", "energy__")
-
   n <- posterior::niterations(draws)
   n_chains <- posterior::nchains(draws)
+  zeros <- rep(0, n * n_chains) # filler for creating dummy sampler diagnostics and lp__ if necessary
   if (is.null(sampler_diagnostics)) {
     # create dummy sampler diagnostics due to CmdStan requirement for all columns in GQ
-    sampler_diagnostics <- rep(0, n * length(sampler_diagnostic_names) * n_chains)
-    dim(sampler_diagnostics) <- c(n, n_chains, length(sampler_diagnostic_names))
-    sampler_diagnostics <- posterior::as_draws_array(sampler_diagnostics)
-    posterior::variables(sampler_diagnostics) <- sampler_diagnostic_names
+    sampler_diagnostics <- posterior::draws_array(
+      accept_stat__ = zeros,
+      stepsize__ = zeros,
+      treedepth__ = zeros,
+      n_leapfrog__ = zeros,
+      divergent__ = zeros,
+      energy__ = zeros,
+      .nchains = n_chains
+    )
   }
 
   # the columns must be in order "lp__, sampler_diagnostics, parameters"
-  variables <- posterior::variables(draws)
-  # create a dummy lp__ column if it does not exist
-  if ("lp__" %in% variables) {
+  draws_variables <- posterior::variables(draws)
+  if ("lp__" %in% draws_variables) {
     lp__ <- NULL
-  } else {
-    lp__ <- rep(0, n * n_chains)
-    dim(lp__) <- c(n, n_chains, 1)
-    lp__ <- posterior::as_draws_array(lp__)
-    posterior::variables(lp__) <- "lp__"
+  } else { # create a dummy lp__ if it does not exist
+    lp__ <- posterior::draws_array(lp__ = zeros, .nchains = n_chains)
   }
-  variables <- c("lp__", sampler_diagnostic_names, variables[!(variables %in% c("lp__", "lp_approx__"))])
+  all_variables <- c("lp__", posterior::variables(sampler_diagnostics), draws_variables[!(draws_variables %in% c("lp__", "lp_approx__"))])
   draws <- posterior::subset_draws(
     posterior::bind_draws(draws, sampler_diagnostics, lp__, along = "variable"),
-    variable = variables
+    variable = all_variables
   )
+
   chains <- posterior::chain_ids(draws)
   paths <- generate_file_names(basename = "fittedParams", ids = chains)
   paths <- file.path(tempdir(), paths)
   chain <- 1
   for (path in paths) {
     write(
-      paste0("# num_samples = ", n, "\n", paste0(unrepair_variable_names(variables), collapse = ",")),
+      paste0("# num_samples = ", n, "\n", paste0(unrepair_variable_names(all_variables), collapse = ",")),
       file = path,
       append = FALSE
     )
