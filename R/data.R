@@ -191,7 +191,7 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
 process_fitted_params <- function(fitted_params) {
   if (is.character(fitted_params)) {
     paths <- absolute_path(fitted_params)
-  } else if (checkmate::test_r6(fitted_params, classes = "CmdStanMCMC") && 
+  } else if (checkmate::test_r6(fitted_params, classes = "CmdStanMCMC") &&
               all(file.exists(fitted_params$output_files()))) {
       paths <- absolute_path(fitted_params$output_files())
   } else if(checkmate::test_r6(fitted_params, classes = c("CmdStanMCMC"))) {
@@ -218,7 +218,10 @@ process_fitted_params <- function(fitted_params) {
   } else if (any(class(fitted_params) == "draws_matrix")){
     paths <- draws_to_csv(posterior::as_draws_array(fitted_params))
   } else {
-    stop("'fitted_params' must be a list of paths to CSV files, a CmdStanMCMC/CmdStanVB object, a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)
+    stop(
+      "'fitted_params' must be a list of paths to CSV files, ",
+      "a CmdStanMCMC/CmdStanVB object, ",
+      "a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)
   }
   paths
 }
