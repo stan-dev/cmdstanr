@@ -15,11 +15,7 @@ os_is_macos <- function() {
 }
 
 is_verbose_mode <- function() {
-  verbose <- options("cmdstanr_verbose")
-  if(is.null(verbose)) {
-    verbose <- FALSE
-  }
-  verbose
+  getOption("cmdstanr_verbose", default = FALSE)
 }
 
 #' Check if running R in Rosetta 2 translation environment, which is an
