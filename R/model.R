@@ -500,7 +500,8 @@ compile_method <- function(quiet = TRUE,
              cpp_options_to_compile_flags(cpp_options),
              stancflags_val),
     wd = cmdstan_path(),
-    echo = !quiet,
+    echo = !quiet || is_verbose_mode,
+    echo_cmd = is_verbose_mode,
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
       if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
@@ -648,7 +649,8 @@ check_syntax_method <- function(pedantic = FALSE,
     command = stanc_cmd(),
     args = c(self$stan_file(), stanc_built_options, stancflags_val),
     wd = cmdstan_path(),
-    echo = FALSE,
+    echo = is_verbose_mode,
+    echo_cmd = is_verbose_mode,
     spinner = quiet && interactive(),
     stdout_line_callback = function(x,p) {
       if (!quiet) cat(x)

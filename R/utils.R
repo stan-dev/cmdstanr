@@ -14,6 +14,14 @@ os_is_macos <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Darwin")
 }
 
+is_verbose_mode <- function() {
+  verbose <- options("cmdstanr_verbose")
+  if(is.null(verbose)) {
+    verbose <- FALSE
+  }
+  verbose
+}
+
 #' Check if running R in Rosetta 2 translation environment, which is an
 #' Intel-to-ARM translation layer.
 #' @return `TRUE` if it is running rosetta2, `FALSE` if not.
