@@ -8,10 +8,12 @@
 
 * Added informative messages on compile errors caused by precompiled headers (PCH). (#384)
 
+* New `loo()` method for CmdStanMCMC objects. Requires computing pointwise
+log-likelihood in Stan program. (#366)
+
 * The `fitted_params` argument to the `$generate_quantities()` method now also
 accepts CmdStanVB, `posterior::draws_array`, and `posterior::draws_matrix`
 objects. (#390)
-
 
 # cmdstanr 0.2.2
 
@@ -25,7 +27,7 @@ objects. (#390)
 
 * Added support for native execution on the macOS with the M1 ARM-based CPU. (#375)
 
-* Added threading support via `threads` argument for `$optimize()` and `$variational()` 
+* Added threading support via `threads` argument for `$optimize()` and `$variational()`
   (was already available via `threads_per_chain` for `$sample()`). (#369)
 
 # cmdstanr 0.2.1
@@ -52,7 +54,7 @@ created by CmdStan without CmdStanR. (#291, #292, @johnlees)
 * Fix error when returning draws or sampler diagnostics for a fit with only warmup
 and no samples. (#288, #293)
 
-* Fix trailing slashes issue for `dir` in `cmdstan_model()` and `output_dir` 
+* Fix trailing slashes issue for `dir` in `cmdstan_model()` and `output_dir`
 in fitting methods. (#281, #294)
 
 * Fix dimensions error when processing a list of matrices passed in as `data`. (#296, #302)
@@ -101,7 +103,7 @@ temporary. (#267, #272)
 
 * New knitr engine `eng_cmdstan()` and function `register_knitr_engine()` that
 allow Stan chunks in R markdown documents to be processed using CmdStanR
-instead of RStan. The new vignette _R Markdown CmdStan Engine_ provides a 
+instead of RStan. The new vignette _R Markdown CmdStan Engine_ provides a
 demonstration. (#261, #264, @bearloga)
 
 # cmdstanr 0.1.0
