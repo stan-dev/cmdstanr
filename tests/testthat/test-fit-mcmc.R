@@ -254,3 +254,22 @@ test_that("output() shows informational messages depening on show_messages", {
     "Informational Message: The current Metropolis proposal is about to be rejected"
   )
 })
+
+test_that("loo method works if log_lik is available", {
+  skip_on_cran()
+  skip_if_not_installed("loo")
+  fit_bernoulli <- testing_fit("bernoulli_log_lik")
+  expect_s3_class(suppressWarnings(fit_bernoulli$loo(cores = 1, save_psis = TRUE)), "loo")
+  expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = FALSE)), "loo")
+})
+
+test_that("loo errors if it can't find log lik variables", {
+  skip_on_cran()
+  skip_if_not_installed("loo")
+  fit_schools <- testing_fit("schools")
+  expect_error(
+    fit_schools$loo(),
+    "Can't find the following variable(s) in the output: log_lik",
+    fixed = TRUE
+  )
+})

@@ -589,7 +589,6 @@ NULL
 #'
 NULL
 
-
 #' Save output and data files
 #'
 #' @name fit-method-save_output_files
@@ -784,6 +783,51 @@ NULL
 #'
 NULL
 
+#' Leave-one-out cross-validation (LOO-CV)
+#'
+#' @name fit-method-loo
+#' @aliases loo
+#' @description The `$loo()` method computes approximate LOO-CV using the
+#'   \pkg{loo} package. This is a simple wrapper around [loo::loo.array()]
+#'   provided for convenience and requires computing the pointwise
+#'   log-likelihood in your Stan program. See the \pkg{loo} package
+#'   [vignettes](https://mc-stan.org/loo/articles/) for details.
+#'
+#' @section Usage:
+#'   ```
+#'   $loo(variables = "log_lik", r_eff = NULL, ...)
+#'   ```
+#'
+#' @param variables (character vector) The name(s) of the variable(s) in the
+#'   Stan program containing the pointwise log-likelihood. The default is to
+#'   look for `"log_lik"`. This argument is passed to the
+#'   [`$draws()][fit-method-draws] method.
+#' @param r_eff There are several options:
+#'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
+#'   to compute the `r_eff` argument to pass to [loo::loo.array()].
+#'   * `FALSE` or `NULL` will avoid computing `r_eff` (which can sometimes be slow)
+#'   but will result in a warning from the \pkg{loo} package.
+#'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
+#'   argument to [loo::loo.array()].
+#' @param ... Other arguments (e.g., `cores`, `save_psis`, etc.) passed to
+#'   [loo::loo.array()].
+#'
+#' @section Value: The object returned by [loo::loo.array()].
+#'
+#' @seealso The \pkg{loo} package website with
+#'   [documentation](https://mc-stan.org/loo/reference/index.html) and
+#'   [vignettes](https://mc-stan.org/loo/articles/).
+#'
+#' @examples
+#'
+#' \dontrun{
+#' # the "logistic" example model has "log_lik" in generated quantities
+#' fit <- cmdstanr_example("logistic")
+#' fit$loo(cores = 2)
+#' }
+#'
+NULL
+
 
 # CmdStanMCMC -------------------------------------------------------------
 
@@ -819,6 +863,7 @@ NULL
 #'  [`$summary()`][fit-method-summary] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
+#'  [`$loo()`][fit-method-loo]  |  Run [loo::loo.array()] for approximate LOO-CV |
 #'
 #'  ## Save fitted model object and temporary files
 #'
@@ -953,7 +998,24 @@ CmdStanMCMC <- R6::R6Class(
         out <- lapply(out, diag)
       }
       out
+    },
+    # approximate loo-cv using the loo package
+    loo = function(variables = "log_lik", r_eff = TRUE, ...) {
+      if (!requireNamespace("loo", quietly = TRUE)) {
+        stop("Please install the loo package to use this method.", call. = FALSE)
+      }
+      LLarray <- self$draws(variables)
+      if (is.logical(r_eff)) {
+        if (isTRUE(r_eff)) {
+          r_eff_cores <- list(...)[["cores"]] %||% getOption("mc.cores", 1)
+          r_eff <- loo::relative_eff(exp(LLarray), cores = r_eff_cores)
+        } else {
+          r_eff <- NULL
+        }
+      }
+      loo::loo.array(LLarray, r_eff = r_eff, ...)
     }
+
   ),
   private = list(
     # also inherits draws_ and metadata_ from CmdStanFit
