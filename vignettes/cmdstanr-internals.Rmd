@@ -405,4 +405,19 @@ fit <- readRDS(temp_rds_file)
 fit$summary()
 ```
 
+## Developing using CmdStanR
 
+CmdStanR can of course be used for developing other packages that require compiling
+and running Stan models as well as using new or custom Stan features available
+through CmdStan.
+
+### Troubleshooting and debugging
+
+When developing or testing new features it might be useful to have more information
+on how CmdStan is called internally and get more information printed when compiling
+or running models.
+
+This can be enabled using
+```{r verbose-mode}
+options("cmdstanr_verbose"=TRUE)
+```
