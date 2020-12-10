@@ -175,6 +175,7 @@ CmdStanRun <- R6::R6Class(
         args = c(self$output_files(include_failed = FALSE), flags),
         wd = cmdstan_path(),
         echo = TRUE,
+        echo_cmd = is_verbose_mode(),
         error_on_status = TRUE
       )
     },
@@ -237,7 +238,7 @@ CmdStanRun <- R6::R6Class(
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     current_path <- Sys.getenv("PATH")
-    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
     }
   }
@@ -320,7 +321,7 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     current_path <- Sys.getenv("PATH")
-    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
     }
   }
@@ -386,7 +387,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
     current_path <- Sys.getenv("PATH")
-    if (regexpr("path_to_TBB", current_path, perl = TRUE) <= 0) {
+    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
       Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
     }
   }
@@ -516,7 +517,8 @@ CmdStanProcs <- R6::R6Class(
         args = args,
         wd = wd,
         stdout = "|",
-        stderr = "|"
+        stderr = "|",
+        echo_cmd = is_verbose_mode()
       )
       invisible(self)
     },
@@ -624,9 +626,9 @@ CmdStanProcs <- R6::R6Class(
     },
     is_error_message = function(line) {
       startsWith(line, "Exception:") ||
-      (regexpr("either mistyped or misplaced.", line, perl = TRUE) > 0) ||
-      (regexpr("A method must be specified!", line, perl = TRUE) > 0) ||
-      (regexpr("is not a valid value for", line, perl = TRUE) > 0)
+      (grepl("either mistyped or misplaced.", line, perl = TRUE)) ||
+      (grepl("A method must be specified!", line, perl = TRUE)) ||
+      (grepl("is not a valid value for", line, perl = TRUE))
     },
     process_error_output = function(err_out, id) {
       if (length(err_out)) {
@@ -645,18 +647,18 @@ CmdStanProcs <- R6::R6Class(
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
-          if (regexpr("Optimization terminated with error", line, perl = TRUE) > 0) {
+          if (grepl("Optimization terminated with error", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 3.5)
           }
-          if (regexpr("Optimization terminated normally", line, perl = TRUE) > 0) {
+          if (grepl("Optimization terminated normally", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 4)
           }
-          if (self$proc_state(id) == 2 && regexpr("refresh = ", line, perl = TRUE) > 0) {
+          if (self$proc_state(id) == 2 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 2.5)
           }
           if (private$proc_state_[[id]] == 3.5) {
             message(line)
-          } else if (private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) {        
+          } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) || is_verbose_mode()) {        
             cat(line, collapse = "\n")
           }
         } else {
@@ -732,50 +734,50 @@ CmdStanMCMCProcs <- R6::R6Class(
           # (Note: state 2 is only used because rejection in cmdstan is printed
           # to stdout not stderr and we want to avoid printing the intial chain metadata)
           next_state <- state
-          if (state < 3 && regexpr("refresh =", line, perl = TRUE) > 0) {
+          if (state < 3 && grepl("refresh =", line, perl = TRUE)) {
             state <- 1.5
             next_state <- 1.5
           }
-          if (state <= 3 && regexpr("Rejecting initial value:", line, perl = TRUE) > 0) {
+          if (state <= 3 && grepl("Rejecting initial value:", line, perl = TRUE)) {
             state <- 2
             next_state <- 2
           }
-          if (state < 3 && regexpr("Iteration:", line, perl = TRUE) > 0) {
+          if (state < 3 && grepl("Iteration:", line, perl = TRUE)) {
             state <- 3 # 3 =  warmup
             next_state <- 3
           }
-          if (state < 3 && regexpr("Elapsed Time:", line, perl = TRUE) > 0) {
+          if (state < 3 && grepl("Elapsed Time:", line, perl = TRUE)) {
             state <- 5 # 5 = end of samp+ling
             next_state <- 5
           }
           if (private$proc_state_[[id]] == 3 &&
-              regexpr("(Sampling)", line, perl = TRUE) > 0) {
+              grepl("(Sampling)", line, perl = TRUE)) {
             next_state <- 4 # 4 = sampling
           }
-          if (regexpr("\\[100%\\]", line, perl = TRUE) > 0) {
+          if (grepl("\\[100%\\]", line, perl = TRUE)) {
             next_state <- 5 # writing csv and finishing
           }
-          if (regexpr("seconds (Total)", line, fixed = TRUE) > 0) {
+          if (grepl("seconds (Total)", line, fixed = TRUE)) {
             private$proc_total_time_[[id]] <- as.double(trimws(sub("seconds (Total)", "", line, fixed = TRUE)))
             next_state <- 5
             state <- 5
           }
-          if (regexpr("seconds (Sampling)", line, fixed = TRUE) > 0) {
+          if (grepl("seconds (Sampling)", line, fixed = TRUE)) {
             private$proc_section_time_[id, "sampling"] <- as.double(trimws(sub("seconds (Sampling)", "", line, fixed = TRUE)))
             next_state <- 5
             state <- 5
           }
-          if (regexpr("seconds (Warm-up)", line, fixed = TRUE) > 0) {
+          if (grepl("seconds (Warm-up)", line, fixed = TRUE)) {
             private$proc_section_time_[id, "warmup"] <- as.double(trimws(sub("Elapsed Time: ", "", sub("seconds (Warm-up)", "", line, fixed = TRUE), fixed = TRUE)))
             next_state <- 5
             state <- 5
           }
-          if (regexpr("Gradient evaluation took",line, fixed = TRUE) > 0
-              || regexpr("leapfrog steps per transition would take",line, fixed = TRUE) > 0
-              || regexpr("Adjust your expectations accordingly!",line, fixed = TRUE) > 0) {
+          if (grepl("Gradient evaluation took",line, fixed = TRUE)
+              || grepl("leapfrog steps per transition would take",line, fixed = TRUE)
+              || grepl("Adjust your expectations accordingly!",line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          if (state > 1.5 && state < 5 && !ignore_line) {
+          if ((state > 1.5 && state < 5 && !ignore_line) || is_verbose_mode()) {
             if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
@@ -873,7 +875,7 @@ CmdStanGQProcs <- R6::R6Class(
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
-          if (self$proc_state(id) == 1 && regexpr("refresh = ", line, perl = TRUE) > 0) {
+          if (self$proc_state(id) == 1 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 1.5)
           } else if (self$proc_state(id) >= 2) {
             cat("Chain", id, line, "\n")

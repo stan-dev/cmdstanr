@@ -347,8 +347,8 @@ build_cmdstan <- function(dir,
     run_cmd,
     args = c(translation_args, paste0("-j", cores), "build"),
     wd = dir,
-    echo_cmd = FALSE,
-    echo = !quiet,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) },
@@ -394,8 +394,8 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     make_cmd(),
     args = c("clean-all"),
     wd = dir,
-    echo_cmd = FALSE,
-    echo = !quiet,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) }
@@ -408,8 +408,8 @@ build_example <- function(dir, cores, quiet, timeout) {
     make_cmd(),
     args = c(paste0("-j", cores), cmdstan_ext("examples/bernoulli/bernoulli")),
     wd = dir,
-    echo_cmd = FALSE,
-    echo = !quiet,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) },
@@ -464,7 +464,9 @@ install_mingw32_make <- function(quiet = FALSE) {
     "pacman",
     args = c("-Syu", "mingw-w64-x86_64-make","--noconfirm"),
     wd = rtools_usr_bin,
-    error_on_status = TRUE
+    error_on_status = TRUE,
+    echo_cmd = is_verbose_mode(),
+    echo = is_verbose_mode()
   )
   write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
   Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
@@ -484,7 +486,7 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   }
   # If RTools is installed in a path with spaces or brackets
   # we error as this path is not valid
-  if (regexpr("\\(|)| ", rtools_path) > 0) {
+  if (grepl("\\(|)| ", rtools_path)) {
     stop(
       "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
       "\nPlease reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain().",

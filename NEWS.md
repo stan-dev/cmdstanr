@@ -8,6 +8,10 @@
 
 * Added informative messages on compile errors caused by precompiled headers (PCH). (#384)
 
+* Added the `cmdstanr_verbose` option for verbose mode. Intended for
+troubleshooting, debugging and development. See end of *How does CmdStanR work?*
+vignette for details. (#392)
+
 * New `loo()` method for CmdStanMCMC objects. Requires computing pointwise
 log-likelihood in Stan program. (#366)
 
