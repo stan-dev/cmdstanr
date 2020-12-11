@@ -160,7 +160,7 @@ test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", 
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(as.vector(csv_output$inv_metric[[as.character(1)]]),
-               c(1.00098, 0.068748))
+               c(1.00098, 0.00068748))
   expect_equal(as.vector(csv_output$inv_metric[[as.character(2)]]),
                c(0.909635, 0.066384))
 })

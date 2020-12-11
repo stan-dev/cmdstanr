@@ -2,6 +2,9 @@
 
 ### Bug fixes
 
+* Fixed reading inverse mass metric with values written in scientific format in 
+the CSV.
+
 ### New features
 
 * Added `$sample_mpi()` for MCMC sampling with MPI. (#350)

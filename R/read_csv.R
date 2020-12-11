@@ -430,16 +430,22 @@ read_csv_metadata <- function(csv_file) {
         inv_metric_split <- strsplit(gsub("# ", "", line), ",")
         if ((length(inv_metric_split) == 0) ||
             ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0))) ||
-            grepl("[a-zA-z]", line, perl = TRUE) ||
             inv_metric_split == "#") {
           parsing_done <- TRUE
           parse_key_val <- TRUE
           break;
         }
+        suppressWarnings(
+          numeric_inv_metric_split <- tryCatch(rapply(inv_metric_split, as.numeric), error = function() {
+            parsing_done <- TRUE
+            parse_key_val <- TRUE
+            break;
+          })
+        )        
         if (inv_metric_rows == 0) {
-          csv_file_info$inv_metric <- rapply(inv_metric_split, as.numeric)
+          csv_file_info$inv_metric <- numeric_inv_metric_split
         } else {
-          csv_file_info$inv_metric <- c(csv_file_info$inv_metric, rapply(inv_metric_split, as.numeric))
+          csv_file_info$inv_metric <- c(csv_file_info$inv_metric, numeric_inv_metric_split)
         }
         inv_metric_rows <- inv_metric_rows + 1
         parse_key_val <- FALSE
