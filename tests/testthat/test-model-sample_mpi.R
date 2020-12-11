@@ -2,7 +2,7 @@ context("model-sample_mpi")
 
 test_that("sample_mpi() works", {
   skip_on_cran()
-  skip_on_covr()
+  # skip_on_covr()
   skip_if(!nzchar(Sys.getenv("CMDSTANR_RUN_MPI_TESTS")))
   mpi_file <- write_stan_file("
   functions {
