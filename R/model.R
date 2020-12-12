@@ -1203,7 +1203,7 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'   `"bfgs"`, or `"newton"`. The control parameters below are only available
 #'   for `"lbfgs"` and `"bfgs`. For their default values see the CmdStan User's
 #'   Guide or run `cmdstanr_example(method="optimize")$metadata()`.
-#'   * `iter`: (positive integer) The number of iterations.
+#'   * `iter`: (positive integer) The maximum number of iterations.
 #'   * `init_alpha`: (positive real) The initial step size parameter.
 #'   * `tol_obj`: (positive real) Convergence tolerance on changes in objective function value.
 #'   * `tol_rel_obj`: (positive real) Convergence tolerance on relative changes in objective function value.

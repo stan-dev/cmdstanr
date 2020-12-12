@@ -127,7 +127,7 @@ using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
 \code{"bfgs"}, or \code{"newton"}. The control parameters below are only available
 for \code{"lbfgs"} and \verb{"bfgs}. For their default values see the CmdStan User's
 Guide or run \code{cmdstanr_example(method="optimize")$metadata()}.
-\item \code{iter}: (positive integer) The number of iterations.
+\item \code{iter}: (positive integer) The maximum number of iterations.
 \item \code{init_alpha}: (positive real) The initial step size parameter.
 \item \code{tol_obj}: (positive real) Convergence tolerance on changes in objective function value.
 \item \code{tol_rel_obj}: (positive real) Convergence tolerance on relative changes in objective function value.
