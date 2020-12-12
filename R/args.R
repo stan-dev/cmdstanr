@@ -599,21 +599,21 @@ validate_optimize_args <- function(self) {
   if (!is.null(self$iter)) {
     self$iter <- as.integer(self$iter)
   }
-  checkmate::assert_number(self$init_alpha, lower = 0, null.ok = TRUE)
-  if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
-    stop("'init_alpha' can't be used when algorithm is 'newton'.",
-         call. = FALSE)
+
+  bfgs_args <- c("init_alpha", "history_size", "tol_obj", "tol_rel_obj",
+                 "tol_grad", "tol_rel_grad", "tol_param")
+  for (arg in bfgs_args) {
+    # check that:
+    # - arg is positive or NULL
+    # - algorithm='lbfgs' or 'bfgs' explicitly specified (error if not or if 'newton')
+    if (!is.null(self[[arg]]) && is.null(self$algorithm)) {
+      stop("Please specify 'algorithm' in order to use '", arg, "'.", call. = FALSE)
+    }
+    if (!is.null(self[[arg]]) && isTRUE(self$algorithm == "newton")) {
+      stop("'", arg, "' can't be used when algorithm is 'newton'.", call. = FALSE)
+    }
+    checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
   }
-
-  checkmate::assert_number(self$tol_obj, lower = 0, null.ok = TRUE)
-  checkmate::assert_number(self$tol_rel_obj, lower = 0, null.ok = TRUE)
-  checkmate::assert_number(self$tol_grad, lower = 0, null.ok = TRUE)
-  checkmate::assert_number(self$tol_rel_grad, lower = 0, null.ok = TRUE)
-  checkmate::assert_number(self$tol_param, lower = 0, null.ok = TRUE)
-  checkmate::assert_number(self$history_size, lower = 0, null.ok = TRUE)
-
-  # TODO: enforce that 'algorithm' is specified if the tolerance parameters are,
-  # otherwise cmdstan errors.
 
   invisible(TRUE)
 }

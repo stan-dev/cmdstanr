@@ -74,11 +74,23 @@ test_that("optimize() method errors for any invalid argument before calling cmds
   }
 })
 
-test_that("optimize() errors when combining 'newton' with 'init_alpha'", {
+test_that("optimize() errors with bad combination of arguments", {
   skip_on_cran()
+
+  # check a few examples (if these errors are correct then they will be correct
+  # for all similar args because of how it's implemented)
   expect_error(
-      mod$optimize(data = data_list, algorithm = "newton", init_alpha = 0.1),
-    "'init_alpha' can't be used when algorithm is 'newton'"
+    mod$optimize(data = data_list, algorithm = "newton", tol_grad = 0.1),
+    "'tol_grad' can't be used when algorithm is 'newton'"
+  )
+  expect_error(
+    mod$optimize(data = data_list, algorithm = "bfgs", history_size = -10),
+    "not >= 0",
+    fixed = TRUE
+  )
+  expect_error(
+    mod$optimize(data = data_list, init_alpha = 0.1),
+    "Please specify 'algorithm' in order to use 'init_alpha'"
   )
 })
 
