@@ -17,7 +17,7 @@ optimization, the mode is calculated without the Jacobian adjustment for
 constrained variables, which shifts the mode due to the change of
 variables. Thus modes correspond to modes of the model as written.
 
--- \href{https://github.com/stan-dev/cmdstan/releases/latest}{\emph{CmdStan Interface User's Guide}}
+-- \href{https://mc-stan.org/docs/cmdstan-guide/}{\emph{CmdStan User's Guide}}
 }
 \section{Usage}{
 \preformatted{$optimize(
@@ -27,11 +27,17 @@ variables. Thus modes correspond to modes of the model as written.
   init = NULL,
   save_latent_dynamics = FALSE,
   output_dir = NULL,
+  sig_figs = NULL,
   threads = NULL,
   algorithm = NULL,
   init_alpha = NULL,
   iter = NULL,
-  sig_figs = NULL
+  tol_obj = NULL,
+  tol_rel_obj = NULL,
+  tol_grad = NULL,
+  tol_rel_grad = NULL,
+  tol_param = NULL,
+  history_size = NULL
 )
 }
 }
@@ -110,16 +116,24 @@ arguments above, the \verb{$optimize()} method also has its own set of
 arguments. These arguments are described briefly here and in greater detail
 in the CmdStan manual. Arguments left at \code{NULL} default to the default used
 by the installed version of CmdStan.
+The latest \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
+will have the defaults for the latest version of CmdStan.
 \itemize{
 \item \code{threads}: (positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of
 threads to use in parallelized sections (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
 \item \code{algorithm}: (string) The optimization algorithm. One of \code{"lbfgs"},
-\code{"bfgs"}, or \code{"newton"}.
+\code{"bfgs"}, or \code{"newton"}. The control parameters below are only available
+for \code{"lbfgs"} and \verb{"bfgs}. For their default values see the CmdStan User's
+Guide or run \code{cmdstanr_example(method="optimize")$metadata()}.
 \item \code{iter}: (positive integer) The number of iterations.
-\item \code{init_alpha}: (nonnegative real) The line search step size for first
-iteration. Not applicable if \code{algorithm="newton"}.
+\item \code{init_alpha}: (positive real) The initial step size parameter.
+\item \code{tol_obj}: (positive real) Convergence tolerance on changes in objective function value.
+\item \code{tol_rel_obj}: (positive real) Convergence tolerance on relative changes in objective function value.
+\item \code{tol_grad}: (positive real) Convergence tolerance on the norm of the gradient.
+\item \code{tol_rel_grad}: (positive real) Convergence tolerance on the relative norm of the gradient.
+\item \code{tol_param}: (positive real) Convergence tolerance on changes in parameter value.
 }
 }
 

@@ -46,6 +46,7 @@ of processes with \code{mpi_args = list("n" = 4)}.
   init = NULL,
   save_latent_dynamics = FALSE,
   output_dir = NULL,
+  sig_figs = NULL,
   chains = 4,
   parallel_chains = getOption("mc.cores", 1),
   chain_ids = seq_len(chains),
@@ -64,7 +65,6 @@ of processes with \code{mpi_args = list("n" = 4)}.
   term_buffer = NULL,
   window = NULL,
   fixed_param = FALSE,
-  sig_figs = NULL,
   validate_csv = TRUE,
   show_messages = TRUE
 )

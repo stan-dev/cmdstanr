@@ -345,10 +345,22 @@ OptimizeArgs <- R6::R6Class(
     method = "optimize",
     initialize = function(algorithm = NULL,
                           init_alpha = NULL,
-                          iter = NULL) {
+                          iter = NULL,
+                          tol_obj = NULL,
+                          tol_rel_obj = NULL,
+                          tol_grad = NULL,
+                          tol_rel_grad = NULL,
+                          tol_param = NULL,
+                          history_size = NULL) {
       self$algorithm <- algorithm
       self$init_alpha <- init_alpha
       self$iter <- iter
+      self$tol_obj <- tol_obj
+      self$tol_rel_obj <- tol_rel_obj
+      self$tol_grad <- tol_grad
+      self$tol_rel_grad <- tol_rel_grad
+      self$tol_param <- tol_param
+      self$history_size <- history_size
       invisible(self)
     },
     validate = function(num_procs) {
@@ -367,7 +379,13 @@ OptimizeArgs <- R6::R6Class(
         "method=optimize",
         .make_arg("algorithm"),
         .make_arg("init_alpha"),
-        .make_arg("iter")
+        .make_arg("iter"),
+        .make_arg("tol_obj"),
+        .make_arg("tol_rel_obj"),
+        .make_arg("tol_grad"),
+        .make_arg("tol_rel_grad"),
+        .make_arg("tol_param"),
+        .make_arg("history_size")
       )
       new_args <- do.call(c, new_args)
       c(args, new_args)
@@ -586,6 +604,16 @@ validate_optimize_args <- function(self) {
     stop("'init_alpha' can't be used when algorithm is 'newton'.",
          call. = FALSE)
   }
+
+  checkmate::assert_number(self$tol_obj, lower = 0, null.ok = TRUE)
+  checkmate::assert_number(self$tol_rel_obj, lower = 0, null.ok = TRUE)
+  checkmate::assert_number(self$tol_grad, lower = 0, null.ok = TRUE)
+  checkmate::assert_number(self$tol_rel_grad, lower = 0, null.ok = TRUE)
+  checkmate::assert_number(self$tol_param, lower = 0, null.ok = TRUE)
+  checkmate::assert_number(self$history_size, lower = 0, null.ok = TRUE)
+
+  # TODO: enforce that 'algorithm' is specified if the tolerance parameters are,
+  # otherwise cmdstan errors.
 
   invisible(TRUE)
 }

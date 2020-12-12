@@ -26,6 +26,7 @@ matrix for the approximation.
   init = NULL,
   save_latent_dynamics = FALSE,
   output_dir = NULL,
+  sig_figs = NULL,
   threads = NULL,
   algorithm = NULL,
   iter = NULL,
@@ -36,8 +37,7 @@ matrix for the approximation.
   adapt_iter = NULL,
   tol_rel_obj = NULL,
   eval_elbo = NULL,
-  output_samples = NULL,
-  sig_figs = NULL
+  output_samples = NULL
 )
 }
 }

@@ -18,6 +18,7 @@ some data.
   init = NULL,
   save_latent_dynamics = FALSE,
   output_dir = NULL,
+  sig_figs = NULL,
   chains = 4,
   parallel_chains = getOption("mc.cores", 1),
   chain_ids = seq_len(chains),
@@ -37,7 +38,6 @@ some data.
   term_buffer = NULL,
   window = NULL,
   fixed_param = FALSE,
-  sig_figs = NULL,
   validate_csv = TRUE,
   show_messages = TRUE
 )
@@ -153,6 +153,8 @@ The rest of the arguments correspond to arguments offered by CmdStan,
 although some names are slightly different. They are described briefly here
 and in greater detail in the CmdStan manual. Arguments left at \code{NULL}
 default to the default used by the installed version of CmdStan.
+The latest \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
+will have the default values for the latest version of CmdStan.
 \itemize{
 \item \code{iter_sampling}: (positive integer) The number of post-warmup iterations to
 run per chain.
