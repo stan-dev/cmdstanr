@@ -353,8 +353,8 @@ OptimizeArgs <- R6::R6Class(
                           tol_param = NULL,
                           history_size = NULL) {
       self$algorithm <- algorithm
-      self$init_alpha <- init_alpha
       self$iter <- iter
+      self$init_alpha <- init_alpha
       self$tol_obj <- tol_obj
       self$tol_rel_obj <- tol_rel_obj
       self$tol_grad <- tol_grad
@@ -378,8 +378,8 @@ OptimizeArgs <- R6::R6Class(
       new_args <- list(
         "method=optimize",
         .make_arg("algorithm"),
-        .make_arg("init_alpha"),
         .make_arg("iter"),
+        .make_arg("init_alpha"),
         .make_arg("tol_obj"),
         .make_arg("tol_rel_obj"),
         .make_arg("tol_grad"),
