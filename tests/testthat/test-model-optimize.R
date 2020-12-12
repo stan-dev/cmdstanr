@@ -84,9 +84,8 @@ test_that("optimize() errors with bad combination of arguments", {
     "'tol_grad' can't be used when algorithm is 'newton'"
   )
   expect_error(
-    mod$optimize(data = data_list, algorithm = "bfgs", history_size = -10),
-    "not >= 0",
-    fixed = TRUE
+    mod$optimize(data = data_list, algorithm = "bfgs", tol_obj = -10),
+    "not >= 0"
   )
   expect_error(
     mod$optimize(data = data_list, init_alpha = 0.1),
@@ -105,6 +104,10 @@ test_that("optimize() errors with bad combination of arguments", {
   expect_error(
     mod$optimize(data = data_list, algorithm = "lbfgs", history_size = 1.5),
     "Must be of type 'integerish'"
+  )
+  expect_error(
+    mod$optimize(data = data_list, algorithm = "lbfgs", history_size = -1),
+    "not >= 1"
   )
 })
 
