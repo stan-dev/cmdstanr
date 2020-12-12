@@ -92,6 +92,20 @@ test_that("optimize() errors with bad combination of arguments", {
     mod$optimize(data = data_list, init_alpha = 0.1),
     "Please specify 'algorithm' in order to use 'init_alpha'"
   )
+
+  # history size only allowed with lbfgs and must be positive integer
+  expect_error(
+    mod$optimize(data = data_list, history_size = 1),
+    "'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'"
+  )
+  expect_error(
+    mod$optimize(data = data_list, algorithm = "bfgs", history_size = 1),
+    "'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'"
+  )
+  expect_error(
+    mod$optimize(data = data_list, algorithm = "lbfgs", history_size = 1.5),
+    "Must be of type 'integerish'"
+  )
 })
 
 test_that("optimize() works with (L-)BFGS tolerances specified", {

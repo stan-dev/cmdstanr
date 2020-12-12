@@ -1199,17 +1199,20 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`).
+#'   * `iter`: (positive integer) The maximum number of iterations.
 #'   * `algorithm`: (string) The optimization algorithm. One of `"lbfgs"`,
 #'   `"bfgs"`, or `"newton"`. The control parameters below are only available
-#'   for `"lbfgs"` and `"bfgs`. For their default values see the CmdStan User's
-#'   Guide or run `cmdstanr_example(method="optimize")$metadata()`.
-#'   * `iter`: (positive integer) The maximum number of iterations.
+#'   for `"lbfgs"` and `"bfgs`. For their default values and more details see
+#'   the CmdStan User's Guide. The default values can also be obtained by
+#'   running `cmdstanr_example(method="optimize")$metadata()`.
 #'   * `init_alpha`: (positive real) The initial step size parameter.
 #'   * `tol_obj`: (positive real) Convergence tolerance on changes in objective function value.
 #'   * `tol_rel_obj`: (positive real) Convergence tolerance on relative changes in objective function value.
 #'   * `tol_grad`: (positive real) Convergence tolerance on the norm of the gradient.
 #'   * `tol_rel_grad`: (positive real) Convergence tolerance on the relative norm of the gradient.
 #'   * `tol_param`: (positive real) Convergence tolerance on changes in parameter value.
+#'   * `history_size`: (positive integer) The size of the history used when
+#'   approximating the Hessian. Only available for L-BFGS.
 #'
 #' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
 #'

@@ -123,17 +123,20 @@ will have the defaults for the latest version of CmdStan.
 \link[=model-method-compile]{compiled} with threading support, the number of
 threads to use in parallelized sections (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
+\item \code{iter}: (positive integer) The maximum number of iterations.
 \item \code{algorithm}: (string) The optimization algorithm. One of \code{"lbfgs"},
 \code{"bfgs"}, or \code{"newton"}. The control parameters below are only available
-for \code{"lbfgs"} and \verb{"bfgs}. For their default values see the CmdStan User's
-Guide or run \code{cmdstanr_example(method="optimize")$metadata()}.
-\item \code{iter}: (positive integer) The maximum number of iterations.
+for \code{"lbfgs"} and \verb{"bfgs}. For their default values and more details see
+the CmdStan User's Guide. The default values can also be obtained by
+running \code{cmdstanr_example(method="optimize")$metadata()}.
 \item \code{init_alpha}: (positive real) The initial step size parameter.
 \item \code{tol_obj}: (positive real) Convergence tolerance on changes in objective function value.
 \item \code{tol_rel_obj}: (positive real) Convergence tolerance on relative changes in objective function value.
 \item \code{tol_grad}: (positive real) Convergence tolerance on the norm of the gradient.
 \item \code{tol_rel_grad}: (positive real) Convergence tolerance on the relative norm of the gradient.
 \item \code{tol_param}: (positive real) Convergence tolerance on changes in parameter value.
+\item \code{history_size}: (positive integer) The size of the history used when
+approximating the Hessian. Only available for L-BFGS.
 }
 }
 

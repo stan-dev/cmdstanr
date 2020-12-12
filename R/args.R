@@ -595,17 +595,16 @@ validate_sample_args <- function(self, num_procs) {
 validate_optimize_args <- function(self) {
   checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
                            choices = c("bfgs", "lbfgs", "newton"))
-  checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE, len = 1)
+  checkmate::assert_integerish(self$iter, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$iter)) {
     self$iter <- as.integer(self$iter)
   }
 
-  bfgs_args <- c("init_alpha", "history_size", "tol_obj", "tol_rel_obj",
-                 "tol_grad", "tol_rel_grad", "tol_param")
+  # check args only available for lbfgs and bfgs
+  bfgs_args <- c("init_alpha", "tol_obj", "tol_rel_obj", "tol_grad", "tol_rel_grad", "tol_param")
   for (arg in bfgs_args) {
-    # check that:
-    # - arg is positive or NULL
-    # - algorithm='lbfgs' or 'bfgs' explicitly specified (error if not or if 'newton')
+    # check that arg is positive or NULL and that algorithm='lbfgs' or 'bfgs' is
+    # explicitly specified (error if not or if 'newton')
     if (!is.null(self[[arg]]) && is.null(self$algorithm)) {
       stop("Please specify 'algorithm' in order to use '", arg, "'.", call. = FALSE)
     }
@@ -613,6 +612,16 @@ validate_optimize_args <- function(self) {
       stop("'", arg, "' can't be used when algorithm is 'newton'.", call. = FALSE)
     }
     checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
+  }
+
+  # history_size only available for lbfgs
+  if (!is.null(self$history_size)) {
+    if (!isTRUE(self$algorithm == "lbfgs")) {
+      stop("'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'.", call. = FALSE)
+    } else {
+      checkmate::assert_integerish(self$history_size, lower = 1, len = 1, null.ok = FALSE)
+      self$history_size <- as.integer(self$history_size)
+    }
   }
 
   invisible(TRUE)
