@@ -343,9 +343,9 @@ OptimizeArgs <- R6::R6Class(
   lock_objects = FALSE,
   public = list(
     method = "optimize",
-    initialize = function(algorithm = NULL,
+    initialize = function(iter = NULL,
+                          algorithm = NULL,
                           init_alpha = NULL,
-                          iter = NULL,
                           tol_obj = NULL,
                           tol_rel_obj = NULL,
                           tol_grad = NULL,
@@ -377,8 +377,8 @@ OptimizeArgs <- R6::R6Class(
       }
       new_args <- list(
         "method=optimize",
-        .make_arg("algorithm"),
         .make_arg("iter"),
+        .make_arg("algorithm"),
         .make_arg("init_alpha"),
         .make_arg("tol_obj"),
         .make_arg("tol_rel_obj"),
