@@ -296,7 +296,7 @@ test_that("read_cmdstan_csv() reads values up to adaptation", {
 
   csv_out <- read_cmdstan_csv(csv_files)
   expect_equal(csv_out$metadata$pi, 3.14)
-  expect_true(is.null(csv_out$metadata$pi_square))
+  expect_false(is.null(csv_out$metadata$pi_square))
 })
 
 test_that("remaining_columns_to_read() works", {
