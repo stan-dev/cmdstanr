@@ -388,8 +388,11 @@ read_csv_metadata <- function(csv_file) {
   inv_metric_next <- FALSE
   inv_metric_diagonal_next <- FALSE
   csv_file_info <- list()
-  inv_metric_rows <- 0
+  csv_file_info$inv_metric <- NULL
+  inv_metric_rows_to_read <- -1
+  inv_metric_rows <- -1
   parsing_done <- FALSE
+  dense_inv_metric <- FALSE
   if (os_is_windows()) {
     grep_path <- repair_path(Sys.which("grep.exe"))
     fread_cmd <- paste0(grep_path, " '^[#a-zA-Z]' --color=never ", csv_file)
@@ -422,26 +425,28 @@ read_csv_metadata <- function(csv_file) {
       }
     } else {
       parse_key_val <- TRUE
-      if (grepl("# Diagonal elements of inverse mass matrix:", line, perl = TRUE)
-          || grepl("# Elements of inverse mass matrix:", line, perl = TRUE)) {
+      if (grepl("# Diagonal elements of inverse mass matrix:", line, perl = TRUE)) {
         inv_metric_next <- TRUE
         parse_key_val <- FALSE
+        inv_metric_rows <- 1
+        inv_metric_rows_to_read <- 1
+        dense_inv_metric <- FALSE
+      } else if (grepl("# Elements of inverse mass matrix:", line, perl = TRUE)) {
+        inv_metric_next <- TRUE
+        parse_key_val <- FALSE
+        dense_inv_metric <- TRUE
       } else if (inv_metric_next) {
         inv_metric_split <- strsplit(gsub("# ", "", line), ",")
-        if ((length(inv_metric_split) == 0) ||
-            ((length(inv_metric_split) == 1) && identical(inv_metric_split[[1]], character(0))) ||
-            grepl("[a-zA-z]", line, perl = TRUE) ||
-            inv_metric_split == "#") {
-          parsing_done <- TRUE
-          parse_key_val <- TRUE
-          break;
+        numeric_inv_metric_split <- rapply(inv_metric_split, as.numeric)
+        if (inv_metric_rows == -1 && dense_inv_metric) {
+          inv_metric_rows <- length(inv_metric_split[[1]])
+          inv_metric_rows_to_read <- inv_metric_rows
         }
-        if (inv_metric_rows == 0) {
-          csv_file_info$inv_metric <- rapply(inv_metric_split, as.numeric)
-        } else {
-          csv_file_info$inv_metric <- c(csv_file_info$inv_metric, rapply(inv_metric_split, as.numeric))
+        csv_file_info$inv_metric <- c(csv_file_info$inv_metric, numeric_inv_metric_split)
+        inv_metric_rows_to_read <- inv_metric_rows_to_read - 1
+        if (inv_metric_rows_to_read == 0) {
+          inv_metric_next <- FALSE
         }
-        inv_metric_rows <- inv_metric_rows + 1
         parse_key_val <- FALSE
       }
       if (parse_key_val) {

@@ -140,7 +140,7 @@ lp__,accept_stat__,stepsize__,treedepth__,n_leapfrog__,divergent__,energy__,mu,s
 # Adaptation terminated
 # Step size = 0.712907
 # Diagonal elements of inverse mass matrix:
-# 1.00098, 0.068748
+# 1.00098, 0.068748e-2
 -19.4938,0.953779,0.712907,2,3,0,19.4971,8.11498,7.4563
 -19.6889,0.983261,0.712907,1,1,0,19.8364,7.96487,7.78375
 -18.0516,0.982462,0.712907,2,3,0,20.5179,8.24821,5.4579
@@ -241,8 +241,8 @@ lp__,accept_stat__,stepsize__,treedepth__,n_leapfrog__,divergent__,energy__,mu,s
 -13.3724,1,0.712907,1,1,0,13.6117,5.58052,2.40945
 -13.3724,0.292728,0.712907,2,3,0,17.7528,5.58052,2.40945
 -13.348,0.991998,0.712907,2,3,0,13.5989,4.34492,2.68262
-# 
+#
 #  Elapsed Time: 0.038029 seconds (Warm-up)
 #                0.030711 seconds (Sampling)
 #                0.06874 seconds (Total)
-# 
+#
