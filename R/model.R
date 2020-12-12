@@ -691,6 +691,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
+#'     sig_figs = NULL,
 #'     chains = 4,
 #'     parallel_chains = getOption("mc.cores", 1),
 #'     chain_ids = seq_len(chains),
@@ -710,7 +711,6 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'     term_buffer = NULL,
 #'     window = NULL,
 #'     fixed_param = FALSE,
-#'     sig_figs = NULL,
 #'     validate_csv = TRUE,
 #'     show_messages = TRUE
 #'   )
@@ -763,6 +763,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'   although some names are slightly different. They are described briefly here
 #'   and in greater detail in the CmdStan manual. Arguments left at `NULL`
 #'   default to the default used by the installed version of CmdStan.
+#'   The latest [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   will have the default values for the latest version of CmdStan.
 #'
 #'   * `iter_sampling`: (positive integer) The number of post-warmup iterations to
 #'   run per chain.
@@ -834,6 +836,7 @@ sample_method <- function(data = NULL,
                           init = NULL,
                           save_latent_dynamics = FALSE,
                           output_dir = NULL,
+                          sig_figs = NULL,
                           chains = 4,
                           parallel_chains = getOption("mc.cores", 1),
                           chain_ids = seq_len(chains),
@@ -853,7 +856,6 @@ sample_method <- function(data = NULL,
                           term_buffer = NULL,
                           window = NULL,
                           fixed_param = FALSE,
-                          sig_figs = NULL,
                           validate_csv = TRUE,
                           show_messages = TRUE,
                           # deprecated
@@ -952,8 +954,8 @@ sample_method <- function(data = NULL,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
-    validate_csv = validate_csv,
-    sig_figs = sig_figs
+    sig_figs = sig_figs,
+    validate_csv = validate_csv
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(
     num_procs = chains,
@@ -1013,6 +1015,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
+#'     sig_figs = NULL,
 #'     chains = 4,
 #'     parallel_chains = getOption("mc.cores", 1),
 #'     chain_ids = seq_len(chains),
@@ -1031,7 +1034,6 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     term_buffer = NULL,
 #'     window = NULL,
 #'     fixed_param = FALSE,
-#'     sig_figs = NULL,
 #'     validate_csv = TRUE,
 #'     show_messages = TRUE
 #'   )
@@ -1159,7 +1161,7 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'   constrained variables, which shifts the mode due to the change of
 #'   variables. Thus modes correspond to modes of the model as written.
 #'
-#'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
+#'   -- [*CmdStan User's Guide*](https://mc-stan.org/docs/cmdstan-guide/)
 #'
 #' @section Usage:
 #'   ```
@@ -1170,11 +1172,17 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
+#'     sig_figs = NULL,
 #'     threads = NULL,
 #'     algorithm = NULL,
 #'     init_alpha = NULL,
 #'     iter = NULL,
-#'     sig_figs = NULL
+#'     tol_obj = NULL,
+#'     tol_rel_obj = NULL,
+#'     tol_grad = NULL,
+#'     tol_rel_grad = NULL,
+#'     tol_param = NULL,
+#'     history_size = NULL
 #'   )
 #'   ```
 #'
@@ -1184,16 +1192,27 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'   arguments. These arguments are described briefly here and in greater detail
 #'   in the CmdStan manual. Arguments left at `NULL` default to the default used
 #'   by the installed version of CmdStan.
+#'   The latest [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   will have the defaults for the latest version of CmdStan.
 #'
 #'   * `threads`: (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`).
+#'   * `iter`: (positive integer) The maximum number of iterations.
 #'   * `algorithm`: (string) The optimization algorithm. One of `"lbfgs"`,
-#'   `"bfgs"`, or `"newton"`.
-#'   * `iter`: (positive integer) The number of iterations.
-#'   * `init_alpha`: (nonnegative real) The line search step size for first
-#'   iteration. Not applicable if `algorithm="newton"`.
+#'   `"bfgs"`, or `"newton"`. The control parameters below are only available
+#'   for `"lbfgs"` and `"bfgs`. For their default values and more details see
+#'   the CmdStan User's Guide. The default values can also be obtained by
+#'   running `cmdstanr_example(method="optimize")$metadata()`.
+#'   * `init_alpha`: (positive real) The initial step size parameter.
+#'   * `tol_obj`: (positive real) Convergence tolerance on changes in objective function value.
+#'   * `tol_rel_obj`: (positive real) Convergence tolerance on relative changes in objective function value.
+#'   * `tol_grad`: (positive real) Convergence tolerance on the norm of the gradient.
+#'   * `tol_rel_grad`: (positive real) Convergence tolerance on the relative norm of the gradient.
+#'   * `tol_param`: (positive real) Convergence tolerance on changes in parameter value.
+#'   * `history_size`: (positive integer) The size of the history used when
+#'   approximating the Hessian. Only available for L-BFGS.
 #'
 #' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
 #'
@@ -1208,11 +1227,17 @@ optimize_method <- function(data = NULL,
                             init = NULL,
                             save_latent_dynamics = FALSE,
                             output_dir = NULL,
+                            sig_figs = NULL,
                             threads = NULL,
                             algorithm = NULL,
                             init_alpha = NULL,
                             iter = NULL,
-                            sig_figs = NULL) {
+                            tol_obj = NULL,
+                            tol_rel_obj = NULL,
+                            tol_grad = NULL,
+                            tol_rel_grad = NULL,
+                            tol_param = NULL,
+                            history_size = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1231,7 +1256,13 @@ optimize_method <- function(data = NULL,
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
-    iter = iter
+    iter = iter,
+    tol_obj = tol_obj,
+    tol_rel_obj = tol_rel_obj,
+    tol_grad = tol_grad,
+    tol_rel_grad = tol_rel_grad,
+    tol_param = tol_param,
+    history_size = history_size
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = optimize_args,
@@ -1286,6 +1317,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     init = NULL,
 #'     save_latent_dynamics = FALSE,
 #'     output_dir = NULL,
+#'     sig_figs = NULL,
 #'     threads = NULL,
 #'     algorithm = NULL,
 #'     iter = NULL,
@@ -1296,8 +1328,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'     adapt_iter = NULL,
 #'     tol_rel_obj = NULL,
 #'     eval_elbo = NULL,
-#'     output_samples = NULL,
-#'     sig_figs = NULL
+#'     output_samples = NULL
 #'   )
 #'   ```
 #'
@@ -1343,6 +1374,7 @@ variational_method <- function(data = NULL,
                                init = NULL,
                                save_latent_dynamics = FALSE,
                                output_dir = NULL,
+                               sig_figs = NULL,
                                threads = NULL,
                                algorithm = NULL,
                                iter = NULL,
@@ -1353,8 +1385,7 @@ variational_method <- function(data = NULL,
                                adapt_iter = NULL,
                                tol_rel_obj = NULL,
                                eval_elbo = NULL,
-                               output_samples = NULL,
-                               sig_figs = NULL) {
+                               output_samples = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1424,9 +1455,9 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'     data = NULL,
 #'     seed = NULL,
 #'     output_dir = NULL,
+#'     sig_figs = NULL,
 #'     parallel_chains = getOption("mc.cores", 1),
-#'     threads_per_chain = NULL,
-#'     sig_figs = NULL
+#'     threads_per_chain = NULL
 #'   )
 #'   ```
 #'
@@ -1436,7 +1467,7 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'     - A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for VB)
 #'       object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
 #'     - A character vector of paths to CmdStan CSV output files.
-#'   * `data`, `seed`, `output_dir`, `parallel_chains`, `threads_per_chain`, `sig_figs`:
+#'   * `data`, `seed`, `output_dir`, `sig_figs`, `parallel_chains`, `threads_per_chain`:
 #'   Same as for the [`$sample()`][model-method-sample] method.
 #'
 #' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
@@ -1492,9 +1523,9 @@ generate_quantities_method <- function(fitted_params,
                                        data = NULL,
                                        seed = NULL,
                                        output_dir = NULL,
+                                       sig_figs = NULL,
                                        parallel_chains = getOption("mc.cores", 1),
-                                       threads_per_chain = NULL,
-                                       sig_figs = NULL) {
+                                       threads_per_chain = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {

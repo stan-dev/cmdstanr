@@ -15,9 +15,9 @@ based on previously fitted parameters.
   data = NULL,
   seed = NULL,
   output_dir = NULL,
+  sig_figs = NULL,
   parallel_chains = getOption("mc.cores", 1),
-  threads_per_chain = NULL,
-  sig_figs = NULL
+  threads_per_chain = NULL
 )
 }
 }
@@ -32,7 +32,7 @@ based on previously fitted parameters.
 object returned by CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
 \item A character vector of paths to CmdStan CSV output files.
 }
-\item \code{data}, \code{seed}, \code{output_dir}, \code{parallel_chains}, \code{threads_per_chain}, \code{sig_figs}:
+\item \code{data}, \code{seed}, \code{output_dir}, \code{sig_figs}, \code{parallel_chains}, \code{threads_per_chain}:
 Same as for the \code{\link[=model-method-sample]{$sample()}} method.
 }
 }
