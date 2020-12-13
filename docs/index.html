@@ -163,8 +163,9 @@
 <div id="installing-the-r-package" class="section level4">
 <h4 class="hasAnchor">
 <a href="#installing-the-r-package" class="anchor"></a>Installing the R package</h4>
-<p>You can install the beta release of the <strong>cmdstanr</strong> R package with</p>
-<div class="sourceCode" id="cb1"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"cmdstanr"</span>, <span class="kw">repos</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span>(<span class="st">"repos"</span>)))</pre></div>
+<p>You can install the latest beta release of the <strong>cmdstanr</strong> R package with</p>
+<div class="sourceCode" id="cb1"><pre class="r"><span class="co"># we recommend running this is a fresh R session or restarting your current session</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"cmdstanr"</span>, <span class="kw">repos</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span>(<span class="st">"repos"</span>)))</pre></div>
 <p>or you can install the latest development version from GitHub:</p>
 <div class="sourceCode" id="cb2"><pre class="r"><span class="co"># install.packages("remotes")</span>
 <span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span>(<span class="st">"stan-dev/cmdstanr"</span>)</pre></div>

@@ -34,9 +34,10 @@ analysis.
 
 #### Installing the R package
 
-You can install the beta release of the **cmdstanr** R package with 
+You can install the latest beta release of the **cmdstanr** R package with 
 
 ```r
+# we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 

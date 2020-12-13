@@ -37,9 +37,11 @@ provides an alternative to the traditional [RStan](https://mc-stan.org/rstan/)
 interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
 later in this vignette for more details on how the two interfaces differ.
 
-**CmdStanR is not on CRAN yet**, but the beta release can be installed via:
+**CmdStanR is not on CRAN yet**, but the beta release can be installed by
+running the following command in R.
 
 ```{r install, eval=FALSE}
+# we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
@@ -152,9 +154,7 @@ method:
 mod$exe_file()
 ```
 
-## Fitting a model
-
-### MCMC
+## Running MCMC
 
 The
 [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
@@ -189,7 +189,7 @@ the most important methods. For a full list, follow this link to the
 
 * [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 
-#### Posterior summary statistics
+### Posterior summary statistics
 
 The
 [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
@@ -204,7 +204,7 @@ fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 ```
 
 
-#### Posterior draws
+### Posterior draws
 
 The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
 method can be used to extract the posterior draws as a 3-D array (iteration x
@@ -229,7 +229,7 @@ the `$draws()` method directly to plotting functions in
 mcmc_hist(fit$draws("theta"))
 ```
 
-#### Sampler diagnostics
+### Sampler diagnostics
 
 The
 [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html)
@@ -245,7 +245,7 @@ diagnostics_df <- as_draws_df(fit$sampler_diagnostics())
 print(diagnostics_df)
 ```
 
-#### CmdStan utilities
+### CmdStan utilities
 
 The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
 and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
@@ -257,7 +257,7 @@ fit$cmdstan_summary()
 ```
 
 
-#### Create a `stanfit` object
+### Create a `stanfit` object
 
 If you have RStan installed then it is also possible to create a `stanfit` 
 object from the csv output files written by CmdStan. This can be done by using
@@ -270,14 +270,14 @@ stanfit <- rstan::read_stan_csv(fit$output_files())
 
 
 
-### Optimization and variational inference
+## Running optimization and variational inference
 
 CmdStanR also supports running Stan's optimization algorithms and its algorithms
 for variational approximation of full Bayesian inference. These are run via the
 `$optimize()` and `$variational()` methods, which are called in a similar way to
 the `$sample()` method demonstrated above.
 
-#### Optimization
+### Optimization
 
 We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html):
 
@@ -294,7 +294,7 @@ mcmc_hist(fit$draws("theta")) +
   vline_at(fit_mle$mle(), size = 1.5)
 ```
 
-#### Variational Bayes
+### Variational Bayes
 
 We can run Stan's experimental variational Bayes algorithm using the 
 [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html) 
