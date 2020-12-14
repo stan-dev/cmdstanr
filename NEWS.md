@@ -5,6 +5,10 @@
 * Fixed reading inverse mass matrix with values written in scientific format in
 the CSV. (#394)
 
+* Fixed error caused by an empty data list. Previously if a model didn't require
+data then `data` had to either be NULL or be a non-empty list, but now `list()`
+is allowed. (#403)
+
 ### New features
 
 * Added `$sample_mpi()` for MCMC sampling with MPI. (#350)
