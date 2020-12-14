@@ -47,10 +47,6 @@ test_that("error if data contains NA elements", {
   expect_error(mod$sample(data = data_list3), "Data includes NA values")
 })
 
-test_that("empty data list converted to NULL", {
-  expect_null(process_data(list()))
-})
-
 test_that("empty data list doesn't error if no data block", {
   mod <- cmdstan_model(write_stan_file("
   parameters {
