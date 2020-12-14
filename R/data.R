@@ -84,6 +84,9 @@ list_to_array <- function(x, name = NULL) {
 #'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
 #' @return Path to data file.
 process_data <- function(data) {
+  if (length(data) == 0) {
+    data <- NULL
+  }
   if (is.null(data)) {
     path <- data
   } else if (is.character(data)) {
