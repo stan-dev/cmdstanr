@@ -59,10 +59,10 @@ color_scheme_set("brightblue")
 ## Installing CmdStan
 
 CmdStanR requires a working installation of
-[CmdStan](https://mc-stan.org/users/interfaces/cmdstan/), the shell interface to
-Stan. If you don't have CmdStan installed then CmdStanR can install it for you,
-assuming you have a suitable C++ toolchain. The requirements are described in
-the CmdStan Guide:
+[CmdStan](https://mc-stan.org/users/interfaces/cmdstan.html), the shell
+interface to Stan. If you don't have CmdStan installed then CmdStanR can install
+it for you, assuming you have a suitable C++ toolchain. The requirements are
+described in the CmdStan Guide:
 
 * https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html
 
