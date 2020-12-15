@@ -127,7 +127,7 @@ CmdStanFit <- R6::R6Class(
       print(out, row.names=FALSE)
       if (max_rows < total_rows) {
         cat("\n # showing", max_rows, "of", total_rows,
-            "rows (change via 'max_rows' argument)")
+            "rows (change via 'max_rows' argument)\n")
       }
       invisible(self)
     },
