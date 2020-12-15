@@ -4,6 +4,19 @@
 \alias{model-method-generate-quantities}
 \alias{generate_quantities}
 \title{Run Stan's standalone generated quantities method}
+\arguments{
+\item{fitted_params}{(multiple options) The parameter draws to use. One of
+the following:
+\itemize{
+\item A \link{CmdStanMCMC} or \link{CmdStanVB} fitted model object.
+\item A \link[posterior:draws_array]{posterior::draws_array} (for MCMC) or \link[posterior:draws_matrix]{posterior::draws_matrix} (for
+VB) object returned by CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
+\item A character vector of paths to CmdStan CSV output files.
+}}
+
+\item{data, seed, output_dir, sig_figs, parallel_chains, threads_per_chain}{Same
+as for the \code{\link[=model-method-sample]{$sample()}} method.}
+}
 \description{
 The \verb{$generate_quantities()} method of a \code{\link{CmdStanModel}} object
 runs Stan's standalone generated quantities to obtain generated quantities
@@ -22,23 +35,8 @@ based on previously fitted parameters.
 }
 }
 
-\section{Arguments}{
-
-\itemize{
-\item \code{fitted_params}: (multiple options) The parameter draws to use. One of the following:
-\itemize{
-\item A \link{CmdStanMCMC} or \link{CmdStanVB} fitted model object.
-\item A \link[posterior:draws_array]{posterior::draws_array} (for MCMC) or \link[posterior:draws_matrix]{posterior::draws_matrix} (for VB)
-object returned by CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
-\item A character vector of paths to CmdStan CSV output files.
-}
-\item \code{data}, \code{seed}, \code{output_dir}, \code{sig_figs}, \code{parallel_chains}, \code{threads_per_chain}:
-Same as for the \code{\link[=model-method-sample]{$sample()}} method.
-}
-}
-
 \section{Value}{
- The \verb{$generate_quantities()} method returns a \code{\link{CmdStanGQ}} object.
+ A \code{\link{CmdStanGQ}} object.
 }
 
 \examples{

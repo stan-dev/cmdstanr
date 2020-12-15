@@ -682,7 +682,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'   a set of draws from the posterior distribution of a model conditioned on
 #'   some data.
 #'
-#'   Any arguments left as `NULL` will default to the default value used by the
+#'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
@@ -722,95 +722,9 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'   ```
 #'
 #' @template model-common-args
-#' @param chains (positive integer) The number of Markov chains to run. The
-#'   default is 4.
-#' @param parallel_chains (positive integer) The _maximum_ number of MCMC chains
-#'   to run in parallel. If `parallel_chains` is not specified then the default
-#'   is to look for the option `"mc.cores"`, which can be set for an entire \R
-#'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
-#'   been set then the default is `1`.
-#' @param chain_ids (vector) A vector of chain IDs. Must contain `chains` unique
-#'   positive integers. If not set, the default chain IDs are used (integers
-#'   starting from `1`).
-#' @param threads_per_chain (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
-#'   contrast with `parallel_chains`, which specifies the number of chains to
-#'   run in parallel. The actual number of CPU cores used use is
-#'   `parallel_chains*threads_per_chain`. For an example of using threading see
-#'   the Stan case study [Reduce Sum: A Minimal
-#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
-#' @param show_messages (logical) When `TRUE` (the default), prints all
-#'   informational messages, for example rejection of the current proposal.
-#'   Disable if you wish silence these messages, but this is not recommended
-#'   unless you are very sure that the model is correct up to numerical error.
-#'   If the messages are silenced then the `$output()` method of the resulting
-#'   fit object can be used to display all the silenced messages.
-#' @param validate_csv (logical) When `TRUE` (the default), validate the
-#'   sampling results in the csv files. Disable if you wish to manually read in
-#'   the sampling results and validate them yourself, for example using
-#'   [read_cmdstan_csv()].
+#' @template model-sample-args
 #'
-#' @param iter_sampling (positive integer) The number of post-warmup
-#'   iterations to run per chain. Note: in the CmdStan User's Guide this is
-#'   referred to as `num_samples`.
-#' @param iter_warmup (positive integer) The number of warmup iterations to run
-#'   per chain. Note: in the CmdStan User's Guide this is referred to as `num_warmup`.
-#' @param save_warmup (logical) Should warmup iterations be saved? The default
-#'   is `FALSE`. If `save_warmup=TRUE` then you can use
-#'   [$draws(inc_warmup=TRUE)][fit-method-draws] to include warmup when
-#'   accessing the draws.
-#' @param thin (positive integer) The period between saved samples. This should
-#'   be left at its default (no thinning) unless memory is a problem.
-#' @param max_treedepth (positive integer) The maximum allowed tree depth for the
-#'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
-#'   details.
-#' @param adapt_engaged (logical) Do warmup adaptation? The default is `TRUE`.
-#'   If a precomputed inverse metric is specified via the `inv_metric` argument
-#'   (or `metric_file`) then, if `adapt_engaged=TRUE`, Stan will use the
-#'   provided inverse metric just as an initial guess during adaptation. To turn
-#'   off adaptation when using a precomputed inverse metric set
-#'   `adapt_engaged=FALSE`.
-#' @param adapt_delta (real in `(0,1)`) The adaptation target acceptance
-#'   statistic.
-#' @param step_size (positive real) The _initial_ step size for the discrete
-#'   approximation to continuous Hamiltonian dynamics. This is further tuned
-#'   during warmup.
-#' @param metric (character) One of `"diag_e"`, `"dense_e"`, or `"unit_e"`,
-#'   specifying the geometry of the base manifold. See the _Euclidean Metric_
-#'   section of the CmdStan documentation for more details. To specify a
-#'   precomputed (inverse) metric, see the `inv_metric` argument below.
-#' @param metric_file (character) A character vector containing paths to JSON or
-#'   Rdump files (one per chain) compatible with CmdStan that contain
-#'   precomputed inverse metrics. The `metric_file` argument is inherited from
-#'   CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
-#'   named `inv_metric`, referring to the _inverse_ metric. We recommend instead
-#'   using CmdStanR's `inv_metric` argument (see below) to specify an inverse
-#'   metric directly using a vector or matrix from your \R session.
-#' @param inv_metric (vector, matrix) A vector (if `metric='diag_e'`) or a
-#'   matrix (if `metric='dense_e'`) for initializing the inverse metric, which
-#'   can be used as an alternative to the `metric_file` argument. A vector is
-#'   interpreted as a diagonal metric. The inverse metric is usually set to an
-#'   estimate of the posterior covariance. See the `adapt_engaged` argument
-#'   above for details on (and control over) how specifying a precomputed
-#'   inverse metric interacts with adaptation.
-#' @param init_buffer (nonnegative integer) Width of initial fast timestep
-#'   adaptation interval during warmup.
-#' @param term_buffer (nonnegative integer) Width of final fast timestep
-#'   adaptation interval during warmup.
-#' @param window (nonnegative integer) Initial width of slow timestep/metric
-#'   adaptation interval.
-#' @param fixed_param (logical) When `TRUE`, call CmdStan with argument
-#'   `"algorithm=fixed_param"`. The default is `FALSE`. The fixed parameter
-#'   sampler generates a new sample without changing the current state of the
-#'   Markov chain; only generated quantities may change. This can be useful
-#'   when, for example, trying to generate pseudo-data using the generated
-#'   quantities block. If the parameters block is empty then using
-#'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
-#'   `parallel_chains` arguments will be set to `1`.
-#'
-#' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
+#' @section Value: A [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -969,7 +883,7 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   [`$sample()`][model-method-sample] method provides both parallelization of
 #'   chains and threading support for within-chain parallelization.
 #'
-#' @details In order to use MPI with Stan, an MPI implementation must be
+#'   In order to use MPI with Stan, an MPI implementation must be
 #'   installed. For Unix systems the most commonly used implementations are
 #'   MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 #'   (for example mpicxx), which is required to compile the model.
@@ -986,18 +900,11 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   - `TBB_CXX_TYPE`: The C++ compiler the MPI wrapper wraps. Typically `"gcc"`
 #'   on Linux and `"clang"` on macOS.
 #'
-#'   In the call to the `$sample_mpi()` method we can also provide the name of
-#'   the MPI launcher (`mpi_cmd`, defaulting to `"mpiexec"`) and any other
-#'   MPI launch arguments. In most cases, it is enough to only define the number
-#'   of processes with `mpi_args = list("n" = 4)`.
-#'
-#' @inheritParams model-method-sample
-#' @param mpi_cmd (character vector) The MPI launcher used for launching MPI processes.
-#'     The default launcher is `"mpiexec"`.
-#' @param mpi_args (list) A list of arguments to use when launching MPI processes.
-#'     For example, `mpi_args = list("n" = 4)` launches the executable as
-#'     `mpiexec -n 4 model_executable`, followed by CmdStan arguments
-#'     for the model executable.
+#'   In the call to the `$sample_mpi()` method it is also possible to provide
+#'   the name of the MPI launcher (`mpi_cmd`, defaulting to `"mpiexec"`) and any
+#'   other MPI launch arguments (`mpi_args`). In most cases, it is enough to
+#'   only define the number of processes. To use `n_procs` processes specify
+#'   `mpi_args = list("n" = n_procs)`.
 #'
 #' @section Usage:
 #'   ```
@@ -1012,7 +919,6 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'     output_dir = NULL,
 #'     sig_figs = NULL,
 #'     chains = 4,
-#'     parallel_chains = getOption("mc.cores", 1),
 #'     chain_ids = seq_len(chains),
 #'     iter_warmup = NULL,
 #'     iter_sampling = NULL,
@@ -1034,7 +940,16 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   )
 #'   ```
 #'
-#' @section Value: The `$sample_mpi()` method returns a [`CmdStanMCMC`] object.
+#' @template model-common-args
+#' @template model-sample-args
+#' @param mpi_cmd (character vector) The MPI launcher used for launching MPI
+#'   processes. The default launcher is `"mpiexec"`.
+#' @param mpi_args (list) A list of arguments to use when launching MPI
+#'   processes. For example, `mpi_args = list("n" = 4)` launches the executable
+#'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
+#'   model executable.
+#'
+#' @section Value: A [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
 #' @seealso The Stan Math Library's MPI documentation
@@ -1137,7 +1052,7 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'   Stan's optimizer to obtain a posterior mode (penalized maximum likelihood)
 #'   estimate.
 #'
-#'   Any arguments left as `NULL` will default to the default value used by the
+#'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
@@ -1175,34 +1090,26 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'   ```
 #'
 #' @template model-common-args
-#' @section Arguments unique to the `optimize` method: In addition to the
-#'   arguments above, the `$optimize()` method also has its own set of
-#'   arguments. These arguments are described briefly here and in greater detail
-#'   in the CmdStan manual. Arguments left at `NULL` default to the default used
-#'   by the installed version of CmdStan.
-#'   The latest [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
-#'   will have the defaults for the latest version of CmdStan.
-#'
-#'   * `threads`: (positive integer) If the model was
+#' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`).
-#'   * `iter`: (positive integer) The maximum number of iterations.
-#'   * `algorithm`: (string) The optimization algorithm. One of `"lbfgs"`,
+#' @param iter (positive integer) The maximum number of iterations.
+#' @param algorithm (string) The optimization algorithm. One of `"lbfgs"`,
 #'   `"bfgs"`, or `"newton"`. The control parameters below are only available
 #'   for `"lbfgs"` and `"bfgs`. For their default values and more details see
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
-#'   * `init_alpha`: (positive real) The initial step size parameter.
-#'   * `tol_obj`: (positive real) Convergence tolerance on changes in objective function value.
-#'   * `tol_rel_obj`: (positive real) Convergence tolerance on relative changes in objective function value.
-#'   * `tol_grad`: (positive real) Convergence tolerance on the norm of the gradient.
-#'   * `tol_rel_grad`: (positive real) Convergence tolerance on the relative norm of the gradient.
-#'   * `tol_param`: (positive real) Convergence tolerance on changes in parameter value.
-#'   * `history_size`: (positive integer) The size of the history used when
+#' @param init_alpha (positive real) The initial step size parameter.
+#' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
+#' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
+#' @param tol_grad (positive real) Convergence tolerance on the norm of the gradient.
+#' @param tol_rel_grad (positive real) Convergence tolerance on the relative norm of the gradient.
+#' @param tol_param (positive real) Convergence tolerance on changes in parameter value.
+#' @param history_size (positive integer) The size of the history used when
 #'   approximating the Hessian. Only available for L-BFGS.
 #'
-#' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
+#' @section Value: A [`CmdStanMLE`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -1287,7 +1194,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #' @description The `$variational()` method of a [`CmdStanModel`] object runs
 #'   Stan's variational Bayes (ADVI) algorithms.
 #'
-#'   Any arguments left as `NULL` will default to the default value used by the
+#'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
@@ -1326,35 +1233,29 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'   ```
 #'
 #' @template model-common-args
-#' @section Arguments unique to the `variational` method: In addition to the
-#'   arguments above, the `$variational()` method also has its own set of
-#'   arguments. These arguments are described briefly here and in greater detail
-#'   in the CmdStan manual. Arguments left at `NULL` default to the default used
-#'   by the installed version of CmdStan.
-#'
-#'   * `threads`: (positive integer) If the model was
+#' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`).
-#'   * `algorithm`: (string) The algorithm. Either `"meanfield"` or `"fullrank"`.
-#'   * `iter`: (positive integer) The _maximum_ number of iterations.
-#'   * `grad_samples`: (positive integer) The number of samples for Monte Carlo
+#'   threads to use in parallelized sections (e.g., when using the Stan
+#'   functions `reduce_sum()` or `map_rect()`).
+#' @param algorithm (string) The algorithm. Either `"meanfield"` or
+#'   `"fullrank"`.
+#' @param iter (positive integer) The _maximum_ number of iterations.
+#' @param grad_samples (positive integer) The number of samples for Monte Carlo
 #'   estimate of gradients.
-#'   * `elbo_samples`: (positive integer) The number of samples for Monte Carlo
+#' @param elbo_samples (positive integer) The number of samples for Monte Carlo
 #'   estimate of ELBO (objective function).
-#'   * `eta`: (positive real) The step size weighting parameter for adaptive
+#' @param eta (positive real) The step size weighting parameter for adaptive
 #'   step size sequence.
-#'   * `adapt_engaged`: (logical) Do warmup adaptation?
-#'   * `adapt_iter`: (positive integer) The _maximum_ number of adaptation
+#' @param adapt_engaged (logical) Do warmup adaptation?
+#' @param adapt_iter (positive integer) The _maximum_ number of adaptation
 #'   iterations.
-#'   * `tol_rel_obj`: (positive real) Convergence tolerance on the relative norm
+#' @param tol_rel_obj (positive real) Convergence tolerance on the relative norm
 #'   of the objective.
-#'   * `eval_elbo`: (positive integer) Evaluate ELBO every Nth iteration.
-#'   * `output_samples:` (positive integer) Number of posterior samples to draw
-#'   and save.
+#' @param eval_elbo (positive integer) Evaluate ELBO every Nth iteration.
+#' @param output_samples (positive integer) Number of approximate posterior
+#'   samples to draw and save.
 #'
-#'
-#' @section Value: The `$variational()` method returns a [`CmdStanVB`] object.
+#' @section Value: A [`CmdStanVB`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -1454,16 +1355,16 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'   )
 #'   ```
 #'
-#' @section Arguments:
-#'   * `fitted_params`: (multiple options) The parameter draws to use. One of the following:
-#'     - A [CmdStanMCMC] or [CmdStanVB] fitted model object.
-#'     - A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for VB)
-#'       object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
-#'     - A character vector of paths to CmdStan CSV output files.
-#'   * `data`, `seed`, `output_dir`, `sig_figs`, `parallel_chains`, `threads_per_chain`:
-#'   Same as for the [`$sample()`][model-method-sample] method.
+#' @param fitted_params (multiple options) The parameter draws to use. One of
+#'   the following:
+#'  * A [CmdStanMCMC] or [CmdStanVB] fitted model object.
+#'  * A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for
+#'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
+#'  * A character vector of paths to CmdStan CSV output files.
+#' @param data,seed,output_dir,sig_figs,parallel_chains,threads_per_chain Same
+#'   as for the [`$sample()`][model-method-sample] method.
 #'
-#' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
+#' @section Value: A [`CmdStanGQ`] object.
 #'
 #' @template seealso-docs
 #'

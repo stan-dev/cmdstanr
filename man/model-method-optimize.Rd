@@ -5,72 +5,112 @@
 \alias{optimize}
 \title{Run Stan's optimization algorithms}
 \arguments{
-\item{data}{(multiple options) The data to use. One of the following:
-- A named list of \R objects (like for RStan). Internally this list is
-then written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
-- A path to a data file compatible with CmdStan (JSON or \R dump). See
-the appendices in the CmdStan manual for details on using these formats.}
+\item{data}{(multiple options) The data to use for the variables specified in
+the \code{data} block of the Stan program. One of the following:
+\itemize{
+\item A named list of \R objects (like for RStan). Internally this list is then
+written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
+\item A path to a data file compatible with CmdStan (JSON or \R dump). See the
+appendices in the CmdStan manual for details on using these formats.
+\item \code{NULL} or an empty list if the Stan program has no \code{data} block.
+}}
 
 \item{seed}{(positive integer) A seed for the (P)RNG to pass to CmdStan.}
 
 \item{refresh}{(non-negative integer) The number of iterations between
-printed screen updates. If \code{refresh = 0}, only error messages will be printed.}
+printed screen updates. If \code{refresh = 0}, only error messages will be
+printed.}
 
-\item{init}{(multiple options) The initialization method for the parameters block:
-- A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
+\item{init}{(multiple options) The initialization method to use for the
+variables declared in the \code{parameters} block of the Stan program:
+\itemize{
+\item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
 \emph{unconstrained} parameter space);
-- \code{0} initializes to \code{0};
-- A character vector of paths (one per chain) to JSON or Rdump files. See
+\item \code{0} initializes to \code{0};
+\item A character vector of paths (one per chain) to JSON or Rdump files. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
-- A list of lists. For MCMC the list should contain a sublist for each
+\item A list of lists. For MCMC the list should contain a sublist for each
 chain. For optimization and variational inference there should be just one
 sublist. The sublists should have named elements corresponding to the
 parameters for which you are specifying initial values. See \strong{Examples}.
-- A function that returns a single list with names corresponding to the
-parameters for which you are specifying initial values. The function
-can take no arguments or a single argument \code{chain_id}. For MCMC, if the
-function has argument \code{chain_id} it will be supplied with the chain id
-(from 1 to number of chains) when called to generate the initial
-values. See \strong{Examples}.}
+\item A function that returns a single list with names corresponding to the
+parameters for which you are specifying initial values. The function can
+take no arguments or a single argument \code{chain_id}. For MCMC, if the function
+has argument \code{chain_id} it will be supplied with the chain id (from 1 to
+number of chains) when called to generate the initial values. See
+\strong{Examples}.
+}}
 
 \item{save_latent_dynamics}{(logical) Should auxiliary diagnostic information
 about the latent dynamics be written to temporary diagnostic CSV files?
 This argument replaces CmdStan's \code{diagnostic_file} argument and the content
 written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (and for some algorithms no content may be written). The default
-is \code{save_latent_dynamics=FALSE}, which is appropriate for almost every use case
-(all diagnostics recommended for users to check are \emph{always} saved, e.g.,
-divergences for HMC). To save the temporary files created when
+CmdStanR (\strong{for some algorithms no content may be written}). The default
+is \code{save_latent_dynamics=FALSE}, which is appropriate for almost every use
+case (all diagnostics recommended for users to check are \emph{always} saved,
+e.g., divergences for HMC). To save the temporary files created when
 \code{save_latent_dynamics=TRUE} see the
-\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}} method.}
+\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
+method.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For interactive use this can typically be left at
 \code{NULL} (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
 posterior draws and diagnostics) available in \R via methods of the fitted
 model objects. The behavior of \code{output_dir} is as follows:
-- If \code{NULL} (the default), then the CSV files are written to a temporary
-directory and only saved permanently if the user calls one of the
-\verb{$save_*} methods of the fitted model object (e.g.,
+\itemize{
+\item If \code{NULL} (the default), then the CSV files are written to a temporary
+directory and only saved permanently if the user calls one of the \verb{$save_*}
+methods of the fitted model object (e.g.,
 \code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
-files are removed when the fitted model object is garbage collected.
-- If a path, then the files are created in \code{output_dir} with names
+files are removed when the fitted model object is
+\link[base:gc]{garbage collected} (manually or automatically).
+\item If a path, then the files are created in \code{output_dir} with names
 corresponding the defaults used by \verb{$save_output_files()} (and similar
-methods like \verb{$save_latent_dynamics_files()}).}
+methods like \verb{$save_latent_dynamics_files()}).
+}}
 
 \item{sig_figs}{(positive integer) The number of significant figures used
-for the output values. By default, CmdStan represent the output values with
-6 significant figures. The upper limit for \code{sig_figs} is 18. Increasing
-this value can cause an increased usage of disk space due to larger
-output CSV files.}
+when storing the output values. By default, CmdStan represent the output
+values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
+Increasing this value result in larger output CSV files and thus an
+increased usage of disk space.}
+
+\item{threads}{(positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when
+using the Stan functions \code{reduce_sum()} or \code{map_rect()}).}
+
+\item{iter}{(positive integer) The maximum number of iterations.}
+
+\item{algorithm}{(string) The optimization algorithm. One of \code{"lbfgs"},
+\code{"bfgs"}, or \code{"newton"}. The control parameters below are only available
+for \code{"lbfgs"} and \verb{"bfgs}. For their default values and more details see
+the CmdStan User's Guide. The default values can also be obtained by
+running \code{cmdstanr_example(method="optimize")$metadata()}.}
+
+\item{init_alpha}{(positive real) The initial step size parameter.}
+
+\item{tol_obj}{(positive real) Convergence tolerance on changes in objective function value.}
+
+\item{tol_rel_obj}{(positive real) Convergence tolerance on relative changes in objective function value.}
+
+\item{tol_grad}{(positive real) Convergence tolerance on the norm of the gradient.}
+
+\item{tol_rel_grad}{(positive real) Convergence tolerance on the relative norm of the gradient.}
+
+\item{tol_param}{(positive real) Convergence tolerance on changes in parameter value.}
+
+\item{history_size}{(positive integer) The size of the history used when
+approximating the Hessian. Only available for L-BFGS.}
 }
 \description{
 The \verb{$optimize()} method of a \code{\link{CmdStanModel}} object runs
 Stan's optimizer to obtain a posterior mode (penalized maximum likelihood)
 estimate.
 
-Any arguments left as \code{NULL} will default to the default value used by the
+Any argument left as \code{NULL} will default to the default value used by the
 installed version of CmdStan. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
@@ -108,38 +148,8 @@ variables. Thus modes correspond to modes of the model as written.
 }
 }
 
-\section{Arguments unique to the \code{optimize} method}{
- In addition to the
-arguments above, the \verb{$optimize()} method also has its own set of
-arguments. These arguments are described briefly here and in greater detail
-in the CmdStan manual. Arguments left at \code{NULL} default to the default used
-by the installed version of CmdStan.
-The latest \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
-will have the defaults for the latest version of CmdStan.
-\itemize{
-\item \code{threads}: (positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}).
-\item \code{iter}: (positive integer) The maximum number of iterations.
-\item \code{algorithm}: (string) The optimization algorithm. One of \code{"lbfgs"},
-\code{"bfgs"}, or \code{"newton"}. The control parameters below are only available
-for \code{"lbfgs"} and \verb{"bfgs}. For their default values and more details see
-the CmdStan User's Guide. The default values can also be obtained by
-running \code{cmdstanr_example(method="optimize")$metadata()}.
-\item \code{init_alpha}: (positive real) The initial step size parameter.
-\item \code{tol_obj}: (positive real) Convergence tolerance on changes in objective function value.
-\item \code{tol_rel_obj}: (positive real) Convergence tolerance on relative changes in objective function value.
-\item \code{tol_grad}: (positive real) Convergence tolerance on the norm of the gradient.
-\item \code{tol_rel_grad}: (positive real) Convergence tolerance on the relative norm of the gradient.
-\item \code{tol_param}: (positive real) Convergence tolerance on changes in parameter value.
-\item \code{history_size}: (positive integer) The size of the history used when
-approximating the Hessian. Only available for L-BFGS.
-}
-}
-
 \section{Value}{
- The \verb{$optimize()} method returns a \code{\link{CmdStanMLE}} object.
+ A \code{\link{CmdStanMLE}} object.
 }
 
 \examples{
