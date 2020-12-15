@@ -4,6 +4,15 @@
 \alias{model-method-sample_mpi}
 \alias{sample_mpi}
 \title{Run Stan's MCMC algorithms with MPI}
+\arguments{
+\item{mpi_cmd}{(character vector) The MPI launcher used for launching MPI processes.
+The default launcher is \code{"mpiexec"}.}
+
+\item{mpi_args}{(list) A list of arguments to use when launching MPI processes.
+For example, \code{mpi_args = list("n" = 4)} launches the executable as
+\verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments
+for the model executable.}
+}
 \description{
 The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object is
 identical to the \verb{$sample()} method but with support for
@@ -69,22 +78,6 @@ of processes with \code{mpi_args = list("n" = 4)}.
   show_messages = TRUE
 )
 }
-}
-
-\section{Arguments unique to the \code{sample_mpi} method}{
-
-\itemize{
-\item \code{mpi_cmd}: (character vector) The MPI launcher used for launching MPI processes.
-The default launcher is \code{"mpiexec"}.
-\item \code{mpi_args}: (list) A list of arguments to use when launching MPI processes.
-For example, \code{mpi_args = list("n" = 4)} launches the executable as
-\verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments
-for the model executable.
-}
-
-All other arguments are the same as for \code{\link[=model-method-sample]{$sample()}}
-except \verb{$sample_mpi()} does not have arguments \code{threads_per_chain} or
-\code{parallel_chains}.
 }
 
 \section{Value}{
