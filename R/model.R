@@ -504,11 +504,13 @@ compile_method <- function(quiet = TRUE,
     echo_cmd = is_verbose_mode(),
     spinner = quiet && interactive(),
     stderr_line_callback = function(x,p) {
-      if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) message(x)
+      if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
+        message(x)
+      }
       if (grepl("PCH file", x)) {
         warning(
-          "CmdStan encountered an issue with an outdated precompiled header (PCH). ",
-          "Please run rebuild_cmdstan() to rebuild the PCH files.\n",
+          "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
+          "If your model failed to compile please run rebuild_cmdstan().\n",
           "If the issue persists please open a bug report.",
           call. = FALSE
         )
