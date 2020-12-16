@@ -7,21 +7,14 @@
 \alias{print.CmdStanMCMC}
 \alias{print.CmdStanMLE}
 \alias{print.CmdStanVB}
-\alias{print}
 \title{Compute a summary table of estimates and diagnostics}
 \usage{
 summary(variables = NULL, ...)
-
-print(variables = NULL, ..., digits = 2, max_rows = 10)
 }
 \arguments{
 \item{variables}{(character vector) The variables to include.}
 
 \item{...}{Optional arguments to pass to \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.}
-
-\item{digits}{(integer) For \code{print} only, the number of digits to use for rounding.}
-
-\item{max_rows}{(integer) For \code{print} only, the maximum number of rows to print.}
 }
 \value{
 The \verb{$summary()} method returns the tibble data frame created by
@@ -36,13 +29,13 @@ The \verb{$summary()} method runs
 package and returns the output. For MCMC, only post-warmup draws are
 included in the summary.
 
-The \verb{$print()} method prints the same summary stats but removes the extra
-formatting used for printing tibbles and returns the fitted model object
-itself. The \verb{$print()} method may also be faster than \verb{$summary()} because
-it is designed to only compute the summary statistics for the variables
-that will actually fit in the printed output (see argument \code{max_rows})
-whereas \verb{$summary()} will compute them for all of the specified variables
-in order to be able to return them to the user.
+There is also a \verb{$print()} method that prints the same summary stats but
+removes the extra formatting used for printing tibbles and returns the
+fitted model object itself. The \verb{$print()} method may also be faster than
+\verb{$summary()} because it is designed to only compute the summary statistics
+for the variables that will actually fit in the printed output whereas
+\verb{$summary()} will compute them for all of the specified variables in order
+to be able to return them to the user. See \strong{Examples}.
 }
 \examples{
 \dontrun{

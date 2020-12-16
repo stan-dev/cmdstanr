@@ -13,6 +13,46 @@ CmdStanFit <- R6::R6Class(
     },
     num_procs = function() {
       self$runset$num_procs()
+    },
+    print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("Fitting failed. Unable to print.", call. = FALSE)
+      }
+      # filter variables before passing to summary to avoid computing anything
+      # that won't be printed because of max_rows
+      all_variables <- self$metadata()$model_params
+      if (is.null(variables)) {
+        total_rows <- length(all_variables)
+        variables_to_print <- all_variables[seq_len(max_rows)]
+      } else {
+        matches <- matching_variables(variables, all_variables)
+        if (length(matches$not_found) > 0) {
+          stop("Can't find the following variable(s): ",
+               paste(matches$not_found, collapse = ", "), call. = FALSE)
+        }
+        total_rows <- length(matches$matching)
+        variables_to_print <- matches$matching[seq_len(max_rows)]
+      }
+
+      # if max_rows > length(variables_to_print) some will be NA
+      variables_to_print <- variables_to_print[!is.na(variables_to_print)]
+
+      out <- self$summary(variables_to_print, ...)
+      out <- as.data.frame(out)
+      out[, 1] <- format(out[, 1], justify = "left")
+      out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
+      for (col in grep("ess_", colnames(out), value = TRUE)) {
+        out[[col]] <- as.integer(out[[col]])
+      }
+
+      opts <- options(max.print = prod(dim(out)))
+      on.exit(options(max.print = opts$max.print), add = TRUE)
+      base::print(out, row.names=FALSE)
+      if (max_rows < total_rows) {
+        cat("\n # showing", max_rows, "of", total_rows,
+            "rows (change via 'max_rows' argument)\n")
+      }
+      invisible(self)
     }
   ),
   private = list(
@@ -249,18 +289,16 @@ CmdStanFit$set("public", name = "lp", value = lp)
 #'   package and returns the output. For MCMC, only post-warmup draws are
 #'   included in the summary.
 #'
-#'   The `$print()` method prints the same summary stats but removes the extra
-#'   formatting used for printing tibbles and returns the fitted model object
-#'   itself. The `$print()` method may also be faster than `$summary()` because
-#'   it is designed to only compute the summary statistics for the variables
-#'   that will actually fit in the printed output (see argument `max_rows`)
-#'   whereas `$summary()` will compute them for all of the specified variables
-#'   in order to be able to return them to the user.
+#'   There is also a `$print()` method that prints the same summary stats but
+#'   removes the extra formatting used for printing tibbles and returns the
+#'   fitted model object itself. The `$print()` method may also be faster than
+#'   `$summary()` because it is designed to only compute the summary statistics
+#'   for the variables that will actually fit in the printed output whereas
+#'   `$summary()` will compute them for all of the specified variables in order
+#'   to be able to return them to the user. See **Examples**.
 #'
 #' @param variables (character vector) The variables to include.
 #' @param ... Optional arguments to pass to [`posterior::summarise_draws()`][posterior::draws_summary].
-#' @param digits (integer) For `print` only, the number of digits to use for rounding.
-#' @param max_rows (integer) For `print` only, the maximum number of rows to print.
 #'
 #' @return
 #' The `$summary()` method returns the tibble data frame created by
@@ -314,49 +352,6 @@ summary <- function(variables = NULL, ...) {
   summary
 }
 CmdStanFit$set("public", name = "summary", value = summary)
-
-#' @rdname fit-method-summary
-print <- function(variables = NULL, ..., digits = 2, max_rows = 10) {
-  if (!length(self$output_files(include_failed = FALSE))) {
-    stop("Fitting failed. Unable to print.", call. = FALSE)
-  }
-  # filter variables before passing to summary to avoid computing anything
-  # that won't be printed because of max_rows
-  all_variables <- self$metadata()$model_params
-  if (is.null(variables)) {
-    total_rows <- length(all_variables)
-    variables_to_print <- all_variables[seq_len(max_rows)]
-  } else {
-    matches <- matching_variables(variables, all_variables)
-    if (length(matches$not_found) > 0) {
-      stop("Can't find the following variable(s): ",
-           paste(matches$not_found, collapse = ", "), call. = FALSE)
-    }
-    total_rows <- length(matches$matching)
-    variables_to_print <- matches$matching[seq_len(max_rows)]
-  }
-
-  # if max_rows > length(variables_to_print) some will be NA
-  variables_to_print <- variables_to_print[!is.na(variables_to_print)]
-
-  out <- self$summary(variables_to_print, ...)
-  out <- as.data.frame(out)
-  out[, 1] <- format(out[, 1], justify = "left")
-  out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
-  for (col in grep("ess_", colnames(out), value = TRUE)) {
-    out[[col]] <- as.integer(out[[col]])
-  }
-
-  opts <- options(max.print = prod(dim(out)))
-  on.exit(options(max.print = opts$max.print), add = TRUE)
-  base::print(out, row.names=FALSE)
-  if (max_rows < total_rows) {
-    cat("\n # showing", max_rows, "of", total_rows,
-        "rows (change via 'max_rows' argument)\n")
-  }
-  invisible(self)
-}
-CmdStanFit$set("public", name = "print", value = print)
 
 #' Run CmdStan's `stansummary` and `diagnose` utilities
 #'
