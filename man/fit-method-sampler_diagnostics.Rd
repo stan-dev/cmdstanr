@@ -4,21 +4,18 @@
 \alias{fit-method-sampler_diagnostics}
 \alias{sampler_diagnostics}
 \title{Extract sampler diagnostics}
+\arguments{
+\item{inc_warmup}{(logical) Should warmup draws be included? Defaults to \code{FALSE}.}
+
+\item{...}{Arguments passed on to
+\code{\link[posterior:draws_array]{posterior::as_draws_array()}}.}
+}
 \description{
 Extract the values of sampler diagnostics for each iteration and
 chain of MCMC.
 }
 \section{Usage}{
 \preformatted{$sampler_diagnostics(inc_warmup = FALSE, ...)
-}
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{inc_warmup}: (logical) Should warmup draws be included? Defaults to \code{FALSE}.
-\item \code{...}: Arguments passed on to
-\code{\link[posterior:draws_array]{posterior::as_draws_array()}}.
 }
 }
 

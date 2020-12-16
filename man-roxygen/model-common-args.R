@@ -14,16 +14,18 @@
 #'
 #' @param init (multiple options) The initialization method to use for the
 #'   variables declared in the `parameters` block of the Stan program:
-#'  * A real number `x>0` initializes randomly between `[-x,x]` (on the
-#'  _unconstrained_ parameter space);
-#'  * `0` initializes to `0`;
-#'  * A character vector of paths (one per chain) to JSON or Rdump files. See
+#'  * A real number `x>0`. This initializes _all_ parameters randomly between
+#'  `[-x,x]` (on the _unconstrained_ parameter space);
+#'  * The number `0`. This initializes _all_ parameters to `0`;
+#'  * A character vector of paths (one per chain) to JSON or Rdump files
+#'  containing initial values for all or some parameters. See
 #'  [write_stan_json()] to write \R objects to JSON files compatible with
 #'  CmdStan.
-#'  * A list of lists. For MCMC the list should contain a sublist for each
-#'  chain. For optimization and variational inference there should be just one
-#'  sublist. The sublists should have named elements corresponding to the
-#'  parameters for which you are specifying initial values. See **Examples**.
+#'  * A list of lists containing initial values for all or some parameters. For
+#'  MCMC the list should contain a sublist for each chain. For optimization and
+#'  variational inference there should be just one sublist. The sublists should
+#'  have named elements corresponding to the parameters for which you are
+#'  specifying initial values. See **Examples**.
 #'  * A function that returns a single list with names corresponding to the
 #'  parameters for which you are specifying initial values. The function can
 #'  take no arguments or a single argument `chain_id`. For MCMC, if the function

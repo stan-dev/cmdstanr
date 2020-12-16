@@ -4,21 +4,17 @@
 \alias{fit-method-inv_metric}
 \alias{inv_metric}
 \title{Extract inverse metric (mass matrix)}
+\arguments{
+\item{matrix}{(logical) If a diagonal metric was used, setting \code{matrix = FALSE}
+returns a list containing just the diagonals of the matrices instead of the
+full matrices. Setting \code{matrix = FALSE} has no effect for dense metrics.}
+}
 \description{
 Return a list containing the inverse metric (mass matrix) for
 each chain.
 }
 \section{Usage}{
 \preformatted{$inv_metric(matrix = TRUE)
-}
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{matrix}: (logical) If a diagonal metric was used, setting \code{matrix = FALSE}
-returns a list containing just the diagonals of the matrices instead of the
-full matrices. Setting \code{matrix = FALSE} has no effect for dense metrics.
 }
 }
 

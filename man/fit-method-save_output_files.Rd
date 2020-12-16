@@ -14,6 +14,17 @@
 \alias{data_file}
 \alias{latent_dynamics_files}
 \title{Save output and data files}
+\arguments{
+\item{dir}{(string) Path to directory where the files should be saved.}
+
+\item{basename}{(string) Base filename to use. See \strong{Details}.}
+
+\item{timestamp}{(logical) Should a timestamp be added to the file name(s)?
+Defaults to \code{TRUE}. See \strong{Details}.}
+
+\item{random}{(logical) Should random alphanumeric characters be added to the
+end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.}
+}
 \description{
 All fitted model objects have methods for saving (moving to a
 specified location) the files created by CmdStanR to hold CmdStan output
@@ -33,18 +44,6 @@ $save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 $output_files()
 $latent_dynamics_files()
 $data_file()
-}
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{dir}: (string) Path to directory where the files should be saved.
-\item \code{basename}: (string) Base filename to use. See \strong{Details}.
-\item \code{timestamp}: (logical) Should a timestamp be added to the file name(s)?
-Defaults to \code{TRUE}. See \strong{Details}.
-\item \code{random}: (logical) Should random alphanumeric characters be added to the
-end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.
 }
 }
 

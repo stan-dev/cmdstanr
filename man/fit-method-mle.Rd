@@ -4,6 +4,11 @@
 \alias{fit-method-mle}
 \alias{mle}
 \title{Extract (penalized) maximum likelihood estimate after optimization}
+\arguments{
+\item{variables}{(character vector) The variables (parameters and generated
+quantities) to include. If NULL (the default) then all variables are
+included.}
+}
 \description{
 The \verb{$mle()} method is only available for \code{\link{CmdStanMLE}} objects.
 It returns the penalized maximum likelihood estimate (posterior mode) as a
@@ -15,15 +20,6 @@ include \code{lp__}, the total log probability (\code{target}) accumulated in th
 }
 \section{Usage}{
 \preformatted{$mle(variables = NULL)
-}
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{variables}: (character vector) The variables (parameters and generated
-quantities) to include. If NULL (the default) then all variables are
-included.
 }
 }
 

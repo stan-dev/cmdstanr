@@ -4,6 +4,17 @@
 \alias{fit-method-draws}
 \alias{draws}
 \title{Extract posterior draws}
+\arguments{
+\item{variables}{(character vector) The variables (parameters and generated
+quantities) to read in. If \code{NULL} (the default) then the draws of all
+variables are included.}
+
+\item{inc_warmup}{(logical) For MCMC only, should warmup draws be included?
+Defaults to \code{FALSE}.}
+
+\item{...}{Arguments passed on to
+\code{\link[posterior:draws_array]{posterior::as_draws_array()}}.}
+}
 \description{
 Extract posterior draws after MCMC or approximate posterior
 draws after variational approximation using formats provided by the
@@ -15,19 +26,6 @@ log probability (\code{target}) accumulated in the \code{model} block.
 }
 \section{Usage}{
 \preformatted{$draws(variables = NULL, inc_warmup = FALSE, ...)
-}
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{variables}: (character vector) The variables (parameters and generated
-quantities) to read in. If \code{NULL} (the default) then the draws of all
-variables are included.
-\item \code{inc_warmup}: (logical) For MCMC only, should warmup draws be included?
-Defaults to \code{FALSE}.
-\item \code{...}: Arguments passed on to
-\code{\link[posterior:draws_array]{posterior::as_draws_array()}}.
 }
 }
 

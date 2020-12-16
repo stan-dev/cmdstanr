@@ -24,16 +24,18 @@ printed.}
 \item{init}{(multiple options) The initialization method to use for the
 variables declared in the \code{parameters} block of the Stan program:
 \itemize{
-\item A real number \code{x>0} initializes randomly between \verb{[-x,x]} (on the
-\emph{unconstrained} parameter space);
-\item \code{0} initializes to \code{0};
-\item A character vector of paths (one per chain) to JSON or Rdump files. See
+\item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
+\verb{[-x,x]} (on the \emph{unconstrained} parameter space);
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0};
+\item A character vector of paths (one per chain) to JSON or Rdump files
+containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
-\item A list of lists. For MCMC the list should contain a sublist for each
-chain. For optimization and variational inference there should be just one
-sublist. The sublists should have named elements corresponding to the
-parameters for which you are specifying initial values. See \strong{Examples}.
+\item A list of lists containing initial values for all or some parameters. For
+MCMC the list should contain a sublist for each chain. For optimization and
+variational inference there should be just one sublist. The sublists should
+have named elements corresponding to the parameters for which you are
+specifying initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC, if the function
@@ -46,18 +48,16 @@ number of chains) when called to generate the initial values. See
 about the latent dynamics be written to temporary diagnostic CSV files?
 This argument replaces CmdStan's \code{diagnostic_file} argument and the content
 written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (\strong{for some algorithms no content may be written}). The default
-is \code{save_latent_dynamics=FALSE}, which is appropriate for almost every use
-case (all diagnostics recommended for users to check are \emph{always} saved,
-e.g., divergences for HMC). To save the temporary files created when
-\code{save_latent_dynamics=TRUE} see the
+CmdStanR (for some algorithms no content may be written). The default
+is \code{FALSE}, which is appropriate for almost every use case. To save the
+temporary files created when \code{save_latent_dynamics=TRUE} see the
 \code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
 method.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For interactive use this can typically be left at
-\code{NULL} (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
-posterior draws and diagnostics) available in \R via methods of the fitted
+\code{NULL} (temporary directory) since CmdStanR makes the CmdStan output
+(posterior draws and diagnostics) available in \R via methods of the fitted
 model objects. The behavior of \code{output_dir} is as follows:
 \itemize{
 \item If \code{NULL} (the default), then the CSV files are written to a temporary
@@ -67,14 +67,13 @@ methods of the fitted model object (e.g.,
 files are removed when the fitted model object is
 \link[base:gc]{garbage collected} (manually or automatically).
 \item If a path, then the files are created in \code{output_dir} with names
-corresponding the defaults used by \verb{$save_output_files()} (and similar
-methods like \verb{$save_latent_dynamics_files()}).
+corresponding to the defaults used by \verb{$save_output_files()}.
 }}
 
 \item{sig_figs}{(positive integer) The number of significant figures used
 when storing the output values. By default, CmdStan represent the output
 values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
-Increasing this value result in larger output CSV files and thus an
+Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
 
 \item{threads}{(positive integer) If the model was

@@ -4,6 +4,11 @@
 \alias{fit-method-save_object}
 \alias{save_object}
 \title{Save fitted model object to a file}
+\arguments{
+\item{file}{(string) Path where the file should be saved.}
+
+\item{...}{Other arguments to pass to \code{\link[base:readRDS]{base::saveRDS()}} besides \code{object} and \code{file}.}
+}
 \description{
 This method is a wrapper around \code{\link[base:readRDS]{base::saveRDS()}} that ensures
 that all posterior draws and diagnostics are saved when saving a fitted
@@ -13,14 +18,6 @@ safest way to guarantee that everything has been read in before saving.
 }
 \section{Usage}{
 \preformatted{$save_object(file, ...)
-}
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{file}: (string) Path where the file should be saved.
-\item \code{...}: Other arguments to pass to \code{\link[base:readRDS]{base::saveRDS()}} besides \code{object} and \code{file}.
 }
 }
 

@@ -6,12 +6,21 @@
 \alias{print.CmdStanMCMC}
 \alias{print.CmdStanMLE}
 \alias{print.CmdStanVB}
-\title{Compute a summary table of MCMC estimates and diagnostics}
+\title{Compute a summary table of estimates and diagnostics}
+\arguments{
+\item{variables}{(character vector) The variables to include.}
+
+\item{...}{Optional arguments to pass to \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.}
+
+\item{digits}{(integer) For \code{print} only, the number of digits to use for rounding.}
+
+\item{max_rows}{(integer) For \code{print} only, the maximum number of rows to print.}
+}
 \description{
 The \verb{$summary()} method runs
 \code{\link[posterior:draws_summary]{summarise_draws()}} from the \pkg{posterior}
-package and returns the output. For MCMC only post-warmup draws are included
-in the summary.
+package and returns the output. For MCMC, only post-warmup draws are
+included in the summary.
 
 The \verb{$print()} method prints the same summary stats but removes the extra
 formatting used for printing tibbles and returns the fitted model object
@@ -27,21 +36,9 @@ $print(variables = NULL, ..., digits = 2, max_rows = 10)
 }
 }
 
-\section{Arguments}{
-
-\itemize{
-\item \code{variables}: (character vector) The variables to include.
-\item \code{...}: Optional arguments to pass to
-\code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
-\item \code{digits}: (integer) For \code{print} only, the number of digits to use for
-rounding.
-\item \code{max_rows}: (integer) For \code{print} only, the maximum number of rows to print.
-}
-}
-
 \section{Value}{
 
-The \verb{$summary()} method returns the tibble created by
+The \verb{$summary()} method returns the tibble data frame created by
 \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
 
 The \verb{$print()} method returns the fitted model object itself (invisibly),

@@ -4,6 +4,9 @@
 \alias{fit-method-output}
 \alias{output}
 \title{Access console output}
+\arguments{
+\item{id}{(integer) For MCMC only, the chain id.}
+}
 \description{
 For MCMC the \verb{$output()} method returns the stdout and stderr of
 all chains as a list of character vectors. If the \code{id} argument is specified
@@ -14,13 +17,6 @@ console output.
 }
 \section{Usage}{
 \preformatted{$output(id = NULL)
-}
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{id}: (integer) For MCMC only, the chain id.
 }
 }
 
