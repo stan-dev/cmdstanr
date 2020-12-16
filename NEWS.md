@@ -29,6 +29,10 @@ objects. (#390)
 * The `$optimize()` method now supports all of CmdStan's tolerance-related
 arguments for (L)BFGS. (#398)
 
+* The documentation for the R6 methods now uses `@param`, which allows package
+developers to import the CmdStanR documentation using roxygen2's
+`@inheritParams`. (#408)
+
 # cmdstanr 0.2.2
 
 ### Bug fixes
