@@ -4,6 +4,28 @@
 \alias{model-method-variational}
 \alias{variational}
 \title{Run Stan's variational approximation algorithms}
+\usage{
+variational(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  save_latent_dynamics = FALSE,
+  output_dir = NULL,
+  sig_figs = NULL,
+  threads = NULL,
+  algorithm = NULL,
+  iter = NULL,
+  grad_samples = NULL,
+  elbo_samples = NULL,
+  eta = NULL,
+  adapt_engaged = NULL,
+  adapt_iter = NULL,
+  tol_rel_obj = NULL,
+  eval_elbo = NULL,
+  output_samples = NULL
+)
+}
 \arguments{
 \item{data}{(multiple options) The data to use for the variables specified in
 the \code{data} block of the Stan program. One of the following:
@@ -127,30 +149,6 @@ matrix for the approximation.
 
 -- \href{https://github.com/stan-dev/cmdstan/releases/latest}{\emph{CmdStan Interface User's Guide}}
 }
-\section{Usage}{
-\preformatted{$variational(
-  data = NULL,
-  seed = NULL,
-  refresh = NULL,
-  init = NULL,
-  save_latent_dynamics = FALSE,
-  output_dir = NULL,
-  sig_figs = NULL,
-  threads = NULL,
-  algorithm = NULL,
-  iter = NULL,
-  grad_samples = NULL,
-  elbo_samples = NULL,
-  eta = NULL,
-  adapt_engaged = NULL,
-  adapt_iter = NULL,
-  tol_rel_obj = NULL,
-  eval_elbo = NULL,
-  output_samples = NULL
-)
-}
-}
-
 \section{Value}{
  A \code{\link{CmdStanVB}} object.
 }

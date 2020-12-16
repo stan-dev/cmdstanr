@@ -4,6 +4,17 @@
 \alias{model-method-generate-quantities}
 \alias{generate_quantities}
 \title{Run Stan's standalone generated quantities method}
+\usage{
+generate_quantities(
+  fitted_params,
+  data = NULL,
+  seed = NULL,
+  output_dir = NULL,
+  sig_figs = NULL,
+  parallel_chains = getOption("mc.cores", 1),
+  threads_per_chain = NULL
+)
+}
 \arguments{
 \item{fitted_params}{(multiple options) The parameter draws to use. One of
 the following:
@@ -14,27 +25,60 @@ VB) object returned by CmdStanR's \code{\link[=fit-method-draws]{$draws()}} meth
 \item A character vector of paths to CmdStan CSV output files.
 }}
 
-\item{data, seed, output_dir, sig_figs, parallel_chains, threads_per_chain}{Same
-as for the \code{\link[=model-method-sample]{$sample()}} method.}
+\item{data}{(multiple options) The data to use for the variables specified in
+the \code{data} block of the Stan program. One of the following:
+\itemize{
+\item A named list of \R objects (like for RStan). Internally this list is then
+written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
+\item A path to a data file compatible with CmdStan (JSON or \R dump). See the
+appendices in the CmdStan manual for details on using these formats.
+\item \code{NULL} or an empty list if the Stan program has no \code{data} block.
+}}
+
+\item{seed}{(positive integer) A seed for the (P)RNG to pass to CmdStan.}
+
+\item{output_dir}{(string) A path to a directory where CmdStan should write
+its output CSV files. For interactive use this can typically be left at
+\code{NULL} (temporary directory) since CmdStanR makes the CmdStan output
+(posterior draws and diagnostics) available in \R via methods of the fitted
+model objects. The behavior of \code{output_dir} is as follows:
+\itemize{
+\item If \code{NULL} (the default), then the CSV files are written to a temporary
+directory and only saved permanently if the user calls one of the \verb{$save_*}
+methods of the fitted model object (e.g.,
+\code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
+files are removed when the fitted model object is
+\link[base:gc]{garbage collected} (manually or automatically).
+\item If a path, then the files are created in \code{output_dir} with names
+corresponding to the defaults used by \verb{$save_output_files()}.
+}}
+
+\item{sig_figs}{(positive integer) The number of significant figures used
+when storing the output values. By default, CmdStan represent the output
+values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
+Increasing this value will result in larger output CSV files and thus an
+increased usage of disk space.}
+
+\item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
+to run in parallel. If \code{parallel_chains} is not specified then the default
+is to look for the option \code{"mc.cores"}, which can be set for an entire \R
+session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
+been set then the default is \code{1}.}
+
+\item{threads_per_chain}{(positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
+using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
+contrast with \code{parallel_chains}, which specifies the number of chains to
+run in parallel. The actual number of CPU cores used use is
+\code{parallel_chains*threads_per_chain}. For an example of using threading see
+the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 }
 \description{
 The \verb{$generate_quantities()} method of a \code{\link{CmdStanModel}} object
 runs Stan's standalone generated quantities to obtain generated quantities
 based on previously fitted parameters.
 }
-\section{Usage}{
-\preformatted{$generate_quantities(
-  fitted_params,
-  data = NULL,
-  seed = NULL,
-  output_dir = NULL,
-  sig_figs = NULL,
-  parallel_chains = getOption("mc.cores", 1),
-  threads_per_chain = NULL
-)
-}
-}
-
 \section{Value}{
  A \code{\link{CmdStanGQ}} object.
 }

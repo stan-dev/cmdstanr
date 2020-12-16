@@ -4,6 +4,27 @@
 \alias{model-method-optimize}
 \alias{optimize}
 \title{Run Stan's optimization algorithms}
+\usage{
+optimize(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  save_latent_dynamics = FALSE,
+  output_dir = NULL,
+  sig_figs = NULL,
+  threads = NULL,
+  algorithm = NULL,
+  init_alpha = NULL,
+  iter = NULL,
+  tol_obj = NULL,
+  tol_rel_obj = NULL,
+  tol_grad = NULL,
+  tol_rel_grad = NULL,
+  tol_param = NULL,
+  history_size = NULL
+)
+}
 \arguments{
 \item{data}{(multiple options) The data to use for the variables specified in
 the \code{data} block of the Stan program. One of the following:
@@ -81,8 +102,6 @@ increased usage of disk space.}
 threads to use in parallelized sections (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}).}
 
-\item{iter}{(positive integer) The maximum number of iterations.}
-
 \item{algorithm}{(string) The optimization algorithm. One of \code{"lbfgs"},
 \code{"bfgs"}, or \code{"newton"}. The control parameters below are only available
 for \code{"lbfgs"} and \verb{"bfgs}. For their default values and more details see
@@ -90,6 +109,8 @@ the CmdStan User's Guide. The default values can also be obtained by
 running \code{cmdstanr_example(method="optimize")$metadata()}.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
+
+\item{iter}{(positive integer) The maximum number of iterations.}
 
 \item{tol_obj}{(positive real) Convergence tolerance on changes in objective function value.}
 
@@ -124,29 +145,6 @@ variables. Thus modes correspond to modes of the model as written.
 
 -- \href{https://mc-stan.org/docs/cmdstan-guide/}{\emph{CmdStan User's Guide}}
 }
-\section{Usage}{
-\preformatted{$optimize(
-  data = NULL,
-  seed = NULL,
-  refresh = NULL,
-  init = NULL,
-  save_latent_dynamics = FALSE,
-  output_dir = NULL,
-  sig_figs = NULL,
-  threads = NULL,
-  algorithm = NULL,
-  init_alpha = NULL,
-  iter = NULL,
-  tol_obj = NULL,
-  tol_rel_obj = NULL,
-  tol_grad = NULL,
-  tol_rel_grad = NULL,
-  tol_param = NULL,
-  history_size = NULL
-)
-}
-}
-
 \section{Value}{
  A \code{\link{CmdStanMLE}} object.
 }

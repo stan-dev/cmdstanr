@@ -829,7 +829,7 @@ validate_seed <- function(seed, num_procs) {
 #' @return An integer vector of length `num_procs`.
 maybe_generate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
-    seed <- sample(.Machine$integer.max, num_procs)
+    seed <- base::sample(.Machine$integer.max, num_procs)
   } else if (length(seed) == 1 && num_procs > 1) {
     seed <- as.integer(seed)
     seed <- c(seed, seed + 1:(num_procs -1))

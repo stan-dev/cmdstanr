@@ -4,15 +4,39 @@
 \alias{model-method-sample_mpi}
 \alias{sample_mpi}
 \title{Run Stan's MCMC algorithms with MPI}
+\usage{
+sample_mpi(
+  data = NULL,
+  mpi_cmd = "mpiexec",
+  mpi_args = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  save_latent_dynamics = FALSE,
+  output_dir = NULL,
+  chains = 1,
+  chain_ids = seq_len(chains),
+  iter_warmup = NULL,
+  iter_sampling = NULL,
+  save_warmup = FALSE,
+  thin = NULL,
+  max_treedepth = NULL,
+  adapt_engaged = TRUE,
+  adapt_delta = NULL,
+  step_size = NULL,
+  metric = NULL,
+  metric_file = NULL,
+  inv_metric = NULL,
+  init_buffer = NULL,
+  term_buffer = NULL,
+  window = NULL,
+  fixed_param = FALSE,
+  sig_figs = NULL,
+  validate_csv = TRUE,
+  show_messages = TRUE
+)
+}
 \arguments{
-\item{mpi_cmd}{(character vector) The MPI launcher used for launching MPI
-processes. The default launcher is \code{"mpiexec"}.}
-
-\item{mpi_args}{(list) A list of arguments to use when launching MPI
-processes. For example, \code{mpi_args = list("n" = 4)} launches the executable
-as \verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments for the
-model executable.}
-
 \item{data}{(multiple options) The data to use for the variables specified in
 the \code{data} block of the Stan program. One of the following:
 \itemize{
@@ -22,6 +46,14 @@ written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json(
 appendices in the CmdStan manual for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no \code{data} block.
 }}
+
+\item{mpi_cmd}{(character vector) The MPI launcher used for launching MPI
+processes. The default launcher is \code{"mpiexec"}.}
+
+\item{mpi_args}{(list) A list of arguments to use when launching MPI
+processes. For example, \code{mpi_args = list("n" = 4)} launches the executable
+as \verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments for the
+model executable.}
 
 \item{seed}{(positive integer) A seed for the (P)RNG to pass to CmdStan.}
 
@@ -78,56 +110,20 @@ files are removed when the fitted model object is
 corresponding to the defaults used by \verb{$save_output_files()}.
 }}
 
-\item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
-values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
-Increasing this value will result in larger output CSV files and thus an
-increased usage of disk space.}
-
 \item{chains}{(positive integer) The number of Markov chains to run. The
 default is 4.}
-
-\item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
-to run in parallel. If \code{parallel_chains} is not specified then the default
-is to look for the option \code{"mc.cores"}, which can be set for an entire \R
-session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
-been set then the default is \code{1}. This argument is available for
-the \verb{$sample()} method but not for the \verb{$sample_mpi()} method.}
 
 \item{chain_ids}{(vector) A vector of chain IDs. Must contain \code{chains} unique
 positive integers. If not set, the default chain IDs are used (integers
 starting from \code{1}).}
 
-\item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
-contrast with \code{parallel_chains}, which specifies the number of chains to
-run in parallel. The actual number of CPU cores used use is
-\code{parallel_chains*threads_per_chain}. For an example of using threading see
-the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
-This argument is available for the \verb{$sample()} method but not for the
-\verb{$sample_mpi()} method.}
-
-\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
-informational messages, for example rejection of the current proposal.
-Disable if you wish silence these messages, but this is not recommended
-unless you are very sure that the model is correct up to numerical error.
-If the messages are silenced then the \verb{$output()} method of the resulting
-fit object can be used to display all the silenced messages.}
-
-\item{validate_csv}{(logical) When \code{TRUE} (the default), validate the
-sampling results in the csv files. Disable if you wish to manually read in
-the sampling results and validate them yourself, for example using
-\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.}
+\item{iter_warmup}{(positive integer) The number of warmup iterations to run
+per chain. Note: in the CmdStan User's Guide this is referred to as
+\code{num_warmup}.}
 
 \item{iter_sampling}{(positive integer) The number of post-warmup iterations
 to run per chain. Note: in the CmdStan User's Guide this is referred to as
 \code{num_samples}.}
-
-\item{iter_warmup}{(positive integer) The number of warmup iterations to run
-per chain. Note: in the CmdStan User's Guide this is referred to as
-\code{num_warmup}.}
 
 \item{save_warmup}{(logical) Should warmup iterations be saved? The default
 is \code{FALSE}. If \code{save_warmup=TRUE} then you can use
@@ -193,6 +189,24 @@ when, for example, trying to generate pseudo-data using the generated
 quantities block. If the parameters block is empty then using
 \code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
 \code{parallel_chains} arguments will be set to \code{1}.}
+
+\item{sig_figs}{(positive integer) The number of significant figures used
+when storing the output values. By default, CmdStan represent the output
+values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
+Increasing this value will result in larger output CSV files and thus an
+increased usage of disk space.}
+
+\item{validate_csv}{(logical) When \code{TRUE} (the default), validate the
+sampling results in the csv files. Disable if you wish to manually read in
+the sampling results and validate them yourself, for example using
+\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.}
+
+\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish silence these messages, but this is not recommended
+unless you are very sure that the model is correct up to numerical error.
+If the messages are silenced then the \verb{$output()} method of the resulting
+fit object can be used to display all the silenced messages.}
 }
 \description{
 The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object is
@@ -226,40 +240,6 @@ other MPI launch arguments (\code{mpi_args}). In most cases, it is enough to
 only define the number of processes. To use \code{n_procs} processes specify
 \code{mpi_args = list("n" = n_procs)}.
 }
-\section{Usage}{
-\preformatted{$sample_mpi(
-  data = NULL,
-  mpi_cmd = "mpiexec",
-  mpi_args = NULL,
-  seed = NULL,
-  refresh = NULL,
-  init = NULL,
-  save_latent_dynamics = FALSE,
-  output_dir = NULL,
-  sig_figs = NULL,
-  chains = 4,
-  chain_ids = seq_len(chains),
-  iter_warmup = NULL,
-  iter_sampling = NULL,
-  save_warmup = FALSE,
-  thin = NULL,
-  max_treedepth = NULL,
-  adapt_engaged = TRUE,
-  adapt_delta = NULL,
-  step_size = NULL,
-  metric = NULL,
-  metric_file = NULL,
-  inv_metric = NULL,
-  init_buffer = NULL,
-  term_buffer = NULL,
-  window = NULL,
-  fixed_param = FALSE,
-  validate_csv = TRUE,
-  show_messages = TRUE
-)
-}
-}
-
 \section{Value}{
  A \code{\link{CmdStanMCMC}} object.
 }

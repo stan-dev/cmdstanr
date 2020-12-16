@@ -4,6 +4,18 @@
 \alias{model-method-compile}
 \alias{compile}
 \title{Compile a Stan program}
+\usage{
+compile(
+  quiet = TRUE,
+  dir = NULL,
+  pedantic = FALSE,
+  include_paths = NULL,
+  cpp_options = list(),
+  stanc_options = list(),
+  force_recompile = FALSE,
+  threads = FALSE
+)
+}
 \arguments{
 \item{quiet}{(logical) Should the verbose output from CmdStan during
 compilation be suppressed? The default is \code{TRUE}, but if you encounter an
@@ -36,6 +48,9 @@ https://mc-stan.org/docs/cmdstan-guide/stanc.html.}
 
 \item{force_recompile}{(logical) Should the model be recompiled even if was
 not modified since last compiled. The default is \code{FALSE}.}
+
+\item{threads}{Deprecated and will be removed in a future release. Please
+turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
 }
 \description{
 The \verb{$compile()} method of a \code{\link{CmdStanModel}} object translates
@@ -50,31 +65,15 @@ containing the generated C++ code are available via the \verb{$exe_file()} and
 \verb{$hpp_file()} methods. The default is to create the executable in the same
 directory as the Stan program and to write the generated C++ code in a
 temporary directory. To save the C++ code to a non-temporary location use
-\verb{$save_hpp_file()}.
+\verb{$save_hpp_file(dir)}.
 }
-\section{Usage}{
-\preformatted{$compile(
-  quiet = TRUE,
-  dir = NULL,
-  pedantic = FALSE,
-  include_paths = NULL,
-  cpp_options = list(),
-  stanc_options = list(),
-  force_recompile = FALSE
-)
-$exe_file()
-$hpp_file()
-$save_hpp_file(dir = NULL)
-}
-}
-
 \section{Value}{
  The \verb{$compile()} method is called for its side effect of
 creating the executable and adding its path to the \code{\link{CmdStanModel}} object,
 but it also returns the \code{\link{CmdStanModel}} object invisibly.
 
-The \verb{$exe_file()}, \verb{$hpp_file()}, and \verb{$save_hpp_file()} methods all return
-file paths.
+After compilation, the \verb{$exe_file()}, \verb{$hpp_file()}, and \verb{$save_hpp_file()}
+methods can be used and return file paths.
 }
 
 \examples{

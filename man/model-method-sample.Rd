@@ -4,6 +4,46 @@
 \alias{model-method-sample}
 \alias{sample}
 \title{Run Stan's MCMC algorithms}
+\usage{
+sample(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  save_latent_dynamics = FALSE,
+  output_dir = NULL,
+  sig_figs = NULL,
+  chains = 4,
+  parallel_chains = getOption("mc.cores", 1),
+  chain_ids = seq_len(chains),
+  threads_per_chain = NULL,
+  iter_warmup = NULL,
+  iter_sampling = NULL,
+  save_warmup = FALSE,
+  thin = NULL,
+  max_treedepth = NULL,
+  adapt_engaged = TRUE,
+  adapt_delta = NULL,
+  step_size = NULL,
+  metric = NULL,
+  metric_file = NULL,
+  inv_metric = NULL,
+  init_buffer = NULL,
+  term_buffer = NULL,
+  window = NULL,
+  fixed_param = FALSE,
+  validate_csv = TRUE,
+  show_messages = TRUE,
+  cores = NULL,
+  num_cores = NULL,
+  num_chains = NULL,
+  num_warmup = NULL,
+  num_samples = NULL,
+  save_extra_diagnostics = NULL,
+  max_depth = NULL,
+  stepsize = NULL
+)
+}
 \arguments{
 \item{data}{(multiple options) The data to use for the variables specified in
 the \code{data} block of the Stan program. One of the following:
@@ -83,8 +123,7 @@ default is 4.}
 to run in parallel. If \code{parallel_chains} is not specified then the default
 is to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
-been set then the default is \code{1}. This argument is available for
-the \verb{$sample()} method but not for the \verb{$sample_mpi()} method.}
+been set then the default is \code{1}.}
 
 \item{chain_ids}{(vector) A vector of chain IDs. Must contain \code{chains} unique
 positive integers. If not set, the default chain IDs are used (integers
@@ -97,29 +136,15 @@ using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
 contrast with \code{parallel_chains}, which specifies the number of chains to
 run in parallel. The actual number of CPU cores used use is
 \code{parallel_chains*threads_per_chain}. For an example of using threading see
-the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
-This argument is available for the \verb{$sample()} method but not for the
-\verb{$sample_mpi()} method.}
-
-\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
-informational messages, for example rejection of the current proposal.
-Disable if you wish silence these messages, but this is not recommended
-unless you are very sure that the model is correct up to numerical error.
-If the messages are silenced then the \verb{$output()} method of the resulting
-fit object can be used to display all the silenced messages.}
-
-\item{validate_csv}{(logical) When \code{TRUE} (the default), validate the
-sampling results in the csv files. Disable if you wish to manually read in
-the sampling results and validate them yourself, for example using
-\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.}
-
-\item{iter_sampling}{(positive integer) The number of post-warmup iterations
-to run per chain. Note: in the CmdStan User's Guide this is referred to as
-\code{num_samples}.}
+the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{iter_warmup}{(positive integer) The number of warmup iterations to run
 per chain. Note: in the CmdStan User's Guide this is referred to as
 \code{num_warmup}.}
+
+\item{iter_sampling}{(positive integer) The number of post-warmup iterations
+to run per chain. Note: in the CmdStan User's Guide this is referred to as
+\code{num_samples}.}
 
 \item{save_warmup}{(logical) Should warmup iterations be saved? The default
 is \code{FALSE}. If \code{save_warmup=TRUE} then you can use
@@ -185,6 +210,20 @@ when, for example, trying to generate pseudo-data using the generated
 quantities block. If the parameters block is empty then using
 \code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
 \code{parallel_chains} arguments will be set to \code{1}.}
+
+\item{validate_csv}{(logical) When \code{TRUE} (the default), validate the
+sampling results in the csv files. Disable if you wish to manually read in
+the sampling results and validate them yourself, for example using
+\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.}
+
+\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish silence these messages, but this is not recommended
+unless you are very sure that the model is correct up to numerical error.
+If the messages are silenced then the \verb{$output()} method of the resulting
+fit object can be used to display all the silenced messages.}
+
+\item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize}{Deprecated and will be removed in a future release.}
 }
 \description{
 The \verb{$sample()} method of a \code{\link{CmdStanModel}} object runs the
@@ -197,40 +236,6 @@ installed version of CmdStan. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
 }
-\section{Usage}{
-\preformatted{$sample(
-  data = NULL,
-  seed = NULL,
-  refresh = NULL,
-  init = NULL,
-  save_latent_dynamics = FALSE,
-  output_dir = NULL,
-  sig_figs = NULL,
-  chains = 4,
-  parallel_chains = getOption("mc.cores", 1),
-  chain_ids = seq_len(chains),
-  threads_per_chain = NULL,
-  iter_warmup = NULL,
-  iter_sampling = NULL,
-  save_warmup = FALSE,
-  thin = NULL,
-  max_treedepth = NULL,
-  adapt_engaged = TRUE,
-  adapt_delta = NULL,
-  step_size = NULL,
-  metric = NULL,
-  metric_file = NULL,
-  inv_metric = NULL,
-  init_buffer = NULL,
-  term_buffer = NULL,
-  window = NULL,
-  fixed_param = FALSE,
-  validate_csv = TRUE,
-  show_messages = TRUE
-)
-}
-}
-
 \section{Value}{
  A \code{\link{CmdStanMCMC}} object.
 }

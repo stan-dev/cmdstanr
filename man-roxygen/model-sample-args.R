@@ -4,8 +4,7 @@
 #'   to run in parallel. If `parallel_chains` is not specified then the default
 #'   is to look for the option `"mc.cores"`, which can be set for an entire \R
 #'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
-#'   been set then the default is `1`. This argument is available for
-#'   the `$sample()` method but not for the `$sample_mpi()` method.
+#'   been set then the default is `1`.
 #' @param chain_ids (vector) A vector of chain IDs. Must contain `chains` unique
 #'   positive integers. If not set, the default chain IDs are used (integers
 #'   starting from `1`).
@@ -18,8 +17,6 @@
 #'   `parallel_chains*threads_per_chain`. For an example of using threading see
 #'   the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
-#'   This argument is available for the `$sample()` method but not for the
-#'   `$sample_mpi()` method.
 #'
 #' @param show_messages (logical) When `TRUE` (the default), prints all
 #'   informational messages, for example rejection of the current proposal.

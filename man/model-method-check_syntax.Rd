@@ -4,6 +4,14 @@
 \alias{model-method-check_syntax}
 \alias{check_syntax}
 \title{Check syntax of a Stan program}
+\usage{
+check_syntax(
+  pedantic = FALSE,
+  include_paths = NULL,
+  stanc_options = list(),
+  quiet = FALSE
+)
+}
 \arguments{
 \item{pedantic}{(logical) Should pedantic mode be turned on? The default is
 \code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
@@ -28,16 +36,6 @@ The \verb{$check_syntax()} method of a \code{\link{CmdStanModel}} object
 checks the Stan program for syntax errors and returns \code{TRUE} (invisibly) if
 parsing succeeds. If invalid syntax in found an error is thrown.
 }
-\section{Usage}{
-\preformatted{$check_syntax(
-  pedantic = FALSE,
-  include_paths = NULL,
-  stanc_options = list(),
-  quiet = FALSE
-)
-}
-}
-
 \section{Value}{
  The \verb{$check_syntax()} method returns \code{TRUE} (invisibly) if
 the model is valid.
