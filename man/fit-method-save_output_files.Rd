@@ -2,18 +2,36 @@
 % Please edit documentation in R/fit.R
 \name{fit-method-save_output_files}
 \alias{fit-method-save_output_files}
+\alias{save_output_files}
 \alias{fit-method-save_data_file}
 \alias{fit-method-save_latent_dynamics_files}
 \alias{fit-method-output_files}
 \alias{fit-method-data_file}
 \alias{fit-method-latent_dynamics_files}
-\alias{save_output_files}
 \alias{save_data_file}
 \alias{save_latent_dynamics_files}
 \alias{output_files}
 \alias{data_file}
 \alias{latent_dynamics_files}
 \title{Save output and data files}
+\usage{
+save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+
+save_latent_dynamics_files(
+  dir = ".",
+  basename = NULL,
+  timestamp = TRUE,
+  random = TRUE
+)
+
+save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+
+output_files(include_failed = FALSE)
+
+latent_dynamics_files(include_failed = FALSE)
+
+data_file()
+}
 \arguments{
 \item{dir}{(string) Path to directory where the files should be saved.}
 
@@ -24,6 +42,18 @@ Defaults to \code{TRUE}. See \strong{Details}.}
 
 \item{random}{(logical) Should random alphanumeric characters be added to the
 end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.}
+
+\item{include_failed}{Should CmdStan runs that failed also be included? The
+default is \code{FALSE.}}
+}
+\value{
+The \verb{$save_*} methods print a message with the new file paths and (invisibly)
+return a character vector of the new paths (or \code{NA} for any that couldn't be
+copied). They also have the side effect of setting the internal paths in the
+fitted model object to the new paths.
+
+The methods \emph{without} the \code{save_} prefix return character vectors of file
+paths without moving any files.
 }
 \description{
 All fitted model objects have methods for saving (moving to a
@@ -36,17 +66,6 @@ updated to point to the new file locations.}
 The versions without the \code{save_} prefix (e.g., \verb{$output_files()}) return
 the current file paths without moving any files.
 }
-\section{Usage}{
-\preformatted{$save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-$save_latent_dynamics_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-$save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-
-$output_files()
-$latent_dynamics_files()
-$data_file()
-}
-}
-
 \section{Details}{
 
 For \verb{$save_output_files()} the files moved to \code{dir} will have names of
@@ -66,17 +85,20 @@ For \verb{$save_data_file()} no \code{id} is included in the file name because e
 with multiple MCMC chains the data file is the same.
 }
 
-\section{Value}{
+\examples{
+\dontrun{
+fit <- cmdstanr_example()
+fit$output_files()
+fit$data_file()
 
-The \verb{$save_*} methods print a message with the new file paths and (invisibly)
-return a character vector of the new paths (or \code{NA} for any that couldn't be
-copied). They also have the side effect of setting the internal paths in the
-fitted model object to the new paths.
-
-The methods \emph{without} the \code{save_} prefix return character vectors of file
-paths without moving any files.
+# just using tempdir for the example
+my_dir <- tempdir()
+fit$save_output_files(dir = my_dir, basename = "banana")
+fit$save_output_files(dir = my_dir, basename = "tomato", timestamp = FALSE)
+fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
 }
 
+}
 \seealso{
 \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }

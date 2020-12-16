@@ -4,15 +4,17 @@
 \alias{fit-method-return_codes}
 \alias{return_codes}
 \title{Extract return codes from CmdStan}
+\usage{
+return_codes()
+}
+\value{
+An integer vector of return codes with length equal to the number of
+CmdStan runs (number of chains for MCMC and one otherwise).
+}
 \description{
 The \verb{$return_codes()} method returns a vector of return codes
 from the CmdStan run(s). A return code of 0 indicates a successful run.
 }
-\section{Usage}{
-\preformatted{$return_codes()
-}
-}
-
 \examples{
 \dontrun{
 # example with return codes all zero

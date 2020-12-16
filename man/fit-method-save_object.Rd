@@ -4,6 +4,9 @@
 \alias{fit-method-save_object}
 \alias{save_object}
 \title{Save fitted model object to a file}
+\usage{
+save_object(file, ...)
+}
 \arguments{
 \item{file}{(string) Path where the file should be saved.}
 
@@ -16,11 +19,6 @@ model object. Because the contents of the CmdStan output CSV files are only
 read into R lazily (i.e., as needed), the \verb{$save_object()} method is the
 safest way to guarantee that everything has been read in before saving.
 }
-\section{Usage}{
-\preformatted{$save_object(file, ...)
-}
-}
-
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")

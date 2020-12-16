@@ -20,6 +20,7 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-inv_metric]{$inv_metric()}} \tab Return the inverse metric for each chain. \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+   \code{\link[=fit-method-num_chains]{$num_chains()}} \tab Returns the number of MCMC chains. \cr
 }
 
 }
@@ -46,8 +47,8 @@ methods, all of which have their own (linked) documentation pages.
 
 \subsection{Report run times, console output, return codes}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
-   \code{\link[=fit-method-time]{$time()}} \tab Report total and chain-specific run times. \cr
    \code{\link[=fit-method-output]{$output()}} \tab Return the stdout and stderr of all chains or pretty print the output for a single chain. \cr
+   \code{\link[=fit-method-time]{$time()}} \tab Report total and chain-specific run times. \cr
    \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
 }
 

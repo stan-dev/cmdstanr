@@ -4,22 +4,22 @@
 \alias{fit-method-output}
 \alias{output}
 \title{Access console output}
+\usage{
+output(id = NULL)
+}
 \arguments{
-\item{id}{(integer) For MCMC only, the chain id.}
+\item{id}{(integer) The chain id. Ignored if the model was not fit using
+MCMC.}
 }
 \description{
-For MCMC the \verb{$output()} method returns the stdout and stderr of
-all chains as a list of character vectors. If the \code{id} argument is specified
-it pretty prints the console output for a single chain.
+For MCMC, the \verb{$output()} method returns the stdout and stderr
+of all chains as a list of character vectors if \code{id=NULL}. If the \code{id}
+argument is specified it instead pretty prints the console output for a
+single chain.
 
-For optimization and variational inference \verb{$output()} just pretty prints the
-console output.
+For optimization and variational inference \verb{$output()} just pretty prints
+the console output.
 }
-\section{Usage}{
-\preformatted{$output(id = NULL)
-}
-}
-
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")

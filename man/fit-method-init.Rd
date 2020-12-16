@@ -4,6 +4,12 @@
 \alias{fit-method-init}
 \alias{init}
 \title{Extract user-specified initial values}
+\usage{
+init()
+}
+\value{
+A list of lists. See \strong{Examples}.
+}
 \description{
 Return user-specified initial values. If the user provided
 initial values files or \R objects (list of lists or function) via the
@@ -12,16 +18,6 @@ the list of lists format). Currently it is not possible to extract initial
 values generated automatically by CmdStan, although CmdStan may support
 this in the future.
 }
-\section{Usage}{
-\preformatted{$init()
-}
-}
-
-\section{Value}{
-
-A list of lists. See \strong{Examples}.
-}
-
 \examples{
 \dontrun{
 init_fun <- function() list(alpha = rnorm(1), beta = rnorm(3))

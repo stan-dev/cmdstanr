@@ -4,18 +4,10 @@
 \alias{fit-method-time}
 \alias{time}
 \title{Report timing of CmdStan runs}
-\description{
-Report the run time in seconds. For MCMC additional information
-is provided about the run times of individual chains and the warmup and
-sampling phases.
+\usage{
+time()
 }
-\section{Usage}{
-\preformatted{$time()
-}
-}
-
-\section{Value}{
-
+\value{
 A list with elements
 \itemize{
 \item \code{total}: (scalar) the total run time.
@@ -24,7 +16,11 @@ chains. The data frame has columns \code{"chain_id"}, \code{"warmup"}, \code{"sa
 and \code{"total"}.
 }
 }
-
+\description{
+Report the run time in seconds. For MCMC additional information
+is provided about the run times of individual chains and the warmup and
+sampling phases.
+}
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")

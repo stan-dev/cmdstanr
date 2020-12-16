@@ -3,27 +3,22 @@
 \name{fit-method-inv_metric}
 \alias{fit-method-inv_metric}
 \alias{inv_metric}
-\title{Extract inverse metric (mass matrix)}
+\title{Extract inverse metric (mass matrix) after MCMC}
+\usage{
+inv_metric(matrix = TRUE)
+}
 \arguments{
-\item{matrix}{(logical) If a diagonal metric was used, setting \code{matrix = FALSE}
-returns a list containing just the diagonals of the matrices instead of the
-full matrices. Setting \code{matrix = FALSE} has no effect for dense metrics.}
+\item{matrix}{(logical) If a diagonal metric was used, setting \code{matrix = FALSE} returns a list containing just the diagonals of the matrices instead
+of the full matrices. Setting \code{matrix = FALSE} has no effect for dense
+metrics.}
 }
-\description{
-Return a list containing the inverse metric (mass matrix) for
-each chain.
-}
-\section{Usage}{
-\preformatted{$inv_metric(matrix = TRUE)
-}
-}
-
-\section{Value}{
-
+\value{
 A list of length equal to the number of MCMC chains. See the \code{matrix}
 argument for details.
 }
-
+\description{
+Extract the inverse metric (mass matrix) for each MCMC chain.
+}
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")

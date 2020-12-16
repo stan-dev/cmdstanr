@@ -4,34 +4,29 @@
 \alias{fit-method-mle}
 \alias{mle}
 \title{Extract (penalized) maximum likelihood estimate after optimization}
+\usage{
+mle(variables = NULL)
+}
 \arguments{
-\item{variables}{(character vector) The variables (parameters and generated
-quantities) to include. If NULL (the default) then all variables are
-included.}
+\item{variables}{(character vector) The variables (parameters, transformed
+parameters, and generated quantities) to include. If NULL (the default)
+then all variables are included.}
+}
+\value{
+A numeric vector. See \strong{Examples}.
 }
 \description{
 The \verb{$mle()} method is only available for \code{\link{CmdStanMLE}} objects.
 It returns the penalized maximum likelihood estimate (posterior mode) as a
-numeric vector with one element per variable. The returned vector does not
+numeric vector with one element per variable. The returned vector does \emph{not}
 include \code{lp__}, the total log probability (\code{target}) accumulated in the
 \code{model} block of the Stan program, which is available via the
 \code{\link[=fit-method-lp]{$lp()}} method and also included in the
 \code{\link[=fit-method-draws]{$draws()}} method.
 }
-\section{Usage}{
-\preformatted{$mle(variables = NULL)
-}
-}
-
-\section{Value}{
-
-A numeric vector. See \strong{Examples}.
-}
-
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic", method = "optimize")
-fit$mle()
 fit$mle("alpha")
 fit$mle("beta")
 fit$mle("beta[2]")

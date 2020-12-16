@@ -3,30 +3,23 @@
 \name{fit-method-sampler_diagnostics}
 \alias{fit-method-sampler_diagnostics}
 \alias{sampler_diagnostics}
-\title{Extract sampler diagnostics}
+\title{Extract sampler diagnostics after MCMC}
+\usage{
+sampler_diagnostics(inc_warmup = FALSE)
+}
 \arguments{
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to \code{FALSE}.}
-
-\item{...}{Arguments passed on to
-\code{\link[posterior:draws_array]{posterior::as_draws_array()}}.}
 }
-\description{
-Extract the values of sampler diagnostics for each iteration and
-chain of MCMC.
-}
-\section{Usage}{
-\preformatted{$sampler_diagnostics(inc_warmup = FALSE, ...)
-}
-}
-
-\section{Value}{
-
+\value{
 A 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
 variable). The variables for Stan's default MCMC algorithm are
 \code{"accept_stat__"}, \code{"stepsize__"}, \code{"treedepth__"}, \code{"n_leapfrog__"},
 \code{"divergent__"}, \code{"energy__"}.
 }
-
+\description{
+Extract the values of sampler diagnostics for each iteration and
+chain of MCMC.
+}
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")
