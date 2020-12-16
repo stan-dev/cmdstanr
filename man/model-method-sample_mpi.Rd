@@ -5,6 +5,14 @@
 \alias{sample_mpi}
 \title{Run Stan's MCMC algorithms with MPI}
 \arguments{
+\item{mpi_cmd}{(character vector) The MPI launcher used for launching MPI
+processes. The default launcher is \code{"mpiexec"}.}
+
+\item{mpi_args}{(list) A list of arguments to use when launching MPI
+processes. For example, \code{mpi_args = list("n" = 4)} launches the executable
+as \verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments for the
+model executable.}
+
 \item{data}{(multiple options) The data to use for the variables specified in
 the \code{data} block of the Stan program. One of the following:
 \itemize{
@@ -185,14 +193,6 @@ when, for example, trying to generate pseudo-data using the generated
 quantities block. If the parameters block is empty then using
 \code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
 \code{parallel_chains} arguments will be set to \code{1}.}
-
-\item{mpi_cmd}{(character vector) The MPI launcher used for launching MPI
-processes. The default launcher is \code{"mpiexec"}.}
-
-\item{mpi_args}{(list) A list of arguments to use when launching MPI
-processes. For example, \code{mpi_args = list("n" = 4)} launches the executable
-as \verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments for the
-model executable.}
 }
 \description{
 The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object is

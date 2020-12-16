@@ -940,14 +940,14 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   )
 #'   ```
 #'
-#' @template model-common-args
-#' @template model-sample-args
 #' @param mpi_cmd (character vector) The MPI launcher used for launching MPI
 #'   processes. The default launcher is `"mpiexec"`.
 #' @param mpi_args (list) A list of arguments to use when launching MPI
 #'   processes. For example, `mpi_args = list("n" = 4)` launches the executable
 #'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
 #'   model executable.
+#' @template model-common-args
+#' @template model-sample-args
 #'
 #' @section Value: A [`CmdStanMCMC`] object.
 #'
