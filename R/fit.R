@@ -638,7 +638,6 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 
 
 # CmdStanMCMC -------------------------------------------------------------
-
 #' CmdStanMCMC objects
 #'
 #' @name CmdStanMCMC
@@ -995,8 +994,8 @@ num_chains = function() {
 }
 CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 
-# CmdStanMLE -------------------------------------------------------------
 
+# CmdStanMLE -------------------------------------------------------------
 #' CmdStanMLE objects
 #'
 #' @name CmdStanMLE
@@ -1096,8 +1095,8 @@ mle <- function(variables = NULL) {
 }
 CmdStanMLE$set("public", name = "mle", value = mle)
 
-# CmdStanVB ---------------------------------------------------------------
 
+# CmdStanVB ---------------------------------------------------------------
 #' CmdStanVB objects
 #'
 #' @name CmdStanVB
@@ -1171,8 +1170,8 @@ lp_approx <- function() {
 }
 CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 
-# CmdStanGQ ---------------------------------------------------------------
 
+# CmdStanGQ ---------------------------------------------------------------
 #' CmdStanGQ objects
 #'
 #' @name CmdStanGQ
