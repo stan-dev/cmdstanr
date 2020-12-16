@@ -8,7 +8,7 @@
 num_chains()
 }
 \value{
-Am integer.
+An integer.
 }
 \description{
 The \verb{$num_chains()} method returns the number of MCMC chains.

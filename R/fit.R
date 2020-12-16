@@ -980,7 +980,7 @@ CmdStanMCMC$set("public", name = "inv_metric", value = inv_metric)
 #' @name fit-method-num_chains
 #' @aliases num_chains
 #' @description The `$num_chains()` method returns the number of MCMC chains.
-#' @return Am integer.
+#' @return An integer.
 #'
 #' @seealso [`CmdStanMCMC`]
 #'
@@ -1092,7 +1092,7 @@ CmdStanMLE <- R6::R6Class(
 mle <- function(variables = NULL) {
   x <- self$draws(variables)
   x <- x[, colnames(x) != "lp__"]
-  setNames(as.numeric(x), nm = posterior::variables(x))
+  stats::setNames(as.numeric(x), posterior::variables(x))
 }
 CmdStanMLE$set("public", name = "mle", value = mle)
 
