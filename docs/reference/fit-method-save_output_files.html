@@ -87,7 +87,7 @@ the current file paths without moving any files." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -193,33 +193,59 @@ updated to point to the new file locations.</strong></p>
 the current file paths without moving any files.</p>
     </div>
 
+    <pre class="usage"><span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"."</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 
+<span class='fu'>save_latent_dynamics_files</span>(
+  <span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"."</span>,
+  <span class='kw'>basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)
 
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
+<span class='fu'>save_data_file</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"."</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 
-    
-<pre>$save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-$save_latent_dynamics_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-$save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+<span class='fu'>output_files</span>(<span class='kw'>include_failed</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
-$output_files()
-$latent_dynamics_files()
-$data_file()
-</pre>
+<span class='fu'>latent_dynamics_files</span>(<span class='kw'>include_failed</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
+
+<span class='fu'>data_file</span>()</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>dir</th>
+      <td><p>(string) Path to directory where the files should be saved.</p></td>
+    </tr>
+    <tr>
+      <th>basename</th>
+      <td><p>(string) Base filename to use. See <strong>Details</strong>.</p></td>
+    </tr>
+    <tr>
+      <th>timestamp</th>
+      <td><p>(logical) Should a timestamp be added to the file name(s)?
+Defaults to <code>TRUE</code>. See <strong>Details</strong>.</p></td>
+    </tr>
+    <tr>
+      <th>random</th>
+      <td><p>(logical) Should random alphanumeric characters be added to the
+end of the file name(s)? Defaults to <code>TRUE</code>. See <strong>Details</strong>.</p></td>
+    </tr>
+    <tr>
+      <th>include_failed</th>
+      <td><p>Should CmdStan runs that failed also be included? The
+default is <code>FALSE.</code></p></td>
+    </tr>
+    </table>
 
-    
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-<ul>
-<li><p><code>dir</code>: (string) Path to directory where the files should be saved.</p></li>
-<li><p><code>basename</code>: (string) Base filename to use. See <strong>Details</strong>.</p></li>
-<li><p><code>timestamp</code>: (logical) Should a timestamp be added to the file name(s)?
-Defaults to <code>TRUE</code>. See <strong>Details</strong>.</p></li>
-<li><p><code>random</code>: (logical) Should random alphanumeric characters be added to the
-end of the file name(s)? Defaults to <code>TRUE</code>. See <strong>Details</strong>.</p></li>
-</ul>
-
+    <p>The <code>$save_*</code> methods print a message with the new file paths and (invisibly)
+return a character vector of the new paths (or <code>NA</code> for any that couldn't be
+copied). They also have the side effect of setting the internal paths in the
+fitted model object to the new paths.</p>
+<p>The methods <em>without</em> the <code>save_</code> prefix return character vectors of file
+paths without moving any files.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     
@@ -237,20 +263,33 @@ the form <code>basename-timestamp-id-random</code>, where</p><ul>
 file name after <code>basename</code>.</p>
 <p>For <code>$save_data_file()</code> no <code>id</code> is included in the file name because even
 with multiple MCMC chains the data file is the same.</p>
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    
-
-<p>The <code>$save_*</code> methods print a message with the new file paths and (invisibly)
-return a character vector of the new paths (or <code>NA</code> for any that couldn't be
-copied). They also have the side effect of setting the internal paths in the
-fitted model object to the new paths.</p>
-<p>The methods <em>without</em> the <code>save_</code> prefix return character vectors of file
-paths without moving any files.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code>, <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code></p></div>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>()</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>output_files</span>()</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171339-1-578cb5.csv"
+#&gt; [2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171339-2-578cb5.csv"
+#&gt; [3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171339-3-578cb5.csv"
+#&gt; [4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171339-4-578cb5.csv"</div><div class='input'><span class='no'>fit</span>$<span class='fu'>data_file</span>()</div><div class='output co'>#&gt; [1] "/private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpOUu4d5/temp_libpath1f1e474979aa/cmdstanr/logistic.data.json"</div><div class='input'>
+<span class='co'># just using tempdir for the example</span>
+<span class='no'>my_dir</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>()
+<span class='no'>fit</span>$<span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='no'>my_dir</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='st'>"banana"</span>)</div><div class='output co'>#&gt; <span class='message'>Moved 4 files and set internal paths to new locations:</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/banana-202012171339-1-518bfc.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/banana-202012171339-2-518bfc.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/banana-202012171339-3-518bfc.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/banana-202012171339-4-518bfc.csv</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='no'>my_dir</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='st'>"tomato"</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='message'>Moved 4 files and set internal paths to new locations:</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/tomato-1-2c2672.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/tomato-2-2c2672.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/tomato-3-2c2672.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/tomato-4-2c2672.csv</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='no'>my_dir</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='st'>"lettuce"</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='message'>Moved 4 files and set internal paths to new locations:</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/lettuce-1.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/lettuce-2.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/lettuce-3.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/lettuce-4.csv</span></div><div class='input'># }
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

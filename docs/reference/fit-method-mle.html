@@ -86,7 +86,7 @@ $draws() method." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -184,47 +184,39 @@ $draws() method." />
     <div class="ref-description">
     <p>The <code>$mle()</code> method is only available for <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code> objects.
 It returns the penalized maximum likelihood estimate (posterior mode) as a
-numeric vector with one element per variable. The returned vector does not
+numeric vector with one element per variable. The returned vector does <em>not</em>
 include <code>lp__</code>, the total log probability (<code>target</code>) accumulated in the
 <code>model</code> block of the Stan program, which is available via the
 <code><a href='fit-method-lp.html'>$lp()</a></code> method and also included in the
 <code><a href='fit-method-draws.html'>$draws()</a></code> method.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$mle(variables = NULL)
-</pre>
+    <pre class="usage"><span class='fu'>mle</span>(<span class='kw'>variables</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>variables</code>: (character vector) The variables (parameters and generated
-quantities) to include. If NULL (the default) then all variables are
-included.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>variables</th>
+      <td><p>(character vector) The variables (parameters, transformed
+parameters, and generated quantities) to include. If NULL (the default)
+then all variables are included.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
-
-<p>A numeric vector. See <strong>Examples</strong>.</p>
+    <p>A numeric vector. See <strong>Examples</strong>.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='CmdStanMLE.html'>CmdStanMLE</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>()</div><div class='output co'>#&gt;     alpha   beta[1]   beta[2]   beta[3] 
-#&gt;  0.364454 -0.631561 -0.258958  0.648495 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"alpha"</span>)</div><div class='output co'>#&gt;    alpha 
-#&gt; 0.364454 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt;   beta[1]   beta[2]   beta[3] 
-#&gt; -0.631561 -0.258958  0.648495 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta[2]"</span>)</div><div class='output co'>#&gt;   beta[2] 
-#&gt; -0.258958 </div><div class='input'># }
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"alpha"</span>)</div><div class='output co'>#&gt;    alpha 
+#&gt; 0.364448 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt;   beta[1]   beta[2]   beta[3] 
+#&gt; -0.631556 -0.258966  0.648501 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta[2]"</span>)</div><div class='output co'>#&gt;   beta[2] 
+#&gt; -0.258966 </div><div class='input'># }
 
 </div></pre>
   </div>

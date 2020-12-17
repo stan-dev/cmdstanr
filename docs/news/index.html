@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -173,20 +173,45 @@
       <small>Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="cmdstanr-022" class="section level1">
-<h1 class="page-header" data-toc-text="0.2.2">
-<a href="#cmdstanr-022" class="anchor"></a>cmdstanr 0.2.2</h1>
+    <div id="cmdstanr-030" class="section level1">
+<h1 class="page-header" data-toc-text="0.3.0">
+<a href="#cmdstanr-030" class="anchor"></a>cmdstanr 0.3.0</h1>
 <div id="bug-fixes" class="section level3">
 <h3 class="hasAnchor">
 <a href="#bug-fixes" class="anchor"></a>Bug fixes</h3>
 <ul>
-<li><p>Fixed bug with reading Stan CSV when grep used coloring by default (<a href='https://github.com/stan-dev/cmdstanr/issues/364'>#364</a>,<a href='https://github.com/stan-dev/cmdstanr/issues/371'>#371</a>)</p></li>
-<li><p>Depend on posterior v0.1.3 to avoid a potential error in <code>$summary()</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/383'>#383</a>)</p></li>
+<li><p>Fixed reading inverse mass matrix with values written in scientific format in the CSV. (<a href='https://github.com/stan-dev/cmdstanr/issues/394'>#394</a>)</p></li>
+<li><p>Fixed error caused by an empty data list. Previously if a model didn’t require data then <code>data</code> had to either be NULL or be a non-empty list, but now <code><a href="https://rdrr.io/r/base/list.html">list()</a></code> is allowed. (<a href='https://github.com/stan-dev/cmdstanr/issues/403'>#403</a>)</p></li>
 </ul>
 </div>
 <div id="new-features" class="section level3">
 <h3 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New features</h3>
+<ul>
+<li><p>Added <code>$sample_mpi()</code> for MCMC sampling with MPI. (<a href='https://github.com/stan-dev/cmdstanr/issues/350'>#350</a>)</p></li>
+<li><p>Added informative messages on compile errors caused by precompiled headers (PCH). (<a href='https://github.com/stan-dev/cmdstanr/issues/384'>#384</a>)</p></li>
+<li><p>Added the <code>cmdstanr_verbose</code> option for verbose mode. Intended for troubleshooting, debugging and development. See end of <em>How does CmdStanR work?</em> vignette for details. (<a href='https://github.com/stan-dev/cmdstanr/issues/392'>#392</a>)</p></li>
+<li><p>New <code>$loo()</code> method for CmdStanMCMC objects. Requires computing pointwise log-likelihood in Stan program. (<a href='https://github.com/stan-dev/cmdstanr/issues/366'>#366</a>)</p></li>
+<li><p>The <code>fitted_params</code> argument to the <code>$generate_quantities()</code> method now also accepts CmdStanVB, <code><a href="https://mc-stan.org/posterior/reference/draws_array.html">posterior::draws_array</a></code>, and <code><a href="https://mc-stan.org/posterior/reference/draws_matrix.html">posterior::draws_matrix</a></code> objects. (<a href='https://github.com/stan-dev/cmdstanr/issues/390'>#390</a>)</p></li>
+<li><p>The <code>$optimize()</code> method now supports all of CmdStan’s tolerance-related arguments for (L)BFGS. (<a href='https://github.com/stan-dev/cmdstanr/issues/398'>#398</a>)</p></li>
+<li><p>The documentation for the R6 methods now uses <code>@param</code>, which allows package developers to import the CmdStanR documentation using roxygen2’s <code>@inheritParams</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/408'>#408</a>)</p></li>
+</ul>
+</div>
+</div>
+    <div id="cmdstanr-022" class="section level1">
+<h1 class="page-header" data-toc-text="0.2.2">
+<a href="#cmdstanr-022" class="anchor"></a>cmdstanr 0.2.2</h1>
+<div id="bug-fixes-1" class="section level3">
+<h3 class="hasAnchor">
+<a href="#bug-fixes-1" class="anchor"></a>Bug fixes</h3>
+<ul>
+<li><p>Fixed bug with reading Stan CSV when grep used coloring by default (<a href='https://github.com/stan-dev/cmdstanr/issues/364'>#364</a>,<a href='https://github.com/stan-dev/cmdstanr/issues/371'>#371</a>)</p></li>
+<li><p>Depend on posterior v0.1.3 to avoid a potential error in <code>$summary()</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/383'>#383</a>)</p></li>
+</ul>
+</div>
+<div id="new-features-1" class="section level3">
+<h3 class="hasAnchor">
+<a href="#new-features-1" class="anchor"></a>New features</h3>
 <ul>
 <li><p>Added support for native execution on the macOS with the M1 ARM-based CPU. (<a href='https://github.com/stan-dev/cmdstanr/issues/375'>#375</a>)</p></li>
 <li><p>Added threading support via <code>threads</code> argument for <code>$optimize()</code> and <code>$variational()</code> (was already available via <code>threads_per_chain</code> for <code>$sample()</code>). (<a href='https://github.com/stan-dev/cmdstanr/issues/369'>#369</a>)</p></li>
@@ -196,17 +221,17 @@
     <div id="cmdstanr-021" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.1">
 <a href="#cmdstanr-021" class="anchor"></a>cmdstanr 0.2.1</h1>
-<div id="bug-fixes-1" class="section level3">
+<div id="bug-fixes-2" class="section level3">
 <h3 class="hasAnchor">
-<a href="#bug-fixes-1" class="anchor"></a>Bug fixes</h3>
+<a href="#bug-fixes-2" class="anchor"></a>Bug fixes</h3>
 <ul>
 <li><p>Fixed bug with processing stanc_options in <code><a href="../reference/model-method-check_syntax.html">check_syntax()</a></code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/345'>#345</a>)</p></li>
 <li><p>Fixed bug on access to one variable via <code><a href="../reference/fit-method-draws.html">draws()</a></code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/348'>#348</a>)</p></li>
 </ul>
 </div>
-<div id="new-features-1" class="section level3">
+<div id="new-features-2" class="section level3">
 <h3 class="hasAnchor">
-<a href="#new-features-1" class="anchor"></a>New features</h3>
+<a href="#new-features-2" class="anchor"></a>New features</h3>
 <ul>
 <li>
 <code><a href="../reference/model-method-compile.html">compile()</a></code> and <code><a href="../reference/model-method-check_syntax.html">check_syntax()</a></code> methods gain argument <code>pedantic</code> for turning on pedantic mode, which warns about issues with the model beyond syntax errors. (<a href='https://github.com/stan-dev/cmdstanr/issues/361'>#361</a>)</li>
@@ -216,9 +241,9 @@
     <div id="cmdstanr-020" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.0">
 <a href="#cmdstanr-020" class="anchor"></a>cmdstanr 0.2.0</h1>
-<div id="bug-fixes-2" class="section level3">
+<div id="bug-fixes-3" class="section level3">
 <h3 class="hasAnchor">
-<a href="#bug-fixes-2" class="anchor"></a>Bug fixes</h3>
+<a href="#bug-fixes-3" class="anchor"></a>Bug fixes</h3>
 <ul>
 <li><p>Fix potential indexing error if using <code><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv()</a></code> with CSV files created by CmdStan without CmdStanR. (<a href='https://github.com/stan-dev/cmdstanr/issues/291'>#291</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/292'>#292</a>, <a href='https://github.com/johnlees'>@johnlees</a>)</p></li>
 <li><p>Fix error when returning draws or sampler diagnostics for a fit with only warmup and no samples. (<a href='https://github.com/stan-dev/cmdstanr/issues/288'>#288</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/293'>#293</a>)</p></li>
@@ -230,9 +255,9 @@
 <li><p>Fix missing <code>include_paths</code> in <code>$syntax_check()</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/335'>#335</a>, <a href='https://github.com/mike-lawrence'>@mike-lawrence</a>)</p></li>
 </ul>
 </div>
-<div id="new-features-2" class="section level3">
+<div id="new-features-3" class="section level3">
 <h3 class="hasAnchor">
-<a href="#new-features-2" class="anchor"></a>New features</h3>
+<a href="#new-features-3" class="anchor"></a>New features</h3>
 <ul>
 <li><p>CSV reading is now faster by using <code><a href="https://Rdatatable.gitlab.io/data.table/reference/fread.html">data.table::fread()</a></code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/318'>#318</a>)</p></li>
 <li><p><code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> gains argument <code>version</code> for specifying which version of CmdStan to install. (<a href='https://github.com/stan-dev/cmdstanr/issues/300'>#300</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/308'>#308</a>)</p></li>

@@ -827,8 +827,8 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'
 #'   An example of compiling with MPI:
 #'   ```
-#'   mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-#'   mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
+#'   mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+#'   mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 #'   ```
 #'   The C++ options that must be supplied to the
 #'   [compile][model-method-compile] call are:

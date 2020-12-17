@@ -221,8 +221,8 @@ installed. For Unix systems the most commonly used implementations are
 MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 (for example mpicxx), which is required to compile the model.
 
-An example of compiling with MPI:\preformatted{mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
+An example of compiling with MPI:\preformatted{mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 }
 
 The C++ options that must be supplied to the

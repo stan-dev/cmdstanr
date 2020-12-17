@@ -82,7 +82,7 @@ CmdStanModel object." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -270,7 +270,7 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 13.5 seconds.</div><div class='input'>
+#&gt; Total execution time: 0.7 seconds.</div><div class='input'>
 <span class='co'># stan program for standalone generated quantities</span>
 <span class='co'># (could keep model block, but not necessary so removing it)</span>
 <span class='no'>gq_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(
@@ -295,12 +295,12 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 3.8 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
+#&gt; Total execution time: 0.6 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   ..$ variable : chr [1:10] "y_rep[1]" "y_rep[2]" "y_rep[3]" "y_rep[4]" ...</div><div class='input'>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)</div><div class='output co'>#&gt; <span class='message'>This is posterior version 0.1.2</span></div><div class='input'><span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 10 variables
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)</div><div class='output co'>#&gt; <span class='message'>This is posterior version 0.1.3</span></div><div class='input'><span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 10 variables
 #&gt;    y_rep[1] y_rep[2] y_rep[3] y_rep[4] y_rep[5] y_rep[6] y_rep[7] y_rep[8]
 #&gt; 1         0        0        0        0        0        0        0        0
 #&gt; 2         0        1        1        1        1        1        1        1

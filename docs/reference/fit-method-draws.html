@@ -85,7 +85,7 @@ log probability (target) accumulated in the model block." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -189,32 +189,26 @@ draws after variational approximation using formats provided by the
 log probability (<code>target</code>) accumulated in the <code>model</code> block.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$draws(variables = NULL, inc_warmup = FALSE, ...)
-</pre>
+    <pre class="usage"><span class='fu'>draws</span>(<span class='kw'>variables</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>inc_warmup</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>variables</code>: (character vector) The variables (parameters and generated
-quantities) to read in. If <code>NULL</code> (the default) then the draws of all
-variables are included.</p></li>
-<li><p><code>inc_warmup</code>: (logical) For MCMC only, should warmup draws be included?
-Defaults to <code>FALSE</code>.</p></li>
-<li><p><code>...</code>: Arguments passed on to
-<code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>posterior::as_draws_array()</a></code>.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>variables</th>
+      <td><p>(character vector) The variables to read in. If <code>NULL</code> (the
+default) then all variables are included.</p></td>
+    </tr>
+    <tr>
+      <th>inc_warmup</th>
+      <td><p>(logical) Should warmup draws be included? Defaults to
+<code>FALSE</code>. Ignored except when used with <a href='CmdStanMCMC.html'>CmdStanMCMC</a> objects.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     
-
 <ul>
 <li><p>For <a href='model-method-sample.html'>MCMC</a>, a 3-D
 <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> object (iteration x chain x
@@ -247,25 +241,25 @@ format. See <code><a href='fit-method-mle.html'>$mle()</a></code> to extract the
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'>
 <span class='co'># returned as 3-D array (see ?posterior::draws_array)</span>
 <span class='no'>draws</span> <span class='kw'>&lt;-</span> <span class='no'>fit</span>$<span class='fu'>draws</span>()
-<span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; [1] 1000    4    5</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:5] -67.7 -67.3 -66.9 -67.2 -68.1 ...
+<span class='fu'><a href='https://rdrr.io/r/base/dim.html'>dim</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; [1] 1000    4  105</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:105] -67.7 -67.3 -66.9 -67.2 -68.1 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
-#&gt;   ..$ variable : chr [1:5] "lp__" "alpha" "beta[1]" "beta[2]" ...</div><div class='input'>
+#&gt;   ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...</div><div class='input'>
 <span class='co'># can easily convert to other formats (data frame, matrix, list)</span>
-<span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>draws</span>)  <span class='co'># see also as_draws_matrix, as_draws_list</span></div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 5 variables
-#&gt;    lp__ alpha beta[1] beta[2] beta[3]
-#&gt; 1   -68  0.56   -1.19  -0.581    0.65
-#&gt; 2   -67  0.15   -0.85  -0.681    0.46
-#&gt; 3   -67  0.60   -0.54   0.191    0.66
-#&gt; 4   -67  0.14   -0.71  -0.748    0.97
-#&gt; 5   -68  0.43   -0.64   0.340    0.73
-#&gt; 6   -66  0.42   -0.75   0.116    0.79
-#&gt; 7   -65  0.58   -0.56  -0.056    0.78
-#&gt; 8   -64  0.42   -0.75  -0.122    0.82
-#&gt; 9   -65  0.34   -0.40  -0.508    0.46
-#&gt; 10  -65  0.65   -0.59  -0.022    0.64
-#&gt; # ... with 3990 more draws
+<span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>draws</span>)  <span class='co'># see also as_draws_matrix, as_draws_list</span></div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 105 variables
+#&gt;    lp__ alpha beta[1] beta[2] beta[3] log_lik[1] log_lik[2] log_lik[3]
+#&gt; 1   -68  0.56   -1.19  -0.581    0.65      -0.41      -0.42      -0.51
+#&gt; 2   -67  0.15   -0.85  -0.681    0.46      -0.61      -0.46      -1.00
+#&gt; 3   -67  0.60   -0.54   0.191    0.66      -0.40      -0.39      -0.18
+#&gt; 4   -67  0.14   -0.71  -0.748    0.97      -0.69      -0.27      -1.01
+#&gt; 5   -68  0.43   -0.64   0.340    0.73      -0.43      -0.28      -0.14
+#&gt; 6   -66  0.42   -0.75   0.116    0.79      -0.45      -0.27      -0.20
+#&gt; 7   -65  0.58   -0.56  -0.056    0.78      -0.43      -0.38      -0.27
+#&gt; 8   -64  0.42   -0.75  -0.122    0.82      -0.48      -0.30      -0.31
+#&gt; 9   -65  0.34   -0.40  -0.508    0.46      -0.57      -0.59      -0.84
+#&gt; 10  -65  0.65   -0.59  -0.022    0.64      -0.39      -0.46      -0.25
+#&gt; # ... with 3990 more draws, and 97 more variables
 #&gt; # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</div><div class='input'>
 <span class='co'># can select specific parameters</span>
 <span class='no'>fit</span>$<span class='fu'>draws</span>(<span class='st'>"alpha"</span>)</div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 4 chains, and 1 variables
