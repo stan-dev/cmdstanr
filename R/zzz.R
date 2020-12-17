@@ -1,12 +1,3 @@
-.onAttach <- function(...) {
-  startup_messages()
-}
-
-.onLoad <- function(...) {
-  cmdstanr_initialize()
-}
-
-
 startup_messages <- function() {
   packageStartupMessage("This is cmdstanr version ", utils::packageVersion("cmdstanr"))
   packageStartupMessage("- Online documentation and vignettes at mc-stan.org/cmdstanr")
@@ -64,4 +55,24 @@ cmdstanr_initialize <- function() {
     .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
   }
   invisible(TRUE)
+}
+
+cmdstanr_knitr_env_function_generator <- function(env1) {
+  function(env2 = NULL) {
+    if (!is.null(env2)) {
+      env1 <<- env2
+    }
+    invisible(env1)
+  }
+}
+cmdstanr_knitr_env <- cmdstanr_knitr_env_function_generator(new.env())
+
+
+.onAttach <- function(...) {
+  startup_messages()
+}
+
+.onLoad <- function(...) {
+  cmdstanr_knitr_env(knitr::knit_global())
+  cmdstanr_initialize()
 }

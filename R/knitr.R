@@ -84,7 +84,7 @@ eng_cmdstan <- function(options) {
     }
     file <- write_stan_file(options$code, dir = dir)
     mod <- cmdstan_model(file)
-    assign(output_var, mod, envir = knitr::knit_global())
+    assign(output_var, mod, envir = cmdstanr_knitr_env())
   }
   options$engine <- "stan" # for syntax highlighting
   code <- paste(options$code, collapse = "\n")
