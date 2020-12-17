@@ -11,86 +11,9 @@ CmdStanFit <- R6::R6Class(
       self$runset <- runset
       invisible(self)
     },
-
-    save_object = function(file, ...) {
-      self$draws()
-      try(self$sampler_diagnostics(), silent = TRUE)
-      try(self$init(), silent = TRUE)
-      saveRDS(self, file = file, ...)
-      invisible(self)
-    },
-
     num_procs = function() {
       self$runset$num_procs()
     },
-
-    time = function() {
-      self$runset$time()
-    },
-
-    draws = function(variables = NULL) {
-      if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
-      }
-      # CmdStanMCMC has its own implementation, this is used for VB and MLE
-      if (is.null(private$draws_)) {
-        private$read_csv_()
-      }
-      posterior::subset_draws(private$draws_, variable = variables)
-    },
-
-    lp = function() {
-      lp__ <- self$draws(variables = "lp__")
-      lp__ <- posterior::as_draws_matrix(lp__) # if mcmc this combines all chains, otherwise does nothing
-      as.numeric(lp__)
-    },
-
-    metadata = function() {
-      if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Fitting failed. Unable to retrieve the metadata.", call. = FALSE)
-      }
-      if (is.null(private$metadata_)) {
-        private$read_csv_()
-      }
-      private$metadata_
-    },
-
-    init = function() {
-      if (is.null(private$init_)) {
-        init_paths <- self$metadata()$init
-        if (!is.character(init_paths) || any(!file.exists(init_paths))) {
-          stop("Can't find initial values files.", call. = FALSE)
-        }
-        private$init_ <- lapply(init_paths, jsonlite::read_json, simplifyVector = TRUE)
-      }
-      private$init_
-    },
-
-    summary = function(variables = NULL, ...) {
-      draws <- self$draws(variables)
-      if (self$runset$method() == "sample") {
-        summary <- posterior::summarise_draws(draws, ...)
-      } else {
-        if (!length(list(...))) {
-          # if user didn't supply any args use default summary measures,
-          # which don't include MCMC-specific things
-          summary <- posterior::summarise_draws(
-            draws,
-            posterior::default_summary_measures()
-          )
-        } else {
-          # otherwise use whatever the user specified via ...
-          summary <- posterior::summarise_draws(draws, ...)
-        }
-      }
-      if (self$runset$method() == "optimize") {
-        summary <- summary[, c("variable", "mean")]
-        colnames(summary) <- c("variable", "estimate")
-      }
-      summary
-    },
-
-    # print summary table without using tibbles
     print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Fitting failed. Unable to print.", call. = FALSE)
@@ -124,54 +47,12 @@ CmdStanFit <- R6::R6Class(
 
       opts <- options(max.print = prod(dim(out)))
       on.exit(options(max.print = opts$max.print), add = TRUE)
-      print(out, row.names=FALSE)
+      base::print(out, row.names=FALSE)
       if (max_rows < total_rows) {
         cat("\n # showing", max_rows, "of", total_rows,
             "rows (change via 'max_rows' argument)\n")
       }
       invisible(self)
-    },
-
-    cmdstan_summary = function(...) {
-      self$runset$run_cmdstan_tool("stansummary", ...)
-    },
-    cmdstan_diagnose = function(...) {
-      self$runset$run_cmdstan_tool("diagnose", ...)
-    },
-    output = function(id = NULL) {
-      # non-MCMC fit is obtained with one process only
-      # so fit$output() prints the output of that process
-      cat(paste(self$runset$procs$proc_output(1), collapse="\n"))
-    },
-    output_files = function(include_failed = FALSE) {
-      self$runset$output_files(include_failed)
-    },
-    latent_dynamics_files = function(include_failed = FALSE) {
-      self$runset$latent_dynamics_files(include_failed)
-    },
-    data_file = function() {
-      self$runset$data_file()
-    },
-    save_output_files = function(dir = ".",
-                                 basename = NULL,
-                                 timestamp = TRUE,
-                                 random = TRUE) {
-      self$runset$save_output_files(dir, basename, timestamp, random)
-    },
-    save_latent_dynamics_files = function(dir = ".",
-                                     basename = NULL,
-                                     timestamp = TRUE,
-                                     random = TRUE) {
-      self$runset$save_latent_dynamics_files(dir, basename, timestamp, random)
-    },
-    save_data_file = function(dir = ".",
-                              basename = NULL,
-                              timestamp = TRUE,
-                              random = TRUE) {
-      self$runset$save_data_file(dir, basename, timestamp, random)
-    },
-    return_codes = function() {
-      self$runset$procs$return_codes()
     }
   ),
   private = list(
@@ -180,9 +61,6 @@ CmdStanFit <- R6::R6Class(
     init_ = NULL
   )
 )
-
-
-# Document methods ----------------------------------------------------------
 
 #' Save fitted model object to a file
 #'
@@ -194,14 +72,8 @@ CmdStanFit <- R6::R6Class(
 #'   read into R lazily (i.e., as needed), the `$save_object()` method is the
 #'   safest way to guarantee that everything has been read in before saving.
 #'
-#' @section Usage:
-#'   ```
-#'   $save_object(file, ...)
-#'   ```
-#'
-#' @section Arguments:
-#' * `file`: (string) Path where the file should be saved.
-#' * `...`: Other arguments to pass to [base::saveRDS()] besides `object` and `file`.
+#' @param file (string) Path where the file should be saved.
+#' @param ... Other arguments to pass to [base::saveRDS()] besides `object` and `file`.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -217,7 +89,14 @@ CmdStanFit <- R6::R6Class(
 #' fit$summary()
 #' }
 #'
-NULL
+save_object <- function(file, ...) {
+  self$draws()
+  try(self$sampler_diagnostics(), silent = TRUE)
+  try(self$init(), silent = TRUE)
+  saveRDS(self, file = file, ...)
+  invisible(self)
+}
+CmdStanFit$set("public", name = "save_object", value = save_object)
 
 #' Extract posterior draws
 #'
@@ -231,20 +110,12 @@ NULL
 #'   `generated quantities` from the Stan program as well as `lp__`, the total
 #'   log probability (`target`) accumulated in the `model` block.
 #'
-#' @section Usage:
-#'   ```
-#'   $draws(variables = NULL, inc_warmup = FALSE, ...)
-#'   ```
-#' @section Arguments:
-#' * `variables`: (character vector) The variables (parameters and generated
-#' quantities) to read in. If `NULL` (the default) then the draws of all
-#' variables are included.
-#' * `inc_warmup`: (logical) For MCMC only, should warmup draws be included?
-#' Defaults to `FALSE`.
-#' * `...`: Arguments passed on to
-#' [`posterior::as_draws_array()`][posterior::draws_array].
+#' @param variables (character vector) The variables to read in. If `NULL` (the
+#'   default) then all variables are included.
+#' @param inc_warmup (logical) Should warmup draws be included? Defaults to
+#'   `FALSE`. Ignored except when used with [CmdStanMCMC] objects.
 #'
-#' @section Value:
+#' @return
 #' * For [MCMC][model-method-sample], a 3-D
 #' [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable).
@@ -291,95 +162,35 @@ NULL
 #' mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
 #' }
 #'
-NULL
+draws <- function(variables = NULL, inc_warmup = FALSE) {
+  # CmdStanMCMC and CmdStanGQ have separate implementations,
+  # this is used for CmdStanVB and CmdStanMLE
+  if (!length(self$output_files(include_failed = FALSE))) {
+    stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
+  }
+  if (inc_warmup) {
+    warning("'inc_warmup' is ignored except when used with CmdStanMCMC objects.",
+            call. = FALSE)
+  }
+  if (is.null(private$draws_)) {
+    private$read_csv_()
+  }
+  posterior::subset_draws(private$draws_, variable = variables)
+}
+CmdStanFit$set("public", name = "draws", value = draws)
 
-#' Extract sampler diagnostics
-#'
-#' @name fit-method-sampler_diagnostics
-#' @aliases sampler_diagnostics
-#' @description Extract the values of sampler diagnostics for each iteration and
-#'   chain of MCMC.
-#'
-#' @section Usage:
-#'   ```
-#'   $sampler_diagnostics(inc_warmup = FALSE, ...)
-#'   ```
-#' @section Arguments:
-#' * `inc_warmup`: (logical) Should warmup draws be included? Defaults to `FALSE`.
-#' * `...`: Arguments passed on to
-#' [`posterior::as_draws_array()`][posterior::draws_array].
-#'
-#' @section Value:
-#' A 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
-#' variable). The variables for Stan's default MCMC algorithm are
-#' `"accept_stat__"`, `"stepsize__"`, `"treedepth__"`, `"n_leapfrog__"`,
-#' `"divergent__"`, `"energy__"`.
-#'
-#' @seealso [`CmdStanMCMC`]
-#'
-#' @examples
-#' \dontrun{
-#' fit <- cmdstanr_example("logistic")
-#' sampler_diagnostics <- fit$sampler_diagnostics()
-#' str(sampler_diagnostics)
-#'
-#' library(posterior)
-#' as_draws_df(sampler_diagnostics)
-#' }
-#'
-NULL
-
-#' Extract inverse metric (mass matrix)
-#'
-#' @name fit-method-inv_metric
-#' @aliases inv_metric
-#' @description Return a list containing the inverse metric (mass matrix) for
-#'   each chain.
-#'
-#' @section Usage:
-#'   ```
-#'   $inv_metric(matrix = TRUE)
-#'   ```
-#' @section Arguments:
-#' * `matrix`: (logical) If a diagonal metric was used, setting `matrix = FALSE`
-#' returns a list containing just the diagonals of the matrices instead of the
-#' full matrices. Setting `matrix = FALSE` has no effect for dense metrics.
-#'
-#' @section Value:
-#' A list of length equal to the number of MCMC chains. See the `matrix`
-#' argument for details.
-#'
-#' @seealso [`CmdStanMCMC`]
-#'
-#' @examples
-#' \dontrun{
-#' fit <- cmdstanr_example("logistic")
-#' fit$inv_metric()
-#' fit$inv_metric(matrix=FALSE)
-#'
-#' fit <- cmdstanr_example("logistic", metric = "dense_e")
-#' fit$inv_metric()
-#' }
-#'
-NULL
-
-#' Extract initial values
+#' Extract user-specified initial values
 #'
 #' @name fit-method-init
 #' @aliases init
 #' @description Return user-specified initial values. If the user provided
 #'   initial values files or \R objects (list of lists or function) via the
 #'   `init` argument when fitting the model then these are returned (always in
-#'   the list of lists format). Initial values generated by CmdStan are not
-#'   returned.
+#'   the list of lists format). Currently it is not possible to extract initial
+#'   values generated automatically by CmdStan, although CmdStan may support
+#'   this in the future.
 #'
-#' @section Usage:
-#'   ```
-#'   $init()
-#'   ```
-#'
-#' @section Value:
-#' A list of lists. See **Examples**.
+#' @return A list of lists. See **Examples**.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
 #'
@@ -400,7 +211,17 @@ NULL
 #' str(fit$init())
 #' }
 #'
-NULL
+init <- function() {
+  if (is.null(private$init_)) {
+    init_paths <- self$metadata()$init
+    if (!is.character(init_paths) || any(!file.exists(init_paths))) {
+      stop("Can't find initial values files.", call. = FALSE)
+    }
+    private$init_ <- lapply(init_paths, jsonlite::read_json, simplifyVector = TRUE)
+  }
+  private$init_
+}
+CmdStanFit$set("public", name = "init", value = init)
 
 #' Extract log probability (target)
 #'
@@ -416,12 +237,6 @@ NULL
 #'   section of the Stan Reference Manual for details on when normalizing
 #'   constants are dropped from log probability calculations.
 #'
-#' @section Usage:
-#'   ```
-#'   $lp()
-#'   $lp_approx()
-#'   ```
-#'
 #' @section Details:
 #' `lp__` is the unnormalized log density on Stan's [unconstrained
 #' space](https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html).
@@ -434,9 +249,9 @@ NULL
 #' for performing the checks described in Yao et al. (2018) and implemented in
 #' the \pkg{loo} package.
 #'
-#' @section Value:
-#' A numeric vector with length equal to the number of (post-warmup) draws for
-#' MCMC and variational inference, and length equal to `1` for optimization.
+#' @return A numeric vector with length equal to the number of (post-warmup)
+#'   draws for MCMC and variational inference, and length equal to `1` for
+#'   optimization.
 #'
 #' @references
 #' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
@@ -457,77 +272,36 @@ NULL
 #' plot(fit_vb$lp(), fit_vb$lp_approx())
 #' }
 #'
-NULL
+lp <- function() {
+  lp__ <- self$draws(variables = "lp__")
+  lp__ <- posterior::as_draws_matrix(lp__) # if mcmc this combines all chains, otherwise does nothing
+  as.numeric(lp__)
+}
+CmdStanFit$set("public", name = "lp", value = lp)
 
-#' Extract (penalized) maximum likelihood estimate after optimization
-#'
-#' @name fit-method-mle
-#' @aliases mle
-#' @description The `$mle()` method is only available for [`CmdStanMLE`] objects.
-#' It returns the penalized maximum likelihood estimate (posterior mode) as a
-#' numeric vector with one element per variable. The returned vector does not
-#' include `lp__`, the total log probability (`target`) accumulated in the
-#' `model` block of the Stan program, which is available via the
-#' [`$lp()`][fit-method-lp] method and also included in the
-#' [`$draws()`][fit-method-draws] method.
-#'
-#' @section Usage:
-#'   ```
-#'   $mle(variables = NULL)
-#'   ```
-#' @section Arguments:
-#' * `variables`: (character vector) The variables (parameters and generated
-#' quantities) to include. If NULL (the default) then all variables are
-#' included.
-#'
-#' @section Value:
-#' A numeric vector. See **Examples**.
-#'
-#' @seealso [`CmdStanMLE`]
-#'
-#' @examples
-#' \dontrun{
-#' fit <- cmdstanr_example("logistic", method = "optimize")
-#' fit$mle()
-#' fit$mle("alpha")
-#' fit$mle("beta")
-#' fit$mle("beta[2]")
-#' }
-#'
-NULL
 
-#' Compute a summary table of MCMC estimates and diagnostics
+#' Compute a summary table of estimates and diagnostics
 #'
 #' @name fit-method-summary
-#' @aliases summary print.CmdStanMCMC print.CmdStanMLE print.CmdStanVB
+#' @aliases summary fit-method-print print.CmdStanMCMC print.CmdStanMLE print.CmdStanVB
 #' @description The `$summary()` method runs
 #'   [`summarise_draws()`][posterior::draws_summary] from the \pkg{posterior}
-#'   package and returns the output. For MCMC only post-warmup draws are included
-#'   in the summary.
+#'   package and returns the output. For MCMC, only post-warmup draws are
+#'   included in the summary.
 #'
-#'   The `$print()` method prints the same summary stats but removes the extra
-#'   formatting used for printing tibbles and returns the fitted model object
-#'   itself. The `$print()` method may also be faster than `$summary()` because
-#'   it is designed to only compute the summary statistics for the variables
-#'   that will actually fit in the printed output (see argument `max_rows`)
-#'   whereas `$summary()` will compute them for all of the specified variables
-#'   in order to be able to return them to the user.
+#'   There is also a `$print()` method that prints the same summary stats but
+#'   removes the extra formatting used for printing tibbles and returns the
+#'   fitted model object itself. The `$print()` method may also be faster than
+#'   `$summary()` because it is designed to only compute the summary statistics
+#'   for the variables that will actually fit in the printed output whereas
+#'   `$summary()` will compute them for all of the specified variables in order
+#'   to be able to return them to the user. See **Examples**.
 #'
-#' @section Usage:
-#'   ```
-#'   $summary(variables = NULL, ...)
-#'   $print(variables = NULL, ..., digits = 2, max_rows = 10)
-#'   ```
-#' @section Arguments:
-#' * `variables`: (character vector) The variables to include.
-#' * `...`: Optional arguments to pass to
-#' [`posterior::summarise_draws()`][posterior::draws_summary].
-#' * `digits`: (integer) For `print` only, the number of digits to use for
-#' rounding.
-#' * `max_rows`: (integer) For `print` only, the maximum number of rows to print.
+#' @param variables (character vector) The variables to include.
+#' @param ... Optional arguments to pass to [`posterior::summarise_draws()`][posterior::draws_summary].
 #'
-#' @section Value:
-#' The `$summary()` method returns the tibble created by
+#' @return
+#' The `$summary()` method returns the tibble data frame created by
 #' [`posterior::summarise_draws()`][posterior::draws_summary].
 #'
 #' The `$print()` method returns the fitted model object itself (invisibly),
@@ -554,31 +328,52 @@ NULL
 #' fit$summary("beta", prob_gt_0 = ~ mean(. > 0))
 #' }
 #'
-NULL
+summary <- function(variables = NULL, ...) {
+  draws <- self$draws(variables)
+  if (self$runset$method() == "sample") {
+    summary <- posterior::summarise_draws(draws, ...)
+  } else {
+    if (!length(list(...))) {
+      # if user didn't supply any args use default summary measures,
+      # which don't include MCMC-specific things
+      summary <- posterior::summarise_draws(
+        draws,
+        posterior::default_summary_measures()
+      )
+    } else {
+      # otherwise use whatever the user specified via ...
+      summary <- posterior::summarise_draws(draws, ...)
+    }
+  }
+  if (self$runset$method() == "optimize") {
+    summary <- summary[, c("variable", "mean")]
+    colnames(summary) <- c("variable", "estimate")
+  }
+  summary
+}
+CmdStanFit$set("public", name = "summary", value = summary)
 
-
-#' Run CmdStan's `stansummary` and `diagnose`
-#'
-#' @description
-#' Run CmdStan's `stansummary` and `diagnose` utilities. These are
-#' documented in the CmdStan Guide:
-#' * https://mc-stan.org/docs/cmdstan-guide/stansummary.html
-#' * https://mc-stan.org/docs/cmdstan-guide/diagnose.html
+#' Run CmdStan's `stansummary` and `diagnose` utilities
 #'
 #' @name fit-method-cmdstan_summary
 #' @aliases fit-method-cmdstan_diagnose cmdstan_summary cmdstan_diagnose
-#' @note Although these methods also work for models fit using the
+#' @description Run CmdStan's `stansummary` and `diagnose` utilities. These are
+#'   documented in the CmdStan Guide:
+#'   * https://mc-stan.org/docs/cmdstan-guide/stansummary.html
+#'   * https://mc-stan.org/docs/cmdstan-guide/diagnose.html
+#'
+#'   Although these methods can be used for models fit using the
 #'   [`$variational()`][model-method-variational] method, much of the output is
-#'   only relevant for models fit using the [`$sample()`][model-method-sample]
-#'   method.
+#'   currently only relevant for models fit using the
+#'   [`$sample()`][model-method-sample] method.
 #'
-#' @section Usage:
-#'   ```
-#'   $cmdstan_summary()
-#'   $cmdstan_diagnose()
-#'   ```
+#'   See the [$summary()][fit-method-summary] for computing similar summaries in
+#'   R rather than calling CmdStan's utilites.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#' @param flags An optional character vector of flags (e.g.
+#'   `flags = c("--sig_figs=1")`).
+#'
+#' @seealso [`CmdStanMCMC`], [fit-method-summary]
 #'
 #' @examples
 #' \dontrun{
@@ -587,7 +382,16 @@ NULL
 #' fit$cmdstan_summary()
 #' }
 #'
-NULL
+cmdstan_summary <- function(flags = NULL) {
+  self$runset$run_cmdstan_tool("stansummary", flags = flags)
+}
+CmdStanFit$set("public", name = "cmdstan_summary", value = cmdstan_summary)
+
+#' @rdname fit-method-cmdstan_summary
+cmdstan_diagnose <- function() {
+  self$runset$run_cmdstan_tool("diagnose")
+}
+CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 
 #' Save output and data files
 #'
@@ -607,23 +411,11 @@ NULL
 #'   The versions without the `save_` prefix (e.g., `$output_files()`) return
 #'   the current file paths without moving any files.
 #'
-#' @section Usage:
-#'   ```
-#'   $save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-#'   $save_latent_dynamics_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-#'   $save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-#'
-#'   $output_files()
-#'   $latent_dynamics_files()
-#'   $data_file()
-#'   ```
-#'
-#' @section Arguments:
-#' * `dir`: (string) Path to directory where the files should be saved.
-#' * `basename`: (string) Base filename to use. See __Details__.
-#' * `timestamp`: (logical) Should a timestamp be added to the file name(s)?
+#' @param dir (string) Path to directory where the files should be saved.
+#' @param basename (string) Base filename to use. See __Details__.
+#' @param timestamp (logical) Should a timestamp be added to the file name(s)?
 #'   Defaults to `TRUE`. See __Details__.
-#' * `random`: (logical) Should random alphanumeric characters be added to the
+#' @param random (logical) Should random alphanumeric characters be added to the
 #'   end of the file name(s)? Defaults to `TRUE`. See __Details__.
 #'
 #' @section Details:
@@ -641,7 +433,7 @@ NULL
 #' For `$save_data_file()` no `id` is included in the file name because even
 #' with multiple MCMC chains the data file is the same.
 #'
-#' @section Value:
+#' @return
 #' The `$save_*` methods print a message with the new file paths and (invisibly)
 #' return a character vector of the new paths (or `NA` for any that couldn't be
 #' copied). They also have the side effect of setting the internal paths in the
@@ -652,7 +444,65 @@ NULL
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
-NULL
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example()
+#' fit$output_files()
+#' fit$data_file()
+#'
+#' # just using tempdir for the example
+#' my_dir <- tempdir()
+#' fit$save_output_files(dir = my_dir, basename = "banana")
+#' fit$save_output_files(dir = my_dir, basename = "tomato", timestamp = FALSE)
+#' fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
+#' }
+#'
+save_output_files <- function(dir = ".",
+                              basename = NULL,
+                              timestamp = TRUE,
+                              random = TRUE) {
+  self$runset$save_output_files(dir, basename, timestamp, random)
+}
+CmdStanFit$set("public", name = "save_output_files", value = save_output_files)
+
+#' @rdname fit-method-save_output_files
+save_latent_dynamics_files <- function(dir = ".",
+                                       basename = NULL,
+                                       timestamp = TRUE,
+                                       random = TRUE) {
+  self$runset$save_latent_dynamics_files(dir, basename, timestamp, random)
+}
+CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)
+
+#' @rdname fit-method-save_output_files
+save_data_file <- function(dir = ".",
+                           basename = NULL,
+                           timestamp = TRUE,
+                           random = TRUE) {
+  self$runset$save_data_file(dir, basename, timestamp, random)
+}
+CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
+
+
+#' @rdname fit-method-save_output_files
+#' @param include_failed Should CmdStan runs that failed also be included? The
+#'   default is `FALSE.`
+output_files <- function(include_failed = FALSE) {
+  self$runset$output_files(include_failed)
+}
+CmdStanFit$set("public", name = "output_files", value = output_files)
+
+#' @rdname fit-method-save_output_files
+latent_dynamics_files <- function(include_failed = FALSE) {
+  self$runset$latent_dynamics_files(include_failed)
+}
+CmdStanFit$set("public", name = "latent_dynamics_files", value = latent_dynamics_files)
+
+#' @rdname fit-method-save_output_files
+data_file <- function() {
+  self$runset$data_file()
+}
+CmdStanFit$set("public", name = "data_file", value = data_file)
 
 #' Report timing of CmdStan runs
 #'
@@ -662,12 +512,7 @@ NULL
 #'   is provided about the run times of individual chains and the warmup and
 #'   sampling phases.
 #'
-#' @section Usage:
-#'   ```
-#'   $time()
-#'   ```
-#'
-#' @section Value:
+#' @return
 #' A list with elements
 #' * `total`: (scalar) the total run time.
 #' * `chains`: (data frame) for MCMC only, timing info for the individual
@@ -688,26 +533,25 @@ NULL
 #' fit_vb$time()
 #' }
 #'
-NULL
+time <- function() {
+  self$runset$time()
+}
+CmdStanFit$set("public", name = "time", value = time)
 
 #' Access console output
 #'
 #' @name fit-method-output
 #' @aliases output
-#' @description For MCMC the `$output()` method returns the stdout and stderr of
-#' all chains as a list of character vectors. If the `id` argument is specified
-#' it pretty prints the console output for a single chain.
+#' @description For MCMC, the `$output()` method returns the stdout and stderr
+#'   of all chains as a list of character vectors if `id=NULL`. If the `id`
+#'   argument is specified it instead pretty prints the console output for a
+#'   single chain.
 #'
-#' For optimization and variational inference `$output()` just pretty prints the
-#' console output.
+#'   For optimization and variational inference `$output()` just pretty prints
+#'   the console output.
 #'
-#' @section Usage:
-#'   ```
-#'   $output(id = NULL)
-#'   ```
-#'
-#' @section Arguments:
-#' * `id`: (integer) For MCMC only, the chain id.
+#' @param id (integer) The chain id. Ignored if the model was not fit using
+#'   MCMC.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -725,7 +569,12 @@ NULL
 #' fit_vb$output()
 #' }
 #'
-NULL
+output <- function(id = NULL) {
+  # MCMC has separate implementation but doc is shared
+  # Non-MCMC fit is obtained with one process only so id is ignored
+  cat(paste(self$runset$procs$proc_output(1), collapse="\n"))
+}
+CmdStanFit$set("public", name = "output", value = output)
 
 #' Extract metadata from CmdStan CSV files
 #'
@@ -734,11 +583,6 @@ NULL
 #' @description The `$metadata()` method returns a list of information gathered
 #'   from the CSV output files, including the CmdStan configuration used when
 #'   fitting the model. See **Examples** and [read_cmdstan_csv()].
-#'
-#' @section Usage:
-#'   ```
-#'   $metadata()
-#'   ```
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -754,7 +598,16 @@ NULL
 #' str(fit_vb$metadata())
 #' }
 #'
-NULL
+metadata <- function() {
+  if (!length(self$output_files(include_failed = FALSE))) {
+    stop("Fitting failed. Unable to retrieve the metadata.", call. = FALSE)
+  }
+  if (is.null(private$metadata_)) {
+    private$read_csv_()
+  }
+  private$metadata_
+}
+CmdStanFit$set("public", name = "metadata", value = metadata)
 
 #' Extract return codes from CmdStan
 #'
@@ -762,11 +615,8 @@ NULL
 #' @aliases return_codes
 #' @description The `$return_codes()` method returns a vector of return codes
 #'   from the CmdStan run(s). A return code of 0 indicates a successful run.
-#'
-#' @section Usage:
-#'   ```
-#'   $return_codes()
-#'   ```
+#' @return An integer vector of return codes with length equal to the number of
+#'   CmdStan runs (number of chains for MCMC and one otherwise).
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -781,56 +631,13 @@ NULL
 #' fit_opt$return_codes() # should be non-zero
 #' }
 #'
-NULL
-
-#' Leave-one-out cross-validation (LOO-CV)
-#'
-#' @name fit-method-loo
-#' @aliases loo
-#' @description The `$loo()` method computes approximate LOO-CV using the
-#'   \pkg{loo} package. This is a simple wrapper around [loo::loo.array()]
-#'   provided for convenience and requires computing the pointwise
-#'   log-likelihood in your Stan program. See the \pkg{loo} package
-#'   [vignettes](https://mc-stan.org/loo/articles/) for details.
-#'
-#' @section Usage:
-#'   ```
-#'   $loo(variables = "log_lik", r_eff = NULL, ...)
-#'   ```
-#'
-#' @param variables (character vector) The name(s) of the variable(s) in the
-#'   Stan program containing the pointwise log-likelihood. The default is to
-#'   look for `"log_lik"`. This argument is passed to the
-#'   [`$draws()][fit-method-draws] method.
-#' @param r_eff There are several options:
-#'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
-#'   to compute the `r_eff` argument to pass to [loo::loo.array()].
-#'   * `FALSE` or `NULL` will avoid computing `r_eff` (which can sometimes be slow)
-#'   but will result in a warning from the \pkg{loo} package.
-#'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
-#'   argument to [loo::loo.array()].
-#' @param ... Other arguments (e.g., `cores`, `save_psis`, etc.) passed to
-#'   [loo::loo.array()].
-#'
-#' @section Value: The object returned by [loo::loo.array()].
-#'
-#' @seealso The \pkg{loo} package website with
-#'   [documentation](https://mc-stan.org/loo/reference/index.html) and
-#'   [vignettes](https://mc-stan.org/loo/articles/).
-#'
-#' @examples
-#'
-#' \dontrun{
-#' # the "logistic" example model has "log_lik" in generated quantities
-#' fit <- cmdstanr_example("logistic")
-#' fit$loo(cores = 2)
-#' }
-#'
-NULL
+return_codes <- function() {
+  self$runset$procs$return_codes()
+}
+CmdStanFit$set("public", name = "return_codes", value = return_codes)
 
 
 # CmdStanMCMC -------------------------------------------------------------
-
 #' CmdStanMCMC objects
 #'
 #' @name CmdStanMCMC
@@ -855,6 +662,7 @@ NULL
 #'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$num_chains()`][fit-method-num_chains] | Returns the number of MCMC chains. |
 #'
 #'  ## Summarize inferences and diagnostics
 #'
@@ -878,8 +686,8 @@ NULL
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$output()`][fit-method-output]  |  Return the stdout and stderr of all chains or pretty print the output for a single chain. |
+#'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
 NULL
@@ -888,6 +696,7 @@ CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
   public = list(
+    # override the CmdStanFit initialize method
     initialize = function(runset) {
       super$initialize(runset)
       if (!length(self$output_files())) {
@@ -910,11 +719,7 @@ CmdStanMCMC <- R6::R6Class(
         }
       }
     },
-
-    num_chains = function() {
-      super$num_procs()
-    },
-
+    # override the CmdStanFit output method
     output = function(id = NULL) {
       if (is.null(id)) {
         self$runset$procs$proc_output()
@@ -923,6 +728,7 @@ CmdStanMCMC <- R6::R6Class(
       }
     },
 
+    # override the CmdStanFit draws method
     draws = function(variables = NULL, inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
@@ -955,67 +761,7 @@ CmdStanMCMC <- R6::R6Class(
       } else {
         private$draws_[,,variables]
       }
-    },
-
-    sampler_diagnostics = function(inc_warmup = FALSE) {
-      if (!length(self$output_files(include_failed = FALSE))) {
-        stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.", call. = FALSE)
-      }
-      to_read <- remaining_columns_to_read(
-        requested = NULL,
-        currently_read = dimnames(private$sampler_diagnostics_)$variable,
-        all = private$metadata_$sampler_diagnostics
-      )
-      if (is.null(to_read) || any(nzchar(to_read))) {
-        private$read_csv_(variables = "", sampler_diagnostics = NULL)
-      }
-      if (inc_warmup) {
-        if (!private$metadata_$save_warmup) {
-          stop("Warmup sampler diagnostics were requested from a fit object without them! ",
-               "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
-        }
-        posterior::bind_draws(
-          private$warmup_sampler_diagnostics_,
-          private$sampler_diagnostics_,
-          along="iteration"
-        )
-      } else {
-        private$sampler_diagnostics_
-      }
-    },
-
-    # returns list of inverse metrics
-    inv_metric = function(matrix = TRUE) {
-      if (!length(self$output_files(include_failed = FALSE))) {
-        stop("No chains finished successfully. Unable to retrieve the inverse metrics.", call. = FALSE)
-      }
-      if (is.null(private$inv_metric_)) {
-        private$read_csv_(variables = "", sampler_diagnostics = "")
-      }
-      out <- private$inv_metric_
-      if (matrix && !is.matrix(out[[1]])) {
-        # convert each vector to a diagonal matrix
-        out <- lapply(out, diag)
-      }
-      out
-    },
-    # approximate loo-cv using the loo package
-    loo = function(variables = "log_lik", r_eff = TRUE, ...) {
-      if (!requireNamespace("loo", quietly = TRUE)) {
-        stop("Please install the loo package to use this method.", call. = FALSE)
-      }
-      LLarray <- self$draws(variables)
-      if (is.logical(r_eff)) {
-        if (isTRUE(r_eff)) {
-          r_eff_cores <- list(...)[["cores"]] %||% getOption("mc.cores", 1)
-          r_eff <- loo::relative_eff(exp(LLarray), cores = r_eff_cores)
-        } else {
-          r_eff <- NULL
-        }
-      }
-      loo::loo.array(LLarray, r_eff = r_eff, ...)
     }
-
   ),
   private = list(
     # also inherits draws_ and metadata_ from CmdStanFit
@@ -1075,9 +821,181 @@ CmdStanMCMC <- R6::R6Class(
   )
 )
 
+#' Leave-one-out cross-validation (LOO-CV)
+#'
+#' @name fit-method-loo
+#' @aliases loo
+#' @description The `$loo()` method computes approximate LOO-CV using the
+#'   \pkg{loo} package. This is a simple wrapper around [loo::loo.array()]
+#'   provided for convenience and requires computing the pointwise
+#'   log-likelihood in your Stan program. See the \pkg{loo} package
+#'   [vignettes](https://mc-stan.org/loo/articles/) for details.
+#'
+#' @param variables (character vector) The name(s) of the variable(s) in the
+#'   Stan program containing the pointwise log-likelihood. The default is to
+#'   look for `"log_lik"`. This argument is passed to the
+#'   [`$draws()][fit-method-draws] method.
+#' @param r_eff There are several options:
+#'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
+#'   to compute the `r_eff` argument to pass to [loo::loo.array()].
+#'   * `FALSE` or `NULL` will avoid computing `r_eff` (which can sometimes be slow)
+#'   but will result in a warning from the \pkg{loo} package.
+#'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
+#'   argument to [loo::loo.array()].
+#' @param ... Other arguments (e.g., `cores`, `save_psis`, etc.) passed to
+#'   [loo::loo.array()].
+#'
+#' @return The object returned by [loo::loo.array()].
+#'
+#' @seealso The \pkg{loo} package website with
+#'   [documentation](https://mc-stan.org/loo/reference/index.html) and
+#'   [vignettes](https://mc-stan.org/loo/articles/).
+#'
+#' @examples
+#'
+#' \dontrun{
+#' # the "logistic" example model has "log_lik" in generated quantities
+#' fit <- cmdstanr_example("logistic")
+#' loo_result <- fit$loo(cores = 2)
+#' print(loo_result)
+#' }
+#'
+loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
+  if (!requireNamespace("loo", quietly = TRUE)) {
+    stop("Please install the loo package to use this method.", call. = FALSE)
+  }
+  LLarray <- self$draws(variables)
+  if (is.logical(r_eff)) {
+    if (isTRUE(r_eff)) {
+      r_eff_cores <- list(...)[["cores"]] %||% getOption("mc.cores", 1)
+      r_eff <- loo::relative_eff(exp(LLarray), cores = r_eff_cores)
+    } else {
+      r_eff <- NULL
+    }
+  }
+  loo::loo.array(LLarray, r_eff = r_eff, ...)
+}
+CmdStanMCMC$set("public", name = "loo", value = loo)
+
+#' Extract sampler diagnostics after MCMC
+#'
+#' @name fit-method-sampler_diagnostics
+#' @aliases sampler_diagnostics
+#' @description Extract the values of sampler diagnostics for each iteration and
+#'   chain of MCMC.
+#'
+#' @param inc_warmup (logical) Should warmup draws be included? Defaults to `FALSE`.
+#'
+#' @return
+#' A 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
+#' variable). The variables for Stan's default MCMC algorithm are
+#' `"accept_stat__"`, `"stepsize__"`, `"treedepth__"`, `"n_leapfrog__"`,
+#' `"divergent__"`, `"energy__"`.
+#'
+#' @seealso [`CmdStanMCMC`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic")
+#' sampler_diagnostics <- fit$sampler_diagnostics()
+#' str(sampler_diagnostics)
+#'
+#' library(posterior)
+#' as_draws_df(sampler_diagnostics)
+#' }
+#'
+sampler_diagnostics <- function(inc_warmup = FALSE) {
+  if (!length(self$output_files(include_failed = FALSE))) {
+    stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.", call. = FALSE)
+  }
+  to_read <- remaining_columns_to_read(
+    requested = NULL,
+    currently_read = dimnames(private$sampler_diagnostics_)$variable,
+    all = private$metadata_$sampler_diagnostics
+  )
+  if (is.null(to_read) || any(nzchar(to_read))) {
+    private$read_csv_(variables = "", sampler_diagnostics = NULL)
+  }
+  if (inc_warmup) {
+    if (!private$metadata_$save_warmup) {
+      stop("Warmup sampler diagnostics were requested from a fit object without them! ",
+           "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
+    }
+    posterior::bind_draws(
+      private$warmup_sampler_diagnostics_,
+      private$sampler_diagnostics_,
+      along="iteration"
+    )
+  } else {
+    private$sampler_diagnostics_
+  }
+}
+CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnostics)
+
+#' Extract inverse metric (mass matrix) after MCMC
+#'
+#' @name fit-method-inv_metric
+#' @aliases inv_metric
+#' @description Extract the inverse metric (mass matrix) for each MCMC chain.
+#'
+#' @param matrix (logical) If a diagonal metric was used, setting `matrix =
+#'   FALSE` returns a list containing just the diagonals of the matrices instead
+#'   of the full matrices. Setting `matrix = FALSE` has no effect for dense
+#'   metrics.
+#'
+#' @return A list of length equal to the number of MCMC chains. See the `matrix`
+#'   argument for details.
+#'
+#' @seealso [`CmdStanMCMC`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic")
+#' fit$inv_metric()
+#' fit$inv_metric(matrix=FALSE)
+#'
+#' fit <- cmdstanr_example("logistic", metric = "dense_e")
+#' fit$inv_metric()
+#' }
+#'
+inv_metric <- function(matrix = TRUE) {
+  if (!length(self$output_files(include_failed = FALSE))) {
+    stop("No chains finished successfully. Unable to retrieve the inverse metrics.", call. = FALSE)
+  }
+  if (is.null(private$inv_metric_)) {
+    private$read_csv_(variables = "", sampler_diagnostics = "")
+  }
+  out <- private$inv_metric_
+  if (matrix && !is.matrix(out[[1]])) {
+    # convert each vector to a diagonal matrix
+    out <- lapply(out, diag)
+  }
+  out
+}
+CmdStanMCMC$set("public", name = "inv_metric", value = inv_metric)
+
+#' Extract number of chains after MCMC
+#'
+#' @name fit-method-num_chains
+#' @aliases num_chains
+#' @description The `$num_chains()` method returns the number of MCMC chains.
+#' @return An integer.
+#'
+#' @seealso [`CmdStanMCMC`]
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example(chains = 2)
+#' fit_mcmc$num_chains()
+#' }
+#'
+num_chains = function() {
+  super$num_procs()
+}
+CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
+
 
 # CmdStanMLE -------------------------------------------------------------
-
 #' CmdStanMLE objects
 #'
 #' @name CmdStanMLE
@@ -1127,14 +1045,7 @@ NULL
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
   inherit = CmdStanFit,
-  public = list(
-    mle = function(variables = NULL) {
-      x <- self$draws(variables)
-      x <- x[, colnames(x) != "lp__"]
-      estimate <- setNames(as.numeric(x), nm = posterior::variables(x))
-      estimate
-    }
-  ),
+  public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function() {
@@ -1149,8 +1060,43 @@ CmdStanMLE <- R6::R6Class(
   )
 )
 
-# CmdStanVB ---------------------------------------------------------------
+#' Extract (penalized) maximum likelihood estimate after optimization
+#'
+#' @name fit-method-mle
+#' @aliases mle
+#' @description The `$mle()` method is only available for [`CmdStanMLE`] objects.
+#' It returns the penalized maximum likelihood estimate (posterior mode) as a
+#' numeric vector with one element per variable. The returned vector does *not*
+#' include `lp__`, the total log probability (`target`) accumulated in the
+#' `model` block of the Stan program, which is available via the
+#' [`$lp()`][fit-method-lp] method and also included in the
+#' [`$draws()`][fit-method-draws] method.
+#'
+#' @param variables (character vector) The variables (parameters, transformed
+#'   parameters, and generated quantities) to include. If NULL (the default)
+#'   then all variables are included.
+#'
+#' @return A numeric vector. See **Examples**.
+#'
+#' @seealso [`CmdStanMLE`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic", method = "optimize")
+#' fit$mle("alpha")
+#' fit$mle("beta")
+#' fit$mle("beta[2]")
+#' }
+#'
+mle <- function(variables = NULL) {
+  x <- self$draws(variables)
+  x <- x[, colnames(x) != "lp__"]
+  stats::setNames(as.numeric(x), posterior::variables(x))
+}
+CmdStanMLE$set("public", name = "mle", value = mle)
 
+
+# CmdStanVB ---------------------------------------------------------------
 #' CmdStanVB objects
 #'
 #' @name CmdStanVB
@@ -1203,11 +1149,7 @@ NULL
 CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",
   inherit = CmdStanFit,
-  public = list(
-    lp_approx = function() {
-      as.numeric(self$draws()[, "lp_approx__"])
-    }
-  ),
+  public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function() {
@@ -1222,8 +1164,14 @@ CmdStanVB <- R6::R6Class(
   )
 )
 
-# CmdStanGQ ---------------------------------------------------------------
+#' @rdname fit-method-lp
+lp_approx <- function() {
+  as.numeric(self$draws()[, "lp_approx__"])
+}
+CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 
+
+# CmdStanGQ ---------------------------------------------------------------
 #' CmdStanGQ objects
 #'
 #' @name CmdStanGQ
@@ -1278,9 +1226,14 @@ CmdStanGQ <- R6::R6Class(
     num_chains = function() {
       super$num_procs()
     },
-    draws = function(variables = NULL) {
+    # override CmdStanFit draws method
+    draws = function(variables = NULL, inc_warmup = FALSE) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
+      }
+      if (inc_warmup) {
+        warning("'inc_warmup' is ignored except when used with CmdStanMCMC objects.",
+                call. = FALSE)
       }
       to_read <- remaining_columns_to_read(
         requested = variables,
@@ -1302,6 +1255,7 @@ CmdStanGQ <- R6::R6Class(
       }
       private$draws_[,,variables]
     },
+    # override CmdStanFit output method
     output = function(id = NULL) {
       if (is.null(id)) {
         self$runset$procs$proc_output()

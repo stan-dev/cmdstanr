@@ -47,11 +47,12 @@
 
 
 <meta property="og:title" content="Access console output — fit-method-output" />
-<meta property="og:description" content="For MCMC the $output() method returns the stdout and stderr of
-all chains as a list of character vectors. If the id argument is specified
-it pretty prints the console output for a single chain.
-For optimization and variational inference $output() just pretty prints the
-console output." />
+<meta property="og:description" content="For MCMC, the $output() method returns the stdout and stderr
+of all chains as a list of character vectors if id=NULL. If the id
+argument is specified it instead pretty prints the console output for a
+single chain.
+For optimization and variational inference $output() just pretty prints
+the console output." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -84,7 +85,7 @@ console output." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -180,28 +181,25 @@ console output." />
     </div>
 
     <div class="ref-description">
-    <p>For MCMC the <code>$output()</code> method returns the stdout and stderr of
-all chains as a list of character vectors. If the <code>id</code> argument is specified
-it pretty prints the console output for a single chain.</p>
-<p>For optimization and variational inference <code>$output()</code> just pretty prints the
-console output.</p>
+    <p>For MCMC, the <code>$output()</code> method returns the stdout and stderr
+of all chains as a list of character vectors if <code>id=NULL</code>. If the <code>id</code>
+argument is specified it instead pretty prints the console output for a
+single chain.</p>
+<p>For optimization and variational inference <code>$output()</code> just pretty prints
+the console output.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$output(id = NULL)
-</pre>
+    <pre class="usage"><span class='fu'>output</span>(<span class='kw'>id</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>id</code>: (integer) For MCMC only, the chain id.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>id</th>
+      <td><p>(integer) The chain id. Ignored if the model was not fit using
+MCMC.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
@@ -236,19 +234,19 @@ console output.</p>
 #&gt;         stepsize_jitter = 0 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmppTMpzn/temp_libpath35d63c053564/cmdstanr/logistic.data.json
+#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpOUu4d5/temp_libpath1f1e474979aa/cmdstanr/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
-#&gt;   seed = 699507595
+#&gt;   seed = 984374382
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/logistic-202011121417-1-4ff592.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171338-1-74a0f0.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt;   sig_figs = -1 (Default)
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 2.3e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.23 seconds.
+#&gt; Gradient evaluation took 2.8e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.28 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -275,9 +273,9 @@ console output.</p>
 #&gt; Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #&gt; Iteration: 2000 / 2000 [100%]  (Sampling)
 #&gt; 
-#&gt;  Elapsed Time: 0.032 seconds (Warm-up)
-#&gt;                0.049 seconds (Sampling)
-#&gt;                0.081 seconds (Total)</div><div class='input'><span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='no'>fit_mcmc</span>$<span class='fu'>output</span>()
+#&gt;  Elapsed Time: 0.035 seconds (Warm-up)
+#&gt;                0.137 seconds (Sampling)
+#&gt;                0.172 seconds (Total)</div><div class='input'><span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='no'>fit_mcmc</span>$<span class='fu'>output</span>()
 <span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>out</span>)</div><div class='output co'>#&gt; List of 4
 #&gt;  $ : chr [1:70] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
 #&gt;  $ : chr [1:70] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
@@ -299,19 +297,19 @@ console output.</p>
 #&gt;     save_iterations = 0 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmppTMpzn/temp_libpath35d63c053564/cmdstanr/logistic.data.json
+#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpOUu4d5/temp_libpath1f1e474979aa/cmdstanr/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
-#&gt;   seed = 1879167869
+#&gt;   seed = 432754710
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/logistic-202011121417-1-1cc375.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171338-1-30f448.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt;   sig_figs = -1 (Default)
 #&gt; 
-#&gt; Initial log joint probability = -81.5538
+#&gt; Initial log joint probability = -103.426
 #&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes 
-#&gt;        6      -63.9218   0.000306238   0.000762331           1           1        8   
+#&gt;        7      -63.9218   0.000113707   0.000210786           1           1        9   
 #&gt; Optimization terminated normally: 
 #&gt;   Convergence detected: relative gradient magnitude is below tolerance</div><div class='input'>
 <span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"variational"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit_vb</span>$<span class='fu'>output</span>()</div><div class='output co'>#&gt; 
@@ -331,12 +329,12 @@ console output.</p>
 #&gt;     output_samples = 1000 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmppTMpzn/temp_libpath35d63c053564/cmdstanr/logistic.data.json
+#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpOUu4d5/temp_libpath1f1e474979aa/cmdstanr/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
-#&gt;   seed = 2071003765
+#&gt;   seed = 1062574477
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/logistic-202011121417-1-42bc7b.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171338-1-7dd145.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt;   sig_figs = -1 (Default)
@@ -349,8 +347,8 @@ console output.</p>
 #&gt; 
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 2.3e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.23 seconds.
+#&gt; Gradient evaluation took 2.8e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.28 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -364,13 +362,9 @@ console output.</p>
 #&gt; 
 #&gt; Begin stochastic gradient ascent.
 #&gt;   iter             ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
-#&gt;    100          -67.817             1.000            1.000
-#&gt;    200          -66.301             0.511            1.000
-#&gt;    300          -66.246             0.341            0.023
-#&gt;    400          -66.847             0.258            0.023
-#&gt;    500          -66.131             0.209            0.011
-#&gt;    600          -66.097             0.174            0.011
-#&gt;    700          -66.152             0.149            0.009   MEDIAN ELBO CONVERGED
+#&gt;    100          -66.324             1.000            1.000
+#&gt;    200          -66.614             0.502            1.000
+#&gt;    300          -66.607             0.335            0.004   MEDIAN ELBO CONVERGED
 #&gt; 
 #&gt; Drawing a sample of size 1000 from the approximate posterior... 
 #&gt; COMPLETED.</div><div class='input'># }

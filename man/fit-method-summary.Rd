@@ -3,51 +3,40 @@
 \name{fit-method-summary}
 \alias{fit-method-summary}
 \alias{summary}
+\alias{fit-method-print}
 \alias{print.CmdStanMCMC}
 \alias{print.CmdStanMLE}
 \alias{print.CmdStanVB}
-\title{Compute a summary table of MCMC estimates and diagnostics}
-\description{
-The \verb{$summary()} method runs
-\code{\link[posterior:draws_summary]{summarise_draws()}} from the \pkg{posterior}
-package and returns the output. For MCMC only post-warmup draws are included
-in the summary.
-
-The \verb{$print()} method prints the same summary stats but removes the extra
-formatting used for printing tibbles and returns the fitted model object
-itself. The \verb{$print()} method may also be faster than \verb{$summary()} because
-it is designed to only compute the summary statistics for the variables
-that will actually fit in the printed output (see argument \code{max_rows})
-whereas \verb{$summary()} will compute them for all of the specified variables
-in order to be able to return them to the user.
+\title{Compute a summary table of estimates and diagnostics}
+\usage{
+summary(variables = NULL, ...)
 }
-\section{Usage}{
-\preformatted{$summary(variables = NULL, ...)
-$print(variables = NULL, ..., digits = 2, max_rows = 10)
-}
-}
+\arguments{
+\item{variables}{(character vector) The variables to include.}
 
-\section{Arguments}{
-
-\itemize{
-\item \code{variables}: (character vector) The variables to include.
-\item \code{...}: Optional arguments to pass to
-\code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
-\item \code{digits}: (integer) For \code{print} only, the number of digits to use for
-rounding.
-\item \code{max_rows}: (integer) For \code{print} only, the maximum number of rows to print.
+\item{...}{Optional arguments to pass to \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.}
 }
-}
-
-\section{Value}{
-
-The \verb{$summary()} method returns the tibble created by
+\value{
+The \verb{$summary()} method returns the tibble data frame created by
 \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.
 
 The \verb{$print()} method returns the fitted model object itself (invisibly),
 which is the standard behavior for print methods in \R.
 }
+\description{
+The \verb{$summary()} method runs
+\code{\link[posterior:draws_summary]{summarise_draws()}} from the \pkg{posterior}
+package and returns the output. For MCMC, only post-warmup draws are
+included in the summary.
 
+There is also a \verb{$print()} method that prints the same summary stats but
+removes the extra formatting used for printing tibbles and returns the
+fitted model object itself. The \verb{$print()} method may also be faster than
+\verb{$summary()} because it is designed to only compute the summary statistics
+for the variables that will actually fit in the printed output whereas
+\verb{$summary()} will compute them for all of the specified variables in order
+to be able to return them to the user. See \strong{Examples}.
+}
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")

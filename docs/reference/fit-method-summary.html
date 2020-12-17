@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Compute a summary table of MCMC estimates and diagnostics — fit-method-summary • cmdstanr</title>
+<title>Compute a summary table of estimates and diagnostics — fit-method-summary • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,18 +46,18 @@
 
 
 
-<meta property="og:title" content="Compute a summary table of MCMC estimates and diagnostics — fit-method-summary" />
+<meta property="og:title" content="Compute a summary table of estimates and diagnostics — fit-method-summary" />
 <meta property="og:description" content="The $summary() method runs
 summarise_draws() from the posterior
-package and returns the output. For MCMC only post-warmup draws are included
-in the summary.
-The $print() method prints the same summary stats but removes the extra
-formatting used for printing tibbles and returns the fitted model object
-itself. The $print() method may also be faster than $summary() because
-it is designed to only compute the summary statistics for the variables
-that will actually fit in the printed output (see argument max_rows)
-whereas $summary() will compute them for all of the specified variables
-in order to be able to return them to the user." />
+package and returns the output. For MCMC, only post-warmup draws are
+included in the summary.
+There is also a $print() method that prints the same summary stats but
+removes the extra formatting used for printing tibbles and returns the
+fitted model object itself. The $print() method may also be faster than
+$summary() because it is designed to only compute the summary statistics
+for the variables that will actually fit in the printed output whereas
+$summary() will compute them for all of the specified variables in order
+to be able to return them to the user. See Examples." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -90,7 +90,7 @@ in order to be able to return them to the user." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -180,7 +180,7 @@ in order to be able to return them to the user." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Compute a summary table of MCMC estimates and diagnostics</h1>
+    <h1>Compute a summary table of estimates and diagnostics</h1>
     <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
     <div class="hidden name"><code>fit-method-summary.Rd</code></div>
     </div>
@@ -188,44 +188,35 @@ in order to be able to return them to the user." />
     <div class="ref-description">
     <p>The <code>$summary()</code> method runs
 <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>summarise_draws()</a></code> from the <span class="pkg">posterior</span>
-package and returns the output. For MCMC only post-warmup draws are included
-in the summary.</p>
-<p>The <code>$print()</code> method prints the same summary stats but removes the extra
-formatting used for printing tibbles and returns the fitted model object
-itself. The <code>$print()</code> method may also be faster than <code>$summary()</code> because
-it is designed to only compute the summary statistics for the variables
-that will actually fit in the printed output (see argument <code>max_rows</code>)
-whereas <code>$summary()</code> will compute them for all of the specified variables
-in order to be able to return them to the user.</p>
+package and returns the output. For MCMC, only post-warmup draws are
+included in the summary.</p>
+<p>There is also a <code>$print()</code> method that prints the same summary stats but
+removes the extra formatting used for printing tibbles and returns the
+fitted model object itself. The <code>$print()</code> method may also be faster than
+<code>$summary()</code> because it is designed to only compute the summary statistics
+for the variables that will actually fit in the printed output whereas
+<code>$summary()</code> will compute them for all of the specified variables in order
+to be able to return them to the user. See <strong>Examples</strong>.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$summary(variables = NULL, ...)
-$print(variables = NULL, ..., digits = 2, max_rows = 10)
-</pre>
+    <pre class="usage"><span class='fu'>summary</span>(<span class='kw'>variables</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>variables</code>: (character vector) The variables to include.</p></li>
-<li><p><code>...</code>: Optional arguments to pass to
-<code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</p></li>
-<li><p><code>digits</code>: (integer) For <code>print</code> only, the number of digits to use for
-rounding.</p></li>
-<li><p><code>max_rows</code>: (integer) For <code>print</code> only, the maximum number of rows to print.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>variables</th>
+      <td><p>(character vector) The variables to include.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Optional arguments to pass to <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
-
-<p>The <code>$summary()</code> method returns the tibble created by
+    <p>The <code>$summary()</code> method returns the tibble data frame created by
 <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</p>
 <p>The <code>$print()</code> method returns the fitted model object itself (invisibly),
 which is the standard behavior for print methods in <span style="R">R</span>.</p>
@@ -235,49 +226,68 @@ which is the standard behavior for print methods in <span style="R">R</span>.</p
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>summary</span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 5 x 10</span><span>
-#&gt;   variable    mean  median    sd   mad       q5     q95  rhat ess_bulk ess_tail
-#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__     -</span><span style='color: #BB0000;'>66.0</span><span>   -</span><span style='color: #BB0000;'>65.7</span><span>   1.45  1.25  -</span><span style='color: #BB0000;'>68.8</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>    1.00    </span><span style='text-decoration: underline;'>2</span><span>057.    </span><span style='text-decoration: underline;'>2</span><span>482.
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> alpha      0.380   0.381 0.218 0.217   0.025</span><span style='text-decoration: underline;'>0</span><span>   0.742  1.00    </span><span style='text-decoration: underline;'>4</span><span>479.    </span><span style='text-decoration: underline;'>3</span><span>075.
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.672</span><span>  -</span><span style='color: #BB0000;'>0.667</span><span> 0.252 0.250  -</span><span style='color: #BB0000;'>1.09</span><span>    -</span><span style='color: #BB0000;'>0.261</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>021.    </span><span style='text-decoration: underline;'>2</span><span>727.
-#&gt; </span><span style='color: #BCBCBC;'>4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.274</span><span>  -</span><span style='color: #BB0000;'>0.272</span><span> 0.229 0.225  -</span><span style='color: #BB0000;'>0.662</span><span>    0.101  1.00    </span><span style='text-decoration: underline;'>4</span><span>216.    </span><span style='text-decoration: underline;'>2</span><span>960.
-#&gt; </span><span style='color: #BCBCBC;'>5</span><span> beta[3]    0.685   0.676 0.266 0.264   0.248    1.12   1.00    </span><span style='text-decoration: underline;'>4</span><span>041.    </span><span style='text-decoration: underline;'>2</span><span>789.</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</div><div class='output co'>#&gt;  variable   mean median   sd  mad     q5    q95 rhat ess_bulk ess_tail
-#&gt;   lp__    -65.98 -65.67 1.45 1.25 -68.83 -64.28 1.00     2056     2482
-#&gt;   alpha     0.38   0.38 0.22 0.22   0.02   0.74 1.00     4479     3075
-#&gt;   beta[1]  -0.67  -0.67 0.25 0.25  -1.09  -0.26 1.00     4020     2726
-#&gt;   beta[2]  -0.27  -0.27 0.23 0.22  -0.66   0.10 1.00     4216     2960
-#&gt;   beta[3]   0.68   0.68 0.27 0.26   0.25   1.12 1.00     4040     2789</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='kw'>max_rows</span> <span class='kw'>=</span> <span class='fl'>2</span>) <span class='co'># same as print(fit, max_rows = 2)</span></div><div class='output co'>#&gt;  variable   mean median   sd  mad     q5    q95 rhat ess_bulk ess_tail
-#&gt;     lp__  -65.98 -65.67 1.45 1.25 -68.83 -64.28 1.00     2056     2482
-#&gt;     alpha   0.38   0.38 0.22 0.22   0.02   0.74 1.00     4479     3075
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>summary</span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 105 x 10</span><span>
+#&gt;    variable    mean  median     sd    mad       q5      q95  rhat ess_bulk
+#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> lp__     -</span><span style='color: #BB0000;'>65.9</span><span>   -</span><span style='color: #BB0000;'>65.6</span><span>   1.45   1.22   -</span><span style='color: #BB0000;'>68.8</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>     1.00    </span><span style='text-decoration: underline;'>2</span><span>041.
+#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> alpha      0.379   0.381 0.220  0.220    0.026</span><span style='text-decoration: underline;'>9</span><span>   0.753   1.00    </span><span style='text-decoration: underline;'>4</span><span>096.
+#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.659</span><span>  -</span><span style='color: #BB0000;'>0.655</span><span> 0.250  0.252   -</span><span style='color: #BB0000;'>1.08</span><span>    -</span><span style='color: #BB0000;'>0.261</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>764.
+#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.273</span><span>  -</span><span style='color: #BB0000;'>0.271</span><span> 0.225  0.216   -</span><span style='color: #BB0000;'>0.646</span><span>    0.088</span><span style='text-decoration: underline;'>8</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>440.
+#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> beta[3]    0.681   0.677 0.261  0.259    0.271    1.12    1.00    </span><span style='text-decoration: underline;'>4</span><span>279.
+#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.517</span><span>  -</span><span style='color: #BB0000;'>0.510</span><span> 0.098</span><span style='text-decoration: underline;'>8</span><span> 0.098</span><span style='text-decoration: underline;'>9</span><span>  -</span><span style='color: #BB0000;'>0.686</span><span>   -</span><span style='color: #BB0000;'>0.367</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>990.
+#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.403</span><span>  -</span><span style='color: #BB0000;'>0.385</span><span> 0.146  0.135   -</span><span style='color: #BB0000;'>0.677</span><span>   -</span><span style='color: #BB0000;'>0.200</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>584.
+#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.499</span><span>  -</span><span style='color: #BB0000;'>0.466</span><span> 0.220  0.204   -</span><span style='color: #BB0000;'>0.891</span><span>   -</span><span style='color: #BB0000;'>0.210</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>330.
+#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.450</span><span>  -</span><span style='color: #BB0000;'>0.432</span><span> 0.152  0.150   -</span><span style='color: #BB0000;'>0.726</span><span>   -</span><span style='color: #BB0000;'>0.238</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>179.
+#&gt; </span><span style='color: #BCBCBC;'>10</span><span> log_lik…  -</span><span style='color: #BB0000;'>1.18</span><span>   -</span><span style='color: #BB0000;'>1.16</span><span>  0.282  0.284   -</span><span style='color: #BB0000;'>1.68</span><span>    -</span><span style='color: #BB0000;'>0.756</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>453.
+#&gt; </span><span style='color: #949494;'># … with 95 more rows, and 1 more variable: ess_tail </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span></div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</div><div class='output co'>#&gt;    variable   mean median   sd  mad     q5    q95 rhat ess_bulk ess_tail
+#&gt;  lp__       -65.95 -65.59 1.45 1.22 -68.80 -64.29 1.00     2040     2693
+#&gt;  alpha        0.38   0.38 0.22 0.22   0.03   0.75 1.00     4096     2697
+#&gt;  beta[1]     -0.66  -0.65 0.25 0.25  -1.08  -0.26 1.00     3764     2833
+#&gt;  beta[2]     -0.27  -0.27 0.22 0.22  -0.65   0.09 1.00     4440     2925
+#&gt;  beta[3]      0.68   0.68 0.26 0.26   0.27   1.12 1.00     4279     2926
+#&gt;  log_lik[1]  -0.52  -0.51 0.10 0.10  -0.69  -0.37 1.00     3989     2987
+#&gt;  log_lik[2]  -0.40  -0.39 0.15 0.13  -0.68  -0.20 1.00     4583     2861
+#&gt;  log_lik[3]  -0.50  -0.47 0.22 0.20  -0.89  -0.21 1.00     4329     3207
+#&gt;  log_lik[4]  -0.45  -0.43 0.15 0.15  -0.73  -0.24 1.00     4178     3105
+#&gt;  log_lik[5]  -1.18  -1.16 0.28 0.28  -1.68  -0.76 1.00     4452     3084
 #&gt; 
-#&gt;  # showing 2 of 5 rows (change via 'max_rows' argument)</div><div class='input'>
+#&gt;  # showing 10 of 105 rows (change via 'max_rows' argument)</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='kw'>max_rows</span> <span class='kw'>=</span> <span class='fl'>2</span>) <span class='co'># same as print(fit, max_rows = 2)</span></div><div class='output co'>#&gt;  variable   mean median   sd  mad     q5    q95 rhat ess_bulk ess_tail
+#&gt;     lp__  -65.95 -65.59 1.45 1.22 -68.80 -64.29 1.00     2040     2693
+#&gt;     alpha   0.38   0.38 0.22 0.22   0.03   0.75 1.00     4096     2697
+#&gt; 
+#&gt;  # showing 2 of 105 rows (change via 'max_rows' argument)</div><div class='input'>
 <span class='co'># include only certain variables</span>
 <span class='no'>fit</span>$<span class='fu'>summary</span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 3 x 10</span><span>
-#&gt;   variable   mean median    sd   mad     q5    q95  rhat ess_bulk ess_tail
-#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> beta[1]  -</span><span style='color: #BB0000;'>0.672</span><span> -</span><span style='color: #BB0000;'>0.667</span><span> 0.252 0.250 -</span><span style='color: #BB0000;'>1.09</span><span>  -</span><span style='color: #BB0000;'>0.261</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>021.    </span><span style='text-decoration: underline;'>2</span><span>727.
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> beta[2]  -</span><span style='color: #BB0000;'>0.274</span><span> -</span><span style='color: #BB0000;'>0.272</span><span> 0.229 0.225 -</span><span style='color: #BB0000;'>0.662</span><span>  0.101  1.00    </span><span style='text-decoration: underline;'>4</span><span>216.    </span><span style='text-decoration: underline;'>2</span><span>960.
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[3]   0.685  0.676 0.266 0.264  0.248  1.12   1.00    </span><span style='text-decoration: underline;'>4</span><span>041.    </span><span style='text-decoration: underline;'>2</span><span>789.</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta[2]"</span>))</div><div class='output co'>#&gt;  variable  mean median   sd  mad    q5  q95 rhat ess_bulk ess_tail
-#&gt;   alpha    0.38   0.38 0.22 0.22  0.02 0.74 1.00     4479     3075
-#&gt;   beta[2] -0.27  -0.27 0.23 0.22 -0.66 0.10 1.00     4216     2960</div><div class='input'>
+#&gt;   variable   mean median    sd   mad     q5     q95  rhat ess_bulk ess_tail
+#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'>1</span><span> beta[1]  -</span><span style='color: #BB0000;'>0.659</span><span> -</span><span style='color: #BB0000;'>0.655</span><span> 0.250 0.252 -</span><span style='color: #BB0000;'>1.08</span><span>  -</span><span style='color: #BB0000;'>0.261</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>764.    </span><span style='text-decoration: underline;'>2</span><span>834.
+#&gt; </span><span style='color: #BCBCBC;'>2</span><span> beta[2]  -</span><span style='color: #BB0000;'>0.273</span><span> -</span><span style='color: #BB0000;'>0.271</span><span> 0.225 0.216 -</span><span style='color: #BB0000;'>0.646</span><span>  0.088</span><span style='text-decoration: underline;'>8</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>440.    </span><span style='text-decoration: underline;'>2</span><span>926.
+#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[3]   0.681  0.677 0.261 0.259  0.271  1.12    1.00    </span><span style='text-decoration: underline;'>4</span><span>279.    </span><span style='text-decoration: underline;'>2</span><span>926.</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta[2]"</span>))</div><div class='output co'>#&gt;  variable  mean median   sd  mad    q5  q95 rhat ess_bulk ess_tail
+#&gt;   alpha    0.38   0.38 0.22 0.22  0.03 0.75 1.00     4096     2697
+#&gt;   beta[2] -0.27  -0.27 0.22 0.22 -0.65 0.09 1.00     4440     2925</div><div class='input'>
 <span class='co'># include all variables but only certain summaries</span>
-<span class='no'>fit</span>$<span class='fu'>summary</span>(<span class='kw'>NULL</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"mean"</span>, <span class='st'>"sd"</span>))</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 5 x 3</span><span>
-#&gt;   variable    mean    sd
-#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__     -</span><span style='color: #BB0000;'>66.0</span><span>   1.45 
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> alpha      0.380 0.218
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.672</span><span> 0.252
-#&gt; </span><span style='color: #BCBCBC;'>4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.274</span><span> 0.229
-#&gt; </span><span style='color: #BCBCBC;'>5</span><span> beta[3]    0.685 0.266</div><div class='input'>
+<span class='no'>fit</span>$<span class='fu'>summary</span>(<span class='kw'>NULL</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"mean"</span>, <span class='st'>"sd"</span>))</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 105 x 3</span><span>
+#&gt;    variable      mean     sd
+#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> lp__       -</span><span style='color: #BB0000;'>65.9</span><span>   1.45  
+#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> alpha        0.379 0.220 
+#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> beta[1]     -</span><span style='color: #BB0000;'>0.659</span><span> 0.250 
+#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> beta[2]     -</span><span style='color: #BB0000;'>0.273</span><span> 0.225 
+#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> beta[3]      0.681 0.261 
+#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> log_lik[1]  -</span><span style='color: #BB0000;'>0.517</span><span> 0.098</span><span style='text-decoration: underline;'>8</span><span>
+#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> log_lik[2]  -</span><span style='color: #BB0000;'>0.403</span><span> 0.146 
+#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> log_lik[3]  -</span><span style='color: #BB0000;'>0.499</span><span> 0.220 
+#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> log_lik[4]  -</span><span style='color: #BB0000;'>0.450</span><span> 0.152 
+#&gt; </span><span style='color: #BCBCBC;'>10</span><span> log_lik[5]  -</span><span style='color: #BB0000;'>1.18</span><span>  0.282 
+#&gt; </span><span style='color: #949494;'># … with 95 more rows</span><span></div><div class='input'>
 <span class='co'># can use functions created from formulas</span>
 <span class='co'># for example, calculate Pr(beta &gt; 0)</span>
 <span class='no'>fit</span>$<span class='fu'>summary</span>(<span class='st'>"beta"</span>, <span class='kw'>prob_gt_0</span> <span class='kw'>=</span> ~ <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span>(<span class='no'>.</span> <span class='kw'>&gt;</span> <span class='fl'>0</span>))</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 3 x 2</span><span>
 #&gt;   variable prob_gt_0
 #&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
 #&gt; </span><span style='color: #BCBCBC;'>1</span><span> beta[1]      0.003
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> beta[2]      0.115
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[3]      0.996</div><div class='input'># }
+#&gt; </span><span style='color: #BCBCBC;'>2</span><span> beta[2]      0.112
+#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[3]      0.995</div><div class='input'># }
 
 </div></span></pre>
   </div>

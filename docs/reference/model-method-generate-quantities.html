@@ -82,7 +82,7 @@ based on previously fitted parameters." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -183,39 +183,93 @@ runs Stan's standalone generated quantities to obtain generated quantities
 based on previously fitted parameters.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$generate_quantities(
-  fitted_params,
-  data = NULL,
-  seed = NULL,
-  output_dir = NULL,
-  sig_figs = NULL,
-  parallel_chains = getOption("mc.cores", 1),
-  threads_per_chain = NULL
-)
-</pre>
+    <pre class="usage"><span class='fu'>generate_quantities</span>(
+  <span class='no'>fitted_params</span>,
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>output_dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>sig_figs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>parallel_chains</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"mc.cores"</span>, <span class='fl'>1</span>),
+  <span class='kw'>threads_per_chain</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>fitted_params</code>: (multiple options) The parameter draws to use. One of the following:</p><ul>
-<li><p>A <a href='CmdStanMCMC.html'>CmdStanMCMC</a> fitted model object.</p></li>
-<li><p>A character vector of paths to CmdStan CSV output files containing
-parameter draws.</p></li>
-</ul></li>
-<li><p><code>data</code>, <code>seed</code>, <code>output_dir</code>, <code>parallel_chains</code>, <code>threads_per_chain</code>:
-Same as for the <code><a href='model-method-sample.html'>$sample()</a></code> method.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>fitted_params</th>
+      <td><p>(multiple options) The parameter draws to use. One of
+the following:</p><ul>
+<li><p>A <a href='CmdStanMCMC.html'>CmdStanMCMC</a> or <a href='CmdStanVB.html'>CmdStanVB</a> fitted model object.</p></li>
+<li><p>A <a href='https://mc-stan.org/posterior/reference/draws_array.html'>posterior::draws_array</a> (for MCMC) or <a href='https://mc-stan.org/posterior/reference/draws_matrix.html'>posterior::draws_matrix</a> (for
+VB) object returned by CmdStanR's <code><a href='fit-method-draws.html'>$draws()</a></code> method.</p></li>
+<li><p>A character vector of paths to CmdStan CSV output files.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>data</th>
+      <td><p>(multiple options) The data to use for the variables specified in
+the <code>data</code> block of the Stan program. One of the following:</p><ul>
+<li><p>A named list of <span style="R">R</span> objects (like for RStan). Internally this list is then
+written to JSON for CmdStan using <code><a href='write_stan_json.html'>write_stan_json()</a></code>.</p></li>
+<li><p>A path to a data file compatible with CmdStan (JSON or <span style="R">R</span> dump). See the
+appendices in the CmdStan manual for details on using these formats.</p></li>
+<li><p><code>NULL</code> or an empty list if the Stan program has no <code>data</code> block.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>seed</th>
+      <td><p>(positive integer) A seed for the (P)RNG to pass to CmdStan.</p></td>
+    </tr>
+    <tr>
+      <th>output_dir</th>
+      <td><p>(string) A path to a directory where CmdStan should write
+its output CSV files. For interactive use this can typically be left at
+<code>NULL</code> (temporary directory) since CmdStanR makes the CmdStan output
+(posterior draws and diagnostics) available in <span style="R">R</span> via methods of the fitted
+model objects. The behavior of <code>output_dir</code> is as follows:</p><ul>
+<li><p>If <code>NULL</code> (the default), then the CSV files are written to a temporary
+directory and only saved permanently if the user calls one of the <code>$save_*</code>
+methods of the fitted model object (e.g.,
+<code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code>). These temporary
+files are removed when the fitted model object is
+<a href='https://rdrr.io/r/base/gc.html'>garbage collected</a> (manually or automatically).</p></li>
+<li><p>If a path, then the files are created in <code>output_dir</code> with names
+corresponding to the defaults used by <code>$save_output_files()</code>.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>sig_figs</th>
+      <td><p>(positive integer) The number of significant figures used
+when storing the output values. By default, CmdStan represent the output
+values with 6 significant figures. The upper limit for <code>sig_figs</code> is 18.
+Increasing this value will result in larger output CSV files and thus an
+increased usage of disk space.</p></td>
+    </tr>
+    <tr>
+      <th>parallel_chains</th>
+      <td><p>(positive integer) The <em>maximum</em> number of MCMC chains
+to run in parallel. If <code>parallel_chains</code> is not specified then the default
+is to look for the option <code>"mc.cores"</code>, which can be set for an entire <span style="R">R</span>
+session by <code><a href='https://rdrr.io/r/base/options.html'>options(mc.cores=value)</a></code>. If the <code>"mc.cores"</code> option has not
+been set then the default is <code>1</code>.</p></td>
+    </tr>
+    <tr>
+      <th>threads_per_chain</th>
+      <td><p>(positive integer) If the model was
+<a href='model-method-compile.html'>compiled</a> with threading support, the number of
+threads to use in parallelized sections <em>within</em> an MCMC chain (e.g., when
+using the Stan functions <code>reduce_sum()</code> or <code>map_rect()</code>). This is in
+contrast with <code>parallel_chains</code>, which specifies the number of chains to
+run in parallel. The actual number of CPU cores used use is
+<code>parallel_chains*threads_per_chain</code>. For an example of using threading see
+the Stan case study <a href='https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html'>Reduce Sum: A Minimal Example</a>.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The <code>$generate_quantities()</code> method returns a <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code> object.</p>
+    <p>A <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code> object.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>The CmdStanR website
@@ -230,6 +284,7 @@ documentation and tutorials.</p>
 <code><a href='model-method-check_syntax.html'>model-method-check_syntax</a></code>,
 <code><a href='model-method-compile.html'>model-method-compile</a></code>,
 <code><a href='model-method-optimize.html'>model-method-optimize</a></code>,
+<code><a href='model-method-sample_mpi.html'>model-method-sample_mpi</a></code>,
 <code><a href='model-method-sample.html'>model-method-sample</a></code>,
 <code><a href='model-method-variational.html'>model-method-variational</a></code></p></div>
 
@@ -259,7 +314,7 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 3.9 seconds.</div><div class='input'>
+#&gt; Total execution time: 0.6 seconds.</div><div class='input'>
 <span class='co'># stan program for standalone generated quantities</span>
 <span class='co'># (could keep model block, but not necessary so removing it)</span>
 <span class='no'>gq_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(
@@ -284,7 +339,7 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 3.8 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
+#&gt; Total execution time: 0.5 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"

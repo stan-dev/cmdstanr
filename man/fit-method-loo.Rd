@@ -4,6 +4,9 @@
 \alias{fit-method-loo}
 \alias{loo}
 \title{Leave-one-out cross-validation (LOO-CV)}
+\usage{
+loo(variables = "log_lik", r_eff = TRUE, ...)
+}
 \arguments{
 \item{variables}{(character vector) The name(s) of the variable(s) in the
 Stan program containing the pointwise log-likelihood. The default is to
@@ -23,6 +26,9 @@ argument to \code{\link[loo:loo]{loo::loo.array()}}.
 \item{...}{Other arguments (e.g., \code{cores}, \code{save_psis}, etc.) passed to
 \code{\link[loo:loo]{loo::loo.array()}}.}
 }
+\value{
+The object returned by \code{\link[loo:loo]{loo::loo.array()}}.
+}
 \description{
 The \verb{$loo()} method computes approximate LOO-CV using the
 \pkg{loo} package. This is a simple wrapper around \code{\link[loo:loo]{loo::loo.array()}}
@@ -30,21 +36,13 @@ provided for convenience and requires computing the pointwise
 log-likelihood in your Stan program. See the \pkg{loo} package
 \href{https://mc-stan.org/loo/articles/}{vignettes} for details.
 }
-\section{Usage}{
-\preformatted{$loo(variables = "log_lik", r_eff = NULL, ...)
-}
-}
-
-\section{Value}{
- The object returned by \code{\link[loo:loo]{loo::loo.array()}}.
-}
-
 \examples{
 
 \dontrun{
 # the "logistic" example model has "log_lik" in generated quantities
 fit <- cmdstanr_example("logistic")
-fit$loo(cores = 2)
+loo_result <- fit$loo(cores = 2)
+print(loo_result)
 }
 
 }

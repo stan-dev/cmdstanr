@@ -5,8 +5,11 @@
 #' [R Markdown CmdStan Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html)
 #' for a demonstration.
 #'
-#' @param override Override knitr's built-in, RStan-based engine for `stan`.
-#'   See below for details.
+#' @export
+#'
+#' @param override Override knitr's built-in, RStan-based engine for Stan? The
+#'   default is `TRUE`. See **Details**.
+#'
 #' @details
 #' If `override = TRUE` (default), this registers CmdStanR's knitr engine as the
 #' engine for `stan` chunks, replacing knitr's built-in, RStan-based engine. If
@@ -30,10 +33,11 @@
 #' If you would like to keep `stan` chunks as `stan` chunks, it is possible to
 #' specify `engine = "cmdstan"` in the chunk options after registering the
 #' `cmdstan` engine with `override = FALSE`.
+#'
 #' @references
-#' - [Register a custom language engine](https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html)
-#' - [Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
-#' @export
+#' * [Register a custom language engine for knitr](https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html)
+#' * [knitr's built-in Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
+#'
 register_knitr_engine <- function(override = TRUE) {
   if (!requireNamespace("knitr", quietly = TRUE)) {
     stop("Please install the knitr package.", call. = FALSE)

@@ -50,7 +50,11 @@
 <meta property="og:description" content="The $sample() method of a CmdStanModel object runs the
 default MCMC algorithm in CmdStan (algorithm=hmc engine=nuts), to produce
 a set of draws from the posterior distribution of a model conditioned on
-some data." />
+some data.
+Any argument left as NULL will default to the default value used by the
+installed version of CmdStan. See the
+CmdStan User’s Guide
+for more details." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -83,7 +87,7 @@ some data." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -183,210 +187,294 @@ some data." />
 default MCMC algorithm in CmdStan (<code>algorithm=hmc engine=nuts</code>), to produce
 a set of draws from the posterior distribution of a model conditioned on
 some data.</p>
+<p>Any argument left as <code>NULL</code> will default to the default value used by the
+installed version of CmdStan. See the
+<a href='https://mc-stan.org/docs/cmdstan-guide/'>CmdStan User’s Guide</a>
+for more details.</p>
     </div>
 
+    <pre class="usage"><span class='fu'>sample</span>(
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>init</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>save_latent_dynamics</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>output_dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>sig_figs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>4</span>,
+  <span class='kw'>parallel_chains</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"mc.cores"</span>, <span class='fl'>1</span>),
+  <span class='kw'>chain_ids</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq_len</a></span>(<span class='no'>chains</span>),
+  <span class='kw'>threads_per_chain</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>iter_warmup</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>iter_sampling</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>save_warmup</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>thin</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>max_treedepth</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>adapt_engaged</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>adapt_delta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>step_size</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>metric</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>metric_file</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>inv_metric</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>init_buffer</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>term_buffer</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>window</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>fixed_param</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>validate_csv</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>show_messages</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>cores</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>num_cores</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>num_chains</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>num_warmup</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>num_samples</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>save_extra_diagnostics</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>max_depth</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>stepsize</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+)</pre>
 
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$sample(
-  data = NULL,
-  seed = NULL,
-  refresh = NULL,
-  init = NULL,
-  save_latent_dynamics = FALSE,
-  output_dir = NULL,
-  chains = 4,
-  parallel_chains = getOption("mc.cores", 1),
-  chain_ids = seq_len(chains),
-  threads_per_chain = NULL,
-  iter_warmup = NULL,
-  iter_sampling = NULL,
-  save_warmup = FALSE,
-  thin = NULL,
-  max_treedepth = NULL,
-  adapt_engaged = TRUE,
-  adapt_delta = NULL,
-  step_size = NULL,
-  metric = NULL,
-  metric_file = NULL,
-  inv_metric = NULL,
-  init_buffer = NULL,
-  term_buffer = NULL,
-  window = NULL,
-  fixed_param = FALSE,
-  sig_figs = NULL,
-  validate_csv = TRUE,
-  show_messages = TRUE
-)
-</pre>
-
-    <h2 class="hasAnchor" id="arguments-shared-by-all-fitting-methods"><a class="anchor" href="#arguments-shared-by-all-fitting-methods"></a>Arguments shared by all fitting methods</h2>
-
-    <p>The following arguments can
-be specified for any of the fitting methods (<code>sample</code>, <code>optimize</code>,
-<code>variational</code>). Arguments left at <code>NULL</code> default to the default used by the
-installed version of CmdStan.</p><ul>
-<li><p><code>data</code>: (multiple options) The data to use. One of the following:</p><ul>
-<li><p>A named list of <span style="R">R</span> objects (like for RStan). Internally this list is
-then written to JSON for CmdStan using <code><a href='write_stan_json.html'>write_stan_json()</a></code>.</p></li>
-<li><p>A path to a data file compatible with CmdStan (JSON or <span style="R">R</span> dump). See
-the appendices in the CmdStan manual for details on using these formats.</p></li>
-</ul></li>
-<li><p><code>seed</code>: (positive integer) A seed for the (P)RNG to pass to CmdStan.</p></li>
-<li><p><code>refresh</code>: (non-negative integer) The number of iterations between
-printed screen updates. If <code>refresh = 0</code>, only error messages will be printed.</p></li>
-<li><p><code>init</code>: (multiple options) The initialization method for the parameters block:</p><ul>
-<li><p>A real number <code>x&gt;0</code> initializes randomly between <code>[-x,x]</code> (on the
-<em>unconstrained</em> parameter space);</p></li>
-<li><p><code>0</code> initializes to <code>0</code>;</p></li>
-<li><p>A character vector of paths (one per chain) to JSON or Rdump files. See
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>data</th>
+      <td><p>(multiple options) The data to use for the variables specified in
+the <code>data</code> block of the Stan program. One of the following:</p><ul>
+<li><p>A named list of <span style="R">R</span> objects (like for RStan). Internally this list is then
+written to JSON for CmdStan using <code><a href='write_stan_json.html'>write_stan_json()</a></code>.</p></li>
+<li><p>A path to a data file compatible with CmdStan (JSON or <span style="R">R</span> dump). See the
+appendices in the CmdStan manual for details on using these formats.</p></li>
+<li><p><code>NULL</code> or an empty list if the Stan program has no <code>data</code> block.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>seed</th>
+      <td><p>(positive integer) A seed for the (P)RNG to pass to CmdStan.</p></td>
+    </tr>
+    <tr>
+      <th>refresh</th>
+      <td><p>(non-negative integer) The number of iterations between
+printed screen updates. If <code>refresh = 0</code>, only error messages will be
+printed.</p></td>
+    </tr>
+    <tr>
+      <th>init</th>
+      <td><p>(multiple options) The initialization method to use for the
+variables declared in the <code>parameters</code> block of the Stan program:</p><ul>
+<li><p>A real number <code>x&gt;0</code>. This initializes <em>all</em> parameters randomly between
+<code>[-x,x]</code> (on the <em>unconstrained</em> parameter space);</p></li>
+<li><p>The number <code>0</code>. This initializes <em>all</em> parameters to <code>0</code>;</p></li>
+<li><p>A character vector of paths (one per chain) to JSON or Rdump files
+containing initial values for all or some parameters. See
 <code><a href='write_stan_json.html'>write_stan_json()</a></code> to write <span style="R">R</span> objects to JSON files compatible with
 CmdStan.</p></li>
-<li><p>A list of lists. For MCMC the list should contain a sublist for each
-chain. For optimization and variational inference there should be just one
-sublist. The sublists should have named elements corresponding to the
-parameters for which you are specifying initial values. See <strong>Examples</strong>.</p></li>
+<li><p>A list of lists containing initial values for all or some parameters. For
+MCMC the list should contain a sublist for each chain. For optimization and
+variational inference there should be just one sublist. The sublists should
+have named elements corresponding to the parameters for which you are
+specifying initial values. See <strong>Examples</strong>.</p></li>
 <li><p>A function that returns a single list with names corresponding to the
-parameters for which you are specifying initial values. The function
-can take no arguments or a single argument <code>chain_id</code>. For MCMC, if the
-function has argument <code>chain_id</code> it will be supplied with the chain id
-(from 1 to number of chains) when called to generate the initial
-values. See <strong>Examples</strong>.</p></li>
-</ul></li>
-<li><p><code>save_latent_dynamics</code>: (logical) Should auxiliary diagnostic information
+parameters for which you are specifying initial values. The function can
+take no arguments or a single argument <code>chain_id</code>. For MCMC, if the function
+has argument <code>chain_id</code> it will be supplied with the chain id (from 1 to
+number of chains) when called to generate the initial values. See
+<strong>Examples</strong>.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>save_latent_dynamics</th>
+      <td><p>(logical) Should auxiliary diagnostic information
 about the latent dynamics be written to temporary diagnostic CSV files?
 This argument replaces CmdStan's <code>diagnostic_file</code> argument and the content
 written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (and for some algorithms no content may be written). The default
-is <code>save_latent_dynamics=FALSE</code>, which is appropriate for almost every use case
-(all diagnostics recommended for users to check are <em>always</em> saved, e.g.,
-divergences for HMC). To save the temporary files created when
-<code>save_latent_dynamics=TRUE</code> see the
-<code><a href='fit-method-save_output_files.html'>$save_latent_dynamics_files()</a></code> method.</p></li>
-<li><p><code>output_dir</code>: (string) A path to a directory where CmdStan should write
+CmdStanR (for some algorithms no content may be written). The default
+is <code>FALSE</code>, which is appropriate for almost every use case. To save the
+temporary files created when <code>save_latent_dynamics=TRUE</code> see the
+<code><a href='fit-method-save_output_files.html'>$save_latent_dynamics_files()</a></code>
+method.</p></td>
+    </tr>
+    <tr>
+      <th>output_dir</th>
+      <td><p>(string) A path to a directory where CmdStan should write
 its output CSV files. For interactive use this can typically be left at
-<code>NULL</code> (temporary directory) since CmdStanR makes the CmdStan output (e.g.,
-posterior draws and diagnostics) available in <span style="R">R</span> via methods of the fitted
+<code>NULL</code> (temporary directory) since CmdStanR makes the CmdStan output
+(posterior draws and diagnostics) available in <span style="R">R</span> via methods of the fitted
 model objects. The behavior of <code>output_dir</code> is as follows:</p><ul>
 <li><p>If <code>NULL</code> (the default), then the CSV files are written to a temporary
-directory and only saved permanently if the user calls one of the
-<code>$save_*</code> methods of the fitted model object (e.g.,
+directory and only saved permanently if the user calls one of the <code>$save_*</code>
+methods of the fitted model object (e.g.,
 <code><a href='fit-method-save_output_files.html'>$save_output_files()</a></code>). These temporary
-files are removed when the fitted model object is garbage collected.</p></li>
+files are removed when the fitted model object is
+<a href='https://rdrr.io/r/base/gc.html'>garbage collected</a> (manually or automatically).</p></li>
 <li><p>If a path, then the files are created in <code>output_dir</code> with names
-corresponding the defaults used by <code>$save_output_files()</code> (and similar
-methods like <code>$save_latent_dynamics_files()</code>).</p></li>
-</ul></li>
-<li><p><code>sig_figs</code>: (positive integer) The number of significant figures used
-for the output values. By default, CmdStan represent the output values with
-6 significant figures. The upper limit for <code>sig_figs</code> is 18. Increasing
-this value can cause an increased usage of disk space due to larger
-output CSV files.</p></li>
-</ul>
-
-    <h2 class="hasAnchor" id="arguments-unique-to-the-sample-method"><a class="anchor" href="#arguments-unique-to-the-sample-method"></a>Arguments unique to the <code>sample</code> method</h2>
-
-    <p>In addition to the
-arguments above, the <code>$sample()</code> method also has its own set of arguments.</p>
-<p>The following three arguments are offered by CmdStanR but do not correspond
-to arguments in CmdStan:</p><ul>
-<li><p><code>chains</code>: (positive integer) The number of Markov chains to run. The
-default is 4.</p></li>
-<li><p><code>parallel_chains</code>: (positive integer) The <em>maximum</em> number of MCMC chains
+corresponding to the defaults used by <code>$save_output_files()</code>.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>sig_figs</th>
+      <td><p>(positive integer) The number of significant figures used
+when storing the output values. By default, CmdStan represent the output
+values with 6 significant figures. The upper limit for <code>sig_figs</code> is 18.
+Increasing this value will result in larger output CSV files and thus an
+increased usage of disk space.</p></td>
+    </tr>
+    <tr>
+      <th>chains</th>
+      <td><p>(positive integer) The number of Markov chains to run. The
+default is 4.</p></td>
+    </tr>
+    <tr>
+      <th>parallel_chains</th>
+      <td><p>(positive integer) The <em>maximum</em> number of MCMC chains
 to run in parallel. If <code>parallel_chains</code> is not specified then the default
 is to look for the option <code>"mc.cores"</code>, which can be set for an entire <span style="R">R</span>
 session by <code><a href='https://rdrr.io/r/base/options.html'>options(mc.cores=value)</a></code>. If the <code>"mc.cores"</code> option has not
-been set then the default is <code>1</code>.</p></li>
-<li><p><code>chain_ids</code>: (vector) A vector of chain IDs. Must contain <code>chains</code> unique
+been set then the default is <code>1</code>.</p></td>
+    </tr>
+    <tr>
+      <th>chain_ids</th>
+      <td><p>(vector) A vector of chain IDs. Must contain <code>chains</code> unique
 positive integers. If not set, the default chain IDs are used (integers
-starting from <code>1</code>).</p></li>
-<li><p><code>threads_per_chain</code>: (positive integer) If the model was
+starting from <code>1</code>).</p></td>
+    </tr>
+    <tr>
+      <th>threads_per_chain</th>
+      <td><p>(positive integer) If the model was
 <a href='model-method-compile.html'>compiled</a> with threading support, the number of
 threads to use in parallelized sections <em>within</em> an MCMC chain (e.g., when
 using the Stan functions <code>reduce_sum()</code> or <code>map_rect()</code>). This is in
 contrast with <code>parallel_chains</code>, which specifies the number of chains to
 run in parallel. The actual number of CPU cores used use is
 <code>parallel_chains*threads_per_chain</code>. For an example of using threading see
-the Stan case study <a href='https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html'>Reduce Sum: A Minimal Example</a>.</p></li>
-<li><p><code>show_messages</code>: (logical) When <code>TRUE</code> (the default), prints all
-informational messages, for example rejection of the current proposal.
-Disable if you wish silence these messages, but this is not recommended
-unless you are very sure that the model is correct up to numerical error.
-If the messages are silenced then the <code>$output()</code> method of the resulting
-fit object can be used to display all the silenced messages.</p></li>
-<li><p><code>validate_csv</code>: (logical) When <code>TRUE</code> (the default), validate the
-sampling results in the csv files. Disable if you wish to manually read in
-the sampling results and validate them yourself, for example using
-<code><a href='read_cmdstan_csv.html'>read_cmdstan_csv()</a></code>.</p></li>
-</ul>
-
-<p>The rest of the arguments correspond to arguments offered by CmdStan,
-although some names are slightly different. They are described briefly here
-and in greater detail in the CmdStan manual. Arguments left at <code>NULL</code>
-default to the default used by the installed version of CmdStan.</p><ul>
-<li><p><code>iter_sampling</code>: (positive integer) The number of post-warmup iterations to
-run per chain.</p></li>
-<li><p><code>iter_warmup</code>: (positive integer) The number of warmup iterations to run
-per chain.</p></li>
-<li><p><code>save_warmup</code>: (logical) Should warmup iterations be saved? The default
+the Stan case study <a href='https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html'>Reduce Sum: A Minimal Example</a>.</p></td>
+    </tr>
+    <tr>
+      <th>iter_warmup</th>
+      <td><p>(positive integer) The number of warmup iterations to run
+per chain. Note: in the CmdStan User's Guide this is referred to as
+<code>num_warmup</code>.</p></td>
+    </tr>
+    <tr>
+      <th>iter_sampling</th>
+      <td><p>(positive integer) The number of post-warmup iterations
+to run per chain. Note: in the CmdStan User's Guide this is referred to as
+<code>num_samples</code>.</p></td>
+    </tr>
+    <tr>
+      <th>save_warmup</th>
+      <td><p>(logical) Should warmup iterations be saved? The default
 is <code>FALSE</code>. If <code>save_warmup=TRUE</code> then you can use
 <a href='fit-method-draws.html'>$draws(inc_warmup=TRUE)</a> to include warmup when
-accessing the draws.</p></li>
-<li><p><code>thin</code>: (positive integer) The period between saved samples. This should
-be left at its default (no thinning) unless memory is a problem.</p></li>
-<li><p><code>max_treedepth</code>: (positive integer) The maximum allowed tree depth for the
-NUTS engine. See the <em>Tree Depth</em> section of the CmdStan manual for more
-details.</p></li>
-<li><p><code>adapt_engaged</code>: (logical) Do warmup adaptation? The default is <code>TRUE</code>.
+accessing the draws.</p></td>
+    </tr>
+    <tr>
+      <th>thin</th>
+      <td><p>(positive integer) The period between saved samples. This should
+typically be left at its default (no thinning) unless memory is a problem.</p></td>
+    </tr>
+    <tr>
+      <th>max_treedepth</th>
+      <td><p>(positive integer) The maximum allowed tree depth for
+the NUTS engine. See the <em>Tree Depth</em> section of the CmdStan User's Guide
+for more details.</p></td>
+    </tr>
+    <tr>
+      <th>adapt_engaged</th>
+      <td><p>(logical) Do warmup adaptation? The default is <code>TRUE</code>.
 If a precomputed inverse metric is specified via the <code>inv_metric</code> argument
 (or <code>metric_file</code>) then, if <code>adapt_engaged=TRUE</code>, Stan will use the
 provided inverse metric just as an initial guess during adaptation. To turn
 off adaptation when using a precomputed inverse metric set
-<code>adapt_engaged=FALSE</code>.</p></li>
-<li><p><code>adapt_delta</code>: (real in <code>(0,1)</code>) The adaptation target acceptance
-statistic.</p></li>
-<li><p><code>step_size</code>: (positive real) The <em>initial</em> step size for the discrete
+<code>adapt_engaged=FALSE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>adapt_delta</th>
+      <td><p>(real in <code>(0,1)</code>) The adaptation target acceptance
+statistic.</p></td>
+    </tr>
+    <tr>
+      <th>step_size</th>
+      <td><p>(positive real) The <em>initial</em> step size for the discrete
 approximation to continuous Hamiltonian dynamics. This is further tuned
-during warmup.</p></li>
-<li><p><code>metric</code>: (character) One of <code>"diag_e"</code>, <code>"dense_e"</code>, or <code>"unit_e"</code>,
+during warmup.</p></td>
+    </tr>
+    <tr>
+      <th>metric</th>
+      <td><p>(character) One of <code>"diag_e"</code>, <code>"dense_e"</code>, or <code>"unit_e"</code>,
 specifying the geometry of the base manifold. See the <em>Euclidean Metric</em>
-section of the CmdStan documentation for more details. To specify a
-precomputed (inverse) metric, see the <code>inv_metric</code> argument below.</p></li>
-<li><p><code>metric_file</code>: (character) A character vector containing paths to JSON or
+section of the CmdStan User's Guide for more details. To specify a
+precomputed (inverse) metric, see the <code>inv_metric</code> argument below.</p></td>
+    </tr>
+    <tr>
+      <th>metric_file</th>
+      <td><p>(character) A character vector containing paths to JSON or
 Rdump files (one per chain) compatible with CmdStan that contain
 precomputed inverse metrics. The <code>metric_file</code> argument is inherited from
 CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
 named <code>inv_metric</code>, referring to the <em>inverse</em> metric. We recommend instead
 using CmdStanR's <code>inv_metric</code> argument (see below) to specify an inverse
-metric directly using a vector or matrix from your <span style="R">R</span> session.</p></li>
-<li><p><code>inv_metric</code>: (vector, matrix) A vector (if <code>metric='diag_e'</code>) or a
-matrix (if <code>metric='dense_e'</code>) for initializing the inverse metric, which
+metric directly using a vector or matrix from your <span style="R">R</span> session.</p></td>
+    </tr>
+    <tr>
+      <th>inv_metric</th>
+      <td><p>(vector, matrix) A vector (if <code>metric='diag_e'</code>) or a
+matrix (if <code>metric='dense_e'</code>) for initializing the inverse metric. This
 can be used as an alternative to the <code>metric_file</code> argument. A vector is
 interpreted as a diagonal metric. The inverse metric is usually set to an
 estimate of the posterior covariance. See the <code>adapt_engaged</code> argument
-above for details on (and control over) how specifying a precomputed
-inverse metric interacts with adaptation.</p></li>
-<li><p><code>init_buffer</code>: (nonnegative integer) Width of initial fast timestep
-adaptation interval during warmup.</p></li>
-<li><p><code>term_buffer</code>: (nonnegative integer) Width of final fast timestep
-adaptation interval during warmup.</p></li>
-<li><p><code>window</code>: (nonnegative integer) Initial width of slow timestep/metric
-adaptation interval.</p></li>
-<li><p><code>fixed_param</code>: (logical) When <code>TRUE</code>, call CmdStan with argument
+above for details about (and control over) how specifying a precomputed
+inverse metric interacts with adaptation.</p></td>
+    </tr>
+    <tr>
+      <th>init_buffer</th>
+      <td><p>(nonnegative integer) Width of initial fast timestep
+adaptation interval during warmup.</p></td>
+    </tr>
+    <tr>
+      <th>term_buffer</th>
+      <td><p>(nonnegative integer) Width of final fast timestep
+adaptation interval during warmup.</p></td>
+    </tr>
+    <tr>
+      <th>window</th>
+      <td><p>(nonnegative integer) Initial width of slow timestep/metric
+adaptation interval.</p></td>
+    </tr>
+    <tr>
+      <th>fixed_param</th>
+      <td><p>(logical) When <code>TRUE</code>, call CmdStan with argument
 <code>"algorithm=fixed_param"</code>. The default is <code>FALSE</code>. The fixed parameter
 sampler generates a new sample without changing the current state of the
 Markov chain; only generated quantities may change. This can be useful
 when, for example, trying to generate pseudo-data using the generated
 quantities block. If the parameters block is empty then using
 <code>fixed_param=TRUE</code> is mandatory. When <code>fixed_param=TRUE</code> the <code>chains</code> and
-<code>parallel_chains</code> arguments will be set to <code>1</code>.</p></li>
-</ul>
+<code>parallel_chains</code> arguments will be set to <code>1</code>.</p></td>
+    </tr>
+    <tr>
+      <th>validate_csv</th>
+      <td><p>(logical) When <code>TRUE</code> (the default), validate the
+sampling results in the csv files. Disable if you wish to manually read in
+the sampling results and validate them yourself, for example using
+<code><a href='read_cmdstan_csv.html'>read_cmdstan_csv()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>show_messages</th>
+      <td><p>(logical) When <code>TRUE</code> (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish silence these messages, but this is not recommended
+unless you are very sure that the model is correct up to numerical error.
+If the messages are silenced then the <code>$output()</code> method of the resulting
+fit object can be used to display all the silenced messages.</p></td>
+    </tr>
+    <tr>
+      <th>cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize</th>
+      <td><p>Deprecated and will be removed in a future release.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The <code>$sample()</code> method returns a <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code> object.</p>
+    <p>A <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code> object.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>The CmdStanR website
@@ -402,6 +490,7 @@ documentation and tutorials.</p>
 <code><a href='model-method-compile.html'>model-method-compile</a></code>,
 <code><a href='model-method-generate-quantities.html'>model-method-generate-quantities</a></code>,
 <code><a href='model-method-optimize.html'>model-method-optimize</a></code>,
+<code><a href='model-method-sample_mpi.html'>model-method-sample_mpi</a></code>,
 <code><a href='model-method-variational.html'>model-method-variational</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
@@ -491,7 +580,7 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; Both chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.1 seconds.</div><div class='input'>
+#&gt; Total execution time: 0.2 seconds.</div><div class='input'>
 <span class='co'># Use 'posterior' package for summaries</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 2 x 10</span><span>
 #&gt;   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
@@ -540,10 +629,7 @@ documentation and tutorials.</p>
 <span class='co'># Plot posterior using bayesplot (ggplot2)</span>
 <span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='model-method-sample-1.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># Call CmdStan's diagnose and stansummary utilities</span>
-<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></span>()</div><div class='output co'>#&gt; Running bin/diagnose \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/bernoulli-202011121419-1-771cfa.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/bernoulli-202011121419-2-771cfa.csv
-#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/bernoulli-202011121419-1-771cfa.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/bernoulli-202011121419-2-771cfa.csv
+<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></span>()</div><div class='output co'>#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/bernoulli-202012171339-1-95e531.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/bernoulli-202012171339-2-95e531.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -558,27 +644,24 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; Split R-hat values satisfactory all parameters.
 #&gt; 
-#&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></span>()</div><div class='output co'>#&gt; Running bin/stansummary \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/bernoulli-202011121419-1-771cfa.csv \
-#&gt;   /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/bernoulli-202011121419-2-771cfa.csv
-#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/bernoulli-202011121419-1-771cfa.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpL7jcf4/bernoulli-202011121419-2-771cfa.csv
+#&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></span>()</div><div class='output co'>#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/bernoulli-202012171339-1-95e531.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/bernoulli-202012171339-2-95e531.csv
 #&gt; Inference for Stan model: bernoulli_model
 #&gt; 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.0070, 0.0070) seconds, 0.014 seconds total
-#&gt; Sampling took (0.018, 0.018) seconds, 0.036 seconds total
+#&gt; Warmup took (0.010, 0.0070) seconds, 0.017 seconds total
+#&gt; Sampling took (0.018, 0.017) seconds, 0.035 seconds total
 #&gt; 
 #&gt;                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
 #&gt; 
-#&gt; lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8      586    16282      1.0
-#&gt; accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.0e+04  1.0e+00
-#&gt; stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  2.8e+01  2.6e+13
-#&gt; treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  5.2e+04  1.0e+00
-#&gt; n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  3.9e+02  1.0e+00
+#&gt; lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8      586    16747      1.0
+#&gt; accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.1e+04  1.0e+00
+#&gt; stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  2.9e+01  2.6e+13
+#&gt; treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  5.3e+04  1.0e+00
+#&gt; n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  4.0e+02  1.0e+00
 #&gt; divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-#&gt; energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  1.9e+04  1.0e+00
+#&gt; energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  2.0e+04  1.0e+00
 #&gt; 
-#&gt; theta           0.25  4.5e-03    0.12  0.081  0.23  0.49      755    20978     1.00
+#&gt; theta           0.25  4.5e-03    0.12  0.081  0.23  0.49      755    21577     1.00
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,
@@ -611,8 +694,8 @@ documentation and tutorials.</p>
 #&gt;   This procedure has not been thoroughly tested and may be unstable 
 #&gt;   or buggy. The interface is subject to change. 
 #&gt; ------------------------------------------------------------ 
-#&gt; Gradient evaluation took 7e-06 seconds 
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds. 
+#&gt; Gradient evaluation took 1.1e-05 seconds 
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds. 
 #&gt; Adjust your expectations accordingly! 
 #&gt; Begin eta adaptation. 
 #&gt; Iteration:   1 / 250 [  0%]  (Adaptation) 

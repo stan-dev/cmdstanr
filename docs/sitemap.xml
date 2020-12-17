@@ -49,6 +49,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-inv_metric.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-loo.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-lp.html</loc>
   </url>
   <url>
@@ -56,6 +59,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-mle.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-num_chains.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-output.html</loc>
@@ -95,6 +101,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-sample.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-sample_mpi.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-variational.html</loc>

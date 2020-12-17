@@ -4,41 +4,38 @@
 \alias{model-method-check_syntax}
 \alias{check_syntax}
 \title{Check syntax of a Stan program}
-\description{
-The \verb{$check_syntax()} method of a \code{\link{CmdStanModel}} object
-checks the Stan program for syntax errors and returns \code{TRUE} (invisibly) if
-parsing succeeds. If invalid syntax in found an error is thrown.
-}
-\section{Usage}{
-\preformatted{$check_syntax(
+\usage{
+check_syntax(
   pedantic = FALSE,
   include_paths = NULL,
   stanc_options = list(),
   quiet = FALSE
 )
 }
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{pedantic}: (logical) Should pedantic mode be turned on? The default is
+\arguments{
+\item{pedantic}{(logical) Should pedantic mode be turned on? The default is
 \code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
 Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/reference-manual/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
-the Stan Reference Manual.
-\item \code{include_paths}: (character vector) Paths to directories where Stan
+the Stan Reference Manual.}
+
+\item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
-program.
-\item \code{stanc_options}: (list) Any other Stan-to-C++ transpiler options to be
+program.}
+
+\item{stanc_options}{(list) Any other Stan-to-C++ transpiler options to be
 used when compiling the model. See the documentation for the
-\code{\link[=model-method-compile]{$compile()}} method for details.
-\item \code{quiet}: (logical) Should informational messages be suppressed? The
+\code{\link[=model-method-compile]{$compile()}} method for details.}
+
+\item{quiet}{(logical) Should informational messages be suppressed? The
 default is \code{FALSE}, which will print a message if the Stan program is valid
 or the compiler error message if there are syntax errors. If \code{TRUE}, only
-the error message will be printed.
+the error message will be printed.}
 }
+\description{
+The \verb{$check_syntax()} method of a \code{\link{CmdStanModel}} object
+checks the Stan program for syntax errors and returns \code{TRUE} (invisibly) if
+parsing succeeds. If invalid syntax in found an error is thrown.
 }
-
 \section{Value}{
  The \verb{$check_syntax()} method returns \code{TRUE} (invisibly) if
 the model is valid.

@@ -4,6 +4,54 @@
 \alias{model-method-compile}
 \alias{compile}
 \title{Compile a Stan program}
+\usage{
+compile(
+  quiet = TRUE,
+  dir = NULL,
+  pedantic = FALSE,
+  include_paths = NULL,
+  cpp_options = list(),
+  stanc_options = list(),
+  force_recompile = FALSE,
+  threads = FALSE
+)
+}
+\arguments{
+\item{quiet}{(logical) Should the verbose output from CmdStan during
+compilation be suppressed? The default is \code{TRUE}, but if you encounter an
+error we recommend trying again with \code{quiet=FALSE} to see more of the
+output.}
+
+\item{dir}{(string) The path to the directory in which to store the CmdStan
+executable (or \code{.hpp} file if using \verb{$save_hpp_file()}). The default is the
+same location as the Stan program.}
+
+\item{pedantic}{(logical) Should pedantic mode be turned on? The default is
+\code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
+Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/reference-manual/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
+the Stan Reference Manual. \strong{Note:} to do a pedantic check for a model
+that is already compiled use the
+\code{\link[=model-method-check_syntax]{$check_syntax()}} method instead.}
+
+\item{include_paths}{(character vector) Paths to directories where Stan
+should look for files specified in \verb{#include} directives in the Stan
+program.}
+
+\item{cpp_options}{(list) Any makefile options to be used when compiling the
+model (\code{STAN_THREADS}, \code{STAN_MPI}, \code{STAN_OPENCL}, etc.). Anything you would
+otherwise write in the \code{make/local} file.}
+
+\item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
+when compiling the model. See the \strong{Examples} section below as well as the
+\code{stanc} chapter of the CmdStan Guide for more details on available options:
+https://mc-stan.org/docs/cmdstan-guide/stanc.html.}
+
+\item{force_recompile}{(logical) Should the model be recompiled even if was
+not modified since last compiled. The default is \code{FALSE}.}
+
+\item{threads}{Deprecated and will be removed in a future release. Please
+turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
+}
 \description{
 The \verb{$compile()} method of a \code{\link{CmdStanModel}} object translates
 the Stan program to C++ and creates a compiled executable. In most cases
@@ -17,65 +65,15 @@ containing the generated C++ code are available via the \verb{$exe_file()} and
 \verb{$hpp_file()} methods. The default is to create the executable in the same
 directory as the Stan program and to write the generated C++ code in a
 temporary directory. To save the C++ code to a non-temporary location use
-\verb{$save_hpp_file()}.
+\verb{$save_hpp_file(dir)}.
 }
-\section{Usage}{
-\preformatted{$compile(
-  quiet = TRUE,
-  dir = NULL,
-  pedantic = FALSE,
-  include_paths = NULL,
-  cpp_options = list(),
-  stanc_options = list(),
-  force_recompile = FALSE
-)
-$exe_file()
-$hpp_file()
-$save_hpp_file(dir = NULL)
-}
-}
-
-\section{Arguments}{
-
-Leaving all arguments at their defaults should be fine for most users, but
-optional arguments are provided to enable features in CmdStan (and the Stan
-Math library). See the CmdStan manual for more details.
-\itemize{
-\item \code{quiet}: (logical) Should the verbose output from CmdStan during
-compilation be suppressed? The default is \code{TRUE}, but if you encounter an
-error we recommend trying again with \code{quiet=FALSE} to see more of the
-output.
-\item \code{dir}: (string) The path to the directory in which to store the CmdStan
-executable (or \code{.hpp} file if using \verb{$save_hpp_file()}). The default is the
-same location as the Stan program.
-\item \code{pedantic}: (logical) Should pedantic mode be turned on? The default is
-\code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
-Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/reference-manual/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
-the Stan Reference Manual. \strong{Note:} to do a pedantic check for a model
-that is already compiled use the
-\code{\link[=model-method-check_syntax]{$check_syntax()}} method instead.
-\item \code{include_paths}: (character vector) Paths to directories where Stan
-should look for files specified in \verb{#include} directives in the Stan
-program.
-\item \code{cpp_options}: (list) Any makefile options to be used when compiling the
-model (\code{STAN_THREADS}, \code{STAN_MPI}, \code{STAN_OPENCL}, etc.). Anything you would
-otherwise write in the \code{make/local} file.
-\item \code{stanc_options}: (list) Any Stan-to-C++ transpiler options to be used
-when compiling the model. See the \strong{Examples} section below as well as the
-\code{stanc} chapter of the CmdStan Guide for more details on available options:
-https://mc-stan.org/docs/cmdstan-guide/stanc.html.
-\item \code{force_recompile}: (logical) Should the model be recompiled even if was
-not modified since last compiled. The default is \code{FALSE}.
-}
-}
-
 \section{Value}{
  The \verb{$compile()} method is called for its side effect of
 creating the executable and adding its path to the \code{\link{CmdStanModel}} object,
 but it also returns the \code{\link{CmdStanModel}} object invisibly.
 
-The \verb{$exe_file()}, \verb{$hpp_file()}, and \verb{$save_hpp_file()} methods all return
-file paths.
+After compilation, the \verb{$exe_file()}, \verb{$hpp_file()}, and \verb{$save_hpp_file()}
+methods can be used and return file paths.
 }
 
 \examples{

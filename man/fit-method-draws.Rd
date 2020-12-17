@@ -4,35 +4,17 @@
 \alias{fit-method-draws}
 \alias{draws}
 \title{Extract posterior draws}
-\description{
-Extract posterior draws after MCMC or approximate posterior
-draws after variational approximation using formats provided by the
-\pkg{posterior} package.
-
-The variables include the \code{parameters}, \verb{transformed parameters}, and
-\verb{generated quantities} from the Stan program as well as \code{lp__}, the total
-log probability (\code{target}) accumulated in the \code{model} block.
+\usage{
+draws(variables = NULL, inc_warmup = FALSE)
 }
-\section{Usage}{
-\preformatted{$draws(variables = NULL, inc_warmup = FALSE, ...)
-}
-}
+\arguments{
+\item{variables}{(character vector) The variables to read in. If \code{NULL} (the
+default) then all variables are included.}
 
-\section{Arguments}{
-
-\itemize{
-\item \code{variables}: (character vector) The variables (parameters and generated
-quantities) to read in. If \code{NULL} (the default) then the draws of all
-variables are included.
-\item \code{inc_warmup}: (logical) For MCMC only, should warmup draws be included?
-Defaults to \code{FALSE}.
-\item \code{...}: Arguments passed on to
-\code{\link[posterior:draws_array]{posterior::as_draws_array()}}.
+\item{inc_warmup}{(logical) Should warmup draws be included? Defaults to
+\code{FALSE}. Ignored except when used with \link{CmdStanMCMC} objects.}
 }
-}
-
-\section{Value}{
-
+\value{
 \itemize{
 \item For \link[=model-method-sample]{MCMC}, a 3-D
 \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
@@ -51,7 +33,15 @@ are \emph{not} actually draws, just point estimates stored in the \code{draws_ma
 format. See \code{\link[=fit-method-mle]{$mle()}} to extract them as a numeric vector.
 }
 }
+\description{
+Extract posterior draws after MCMC or approximate posterior
+draws after variational approximation using formats provided by the
+\pkg{posterior} package.
 
+The variables include the \code{parameters}, \verb{transformed parameters}, and
+\verb{generated quantities} from the Stan program as well as \code{lp__}, the total
+log probability (\code{target}) accumulated in the \code{model} block.
+}
 \examples{
 \dontrun{
 library(posterior)

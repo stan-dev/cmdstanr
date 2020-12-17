@@ -4,40 +4,8 @@
 \alias{model-method-sample_mpi}
 \alias{sample_mpi}
 \title{Run Stan's MCMC algorithms with MPI}
-\description{
-The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object is
-identical to the \verb{$sample()} method but with support for
-\href{https://mc-stan.org/math/mpi.html}{MPI}. The target audience for MPI are
-those with large computer clusters. For other users, the
-\code{\link[=model-method-sample]{$sample()}} method provides both parallelization of
-chains and threading support for within-chain parallelization.
-}
-\details{
-In order to use MPI with Stan, an MPI implementation must be
-installed. For Unix systems the most commonly used implementations are
-MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
-(for example mpicxx), which is required to compile the model.
-
-An example of compiling with MPI:\preformatted{mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
-}
-
-The C++ options that must be supplied to the
-\link[=model-method-compile]{compile} call are:
-\itemize{
-\item \code{STAN_MPI}: Enables the use of MPI with Stan if \code{TRUE}.
-\item \code{CXX}: The name of the MPI C++ compiler wrapper. Typically \code{"mpicxx"}.
-\item \code{TBB_CXX_TYPE}: The C++ compiler the MPI wrapper wraps. Typically \code{"gcc"}
-on Linux and \code{"clang"} on macOS.
-}
-
-In the call to the \verb{$sample_mpi()} method we can also provide the name of
-the MPI launcher (\code{mpi_cmd}, defaulting to \code{"mpiexec"}) and any other
-MPI launch arguments. In most cases, it is enough to only define the number
-of processes with \code{mpi_args = list("n" = 4)}.
-}
-\section{Usage}{
-\preformatted{$sample_mpi(
+\usage{
+sample_mpi(
   data = NULL,
   mpi_cmd = "mpiexec",
   mpi_args = NULL,
@@ -46,9 +14,7 @@ of processes with \code{mpi_args = list("n" = 4)}.
   init = NULL,
   save_latent_dynamics = FALSE,
   output_dir = NULL,
-  sig_figs = NULL,
-  chains = 4,
-  parallel_chains = getOption("mc.cores", 1),
+  chains = 1,
   chain_ids = seq_len(chains),
   iter_warmup = NULL,
   iter_sampling = NULL,
@@ -65,30 +31,217 @@ of processes with \code{mpi_args = list("n" = 4)}.
   term_buffer = NULL,
   window = NULL,
   fixed_param = FALSE,
+  sig_figs = NULL,
   validate_csv = TRUE,
   show_messages = TRUE
 )
 }
-}
-
-\section{Arguments unique to the \code{sample_mpi} method}{
-
+\arguments{
+\item{data}{(multiple options) The data to use for the variables specified in
+the \code{data} block of the Stan program. One of the following:
 \itemize{
-\item \code{mpi_cmd}: (character vector) The MPI launcher used for launching MPI processes.
-The default launcher is \code{"mpiexec"}.
-\item \code{mpi_args}: (list) A list of arguments to use when launching MPI processes.
-For example, \code{mpi_args = list("n" = 4)} launches the executable as
-\verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments
-for the model executable.
+\item A named list of \R objects (like for RStan). Internally this list is then
+written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
+\item A path to a data file compatible with CmdStan (JSON or \R dump). See the
+appendices in the CmdStan manual for details on using these formats.
+\item \code{NULL} or an empty list if the Stan program has no \code{data} block.
+}}
+
+\item{mpi_cmd}{(character vector) The MPI launcher used for launching MPI
+processes. The default launcher is \code{"mpiexec"}.}
+
+\item{mpi_args}{(list) A list of arguments to use when launching MPI
+processes. For example, \code{mpi_args = list("n" = 4)} launches the executable
+as \verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments for the
+model executable.}
+
+\item{seed}{(positive integer) A seed for the (P)RNG to pass to CmdStan.}
+
+\item{refresh}{(non-negative integer) The number of iterations between
+printed screen updates. If \code{refresh = 0}, only error messages will be
+printed.}
+
+\item{init}{(multiple options) The initialization method to use for the
+variables declared in the \code{parameters} block of the Stan program:
+\itemize{
+\item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
+\verb{[-x,x]} (on the \emph{unconstrained} parameter space);
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0};
+\item A character vector of paths (one per chain) to JSON or Rdump files
+containing initial values for all or some parameters. See
+\code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
+CmdStan.
+\item A list of lists containing initial values for all or some parameters. For
+MCMC the list should contain a sublist for each chain. For optimization and
+variational inference there should be just one sublist. The sublists should
+have named elements corresponding to the parameters for which you are
+specifying initial values. See \strong{Examples}.
+\item A function that returns a single list with names corresponding to the
+parameters for which you are specifying initial values. The function can
+take no arguments or a single argument \code{chain_id}. For MCMC, if the function
+has argument \code{chain_id} it will be supplied with the chain id (from 1 to
+number of chains) when called to generate the initial values. See
+\strong{Examples}.
+}}
+
+\item{save_latent_dynamics}{(logical) Should auxiliary diagnostic information
+about the latent dynamics be written to temporary diagnostic CSV files?
+This argument replaces CmdStan's \code{diagnostic_file} argument and the content
+written to CSV is controlled by the user's CmdStan installation and not
+CmdStanR (for some algorithms no content may be written). The default
+is \code{FALSE}, which is appropriate for almost every use case. To save the
+temporary files created when \code{save_latent_dynamics=TRUE} see the
+\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
+method.}
+
+\item{output_dir}{(string) A path to a directory where CmdStan should write
+its output CSV files. For interactive use this can typically be left at
+\code{NULL} (temporary directory) since CmdStanR makes the CmdStan output
+(posterior draws and diagnostics) available in \R via methods of the fitted
+model objects. The behavior of \code{output_dir} is as follows:
+\itemize{
+\item If \code{NULL} (the default), then the CSV files are written to a temporary
+directory and only saved permanently if the user calls one of the \verb{$save_*}
+methods of the fitted model object (e.g.,
+\code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
+files are removed when the fitted model object is
+\link[base:gc]{garbage collected} (manually or automatically).
+\item If a path, then the files are created in \code{output_dir} with names
+corresponding to the defaults used by \verb{$save_output_files()}.
+}}
+
+\item{chains}{(positive integer) The number of Markov chains to run. The
+default is 4.}
+
+\item{chain_ids}{(vector) A vector of chain IDs. Must contain \code{chains} unique
+positive integers. If not set, the default chain IDs are used (integers
+starting from \code{1}).}
+
+\item{iter_warmup}{(positive integer) The number of warmup iterations to run
+per chain. Note: in the CmdStan User's Guide this is referred to as
+\code{num_warmup}.}
+
+\item{iter_sampling}{(positive integer) The number of post-warmup iterations
+to run per chain. Note: in the CmdStan User's Guide this is referred to as
+\code{num_samples}.}
+
+\item{save_warmup}{(logical) Should warmup iterations be saved? The default
+is \code{FALSE}. If \code{save_warmup=TRUE} then you can use
+\link[=fit-method-draws]{$draws(inc_warmup=TRUE)} to include warmup when
+accessing the draws.}
+
+\item{thin}{(positive integer) The period between saved samples. This should
+typically be left at its default (no thinning) unless memory is a problem.}
+
+\item{max_treedepth}{(positive integer) The maximum allowed tree depth for
+the NUTS engine. See the \emph{Tree Depth} section of the CmdStan User's Guide
+for more details.}
+
+\item{adapt_engaged}{(logical) Do warmup adaptation? The default is \code{TRUE}.
+If a precomputed inverse metric is specified via the \code{inv_metric} argument
+(or \code{metric_file}) then, if \code{adapt_engaged=TRUE}, Stan will use the
+provided inverse metric just as an initial guess during adaptation. To turn
+off adaptation when using a precomputed inverse metric set
+\code{adapt_engaged=FALSE}.}
+
+\item{adapt_delta}{(real in \verb{(0,1)}) The adaptation target acceptance
+statistic.}
+
+\item{step_size}{(positive real) The \emph{initial} step size for the discrete
+approximation to continuous Hamiltonian dynamics. This is further tuned
+during warmup.}
+
+\item{metric}{(character) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
+specifying the geometry of the base manifold. See the \emph{Euclidean Metric}
+section of the CmdStan User's Guide for more details. To specify a
+precomputed (inverse) metric, see the \code{inv_metric} argument below.}
+
+\item{metric_file}{(character) A character vector containing paths to JSON or
+Rdump files (one per chain) compatible with CmdStan that contain
+precomputed inverse metrics. The \code{metric_file} argument is inherited from
+CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
+named \code{inv_metric}, referring to the \emph{inverse} metric. We recommend instead
+using CmdStanR's \code{inv_metric} argument (see below) to specify an inverse
+metric directly using a vector or matrix from your \R session.}
+
+\item{inv_metric}{(vector, matrix) A vector (if \code{metric='diag_e'}) or a
+matrix (if \code{metric='dense_e'}) for initializing the inverse metric. This
+can be used as an alternative to the \code{metric_file} argument. A vector is
+interpreted as a diagonal metric. The inverse metric is usually set to an
+estimate of the posterior covariance. See the \code{adapt_engaged} argument
+above for details about (and control over) how specifying a precomputed
+inverse metric interacts with adaptation.}
+
+\item{init_buffer}{(nonnegative integer) Width of initial fast timestep
+adaptation interval during warmup.}
+
+\item{term_buffer}{(nonnegative integer) Width of final fast timestep
+adaptation interval during warmup.}
+
+\item{window}{(nonnegative integer) Initial width of slow timestep/metric
+adaptation interval.}
+
+\item{fixed_param}{(logical) When \code{TRUE}, call CmdStan with argument
+\code{"algorithm=fixed_param"}. The default is \code{FALSE}. The fixed parameter
+sampler generates a new sample without changing the current state of the
+Markov chain; only generated quantities may change. This can be useful
+when, for example, trying to generate pseudo-data using the generated
+quantities block. If the parameters block is empty then using
+\code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
+\code{parallel_chains} arguments will be set to \code{1}.}
+
+\item{sig_figs}{(positive integer) The number of significant figures used
+when storing the output values. By default, CmdStan represent the output
+values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
+Increasing this value will result in larger output CSV files and thus an
+increased usage of disk space.}
+
+\item{validate_csv}{(logical) When \code{TRUE} (the default), validate the
+sampling results in the csv files. Disable if you wish to manually read in
+the sampling results and validate them yourself, for example using
+\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.}
+
+\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish silence these messages, but this is not recommended
+unless you are very sure that the model is correct up to numerical error.
+If the messages are silenced then the \verb{$output()} method of the resulting
+fit object can be used to display all the silenced messages.}
+}
+\description{
+The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object is
+identical to the \verb{$sample()} method but with support for
+\href{https://mc-stan.org/math/mpi.html}{MPI}. The target audience for MPI are
+those with large computer clusters. For other users, the
+\code{\link[=model-method-sample]{$sample()}} method provides both parallelization of
+chains and threading support for within-chain parallelization.
+
+In order to use MPI with Stan, an MPI implementation must be
+installed. For Unix systems the most commonly used implementations are
+MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
+(for example mpicxx), which is required to compile the model.
+
+An example of compiling with MPI:\preformatted{mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 }
 
-All other arguments are the same as for \code{\link[=model-method-sample]{$sample()}}
-except \verb{$sample_mpi()} does not have arguments \code{threads_per_chain} or
-\code{parallel_chains}.
+The C++ options that must be supplied to the
+\link[=model-method-compile]{compile} call are:
+\itemize{
+\item \code{STAN_MPI}: Enables the use of MPI with Stan if \code{TRUE}.
+\item \code{CXX}: The name of the MPI C++ compiler wrapper. Typically \code{"mpicxx"}.
+\item \code{TBB_CXX_TYPE}: The C++ compiler the MPI wrapper wraps. Typically \code{"gcc"}
+on Linux and \code{"clang"} on macOS.
 }
 
+In the call to the \verb{$sample_mpi()} method it is also possible to provide
+the name of the MPI launcher (\code{mpi_cmd}, defaulting to \code{"mpiexec"}) and any
+other MPI launch arguments (\code{mpi_args}). In most cases, it is enough to
+only define the number of processes. To use \code{n_procs} processes specify
+\code{mpi_args = list("n" = n_procs)}.
+}
 \section{Value}{
- The \verb{$sample_mpi()} method returns a \code{\link{CmdStanMCMC}} object.
+ A \code{\link{CmdStanMCMC}} object.
 }
 
 \examples{

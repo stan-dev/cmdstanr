@@ -83,7 +83,7 @@ fitting the model using Stan's algorithms." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -218,6 +218,7 @@ methods, many of which have their own (linked) documentation pages:</p><h3>Stan 
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='model-method-sample.html'>$sample()</a></code></td><td>Run CmdStan's <code>"sample"</code> method, return <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code> object.</td></tr>
+<tr><td><code><a href='model-method-sample_mpi.html'>$sample_mpi()</a></code></td><td>Run CmdStan's <code>"sample"</code> method with <a href='https://mc-stan.org/math/mpi.html'>MPI</a>, return <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code> object.</td></tr>
 <tr><td><code><a href='model-method-optimize.html'>$optimize()</a></code></td><td>Run CmdStan's <code>"optimize"</code> method, return <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code> object.</td></tr>
 <tr><td><code><a href='model-method-variational.html'>$variational()</a></code></td><td>Run CmdStan's <code>"variational"</code> method, return <code><a href='CmdStanVB.html'>CmdStanVB</a></code> object.</td></tr>
 <tr><td><code><a href='model-method-generate-quantities.html'>$generate_quantities()</a></code></td><td>Run CmdStan's <code>"generate quantities"</code> method, return <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code> object.</td></tr>
@@ -240,7 +241,8 @@ documentation and tutorials.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>cmdstanr</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)</div><div class='output co'>#&gt; <span class='message'>This is posterior version 0.1.2</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>bayesplot</span>)</div><div class='output co'>#&gt; <span class='message'>This is bayesplot version 1.7.2.9000</span></div><div class='output co'>#&gt; <span class='message'>- Online documentation and vignettes at mc-stan.org/bayesplot</span></div><div class='output co'>#&gt; <span class='message'>- bayesplot theme set to bayesplot::theme_default()</span></div><div class='output co'>#&gt; <span class='message'>   * Does _not_ affect other ggplot2 plots</span></div><div class='output co'>#&gt; <span class='message'>   * See ?bayesplot_theme_set for details on theme setting</span></div><div class='output co'>#&gt; <span class='message'></span>
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>bayesplot</span>)</div><div class='output co'>#&gt; <span class='message'>This is bayesplot version 1.7.2</span></div><div class='output co'>#&gt; <span class='message'>- Online documentation and vignettes at mc-stan.org/bayesplot</span></div><div class='output co'>#&gt; <span class='message'>- bayesplot theme set to bayesplot::theme_default()</span></div><div class='output co'>#&gt; <span class='message'>   * Does _not_ affect other ggplot2 plots</span></div><div class='output co'>#&gt; <span class='message'>   * See ?bayesplot_theme_set for details on theme setting</span></div><div class='output co'>#&gt; <span class='message'></span>
 #&gt; <span class='message'>Attaching package: ‘bayesplot’</span></div><div class='output co'>#&gt; <span class='message'>The following object is masked from ‘package:posterior’:</span>
 #&gt; <span class='message'></span>
 #&gt; <span class='message'>    rhat</span></div><div class='input'><span class='fu'><a href='https://mc-stan.org/bayesplot/reference/bayesplot-colors.html'>color_scheme_set</a></span>(<span class='st'>"brightblue"</span>)
@@ -325,7 +327,7 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; Both chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.2 seconds.</div><div class='input'>
+#&gt; Total execution time: 0.1 seconds.</div><div class='input'>
 <span class='co'># Use 'posterior' package for summaries</span>
 <span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 2 x 10</span><span>
 #&gt;   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
@@ -374,7 +376,7 @@ documentation and tutorials.</p>
 <span class='co'># Plot posterior using bayesplot (ggplot2)</span>
 <span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='CmdStanModel-1.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># Call CmdStan's diagnose and stansummary utilities</span>
-<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></span>()</div><div class='output co'>#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCe3KhV/bernoulli-202011241550-1-0d9499.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCe3KhV/bernoulli-202011241550-2-0d9499.csv
+<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></span>()</div><div class='output co'>#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/bernoulli-202012171337-1-34ccc3.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/bernoulli-202012171337-2-34ccc3.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -389,24 +391,24 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; Split R-hat values satisfactory all parameters.
 #&gt; 
-#&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></span>()</div><div class='output co'>#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCe3KhV/bernoulli-202011241550-1-0d9499.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpCe3KhV/bernoulli-202011241550-2-0d9499.csv
+#&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></span>()</div><div class='output co'>#&gt; Input files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/bernoulli-202012171337-1-34ccc3.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/bernoulli-202012171337-2-34ccc3.csv
 #&gt; Inference for Stan model: bernoulli_model
 #&gt; 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 #&gt; 
 #&gt; Warmup took (0.0050, 0.0050) seconds, 0.010 seconds total
-#&gt; Sampling took (0.014, 0.013) seconds, 0.027 seconds total
+#&gt; Sampling took (0.015, 0.013) seconds, 0.028 seconds total
 #&gt; 
 #&gt;                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
 #&gt; 
-#&gt; lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8      586    21709      1.0
-#&gt; accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.7e+04  1.0e+00
-#&gt; stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  3.7e+01  2.6e+13
-#&gt; treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  6.9e+04  1.0e+00
-#&gt; n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  5.2e+02  1.0e+00
+#&gt; lp__            -7.3  3.1e-02    0.74   -8.8  -7.0  -6.8      586    20934      1.0
+#&gt; accept_stat__   0.92  5.0e-03    0.14   0.61  0.97   1.0  7.3e+02  2.6e+04  1.0e+00
+#&gt; stepsize__       1.0  9.0e-02   0.090   0.93   1.1   1.1  1.0e+00  3.6e+01  2.6e+13
+#&gt; treedepth__      1.4  1.2e-02    0.52    1.0   1.0   2.0  1.9e+03  6.6e+04  1.0e+00
+#&gt; n_leapfrog__     2.6  4.0e-01     1.5    1.0   3.0   7.0  1.4e+01  5.0e+02  1.0e+00
 #&gt; divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-#&gt; energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  2.6e+04  1.0e+00
+#&gt; energy__         7.8  4.0e-02     1.0    6.8   7.4  10.0  6.9e+02  2.5e+04  1.0e+00
 #&gt; 
-#&gt; theta           0.25  4.5e-03    0.12  0.081  0.23  0.49      755    27971     1.00
+#&gt; theta           0.25  4.5e-03    0.12  0.081  0.23  0.49      755    26972     1.00
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,
@@ -439,8 +441,8 @@ documentation and tutorials.</p>
 #&gt;   This procedure has not been thoroughly tested and may be unstable 
 #&gt;   or buggy. The interface is subject to change. 
 #&gt; ------------------------------------------------------------ 
-#&gt; Gradient evaluation took 9e-06 seconds 
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds. 
+#&gt; Gradient evaluation took 1.1e-05 seconds 
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds. 
 #&gt; Adjust your expectations accordingly! 
 #&gt; Begin eta adaptation. 
 #&gt; Iteration:   1 / 250 [  0%]  (Adaptation) 

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Register CmdStanR's knitr engine for Stan — register_knitr_engine • cmdstanr</title>
+<title>Leave-one-out cross-validation (LOO-CV) — fit-method-loo • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,11 +46,12 @@
 
 
 
-<meta property="og:title" content="Register CmdStanR's knitr engine for Stan — register_knitr_engine" />
-<meta property="og:description" content="Registers CmdStanR's knitr engine eng_cmdstan() for processing Stan chunks.
-Refer to the vignette
-R Markdown CmdStan Engine
-for a demonstration." />
+<meta property="og:title" content="Leave-one-out cross-validation (LOO-CV) — fit-method-loo" />
+<meta property="og:description" content="The $loo() method computes approximate LOO-CV using the
+loo package. This is a simple wrapper around loo::loo.array()
+provided for convenience and requires computing the pointwise
+log-likelihood in your Stan program. See the loo package
+vignettes for details." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -173,60 +174,77 @@ for a demonstration." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Register CmdStanR's knitr engine for Stan</h1>
-    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/knitr.R'><code>R/knitr.R</code></a></small>
-    <div class="hidden name"><code>register_knitr_engine.Rd</code></div>
+    <h1>Leave-one-out cross-validation (LOO-CV)</h1>
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
+    <div class="hidden name"><code>fit-method-loo.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Registers CmdStanR's knitr engine <code><a href='eng_cmdstan.html'>eng_cmdstan()</a></code> for processing Stan chunks.
-Refer to the vignette
-<a href='https://mc-stan.org/cmdstanr/articles/r-markdown.html'>R Markdown CmdStan Engine</a>
-for a demonstration.</p>
+    <p>The <code>$loo()</code> method computes approximate LOO-CV using the
+<span class="pkg">loo</span> package. This is a simple wrapper around <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo::loo.array()</a></code>
+provided for convenience and requires computing the pointwise
+log-likelihood in your Stan program. See the <span class="pkg">loo</span> package
+<a href='https://mc-stan.org/loo/articles/'>vignettes</a> for details.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>register_knitr_engine</span>(<span class='kw'>override</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>loo</span>(<span class='kw'>variables</span> <span class='kw'>=</span> <span class='st'>"log_lik"</span>, <span class='kw'>r_eff</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>override</th>
-      <td><p>Override knitr's built-in, RStan-based engine for Stan? The
-default is <code>TRUE</code>. See <strong>Details</strong>.</p></td>
+      <th>variables</th>
+      <td><p>(character vector) The name(s) of the variable(s) in the
+Stan program containing the pointwise log-likelihood. The default is to
+look for <code>"log_lik"</code>. This argument is passed to the
+<a href='fit-method-draws.html'>`$draws()</a> method.</p></td>
+    </tr>
+    <tr>
+      <th>r_eff</th>
+      <td><p>There are several options:</p><ul>
+<li><p><code>TRUE</code> (the default) will automatically call <code><a href='https://mc-stan.org/loo/reference/relative_eff.html'>loo::relative_eff.array()</a></code>
+to compute the <code>r_eff</code> argument to pass to <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo::loo.array()</a></code>.</p></li>
+<li><p><code>FALSE</code> or <code>NULL</code> will avoid computing <code>r_eff</code> (which can sometimes be slow)
+but will result in a warning from the <span class="pkg">loo</span> package.</p></li>
+<li><p>If <code>r_eff</code> is anything else, that object will be passed as the <code>r_eff</code>
+argument to <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo::loo.array()</a></code>.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Other arguments (e.g., <code>cores</code>, <code>save_psis</code>, etc.) passed to
+<code><a href='https://mc-stan.org/loo/reference/loo.html'>loo::loo.array()</a></code>.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>If <code>override = TRUE</code> (default), this registers CmdStanR's knitr engine as the
-engine for <code>stan</code> chunks, replacing knitr's built-in, RStan-based engine. If
-<code>override = FALSE</code>, this registers a <code>cmdstan</code> engine so that both engines
-may be used in the same R Markdown document. If the template supports syntax
-highlighting for the Stan language, the <code>cmdstan</code> chunks will have <code>stan</code>
-syntax highlighting applied to them.</p>
-<p>See the vignette
-<a href='https://mc-stan.org/cmdstanr/articles/r-markdown.html'>R Markdown CmdStan Engine</a>
-for an example.</p>
-<p><strong>Note:</strong> When running chunks interactively in RStudio (e.g. when using
-<a href='https://bookdown.org/yihui/rmarkdown/notebook.html'>R Notebooks</a>), it has
-been observed that the built-in, RStan-based engine is used for <code>stan</code>
-chunks even when CmdStanR's engine has been registered in the session. When
-the R Markdown document is knit/rendered, the correct engine is used. As a
-workaround, when running chunks interactively, it is recommended to use the
-<code>override = FALSE</code> option and change <code>stan</code> chunks to be <code>cmdstan</code> chunks.</p>
-<p>If you would like to keep <code>stan</code> chunks as <code>stan</code> chunks, it is possible to
-specify <code>engine = "cmdstan"</code> in the chunk options after registering the
-<code>cmdstan</code> engine with <code>override = FALSE</code>.</p>
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+    <p>The object returned by <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo::loo.array()</a></code>.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    
-<ul>
-<li><p><a href='https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html'>Register a custom language engine for knitr</a></p></li>
-<li><p><a href='https://bookdown.org/yihui/rmarkdown/language-engines.html#stan'>knitr's built-in Stan language engine</a></p></li>
-</ul>
+    <div class='dont-index'><p>The <span class="pkg">loo</span> package website with
+<a href='https://mc-stan.org/loo/reference/index.html'>documentation</a> and
+<a href='https://mc-stan.org/loo/articles/'>vignettes</a>.</p></div>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'>
+<span class='co'># \dontrun{</span>
+<span class='co'># the "logistic" example model has "log_lik" in generated quantities</span>
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>loo_result</span> <span class='kw'>&lt;-</span> <span class='no'>fit</span>$<span class='fu'>loo</span>(<span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>loo_result</span>)</div><div class='output co'>#&gt; 
+#&gt; Computed from 4000 by 100 log-likelihood matrix
+#&gt; 
+#&gt;          Estimate  SE
+#&gt; elpd_loo    -63.7 4.1
+#&gt; p_loo         4.0 0.5
+#&gt; looic       127.4 8.3
+#&gt; ------
+#&gt; Monte Carlo SE of elpd_loo is 0.0.
+#&gt; 
+#&gt; All Pareto k estimates are good (k &lt; 0.5).
+#&gt; See help('pareto-k-diagnostic') for details.</div><div class='input'># }
 
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

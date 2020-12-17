@@ -84,7 +84,7 @@ safest way to guarantee that everything has been read in before saving." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -187,22 +187,20 @@ read into R lazily (i.e., as needed), the <code>$save_object()</code> method is 
 safest way to guarantee that everything has been read in before saving.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$save_object(file, ...)
-</pre>
+    <pre class="usage"><span class='fu'>save_object</span>(<span class='no'>file</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>file</code>: (string) Path where the file should be saved.</p></li>
-<li><p><code>...</code>: Other arguments to pass to <code><a href='https://rdrr.io/r/base/readRDS.html'>base::saveRDS()</a></code> besides <code>object</code> and <code>file</code>.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>file</th>
+      <td><p>(string) Path where the file should be saved.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Other arguments to pass to <code><a href='https://rdrr.io/r/base/readRDS.html'>base::saveRDS()</a></code> besides <code>object</code> and <code>file</code>.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
@@ -216,14 +214,20 @@ safest way to guarantee that everything has been read in before saving.</p>
 <span class='fu'><a href='https://rdrr.io/r/base/rm.html'>rm</a></span>(<span class='no'>fit</span>)
 
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span>(<span class='no'>temp_rds_file</span>)
-<span class='no'>fit</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 5 x 10</span><span>
-#&gt;   variable    mean  median    sd   mad       q5     q95  rhat ess_bulk ess_tail
-#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__     -</span><span style='color: #BB0000;'>66.0</span><span>   -</span><span style='color: #BB0000;'>65.7</span><span>   1.49  1.30  -</span><span style='color: #BB0000;'>69.0</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>    1.00    </span><span style='text-decoration: underline;'>2</span><span>094.    </span><span style='text-decoration: underline;'>2</span><span>922.
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> alpha      0.382   0.381 0.223 0.223   0.019</span><span style='text-decoration: underline;'>5</span><span>   0.751  1.00    </span><span style='text-decoration: underline;'>4</span><span>059.    </span><span style='text-decoration: underline;'>2</span><span>939.
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.661</span><span>  -</span><span style='color: #BB0000;'>0.658</span><span> 0.247 0.247  -</span><span style='color: #BB0000;'>1.09</span><span>    -</span><span style='color: #BB0000;'>0.269</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>235.    </span><span style='text-decoration: underline;'>2</span><span>991.
-#&gt; </span><span style='color: #BCBCBC;'>4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.280</span><span>  -</span><span style='color: #BB0000;'>0.276</span><span> 0.231 0.224  -</span><span style='color: #BB0000;'>0.663</span><span>    0.103  1.00    </span><span style='text-decoration: underline;'>3</span><span>985.    </span><span style='text-decoration: underline;'>2</span><span>968.
-#&gt; </span><span style='color: #BCBCBC;'>5</span><span> beta[3]    0.678   0.672 0.272 0.262   0.232    1.14   1.00    </span><span style='text-decoration: underline;'>4</span><span>119.    </span><span style='text-decoration: underline;'>2</span><span>911.</div><div class='input'># }
+<span class='no'>fit</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 105 x 10</span><span>
+#&gt;    variable    mean  median     sd   mad       q5      q95  rhat ess_bulk
+#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> lp__     -</span><span style='color: #BB0000;'>66.0</span><span>   -</span><span style='color: #BB0000;'>65.7</span><span>   1.45   1.26  -</span><span style='color: #BB0000;'>68.8</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>     1.00    </span><span style='text-decoration: underline;'>2</span><span>256.
+#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> alpha      0.377   0.377 0.220  0.215   0.012</span><span style='text-decoration: underline;'>7</span><span>   0.746   1.00    </span><span style='text-decoration: underline;'>4</span><span>115.
+#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.666</span><span>  -</span><span style='color: #BB0000;'>0.663</span><span> 0.247  0.250  -</span><span style='color: #BB0000;'>1.07</span><span>    -</span><span style='color: #BB0000;'>0.267</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>477.
+#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.276</span><span>  -</span><span style='color: #BB0000;'>0.278</span><span> 0.228  0.233  -</span><span style='color: #BB0000;'>0.658</span><span>    0.091</span><span style='text-decoration: underline;'>5</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>296.
+#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> beta[3]    0.681   0.672 0.277  0.269   0.247    1.15    1.00    </span><span style='text-decoration: underline;'>4</span><span>142.
+#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.517</span><span>  -</span><span style='color: #BB0000;'>0.512</span><span> 0.099</span><span style='text-decoration: underline;'>5</span><span> 0.101  -</span><span style='color: #BB0000;'>0.694</span><span>   -</span><span style='color: #BB0000;'>0.368</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>197.
+#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.403</span><span>  -</span><span style='color: #BB0000;'>0.381</span><span> 0.151  0.141  -</span><span style='color: #BB0000;'>0.684</span><span>   -</span><span style='color: #BB0000;'>0.194</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>422.
+#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.500</span><span>  -</span><span style='color: #BB0000;'>0.465</span><span> 0.215  0.207  -</span><span style='color: #BB0000;'>0.904</span><span>   -</span><span style='color: #BB0000;'>0.210</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>562.
+#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.449</span><span>  -</span><span style='color: #BB0000;'>0.429</span><span> 0.156  0.154  -</span><span style='color: #BB0000;'>0.730</span><span>   -</span><span style='color: #BB0000;'>0.228</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>022.
+#&gt; </span><span style='color: #BCBCBC;'>10</span><span> log_lik…  -</span><span style='color: #BB0000;'>1.18</span><span>   -</span><span style='color: #BB0000;'>1.16</span><span>  0.282  0.281  -</span><span style='color: #BB0000;'>1.67</span><span>    -</span><span style='color: #BB0000;'>0.754</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>546.
+#&gt; </span><span style='color: #949494;'># … with 95 more rows, and 1 more variable: ess_tail </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span></div><div class='input'># }
 
 </div></span></pre>
   </div>

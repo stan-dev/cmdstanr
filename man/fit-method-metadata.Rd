@@ -4,16 +4,14 @@
 \alias{fit-method-metadata}
 \alias{metadata}
 \title{Extract metadata from CmdStan CSV files}
+\usage{
+metadata()
+}
 \description{
 The \verb{$metadata()} method returns a list of information gathered
 from the CSV output files, including the CmdStan configuration used when
 fitting the model. See \strong{Examples} and \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.
 }
-\section{Usage}{
-\preformatted{$metadata()
-}
-}
-
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")

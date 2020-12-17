@@ -276,61 +276,43 @@ CmdStanModel <- R6::R6Class(
 #'   `$hpp_file()` methods. The default is to create the executable in the same
 #'   directory as the Stan program and to write the generated C++ code in a
 #'   temporary directory. To save the C++ code to a non-temporary location use
-#'   `$save_hpp_file()`.
+#'   `$save_hpp_file(dir)`.
 #'
-#' @section Usage:
-#'   ```
-#'   $compile(
-#'     quiet = TRUE,
-#'     dir = NULL,
-#'     pedantic = FALSE,
-#'     include_paths = NULL,
-#'     cpp_options = list(),
-#'     stanc_options = list(),
-#'     force_recompile = FALSE
-#'   )
-#'   $exe_file()
-#'   $hpp_file()
-#'   $save_hpp_file(dir = NULL)
-#'   ```
-#'
-#' @section Arguments:
-#'   Leaving all arguments at their defaults should be fine for most users, but
-#'   optional arguments are provided to enable features in CmdStan (and the Stan
-#'   Math library). See the CmdStan manual for more details.
-#'   * `quiet`: (logical) Should the verbose output from CmdStan during
+#' @param quiet (logical) Should the verbose output from CmdStan during
 #'   compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
 #'   output.
-#'   * `dir`: (string) The path to the directory in which to store the CmdStan
+#' @param dir (string) The path to the directory in which to store the CmdStan
 #'   executable (or `.hpp` file if using `$save_hpp_file()`). The default is the
 #'   same location as the Stan program.
-#'   * `pedantic`: (logical) Should pedantic mode be turned on? The default is
+#' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
 #'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
 #'   that is already compiled use the
 #'   [`$check_syntax()`][model-method-check_syntax] method instead.
-#'   * `include_paths`: (character vector) Paths to directories where Stan
+#' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
-#'   * `cpp_options`: (list) Any makefile options to be used when compiling the
+#' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
 #'   otherwise write in the `make/local` file.
-#'   * `stanc_options`: (list) Any Stan-to-C++ transpiler options to be used
+#' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   `stanc` chapter of the CmdStan Guide for more details on available options:
 #'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
-#'   * `force_recompile`: (logical) Should the model be recompiled even if was
+#' @param force_recompile (logical) Should the model be recompiled even if was
 #'   not modified since last compiled. The default is `FALSE`.
+#' @param threads Deprecated and will be removed in a future release. Please
+#'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
 #' @section Value: The `$compile()` method is called for its side effect of
 #'   creating the executable and adding its path to the [`CmdStanModel`] object,
 #'   but it also returns the [`CmdStanModel`] object invisibly.
 #'
-#'   The `$exe_file()`, `$hpp_file()`, and `$save_hpp_file()` methods all return
-#'   file paths.
+#'   After compilation, the `$exe_file()`, `$hpp_file()`, and `$save_hpp_file()`
+#'   methods can be used and return file paths.
 #'
 #' @template seealso-docs
 #'
@@ -361,17 +343,15 @@ CmdStanModel <- R6::R6Class(
 #'
 #' }
 #'
-NULL
-
-compile_method <- function(quiet = TRUE,
-                           dir = NULL,
-                           pedantic = FALSE,
-                           include_paths = NULL,
-                           cpp_options = list(),
-                           stanc_options = list(),
-                           force_recompile = FALSE,
-                           #deprecated
-                           threads = FALSE) {
+compile <- function(quiet = TRUE,
+                    dir = NULL,
+                    pedantic = FALSE,
+                    include_paths = NULL,
+                    cpp_options = list(),
+                    stanc_options = list(),
+                    force_recompile = FALSE,
+                    #deprecated
+                    threads = FALSE) {
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
@@ -531,7 +511,7 @@ compile_method <- function(quiet = TRUE,
   private$precompile_include_paths_ <- NULL
   invisible(self)
 }
-CmdStanModel$set("public", name = "compile", value = compile_method)
+CmdStanModel$set("public", name = "compile", value = compile)
 
 #' Check syntax of a Stan program
 #'
@@ -543,29 +523,18 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if
 #'   parsing succeeds. If invalid syntax in found an error is thrown.
 #'
-#' @section Usage:
-#'   ```
-#'   $check_syntax(
-#'     pedantic = FALSE,
-#'     include_paths = NULL,
-#'     stanc_options = list(),
-#'     quiet = FALSE
-#'   )
-#'   ```
-#'
-#' @section Arguments:
-#'   * `pedantic`: (logical) Should pedantic mode be turned on? The default is
+#' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
 #'   the Stan Reference Manual.
-#'   * `include_paths`: (character vector) Paths to directories where Stan
+#' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
-#'   * `stanc_options`: (list) Any other Stan-to-C++ transpiler options to be
+#' @param stanc_options (list) Any other Stan-to-C++ transpiler options to be
 #'   used when compiling the model. See the documentation for the
 #'   [`$compile()`][model-method-compile] method for details.
-#'   * `quiet`: (logical) Should informational messages be suppressed? The
+#' @param quiet (logical) Should informational messages be suppressed? The
 #'   default is `FALSE`, which will print a message if the Stan program is valid
 #'   or the compiler error message if there are syntax errors. If `TRUE`, only
 #'   the error message will be printed.
@@ -600,12 +569,10 @@ CmdStanModel$set("public", name = "compile", value = compile_method)
 #' mod$check_syntax(pedantic = TRUE)
 #' }
 #'
-NULL
-
-check_syntax_method <- function(pedantic = FALSE,
-                                include_paths = NULL,
-                                stanc_options = list(),
-                                quiet = FALSE) {
+check_syntax <- function(pedantic = FALSE,
+                         include_paths = NULL,
+                         stanc_options = list(),
+                         quiet = FALSE) {
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
@@ -674,7 +641,7 @@ check_syntax_method <- function(pedantic = FALSE,
   }
   invisible(TRUE)
 }
-CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
+CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 
 #' Run Stan's MCMC algorithms
 #'
@@ -687,192 +654,58 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax_method)
 #'   a set of draws from the posterior distribution of a model conditioned on
 #'   some data.
 #'
-#' @section Usage:
-#'   ```
-#'   $sample(
-#'     data = NULL,
-#'     seed = NULL,
-#'     refresh = NULL,
-#'     init = NULL,
-#'     save_latent_dynamics = FALSE,
-#'     output_dir = NULL,
-#'     sig_figs = NULL,
-#'     chains = 4,
-#'     parallel_chains = getOption("mc.cores", 1),
-#'     chain_ids = seq_len(chains),
-#'     threads_per_chain = NULL,
-#'     iter_warmup = NULL,
-#'     iter_sampling = NULL,
-#'     save_warmup = FALSE,
-#'     thin = NULL,
-#'     max_treedepth = NULL,
-#'     adapt_engaged = TRUE,
-#'     adapt_delta = NULL,
-#'     step_size = NULL,
-#'     metric = NULL,
-#'     metric_file = NULL,
-#'     inv_metric = NULL,
-#'     init_buffer = NULL,
-#'     term_buffer = NULL,
-#'     window = NULL,
-#'     fixed_param = FALSE,
-#'     validate_csv = TRUE,
-#'     show_messages = TRUE
-#'   )
-#'   ```
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the
+#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   for more details.
 #'
 #' @template model-common-args
-#' @section Arguments unique to the `sample` method: In addition to the
-#'   arguments above, the `$sample()` method also has its own set of arguments.
+#' @template model-sample-args
+#' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize
+#'   Deprecated and will be removed in a future release.
 #'
-#'   The following three arguments are offered by CmdStanR but do not correspond
-#'   to arguments in CmdStan:
-#'
-#'   * `chains`: (positive integer) The number of Markov chains to run. The
-#'   default is 4.
-#'
-#'   * `parallel_chains`: (positive integer) The _maximum_ number of MCMC chains
-#'   to run in parallel. If `parallel_chains` is not specified then the default
-#'   is to look for the option `"mc.cores"`, which can be set for an entire \R
-#'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
-#'   been set then the default is `1`.
-#'
-#'   * `chain_ids`: (vector) A vector of chain IDs. Must contain `chains` unique
-#'   positive integers. If not set, the default chain IDs are used (integers
-#'   starting from `1`).
-#'
-#'   * `threads_per_chain`: (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
-#'   contrast with `parallel_chains`, which specifies the number of chains to
-#'   run in parallel. The actual number of CPU cores used use is
-#'   `parallel_chains*threads_per_chain`. For an example of using threading see
-#'   the Stan case study [Reduce Sum: A Minimal
-#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
-#'
-#'   * `show_messages`: (logical) When `TRUE` (the default), prints all
-#'   informational messages, for example rejection of the current proposal.
-#'   Disable if you wish silence these messages, but this is not recommended
-#'   unless you are very sure that the model is correct up to numerical error.
-#'   If the messages are silenced then the `$output()` method of the resulting
-#'   fit object can be used to display all the silenced messages.
-#'
-#'   * `validate_csv`: (logical) When `TRUE` (the default), validate the
-#'   sampling results in the csv files. Disable if you wish to manually read in
-#'   the sampling results and validate them yourself, for example using
-#'   [read_cmdstan_csv()].
-#'
-#'
-#'   The rest of the arguments correspond to arguments offered by CmdStan,
-#'   although some names are slightly different. They are described briefly here
-#'   and in greater detail in the CmdStan manual. Arguments left at `NULL`
-#'   default to the default used by the installed version of CmdStan.
-#'   The latest [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
-#'   will have the default values for the latest version of CmdStan.
-#'
-#'   * `iter_sampling`: (positive integer) The number of post-warmup iterations to
-#'   run per chain.
-#'   * `iter_warmup`: (positive integer) The number of warmup iterations to run
-#'   per chain.
-#'   * `save_warmup`: (logical) Should warmup iterations be saved? The default
-#'   is `FALSE`. If `save_warmup=TRUE` then you can use
-#'   [$draws(inc_warmup=TRUE)][fit-method-draws] to include warmup when
-#'   accessing the draws.
-#'   * `thin`: (positive integer) The period between saved samples. This should
-#'   be left at its default (no thinning) unless memory is a problem.
-#'   * `max_treedepth`: (positive integer) The maximum allowed tree depth for the
-#'   NUTS engine. See the _Tree Depth_ section of the CmdStan manual for more
-#'   details.
-#'   * `adapt_engaged`: (logical) Do warmup adaptation? The default is `TRUE`.
-#'   If a precomputed inverse metric is specified via the `inv_metric` argument
-#'   (or `metric_file`) then, if `adapt_engaged=TRUE`, Stan will use the
-#'   provided inverse metric just as an initial guess during adaptation. To turn
-#'   off adaptation when using a precomputed inverse metric set
-#'   `adapt_engaged=FALSE`.
-#'   * `adapt_delta`: (real in `(0,1)`) The adaptation target acceptance
-#'   statistic.
-#'   * `step_size`: (positive real) The _initial_ step size for the discrete
-#'   approximation to continuous Hamiltonian dynamics. This is further tuned
-#'   during warmup.
-#'   * `metric`: (character) One of `"diag_e"`, `"dense_e"`, or `"unit_e"`,
-#'   specifying the geometry of the base manifold. See the _Euclidean Metric_
-#'   section of the CmdStan documentation for more details. To specify a
-#'   precomputed (inverse) metric, see the `inv_metric` argument below.
-#'   * `metric_file`: (character) A character vector containing paths to JSON or
-#'   Rdump files (one per chain) compatible with CmdStan that contain
-#'   precomputed inverse metrics. The `metric_file` argument is inherited from
-#'   CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
-#'   named `inv_metric`, referring to the _inverse_ metric. We recommend instead
-#'   using CmdStanR's `inv_metric` argument (see below) to specify an inverse
-#'   metric directly using a vector or matrix from your \R session.
-#'   * `inv_metric`: (vector, matrix) A vector (if `metric='diag_e'`) or a
-#'   matrix (if `metric='dense_e'`) for initializing the inverse metric, which
-#'   can be used as an alternative to the `metric_file` argument. A vector is
-#'   interpreted as a diagonal metric. The inverse metric is usually set to an
-#'   estimate of the posterior covariance. See the `adapt_engaged` argument
-#'   above for details on (and control over) how specifying a precomputed
-#'   inverse metric interacts with adaptation.
-#'   * `init_buffer`: (nonnegative integer) Width of initial fast timestep
-#'   adaptation interval during warmup.
-#'   * `term_buffer`: (nonnegative integer) Width of final fast timestep
-#'   adaptation interval during warmup.
-#'   * `window`: (nonnegative integer) Initial width of slow timestep/metric
-#'   adaptation interval.
-#'   * `fixed_param`: (logical) When `TRUE`, call CmdStan with argument
-#'   `"algorithm=fixed_param"`. The default is `FALSE`. The fixed parameter
-#'   sampler generates a new sample without changing the current state of the
-#'   Markov chain; only generated quantities may change. This can be useful
-#'   when, for example, trying to generate pseudo-data using the generated
-#'   quantities block. If the parameters block is empty then using
-#'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
-#'   `parallel_chains` arguments will be set to `1`.
-#'
-#' @section Value: The `$sample()` method returns a [`CmdStanMCMC`] object.
+#' @section Value: A [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
-NULL
-
-sample_method <- function(data = NULL,
-                          seed = NULL,
-                          refresh = NULL,
-                          init = NULL,
-                          save_latent_dynamics = FALSE,
-                          output_dir = NULL,
-                          sig_figs = NULL,
-                          chains = 4,
-                          parallel_chains = getOption("mc.cores", 1),
-                          chain_ids = seq_len(chains),
-                          threads_per_chain = NULL,
-                          iter_warmup = NULL,
-                          iter_sampling = NULL,
-                          save_warmup = FALSE,
-                          thin = NULL,
-                          max_treedepth = NULL,
-                          adapt_engaged = TRUE,
-                          adapt_delta = NULL,
-                          step_size = NULL,
-                          metric = NULL,
-                          metric_file = NULL,
-                          inv_metric = NULL,
-                          init_buffer = NULL,
-                          term_buffer = NULL,
-                          window = NULL,
-                          fixed_param = FALSE,
-                          validate_csv = TRUE,
-                          show_messages = TRUE,
-                          # deprecated
-                          cores = NULL,
-                          num_cores = NULL,
-                          num_chains = NULL,
-                          num_warmup = NULL,
-                          num_samples = NULL,
-                          save_extra_diagnostics = NULL,
-                          max_depth = NULL,
-                          stepsize = NULL) {
-
+sample <- function(data = NULL,
+                   seed = NULL,
+                   refresh = NULL,
+                   init = NULL,
+                   save_latent_dynamics = FALSE,
+                   output_dir = NULL,
+                   sig_figs = NULL,
+                   chains = 4,
+                   parallel_chains = getOption("mc.cores", 1),
+                   chain_ids = seq_len(chains),
+                   threads_per_chain = NULL,
+                   iter_warmup = NULL,
+                   iter_sampling = NULL,
+                   save_warmup = FALSE,
+                   thin = NULL,
+                   max_treedepth = NULL,
+                   adapt_engaged = TRUE,
+                   adapt_delta = NULL,
+                   step_size = NULL,
+                   metric = NULL,
+                   metric_file = NULL,
+                   inv_metric = NULL,
+                   init_buffer = NULL,
+                   term_buffer = NULL,
+                   window = NULL,
+                   fixed_param = FALSE,
+                   validate_csv = TRUE,
+                   show_messages = TRUE,
+                   # deprecated
+                   cores = NULL,
+                   num_cores = NULL,
+                   num_chains = NULL,
+                   num_warmup = NULL,
+                   num_samples = NULL,
+                   save_extra_diagnostics = NULL,
+                   max_depth = NULL,
+                   stepsize = NULL) {
   # temporary deprecation warnings
   if (!is.null(cores)) {
     warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
@@ -972,7 +805,7 @@ sample_method <- function(data = NULL,
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
 }
-CmdStanModel$set("public", name = "sample", value = sample_method)
+CmdStanModel$set("public", name = "sample", value = sample)
 
 #' Run Stan's MCMC algorithms with MPI
 #'
@@ -987,15 +820,15 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   [`$sample()`][model-method-sample] method provides both parallelization of
 #'   chains and threading support for within-chain parallelization.
 #'
-#' @details In order to use MPI with Stan, an MPI implementation must be
+#'   In order to use MPI with Stan, an MPI implementation must be
 #'   installed. For Unix systems the most commonly used implementations are
 #'   MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 #'   (for example mpicxx), which is required to compile the model.
 #'
 #'   An example of compiling with MPI:
 #'   ```
-#'   mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-#'   mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
+#'   mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+#'   mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 #'   ```
 #'   The C++ options that must be supplied to the
 #'   [compile][model-method-compile] call are:
@@ -1004,59 +837,21 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #'   - `TBB_CXX_TYPE`: The C++ compiler the MPI wrapper wraps. Typically `"gcc"`
 #'   on Linux and `"clang"` on macOS.
 #'
-#'   In the call to the `$sample_mpi()` method we can also provide the name of
-#'   the MPI launcher (`mpi_cmd`, defaulting to `"mpiexec"`) and any other
-#'   MPI launch arguments. In most cases, it is enough to only define the number
-#'   of processes with `mpi_args = list("n" = 4)`.
+#'   In the call to the `$sample_mpi()` method it is also possible to provide
+#'   the name of the MPI launcher (`mpi_cmd`, defaulting to `"mpiexec"`) and any
+#'   other MPI launch arguments (`mpi_args`). In most cases, it is enough to
+#'   only define the number of processes. To use `n_procs` processes specify
+#'   `mpi_args = list("n" = n_procs)`.
 #'
-#' @section Usage:
-#'   ```
-#'   $sample_mpi(
-#'     data = NULL,
-#'     mpi_cmd = "mpiexec",
-#'     mpi_args = NULL,
-#'     seed = NULL,
-#'     refresh = NULL,
-#'     init = NULL,
-#'     save_latent_dynamics = FALSE,
-#'     output_dir = NULL,
-#'     sig_figs = NULL,
-#'     chains = 4,
-#'     parallel_chains = getOption("mc.cores", 1),
-#'     chain_ids = seq_len(chains),
-#'     iter_warmup = NULL,
-#'     iter_sampling = NULL,
-#'     save_warmup = FALSE,
-#'     thin = NULL,
-#'     max_treedepth = NULL,
-#'     adapt_engaged = TRUE,
-#'     adapt_delta = NULL,
-#'     step_size = NULL,
-#'     metric = NULL,
-#'     metric_file = NULL,
-#'     inv_metric = NULL,
-#'     init_buffer = NULL,
-#'     term_buffer = NULL,
-#'     window = NULL,
-#'     fixed_param = FALSE,
-#'     validate_csv = TRUE,
-#'     show_messages = TRUE
-#'   )
-#'   ```
+#' @inheritParams model-method-sample
+#' @param mpi_cmd (character vector) The MPI launcher used for launching MPI
+#'   processes. The default launcher is `"mpiexec"`.
+#' @param mpi_args (list) A list of arguments to use when launching MPI
+#'   processes. For example, `mpi_args = list("n" = 4)` launches the executable
+#'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
+#'   model executable.
 #'
-#' @section Arguments unique to the `sample_mpi` method:
-#'   * `mpi_cmd`: (character vector) The MPI launcher used for launching MPI processes.
-#'     The default launcher is `"mpiexec"`.
-#'   * `mpi_args`: (list) A list of arguments to use when launching MPI processes.
-#'     For example, `mpi_args = list("n" = 4)` launches the executable as
-#'     `mpiexec -n 4 model_executable`, followed by CmdStan arguments
-#'     for the model executable.
-#'
-#'    All other arguments are the same as for [`$sample()`][model-method-sample]
-#'    except `$sample_mpi()` does not have arguments `threads_per_chain` or
-#'    `parallel_chains`.
-#'
-#' @section Value: The `$sample_mpi()` method returns a [`CmdStanMCMC`] object.
+#' @section Value: A [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
 #' @seealso The Stan Math Library's MPI documentation
@@ -1070,36 +865,34 @@ CmdStanModel$set("public", name = "sample", value = sample_method)
 #' # fit <- mod$sample_mpi(..., mpi_args = list("n" = 4))
 #' }
 #'
-NULL
-
-sample_mpi_method <- function(data = NULL,
-                              mpi_cmd = "mpiexec",
-                              mpi_args = NULL,
-                              seed = NULL,
-                              refresh = NULL,
-                              init = NULL,
-                              save_latent_dynamics = FALSE,
-                              output_dir = NULL,
-                              chains = 1,
-                              chain_ids = seq_len(chains),
-                              iter_warmup = NULL,
-                              iter_sampling = NULL,
-                              save_warmup = FALSE,
-                              thin = NULL,
-                              max_treedepth = NULL,
-                              adapt_engaged = TRUE,
-                              adapt_delta = NULL,
-                              step_size = NULL,
-                              metric = NULL,
-                              metric_file = NULL,
-                              inv_metric = NULL,
-                              init_buffer = NULL,
-                              term_buffer = NULL,
-                              window = NULL,
-                              fixed_param = FALSE,
-                              sig_figs = NULL,
-                              validate_csv = TRUE,
-                              show_messages = TRUE) {
+sample_mpi <- function(data = NULL,
+                       mpi_cmd = "mpiexec",
+                       mpi_args = NULL,
+                       seed = NULL,
+                       refresh = NULL,
+                       init = NULL,
+                       save_latent_dynamics = FALSE,
+                       output_dir = NULL,
+                       chains = 1,
+                       chain_ids = seq_len(chains),
+                       iter_warmup = NULL,
+                       iter_sampling = NULL,
+                       save_warmup = FALSE,
+                       thin = NULL,
+                       max_treedepth = NULL,
+                       adapt_engaged = TRUE,
+                       adapt_delta = NULL,
+                       step_size = NULL,
+                       metric = NULL,
+                       metric_file = NULL,
+                       inv_metric = NULL,
+                       init_buffer = NULL,
+                       term_buffer = NULL,
+                       window = NULL,
+                       fixed_param = FALSE,
+                       sig_figs = NULL,
+                       validate_csv = TRUE,
+                       show_messages = TRUE) {
   if (fixed_param) {
     chains <- 1
     save_warmup <- FALSE
@@ -1147,7 +940,7 @@ sample_mpi_method <- function(data = NULL,
   runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
   CmdStanMCMC$new(runset)
 }
-CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
+CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 
 #' Run Stan's optimization algorithms
 #'
@@ -1159,6 +952,11 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'   Stan's optimizer to obtain a posterior mode (penalized maximum likelihood)
 #'   estimate.
 #'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the
+#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   for more details.
+#'
 #' @details CmdStan can find the posterior mode (assuming there is one). If the
 #'   posterior is not convex, there is no guarantee Stan will be able to find
 #'   the global mode as opposed to a local optimum of log probability. For
@@ -1168,81 +966,48 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi_method)
 #'
 #'   -- [*CmdStan User's Guide*](https://mc-stan.org/docs/cmdstan-guide/)
 #'
-#' @section Usage:
-#'   ```
-#'   $optimize(
-#'     data = NULL,
-#'     seed = NULL,
-#'     refresh = NULL,
-#'     init = NULL,
-#'     save_latent_dynamics = FALSE,
-#'     output_dir = NULL,
-#'     sig_figs = NULL,
-#'     threads = NULL,
-#'     algorithm = NULL,
-#'     init_alpha = NULL,
-#'     iter = NULL,
-#'     tol_obj = NULL,
-#'     tol_rel_obj = NULL,
-#'     tol_grad = NULL,
-#'     tol_rel_grad = NULL,
-#'     tol_param = NULL,
-#'     history_size = NULL
-#'   )
-#'   ```
-#'
 #' @template model-common-args
-#' @section Arguments unique to the `optimize` method: In addition to the
-#'   arguments above, the `$optimize()` method also has its own set of
-#'   arguments. These arguments are described briefly here and in greater detail
-#'   in the CmdStan manual. Arguments left at `NULL` default to the default used
-#'   by the installed version of CmdStan.
-#'   The latest [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
-#'   will have the defaults for the latest version of CmdStan.
-#'
-#'   * `threads`: (positive integer) If the model was
+#' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`).
-#'   * `iter`: (positive integer) The maximum number of iterations.
-#'   * `algorithm`: (string) The optimization algorithm. One of `"lbfgs"`,
+#' @param iter (positive integer) The maximum number of iterations.
+#' @param algorithm (string) The optimization algorithm. One of `"lbfgs"`,
 #'   `"bfgs"`, or `"newton"`. The control parameters below are only available
 #'   for `"lbfgs"` and `"bfgs`. For their default values and more details see
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
-#'   * `init_alpha`: (positive real) The initial step size parameter.
-#'   * `tol_obj`: (positive real) Convergence tolerance on changes in objective function value.
-#'   * `tol_rel_obj`: (positive real) Convergence tolerance on relative changes in objective function value.
-#'   * `tol_grad`: (positive real) Convergence tolerance on the norm of the gradient.
-#'   * `tol_rel_grad`: (positive real) Convergence tolerance on the relative norm of the gradient.
-#'   * `tol_param`: (positive real) Convergence tolerance on changes in parameter value.
-#'   * `history_size`: (positive integer) The size of the history used when
+#' @param init_alpha (positive real) The initial step size parameter.
+#' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
+#' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
+#' @param tol_grad (positive real) Convergence tolerance on the norm of the gradient.
+#' @param tol_rel_grad (positive real) Convergence tolerance on the relative norm of the gradient.
+#' @param tol_param (positive real) Convergence tolerance on changes in parameter value.
+#' @param history_size (positive integer) The size of the history used when
 #'   approximating the Hessian. Only available for L-BFGS.
 #'
-#' @section Value: The `$optimize()` method returns a [`CmdStanMLE`] object.
+#' @section Value: A [`CmdStanMLE`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
-NULL
-
-optimize_method <- function(data = NULL,
-                            seed = NULL,
-                            refresh = NULL,
-                            init = NULL,
-                            save_latent_dynamics = FALSE,
-                            output_dir = NULL,
-                            sig_figs = NULL,
-                            threads = NULL,
-                            algorithm = NULL,
-                            init_alpha = NULL,
-                            iter = NULL,
-                            tol_obj = NULL,
-                            tol_rel_obj = NULL,
-                            tol_grad = NULL,
-                            tol_rel_grad = NULL,
-                            tol_param = NULL,
-                            history_size = NULL) {
+optimize <- function(data = NULL,
+                     seed = NULL,
+                     refresh = NULL,
+                     init = NULL,
+                     save_latent_dynamics = FALSE,
+                     output_dir = NULL,
+                     sig_figs = NULL,
+                     threads = NULL,
+                     algorithm = NULL,
+                     init_alpha = NULL,
+                     iter = NULL,
+                     tol_obj = NULL,
+                     tol_rel_obj = NULL,
+                     tol_grad = NULL,
+                     tol_rel_grad = NULL,
+                     tol_param = NULL,
+                     history_size = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1292,7 +1057,7 @@ optimize_method <- function(data = NULL,
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
 }
-CmdStanModel$set("public", name = "optimize", value = optimize_method)
+CmdStanModel$set("public", name = "optimize", value = optimize)
 
 
 #' Run Stan's variational approximation algorithms
@@ -1304,6 +1069,11 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #' @description The `$variational()` method of a [`CmdStanModel`] object runs
 #'   Stan's variational Bayes (ADVI) algorithms.
 #'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the
+#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   for more details.
+#'
 #' @details CmdStan can fit a variational approximation to the posterior. The
 #'   approximation is a Gaussian in the unconstrained variable space. Stan
 #'   implements two variational algorithms. The `algorithm="meanfield"` option
@@ -1313,84 +1083,52 @@ CmdStanModel$set("public", name = "optimize", value = optimize_method)
 #'
 #'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
 #'
-#' @section Usage:
-#'   ```
-#'   $variational(
-#'     data = NULL,
-#'     seed = NULL,
-#'     refresh = NULL,
-#'     init = NULL,
-#'     save_latent_dynamics = FALSE,
-#'     output_dir = NULL,
-#'     sig_figs = NULL,
-#'     threads = NULL,
-#'     algorithm = NULL,
-#'     iter = NULL,
-#'     grad_samples = NULL,
-#'     elbo_samples = NULL,
-#'     eta = NULL,
-#'     adapt_engaged = NULL,
-#'     adapt_iter = NULL,
-#'     tol_rel_obj = NULL,
-#'     eval_elbo = NULL,
-#'     output_samples = NULL
-#'   )
-#'   ```
-#'
 #' @template model-common-args
-#' @section Arguments unique to the `variational` method: In addition to the
-#'   arguments above, the `$variational()` method also has its own set of
-#'   arguments. These arguments are described briefly here and in greater detail
-#'   in the CmdStan manual. Arguments left at `NULL` default to the default used
-#'   by the installed version of CmdStan.
-#'
-#'   * `threads`: (positive integer) If the model was
+#' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`).
-#'   * `algorithm`: (string) The algorithm. Either `"meanfield"` or `"fullrank"`.
-#'   * `iter`: (positive integer) The _maximum_ number of iterations.
-#'   * `grad_samples`: (positive integer) The number of samples for Monte Carlo
+#'   threads to use in parallelized sections (e.g., when using the Stan
+#'   functions `reduce_sum()` or `map_rect()`).
+#' @param algorithm (string) The algorithm. Either `"meanfield"` or
+#'   `"fullrank"`.
+#' @param iter (positive integer) The _maximum_ number of iterations.
+#' @param grad_samples (positive integer) The number of samples for Monte Carlo
 #'   estimate of gradients.
-#'   * `elbo_samples`: (positive integer) The number of samples for Monte Carlo
+#' @param elbo_samples (positive integer) The number of samples for Monte Carlo
 #'   estimate of ELBO (objective function).
-#'   * `eta`: (positive real) The step size weighting parameter for adaptive
+#' @param eta (positive real) The step size weighting parameter for adaptive
 #'   step size sequence.
-#'   * `adapt_engaged`: (logical) Do warmup adaptation?
-#'   * `adapt_iter`: (positive integer) The _maximum_ number of adaptation
+#' @param adapt_engaged (logical) Do warmup adaptation?
+#' @param adapt_iter (positive integer) The _maximum_ number of adaptation
 #'   iterations.
-#'   * `tol_rel_obj`: (positive real) Convergence tolerance on the relative norm
+#' @param tol_rel_obj (positive real) Convergence tolerance on the relative norm
 #'   of the objective.
-#'   * `eval_elbo`: (positive integer) Evaluate ELBO every Nth iteration.
-#'   * `output_samples:` (positive integer) Number of posterior samples to draw
-#'   and save.
+#' @param eval_elbo (positive integer) Evaluate ELBO every Nth iteration.
+#' @param output_samples (positive integer) Number of approximate posterior
+#'   samples to draw and save.
 #'
-#'
-#' @section Value: The `$variational()` method returns a [`CmdStanVB`] object.
+#' @section Value: A [`CmdStanVB`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
-NULL
-
-variational_method <- function(data = NULL,
-                               seed = NULL,
-                               refresh = NULL,
-                               init = NULL,
-                               save_latent_dynamics = FALSE,
-                               output_dir = NULL,
-                               sig_figs = NULL,
-                               threads = NULL,
-                               algorithm = NULL,
-                               iter = NULL,
-                               grad_samples = NULL,
-                               elbo_samples = NULL,
-                               eta = NULL,
-                               adapt_engaged = NULL,
-                               adapt_iter = NULL,
-                               tol_rel_obj = NULL,
-                               eval_elbo = NULL,
-                               output_samples = NULL) {
+variational <- function(data = NULL,
+                        seed = NULL,
+                        refresh = NULL,
+                        init = NULL,
+                        save_latent_dynamics = FALSE,
+                        output_dir = NULL,
+                        sig_figs = NULL,
+                        threads = NULL,
+                        algorithm = NULL,
+                        iter = NULL,
+                        grad_samples = NULL,
+                        elbo_samples = NULL,
+                        eta = NULL,
+                        adapt_engaged = NULL,
+                        adapt_iter = NULL,
+                        tol_rel_obj = NULL,
+                        eval_elbo = NULL,
+                        output_samples = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1441,7 +1179,7 @@ variational_method <- function(data = NULL,
   runset$run_cmdstan()
   CmdStanVB$new(runset)
 }
-CmdStanModel$set("public", name = "variational", value = variational_method)
+CmdStanModel$set("public", name = "variational", value = variational)
 
 #' Run Stan's standalone generated quantities method
 #'
@@ -1453,29 +1191,15 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #'   runs Stan's standalone generated quantities to obtain generated quantities
 #'   based on previously fitted parameters.
 #'
-#' @section Usage:
-#'   ```
-#'   $generate_quantities(
-#'     fitted_params,
-#'     data = NULL,
-#'     seed = NULL,
-#'     output_dir = NULL,
-#'     sig_figs = NULL,
-#'     parallel_chains = getOption("mc.cores", 1),
-#'     threads_per_chain = NULL
-#'   )
-#'   ```
+#' @inheritParams model-method-sample
+#' @param fitted_params (multiple options) The parameter draws to use. One of
+#'   the following:
+#'  * A [CmdStanMCMC] or [CmdStanVB] fitted model object.
+#'  * A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for
+#'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
+#'  * A character vector of paths to CmdStan CSV output files.
 #'
-#' @section Arguments:
-#'   * `fitted_params`: (multiple options) The parameter draws to use. One of the following:
-#'     - A [CmdStanMCMC] or [CmdStanVB] fitted model object.
-#'     - A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for VB)
-#'       object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
-#'     - A character vector of paths to CmdStan CSV output files.
-#'   * `data`, `seed`, `output_dir`, `sig_figs`, `parallel_chains`, `threads_per_chain`:
-#'   Same as for the [`$sample()`][model-method-sample] method.
-#'
-#' @section Value: The `$generate_quantities()` method returns a [`CmdStanGQ`] object.
+#' @section Value: A [`CmdStanGQ`] object.
 #'
 #' @template seealso-docs
 #'
@@ -1522,15 +1246,13 @@ CmdStanModel$set("public", name = "variational", value = variational_method)
 #' as_draws_df(fit_gq$draws())
 #' }
 #'
-NULL
-
-generate_quantities_method <- function(fitted_params,
-                                       data = NULL,
-                                       seed = NULL,
-                                       output_dir = NULL,
-                                       sig_figs = NULL,
-                                       parallel_chains = getOption("mc.cores", 1),
-                                       threads_per_chain = NULL) {
+generate_quantities <- function(fitted_params,
+                                data = NULL,
+                                seed = NULL,
+                                output_dir = NULL,
+                                sig_figs = NULL,
+                                parallel_chains = getOption("mc.cores", 1),
+                                threads_per_chain = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
@@ -1572,4 +1294,4 @@ generate_quantities_method <- function(fitted_params,
   runset$run_cmdstan()
   CmdStanGQ$new(runset)
 }
-CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities_method)
+CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities)

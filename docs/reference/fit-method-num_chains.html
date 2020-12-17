@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Register CmdStanR's knitr engine for Stan — register_knitr_engine • cmdstanr</title>
+<title>Extract number of chains after MCMC — fit-method-num_chains • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,11 +46,8 @@
 
 
 
-<meta property="og:title" content="Register CmdStanR's knitr engine for Stan — register_knitr_engine" />
-<meta property="og:description" content="Registers CmdStanR's knitr engine eng_cmdstan() for processing Stan chunks.
-Refer to the vignette
-R Markdown CmdStan Engine
-for a demonstration." />
+<meta property="og:title" content="Extract number of chains after MCMC — fit-method-num_chains" />
+<meta property="og:description" content="The $num_chains() method returns the number of MCMC chains." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -173,60 +170,30 @@ for a demonstration." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Register CmdStanR's knitr engine for Stan</h1>
-    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/knitr.R'><code>R/knitr.R</code></a></small>
-    <div class="hidden name"><code>register_knitr_engine.Rd</code></div>
+    <h1>Extract number of chains after MCMC</h1>
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
+    <div class="hidden name"><code>fit-method-num_chains.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Registers CmdStanR's knitr engine <code><a href='eng_cmdstan.html'>eng_cmdstan()</a></code> for processing Stan chunks.
-Refer to the vignette
-<a href='https://mc-stan.org/cmdstanr/articles/r-markdown.html'>R Markdown CmdStan Engine</a>
-for a demonstration.</p>
+    <p>The <code>$num_chains()</code> method returns the number of MCMC chains.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>register_knitr_engine</span>(<span class='kw'>override</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
-
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>override</th>
-      <td><p>Override knitr's built-in, RStan-based engine for Stan? The
-default is <code>TRUE</code>. See <strong>Details</strong>.</p></td>
-    </tr>
-    </table>
-
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>If <code>override = TRUE</code> (default), this registers CmdStanR's knitr engine as the
-engine for <code>stan</code> chunks, replacing knitr's built-in, RStan-based engine. If
-<code>override = FALSE</code>, this registers a <code>cmdstan</code> engine so that both engines
-may be used in the same R Markdown document. If the template supports syntax
-highlighting for the Stan language, the <code>cmdstan</code> chunks will have <code>stan</code>
-syntax highlighting applied to them.</p>
-<p>See the vignette
-<a href='https://mc-stan.org/cmdstanr/articles/r-markdown.html'>R Markdown CmdStan Engine</a>
-for an example.</p>
-<p><strong>Note:</strong> When running chunks interactively in RStudio (e.g. when using
-<a href='https://bookdown.org/yihui/rmarkdown/notebook.html'>R Notebooks</a>), it has
-been observed that the built-in, RStan-based engine is used for <code>stan</code>
-chunks even when CmdStanR's engine has been registered in the session. When
-the R Markdown document is knit/rendered, the correct engine is used. As a
-workaround, when running chunks interactively, it is recommended to use the
-<code>override = FALSE</code> option and change <code>stan</code> chunks to be <code>cmdstan</code> chunks.</p>
-<p>If you would like to keep <code>stan</code> chunks as <code>stan</code> chunks, it is possible to
-specify <code>engine = "cmdstan"</code> in the chunk options after registering the
-<code>cmdstan</code> engine with <code>override = FALSE</code>.</p>
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
-
-    
-<ul>
-<li><p><a href='https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html'>Register a custom language engine for knitr</a></p></li>
-<li><p><a href='https://bookdown.org/yihui/rmarkdown/language-engines.html#stan'>knitr's built-in Stan language engine</a></p></li>
-</ul>
+    <pre class="usage"><span class='fu'>num_chains</span>()</pre>
 
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>An integer.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code></p></div>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'>num_chains</span>()</div><div class='output co'>#&gt; [1] 2</div><div class='input'># }
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

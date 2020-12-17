@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract inverse metric (mass matrix) — fit-method-inv_metric • cmdstanr</title>
+<title>Extract inverse metric (mass matrix) after MCMC — fit-method-inv_metric • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,9 +46,8 @@
 
 
 
-<meta property="og:title" content="Extract inverse metric (mass matrix) — fit-method-inv_metric" />
-<meta property="og:description" content="Return a list containing the inverse metric (mass matrix) for
-each chain." />
+<meta property="og:title" content="Extract inverse metric (mass matrix) after MCMC — fit-method-inv_metric" />
+<meta property="og:description" content="Extract the inverse metric (mass matrix) for each MCMC chain." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -81,7 +80,7 @@ each chain." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -171,39 +170,31 @@ each chain." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract inverse metric (mass matrix)</h1>
+    <h1>Extract inverse metric (mass matrix) after MCMC</h1>
     <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
     <div class="hidden name"><code>fit-method-inv_metric.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Return a list containing the inverse metric (mass matrix) for
-each chain.</p>
+    <p>Extract the inverse metric (mass matrix) for each MCMC chain.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$inv_metric(matrix = TRUE)
-</pre>
+    <pre class="usage"><span class='fu'>inv_metric</span>(<span class='kw'>matrix</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>matrix</code>: (logical) If a diagonal metric was used, setting <code>matrix = FALSE</code>
-returns a list containing just the diagonals of the matrices instead of the
-full matrices. Setting <code>matrix = FALSE</code> has no effect for dense metrics.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>matrix</th>
+      <td><p>(logical) If a diagonal metric was used, setting <code>matrix = FALSE</code> returns a list containing just the diagonals of the matrices instead
+of the full matrices. Setting <code>matrix = FALSE</code> has no effect for dense
+metrics.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
-
-<p>A list of length equal to the number of MCMC chains. See the <code>matrix</code>
+    <p>A list of length equal to the number of MCMC chains. See the <code>matrix</code>
 argument for details.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
