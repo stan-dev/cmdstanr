@@ -1,4 +1,4 @@
-# Items for next tagged release
+# cmdstanr 0.3.0
 
 ### Bug fixes
 
