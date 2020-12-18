@@ -1,11 +1,12 @@
 #' Read CmdStan CSV files into R
 #'
 #' @description `read_cmdstan_csv()` is used internally by CmdStanR to read
-#'   CmdStan's output CSV files into \R. It can also be used by CmdStan users as
-#'   a more flexible and efficient alternative to `rstan::read_stan_csv()`.
+#'   CmdStan's output CSV files into an \R list (see **Value** section). It can
+#'   also be used by CmdStan users as a more flexible and efficient alternative
+#'   to `rstan::read_stan_csv()`.
 #'
-#'   To create fitted model objects from the list returned by
-#'   `read_cmdstan_csv()` use the [as_cmdstan_*()] functions.
+#'   It is also possible to created fitted model objects from the CSV files
+#'   using the `as_cmdstan_*()` functions.
 #'
 #' @export
 #' @param files A character vector of paths to the CSV files to read.
@@ -20,7 +21,15 @@
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #'   Ignored if the model was not fit using MCMC.
 #'
-#' @return A named list with the following components:
+#' @return
+#'
+#' The `as_cmdstan_*()` functions return a [CmdStanMCMC], [CmdStanMLE], or
+#' [CmdStanVB] object. Some methods typically defined for those objects will not
+#' work but the important methods like `$draws()` `$summary()`,
+#' `$sampler_diagnostics()` and many others will work fine.
+#'
+#' The `read_cmdstan_csv()` function returns a named list with the following
+#' components:
 #'
 #' * `metadata`: A list of the meta information from the run that produced the
 #' CSV file(s). See **Examples** below.
@@ -82,19 +91,21 @@
 #'   fit <- mod$sample(save_warmup=TRUE)
 #' )
 #'
+#' csv_files <- fit$output_files()
+#'
 #' # Read in everything
-#' x <- read_cmdstan_csv(fit$output_files())
+#' x <- read_cmdstan_csv(csv_files)
 #' str(x)
 #'
 #' # Don't read in any of the sampler diagnostic variables
-#' x <- read_cmdstan_csv(fit$output_files(), sampler_diagnostics = "")
+#' x <- read_cmdstan_csv(csv_files, sampler_diagnostics = "")
 #'
 #' # Don't read in any of the parameters or generated quantities
-#' x <- read_cmdstan_csv(fit$output_files(), variables = "")
+#' x <- read_cmdstan_csv(csv_files, variables = "")
 #'
 #' # Read in only specific parameters and sampler diagnostics
 #' x <- read_cmdstan_csv(
-#'   fit$output_files(),
+#'   csv_files,
 #'   variables = c("alpha_scalar", "theta_vector[2]"),
 #'   sampler_diagnostics = c("n_leapfrog__", "accept_stat__")
 #' )
@@ -102,9 +113,13 @@
 #' # For non-scalar parameters all elements can be selected or only some elements,
 #' # e.g. all of "theta_vector" but only one element of "tau_matrix"
 #' x <- read_cmdstan_csv(
-#'   fit$output_files(),
+#'   csv_files,
 #'   variables = c("theta_vector", "tau_matrix[2,1]")
 #' )
+#'
+#' # Create a fitted model object from the CSV files
+#' fit <- as_cmdstan_mcmc(csv_files)
+#' fit$print()
 #' }
 #'
 read_cmdstan_csv <- function(files,
@@ -375,36 +390,34 @@ read_sample_csv <- function(files,
 
 #' @rdname read_cmdstan_csv
 #' @export
-#' @param csv_contents The list returned by `read_cmdstan_csv()`.
 #' @param check_diagnostics Should diagnostic checks be performed? The default
 #'   is `TRUE` but set to `FALSE` to avoid checking diagnostics like
 #'   divergences.
-#' @examples
-#' \dontrun{
-#' # create a CmdStanMCMC object
-#' x <- read_cmdstan_csv(fit$output_files())
-#' fit <- as_cmdstan_mcmc(x)
-#' }
-as_cmdstan_mcmc <- function(csv_contents, check_diagnostics = TRUE) {
-  CmdStanMCMC2$new(csv_contents, check_diagnostics)
+#'
+as_cmdstan_mcmc <- function(files, check_diagnostics = TRUE) {
+  csv_contents <- read_cmdstan_csv(files)
+  CmdStanMCMC2$new(csv_contents, files, check_diagnostics)
 }
 
 #' @rdname read_cmdstan_csv
 #' @export
-as_cmdstan_mle <- function(csv_contents) {
-  CmdStanMLE2$new(csv_contents)
+as_cmdstan_mle <- function(files) {
+  csv_contents <- read_cmdstan_csv(files)
+  CmdStanMLE2$new(csv_contents, files)
 }
 
 #' @rdname read_cmdstan_csv
 #' @export
-as_cmdstan_vb <- function(csv_contents) {
-  CmdStanVB2$new(csv_contents)
+as_cmdstan_vb <- function(files) {
+  csv_contents <- read_cmdstan_csv(files)
+  CmdStanVB2$new(csv_contents, files)
 }
 
 
 
 # internal ----------------------------------------------------------------
 
+# CmdStanFit2 -------------------------------------------------------------
 #' Create a CmdStanMCMC/MLE/VB-ish objects from `read_cmdstan_csv()` output
 #' instead of from a CmdStanRun object
 #'
@@ -417,39 +430,54 @@ CmdStanMCMC2 <- R6::R6Class(
   classname = "CmdStanMCMC2",
   inherit = CmdStanMCMC,
   public = list(
-    initialize = function(csv_contents, check_diagnostics = TRUE) {
+    initialize = function(csv_contents, files, check_diagnostics = TRUE) {
       if (check_diagnostics) {
         check_divergences(csv_contents)
         check_sampler_transitions_treedepth(csv_contents)
       }
+      private$output_files_ <- files
       private$metadata_ <- csv_contents$metadata
-      private$sampler_diagnostics_ = csv_contents$post_warmup_sampler_diagnostics
-      private$warmup_sampler_diagnostics_ = csv_contents$warmup_sampler_diagnostics
-      private$warmup_draws_ = csv_contents$warmup_draws
-      private$draws_ = csv_contents$post_warmup_draws
-      inv_metric_ = csv_contents$inv_metric
+      private$sampler_diagnostics_ <- csv_contents$post_warmup_sampler_diagnostics
+      private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
+      private$warmup_draws_ <- csv_contents$warmup_draws
+      private$draws_ <- csv_contents$post_warmup_draws
+      inv_metric_ <- csv_contents$inv_metric
+    },
+    output_files = function() {
+      private$output_files_
     }
-  )
+  ),
+  private = list(output_files_ = NULL)
 )
 CmdStanMLE2 <- R6::R6Class(
   classname = "CmdStanMLE2",
   inherit = CmdStanMLE,
   public = list(
-    initialize = function(csv_contents) {
+    initialize = function(csv_contents, files) {
+      private$output_files_ <- files
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
+    },
+    output_files = function() {
+      private$output_files_
     }
-  )
+  ),
+  private = list(output_files_ = NULL)
 )
 CmdStanVB2 <- R6::R6Class(
   classname = "CmdStanVB2",
   inherit = CmdStanVB,
   public = list(
-    initialize = function(csv_contents) {
+    initialize = function(csv_contents, files) {
+      private$output_files_ <- files
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
+    },
+    output_files = function() {
+      private$output_files_
     }
-  )
+  ),
+  private = list(output_files_ = NULL)
 )
 
 error_unavailable_CmdStanFit2 <- function(...) {
@@ -463,10 +491,9 @@ error_unavailable_CmdStanFit2 <- function(...) {
 unavailable_methods_CmdStanFit2 <-
   c(
     paste0("cmdstan_", c("diagnose", "summary")),
-    paste0(c("output", "latent_dynamics"), "_files"),
-    paste("save_", c("output", "latent_dynamics"), "_files"),
-    "data_file",
-    "save_data_file",
+    "data_file", "save_data_file",
+    "latent_dynamics_files", "save_latent_dynamics_files",
+    "save_output_files",
     "init",
     "output",
     "return_codes",

@@ -9,11 +9,11 @@
 \usage{
 read_cmdstan_csv(files, variables = NULL, sampler_diagnostics = NULL)
 
-as_cmdstan_mcmc(csv_contents, check_diagnostics = TRUE)
+as_cmdstan_mcmc(files, check_diagnostics = TRUE)
 
-as_cmdstan_mle(csv_contents)
+as_cmdstan_mle(files)
 
-as_cmdstan_vb(csv_contents)
+as_cmdstan_vb(files)
 }
 \arguments{
 \item{files}{A character vector of paths to the CSV files to read.}
@@ -34,14 +34,18 @@ as_cmdstan_vb(csv_contents)
 diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).
 Ignored if the model was not fit using MCMC.}
 
-\item{csv_contents}{The list returned by \code{read_cmdstan_csv()}.}
-
 \item{check_diagnostics}{Should diagnostic checks be performed? The default
 is \code{TRUE} but set to \code{FALSE} to avoid checking diagnostics like
 divergences.}
 }
 \value{
-A named list with the following components:
+The \verb{as_cmdstan_*()} functions return a \link{CmdStanMCMC}, \link{CmdStanMLE}, or
+\link{CmdStanVB} object. Some methods typically defined for those objects will not
+work but the important methods like \verb{$draws()} \verb{$summary()},
+\verb{$sampler_diagnostics()} and many others will work fine.
+
+The \code{read_cmdstan_csv()} function returns a named list with the following
+components:
 \itemize{
 \item \code{metadata}: A list of the meta information from the run that produced the
 CSV file(s). See \strong{Examples} below.
@@ -89,11 +93,12 @@ the generated quantities.
 }
 \description{
 \code{read_cmdstan_csv()} is used internally by CmdStanR to read
-CmdStan's output CSV files into \R. It can also be used by CmdStan users as
-a more flexible and efficient alternative to \code{rstan::read_stan_csv()}.
+CmdStan's output CSV files into an \R list (see \strong{Value} section). It can
+also be used by CmdStan users as a more flexible and efficient alternative
+to \code{rstan::read_stan_csv()}.
 
-To create fitted model objects from the list returned by
-\code{read_cmdstan_csv()} use the \code{\link[=as_cmdstan_*]{as_cmdstan_*()}} functions.
+It is also possible to created fitted model objects from the CSV files
+using the \verb{as_cmdstan_*()} functions.
 }
 \examples{
 \dontrun{
@@ -116,19 +121,21 @@ out <- utils::capture.output(
   fit <- mod$sample(save_warmup=TRUE)
 )
 
+csv_files <- fit$output_files()
+
 # Read in everything
-x <- read_cmdstan_csv(fit$output_files())
+x <- read_cmdstan_csv(csv_files)
 str(x)
 
 # Don't read in any of the sampler diagnostic variables
-x <- read_cmdstan_csv(fit$output_files(), sampler_diagnostics = "")
+x <- read_cmdstan_csv(csv_files, sampler_diagnostics = "")
 
 # Don't read in any of the parameters or generated quantities
-x <- read_cmdstan_csv(fit$output_files(), variables = "")
+x <- read_cmdstan_csv(csv_files, variables = "")
 
 # Read in only specific parameters and sampler diagnostics
 x <- read_cmdstan_csv(
-  fit$output_files(),
+  csv_files,
   variables = c("alpha_scalar", "theta_vector[2]"),
   sampler_diagnostics = c("n_leapfrog__", "accept_stat__")
 )
@@ -136,14 +143,13 @@ x <- read_cmdstan_csv(
 # For non-scalar parameters all elements can be selected or only some elements,
 # e.g. all of "theta_vector" but only one element of "tau_matrix"
 x <- read_cmdstan_csv(
-  fit$output_files(),
+  csv_files,
   variables = c("theta_vector", "tau_matrix[2,1]")
 )
+
+# Create a fitted model object from the CSV files
+fit <- as_cmdstan_mcmc(csv_files)
+fit$print()
 }
 
-\dontrun{
-# create a CmdStanMCMC object
-x <- read_cmdstan_csv(fit$output_files())
-fit <- as_cmdstan_mcmc(x)
-}
 }
