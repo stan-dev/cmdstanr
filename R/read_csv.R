@@ -390,11 +390,13 @@ as_cmdstan_mcmc <- function(csv_contents, check_diagnostics = TRUE) {
 }
 
 #' @rdname read_cmdstan_csv
+#' @export
 as_cmdstan_mle <- function(csv_contents) {
   CmdStanMLE2$new(csv_contents)
 }
 
 #' @rdname read_cmdstan_csv
+#' @export
 as_cmdstan_vb <- function(csv_contents) {
   CmdStanVB2$new(csv_contents)
 }
