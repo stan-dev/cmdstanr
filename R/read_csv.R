@@ -1,8 +1,11 @@
 #' Read CmdStan CSV files into R
 #'
-#' `read_cmdstan_csv()` is used internally by CmdStanR to read CmdStan's output
-#' CSV files into \R. It can also be used by CmdStan users as a more flexible
-#' and efficient alternative to `rstan::read_stan_csv()`.
+#' @description `read_cmdstan_csv()` is used internally by CmdStanR to read
+#'   CmdStan's output CSV files into \R. It can also be used by CmdStan users as
+#'   a more flexible and efficient alternative to `rstan::read_stan_csv()`.
+#'
+#'   To create fitted model objects from the list returned by
+#'   `read_cmdstan_csv()` use the [as_cmdstan_*()] functions.
 #'
 #' @export
 #' @param files A character vector of paths to the CSV files to read.
@@ -105,8 +108,8 @@
 #' }
 #'
 read_cmdstan_csv <- function(files,
-                            variables = NULL,
-                            sampler_diagnostics = NULL) {
+                             variables = NULL,
+                             sampler_diagnostics = NULL) {
   checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
   warmup_draws <- NULL
@@ -370,8 +373,109 @@ read_sample_csv <- function(files,
   read_cmdstan_csv(files, variables, sampler_diagnostics)
 }
 
+#' @rdname read_cmdstan_csv
+#' @export
+#' @param csv_contents The list returned by `read_cmdstan_csv()`.
+#' @param check_diagnostics Should diagnostic checks be performed? The default
+#'   is `TRUE` but set to `FALSE` to avoid checking diagnostics like
+#'   divergences.
+#' @examples
+#' \dontrun{
+#' # create a CmdStanMCMC object
+#' x <- read_cmdstan_csv(fit$output_files())
+#' fit <- as_cmdstan_mcmc(x)
+#' }
+as_cmdstan_mcmc <- function(csv_contents, check_diagnostics = TRUE) {
+  CmdStanMCMC2$new(csv_contents, check_diagnostics)
+}
+
+#' @rdname read_cmdstan_csv
+as_cmdstan_mle <- function(csv_contents) {
+  CmdStanMLE2$new(csv_contents)
+}
+
+#' @rdname read_cmdstan_csv
+as_cmdstan_vb <- function(csv_contents) {
+  CmdStanVB2$new(csv_contents)
+}
+
+
 
 # internal ----------------------------------------------------------------
+
+#' Create a CmdStanMCMC/MLE/VB-ish objects from `read_cmdstan_csv()` output
+#' instead of from a CmdStanRun object
+#'
+#' The resulting object has fewer methods than a CmdStanMCMC/MLE/VB object
+#' because it doesn't have access to the CSV files directly.
+#'
+#' @noRd
+#'
+CmdStanMCMC2 <- R6::R6Class(
+  classname = "CmdStanMCMC2",
+  inherit = CmdStanMCMC,
+  public = list(
+    initialize = function(csv_contents, check_diagnostics = TRUE) {
+      if (check_diagnostics) {
+        check_divergences(csv_contents)
+        check_sampler_transitions_treedepth(csv_contents)
+      }
+      private$metadata_ <- csv_contents$metadata
+      private$sampler_diagnostics_ = csv_contents$post_warmup_sampler_diagnostics
+      private$warmup_sampler_diagnostics_ = csv_contents$warmup_sampler_diagnostics
+      private$warmup_draws_ = csv_contents$warmup_draws
+      private$draws_ = csv_contents$post_warmup_draws
+      inv_metric_ = csv_contents$inv_metric
+    }
+  )
+)
+CmdStanMLE2 <- R6::R6Class(
+  classname = "CmdStanMLE2",
+  inherit = CmdStanMLE,
+  public = list(
+    initialize = function(csv_contents) {
+      private$draws_ <- csv_contents$point_estimates
+      private$metadata_ <- csv_contents$metadata
+    }
+  )
+)
+CmdStanVB2 <- R6::R6Class(
+  classname = "CmdStanVB2",
+  inherit = CmdStanVB,
+  public = list(
+    initialize = function(csv_contents) {
+      private$draws_ <- csv_contents$draws
+      private$metadata_ <- csv_contents$metadata
+    }
+  )
+)
+
+error_unavailable_CmdStanFit2 <- function(...) {
+  fun <- switch(class(self)[1],
+                CmdStanMCMC2 = "as_cmdstan_mcmc()",
+                CmdStanMLE2 = "as_cmdstan_mle()",
+                CmdStanVB2 = "as_cmdstan_vb()")
+  stop("This method is not available for objects created using ", fun, ".",
+       call. = FALSE)
+}
+unavailable_methods_CmdStanFit2 <-
+  c(
+    paste0("cmdstan_", c("diagnose", "summary")),
+    paste0(c("output", "latent_dynamics"), "_files"),
+    paste("save_", c("output", "latent_dynamics"), "_files"),
+    "data_file",
+    "save_data_file",
+    "init",
+    "output",
+    "return_codes",
+    "time"
+  )
+for (method in unavailable_methods_CmdStanFit2) {
+  CmdStanMCMC2$set("public", name = method, value = error_unavailable_CmdStanFit2)
+  CmdStanMLE2$set("public", name = method, value = error_unavailable_CmdStanFit2)
+  CmdStanVB2$set("public", name = method, value = error_unavailable_CmdStanFit2)
+}
+
 
 #' Reads the sampling arguments and the diagonal of the
 #' inverse mass matrix from the comments in a CSV file.

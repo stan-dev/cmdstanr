@@ -2,9 +2,18 @@
 % Please edit documentation in R/read_csv.R
 \name{read_cmdstan_csv}
 \alias{read_cmdstan_csv}
+\alias{as_cmdstan_mcmc}
+\alias{as_cmdstan_mle}
+\alias{as_cmdstan_vb}
 \title{Read CmdStan CSV files into R}
 \usage{
 read_cmdstan_csv(files, variables = NULL, sampler_diagnostics = NULL)
+
+as_cmdstan_mcmc(csv_contents, check_diagnostics = TRUE)
+
+as_cmdstan_mle(csv_contents)
+
+as_cmdstan_vb(csv_contents)
 }
 \arguments{
 \item{files}{A character vector of paths to the CSV files to read.}
@@ -24,6 +33,12 @@ read_cmdstan_csv(files, variables = NULL, sampler_diagnostics = NULL)
 \item{sampler_diagnostics}{Works the same way as \code{variables} but for sampler
 diagnostic variables (e.g., \code{"treedepth__"}, \code{"accept_stat__"}, etc.).
 Ignored if the model was not fit using MCMC.}
+
+\item{csv_contents}{The list returned by \code{read_cmdstan_csv()}.}
+
+\item{check_diagnostics}{Should diagnostic checks be performed? The default
+is \code{TRUE} but set to \code{FALSE} to avoid checking diagnostics like
+divergences.}
 }
 \value{
 A named list with the following components:
@@ -73,9 +88,12 @@ the generated quantities.
 }
 }
 \description{
-\code{read_cmdstan_csv()} is used internally by CmdStanR to read CmdStan's output
-CSV files into \R. It can also be used by CmdStan users as a more flexible
-and efficient alternative to \code{rstan::read_stan_csv()}.
+\code{read_cmdstan_csv()} is used internally by CmdStanR to read
+CmdStan's output CSV files into \R. It can also be used by CmdStan users as
+a more flexible and efficient alternative to \code{rstan::read_stan_csv()}.
+
+To create fitted model objects from the list returned by
+\code{read_cmdstan_csv()} use the \code{\link[=as_cmdstan_*]{as_cmdstan_*()}} functions.
 }
 \examples{
 \dontrun{
@@ -123,4 +141,9 @@ x <- read_cmdstan_csv(
 )
 }
 
+\dontrun{
+# create a CmdStanMCMC object
+x <- read_cmdstan_csv(fit$output_files())
+fit <- as_cmdstan_mcmc(x)
+}
 }
