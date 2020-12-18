@@ -482,12 +482,12 @@ test_that("as_cmdstan_* functions created fitted model objects from csv", {
     expect_s3_class(fit$draws(), "draws")
     checkmate::expect_numeric(fit$lp())
     expect_output(fit$print(), "variable")
-    expect_length(fit$output_files(), if (method == "mcmc") fit$num_chains() else 1)
+    expect_length(fit$output_files(), if (class == "mcmc") fit$num_chains() else 1)
     expect_s3_class(fit$summary(), "draws_summary")
 
     if (class == "mcmc") {
       expect_s3_class(fit$sampler_diagnostics(), "draws_array")
-      expect_s3_class(fit$inv_metric(), "draws_array")
+      expect_type(fit$inv_metric(), "list")
     }
     if (class == "mle") {
       checkmate::expect_numeric(fit$mle())
