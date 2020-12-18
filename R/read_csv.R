@@ -443,8 +443,11 @@ CmdStanMCMC2 <- R6::R6Class(
       private$draws_ <- csv_contents$post_warmup_draws
       inv_metric_ <- csv_contents$inv_metric
     },
-    output_files = function() {
+    output_files = function(...) {
       private$output_files_
+    },
+    num_chains = function() {
+      posterior::nchains(self$draws())
     }
   ),
   private = list(output_files_ = NULL)
@@ -458,7 +461,7 @@ CmdStanMLE2 <- R6::R6Class(
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
     },
-    output_files = function() {
+    output_files = function(...) {
       private$output_files_
     }
   ),
@@ -473,7 +476,7 @@ CmdStanVB2 <- R6::R6Class(
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
     },
-    output_files = function() {
+    output_files = function(...) {
       private$output_files_
     }
   ),
@@ -497,7 +500,8 @@ unavailable_methods_CmdStanFit2 <-
     "init",
     "output",
     "return_codes",
-    "time"
+    "time",
+    "num_procs"
   )
 for (method in unavailable_methods_CmdStanFit2) {
   CmdStanMCMC2$set("public", name = method, value = error_unavailable_CmdStanFit2)
