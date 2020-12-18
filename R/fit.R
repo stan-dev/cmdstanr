@@ -1046,9 +1046,9 @@ CmdStanMLE <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Optimization failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      optim_output <- read_cmdstan_csv(self$output_files())
-      private$draws_ <- optim_output$point_estimates
-      private$metadata_ <- optim_output$metadata
+      csv_contents <- read_cmdstan_csv(self$output_files())
+      private$draws_ <- csv_contents$point_estimates
+      private$metadata_ <- csv_contents$metadata
       invisible(self)
     }
   )
@@ -1150,9 +1150,9 @@ CmdStanVB <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Variational inference failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      vb_output <- read_cmdstan_csv(self$output_files())
-      private$draws_ <- vb_output$draws
-      private$metadata_ <- vb_output$metadata
+      csv_contents <- read_cmdstan_csv(self$output_files())
+      private$draws_ <- csv_contents$draws
+      private$metadata_ <- csv_contents$metadata
       invisible(self)
     }
   )
