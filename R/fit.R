@@ -15,9 +15,6 @@ CmdStanFit <- R6::R6Class(
       self$runset$num_procs()
     },
     print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
-      # if (!length(self$output_files(include_failed = FALSE))) {
-      #   stop("Fitting failed. Unable to print.", call. = FALSE)
-      # }
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
       all_variables <- self$metadata()$model_params
