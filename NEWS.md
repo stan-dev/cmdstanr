@@ -1,3 +1,12 @@
+# cmdstanr 0.3.0.9000
+
+### Bug fixes
+
+### New features
+
+* New functions `as_cmdstan_mcmc()`, `as_cmdstan_mle()`, `as_cmdstan_vb()` that
+create CmdStanMCMC/MLE/VB objects directly from CmdStan CSV files. (#412)
+
 # cmdstanr 0.3.0
 
 ### Bug fixes
