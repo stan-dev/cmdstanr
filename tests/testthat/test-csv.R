@@ -480,7 +480,7 @@ test_that("as_cmdstan_* functions created fitted model objects from csv", {
   for (class in names(fits)) {
     fit <- fits[[class]]
     expect_s3_class(fit$draws(), "draws")
-    checkmate::expect_numeric(fit$lp_approx())
+    checkmate::expect_numeric(fit$lp())
     expect_output(fit$print(), "variable")
     expect_length(fit$output_files(), if (method == "mcmc") fit$num_chains() else 1)
     expect_s3_class(fit$summary(), "draws_summary")
