@@ -1,5 +1,11 @@
 # misc --------------------------------------------------------------------
 
+suggest_package <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop("Please install the ", pkg, " package to use this function.",
+         call. = FALSE)
+  }
+}
 
 is_verbose_mode <- function() {
   getOption("cmdstanr_verbose", default = FALSE)
