@@ -7,7 +7,7 @@
 #'   structure of the returned list.
 #'
 #'   It is also possible to create CmdStanR's fitted model objects directly from
-#'   CmdStan CSV files using the `as_cmdstan_*()` functions.
+#'   CmdStan CSV files using the `as_cmdstan_fit()` function.
 #'
 #' @export
 #' @param files A character vector of paths to the CmdStan CSV files. These can
@@ -25,13 +25,12 @@
 #'
 #' @return
 #'
-#' The `as_cmdstan_*()` functions return a [CmdStanMCMC], [CmdStanMLE], or
+#' `as_cmdstan_fit()` returns a [CmdStanMCMC], [CmdStanMLE], or
 #' [CmdStanVB] object. Some methods typically defined for those objects will not
 #' work (e.g. `save_data_file()`) but the important methods like `$summary()`,
 #' `$draws()`, `$sampler_diagnostics()` and others will work fine.
 #'
-#' The `read_cmdstan_csv()` function returns a named list with the following
-#' components:
+#' `read_cmdstan_csv()` returns a named list with the following components:
 #'
 #' * `metadata`: A list of the meta information from the run that produced the
 #' CSV file(s). See **Examples** below.
@@ -380,29 +379,19 @@ read_sample_csv <- function(files,
 
 #' @rdname read_cmdstan_csv
 #' @export
-#' @param check_diagnostics For `as_cmdstan_mcmc()`, should diagnostic checks be
-#'   performed? The default is `TRUE` but set to `FALSE` to avoid checking for
-#'   problems with divergences and treedepth.
+#' @param check_diagnostics For models fit using MCMC, should diagnostic checks
+#'   be performed after reading in the files? The default is `TRUE` but set to
+#'   `FALSE` to avoid checking for problems with divergences and treedepth.
 #'
-as_cmdstan_mcmc <- function(files, check_diagnostics = TRUE) {
+as_cmdstan_fit <- function(files, check_diagnostics = TRUE) {
   csv_contents <- read_cmdstan_csv(files)
-  CmdStanMCMC2$new(csv_contents, files, check_diagnostics)
+  switch(
+    csv_contents$metadata$method,
+    "sample" = CmdStanMCMC2$new(csv_contents, files, check_diagnostics),
+    "optimize" = CmdStanMLE2$new(csv_contents, files),
+    "variational" = CmdStanVB2$new(csv_contents, files)
+  )
 }
-
-#' @rdname read_cmdstan_csv
-#' @export
-as_cmdstan_mle <- function(files) {
-  csv_contents <- read_cmdstan_csv(files)
-  CmdStanMLE2$new(csv_contents, files)
-}
-
-#' @rdname read_cmdstan_csv
-#' @export
-as_cmdstan_vb <- function(files) {
-  csv_contents <- read_cmdstan_csv(files)
-  CmdStanVB2$new(csv_contents, files)
-}
-
 
 
 # internal ----------------------------------------------------------------

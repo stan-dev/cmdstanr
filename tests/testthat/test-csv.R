@@ -471,11 +471,11 @@ test_that("stan_variables and stan_variable_dims works in read_cdmstan_csv()", {
   expect_equal(gq$metadata$stan_variable_dims, list(y_rep = 10, sum_y = 1))
 })
 
-test_that("as_cmdstan_* functions created fitted model objects from csv", {
+test_that("as_cmdstan_fit creates fitted model objects from csv", {
   fits <- list(
-    mle = as_cmdstan_mle(fit_logistic_optimize$output_files()),
-    vb = as_cmdstan_vb(fit_logistic_variational$output_files()),
-    mcmc = as_cmdstan_mcmc(fit_logistic_thin_1$output_files())
+    mle = as_cmdstan_fit(fit_logistic_optimize$output_files()),
+    vb = as_cmdstan_fit(fit_logistic_variational$output_files()),
+    mcmc = as_cmdstan_fit(fit_logistic_thin_1$output_files())
   )
   for (class in names(fits)) {
     fit <- fits[[class]]
