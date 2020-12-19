@@ -39,9 +39,7 @@
 #' * [knitr's built-in Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
 #'
 register_knitr_engine <- function(override = TRUE) {
-  if (!requireNamespace("knitr", quietly = TRUE)) {
-    stop("Please install the knitr package.", call. = FALSE)
-  }
+  suggest_package("knitr")
   if (override) {
     knitr::knit_engines$set(stan = eng_cmdstan)
   } else {
@@ -64,6 +62,7 @@ register_knitr_engine <- function(override = TRUE) {
 #' }
 #' @export
 eng_cmdstan <- function(options) {
+  suggest_package("knitr")
   output_var <- options$output.var
   if (!is.character(output_var) || length(output_var) != 1L) {
     stop(
