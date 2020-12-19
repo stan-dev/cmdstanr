@@ -860,9 +860,7 @@ CmdStanMCMC <- R6::R6Class(
 #' }
 #'
 loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
-  if (!requireNamespace("loo", quietly = TRUE)) {
-    stop("Please install the loo package to use this method.", call. = FALSE)
-  }
+  suggest_package("loo")
   LLarray <- self$draws(variables)
   if (is.logical(r_eff)) {
     if (isTRUE(r_eff)) {
