@@ -380,9 +380,9 @@ read_sample_csv <- function(files,
 
 #' @rdname read_cmdstan_csv
 #' @export
-#' @param check_diagnostics Should diagnostic checks be performed? The default
-#'   is `TRUE` but set to `FALSE` to avoid checking diagnostics like
-#'   divergences.
+#' @param check_diagnostics For `as_cmdstan_mcmc()`, should diagnostic checks be
+#'   performed? The default is `TRUE` but set to `FALSE` to avoid checking for
+#'   problems with divergences and treedepth.
 #'
 as_cmdstan_mcmc <- function(files, check_diagnostics = TRUE) {
   csv_contents <- read_cmdstan_csv(files)
@@ -412,7 +412,7 @@ as_cmdstan_vb <- function(files) {
 #' instead of from a CmdStanRun object
 #'
 #' The resulting object has fewer methods than a CmdStanMCMC/MLE/VB object
-#' because it doesn't have a CmdStanRun object
+#' because it doesn't have access to a CmdStanRun object.
 #'
 #' @noRd
 #'
