@@ -225,6 +225,20 @@ CmdStanRun <- R6::R6Class(
 
 
 # run helpers -------------------------------------------------
+check_target_exe <- function(exe) {
+  exe_path <- file.path(cmdstan_path(), exe)
+  if (!file.exists(exe_path)) {
+    run_log <- processx::run(
+      command = make_cmd(),
+      args = exe,
+      wd = cmdstan_path(),
+      echo_cmd = TRUE,
+      echo = TRUE,
+      error_on_status = TRUE
+    )
+  }
+}
+
 .run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
@@ -257,11 +271,11 @@ CmdStanRun <- R6::R6Class(
         if (is.null(mpi_n_process)) {
           start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI")
         } else {
-          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI with ", mpi_n_process, " processes")          
-        }        
+          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI with ", mpi_n_process, " processes")
+        }
       } else {
         start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
-      }      
+      }
     } else {
       start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_procs(), " in parallel")
     }
@@ -436,8 +450,8 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
 CmdStanRun$set("private", name = "run_variational_", value = .run_other)
 
-# CmdStanProcs ------------------------------------------------------------
 
+# CmdStanProcs ------------------------------------------------------------
 # System processes for model fitting
 CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
@@ -658,7 +672,7 @@ CmdStanProcs <- R6::R6Class(
           }
           if (private$proc_state_[[id]] == 3.5) {
             message(line)
-          } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) || is_verbose_mode()) {        
+          } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) || is_verbose_mode()) {
             cat(line, collapse = "\n")
           }
         } else {
@@ -666,7 +680,7 @@ CmdStanProcs <- R6::R6Class(
           # this represents the start of fitting
           if (self$proc_state(id) == 2.5) {
               self$set_proc_state(id, new_state = 3)
-          } 
+          }
         }
       }
       invisible(self)
@@ -686,7 +700,7 @@ CmdStanProcs <- R6::R6Class(
         ret <- c(ret, self$get_proc(id)$get_exit_status())
       }
       ret
-    }    
+    }
   ),
   private = list(
     processes_ = NULL, # will be list of processx::process objects
@@ -885,7 +899,7 @@ CmdStanGQProcs <- R6::R6Class(
           # this represents the start of fitting
           if (self$proc_state(id) == 1.5) {
               self$set_proc_state(id, new_state = 2)
-          } 
+          }
         }
       }
       invisible(self)

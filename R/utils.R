@@ -1,50 +1,40 @@
 # misc --------------------------------------------------------------------
 
-#' Check for Windows
-#' @return `TRUE` if OS is Windows, `FALSE` if not.
-#' @noRd
-os_is_windows <- function() {
-  isTRUE(.Platform$OS.type == "windows")
-}
-
-#' Check for macOS
-#' @return `TRUE` if OS is macOS, `FALSE` if not.
-#' @noRd
-os_is_macos <- function() {
-  isTRUE(Sys.info()[["sysname"]] == "Darwin")
-}
 
 is_verbose_mode <- function() {
   getOption("cmdstanr_verbose", default = FALSE)
 }
 
-#' Check if running R in Rosetta 2 translation environment, which is an
-#' Intel-to-ARM translation layer.
-#' @return `TRUE` if it is running rosetta2, `FALSE` if not.
-#' @noRd
+# Famous helper for switching on `NULL` or zero length
+`%||%` <- function(x, y) {
+  if (is.null(x) || length(x) == 0) y else x
+}
+
+
+# checks for OS and hardware ----------------------------------------------
+
+os_is_windows <- function() {
+  isTRUE(.Platform$OS.type == "windows")
+}
+
+os_is_macos <- function() {
+  isTRUE(Sys.info()[["sysname"]] == "Darwin")
+}
+
+# Check if running R in Rosetta 2 translation environment, which is an
+# Intel-to-ARM translation layer.
 is_rosetta2 <- function() {
   rosetta2 <- FALSE
   if (os_is_macos()) {
     rosetta2_check <- processx::run("/usr/sbin/sysctl",
-                                       args = c("-n", "sysctl.proc_translated"),
-                                       error_on_status = FALSE)
+                                    args = c("-n", "sysctl.proc_translated"),
+                                    error_on_status = FALSE)
     rosetta2 <- rosetta2_check$stdout == "1\n"
   }
   rosetta2
 }
 
-#' Famous helper for switching on `NULL` or zero length
-#' @noRd
-#' @param x,y Any \R objects.
-#' @return `x` if not `NULL` or length zero, otherwise `y` regardless of whether
-#'   `y` is `NULL`.
-`%||%` <- function(x, y) {
-  if (is.null(x) || length(x) == 0) y else x
-}
-
-#' Returns the type of make command to use to compile
-#' @return Returns "mingw32-make" if using cmdstan 2.21+ and running Windows
-#' @noRd
+# Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
   # Cmdstan 2.21 introduced TBB that requires mingw32-make on Windows
   ver <- .cmdstanr$VERSION
@@ -55,28 +45,12 @@ make_cmd <- function() {
   }
 }
 
-#' Returns the stanc exe path
-#' @return Returns "bin/stanc.exe" if running Windows, "bin/stanc" otherwise
-#' @noRd
+# Returns the stanc exe path depending on the OS
 stanc_cmd <- function() {
   if (os_is_windows()) {
     "bin/stanc.exe"
   } else {
     "bin/stanc"
-  }
-}
-
-check_target_exe <- function(exe) {
-  exe_path <- file.path(cmdstan_path(), exe)
-  if (!file.exists(exe_path)) {
-    run_log <- processx::run(
-      command = make_cmd(),
-      args = exe,
-      wd = cmdstan_path(),
-      echo_cmd = TRUE,
-      echo = TRUE,
-      error_on_status = TRUE
-    )
   }
 }
 
