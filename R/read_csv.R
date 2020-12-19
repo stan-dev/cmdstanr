@@ -120,6 +120,8 @@ read_cmdstan_csv <- function(files,
   step_size <- list()
   col_types <- NULL
   col_select <- NULL
+  metadata <- NULL
+  time <- data.frame()
   not_matching <- c()
   for (output_file in files) {
     if (is.null(metadata)) {
@@ -130,14 +132,16 @@ read_cmdstan_csv <- function(files,
       if (!is.null(metadata$step_size_adaptation)) {
         step_size[[as.character(metadata$id)]] <- metadata$step_size_adaptation
       }
-      id <- metadata$id
+      if (!is.null(metadata$time)) {
+        time <- rbind(time, metadata$time)
+      }
     } else {
       csv_file_info <- read_csv_metadata(output_file)
       check <- check_csv_metadata_matches(metadata, csv_file_info)
       if (!is.null(check$error)) {
         stop(check$error, call. = FALSE)
       }
-      not_matching <- c(not_matching, check$not_matching)
+      not_matching <- c(not_matching, check$not_matching)  
       metadata$id <- c(metadata$id, csv_file_info$id)
       metadata$seed <- c(metadata$seed, csv_file_info$seed)
       metadata$init <- c(metadata$init, csv_file_info$init)
@@ -151,7 +155,9 @@ read_cmdstan_csv <- function(files,
       if (!is.null(csv_file_info$step_size_adaptation)) {
         step_size[[as.character(csv_file_info$id)]] <- csv_file_info$step_size_adaptation
       }
-      id <- csv_file_info$id
+      if (!is.null(csv_file_info$time)) {
+        time <- rbind(time, csv_file_info$time)
+      }
     }
     if (is.null(col_select)) {
       if (is.null(variables)) { # variables = NULL returns all
@@ -326,7 +332,8 @@ read_cmdstan_csv <- function(files,
       warmup_draws = warmup_draws,
       post_warmup_draws = post_warmup_draws,
       warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
-      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
+      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws,
+      time = time
     )
   } else if (metadata$method == "variational") {
     if (!is.null(variational_draws)) {
@@ -393,6 +400,9 @@ read_csv_metadata <- function(csv_file) {
   inv_metric_rows <- -1
   parsing_done <- FALSE
   dense_inv_metric <- FALSE
+  warmup_time <- 0
+  sampling_time <-0
+  total_time <- 0
   if (os_is_windows()) {
     grep_path <- repair_path(Sys.which("grep.exe"))
     fread_cmd <- paste0(grep_path, " '^[#a-zA-Z]' --color=never ", csv_file)
@@ -467,6 +477,16 @@ read_csv_metadata <- function(csv_file) {
               csv_file_info[[key_val[1]]] <- key_val[2]
             }
           }
+        } else if (grepl("(Warm-up)", tmp, fixed = TRUE)) {
+          tmp <- gsub("Elapsed Time:", "", tmp, fixed = TRUE)
+          tmp <- gsub("seconds (Warm-up)", "", tmp, fixed = TRUE)
+          warmup_time <- as.numeric(tmp)
+        } else if (grepl("(Sampling)", tmp, fixed = TRUE)) {
+          tmp <- gsub("seconds (Sampling)", "", tmp, fixed = TRUE)
+          sampling_time <- as.numeric(tmp)
+        } else if (grepl("(Total)", tmp, fixed = TRUE)) {
+          tmp <- gsub("seconds (Total)", "", tmp, fixed = TRUE)
+          total_time <- as.numeric(tmp)
         }
       }
     }
@@ -492,6 +512,14 @@ read_csv_metadata <- function(csv_file) {
     csv_file_info$threads <- csv_file_info$num_threads
   } else {
     csv_file_info$threads_per_chain <- csv_file_info$num_threads
+  }
+  if (csv_file_info$method == "sample") {
+    csv_file_info$time <- data.frame(
+      chain_id = csv_file_info$id,
+      warmup = warmup_time,
+      sampling = sampling_time,
+      total = total_time
+    )
   }
   csv_file_info$model <- NULL
   csv_file_info$engaged <- NULL
