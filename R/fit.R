@@ -1,7 +1,10 @@
-# CmdStanFit superclass ---------------------------------------------------
-
-# CmdStanMCMC, CmdStanMLE, CmdStanVB, and CmdStanGQ all share the methods of the
-# superclass CmdStanFit and also have their own unique methods
+# CmdStanFit ---------------------------------------------------
+#' CmdStanFit superclass
+#'
+#' @noRd
+#' @description CmdStanMCMC, CmdStanMLE, CmdStanVB, and CmdStanGQ all share the
+#'   methods of the superclass CmdStanFit and also have their own unique methods.
+#'
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
@@ -691,8 +694,6 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
-NULL
-
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
@@ -1039,8 +1040,6 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
-NULL
-
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
   inherit = CmdStanFit,
@@ -1143,8 +1142,6 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
-NULL
-
 CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",
   inherit = CmdStanFit,

@@ -180,8 +180,6 @@ cmdstan_model <- function(stan_file, compile = TRUE, ...) {
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
-NULL
-
 CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
