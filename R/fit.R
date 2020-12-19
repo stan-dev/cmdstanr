@@ -15,6 +15,11 @@ CmdStanFit <- R6::R6Class(
       self$runset$num_procs()
     },
     print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
+      if (is.null(private$draws_) &&
+          !length(self$output_files(include_failed = FALSE))) {
+        stop("Fitting failed. Unable to print.", call. = FALSE)
+      }
+
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
       all_variables <- self$metadata()$model_params
@@ -30,13 +35,12 @@ CmdStanFit <- R6::R6Class(
         total_rows <- length(matches$matching)
         variables_to_print <- matches$matching[seq_len(max_rows)]
       }
-
       # if max_rows > length(variables_to_print) some will be NA
       variables_to_print <- variables_to_print[!is.na(variables_to_print)]
 
       out <- self$summary(variables_to_print, ...)
       out <- as.data.frame(out)
-      out[, 1] <- format(out[, 1], justify = "left")
+      out[,  1] <- format(out[, 1], justify = "left")
       out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
       for (col in grep("ess_", colnames(out), value = TRUE)) {
         out[[col]] <- as.integer(out[[col]])
@@ -44,7 +48,7 @@ CmdStanFit <- R6::R6Class(
 
       opts <- options(max.print = prod(dim(out)))
       on.exit(options(max.print = opts$max.print), add = TRUE)
-      base::print(out, row.names=FALSE)
+      base::print(out, row.names = FALSE)
       if (max_rows < total_rows) {
         cat("\n # showing", max_rows, "of", total_rows,
             "rows (change via 'max_rows' argument)\n")

@@ -126,9 +126,9 @@ test_that("errors when using draws after all chains fail", {
   expect_error(fit_all_fail$sampler_diagnostics(), "No chains finished successfully")
   expect_error(fit_all_fail$cmdstan_summary(), "Unable to run bin/stansummary")
   expect_error(fit_all_fail$cmdstan_diagnose(), "Unable to run bin/diagnose")
-  expect_error(fit_all_fail$print(), "Fitting failed. Unable to retrieve the metadata.")
+  expect_error(fit_all_fail$print(), "Fitting failed. Unable to print")
   expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
-  expect_error(fit_all_fail$metadata(), "Fitting failed. Unable to retrieve the metadata.")
+  expect_error(fit_all_fail$metadata(), "Fitting failed. Unable to retrieve the metadata")
   expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
 })
 

@@ -418,11 +418,11 @@ as_cmdstan_vb <- function(files) {
 # internal ----------------------------------------------------------------
 
 # CmdStanFit2 -------------------------------------------------------------
-#' Create a CmdStanMCMC/MLE/VB-ish objects from `read_cmdstan_csv()` output
+#' Create CmdStanMCMC/MLE/VB-ish objects from `read_cmdstan_csv()` output
 #' instead of from a CmdStanRun object
 #'
 #' The resulting object has fewer methods than a CmdStanMCMC/MLE/VB object
-#' because it doesn't have access to the CSV files directly.
+#' because it doesn't have a CmdStanRun object
 #'
 #' @noRd
 #'
@@ -483,16 +483,9 @@ CmdStanVB2 <- R6::R6Class(
   private = list(output_files_ = NULL)
 )
 
-error_unavailable_CmdStanFit2 <- function(...) {
-  fun <- switch(class(self)[1],
-                CmdStanMCMC2 = "as_cmdstan_mcmc()",
-                CmdStanMLE2 = "as_cmdstan_mle()",
-                CmdStanVB2 = "as_cmdstan_vb()")
-  stop("This method is not available for objects created using ", fun, ".",
-       call. = FALSE)
-}
-unavailable_methods_CmdStanFit2 <-
-  c(
+
+# these methods are unavailable because there's no CmdStanRun object
+unavailable_methods_CmdStanFit2 <- c(
     paste0("cmdstan_", c("diagnose", "summary")),
     "data_file", "save_data_file",
     "latent_dynamics_files", "save_latent_dynamics_files",
@@ -503,6 +496,14 @@ unavailable_methods_CmdStanFit2 <-
     "time",
     "num_procs"
   )
+error_unavailable_CmdStanFit2 <- function(...) {
+  fun <- switch(class(self)[1],
+                CmdStanMCMC2 = "as_cmdstan_mcmc()",
+                CmdStanMLE2 = "as_cmdstan_mle()",
+                CmdStanVB2 = "as_cmdstan_vb()")
+  stop("This method is not available for objects created using ", fun, ".",
+       call. = FALSE)
+}
 for (method in unavailable_methods_CmdStanFit2) {
   CmdStanMCMC2$set("public", name = method, value = error_unavailable_CmdStanFit2)
   CmdStanMLE2$set("public", name = method, value = error_unavailable_CmdStanFit2)
