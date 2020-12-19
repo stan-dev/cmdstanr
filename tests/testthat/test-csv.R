@@ -472,7 +472,6 @@ test_that("stan_variables and stan_variable_dims works in read_cdmstan_csv()", {
 })
 
 test_that("returning time works for read_cmdstan_csv", {
-  skip_on_cran()
   csv_files <- test_path("resources", "csv", "model1-2-no-warmup.csv")
   csv_data <- read_cmdstan_csv(csv_files)
   expect_equal(csv_data$time, data.frame(
