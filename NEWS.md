@@ -1,3 +1,11 @@
+# Items for next tagged release
+
+### Bug fixes
+
+### New features
+
+* `read_cmdstan_csv` now also returns time for MCMC sampling CSV files.
+
 # cmdstanr 0.3.0
 
 ### Bug fixes
