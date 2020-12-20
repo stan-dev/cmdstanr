@@ -1,7 +1,10 @@
-# CmdStanFit superclass ---------------------------------------------------
-
-# CmdStanMCMC, CmdStanMLE, CmdStanVB, and CmdStanGQ all share the methods of the
-# superclass CmdStanFit and also have their own unique methods
+# CmdStanFit ---------------------------------------------------
+#' CmdStanFit superclass
+#'
+#' @noRd
+#' @description CmdStanMCMC, CmdStanMLE, CmdStanVB, and CmdStanGQ all share the
+#'   methods of the superclass CmdStanFit and also have their own unique methods.
+#'
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
@@ -15,9 +18,11 @@ CmdStanFit <- R6::R6Class(
       self$runset$num_procs()
     },
     print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
-      if (!length(self$output_files(include_failed = FALSE))) {
+      if (is.null(private$draws_) &&
+          !length(self$output_files(include_failed = FALSE))) {
         stop("Fitting failed. Unable to print.", call. = FALSE)
       }
+
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
       all_variables <- self$metadata()$model_params
@@ -33,13 +38,12 @@ CmdStanFit <- R6::R6Class(
         total_rows <- length(matches$matching)
         variables_to_print <- matches$matching[seq_len(max_rows)]
       }
-
       # if max_rows > length(variables_to_print) some will be NA
       variables_to_print <- variables_to_print[!is.na(variables_to_print)]
 
       out <- self$summary(variables_to_print, ...)
       out <- as.data.frame(out)
-      out[, 1] <- format(out[, 1], justify = "left")
+      out[,  1] <- format(out[, 1], justify = "left")
       out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
       for (col in grep("ess_", colnames(out), value = TRUE)) {
         out[[col]] <- as.integer(out[[col]])
@@ -47,7 +51,7 @@ CmdStanFit <- R6::R6Class(
 
       opts <- options(max.print = prod(dim(out)))
       on.exit(options(max.print = opts$max.print), add = TRUE)
-      base::print(out, row.names=FALSE)
+      base::print(out, row.names = FALSE)
       if (max_rows < total_rows) {
         cat("\n # showing", max_rows, "of", total_rows,
             "rows (change via 'max_rows' argument)\n")
@@ -330,7 +334,7 @@ CmdStanFit$set("public", name = "lp", value = lp)
 #'
 summary <- function(variables = NULL, ...) {
   draws <- self$draws(variables)
-  if (self$runset$method() == "sample") {
+  if (self$metadata()$method == "sample") {
     summary <- posterior::summarise_draws(draws, ...)
   } else {
     if (!length(list(...))) {
@@ -345,7 +349,7 @@ summary <- function(variables = NULL, ...) {
       summary <- posterior::summarise_draws(draws, ...)
     }
   }
-  if (self$runset$method() == "optimize") {
+  if (self$metadata()$method == "optimize") {
     summary <- summary[, c("variable", "mean")]
     colnames(summary) <- c("variable", "estimate")
   }
@@ -600,10 +604,10 @@ CmdStanFit$set("public", name = "output", value = output)
 #' }
 #'
 metadata <- function() {
-  if (!length(self$output_files(include_failed = FALSE))) {
-    stop("Fitting failed. Unable to retrieve the metadata.", call. = FALSE)
-  }
   if (is.null(private$metadata_)) {
+    if (!length(self$output_files(include_failed = FALSE))) {
+      stop("Fitting failed. Unable to retrieve the metadata.", call. = FALSE)
+    }
     private$read_csv_()
   }
   private$metadata_
@@ -691,8 +695,6 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
-NULL
-
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
@@ -706,17 +708,17 @@ CmdStanMCMC <- R6::R6Class(
       } else {
         if (self$runset$args$validate_csv) {
           fixed_param <- runset$args$method_args$fixed_param
-          data_csv <- read_cmdstan_csv(
+          csv_contents <- read_cmdstan_csv(
             self$output_files(),
             variables = "",
             sampler_diagnostics =
              if (!fixed_param) c("treedepth__", "divergent__") else ""
           )
           if (!fixed_param) {
-            check_divergences(data_csv)
-            check_sampler_transitions_treedepth(data_csv)
+            check_divergences(csv_contents)
+            check_sampler_transitions_treedepth(csv_contents)
           }
-          private$metadata_ <- data_csv$metadata
+          private$metadata_ <- csv_contents$metadata
         }
       }
     },
@@ -731,9 +733,6 @@ CmdStanMCMC <- R6::R6Class(
 
     # override the CmdStanFit draws method
     draws = function(variables = NULL, inc_warmup = FALSE) {
-      if (!length(self$output_files(include_failed = FALSE))) {
-        stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
-      }
       if (inc_warmup && !private$metadata_$save_warmup) {
         stop("Warmup draws were requested from a fit object without them! ",
              "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
@@ -774,45 +773,45 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
       }
-      data_csv <- read_cmdstan_csv(
+      csv_contents <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
         sampler_diagnostics = sampler_diagnostics
       )
-      private$inv_metric_ <- data_csv$inv_metric
-      private$metadata_ <- data_csv$metadata
+      private$inv_metric_ <- csv_contents$inv_metric
+      private$metadata_ <- csv_contents$metadata
 
-      if (!is.null(data_csv$post_warmup_draws)) {
-        missing_variables <- !(posterior::variables(data_csv$post_warmup_draws) %in% posterior::variables(private$draws_))
+      if (!is.null(csv_contents$post_warmup_draws)) {
+        missing_variables <- !(posterior::variables(csv_contents$post_warmup_draws) %in% posterior::variables(private$draws_))
         private$draws_ <- posterior::bind_draws(
           private$draws_,
-          data_csv$post_warmup_draws[,,missing_variables],
+          csv_contents$post_warmup_draws[,,missing_variables],
           along="variable"
         )
       }
-      if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-        missing_variables <- !(posterior::variables(data_csv$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))
+      if (!is.null(csv_contents$post_warmup_sampler_diagnostics)) {
+        missing_variables <- !(posterior::variables(csv_contents$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))
         private$sampler_diagnostics_ <- posterior::bind_draws(
           private$sampler_diagnostics_,
-          data_csv$post_warmup_sampler_diagnostics[,,missing_variables],
+          csv_contents$post_warmup_sampler_diagnostics[,,missing_variables],
           along="variable"
         )
       }
-      if (!is.null(data_csv$metadata$save_warmup)
-         && data_csv$metadata$save_warmup) {
-        if (!is.null(data_csv$warmup_draws)) {
-          missing_variables <- !(posterior::variables(data_csv$warmup_draws) %in% posterior::variables(private$warmup_draws_))
+      if (!is.null(csv_contents$metadata$save_warmup)
+         && csv_contents$metadata$save_warmup) {
+        if (!is.null(csv_contents$warmup_draws)) {
+          missing_variables <- !(posterior::variables(csv_contents$warmup_draws) %in% posterior::variables(private$warmup_draws_))
           private$warmup_draws_ <- posterior::bind_draws(
             private$warmup_draws_,
-            data_csv$warmup_draws[,,missing_variables],
+            csv_contents$warmup_draws[,,missing_variables],
             along="variable"
           )
         }
-        if (!is.null(data_csv$warmup_sampler_diagnostics)) {
-          missing_variables <- !(posterior::variables(data_csv$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))
+        if (!is.null(csv_contents$warmup_sampler_diagnostics)) {
+          missing_variables <- !(posterior::variables(csv_contents$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))
           private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
             private$warmup_sampler_diagnostics_,
-            data_csv$warmup_sampler_diagnostics[,,missing_variables],
+            csv_contents$warmup_sampler_diagnostics[,,missing_variables],
             along="variable"
           )
         }
@@ -904,7 +903,8 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #' }
 #'
 sampler_diagnostics <- function(inc_warmup = FALSE) {
-  if (!length(self$output_files(include_failed = FALSE))) {
+  if (is.null(private$sampler_diagnostics_) &&
+      !length(self$output_files(include_failed = FALSE))) {
     stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.", call. = FALSE)
   }
   to_read <- remaining_columns_to_read(
@@ -1039,8 +1039,6 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
-NULL
-
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
   inherit = CmdStanFit,
@@ -1051,9 +1049,9 @@ CmdStanMLE <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Optimization failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      optim_output <- read_cmdstan_csv(self$output_files())
-      private$draws_ <- optim_output$point_estimates
-      private$metadata_ <- optim_output$metadata
+      csv_contents <- read_cmdstan_csv(self$output_files())
+      private$draws_ <- csv_contents$point_estimates
+      private$metadata_ <- csv_contents$metadata
       invisible(self)
     }
   )
@@ -1143,8 +1141,6 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
-NULL
-
 CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",
   inherit = CmdStanFit,
@@ -1155,9 +1151,9 @@ CmdStanVB <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Variational inference failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      vb_output <- read_cmdstan_csv(self$output_files())
-      private$draws_ <- vb_output$draws
-      private$metadata_ <- vb_output$metadata
+      csv_contents <- read_cmdstan_csv(self$output_files())
+      private$draws_ <- csv_contents$draws
+      private$metadata_ <- csv_contents$metadata
       invisible(self)
     }
   )
@@ -1269,17 +1265,17 @@ CmdStanGQ <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
-      data_csv <- read_cmdstan_csv(
+      csv_contents <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
         sampler_diagnostics = ""
       )
-      private$metadata_ <- data_csv$metadata
-      if (!is.null(data_csv$generated_quantities)) {
+      private$metadata_ <- csv_contents$metadata
+      if (!is.null(csv_contents$generated_quantities)) {
         private$draws_ <-
           posterior::bind_draws(
             private$draws_,
-            data_csv$generated_quantities,
+            csv_contents$generated_quantities,
             along="variable"
           )
       }

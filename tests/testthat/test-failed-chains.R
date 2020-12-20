@@ -1,7 +1,7 @@
 if (not_on_cran()) {
   set_cmdstan_path()
-  stan_program <- test_path("resources/stan/chain_fails.stan")
-  stan_program_init_warnings <- test_path("resources/stan/init_warnings.stan")
+  stan_program <- testing_stan_file("chain_fails")
+  stan_program_init_warnings <- testing_stan_file("init_warnings")
 
   mod <- cmdstan_model(stan_file = stan_program)
   mod_init_warnings <- cmdstan_model(stan_file = stan_program_init_warnings)
@@ -126,9 +126,9 @@ test_that("errors when using draws after all chains fail", {
   expect_error(fit_all_fail$sampler_diagnostics(), "No chains finished successfully")
   expect_error(fit_all_fail$cmdstan_summary(), "Unable to run bin/stansummary")
   expect_error(fit_all_fail$cmdstan_diagnose(), "Unable to run bin/diagnose")
-  expect_error(fit_all_fail$print(), "Fitting failed. Unable to print.")
+  expect_error(fit_all_fail$print(), "Fitting failed. Unable to print")
   expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
-  expect_error(fit_all_fail$metadata(), "Fitting failed. Unable to retrieve the metadata.")
+  expect_error(fit_all_fail$metadata(), "Fitting failed. Unable to retrieve the metadata")
   expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
 })
 

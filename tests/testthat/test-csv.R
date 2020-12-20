@@ -518,3 +518,39 @@ test_that("time from read_cmdstan_csv matches time from fit$time()", {
     fit$time()$chains
   )
 })
+
+test_that("as_cmdstan_fit creates fitted model objects from csv", {
+  fits <- list(
+    mle = as_cmdstan_fit(fit_logistic_optimize$output_files()),
+    vb = as_cmdstan_fit(fit_logistic_variational$output_files()),
+    mcmc = as_cmdstan_fit(fit_logistic_thin_1$output_files())
+  )
+  for (class in names(fits)) {
+    fit <- fits[[class]]
+    checkmate::expect_r6(fit, classes = paste0("CmdStan", toupper(class), "_CSV"))
+    expect_s3_class(fit$draws(), "draws")
+    checkmate::expect_numeric(fit$lp())
+    expect_output(fit$print(), "variable")
+    expect_length(fit$output_files(), if (class == "mcmc") fit$num_chains() else 1)
+    expect_s3_class(fit$summary(), "draws_summary")
+
+    if (class == "mcmc") {
+      expect_s3_class(fit$sampler_diagnostics(), "draws_array")
+      expect_type(fit$inv_metric(), "list")
+      expect_equal(fit$time()$total, NA_integer_)
+      expect_s3_class(fit$time()$chains, "data.frame")
+    }
+    if (class == "mle") {
+      checkmate::expect_numeric(fit$mle())
+    }
+    if (class == "vb") {
+      checkmate::expect_numeric(fit$lp_approx())
+    }
+
+    for (method in unavailable_methods_CmdStanFit_CSV) {
+      if (!(method == "time" && class == "mcmc")) {
+        expect_error(fit[[method]](), "This method is not available")
+      }
+    }
+  }
+})
