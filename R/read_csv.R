@@ -141,7 +141,7 @@ read_cmdstan_csv <- function(files,
       if (!is.null(check$error)) {
         stop(check$error, call. = FALSE)
       }
-      not_matching <- c(not_matching, check$not_matching)  
+      not_matching <- c(not_matching, check$not_matching)
       metadata$id <- c(metadata$id, csv_file_info$id)
       metadata$seed <- c(metadata$seed, csv_file_info$seed)
       metadata$init <- c(metadata$init, csv_file_info$init)
@@ -327,13 +327,13 @@ read_cmdstan_csv <- function(files,
     }
     list(
       metadata = metadata,
+      time = list(total = NA_integer_, chains = time),
       inv_metric = inv_metric,
       step_size = step_size,
       warmup_draws = warmup_draws,
       post_warmup_draws = post_warmup_draws,
       warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
-      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws,
-      time = time
+      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
     )
   } else if (metadata$method == "variational") {
     if (!is.null(variational_draws)) {
