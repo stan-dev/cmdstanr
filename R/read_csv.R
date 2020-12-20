@@ -398,16 +398,16 @@ as_cmdstan_fit <- function(files, check_diagnostics = TRUE) {
   csv_contents <- read_cmdstan_csv(files)
   switch(
     csv_contents$metadata$method,
-    "sample" = CmdStanMCMC2$new(csv_contents, files, check_diagnostics),
-    "optimize" = CmdStanMLE2$new(csv_contents, files),
-    "variational" = CmdStanVB2$new(csv_contents, files)
+    "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
+    "optimize" = CmdStanMLE_CSV$new(csv_contents, files),
+    "variational" = CmdStanVB_CSV$new(csv_contents, files)
   )
 }
 
 
 # internal ----------------------------------------------------------------
 
-# CmdStanFit2 -------------------------------------------------------------
+# CmdStanFit_CSV -------------------------------------------------------------
 #' Create CmdStanMCMC/MLE/VB-ish objects from `read_cmdstan_csv()` output
 #' instead of from a CmdStanRun object
 #'
@@ -416,8 +416,8 @@ as_cmdstan_fit <- function(files, check_diagnostics = TRUE) {
 #'
 #' @noRd
 #'
-CmdStanMCMC2 <- R6::R6Class(
-  classname = "CmdStanMCMC2",
+CmdStanMCMC_CSV <- R6::R6Class(
+  classname = "CmdStanMCMC_CSV",
   inherit = CmdStanMCMC,
   public = list(
     initialize = function(csv_contents, files, check_diagnostics = TRUE) {
@@ -427,23 +427,31 @@ CmdStanMCMC2 <- R6::R6Class(
       }
       private$output_files_ <- files
       private$metadata_ <- csv_contents$metadata
+      private$time_ <- csv_contents$time
+      private$inv_metric_ <- csv_contents$inv_metric
       private$sampler_diagnostics_ <- csv_contents$post_warmup_sampler_diagnostics
       private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
       private$warmup_draws_ <- csv_contents$warmup_draws
       private$draws_ <- csv_contents$post_warmup_draws
-      inv_metric_ <- csv_contents$inv_metric
     },
+    # override some methods so they work without a CmdStanRun object
     output_files = function(...) {
       private$output_files_
+    },
+    time = function() {
+      private$time_
     },
     num_chains = function() {
       posterior::nchains(self$draws())
     }
   ),
-  private = list(output_files_ = NULL)
+  private = list(
+    output_files_ = NULL,
+    time_ = NULL
+  )
 )
-CmdStanMLE2 <- R6::R6Class(
-  classname = "CmdStanMLE2",
+CmdStanMLE_CSV <- R6::R6Class(
+  classname = "CmdStanMLE_CSV",
   inherit = CmdStanMLE,
   public = list(
     initialize = function(csv_contents, files) {
@@ -457,8 +465,8 @@ CmdStanMLE2 <- R6::R6Class(
   ),
   private = list(output_files_ = NULL)
 )
-CmdStanVB2 <- R6::R6Class(
-  classname = "CmdStanVB2",
+CmdStanVB_CSV <- R6::R6Class(
+  classname = "CmdStanVB_CSV",
   inherit = CmdStanVB,
   public = list(
     initialize = function(csv_contents, files) {
@@ -473,33 +481,32 @@ CmdStanVB2 <- R6::R6Class(
   private = list(output_files_ = NULL)
 )
 
-
 # these methods are unavailable because there's no CmdStanRun object
-unavailable_methods_CmdStanFit2 <- c(
-    paste0("cmdstan_", c("diagnose", "summary")),
-    "data_file", "save_data_file",
-    "latent_dynamics_files", "save_latent_dynamics_files",
+unavailable_methods_CmdStanFit_CSV <- c(
+    "cmdstan_diagnose", "cmdstan_summary",
+    "save_data_file", "data_file",
+    "save_latent_dynamics_files", "latent_dynamics_files",
     "save_output_files",
     "init",
     "output",
     "return_codes",
-    "time",
-    "num_procs"
+    "num_procs",
+    "time" # available for MCMC not others
   )
-error_unavailable_CmdStanFit2 <- function(...) {
-  fun <- switch(class(self)[1],
-                CmdStanMCMC2 = "as_cmdstan_mcmc()",
-                CmdStanMLE2 = "as_cmdstan_mle()",
-                CmdStanVB2 = "as_cmdstan_vb()")
-  stop("This method is not available for objects created using ", fun, ".",
+error_unavailable_CmdStanFit_CSV <- function(...) {
+  stop("This method is not available for objects created using as_cmdstan_fit().",
        call. = FALSE)
 }
-for (method in unavailable_methods_CmdStanFit2) {
-  CmdStanMCMC2$set("public", name = method, value = error_unavailable_CmdStanFit2)
-  CmdStanMLE2$set("public", name = method, value = error_unavailable_CmdStanFit2)
-  CmdStanVB2$set("public", name = method, value = error_unavailable_CmdStanFit2)
+for (method in unavailable_methods_CmdStanFit_CSV) {
+  if (method != "time") {
+    CmdStanMCMC_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
+  }
+  CmdStanMLE_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
+  CmdStanVB_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
 }
 
+
+# csv reading internals ---------------------------------------------------
 
 #' Reads the sampling arguments and the diagonal of the
 #' inverse mass matrix from the comments in a CSV file.
