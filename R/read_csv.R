@@ -28,6 +28,10 @@
 #' For [sampling][model-method-sample] the returned list also includes the
 #' following components:
 #'
+#' * `time`: Run time information for the individual chains. The returned object
+#' is the same as for the [$time()][fit-method-time] method except the total run
+#' time can't be inferred from the CSV files (the chains may have been run in
+#' parallel) and is therefore `NA`.
 #' * `inv_metric`: A list (one element per chain) of inverse mass matrices
 #' or their diagonals, depending on the type of metric used.
 #' * `step_size`: A list (one element per chain) of the step sizes used.
