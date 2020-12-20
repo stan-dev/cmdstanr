@@ -10,8 +10,9 @@ time()
 \value{
 A list with elements
 \itemize{
-\item \code{total}: (scalar) the total run time.
-\item \code{chains}: (data frame) for MCMC only, timing info for the individual
+\item \code{total}: (scalar) The total run time. For MCMC this may be different than
+the sum of the chain run times if parallelization was used.
+\item \code{chains}: (data frame) For MCMC only, timing info for the individual
 chains. The data frame has columns \code{"chain_id"}, \code{"warmup"}, \code{"sampling"},
 and \code{"total"}.
 }
