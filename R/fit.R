@@ -518,8 +518,9 @@ CmdStanFit$set("public", name = "data_file", value = data_file)
 #'
 #' @return
 #' A list with elements
-#' * `total`: (scalar) the total run time.
-#' * `chains`: (data frame) for MCMC only, timing info for the individual
+#' * `total`: (scalar) The total run time. For MCMC this may be different than
+#' the sum of the chain run times if parallelization was used.
+#' * `chains`: (data frame) For MCMC only, timing info for the individual
 #' chains. The data frame has columns `"chain_id"`, `"warmup"`, `"sampling"`,
 #' and `"total"`.
 #'

@@ -7,6 +7,10 @@
 * New function `as_cmdstan_fit()` that creates CmdStanMCMC/MLE/VB objects
 directly from CmdStan CSV files. (#412)
 
+* `read_cmdstan_csv` now also returns chain run times for MCMC sampling CSV
+files. (#414)
+
+
 # cmdstanr 0.3.0
 
 ### Bug fixes

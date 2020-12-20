@@ -51,6 +51,10 @@ the CSV file(s).
 For \link[=model-method-sample]{sampling} the returned list also includes the
 following components:
 \itemize{
+\item \code{time}: Run time information for the individual chains. The returned object
+is the same as for the \link[=fit-method-time]{$time()} method except the total run
+time can't be inferred from the CSV files (the chains may have been run in
+parallel) and is therefore \code{NA}.
 \item \code{inv_metric}: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.
 \item \code{step_size}: A list (one element per chain) of the step sizes used.
