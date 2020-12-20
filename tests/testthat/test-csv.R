@@ -474,15 +474,18 @@ test_that("stan_variables and stan_variable_dims works in read_cdmstan_csv()", {
 test_that("returning time works for read_cmdstan_csv", {
   csv_files <- test_path("resources", "csv", "model1-2-no-warmup.csv")
   csv_data <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_data$time, data.frame(
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
     chain_id = 2,
     warmup = 0.017041,
     sampling = 0.022068,
     total = 0.039109
   ))
+
   csv_files <- test_path("resources", "csv", "model1-3-diff_args.csv")
   csv_data <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_data$time, data.frame(
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
     chain_id = 1,
     warmup = 0.038029,
     sampling = 0.030711,
@@ -494,7 +497,8 @@ test_that("returning time works for read_cmdstan_csv", {
     test_path("resources", "csv", "model1-2-warmup.csv")
   )
   csv_data <- read_cmdstan_csv(csv_files)
-  expect_equal(csv_data$time, data.frame(
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
     chain_id = c(1,2),
     warmup = c(0.038029, 0.017041),
     sampling = c(0.030711, 0.022068),
@@ -504,5 +508,5 @@ test_that("returning time works for read_cmdstan_csv", {
     test_path("resources", "csv", "bernoulli-1-optimize.csv")
   )
   csv_data <- read_cmdstan_csv(csv_files)
-  expect_null(csv_data$time)
+  expect_null(csv_data$time$chains)
 })
