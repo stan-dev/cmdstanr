@@ -20,9 +20,14 @@ knitr::opts_chunk$set(
 )
 ```
 
-R Markdown supports a variety of languages through the use of knitr language engines. One such engine is the `stan` engine, which allows users to write Stan programs directly in their R Markdown documents by setting the language of the chunk to `stan`.
+R Markdown supports a variety of languages through the use of knitr language
+engines. One such engine is the `stan` engine, which allows users to write Stan
+programs directly in their R Markdown documents by setting the language of the
+chunk to `stan`.
 
-Behind the scenes, the engine relies on RStan to compile the model code into an in-memory `stanmodel`, which is assigned to a variable with the name given by the `output.var` chunk option. For example:
+Behind the scenes, the engine relies on RStan to compile the model code into an
+in-memory `stanmodel`, which is assigned to a variable with the name given by
+the `output.var` chunk option. For example:
 
 ````
 `r ''````{stan, output.var="model"}
@@ -42,7 +47,10 @@ library(cmdstanr)
 register_knitr_engine()
 ```
 
-By default, this overrides knitr's built-in `stan` engine so that all `stan` chunks are processed with CmdStanR, not RStan. Of course, this also means that the variable specified by `output.var` will no longer be a `stanmodel` object, but instead a `CmdStanModel` object, so the code above would look like this:
+By default, this overrides knitr's built-in `stan` engine so that all `stan`
+chunks are processed with CmdStanR, not RStan. Of course, this also means that
+the variable specified by `output.var` will no longer be a `stanmodel` object,
+but instead a `CmdStanModel` object, so the code above would look like this:
 
 ````
 `r ''````{stan, output.var="model"}
@@ -82,19 +90,26 @@ print(fit)
 
 ## Caching chunks
 
-Use `cache=TRUE` chunk option to avoid re-compiling the Stan model code every time the R Markdown is knit/rendered.
+Use `cache=TRUE` chunk option to avoid re-compiling the Stan model code every
+time the R Markdown is knit/rendered.
 
-You can find the Stan model file and the compiled executable in the document's cache directory.
+You can find the Stan model file and the compiled executable in the document's
+cache directory.
 
 ## Using RStan and CmdStanR engines side-by-side
 
-While the default behavior is to override the built-in `stan` engine because the assumption is that the user is probably not using both RStan and CmdStanR in the same document or project, the option to use both exists. When registering CmdStanR's knitr engine, set `override = FALSE` to register the engine as a `cmdstan` engine:
+While the default behavior is to override the built-in `stan` engine because the
+assumption is that the user is probably not using both RStan and CmdStanR in the
+same document or project, the option to use both exists. When registering
+CmdStanR's knitr engine, set `override = FALSE` to register the engine as a
+`cmdstan` engine:
 
 ``` r
 register_knitr_engine(override = FALSE)
 ```
 
-This will cause `stan` chunks to be processed by knitr's built-in, RStan-based engine and only use CmdStanR's knitr engine for `cmdstan` chunks:
+This will cause `stan` chunks to be processed by knitr's built-in, RStan-based
+engine and only use CmdStanR's knitr engine for `cmdstan` chunks:
 
 ````
 `r ''````{stan, output.var="model_obj1"}
@@ -116,6 +131,14 @@ model_obj2$sample()
 
 ## Running interactively
 
-When running chunks interactively in RStudio (e.g. when using [R Notebooks](https://bookdown.org/yihui/rmarkdown/notebook.html)), it has been observed that the built-in, RStan-based engine is used for `stan` chunks even when CmdStanR's engine has been registered in the session as the engine for `stan`. As a workaround, when running chunks *interactively*, it is recommended to use the `override = FALSE` option and change `stan` chunks to be `cmdstan` chunks.
+When running chunks interactively in RStudio (e.g. when using 
+[R Notebooks](https://bookdown.org/yihui/rmarkdown/notebook.html)), it has been
+observed that the built-in, RStan-based engine is used for `stan` chunks even
+when CmdStanR's engine has been registered in the session as the engine for
+`stan`. As a workaround, when running chunks *interactively*, it is recommended
+to use the `override = FALSE` option and change `stan` chunks to be `cmdstan`
+chunks.
 
-Do not worry: if the template you use supports syntax highlighting for the Stan language, that syntax highlighting will be applied to `cmdstan` chunks when the document is knit/rendered.
+Do not worry: if the template you use supports syntax highlighting for the Stan
+language, that syntax highlighting will be applied to `cmdstan` chunks when the
+document is knit/rendered.
