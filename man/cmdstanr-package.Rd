@@ -20,6 +20,49 @@ CmdStanR (\pkg{cmdstanr} package) is a lightweight interface to Stan
 necessary objects and functions to compile a Stan program and run Stan's
 algorithms from \R via CmdStan, the shell interface to Stan
 (\href{https://mc-stan.org/users/interfaces/cmdstan}{mc-stan.org/users/interfaces/cmdstan}).
+
+\subsection{Different ways of interfacing with Stan’s C++}{
+
+The RStan interface (\href{https://mc-stan.org/rstan}{\strong{rstan}} package) is
+an in-memory interface to Stan and relies on R packages like \strong{Rcpp}
+and \strong{inline} to call C++ code from R. On the other hand, the CmdStanR
+interface does not directly call any C++ code from R, instead relying on
+the CmdStan interface behind the scenes for compilation, running
+algorithms, and writing results to output files.
+}
+
+\subsection{Advantages of RStan}{
+\itemize{
+\item Advanced features. We are working on making these available outside
+of RStan but currently they are only available to R users via RStan:
+\itemize{
+\item \code{rstan::log_prob()}
+\item \code{rstan::grad_log_prob()}
+\item \code{rstan::expose_stan_functions()}
+}
+\item Allows others developers to create packages like \strong{rstanarm} with
+\emph{pre-compiled} Stan programs on CRAN.
+}
+}
+
+\subsection{Advantages of CmdStanR}{
+\itemize{
+\item Compatible with latest versions of Stan. Keeping up with Stan
+releases is complicated for RStan, often requiring non-trivial
+changes to the \strong{rstan} package and new CRAN releases of both
+\strong{rstan} and \strong{StanHeaders}. With CmdStanR the latest improvements
+in Stan will be available from R immediately after updating CmdStan
+using \code{cmdstanr::install_cmdstan()}.
+\item Fewer installation issues (e.g., no need to mess with Makevars
+files).
+\item Running Stan via external processes results in fewer unexpected
+crashes, especially in RStudio.
+\item Less memory overhead.
+\item More permissive license. RStan uses the GPL-3 license while the
+license for CmdStanR is BSD-3, which is a bit more permissive and is
+the same license used for CmdStan and the Stan C++ source code.
+}
+}
 }
 \section{Getting started}{
  CmdStanR requires a working version of CmdStan. If
@@ -27,31 +70,6 @@ you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model
 started, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} for help with installation.
 The vignette \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
 demonstrates the basic functionality of the package.
-}
-
-\section{Comparison with RStan}{
- The RStan interface (\pkg{rstan} package) is
-an in-memory interface to Stan and relies on \R packages like \pkg{Rcpp}
-and \pkg{inline} to call C++ code from R. On the other hand, the \R code in
-this package does not directly call any C++ code, instead relying on
-CmdStan for compilation, running algorithms, and writing results to output
-files.
-
-Both forms of interfacing with Stan have advantages and disadvantages. An
-in-memory interface like RStan is able to offer more advanced features than
-CmdStanR (for example the \code{rstan::log_prob()} and \code{rstan::grad_log_prob()}
-methods) but keeping up with Stan releases is more complicated for RStan,
-often requiring non-trivial changes to the \pkg{rstan} package and always
-requiring new CRAN releases of \pkg{rstan} and \pkg{StanHeaders}. With
-CmdStanR, the latest features in Stan will be available from \R immediately
-after updating CmdStan, which can be done with the \code{\link[=install_cmdstan]{install_cmdstan()}}
-function. We also anticipate that running Stan via external processes will
-have the advantage of playing nicer with R (and RStudio) and result in fewer
-unexpected crashes than when using RStan.
-
-Another difference between RStan and CmdStanR is the license. RStan is
-GPL-3 while the license for CmdStanR (like Stan) is BSD-3, which is a bit
-more permissive.
 }
 
 \examples{
