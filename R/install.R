@@ -101,7 +101,7 @@ install_cmdstan <- function(dir = NULL,
       stop(release_url, " is not a .tar.gz archive!",
            "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
     }
-    message("* Installing Cmdstan from ", release_url)
+    message("* Installing CmdStan from ", release_url)
     download_url <- release_url
     split_url <- strsplit(release_url, "/")
     tar_name <- utils::tail(split_url[[1]], n=1)
@@ -126,12 +126,12 @@ install_cmdstan <- function(dir = NULL,
   tar_downloaded <- download_with_retries(download_url, dest_file)
   if (!tar_downloaded) {
     if (!is.null(version)) {
-      stop("Download of Cmdstan failed. Please check if the supplied version number is valid.", call. = FALSE)
+      stop("Download of CmdStan failed. Please check if the supplied version number is valid.", call. = FALSE)
     }
     if (!is.null(release_url)) {
-      stop("Download of Cmdstan failed. Please check if the supplied release URL is valid.", call. = FALSE)
+      stop("Download of CmdStan failed. Please check if the supplied release URL is valid.", call. = FALSE)
     }
-    stop("Download of Cmdstan failed. Please try again.", call. = FALSE)
+    stop("Download of CmdStan failed. Please try again.", call. = FALSE)
   }
   message("* Download complete")
 
@@ -270,7 +270,6 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 # internal ----------------------------------------------------------------
 
 check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
-  browser()
   if (dir.exists(dir_cmdstan)) {
     if (!overwrite) {
       warning(
