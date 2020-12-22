@@ -23,8 +23,7 @@ A \code{\link{CmdStanModel}} object.
 }
 \description{
 \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-The \code{cmdstan_model()} function creates a new \code{\link{CmdStanModel}} object from a
-file containing a Stan program.
+Create a new \code{\link{CmdStanModel}} object from a file containing a Stan program.
 }
 \examples{
 \dontrun{
@@ -33,7 +32,7 @@ library(posterior)
 library(bayesplot)
 color_scheme_set("brightblue")
 
-# Set path to cmdstan
+# Set path to CmdStan
 # (Note: if you installed CmdStan via install_cmdstan() with default settings
 # then setting the path is unnecessary but the default below should still work.
 # Otherwise use the `path` argument to specify the location of your
@@ -140,7 +139,8 @@ fit_optim_w_init_list$init()
 
 }
 \seealso{
-\code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=cmdstan_path]{cmdstan_path()}}
+\code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=model-method-compile]{$compile()}},
+\code{\link[=model-method-check_syntax]{$check_syntax()}}
 
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online

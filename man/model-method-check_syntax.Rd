@@ -31,16 +31,15 @@ default is \code{FALSE}, which will print a message if the Stan program is valid
 or the compiler error message if there are syntax errors. If \code{TRUE}, only
 the error message will be printed.}
 }
+\value{
+The \verb{$check_syntax()} method returns \code{TRUE} (invisibly) if the model
+is valid.
+}
 \description{
 The \verb{$check_syntax()} method of a \code{\link{CmdStanModel}} object
 checks the Stan program for syntax errors and returns \code{TRUE} (invisibly) if
 parsing succeeds. If invalid syntax in found an error is thrown.
 }
-\section{Value}{
- The \verb{$check_syntax()} method returns \code{TRUE} (invisibly) if
-the model is valid.
-}
-
 \examples{
 \dontrun{
 file <- write_stan_file("

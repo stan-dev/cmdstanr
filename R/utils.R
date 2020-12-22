@@ -42,7 +42,7 @@ is_rosetta2 <- function() {
 
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
-  # Cmdstan 2.21 introduced TBB that requires mingw32-make on Windows
+  # CmdStan 2.21 introduced TBB that requires mingw32-make on Windows
   ver <- .cmdstanr$VERSION
   if (os_is_windows() && (is.null(ver) || ver >= "2.21")) {
     "mingw32-make.exe"

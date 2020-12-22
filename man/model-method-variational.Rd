@@ -130,6 +130,9 @@ of the objective.}
 \item{output_samples}{(positive integer) Number of approximate posterior
 samples to draw and save.}
 }
+\value{
+A \code{\link{CmdStanVB}} object.
+}
 \description{
 The \verb{$variational()} method of a \code{\link{CmdStanModel}} object runs
 Stan's variational Bayes (ADVI) algorithms.
@@ -149,10 +152,6 @@ matrix for the approximation.
 
 -- \href{https://github.com/stan-dev/cmdstan/releases/latest}{\emph{CmdStan Interface User's Guide}}
 }
-\section{Value}{
- A \code{\link{CmdStanVB}} object.
-}
-
 \examples{
 \dontrun{
 library(cmdstanr)
@@ -160,7 +159,7 @@ library(posterior)
 library(bayesplot)
 color_scheme_set("brightblue")
 
-# Set path to cmdstan
+# Set path to CmdStan
 # (Note: if you installed CmdStan via install_cmdstan() with default settings
 # then setting the path is unnecessary but the default below should still work.
 # Otherwise use the `path` argument to specify the location of your

@@ -1,8 +1,7 @@
 #' Create a new CmdStanModel object
 #'
 #' \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-#' The `cmdstan_model()` function creates a new [`CmdStanModel`] object from a
-#' file containing a Stan program.
+#' Create a new [`CmdStanModel`] object from a file containing a Stan program.
 #'
 #' @export
 #' @param stan_file The path to a `.stan` file containing a Stan program. The
@@ -16,7 +15,10 @@
 #'
 #' @return A [`CmdStanModel`] object.
 #'
-#' @seealso [install_cmdstan()], [cmdstan_path()]
+#' @seealso [install_cmdstan()], [`$compile()`][model-method-compile],
+#'   [`$check_syntax()`][model-method-check_syntax]
+#'
+#'
 #' @template seealso-docs
 #'
 #' @examples
@@ -26,7 +28,7 @@
 #' library(bayesplot)
 #' color_scheme_set("brightblue")
 #'
-#' # Set path to cmdstan
+#' # Set path to CmdStan
 #' # (Note: if you installed CmdStan via install_cmdstan() with default settings
 #' # then setting the path is unnecessary but the default below should still work.
 #' # Otherwise use the `path` argument to specify the location of your
@@ -262,11 +264,15 @@ CmdStanModel <- R6::R6Class(
 #' @aliases compile
 #' @family CmdStanModel methods
 #'
-#' @description The `$compile()` method of a [`CmdStanModel`] object translates
-#'   the Stan program to C++ and creates a compiled executable. In most cases
-#'   the user does not need to explicitly call the `$compile()` method as
-#'   compilation will occur when calling [cmdstan_model()]. However it is
-#'   possible to set `compile=FALSE` in the call to `cmdstan_model()` and
+#' @description The `$compile()` method of a [`CmdStanModel`] object checks the
+#'   syntax of the Stan program, translates the program to C++, and creates a
+#'   compiled executable. To just check the syntax of a Stan program without
+#'   compiling it use the [`$check_syntax()`][model-method-check_syntax] method
+#'   instead.
+#'
+#'   In most cases the user does not need to explicitly call the `$compile()`
+#'   method as compilation will occur when calling [cmdstan_model()]. However it
+#'   is possible to set `compile=FALSE` in the call to `cmdstan_model()` and
 #'   subsequently call the `$compile()` method directly.
 #'
 #'   After compilation, the paths to the executable and the `.hpp` file
@@ -305,13 +311,15 @@ CmdStanModel <- R6::R6Class(
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
-#' @section Value: The `$compile()` method is called for its side effect of
-#'   creating the executable and adding its path to the [`CmdStanModel`] object,
-#'   but it also returns the [`CmdStanModel`] object invisibly.
+#' @return The `$compile()` method is called for its side effect of creating the
+#'   executable and adding its path to the [`CmdStanModel`] object, but it also
+#'   returns the [`CmdStanModel`] object invisibly.
 #'
 #'   After compilation, the `$exe_file()`, `$hpp_file()`, and `$save_hpp_file()`
 #'   methods can be used and return file paths.
 #'
+#' @seealso The [`$check_syntax()`][model-method-check_syntax] method to check
+#'   Stan syntax or enable pedantic model without compiling.
 #' @template seealso-docs
 #'
 #' @examples
@@ -537,8 +545,8 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'   or the compiler error message if there are syntax errors. If `TRUE`, only
 #'   the error message will be printed.
 #'
-#' @section Value: The `$check_syntax()` method returns `TRUE` (invisibly) if
-#'   the model is valid.
+#' @return The `$check_syntax()` method returns `TRUE` (invisibly) if the model
+#'   is valid.
 #'
 #' @template seealso-docs
 #'
@@ -662,7 +670,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize
 #'   Deprecated and will be removed in a future release.
 #'
-#' @section Value: A [`CmdStanMCMC`] object.
+#' @return A [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -849,7 +857,7 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
 #'   model executable.
 #'
-#' @section Value: A [`CmdStanMCMC`] object.
+#' @return A [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
 #' @seealso The Stan Math Library's MPI documentation
@@ -984,7 +992,7 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @param history_size (positive integer) The size of the history used when
 #'   approximating the Hessian. Only available for L-BFGS.
 #'
-#' @section Value: A [`CmdStanMLE`] object.
+#' @return A [`CmdStanMLE`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -1104,7 +1112,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' @param output_samples (positive integer) Number of approximate posterior
 #'   samples to draw and save.
 #'
-#' @section Value: A [`CmdStanVB`] object.
+#' @return A [`CmdStanVB`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -1197,7 +1205,7 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
 #'
-#' @section Value: A [`CmdStanGQ`] object.
+#' @return A [`CmdStanGQ`] object.
 #'
 #' @template seealso-docs
 #'

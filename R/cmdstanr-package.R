@@ -18,13 +18,13 @@
 #'   algorithms from \R via CmdStan, the shell interface to Stan
 #'   ([mc-stan.org/users/interfaces/cmdstan](https://mc-stan.org/users/interfaces/cmdstan)).
 #'
+#' @includeRmd vignettes/children/comparison-with-rstan.md
+#'
 #' @section Getting started: CmdStanR requires a working version of CmdStan. If
 #'   you already have CmdStan installed see [cmdstan_model()] to get
 #'   started, otherwise see [install_cmdstan()] for help with installation.
 #'   The vignette [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 #'   demonstrates the basic functionality of the package.
-#'
-#' @includeRmd vignettes/children/comparison-with-rstan.md
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples

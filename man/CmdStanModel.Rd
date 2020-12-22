@@ -51,7 +51,7 @@ library(posterior)
 library(bayesplot)
 color_scheme_set("brightblue")
 
-# Set path to cmdstan
+# Set path to CmdStan
 # (Note: if you installed CmdStan via install_cmdstan() with default settings
 # then setting the path is unnecessary but the default below should still work.
 # Otherwise use the `path` argument to specify the location of your

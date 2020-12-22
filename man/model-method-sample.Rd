@@ -225,6 +225,9 @@ fit object can be used to display all the silenced messages.}
 
 \item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize}{Deprecated and will be removed in a future release.}
 }
+\value{
+A \code{\link{CmdStanMCMC}} object.
+}
 \description{
 The \verb{$sample()} method of a \code{\link{CmdStanModel}} object runs the
 default MCMC algorithm in CmdStan (\verb{algorithm=hmc engine=nuts}), to produce
@@ -236,10 +239,6 @@ installed version of CmdStan. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
 }
-\section{Value}{
- A \code{\link{CmdStanMCMC}} object.
-}
-
 \examples{
 \dontrun{
 library(cmdstanr)
@@ -247,7 +246,7 @@ library(posterior)
 library(bayesplot)
 color_scheme_set("brightblue")
 
-# Set path to cmdstan
+# Set path to CmdStan
 # (Note: if you installed CmdStan via install_cmdstan() with default settings
 # then setting the path is unnecessary but the default below should still work.
 # Otherwise use the `path` argument to specify the location of your
