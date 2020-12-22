@@ -56,6 +56,13 @@ test_that("variational() method runs when all arguments specified validly", {
   expect_is(fit2, "CmdStanVB")
 })
 
+test_that("variational() warns if threads specified but not enabled", {
+  expect_warning(
+    expect_vb_output(fit <- mod$variational(data = data_list, threads = 2)),
+    "'threads' will have no effect"
+  )
+})
+
 test_that("variational() method errors for any invalid argument before calling cmdstan", {
   skip_on_cran()
 

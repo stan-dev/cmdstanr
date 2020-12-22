@@ -58,7 +58,8 @@ test_that("time is reported after optimization", {
                 "Finished in")
 })
 
-test_that("no error when checking estimates are after failure", {
+test_that("no error when checking estimates after failure", {
   fit <- cmdstanr_example("schools", method = "optimize") # optim ålways fails for this
   expect_silent(fit$summary()) # no error
 })
+

@@ -56,12 +56,19 @@ test_that("optimize() method runs when all arguments specified validly", {
   expect_is(fit2, "CmdStanMLE")
 })
 
-test_that("optimize() method runs arguments are specified in scientific notation", {
+test_that("optimize() method runs when arguments are specified in scientific notation", {
   skip_on_cran()
 
   # specifying all arguments validly
   expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_sci_nota_values))
   expect_is(fit1, "CmdStanMLE")
+})
+
+test_that("optimize() warns if threads specified but not enabled", {
+  expect_warning(
+    expect_optim_output(fit <- mod$optimize(data = data_list, threads = 2)),
+    "'threads' will have no effect"
+  )
 })
 
 test_that("optimize() method errors for any invalid argument before calling cmdstan", {
