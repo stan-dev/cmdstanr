@@ -144,6 +144,13 @@ test_that("draws() method returns a 'draws' object", {
       expect_type(draws, "double")
     }
     expect_s3_class(draws, "draws")
+
+    if (method != "sample") {
+      expect_warning(
+        fit$draws(inc_warmup = TRUE),
+        "'inc_warmup' is ignored except when used with CmdStanMCMC objects"
+      )
+    }
   }
 })
 

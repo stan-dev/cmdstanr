@@ -85,19 +85,20 @@ test_that("generate_quantities works with draws_array", {
   )
 })
 
-fit <- testing_fit("bernoulli", method = "variational", seed = 123)
-mod_gq <- testing_model("bernoulli_ppc")
-data_list <- testing_data("bernoulli")
-fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit)
-
 test_that("generate_quantities works with VB and draws_matrix", {
   skip_on_cran()
   fit <- testing_fit("bernoulli", method = "variational", seed = 123)
-  fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit)
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit)
   )
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit$draws())
+  )
+})
+
+test_that("generate_quantities() warns if threads specified but not enabled", {
+  expect_warning(
+    expect_gq_output(fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit, threads_per_chain = 4)),
+    "'threads_per_chain' will have no effect"
   )
 })
