@@ -44,34 +44,33 @@ been set then the default is \code{2}.}
 \item{quiet}{For \code{install_cmdstan()}, should the verbose output from the
 system processes be suppressed when building the CmdStan binaries?
 The default is \code{FALSE}.
-For \code{check_cmdstan_toolchain()}, should the function supress
-printing informational messages? The default is \code{FALSE}.
-If \code{TRUE} \code{check_cmdstan_toolchain()} only outputs errors.}
+For \code{check_cmdstan_toolchain()}, should the function suppress printing
+informational messages? The default is \code{FALSE}. If \code{TRUE} only errors will
+be printed.}
 
-\item{overwrite}{When an existing installation is found in \code{dir}, should
-CmdStan still be downloaded and reinstalled? The default is \code{FALSE}, in
-which case an informative error is thrown instead of overwriting the user's
-installation.}
+\item{overwrite}{Should CmdStan still be downloaded and installed even if an
+installation of the same version is found in \code{dir}? The default is \code{FALSE},
+in which case an informative error is thrown instead of overwriting the
+user's installation.}
 
-\item{timeout}{Timeout (in seconds) for the CmdStan build stage of the
-installation process.}
+\item{timeout}{Timeout (in seconds) for the build stage of the installation.}
 
-\item{version}{Specifies the Cmdstan release version to be
-installed. By default set to \code{NULL}, which downloads the latest stable
-release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}.}
+\item{version}{The CmdStan release version to install. The default is \code{NULL},
+which downloads the latest stable release from
+\url{https://github.com/stan-dev/cmdstan/releases}.}
 
-\item{release_url}{Specifies the URL to a specific Cmdstan release to be
-installed. By default set to \code{NULL}, which downloads the latest stable
-release from \href{https://github.com/stan-dev/cmdstan/releases}{GitHub}. If
-\code{version} and \code{release_url} are set, \code{version} is used.}
+\item{release_url}{The URL for the specific CmdStan release or
+release candidate to install. See \url{https://github.com/stan-dev/cmdstan/releases}.
+The URL should point to the tarball (\code{.tar.gz.} file) itself, e.g.,
+\code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"}.
+If both \code{version} and \code{release_url} are specified then \code{version} will be used.}
 
 \item{cpp_options}{A list specifying any makefile flags/variables to be
 written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
 will force the use of clang for compilation.}
 
-\item{check_toolchain}{Should \code{install_cmdstan()} check that the
-required toolchain is installed and properly configured.
-The default is \code{TRUE}.}
+\item{check_toolchain}{Should \code{install_cmdstan()} attempt to check that the
+required toolchain is installed and properly configured. The default is \code{TRUE}.}
 
 \item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
 appended to the end of the existing \code{make/local} file? The default is \code{TRUE}.
@@ -89,18 +88,15 @@ the updated contents are returned.
 }
 \description{
 The \code{install_cmdstan()} function attempts to download and
-install the latest release of
-\href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan}. Installing
-a previous release or a new release candidate is also possible by
-specifying the \code{release_url} argument. Currently the necessary C++ tool
-chain is assumed to be available, but in the future CmdStanR may help
-install the requirements. See the first few sections of the
-CmdStan \href{https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html}{installation guide}
-for details on the required toolchain.
+install the latest release of \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan}.
+Installing a previous release or a new release candidate is also possible
+by specifying the \code{release_url} argument.
+See the first few sections of the CmdStan
+\href{https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html}{installation guide}
+for details on the C++ toolchain required for installing CmdStan.
 
-The \code{rebuild_cmdstan()} function cleans and rebuilds the cmdstan
-installation. Use this function in case of any issues when compiling
-models.
+The \code{rebuild_cmdstan()} function cleans and rebuilds the CmdStan
+installation. Use this function in case of any issues when compiling models.
 
 The \code{cmdstan_make_local()} function is used to read/write makefile flags
 and variables from/to the \code{make/local} file of a CmdStan installation.
@@ -110,6 +106,9 @@ switches, changing the C++ compiler, etc. A change to the \code{make/local} file
 should typically be followed by calling \code{rebuild_cmdstan()}.
 }
 \examples{
+\dontrun{
+check_cmdstan_toolchain()
+
 # install_cmdstan(cores = 4)
 
 cpp_options <- list(
@@ -119,7 +118,6 @@ cpp_options <- list(
 )
 # cmdstan_make_local(cpp_options = cpp_options)
 # rebuild_cmdstan()
-
-# check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
+}
 
 }

@@ -1,12 +1,20 @@
-# CmdStanRun (RunSet) -----------------------------------------------------
+# CmdStanRun --------------------------------------------------------------
 
-# Record of CmdStan runs for a specified configuration and number of chains.
+#' Run CmdStan using a specified configuration
+#'
+#' The internal `CmdStanRun` R6 class handles preparing the call to CmdStan
+#' (using the `CmdStanArgs` object), setting up the external processes (using
+#' the `CmdStanProcs` object), and provides methods for running CmdStan's
+#' multiple methods/algorithms, running CmdStan utilities (e.g. `stansummary`),
+#' and saving the output files.
+#'
+#' @noRd
+#' @param args A `CmdStanArgs` object.
+#' @param procs A `CmdStanProcs` object.
+#'
 CmdStanRun <- R6::R6Class(
   classname = "CmdStanRun",
   public = list(
-    # Initialize object
-    # @param args CmdStanArgs object.
-    # @param procs CmdStanProcs object.
     args = NULL,
     procs = NULL,
     initialize = function(args, procs) {
@@ -72,9 +80,12 @@ CmdStanRun <- R6::R6Class(
       )
       file.remove(current_files[!current_files %in% new_paths])
       private$output_files_ <- new_paths
-      message("Moved ", length(current_files),
-              " files and set internal paths to new locations:\n",
-              paste("-", new_paths, collapse = "\n"))
+      message(
+        "Moved ",
+        length(current_files),
+        " files and set internal paths to new locations:\n",
+        paste("-", new_paths, collapse = "\n")
+      )
       private$output_files_saved_ <- TRUE
       invisible(new_paths)
     },
@@ -94,9 +105,12 @@ CmdStanRun <- R6::R6Class(
       )
       file.remove(current_files[!current_files %in% new_paths])
       private$latent_dynamics_files_ <- new_paths
-      message("Moved ", length(current_files),
-              " files and set internal paths to new locations:\n",
-              paste("-", new_paths, collapse = "\n"))
+      message(
+        "Moved ",
+        length(current_files),
+        " files and set internal paths to new locations:\n",
+        paste("-", new_paths, collapse = "\n")
+      )
       private$latent_dynamics_files_saved_ <- TRUE
       invisible(new_paths)
     },
@@ -138,24 +152,18 @@ CmdStanRun <- R6::R6Class(
     },
 
     run_cmdstan = function() {
-      if (self$method() == "sample") {
-        private$run_sample_()
-      } else if (self$method() == "optimize") {
-        private$run_optimize_()
-      } else if (self$method() == "variational") {
-        private$run_variational_()
-      } else if (self$method() == "generate_quantities") {
-        private$run_generate_quantities_()
-      }
+      run_method <- paste0("run_", self$method(), "_")
+      private[[run_method]]()
     },
 
     run_cmdstan_mpi = function(mpi_cmd, mpi_args) {
       private$run_sample_(mpi_cmd, mpi_args)
     },
 
-    # run bin/stansummary or bin/diagnose
-    # @param tool The name of the tool in `bin/` to run.
-    # @param flags An optional character vector of flags (e.g. c("--sig_figs=1")).
+    #' Run `bin/stansummary` or `bin/diagnose`
+    #' @param tool The name of the tool in `bin/` to run.
+    #' @param flags An optional character vector of flags (e.g. `c("--sig_figs=1")`).
+    #' @noRd
     run_cmdstan_tool = function(tool = c("stansummary", "diagnose"), flags = NULL) {
       if (self$method() == "optimize") {
         stop("Not available for optimize method.", call. = FALSE)
@@ -452,23 +460,33 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
 
 
 # CmdStanProcs ------------------------------------------------------------
-# System processes for model fitting
+
+#' System processes for running CmdStan using the `processx::process` R6 class
+#'
+#' The internal `CmdStanProcs` R6 class provides methods for setting up the
+#' system processes for running CmdStan, monitoring the status of the processes,
+#' and handling stdout and stderr.
+#'
+#' @noRd
+#' @param num_procs The number of CmdStan processes to start for a run. For MCMC
+#'   this is the number of chains. Currently for other methods this must be set
+#'   to 1.
+#' @param parallel_procs The maximum number of processes to run in parallel.
+#'   Currently for non-sampling this must be set to 1.
+#' @param threads_per_proc The number of threads to use per process to run
+#'   parallel sections of model.
+#'
 CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
-    # @param num_procs The number of CmdStan processes to start for a run.
-    #   For MCMC this is the number of chains. Currently for other methods
-    #   this must be set to 1.
-    # @param parallel_procs The maximum number of processes to run in parallel.
-    #   Currently for non-sampling this must be set to 1.
-    # @param threads_per_proc The number of threads to use per process
-    #   to run parallel sections of model.
-    initialize = function(num_procs, parallel_procs = NULL, threads_per_proc = NULL, show_stderr_messages = TRUE, show_stdout_messages = TRUE ) {
+    initialize = function(num_procs,
+                          parallel_procs = NULL,
+                          threads_per_proc = NULL,
+                          show_stderr_messages = TRUE,
+                          show_stdout_messages = TRUE) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
-      checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE,
-                                   .var.name = "parallel_procs", null.ok = TRUE)
-      checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE,
-                                   .var.name = "threads_per_proc")
+      checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
+      checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
@@ -690,8 +708,8 @@ CmdStanProcs <- R6::R6Class(
         warning("Fitting finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
       } else {
         cat("Finished in ",
-                format(round(self$total_time(), 1), nsmall = 1),
-                "seconds.\n")
+            format(round(self$total_time(), 1), nsmall = 1),
+            "seconds.\n")
       }
     },
     return_codes = function() {
