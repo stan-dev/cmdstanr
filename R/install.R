@@ -1,18 +1,15 @@
 #' Install CmdStan or clean and rebuild an existing installation
 #'
 #' @description The `install_cmdstan()` function attempts to download and
-#'   install the latest release of
-#'   [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest). Installing
-#'   a previous release or a new release candidate is also possible by
-#'   specifying the `release_url` argument. Currently the necessary C++ tool
-#'   chain is assumed to be available, but in the future CmdStanR may help
-#'   install the requirements. See the first few sections of the
-#'   CmdStan [installation guide](https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html)
-#'   for details on the required toolchain.
+#'   install the latest release of [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest).
+#'   Installing a previous release or a new release candidate is also possible
+#'   by specifying the `release_url` argument.
+#'   See the first few sections of the CmdStan
+#'   [installation guide](https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html)
+#'   for details on the C++ toolchain required for installing CmdStan.
 #'
-#'   The `rebuild_cmdstan()` function cleans and rebuilds the cmdstan
-#'   installation. Use this function in case of any issues when compiling
-#'   models.
+#'   The `rebuild_cmdstan()` function cleans and rebuilds the CmdStan
+#'   installation. Use this function in case of any issues when compiling models.
 #'
 #'   The `cmdstan_make_local()` function is used to read/write makefile flags
 #'   and variables from/to the `make/local` file of a CmdStan installation.
@@ -33,31 +30,42 @@
 #' @param quiet For `install_cmdstan()`, should the verbose output from the
 #'   system processes be suppressed when building the CmdStan binaries?
 #'   The default is `FALSE`.
-#'   For `check_cmdstan_toolchain()`, should the function supress
-#'   printing informational messages? The default is `FALSE`.
-#'   If `TRUE` `check_cmdstan_toolchain()` only outputs errors.
-#' @param overwrite When an existing installation is found in `dir`, should
-#'   CmdStan still be downloaded and reinstalled? The default is `FALSE`, in
-#'   which case an informative error is thrown instead of overwriting the user's
-#'   installation.
-#' @param timeout Timeout (in seconds) for the CmdStan build stage of the
-#'   installation process.
-#' @param version Specifies the Cmdstan release version to be
-#'   installed. By default set to `NULL`, which downloads the latest stable
-#'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases).
-#' @param release_url Specifies the URL to a specific Cmdstan release to be
-#'   installed. By default set to `NULL`, which downloads the latest stable
-#'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases). If
-#'   `version` and `release_url` are set, `version` is used.
+#'   For `check_cmdstan_toolchain()`, should the function suppress printing
+#'   informational messages? The default is `FALSE`. If `TRUE` only errors will
+#'   be printed.
+#' @param overwrite Should CmdStan still be downloaded and installed even if an
+#'   installation of the same version is found in `dir`? The default is `FALSE`,
+#'   in which case an informative error is thrown instead of overwriting the
+#'   user's installation.
+#' @param timeout Timeout (in seconds) for the build stage of the installation.
+#' @param version The CmdStan release version to install. The default is `NULL`,
+#'   which downloads the latest stable release from
+#'   <https://github.com/stan-dev/cmdstan/releases>.
+#' @param release_url The URL for the specific CmdStan release or
+#'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
+#'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
+#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"`.
+#'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param cpp_options A list specifying any makefile flags/variables to be
 #'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
 #'   will force the use of clang for compilation.
-#' @param check_toolchain Should `install_cmdstan()` check that the
-#'   required toolchain is installed and properly configured.
-#'   The default is `TRUE`.
+#' @param check_toolchain Should `install_cmdstan()` attempt to check that the
+#'   required toolchain is installed and properly configured. The default is `TRUE`.
 #'
 #' @examples
+#' \dontrun{
+#' check_cmdstan_toolchain()
+#'
 #' # install_cmdstan(cores = 4)
+#'
+#' cpp_options <- list(
+#'   "CXX" = "clang++",
+#'   "CXXFLAGS+= -march-native",
+#'   PRECOMPILED_HEADERS = TRUE
+#' )
+#' # cmdstan_make_local(cpp_options = cpp_options)
+#' # rebuild_cmdstan()
+#' }
 #'
 install_cmdstan <- function(dir = NULL,
                             cores = getOption("mc.cores", 2),
@@ -82,14 +90,16 @@ install_cmdstan <- function(dir = NULL,
   }
   if (!is.null(version)) {
     if (!is.null(release_url)) {
-      warning("version and release_url are supplied to install_cmdstan()!\nrelease_url will be ignored.")
+      warning("version and release_url shouldn't both be specified!",
+              "\nrelease_url will be ignored.", call. = FALSE)
     }
-    release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",version, "/cmdstan-", version, ".tar.gz")
+    release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
+                          version, "/cmdstan-", version, ".tar.gz")
   }
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
-           "cmdstanr supports installing from .tar.gz archives only.")
+           "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
     }
     message("* Installing Cmdstan from ", release_url)
     download_url <- release_url
@@ -132,8 +142,7 @@ install_cmdstan <- function(dir = NULL,
     extras = "--strip-components 1"
   )
   if (untar_rc != 0) {
-    stop("Problem extracting tarball. Exited with return code: ", untar_rc,
-          call. = FALSE)
+    stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
   }
   file.remove(dest_file)
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
@@ -150,8 +159,7 @@ install_cmdstan <- function(dir = NULL,
       )
     }
     if (version < "2.24") {
-      # cmdstan 2.23 and earlier prints a lot of warnings with RTools 4.0 on Windows
-      # this disables them
+      # disable warnings cmdstan <= 2.23 prints with RTools 4.0 on Windows
       cmdstan_make_local(
         dir = dir_cmdstan,
         cpp_options = list(
@@ -172,7 +180,7 @@ install_cmdstan <- function(dir = NULL,
       }
     }
   }
-  # Setting up native M1 compilation of Cmdstan and its downstream libraries
+  # Setting up native M1 compilation of CmdStan and its downstream libraries
   if (is_rosetta2()) {
     cmdstan_make_local(
       dir = dir_cmdstan,
@@ -187,12 +195,13 @@ install_cmdstan <- function(dir = NULL,
         dest_macos_inc <- file.path(dir_cmdstan, "stan", "lib", "stan_math", "lib", "tbb_2019_U8", "build", "macos.inc")
         file.remove(dest_macos_inc)
         utils::download.file(url = macos_inc,
-                            destfile = dest_macos_inc,
-                            quiet = quiet)
+                             destfile = dest_macos_inc,
+                             quiet = quiet)
       }),
       silent = TRUE
     )
   }
+
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
   if (!build_status_ok(build_log, quiet = quiet)) {
@@ -228,14 +237,6 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
 #'   contents of `make/local` are returned without writing anything, otherwise
 #'   the updated contents are returned.
-#' @examples
-#' cpp_options <- list(
-#'   "CXX" = "clang++",
-#'   "CXXFLAGS+= -march-native",
-#'   PRECOMPILED_HEADERS = TRUE
-#' )
-#' # cmdstan_make_local(cpp_options = cpp_options)
-#' # rebuild_cmdstan()
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -269,6 +270,7 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 # internal ----------------------------------------------------------------
 
 check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
+  browser()
   if (dir.exists(dir_cmdstan)) {
     if (!overwrite) {
       warning(
@@ -356,8 +358,7 @@ build_cmdstan <- function(dir,
   )
 }
 
-# Removes files that are used to simplify switching to using threading,
-# opencl or mpi.
+# Removes files that are used to simplify switching to using threading, opencl or mpi.
 clean_compile_helper_files <- function() {
   # remove main_.*.o files and model_header_.*.hpp.gch files
   files_to_remove <- c(
@@ -615,8 +616,6 @@ check_unix_cpp_compiler <- function() {
 #'   any detected toolchain problems? Currently this option is only available on
 #'   Windows. The default is `FALSE`, in which case problems are only reported
 #'   along with suggested fixes.
-#' @examples
-#' # check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (os_is_windows()) {
