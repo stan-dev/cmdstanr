@@ -1,17 +1,13 @@
-on_appveyor <- function() {
-  identical(tolower(Sys.getenv("APPVEYOR")), "true")
-}
-
-on_travis <- function() {
-  identical(Sys.getenv("TRAVIS"), "true")
-}
-
 on_codecov <- function() {
   identical(Sys.getenv("R_COVR"), "true")
 }
 
+on_ci <- function() {
+  isTRUE(as.logical(Sys.getenv("CI")))
+}
+
 not_on_cran <- function() {
-  on_travis() || on_appveyor() || identical(Sys.getenv("NOT_CRAN"), "true")
+  on_ci() || identical(Sys.getenv("NOT_CRAN"), "true")
 }
 
 test_release_url <- function() {
