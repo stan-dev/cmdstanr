@@ -15,11 +15,6 @@
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
 #' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`.
 #'
-NULL
-
-
-# CmdStanArgs -------------------------------------------------------------
-
 CmdStanArgs <- R6::R6Class(
   "CmdStanArgs",
   lock_objects = FALSE,
@@ -100,25 +95,20 @@ CmdStanArgs <- R6::R6Class(
       files
     },
 
-    # Compose all arguments to pass to CmdStan
-    #
-    # @param idx The run id. For MCMC this is the chain id, for optimization
-    #   this is just 1.
-    # @param output_file File path to csv file where output will be written.
-    # @param latent_dynamics_file File path to csv file where "extra" diagnostics (latent dynamics) will be written.
-    # @return Character vector of arguments of the form "name=value".
-    #
+    #' Compose all arguments to pass to CmdStan
+    #'
+    #' @noRd
+    #' @param idx The run id. For MCMC this is the chain id, for optimization
+    #'   this is just 1.
+    #' @param output_file File path to csv file where output will be written.
+    #' @param latent_dynamics_file File path to csv file where the extra latent
+    #'   dynamics information will be written.
+    #' @return Character vector of arguments of the form "name=value".
+    #'
     compose_all_args = function(idx = NULL,
                                 output_file = NULL,
                                 latent_dynamics_file = NULL) {
-      args <-
-        list(
-          id = NULL,
-          seed = NULL,
-          init = NULL,
-          data = NULL,
-          output = NULL
-        )
+      args <- list()
       idx <- idx %||% 1
       if (!is.null(self$proc_ids)) {
         if (idx < 0 || idx > length(self$proc_ids)) {
@@ -241,13 +231,14 @@ SampleArgs <- R6::R6Class(
       invisible(self)
     },
 
-    # Compose arguments to CmdStan command for sampling-specific
-    # non-default arguments
-    #
-    # @param idx Integer chain id.
-    # @param args A character vector of arguments to prepend to the returned
-    #   character vector. This will get passed in from CmdStanArgs$compose_all_args().
-    # @return A character vector of CmdStan arguments.
+    #' Compose arguments to CmdStan command for sampling-specific
+    #' non-default arguments
+    #'
+    #' @noRd
+    #' @param idx Integer chain id.
+    #' @param args A character vector of arguments to prepend to the returned
+    #'   character vector. This will get passed in from `CmdStanArgs$compose_all_args()`.
+    #' @return A character vector of CmdStan arguments.
     compose = function(idx, args = NULL) {
       .make_arg <- function(arg_name, cmdstan_arg_name = NULL, idx = NULL) {
         compose_arg(self, arg_name = arg_name, cmdstan_arg_name = cmdstan_arg_name, idx = idx)
@@ -295,8 +286,6 @@ SampleArgs <- R6::R6Class(
           .make_arg("window")
         )
       }
-
-      # convert list to character vector
       new_args <- do.call(c, new_args)
       c(args, new_args)
     }
