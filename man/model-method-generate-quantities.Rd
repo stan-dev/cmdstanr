@@ -74,15 +74,14 @@ run in parallel. The actual number of CPU cores used use is
 \code{parallel_chains*threads_per_chain}. For an example of using threading see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 }
+\value{
+A \code{\link{CmdStanGQ}} object.
+}
 \description{
 The \verb{$generate_quantities()} method of a \code{\link{CmdStanModel}} object
 runs Stan's standalone generated quantities to obtain generated quantities
 based on previously fitted parameters.
 }
-\section{Value}{
- A \code{\link{CmdStanGQ}} object.
-}
-
 \examples{
 \dontrun{
 # first fit a model using MCMC

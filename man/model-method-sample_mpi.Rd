@@ -208,6 +208,9 @@ unless you are very sure that the model is correct up to numerical error.
 If the messages are silenced then the \verb{$output()} method of the resulting
 fit object can be used to display all the silenced messages.}
 }
+\value{
+A \code{\link{CmdStanMCMC}} object.
+}
 \description{
 The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object is
 identical to the \verb{$sample()} method but with support for
@@ -240,10 +243,6 @@ other MPI launch arguments (\code{mpi_args}). In most cases, it is enough to
 only define the number of processes. To use \code{n_procs} processes specify
 \code{mpi_args = list("n" = n_procs)}.
 }
-\section{Value}{
- A \code{\link{CmdStanMCMC}} object.
-}
-
 \examples{
 \dontrun{
 # mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
