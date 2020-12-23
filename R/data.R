@@ -187,7 +187,7 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
 #' Process fitted params for the generate quantities method
 #'
 #' @noRd
-#' @param fitted_params Paths to CSV files produced by Cmdstan sampling,
+#' @param fitted_params Paths to CSV files produced by CmdStan sampling,
 #'  a CmdStanMCMC or CmdStanVB object, a draws_array or draws_matrix.
 #' @return Paths to CSV files containing parameter values.
 #'

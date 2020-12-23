@@ -125,6 +125,9 @@ running \code{cmdstanr_example(method="optimize")$metadata()}.}
 \item{history_size}{(positive integer) The size of the history used when
 approximating the Hessian. Only available for L-BFGS.}
 }
+\value{
+A \code{\link{CmdStanMLE}} object.
+}
 \description{
 The \verb{$optimize()} method of a \code{\link{CmdStanModel}} object runs
 Stan's optimizer to obtain a posterior mode (penalized maximum likelihood)
@@ -145,10 +148,6 @@ variables. Thus modes correspond to modes of the model as written.
 
 -- \href{https://mc-stan.org/docs/cmdstan-guide/}{\emph{CmdStan User's Guide}}
 }
-\section{Value}{
- A \code{\link{CmdStanMLE}} object.
-}
-
 \examples{
 \dontrun{
 library(cmdstanr)
@@ -156,7 +155,7 @@ library(posterior)
 library(bayesplot)
 color_scheme_set("brightblue")
 
-# Set path to cmdstan
+# Set path to CmdStan
 # (Note: if you installed CmdStan via install_cmdstan() with default settings
 # then setting the path is unnecessary but the default below should still work.
 # Otherwise use the `path` argument to specify the location of your

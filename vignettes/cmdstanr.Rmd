@@ -13,21 +13,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r settings-knitr, include=FALSE}
-stopifnot(require(knitr))
-opts_chunk$set(
-  # collapse = TRUE,
-  dev = "png",
-  dpi = 150,
-  fig.asp = 0.618,
-  fig.width = 5,
-  out.width = "60%",
-  fig.align = "center",
-  comment = NA,
-  eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
-)
+```{r child="children/settings-knitr.Rmd"}
 ```
-
 
 ## Introduction
 
@@ -296,7 +283,7 @@ mcmc_hist(fit$draws("theta")) +
 
 ### Variational Bayes
 
-We can run Stan's experimental variational Bayes algorithm using the 
+We can run Stan's experimental variational Bayes algorithm (ADVI) using the 
 [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html) 
 method:
 
@@ -345,23 +332,5 @@ fit2 <- readRDS("fit.RDS")
 
 ## Comparison with RStan
 
-The RStan interface ([**rstan**](https://mc-stan.org/rstan) package) is an
-in-memory interface to Stan and relies on R packages like **Rcpp** and
-**inline** to call C++ code from R. On the other hand, the CmdStanR interface does
-not directly call any C++ code from R, instead relying on CmdStan for
-compilation, running algorithms, and writing results to output files.
-
-Both forms of interfacing with Stan have advantages and disadvantages. An
-in-memory interface like RStan is able to offer more advanced features than
-CmdStanR (for example the `rstan::log_prob()` and `rstan::grad_log_prob()`
-methods) but keeping up with Stan releases is more complicated for RStan, often
-requiring non-trivial changes to the **rstan** package and requiring new CRAN
-releases of **rstan** and **StanHeaders**. On the other hand, with CmdStanR, 
-the latest features in Stan will be available from R immediately after updating 
-CmdStan, without an update to the **cmdstanr** package. We also anticipate that
-running Stan via external processes will have the advantage of playing nicer with 
-R (and RStudio) and result in fewer unexpected crashes than when using RStan.
-
-Finally, RStan and CmdStanR have different open source licenses. RStan uses the 
-GPL-3 license while the license for CmdStanR (like Stan) is BSD-3, which is a bit 
-more permissive.
+```{r child="children/comparison-with-rstan.md"}
+```

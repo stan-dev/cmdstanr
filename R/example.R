@@ -6,14 +6,15 @@
 #'   * `"schools"`: the so-called "eight schools" model, a hierarchical
 #'   meta-analysis. Fitting this model will result in warnings about
 #'   divergences.
-#'   * `"schools_ncp"`: non-centered parameterization eight schools model that
-#'   fixes the problem with divergences.
+#'   * `"schools_ncp"`: non-centered parameterization of the "eight schools"
+#'   model that fixes the problem with divergences.
 #'
-#' To print the Stan code for a given example use `print_example_program()`.
+#'   To print the Stan code for a given example use `print_example_program()`.
 #'
 #' @param method Which fitting method should be used? The default is the
 #'   `"sample"` method (MCMC).
-#' @param ... Arguments passed to the chosen `method`.
+#' @param ... Arguments passed to the chosen `method`. See the help pages for
+#'   the individual methods for details.
 #' @param quiet If `TRUE` (the default) then fitting the model is wrapped in
 #'   [utils::capture.output()].
 #'

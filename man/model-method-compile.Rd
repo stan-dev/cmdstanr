@@ -52,12 +52,24 @@ not modified since last compiled. The default is \code{FALSE}.}
 \item{threads}{Deprecated and will be removed in a future release. Please
 turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
 }
+\value{
+The \verb{$compile()} method is called for its side effect of creating the
+executable and adding its path to the \code{\link{CmdStanModel}} object, but it also
+returns the \code{\link{CmdStanModel}} object invisibly.
+
+After compilation, the \verb{$exe_file()}, \verb{$hpp_file()}, and \verb{$save_hpp_file()}
+methods can be used and return file paths.
+}
 \description{
-The \verb{$compile()} method of a \code{\link{CmdStanModel}} object translates
-the Stan program to C++ and creates a compiled executable. In most cases
-the user does not need to explicitly call the \verb{$compile()} method as
-compilation will occur when calling \code{\link[=cmdstan_model]{cmdstan_model()}}. However it is
-possible to set \code{compile=FALSE} in the call to \code{cmdstan_model()} and
+The \verb{$compile()} method of a \code{\link{CmdStanModel}} object checks the
+syntax of the Stan program, translates the program to C++, and creates a
+compiled executable. To just check the syntax of a Stan program without
+compiling it use the \code{\link[=model-method-check_syntax]{$check_syntax()}} method
+instead.
+
+In most cases the user does not need to explicitly call the \verb{$compile()}
+method as compilation will occur when calling \code{\link[=cmdstan_model]{cmdstan_model()}}. However it
+is possible to set \code{compile=FALSE} in the call to \code{cmdstan_model()} and
 subsequently call the \verb{$compile()} method directly.
 
 After compilation, the paths to the executable and the \code{.hpp} file
@@ -67,15 +79,6 @@ directory as the Stan program and to write the generated C++ code in a
 temporary directory. To save the C++ code to a non-temporary location use
 \verb{$save_hpp_file(dir)}.
 }
-\section{Value}{
- The \verb{$compile()} method is called for its side effect of
-creating the executable and adding its path to the \code{\link{CmdStanModel}} object,
-but it also returns the \code{\link{CmdStanModel}} object invisibly.
-
-After compilation, the \verb{$exe_file()}, \verb{$hpp_file()}, and \verb{$save_hpp_file()}
-methods can be used and return file paths.
-}
-
 \examples{
 \dontrun{
 file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
@@ -105,6 +108,9 @@ mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 
 }
 \seealso{
+The \code{\link[=model-method-check_syntax]{$check_syntax()}} method to check
+Stan syntax or enable pedantic model without compiling.
+
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
 documentation and tutorials.
