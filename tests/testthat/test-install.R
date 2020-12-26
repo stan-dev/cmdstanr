@@ -9,7 +9,10 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   } else {
     dir <- tempdir(check = TRUE)
   }
-  cmdstan_test_tarball_url <- getOption("CMDSTAN_TEST_TARBALL_URL")
+  cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+  if (!nzchar(cmdstan_test_tarball_url)) {
+    cmdstan_test_tarball_url <- NULL
+  }
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,

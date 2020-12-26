@@ -289,7 +289,7 @@ check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
 
 github_auth_token <- function() {
   github_pat <- Sys.getenv("GITHUB_PAT")
-  if (nzchar(access_token)) {
+  if (nzchar(github_pat)) {
     auth_token <- c(Authorization = paste0("token ", github_pat))
   } else {
     auth_token <- NULL
