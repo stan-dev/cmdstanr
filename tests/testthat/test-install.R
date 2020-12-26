@@ -1,5 +1,12 @@
 context("install")
 
+if (not_on_cran()) {
+  cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+  if (!nzchar(cmdstan_test_tarball_url)) {
+    cmdstan_test_tarball_url <- NULL
+  }
+}
+
 test_that("install_cmdstan() successfully installs cmdstan", {
   skip_on_cran()
   skip_if_offline()
@@ -9,10 +16,6 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   } else {
     dir <- tempdir(check = TRUE)
   }
-  cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
-  if (!nzchar(cmdstan_test_tarball_url)) {
-    cmdstan_test_tarball_url <- NULL
-  }
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
@@ -20,7 +23,8 @@ test_that("install_cmdstan() successfully installs cmdstan", {
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
-    "CmdStan path set"
+    "CmdStan path set",
+    fixed = TRUE
   )
 })
 
@@ -44,7 +48,8 @@ test_that("install_cmdstan() errors if installation already exists", {
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
                     release_url = cmdstan_test_tarball_url),
-    "An installation already exists"
+    "An installation already exists",
+    fixed = TRUE
   )
 })
 
