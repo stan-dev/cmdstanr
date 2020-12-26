@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-16.04
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
     steps:
       - uses: n1hility/cancel-previous-runs@v2
         with:
@@ -29,8 +30,6 @@ jobs:
       - name: Install Ubuntu dependencies
         run: |
           sudo apt-get install libcurl4-openssl-dev
-          sudo apt-get install -y openmpi-bin
-          echo "CMDSTANR_RUN_MPI_TESTS=TRUE" >> $GITHUB_ENV
 
       - name: Query dependencies
         run: |
@@ -64,6 +63,7 @@ jobs:
     runs-on: windows-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
     steps:
       - uses: actions/checkout@v2
 

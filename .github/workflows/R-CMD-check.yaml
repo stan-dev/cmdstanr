@@ -30,6 +30,7 @@ jobs:
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
 
     steps:
       - uses: n1hility/cancel-previous-runs@v2
