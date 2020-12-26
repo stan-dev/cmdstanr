@@ -12,7 +12,7 @@ jobs:
   test-coverage-ubuntu:
     name: "Linux"
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
