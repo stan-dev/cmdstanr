@@ -30,6 +30,8 @@ jobs:
       - name: Install Ubuntu dependencies
         run: |
           sudo apt-get install libcurl4-openssl-dev
+          sudo apt-get install -y openmpi-bin
+          echo "CMDSTANR_RUN_MPI_TESTS=TRUE" >> $GITHUB_ENV
 
       - name: Query dependencies
         run: |
