@@ -9,10 +9,11 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   } else {
     dir <- tempdir(check = TRUE)
   }
+  cmdstan_test_tarball_url <- getOption("CMDSTAN_TEST_TARBALL_URL")
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
-                      release_url = test_release_url()),
+                      release_url = cmdstan_test_tarball_url),
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
@@ -39,7 +40,7 @@ test_that("install_cmdstan() errors if installation already exists", {
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    release_url = test_release_url()),
+                    release_url = cmdstan_test_tarball_url),
     "An installation already exists"
   )
 })
@@ -59,7 +60,7 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
-                      release_url = test_release_url()),
+                      release_url = cmdstan_test_tarball_url),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
@@ -71,7 +72,7 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
-                      release_url = test_release_url()),
+                      release_url = cmdstan_test_tarball_url),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),

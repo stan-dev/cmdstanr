@@ -196,7 +196,8 @@ install_cmdstan <- function(dir = NULL,
         file.remove(dest_macos_inc)
         utils::download.file(url = macos_inc,
                              destfile = dest_macos_inc,
-                             quiet = quiet)
+                             quiet = quiet,
+                             headers = github_auth_token())
       }),
       silent = TRUE
     )
@@ -286,6 +287,16 @@ check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
   TRUE
 }
 
+github_auth_token <- function() {
+  github_pat <- Sys.getenv("GITHUB_PAT")
+  if (nzchar(access_token)) {
+    auth_token <- c(Authorization = paste0("token ", github_pat))
+  } else {
+    auth_token <- NULL
+  }
+  auth_token
+}
+
 # construct url for download from cmdstan version number
 github_download_url <- function(version_number) {
   base_url <- "https://github.com/stan-dev/cmdstan/releases/download/"
@@ -311,13 +322,15 @@ download_with_retries <- function(download_url,
                                   retries = 5,
                                   pause_sec = 5,
                                   quiet = TRUE) {
+        
     download_rc <- 1
     while (retries > 0 && download_rc != 0) {
       try(
         suppressWarnings(
           download_rc <- utils::download.file(url = download_url,
                                             destfile = destination_file,
-                                            quiet = quiet)
+                                            quiet = quiet,
+                                            headers = github_auth_token())
         ),
         silent = TRUE
       )
