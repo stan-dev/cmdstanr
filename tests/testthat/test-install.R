@@ -240,7 +240,7 @@ test_that("clean and rebuild works", {
   if (os_is_windows()) skip_on_covr()
   expect_output(
     rebuild_cmdstan(),
-    paste0("CmdStan v", latest_released_version(), " built")
+    paste0("CmdStan v", cmdstan_version(), " built")
   )
 })
 
