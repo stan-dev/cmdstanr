@@ -120,7 +120,11 @@ read_cmdstan_csv <- function(files,
                              sampler_diagnostics = NULL) {
   checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
-  generated_quantities <- NULL
+  warmup_draws <- list()
+  post_warmup_draws <- list()
+  warmup_sampler_diagnostics_draws <- list()
+  post_warmup_sampler_diagnostics_draws <- list()
+  generated_quantities <- list()
   variational_draws <- NULL
   point_estimates <- NULL
   inv_metric <- list()
@@ -130,10 +134,6 @@ read_cmdstan_csv <- function(files,
   metadata <- NULL
   time <- data.frame()
   not_matching <- c()
-  warmup_draws <- list()
-  post_warmup_draws <- list()
-  warmup_sampler_diagnostics_draws <- list()
-  post_warmup_sampler_diagnostics_draws <- list()
   for (output_file in files) {
     if (is.null(metadata)) {
       metadata <- read_csv_metadata(output_file)
@@ -277,9 +277,7 @@ read_cmdstan_csv <- function(files,
       } else if (metadata$method == "optimize") {
         point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])[, variables]
       } else if (metadata$method == "generate_quantities") {
-          generated_quantities <- posterior::bind_draws(generated_quantities,
-                                                        posterior::as_draws_array(draws),
-                                                        along="chain")
+        generated_quantities[[length(generated_quantities) + 1]] <- draws
       }
     }
   }
@@ -290,7 +288,6 @@ read_cmdstan_csv <- function(files,
   }
 
   metadata$inv_metric <- NULL
-  metadata$lines_to_skip <- NULL
   metadata$model_params <- repair_variable_names(metadata$model_params)
   repaired_variables <- repair_variable_names(variables)
   if (metadata$method == "variational") {
@@ -365,6 +362,9 @@ read_cmdstan_csv <- function(files,
     )
   } else if (metadata$method == "generate_quantities") {
     if (!is.null(generated_quantities)) {
+      generated_quantities <- lapply(generated_quantities, posterior::as_draws_array)
+      generated_quantities[["along"]] <- "chain"
+      generated_quantities <- do.call(posterior::bind_draws, generated_quantities)
       posterior::variables(generated_quantities) <- repaired_variables
     }
     list(
