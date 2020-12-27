@@ -59,7 +59,6 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y openmpi-bin
-          echo "CMDSTANR_RUN_MPI_TESTS=TRUE" >> $GITHUB_ENV
 
       - uses: r-lib/actions/setup-r@master
         with:
