@@ -688,9 +688,13 @@ check_csv_metadata_matches <- function(a, b) {
 
 bind_list_of_draws_array <- function(draws, along = "chain") {
   if (!is.null(draws) && length(draws) > 0) {
-    draws <- lapply(draws, posterior::as_draws_array)
-    draws[["along"]] <- along
-    draws <- do.call(posterior::bind_draws, draws)
+    if (length(draws) > 1) {
+      draws <- lapply(draws, posterior::as_draws_array)
+      draws[["along"]] <- along
+      draws <- do.call(posterior::bind_draws, draws)
+    } else {
+      draws <- posterior::as_draws_array(draws[[1]])
+    }    
   } else {
     draws <- NULL
   }
