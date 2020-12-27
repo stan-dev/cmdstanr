@@ -29,8 +29,8 @@ jobs:
 
       - name: Install Ubuntu dependencies
         run: |
-          sudo apt-get install libcurl4-openssl-dev
-          sudo apt install openmpi-bin openmpi-common openmpi-doc libopenmpi-dev
+          sudo apt-get install -y libcurl4-openssl-dev
+          sudo apt-get install -y openmpi-bin openmpi-common openmpi-doc libopenmpi-dev
 
       - name: Query dependencies
         run: |
@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          install.packages(c("posterior", "cmdstanr", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
@@ -96,7 +96,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("posterior", "cmdstanr", "remotes"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          install.packages(c("posterior", "cmdstanr", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")

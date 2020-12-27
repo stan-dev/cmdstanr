@@ -87,6 +87,7 @@ jobs:
           remotes::install_cran("rcmdcheck")
           install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
           install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
+          install.packages("curl")
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
         shell: Rscript {0}
 

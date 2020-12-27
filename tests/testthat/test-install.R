@@ -122,7 +122,8 @@ test_that("install_cmdstan() works with version and release_url", {
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
-    "Finished installing CmdStan"
+    "Finished installing CmdStan",
+    fixed = TRUE
   )
   expect_warning(
     expect_message(
@@ -134,9 +135,11 @@ test_that("install_cmdstan() works with version and release_url", {
         "Compiling, linking C++ code",
         fixed = TRUE
       ),
-      "Finished installing CmdStan"
+      "Finished installing CmdStan",
+    fixed = TRUE
     ),
-    "version and release_url shouldn't both be specified"
+    "version and release_url shouldn't both be specified",
+    fixed = TRUE
   )
   expect_true(dir.exists(file.path(dir, "cmdstan-2.23.0")))
   set_cmdstan_path(cmdstan_default_path())
@@ -245,7 +248,8 @@ test_that("clean and rebuild works", {
   if (os_is_windows()) skip_on_covr()
   expect_output(
     rebuild_cmdstan(),
-    paste0("CmdStan v", cmdstan_version(), " built")
+    paste0("CmdStan v", cmdstan_version(), " built"),
+    fixed = TRUE
   )
 })
 
