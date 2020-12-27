@@ -782,38 +782,54 @@ CmdStanMCMC <- R6::R6Class(
       private$metadata_ <- csv_contents$metadata
 
       if (!is.null(csv_contents$post_warmup_draws)) {
-        missing_variables <- !(posterior::variables(csv_contents$post_warmup_draws) %in% posterior::variables(private$draws_))
-        private$draws_ <- posterior::bind_draws(
-          private$draws_,
-          csv_contents$post_warmup_draws[,,missing_variables],
-          along="variable"
-        )
+        if (is.null(private$draws_)) {
+          private$draws_ <- csv_contents$post_warmup_draws
+        } else {
+          missing_variables <- !(posterior::variables(csv_contents$post_warmup_draws) %in% posterior::variables(private$draws_))
+          private$draws_ <- posterior::bind_draws(
+            private$draws_,
+            csv_contents$post_warmup_draws[,,missing_variables],
+            along="variable"
+          )
+        }        
       }
       if (!is.null(csv_contents$post_warmup_sampler_diagnostics)) {
-        missing_variables <- !(posterior::variables(csv_contents$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))
-        private$sampler_diagnostics_ <- posterior::bind_draws(
-          private$sampler_diagnostics_,
-          csv_contents$post_warmup_sampler_diagnostics[,,missing_variables],
-          along="variable"
-        )
+        if (is.null(private$sampler_diagnostics_)) {
+          private$sampler_diagnostics_ <- csv_contents$post_warmup_sampler_diagnostics
+        } else {
+          missing_variables <- !(posterior::variables(csv_contents$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))
+          private$sampler_diagnostics_ <- posterior::bind_draws(
+            private$sampler_diagnostics_,
+            csv_contents$post_warmup_sampler_diagnostics[,,missing_variables],
+            along="variable"
+          )
+        }
       }
       if (!is.null(csv_contents$metadata$save_warmup)
          && csv_contents$metadata$save_warmup) {
         if (!is.null(csv_contents$warmup_draws)) {
-          missing_variables <- !(posterior::variables(csv_contents$warmup_draws) %in% posterior::variables(private$warmup_draws_))
-          private$warmup_draws_ <- posterior::bind_draws(
-            private$warmup_draws_,
-            csv_contents$warmup_draws[,,missing_variables],
-            along="variable"
-          )
+          if (is.null(private$warmup_draws_)) {
+            private$warmup_draws_ <- csv_contents$warmup_draws
+          } else {
+            missing_variables <- !(posterior::variables(csv_contents$warmup_draws) %in% posterior::variables(private$warmup_draws_))
+            private$warmup_draws_ <- posterior::bind_draws(
+              private$warmup_draws_,
+              csv_contents$warmup_draws[,,missing_variables],
+              along="variable"
+            )
+          }
         }
         if (!is.null(csv_contents$warmup_sampler_diagnostics)) {
-          missing_variables <- !(posterior::variables(csv_contents$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))
-          private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
-            private$warmup_sampler_diagnostics_,
-            csv_contents$warmup_sampler_diagnostics[,,missing_variables],
-            along="variable"
-          )
+          if (is.null(private$warmup_sampler_diagnostics_)) {
+            private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
+          } else {
+            missing_variables <- !(posterior::variables(csv_contents$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))
+            private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
+              private$warmup_sampler_diagnostics_,
+              csv_contents$warmup_sampler_diagnostics[,,missing_variables],
+              along="variable"
+            )
+          }
         }
       }
       invisible(self)
