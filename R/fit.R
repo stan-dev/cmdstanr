@@ -712,7 +712,7 @@ CmdStanMCMC <- R6::R6Class(
                            sampler_diagnostics = if (!fixed_param) c("treedepth__", "divergent__") else "")
           if (!fixed_param) {
             check_divergences(private$sampler_diagnostics_)
-            check_sampler_transitions_treedepth(private$sampler_diagnostics_, private$metadata_$max_treedepth)
+            check_sampler_transitions_treedepth(private$sampler_diagnostics_, private$metadata_)
           }
         }
       }

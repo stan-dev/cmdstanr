@@ -400,8 +400,8 @@ CmdStanMCMC_CSV <- R6::R6Class(
   public = list(
     initialize = function(csv_contents, files, check_diagnostics = TRUE) {
       if (check_diagnostics) {
-        check_divergences(csv_contents)
-        check_sampler_transitions_treedepth(csv_contents)
+        check_divergences(csv_contents$post_warmup_sampler_diagnostics)
+        check_sampler_transitions_treedepth(csv_contents$post_warmup_sampler_diagnostics, csv_contents$metadata)
       }
       private$output_files_ <- files
       private$metadata_ <- csv_contents$metadata
