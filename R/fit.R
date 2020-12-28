@@ -708,17 +708,12 @@ CmdStanMCMC <- R6::R6Class(
       } else {
         if (self$runset$args$validate_csv) {
           fixed_param <- runset$args$method_args$fixed_param
-          csv_contents <- read_cmdstan_csv(
-            self$output_files(),
-            variables = "",
-            sampler_diagnostics =
-             if (!fixed_param) c("treedepth__", "divergent__") else ""
-          )
+          private$read_csv_(variables = "",
+                           sampler_diagnostics = if (!fixed_param) c("treedepth__", "divergent__") else "")
           if (!fixed_param) {
-            check_divergences(csv_contents)
-            check_sampler_transitions_treedepth(csv_contents)
+            check_divergences(private$sampler_diagnostics_)
+            check_sampler_transitions_treedepth(private$sampler_diagnostics_, private$metadata_$max_treedepth)
           }
-          private$metadata_ <- csv_contents$metadata
         }
       }
     },
