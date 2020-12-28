@@ -53,6 +53,17 @@ test_that("process_fitted_params() errors with bad args", {
     process_fitted_params(fit_tmp_null),
     "Unable to obtain draws from the fit object."
   )
+
+  fit_tmp <- testing_fit("bernoulli", method = "variational", seed = 123)
+  temp_file <- tempfile(fileext = ".rds")
+  saveRDS(fit_tmp, file = temp_file)
+  rm(fit_tmp)
+  gc()
+  fit_tmp_null <- readRDS(temp_file)
+  expect_error(
+    process_fitted_params(fit_tmp_null),
+    "Unable to obtain draws from the fit object."
+  )
 })
 
 test_that("process_fitted_params() works if output_files in fit do not exist", {
@@ -150,6 +161,33 @@ test_that("process_fitted_params() works with draws_array", {
       posterior::subset_draws(fit$draws(), variable = "lp__", chain = chain),
       posterior::subset_draws(fit_params_tmp, variable = "lp__")
     )
+    expect_equal(
+      posterior::subset_draws(fit$draws(), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"), chain = chain),
+      posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"),)
+    )
+    chain <- chain + 1
+  }
+})
+
+test_that("process_fitted_params() works with draws_array without lp__", {
+  fit <- testing_fit("logistic", method = "sample", seed = 123)
+  fit_params_files <- process_fitted_params(posterior::subset_draws(fit$draws(), variables = c("alpha", "beta[1]", "beta[2]", "beta[3]")))
+  expect_true(all(file.exists(fit_params_files)))
+  chain <- 1
+  for(file in fit_params_files) {
+    if (os_is_windows()) {
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", file)
+    } else {
+      fread_cmd <- paste0("grep -v '^#' --color=never ", file)
+    }
+    suppressWarnings(
+      fit_params_tmp <- data.table::fread(
+        cmd = fread_cmd
+      )
+    )
+    fit_params_tmp <- posterior::as_draws_array(fit_params_tmp)
+    posterior::variables(fit_params_tmp) <- repair_variable_names(posterior::variables(fit_params_tmp))
     expect_equal(
       posterior::subset_draws(fit$draws(), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"), chain = chain),
       posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"),)
