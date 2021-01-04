@@ -310,6 +310,8 @@ test_that("remaining_columns_to_read() works", {
   expect_equal(remaining_columns_to_read(NULL, c("a", "b", "c"), NULL), NULL)
   expect_equal(remaining_columns_to_read(NULL, NULL, c("a", "b", "c")), c("a", "b", "c"))
   expect_equal(remaining_columns_to_read(c("a", "b", "c"), c("a", "b", "c"), NULL), "")
+  expect_equal(remaining_columns_to_read(c(""), c("a", "b", "c"), NULL), "")
+  expect_equal(remaining_columns_to_read(c("", "a"), c("a", "b", "c"), NULL), "")
   expect_equal(remaining_columns_to_read(c("a", "b", "c"), NULL, c("a", "b", "c")), c("a", "b", "c"))
 
   # with vector and matrix variables

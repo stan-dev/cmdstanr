@@ -1,16 +1,15 @@
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+on: 
+  workflow_dispatch:
+    inputs:
+      tarball_url:
+        description: 'CmdStan tarball URL to test with.'
+        required: true
+        default: 'latest'
 
-name: Unit tests
+name: Custom CmdStan tarball unit tests
 
 jobs:
-  R-CMD-check:
-    if: "! contains(github.event.head_commit.message, '[ci skip]')"
+  tarball-check:
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
@@ -19,26 +18,16 @@ jobs:
       fail-fast: true
       matrix:
         config:
-          - {os: macOS-latest,   r: 'devel'}
           - {os: macOS-latest,   r: 'release'}
-          - {os: windows-latest, r: 'devel'}
           - {os: windows-latest, r: 'release'}
-          - {os: windows-latest, r: 'oldrel'}
-          - {os: ubuntu-20.04,   r: 'devel'}
           - {os: ubuntu-20.04,   r: 'release'}
-          - {os: ubuntu-20.04,   r: 'oldrel'}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
       NOT_CRAN: true
 
     steps:
-      - uses: n1hility/cancel-previous-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          workflow: R-CMD-check.yaml
-        if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
-
       - uses: actions/checkout@v2
 
       - name: Set path for RTools 4.0
@@ -59,7 +48,6 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y openmpi-bin
-
       - uses: r-lib/actions/setup-r@master
         with:
           r-version: ${{ matrix.config.r }}
@@ -87,8 +75,11 @@ jobs:
           remotes::install_cran("rcmdcheck")
           install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
           install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
-          install.packages("curl")
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
+          if (Sys.getenv("CMDSTAN_TEST_TARBALL_URL") == "latest") {
+            cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
+          } else {
+            cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "${{ github.event.inputs.tarball_url }}")
+          }
         shell: Rscript {0}
 
       - name: Session info

@@ -1,9 +1,15 @@
 context("install")
 
+if (not_on_cran()) {
+  cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+  if (!nzchar(cmdstan_test_tarball_url)) {
+    cmdstan_test_tarball_url <- NULL
+  }
+}
+
 test_that("install_cmdstan() successfully installs cmdstan", {
   skip_on_cran()
   skip_if_offline()
-  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -12,18 +18,18 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
-                      release_url = test_release_url()),
+                      release_url = cmdstan_test_tarball_url),
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
-    "CmdStan path set"
+    "CmdStan path set",
+    fixed = TRUE
   )
 })
 
 test_that("install_cmdstan() errors if installation already exists", {
   skip_if_offline()
   skip_on_cran()
-  if (os_is_windows()) skip_on_covr()
   if (not_on_cran()) {
     # want to test passing NULL to install_cmdstan but need a real dir to
     # check in dir.exists() below so also create dir_check
@@ -39,15 +45,15 @@ test_that("install_cmdstan() errors if installation already exists", {
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    release_url = test_release_url()),
-    "An installation already exists"
+                    release_url = cmdstan_test_tarball_url),
+    "An installation already exists",
+    fixed = TRUE
   )
 })
 
 test_that("install_cmdstan() errors if it times out", {
   skip_on_cran()
   skip_if_offline()
-  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -59,7 +65,7 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
-                      release_url = test_release_url()),
+                      release_url = cmdstan_test_tarball_url),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
@@ -71,7 +77,7 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
-                      release_url = test_release_url()),
+                      release_url = cmdstan_test_tarball_url),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
@@ -99,7 +105,6 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 test_that("install_cmdstan() works with version and release_url", {
   skip_on_cran()
   skip_if_offline()
-  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -113,7 +118,8 @@ test_that("install_cmdstan() works with version and release_url", {
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
-    "Finished installing CmdStan"
+    "Finished installing CmdStan",
+    fixed = TRUE
   )
   expect_warning(
     expect_message(
@@ -125,9 +131,11 @@ test_that("install_cmdstan() works with version and release_url", {
         "Compiling, linking C++ code",
         fixed = TRUE
       ),
-      "Finished installing CmdStan"
+      "Finished installing CmdStan",
+    fixed = TRUE
     ),
-    "version and release_url shouldn't both be specified"
+    "version and release_url shouldn't both be specified",
+    fixed = TRUE
   )
   expect_true(dir.exists(file.path(dir, "cmdstan-2.23.0")))
   set_cmdstan_path(cmdstan_default_path())
@@ -233,10 +241,10 @@ test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
 
 test_that("clean and rebuild works", {
   skip_on_cran()
-  if (os_is_windows()) skip_on_covr()
   expect_output(
     rebuild_cmdstan(),
-    paste0("CmdStan v", latest_released_version(), " built")
+    paste0("CmdStan v", cmdstan_version(), " built"),
+    fixed = TRUE
   )
 })
 
