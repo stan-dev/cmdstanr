@@ -38,6 +38,29 @@ test_that("draws() stops for unkown variables", {
   )
 })
 
+test_that("draws() works when gradually adding variables", {
+  skip_on_cran()
+  fit <- testing_fit("logistic", method = "sample", refresh = 0,
+                     validate_csv = TRUE, save_warmup = TRUE)
+
+  draws_lp__ <- fit$draws(variables = c("lp__"), inc_warmup = TRUE)
+  sampler_diagnostics <- fit$sampler_diagnostics(inc_warmup = TRUE)
+  expect_type(draws_lp__, "double")
+  expect_s3_class(draws_lp__, "draws_array")
+  expect_equal(posterior::variables(draws_lp__), c("lp__"))
+  expect_type(sampler_diagnostics, "double")
+  expect_s3_class(sampler_diagnostics, "draws_array")
+  expect_equal(posterior::variables(sampler_diagnostics), c(c("treedepth__", "divergent__", "accept_stat__", "stepsize__", "n_leapfrog__", "energy__")))
+  draws_alpha <- fit$draws(variables = c("alpha"), inc_warmup = TRUE)
+  expect_type(draws_alpha, "double")
+  expect_s3_class(draws_alpha, "draws_array")
+  expect_equal(posterior::variables(draws_alpha), c("alpha"))
+  draws_beta <- fit$draws(variables = c("beta"), inc_warmup = TRUE)
+  expect_type(draws_beta, "double")
+  expect_s3_class(draws_beta, "draws_array")
+  expect_equal(posterior::variables(draws_beta), c("beta[1]", "beta[2]", "beta[3]"))
+})
+
 test_that("draws() method returns draws_array (reading csv works)", {
   skip_on_cran()
   draws <- fit_mcmc$draws()
@@ -273,3 +296,4 @@ test_that("loo errors if it can't find log lik variables", {
     fixed = TRUE
   )
 })
+
