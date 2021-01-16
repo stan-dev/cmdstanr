@@ -1,4 +1,8 @@
-on:
+---
+# Github Actions workflow to analyze CmdStanR code, test coverage
+# yamllint disable rule:line-length
+
+'on':
   push:
     branches:
       - master

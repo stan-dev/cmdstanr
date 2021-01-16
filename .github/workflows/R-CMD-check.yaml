@@ -1,4 +1,8 @@
-on:
+---
+# Github Actions workflow to check CmdStanR
+# yamllint disable rule:line-length
+
+'on':
   push:
     branches:
       - master
@@ -19,14 +23,14 @@ jobs:
       fail-fast: true
       matrix:
         config:
-          - {os: macOS-latest,   r: 'devel'}
-          - {os: macOS-latest,   r: 'release'}
+          - {os: macOS-latest, r: 'devel'}
+          - {os: macOS-latest, r: 'release'}
           - {os: windows-latest, r: 'devel'}
           - {os: windows-latest, r: 'release'}
           - {os: windows-latest, r: 'oldrel'}
-          - {os: ubuntu-20.04,   r: 'devel'}
-          - {os: ubuntu-20.04,   r: 'release'}
-          - {os: ubuntu-20.04,   r: 'oldrel'}
+          - {os: ubuntu-20.04, r: 'devel'}
+          - {os: ubuntu-20.04, r: 'release'}
+          - {os: ubuntu-20.04, r: 'oldrel'}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -44,7 +48,7 @@ jobs:
       - name: Set path for RTools 4.0
         if: runner.os == 'Windows'
         run: echo "C:/rtools40/usr/bin;C:/rtools40/mingw64/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-      
+
       - name: Install mingw32-make and check toolchain path
         if: runner.os == 'Windows'
         run: |
@@ -54,7 +58,7 @@ jobs:
           mingw32-make --version
           Get-Command mingw32-make | Select-Object -ExpandProperty Definition
         shell: powershell
-      
+
       - name: Install MPI
         if: runner.os == 'Linux'
         run: |
