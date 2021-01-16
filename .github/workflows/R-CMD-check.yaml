@@ -2,6 +2,8 @@
 # Github Actions workflow to check CmdStanR
 # yamllint disable rule:line-length
 
+name: Unit tests
+
 'on':
   push:
     branches:
@@ -9,8 +11,6 @@
   pull_request:
     branches:
       - master
-
-name: Unit tests
 
 jobs:
   R-CMD-check:

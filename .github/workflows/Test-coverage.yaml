@@ -2,6 +2,8 @@
 # Github Actions workflow to analyze CmdStanR code, test coverage
 # yamllint disable rule:line-length
 
+name: Test coverage
+
 'on':
   push:
     branches:
@@ -9,8 +11,6 @@
   pull_request:
     branches:
       - master
-
-name: Test coverage
 
 jobs:
   test-coverage-ubuntu:

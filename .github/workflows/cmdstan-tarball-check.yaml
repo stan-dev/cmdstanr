@@ -2,6 +2,8 @@
 # Github Actions workflow to check CmdStanR tarball
 # yamllint disable rule:line-length
 
+name: Custom CmdStan tarball unit tests
+
 'on':
   workflow_dispatch:
     inputs:
@@ -9,8 +11,6 @@
         description: 'CmdStan tarball URL to test with.'
         required: true
         default: 'latest'
-
-name: Custom CmdStan tarball unit tests
 
 jobs:
   tarball-check:
