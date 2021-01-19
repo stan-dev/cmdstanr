@@ -688,6 +688,9 @@ CmdStanProcs <- R6::R6Class(
           if (self$proc_state(id) == 2 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 2.5)
           }
+          if (self$proc_state(id) == 2.5 && grepl("Exception:", line, fixed = TRUE)) {
+            self$set_proc_state(id, new_state = 3)
+          }
           if (private$proc_state_[[id]] == 3.5) {
             message(line)
           } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) || is_verbose_mode()) {

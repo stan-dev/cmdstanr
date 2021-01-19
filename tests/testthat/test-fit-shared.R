@@ -126,7 +126,7 @@ test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
     } else if (method == "generate_quantities") {
       expect_error(fit$cmdstan_summary(), "Not available for generate_quantities method")
       expect_error(fit$cmdstan_diagnose(), "Not available for generate_quantities method")
-    } else {
+    } else if (method == "sample") {
       expect_output(fit$cmdstan_summary(), "Inference for Stan model")
       expect_output(fit$cmdstan_diagnose(), "Processing complete")
     }
