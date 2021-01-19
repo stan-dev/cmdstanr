@@ -488,7 +488,7 @@ save_data_file <- function(dir = ".",
 CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
 
 
-#' @rdname fit-method-save_output_files
+#' @rdname fit-method-output_files
 #' @param include_failed Should CmdStan runs that failed also be included? The
 #'   default is `FALSE.`
 output_files <- function(include_failed = FALSE) {
@@ -496,13 +496,21 @@ output_files <- function(include_failed = FALSE) {
 }
 CmdStanFit$set("public", name = "output_files", value = output_files)
 
-#' @rdname fit-method-save_output_files
+#' @rdname fit-method-profile_files
+#' @param include_failed Should CmdStan runs that failed also be included? The
+#'   default is `FALSE.`
+profile_files <- function(include_failed = FALSE) {
+  self$runset$profile_files(include_failed)
+}
+CmdStanFit$set("public", name = "profile_files", value = profile_files)
+
+#' @rdname fit-method-latent_dynamics_files
 latent_dynamics_files <- function(include_failed = FALSE) {
   self$runset$latent_dynamics_files(include_failed)
 }
 CmdStanFit$set("public", name = "latent_dynamics_files", value = latent_dynamics_files)
 
-#' @rdname fit-method-save_output_files
+#' @rdname fit-method-data_file
 data_file <- function() {
   self$runset$data_file()
 }
@@ -641,6 +649,26 @@ return_codes <- function() {
 }
 CmdStanFit$set("public", name = "return_codes", value = return_codes)
 
+#' Return profiling data frames
+#'
+#' @name fit-method-profiles
+#' @aliases profiles
+#' @description The `$profiles()` method returns a list of data frames
+#'  with profiling data if the profiling CSV files were created.
+#' @return A list of data frames with profiling data if the
+#'  profiling CSV files were created.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#'
+profiles <- function() {
+  if (cmdstan_version() < "2.26") {
+    stop("$profiles() method is only available with CmdStan 2.26+!")
+  }
+  profiles <- list()
+  for
+  lapply(self$profile_files(), data.table::fread)
+}
+CmdStanFit$set("public", name = "profiles", value = profiles)
 
 # CmdStanMCMC -------------------------------------------------------------
 #' CmdStanMCMC objects

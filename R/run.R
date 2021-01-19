@@ -61,7 +61,7 @@ CmdStanRun <- R6::R6Class(
         private$latent_dynamics_files_[ok]
       }
     },
-    profile_files = function(include_failed = FALSE) {
+    output_files = function(include_failed = FALSE) {
       if (include_failed) {
         private$output_files_
       } else {
@@ -71,10 +71,10 @@ CmdStanRun <- R6::R6Class(
     },
     profile_files = function(include_failed = FALSE) {
       if (include_failed) {
-        private$output_files_
+        private$profile_files_
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
-        private$output_files_[ok]
+        private$profile_files_[ok]
       }
     },
     save_output_files = function(dir = ".",
@@ -157,6 +157,11 @@ CmdStanRun <- R6::R6Class(
           self$args$compose_all_args(
             idx = j,
             output_file = private$output_files_[j],
+            profile_file = if (!is.null(private$profile_files_)) {
+              private$profile_files_[j]
+            } else {
+              NULL
+            },
             latent_dynamics_file = private$latent_dynamics_files_[j] # maybe NULL
           )
         })
@@ -225,6 +230,7 @@ CmdStanRun <- R6::R6Class(
   ),
   private = list(
     output_files_ = character(),
+    profile_files_ = character(),
     output_files_saved_ = FALSE,
     latent_dynamics_files_ = NULL,
     latent_dynamics_files_saved_ = FALSE,

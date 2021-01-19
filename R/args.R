@@ -109,6 +109,7 @@ CmdStanArgs <- R6::R6Class(
     #'
     compose_all_args = function(idx = NULL,
                                 output_file = NULL,
+                                profile_file = NULL,
                                 latent_dynamics_file = NULL) {
       args <- list()
       idx <- idx %||% 1
@@ -144,6 +145,11 @@ CmdStanArgs <- R6::R6Class(
       if (!is.null(self$sig_figs)) {
         args$output <- c(args$output, paste0("sig_figs=", self$sig_figs))
       }
+
+      if (!is.null(profile_file)) {
+        args$output <- c(args$output, paste0("profile_file=", profile_file))
+      }
+
 
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
