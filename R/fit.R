@@ -665,8 +665,12 @@ profiles <- function() {
     stop("$profiles() method is only available with CmdStan 2.26+!")
   }
   profiles <- list()
-  for
-  lapply(self$profile_files(), data.table::fread)
+  i <- 1
+  for(f in self$profile_files()) {
+    profiles[[i]] <- data.table::fread(f, data.table = FALSE)
+    i <- i + 1
+  }
+  profiles
 }
 CmdStanFit$set("public", name = "profiles", value = profiles)
 
