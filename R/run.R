@@ -688,6 +688,9 @@ CmdStanProcs <- R6::R6Class(
           if (self$proc_state(id) == 2 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 2.5)
           }
+          if (self$proc_state(id) == 2.5 && grepl("Exception:", line, fixed = TRUE)) {
+            self$set_proc_state(id, new_state = 3)
+          }
           if (private$proc_state_[[id]] == 3.5) {
             message(line)
           } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) || is_verbose_mode()) {
@@ -770,6 +773,9 @@ CmdStanMCMCProcs <- R6::R6Class(
             state <- 1.5
             next_state <- 1.5
           }
+          if (state < 3 && grepl("profile_file =", line, perl = TRUE)) {
+            next_state <- 3
+          }
           if (state <= 3 && grepl("Rejecting initial value:", line, perl = TRUE)) {
             state <- 2
             next_state <- 2
@@ -806,7 +812,9 @@ CmdStanMCMCProcs <- R6::R6Class(
           }
           if (grepl("Gradient evaluation took",line, fixed = TRUE)
               || grepl("leapfrog steps per transition would take",line, fixed = TRUE)
-              || grepl("Adjust your expectations accordingly!",line, fixed = TRUE)) {
+              || grepl("Adjust your expectations accordingly!",line, fixed = TRUE)
+              || grepl("stanc_version",line, fixed = TRUE)
+              || grepl("stancflags",line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
           if ((state > 1.5 && state < 5 && !ignore_line) || is_verbose_mode()) {
