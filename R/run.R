@@ -773,6 +773,10 @@ CmdStanMCMCProcs <- R6::R6Class(
             state <- 1.5
             next_state <- 1.5
           }
+          if (state < 3 && grepl("profile_file =", line, perl = TRUE)) {
+            state <- 3
+            next_state <- 3
+          }
           if (state <= 3 && grepl("Rejecting initial value:", line, perl = TRUE)) {
             state <- 2
             next_state <- 2
@@ -809,7 +813,9 @@ CmdStanMCMCProcs <- R6::R6Class(
           }
           if (grepl("Gradient evaluation took",line, fixed = TRUE)
               || grepl("leapfrog steps per transition would take",line, fixed = TRUE)
-              || grepl("Adjust your expectations accordingly!",line, fixed = TRUE)) {
+              || grepl("Adjust your expectations accordingly!",line, fixed = TRUE)
+              || grepl("stanc_version",line, fixed = TRUE)
+              || grepl("stancflags",line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
           if ((state > 1.5 && state < 5 && !ignore_line) || is_verbose_mode()) {

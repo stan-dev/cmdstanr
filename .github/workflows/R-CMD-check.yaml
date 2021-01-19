@@ -91,7 +91,7 @@ jobs:
           install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
           install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
           install.packages("curl")
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
+          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, version = "2.26.0-rc1")
         shell: Rscript {0}
 
       - name: Session info
