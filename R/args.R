@@ -75,11 +75,13 @@ CmdStanArgs <- R6::R6Class(
       invisible(self)
     },
 
-    new_file_names = function(type = c("output", "diagnostic")) {
+    new_file_names = function(type = c("output", "diagnostic", "profile")) {
       basename <- self$model_name
       type <- match.arg(type)
       if (type == "diagnostic") {
         basename <- paste0(basename, "-diagnostic")
+      } else if (type == "profile") {
+        basename <- paste0(basename, "-profile")
       }
       generate_file_names( # defined in utils.R
         basename = basename,
@@ -89,7 +91,7 @@ CmdStanArgs <- R6::R6Class(
         random = TRUE
       )
     },
-    new_files = function(type = c("output", "diagnostic")) {
+    new_files = function(type = c("output", "diagnostic", "profile")) {
       files <- file.path(self$output_dir, self$new_file_names(type))
       invisible(file.create(files))
       files

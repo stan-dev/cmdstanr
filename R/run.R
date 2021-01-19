@@ -23,6 +23,9 @@ CmdStanRun <- R6::R6Class(
       self$args <- args
       self$procs <- procs
       private$output_files_ <- self$new_output_files()
+      if (cmdstan_version() >= "2.26.0") {
+        private$profile_files_ <- self$new_profile_files()
+      }      
       if (self$args$save_latent_dynamics) {
         private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
       }
@@ -40,6 +43,9 @@ CmdStanRun <- R6::R6Class(
     new_latent_dynamics_files = function() {
       self$args$new_files(type = "diagnostic")
     },
+    new_profile_files = function() {
+      self$args$new_files(type = "profile")
+    },
     latent_dynamics_files = function(include_failed = FALSE) {
       if (!length(private$latent_dynamics_files_)) {
         stop(
@@ -55,7 +61,7 @@ CmdStanRun <- R6::R6Class(
         private$latent_dynamics_files_[ok]
       }
     },
-    output_files = function(include_failed = FALSE) {
+    profile_files = function(include_failed = FALSE) {
       if (include_failed) {
         private$output_files_
       } else {
@@ -63,7 +69,14 @@ CmdStanRun <- R6::R6Class(
         private$output_files_[ok]
       }
     },
-
+    profile_files = function(include_failed = FALSE) {
+      if (include_failed) {
+        private$output_files_
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        private$output_files_[ok]
+      }
+    },
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE,
