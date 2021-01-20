@@ -103,14 +103,14 @@ CmdStanArgs <- R6::R6Class(
     #' @param idx The run id. For MCMC this is the chain id, for optimization
     #'   this is just 1.
     #' @param output_file File path to csv file where output will be written.
-    #' @param file File path to csv file where profile data will be written.
+    #' @param profile_file File path to csv file where profile data will be written.
     #' @param latent_dynamics_file File path to csv file where the extra latent
     #'   dynamics information will be written.
     #' @return Character vector of arguments of the form "name=value".
     #'
     compose_all_args = function(idx = NULL,
                                 output_file = NULL,
-                                file = NULL,
+                                profile_file = NULL,
                                 latent_dynamics_file = NULL) {
       args <- list()
       idx <- idx %||% 1
@@ -148,7 +148,7 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(file)) {
-        args$output <- c(args$output, paste0("file=", file))
+        args$output <- c(args$output, paste0("file=", profile_file))
       }
 
 
