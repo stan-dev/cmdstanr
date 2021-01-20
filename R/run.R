@@ -268,7 +268,7 @@ CmdStanRun <- R6::R6Class(
           if (!private$output_files_saved_)
             self$output_files(include_failed = TRUE),
           if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
-            self$latent_dynamics_files(include_failed = TRUE)
+            self$latent_dynamics_files(include_failed = TRUE),
           if (self$args$save_profile_files && !private$profile_files_saved_)
             self$save_profile_files(include_failed = TRUE)
         )

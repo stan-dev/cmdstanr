@@ -402,9 +402,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' @name fit-method-save_output_files
 #' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
 #'   fit-method-save_profile_files fit-method-output_files fit-method-data_file
-#'   fit-method-latent_dynamics_files save_output_files save_data_file
-#'   save_latent_dynamics_files save_profile_files
-#'   output_files data_file latent_dynamics_files profile_files
+#'   fit-method-latent_dynamics_files save_output_files save_data_file save_latent_dynamics_files
+#'   save_profile_files output_files data_file latent_dynamics_files profile_files
 #'
 #' @description All fitted model objects have methods for saving (moving to a
 #'   specified location) the files created by CmdStanR to hold CmdStan output
@@ -491,7 +490,7 @@ save_profile_files <- function(dir = ".",
                                        random = TRUE) {
   self$runset$save_profile_files(dir, basename, timestamp, random)
 }
-CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)
+CmdStanFit$set("public", name = "save_profile_files", value = save_profile_files)
 
 #' @rdname fit-method-save_output_files
 save_data_file <- function(dir = ".",

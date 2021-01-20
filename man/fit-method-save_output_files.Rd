@@ -5,14 +5,17 @@
 \alias{save_output_files}
 \alias{fit-method-save_data_file}
 \alias{fit-method-save_latent_dynamics_files}
+\alias{fit-method-save_profile_files}
 \alias{fit-method-output_files}
 \alias{fit-method-data_file}
 \alias{fit-method-latent_dynamics_files}
 \alias{save_data_file}
 \alias{save_latent_dynamics_files}
+\alias{save_profile_files}
 \alias{output_files}
 \alias{data_file}
 \alias{latent_dynamics_files}
+\alias{profile_files}
 \title{Save output and data files}
 \usage{
 save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
@@ -25,12 +28,6 @@ save_latent_dynamics_files(
 )
 
 save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
-
-output_files(include_failed = FALSE)
-
-latent_dynamics_files(include_failed = FALSE)
-
-data_file()
 }
 \arguments{
 \item{dir}{(string) Path to directory where the files should be saved.}
@@ -42,9 +39,6 @@ Defaults to \code{TRUE}. See \strong{Details}.}
 
 \item{random}{(logical) Should random alphanumeric characters be added to the
 end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.}
-
-\item{include_failed}{Should CmdStan runs that failed also be included? The
-default is \code{FALSE.}}
 }
 \value{
 The \verb{$save_*} methods print a message with the new file paths and (invisibly)
@@ -79,6 +73,10 @@ the form \code{basename-timestamp-id-random}, where
 
 For \verb{$save_latent_dynamics_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-diagnostic-"} is included in the new
+file name after \code{basename}.
+
+For \verb{$save_profile_files()} everything is the same as for
+\verb{$save_output_files()} except \code{"-profile-"} is included in the new
 file name after \code{basename}.
 
 For \verb{$save_data_file()} no \code{id} is included in the file name because even
