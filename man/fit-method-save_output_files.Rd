@@ -5,7 +5,6 @@
 \alias{save_output_files}
 \alias{fit-method-save_data_file}
 \alias{fit-method-save_latent_dynamics_files}
-\alias{fit-method-save_profile_files}
 \alias{fit-method-output_files}
 \alias{fit-method-data_file}
 \alias{fit-method-latent_dynamics_files}
@@ -27,7 +26,17 @@ save_latent_dynamics_files(
   random = TRUE
 )
 
+save_profile_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+
 save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+
+output_files(include_failed = FALSE)
+
+profile_files(include_failed = FALSE)
+
+latent_dynamics_files(include_failed = FALSE)
+
+data_file()
 }
 \arguments{
 \item{dir}{(string) Path to directory where the files should be saved.}
@@ -39,6 +48,9 @@ Defaults to \code{TRUE}. See \strong{Details}.}
 
 \item{random}{(logical) Should random alphanumeric characters be added to the
 end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.}
+
+\item{include_failed}{Should CmdStan runs that failed also be included? The
+default is \code{FALSE.}}
 }
 \value{
 The \verb{$save_*} methods print a message with the new file paths and (invisibly)

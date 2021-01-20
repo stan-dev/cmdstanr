@@ -401,7 +401,7 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' @name fit-method-save_output_files
 #' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
-#'   fit-method-save_profile_files fit-method-output_files fit-method-data_file
+#'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files
 #'   fit-method-latent_dynamics_files save_output_files save_data_file save_latent_dynamics_files
 #'   save_profile_files output_files data_file latent_dynamics_files profile_files
 #'
@@ -441,7 +441,6 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' For `$save_data_file()` no `id` is included in the file name because even
 #' with multiple MCMC chains the data file is the same.
 #' 
-#'
 #' @return
 #' The `$save_*` methods print a message with the new file paths and (invisibly)
 #' return a character vector of the new paths (or `NA` for any that couldn't be
@@ -483,7 +482,7 @@ save_latent_dynamics_files <- function(dir = ".",
 }
 CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)
 
-#' @rdname fit-method-save_profile_files
+#' @rdname fit-method-save_output_files
 save_profile_files <- function(dir = ".",
                                        basename = NULL,
                                        timestamp = TRUE,
@@ -502,7 +501,7 @@ save_data_file <- function(dir = ".",
 CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
 
 
-#' @rdname fit-method-output_files
+#' @rdname fit-method-save_output_files
 #' @param include_failed Should CmdStan runs that failed also be included? The
 #'   default is `FALSE.`
 output_files <- function(include_failed = FALSE) {
@@ -510,7 +509,7 @@ output_files <- function(include_failed = FALSE) {
 }
 CmdStanFit$set("public", name = "output_files", value = output_files)
 
-#' @rdname fit-method-profile_files
+#' @rdname fit-method-save_output_files
 #' @param include_failed Should CmdStan runs that failed also be included? The
 #'   default is `FALSE.`
 profile_files <- function(include_failed = FALSE) {
@@ -518,13 +517,13 @@ profile_files <- function(include_failed = FALSE) {
 }
 CmdStanFit$set("public", name = "profile_files", value = profile_files)
 
-#' @rdname fit-method-latent_dynamics_files
+#' @rdname fit-method-save_output_files
 latent_dynamics_files <- function(include_failed = FALSE) {
   self$runset$latent_dynamics_files(include_failed)
 }
 CmdStanFit$set("public", name = "latent_dynamics_files", value = latent_dynamics_files)
 
-#' @rdname fit-method-data_file
+#' @rdname fit-method-save_output_files
 data_file <- function() {
   self$runset$data_file()
 }

@@ -151,7 +151,6 @@ CmdStanArgs <- R6::R6Class(
         args$output <- c(args$output, paste0("file=", profile_file))
       }
 
-
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
     },
