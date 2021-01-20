@@ -148,7 +148,7 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(file)) {
-        args$output <- c(args$output, paste0("file=", profile_file))
+        args$output <- c(args$output, paste0("profile_file=", profile_file))
       }
 
       args <- do.call(c, append(args, list(use.names = FALSE)))
