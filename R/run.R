@@ -127,6 +127,31 @@ CmdStanRun <- R6::R6Class(
       private$latent_dynamics_files_saved_ <- TRUE
       invisible(new_paths)
     },
+    save_profile_files = function(dir = ".",
+                                  basename = NULL,
+                                  timestamp = TRUE,
+                                  random = TRUE) {
+      current_files <- self$profile_files(include_failed = TRUE) # used so we get error if 0 files
+      new_paths <- copy_temp_files(
+        current_paths = current_files,
+        new_dir = dir,
+        new_basename = paste0(basename %||% self$model_name(), "-profile"),
+        ids = self$proc_ids(),
+        ext = ".csv",
+        timestamp = timestamp,
+        random = random
+      )
+      file.remove(current_files[!current_files %in% new_paths])
+      private$profile_files_ <- new_paths
+      message(
+        "Moved ",
+        length(current_files),
+        " files and set internal paths to new locations:\n",
+        paste("-", new_paths, collapse = "\n")
+      )
+      private$profile_files_saved_ <- TRUE
+      invisible(new_paths)
+    },
     save_data_file = function(dir = ".",
                               basename = NULL,
                               timestamp = TRUE,
@@ -234,6 +259,7 @@ CmdStanRun <- R6::R6Class(
     output_files_saved_ = FALSE,
     latent_dynamics_files_ = NULL,
     latent_dynamics_files_saved_ = FALSE,
+    profile_files_saved_ = FALSE,
     command_args_ = list(),
 
     finalize = function() {
@@ -243,6 +269,8 @@ CmdStanRun <- R6::R6Class(
             self$output_files(include_failed = TRUE),
           if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
             self$latent_dynamics_files(include_failed = TRUE)
+          if (self$args$save_profile_files && !private$profile_files_saved_)
+            self$save_profile_files(include_failed = TRUE)
         )
         unlink(temp_files)
       }

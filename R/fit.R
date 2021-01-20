@@ -478,6 +478,15 @@ save_latent_dynamics_files <- function(dir = ".",
 }
 CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)
 
+#' @rdname fit-method-save_profile_files
+save_profile_files <- function(dir = ".",
+                                       basename = NULL,
+                                       timestamp = TRUE,
+                                       random = TRUE) {
+  self$runset$save_profile_files(dir, basename, timestamp, random)
+}
+CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)
+
 #' @rdname fit-method-save_output_files
 save_data_file <- function(dir = ".",
                            basename = NULL,
