@@ -269,8 +269,8 @@ CmdStanRun <- R6::R6Class(
             self$output_files(include_failed = TRUE),
           if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
             self$latent_dynamics_files(include_failed = TRUE),
-          if (self$args$save_profile_files && !private$profile_files_saved_)
-            self$save_profile_files(include_failed = TRUE)
+          if (cmdstan_version() > "2.25.0" && !private$profile_files_saved_)
+            self$profile_files(include_failed = TRUE)
         )
         unlink(temp_files)
       }
