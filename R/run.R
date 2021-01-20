@@ -70,6 +70,9 @@ CmdStanRun <- R6::R6Class(
       }
     },
     profile_files = function(include_failed = FALSE) {
+      if (cmdstan_version() < "2.26") {
+        stop("Profiling is only available with CmdStan 2.26+!")
+      }
       if (include_failed) {
         private$profile_files_
       } else {

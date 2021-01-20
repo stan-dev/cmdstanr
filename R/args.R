@@ -811,7 +811,12 @@ validate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
     return(invisible(TRUE))
   }
-  checkmate::assert_integerish(seed, lower = 1)
+  if (cmdstan_version() < "2.26") {
+    lower_seed <- 1
+  } else {
+    lower_seed <- 0
+  }
+  checkmate::assert_integerish(seed, lower = lower_seed)
   if (length(seed) > 1 && length(seed) != num_procs) {
     stop("If 'seed' is specified it must be a single integer or one per chain.",
          call. = FALSE)

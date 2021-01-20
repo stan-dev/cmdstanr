@@ -675,9 +675,6 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
 profiles <- function() {
-  if (cmdstan_version() < "2.26") {
-    stop("$profiles() method is only available with CmdStan 2.26+!")
-  }
   profiles <- list()
   i <- 1
   for(f in self$profile_files()) {
