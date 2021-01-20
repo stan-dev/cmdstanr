@@ -74,10 +74,11 @@ CmdStanRun <- R6::R6Class(
         stop("Profiling is only available with CmdStan 2.26+!")
       }
       if (include_failed) {
-        private$profile_files_
+        private$profile_files_[file.exists(private$profile_files_)]
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
-        private$profile_files_[ok]
+        ok_profile_files <- private$profile_files_[ok]
+        ok_profile_files[file.exists(ok_profile_files)]
       }
     },
     save_output_files = function(dir = ".",
