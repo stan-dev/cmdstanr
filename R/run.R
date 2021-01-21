@@ -70,7 +70,7 @@ CmdStanRun <- R6::R6Class(
       }
     },
     profile_files = function(include_failed = FALSE) {
-      if (!length(private$profile_files_))
+      if (!length(private$profile_files_)) {
         stop(
           "No profile files found. ",
           "The model that produced the fit did not use any profiling.",
