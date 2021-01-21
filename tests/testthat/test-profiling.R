@@ -34,7 +34,7 @@ test_that("profiling errors if no profiling files are present", {
                "No profile files found. The model that produced the fit did not use any profiling.")
 })
 
-test_that("saving diagnostic csv output works", {
+test_that("saving profile csv output works", {
   skip_on_cran()
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
@@ -52,4 +52,3 @@ test_that("saving diagnostic csv output works", {
 
   expect_false(any(file.exists(old_paths)))
 })
-
