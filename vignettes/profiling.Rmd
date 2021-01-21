@@ -1,0 +1,36 @@
+---
+title: "Profiling Stan programs with CmdStanR"
+author: "Rok Češnovar and Jonah Gabry"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+vignette: >
+  %\VignetteIndexEntry{Profiling Stan programs with CmdStanR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r child="children/settings-knitr.Rmd"}
+```
+
+## Introduction
+
+As of version 2.26.0 CmdStan supports profiling Stan programs ...
+
+## Adding profiling statements to a Stan program
+
+Profiling Stan programs requires adding `profile` statements to the 
+Stan program ...
+
+## Accessing profiling information after running Stan
+
+### Load profile data into R
+
+The `$profiles()` method ...
+
+### Saving profile files
+
+The `$save_profile_files()` method ...
