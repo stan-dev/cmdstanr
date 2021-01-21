@@ -13,7 +13,7 @@ test_that("profiling works if profiling data is present", {
   expect_equal(profiles[[1]][,"name"], c("glm", "priors", "udf"))
 })
 
-test_that("profiling works if no profiling data is present", {
+test_that("profiling errors if no profiling files are present", {
   skip_on_cran()
   mod <- testing_model("logistic")
   utils::capture.output(
@@ -25,5 +25,29 @@ test_that("profiling works if no profiling data is present", {
                "No profile files found. The model that produced the fit did not use any profiling.")
   expect_error(fit$save_profile_files(),
                "No profile files found. The model that produced the fit did not use any profiling.")
+})
+
+
+test_that("saving diagnostic csv output works", {
+  skip_on_cran()
+  mod <- testing_model("logistic_profiling")
+  utils::capture.output(
+    fit <- mod$sample(data = testing_data("logistic_profiling"), refresh = 0)
+  )
+  old_paths <- fit$profile_files()
+  checkmate::expect_file_exists(old_paths, extension = "csv")
+
+  expect_message(
+    paths <- fit$save_profile_files(tempdir(), basename = "testing-output"),
+    paste("Moved", fit$num_procs(), "files and set internal paths")
+  )
+  checkmate::expect_file_exists(paths, extension = "csv")
+  expect_true(all(file.size(paths) > 0))
+
+  should_match <- paste0("testing-output-diagnostic-",
+                         format(Sys.time(), "%Y%m%d%H%M"),
+                         "-",
+                         seq_len(fit$num_procs()))
+  expect_false(any(file.exists(old_paths)))
 })
 
