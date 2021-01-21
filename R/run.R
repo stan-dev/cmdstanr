@@ -81,7 +81,7 @@ CmdStanRun <- R6::R6Class(
         private$profile_files_[file.exists(private$profile_files_)]
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
-        private$profile_files_[ok && file.exists(private$profile_files_)]
+        private$profile_files_[ok]
       }
     },
     save_output_files = function(dir = ".",
