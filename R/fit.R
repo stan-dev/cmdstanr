@@ -675,7 +675,38 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'   were created.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @examples
+#' \dontrun{
+#' # first fit a model using MCMC
+#' mcmc_program <- write_stan_file(
+#'   "data {
+#'     int<lower=0> N;
+#'     int<lower=0,upper=1> y[N];
+#'   }
+#'   parameters {
+#'     real<lower=0,upper=1> theta;
+#'   }
+#'   model {
+#'     profile("likelihood") {
+#'       y ~ bernoulli(theta);
+#'     }
+#'   }
+#'   generated quantities {
+#'     int y_rep[N];
+#'     profile("gq") {
+#'       y_rep = bernoulli_rng(rep_vector(theta, N));
+#'     }
+#'   }
+#' "
+#' )
+#' mod_mcmc <- cmdstan_model(mcmc_program)
 #'
+#' data <- list(N = 10, y = c(1,1,0,0,0,1,0,1,0,0))
+#' fit <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
+#'
+#' fit$profiles()
+#' }
+#' 
 profiles <- function() {
   profiles <- list()
   i <- 1
