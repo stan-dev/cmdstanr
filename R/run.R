@@ -189,11 +189,7 @@ CmdStanRun <- R6::R6Class(
           self$args$compose_all_args(
             idx = j,
             output_file = private$output_files_[j],
-            profile_file = if (!is.null(private$profile_files_)) {
-              private$profile_files_[j]
-            } else {
-              NULL
-            },
+            profile_file = private$profile_files_[j],
             latent_dynamics_file = private$latent_dynamics_files_[j] # maybe NULL
           )
         })

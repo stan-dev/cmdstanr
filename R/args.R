@@ -93,7 +93,6 @@ CmdStanArgs <- R6::R6Class(
     },
     new_files = function(type = c("output", "diagnostic", "profile")) {
       files <- file.path(self$output_dir, self$new_file_names(type))
-      if (type != "profile") invisible(file.create(files))
       files
     },
 
