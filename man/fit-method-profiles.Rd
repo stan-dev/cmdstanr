@@ -19,6 +19,39 @@ See \code{\link[=save_profile_files]{save_profile_files()}} to control where the
 Support for profiling Stan programs is available with CmdStan >= 2.26 and
 requires adding profiling statements to the Stan program.
 }
+\examples{
+\dontrun{
+# first fit a model using MCMC
+mcmc_program <- write_stan_file(
+  "data {
+    int<lower=0> N;
+    int<lower=0,upper=1> y[N];
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  model {
+    profile("likelihood") {
+      y ~ bernoulli(theta);
+    }
+  }
+  generated quantities {
+    int y_rep[N];
+    profile("gq") {
+      y_rep = bernoulli_rng(rep_vector(theta, N));
+    }
+  }
+"
+)
+mod_mcmc <- cmdstan_model(mcmc_program)
+
+data <- list(N = 10, y = c(1,1,0,0,0,1,0,1,0,0))
+fit <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
+
+fit$profiles()
+}
+
+}
 \seealso{
 \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }
