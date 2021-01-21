@@ -1,5 +1,3 @@
-context("profiling")
-
 test_that("profiling works if profiling data is present", {
   skip_on_cran()
   mod <- testing_model("logistic_profiling")
@@ -16,17 +14,21 @@ test_that("profiling works if profiling data is present", {
 test_that("profiling errors if no profiling files are present", {
   skip_on_cran()
   mod <- testing_model("logistic")
-  utils::capture.output(
-    fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
+  suppressWarnings(
+    utils::capture.output(
+      fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
+    )
   )
-  expect_error(fit$profile_files(),
-               "No profile files found. The model that produced the fit did not use any profiling.")
+  expect_error(
+    fit$profile_files(),
+    "No profile files found. The model that produced the fit did not use any profiling.",
+    fixed = TRUE
+  )
   expect_error(fit$profiles(),
                "No profile files found. The model that produced the fit did not use any profiling.")
   expect_error(fit$save_profile_files(),
                "No profile files found. The model that produced the fit did not use any profiling.")
 })
-
 
 test_that("saving diagnostic csv output works", {
   skip_on_cran()

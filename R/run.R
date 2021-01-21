@@ -78,7 +78,7 @@ CmdStanRun <- R6::R6Class(
         )
       }
       if (include_failed) {
-        private$profile_files_[]
+        private$profile_files_[file.exists(private$profile_files_)]
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
         private$profile_files_[ok && file.exists(private$profile_files_)]
@@ -277,7 +277,7 @@ CmdStanRun <- R6::R6Class(
           if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
             self$latent_dynamics_files(include_failed = TRUE),
           if (cmdstan_version() > "2.25.0" && !private$profile_files_saved_)
-            self$profile_files(include_failed = TRUE)
+            private$profile_files_[file.exists(private$profile_files_)]
         )
         unlink(temp_files)
       }

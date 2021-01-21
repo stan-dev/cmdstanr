@@ -147,7 +147,7 @@ CmdStanArgs <- R6::R6Class(
         args$output <- c(args$output, paste0("sig_figs=", self$sig_figs))
       }
 
-      if (!is.null(file)) {
+      if (!is.null(profile_file)) {
         args$output <- c(args$output, paste0("profile_file=", profile_file))
       }
 

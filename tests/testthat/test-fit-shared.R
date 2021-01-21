@@ -399,3 +399,23 @@ test_that("sig_figs works with all methods", {
     c(0.12, 0.12345, 0.123456789)
   )
 })
+
+test_that("profiling errors if no profiling files are present", {
+  skip_on_cran()
+  mod <- testing_model("logistic")
+  suppressWarnings(
+    utils::capture.output(
+      fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
+    )
+  )
+  expect_error(
+    fit$profile_files(),
+    "No profile files found. The model that produced the fit did not use any profiling.",
+    fixed = TRUE
+  )
+
+# expect_error(fit$profiles(),
+#              "No profile files found. The model that produced the fit did not use any profiling.")
+# expect_error(fit$save_profile_files(),
+#              "No profile files found. The model that produced the fit did not use any profiling.")
+})
