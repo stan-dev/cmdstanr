@@ -400,10 +400,10 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' Save output and data files
 #'
 #' @name fit-method-save_output_files
-#' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
-#'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files
-#'   fit-method-latent_dynamics_files save_output_files save_data_file save_latent_dynamics_files
-#'   save_profile_files output_files data_file latent_dynamics_files profile_files
+#' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files fit-method-save_profile_files
+#'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files fit-method-profile_files
+#'   save_output_files save_data_file save_latent_dynamics_files save_profile_files
+#'   output_files data_file latent_dynamics_files profile_files
 #'
 #' @description All fitted model objects have methods for saving (moving to a
 #'   specified location) the files created by CmdStanR to hold CmdStan output
@@ -433,14 +433,14 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' For `$save_latent_dynamics_files()` everything is the same as for
 #' `$save_output_files()` except `"-diagnostic-"` is included in the new
 #' file name after `basename`.
-#' 
+#'
 #' For `$save_profile_files()` everything is the same as for
 #' `$save_output_files()` except `"-profile-"` is included in the new
 #' file name after `basename`.
 #'
 #' For `$save_data_file()` no `id` is included in the file name because even
 #' with multiple MCMC chains the data file is the same.
-#' 
+#'
 #' @return
 #' The `$save_*` methods print a message with the new file paths and (invisibly)
 #' return a character vector of the new paths (or `NA` for any that couldn't be
@@ -484,9 +484,9 @@ CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_laten
 
 #' @rdname fit-method-save_output_files
 save_profile_files <- function(dir = ".",
-                                       basename = NULL,
-                                       timestamp = TRUE,
-                                       random = TRUE) {
+                               basename = NULL,
+                               timestamp = TRUE,
+                               random = TRUE) {
   self$runset$save_profile_files(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_profile_files", value = save_profile_files)
@@ -510,8 +510,6 @@ output_files <- function(include_failed = FALSE) {
 CmdStanFit$set("public", name = "output_files", value = output_files)
 
 #' @rdname fit-method-save_output_files
-#' @param include_failed Should CmdStan runs that failed also be included? The
-#'   default is `FALSE.`
 profile_files <- function(include_failed = FALSE) {
   self$runset$profile_files(include_failed)
 }
@@ -666,18 +664,22 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'
 #' @name fit-method-profiles
 #' @aliases profiles
-#' @description The `$profiles()` method returns a list of data frames
-#'  with profiling data if any profiling data was written to the profile 
-#'  CSV files.
-#' @return A list of data frames with profiling data if the
-#'  profiling CSV files were created.
+#' @description The `$profiles()` method returns a list of data frames with
+#'   profiling data if any profiling data was written to the profile CSV files.
+#'   See [save_profile_files()] to control where the files are saved.
+#'
+#'   Support for profiling Stan programs is available with CmdStan >= 2.26 and
+#'   requires adding profiling statements to the Stan program.
+#'
+#' @return A list of data frames with profiling data if the profiling CSV files
+#'   were created.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
 profiles <- function() {
   profiles <- list()
   i <- 1
-  for(f in self$profile_files()) {
+  for (f in self$profile_files()) {
     profiles[[i]] <- data.table::fread(f, data.table = FALSE)
     i <- i + 1
   }
@@ -829,7 +831,7 @@ CmdStanMCMC <- R6::R6Class(
             csv_contents$post_warmup_draws[,,missing_variables],
             along="variable"
           )
-        }        
+        }
       }
       if (!is.null(csv_contents$post_warmup_sampler_diagnostics)) {
         if (is.null(private$sampler_diagnostics_)) {

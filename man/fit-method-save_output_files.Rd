@@ -5,9 +5,11 @@
 \alias{save_output_files}
 \alias{fit-method-save_data_file}
 \alias{fit-method-save_latent_dynamics_files}
+\alias{fit-method-save_profile_files}
 \alias{fit-method-output_files}
 \alias{fit-method-data_file}
 \alias{fit-method-latent_dynamics_files}
+\alias{fit-method-profile_files}
 \alias{save_data_file}
 \alias{save_latent_dynamics_files}
 \alias{save_profile_files}
