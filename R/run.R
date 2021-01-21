@@ -258,7 +258,7 @@ CmdStanRun <- R6::R6Class(
   ),
   private = list(
     output_files_ = character(),
-    profile_files_ = character(),
+    profile_files_ = NULL,
     output_files_saved_ = FALSE,
     latent_dynamics_files_ = NULL,
     latent_dynamics_files_saved_ = FALSE,
