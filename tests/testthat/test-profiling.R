@@ -46,10 +46,6 @@ test_that("saving diagnostic csv output works", {
   checkmate::expect_file_exists(paths, extension = "csv")
   expect_true(all(file.size(paths) > 0))
 
-  should_match <- paste0("testing-output-diagnostic-",
-                         format(Sys.time(), "%Y%m%d%H%M"),
-                         "-",
-                         seq_len(fit$num_procs()))
   expect_false(any(file.exists(old_paths)))
 })
 
