@@ -70,7 +70,7 @@ CmdStanRun <- R6::R6Class(
       }
     },
     profile_files = function(include_failed = FALSE) {
-      if (!any(file.exists(private$profile_files_))) {
+      if (!length(private$profile_files_))
         stop(
           "No profile files found. ",
           "The model that produced the fit did not use any profiling.",
@@ -78,7 +78,7 @@ CmdStanRun <- R6::R6Class(
         )
       }
       if (include_failed) {
-        private$profile_files_[file.exists(private$profile_files_)]
+        private$profile_files_
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
         private$profile_files_[ok]
@@ -273,7 +273,7 @@ CmdStanRun <- R6::R6Class(
           if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
             self$latent_dynamics_files(include_failed = TRUE),
           if (cmdstan_version() > "2.25.0" && !private$profile_files_saved_)
-            private$profile_files_[file.exists(private$profile_files_)]
+            private$profile_files_
         )
         unlink(temp_files)
       }
