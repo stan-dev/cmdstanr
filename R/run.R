@@ -70,15 +70,18 @@ CmdStanRun <- R6::R6Class(
       }
     },
     profile_files = function(include_failed = FALSE) {
-      if (cmdstan_version() < "2.26") {
-        stop("Profiling is only available with CmdStan 2.26+!")
+      if (!any(file.exists(private$profile_files_))) {
+        stop(
+          "No profile files found. ",
+          "The model that produced the fit did not use any profiling.",
+          call. = FALSE
+        )
       }
       if (include_failed) {
-        private$profile_files_[file.exists(private$profile_files_)]
+        private$profile_files_[]
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
-        ok_profile_files <- private$profile_files_[ok]
-        ok_profile_files[file.exists(ok_profile_files)]
+        private$profile_files_[ok && file.exists(private$profile_files_)]
       }
     },
     save_output_files = function(dir = ".",
