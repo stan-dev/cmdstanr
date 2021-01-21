@@ -2,7 +2,7 @@ test_that("profiling works if profiling data is present", {
   skip_on_cran()
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
-    fit <- mod$sample(data = testing_data("logistic_profiling"), refresh = 0)
+    fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
   )
   expect_equal(length(fit$profile_files()), 4)
   profiles <- fit$profiles()
@@ -34,7 +34,7 @@ test_that("saving diagnostic csv output works", {
   skip_on_cran()
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
-    fit <- mod$sample(data = testing_data("logistic_profiling"), refresh = 0)
+    fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
   )
   old_paths <- fit$profile_files()
   checkmate::expect_file_exists(old_paths, extension = "csv")
