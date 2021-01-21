@@ -1,6 +1,6 @@
 ---
 title: "Profiling Stan programs with CmdStanR"
-author: "Rok Češnovar and Jonah Gabry"
+author: "Rok Češnovar, Jonah Gabry and Ben Bales"
 output: 
   rmarkdown::html_vignette:
     toc: true
@@ -18,18 +18,97 @@ vignette: >
 
 ## Introduction
 
-As of version 2.26.0 CmdStan supports profiling Stan programs ...
+The intention of this vignette is to showcase profiling with CmdStanR. Profiling
+was introduced in CmdStan 2.26.0. The minimum CmdStanR version to run the code 
+presented in this vignette is 0.3.1.
 
 ## Adding profiling statements to a Stan program
 
-Profiling Stan programs requires adding `profile` statements to the 
-Stan program ...
+Lets start with a simple linear regression model. Profiling Stan programs requires
+adding `profile` statements to a Stan model. In the linear regression model we 
+want to profile the two parts of the model: the priors and the likelihood.
 
+We do this by enclosing the two prior definitions in a profile labeled `priors`
+and the likelihood function with a profile labeled `likelihood`. The entire model
+with the two profiles can be seen below.
+
+```stan
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  int y[n];
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  profile("priors") {
+    target += std_normal_lpdf(beta);
+    target += std_normal_lpdf(alpha);
+  }
+  profile("likelihood") {
+    target += bernoulli_logit_lpmf(y | X * beta + alpha);
+  }  
+}
+```
+
+
+We then compile the model
+```{r compile, message=FALSE}
+library(cmdstanr)
+stan_file_profiling <- write_stan_file('
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  int y[n];
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  profile("priors") {
+    target += std_normal_lpdf(beta);
+    target += std_normal_lpdf(alpha);
+  }
+  profile("likelihood") {
+    target += bernoulli_logit_lpmf(y | X * beta + alpha);
+  }  
+}
+')
+model <- cmdstan_model(stan_file = stan_file_profiling)
+```
+and run sampling with some generated data
+
+```{r sampling, message=FALSE, results='hide'}
+n <- 1000
+k <- 20
+X <- matrix(rnorm(n * k), ncol = k)
+
+y <- 3 * X[,1] - 2 * X[,2] + 1
+p <- runif(n)
+y <- ifelse(p < (1 / (1 + exp(-y))), 1, 0)
+
+fit <- model$sample(data = list(k = ncol(X), n = nrow(X), y = y, X = X), chains = 1)
+```
 ## Accessing profiling information after running Stan
 
-### Load profile data into R
+After the sampling finishes, CmdStan stores the profiling data in CSV files. The paths
+of the profiling CSV files can be retrieved using `$profile_files()`.
 
-The `$profiles()` method ...
+```{r profile_files}
+fit$profile_files()
+```
+With `$profiles()` you can automatically read in all profiling CSV.
+
+```{r profiles}
+fit$profiles()
+```
+
+Here we can see that ...
 
 ### Saving profile files
 
