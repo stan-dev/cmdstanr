@@ -1,3 +1,7 @@
+if (not_on_cran()) {
+  set_cmdstan_path()
+}
+
 test_that("profiling works if profiling data is present", {
   skip_on_cran()
   mod <- testing_model("logistic_profiling")
