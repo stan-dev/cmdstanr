@@ -469,6 +469,7 @@ unavailable_methods_CmdStanFit_CSV <- c(
     "output",
     "return_codes",
     "num_procs",
+    "save_profile_files", "profile_files", "profiles",
     "time" # available for MCMC not others
   )
 error_unavailable_CmdStanFit_CSV <- function(...) {

@@ -12,6 +12,10 @@ files. (#414)
 
 * Faster CSV reading for multiple chains. (#419)
 
+* New `profiles()` method for fitted model objects accesses profiling
+information from R if profiling used in the Stan program. Support for profiling
+Stan programs requires CmdStan >= 2.26. (#434)
+
 
 # cmdstanr 0.3.0
 

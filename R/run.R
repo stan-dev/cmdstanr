@@ -23,6 +23,9 @@ CmdStanRun <- R6::R6Class(
       self$args <- args
       self$procs <- procs
       private$output_files_ <- self$new_output_files()
+      if (cmdstan_version() >= "2.26.0") {
+        private$profile_files_ <- self$new_profile_files()
+      }
       if (self$args$save_latent_dynamics) {
         private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
       }
@@ -39,6 +42,9 @@ CmdStanRun <- R6::R6Class(
     },
     new_latent_dynamics_files = function() {
       self$args$new_files(type = "diagnostic")
+    },
+    new_profile_files = function() {
+      self$args$new_files(type = "profile")
     },
     latent_dynamics_files = function(include_failed = FALSE) {
       if (!length(private$latent_dynamics_files_)) {
@@ -63,7 +69,22 @@ CmdStanRun <- R6::R6Class(
         private$output_files_[ok]
       }
     },
-
+    profile_files = function(include_failed = FALSE) {
+      files <- private$profile_files_
+      if (!length(files) || !any(file.exists(files))) {
+        stop(
+          "No profile files found. ",
+          "The model that produced the fit did not use any profiling.",
+          call. = FALSE
+        )
+      }
+      if (include_failed) {
+        files
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        files[ok]
+      }
+    },
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE,
@@ -90,9 +111,9 @@ CmdStanRun <- R6::R6Class(
       invisible(new_paths)
     },
     save_latent_dynamics_files = function(dir = ".",
-                                     basename = NULL,
-                                     timestamp = TRUE,
-                                     random = TRUE) {
+                                          basename = NULL,
+                                          timestamp = TRUE,
+                                          random = TRUE) {
       current_files <- self$latent_dynamics_files(include_failed = TRUE) # used so we get error if 0 files
       new_paths <- copy_temp_files(
         current_paths = current_files,
@@ -112,6 +133,31 @@ CmdStanRun <- R6::R6Class(
         paste("-", new_paths, collapse = "\n")
       )
       private$latent_dynamics_files_saved_ <- TRUE
+      invisible(new_paths)
+    },
+    save_profile_files = function(dir = ".",
+                                  basename = NULL,
+                                  timestamp = TRUE,
+                                  random = TRUE) {
+      current_files <- self$profile_files(include_failed = TRUE) # used so we get error if 0 files
+      new_paths <- copy_temp_files(
+        current_paths = current_files,
+        new_dir = dir,
+        new_basename = paste0(basename %||% self$model_name(), "-profile"),
+        ids = self$proc_ids(),
+        ext = ".csv",
+        timestamp = timestamp,
+        random = random
+      )
+      file.remove(current_files[!current_files %in% new_paths])
+      private$profile_files_ <- new_paths
+      message(
+        "Moved ",
+        length(current_files),
+        " files and set internal paths to new locations:\n",
+        paste("-", new_paths, collapse = "\n")
+      )
+      private$profile_files_saved_ <- TRUE
       invisible(new_paths)
     },
     save_data_file = function(dir = ".",
@@ -144,6 +190,7 @@ CmdStanRun <- R6::R6Class(
           self$args$compose_all_args(
             idx = j,
             output_file = private$output_files_[j],
+            profile_file = private$profile_files_[j],
             latent_dynamics_file = private$latent_dynamics_files_[j] # maybe NULL
           )
         })
@@ -212,9 +259,11 @@ CmdStanRun <- R6::R6Class(
   ),
   private = list(
     output_files_ = character(),
+    profile_files_ = NULL,
     output_files_saved_ = FALSE,
     latent_dynamics_files_ = NULL,
     latent_dynamics_files_saved_ = FALSE,
+    profile_files_saved_ = FALSE,
     command_args_ = list(),
 
     finalize = function() {
@@ -223,7 +272,9 @@ CmdStanRun <- R6::R6Class(
           if (!private$output_files_saved_)
             self$output_files(include_failed = TRUE),
           if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
-            self$latent_dynamics_files(include_failed = TRUE)
+            self$latent_dynamics_files(include_failed = TRUE),
+          if (cmdstan_version() > "2.25.0" && !private$profile_files_saved_)
+            private$profile_files_
         )
         unlink(temp_files)
       }

@@ -75,11 +75,13 @@ CmdStanArgs <- R6::R6Class(
       invisible(self)
     },
 
-    new_file_names = function(type = c("output", "diagnostic")) {
+    new_file_names = function(type = c("output", "diagnostic", "profile")) {
       basename <- self$model_name
       type <- match.arg(type)
       if (type == "diagnostic") {
         basename <- paste0(basename, "-diagnostic")
+      } else if (type == "profile") {
+        basename <- paste0(basename, "-profile")
       }
       generate_file_names( # defined in utils.R
         basename = basename,
@@ -89,9 +91,8 @@ CmdStanArgs <- R6::R6Class(
         random = TRUE
       )
     },
-    new_files = function(type = c("output", "diagnostic")) {
+    new_files = function(type = c("output", "diagnostic", "profile")) {
       files <- file.path(self$output_dir, self$new_file_names(type))
-      invisible(file.create(files))
       files
     },
 
@@ -101,12 +102,14 @@ CmdStanArgs <- R6::R6Class(
     #' @param idx The run id. For MCMC this is the chain id, for optimization
     #'   this is just 1.
     #' @param output_file File path to csv file where output will be written.
+    #' @param profile_file File path to csv file where profile data will be written.
     #' @param latent_dynamics_file File path to csv file where the extra latent
     #'   dynamics information will be written.
     #' @return Character vector of arguments of the form "name=value".
     #'
     compose_all_args = function(idx = NULL,
                                 output_file = NULL,
+                                profile_file = NULL,
                                 latent_dynamics_file = NULL) {
       args <- list()
       idx <- idx %||% 1
@@ -141,6 +144,10 @@ CmdStanArgs <- R6::R6Class(
 
       if (!is.null(self$sig_figs)) {
         args$output <- c(args$output, paste0("sig_figs=", self$sig_figs))
+      }
+
+      if (!is.null(profile_file)) {
+        args$output <- c(args$output, paste0("profile_file=", profile_file))
       }
 
       args <- do.call(c, append(args, list(use.names = FALSE)))
@@ -803,7 +810,12 @@ validate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
     return(invisible(TRUE))
   }
-  checkmate::assert_integerish(seed, lower = 1)
+  if (cmdstan_version() < "2.26") {
+    lower_seed <- 1
+  } else {
+    lower_seed <- 0
+  }
+  checkmate::assert_integerish(seed, lower = lower_seed)
   if (length(seed) > 1 && length(seed) != num_procs) {
     stop("If 'seed' is specified it must be a single integer or one per chain.",
          call. = FALSE)

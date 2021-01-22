@@ -400,10 +400,10 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' Save output and data files
 #'
 #' @name fit-method-save_output_files
-#' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
-#'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files
-#'   save_output_files save_data_file save_latent_dynamics_files
-#'   output_files data_file latent_dynamics_files
+#' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files fit-method-save_profile_files
+#'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files fit-method-profile_files
+#'   save_output_files save_data_file save_latent_dynamics_files save_profile_files
+#'   output_files data_file latent_dynamics_files profile_files
 #'
 #' @description All fitted model objects have methods for saving (moving to a
 #'   specified location) the files created by CmdStanR to hold CmdStan output
@@ -432,6 +432,10 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' For `$save_latent_dynamics_files()` everything is the same as for
 #' `$save_output_files()` except `"-diagnostic-"` is included in the new
+#' file name after `basename`.
+#'
+#' For `$save_profile_files()` everything is the same as for
+#' `$save_output_files()` except `"-profile-"` is included in the new
 #' file name after `basename`.
 #'
 #' For `$save_data_file()` no `id` is included in the file name because even
@@ -479,6 +483,15 @@ save_latent_dynamics_files <- function(dir = ".",
 CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)
 
 #' @rdname fit-method-save_output_files
+save_profile_files <- function(dir = ".",
+                               basename = NULL,
+                               timestamp = TRUE,
+                               random = TRUE) {
+  self$runset$save_profile_files(dir, basename, timestamp, random)
+}
+CmdStanFit$set("public", name = "save_profile_files", value = save_profile_files)
+
+#' @rdname fit-method-save_output_files
 save_data_file <- function(dir = ".",
                            basename = NULL,
                            timestamp = TRUE,
@@ -495,6 +508,12 @@ output_files <- function(include_failed = FALSE) {
   self$runset$output_files(include_failed)
 }
 CmdStanFit$set("public", name = "output_files", value = output_files)
+
+#' @rdname fit-method-save_output_files
+profile_files <- function(include_failed = FALSE) {
+  self$runset$profile_files(include_failed)
+}
+CmdStanFit$set("public", name = "profile_files", value = profile_files)
 
 #' @rdname fit-method-save_output_files
 latent_dynamics_files <- function(include_failed = FALSE) {
@@ -641,6 +660,63 @@ return_codes <- function() {
 }
 CmdStanFit$set("public", name = "return_codes", value = return_codes)
 
+#' Return profiling data
+#'
+#' @name fit-method-profiles
+#' @aliases profiles
+#' @description The `$profiles()` method returns a list of data frames with
+#'   profiling data if any profiling data was written to the profile CSV files.
+#'   See [save_profile_files()] to control where the files are saved.
+#'
+#'   Support for profiling Stan programs is available with CmdStan >= 2.26 and
+#'   requires adding profiling statements to the Stan program.
+#'
+#' @return A list of data frames with profiling data if the profiling CSV files
+#'   were created.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @examples
+#' \dontrun{
+#' # first fit a model using MCMC
+#' mcmc_program <- write_stan_file(
+#'   "data {
+#'     int<lower=0> N;
+#'     int<lower=0,upper=1> y[N];
+#'   }
+#'   parameters {
+#'     real<lower=0,upper=1> theta;
+#'   }
+#'   model {
+#'     profile("likelihood") {
+#'       y ~ bernoulli(theta);
+#'     }
+#'   }
+#'   generated quantities {
+#'     int y_rep[N];
+#'     profile("gq") {
+#'       y_rep = bernoulli_rng(rep_vector(theta, N));
+#'     }
+#'   }
+#' "
+#' )
+#' mod_mcmc <- cmdstan_model(mcmc_program)
+#'
+#' data <- list(N = 10, y = c(1,1,0,0,0,1,0,1,0,0))
+#' fit <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
+#'
+#' fit$profiles()
+#' }
+#' 
+profiles <- function() {
+  profiles <- list()
+  i <- 1
+  for (f in self$profile_files()) {
+    profiles[[i]] <- data.table::fread(f, data.table = FALSE)
+    i <- i + 1
+  }
+  profiles
+}
+CmdStanFit$set("public", name = "profiles", value = profiles)
 
 # CmdStanMCMC -------------------------------------------------------------
 #' CmdStanMCMC objects
@@ -786,7 +862,7 @@ CmdStanMCMC <- R6::R6Class(
             csv_contents$post_warmup_draws[,,missing_variables],
             along="variable"
           )
-        }        
+        }
       }
       if (!is.null(csv_contents$post_warmup_sampler_diagnostics)) {
         if (is.null(private$sampler_diagnostics_)) {

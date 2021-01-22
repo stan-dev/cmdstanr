@@ -5,14 +5,18 @@
 \alias{save_output_files}
 \alias{fit-method-save_data_file}
 \alias{fit-method-save_latent_dynamics_files}
+\alias{fit-method-save_profile_files}
 \alias{fit-method-output_files}
 \alias{fit-method-data_file}
 \alias{fit-method-latent_dynamics_files}
+\alias{fit-method-profile_files}
 \alias{save_data_file}
 \alias{save_latent_dynamics_files}
+\alias{save_profile_files}
 \alias{output_files}
 \alias{data_file}
 \alias{latent_dynamics_files}
+\alias{profile_files}
 \title{Save output and data files}
 \usage{
 save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
@@ -24,9 +28,13 @@ save_latent_dynamics_files(
   random = TRUE
 )
 
+save_profile_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+
 save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 
 output_files(include_failed = FALSE)
+
+profile_files(include_failed = FALSE)
 
 latent_dynamics_files(include_failed = FALSE)
 
@@ -79,6 +87,10 @@ the form \code{basename-timestamp-id-random}, where
 
 For \verb{$save_latent_dynamics_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-diagnostic-"} is included in the new
+file name after \code{basename}.
+
+For \verb{$save_profile_files()} everything is the same as for
+\verb{$save_output_files()} except \code{"-profile-"} is included in the new
 file name after \code{basename}.
 
 For \verb{$save_data_file()} no \code{id} is included in the file name because even
