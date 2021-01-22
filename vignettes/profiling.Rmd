@@ -24,13 +24,18 @@ presented in this vignette is 0.3.1.
 
 ## Adding profiling statements to a Stan program
 
-Lets start with a simple linear regression model. Profiling Stan programs requires
-adding `profile` statements to a Stan model. In the linear regression model we 
-want to profile the two parts of the model: the priors and the likelihood.
+We have a simple linear regression model in which the model block consists of three
+statements: setting the prior for `alpha` and `beta` and a likelihood statement.
 
-We do this by enclosing the two prior definitions in a profile labeled `priors`
-and the likelihood function with a profile labeled `likelihood`. The entire model
-with the two profiles can be seen below.
+```stan
+target += std_normal_lpdf(beta);
+target += std_normal_lpdf(alpha);
+target += bernoulli_logit_lpmf(y | X * beta + alpha);
+```
+
+We start by adding `profile` statements to the Stan model. We do this by enclosing
+the two prior definitions in a profile labeled `priors` and the likelihood function
+with a profile labeled `likelihood`. The entire model with the two profiles can be seen below.
 
 ```stan
 data {
@@ -53,7 +58,6 @@ model {
   }  
 }
 ```
-
 
 We then compile the model
 ```{r compile, message=FALSE}
@@ -81,7 +85,7 @@ model {
 ')
 model <- cmdstan_model(stan_file = stan_file_profiling)
 ```
-and run sampling with some generated data
+and run sampling with some fake data (`ǹ = 1000`, `k = 20`)
 
 ```{r sampling, message=FALSE, results='hide'}
 n <- 1000
@@ -96,20 +100,86 @@ fit <- model$sample(data = list(k = ncol(X), n = nrow(X), y = y, X = X), chains 
 ```
 ## Accessing profiling information after running Stan
 
-After the sampling finishes, CmdStan stores the profiling data in CSV files. The paths
-of the profiling CSV files can be retrieved using `$profile_files()`.
+After sampling (or optimization/variational inference) finishes, CmdStan stores the
+profiling data in CSV files that are stored in a temporary location. 
+The paths of the profiling CSV files can be retrieved using `$profile_files()`.
 
 ```{r profile_files}
 fit$profile_files()
 ```
-With `$profiles()` you can automatically read in all profiling CSV.
+
+In order to automatically read the profiling data from the CSV files, use `$profiles()`.
 
 ```{r profiles}
 fit$profiles()
 ```
 
-Here we can see that ...
+We can see all the profiling data for both profiles. For details on all the columns
+check the [CmdStan guide section](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
 
+We can see that the vast majority of time is spent calculating the likelihood function, which was expected. We can also
+see that the likelihood function uses more stack.
+
+To get the per-gradient call numbers we run
+```{r per-gradient}
+profile_chain_1 <- fit$profiles()[[1]]
+per_call_profiling <- cbind(
+  profile_chain_1["name"],
+  profile_chain_1["total_time"]/profile_chain_1["autodiff_calls"],
+  profile_chain_1["chain_stack"]/profile_chain_1["autodiff_calls"],
+  profile_chain_1["no_chain_stack"]/profile_chain_1["autodiff_calls"]
+)
+per_call_profiling
+```
+We observe that for each gradient we place two varis on the chain stack (one for each `std_normal_lpdf` call) and no varis
+on the nochain stack (there are no intermediate values we need to store. In the likelihood profile we place three varis on
+the chain stack (one for multiplication, one for addition and one for the `bernoulli_logit_lpmf` call). In the likelihood
+call we also place `2 * n` varis on the chain stack (`n` for the result of multiplcation and `n` for the result of addition).
+
+If we change the likelihood call to use the glm function we get the following per call profiling numbers:
+
+```{r glm, message=FALSE}
+library(cmdstanr)
+stan_file_glm_profiling <- write_stan_file('
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  int y[n];
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  profile("priors") {
+    target += std_normal_lpdf(beta);
+    target += std_normal_lpdf(alpha);
+  }
+  profile("likelihood") {
+    target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
+  }  
+}
+')
+model_glm <- cmdstan_model(stan_file = stan_file_glm_profiling)
+fit_glm <- model_glm$sample(data = list(k = ncol(X), n = nrow(X), y = y, X = X), chains = 1)
+glm_profile_chain_1 <- fit_glm$profiles()[[1]]
+glm_per_call_profiling <- cbind(
+  glm_profile_chain_1["name"],
+  glm_profile_chain_1["total_time"]/glm_profile_chain_1["autodiff_calls"],
+  glm_profile_chain_1["chain_stack"]/glm_profile_chain_1["autodiff_calls"],
+  glm_profile_chain_1["no_chain_stack"]/glm_profile_chain_1["autodiff_calls"]
+)
+glm_per_call_profiling
+```
+
+We can see that using GLMs makes the likelihood profiling section faster by a factor of `r format(per_call_profiling[1, "total_time"]/glm_per_call_profiling[1, "total_time"], digits = 3)` while the execution time for the priors remains the same. We can also see that the GLM function uses only one vari for the GLM function call and that no varis are placed on the nochain stack as there are no intermediate results to store.
 ### Saving profile files
 
-The `$save_profile_files()` method ...
+CmdStanR also offers helper functions to save the temporary profiling CSV files to a different location
+with the `$save_profile_files()` method.
+
+```{r save_profile_files, eval=FALSE}
+# see ?save_profile_files for info on optional arguments
+fit$save_profile_files(dir = "path/to/directory")
+```
