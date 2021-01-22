@@ -25,7 +25,7 @@ CmdStanRun <- R6::R6Class(
       private$output_files_ <- self$new_output_files()
       if (cmdstan_version() >= "2.26.0") {
         private$profile_files_ <- self$new_profile_files()
-      }      
+      }
       if (self$args$save_latent_dynamics) {
         private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
       }
@@ -70,7 +70,8 @@ CmdStanRun <- R6::R6Class(
       }
     },
     profile_files = function(include_failed = FALSE) {
-      if (!length(private$profile_files_)) {
+      files <- private$profile_files_
+      if (!length(files) || !any(file.exists(files))) {
         stop(
           "No profile files found. ",
           "The model that produced the fit did not use any profiling.",
@@ -78,10 +79,10 @@ CmdStanRun <- R6::R6Class(
         )
       }
       if (include_failed) {
-        private$profile_files_
+        files
       } else {
         ok <- self$procs$is_finished() | self$procs$is_queued()
-        private$profile_files_[ok]
+        files[ok]
       }
     },
     save_output_files = function(dir = ".",
@@ -110,9 +111,9 @@ CmdStanRun <- R6::R6Class(
       invisible(new_paths)
     },
     save_latent_dynamics_files = function(dir = ".",
-                                     basename = NULL,
-                                     timestamp = TRUE,
-                                     random = TRUE) {
+                                          basename = NULL,
+                                          timestamp = TRUE,
+                                          random = TRUE) {
       current_files <- self$latent_dynamics_files(include_failed = TRUE) # used so we get error if 0 files
       new_paths <- copy_temp_files(
         current_paths = current_files,

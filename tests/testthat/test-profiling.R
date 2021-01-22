@@ -4,6 +4,7 @@ if (not_on_cran()) {
 
 test_that("profiling works if profiling data is present", {
   skip_on_cran()
+  skip_if(cmdstan_version() < "2.26.0")
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
     fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
@@ -36,6 +37,7 @@ test_that("profiling errors if no profiling files are present", {
 
 test_that("saving profile csv output works", {
   skip_on_cran()
+  skip_if(cmdstan_version() < "2.26.0")
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
     fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
