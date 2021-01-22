@@ -125,8 +125,7 @@
 
       
 
-      </header><script src="profiling_files/accessible-code-block-0.0.1/empty-anchor.js"></script><link href="profiling_files/anchor-sections-1.0/anchor-sections.css" rel="stylesheet">
-<script src="profiling_files/anchor-sections-1.0/anchor-sections.js"></script><div class="row">
+      </header><script src="profiling_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Profiling Stan programs with CmdStanR</h1>
@@ -143,16 +142,14 @@
 <div id="introduction" class="section level2">
 <h2 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h2>
-<p>The intention of this vignette is to showcase profiling with CmdStanR. Profiling was introduced in CmdStan 2.26.0. The minimum CmdStanR version to run the code presented in this vignette is 0.3.1.</p>
+<p>The intention of this vignette is to showcase profiling with CmdStanR introduced in CmdStan 2.26.0.</p>
+<p>Profiling is useful for identifying what parts of a model are taking the longest time to run to guide optimization efforts.</p>
+<p>Be aware that the statistical assumptions that go into a model are the most important factors in overall model performance. It is often not possible to make up for model problems with just brute force computation. For ideas on how to address performance of your model from a statistical perspective, see: [CITE WORKFLOW PAPER].</p>
 </div>
 <div id="adding-profiling-statements-to-a-stan-program" class="section level2">
 <h2 class="hasAnchor">
 <a href="#adding-profiling-statements-to-a-stan-program" class="anchor"></a>Adding profiling statements to a Stan program</h2>
-<p>We have a simple linear regression model in which the model block consists of three statements: setting the prior for <code>alpha</code> and <code>beta</code> and a likelihood statement.</p>
-<pre class="stan"><code>target += std_normal_lpdf(beta);
-target += std_normal_lpdf(alpha);
-target += bernoulli_logit_lpmf(y | X * beta + alpha);</code></pre>
-<p>We start by adding <code>profile</code> statements to the Stan model. We do this by enclosing the two prior definitions in a profile labeled <code>priors</code> and the likelihood function with a profile labeled <code>likelihood</code>. The entire model with the two profiles can be seen below.</p>
+<p>Consider a simple logistic regression with parameters <code>alpha</code> and <code>beta</code>, covariates <code>X</code>, and output <code>y</code>.</p>
 <pre class="stan"><code>data {
   int&lt;lower=1&gt; k;
   int&lt;lower=0&gt; n;
@@ -164,41 +161,27 @@ parameters {
   real alpha;
 }
 model {
-  profile("priors") {
-    target += std_normal_lpdf(beta);
-    target += std_normal_lpdf(alpha);
-  }
-  profile("likelihood") {
-    target += bernoulli_logit_lpmf(y | X * beta + alpha);
-  }  
+  beta ~ std_normal();
+  alpha ~ std_normal();
+
+  y ~ bernoulli_logit(X * beta + alpha);
 }</code></pre>
-<p>We then compile the model</p>
-<div class="sourceCode" id="cb3"><pre class="downlit">
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr">cmdstanr</a></span><span class="op">)</span>
-<span class="va">stan_file_profiling</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">'
-data {
-  int&lt;lower=1&gt; k;
-  int&lt;lower=0&gt; n;
-  matrix[n, k] X;
-  int y[n];
+<p>A simple question is how much time do the prior calculations take compared against the likelihood? To answer this, surround the prior and likelihood calculations with <code>profile</code> statements as follows:</p>
+<pre class="stan"><code>profile("priors") {
+  target += std_normal_lpdf(beta);
+  target += std_normal_lpdf(alpha);
 }
-parameters {
-  vector[k] beta;
-  real alpha;
-}
-model {
-  profile("priors") {
-    target += std_normal_lpdf(beta);
-    target += std_normal_lpdf(alpha);
-  }
-  profile("likelihood") {
-    target += bernoulli_logit_lpmf(y | X * beta + alpha);
-  }  
-}
-'</span><span class="op">)</span>
-<span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span>stan_file <span class="op">=</span> <span class="va">stan_file_profiling</span><span class="op">)</span></pre></div>
-<p>and run sampling with some fake data (<code>ǹ = 1000</code>, <code>k = 20</code>)</p>
-<div class="sourceCode" id="cb4"><pre class="downlit">
+profile("likelihood") {
+  target += bernoulli_logit_lpmf(y | X * beta + alpha);
+}</code></pre>
+<p>The model is run as usual, Stan collects the profiling information for any model with <code>profile</code> statements.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr">cmdstanr</a></span><span class="op">)</span>
+
+<span class="co"># Compile the model</span>
+<span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="st">"profiling_bernoulli_logit.stan"</span><span class="op">)</span>
+
+<span class="co"># Generate some fake data</span>
 <span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1000</span>
 <span class="va">k</span> <span class="op">&lt;-</span> <span class="fl">20</span>
 <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">k</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="va">k</span><span class="op">)</span>
@@ -206,110 +189,63 @@ model {
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1</span>
 <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span><span class="op">(</span><span class="va">p</span> <span class="op">&lt;</span> <span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">y</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>
+<span class="va">mdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">y</span>, X <span class="op">=</span> <span class="va">X</span><span class="op">)</span>
 
-<span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">y</span>, X <span class="op">=</span> <span class="va">X</span><span class="op">)</span>, chains <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></pre></div>
-</div>
-<div id="accessing-profiling-information-after-running-stan" class="section level2">
-<h2 class="hasAnchor">
-<a href="#accessing-profiling-information-after-running-stan" class="anchor"></a>Accessing profiling information after running Stan</h2>
-<p>After sampling (or optimization/variational inference) finishes, CmdStan stores the profiling data in CSV files that are stored in a temporary location. The paths of the profiling CSV files can be retrieved using <code>$profile_files()</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit">
-<span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></pre></div>
-<pre><code>[1] "/tmp/RtmpWOx4ya/file9281365a92ab-profile-202101221339-1-413e54.csv"</code></pre>
-<p>In order to automatically read the profiling data from the CSV files, use <code>$profiles()</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit">
-<span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></pre></div>
+<span class="co"># Run one chain of the model</span>
+<span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">mdata</span>, chains <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
+<p>The raw profiling information can then be accessed with the <code>$profiles()</code> function, which returns one data frame per chain run (profiles across multiple chains are not automatically aggregated). Details on the column names are available in the <a href="https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file">CmdStan documentation</a>.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id total_time forward_time reverse_time chain_stack
-1 likelihood 140635937326912 0.93335400   0.79014300  0.143212000       52911
-2     priors 140635937326912 0.00521322   0.00426319  0.000950032       35274
+1 likelihood 140008269469504 1.20486000   1.04047000   0.16439900       50949
+2     priors 140008269469504 0.00584956   0.00471553   0.00113403       33966
   no_chain_stack autodiff_calls no_autodiff_calls
-1       35274000          17637                 1
-2              0          17637                 1</code></pre>
-<p>We can see all the profiling data for both profiles. For details on all the columns check the <a href="https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file">CmdStan guide section</a>.</p>
-<p>We can see that the vast majority of time is spent calculating the likelihood function, which was expected. We can also see that the likelihood function uses more stack.</p>
-<p>To get the per-gradient call numbers we run</p>
-<div class="sourceCode" id="cb9"><pre class="downlit">
-<span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
-<span class="va">per_call_profiling</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span><span class="op">(</span>
-  <span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"name"</span><span class="op">]</span>,
-  <span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"total_time"</span><span class="op">]</span><span class="op">/</span><span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"autodiff_calls"</span><span class="op">]</span>,
-  <span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"chain_stack"</span><span class="op">]</span><span class="op">/</span><span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"autodiff_calls"</span><span class="op">]</span>,
-  <span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"no_chain_stack"</span><span class="op">]</span><span class="op">/</span><span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"autodiff_calls"</span><span class="op">]</span>
-<span class="op">)</span>
-<span class="va">per_call_profiling</span></pre></div>
-<pre><code>        name   total_time chain_stack no_chain_stack
-1 likelihood 5.292022e-05           3           2000
-2     priors 2.955843e-07           2              0</code></pre>
-<p>We observe that for each gradient we place two varis on the chain stack (one for each <code>std_normal_lpdf</code> call) and no varis on the nochain stack (there are no intermediate values we need to store. In the likelihood profile we place three varis on the chain stack (one for multiplication, one for addition and one for the <code>bernoulli_logit_lpmf</code> call). In the likelihood call we also place <code>2 * n</code> varis on the chain stack (<code>n</code> for the result of multiplcation and <code>n</code> for the result of addition).</p>
-<p>If we change the likelihood call to use the glm function we get the following per call profiling numbers:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit">
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr">cmdstanr</a></span><span class="op">)</span>
-<span class="va">stan_file_glm_profiling</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">'
-data {
-  int&lt;lower=1&gt; k;
-  int&lt;lower=0&gt; n;
-  matrix[n, k] X;
-  int y[n];
-}
-parameters {
-  vector[k] beta;
-  real alpha;
-}
-model {
-  profile("priors") {
-    target += std_normal_lpdf(beta);
-    target += std_normal_lpdf(alpha);
-  }
-  profile("likelihood") {
-    target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
-  }  
-}
-'</span><span class="op">)</span>
-<span class="va">model_glm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span>stan_file <span class="op">=</span> <span class="va">stan_file_glm_profiling</span><span class="op">)</span>
-<span class="va">fit_glm</span> <span class="op">&lt;-</span> <span class="va">model_glm</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">y</span>, X <span class="op">=</span> <span class="va">X</span><span class="op">)</span>, chains <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></pre></div>
-<pre><code>Running MCMC with 1 chain...
-
-Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
-Chain 1 Iteration:  100 / 2000 [  5%]  (Warmup) 
-Chain 1 Iteration:  200 / 2000 [ 10%]  (Warmup) 
-Chain 1 Iteration:  300 / 2000 [ 15%]  (Warmup) 
-Chain 1 Iteration:  400 / 2000 [ 20%]  (Warmup) 
-Chain 1 Iteration:  500 / 2000 [ 25%]  (Warmup) 
-Chain 1 Iteration:  600 / 2000 [ 30%]  (Warmup) 
-Chain 1 Iteration:  700 / 2000 [ 35%]  (Warmup) 
-Chain 1 Iteration:  800 / 2000 [ 40%]  (Warmup) 
-Chain 1 Iteration:  900 / 2000 [ 45%]  (Warmup) 
-Chain 1 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
-Chain 1 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
-Chain 1 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
-Chain 1 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
-Chain 1 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
-Chain 1 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
-Chain 1 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
-Chain 1 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
-Chain 1 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
-Chain 1 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
-Chain 1 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
-Chain 1 Iteration: 2000 / 2000 [100%]  (Sampling) 
-Chain 1 finished in 0.5 seconds.</code></pre>
-<div class="sourceCode" id="cb13"><pre class="downlit">
-<span class="va">glm_profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
-<span class="va">glm_per_call_profiling</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span><span class="op">(</span>
-  <span class="va">glm_profile_chain_1</span><span class="op">[</span><span class="st">"name"</span><span class="op">]</span>,
-  <span class="va">glm_profile_chain_1</span><span class="op">[</span><span class="st">"total_time"</span><span class="op">]</span><span class="op">/</span><span class="va">glm_profile_chain_1</span><span class="op">[</span><span class="st">"autodiff_calls"</span><span class="op">]</span>,
-  <span class="va">glm_profile_chain_1</span><span class="op">[</span><span class="st">"chain_stack"</span><span class="op">]</span><span class="op">/</span><span class="va">glm_profile_chain_1</span><span class="op">[</span><span class="st">"autodiff_calls"</span><span class="op">]</span>,
-  <span class="va">glm_profile_chain_1</span><span class="op">[</span><span class="st">"no_chain_stack"</span><span class="op">]</span><span class="op">/</span><span class="va">glm_profile_chain_1</span><span class="op">[</span><span class="st">"autodiff_calls"</span><span class="op">]</span>
-<span class="op">)</span>
-<span class="va">glm_per_call_profiling</span></pre></div>
-<pre><code>        name   total_time chain_stack no_chain_stack
-1 likelihood 2.806485e-05           1              0
-2     priors 2.412459e-07           2              0</code></pre>
-<p>We can see that using GLMs makes the likelihood profiling section faster by a factor of 1.89 while the execution time for the priors remains the same. We can also see that the GLM function uses only one vari for the GLM function call and that no varis are placed on the nochain stack as there are no intermediate results to store. ### Saving profile files</p>
-<p>CmdStanR also offers helper functions to save the temporary profiling CSV files to a different location with the <code>$save_profile_files()</code> method.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit">
-<span class="co"># see ?save_profile_files for info on optional arguments</span>
-<span class="va">fit</span><span class="op">$</span><span class="fu">save_profile_files</span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"path/to/directory"</span><span class="op">)</span></pre></div>
+1       33966000          16983                 1
+2              0          16983                 1</code></pre>
+<p>Look at the <code>total_time</code> column for the total time spent inside a given profile statement. It is clear that the vast majority of time is spent in the likelihood function.</p>
+<p>The glm functions can be used to make models like this faster. In this case the likelihood can be replaced with:</p>
+<pre class="stan"><code>target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);</code></pre>
+<p>The profiling information for the new model is collected automatically just like the last one:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">model_glm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="st">"profiling_bernoulli_logit_glm.stan"</span><span class="op">)</span>
+<span class="va">fit_glm</span> <span class="op">&lt;-</span> <span class="va">model_glm</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">mdata</span>, chains <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<pre><code>[[1]]
+        name       thread_id total_time forward_time reverse_time chain_stack
+1 likelihood 140429911627584 0.57777300   0.57682500  0.000947282       17011
+2     priors 140429911627584 0.00584365   0.00490393  0.000939724       34022
+  no_chain_stack autodiff_calls no_autodiff_calls
+1              0          17011                 1
+2              0          17011                 1</code></pre>
+<p>Looking at the <code>total_time</code> column, this is much faster.</p>
+</div>
+<div id="per-gradient-timings-and-memory-usage" class="section level2">
+<h2 class="hasAnchor">
+<a href="#per-gradient-timings-and-memory-usage" class="anchor"></a>Per-gradient timings, and memory usage</h2>
+<p>The other columns of the profiling output are documented in the <a href="https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file">CmdStan documentation</a>.</p>
+<p>The timing numbers are broken down by forward pass and reverse pass, and the <code>chain_stack</code> and <code>no_chain_stack</code> contain information about how many autodiff variables were saved in the process of performing a calculation.</p>
+<p>These are all total numbers – times are the total times over the whole calculation, and <code>chain_stack</code> counts are similarly the total counts of autodiff variables use over the whole calculation. It is often convenient to have per-gradient calculations (which will be more stable across runs with different seeds). To compute these, use the <code>autodiff_calls</code> column.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
+<span class="va">per_gradient_timing</span> <span class="op">=</span> <span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"total_time"</span><span class="op">]</span><span class="op">/</span><span class="va">profile_chain_1</span><span class="op">[</span><span class="st">"autodiff_calls"</span><span class="op">]</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span></code></pre></div>
+<pre><code>    total_time
+1 7.094506e-05
+2 3.444362e-07</code></pre>
+</div>
+<div id="accessing-the-profile-files" class="section level2">
+<h2 class="hasAnchor">
+<a href="#accessing-the-profile-files" class="anchor"></a>Accessing the profile files</h2>
+<p>After sampling (or optimization/variational inference) finishes, CmdStan stores the profiling data in CSV files that are stored in a temporary location. The paths of the profiling CSV files can be retrieved using <code>$profile_files()</code>.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<pre><code>[1] "/tmp/RtmpMlEaGT/profiling_bernoulli_logit-profile-202101221305-1-699d14.csv"</code></pre>
+<p>These can be saved to a more permanent location with the <code>$save_profile_files()</code> method.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># see ?save_profile_files for info on optional arguments</span>
+<span class="va">fit</span><span class="op">$</span><span class="fu">save_profile_files</span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"path/to/directory"</span><span class="op">)</span></code></pre></div>
 </div>
   </div>
 
