@@ -75,7 +75,7 @@ model with `profile` statements.
 library(cmdstanr)
 
 # Compile the model
-model <- cmdstan_model("profiling_bernoulli_logit.stan")
+model <- cmdstan_model("models/profiling_bernoulli_logit.stan")
 
 # Generate some fake data
 n <- 1000
@@ -115,7 +115,7 @@ The profiling information for the new model is collected automatically just
 like the last one:
 
 ```{r, message=FALSE, results='hide'}
-model_glm <- cmdstan_model("profiling_bernoulli_logit_glm.stan")
+model_glm <- cmdstan_model("models/profiling_bernoulli_logit_glm.stan")
 fit_glm <- model_glm$sample(data = mdata, chains = 1)
 ```
 
