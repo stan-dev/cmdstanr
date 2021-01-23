@@ -1,0 +1,101 @@
+---
+title: "Threading in CmdStanR"
+author: "Rok Češnovar, Jonah Gabry and Ben Bales"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+vignette: >
+  %\VignetteIndexEntry{Threading in CmdStanR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r child="children/settings-knitr.Rmd"}
+```
+
+## Introduction
+
+The intention of this vignette is to introduce the use of threading for parallelization in CmdStanR. This vignette requires CmdStan 2.25 or newer.
+
+The model and data used in this vignette are copied from the [`reduce_sum`
+case study](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html) from Ben Bales and Sebastian Weber that is based on Richard McElreath’s [tutorial on Map-Reduce](https://github.com/rmcelreath/cmdstan_map_rect_tutorial).
+
+## The model and the dataset
+
+The model we are going to use is a simple logistic regression. The dataset will be the football red card data set from the [crowdsourced data analysis project](https://psyarxiv.com/qkwst/). See the [`reduce_sum` case study] for a more detailed explanation of the dataset. 
+
+The Stan code of the model is shown below. We can see a `reduce_sum` call with of the user-defined `lpmf` function. The reduce sum call slices over the `n_redcards` data variable.
+
+```stan
+functions {
+  real partial_sum_lpmf(int[] slice_n_redcards,
+                        int start, int end,
+                        int[] n_games,
+                        vector rating,
+                        vector beta) {
+    return binomial_logit_lupmf(slice_n_redcards |
+                               n_games[start:end],
+                               beta[1] + beta[2] * rating[start:end]);
+  }
+}
+data {
+  int<lower=0> N;
+  int<lower=0> n_redcards[N];
+  int<lower=0> n_games[N];
+  vector[N] rating;
+  int<lower=1> grainsize;
+}
+parameters {
+  vector[2] beta;
+}
+model {
+
+  beta[1] ~ normal(0, 10);
+  beta[2] ~ normal(0, 1);
+
+  target += reduce_sum(partial_sum_lupmf, n_redcards, grainsize,
+                       n_games, rating, beta);
+}
+```
+
+We download the dataset, read it in and create a list:
+
+```{r data_prep}
+download.file("https://raw.githubusercontent.com/stan-dev/example-models/807053f11b7ecbed1e02cd4c7caa0416f3657799/knitr/reduce-sum/redcard_input.R", "redcard_input.R")
+source("redcard_input.R")
+
+redcard_data <- list(N = N, n_redcards = n_redcards, n_games = n_games, rating = rating)
+```
+
+## Compiling with threading
+
+We compile the model with `stan_threads` enabled in `cpp_options`.
+
+```{r cmdstan_model, message=FALSE}
+library(cmdstanr)
+mod <- cmdstan_model(stan_file = "threading-files/logistic.stan", cpp_options = list(stan_threads = TRUE))
+```
+
+## Running the model
+
+We set the grainsize to `1`:
+```{r grainsize}
+redcard_data$grainsize <- 1
+```
+We first run the model using one thread. We do that by setting the `threads_per_chain` argument to 1:
+```{r one_thread}
+fit_1 <- mod$sample(data = redcard_data, chains = 1, threads_per_chain = 1, refresh = 0)
+```
+
+We then run with four threads:
+```{r four_threads}
+fit_4 <- mod$sample(data = redcard_data, chains = 1, threads_per_chain = 4, refresh = 0)
+```
+
+We calculate the speedup of running four threads:
+```{r speedup}
+fit_1$time()$total / fit_4$time()$total
+```
