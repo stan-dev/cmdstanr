@@ -5,6 +5,7 @@ output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
+bibliography: profiling-files/profiling.bib
 params:
   EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
 vignette: >
@@ -28,7 +29,7 @@ Be aware that the statistical assumptions that go into a model are the
 most important factors in overall model performance. It is often not possible
 to make up for model problems with just brute force computation. For ideas on
 how to address performance of your model from a statistical perspective,
-see: [CITE WORKFLOW PAPER].
+see: [@gelman2020bayesian].
 
 ## Adding profiling statements to a Stan program
 
@@ -75,7 +76,7 @@ model with `profile` statements.
 library(cmdstanr)
 
 # Compile the model
-model <- cmdstan_model("models/profiling_bernoulli_logit.stan")
+model <- cmdstan_model("profiling-files/profiling_bernoulli_logit.stan")
 
 # Generate some fake data
 n <- 1000
@@ -115,7 +116,7 @@ The profiling information for the new model is collected automatically just
 like the last one:
 
 ```{r, message=FALSE, results='hide'}
-model_glm <- cmdstan_model("models/profiling_bernoulli_logit_glm.stan")
+model_glm <- cmdstan_model("profiling-files/profiling_bernoulli_logit_glm.stan")
 fit_glm <- model_glm$sample(data = mdata, chains = 1)
 ```
 
@@ -163,3 +164,7 @@ method.
 # see ?save_profile_files for info on optional arguments
 fit$save_profile_files(dir = "path/to/directory")
 ```
+
+# References
+
+<!-- profiling.bib specified at the top -->
