@@ -1,7 +1,9 @@
 context("install")
 
 if (not_on_cran()) {
-  cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+  #cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+  cmdstan_test_tarball_url <- 
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.26.0-rc1/cmdstan-2.26.0-rc1.tar.gz"
   if (!nzchar(cmdstan_test_tarball_url)) {
     cmdstan_test_tarball_url <- NULL
   }
