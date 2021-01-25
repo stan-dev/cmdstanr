@@ -19,24 +19,25 @@ vignette: >
 
 ## Introduction
 
-The intention of this vignette is to showcase profiling with CmdStanR introduced
-in CmdStan 2.26.0.
+This vignette demonstrates how to use the new profiling functionality 
+introduced in CmdStan 2.26.0.
 
-Profiling is useful for identifying what parts of a model are taking the
-longest time to run to guide optimization efforts.
+Profiling identifies which parts of a Stan program are taking the longest time
+to run and is therefore a useful guide when working on optimizing the
+performance of a model.
 
-Be aware that the statistical assumptions that go into a model are the
-most important factors in overall model performance. It is often not possible
-to make up for model problems with just brute force computation. For ideas on
-how to address performance of your model from a statistical perspective,
-see: [@gelman2020bayesian].
+However, be aware that the statistical assumptions that go into a model are
+the most important factors in overall model performance. It is often not
+possible to make up for model problems with just brute force computation. For
+ideas on how to address performance of your model from a statistical
+perspective, see [@gelman2020bayesian].
 
 ## Adding profiling statements to a Stan program
 
 Consider a simple logistic regression with parameters `alpha` and `beta`,
-covariates `X`, and output `y`.
+covariates `X`, and outcome `y`.
 
-```stan
+```
 data {
   int<lower=1> k;
   int<lower=0> n;
@@ -56,10 +57,10 @@ model {
 ```
 
 A simple question is how much time do the prior calculations take compared
-against the likelihood? To answer this, surround the prior and likelihood
-calculations with `profile` statements as follows:
+against the likelihood? To answer this we surround the prior and likelihood
+calculations with `profile` statements.
 
-```stan
+```
 profile("priors") {
   target += std_normal_lpdf(beta);
   target += std_normal_lpdf(alpha);
@@ -69,10 +70,9 @@ profile("likelihood") {
 }
 ```
 
-The model is run as usual, Stan collects the profiling information for any
-model with `profile` statements.
+We can then run the model as usual and Stan will collect the profiling information for any sections with `profile` statements.
 
-```{r, message=FALSE, results='hide'}
+```{r fit-model, message=FALSE, results='hide'}
 library(cmdstanr)
 
 # Compile the model
@@ -86,14 +86,15 @@ X <- matrix(rnorm(n * k), ncol = k)
 y <- 3 * X[,1] - 2 * X[,2] + 1
 p <- runif(n)
 y <- ifelse(p < (1 / (1 + exp(-y))), 1, 0)
-mdata = list(k = ncol(X), n = nrow(X), y = y, X = X)
+mdata <- list(k = ncol(X), n = nrow(X), y = y, X = X)
 
 # Run one chain of the model
 fit <- model$sample(data = mdata, chains = 1)
 ```
+## Accessing the profiling information from R 
 
 The raw profiling information can then be accessed with the `$profiles()`
-function, which returns one data frame per chain run (profiles across multiple
+method, which returns one data frame per chain (profiles across multiple
 chains are not automatically aggregated). Details on the column names are
 available in the [CmdStan documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
 
@@ -101,56 +102,56 @@ available in the [CmdStan documentation](https://mc-stan.org/docs/2_26/cmdstan-g
 fit$profiles()
 ```
 
-Look at the `total_time` column for the total time spent inside a given
-profile statement. It is clear that the vast majority of time is spent
-in the likelihood function.
+The `total_time` column is the total time spent inside a given profile
+statement. It is clear that the vast majority of time is spent in the likelihood
+function.
 
-The glm functions can be used to make models like this faster. In this case the
-likelihood can be replaced with:
+Stan's specialized glm functions can be used to make models like this faster. In
+this case the likelihood can be replaced with
 
-```stan
+```
 target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
 ```
 
 The profiling information for the new model is collected automatically just
-like the last one:
+like the last one.
 
-```{r, message=FALSE, results='hide'}
+```{r fit-model-glm, message=FALSE, results='hide'}
 model_glm <- cmdstan_model("profiling-files/profiling_bernoulli_logit_glm.stan")
 fit_glm <- model_glm$sample(data = mdata, chains = 1)
 ```
 
-```{r}
+```{r profiles-glm}
 fit_glm$profiles()
 ```
 
-Looking at the `total_time` column, this is much faster.
+We can see from the `total_time` column that this is much faster.
 
 ## Per-gradient timings, and memory usage
 
 The other columns of the profiling output are documented in the
 [CmdStan documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
 
-The timing numbers are broken down by forward pass and reverse pass, and
-the `chain_stack` and `no_chain_stack` contain information about how many
+The timing numbers are broken down by forward pass and reverse pass, and the
+`chain_stack` and `no_chain_stack` columns contain information about how many
 autodiff variables were saved in the process of performing a calculation.
 
-These are all total numbers -- times are the total times over the whole
+These numbers are all totals -- times are the total times over the whole
 calculation, and `chain_stack` counts are similarly the total counts of autodiff
-variables use over the whole calculation. It is often convenient to have
+variables used over the whole calculation. It is often convenient to have
 per-gradient calculations (which will be more stable across runs with different
 seeds). To compute these, use the `autodiff_calls` column.
 
 ```{r per-gradient}
 profile_chain_1 <- fit$profiles()[[1]]
-per_gradient_timing = profile_chain_1["total_time"]/profile_chain_1["autodiff_calls"]
+per_gradient_timing <- profile_chain_1["total_time"]/profile_chain_1["autodiff_calls"]
 print(per_gradient_timing)
 ```
 
 ## Accessing the profile files
 
-After sampling (or optimization/variational inference) finishes, CmdStan stores
-the profiling data in CSV files that are stored in a temporary location. 
+After sampling (or optimization or variational inference) finishes, CmdStan stores
+the profiling data in CSV files in a temporary location. 
 The paths of the profiling CSV files can be retrieved using `$profile_files()`.
 
 ```{r profile_files}
