@@ -59,7 +59,7 @@ test_that("install_cmdstan() errors if it times out", {
   } else {
     dir <- tempdir(check = TRUE)
   }
-  ver <- latest_released_version()
+  ver <- "2.26.0-rc1" #latest_released_version()
   dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
   # with quiet=TRUE
   expect_warning(
