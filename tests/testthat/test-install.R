@@ -40,14 +40,12 @@ test_that("install_cmdstan() errors if installation already exists", {
     install_dir <- tempdir()
   }
   dir <- file.path(install_dir, "cmdstan-2.23.0")
-  fake_folder <- FALSE
   if (!dir.exists(dir)) {
-    fake_folder <- TRUE
     dir.create(dir)
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    release_url = cmdstan_test_tarball_url),
+                    version = "2.23.0"),
     "An installation already exists",
     fixed = TRUE
   )
