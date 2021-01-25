@@ -16,6 +16,8 @@ files. (#414)
 information from R if profiling used in the Stan program. Support for profiling
 Stan programs requires CmdStan >= 2.26. (#434)
 
+* New vignette on profiling Stan programs. (#435)
+
 
 # cmdstanr 0.3.0
 
