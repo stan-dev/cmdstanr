@@ -1,2 +1,4 @@
 *.html
 *.R
+profiling-files/profiling_bernoulli_logit_glm
+profiling-files/profiling_bernoulli_logit
