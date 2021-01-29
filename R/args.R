@@ -31,7 +31,8 @@ CmdStanArgs <- R6::R6Class(
                           refresh = NULL,
                           output_dir = NULL,
                           validate_csv = TRUE,
-                          sig_figs = NULL) {
+                          sig_figs = NULL,
+                          opencl_device = NULL) {
 
       self$model_name <- model_name
       self$exe_file <- exe_file
@@ -57,7 +58,7 @@ CmdStanArgs <- R6::R6Class(
         init <- process_init_list(init, length(self$proc_ids))
       }
       self$init <- init
-
+      self$opencl_device <- opencl_device
       self$method_args$validate(num_procs = length(self$proc_ids))
       self$validate()
     },
@@ -149,7 +150,9 @@ CmdStanArgs <- R6::R6Class(
       if (!is.null(profile_file)) {
         args$output <- c(args$output, paste0("profile_file=", profile_file))
       }
-
+      if (!is.null(self$opencl_device)) {
+        args$opencl <- c("opencl", paste0("platform=", self$opencl_device[1]), paste0("device=", self$opencl_device[2]))
+      }
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
     },
@@ -491,7 +494,12 @@ validate_cmdstan_args = function(self) {
   num_procs <- length(self$proc_ids)
   validate_init(self$init, num_procs)
   validate_seed(self$seed, num_procs)
-
+  if (!is.null(self$opencl_device)) {
+    if (cmdstan_version() < "2.25") {
+      stop("Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer.", call. = FALSE)
+    }
+    checkmate::assert_vector(self$opencl_device, len = 2)    
+  }
   invisible(TRUE)
 }
 

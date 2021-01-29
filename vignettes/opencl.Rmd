@@ -1,0 +1,117 @@
+---
+title: "Using CmdStanR to run Stan on the GPU with OpenCL"
+author: "Rok Češnovar and Jonah Gabry"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
+params:
+  EVAL: !r identical(Sys.getenv("CMDSTANR_OPENCL_TESTS"), "true")
+vignette: >
+  %\VignetteIndexEntry{Using CmdStanR to run Stan on the GPU with OpenCL}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r child="children/settings-knitr.Rmd"}
+```
+
+## Introduction
+
+This vignette demonstrates how to use the OpenCL capabilites of CmdStan with
+CmdStanR. The vignette requires CmdStan 2.26 or newer.
+
+## OpenCL runtime
+
+OpenCL is supported on most modern CPUs and GPUs. In order to run OpenCL-enabled Stan models, 
+an OpenCL runtime for the target device must be installed. This is also a prerequisite 
+for running this vignette. A guide for the most common devices is available [here](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl).
+
+## Compiling a model with OpenCL
+
+Consider a simple logistic regression with parameters `alpha` and `beta`,
+covariates `X`, and outcome `y`.
+
+```
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  int y[n];
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  target += std_normal_lpdf(beta);
+  target += std_normal_lpdf(alpha);
+  target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
+}
+```
+
+We will generate some fake data and store it to a JSON file first, 
+to avoid writing it multiple times.
+
+```{r fake-data, message=FALSE, results='hide'}
+library(cmdstanr)
+
+# Generate some fake data
+n <- 200000
+k <- 20
+X <- matrix(rnorm(n * k), ncol = k)
+
+y <- 3 * X[,1] - 2 * X[,2] + 1
+p <- runif(n)
+y <- ifelse(p < (1 / (1 + exp(-y))), 1, 0)
+mdata <- list(k = ncol(X), n = nrow(X), y = y, X = X)
+
+data_file <- "lr_data.json"
+write_stan_json(mdata, data_file)
+```
+
+We now compile the model with `cpp_options = list(stan_opencl = TRUE)`.
+
+```{r compile-opencl, message=FALSE, results='hide'}
+# Compile the model with STAN_OPENCL=TRUE
+model_cl <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan", cpp_options = list(stan_opencl = TRUE))
+```
+
+## Running models with OpenCL
+
+Once a model is compiled with OpenCL, we need to select the target device
+and run sampling or any other method. OpenCL devices have unique platform
+and device IDs with which we determine the target one on our system.
+
+If the system has one GPU and no OpenCL CPU runtime, the platform and
+device IDs of the GPU are typically both `0`. If there are multiple devices
+we need to run the `clinfo` tool to determine the IDs. See [here](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#running-2)
+for instruction on installing/using `clinfo`.
+
+On our target system the GPU has platform ID `0` and device ID `0`.
+We determine the target device using the `opencl_device` argument.
+The argument is supplied a vector of length 2, where the first element
+is the platform ID and the second argument is the device ID.
+
+```{r fit-opencl}
+fit_cl <- model_cl$sample(data = data_file, chains = 4, parallel_chains = 4, opencl_device = c(0,0), refresh = 0)
+```
+
+Lets run a CPU version to compare the runtimes:
+
+```{r fit-cpu, message=FALSE}
+# CPU version
+model <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan")
+fit <- model$sample(data = data_file, chains = 4, parallel_chains = 4, refresh = 0)
+```
+
+## Device names
+
+The devices used to obtain the fit can be retrieved from `$metadata()`:
+```{r device-name}
+fit_cl$metadata()$opencl_platform_name
+fit_cl$metadata()$opencl_device_name
+```
+
+
+
