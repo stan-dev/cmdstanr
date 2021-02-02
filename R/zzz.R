@@ -73,7 +73,7 @@ cmdstanr_knitr_env <- cmdstanr_knitr_env_function_generator(new.env())
 }
 
 .onLoad <- function(...) {
-  if (requireNamespace(pkg, quietly = TRUE)) {
+  if (requireNamespace("knitr", quietly = TRUE)) {
     cmdstanr_knitr_env(knitr::knit_global())
   }
   cmdstanr_initialize()
