@@ -929,7 +929,7 @@ CmdStanMCMCProcs <- R6::R6Class(
                 "seconds.\n")
             warning("The returned fit object will only read in results of successful chains. "
               "Please use 'read_cmdstan_csv()' to read the results of the failed chains separately.",
-              "Use the '$output(chain_id)' for more output of the failed chains."
+              "Use the '$output(chain_id)' method for more output of the failed chains."
               immediate. = TRUE,
               call. = FALSE)
           }
