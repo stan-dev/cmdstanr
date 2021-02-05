@@ -927,7 +927,7 @@ CmdStanMCMCProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of successful chains. "
+            warning("The returned fit object will only read in results of successful chains. ",
               "Please use read_cmdstan_csv() to read the results of the failed chains separately.",
               "Use the $output(chain_id) method for more output of the failed chains."
               immediate. = TRUE,
