@@ -1106,9 +1106,17 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' @param adapt_engaged (logical) Do warmup adaptation?
 #' @param adapt_iter (positive integer) The _maximum_ number of adaptation
 #'   iterations.
-#' @param tol_rel_obj (positive real) Convergence tolerance on the relative norm
-#'   of the objective.
-#' @param eval_elbo (positive integer) Evaluate ELBO every Nth iteration.
+#' @param eval_window (positive integer) Number of iterations in each evaluation
+#'   window.
+#' @param window_size (real between zero and one) Proportion of eval_window
+#'   samples to calculate Rhat with.
+#' @param rhat_cut (real greater than one) Rhat threshold to stop preliminary
+#'   optimization.
+#' @param mcse_cut (positive real) MCSE threshold to set iterate
+#'   averaging limit.
+#' @param ess_cut (positive real) ESS threshold to set iterative averaging
+#'   limit.
+#' @param num_chains (positive integer) Number of chains to use
 #' @param output_samples (positive integer) Number of approximate posterior
 #'   samples to draw and save.
 #'

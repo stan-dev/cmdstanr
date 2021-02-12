@@ -21,8 +21,12 @@ variational(
   eta = NULL,
   adapt_engaged = NULL,
   adapt_iter = NULL,
-  tol_rel_obj = NULL,
-  eval_elbo = NULL,
+  eval_window = NULL,
+  window_size = NULL,
+  rhat_cut = NULL,
+  mcse_cut = NULL,
+  ess_cut = NULL,
+  num_chains = NULL,
   output_samples = NULL
 )
 }
@@ -122,10 +126,22 @@ step size sequence.}
 \item{adapt_iter}{(positive integer) The \emph{maximum} number of adaptation
 iterations.}
 
-\item{tol_rel_obj}{(positive real) Convergence tolerance on the relative norm
-of the objective.}
+\item{eval_window}{(positive integer) Number of iterations in each evaluation
+window.}
 
-\item{eval_elbo}{(positive integer) Evaluate ELBO every Nth iteration.}
+\item{window_size}{(real between zero and one) Proportion of eval_window
+samples to calculate Rhat with.}
+
+\item{rhat_cut}{(real greater than one) Rhat threshold to stop preliminary
+optimization.}
+
+\item{mcse_cut}{(positive real) MCSE threshold to set iterate
+averaging limit.}
+
+\item{ess_cut}{(positive real) ESS threshold to set iterative averaging
+limit.}
+
+\item{num_chains}{(positive integer) Number of chains to use}
 
 \item{output_samples}{(positive integer) Number of approximate posterior
 samples to draw and save.}
