@@ -41,7 +41,8 @@ sample(
   num_samples = NULL,
   save_extra_diagnostics = NULL,
   max_depth = NULL,
-  stepsize = NULL
+  stepsize = NULL,
+  opencl_device = NULL
 )
 }
 \arguments{
@@ -224,6 +225,10 @@ If the messages are silenced then the \verb{$output()} method of the resulting
 fit object can be used to display all the silenced messages.}
 
 \item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize}{Deprecated and will be removed in a future release.}
+
+\item{opencl_device}{(an integer vector of length 2) The platform and
+device IDs of the OpenCL device to use for fitting. The model must
+be compiled with \code{STAN_OPENCL=true} for this argument to have an effect.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

@@ -12,7 +12,8 @@ generate_quantities(
   output_dir = NULL,
   sig_figs = NULL,
   parallel_chains = getOption("mc.cores", 1),
-  threads_per_chain = NULL
+  threads_per_chain = NULL,
+  opencl_device = NULL
 )
 }
 \arguments{
@@ -73,6 +74,10 @@ contrast with \code{parallel_chains}, which specifies the number of chains to
 run in parallel. The actual number of CPU cores used use is
 \code{parallel_chains*threads_per_chain}. For an example of using threading see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
+
+\item{opencl_device}{(an integer vector of length 2) The platform and
+device IDs of the OpenCL device to use for fitting. The model must
+be compiled with \code{STAN_OPENCL=true} for this argument to have an effect.}
 }
 \value{
 A \code{\link{CmdStanGQ}} object.

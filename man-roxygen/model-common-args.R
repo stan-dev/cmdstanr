@@ -62,4 +62,9 @@
 #'   values with 6 significant figures. The upper limit for `sig_figs` is 18.
 #'   Increasing this value will result in larger output CSV files and thus an
 #'   increased usage of disk space.
+#' 
+#' @param opencl_device (an integer vector of length 2) The platform and 
+#'   device IDs of the OpenCL device to use for fitting. The model must 
+#'   be compiled with `STAN_OPENCL=true` for this argument to have an effect.
 #'
+#' 

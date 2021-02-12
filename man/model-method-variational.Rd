@@ -23,7 +23,8 @@ variational(
   adapt_iter = NULL,
   tol_rel_obj = NULL,
   eval_elbo = NULL,
-  output_samples = NULL
+  output_samples = NULL,
+  opencl_device = NULL
 )
 }
 \arguments{
@@ -129,6 +130,10 @@ of the objective.}
 
 \item{output_samples}{(positive integer) Number of approximate posterior
 samples to draw and save.}
+
+\item{opencl_device}{(an integer vector of length 2) The platform and
+device IDs of the OpenCL device to use for fitting. The model must
+be compiled with \code{STAN_OPENCL=true} for this argument to have an effect.}
 }
 \value{
 A \code{\link{CmdStanVB}} object.
