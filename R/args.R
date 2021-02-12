@@ -404,16 +404,24 @@ VariationalArgs <- R6::R6Class(
                           eta = NULL,
                           adapt_engaged = NULL,
                           adapt_iter = NULL,
-                          tol_rel_obj = NULL,
-                          eval_elbo = NULL,
+                          eval_window = NULL,
+                          window_size = NULL,
+                          rhat_cut = NULL,
+                          mcse_cut = NULL,
+                          ess_cut = NULL,
+                          num_chains = NULL,
                           output_samples = NULL) {
       self$algorithm <- algorithm
       self$iter <- iter
       self$grad_samples <- grad_samples
       self$elbo_samples <- elbo_samples
       self$eta <- eta
-      self$tol_rel_obj <- tol_rel_obj
-      self$eval_elbo <- eval_elbo
+      self$eval_window <- eval_window
+      self$window_size <- window_size
+      self$rhat_cut <- rhat_cut
+      self$mcse_cut <- mcse_cut
+      self$ess_cut <- ess_cut
+      self$num_chains <- num_chains
       self$output_samples <- output_samples
       self$adapt_iter <- adapt_iter
       self$adapt_engaged <- adapt_engaged
@@ -443,8 +451,12 @@ VariationalArgs <- R6::R6Class(
         .make_arg("grad_samples"),
         .make_arg("elbo_samples"),
         .make_arg("eta"),
-        .make_arg("tol_rel_obj"),
-        .make_arg("eval_elbo"),
+        .make_arg("eval_window"),
+        .make_arg("window_size"),
+        .make_arg("rhat_cut"),
+        .make_arg("mcse_cut"),
+        .make_arg("ess_cut"),
+        .make_arg("num_chains"),
         .make_arg("output_samples"),
         if (!is.null(self$adapt_engaged) || !is.null(self$adapt_iter))
           "adapt",
@@ -657,10 +669,15 @@ validate_variational_args <- function(self) {
   if (!is.null(self$elbo_samples)) {
     self$elbo_samples <- as.integer(self$elbo_samples)
   }
-  checkmate::assert_integerish(self$eval_elbo, null.ok = TRUE,
+  checkmate::assert_integerish(self$eval_window,  null.ok = TRUE,
                                lower = 1, len = 1)
-  if (!is.null(self$eval_elbo)) {
-    self$eval_elbo <- as.integer(self$eval_elbo)
+  if (!is.null(self$eval_window)) {
+    self$eval_window <- as.integer(self$eval_window)
+  }
+  checkmate::assert_integerish(self$num_chains,  null.ok = TRUE,
+                               lower = 1, len = 1)
+  if (!is.null(self$num_chains)) {
+    self$num_chains <- as.integer(self$num_chains)
   }
   checkmate::assert_integerish(self$output_samples, null.ok = TRUE,
                                lower = 1, len = 1)
@@ -677,7 +694,13 @@ validate_variational_args <- function(self) {
   }
   checkmate::assert_number(self$eta, null.ok = TRUE,
                            lower = .Machine$double.eps)
-  checkmate::assert_number(self$tol_rel_obj, null.ok = TRUE,
+  checkmate::assert_number(self$window_size, null.ok = TRUE,
+                           lower = .Machine$double.eps)
+  checkmate::assert_number(self$rhat_cut, null.ok = TRUE,
+                           lower = .Machine$double.eps)
+  checkmate::assert_number(self$mcse_cut, null.ok = TRUE,
+                           lower = .Machine$double.eps)
+  checkmate::assert_number(self$ess_cut, null.ok = TRUE,
                            lower = .Machine$double.eps)
 
   invisible(TRUE)

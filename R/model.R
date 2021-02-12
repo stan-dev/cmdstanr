@@ -1132,8 +1132,12 @@ variational <- function(data = NULL,
                         eta = NULL,
                         adapt_engaged = NULL,
                         adapt_iter = NULL,
-                        tol_rel_obj = NULL,
-                        eval_elbo = NULL,
+                        eval_window = NULL,
+                        window_size = NULL,
+                        rhat_cut = NULL,
+                        mcse_cut = NULL,
+                        ess_cut = NULL,
+                        num_chains = NULL,
                         output_samples = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
@@ -1158,8 +1162,12 @@ variational <- function(data = NULL,
     eta = eta,
     adapt_engaged = adapt_engaged,
     adapt_iter = adapt_iter,
-    tol_rel_obj = tol_rel_obj,
-    eval_elbo = eval_elbo,
+    eval_window = eval_window,
+    window_size = window_size,
+    rhat_cut = rhat_cut,
+    mcse_cut = mcse_cut,
+    ess_cut = ess_cut,
+    num_chains = num_chains,
     output_samples = output_samples
   )
   cmdstan_args <- CmdStanArgs$new(

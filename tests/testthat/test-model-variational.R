@@ -18,8 +18,12 @@ if (not_on_cran()) {
     eta = 1.5,
     adapt_engaged = TRUE,
     adapt_iter = 51,
-    tol_rel_obj = 0.011,
-    eval_elbo = 101,
+    eval_window = 151,
+    window_size = 0.1,
+    rhat_cut = 1.01,
+    mcse_cut = 0.03,
+    ess_cut = 21.1,
+    num_chains = 5,
     output_samples = 10,
     save_latent_dynamics = FALSE
   )
@@ -37,8 +41,12 @@ if (not_on_cran()) {
     eta = -1.5,
     adapt_engaged = "NOT_VALID",
     adapt_iter = -10,
-    tol_rel_obj = -0.5,
-    eval_elbo = -10,
+    eval_window = 1.1,
+    window_size = -0.1,
+    rhat_cut = -2,
+    mcse_cut = -3,
+    ess_cut = -5,
+    num_chains = 5.5,
     output_samples = -10,
     save_latent_dynamics = "NOT_LOGICAL"
   )
