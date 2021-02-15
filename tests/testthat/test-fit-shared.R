@@ -399,3 +399,38 @@ test_that("sig_figs works with all methods", {
     c(0.12, 0.12345, 0.123456789)
   )
 })
+
+test_that("draws are returned for model with spaces", {
+  skip_on_cran()
+  m <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  generated quantities {
+    real two_y = 2 * y;
+  }
+  "
+  f <- write_stan_file(m, basename = "file with spaces")
+  expect_equal(basename(f), "file with spaces.stan")
+  mod <- cmdstan_model(f)
+  utils::capture.output(
+    fit_sample <- mod$sample(seed = 123, iter_sampling = 1000, chains = 1)
+  )
+  expect_equal(dim(fit_sample$draws()), c(1000, 1, 3))
+  utils::capture.output(
+    fit <- mod$variational(seed = 123, output_samples = 1000)
+  )
+  expect_equal(dim(fit$draws()), c(1000, 4))
+  utils::capture.output(
+    fit <- mod$optimize(seed = 123)
+  )
+  expect_equal(length(fit$mle()), 2)
+
+  utils::capture.output(
+    fit <- mod$generate_quantities(fitted_params = fit_sample, seed = 123)
+  )
+  expect_equal(dim(fit$draws()), c(1000, 1, 1))
+})
