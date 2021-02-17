@@ -18,6 +18,8 @@ Stan programs requires CmdStan >= 2.26. (#434)
 
 * New vignette on profiling Stan programs. (#435)
 
+* New check for invalid parameter names when supplying init values. (#452)
+
 
 # cmdstanr 0.3.0
 
