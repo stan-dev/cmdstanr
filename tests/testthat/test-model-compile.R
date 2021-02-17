@@ -6,7 +6,6 @@ if (not_on_cran()) {
   mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 }
 
-
 test_that("object initialized correctly", {
   skip_on_cran()
   expect_equal(mod$stan_file(), stan_program)
@@ -399,4 +398,25 @@ test_that("check_syntax() works with include_paths", {
 
 })
 
+test_that("check_syntax() works with pedantic=TRUE", {
+  skip_on_cran()
+  model_code <- "
+  transformed data {
+    real a;
+    a <- 3;
+  }
+  "
+  stan_file <- write_stan_file(model_code)
+  mod_dep_warning <- cmdstan_model(stan_file, compile = FALSE)
+  expect_message(
+    mod_dep_warning$compile(),
+    "Warning: deprecated language construct used in",
+    fixed = TRUE
+  )
+  expect_message(
+    mod_dep_warning$check_syntax(),
+    "Warning: deprecated language construct used in",
+    fixed = TRUE
+  )
+})
 
