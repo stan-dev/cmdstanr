@@ -716,7 +716,7 @@ process_init_list <- function(init, num_procs) {
     stop("'init' contains empty lists.", call. = FALSE)
   }
   if (any(grepl("\\[",names(unlist(init))))) {
-    stop("'init' contains entries with parameter names that include square-brackets, which is not permitted. To supply inits for a multi-element parameter, create a single entry with the parameter's name in the init list and use c()/matrix()/etc to specify the values.", call. = FALSE)
+    stop("'init' contains entries with parameter names that include square-brackets, which is not permitted. To supply inits for a vector, matrix or array of parameters, create a single entry with the parameter's name in the init list and specify init values for the entire parameter container.", call. = FALSE)
   }
   init_paths <-
     tempfile(
