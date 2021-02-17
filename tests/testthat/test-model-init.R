@@ -166,7 +166,9 @@ test_that("error if init list is specified incorrectly", {
   init_list[[2]] = init_list[[1]]
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "'init' contains entries with parameter names that include square-brackets, which is not permitted. To supply inits for a multi-element parameter, create a single entry with the parameter's name in the init list and use c()/matrix()/etc to specify the values."
+    "'init' contains entries with parameter names that include square-brackets, which is not permitted. To supply inits for a multi-element parameter, create a single entry with the parameter's name in the init list and use c()/matrix()/etc to specify the values.",
+    fixed = TRUE
+
   )
 
 })
