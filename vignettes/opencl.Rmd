@@ -88,7 +88,7 @@ device IDs of the GPU are typically both `0`. If there are multiple devices
 we need to run the `clinfo` tool to determine the IDs. See [here](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#running-2)
 for instruction on installing/using `clinfo`.
 
-On our target system the GPU has platform ID `0` and device ID `0`.
+On our target system the GPU has platform ID = `0` and device ID = `0`.
 We determine the target device using the `opencl_device` argument.
 The argument is supplied a vector of length 2, where the first element
 is the platform ID and the second argument is the device ID.
@@ -97,21 +97,19 @@ is the platform ID and the second argument is the device ID.
 fit_cl <- model_cl$sample(data = data_file, chains = 4, parallel_chains = 4, opencl_device = c(0,0), refresh = 0)
 ```
 
-Lets run a CPU version to compare the runtimes:
+Lets run a version without OpenCL to compare the runtimes:
 
 ```{r fit-cpu, message=FALSE}
-# CPU version
+# no OpenCL version
 model <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan")
 fit <- model$sample(data = data_file, chains = 4, parallel_chains = 4, refresh = 0)
 ```
 
 ## Device names
 
-The devices used to obtain the fit can be retrieved from `$metadata()`:
+The OpenCL device used to obtain the fit can be retrieved from `$metadata()`:
 ```{r device-name}
 fit_cl$metadata()$opencl_platform_name
 fit_cl$metadata()$opencl_device_name
 ```
-
-
 
