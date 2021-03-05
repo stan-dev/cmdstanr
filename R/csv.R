@@ -223,9 +223,9 @@ read_cmdstan_csv <- function(files,
     if (length(col_select) > 0) {
       if (os_is_windows()) {
         grep_path <- repair_path(Sys.which("grep.exe"))
-        fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", output_file)
+        fread_cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
       } else {
-        fread_cmd <- paste0("grep -v '^#' --color=never ", output_file)
+        fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
       }
       suppressWarnings(
       draws <- data.table::fread(
@@ -512,9 +512,9 @@ read_csv_metadata <- function(csv_file) {
   total_time <- 0
   if (os_is_windows()) {
     grep_path <- repair_path(Sys.which("grep.exe"))
-    fread_cmd <- paste0(grep_path, " '^[#a-zA-Z]' --color=never ", csv_file)
+    fread_cmd <- paste0(grep_path, " '^[#a-zA-Z]' --color=never '", csv_file, "'")
   } else {
-    fread_cmd <- paste0("grep '^[#a-zA-Z]' --color=never ", csv_file)
+    fread_cmd <- paste0("grep '^[#a-zA-Z]' --color=never '", csv_file, "'")
   }
   suppressWarnings(
     metadata <- data.table::fread(

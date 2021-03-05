@@ -2,6 +2,8 @@
 
 ### Bug fixes
 
+* Fixed issue with retrieving draws with models with spaces in their names. (#453)
+
 ### New features
 
 * New function `as_cmdstan_fit()` that creates CmdStanMCMC/MLE/VB objects

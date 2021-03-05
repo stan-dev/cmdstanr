@@ -759,7 +759,7 @@ CmdStanProcs <- R6::R6Class(
     },
     report_time = function(id = NULL) {
       if (self$proc_state(id) == 7) {
-        warning("Fitting finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+        warning("Fitting finished unexpectedly! Use the $output() method for more information.\n", immediate. = TRUE, call. = FALSE)
       } else {
         cat("Finished in ",
             format(round(self$total_time(), 1), nsmall = 1),
@@ -913,7 +913,7 @@ CmdStanMCMCProcs <- R6::R6Class(
                 format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n")
           } else if (num_failed == num_chains) {
-            warning("All chains finished unexpectedly!\n", call. = FALSE)
+            warning("All chains finished unexpectedly! Use the $output(chain_id) method for more information.\n", call. = FALSE)
             warning("Use read_cmdstan_csv() to read the results of the failed chains.",
                     immediate. = TRUE,
                     call. = FALSE)
@@ -924,9 +924,11 @@ CmdStanMCMCProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of successful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
-                    immediate. = TRUE,
-                    call. = FALSE)
+            warning("The returned fit object will only read in results of successful chains. ",
+              "Please use read_cmdstan_csv() to read the results of the failed chains separately.",
+              "Use the $output(chain_id) method for more output of the failed chains.",
+              immediate. = TRUE,
+              call. = FALSE)
           }
         }
         return(invisible(NULL))
@@ -1005,6 +1007,7 @@ CmdStanGQProcs <- R6::R6Class(
           } else if (num_failed == num_chains) {
             warning("All chains finished unexpectedly!\n", call. = FALSE)
             warning("Use read_cmdstan_csv() to read the results of the failed chains.",
+                    "Use $output(chain_id) on the fit object for more output of the failed chains.",
                     immediate. = TRUE,
                     call. = FALSE)
           } else {
@@ -1014,7 +1017,9 @@ CmdStanGQProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of successful chains. Please use read_cmdstan_csv() to read the results of the failed chains separately.",
+            warning("The returned fit object will only read in results of successful chains. ",
+                    "Please use read_cmdstan_csv() to read the results of the failed chains separately.",
+                    "Use $output(chain_id) on the fit object for more output of the failed chains.",
                     immediate. = TRUE,
                     call. = FALSE)
           }
