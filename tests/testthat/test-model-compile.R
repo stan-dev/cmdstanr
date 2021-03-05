@@ -420,3 +420,26 @@ test_that("check_syntax() works with pedantic=TRUE", {
   )
 })
 
+test_that("compiliation errors if folder with the model name exists", {
+  skip_on_cran()
+  skip_if(os_is_windows())
+  model_code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file <- write_stan_file(model_code)
+  exe <- strip_ext(stan_file)
+  if (!dir.exists(exe)) {
+    if (file.exists(exe)) {
+      file.remove(exe)
+    }
+    dir.create(exe)
+  }
+  expect_error(cmdstan_model(stan_file),
+               "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.")
+})
+
