@@ -2,6 +2,8 @@
 
 ### Bug fixes
 
+* Fixed issue with retrieving draws with models with spaces in their names. (#453)
+
 * Fixed bug with spaces in path to the temporary folder on Windows. (#460)
 
 ### New features
