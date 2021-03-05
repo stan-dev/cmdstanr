@@ -10,7 +10,7 @@ name: Custom CmdStan tarball unit tests
       tarball_url:
         description: 'CmdStan tarball URL to test with.'
         required: true
-        default: 'latest'
+        default: 'https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz'
 
 jobs:
   tarball-check:
