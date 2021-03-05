@@ -437,6 +437,9 @@ compile <- function(quiet = TRUE,
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   temp_file_no_ext <- strip_ext(temp_stan_file)
   tmp_exe <- cmdstan_ext(temp_file_no_ext) # adds .exe on Windows
+  if(os_is_windows()) {
+    tmp_exe <- utils::shortPathName(tmp_exe)
+  }
   private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
 
   # add path to the TBB library to the PATH variable to avoid copying the dll file

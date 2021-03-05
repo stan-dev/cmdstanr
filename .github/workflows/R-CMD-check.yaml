@@ -35,6 +35,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
+      CMDSTAN_VERSION: "2.26.1"
 
     steps:
       - uses: n1hility/cancel-previous-runs@v2
@@ -91,7 +92,7 @@ jobs:
           install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
           install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
           install.packages("curl")
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
+          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, version = Sys.getenv("CMDSTAN_VERSION"))
         shell: Rscript {0}
 
       - name: Session info
