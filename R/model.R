@@ -405,6 +405,9 @@ compile <- function(quiet = TRUE,
     exe_base <- file.path(dir, basename(self$stan_file()))
   }
   exe <- cmdstan_ext(paste0(strip_ext(exe_base), exe_suffix))
+  if (dir.exists(exe)) {
+    stop("There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.", call. = FALSE)
+  }
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   # compile if:
