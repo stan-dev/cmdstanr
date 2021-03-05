@@ -163,7 +163,7 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
 
   chains <- posterior::chain_ids(draws)
   paths <- generate_file_names(basename = "fittedParams", ids = chains)
-  paths <- absolute_path(file.path(tempdir(), paths))
+  paths <- file.path(tempdir(), paths)
   chain <- 1
   for (path in paths) {
     write(
