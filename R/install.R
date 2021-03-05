@@ -644,7 +644,7 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
     stop("No write permissions to the temporary folder! Please change the permissions or location of the temporary folder.", call. = FALSE)
   }
   if (!quiet) {
-    message("The CmdStan toolchain is setup properly!")
+    message("The C++ toolchain required for CmdStan is setup properly!")
   }
   invisible(NULL)
 }
