@@ -70,9 +70,6 @@ repair_path <- function(path) {
   if (!length(path) || !is.character(path)) {
     return(path)
   }
-  if(os_is_windows()) {
-    path <- utils::shortPathName(path)
-  }
   path <- path.expand(path)
   path <- gsub("\\\\", "/", path)
   path <- gsub("//", "/", path)
