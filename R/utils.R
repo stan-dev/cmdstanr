@@ -77,6 +77,9 @@ repair_path <- function(path) {
     # remove trailing "/"
     path <- substr(path, 1, nchar(path) - 1)
   }
+  if(os_is_windows()) {
+    path <- utils::shortPathName(path)
+  }
   path
 }
 
