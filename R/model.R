@@ -422,7 +422,9 @@ compile <- function(quiet = TRUE,
   }
 
   if (!force_recompile) {
-    message("Model executable is up to date!")
+    if (interactive()) {
+      message("Model executable is up to date!")
+    }
     private$cpp_options_ <- cpp_options
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
@@ -430,7 +432,9 @@ compile <- function(quiet = TRUE,
     self$exe_file(exe)
     return(invisible(self))
   } else {
-    message("Compiling Stan program...")
+    if (interactive()) {
+      message("Compiling Stan program...")
+    }
   }
 
   temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
