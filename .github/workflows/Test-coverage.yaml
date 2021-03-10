@@ -20,7 +20,14 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
+      CMDSTAN_VERSION: "2.26.1"
+
     steps:
+      - name: cmdstan env vars
+        run: |
+          echo "CMDSTAN_PATH=${HOME}/.cmdstanr" >> $GITHUB_ENV
+        shell: bash
+
       - uses: n1hility/cancel-previous-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -53,10 +60,23 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages(c("posterior", "cmdstanr", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           remotes::install_cran("gridExtra")
+        shell: Rscript {0}
+
+      - name: Cache cmdstan
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.CMDSTAN_PATH }}
+          key: ${{ runner.os }}-cmdstan-${{ env.CMDSTAN_VERSION }}
+          restore-keys: ${{ runner.os }}-cmdstan-
+
+      - name: Install cmdstan
+        run: |
+          version <- Sys.getenv("CMDSTAN_VERSION")
+          url <- sprintf("https://github.com/stan-dev/cmdstan/releases/download/v%s/cmdstan-%s.tar.gz", version, version)
+          cmdstanr::install_cmdstan(cores = 2, release_url = url)
         shell: Rscript {0}
 
       - name: Test coverage
