@@ -16,7 +16,6 @@ test_that("eng_cmdstan works", {
     cache.path = tempdir()
   ))
   expect_interactive_message(eng_cmdstan(opts), "Compiling Stan program")
-
   opts$eval <- FALSE
   expect_silent(eng_cmdstan(opts))
 })
