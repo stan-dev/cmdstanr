@@ -33,6 +33,7 @@ jobs:
 
       - name: Install Ubuntu dependencies
         run: |
+          sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev
           sudo apt-get install -y openmpi-bin openmpi-common openmpi-doc libopenmpi-dev
 
