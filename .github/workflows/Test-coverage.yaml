@@ -69,8 +69,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.CMDSTAN_PATH }}
-          key: ${{ runner.os }}-cmdstan-${{ env.CMDSTAN_VERSION }}
-          restore-keys: ${{ runner.os }}-cmdstan-
+          key: ${{ runner.os }}-codecov-cmdstan-${{ env.CMDSTAN_VERSION }}
+          restore-keys: ${{ runner.os }}-codecov-cmdstan-
 
       - name: Install cmdstan
         run: |
