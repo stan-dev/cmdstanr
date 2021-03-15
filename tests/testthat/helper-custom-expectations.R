@@ -37,3 +37,11 @@ expect_gq_output <- function(object, num_chains = NULL) {
   }
   expect_output(object, output)
 }
+
+expect_interactive_message <- function(object, regexp = NULL) {
+  if (interactive()) {
+    expect_message(object = object, regexp = regexp)
+  } else {
+    expect_silent(object = object)
+  }
+}

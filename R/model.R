@@ -405,6 +405,9 @@ compile <- function(quiet = TRUE,
     exe_base <- file.path(dir, basename(self$stan_file()))
   }
   exe <- cmdstan_ext(paste0(strip_ext(exe_base), exe_suffix))
+  if (dir.exists(exe)) {
+    stop("There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.", call. = FALSE)
+  }
   model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   # compile if:
@@ -419,7 +422,9 @@ compile <- function(quiet = TRUE,
   }
 
   if (!force_recompile) {
-    message("Model executable is up to date!")
+    if (interactive()) {
+      message("Model executable is up to date!")
+    }
     private$cpp_options_ <- cpp_options
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
@@ -427,7 +432,9 @@ compile <- function(quiet = TRUE,
     self$exe_file(exe)
     return(invisible(self))
   } else {
-    message("Compiling Stan program...")
+    if (interactive()) {
+      message("Compiling Stan program...")
+    }
   }
 
   temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
