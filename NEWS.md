@@ -2,6 +2,12 @@
 
 ### Bug fixes
 
+* Fixed issue with retrieving draws with models with spaces in their names. (#453)
+
+* Fixed bug with spaces in path to the temporary folder on Windows. (#460)
+
+* Fixed issue with not reporting model executable name clashing with folder name. (#461)
+
 ### New features
 
 * New function `as_cmdstan_fit()` that creates CmdStanMCMC/MLE/VB objects
@@ -16,6 +22,11 @@ files. (#414)
 information from R if profiling used in the Stan program. Support for profiling
 Stan programs requires CmdStan >= 2.26. (#434)
 
+* New vignette on profiling Stan programs. (#435)
+
+* New check for invalid parameter names when supplying init values. (#452)
+
+* Suppressing compilation messages when not in interactive mode. (#462, @wlandau)
 
 # cmdstanr 0.3.0
 

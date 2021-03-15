@@ -6,7 +6,6 @@ if (not_on_cran()) {
   mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 }
 
-
 test_that("object initialized correctly", {
   skip_on_cran()
   expect_equal(mod$stan_file(), stan_program)
@@ -34,8 +33,8 @@ test_that("compile() method works", {
   if (file.exists(exe)) {
     file.remove(exe)
   }
-  expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
-  expect_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
+  expect_interactive_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
+  expect_interactive_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
   checkmate::expect_file_exists(mod$hpp_file())
   checkmate::expect_file_exists(exe)
   file.remove(exe)
@@ -46,7 +45,10 @@ test_that("compile() method works", {
 test_that("compile() method forces recompilation force_recompile = TRUE", {
   skip_on_cran()
   mod$compile(quiet = TRUE)
-  expect_message(mod$compile(quiet = TRUE, force_recompile = TRUE), "Compiling Stan program...")
+  expect_interactive_message(
+    mod$compile(quiet = TRUE, force_recompile = TRUE),
+    "Compiling Stan program..."
+  )
 })
 
 test_that("compile() method forces recompilation if model modified", {
@@ -57,7 +59,7 @@ test_that("compile() method forces recompilation if model modified", {
     mod$compile(quiet = TRUE)
   }
   Sys.setFileTime(mod$stan_file(), Sys.time() + 1) #touch file to trigger recompile
-  expect_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
+  expect_interactive_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
 })
 
 test_that("compile() method works with spaces in path", {
@@ -76,7 +78,7 @@ test_that("compile() method works with spaces in path", {
   if (file.exists(exe)) {
     file.remove(exe)
   }
-  expect_message(mod_spaces$compile(), "Compiling Stan program...")
+  expect_interactive_message(mod_spaces$compile(), "Compiling Stan program...")
   file.remove(stan_model_with_spaces)
   file.remove(exe)
   file.remove(dir_with_spaces)
@@ -112,7 +114,7 @@ test_that("compilation works with include_paths", {
     )
   )
 
-  expect_message(
+  expect_interactive_message(
     mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
                                    include_paths = test_path("resources", "stan")),
     "Compiling Stan program"
@@ -171,15 +173,15 @@ test_that("switching threads on and off works without rebuild", {
 test_that("multiple cpp_options work", {
   skip_on_cran()
   stan_file <- testing_stan_file("bernoulli")
-  expect_message(
+  expect_interactive_message(
     mod <- cmdstan_model(stan_file, cpp_options = list("DUMMY_TEST2"="1", "DUMMY_TEST2"="1",  "DUMMY_TEST3"="1"), force_recompile = TRUE),
     "Compiling Stan program..."
   )
-  expect_message(
+  expect_interactive_message(
     mod$compile(cpp_options = list("DUMMY_TEST2"="1", "DUMMY_TEST2"="1",  "DUMMY_TEST3"="1"), force_recompile = TRUE),
     "Compiling Stan program..."
   )
-  expect_message(
+  expect_interactive_message(
     mod$compile(cpp_options = list(), force_recompile = TRUE),
     "Compiling Stan program..."
   )
@@ -399,4 +401,48 @@ test_that("check_syntax() works with include_paths", {
 
 })
 
+test_that("check_syntax() works with pedantic=TRUE", {
+  skip_on_cran()
+  model_code <- "
+  transformed data {
+    real a;
+    a <- 3;
+  }
+  "
+  stan_file <- write_stan_file(model_code)
+  mod_dep_warning <- cmdstan_model(stan_file, compile = FALSE)
+  expect_message(
+    mod_dep_warning$compile(),
+    "Warning: deprecated language construct used in",
+    fixed = TRUE
+  )
+  expect_message(
+    mod_dep_warning$check_syntax(),
+    "Warning: deprecated language construct used in",
+    fixed = TRUE
+  )
+})
+
+test_that("compiliation errors if folder with the model name exists", {
+  skip_on_cran()
+  skip_if(os_is_windows())
+  model_code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file <- write_stan_file(model_code)
+  exe <- strip_ext(stan_file)
+  if (!dir.exists(exe)) {
+    if (file.exists(exe)) {
+      file.remove(exe)
+    }
+    dir.create(exe)
+  }
+  expect_error(cmdstan_model(stan_file),
+               "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.")
+})
 
