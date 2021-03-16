@@ -1,5 +1,5 @@
 ---
-title: "Using CmdStanR to run Stan on the GPU with OpenCL"
+title: "CmdStanR to run Stan on the GPU with OpenCL"
 author: "Rok Češnovar and Jonah Gabry"
 output: 
   rmarkdown::html_vignette:
@@ -13,9 +13,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r child="children/settings-knitr.Rmd"}
-```
-
 ## Introduction
 
 This vignette demonstrates how to use the OpenCL capabilites of CmdStan with
@@ -23,16 +20,23 @@ CmdStanR. The vignette requires CmdStan 2.26 or newer.
 
 ## OpenCL runtime
 
-OpenCL is supported on most modern CPUs and GPUs. In order to run OpenCL-enabled Stan models, 
-an OpenCL runtime for the target device must be installed. This is also a prerequisite 
-for running this vignette. A guide for the most common devices is available [here](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl).
+OpenCL is supported on most modern CPUs and GPUs. In order to use
+OpenCL in CmdStanR, an OpenCL runtime for the target device must be installed.
+A guide for the most common devices is available [here](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl).
 
 ## Compiling a model with OpenCL
+
+By default, models in CmdStanR are compiled without OpenCL support. Once OpenCL
+support is enabled, a CmdStan model will make use of OpenCL if the functions
+in the model support it. Technically no changes to a model are required to
+support OpenCL since the choice of using OpenCL is handled by the compiler,
+but it can still be useful to rewrite a model to be more OpenCL-friendly by
+using vectorization as much as possible.
 
 Consider a simple logistic regression with parameters `alpha` and `beta`,
 covariates `X`, and outcome `y`.
 
-```
+```stan
 data {
   int<lower=1> k;
   int<lower=0> n;
@@ -50,8 +54,7 @@ model {
 }
 ```
 
-We will generate some fake data and store it to a JSON file first, 
-to avoid writing it multiple times.
+Some fake data will be useful to run this model:
 
 ```{r fake-data, message=FALSE, results='hide'}
 library(cmdstanr)
@@ -65,36 +68,50 @@ y <- 3 * X[,1] - 2 * X[,2] + 1
 p <- runif(n)
 y <- ifelse(p < (1 / (1 + exp(-y))), 1, 0)
 mdata <- list(k = ncol(X), n = nrow(X), y = y, X = X)
-
-data_file <- "lr_data.json"
-write_stan_json(mdata, data_file)
 ```
 
-We now compile the model with `cpp_options = list(stan_opencl = TRUE)`.
+In this model, most of the computation will be handled by the
+`bernoulli_logit_glm_lpmf` function. Because this is a supported GPU function,
+it should be possible to accelerate it with OpenCL. Check 
+[here](http://mc-stan.org/math/opencl_support.html) for a list of functions
+with OpenCL support.
+
+To build the model with OpenCL support, add
+`cpp_options = list(stan_opencl = TRUE)` to the model compile.
 
 ```{r compile-opencl, message=FALSE, results='hide'}
 # Compile the model with STAN_OPENCL=TRUE
-model_cl <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan", cpp_options = list(stan_opencl = TRUE))
+model_cl <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan",
+                          cpp_options = list(stan_opencl = TRUE))
 ```
 
 ## Running models with OpenCL
 
-Once a model is compiled with OpenCL, we need to select the target device
-and run sampling or any other method. OpenCL devices have unique platform
-and device IDs with which we determine the target one on our system.
+Running models with OpenCL requires specifying the OpenCL platform and device
+on which to run the model (there can be multiple). If the system has one GPU
+and no OpenCL CPU runtime, the platform and device IDs of the GPU are typically
+both `0`, but the `clinfo` tool can be used to figure out for sure what devices
+are available. Information on using `clinfo` can be found [here](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#running-2).
 
-If the system has one GPU and no OpenCL CPU runtime, the platform and
-device IDs of the GPU are typically both `0`. If there are multiple devices
-we need to run the `clinfo` tool to determine the IDs. See [here](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#running-2)
-for instruction on installing/using `clinfo`.
+On an Ubuntu system with both CPU and GPU OpenCL support, `clinfo -l` looks
+like:
 
-On our target system the GPU has platform ID = `0` and device ID = `0`.
-We determine the target device using the `opencl_device` argument.
-The argument is supplied a vector of length 2, where the first element
-is the platform ID and the second argument is the device ID.
+```{bash eval=FALSE}
+$ clinfo -l
+Platform #0: Intel(R) CPU Runtime for OpenCL(TM) Applications
+ `-- Device #0: Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz
+Platform #1: Intel(R) OpenCL HD Graphics
+ `-- Device #0: Intel(R) Graphics [0x1916]
+```
+
+The GPU device is platform ID 0 and device ID 1. These can be specified with
+the `opencl_device` argument when running a model. The `opencl_device` is  
+supplied as a vector of length 2, where the first element is the platform ID
+and the second argument is the device ID.
 
 ```{r fit-opencl}
-fit_cl <- model_cl$sample(data = data_file, chains = 4, parallel_chains = 4, opencl_device = c(0,0), refresh = 0)
+fit_cl <- model_cl$sample(data = mdata, chains = 4, parallel_chains = 4,
+                          opencl_device = c(0, 1))
 ```
 
 Lets run a version without OpenCL to compare the runtimes:
@@ -102,7 +119,8 @@ Lets run a version without OpenCL to compare the runtimes:
 ```{r fit-cpu, message=FALSE}
 # no OpenCL version
 model <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan")
-fit <- model$sample(data = data_file, chains = 4, parallel_chains = 4, refresh = 0)
+fit <- model$sample(data = data_file, chains = 4, parallel_chains = 4,
+                    refresh = 0)
 ```
 
 ## Device names
