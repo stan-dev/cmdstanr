@@ -713,7 +713,7 @@ sample <- function(data = NULL,
                    fixed_param = FALSE,
                    validate_csv = TRUE,
                    show_messages = TRUE,
-                   opencl_ids = NULL
+                   opencl_ids = NULL,
                    # deprecated
                    cores = NULL,
                    num_cores = NULL,
