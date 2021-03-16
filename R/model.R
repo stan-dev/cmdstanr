@@ -713,6 +713,7 @@ sample <- function(data = NULL,
                    fixed_param = FALSE,
                    validate_csv = TRUE,
                    show_messages = TRUE,
+                   opencl_ids = NULL
                    # deprecated
                    cores = NULL,
                    num_cores = NULL,
@@ -721,8 +722,7 @@ sample <- function(data = NULL,
                    num_samples = NULL,
                    save_extra_diagnostics = NULL,
                    max_depth = NULL,
-                   stepsize = NULL,
-                   opencl_device = NULL) {
+                   stepsize = NULL) {
   # temporary deprecation warnings
   if (!is.null(cores)) {
     warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
@@ -782,8 +782,8 @@ sample <- function(data = NULL,
     }
   }
   if (is.null(self$cpp_options()[["stan_opencl"]])
-      && !is.null(opencl_device)) {
-     stop("'opencl_device' is set but the model was not compiled with for use with OpenCL.",
+      && !is.null(opencl_ids)) {
+     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
            "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
            call. = FALSE)   
   }
@@ -818,7 +818,7 @@ sample <- function(data = NULL,
     output_dir = output_dir,
     sig_figs = sig_figs,
     validate_csv = validate_csv,
-    opencl_device = opencl_device
+    opencl_ids = opencl_ids
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(
     num_procs = chains,
@@ -1033,7 +1033,7 @@ optimize <- function(data = NULL,
                      tol_rel_grad = NULL,
                      tol_param = NULL,
                      history_size = NULL,
-                     opencl_device = NULL) {
+                     opencl_ids = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1050,8 +1050,8 @@ optimize <- function(data = NULL,
     }
   }
   if (is.null(self$cpp_options()[["stan_opencl"]])
-      && !is.null(opencl_device)) {
-     stop("'opencl_device' is set but the model was not compiled with for use with OpenCL.",
+      && !is.null(opencl_ids)) {
+     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
            "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
            call. = FALSE)   
   }
@@ -1078,7 +1078,7 @@ optimize <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     sig_figs = sig_figs,
-    opencl_device = opencl_device
+    opencl_ids = opencl_ids
   )
 
   cmdstan_procs <- CmdStanProcs$new(
@@ -1162,7 +1162,7 @@ variational <- function(data = NULL,
                         tol_rel_obj = NULL,
                         eval_elbo = NULL,
                         output_samples = NULL,
-                        opencl_device = NULL) {
+                        opencl_ids = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1179,8 +1179,8 @@ variational <- function(data = NULL,
     }
   }
   if (is.null(self$cpp_options()[["stan_opencl"]])
-      && !is.null(opencl_device)) {
-     stop("'opencl_device' is set but the model was not compiled with for use with OpenCL.",
+      && !is.null(opencl_ids)) {
+     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
            "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
            call. = FALSE)   
   }
@@ -1208,7 +1208,7 @@ variational <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     sig_figs = sig_figs,
-    opencl_device = opencl_device
+    opencl_ids = opencl_ids
   )
 
   cmdstan_procs <- CmdStanProcs$new(
@@ -1294,7 +1294,7 @@ generate_quantities <- function(fitted_params,
                                 sig_figs = NULL,
                                 parallel_chains = getOption("mc.cores", 1),
                                 threads_per_chain = NULL,
-                                opencl_device = NULL) {
+                                opencl_ids = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
@@ -1312,8 +1312,8 @@ generate_quantities <- function(fitted_params,
     }
   }
   if (is.null(self$cpp_options()[["stan_opencl"]])
-      && !is.null(opencl_device)) {
-     stop("'opencl_device' is set but the model was not compiled with for use with OpenCL.",
+      && !is.null(opencl_ids)) {
+     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
            "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
            call. = FALSE)   
   }
@@ -1331,7 +1331,7 @@ generate_quantities <- function(fitted_params,
     seed = seed,
     output_dir = output_dir,
     sig_figs = sig_figs,
-    opencl_device = opencl_device
+    opencl_ids = opencl_ids
   )
   cmdstan_procs <- CmdStanGQProcs$new(
     num_procs = chains,

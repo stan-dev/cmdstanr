@@ -63,8 +63,9 @@
 #'   Increasing this value will result in larger output CSV files and thus an
 #'   increased usage of disk space.
 #' 
-#' @param opencl_device (an integer vector of length 2) The platform and 
+#' @param opencl_ids (an integer vector of length 2) The platform and 
 #'   device IDs of the OpenCL device to use for fitting. The model must 
-#'   be compiled with `STAN_OPENCL=true` for this argument to have an effect.
+#'   be compiled with `cpp_options = list(stan_opencl = TRUE)` for this
+#'   argument to have an effect.
 #'
 #' 
