@@ -782,12 +782,7 @@ sample <- function(data = NULL,
            call. = FALSE)
     }
   }
-  if (is.null(self$cpp_options()[["stan_opencl"]])
-      && !is.null(opencl_ids)) {
-     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
-           "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
-           call. = FALSE)   
-  }
+  
 
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
@@ -1054,12 +1049,7 @@ optimize <- function(data = NULL,
            call. = FALSE)
     }
   }
-  if (is.null(self$cpp_options()[["stan_opencl"]])
-      && !is.null(opencl_ids)) {
-     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
-           "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
-           call. = FALSE)   
-  }
+  check_opencl(self$cpp_options(), opencl_ids)
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
@@ -1185,12 +1175,7 @@ variational <- function(data = NULL,
            call. = FALSE)
     }
   }
-  if (is.null(self$cpp_options()[["stan_opencl"]])
-      && !is.null(opencl_ids)) {
-     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
-           "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
-           call. = FALSE)   
-  }
+  check_opencl(self$cpp_options(), opencl_ids)
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -1320,12 +1305,7 @@ generate_quantities <- function(fitted_params,
            call. = FALSE)
     }
   }
-  if (is.null(self$cpp_options()[["stan_opencl"]])
-      && !is.null(opencl_ids)) {
-     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
-           "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
-           call. = FALSE)   
-  }
+  check_opencl(self$cpp_options(), opencl_ids)
   fitted_params <- process_fitted_params(fitted_params)
   chains <- length(fitted_params)
   generate_quantities_args <- GenerateQuantitiesArgs$new(
@@ -1353,3 +1333,13 @@ generate_quantities <- function(fitted_params,
   CmdStanGQ$new(runset)
 }
 CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities)
+
+
+check_opencl <- function(cpp_options, opencl_ids) {
+  if (is.null(cpp_options[["stan_opencl"]])
+      && !is.null(opencl_ids)) {
+     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+           "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
+           call. = FALSE)   
+  }
+}
