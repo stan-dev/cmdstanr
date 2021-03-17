@@ -12,6 +12,7 @@ optimize(
   init = NULL,
   save_latent_dynamics = FALSE,
   output_dir = NULL,
+  output_basename = NULL,
   sig_figs = NULL,
   threads = NULL,
   algorithm = NULL,
@@ -89,6 +90,12 @@ files are removed when the fitted model object is
 \link[base:gc]{garbage collected} (manually or automatically).
 \item If a path, then the files are created in \code{output_dir} with names
 corresponding to the defaults used by \verb{$save_output_files()}.
+}}
+
+\item{output_basename}{(string) A string to use as a prefix for the
+names of the output CSV files of CmdStan.
+\itemize{
+\item If \code{NULL} (the default), the
 }}
 
 \item{sig_figs}{(positive integer) The number of significant figures used
