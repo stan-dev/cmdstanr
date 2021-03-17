@@ -17,7 +17,7 @@ CmdStanFit <- R6::R6Class(
     num_procs = function() {
       self$runset$num_procs()
     },
-    print = function(variables = NULL, ..., digits = 2, max_rows = 10) {
+    print = function(variables = NULL, ..., digits = 2, max_rows = getOption("cmdstanr_max_rows", 10)) {
       if (is.null(private$draws_) &&
           !length(self$output_files(include_failed = FALSE))) {
         stop("Fitting failed. Unable to print.", call. = FALSE)
@@ -54,7 +54,7 @@ CmdStanFit <- R6::R6Class(
       base::print(out, row.names = FALSE)
       if (max_rows < total_rows) {
         cat("\n # showing", max_rows, "of", total_rows,
-            "rows (change via 'max_rows' argument)\n")
+            "rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)\n")
       }
       invisible(self)
     }
@@ -706,7 +706,7 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'
 #' fit$profiles()
 #' }
-#' 
+#'
 profiles <- function() {
   profiles <- list()
   i <- 1
