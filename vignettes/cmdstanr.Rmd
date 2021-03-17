@@ -159,7 +159,7 @@ fit <- mod$sample(
   data = data_list, 
   seed = 123, 
   chains = 4, 
-  parallel_chains = 2,
+  parallel_chains = 4,
   refresh = 500
 )
 ```
