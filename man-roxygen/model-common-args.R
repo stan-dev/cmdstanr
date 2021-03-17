@@ -48,15 +48,20 @@
 #'   `NULL` (temporary directory) since CmdStanR makes the CmdStan output
 #'   (posterior draws and diagnostics) available in \R via methods of the fitted
 #'   model objects. The behavior of `output_dir` is as follows:
-#'  * If `NULL` (the default), then the CSV files are written to a temporary
-#'  directory and only saved permanently if the user calls one of the `$save_*`
-#'  methods of the fitted model object (e.g.,
-#'  [`$save_output_files()`][fit-method-save_output_files]). These temporary
-#'  files are removed when the fitted model object is
-#'  [garbage collected][base::gc] (manually or automatically).
-#'  * If a path, then the files are created in `output_dir` with names
-#'  corresponding to the defaults used by `$save_output_files()`.
+#'   * If `NULL` (the default), then the CSV files are written to a temporary
+#'   directory and only saved permanently if the user calls one of the `$save_*`
+#'   methods of the fitted model object (e.g.,
+#'   [`$save_output_files()`][fit-method-save_output_files]). These temporary
+#'   files are removed when the fitted model object is
+#'   [garbage collected][base::gc] (manually or automatically).
+#'   * If a path, then the files are created in `output_dir` with names
+#'   corresponding to the defaults used by `$save_output_files()`.
 #'
+#' @param output_basename (string) A string to use as a prefix for the
+#'   names of the output CSV files of CmdStan.
+#'   * If `NULL` (the default), the basename of the output CSV files
+#'   will be comprised from the model name, timestamp and 5 random characters.
+#' 
 #' @param sig_figs (positive integer) The number of significant figures used
 #'   when storing the output values. By default, CmdStan represent the output
 #'   values with 6 significant figures. The upper limit for `sig_figs` is 18.
