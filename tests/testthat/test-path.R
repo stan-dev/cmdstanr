@@ -86,6 +86,14 @@ test_that("CmdStan version detected when setting path", {
   expect_equal(cmdstan_version(), VERSION)
 })
 
+test_that("cmdstan_version() behavior when version is not set", {
+  version <- .cmdstanr$VERSION
+  on.exit(.cmdstanr$VERSION <- version)
+  .cmdstanr$VERSION <- NULL
+  expect_error(cmdstan_version())
+  expect_null(cmdstan_version(error_on_NA = FALSE))
+})
+
 test_that("Warning message is thrown if can't detect version number", {
   path <- testthat::test_path("answers") # valid path but not cmdstan
   expect_warning(
