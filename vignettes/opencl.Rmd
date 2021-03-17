@@ -93,7 +93,7 @@ and no OpenCL CPU runtime, the platform and device IDs of the GPU are typically
 both `0`, but the `clinfo` tool can be used to figure out for sure what devices
 are available.
 
-On an Ubuntu system with both CPU and GPU OpenCL support, `clinfo -l` outpus:
+On an Ubuntu system with both CPU and GPU OpenCL support, `clinfo -l` outputs:
 
 ```{bash eval=FALSE}
 Platform #0: AMD Accelerated Parallel Processing
