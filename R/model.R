@@ -697,6 +697,7 @@ sample <- function(data = NULL,
                    parallel_chains = getOption("mc.cores", 1),
                    chain_ids = seq_len(chains),
                    threads_per_chain = NULL,
+                   opencl_ids = NULL,
                    iter_warmup = NULL,
                    iter_sampling = NULL,
                    save_warmup = FALSE,
@@ -714,7 +715,6 @@ sample <- function(data = NULL,
                    fixed_param = FALSE,
                    validate_csv = TRUE,
                    show_messages = TRUE,
-                   opencl_ids = NULL,
                    # deprecated
                    cores = NULL,
                    num_cores = NULL,
@@ -1029,6 +1029,7 @@ optimize <- function(data = NULL,
                      output_basename = NULL,
                      sig_figs = NULL,
                      threads = NULL,
+                     opencl_ids = NULL,
                      algorithm = NULL,
                      init_alpha = NULL,
                      iter = NULL,
@@ -1037,8 +1038,7 @@ optimize <- function(data = NULL,
                      tol_grad = NULL,
                      tol_rel_grad = NULL,
                      tol_param = NULL,
-                     history_size = NULL,
-                     opencl_ids = NULL) {
+                     history_size = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
@@ -1159,6 +1159,7 @@ variational <- function(data = NULL,
                         output_basename = NULL,
                         sig_figs = NULL,
                         threads = NULL,
+                        opencl_ids = NULL,
                         algorithm = NULL,
                         iter = NULL,
                         grad_samples = NULL,
@@ -1168,8 +1169,7 @@ variational <- function(data = NULL,
                         adapt_iter = NULL,
                         tol_rel_obj = NULL,
                         eval_elbo = NULL,
-                        output_samples = NULL,
-                        opencl_ids = NULL) {
+                        output_samples = NULL) {
   checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
     if (!is.null(threads)) {
