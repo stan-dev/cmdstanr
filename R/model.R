@@ -809,6 +809,7 @@ sample <- function(data = NULL,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
+    output_basename = output_basename,
     sig_figs = sig_figs,
     validate_csv = validate_csv
   )
@@ -946,6 +947,7 @@ sample_mpi <- function(data = NULL,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
+    output_basename = output_basename,
     validate_csv = validate_csv,
     sig_figs = sig_figs
   )
@@ -1064,6 +1066,7 @@ optimize <- function(data = NULL,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
+    output_basename = output_basename,
     sig_figs = sig_figs
   )
 
@@ -1187,6 +1190,7 @@ variational <- function(data = NULL,
     init = init,
     refresh = refresh,
     output_dir = output_dir,
+    output_basename = output_basename,
     sig_figs = sig_figs
   )
 
@@ -1304,6 +1308,7 @@ generate_quantities <- function(fitted_params,
     data_file = process_data(data),
     seed = seed,
     output_dir = output_dir,
+    output_basename = output_basename,
     sig_figs = sig_figs
   )
   cmdstan_procs <- CmdStanGQProcs$new(
