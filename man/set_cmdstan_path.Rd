@@ -10,16 +10,24 @@ set_cmdstan_path(path = NULL)
 
 cmdstan_path()
 
-cmdstan_version()
+cmdstan_version(error_on_NA = TRUE)
 }
 \arguments{
 \item{path}{The full file path to the CmdStan installation as a string. If
 \code{NULL} (the default) then the path is set to the default path used by
 \code{\link[=install_cmdstan]{install_cmdstan()}} if it exists.}
+
+\item{error_on_NA}{Logical of length 1, whether to
+throw an error if CmdStan is not found.
+If \code{FALSE}, \code{cmdstan_version()} returns \code{NULL}.}
 }
 \value{
 A string. Either the file path to the CmdStan installation or the
 CmdStan version number.
+
+CmdStan version string if available. If CmdStan
+is not found and \code{error_on_NA} is \code{FALSE},
+\code{cmdstan_version()} returns \code{NULL}.
 }
 \description{
 Use the \code{set_cmdstan_path()} function to tell CmdStanR where the
