@@ -783,7 +783,7 @@ sample <- function(data = NULL,
   }
   if (is.null(self$cpp_options()[["stan_opencl"]])
       && !is.null(opencl_ids)) {
-     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+     stop("'opencl_ids' is set but the model was not compiled for use with OpenCL.",
            "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
            call. = FALSE)   
   }
