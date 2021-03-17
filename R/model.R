@@ -782,8 +782,7 @@ sample <- function(data = NULL,
            call. = FALSE)
     }
   }
-  
-
+  check_opencl(self$cpp_options(), opencl_ids)
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
     iter_sampling = iter_sampling,
