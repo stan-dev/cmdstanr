@@ -59,7 +59,8 @@
 #'
 #' @param output_basename (string) A string to use as a prefix for the
 #'   names of the output CSV files of CmdStan.
-#'   * If `NULL` (the default), the
+#'   * If `NULL` (the default), the basename of the output CSV files
+#'   will be comprised from the model name, timestamp and 5 random characters.
 #' 
 #' @param sig_figs (positive integer) The number of significant figures used
 #'   when storing the output values. By default, CmdStan represent the output

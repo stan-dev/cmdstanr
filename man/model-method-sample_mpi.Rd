@@ -114,7 +114,8 @@ corresponding to the defaults used by \verb{$save_output_files()}.
 \item{output_basename}{(string) A string to use as a prefix for the
 names of the output CSV files of CmdStan.
 \itemize{
-\item If \code{NULL} (the default), the
+\item If \code{NULL} (the default), the basename of the output CSV files
+will be comprised from the model name, timestamp and 5 random characters.
 }}
 
 \item{chains}{(positive integer) The number of Markov chains to run. The
