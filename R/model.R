@@ -186,6 +186,7 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     stan_file_ = character(),
+    model_name_ = character(),
     exe_file_ = character(),
     hpp_file_ = character(),
     dir_ = NULL,
@@ -201,7 +202,7 @@ CmdStanModel <- R6::R6Class(
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
-
+      private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
       args <- list(...)
       check_stanc_options(args$stanc_options)
       private$precompile_cpp_options_ <- args$cpp_options %||% list()
@@ -224,6 +225,9 @@ CmdStanModel <- R6::R6Class(
     },
     stan_file = function() {
       private$stan_file_
+    },
+    model_name = function() {
+      private$model_name_
     },
     exe_file = function(path = NULL) {
       if (!is.null(path)) {
@@ -408,7 +412,6 @@ compile <- function(quiet = TRUE,
   if (dir.exists(exe)) {
     stop("There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.", call. = FALSE)
   }
-  model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
 
   # compile if:
   # - the user forced compilation,
@@ -476,7 +479,7 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
   if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- model_name
+    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
   stanc_built_options <- c()
   for (i in seq_len(length(stanc_options))) {
@@ -596,8 +599,6 @@ check_syntax <- function(pedantic = FALSE,
     include_paths <- private$precompile_include_paths_
   }
 
-  model_name <- sub(" ", "_", paste0(strip_ext(basename(self$stan_file())), "_model"))
-
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- temp_hpp_file
 
@@ -619,7 +620,7 @@ check_syntax <- function(pedantic = FALSE,
   }
 
   if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- model_name
+    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
   stanc_built_options = c()
   for (i in seq_len(length(stanc_options))) {
@@ -799,7 +800,7 @@ sample <- function(data = NULL,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = sample_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = chain_ids,
     data_file = process_data(data),
@@ -935,7 +936,7 @@ sample_mpi <- function(data = NULL,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = sample_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = chain_ids,
     data_file = process_data(data),
@@ -1052,7 +1053,7 @@ optimize <- function(data = NULL,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = optimize_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data),
@@ -1174,7 +1175,7 @@ variational <- function(data = NULL,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = variational_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data),
@@ -1293,7 +1294,7 @@ generate_quantities <- function(fitted_params,
   )
   cmdstan_args <- CmdStanArgs$new(
     method_args = generate_quantities_args,
-    model_name = strip_ext(basename(self$exe_file())),
+    model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = seq_len(chains),
     data_file = process_data(data),
