@@ -30,6 +30,7 @@ CmdStanArgs <- R6::R6Class(
                           init = NULL,
                           refresh = NULL,
                           output_dir = NULL,
+                          output_basename = NULL,
                           validate_csv = TRUE,
                           sig_figs = NULL,
                           opencl_ids = NULL) {
@@ -52,6 +53,7 @@ CmdStanArgs <- R6::R6Class(
         self$output_dir <- output_dir %||% tempdir(check = TRUE)
       }
       self$output_dir <- repair_path(self$output_dir)
+      self$output_basename <- output_basename
       if (is.function(init)) {
         init <- process_init_function(init, length(self$proc_ids))
       } else if (is.list(init) && !is.data.frame(init)) {
@@ -84,12 +86,15 @@ CmdStanArgs <- R6::R6Class(
       } else if (type == "profile") {
         basename <- paste0(basename, "-profile")
       }
+      if (type ==  "output" && !is.null(self$output_basename)) {
+        basename <- self$output_basename
+      }
       generate_file_names( # defined in utils.R
         basename = basename,
         ext = ".csv",
         ids = self$proc_ids,
-        timestamp = TRUE,
-        random = TRUE
+        timestamp = is.null(self$output_basename),
+        random = is.null(self$output_basename)
       )
     },
     new_files = function(type = c("output", "diagnostic", "profile")) {
