@@ -63,8 +63,18 @@ cmdstan_path <- function() {
 
 #' @rdname set_cmdstan_path
 #' @export
-cmdstan_version <- function() {
-  .cmdstanr$VERSION %||% stop_no_path()
+#' @return CmdStan version string if available. If CmdStan
+#'   is not found and `error_on_NA` is `FALSE`,
+#'   `cmdstan_version()` returns `NULL`.
+#' @param error_on_NA Logical of length 1, whether to
+#'   throw an error if CmdStan is not found.
+#'   If `FALSE`, `cmdstan_version()` returns `NULL`.
+cmdstan_version <- function(error_on_NA = TRUE) {
+  version <- .cmdstanr$VERSION
+  if (is.null(version) && error_on_NA) {
+    stop_no_path()
+  }
+  version
 }
 
 

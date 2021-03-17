@@ -28,6 +28,9 @@ Stan programs requires CmdStan >= 2.26. (#434)
 
 * Suppressing compilation messages when not in interactive mode. (#462, @wlandau)
 
+* Add a new `error_on_NA` argument to `cmdstan_version()` to optionally return `NULL`
+if the CmdStan path is not found (#467, @wlandau).
+
 # cmdstanr 0.3.0
 
 ### Bug fixes
