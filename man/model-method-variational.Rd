@@ -15,6 +15,7 @@ variational(
   output_basename = NULL,
   sig_figs = NULL,
   threads = NULL,
+  opencl_ids = NULL,
   algorithm = NULL,
   iter = NULL,
   grad_samples = NULL,
@@ -24,8 +25,7 @@ variational(
   adapt_iter = NULL,
   tol_rel_obj = NULL,
   eval_elbo = NULL,
-  output_samples = NULL,
-  opencl_device = NULL
+  output_samples = NULL
 )
 }
 \arguments{
@@ -112,6 +112,11 @@ increased usage of disk space.}
 threads to use in parallelized sections (e.g., when using the Stan
 functions \code{reduce_sum()} or \code{map_rect()}).}
 
+\item{opencl_ids}{(integer vector of length 2) The platform and
+device IDs of the OpenCL device to use for fitting. The model must
+be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
+argument to have an effect.}
+
 \item{algorithm}{(string) The algorithm. Either \code{"meanfield"} or
 \code{"fullrank"}.}
 
@@ -138,11 +143,6 @@ of the objective.}
 
 \item{output_samples}{(positive integer) Number of approximate posterior
 samples to draw and save.}
-
-\item{opencl_device}{(an integer vector of length 2) The platform and
-device IDs of the OpenCL device to use for fitting. The model must
-be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
-argument to have an effect.}
 }
 \value{
 A \code{\link{CmdStanVB}} object.

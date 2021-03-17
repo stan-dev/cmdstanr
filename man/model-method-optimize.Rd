@@ -15,6 +15,7 @@ optimize(
   output_basename = NULL,
   sig_figs = NULL,
   threads = NULL,
+  opencl_ids = NULL,
   algorithm = NULL,
   init_alpha = NULL,
   iter = NULL,
@@ -23,8 +24,7 @@ optimize(
   tol_grad = NULL,
   tol_rel_grad = NULL,
   tol_param = NULL,
-  history_size = NULL,
-  opencl_device = NULL
+  history_size = NULL
 )
 }
 \arguments{
@@ -111,6 +111,11 @@ increased usage of disk space.}
 threads to use in parallelized sections (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}).}
 
+\item{opencl_ids}{(integer vector of length 2) The platform and
+device IDs of the OpenCL device to use for fitting. The model must
+be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
+argument to have an effect.}
+
 \item{algorithm}{(string) The optimization algorithm. One of \code{"lbfgs"},
 \code{"bfgs"}, or \code{"newton"}. The control parameters below are only available
 for \code{"lbfgs"} and \verb{"bfgs}. For their default values and more details see
@@ -133,11 +138,6 @@ running \code{cmdstanr_example(method="optimize")$metadata()}.}
 
 \item{history_size}{(positive integer) The size of the history used when
 approximating the Hessian. Only available for L-BFGS.}
-
-\item{opencl_device}{(an integer vector of length 2) The platform and
-device IDs of the OpenCL device to use for fitting. The model must
-be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
-argument to have an effect.}
 }
 \value{
 A \code{\link{CmdStanMLE}} object.

@@ -18,6 +18,7 @@ sample(
   parallel_chains = getOption("mc.cores", 1),
   chain_ids = seq_len(chains),
   threads_per_chain = NULL,
+  opencl_ids = NULL,
   iter_warmup = NULL,
   iter_sampling = NULL,
   save_warmup = FALSE,
@@ -42,8 +43,7 @@ sample(
   num_samples = NULL,
   save_extra_diagnostics = NULL,
   max_depth = NULL,
-  stepsize = NULL,
-  opencl_device = NULL
+  stepsize = NULL
 )
 }
 \arguments{
@@ -147,6 +147,11 @@ run in parallel. The actual number of CPU cores used use is
 \code{parallel_chains*threads_per_chain}. For an example of using threading see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
+\item{opencl_ids}{(integer vector of length 2) The platform and
+device IDs of the OpenCL device to use for fitting. The model must
+be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
+argument to have an effect.}
+
 \item{iter_warmup}{(positive integer) The number of warmup iterations to run
 per chain. Note: in the CmdStan User's Guide this is referred to as
 \code{num_warmup}.}
@@ -233,11 +238,6 @@ If the messages are silenced then the \verb{$output()} method of the resulting
 fit object can be used to display all the silenced messages.}
 
 \item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize}{Deprecated and will be removed in a future release.}
-
-\item{opencl_device}{(an integer vector of length 2) The platform and
-device IDs of the OpenCL device to use for fitting. The model must
-be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
-argument to have an effect.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
