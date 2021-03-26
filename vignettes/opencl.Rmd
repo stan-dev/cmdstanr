@@ -18,6 +18,17 @@ vignette: >
 This vignette demonstrates how to use the OpenCL capabilites of CmdStan with
 CmdStanR. The vignette requires CmdStan 2.26.1 or newer.
 
+As of version 2.26.1, users can expect speedups with OpenCL when using vectorized
+probability distribution/mass functions (functions with the `_lpdf` or `_lpmf`
+suffix). You can expect speedups when the input variables contain 20.000 or more elements.
+
+The actual speedup for a model will depend on whether the `lpdf/lpmf` functions
+are the bottlenecks of the model and the `lpdf/lpmf` function used. 
+The more computationally complex the function is, the larger the expected speedup.
+The biggest speedups are expected when using the GLM functions.
+
+Use [profiling](../profiling.Rmd) in order to establish the bottlenecks in your model.
+
 ## OpenCL runtime
 
 OpenCL is supported on most modern CPUs and GPUs. In order to use
