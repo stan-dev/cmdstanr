@@ -126,7 +126,7 @@ test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
     } else if (method == "generate_quantities") {
       expect_error(fit$cmdstan_summary(), "Not available for generate_quantities method")
       expect_error(fit$cmdstan_diagnose(), "Not available for generate_quantities method")
-    } else {
+    } else if (method == "sample") {
       expect_output(fit$cmdstan_summary(), "Inference for Stan model")
       expect_output(fit$cmdstan_diagnose(), "Processing complete")
     }
@@ -138,8 +138,19 @@ test_that("draws() method returns a 'draws' object", {
   for (method in all_methods) {
     fit <- fits[[method]]
     draws <- fit$draws()
-    expect_type(draws, "double")
+    if (method == "generate_quantities") {
+      expect_type(draws, "integer")
+    } else {
+      expect_type(draws, "double")
+    }
     expect_s3_class(draws, "draws")
+
+    if (method != "sample") {
+      expect_warning(
+        fit$draws(inc_warmup = TRUE),
+        "'inc_warmup' is ignored except when used with CmdStanMCMC objects"
+      )
+    }
   }
 })
 
@@ -177,6 +188,18 @@ test_that("init() errors if no inits specified", {
     fit <- fits[[method]]
     expect_error(fit$init(), "Can't find initial values files")
   }
+})
+
+test_that("return_codes method works properly", {
+  skip_on_cran()
+  expect_equal(fits[["variational"]]$return_codes(), 0)
+  expect_equal(fits[["optimize"]]$return_codes(), 0)
+  expect_equal(fits[["sample"]]$return_codes(), c(0,0,0,0))
+  expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
+
+  # non-zero
+  non_zero <- testing_fit("schools", method = "optimize")
+  expect_gt(non_zero$return_codes(), 0)
 })
 
 test_that("output and latent dynamics files are cleaned up correctly", {
@@ -377,5 +400,37 @@ test_that("sig_figs works with all methods", {
   )
 })
 
+test_that("draws are returned for model with spaces", {
+  skip_on_cran()
+  m <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  generated quantities {
+    real two_y = 2 * y;
+  }
+  "
+  f <- write_stan_file(m, basename = "file with spaces")
+  expect_equal(basename(f), "file with spaces.stan")
+  mod <- cmdstan_model(f)
+  utils::capture.output(
+    fit_sample <- mod$sample(seed = 123, iter_sampling = 1000, chains = 1)
+  )
+  expect_equal(dim(fit_sample$draws()), c(1000, 1, 3))
+  utils::capture.output(
+    fit <- mod$variational(seed = 123, output_samples = 1000)
+  )
+  expect_equal(dim(fit$draws()), c(1000, 4))
+  utils::capture.output(
+    fit <- mod$optimize(seed = 123)
+  )
+  expect_equal(length(fit$mle()), 2)
 
-
+  utils::capture.output(
+    fit <- mod$generate_quantities(fitted_params = fit_sample, seed = 123)
+  )
+  expect_equal(dim(fit$draws()), c(1000, 1, 1))
+})

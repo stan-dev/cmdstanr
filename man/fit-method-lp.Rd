@@ -5,6 +5,16 @@
 \alias{lp}
 \alias{lp_approx}
 \title{Extract log probability (target)}
+\usage{
+lp()
+
+lp_approx()
+}
+\value{
+A numeric vector with length equal to the number of (post-warmup)
+draws for MCMC and variational inference, and length equal to \code{1} for
+optimization.
+}
 \description{
 The \verb{$lp()} method extracts \code{lp__}, the total log probability
 (\code{target}) accumulated in the \code{model} block of the Stan program. For
@@ -15,12 +25,6 @@ See the \href{https://mc-stan.org/docs/2_23/reference-manual/sampling-statements
 section of the Stan Reference Manual for details on when normalizing
 constants are dropped from log probability calculations.
 }
-\section{Usage}{
-\preformatted{$lp()
-$lp_approx()
-}
-}
-
 \section{Details}{
 
 \code{lp__} is the unnormalized log density on Stan's \href{https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html}{unconstrained space}.
@@ -32,12 +36,6 @@ intended to diagnose sampling efficiency and evaluate approximations.
 (also on the unconstrained space). It is exposed in the variational method
 for performing the checks described in Yao et al. (2018) and implemented in
 the \pkg{loo} package.
-}
-
-\section{Value}{
-
-A numeric vector with length equal to the number of (post-warmup) draws for
-MCMC and variational inference, and length equal to \code{1} for optimization.
 }
 
 \examples{

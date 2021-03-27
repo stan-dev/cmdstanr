@@ -21,8 +21,8 @@ print_example_program(example = c("logistic", "schools", "schools_ncp"))
 \item \code{"schools"}: the so-called "eight schools" model, a hierarchical
 meta-analysis. Fitting this model will result in warnings about
 divergences.
-\item \code{"schools_ncp"}: non-centered parameterization eight schools model that
-fixes the problem with divergences.
+\item \code{"schools_ncp"}: non-centered parameterization of the "eight schools"
+model that fixes the problem with divergences.
 }
 
 To print the Stan code for a given example use \code{print_example_program()}.}
@@ -30,7 +30,8 @@ To print the Stan code for a given example use \code{print_example_program()}.}
 \item{method}{Which fitting method should be used? The default is the
 \code{"sample"} method (MCMC).}
 
-\item{...}{Arguments passed to the chosen \code{method}.}
+\item{...}{Arguments passed to the chosen \code{method}. See the help pages for
+the individual methods for details.}
 
 \item{quiet}{If \code{TRUE} (the default) then fitting the model is wrapped in
 \code{\link[utils:capture.output]{utils::capture.output()}}.}

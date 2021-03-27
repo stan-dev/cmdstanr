@@ -56,12 +56,19 @@ test_that("optimize() method runs when all arguments specified validly", {
   expect_is(fit2, "CmdStanMLE")
 })
 
-test_that("optimize() method runs arguments are specified in scientific notation", {
+test_that("optimize() method runs when arguments are specified in scientific notation", {
   skip_on_cran()
 
   # specifying all arguments validly
   expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_sci_nota_values))
   expect_is(fit1, "CmdStanMLE")
+})
+
+test_that("optimize() warns if threads specified but not enabled", {
+  expect_warning(
+    expect_optim_output(fit <- mod$optimize(data = data_list, threads = 2)),
+    "'threads' will have no effect"
+  )
 })
 
 test_that("optimize() method errors for any invalid argument before calling cmdstan", {
@@ -74,10 +81,66 @@ test_that("optimize() method errors for any invalid argument before calling cmds
   }
 })
 
-test_that("optimize() errors when combining 'newton' with 'init_alpha'", {
+test_that("optimize() errors with bad combination of arguments", {
   skip_on_cran()
+
+  # check a few examples (if these errors are correct then they will be correct
+  # for all similar args because of how it's implemented)
   expect_error(
-      mod$optimize(data = data_list, algorithm = "newton", init_alpha = 0.1),
-    "'init_alpha' can't be used when algorithm is 'newton'"
+    mod$optimize(data = data_list, algorithm = "newton", tol_grad = 0.1),
+    "'tol_grad' can't be used when algorithm is 'newton'"
+  )
+  expect_error(
+    mod$optimize(data = data_list, algorithm = "bfgs", tol_obj = -10),
+    "not >= 0"
+  )
+  expect_error(
+    mod$optimize(data = data_list, init_alpha = 0.1),
+    "Please specify 'algorithm' in order to use 'init_alpha'"
+  )
+
+  # history size only allowed with lbfgs and must be positive integer
+  expect_error(
+    mod$optimize(data = data_list, history_size = 1),
+    "'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'"
+  )
+  expect_error(
+    mod$optimize(data = data_list, algorithm = "bfgs", history_size = 1),
+    "'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'"
+  )
+  expect_error(
+    mod$optimize(data = data_list, algorithm = "lbfgs", history_size = 1.5),
+    "Must be of type 'integerish'"
+  )
+  expect_error(
+    mod$optimize(data = data_list, algorithm = "lbfgs", history_size = -1),
+    "not >= 1"
   )
 })
+
+test_that("optimize() works with (L-)BFGS tolerances specified", {
+  skip_on_cran()
+  expect_optim_output(
+    fit <- mod$optimize(
+      data = data_list,
+      algorithm = "lbfgs",
+      # using values that aren't the defaults
+      init_alpha = 0.002,
+      tol_obj = 2e-11,
+      tol_rel_obj = 10001,
+      tol_grad = 5e-07,
+      tol_rel_grad = 10000001,
+      tol_param = 5e-07,
+      history_size = 6
+    )
+  )
+  metadata <- fit$metadata()
+  expect_equal(metadata$init_alpha, 0.002)
+  expect_equal(metadata$tol_obj, 2e-11)
+  expect_equal(metadata$tol_rel_obj, 10001)
+  expect_equal(metadata$tol_grad, 5e-07)
+  expect_equal(metadata$tol_rel_grad, 10000001)
+  expect_equal(metadata$tol_param, 5e-07)
+  expect_equal(metadata$history_size, 6)
+})
+

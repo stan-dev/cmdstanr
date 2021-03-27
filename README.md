@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/cmdstanr)](https://CRAN.R-project.org/package=cmdstanr)
-[![R-CMD-check](https://github.com/stan-dev/cmdstanr/workflows/R-CMD-check/badge.svg)](https://github.com/stan-dev/cmdstanr/actions?workflow=R-CMD-check)
+[![Unit tests](https://github.com/stan-dev/cmdstanr/workflows/Unit%20tests/badge.svg)](https://github.com/stan-dev/cmdstanr/actions?workflow=Unit-tests)
 [![Codecov test coverage](https://codecov.io/gh/stan-dev/cmdstanr/branch/master/graph/badge.svg)](https://codecov.io/gh/stan-dev/cmdstanr?branch=master)
 <!-- badges: end -->
 
@@ -32,18 +32,30 @@ analysis.
 
 ### Installation
 
-You can install the beta release of the **cmdstanr** R package with 
+#### Installing the R package
+
+You can install the latest beta release of the **cmdstanr** R package with 
 
 ```r
+# we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
 or you can install the latest development version from GitHub:
 
 ```r
-# install.packages("devtools")
-devtools::install_github("stan-dev/cmdstanr")
+# install.packages("remotes")
+remotes::install_github("stan-dev/cmdstanr")
 ```
+
+#### Installing CmdStan
+
+If you don't already have CmdStan installed then, in addition to installing the
+R package, it is also necessary to install CmdStan using CmdStanR's 
+`install_cmdstan()` function. A suitable C++ toolchain is also required. 
+Instructions are provided in the [_Getting started with
+CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette. 
+
 
 ### Contributing 
 

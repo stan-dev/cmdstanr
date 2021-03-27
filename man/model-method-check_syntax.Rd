@@ -4,47 +4,65 @@
 \alias{model-method-check_syntax}
 \alias{check_syntax}
 \title{Check syntax of a Stan program}
+\usage{
+check_syntax(
+  pedantic = FALSE,
+  include_paths = NULL,
+  stanc_options = list(),
+  quiet = FALSE
+)
+}
+\arguments{
+\item{pedantic}{(logical) Should pedantic mode be turned on? The default is
+\code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
+Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/reference-manual/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
+the Stan Reference Manual.}
+
+\item{include_paths}{(character vector) Paths to directories where Stan
+should look for files specified in \verb{#include} directives in the Stan
+program.}
+
+\item{stanc_options}{(list) Any other Stan-to-C++ transpiler options to be
+used when compiling the model. See the documentation for the
+\code{\link[=model-method-compile]{$compile()}} method for details.}
+
+\item{quiet}{(logical) Should informational messages be suppressed? The
+default is \code{FALSE}, which will print a message if the Stan program is valid
+or the compiler error message if there are syntax errors. If \code{TRUE}, only
+the error message will be printed.}
+}
+\value{
+The \verb{$check_syntax()} method returns \code{TRUE} (invisibly) if the model
+is valid.
+}
 \description{
 The \verb{$check_syntax()} method of a \code{\link{CmdStanModel}} object
 checks the Stan program for syntax errors and returns \code{TRUE} (invisibly) if
 parsing succeeds. If invalid syntax in found an error is thrown.
 }
-\section{Usage}{
-\preformatted{$check_syntax(
-  quiet = TRUE,
-  include_paths = NULL,
-  stanc_options = list()
-)
-}
-}
-
-\section{Arguments}{
-
-\itemize{
-\item \code{quiet}: (logical) Should informational messages be printed? Default is
-\code{FALSE}, which will print a message if the model is valid or the compiler
-error message if there are syntax errors in the model. If \code{TRUE}, only the
-error message will be printed.
-\item \code{include_paths}: (character vector) Paths to directories where Stan
-should look for files specified in \verb{#include} directives in the Stan
-program.
-\item \code{stanc_options}: (list) Any Stan-to-C++ transpiler options to be used
-when compiling the model. See the documentation for the
-\code{\link[=model-method-compile]{$compile()}} method for details.
-}
-}
-
-\section{Value}{
- The \verb{$check_syntax()} method returns \code{TRUE} (invisibly) if
-the model is valid.
-}
-
 \examples{
 \dontrun{
-file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
-
+file <- write_stan_file("
+data {
+  int N;
+  int y[N];
+}
+parameters {
+  // should have <lower=0> but omitting to demonstrate pedantic mode
+  real lambda;
+}
+model {
+  y ~ poisson(lambda);
+}
+")
 mod <- cmdstan_model(file, compile = FALSE)
+
+# the program is syntactically correct, however...
 mod$check_syntax()
+
+# pedantic mode will warn that lambda should be constrained to be positive
+# and that lambda has no prior distribution
+mod$check_syntax(pedantic = TRUE)
 }
 
 }
@@ -63,6 +81,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-compile}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-optimize}},
+\code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
 \code{\link{model-method-variational}}
 }

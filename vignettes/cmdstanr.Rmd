@@ -13,38 +13,28 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r settings-knitr, include=FALSE}
-stopifnot(require(knitr))
-opts_chunk$set(
-  # collapse = TRUE,
-  dev = "png",
-  dpi = 150,
-  fig.asp = 0.618,
-  fig.width = 5,
-  out.width = "60%",
-  fig.align = "center",
-  comment = NA,
-  eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
-)
+```{r child="children/settings-knitr.Rmd"}
 ```
-
 
 ## Introduction
 
-CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
+CmdStanR is a lightweight interface to [Stan](https://mc-stan.org/) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python) that
-provides an alternative to the traditional [RStan](https://mc-stan.org/rstan)
+provides an alternative to the traditional [RStan](https://mc-stan.org/rstan/)
 interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
 later in this vignette for more details on how the two interfaces differ.
 
-**CmdStanR is not on CRAN yet**, but the beta release can be installed via:
+**CmdStanR is not on CRAN yet**, but the beta release can be installed by
+running the following command in R.
 
 ```{r install, eval=FALSE}
+# we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
-CmdStanR (the **cmdstanr** R package) can now be loaded like any other R package. 
-We'll also load the **bayesplot** and **posterior** packages.
+CmdStanR (the **cmdstanr** R package) can now be loaded like any other R
+package. We'll also load the **bayesplot** and **posterior** packages to use
+later in examples.
 
 ```{r library, message=FALSE}
 library(cmdstanr)
@@ -56,16 +46,31 @@ color_scheme_set("brightblue")
 ## Installing CmdStan
 
 CmdStanR requires a working installation of
-[CmdStan](https://mc-stan.org/users/interfaces/cmdstan), the shell interface to
-Stan. If you don't have CmdStan installed you can install it yourself or use the
-`install_cmdstan()` function provided by CmdStanR.
+[CmdStan](https://mc-stan.org/users/interfaces/cmdstan.html), the shell
+interface to Stan. If you don't have CmdStan installed then CmdStanR can install
+it for you, assuming you have a suitable C++ toolchain. The requirements are
+described in the CmdStan Guide:
 
-```{r, include = FALSE}
+* https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html
+
+To double check that your toolchain is set up properly you can call
+the `check_cmdstan_toolchain()` function: 
+
+```{r check-toolchain}
+check_cmdstan_toolchain()
+```
+
+If your toolchain is configured correctly then CmdStan can be installed by
+calling the
+[`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.html)
+function:
+
+```{r install_cmdstan-1, include = FALSE}
 if (!dir.exists(cmdstan_default_path())) {
   install_cmdstan()
 }
 ```
-```{r, eval=FALSE}
+```{r install_cmdstan-2, eval=FALSE}
 install_cmdstan(cores = 2)
 ```
 
@@ -136,9 +141,7 @@ method:
 mod$exe_file()
 ```
 
-## Fitting a model
-
-### MCMC
+## Running MCMC
 
 The
 [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
@@ -156,7 +159,7 @@ fit <- mod$sample(
   data = data_list, 
   seed = 123, 
   chains = 4, 
-  parallel_chains = 2,
+  parallel_chains = 4,
   refresh = 500
 )
 ```
@@ -173,7 +176,7 @@ the most important methods. For a full list, follow this link to the
 
 * [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
 
-#### Posterior summary statistics
+### Posterior summary statistics
 
 The
 [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
@@ -188,7 +191,7 @@ fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 ```
 
 
-#### Posterior draws
+### Posterior draws
 
 The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
 method can be used to extract the posterior draws as a 3-D array (iteration x
@@ -207,13 +210,13 @@ print(draws_df)
 
 Plotting posterior distributions is as easy as passing the object returned by
 the `$draws()` method directly to plotting functions in
-[**bayesplot**](https://mc-stan.org/bayesplot):
+[**bayesplot**](https://mc-stan.org/bayesplot/):
 
 ```{r plots, message=FALSE}
 mcmc_hist(fit$draws("theta"))
 ```
 
-#### Sampler diagnostics
+### Sampler diagnostics
 
 The
 [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html)
@@ -229,7 +232,7 @@ diagnostics_df <- as_draws_df(fit$sampler_diagnostics())
 print(diagnostics_df)
 ```
 
-#### CmdStan utilities
+### CmdStan utilities
 
 The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
 and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
@@ -241,7 +244,7 @@ fit$cmdstan_summary()
 ```
 
 
-#### Create a `stanfit` object
+### Create a `stanfit` object
 
 If you have RStan installed then it is also possible to create a `stanfit` 
 object from the csv output files written by CmdStan. This can be done by using
@@ -254,14 +257,14 @@ stanfit <- rstan::read_stan_csv(fit$output_files())
 
 
 
-### Optimization and variational inference
+## Running optimization and variational inference
 
 CmdStanR also supports running Stan's optimization algorithms and its algorithms
 for variational approximation of full Bayesian inference. These are run via the
 `$optimize()` and `$variational()` methods, which are called in a similar way to
 the `$sample()` method demonstrated above.
 
-#### Optimization
+### Optimization
 
 We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html):
 
@@ -278,9 +281,9 @@ mcmc_hist(fit$draws("theta")) +
   vline_at(fit_mle$mle(), size = 1.5)
 ```
 
-#### Variational Bayes
+### Variational Bayes
 
-We can run Stan's experimental variational Bayes algorithm using the 
+We can run Stan's experimental variational Bayes algorithm (ADVI) using the 
 [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html) 
 method:
 
@@ -329,23 +332,5 @@ fit2 <- readRDS("fit.RDS")
 
 ## Comparison with RStan
 
-The RStan interface ([**rstan**](https://mc-stan.org/rstan) package) is an
-in-memory interface to Stan and relies on R packages like **Rcpp** and
-**inline** to call C++ code from R. On the other hand, the CmdStanR interface does
-not directly call any C++ code from R, instead relying on CmdStan for
-compilation, running algorithms, and writing results to output files.
-
-Both forms of interfacing with Stan have advantages and disadvantages. An
-in-memory interface like RStan is able to offer more advanced features than
-CmdStanR (for example the `rstan::log_prob()` and `rstan::grad_log_prob()`
-methods) but keeping up with Stan releases is more complicated for RStan, often
-requiring non-trivial changes to the **rstan** package and requiring new CRAN
-releases of **rstan** and **StanHeaders**. On the other hand, with CmdStanR, 
-the latest features in Stan will be available from R immediately after updating 
-CmdStan, without an update to the **cmdstanr** package. We also anticipate that
-running Stan via external processes will have the advantage of playing nicer with 
-R (and RStudio) and result in fewer unexpected crashes than when using RStan.
-
-Finally, RStan and CmdStanR have different open source licenses. RStan uses the 
-GPL-3 license while the license for CmdStanR (like Stan) is BSD-3, which is a bit 
-more permissive.
+```{r child="children/comparison-with-rstan.md"}
+```

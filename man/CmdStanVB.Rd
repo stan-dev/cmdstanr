@@ -40,10 +40,11 @@ all of which have their own (linked) documentation pages.
 
 }
 
-\subsection{Report run times and console output}{\tabular{ll}{
+\subsection{Report run times, console output, return codes}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
    \code{\link[=fit-method-output]{$output()}} \tab Pretty print the output that was printed to the console. \cr
+   \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
 }
 
 }

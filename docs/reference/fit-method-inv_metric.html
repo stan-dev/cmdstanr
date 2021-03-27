@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract inverse metric (mass matrix) — fit-method-inv_metric • cmdstanr</title>
+<title>Extract inverse metric (mass matrix) after MCMC — fit-method-inv_metric • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,9 +46,8 @@
 
 
 
-<meta property="og:title" content="Extract inverse metric (mass matrix) — fit-method-inv_metric" />
-<meta property="og:description" content="Return a list containing the inverse metric (mass matrix) for
-each chain." />
+<meta property="og:title" content="Extract inverse metric (mass matrix) after MCMC — fit-method-inv_metric" />
+<meta property="og:description" content="Extract the inverse metric (mass matrix) for each MCMC chain." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -81,7 +80,7 @@ each chain." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -171,39 +170,31 @@ each chain." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract inverse metric (mass matrix)</h1>
+    <h1>Extract inverse metric (mass matrix) after MCMC</h1>
     <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
     <div class="hidden name"><code>fit-method-inv_metric.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Return a list containing the inverse metric (mass matrix) for
-each chain.</p>
+    <p>Extract the inverse metric (mass matrix) for each MCMC chain.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$inv_metric(matrix = TRUE)
-</pre>
+    <pre class="usage"><span class='fu'>inv_metric</span>(<span class='kw'>matrix</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>matrix</code>: (logical) If a diagonal metric was used, setting <code>matrix = FALSE</code>
-returns a list containing just the diagonals of the matrices instead of the
-full matrices. Setting <code>matrix = FALSE</code> has no effect for dense metrics.</p></li>
-</ul>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>matrix</th>
+      <td><p>(logical) If a diagonal metric was used, setting <code>matrix = FALSE</code> returns a list containing just the diagonals of the matrices instead
+of the full matrices. Setting <code>matrix = FALSE</code> has no effect for dense
+metrics.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
-
-<p>A list of length equal to the number of MCMC chains. See the <code>matrix</code>
+    <p>A list of length equal to the number of MCMC chains. See the <code>matrix</code>
 argument for details.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
@@ -211,72 +202,72 @@ argument for details.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>()</div><div class='output co'>#&gt; [[1]]
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>()</div><div class='output co'>#&gt; $`1`
 #&gt;           [,1]      [,2]      [,3]      [,4]
-#&gt; [1,] 0.0423693 0.0000000 0.0000000 0.0000000
-#&gt; [2,] 0.0000000 0.0516094 0.0000000 0.0000000
-#&gt; [3,] 0.0000000 0.0000000 0.0520884 0.0000000
-#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0690201
+#&gt; [1,] 0.0544152 0.0000000 0.0000000 0.0000000
+#&gt; [2,] 0.0000000 0.0663648 0.0000000 0.0000000
+#&gt; [3,] 0.0000000 0.0000000 0.0511679 0.0000000
+#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0673017
 #&gt; 
-#&gt; [[2]]
+#&gt; $`2`
+#&gt;           [,1]     [,2]     [,3]      [,4]
+#&gt; [1,] 0.0482525 0.000000 0.000000 0.0000000
+#&gt; [2,] 0.0000000 0.057435 0.000000 0.0000000
+#&gt; [3,] 0.0000000 0.000000 0.050702 0.0000000
+#&gt; [4,] 0.0000000 0.000000 0.000000 0.0732792
+#&gt; 
+#&gt; $`3`
 #&gt;           [,1]      [,2]      [,3]      [,4]
-#&gt; [1,] 0.0465958 0.0000000 0.0000000 0.0000000
-#&gt; [2,] 0.0000000 0.0585174 0.0000000 0.0000000
-#&gt; [3,] 0.0000000 0.0000000 0.0529687 0.0000000
-#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0794442
+#&gt; [1,] 0.0397963 0.0000000 0.0000000 0.0000000
+#&gt; [2,] 0.0000000 0.0683896 0.0000000 0.0000000
+#&gt; [3,] 0.0000000 0.0000000 0.0544954 0.0000000
+#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0679505
 #&gt; 
-#&gt; [[3]]
+#&gt; $`4`
 #&gt;           [,1]      [,2]      [,3]      [,4]
-#&gt; [1,] 0.0450847 0.0000000 0.0000000 0.0000000
-#&gt; [2,] 0.0000000 0.0670076 0.0000000 0.0000000
-#&gt; [3,] 0.0000000 0.0000000 0.0521381 0.0000000
-#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0833084
+#&gt; [1,] 0.0599913 0.0000000 0.0000000 0.0000000
+#&gt; [2,] 0.0000000 0.0619537 0.0000000 0.0000000
+#&gt; [3,] 0.0000000 0.0000000 0.0573713 0.0000000
+#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0676692
+#&gt; </div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>(<span class='kw'>matrix</span><span class='kw'>=</span><span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; $`1`
+#&gt; [1] 0.0544152 0.0663648 0.0511679 0.0673017
 #&gt; 
-#&gt; [[4]]
-#&gt;           [,1]      [,2]     [,3]    [,4]
-#&gt; [1,] 0.0466487 0.0000000 0.000000 0.00000
-#&gt; [2,] 0.0000000 0.0694804 0.000000 0.00000
-#&gt; [3,] 0.0000000 0.0000000 0.057168 0.00000
-#&gt; [4,] 0.0000000 0.0000000 0.000000 0.07145
-#&gt; </div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>(<span class='kw'>matrix</span><span class='kw'>=</span><span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; [[1]]
-#&gt; [1] 0.0423693 0.0516094 0.0520884 0.0690201
+#&gt; $`2`
+#&gt; [1] 0.0482525 0.0574350 0.0507020 0.0732792
 #&gt; 
-#&gt; [[2]]
-#&gt; [1] 0.0465958 0.0585174 0.0529687 0.0794442
+#&gt; $`3`
+#&gt; [1] 0.0397963 0.0683896 0.0544954 0.0679505
 #&gt; 
-#&gt; [[3]]
-#&gt; [1] 0.0450847 0.0670076 0.0521381 0.0833084
-#&gt; 
-#&gt; [[4]]
-#&gt; [1] 0.0466487 0.0694804 0.0571680 0.0714500
+#&gt; $`4`
+#&gt; [1] 0.0599913 0.0619537 0.0573713 0.0676692
 #&gt; </div><div class='input'>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>metric</span> <span class='kw'>=</span> <span class='st'>"dense_e"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>()</div><div class='output co'>#&gt; [[1]]
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>metric</span> <span class='kw'>=</span> <span class='st'>"dense_e"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>()</div><div class='output co'>#&gt; $`1`
 #&gt;             [,1]        [,2]        [,3]        [,4]
-#&gt; [1,]  0.05094300 -0.01138130 -0.00584254  0.01066090
-#&gt; [2,] -0.01138130  0.06190010 -0.00491336 -0.00578538
-#&gt; [3,] -0.00584254 -0.00491336  0.04820140 -0.01168500
-#&gt; [4,]  0.01066090 -0.00578538 -0.01168500  0.06534130
+#&gt; [1,]  0.04623570 -0.00139207 -0.00260599  0.00540813
+#&gt; [2,] -0.00139207  0.05471960  0.00125107 -0.00394774
+#&gt; [3,] -0.00260599  0.00125107  0.04719890 -0.01083170
+#&gt; [4,]  0.00540813 -0.00394774 -0.01083170  0.07156050
 #&gt; 
-#&gt; [[2]]
+#&gt; $`2`
 #&gt;              [,1]        [,2]         [,3]        [,4]
-#&gt; [1,]  0.050760700 -0.00246238 -0.000369344  0.00594355
-#&gt; [2,] -0.002462380  0.05988720  0.003791730 -0.00784179
-#&gt; [3,] -0.000369344  0.00379173  0.049899500 -0.01652150
-#&gt; [4,]  0.005943550 -0.00784179 -0.016521500  0.07874590
+#&gt; [1,]  0.048543100 -0.00344888  0.000311215  0.00118579
+#&gt; [2,] -0.003448880  0.06322130 -0.005276520 -0.00610592
+#&gt; [3,]  0.000311215 -0.00527652  0.049614400 -0.01370430
+#&gt; [4,]  0.001185790 -0.00610592 -0.013704300  0.07833850
 #&gt; 
-#&gt; [[3]]
-#&gt;            [,1]         [,2]         [,3]        [,4]
-#&gt; [1,] 0.05145190  0.001041060  0.001213370  0.00644455
-#&gt; [2,] 0.00104106  0.058152500 -0.000869394 -0.00771450
-#&gt; [3,] 0.00121337 -0.000869394  0.047429700 -0.01301480
-#&gt; [4,] 0.00644455 -0.007714500 -0.013014800  0.06768880
+#&gt; $`3`
+#&gt;             [,1]        [,2]        [,3]        [,4]
+#&gt; [1,]  0.05107010 -0.00250574  0.00478996  0.00293886
+#&gt; [2,] -0.00250574  0.05807220 -0.00689427 -0.01342300
+#&gt; [3,]  0.00478996 -0.00689427  0.04909890 -0.01018650
+#&gt; [4,]  0.00293886 -0.01342300 -0.01018650  0.08329210
 #&gt; 
-#&gt; [[4]]
-#&gt;              [,1]        [,2]        [,3]         [,4]
-#&gt; [1,]  4.89085e-02  0.00172959 -0.00223019 -4.68825e-05
-#&gt; [2,]  1.72959e-03  0.05917800 -0.00210807 -5.37377e-03
-#&gt; [3,] -2.23019e-03 -0.00210807  0.04100120 -6.19019e-03
-#&gt; [4,] -4.68825e-05 -0.00537377 -0.00619019  6.46159e-02
+#&gt; $`4`
+#&gt;             [,1]        [,2]        [,3]        [,4]
+#&gt; [1,]  0.04414410  0.00144665 -0.00163528  0.00338170
+#&gt; [2,]  0.00144665  0.06106620 -0.00257072 -0.00794529
+#&gt; [3,] -0.00163528 -0.00257072  0.04137400 -0.00597881
+#&gt; [4,]  0.00338170 -0.00794529 -0.00597881  0.07713860
 #&gt; </div><div class='input'># }
 
 </div></pre>

@@ -1,21 +1,23 @@
-on_appveyor <- function() {
-  identical(tolower(Sys.getenv("APPVEYOR")), "true")
-}
-
-on_travis <- function() {
-  identical(Sys.getenv("TRAVIS"), "true")
-}
-
 on_codecov <- function() {
   identical(Sys.getenv("R_COVR"), "true")
 }
 
-not_on_cran <- function() {
-  on_travis() || on_appveyor() || identical(Sys.getenv("NOT_CRAN"), "true")
+on_ci <- function() {
+  isTRUE(as.logical(Sys.getenv("CI")))
 }
 
-test_release_url <- function() {
-  "https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"
+not_on_cran <- function() {
+  on_ci() || identical(Sys.getenv("NOT_CRAN"), "true")
+}
+
+mpi_toolchain_present <- function() {
+  tryCatch(
+    processx::run(command = "mpicxx", args = "--version")$status == 0 &&
+    processx::run(command = "mpiexec", args = "--version")$status == 0,
+    error=function(cond) {
+      FALSE
+    }
+  )
 }
 
 delete_extensions <- function() {

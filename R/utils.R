@@ -1,33 +1,48 @@
 # misc --------------------------------------------------------------------
 
-#' Check for Windows
-#' @return `TRUE` if OS is Windows, `FALSE` if not.
-#' @noRd
-os_is_windows <- function() {
-  isTRUE(.Platform$OS.type == "windows")
+suggest_package <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop("Please install the ", pkg, " package to use this function.",
+         call. = FALSE)
+  }
 }
 
-#' Check for macOS
-#' @return `TRUE` if OS is macOS, `FALSE` if not.
-#' @noRd
-os_is_macos <- function() {
-  isTRUE(Sys.info()[["sysname"]] == "Darwin")
+is_verbose_mode <- function() {
+  getOption("cmdstanr_verbose", default = FALSE)
 }
 
-#' Famous helper for switching on `NULL` or zero length
-#' @noRd
-#' @param x,y Any \R objects.
-#' @return `x` if not `NULL` or length zero, otherwise `y` regardless of whether
-#'   `y` is `NULL`.
+# Famous helper for switching on `NULL` or zero length
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0) y else x
 }
 
-#' Returns the type of make command to use to compile
-#' @return Returns "mingw32-make" if using cmdstan 2.21+ and running Windows
-#' @noRd
+
+# checks for OS and hardware ----------------------------------------------
+
+os_is_windows <- function() {
+  isTRUE(.Platform$OS.type == "windows")
+}
+
+os_is_macos <- function() {
+  isTRUE(Sys.info()[["sysname"]] == "Darwin")
+}
+
+# Check if running R in Rosetta 2 translation environment, which is an
+# Intel-to-ARM translation layer.
+is_rosetta2 <- function() {
+  rosetta2 <- FALSE
+  if (os_is_macos()) {
+    rosetta2_check <- processx::run("/usr/sbin/sysctl",
+                                    args = c("-n", "sysctl.proc_translated"),
+                                    error_on_status = FALSE)
+    rosetta2 <- rosetta2_check$stdout == "1\n"
+  }
+  rosetta2
+}
+
+# Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
-  # Cmdstan 2.21 introduced TBB that requires mingw32-make on Windows
+  # CmdStan 2.21 introduced TBB that requires mingw32-make on Windows
   ver <- .cmdstanr$VERSION
   if (os_is_windows() && (is.null(ver) || ver >= "2.21")) {
     "mingw32-make.exe"
@@ -36,28 +51,12 @@ make_cmd <- function() {
   }
 }
 
-#' Returns the stanc exe path
-#' @return Returns "bin/stanc.exe" if running Windows, "bin/stanc" otherwise
-#' @noRd
+# Returns the stanc exe path depending on the OS
 stanc_cmd <- function() {
   if (os_is_windows()) {
     "bin/stanc.exe"
   } else {
     "bin/stanc"
-  }
-}
-
-check_target_exe <- function(exe) {
-  exe_path <- file.path(cmdstan_path(), exe)
-  if (!file.exists(exe_path)) {
-    run_log <- processx::run(
-      command = make_cmd(),
-      args = exe,
-      wd = cmdstan_path(),
-      echo_cmd = TRUE,
-      echo = TRUE,
-      error_on_status = TRUE
-    )
   }
 }
 
@@ -183,7 +182,7 @@ generate_file_names <-
       new_names <- paste0(new_names, "-", ids)
     }
     if (random) {
-      rand_num_pid <- as.integer(runif(1, min = 0, max = 1E7)) + Sys.getpid()
+      rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
       rand <- format(as.hexmode(rand_num_pid) , width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
@@ -203,69 +202,31 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   cpp_built_options = c()
   for (i in seq_len(length(cpp_options))) {
     option_name <- names(cpp_options)[i]
-    cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+    if (is.null(option_name) || !nzchar(option_name)) {
+      cpp_built_options = c(cpp_built_options, toupper(cpp_options[[i]]))
+    } else {
+      cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+    }
   }
-  paste0(cpp_built_options, collapse = " ")
+  cpp_built_options
 }
 
-prepare_precompiled <- function(cpp_options = list(), quiet = FALSE) {
-  flags <- NULL
-  if (!is.null(cpp_options$stan_threads)) {
-    flags <- c(flags, "threads")
-  }
-  if (!is.null(cpp_options$stan_mpi)) {
-    flags <- c(flags, "mpi")
-  }
-  if (!is.null(cpp_options$stan_opencl)) {
-    flags <- c(flags, "opencl")
-  }
-  if (is.null(flags)) {
-    flags <- "noflags"
-  } else {
-    flags <- paste0(flags, collapse = "_")
-  }
-  main_path_w_flags <- file.path(cmdstan_path(), "src", "cmdstan", paste0("main_", flags, ".o"))
-  main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-  model_header_path_w_flags <- file.path(cmdstan_path(), "stan", "src", "stan", "model", paste0("model_header_", flags, ".hpp.gch"))
-  model_header_path_gch <- file.path(cmdstan_path(), "stan", "src", "stan", "model", "model_header.hpp.gch")
-  if (file.exists(model_header_path_gch)) {
-    model_header_gch_used <- TRUE
-  } else {
-    model_header_gch_used <- FALSE
-  }
-  if (!file.exists(main_path_w_flags)) {
-    message(
-      "Compiling the main object file and precompiled headers (may take up to a few minutes). ",
-      "This is only necessary the first time a model is compiled after installation or when ",
-      "threading, MPI or OpenCL are used for the first time."
-    )
-    clean_compile_helper_files()
-    run_log <- processx::run(
-      command = make_cmd(),
-      args = c(cpp_options_to_compile_flags(cpp_options),
-               main_path_o),
-      wd = cmdstan_path(),
-      echo_cmd = !quiet,
-      echo = !quiet,
-      spinner = quiet,
-      stderr_line_callback = function(x,p) { if (!quiet) message(x) },
-      error_on_status = TRUE
-    )
-    file.copy(main_path_o, main_path_w_flags)
-    if (model_header_gch_used) {
-      run_log <- processx::run(
-        command = make_cmd(),
-        args = c(cpp_options_to_compile_flags(cpp_options),
-                 file.path("stan", "src", "stan", "model", "model_header.hpp.gch")),
-        wd = cmdstan_path(),
-        echo_cmd = !quiet,
-        echo = !quiet,
-        spinner = quiet,
-        stderr_line_callback = function(x,p) { if (!quiet) message(x) },
-        error_on_status = TRUE
-      )
-      file.copy(model_header_path_gch, model_header_path_w_flags)
+check_stanc_options <- function(stanc_options) {
+  i <- 1
+  names <- names(stanc_options)
+  for (s in stanc_options){
+    if (!is.null(names[i]) && nzchar(names[i])) {
+      name <- names[i]
+    } else {
+      name <- s
     }
+    if (startsWith(name, "--")) {
+      stop("No leading hyphens allowed in stanc options (", name, "). ",
+           "Use options without leading hyphens, like for example ",
+           "`stanc_options = list('allow-undefined')`",
+           call. = FALSE)
+    }
+    i <- i + 1
   }
 }
 
@@ -288,12 +249,13 @@ num_threads <- function() {
 #' @export
 #' @param num_threads (positive integer) The number of threads to set.
 set_num_threads <- function(num_threads) {
-  stop("Please use the 'threads_per_chain' argument in the $sample() method instead of set_num_threads().")
+  stop("Please use the 'threads_per_chain' argument in the $sample() method instead of set_num_threads().",
+       call. = FALSE)
 }
 
-check_divergences <- function(data_csv) {
-  if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-    divergences <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "divergent__")
+check_divergences <- function(post_warmup_sampler_diagnostics) {
+  if (!is.null(post_warmup_sampler_diagnostics)) {
+    divergences <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "divergent__")
     num_of_draws <- length(divergences)
     num_of_divergences <- sum(divergences)
     if (!is.na(num_of_divergences) && num_of_divergences > 0) {
@@ -312,17 +274,16 @@ check_divergences <- function(data_csv) {
   }
 }
 
-check_sampler_transitions_treedepth <- function(data_csv) {
-  if (!is.null(data_csv$post_warmup_sampler_diagnostics)) {
-    treedepth <- posterior::extract_variable_matrix(data_csv$post_warmup_sampler_diagnostics, "treedepth__")
+check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
+  if (!is.null(post_warmup_sampler_diagnostics)) {
+    treedepth <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "treedepth__")
     num_of_draws <- length(treedepth)
-    max_treedepth <- data_csv$metadata$max_treedepth
-    max_treedepth_hit <- sum(treedepth >= max_treedepth)
+    max_treedepth_hit <- sum(treedepth >= metadata$max_treedepth)
     if (!is.na(max_treedepth_hit) && max_treedepth_hit > 0) {
       percentage_max_treedepth <- (max_treedepth_hit)/num_of_draws*100
       message(max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
-              " transitions hit the maximum treedepth limit of ", max_treedepth,
-              " or 2^", max_treedepth, "-1 leapfrog steps.\n",
+              " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
+              " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
               "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
               "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
               "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n")
@@ -331,20 +292,18 @@ check_sampler_transitions_treedepth <- function(data_csv) {
 }
 
 matching_variables <- function(variable_filters, variables) {
-  not_found <- NULL
-  variable_filters <- unrepair_variable_names(variable_filters)
-  variables <- unrepair_variable_names(variables)
-  selected <- c()
-  for (p in variable_filters) {
-    matches <- which(variables == p | startsWith(variables, paste0(p, ".")))
-    if (length(matches)) {
-      selected <- c(selected, matches)
-    } else {
-      not_found <- c(not_found, p)
+  not_found <- c()
+  selected_variables <- c()
+  for(v in variable_filters) {
+    selected <- variables == v | startsWith(variables, paste0(v, "["))
+    selected_variables <- c(selected_variables, variables[selected])
+    variables <- variables[!selected]
+    if (!any(selected)) {
+      not_found <- c(not_found, v)
     }
   }
   list(
-    matching = variables[unique(selected)],
+    matching = selected_variables,
     not_found = not_found
   )
 }
@@ -381,3 +340,4 @@ variable_dims <- function(variable_names = NULL) {
   }
   dims
 }
+

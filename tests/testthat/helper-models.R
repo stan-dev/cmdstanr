@@ -1,5 +1,9 @@
 testing_data <- function(name) {
-  readRDS(test_path("resources", "data", paste0(name, ".data.rds")))
+  if (file.exists(test_path("resources", "data", paste0(name, ".data.rds")))) {
+    readRDS(test_path("resources", "data", paste0(name, ".data.rds")))
+  } else {
+    test_path("resources", "data", paste0(name, ".data.json"))
+  }
 }
 testing_stan_file <- function(name) {
   test_path("resources", "stan", paste0(name, ".stan"))

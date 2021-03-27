@@ -15,11 +15,6 @@
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
 #' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`.
 #'
-NULL
-
-
-# CmdStanArgs -------------------------------------------------------------
-
 CmdStanArgs <- R6::R6Class(
   "CmdStanArgs",
   lock_objects = FALSE,
@@ -35,6 +30,7 @@ CmdStanArgs <- R6::R6Class(
                           init = NULL,
                           refresh = NULL,
                           output_dir = NULL,
+                          output_basename = NULL,
                           validate_csv = TRUE,
                           sig_figs = NULL) {
 
@@ -56,6 +52,7 @@ CmdStanArgs <- R6::R6Class(
         self$output_dir <- output_dir %||% tempdir(check = TRUE)
       }
       self$output_dir <- repair_path(self$output_dir)
+      self$output_basename <- output_basename
       if (is.function(init)) {
         init <- process_init_function(init, length(self$proc_ids))
       } else if (is.list(init) && !is.data.frame(init)) {
@@ -80,45 +77,46 @@ CmdStanArgs <- R6::R6Class(
       invisible(self)
     },
 
-    new_file_names = function(type = c("output", "diagnostic")) {
+    new_file_names = function(type = c("output", "diagnostic", "profile")) {
       basename <- self$model_name
       type <- match.arg(type)
       if (type == "diagnostic") {
         basename <- paste0(basename, "-diagnostic")
+      } else if (type == "profile") {
+        basename <- paste0(basename, "-profile")
+      }
+      if (type ==  "output" && !is.null(self$output_basename)) {
+        basename <- self$output_basename
       }
       generate_file_names( # defined in utils.R
         basename = basename,
         ext = ".csv",
         ids = self$proc_ids,
-        timestamp = TRUE,
-        random = TRUE
+        timestamp = is.null(self$output_basename),
+        random = is.null(self$output_basename)
       )
     },
-    new_files = function(type = c("output", "diagnostic")) {
+    new_files = function(type = c("output", "diagnostic", "profile")) {
       files <- file.path(self$output_dir, self$new_file_names(type))
-      invisible(file.create(files))
       files
     },
 
-    # Compose all arguments to pass to CmdStan
-    #
-    # @param idx The run id. For MCMC this is the chain id, for optimization
-    #   this is just 1.
-    # @param output_file File path to csv file where output will be written.
-    # @param latent_dynamics_file File path to csv file where "extra" diagnostics (latent dynamics) will be written.
-    # @return Character vector of arguments of the form "name=value".
-    #
+    #' Compose all arguments to pass to CmdStan
+    #'
+    #' @noRd
+    #' @param idx The run id. For MCMC this is the chain id, for optimization
+    #'   this is just 1.
+    #' @param output_file File path to csv file where output will be written.
+    #' @param profile_file File path to csv file where profile data will be written.
+    #' @param latent_dynamics_file File path to csv file where the extra latent
+    #'   dynamics information will be written.
+    #' @return Character vector of arguments of the form "name=value".
+    #'
     compose_all_args = function(idx = NULL,
                                 output_file = NULL,
+                                profile_file = NULL,
                                 latent_dynamics_file = NULL) {
-      args <-
-        list(
-          id = NULL,
-          seed = NULL,
-          init = NULL,
-          data = NULL,
-          output = NULL
-        )
+      args <- list()
       idx <- idx %||% 1
       if (!is.null(self$proc_ids)) {
         if (idx < 0 || idx > length(self$proc_ids)) {
@@ -151,6 +149,10 @@ CmdStanArgs <- R6::R6Class(
 
       if (!is.null(self$sig_figs)) {
         args$output <- c(args$output, paste0("sig_figs=", self$sig_figs))
+      }
+
+      if (!is.null(profile_file)) {
+        args$output <- c(args$output, paste0("profile_file=", profile_file))
       }
 
       args <- do.call(c, append(args, list(use.names = FALSE)))
@@ -241,13 +243,14 @@ SampleArgs <- R6::R6Class(
       invisible(self)
     },
 
-    # Compose arguments to CmdStan command for sampling-specific
-    # non-default arguments
-    #
-    # @param idx Integer chain id.
-    # @param args A character vector of arguments to prepend to the returned
-    #   character vector. This will get passed in from CmdStanArgs$compose_all_args().
-    # @return A character vector of CmdStan arguments.
+    #' Compose arguments to CmdStan command for sampling-specific
+    #' non-default arguments
+    #'
+    #' @noRd
+    #' @param idx Integer chain id.
+    #' @param args A character vector of arguments to prepend to the returned
+    #'   character vector. This will get passed in from `CmdStanArgs$compose_all_args()`.
+    #' @return A character vector of CmdStan arguments.
     compose = function(idx, args = NULL) {
       .make_arg <- function(arg_name, cmdstan_arg_name = NULL, idx = NULL) {
         compose_arg(self, arg_name = arg_name, cmdstan_arg_name = cmdstan_arg_name, idx = idx)
@@ -295,8 +298,6 @@ SampleArgs <- R6::R6Class(
           .make_arg("window")
         )
       }
-
-      # convert list to character vector
       new_args <- do.call(c, new_args)
       c(args, new_args)
     }
@@ -343,12 +344,24 @@ OptimizeArgs <- R6::R6Class(
   lock_objects = FALSE,
   public = list(
     method = "optimize",
-    initialize = function(algorithm = NULL,
+    initialize = function(iter = NULL,
+                          algorithm = NULL,
                           init_alpha = NULL,
-                          iter = NULL) {
+                          tol_obj = NULL,
+                          tol_rel_obj = NULL,
+                          tol_grad = NULL,
+                          tol_rel_grad = NULL,
+                          tol_param = NULL,
+                          history_size = NULL) {
       self$algorithm <- algorithm
-      self$init_alpha <- init_alpha
       self$iter <- iter
+      self$init_alpha <- init_alpha
+      self$tol_obj <- tol_obj
+      self$tol_rel_obj <- tol_rel_obj
+      self$tol_grad <- tol_grad
+      self$tol_rel_grad <- tol_rel_grad
+      self$tol_param <- tol_param
+      self$history_size <- history_size
       invisible(self)
     },
     validate = function(num_procs) {
@@ -365,9 +378,15 @@ OptimizeArgs <- R6::R6Class(
       }
       new_args <- list(
         "method=optimize",
+        .make_arg("iter"),
         .make_arg("algorithm"),
         .make_arg("init_alpha"),
-        .make_arg("iter")
+        .make_arg("tol_obj"),
+        .make_arg("tol_rel_obj"),
+        .make_arg("tol_grad"),
+        .make_arg("tol_rel_grad"),
+        .make_arg("tol_param"),
+        .make_arg("history_size")
       )
       new_args <- do.call(c, new_args)
       c(args, new_args)
@@ -577,14 +596,33 @@ validate_sample_args <- function(self, num_procs) {
 validate_optimize_args <- function(self) {
   checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
                            choices = c("bfgs", "lbfgs", "newton"))
-  checkmate::assert_integerish(self$iter, lower = 0, null.ok = TRUE, len = 1)
+  checkmate::assert_integerish(self$iter, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$iter)) {
     self$iter <- as.integer(self$iter)
   }
-  checkmate::assert_number(self$init_alpha, lower = 0, null.ok = TRUE)
-  if (!is.null(self$init_alpha) && isTRUE(self$algorithm == "newton")) {
-    stop("'init_alpha' can't be used when algorithm is 'newton'.",
-         call. = FALSE)
+
+  # check args only available for lbfgs and bfgs
+  bfgs_args <- c("init_alpha", "tol_obj", "tol_rel_obj", "tol_grad", "tol_rel_grad", "tol_param")
+  for (arg in bfgs_args) {
+    # check that arg is positive or NULL and that algorithm='lbfgs' or 'bfgs' is
+    # explicitly specified (error if not or if 'newton')
+    if (!is.null(self[[arg]]) && is.null(self$algorithm)) {
+      stop("Please specify 'algorithm' in order to use '", arg, "'.", call. = FALSE)
+    }
+    if (!is.null(self[[arg]]) && isTRUE(self$algorithm == "newton")) {
+      stop("'", arg, "' can't be used when algorithm is 'newton'.", call. = FALSE)
+    }
+    checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
+  }
+
+  # history_size only available for lbfgs
+  if (!is.null(self$history_size)) {
+    if (!isTRUE(self$algorithm == "lbfgs")) {
+      stop("'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'.", call. = FALSE)
+    } else {
+      checkmate::assert_integerish(self$history_size, lower = 1, len = 1, null.ok = FALSE)
+      self$history_size <- as.integer(self$history_size)
+    }
   }
 
   invisible(TRUE)
@@ -682,7 +720,9 @@ process_init_list <- function(init, num_procs) {
   if (any(sapply(init, function(x) length(x) == 0))) {
     stop("'init' contains empty lists.", call. = FALSE)
   }
-
+  if (any(grepl("\\[",names(unlist(init))))) {
+    stop("'init' contains entries with parameter names that include square-brackets, which is not permitted. To supply inits for a vector, matrix or array of parameters, create a single entry with the parameter's name in the init list and specify init values for the entire parameter container.", call. = FALSE)
+  }
   init_paths <-
     tempfile(
       pattern = paste0("init-", seq_along(init), "-"),
@@ -777,7 +817,12 @@ validate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
     return(invisible(TRUE))
   }
-  checkmate::assert_integerish(seed, lower = 1)
+  if (cmdstan_version() < "2.26") {
+    lower_seed <- 1
+  } else {
+    lower_seed <- 0
+  }
+  checkmate::assert_integerish(seed, lower = lower_seed)
   if (length(seed) > 1 && length(seed) != num_procs) {
     stop("If 'seed' is specified it must be a single integer or one per chain.",
          call. = FALSE)
@@ -792,7 +837,7 @@ validate_seed <- function(seed, num_procs) {
 #' @return An integer vector of length `num_procs`.
 maybe_generate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
-    seed <- sample(.Machine$integer.max, num_procs)
+    seed <- base::sample(.Machine$integer.max, num_procs)
   } else if (length(seed) == 1 && num_procs > 1) {
     seed <- as.integer(seed)
     seed <- c(seed, seed + 1:(num_procs -1))

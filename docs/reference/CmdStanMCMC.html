@@ -83,7 +83,7 @@ objects." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -199,6 +199,7 @@ methods, all of which have their own (linked) documentation pages.</p><h3>Extrac
 <tr><td><code><a href='fit-method-inv_metric.html'>$inv_metric()</a></code></td><td>Return the inverse metric for each chain.</td></tr>
 <tr><td><code><a href='fit-method-init.html'>$init()</a></code></td><td>Return user-specified initial values.</td></tr>
 <tr><td><code><a href='fit-method-metadata.html'>$metadata()</a></code></td><td>Return a list of metadata gathered from the CmdStan CSV files.</td></tr>
+<tr><td><code><a href='fit-method-num_chains.html'>$num_chains()</a></code></td><td>Returns the number of MCMC chains.</td></tr>
 </table>
 
 
@@ -210,6 +211,7 @@ methods, all of which have their own (linked) documentation pages.</p><h3>Extrac
 <tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
+<tr><td><code><a href='fit-method-loo.html'>$loo()</a></code></td><td>Run <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo::loo.array()</a></code> for approximate LOO-CV</td></tr>
 </table>
 
 
@@ -227,11 +229,12 @@ methods, all of which have their own (linked) documentation pages.</p><h3>Extrac
 
 
 
-<h3>Report run times and console output</h3>
+<h3>Report run times, console output, return codes</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
-<tr><td><code><a href='fit-method-time.html'>$time()</a></code></td><td>Report total and chain-specific run times.</td></tr>
 <tr><td><code><a href='fit-method-output.html'>$output()</a></code></td><td>Return the stdout and stderr of all chains or pretty print the output for a single chain.</td></tr>
+<tr><td><code><a href='fit-method-time.html'>$time()</a></code></td><td>Report total and chain-specific run times.</td></tr>
+<tr><td><code><a href='fit-method-return_codes.html'>$return_codes()</a></code></td><td>Return the return codes from the CmdStan runs.</td></tr>
 </table>
 
 

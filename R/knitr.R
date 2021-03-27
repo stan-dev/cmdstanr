@@ -5,8 +5,11 @@
 #' [R Markdown CmdStan Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html)
 #' for a demonstration.
 #'
-#' @param override Override knitr's built-in, RStan-based engine for `stan`.
-#'   See below for details.
+#' @export
+#'
+#' @param override Override knitr's built-in, RStan-based engine for Stan? The
+#'   default is `TRUE`. See **Details**.
+#'
 #' @details
 #' If `override = TRUE` (default), this registers CmdStanR's knitr engine as the
 #' engine for `stan` chunks, replacing knitr's built-in, RStan-based engine. If
@@ -30,14 +33,13 @@
 #' If you would like to keep `stan` chunks as `stan` chunks, it is possible to
 #' specify `engine = "cmdstan"` in the chunk options after registering the
 #' `cmdstan` engine with `override = FALSE`.
+#'
 #' @references
-#' - [Register a custom language engine](https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html)
-#' - [Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
-#' @export
+#' * [Register a custom language engine for knitr](https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html)
+#' * [knitr's built-in Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
+#'
 register_knitr_engine <- function(override = TRUE) {
-  if (!requireNamespace("knitr", quietly = TRUE)) {
-    stop("Please install the knitr package.", call. = FALSE)
-  }
+  suggest_package("knitr")
   if (override) {
     knitr::knit_engines$set(stan = eng_cmdstan)
   } else {
@@ -60,6 +62,7 @@ register_knitr_engine <- function(override = TRUE) {
 #' }
 #' @export
 eng_cmdstan <- function(options) {
+  suggest_package("knitr")
   output_var <- options$output.var
   if (!is.character(output_var) || length(output_var) != 1L) {
     stop(
@@ -80,7 +83,7 @@ eng_cmdstan <- function(options) {
     }
     file <- write_stan_file(options$code, dir = dir)
     mod <- cmdstan_model(file)
-    assign(output_var, mod, envir = knitr::knit_global())
+    assign(output_var, mod, envir = cmdstanr_knitr_env())
   }
   options$engine <- "stan" # for syntax highlighting
   code <- paste(options$code, collapse = "\n")

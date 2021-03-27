@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -214,7 +214,7 @@
       <tr>
         
         <td>
-          <p><code><a href="install_cmdstan.html">install_cmdstan()</a></code> <code><a href="install_cmdstan.html">rebuild_cmdstan()</a></code> <code><a href="install_cmdstan.html">cmdstan_make_local()</a></code> </p>
+          <p><code><a href="install_cmdstan.html">install_cmdstan()</a></code> <code><a href="install_cmdstan.html">rebuild_cmdstan()</a></code> <code><a href="install_cmdstan.html">cmdstan_make_local()</a></code> <code><a href="install_cmdstan.html">check_cmdstan_toolchain()</a></code> </p>
         </td>
         <td><p>Install CmdStan or clean and rebuild an existing installation</p></td>
       </tr><tr>
@@ -251,37 +251,43 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="model-method-check_syntax.html">model-method-check_syntax</a></code> </p>
+          <p><code><a href="model-method-check_syntax.html">check_syntax()</a></code> </p>
         </td>
         <td><p>Check syntax of a Stan program</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="model-method-compile.html">model-method-compile</a></code> </p>
+          <p><code><a href="model-method-compile.html">compile()</a></code> </p>
         </td>
         <td><p>Compile a Stan program</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="model-method-generate-quantities.html">model-method-generate-quantities</a></code> </p>
+          <p><code><a href="model-method-generate-quantities.html">generate_quantities()</a></code> </p>
         </td>
         <td><p>Run Stan's standalone generated quantities method</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="model-method-optimize.html">model-method-optimize</a></code> </p>
+          <p><code><a href="model-method-optimize.html">optimize()</a></code> </p>
         </td>
         <td><p>Run Stan's optimization algorithms</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="model-method-sample.html">model-method-sample</a></code> </p>
+          <p><code><a href="model-method-sample.html">sample()</a></code> </p>
         </td>
         <td><p>Run Stan's MCMC algorithms</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="model-method-variational.html">model-method-variational</a></code> </p>
+          <p><code><a href="model-method-sample_mpi.html">sample_mpi()</a></code> </p>
+        </td>
+        <td><p>Run Stan's MCMC algorithms with MPI</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="model-method-variational.html">variational()</a></code> </p>
         </td>
         <td><p>Run Stan's variational approximation algorithms</p></td>
       </tr><tr>
@@ -330,79 +336,97 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-cmdstan_summary.html">fit-method-cmdstan_summary</a></code> </p>
+          <p><code><a href="fit-method-cmdstan_summary.html">cmdstan_summary()</a></code> <code><a href="fit-method-cmdstan_summary.html">cmdstan_diagnose()</a></code> </p>
         </td>
-        <td><p>Run CmdStan's <code>stansummary</code> and <code>diagnose</code></p></td>
+        <td><p>Run CmdStan's <code>stansummary</code> and <code>diagnose</code> utilities</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-draws.html">fit-method-draws</a></code> </p>
+          <p><code><a href="fit-method-draws.html">draws()</a></code> </p>
         </td>
         <td><p>Extract posterior draws</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-init.html">fit-method-init</a></code> </p>
+          <p><code><a href="fit-method-init.html">init()</a></code> </p>
         </td>
-        <td><p>Extract initial values</p></td>
+        <td><p>Extract user-specified initial values</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-inv_metric.html">fit-method-inv_metric</a></code> </p>
+          <p><code><a href="fit-method-inv_metric.html">inv_metric()</a></code> </p>
         </td>
-        <td><p>Extract inverse metric (mass matrix)</p></td>
+        <td><p>Extract inverse metric (mass matrix) after MCMC</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-lp.html">fit-method-lp</a></code> </p>
+          <p><code><a href="fit-method-loo.html">loo()</a></code> </p>
+        </td>
+        <td><p>Leave-one-out cross-validation (LOO-CV)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="fit-method-lp.html">lp()</a></code> <code><a href="fit-method-lp.html">lp_approx()</a></code> </p>
         </td>
         <td><p>Extract log probability (target)</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-metadata.html">fit-method-metadata</a></code> </p>
+          <p><code><a href="fit-method-metadata.html">metadata()</a></code> </p>
         </td>
         <td><p>Extract metadata from CmdStan CSV files</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-mle.html">fit-method-mle</a></code> </p>
+          <p><code><a href="fit-method-mle.html">mle()</a></code> </p>
         </td>
         <td><p>Extract (penalized) maximum likelihood estimate after optimization</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-output.html">fit-method-output</a></code> </p>
+          <p><code><a href="fit-method-num_chains.html">num_chains()</a></code> </p>
+        </td>
+        <td><p>Extract number of chains after MCMC</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="fit-method-output.html">output()</a></code> </p>
         </td>
         <td><p>Access console output</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-sampler_diagnostics.html">fit-method-sampler_diagnostics</a></code> </p>
+          <p><code><a href="fit-method-return_codes.html">return_codes()</a></code> </p>
         </td>
-        <td><p>Extract sampler diagnostics</p></td>
+        <td><p>Extract return codes from CmdStan</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-save_object.html">fit-method-save_object</a></code> </p>
+          <p><code><a href="fit-method-sampler_diagnostics.html">sampler_diagnostics()</a></code> </p>
+        </td>
+        <td><p>Extract sampler diagnostics after MCMC</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="fit-method-save_object.html">save_object()</a></code> </p>
         </td>
         <td><p>Save fitted model object to a file</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-save_output_files.html">fit-method-save_output_files</a></code> </p>
+          <p><code><a href="fit-method-save_output_files.html">save_output_files()</a></code> <code><a href="fit-method-save_output_files.html">save_latent_dynamics_files()</a></code> <code><a href="fit-method-save_output_files.html">save_data_file()</a></code> <code><a href="fit-method-save_output_files.html">output_files()</a></code> <code><a href="fit-method-save_output_files.html">latent_dynamics_files()</a></code> <code><a href="fit-method-save_output_files.html">data_file()</a></code> </p>
         </td>
         <td><p>Save output and data files</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-summary.html">fit-method-summary</a></code> </p>
+          <p><code><a href="fit-method-summary.html">summary()</a></code> </p>
         </td>
-        <td><p>Compute a summary table of MCMC estimates and diagnostics</p></td>
+        <td><p>Compute a summary table of estimates and diagnostics</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="fit-method-time.html">fit-method-time</a></code> </p>
+          <p><code><a href="fit-method-time.html">time()</a></code> </p>
         </td>
         <td><p>Report timing of CmdStan runs</p></td>
       </tr>

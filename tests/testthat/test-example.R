@@ -60,3 +60,13 @@ test_that("write_stan_file writes to specified directory and filename", {
   try(file.remove(f1, f2, f3, f4), silent = TRUE)
 })
 
+test_that("write_stan_file creates dir if necessary", {
+  expect_match(
+    write_stan_file(stan_program, file.path(tempdir(), "foo"), basename = "bar"),
+    "/foo/bar.stan"
+  )
+})
+
+test_that("write_stan_tempfile is deprecated", {
+  expect_warning(write_stan_tempfile(stan_program), "deprecated")
+})

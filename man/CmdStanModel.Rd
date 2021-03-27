@@ -17,6 +17,7 @@ methods, many of which have their own (linked) documentation pages:
    \verb{$stan_file()} \tab Return the file path to the Stan program. \cr
    \verb{$code()} \tab Return Stan program as a string. \cr
    \verb{$print()} \tab Print readable version of Stan program. \cr
+   \code{\link[=model-method-check_syntax]{$check_syntax()}} \tab Check Stan syntax without having to compile. \cr
 }
 
 }
@@ -34,6 +35,7 @@ methods, many of which have their own (linked) documentation pages:
 \subsection{Model fitting}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=model-method-sample]{$sample()}} \tab Run CmdStan's \code{"sample"} method, return \code{\link{CmdStanMCMC}} object. \cr
+   \code{\link[=model-method-sample_mpi]{$sample_mpi()}} \tab Run CmdStan's \code{"sample"} method with \href{https://mc-stan.org/math/mpi.html}{MPI}, return \code{\link{CmdStanMCMC}} object. \cr
    \code{\link[=model-method-optimize]{$optimize()}} \tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object. \cr
    \code{\link[=model-method-variational]{$variational()}} \tab Run CmdStan's \code{"variational"} method, return \code{\link{CmdStanVB}} object. \cr
    \code{\link[=model-method-generate-quantities]{$generate_quantities()}} \tab Run CmdStan's \code{"generate quantities"} method, return \code{\link{CmdStanGQ}} object. \cr
@@ -49,7 +51,7 @@ library(posterior)
 library(bayesplot)
 color_scheme_set("brightblue")
 
-# Set path to cmdstan
+# Set path to CmdStan
 # (Note: if you installed CmdStan via install_cmdstan() with default settings
 # then setting the path is unnecessary but the default below should still work.
 # Otherwise use the `path` argument to specify the location of your

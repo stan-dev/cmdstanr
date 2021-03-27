@@ -42,7 +42,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -160,11 +160,21 @@
 <div id="installation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h3>
-<p>You can install the beta release of the <strong>cmdstanr</strong> R package with</p>
-<div class="sourceCode" id="cb1"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"cmdstanr"</span>, <span class="kw">repos</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span>(<span class="st">"repos"</span>)))</pre></div>
+<div id="installing-the-r-package" class="section level4">
+<h4 class="hasAnchor">
+<a href="#installing-the-r-package" class="anchor"></a>Installing the R package</h4>
+<p>You can install the latest beta release of the <strong>cmdstanr</strong> R package with</p>
+<div class="sourceCode" id="cb1"><pre class="r"><span class="co"># we recommend running this is a fresh R session or restarting your current session</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"cmdstanr"</span>, <span class="kw">repos</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span>(<span class="st">"repos"</span>)))</pre></div>
 <p>or you can install the latest development version from GitHub:</p>
-<div class="sourceCode" id="cb2"><pre class="r"><span class="co"># install.packages("devtools")</span>
-<span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"stan-dev/cmdstanr"</span>)</pre></div>
+<div class="sourceCode" id="cb2"><pre class="r"><span class="co"># install.packages("remotes")</span>
+<span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span>(<span class="st">"stan-dev/cmdstanr"</span>)</pre></div>
+</div>
+<div id="installing-cmdstan" class="section level4">
+<h4 class="hasAnchor">
+<a href="#installing-cmdstan" class="anchor"></a>Installing CmdStan</h4>
+<p>If you don’t already have CmdStan installed then, in addition to installing the R package, it is also necessary to install CmdStan using CmdStanR’s <code><a href="reference/install_cmdstan.html">install_cmdstan()</a></code> function. A suitable C++ toolchain is also required. Instructions are provided in the <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html"><em>Getting started with CmdStanR</em></a> vignette.</p>
+</div>
 </div>
 <div id="contributing" class="section level3">
 <h3 class="hasAnchor">
@@ -211,7 +221,7 @@
 <h2>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://CRAN.R-project.org/package=cmdstanr"><img src="https://www.r-pkg.org/badges/version/cmdstanr" alt="CRAN status"></a></li>
-<li><a href="https://github.com/stan-dev/cmdstanr/actions?workflow=R-CMD-check"><img src="https://github.com/stan-dev/cmdstanr/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/stan-dev/cmdstanr/actions?workflow=Unit-tests"><img src="https://github.com/stan-dev/cmdstanr/workflows/Unit%20tests/badge.svg" alt="Unit tests"></a></li>
 <li><a href="https://codecov.io/gh/stan-dev/cmdstanr?branch=master"><img src="https://codecov.io/gh/stan-dev/cmdstanr/branch/master/graph/badge.svg" alt="Codecov test coverage"></a></li>
 </ul>
 </div>

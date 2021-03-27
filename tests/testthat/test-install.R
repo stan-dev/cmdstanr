@@ -1,8 +1,15 @@
 context("install")
 
+if (not_on_cran()) {
+  cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+  if (!nzchar(cmdstan_test_tarball_url)) {
+    cmdstan_test_tarball_url <- NULL
+  }
+}
+
 test_that("install_cmdstan() successfully installs cmdstan", {
+  skip_on_cran()
   skip_if_offline()
-  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -11,17 +18,18 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
-                      release_url = test_release_url()),
+                      release_url = cmdstan_test_tarball_url),
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
-    "CmdStan path set"
+    "CmdStan path set",
+    fixed = TRUE
   )
 })
 
 test_that("install_cmdstan() errors if installation already exists", {
   skip_if_offline()
-  if (os_is_windows()) skip_on_covr()
+  skip_on_cran()
   if (not_on_cran()) {
     # want to test passing NULL to install_cmdstan but need a real dir to
     # check in dir.exists() below so also create dir_check
@@ -30,21 +38,20 @@ test_that("install_cmdstan() errors if installation already exists", {
     install_dir <- tempdir()
   }
   dir <- file.path(install_dir, "cmdstan-2.23.0")
-  fake_folder <- FALSE
   if (!dir.exists(dir)) {
-    fake_folder <- TRUE
     dir.create(dir)
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    release_url = test_release_url()),
-    "An installation already exists"
+                    version = "2.23.0"),
+    "An installation already exists",
+    fixed = TRUE
   )
 })
 
 test_that("install_cmdstan() errors if it times out", {
+  skip_on_cran()
   skip_if_offline()
-  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -56,8 +63,8 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
-                      release_url = test_release_url()),
-      if (dir_exists) "* Removing the existing installation" else "* * Installing Cmdstan from https://github.com",
+                      release_url = cmdstan_test_tarball_url),
+      if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
     "increasing the value of the 'timeout' argument and running again with 'quiet=FALSE'",
@@ -68,8 +75,8 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
-                      release_url = test_release_url()),
-      if (dir_exists) "* Removing the existing installation" else "* * Installing Cmdstan from https://github.com",
+                      release_url = cmdstan_test_tarball_url),
+      if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
     "Try increasing the value of the 'timeout' argument.",
@@ -81,22 +88,27 @@ test_that("install_cmdstan() errors if invalid version or URL", {
   skip_if_offline()
   expect_error(
     install_cmdstan(version = "2.23.2"),
-    "Download of Cmdstan failed. Please check if the supplied version number is valid."
+    "Download of CmdStan failed. Please check if the supplied version number is valid."
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz"),
-    "Download of Cmdstan failed. Please check if the supplied release URL is valid."
+    "Download of CmdStan failed. Please check if the supplied release URL is valid."
+  )
+  expect_error(
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0"),
+    "cmdstanr supports installing from .tar.gz archives only"
   )
 })
 
 test_that("install_cmdstan() works with version and release_url", {
+  skip_on_cran()
   skip_if_offline()
-  if (os_is_windows()) skip_on_covr()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
     dir <- tempdir(check = TRUE)
   }
+
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
@@ -104,7 +116,8 @@ test_that("install_cmdstan() works with version and release_url", {
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
-    "Finished installing CmdStan"
+    "Finished installing CmdStan",
+    fixed = TRUE
   )
   expect_warning(
     expect_message(
@@ -116,15 +129,18 @@ test_that("install_cmdstan() works with version and release_url", {
         "Compiling, linking C++ code",
         fixed = TRUE
       ),
-      "Finished installing CmdStan"
+      "Finished installing CmdStan",
+    fixed = TRUE
     ),
-    "version and release_url are supplied to install_cmdstan()"
+    "version and release_url shouldn't both be specified",
+    fixed = TRUE
   )
   expect_true(dir.exists(file.path(dir, "cmdstan-2.23.0")))
   set_cmdstan_path(cmdstan_default_path())
 })
 
 test_that("toolchain checks on Unix work", {
+  skip_on_cran()
   skip_if(os_is_windows())
   path_backup <- Sys.getenv("PATH")
   Sys.setenv("PATH" = "")
@@ -149,6 +165,7 @@ test_that("toolchain checks on Unix work", {
 })
 
 test_that("toolchain checks on Windows with RTools 3.5 work", {
+  skip_on_cran()
   skip_if_not(os_is_windows())
   skip_if(R.Version()$major > "3")
 
@@ -180,6 +197,7 @@ test_that("toolchain checks on Windows with RTools 3.5 work", {
 })
 
 test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
+  skip_on_cran()
   skip_if_not(os_is_windows())
   skip_if(R.Version()$major < "4")
 
@@ -217,4 +235,20 @@ test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
     fixed = TRUE
   )
   Sys.setenv("PATH" = path_backup)
+})
+
+test_that("clean and rebuild works", {
+  skip_on_cran()
+  expect_output(
+    rebuild_cmdstan(),
+    paste0("CmdStan v", cmdstan_version(), " built"),
+    fixed = TRUE
+  )
+})
+
+test_that("github_download_url constructs correct url", {
+  expect_equal(
+    github_download_url("FOO"),
+    "https://github.com/stan-dev/cmdstan/releases/download/vFOO/cmdstan-FOO.tar.gz"
+  )
 })

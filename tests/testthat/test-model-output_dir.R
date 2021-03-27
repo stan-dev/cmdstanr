@@ -1,4 +1,4 @@
-context("model-output_dir")
+context("model-output_dir-output-basename")
 
 if (not_on_cran()) {
   set_cmdstan_path()
@@ -29,6 +29,14 @@ test_that("all fitting methods work with output_dir", {
                         output_dir = method_dir)
     expect_equal(fit$runset$args$output_dir, absolute_path(method_dir))
     expect_equal(length(list.files(method_dir)), fit$num_procs())
+
+
+    # specifying output_dir
+    fit <- testing_fit("bernoulli", method = method, seed = 123,
+                       output_basename = "custom")
+    n_files <- length(fit$output_files())
+    files <- paste0("custom-", 1:n_files, ".csv")
+    expect_equal(basename(fit$output_files()), files)
   }
 
   # specifying output_dir and save_latent_dynamics

@@ -1,18 +1,15 @@
 #' Install CmdStan or clean and rebuild an existing installation
 #'
 #' @description The `install_cmdstan()` function attempts to download and
-#'   install the latest release of
-#'   [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest). Installing
-#'   a previous release or a new release candidate is also possible by
-#'   specifying the `release_url` argument. Currently the necessary C++ tool
-#'   chain is assumed to be available, but in the future CmdStanR may help
-#'   install the requirements. See the first few sections of the
-#'   CmdStan [installation guide](https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html)
-#'   for details on the required toolchain.
+#'   install the latest release of [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest).
+#'   Installing a previous release or a new release candidate is also possible
+#'   by specifying the `release_url` argument.
+#'   See the first few sections of the CmdStan
+#'   [installation guide](https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html)
+#'   for details on the C++ toolchain required for installing CmdStan.
 #'
-#'   The `rebuild_cmdstan()` function cleans and rebuilds the cmdstan
-#'   installation. Use this function in case of any issues when compiling
-#'   models.
+#'   The `rebuild_cmdstan()` function cleans and rebuilds the CmdStan
+#'   installation. Use this function in case of any issues when compiling models.
 #'
 #'   The `cmdstan_make_local()` function is used to read/write makefile flags
 #'   and variables from/to the `make/local` file of a CmdStan installation.
@@ -33,31 +30,42 @@
 #' @param quiet For `install_cmdstan()`, should the verbose output from the
 #'   system processes be suppressed when building the CmdStan binaries?
 #'   The default is `FALSE`.
-#'   For `check_cmdstan_toolchain()`, should the function supress 
-#'   printing informational messages? The default is `FALSE`.
-#'   If `TRUE` `check_cmdstan_toolchain()` only outputs errors.
-#' @param overwrite When an existing installation is found in `dir`, should
-#'   CmdStan still be downloaded and reinstalled? The default is `FALSE`, in
-#'   which case an informative error is thrown instead of overwriting the user's
-#'   installation.
-#' @param timeout Timeout (in seconds) for the CmdStan build stage of the
-#'   installation process.
-#' @param version Specifies the Cmdstan release version to be
-#'   installed. By default set to `NULL`, which downloads the latest stable
-#'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases).
-#' @param release_url Specifies the URL to a specific Cmdstan release to be
-#'   installed. By default set to `NULL`, which downloads the latest stable
-#'   release from [GitHub](https://github.com/stan-dev/cmdstan/releases). If
-#'   `version` and `release_url` are set, `version` is used.
+#'   For `check_cmdstan_toolchain()`, should the function suppress printing
+#'   informational messages? The default is `FALSE`. If `TRUE` only errors will
+#'   be printed.
+#' @param overwrite Should CmdStan still be downloaded and installed even if an
+#'   installation of the same version is found in `dir`? The default is `FALSE`,
+#'   in which case an informative error is thrown instead of overwriting the
+#'   user's installation.
+#' @param timeout Timeout (in seconds) for the build stage of the installation.
+#' @param version The CmdStan release version to install. The default is `NULL`,
+#'   which downloads the latest stable release from
+#'   <https://github.com/stan-dev/cmdstan/releases>.
+#' @param release_url The URL for the specific CmdStan release or
+#'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
+#'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
+#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"`.
+#'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param cpp_options A list specifying any makefile flags/variables to be
 #'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
 #'   will force the use of clang for compilation.
-#' @param check_toolchain Should `install_cmdstan()` check that the
-#'   required toolchain is installed and properly configured.
-#'   The default is `TRUE`.
+#' @param check_toolchain Should `install_cmdstan()` attempt to check that the
+#'   required toolchain is installed and properly configured. The default is `TRUE`.
 #'
 #' @examples
+#' \dontrun{
+#' check_cmdstan_toolchain()
+#'
 #' # install_cmdstan(cores = 4)
+#'
+#' cpp_options <- list(
+#'   "CXX" = "clang++",
+#'   "CXXFLAGS+= -march-native",
+#'   PRECOMPILED_HEADERS = TRUE
+#' )
+#' # cmdstan_make_local(cpp_options = cpp_options)
+#' # rebuild_cmdstan()
+#' }
 #'
 install_cmdstan <- function(dir = NULL,
                             cores = getOption("mc.cores", 2),
@@ -78,20 +86,22 @@ install_cmdstan <- function(dir = NULL,
     }
   } else {
     dir <- repair_path(dir)
-    checkmate::assert_directory_exists(dir, access = "rwx")    
+    checkmate::assert_directory_exists(dir, access = "rwx")
   }
   if (!is.null(version)) {
-    if (!is.null(release_url)) { 
-      warning("version and release_url are supplied to install_cmdstan()!\nrelease_url will be ignored.")
+    if (!is.null(release_url)) {
+      warning("version and release_url shouldn't both be specified!",
+              "\nrelease_url will be ignored.", call. = FALSE)
     }
-    release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",version, "/cmdstan-", version, ".tar.gz")
+    release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
+                          version, "/cmdstan-", version, ".tar.gz")
   }
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
-           "cmdstanr supports installing from .tar.gz archives only.")
+           "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
     }
-    message("* Installing Cmdstan from ", release_url)
+    message("* Installing CmdStan from ", release_url)
     download_url <- release_url
     split_url <- strsplit(release_url, "/")
     tar_name <- utils::tail(split_url[[1]], n=1)
@@ -116,12 +126,12 @@ install_cmdstan <- function(dir = NULL,
   tar_downloaded <- download_with_retries(download_url, dest_file)
   if (!tar_downloaded) {
     if (!is.null(version)) {
-      stop("Download of Cmdstan failed. Please check if the supplied version number is valid.", call. = FALSE)
+      stop("Download of CmdStan failed. Please check if the supplied version number is valid.", call. = FALSE)
     }
     if (!is.null(release_url)) {
-      stop("Download of Cmdstan failed. Please check if the supplied release URL is valid.", call. = FALSE)
+      stop("Download of CmdStan failed. Please check if the supplied release URL is valid.", call. = FALSE)
     }
-    stop("Download of Cmdstan failed. Please try again.", call. = FALSE)
+    stop("Download of CmdStan failed. Please try again.", call. = FALSE)
   }
   message("* Download complete")
 
@@ -132,8 +142,7 @@ install_cmdstan <- function(dir = NULL,
     extras = "--strip-components 1"
   )
   if (untar_rc != 0) {
-    stop("Problem extracting tarball. Exited with return code: ", untar_rc,
-          call. = FALSE)
+    stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
   }
   file.remove(dest_file)
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
@@ -149,28 +158,16 @@ install_cmdstan <- function(dir = NULL,
         append = TRUE
       )
     }
-    if (version < "2.24") {
-      # cmdstan 2.23 and earlier prints a lot of warnings with RTools 4.0 on Windows
-      # this disables them
-      cmdstan_make_local(
-        dir = dir_cmdstan,
-        cpp_options = list(
-          "ifeq (gcc,$(CXX_TYPE))",
-          "CXXFLAGS_WARNINGS+= -Wno-int-in-bool-context -Wno-attributes",
-          "endif"
-        ),
-        append = TRUE
-      )
-    }
-    if (version > "2.22" && version < "2.24") {
-      # cmdstan 2.23 unnecessarily required chmod after moving the windows-stanc
-      # this moves the exe file so the make command that requires chmod is not used
-      windows_stanc <- file.path(dir_cmdstan, "bin", "windows-stanc")
-      bin_stanc_exe <- file.path(dir_cmdstan, "bin", "stanc.exe")
-      if (file.exists(windows_stanc)) {
-        file.copy(windows_stanc, bin_stanc_exe)
-      }
-    }
+  }
+  # Setting up native M1 compilation of CmdStan and its downstream libraries
+  if (is_rosetta2()) {
+    cmdstan_make_local(
+      dir = dir_cmdstan,
+      cpp_options = list(
+        CXX="arch -arch arm64e clang++"
+      ),
+      append = TRUE
+    )
   }
 
   message("* Building CmdStan binaries...")
@@ -208,14 +205,6 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
 #'   contents of `make/local` are returned without writing anything, otherwise
 #'   the updated contents are returned.
-#' @examples
-#' cpp_options <- list(
-#'   "CXX" = "clang++",
-#'   "CXXFLAGS+= -march-native",
-#'   PRECOMPILED_HEADERS = TRUE
-#' )
-#' # cmdstan_make_local(cpp_options = cpp_options)
-#' # rebuild_cmdstan()
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -265,6 +254,16 @@ check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
   TRUE
 }
 
+github_auth_token <- function() {
+  github_pat <- Sys.getenv("GITHUB_PAT")
+  if (nzchar(github_pat)) {
+    auth_token <- c(Authorization = paste0("token ", github_pat))
+  } else {
+    auth_token <- NULL
+  }
+  auth_token
+}
+
 # construct url for download from cmdstan version number
 github_download_url <- function(version_number) {
   base_url <- "https://github.com/stan-dev/cmdstan/releases/download/"
@@ -290,15 +289,17 @@ download_with_retries <- function(download_url,
                                   retries = 5,
                                   pause_sec = 5,
                                   quiet = TRUE) {
+        
     download_rc <- 1
     while (retries > 0 && download_rc != 0) {
       try(
         suppressWarnings(
           download_rc <- utils::download.file(url = download_url,
                                             destfile = destination_file,
-                                            quiet = quiet)
+                                            quiet = quiet,
+                                            headers = github_auth_token())
         ),
-        silent = TRUE                                    
+        silent = TRUE
       )
       if (download_rc != 0) {
         Sys.sleep(pause_sec)
@@ -316,12 +317,19 @@ build_cmdstan <- function(dir,
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE,
                           timeout) {
+  translation_args <- NULL
+  if (is_rosetta2()) {
+    run_cmd <- '/usr/bin/arch'
+    translation_args <- c('-arch', 'arm64e', 'make')
+  } else {
+    run_cmd <- make_cmd()
+  }
   processx::run(
-    make_cmd(),
-    args = c(paste0("-j", cores), "build"),
+    run_cmd,
+    args = c(translation_args, paste0("-j", cores), "build"),
     wd = dir,
-    echo_cmd = FALSE,
-    echo = !quiet,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) },
@@ -329,8 +337,7 @@ build_cmdstan <- function(dir,
   )
 }
 
-# Removes files that are used to simplify switching to using threading,
-# opencl or mpi.
+# Removes files that are used to simplify switching to using threading, opencl or mpi.
 clean_compile_helper_files <- function() {
   # remove main_.*.o files and model_header_.*.hpp.gch files
   files_to_remove <- c(
@@ -367,8 +374,8 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     make_cmd(),
     args = c("clean-all"),
     wd = dir,
-    echo_cmd = FALSE,
-    echo = !quiet,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) }
@@ -381,8 +388,8 @@ build_example <- function(dir, cores, quiet, timeout) {
     make_cmd(),
     args = c(paste0("-j", cores), cmdstan_ext("examples/bernoulli/bernoulli")),
     wd = dir,
-    echo_cmd = FALSE,
-    echo = !quiet,
+    echo_cmd = is_verbose_mode(),
+    echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
     stderr_line_callback = function(x,p) { if (quiet) message(x) },
@@ -427,17 +434,24 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 }
 
 install_mingw32_make <- function(quiet = FALSE) {
+  rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
+  if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
+    warning("No write permissions in the RTools folder. This might prevent installing mingw32-make.",
+            " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
+  }
   if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
   processx::run(
     "pacman",
     args = c("-Syu", "mingw-w64-x86_64-make","--noconfirm"),
-    wd = file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin"),
-    error_on_status = TRUE
+    wd = rtools_usr_bin,
+    error_on_status = TRUE,
+    echo_cmd = is_verbose_mode(),
+    echo = is_verbose_mode()
   )
   write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
   Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
 	invisible(NULL)
-}     
+}
 
 check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   rtools_path <- Sys.getenv("RTOOLS40_HOME")
@@ -452,7 +466,7 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   }
   # If RTools is installed in a path with spaces or brackets
   # we error as this path is not valid
-  if (regexpr("\\(|)| ", rtools_path) > 0) {
+  if (grepl("\\(|)| ", rtools_path)) {
     stop(
       "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
       "\nPlease reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain().",
@@ -559,7 +573,7 @@ check_unix_make <- function() {
     } else {
       stop("The 'make' tool was not found. Please install 'make', restart R, and then run check_cmdstan_toolchain().", call. = FALSE)
     }
-    
+
   }
 }
 
@@ -581,8 +595,6 @@ check_unix_cpp_compiler <- function() {
 #'   any detected toolchain problems? Currently this option is only available on
 #'   Windows. The default is `FALSE`, in which case problems are only reported
 #'   along with suggested fixes.
-#' @examples
-#' # check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (os_is_windows()) {
@@ -595,8 +607,11 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
     check_unix_make()
     check_unix_cpp_compiler()
   }
+  if (!checkmate::test_directory(dirname(tempdir()), access = "w")) {
+    stop("No write permissions to the temporary folder! Please change the permissions or location of the temporary folder.", call. = FALSE)
+  }
   if (!quiet) {
-    message("The CmdStan toolchain is setup properly!")
+    message("The C++ toolchain required for CmdStan is setup properly!")
   }
   invisible(NULL)
 }

@@ -11,18 +11,18 @@ test_that("check_divergences() works", {
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "14 of 100 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(check_divergences(csv_output), output)
+  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
 
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
                  test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "28 of 200 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(check_divergences(csv_output), output)
+  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
 
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "1 of 100 \\(1.0%\\) transitions ended with a divergence."
-  expect_message(check_divergences(csv_output), output)
+  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
 
 
   fit_wramup_no_samples <- testing_fit("logistic", method = "sample",
@@ -32,7 +32,7 @@ test_that("check_divergences() works", {
                           save_warmup = TRUE,
                           validate_csv = FALSE)
   csv_output <- read_cmdstan_csv(fit_wramup_no_samples$output_files())
-  expect_message(check_divergences(csv_output), regexp = NA)
+  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), regexp = NA)
 })
 
 test_that("check_sampler_transitions_treedepth() works", {
@@ -40,19 +40,33 @@ test_that("check_sampler_transitions_treedepth() works", {
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "16 of 100 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
-  expect_message(check_sampler_transitions_treedepth(csv_output), output)
+  expect_message(
+    check_sampler_transitions_treedepth(
+      csv_output$post_warmup_sampler_diagnostics,
+      csv_output$metadata),
+    output
+  )
 
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
                  test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "32 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
-  expect_message(check_sampler_transitions_treedepth(csv_output), output)
+  expect_message(
+    check_sampler_transitions_treedepth(
+      csv_output$post_warmup_sampler_diagnostics,
+      csv_output$metadata),
+    output
+  )
 
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "1 of 100 \\(1.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
-  expect_message(check_sampler_transitions_treedepth(csv_output), output)
-
+  expect_message(
+    check_sampler_transitions_treedepth(
+      csv_output$post_warmup_sampler_diagnostics,
+      csv_output$metadata),
+    output
+  )
 })
 
 test_that("cmdstan_summary works if bin/stansummary deleted file", {
@@ -101,7 +115,7 @@ test_that("cpp_options_to_compile_flags() works", {
     stan_threads = TRUE,
     stanc2 = TRUE
   )
-  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE STANC2=TRUE")
+  expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=TRUE", "STANC2=TRUE"))
   options = list()
   expect_equal(cpp_options_to_compile_flags(options), NULL)
 })
@@ -162,4 +176,37 @@ test_that("variable_dims() works", {
   vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,3]", "c[2,2]", "c[2,1]", "b[4]", "b[2]", "b[3]", "b[1]")
   vars_dims <- list(c = c(2,1), b = 1)
   expect_equal(variable_dims(vars), vars_dims)
+})
+
+test_that("matching_variables() works", {
+  ret <- matching_variables(c("beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("beta[1]", "beta[2]", "beta[3]")
+  )
+  expect_equal(length(ret$not_found), 0)
+
+  ret <- matching_variables(c("alpha"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("alpha")
+  )
+  expect_equal(length(ret$not_found), 0)
+
+  ret <- matching_variables(c("alpha", "theta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("alpha")
+  )
+  expect_equal(
+    ret$not_found,
+    c("theta")
+  )
+
+  ret <- matching_variables(c("alpha", "beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    ret$matching,
+    c("alpha", "beta[1]", "beta[2]", "beta[3]")
+  )
+  expect_equal(length(ret$not_found), 0)
 })

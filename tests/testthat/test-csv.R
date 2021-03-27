@@ -160,7 +160,7 @@ test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", 
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(as.vector(csv_output$inv_metric[[as.character(1)]]),
-               c(1.00098, 0.068748))
+               c(1.00098, 0.00068748))
   expect_equal(as.vector(csv_output$inv_metric[[as.character(2)]]),
                c(0.909635, 0.066384))
 })
@@ -296,7 +296,7 @@ test_that("read_cmdstan_csv() reads values up to adaptation", {
 
   csv_out <- read_cmdstan_csv(csv_files)
   expect_equal(csv_out$metadata$pi, 3.14)
-  expect_true(is.null(csv_out$metadata$pi_square))
+  expect_false(is.null(csv_out$metadata$pi_square))
 })
 
 test_that("remaining_columns_to_read() works", {
@@ -310,6 +310,8 @@ test_that("remaining_columns_to_read() works", {
   expect_equal(remaining_columns_to_read(NULL, c("a", "b", "c"), NULL), NULL)
   expect_equal(remaining_columns_to_read(NULL, NULL, c("a", "b", "c")), c("a", "b", "c"))
   expect_equal(remaining_columns_to_read(c("a", "b", "c"), c("a", "b", "c"), NULL), "")
+  expect_equal(remaining_columns_to_read(c(""), c("a", "b", "c"), NULL), "")
+  expect_equal(remaining_columns_to_read(c("", "a"), c("a", "b", "c"), NULL), "")
   expect_equal(remaining_columns_to_read(c("a", "b", "c"), NULL, c("a", "b", "c")), c("a", "b", "c"))
 
   # with vector and matrix variables
@@ -471,3 +473,86 @@ test_that("stan_variables and stan_variable_dims works in read_cdmstan_csv()", {
   expect_equal(gq$metadata$stan_variable_dims, list(y_rep = 10, sum_y = 1))
 })
 
+test_that("returning time works for read_cmdstan_csv", {
+  csv_files <- test_path("resources", "csv", "model1-2-no-warmup.csv")
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = 2,
+    warmup = 0.017041,
+    sampling = 0.022068,
+    total = 0.039109
+  ))
+
+  csv_files <- test_path("resources", "csv", "model1-3-diff_args.csv")
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = 1,
+    warmup = 0.038029,
+    sampling = 0.030711,
+    total = 0.06874
+  ))
+
+  csv_files <- c(
+    test_path("resources", "csv", "model1-1-warmup.csv"),
+    test_path("resources", "csv", "model1-2-warmup.csv")
+  )
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = c(1,2),
+    warmup = c(0.038029, 0.017041),
+    sampling = c(0.030711, 0.022068),
+    total = c(0.06874, 0.039109)
+  ))
+  csv_files <- c(
+    test_path("resources", "csv", "bernoulli-1-optimize.csv")
+  )
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_null(csv_data$time$chains)
+})
+
+test_that("time from read_cmdstan_csv matches time from fit$time()", {
+  fit <- fit_bernoulli_thin_1
+  expect_equivalent(
+    read_cmdstan_csv(fit$output_files())$time$chains,
+    fit$time()$chains
+  )
+})
+
+test_that("as_cmdstan_fit creates fitted model objects from csv", {
+  fits <- list(
+    mle = as_cmdstan_fit(fit_logistic_optimize$output_files()),
+    vb = as_cmdstan_fit(fit_logistic_variational$output_files()),
+    mcmc = as_cmdstan_fit(fit_logistic_thin_1$output_files())
+  )
+  for (class in names(fits)) {
+    fit <- fits[[class]]
+    checkmate::expect_r6(fit, classes = paste0("CmdStan", toupper(class), "_CSV"))
+    expect_s3_class(fit$draws(), "draws")
+    checkmate::expect_numeric(fit$lp())
+    expect_output(fit$print(), "variable")
+    expect_length(fit$output_files(), if (class == "mcmc") fit$num_chains() else 1)
+    expect_s3_class(fit$summary(), "draws_summary")
+
+    if (class == "mcmc") {
+      expect_s3_class(fit$sampler_diagnostics(), "draws_array")
+      expect_type(fit$inv_metric(), "list")
+      expect_equal(fit$time()$total, NA_integer_)
+      expect_s3_class(fit$time()$chains, "data.frame")
+    }
+    if (class == "mle") {
+      checkmate::expect_numeric(fit$mle())
+    }
+    if (class == "vb") {
+      checkmate::expect_numeric(fit$lp_approx())
+    }
+
+    for (method in unavailable_methods_CmdStanFit_CSV) {
+      if (!(method == "time" && class == "mcmc")) {
+        expect_error(fit[[method]](), "This method is not available")
+      }
+    }
+  }
+})

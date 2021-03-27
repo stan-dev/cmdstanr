@@ -47,8 +47,7 @@
 
 
 <meta property="og:title" content="Write Stan code to a temporary file — write_stan_tempfile" />
-<meta property="og:description" content="Convenience function for writing Stan code to a
-temporary file with a .stan extension." />
+<meta property="og:description" content="This function is deprecated. Please use write_stan_file() instead." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -81,7 +80,7 @@ temporary file with a .stan extension." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -177,8 +176,7 @@ temporary file with a .stan extension." />
     </div>
 
     <div class="ref-description">
-    <p>Convenience function for writing Stan code to a
-<a href='https://rdrr.io/r/base/tempfile.html'>temporary file</a> with a <code>.stan</code> extension.</p>
+    <p>This function is deprecated. Please use <code><a href='write_stan_file.html'>write_stan_file()</a></code> instead.</p>
     </div>
 
     <pre class="usage"><span class='fu'>write_stan_tempfile</span>(<span class='no'>code</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>())</pre>
@@ -193,55 +191,12 @@ containing the individual lines of a Stan program. See <strong>Examples</strong>
     </tr>
     <tr>
       <th>dir</th>
-      <td><p>An optional path of the directory where the temporary file will
-be written to. If omitted, a <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory</a> is used
-by default.</p></td>
+      <td><p>An optional path to the directory where the file will be written.
+If omitted, a <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory</a> is used by default.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The path to the temporary file.</p>
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># stan program as a single string</span>
-<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='st'>"
-data {
-  int&lt;lower=0&gt; N;
-  int&lt;lower=0,upper=1&gt; y[N];
-}
-parameters {
-  real&lt;lower=0,upper=1&gt; theta;
-}
-model {
-  y ~ bernoulli(theta);
-}
-"</span>
-
-<span class='no'>f</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_tempfile</span>(<span class='no'>stan_program</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>f</span>)</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpAcsuBs/file205e14e1fabb.stan"</div><div class='input'>
-<span class='no'>lines</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>lines</span>)</div><div class='output co'>#&gt;  [1] ""                               "data {"                        
-#&gt;  [3] "  int&lt;lower=0&gt; N;"              "  int&lt;lower=0,upper=1&gt; y[N];"  
-#&gt;  [5] "}"                              "parameters {"                  
-#&gt;  [7] "  real&lt;lower=0,upper=1&gt; theta;" "}"                             
-#&gt;  [9] "model {"                        "  y ~ bernoulli(theta);"       
-#&gt; [11] "}"                              ""                              </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='no'>lines</span>, <span class='kw'>sep</span> <span class='kw'>=</span> <span class='st'>"\n"</span>)</div><div class='output co'>#&gt; 
-#&gt; data {
-#&gt;   int&lt;lower=0&gt; N;
-#&gt;   int&lt;lower=0,upper=1&gt; y[N];
-#&gt; }
-#&gt; parameters {
-#&gt;   real&lt;lower=0,upper=1&gt; theta;
-#&gt; }
-#&gt; model {
-#&gt;   y ~ bernoulli(theta);
-#&gt; }
-#&gt; </div><div class='input'>
-<span class='co'># stan program as character vector of lines</span>
-<span class='no'>f2</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_tempfile</span>(<span class='no'>lines</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/identical.html'>identical</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>), <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f2</span>))</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

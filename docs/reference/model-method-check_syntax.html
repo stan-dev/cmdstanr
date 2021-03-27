@@ -82,7 +82,7 @@ parsing succeeds. If invalid syntax in found an error is thrown." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -183,34 +183,43 @@ checks the Stan program for syntax errors and returns <code>TRUE</code> (invisib
 parsing succeeds. If invalid syntax in found an error is thrown.</p>
     </div>
 
-
-
-    <h2 class="hasAnchor" id="usage"><a class="anchor" href="#usage"></a>Usage</h2>
-
-    
-<pre>$check_syntax(
-  quiet = TRUE,
-  include_paths = NULL,
-  stanc_options = list()
-)
-</pre>
+    <pre class="usage"><span class='fu'>check_syntax</span>(
+  <span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>include_paths</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>stanc_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-
-    
-
-<ul>
-<li><p><code>quiet</code>: (logical) Should informational messages be printed? Default is
-<code>FALSE</code>, which will print a message if the model is valid or the compiler
-error message if there are syntax errors in the model. If <code>TRUE</code>, only the
-error message will be printed.</p></li>
-<li><p><code>include_paths</code>: (character vector) Paths to directories where Stan
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>pedantic</th>
+      <td><p>(logical) Should pedantic mode be turned on? The default is
+<code>FALSE</code>. Pedantic mode attempts to warn you about potential issues in your
+Stan program beyond syntax errors. For details see the <a href='https://mc-stan.org/docs/reference-manual/pedantic-mode.html'><em>Pedantic mode</em> chapter</a> in
+the Stan Reference Manual.</p></td>
+    </tr>
+    <tr>
+      <th>include_paths</th>
+      <td><p>(character vector) Paths to directories where Stan
 should look for files specified in <code>#include</code> directives in the Stan
-program.</p></li>
-<li><p><code>stanc_options</code>: (list) Any Stan-to-C++ transpiler options to be used
-when compiling the model. See the documentation for the
-<code><a href='model-method-compile.html'>$compile()</a></code> method for details.</p></li>
-</ul>
+program.</p></td>
+    </tr>
+    <tr>
+      <th>stanc_options</th>
+      <td><p>(list) Any other Stan-to-C++ transpiler options to be
+used when compiling the model. See the documentation for the
+<code><a href='model-method-compile.html'>$compile()</a></code> method for details.</p></td>
+    </tr>
+    <tr>
+      <th>quiet</th>
+      <td><p>(logical) Should informational messages be suppressed? The
+default is <code>FALSE</code>, which will print a message if the Stan program is valid
+or the compiler error message if there are syntax errors. If <code>TRUE</code>, only
+the error message will be printed.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
@@ -230,15 +239,32 @@ documentation and tutorials.</p>
 <code><a href='model-method-compile.html'>model-method-compile</a></code>,
 <code><a href='model-method-generate-quantities.html'>model-method-generate-quantities</a></code>,
 <code><a href='model-method-optimize.html'>model-method-optimize</a></code>,
+<code><a href='model-method-sample_mpi.html'>model-method-sample_mpi</a></code>,
 <code><a href='model-method-sample.html'>model-method-sample</a></code>,
 <code><a href='model-method-variational.html'>model-method-variational</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
-
+<span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(<span class='st'>"
+data {
+  int N;
+  int y[N];
+}
+parameters {
+  // should have &lt;lower=0&gt; but omitting to demonstrate pedantic mode
+  real lambda;
+}
+model {
+  y ~ poisson(lambda);
+}
+"</span>)
 <span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='no'>mod</span>$<span class='fu'>check_syntax</span>()</div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'># }
+
+<span class='co'># the program is syntactically correct, however...</span>
+<span class='no'>mod</span>$<span class='fu'>check_syntax</span>()</div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'>
+<span class='co'># pedantic mode will warn that lambda should be constrained to be positive</span>
+<span class='co'># and that lambda has no prior distribution</span>
+<span class='no'>mod</span>$<span class='fu'>check_syntax</span>(<span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='message'>Warning:</span></div><div class='output co'>#&gt; <span class='message'>  The parameter lambda has no priors.</span></div><div class='output co'>#&gt; <span class='message'>Warning at '/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/file2ed27f29a77b.stan', line 11, column 14 to column 20:</span></div><div class='output co'>#&gt; <span class='message'>  A poisson distribution is given parameter lambda as a rate parameter</span></div><div class='output co'>#&gt; <span class='message'>  (argument 1), but lambda was not constrained to be strictly positive.</span></div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'># }
 
 </div></pre>
   </div>

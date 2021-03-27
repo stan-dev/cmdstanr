@@ -1,7 +1,7 @@
 if (not_on_cran()) {
   set_cmdstan_path()
-  stan_program <- test_path("resources/stan/chain_fails.stan")
-  stan_program_init_warnings <- test_path("resources/stan/init_warnings.stan")
+  stan_program <- testing_stan_file("chain_fails")
+  stan_program_init_warnings <- testing_stan_file("init_warnings")
 
   mod <- cmdstan_model(stan_file = stan_program)
   mod_init_warnings <- cmdstan_model(stan_file = stan_program_init_warnings)
@@ -126,9 +126,9 @@ test_that("errors when using draws after all chains fail", {
   expect_error(fit_all_fail$sampler_diagnostics(), "No chains finished successfully")
   expect_error(fit_all_fail$cmdstan_summary(), "Unable to run bin/stansummary")
   expect_error(fit_all_fail$cmdstan_diagnose(), "Unable to run bin/diagnose")
-  expect_error(fit_all_fail$print(), "Fitting failed. Unable to print.")
+  expect_error(fit_all_fail$print(), "Fitting failed. Unable to print")
   expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
-  expect_error(fit_all_fail$metadata(), "Fitting failed. Unable to retrieve the metadata.")
+  expect_error(fit_all_fail$metadata(), "Fitting failed. Unable to retrieve the metadata")
   expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
 })
 
@@ -155,7 +155,6 @@ test_that("init warnings are shown", {
 
 test_that("optimize error on bad data", {
   mod <- testing_model("bernoulli")
-
   suppressWarnings(
     expect_output(
       mod$optimize(data = list(a = c(1,2,3))),
@@ -201,10 +200,15 @@ test_that("gq chains error on wrong input CSV", {
       "Mismatch between model and fitted_parameters csv"
     )
   )
+  if (cmdstan_version() < "2.26") {
+    err_msg <- "Error reading fitted param names"
+  } else {
+    err_msg <- "Mismatch between model and fitted_parameters csv file"
+  }
   suppressWarnings(
     expect_output(
       mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv")),
-      "Error reading fitted param names"
+      err_msg
     )
   )
   expect_warning(

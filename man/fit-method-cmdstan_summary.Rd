@@ -2,10 +2,19 @@
 % Please edit documentation in R/fit.R
 \name{fit-method-cmdstan_summary}
 \alias{fit-method-cmdstan_summary}
-\alias{fit-method-cmdstan_diagnose}
 \alias{cmdstan_summary}
+\alias{fit-method-cmdstan_diagnose}
 \alias{cmdstan_diagnose}
-\title{Run CmdStan's \code{stansummary} and \code{diagnose}}
+\title{Run CmdStan's \code{stansummary} and \code{diagnose} utilities}
+\usage{
+cmdstan_summary(flags = NULL)
+
+cmdstan_diagnose()
+}
+\arguments{
+\item{flags}{An optional character vector of flags (e.g.
+\code{flags = c("--sig_figs=1")}).}
+}
 \description{
 Run CmdStan's \code{stansummary} and \code{diagnose} utilities. These are
 documented in the CmdStan Guide:
@@ -13,19 +22,15 @@ documented in the CmdStan Guide:
 \item https://mc-stan.org/docs/cmdstan-guide/stansummary.html
 \item https://mc-stan.org/docs/cmdstan-guide/diagnose.html
 }
-}
-\note{
-Although these methods also work for models fit using the
-\code{\link[=model-method-variational]{$variational()}} method, much of the output is
-only relevant for models fit using the \code{\link[=model-method-sample]{$sample()}}
-method.
-}
-\section{Usage}{
-\preformatted{$cmdstan_summary()
-$cmdstan_diagnose()
-}
-}
 
+Although these methods can be used for models fit using the
+\code{\link[=model-method-variational]{$variational()}} method, much of the output is
+currently only relevant for models fit using the
+\code{\link[=model-method-sample]{$sample()}} method.
+
+See the \link[=fit-method-summary]{$summary()} for computing similar summaries in
+R rather than calling CmdStan's utilites.
+}
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")
@@ -35,5 +40,5 @@ fit$cmdstan_summary()
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
+\code{\link{CmdStanMCMC}}, \link{fit-method-summary}
 }

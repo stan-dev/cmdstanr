@@ -13,21 +13,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r settings-knitr, include=FALSE}
-stopifnot(require(knitr))
-opts_chunk$set(
-  # collapse = TRUE,
-  dev = "png",
-  dpi = 150,
-  fig.asp = 0.618,
-  fig.width = 5,
-  out.width = "60%",
-  fig.align = "center",
-  comment = NA,
-  eval = if (isTRUE(exists("params"))) params$EVAL else FALSE
-)
+```{r child="children/settings-knitr.Rmd"}
 ```
-
 
 ## Introduction
 
@@ -103,14 +90,11 @@ mod$exe_file()
 
 ### Pedantic check
 
-If you are using CmdStan version 2.24 or later, you can run a pedantic check for
-your model, by setting the `stanc` (Stan transpiler) option `warn-pedantic`. You
-can supply the option during regular compilation, but a more convenient way is
-to use the `$check_syntax()` method of the `CmdStanModel` object. 
-
-The `$check_syntax()` method will always check that your Stan program does not
-contain any invalid syntax but with pedantic mode also enabled the check will
-warn you about other potential issues in your model, for example:
+If you are using CmdStan version 2.24 or later and CmdStanR version 0.2.1 or
+later, you can run a pedantic check for your model. CmdStanR will always check
+that your Stan program does not contain any invalid syntax but with pedantic
+mode enabled the check will also warn you about other potential issues in your
+model, for example:
 
 - Distribution usages issues: distribution arguments do not match the
 distribution specification, or some specific distribution is used in an
@@ -129,9 +113,54 @@ value.
 - Strict or nonsensical parameter bounds: a parameter is given questionable
 bounds.
 
-```{r pedantic-check, eval = FALSE}
-mod <- cmdstan_model(stan_file, compile = FALSE)
-mod$check_syntax(stanc_options = list("warn-pedantic" = TRUE)) 
+Pedantic mode is available when compiling the model or when using the separate
+`$check_syntax()` method of a `CmdStanModel` object. Internally this corresponds
+to setting the `stanc` (Stan transpiler) option `warn-pedantic`. Here we
+demonstrate pedantic mode with a Stan program that is syntactically correct but
+is missing a lower bound and a prior for a parameter.
+
+```{r stan_file_pedantic}
+stan_file_pedantic <- write_stan_file("
+data {
+  int N;
+  int y[N];
+}
+parameters {
+  // should have <lower=0> but omitting to demonstrate pedantic mode
+  real lambda;
+}
+model {
+  y ~ poisson(lambda);
+}
+")
+```
+
+To turn on pedantic mode at compile time you can set `pedantic=TRUE` in 
+the call to `cmdstan_model()` (or when calling the `$compile()` method directly
+if using the delayed compilation approach described above).
+
+```{r pedantic-compile, collapse = TRUE}
+mod_pedantic <- cmdstan_model(stan_file_pedantic, pedantic = TRUE)
+```
+
+To turn on pedantic mode separately from compilation use the `pedantic` argument
+to the `$check_syntax()` method.
+
+```{r pedantic-check_syntax, collapse=TRUE}
+mod_pedantic$check_syntax(pedantic = TRUE) 
+```
+
+Using `pedantic=TRUE` via the `$check_syntax()` method also has the advantage
+that it can be used even if the model hasn't been compiled yet. This can be
+helpful because the pedantic and syntax checks themselves are much faster than
+compilation.
+
+```{r pedantic-check_syntax-2, collapse=TRUE}
+file.remove(mod_pedantic$exe_file()) # delete compiled executable
+rm(mod_pedantic)
+
+mod_pedantic <- cmdstan_model(stan_file_pedantic, compile = FALSE)
+mod_pedantic$check_syntax(pedantic = TRUE)
 ```
 
 ### Executable location
@@ -155,7 +184,13 @@ There are three data formats that CmdStanR allows when fitting a model:
 ### Named list of R objects
 
 Like the RStan interface, CmdStanR accepts a named list of R objects where the
-names correspond to variables declared in the `data` block of the Stan program:
+names correspond to variables declared in the `data` block of the Stan program. 
+In the Bernoulli model the data is `N`, the number of data points, and `y`
+an integer array of observations. 
+
+```{r print-program-again}
+mod$print()
+```
 
 ```{r data-list, eval=FALSE}
 # data block has 'N' and 'y'
@@ -357,4 +392,31 @@ fit <- readRDS(temp_rds_file)
 fit$summary()
 ```
 
+## Developing using CmdStanR
 
+CmdStanR can of course be used for developing other packages that require compiling
+and running Stan models as well as using new or custom Stan features available
+through CmdStan.
+
+### Troubleshooting and debugging
+
+When developing or testing new features it might be useful to have more
+information on how CmdStan is called internally and to see more information
+printed when compiling or running models. This can be enabled for an entire R
+session by setting the option `"cmdstanr_verbose"` to `TRUE`.
+
+```{r verbose-mode}
+options("cmdstanr_verbose"=TRUE)
+
+mod <- cmdstan_model(stan_file, force_recompile = TRUE)
+fit <- mod$sample(
+  data = data_list,
+  chains = 1,
+  iter_warmup = 100,
+  iter_sampling = 100
+)
+```
+
+```{r include=FALSE}
+options("cmdstanr_verbose" = FALSE)
+```

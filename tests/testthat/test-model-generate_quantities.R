@@ -60,6 +60,7 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
   )
+  mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE))
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2)
   )
@@ -67,5 +68,37 @@ test_that("generate_quantities work for different chains and parallel_chains", {
     mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
     "2 thread(s) per chain",
     fixed = TRUE
+  )
+})
+
+test_that("generate_quantities works with draws_array", {
+  skip_on_cran()
+  fit_1_chain <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
+  expect_gq_output(
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain$draws())
+  )
+  expect_gq_output(
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit$draws(), parallel_chains = 2)
+  )
+  expect_gq_output(
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit$draws(), parallel_chains = 4)
+  )
+})
+
+test_that("generate_quantities works with VB and draws_matrix", {
+  skip_on_cran()
+  fit <- testing_fit("bernoulli", method = "variational", seed = 123)
+  expect_gq_output(
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit)
+  )
+  expect_gq_output(
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit$draws())
+  )
+})
+
+test_that("generate_quantities() warns if threads specified but not enabled", {
+  expect_warning(
+    expect_gq_output(fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit, threads_per_chain = 4)),
+    "'threads_per_chain' will have no effect"
   )
 })

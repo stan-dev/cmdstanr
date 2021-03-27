@@ -3,7 +3,7 @@ url: https://mc-stan.org/cmdstanr
 destination: docs
 
 development:
-  mode: auto
+  mode: release
 
 template:
   params:
@@ -65,10 +65,11 @@ articles:
   - title: "More details"
     desc: >
       More information about compilation, passing in data,
-      how CmdStan ouput is written to CSV and read back into R, and
-      using CmdStanR in R Markdown documents.
+      how CmdStan ouput is written to CSV and read back into R,
+      profiling Stan programs, and using CmdStanR in R Markdown documents.
     contents:
       - cmdstanr-internals
+      - profiling
       - r-markdown
 
 reference:
@@ -104,7 +105,7 @@ reference:
       - read_cmdstan_csv
       - write_stan_json
       - write_stan_file
-  - title: "Knitr engine for CmdStanR"
+  - title: "Using CmdStanR with knitr and R Markdown"
     contents:
       - register_knitr_engine
       - eng_cmdstan

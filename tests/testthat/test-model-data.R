@@ -46,3 +46,21 @@ test_that("error if data contains NA elements", {
   expect_error(mod$sample(data = data_list2), "Data includes NA values")
   expect_error(mod$sample(data = data_list3), "Data includes NA values")
 })
+
+test_that("empty data list doesn't error if no data block", {
+  mod <- cmdstan_model(write_stan_file("
+  parameters {
+    real x;
+  }
+  model {
+    x ~ normal(0, 1);
+  }
+  "))
+
+  expect_sample_output(
+    fit <- mod$sample(data = list(), chains = 1)
+  )
+
+  # would error if fitting failed
+  expect_silent(fit$draws())
+})

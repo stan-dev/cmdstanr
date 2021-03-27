@@ -7,6 +7,10 @@ if (not_on_cran()) {
   fit_optimize <- testing_fit("bernoulli", method = "optimize", seed = 123)
 }
 
+test_that("empty data list converted to NULL", {
+  expect_null(process_data(list()))
+})
+
 test_that("NAs detected in data list", {
   expect_false(any_na_elements(list(y = 1)))
   expect_true(any_na_elements(list(y = 1, N = NA)))
@@ -25,21 +29,18 @@ test_that("process_fitted_params() works with basic input types", {
 })
 
 test_that("process_fitted_params() errors with bad args", {
+  error_msg <- "'fitted_params' must be a list of paths to CSV files, a CmdStanMCMC/CmdStanVB object, a posterior::draws_array or a posterior::draws_matrix."
   expect_error(
     process_fitted_params(5),
-    "'fitted_params' should be a vector of paths or a CmdStanMCMC object."
+    error_msg
   )
   expect_error(
     process_fitted_params(NULL),
-    "'fitted_params' should be a vector of paths or a CmdStanMCMC object."
-  )
-  expect_error(
-    process_fitted_params(fit_vb),
-    "'fitted_params' should be a vector of paths or a CmdStanMCMC object."
+    error_msg
   )
   expect_error(
     process_fitted_params(fit_optimize),
-    "'fitted_params' should be a vector of paths or a CmdStanMCMC object."
+    error_msg
   )
 
   fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
@@ -50,11 +51,10 @@ test_that("process_fitted_params() errors with bad args", {
   fit_tmp_null <- readRDS(temp_file)
   expect_error(
     process_fitted_params(fit_tmp_null),
-    "Unable to obtain draws from the fit \\(CmdStanMCMC\\) object."
+    "Unable to obtain draws from the fit object."
   )
 
-  fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
-  fit_tmp$draws()
+  fit_tmp <- testing_fit("bernoulli", method = "variational", seed = 123)
   temp_file <- tempfile(fileext = ".rds")
   saveRDS(fit_tmp, file = temp_file)
   rm(fit_tmp)
@@ -62,10 +62,9 @@ test_that("process_fitted_params() errors with bad args", {
   fit_tmp_null <- readRDS(temp_file)
   expect_error(
     process_fitted_params(fit_tmp_null),
-    "Unable to obtain sampler diagnostics from the fit \\(CmdStanMCMC\\) object."
+    "Unable to obtain draws from the fit object."
   )
 })
-
 
 test_that("process_fitted_params() works if output_files in fit do not exist", {
   fit_ref <- testing_fit("bernoulli", method = "sample", seed = 123)
@@ -80,15 +79,16 @@ test_that("process_fitted_params() works if output_files in fit do not exist", {
   expect_true(all(file.exists(new_files)))
   chain <- 1
   for(file in new_files) {
+    if (os_is_windows()) {
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", file)
+    } else {
+      fread_cmd <- paste0("grep -v '^#' --color=never ", file)
+    }
     suppressWarnings(
-      tmp_file_gq <- vroom::vroom(
-        file,
-        comment = "#",
-        delim = ',',
-        trim_ws = TRUE,
-        altrep = FALSE,
-        progress = FALSE,
-        skip = 1)
+      tmp_file_gq <- data.table::fread(
+        cmd = fread_cmd
+      )
     )
     tmp_file_gq <- posterior::as_draws_array(tmp_file_gq)
     expect_equal(
@@ -107,4 +107,145 @@ test_that("process_fitted_params() works if output_files in fit do not exist", {
   }
 })
 
+test_that("process_fitted_params() works with CmdStanMCMC", {
+  fit <- testing_fit("logistic", method = "sample", seed = 123)
+  fit_params_files <- process_fitted_params(fit)
+  expect_true(all(file.exists(fit_params_files)))
+  chain <- 1
+  for(file in fit_params_files) {
+    if (os_is_windows()) {
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", file)
+    } else {
+      fread_cmd <- paste0("grep -v '^#' --color=never ", file)
+    }
+    suppressWarnings(
+      fit_params_tmp <- data.table::fread(
+        cmd = fread_cmd
+      )
+    )
+    fit_params_tmp <- posterior::as_draws_array(fit_params_tmp)
+    posterior::variables(fit_params_tmp) <- repair_variable_names(posterior::variables(fit_params_tmp))
+    expect_equal(
+      posterior::subset_draws(fit$draws(), variable = "lp__", chain = chain),
+      posterior::subset_draws(fit_params_tmp, variable = "lp__")
+    )
+    expect_equal(
+      posterior::subset_draws(fit$draws(), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"), chain = chain),
+      posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"),)
+    )
+    chain <- chain + 1
+  }
+})
 
+test_that("process_fitted_params() works with draws_array", {
+  fit <- testing_fit("logistic", method = "sample", seed = 123)
+  fit_params_files <- process_fitted_params(fit$draws())
+  expect_true(all(file.exists(fit_params_files)))
+  chain <- 1
+  for(file in fit_params_files) {
+    if (os_is_windows()) {
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", file)
+    } else {
+      fread_cmd <- paste0("grep -v '^#' --color=never ", file)
+    }
+    suppressWarnings(
+      fit_params_tmp <- data.table::fread(
+        cmd = fread_cmd
+      )
+    )
+    fit_params_tmp <- posterior::as_draws_array(fit_params_tmp)
+    posterior::variables(fit_params_tmp) <- repair_variable_names(posterior::variables(fit_params_tmp))
+    expect_equal(
+      posterior::subset_draws(fit$draws(), variable = "lp__", chain = chain),
+      posterior::subset_draws(fit_params_tmp, variable = "lp__")
+    )
+    expect_equal(
+      posterior::subset_draws(fit$draws(), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"), chain = chain),
+      posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"),)
+    )
+    chain <- chain + 1
+  }
+})
+
+test_that("process_fitted_params() works with draws_array without lp__", {
+  fit <- testing_fit("logistic", method = "sample", seed = 123)
+  fit_params_files <- process_fitted_params(posterior::subset_draws(fit$draws(), variables = c("alpha", "beta[1]", "beta[2]", "beta[3]")))
+  expect_true(all(file.exists(fit_params_files)))
+  chain <- 1
+  for(file in fit_params_files) {
+    if (os_is_windows()) {
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", file)
+    } else {
+      fread_cmd <- paste0("grep -v '^#' --color=never ", file)
+    }
+    suppressWarnings(
+      fit_params_tmp <- data.table::fread(
+        cmd = fread_cmd
+      )
+    )
+    fit_params_tmp <- posterior::as_draws_array(fit_params_tmp)
+    posterior::variables(fit_params_tmp) <- repair_variable_names(posterior::variables(fit_params_tmp))
+    expect_equal(
+      posterior::subset_draws(fit$draws(), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"), chain = chain),
+      posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"),)
+    )
+    chain <- chain + 1
+  }
+})
+
+test_that("process_fitted_params() works with CmdStanVB", {
+  fit <- testing_fit("logistic", method = "variational", seed = 123)
+  file <- process_fitted_params(fit)
+  expect_true(file.exists(file))
+  if (os_is_windows()) {
+    grep_path <- repair_path(Sys.which("grep.exe"))
+    fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", file)
+  } else {
+    fread_cmd <- paste0("grep -v '^#' --color=never ", file)
+  }
+  suppressWarnings(
+    fit_params_tmp <- data.table::fread(
+      cmd = fread_cmd
+    )
+  )
+  fit_params_tmp <- posterior::as_draws_array(fit_params_tmp)
+  posterior::variables(fit_params_tmp) <- repair_variable_names(posterior::variables(fit_params_tmp))
+  expect_equal(
+    posterior::subset_draws(posterior::as_draws_array(fit$draws()), variable = "lp__"),
+    posterior::subset_draws(fit_params_tmp, variable = "lp__")
+  )
+  expect_equal(
+    posterior::subset_draws(posterior::as_draws_array(fit$draws()), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]")),
+    posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  )
+})
+
+test_that("process_fitted_params() works with draws_matrix", {
+  fit <- testing_fit("logistic", method = "variational", seed = 123)
+  file <- process_fitted_params(fit$draws())
+  expect_true(file.exists(file))
+  if (os_is_windows()) {
+    grep_path <- repair_path(Sys.which("grep.exe"))
+    fread_cmd <- paste0(grep_path, " -v '^#' --color=never ", file)
+  } else {
+    fread_cmd <- paste0("grep -v '^#' --color=never ", file)
+  }
+  suppressWarnings(
+    fit_params_tmp <- data.table::fread(
+      cmd = fread_cmd
+    )
+  )
+  fit_params_tmp <- posterior::as_draws_array(fit_params_tmp)
+  posterior::variables(fit_params_tmp) <- repair_variable_names(posterior::variables(fit_params_tmp))
+  expect_equal(
+    posterior::subset_draws(posterior::as_draws_array(fit$draws()), variable = "lp__"),
+    posterior::subset_draws(fit_params_tmp, variable = "lp__")
+  )
+  expect_equal(
+    posterior::subset_draws(posterior::as_draws_array(fit$draws()), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]")),
+    posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  )
+})
