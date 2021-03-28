@@ -533,17 +533,17 @@ CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
     initialize = function(num_procs,
-                          iter,
+                          iter = NULL,
                           parallel_procs = NULL,
                           threads_per_proc = NULL,
                           show_stderr_messages = TRUE,
                           show_stdout_messages = TRUE) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
-      checkmate::assert_integerish(iter, lower = 1, len = 1, any.missing = FALSE)
+      checkmate::assert_integerish(iter, lower = 1, len = 1, null.ok = TRUE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
       checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
-      private$iter_ <- as.integer(iter)
+      private$iter_ <- iter
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
       } else {
