@@ -165,7 +165,7 @@ test_that("sample works for warmup-only run", {
   skip_on_cran()
   expect_output(
     fit <- mod$sample(chains = 2, data = data_list, iter_sampling = 0),
-    "Iteration: 1000 / 1000 [100%]  (Warmup)",
+    "1: 100% | 2: 100% |",
     fixed = TRUE
   )
 })

@@ -377,6 +377,7 @@ check_target_exe <- function(exe) {
           procs$process_error_output(error_output, chain_id)
         }
       }
+      procs$print_progress()
       procs$set_active_procs(procs$num_alive())
     }
     procs$check_finished()
@@ -487,6 +488,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
       error_output <- procs$get_proc(id)$read_error_lines()
       procs$process_error_output(error_output, id)
     }
+    procs$print_progress()
     procs$set_active_procs(procs$num_alive())
   }
   successful_fit <- FALSE
@@ -531,20 +533,23 @@ CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
     initialize = function(num_procs,
+                          iter,
                           parallel_procs = NULL,
                           threads_per_proc = NULL,
                           show_stderr_messages = TRUE,
                           show_stdout_messages = TRUE) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
+      checkmate::assert_integerish(iter, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
       checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
+      private$iter_ <- as.integer(iter)
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
       } else {
         private$parallel_procs_ <- as.integer(parallel_procs)
       }
-      private$threads_per_proc_ <- as.integer(threads_per_proc)
+      # private$threads_per_proc_ <- as.integer(threads_per_proc) # spandrel?
       private$threads_per_proc_ <- threads_per_proc
       private$active_procs_ <- 0
       private$proc_ids_ <- seq_len(num_procs)
@@ -555,6 +560,7 @@ CmdStanProcs <- R6::R6Class(
       private$proc_total_time_ = zeros
       private$show_stderr_messages_ = show_stderr_messages
       private$show_stdout_messages_ = show_stdout_messages
+      private$iter_done_ = as.list(rep(0,length(private$proc_ids_)))
       invisible(self)
     },
     num_procs = function() {
@@ -646,7 +652,6 @@ CmdStanProcs <- R6::R6Class(
           error_output <- self$get_proc(id)$read_error_lines()
           self$process_error_output(error_output, id)
           self$mark_proc_stop(id)
-          self$report_time(id)
         }
       }
       invisible(self)
@@ -723,11 +728,34 @@ CmdStanProcs <- R6::R6Class(
         }
       }
     },
+    print_progress = function(){
+      # get the width of the widest id (sets # leading zeros on all)
+      id_width = nchar(as.character(length(self$proc_ids())))
+      # flush the console at outset just in case it hasn't been updated in a while
+      flush.console()
+      # loop over processes
+      for(id in self$proc_ids()){
+        cat( format(id, width=id_width), ': ', sep='' )
+        # set %-compute text
+        if(private$iter_done_[[id]]==0){
+          # waiting-to-start text is ...
+          cat(' ... | ') # same # of chars as '100% '
+        }else{
+          # if any done, show %
+          cat( format(floor(100*private$iter_done_[[id]]/private$iter_),width=3), '% | ', sep='' )
+        }
+      }
+      #carriage-return; if nothing else has been printed, means that old progress is overwritten without creating a new line
+      # putting this at the END rather than the beginning so that any other lines printed by other functions aren't overwritten
+      cat('\U000D')
+      invisible(self)
+    },
     process_output = function(out, id) {
       if (length(out) == 0) {
         return(NULL)
       }
       for (line in out) {
+        ignore_line <- FALSE
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
           if (grepl("Optimization terminated with error", line, perl = TRUE)) {
@@ -742,16 +770,23 @@ CmdStanProcs <- R6::R6Class(
           if (self$proc_state(id) == 2.5 && grepl("Exception:", line, fixed = TRUE)) {
             self$set_proc_state(id, new_state = 3)
           }
+          if (grepl("Iteration:", line, perl = TRUE)) {
+            regex_match = regexpr('[0-9]+\\s+/',line)
+            private$iter_done_[[id]] = as.numeric(substr(line,regex_match,regex_match+attr(regex_match,'match.length')-3))
+            ignore_line = TRUE
+          }
+
           if (private$proc_state_[[id]] == 3.5) {
             message(line)
-          } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3) || is_verbose_mode()) {
+          } else if ((private$show_stdout_messages_ && private$proc_state_[[id]] >= 3 && !ignore_line) || is_verbose_mode()) {
             cat(line, collapse = "\n")
           }
         } else {
           # after the metadata is printed and we found a blank line
           # this represents the start of fitting
           if (self$proc_state(id) == 2.5) {
-              self$set_proc_state(id, new_state = 3)
+            private$iter_done_[[id]] = 0
+            self$set_proc_state(id, new_state = 3)
           }
         }
       }
@@ -778,6 +813,8 @@ CmdStanProcs <- R6::R6Class(
     processes_ = NULL, # will be list of processx::process objects
     proc_ids_ = integer(),
     num_procs_ = integer(),
+    iter_ = integer(),
+    iter_done_ = NULL,
     parallel_procs_ = integer(),
     active_procs_ = integer(),
     threads_per_proc_ = integer(),
@@ -834,9 +871,15 @@ CmdStanMCMCProcs <- R6::R6Class(
           if (state < 3 && grepl("Iteration:", line, perl = TRUE)) {
             state <- 3 # 3 =  warmup
             next_state <- 3
+            private$iter_done_[[id]] = 0
+          }
+          if (grepl("Iteration:", line, perl = TRUE)) {
+            regex_match = regexpr('[0-9]+\\s+/',line)
+            private$iter_done_[[id]] = as.numeric(substr(line,regex_match,regex_match+attr(regex_match,'match.length')-3))
+            ignore_line = TRUE
           }
           if (state < 3 && grepl("Elapsed Time:", line, perl = TRUE)) {
-            state <- 5 # 5 = end of samp+ling
+            state <- 5 # 5 = end of sampling
             next_state <- 5
           }
           if (private$proc_state_[[id]] == 3 &&
