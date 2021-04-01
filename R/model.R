@@ -816,7 +816,7 @@ sample <- function(data = NULL,
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(
     num_procs = chains,
-iter = sample_args$iter_warmup %||% 1e3 + sample_args$iter_sampling %||% 1e3,
+    iter = sample_args$iter_warmup %||% 1e3 + sample_args$iter_sampling %||% 1e3,
     parallel_procs = parallel_chains,
     threads_per_proc = threads_per_chain,
     show_stderr_messages = show_messages
@@ -955,7 +955,7 @@ sample_mpi <- function(data = NULL,
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(
     num_procs = chains,
-iter = sample_args$iter_warmup %||% 1e3 + sample_args$iter_sampling %||% 1e3,
+    iter = sample_args$iter_warmup %||% 1e3 + sample_args$iter_sampling %||% 1e3,
     parallel_procs = 1,
     show_stderr_messages = show_messages
   )
@@ -1075,7 +1075,7 @@ optimize <- function(data = NULL,
 
   cmdstan_procs <- CmdStanProcs$new(
     num_procs = 1,
-    iter = optimize_args$iter %||% 1e3,
+    iter = optimize_args$iter %||% 2e3,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
     threads_per_proc = threads
   )
@@ -1200,7 +1200,7 @@ variational <- function(data = NULL,
 
   cmdstan_procs <- CmdStanProcs$new(
     num_procs = 1,
-    iter = variational_args$iter %||% 1e3
+    iter = variational_args$iter %||% 1e4
     show_stdout_messages = (is.null(refresh) || refresh != 0),
     threads_per_proc = threads
   )

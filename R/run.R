@@ -772,7 +772,8 @@ CmdStanProcs <- R6::R6Class(
           }
           if (grepl("Iteration:", line, perl = TRUE)) {
             regex_match <- regexpr('[0-9]+\\s+/',line)
-            private$iter_done_[[id]] <- as.numeric(substr(line, regex_match, regex_match + attr(regex_match, 'match.length') - 3))
+            iter_done_string <- substr(line, regex_match, regex_match + attr(regex_match, 'match.length') - 3)
+            private$iter_done_[[id]] <- as.numeric(iter_done_string)
             ignore_line <- TRUE
           }
 
@@ -785,7 +786,6 @@ CmdStanProcs <- R6::R6Class(
           # after the metadata is printed and we found a blank line
           # this represents the start of fitting
           if (self$proc_state(id) == 2.5) {
-            private$iter_done_[[id]] = 0
             self$set_proc_state(id, new_state = 3)
           }
         }
@@ -871,11 +871,11 @@ CmdStanMCMCProcs <- R6::R6Class(
           if (state < 3 && grepl("Iteration:", line, perl = TRUE)) {
             state <- 3 # 3 =  warmup
             next_state <- 3
-            private$iter_done_[[id]] = 0
           }
           if (grepl("Iteration:", line, perl = TRUE)) {
             regex_match <- regexpr('[0-9]+\\s+/',line)
-            private$iter_done_[[id]] <- as.numeric(substr(line, regex_match, regex_match + attr(regex_match, 'match.length') - 3))
+            iter_done_string <- substr(line, regex_match, regex_match + attr(regex_match, 'match.length') - 3)
+            private$iter_done_[[id]] <- as.numeric(iter_done_string)
             ignore_line <- TRUE
           }
           if (state < 3 && grepl("Elapsed Time:", line, perl = TRUE)) {
