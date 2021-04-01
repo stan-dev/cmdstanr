@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Using CmdStanR to run Stan on the GPU with OpenCL • cmdstanr</title>
+<title>Run Stan on the GPU with OpenCL • cmdstanr</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -17,7 +17,7 @@
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Using CmdStanR to run Stan on the GPU with OpenCL">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Run Stan on the GPU with OpenCL">
 <meta property="og:description" content="cmdstanr">
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -46,7 +46,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -99,19 +99,19 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -125,11 +125,10 @@
 
       
 
-      </header><script src="opencl_files/accessible-code-block-0.0.1/empty-anchor.js"></script><link href="opencl_files/anchor-sections-1.0/anchor-sections.css" rel="stylesheet">
-<script src="opencl_files/anchor-sections-1.0/anchor-sections.js"></script><div class="row">
+      </header><script src="opencl_files/header-attrs-2.7/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Using CmdStanR to run Stan on the GPU with OpenCL</h1>
+      <h1 data-toc-skip>Run Stan on the GPU with OpenCL</h1>
                         <h4 class="author">Rok Češnovar and Jonah Gabry</h4>
             
       
@@ -143,18 +142,22 @@
 <div id="introduction" class="section level2">
 <h2 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h2>
-<p>This vignette demonstrates how to use the OpenCL capabilites of CmdStan with CmdStanR. The vignette requires CmdStan 2.26 or newer.</p>
+<p>This vignette demonstrates how to use the OpenCL capabilites of CmdStan with CmdStanR. The vignette requires CmdStan 2.26.1 or newer.</p>
+<p>As of version 2.26.1, users can expect speedups with OpenCL when using vectorized probability distribution/mass functions (functions with the <code>_lpdf</code> or <code>_lpmf</code> suffix). You can expect speedups when the input variables contain 20.000 or more elements.</p>
+<p>The actual speedup for a model will depend on whether the <code>lpdf/lpmf</code> functions are the bottlenecks of the model and the <code>lpdf/lpmf</code> function used. The more computationally complex the function is, the larger the expected speedup. The biggest speedups are expected when using the GLM functions.</p>
+<p>Use <a href="../profiling.Rmd">profiling</a> in order to establish the bottlenecks in your model.</p>
 </div>
 <div id="opencl-runtime" class="section level2">
 <h2 class="hasAnchor">
 <a href="#opencl-runtime" class="anchor"></a>OpenCL runtime</h2>
-<p>OpenCL is supported on most modern CPUs and GPUs. In order to run OpenCL-enabled Stan models, an OpenCL runtime for the target device must be installed. This is also a prerequisite for running this vignette. A guide for the most common devices is available <a href="https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl">here</a>.</p>
+<p>OpenCL is supported on most modern CPUs and GPUs. In order to use OpenCL in CmdStanR, an OpenCL runtime for the target device must be installed. A guide for the most common devices is available <a href="https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl">here</a>.</p>
 </div>
 <div id="compiling-a-model-with-opencl" class="section level2">
 <h2 class="hasAnchor">
 <a href="#compiling-a-model-with-opencl" class="anchor"></a>Compiling a model with OpenCL</h2>
+<p>By default, models in CmdStanR are compiled without OpenCL support. Once OpenCL support is enabled, a CmdStan model will make use of OpenCL if the functions in the model support it. Technically no changes to a model are required to support OpenCL since the choice of using OpenCL is handled by the compiler, but it can still be useful to rewrite a model to be more OpenCL-friendly by using vectorization as much as possible.</p>
 <p>Consider a simple logistic regression with parameters <code>alpha</code> and <code>beta</code>, covariates <code>X</code>, and outcome <code>y</code>.</p>
-<pre><code>data {
+<pre class="stan"><code>data {
   int&lt;lower=1&gt; k;
   int&lt;lower=0&gt; n;
   matrix[n, k] X;
@@ -169,9 +172,9 @@ model {
   target += std_normal_lpdf(alpha);
   target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
 }</code></pre>
-<p>We will generate some fake data and store it to a JSON file first, to avoid writing it multiple times.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit">
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr">cmdstanr</a></span><span class="op">)</span>
+<p>Some fake data will be useful to run this model:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr">cmdstanr</a></span><span class="op">)</span>
 
 <span class="co"># Generate some fake data</span>
 <span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">200000</span>
@@ -181,59 +184,146 @@ model {
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1</span>
 <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span><span class="op">(</span><span class="va">p</span> <span class="op">&lt;</span> <span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">y</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>
-<span class="va">mdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">y</span>, X <span class="op">=</span> <span class="va">X</span><span class="op">)</span>
-
-<span class="va">data_file</span> <span class="op">&lt;-</span> <span class="st">"lr_data.json"</span>
-<span class="fu"><a href="../reference/write_stan_json.html">write_stan_json</a></span><span class="op">(</span><span class="va">mdata</span>, <span class="va">data_file</span><span class="op">)</span></pre></div>
-<p>We now compile the model with <code>cpp_options = list(stan_opencl = TRUE)</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit">
-<span class="co"># Compile the model with STAN_OPENCL=TRUE</span>
-<span class="va">model_cl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="st">"opencl-files/bernoulli_logit_glm.stan"</span>, cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>stan_opencl <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></pre></div>
+<span class="va">mdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">y</span>, X <span class="op">=</span> <span class="va">X</span><span class="op">)</span></code></pre></div>
+<p>In this model, most of the computation will be handled by the <code>bernoulli_logit_glm_lpmf</code> function. Because this is a supported GPU function, it should be possible to accelerate it with OpenCL. Check <a href="http://mc-stan.org/math/opencl_support.html">here</a> for a list of functions with OpenCL support.</p>
+<p>To build the model with OpenCL support, add <code>cpp_options = list(stan_opencl = TRUE)</code> to the model compile.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Compile the model with STAN_OPENCL=TRUE</span>
+<span class="va">model_cl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="st">"opencl-files/bernoulli_logit_glm.stan"</span>,
+                          cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>stan_opencl <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="running-models-with-opencl" class="section level2">
 <h2 class="hasAnchor">
 <a href="#running-models-with-opencl" class="anchor"></a>Running models with OpenCL</h2>
-<p>Once a model is compiled with OpenCL, we need to select the target device and run sampling or any other method. OpenCL devices have unique platform and device IDs with which we determine the target one on our system.</p>
-<p>If the system has one GPU and no OpenCL CPU runtime, the platform and device IDs of the GPU are typically both <code>0</code>. If there are multiple devices we need to run the <code>clinfo</code> tool to determine the IDs. See <a href="https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#running-2">here</a> for instruction on installing/using <code>clinfo</code>.</p>
-<p>On our target system the GPU has platform ID <code>0</code> and device ID <code>0</code>. We determine the target device using the <code>opencl_device</code> argument. The argument is supplied a vector of length 2, where the first element is the platform ID and the second argument is the device ID.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit">
-<span class="va">fit_cl</span> <span class="op">&lt;-</span> <span class="va">model_cl</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_file</span>, chains <span class="op">=</span> <span class="fl">4</span>, parallel_chains <span class="op">=</span> <span class="fl">4</span>, opencl_device <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span>, refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></pre></div>
-<pre><code>Running MCMC with 4 parallel chains...
-
-Chain 1 finished in 67.0 seconds.
-Chain 4 finished in 66.7 seconds.
-Chain 3 finished in 66.7 seconds.
-Chain 2 finished in 66.9 seconds.
-
-All 4 chains finished successfully.
-Mean chain execution time: 66.8 seconds.
-Total execution time: 70.2 seconds.</code></pre>
-<p>Lets run a CPU version to compare the runtimes:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit">
-<span class="co"># CPU version</span>
+<p>Running models with OpenCL requires specifying the OpenCL platform and device on which to run the model (there can be multiple). If the system has one GPU and no OpenCL CPU runtime, the platform and device IDs of the GPU are typically both <code>0</code>, but the <code>clinfo</code> tool can be used to figure out for sure what devices are available.</p>
+<p>On an Ubuntu system with both CPU and GPU OpenCL support, <code>clinfo -l</code> outputs:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Platform</span> <span class="co">#0: AMD Accelerated Parallel Processing</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a> <span class="kw">`</span><span class="ex">--</span> Device <span class="co">#0: gfx906+sram-ecc</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Platform</span> <span class="co">#1: Intel(R) CPU Runtime for OpenCL(TM) Applications</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a> <span class="kw">`</span><span class="at">--</span> Device <span class="co">#0: Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz</span></span></code></pre></div>
+<p>The GPU is platform ID 0 and device ID 0, while the CPU is platform ID 1, device ID 0 . These can be specified with the <code>opencl_ids</code> argument when running a model. The <code>opencl_ids</code> is supplied as a vector of length 2, where the first element is the platform ID and the second argument is the device ID.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fit_cl</span> <span class="op">&lt;-</span> <span class="va">model_cl</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">mdata</span>, chains <span class="op">=</span> <span class="fl">4</span>, parallel_chains <span class="op">=</span> <span class="fl">4</span>,
+                          opencl_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## Running MCMC with 4 parallel chains...
+## 
+## Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
+## Chain 2 Iteration:    1 / 2000 [  0%]  (Warmup) 
+## Chain 3 Iteration:    1 / 2000 [  0%]  (Warmup) 
+## Chain 4 Iteration:    1 / 2000 [  0%]  (Warmup) 
+## Chain 1 Iteration:  100 / 2000 [  5%]  (Warmup) 
+## Chain 2 Iteration:  100 / 2000 [  5%]  (Warmup) 
+## Chain 3 Iteration:  100 / 2000 [  5%]  (Warmup) 
+## Chain 4 Iteration:  100 / 2000 [  5%]  (Warmup) 
+## Chain 1 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+## Chain 2 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+## Chain 3 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+## Chain 4 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+## Chain 1 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+## Chain 2 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+## Chain 3 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+## Chain 4 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+## Chain 1 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+## Chain 2 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+## Chain 3 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+## Chain 4 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+## Chain 1 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+## Chain 3 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+## Chain 2 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+## Chain 4 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+## Chain 1 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+## Chain 3 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+## Chain 4 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+## Chain 2 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+## Chain 1 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+## Chain 3 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+## Chain 4 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+## Chain 2 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+## Chain 1 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+## Chain 3 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+## Chain 2 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+## Chain 4 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+## Chain 1 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+## Chain 3 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+## Chain 2 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+## Chain 4 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+## Chain 1 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+## Chain 1 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+## Chain 3 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+## Chain 3 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+## Chain 2 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+## Chain 2 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+## Chain 4 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+## Chain 4 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+## Chain 1 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+## Chain 3 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+## Chain 2 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+## Chain 4 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+## Chain 1 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+## Chain 3 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+## Chain 2 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+## Chain 4 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+## Chain 1 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+## Chain 3 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+## Chain 2 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+## Chain 4 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+## Chain 1 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+## Chain 3 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+## Chain 2 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+## Chain 4 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+## Chain 1 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+## Chain 3 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+## Chain 2 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+## Chain 4 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+## Chain 1 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+## Chain 3 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+## Chain 2 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+## Chain 4 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+## Chain 1 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+## Chain 3 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+## Chain 2 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+## Chain 4 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+## Chain 1 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+## Chain 3 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+## Chain 2 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+## Chain 4 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+## Chain 1 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+## Chain 3 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+## Chain 2 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+## Chain 4 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+## Chain 1 Iteration: 2000 / 2000 [100%]  (Sampling) 
+## Chain 3 Iteration: 2000 / 2000 [100%]  (Sampling) 
+## Chain 1 finished in 43.2 seconds.
+## Chain 3 finished in 43.2 seconds.
+## Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
+## Chain 2 finished in 44.2 seconds.
+## Chain 4 Iteration: 2000 / 2000 [100%]  (Sampling) 
+## Chain 4 finished in 44.3 seconds.
+## 
+## All 4 chains finished successfully.
+## Mean chain execution time: 43.7 seconds.
+## Total execution time: 46.4 seconds.</code></pre>
+<p>Lets run a version without OpenCL:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># no OpenCL version</span>
 <span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="st">"opencl-files/bernoulli_logit_glm.stan"</span><span class="op">)</span>
-<span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_file</span>, chains <span class="op">=</span> <span class="fl">4</span>, parallel_chains <span class="op">=</span> <span class="fl">4</span>, refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></pre></div>
-<pre><code>Running MCMC with 4 parallel chains...
-
-Chain 3 finished in 447.6 seconds.
-Chain 4 finished in 447.8 seconds.
-Chain 1 finished in 449.7 seconds.
-Chain 2 finished in 451.7 seconds.
-
-All 4 chains finished successfully.
-Mean chain execution time: 449.2 seconds.
-Total execution time: 453.3 seconds.</code></pre>
-</div>
-<div id="device-names" class="section level2">
-<h2 class="hasAnchor">
-<a href="#device-names" class="anchor"></a>Device names</h2>
-<p>The devices used to obtain the fit can be retrieved from <code>$metadata()</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit">
-<span class="va">fit_cl</span><span class="op">$</span><span class="fu">metadata</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">opencl_plaftorm_name</span></pre></div>
-<pre><code>NULL</code></pre>
-<div class="sourceCode" id="cb10"><pre class="downlit">
-<span class="va">fit_cl</span><span class="op">$</span><span class="fu">metadata</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">opencl_device_name</span></pre></div>
-<pre><code>[1] "TITAN Xp"</code></pre>
+<span class="va">fit_cpu</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">mdata</span>, chains <span class="op">=</span> <span class="fl">4</span>, parallel_chains <span class="op">=</span> <span class="fl">4</span>,
+                    refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></code></pre></div>
+<pre><code>## Running MCMC with 4 parallel chains...
+## 
+## Chain 4 finished in 457.7 seconds.
+## Chain 1 finished in 462.0 seconds.
+## Chain 3 finished in 464.1 seconds.
+## Chain 2 finished in 464.6 seconds.
+## 
+## All 4 chains finished successfully.
+## Mean chain execution time: 462.1 seconds.
+## Total execution time: 466.2 seconds.</code></pre>
+<p>The speedup of the OpenCL model is:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fit_cpu</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span><span class="op">/</span><span class="va">fit_cl</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span></code></pre></div>
+<pre><code>## [1] 10.05379</code></pre>
+<p>This speedup will be determined by the GPU/CPU used, the input problem sizes (data as well as parameters) and if the model uses functions that can be run on the GPU or other OpenCL device.</p>
 </div>
   </div>
 

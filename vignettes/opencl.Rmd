@@ -8,7 +8,7 @@ output:
 params:
   EVAL: !r identical(Sys.getenv("CMDSTANR_OPENCL_TESTS"), "true")
 vignette: >
-  %\VignetteIndexEntry{Using CmdStanR to run Stan on the GPU with OpenCL}
+  %\VignetteIndexEntry{Run Stan on the GPU with OpenCL}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -121,7 +121,7 @@ argument is the device ID.
 
 ```{r fit-opencl}
 fit_cl <- model_cl$sample(data = mdata, chains = 4, parallel_chains = 4,
-                          opencl_ids = c(0, 1))
+                          opencl_ids = c(0, 0))
 ```
 
 Lets run a version without OpenCL:
@@ -129,7 +129,7 @@ Lets run a version without OpenCL:
 ```{r fit-cpu, message=FALSE}
 # no OpenCL version
 model <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan")
-fit_cpu <- model$sample(data = data_file, chains = 4, parallel_chains = 4,
+fit_cpu <- model$sample(data = mdata, chains = 4, parallel_chains = 4,
                     refresh = 0)
 ```
 
