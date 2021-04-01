@@ -1200,7 +1200,7 @@ variational <- function(data = NULL,
 
   cmdstan_procs <- CmdStanProcs$new(
     num_procs = 1,
-    iter = variational_args$iter %||% 1e4
+    iter = variational_args$iter %||% 1e4,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
     threads_per_proc = threads
   )
