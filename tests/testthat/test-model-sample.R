@@ -180,7 +180,7 @@ test_that("sampling in parallel works", {
 
   expect_output(
     mod$sample(data = data_list, chains = 2, parallel_chains = 2),
-    "Both chains finished successfully",
+    "All chains finished successfully",
     fixed = TRUE
   )
 })
