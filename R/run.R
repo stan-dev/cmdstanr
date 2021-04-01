@@ -560,7 +560,7 @@ CmdStanProcs <- R6::R6Class(
       private$proc_total_time_ = zeros
       private$show_stderr_messages_ = show_stderr_messages
       private$show_stdout_messages_ = show_stdout_messages
-      private$iter_done_ = as.list(rep(0,length(private$proc_ids_)))
+      private$iter_done_ <- as.list(rep(0, length(private$proc_ids_)))
       invisible(self)
     },
     num_procs = function() {
@@ -730,19 +730,19 @@ CmdStanProcs <- R6::R6Class(
     },
     print_progress = function(){
       # get the width of the widest id (sets # leading zeros on all)
-      id_width = nchar(as.character(length(self$proc_ids())))
+      id_width <- nchar(as.character(length(self$proc_ids())))
       # flush the console at outset just in case it hasn't been updated in a while
       flush.console()
       # loop over processes
-      for(id in self$proc_ids()){
-        cat( format(id, width=id_width), ': ', sep='' )
+      for (id in self$proc_ids()) {
+        cat(format(id, width = id_width), ': ', sep = '')
         # set %-compute text
-        if(private$iter_done_[[id]]==0){
+        if (private$iter_done_[[id]] == 0) {
           # waiting-to-start text is ...
           cat(' ... | ') # same # of chars as '100% '
-        }else{
+        } else {
           # if any done, show %
-          cat( format(floor(100*private$iter_done_[[id]]/private$iter_),width=3), '% | ', sep='' )
+          cat(format(floor(100*private$iter_done_[[id]]/private$iter_), width = 3), '% | ', sep = '' )
         }
       }
       #carriage-return; if nothing else has been printed, means that old progress is overwritten without creating a new line
@@ -771,9 +771,9 @@ CmdStanProcs <- R6::R6Class(
             self$set_proc_state(id, new_state = 3)
           }
           if (grepl("Iteration:", line, perl = TRUE)) {
-            regex_match = regexpr('[0-9]+\\s+/',line)
-            private$iter_done_[[id]] = as.numeric(substr(line,regex_match,regex_match+attr(regex_match,'match.length')-3))
-            ignore_line = TRUE
+            regex_match <- regexpr('[0-9]+\\s+/',line)
+            private$iter_done_[[id]] <- as.numeric(substr(line, regex_match, regex_match + attr(regex_match, 'match.length') - 3))
+            ignore_line <- TRUE
           }
 
           if (private$proc_state_[[id]] == 3.5) {
@@ -874,9 +874,9 @@ CmdStanMCMCProcs <- R6::R6Class(
             private$iter_done_[[id]] = 0
           }
           if (grepl("Iteration:", line, perl = TRUE)) {
-            regex_match = regexpr('[0-9]+\\s+/',line)
-            private$iter_done_[[id]] = as.numeric(substr(line,regex_match,regex_match+attr(regex_match,'match.length')-3))
-            ignore_line = TRUE
+            regex_match <- regexpr('[0-9]+\\s+/',line)
+            private$iter_done_[[id]] <- as.numeric(substr(line, regex_match, regex_match + attr(regex_match, 'match.length') - 3))
+            ignore_line <- TRUE
           }
           if (state < 3 && grepl("Elapsed Time:", line, perl = TRUE)) {
             state <- 5 # 5 = end of sampling
