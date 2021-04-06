@@ -126,8 +126,6 @@ read_cmdstan_csv <- function(files,
   post_warmup_sampler_diagnostics <- list()
   inv_metric <- list()
   step_size <- list()
-  col_types <- NULL
-  col_select <- NULL
   csv_metadata <- list()
   time <- data.frame()
   file_idx <- 0
@@ -198,65 +196,55 @@ read_cmdstan_csv <- function(files,
     }
     sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
   }
-  if (metadata$method == "generate_quantities") {
-    col_select <- c(col_select, variables)
-  } else {
-    col_select <- "lp__"
-    col_select <- c(col_select, variables[variables!="lp__"])
-  }
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
   num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
-  for (output_file in files) {    
-    if (length(col_select) > 0) {
-      if (os_is_windows()) {
-        grep_path <- repair_path(Sys.which("grep.exe"))
-        fread_cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
-      } else {
-        fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
-      }
-      if (length(sampler_diagnostics) > 0) {
-        post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
-        warmup_sd_id <- length(warmup_sampler_diagnostics) + 1
-        suppressWarnings(
-          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- data.table::fread(
-            cmd = fread_cmd,
-            select = sampler_diagnostics,
-            data.table = FALSE
-          )
-        )
-        if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
-          warmup_sampler_diagnostics[[warmup_sd_id]] <- 
-            post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws,]
-          if (num_post_warmup_draws > 0) {
-            post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- 
-              post_warmup_sampler_diagnostics[[post_warmup_sd_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),]
-          } else {
-            post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- NULL
-          }          
-        }
-      }
-      if (length(variables) > 0) {
-        draws_list_id <- length(draws) + 1
-        warmup_draws_list_id <- length(warmup_draws) + 1
-        suppressWarnings(
-          draws[[draws_list_id]] <- data.table::fread(
-            cmd = fread_cmd,
-            select = col_select,
-            data.table = FALSE
-          )
-        )
-        if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
-          warmup_draws[[warmup_draws_list_id]] <- 
-            draws[[draws_list_id]][1:num_warmup_draws,]
-          if (num_post_warmup_draws > 0) {
-            draws[[draws_list_id]] <- draws[[draws_list_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),]
-          } else {
-            draws[[draws_list_id]] <- NULL
-          }
-        }
-      }
+  for (output_file in files) {
+    if (os_is_windows()) {
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
     } else {
-      draws[[length(draws) + 1]] <- NULL
+      fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
+    }
+    if (length(sampler_diagnostics) > 0) {
+      post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
+      warmup_sd_id <- length(warmup_sampler_diagnostics) + 1
+      suppressWarnings(
+        post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- data.table::fread(
+          cmd = fread_cmd,
+          select = sampler_diagnostics,
+          data.table = FALSE
+        )
+      )
+      if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
+        warmup_sampler_diagnostics[[warmup_sd_id]] <- 
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws,,drop = FALSE]
+        if (num_post_warmup_draws > 0) {
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- 
+            post_warmup_sampler_diagnostics[[post_warmup_sd_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
+        } else {
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- NULL
+        }          
+      }
+    }
+    if (length(variables) > 0) {
+      draws_list_id <- length(draws) + 1
+      warmup_draws_list_id <- length(warmup_draws) + 1
+      suppressWarnings(
+        draws[[draws_list_id]] <- data.table::fread(
+          cmd = fread_cmd,
+          select = variables,
+          data.table = FALSE
+        )
+      )
+      if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
+        warmup_draws[[warmup_draws_list_id]] <- 
+          draws[[draws_list_id]][1:num_warmup_draws,,drop = FALSE]
+        if (num_post_warmup_draws > 0) {
+          draws[[draws_list_id]] <- draws[[draws_list_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
+        } else {
+          draws[[draws_list_id]] <- NULL
+        }
+      }
     }
   }
   metadata$inv_metric <- NULL
