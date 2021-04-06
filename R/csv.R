@@ -121,171 +121,136 @@ read_cmdstan_csv <- function(files,
   checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
   warmup_draws <- list()
-  post_warmup_draws <- list()
-  warmup_sampler_diagnostics_draws <- list()
-  post_warmup_sampler_diagnostics_draws <- list()
-  generated_quantities <- list()
-  variational_draws <- NULL
-  point_estimates <- NULL
+  draws <- list()
+  warmup_sampler_diagnostics <- list()
+  post_warmup_sampler_diagnostics <- list()
   inv_metric <- list()
   step_size <- list()
-  col_types <- NULL
-  col_select <- NULL
-  metadata <- NULL
+  csv_metadata <- list()
   time <- data.frame()
-  not_matching <- c()
+  file_idx <- 0
   for (output_file in files) {
-    if (is.null(metadata)) {
-      metadata <- read_csv_metadata(output_file)
-      if (!is.null(metadata$inv_metric)) {
-        inv_metric[[as.character(metadata$id)]] <- metadata$inv_metric
+    file_idx <- length(csv_metadata) + 1
+    csv_metadata[[file_idx]] <- read_csv_metadata(output_file)
+  }
+  if (file_idx > 1) {
+    check_csv_metadata_matches(csv_metadata)
+  }
+  id <- csv_metadata[[1]]$id
+  if (!is.null(csv_metadata[[1]]$inv_metric)) {
+    inv_metric[[as.character(id)]] <- csv_metadata[[1]]$inv_metric
+  }
+  if (!is.null(csv_metadata[[1]]$step_size_adaptation)) {
+    step_size[[as.character(id)]] <- csv_metadata[[1]]$step_size_adaptation
+  }
+  if (!is.null(csv_metadata[[1]]$time)) {
+    time <- rbind(time, csv_metadata[[1]]$time)
+  }
+  if (length(csv_metadata) > 1) {
+    for (file_id in 2:length(csv_metadata)) {
+      file_metadata <- csv_metadata[[file_id]]
+      id <- file_metadata$id
+      csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id)
+      csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
+      csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init)
+      csv_metadata[[1]]$step_size <- c(csv_metadata[[1]]$step_size, file_metadata$step_size)
+      csv_metadata[[1]]$step_size_adaptation <- c(csv_metadata[[1]]$step_size_adaptation, file_metadata$step_size_adaptation)
+      csv_metadata[[1]]$fitted_params <- c(csv_metadata[[1]]$fitted_params, file_metadata$fitted_params)
+      if (!is.null(file_metadata$inv_metric)) {
+        inv_metric[[as.character(id)]] <- file_metadata$inv_metric
       }
-      if (!is.null(metadata$step_size_adaptation)) {
-        step_size[[as.character(metadata$id)]] <- metadata$step_size_adaptation
+      if (!is.null(file_metadata$step_size_adaptation)) {
+        step_size[[as.character(id)]] <- file_metadata$step_size_adaptation
       }
-      if (!is.null(metadata$time)) {
-        time <- rbind(time, metadata$time)
+      if (!is.null(file_metadata$time)) {
+        time <- rbind(time, file_metadata$time)
       }
+    }
+  }
+  metadata <- csv_metadata[[1]]
+  if (is.null(variables)) { # variables = NULL returns all
+    variables <- metadata$model_params
+  } else if (!any(nzchar(variables))) { # if variables = "" returns none
+    variables <- NULL
+  } else { # filter using variables
+    res <- matching_variables(variables, repair_variable_names(metadata$model_params))
+    if (length(res$not_found)) {
+      stop("Can't find the following variable(s) in the output: ",
+            paste(res$not_found, collapse = ", "), call. = FALSE)
+    }
+    variables <- unrepair_variable_names(res$matching)
+  }
+  if (is.null(sampler_diagnostics)) {
+    sampler_diagnostics <- metadata$sampler_diagnostics
+  } else if (!any(nzchar(sampler_diagnostics))) { # if sampler_diagnostics = "" returns none
+    sampler_diagnostics <- NULL
+  } else {
+    selected_sampler_diag <- rep(FALSE, length(metadata$sampler_diagnostics))
+    not_found <- NULL
+    for (p in sampler_diagnostics) {
+      matches <- metadata$sampler_diagnostics == p | startsWith(metadata$sampler_diagnostics, paste0(p,"."))
+      if (!any(matches)) {
+        not_found <- c(not_found, p)
+      }
+      selected_sampler_diag <- selected_sampler_diag | matches
+    }
+    if (length(not_found)) {
+      stop("Can't find the following sampler diagnostic(s) in the output: ",
+            paste(not_found, collapse = ", "), call. = FALSE)
+    }
+    sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
+  }
+  num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
+  num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
+  for (output_file in files) {
+    if (os_is_windows()) {
+      grep_path <- repair_path(Sys.which("grep.exe"))
+      fread_cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
     } else {
-      csv_file_info <- read_csv_metadata(output_file)
-      check <- check_csv_metadata_matches(metadata, csv_file_info)
-      if (!is.null(check$error)) {
-        stop(check$error, call. = FALSE)
-      }
-      not_matching <- c(not_matching, check$not_matching)
-      metadata$id <- c(metadata$id, csv_file_info$id)
-      metadata$seed <- c(metadata$seed, csv_file_info$seed)
-      metadata$init <- c(metadata$init, csv_file_info$init)
-      metadata$step_size <- c(metadata$step_size, csv_file_info$step_size)
-      metadata$step_size_adaptation <- c(metadata$step_size_adaptation, csv_file_info$step_size_adaptation)
-      metadata$fitted_params <- c(metadata$fitted_params, csv_file_info$fitted_params)
-
-      if (!is.null(csv_file_info$inv_metric)) {
-        inv_metric[[as.character(csv_file_info$id)]] <- csv_file_info$inv_metric
-      }
-      if (!is.null(csv_file_info$step_size_adaptation)) {
-        step_size[[as.character(csv_file_info$id)]] <- csv_file_info$step_size_adaptation
-      }
-      if (!is.null(csv_file_info$time)) {
-        time <- rbind(time, csv_file_info$time)
-      }
+      fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
     }
-    if (is.null(col_select)) {
-      if (is.null(variables)) { # variables = NULL returns all
-        variables <- metadata$model_params
-      } else if (!any(nzchar(variables))) { # if variables = "" returns none
-        variables <- NULL
-      } else { # filter using variables
-        res <- matching_variables(variables, repair_variable_names(metadata$model_params))
-        if (length(res$not_found)) {
-          stop("Can't find the following variable(s) in the output: ",
-               paste(res$not_found, collapse = ", "), call. = FALSE)
-        }
-        variables <- unrepair_variable_names(res$matching)
-      }
-      if (is.null(sampler_diagnostics)) {
-        sampler_diagnostics <- metadata$sampler_diagnostics
-      } else if (!any(nzchar(sampler_diagnostics))) { # if sampler_diagnostics = "" returns none
-        sampler_diagnostics <- NULL
-      } else {
-        selected_sampler_diag <- rep(FALSE, length(metadata$sampler_diagnostics))
-        not_found <- NULL
-        for (p in sampler_diagnostics) {
-          matches <- metadata$sampler_diagnostics == p | startsWith(metadata$sampler_diagnostics, paste0(p,"."))
-          if (!any(matches)) {
-            not_found <- c(not_found, p)
-          }
-          selected_sampler_diag <- selected_sampler_diag | matches
-        }
-        if (length(not_found)) {
-          stop("Can't find the following sampler diagnostic(s) in the output: ",
-               paste(not_found, collapse = ", "), call. = FALSE)
-        }
-        sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
-      }
-      if (metadata$method == "generate_quantities") {
-        col_select <- c(col_select, variables)
-      } else {
-        col_select <- "lp__"
-        col_select <- c(col_select, variables[variables!="lp__"])
-        col_select <- c(col_select, sampler_diagnostics)
-      }
-    }
-    if (metadata$method == "sample") {
-      num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
-      num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
-      all_draws <- num_warmup_draws + num_post_warmup_draws
-    } else if (metadata$method == "variational") {
-      all_draws <- metadata$output_samples
-    } else if (metadata$method == "optimize") {
-      all_draws <- 1
-    }
-    if (length(col_select) > 0) {
-      if (os_is_windows()) {
-        grep_path <- repair_path(Sys.which("grep.exe"))
-        fread_cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
-      } else {
-        fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
-      }
+    if (length(sampler_diagnostics) > 0) {
+      post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
+      warmup_sd_id <- length(warmup_sampler_diagnostics) + 1
       suppressWarnings(
-      draws <- data.table::fread(
+        post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- data.table::fread(
           cmd = fread_cmd,
-          select = col_select,
+          select = sampler_diagnostics,
           data.table = FALSE
         )
       )
-    } else {
-      draws <- NULL
-    }
-    if (nrow(draws) > 0) {
-      if (metadata$method == "sample") {
-        if (metadata$save_warmup == 1) {
-          if (length(variables) > 0) {
-            warmup_draws[[length(warmup_draws) + 1]] <- draws[1:num_warmup_draws, variables, drop = FALSE]
-            if (num_post_warmup_draws > 0) {
-              post_warmup_draws[[length(post_warmup_draws) + 1]] <- draws[(num_warmup_draws+1):all_draws, variables, drop = FALSE]
-            }
-          }
-          if (length(sampler_diagnostics) > 0) {
-            warmup_sampler_diagnostics_draws[[length(warmup_sampler_diagnostics_draws) + 1]] <- draws[1:num_warmup_draws, sampler_diagnostics, drop = FALSE]
-            if (num_post_warmup_draws > 0) {
-              post_warmup_sampler_diagnostics_draws[[length(post_warmup_sampler_diagnostics_draws) + 1]] <- draws[(num_warmup_draws+1):all_draws, sampler_diagnostics, drop = FALSE]
-            }
-          }
+      if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
+        warmup_sampler_diagnostics[[warmup_sd_id]] <- 
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws,,drop = FALSE]
+        if (num_post_warmup_draws > 0) {
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- 
+            post_warmup_sampler_diagnostics[[post_warmup_sd_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
         } else {
-            warmup_draws <- NULL
-            warmup_sampler_diagnostics_draws <- NULL
-            if (length(variables) > 0) {
-              post_warmup_draws[[length(post_warmup_draws) + 1]] <- draws[, variables, drop = FALSE]
-            }
-            if (length(sampler_diagnostics) > 0 && all(metadata$algorithm != "fixed_param")) {
-              post_warmup_sampler_diagnostics_draws[[length(post_warmup_sampler_diagnostics_draws) + 1]] <- draws[, sampler_diagnostics, drop = FALSE]
-            }
-        }
-      } else if (metadata$method == "variational") {
-        # ignore first line as it's just the mean and lp__ as it's always 0
-        variational_draws <- posterior::as_draws_matrix(
-          draws[-1, colnames(draws) != "lp__", drop=FALSE]
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- NULL
+        }          
+      }
+    }
+    if (length(variables) > 0) {
+      draws_list_id <- length(draws) + 1
+      warmup_draws_list_id <- length(warmup_draws) + 1
+      suppressWarnings(
+        draws[[draws_list_id]] <- data.table::fread(
+          cmd = fread_cmd,
+          select = variables,
+          data.table = FALSE
         )
-        if ("log_p__" %in% posterior::variables(variational_draws)) {
-          variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
+      )
+      if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
+        warmup_draws[[warmup_draws_list_id]] <- 
+          draws[[draws_list_id]][1:num_warmup_draws,,drop = FALSE]
+        if (num_post_warmup_draws > 0) {
+          draws[[draws_list_id]] <- draws[[draws_list_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
+        } else {
+          draws[[draws_list_id]] <- NULL
         }
-        if ("log_g__" %in% posterior::variables(variational_draws)) {
-          variational_draws <- posterior::rename_variables(variational_draws, lp_approx__ = "log_g__")
-        }
-      } else if (metadata$method == "optimize") {
-        point_estimates <- posterior::as_draws_matrix(draws[1,, drop=FALSE])[, variables]
-      } else if (metadata$method == "generate_quantities") {
-        generated_quantities[[length(generated_quantities) + 1]] <- draws
       }
     }
   }
-  if (length(not_matching) > 0) {
-    not_matching_list <- paste(unique(not_matching), collapse = ", ")
-    warning("Supplied CSV files do not match in the following arguments: ",
-            paste(not_matching_list, collapse = ", "), call. = FALSE)
-  }
-
   metadata$inv_metric <- NULL
   metadata$model_params <- repair_variable_names(metadata$model_params)
   repaired_variables <- repair_variable_names(variables)
@@ -297,34 +262,66 @@ read_cmdstan_csv <- function(files,
     repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
     repaired_variables <- gsub("log_g__", "lp_approx__", repaired_variables)
   }
-
   model_param_dims <- variable_dims(metadata$model_params)
   metadata$stan_variable_dims <- model_param_dims
   metadata$stan_variables <- names(model_param_dims)
 
   if (metadata$method == "sample") {
-    warmup_draws <- bind_list_of_draws_array(warmup_draws)
-    if (!is.null(warmup_draws)) {
+    if (length(warmup_draws) > 0) {
+      warmup_draws <- posterior::as_draws_array(warmup_draws)
       posterior::variables(warmup_draws) <- repaired_variables
+      if (posterior::niterations(warmup_draws) == 0) {
+        warmup_draws <- NULL
+      }
+    } else {
+      warmup_draws <- NULL
     }
-    post_warmup_draws <- bind_list_of_draws_array(post_warmup_draws)
-    if (!is.null(post_warmup_draws)) {
-      posterior::variables(post_warmup_draws) <- repaired_variables
+    if (length(draws) > 0) {
+      draws <-  posterior::as_draws_array(draws)
+      posterior::variables(draws) <- repaired_variables
+      if (posterior::niterations(draws) == 0) {
+        draws <- NULL
+      }
+    } else {
+      draws <- NULL
     }
-    warmup_sampler_diagnostics_draws <- bind_list_of_draws_array(warmup_sampler_diagnostics_draws)
-    post_warmup_sampler_diagnostics_draws <- bind_list_of_draws_array(post_warmup_sampler_diagnostics_draws)
+    if (length(warmup_sampler_diagnostics) > 0) {
+      warmup_sampler_diagnostics <- posterior::as_draws_array(warmup_sampler_diagnostics)
+      if (posterior::niterations(warmup_sampler_diagnostics) == 0) {
+        warmup_sampler_diagnostics <- NULL
+      }
+    } else {
+      warmup_sampler_diagnostics <- NULL
+    }
+    if (length(post_warmup_sampler_diagnostics) > 0) {
+      post_warmup_sampler_diagnostics <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
+      if (posterior::niterations(post_warmup_sampler_diagnostics) == 0) {
+        post_warmup_sampler_diagnostics <- NULL
+      }
+    } else {
+      post_warmup_sampler_diagnostics <- NULL
+    }
     list(
       metadata = metadata,
       time = list(total = NA_integer_, chains = time),
       inv_metric = inv_metric,
       step_size = step_size,
       warmup_draws = warmup_draws,
-      post_warmup_draws = post_warmup_draws,
-      warmup_sampler_diagnostics = warmup_sampler_diagnostics_draws,
-      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics_draws
+      post_warmup_draws = draws,
+      warmup_sampler_diagnostics = warmup_sampler_diagnostics,
+      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics
     )
   } else if (metadata$method == "variational") {
+    variational_draws <- posterior::as_draws_matrix(
+      draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop=FALSE]
+    )
     if (!is.null(variational_draws)) {
+      if ("log_p__" %in% posterior::variables(variational_draws)) {
+        variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
+      }
+      if ("log_g__" %in% posterior::variables(variational_draws)) {
+        variational_draws <- posterior::rename_variables(variational_draws, lp_approx__ = "log_g__")
+      }    
       posterior::variables(variational_draws) <- repaired_variables
     }
     list(
@@ -332,6 +329,7 @@ read_cmdstan_csv <- function(files,
       draws = variational_draws
     )
   } else if (metadata$method == "optimize") {
+    point_estimates <- posterior::as_draws_matrix(draws[[1]][1,, drop=FALSE])[, variables]
     if (!is.null(point_estimates)) {
       posterior::variables(point_estimates) <- repaired_variables
     }
@@ -340,13 +338,13 @@ read_cmdstan_csv <- function(files,
       point_estimates = point_estimates
     )
   } else if (metadata$method == "generate_quantities") {
-    generated_quantities <- bind_list_of_draws_array(generated_quantities)
-    if (!is.null(generated_quantities)) {
-      posterior::variables(generated_quantities) <- repaired_variables
+    draws <- posterior::as_draws_array(draws)
+    if (!is.null(draws)) {
+      posterior::variables(draws) <- repaired_variables
     }
     list(
       metadata = metadata,
-      generated_quantities = generated_quantities
+      generated_quantities = draws
     )
   }
 }
@@ -651,55 +649,60 @@ read_csv_metadata <- function(csv_file) {
 #' @noRd
 #' @param a,b Two lists returned by `read_csv_metadata()` to compare.
 #'
-check_csv_metadata_matches <- function(a, b) {
-  if (a$model_name != b$model_name) {
-    return(list(error = "Supplied CSV files were not generated with the same model!"))
+check_csv_metadata_matches <- function(csv_metadata) {
+  model_name <- sapply(csv_metadata, function(x) x$model_name)
+  if (!all(model_name == model_name[1])) {
+    stop("Supplied CSV files were not generated with the same model!", call. = FALSE)    
   }
-  if (a$method != b$method) {
-    return(list(error = "Supplied CSV files were produced by different methods and need to be read in separately!"))
+  method <- sapply(csv_metadata, function(x) x$method)
+  if (!all(method == method[1])) {
+    stop("Supplied CSV files were produced by different methods and need to be read in separately!", call. = FALSE)
   }
-  if ((length(a$model_params) != length(b$model_params)) ||
-      !(all(a$model_params == b$model_params) &&
-        all(a$sampler_diagnostics == b$sampler_diagnostics))) {
-    return(list(error = "Supplied CSV files have samples for different variables!"))
-  }
-  if (a$method == "sample") {
-    if (a$iter_sampling != b$iter_sampling ||
-        a$thin != b$thin ||
-        a$save_warmup != b$save_warmup ||
-        (a$save_warmup == 1 && a$iter_warmup != b$iter_warmup)) {
-      return(list(error = "Supplied CSV files do not match in the number of output samples!"))
+  for(i in 2:length(csv_metadata)) {
+    if (length(csv_metadata[[1]]$model_params) != length(csv_metadata[[i]]$model_params) ||
+      !all(csv_metadata[[1]]$model_params == csv_metadata[[i]]$model_params)) {
+      stop("Supplied CSV files have samples for different variables!", call. = FALSE)
     }
-  } else if (a$method == "variational") {
-    if (a$output_samples != b$output_samples) {
-      return(list(error = "Supplied CSV files do not match in the number of output samples!"))
+  }
+  if (method[1] == "sample") {
+    iter_sampling <- sapply(csv_metadata, function(x) x$iter_sampling)
+    thin <- sapply(csv_metadata, function(x) x$thin)
+    save_warmup <- sapply(csv_metadata, function(x) x$save_warmup)
+    iter_warmup <- sapply(csv_metadata, function(x) x$iter_warmup)
+    if (!all(iter_sampling == iter_sampling[1]) ||
+        !all(thin == thin[1]) ||
+        !all(save_warmup == save_warmup[1])||
+        (save_warmup[1] == 1 && !all(iter_warmup == iter_warmup[1]))) {
+      stop("Supplied CSV files do not match in the number of output samples!", call. = FALSE)
+    }
+  } else if (method[1] == "variational") {
+    output_samples <- sapply(csv_metadata, function(x) x$output_samples)
+    if (!all(output_samples == output_samples[1])) {
+      stop("Supplied CSV files do not match in the number of output samples!", call. = FALSE)
     }
   }
   match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
                   "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_treedepth",
                   "metric", "stepsize_jitter", "adapt_engaged", "adapt_delta", "iter_warmup")
   not_matching <- c()
-  for (name in names(a)) {
-    if ((name %in% match_list) && (is.null(b[[name]]) ||  all(a[[name]] != b[[name]]))) {
-      not_matching <- c(not_matching, name)
+  for (name in names(csv_metadata[[1]])) {
+    if (name %in% match_list) {
+      values <- sapply(csv_metadata, function(x) x[[name]])
+      if (any(sapply(values, function(x) is.null(x)))) {
+        not_matching <- c(not_matching, name)
+        next
+      }
+      if (!all(values == values[1])) {
+        not_matching <- c(not_matching, name)
+      }
     }
   }
-  list(not_matching = not_matching)
-}
-
-bind_list_of_draws_array <- function(draws, along = "chain") {
-  if (!is.null(draws) && length(draws) > 0) {
-    if (length(draws) > 1) {
-      draws <- lapply(draws, posterior::as_draws_array)
-      draws[["along"]] <- along
-      draws <- do.call(posterior::bind_draws, draws)
-    } else {
-      draws <- posterior::as_draws_array(draws[[1]])
-    }    
-  } else {
-    draws <- NULL
+  if (length(not_matching) > 0) {
+    not_matching_list <- paste(unique(not_matching), collapse = ", ")
+    warning("Supplied CSV files do not match in the following arguments: ",
+            paste(not_matching_list, collapse = ", "), call. = FALSE)
   }
-  draws
+  NULL
 }
 
 # convert names like beta.1.1 to beta[1,1]
