@@ -136,34 +136,38 @@ read_cmdstan_csv <- function(files,
   if (file_idx > 1) {
     check_csv_metadata_matches(csv_metadata)
   }
-  metadata <- csv_metadata[[1]]
-  inv_metric[[as.character(metadata$id)]] <- metadata$inv_metric  
-  step_size[[as.character(metadata$id)]] <- metadata$step_size_adaptation  
-  time <- NULL
-  metadata$id <- NULL
-  metadata$seed <- NULL
-  metadata$init <- NULL
-  metadata$step_size <- NULL
-  metadata$step_size_adaptation <- NULL
-  metadata$fitted_params <- NULL
-  for (file_metadata in csv_metadata) {
-    id <- file_metadata$id
-    metadata$id <- c(metadata$id, id)
-    metadata$seed <- c(metadata$seed, file_metadata$seed)
-    metadata$init <- c(metadata$init, file_metadata$init)
-    metadata$step_size <- c(metadata$step_size, file_metadata$step_size)
-    metadata$step_size_adaptation <- c(metadata$step_size_adaptation, file_metadata$step_size_adaptation)
-    metadata$fitted_params <- c(metadata$fitted_params, file_metadata$fitted_params)
-    if (!is.null(metadata$inv_metric)) {
-      inv_metric[[as.character(id)]] <- file_metadata$inv_metric
-    }
-    if (!is.null(metadata$step_size_adaptation)) {
-      step_size[[as.character(id)]] <- file_metadata$step_size_adaptation
-    }
-    if (!is.null(metadata$time)) {
-      time <- rbind(time, file_metadata$time)
+  id <- csv_metadata[[1]]$id
+  if (!is.null(csv_metadata[[1]]$inv_metric)) {
+    inv_metric[[as.character(id)]] <- csv_metadata[[1]]$inv_metric
+  }
+  if (!is.null(csv_metadata[[1]]$step_size_adaptation)) {
+    step_size[[as.character(id)]] <- csv_metadata[[1]]$step_size_adaptation
+  }
+  if (!is.null(csv_metadata[[1]]$time)) {
+    time <- rbind(time, csv_metadata[[1]]$time)
+  }
+  if (length(csv_metadata) > 1) {
+    for (file_id in 2:length(csv_metadata)) {
+      file_metadata <- csv_metadata[[file_id]]
+      id <- file_metadata$id
+      csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id)
+      csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
+      csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init)
+      csv_metadata[[1]]$step_size <- c(csv_metadata[[1]]$step_size, file_metadata$step_size)
+      csv_metadata[[1]]$step_size_adaptation <- c(csv_metadata[[1]]$step_size_adaptation, file_metadata$step_size_adaptation)
+      csv_metadata[[1]]$fitted_params <- c(csv_metadata[[1]]$fitted_params, file_metadata$fitted_params)
+      if (!is.null(file_metadata$inv_metric)) {
+        inv_metric[[as.character(id)]] <- file_metadata$inv_metric
+      }
+      if (!is.null(file_metadata$step_size_adaptation)) {
+        step_size[[as.character(id)]] <- file_metadata$step_size_adaptation
+      }
+      if (!is.null(file_metadata$time)) {
+        time <- rbind(time, file_metadata$time)
+      }
     }
   }
+  metadata <- csv_metadata[[1]]
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$model_params
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
