@@ -117,7 +117,12 @@
 #'
 read_cmdstan_csv <- function(files,
                              variables = NULL,
-                             sampler_diagnostics = NULL) {
+                             sampler_diagnostics = NULL,
+                             draws_format = getOption("cmdstanr_format", NULL)) {
+  valid_draws_formats <- c("draws_array", "draws_matrix", "draws_list")
+  if (!is.null(draws_format) && !(valid_draws_formats %in% valid_draws_formats)) {
+    stop("The supplied 'draws_format' is not a valid draws format.", call. = FALSE)
+  }
   checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
   warmup_draws <- list()
@@ -267,8 +272,12 @@ read_cmdstan_csv <- function(files,
   metadata$stan_variables <- names(model_param_dims)
 
   if (metadata$method == "sample") {
+    if (is.null(draws_format)) {
+      draws_format <- "draws_array"
+    }
+    as_draws_format <- as_draws_format_fun(draws_format)
     if (length(warmup_draws) > 0) {
-      warmup_draws <- posterior::as_draws_array(warmup_draws)
+      warmup_draws <- do.call(as_draws_format, list(warmup_draws))
       posterior::variables(warmup_draws) <- repaired_variables
       if (posterior::niterations(warmup_draws) == 0) {
         warmup_draws <- NULL
@@ -277,7 +286,7 @@ read_cmdstan_csv <- function(files,
       warmup_draws <- NULL
     }
     if (length(draws) > 0) {
-      draws <-  posterior::as_draws_array(draws)
+      draws <-  do.call(as_draws_format, list(draws))
       posterior::variables(draws) <- repaired_variables
       if (posterior::niterations(draws) == 0) {
         draws <- NULL
@@ -286,7 +295,7 @@ read_cmdstan_csv <- function(files,
       draws <- NULL
     }
     if (length(warmup_sampler_diagnostics) > 0) {
-      warmup_sampler_diagnostics <- posterior::as_draws_array(warmup_sampler_diagnostics)
+      warmup_sampler_diagnostics <- do.call(as_draws_format, list(warmup_sampler_diagnostics))
       if (posterior::niterations(warmup_sampler_diagnostics) == 0) {
         warmup_sampler_diagnostics <- NULL
       }
@@ -294,7 +303,7 @@ read_cmdstan_csv <- function(files,
       warmup_sampler_diagnostics <- NULL
     }
     if (length(post_warmup_sampler_diagnostics) > 0) {
-      post_warmup_sampler_diagnostics <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
+      post_warmup_sampler_diagnostics <- do.call(as_draws_format, list(post_warmup_sampler_diagnostics))
       if (posterior::niterations(post_warmup_sampler_diagnostics) == 0) {
         post_warmup_sampler_diagnostics <- NULL
       }
@@ -312,9 +321,11 @@ read_cmdstan_csv <- function(files,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics
     )
   } else if (metadata$method == "variational") {
-    variational_draws <- posterior::as_draws_matrix(
-      draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop=FALSE]
-    )
+    if (is.null(draws_format)) {
+      draws_format <- "draws_matrix"
+    }
+    as_draws_format <- as_draws_format_fun(draws_format)
+    variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop=FALSE]))
     if (!is.null(variational_draws)) {
       if ("log_p__" %in% posterior::variables(variational_draws)) {
         variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
@@ -329,7 +340,12 @@ read_cmdstan_csv <- function(files,
       draws = variational_draws
     )
   } else if (metadata$method == "optimize") {
-    point_estimates <- posterior::as_draws_matrix(draws[[1]][1,, drop=FALSE])[, variables]
+    if (is.null(draws_format)) {
+      draws_format <- "draws_matrix"
+    }
+    as_draws_format <- as_draws_format_fun(draws_format)
+    point_estimates <- do.call(as_draws_format, list(draws[[1]][1,, drop=FALSE]))
+    point_estimates <- posterior::subset_draws(point_estimates, variable = variables)
     if (!is.null(point_estimates)) {
       posterior::variables(point_estimates) <- repaired_variables
     }
@@ -338,7 +354,11 @@ read_cmdstan_csv <- function(files,
       point_estimates = point_estimates
     )
   } else if (metadata$method == "generate_quantities") {
-    draws <- posterior::as_draws_array(draws)
+    if (is.null(draws_format)) {
+      draws_format <- "draws_array"
+    }
+    as_draws_format <- as_draws_format_fun(draws_format)
+    draws <- do.call(as_draws_format, list(draws))
     if (!is.null(draws)) {
       posterior::variables(draws) <- repaired_variables
     }
@@ -703,6 +723,19 @@ check_csv_metadata_matches <- function(csv_metadata) {
             paste(not_matching_list, collapse = ", "), call. = FALSE)
   }
   NULL
+}
+
+as_draws_format_fun <- function(draws_format) {
+  if (draws_format == "draws_array") {
+    f <- posterior::as_draws_array
+  } else if (draws_format == "draws_df") {
+    f <- posterior::as_draws_df
+  } else if (draws_format == "draws_matrix") {
+    f <- posterior::as_draws_matrix
+  } else if (draws_format == "draws_list") {
+    f <- posterior::as_draws_list
+  }
+  f
 }
 
 # convert names like beta.1.1 to beta[1,1]
