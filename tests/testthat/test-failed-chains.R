@@ -22,7 +22,7 @@ if (not_on_cran()) {
         check_some_fail <- x$sample(
           data = list(pr_fail = 0.5),
           save_latent_dynamics = TRUE,
-          seed = sample.int(attempt*1000, 4)
+          seed = base::sample(.Machine$integer.max, 4)
         )
       )
       num_files <- length(check_some_fail$output_files(include_failed = FALSE))
