@@ -168,6 +168,10 @@ read_cmdstan_csv <- function(files,
     }
   }
   metadata <- csv_metadata[[1]]
+  uniq_seed <- unique(metadata$seed)
+  if (length(uniq_seed) == 1) {
+    metadata$seed <- uniq_seed
+  }  
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$model_params
   } else if (!any(nzchar(variables))) { # if variables = "" returns none

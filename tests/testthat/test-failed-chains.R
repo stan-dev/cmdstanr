@@ -16,14 +16,17 @@ if (not_on_cran()) {
 
   make_some_fail <- function(x) {
     num_files <- 0
+    attempt <- 1
     while (num_files == 0 || num_files == 4) {
       utils::capture.output(
         check_some_fail <- x$sample(
           data = list(pr_fail = 0.5),
-          save_latent_dynamics = TRUE
+          save_latent_dynamics = TRUE,
+          seed = base::sample(.Machine$integer.max, 4)
         )
       )
       num_files <- length(check_some_fail$output_files(include_failed = FALSE))
+      attempt <- attempt + 1
     }
     check_some_fail
   }

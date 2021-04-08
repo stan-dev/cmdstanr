@@ -264,3 +264,52 @@ test_that("print statements in transformed data work", {
   out <- capture.output(fit <- mod$sample(iter_warmup = 1, iter_sampling = 1, chains = 1))
   expect_true(any(grepl("*N = 2*", out)))
 })
+
+test_that("seed works for multi chain sampling", {
+  skip_on_cran()
+  m <- "
+  transformed data {
+    int N = 100;
+    vector[N] a;
+    for (i in 1:N) {
+      a[i] = uniform_rng(0, 1);
+    }
+  }
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  generated quantities {
+    vector[N] tdata = a;
+    vector[N] gq;
+    for (i in 1:N) {
+      gq[i] = uniform_rng(0, 4);
+    }
+  }
+  "
+  f <- write_stan_file(m, basename = "rngs.stan")
+  mod <- cmdstan_model(f)
+  utils::capture.output(
+    fit_sample <- mod$sample(chains = 2, iter_sampling = 1, iter_warmup = 100, seed = 2)
+  )
+  chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
+  chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
+  expect_equal(chain_tdata_1, chain_tdata_2)
+  chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 1)
+  chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 2)
+  expect_false(all(chain_tdata_1 == chain_tdata_2))
+
+  utils::capture.output(
+    fit_sample <- mod$sample(chains = 2, iter_sampling = 1, iter_warmup = 100,
+                             seed = c(1, 2))
+  )
+  chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
+  chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
+  expect_false(all(chain_tdata_1 == chain_tdata_2))
+  chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 1)
+  chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 2)
+  expect_false(all(chain_tdata_1 == chain_tdata_2))
+})
+

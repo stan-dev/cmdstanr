@@ -6,7 +6,15 @@
 #'  appendices in the CmdStan manual for details on using these formats.
 #'  * `NULL` or an empty list if the Stan program has no `data` block.
 #'
-#' @param seed (positive integer) A seed for the (P)RNG to pass to CmdStan.
+#' @param seed (positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
+#'   In the case of multi-chain sampling the single `seed` will automatically be
+#'   augmented by the the run (chain) ID so that each chain uses a different
+#'   seed. The exception is the `transformed data` block, which defaults to
+#'   using same seed for all chains so that the same data is generated for all
+#'   chains if RNG functions are used. The only time `seed` should be specified
+#'   as a vector (one element per chain) is if RNG functions are used in
+#'   `transformed data` and the goal is to generate *different* data for each
+#'   chain.
 #'
 #' @param refresh (non-negative integer) The number of iterations between
 #'   printed screen updates. If `refresh = 0`, only error messages will be
@@ -61,7 +69,7 @@
 #'   names of the output CSV files of CmdStan.
 #'   * If `NULL` (the default), the basename of the output CSV files
 #'   will be comprised from the model name, timestamp and 5 random characters.
-#' 
+#'
 #' @param sig_figs (positive integer) The number of significant figures used
 #'   when storing the output values. By default, CmdStan represent the output
 #'   values with 6 significant figures. The upper limit for `sig_figs` is 18.

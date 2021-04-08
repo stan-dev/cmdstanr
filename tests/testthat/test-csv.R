@@ -556,3 +556,14 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
     }
   }
 })
+
+test_that("read_cmdstan_csv reads seed correctly", {
+  opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
+  vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
+  smp <- read_cmdstan_csv(fit_bernoulli_diag_e_no_samples$output_files())
+  expect_equal(opt$metadata$seed, 123)
+  expect_equal(vi$metadata$seed, 123)
+  expect_equal(smp$metadata$seed, 123)
+})
+
+
