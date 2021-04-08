@@ -37,13 +37,15 @@ appendices in the CmdStan manual for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no \code{data} block.
 }}
 
-\item{seed}{(positive integer) A seed for the (P)RNG to pass to CmdStan.
-The seed is used in the transformed data block and together with
-the run (chain) ID to augment the seed used for sampling, optimization
-or variational inference. A single seed value is recommended for multi-chain
-sampling with multiple seed values required only if RNG functions are used
-in the transformed data block and the goal is to generate different
-data for each chain.}
+\item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
+In the case of multi-chain sampling the single \code{seed} will automatically be
+augmented by the the run (chain) ID so that each chain uses a different
+seed. The exception is the \verb{transformed data} block, which defaults to
+using same seed for all chains so that the same data is generated for all
+chains if RNG functions are used. The only time \code{seed} should be specified
+as a vector (one element per chain) is if RNG functions are used in
+\verb{transformed data} and the goal is to generate \emph{different} data for each
+chain.}
 
 \item{refresh}{(non-negative integer) The number of iterations between
 printed screen updates. If \code{refresh = 0}, only error messages will be
