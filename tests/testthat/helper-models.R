@@ -18,11 +18,11 @@ testing_model <- function(name) {
   cmdstan_model(stan_file = testing_stan_file(name))
 }
 
-testing_fit <- function(name, method = c("sample", "optimize", "variational", "generate_quantities"), ...) {
+testing_fit <- function(name, method = c("sample", "optimize", "variational", "generate_quantities"), seed = 123, ...) {
   method <- match.arg(method)
   mod <- testing_model(name)
   utils::capture.output(
-    fit <- mod[[method]](data = testing_data(name), ...)
+    fit <- mod[[method]](data = testing_data(name), seed = seed, ...)
   )
   fit
 }

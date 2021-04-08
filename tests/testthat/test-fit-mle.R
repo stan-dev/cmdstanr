@@ -54,12 +54,12 @@ test_that("output() works for optimization", {
 
 test_that("time is reported after optimization", {
   skip_on_cran()
-  expect_output(mod$optimize(data = data_list),
+  expect_output(mod$optimize(data = data_list, seed = 123),
                 "Finished in")
 })
 
 test_that("no error when checking estimates after failure", {
-  fit <- cmdstanr_example("schools", method = "optimize") # optim ålways fails for this
+  fit <- cmdstanr_example("schools", method = "optimize", seed = 123) # optim ålways fails for this
   expect_silent(fit$summary()) # no error
 })
 

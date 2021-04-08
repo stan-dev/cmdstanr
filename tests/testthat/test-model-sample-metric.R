@@ -21,33 +21,39 @@ test_that("sample() method works with provided inv_metrics", {
   expect_sample_output(fit_r <- mod$sample(data = data_list,
                                            chains = 1,
                                            metric = "diag_e",
-                                           inv_metric = inv_metric_vector))
+                                           inv_metric = inv_metric_vector,
+                                           seed = 123))
 
   expect_sample_output(fit_r <- mod$sample(data = data_list,
                                            chains = 1,
                                            metric = "dense_e",
-                                           inv_metric = inv_metric_matrix))
+                                           inv_metric = inv_metric_matrix,
+                                           seed = 123))
 
   expect_sample_output(fit_json <- mod$sample(data = data_list,
                                               chains = 1,
                                               metric = "diag_e",
-                                              metric_file = inv_metric_vector_json))
+                                              metric_file = inv_metric_vector_json,
+                                              seed = 123))
 
   expect_sample_output(fit_json <- mod$sample(data = data_list,
                                               chains = 1,
                                               metric = "dense_e",
-                                              metric_file = inv_metric_matrix_json))
+                                              metric_file = inv_metric_matrix_json,
+                                              seed = 123))
 
   expect_sample_output(fit_r <- mod$sample(data = data_list,
                                            chains = 1,
                                            metric = "diag_e",
-                                           metric_file = inv_metric_vector_r))
+                                           metric_file = inv_metric_vector_r,
+                                           seed = 123))
 
   expect_sample_output(fit_r <- mod$sample(data = data_list,
                                            chains = 3,
                                            parallel_chains = 2,
                                            metric = "dense_e",
-                                           metric_file = inv_metric_matrix_r))
+                                           metric_file = inv_metric_matrix_r,
+                                           seed = 123))
 })
 
 
@@ -60,12 +66,14 @@ test_that("sample() method works with lists of inv_metrics", {
   expect_sample_output(fit_r <- mod$sample(data = data_list,
                                            chains = 1,
                                            metric = "diag_e",
-                                           inv_metric = list(inv_metric_vector)))
+                                           inv_metric = list(inv_metric_vector),
+                                           seed = 123))
 
   expect_sample_output(fit_r <- mod$sample(data = data_list,
                                            chains = 2,
                                            metric = "diag_e",
-                                           inv_metric = list(inv_metric_vector, inv_metric_vector)))
+                                           inv_metric = list(inv_metric_vector, inv_metric_vector),
+                                           seed = 123))
 
   expect_error(fit_r <- mod$sample(data = data_list,
                                    chains = 3,

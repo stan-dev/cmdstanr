@@ -198,7 +198,7 @@ test_that("return_codes method works properly", {
   expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
 
   # non-zero
-  non_zero <- testing_fit("schools", method = "optimize")
+  non_zero <- testing_fit("schools", method = "optimize", seed = 123)
   expect_gt(non_zero$return_codes(), 0)
 })
 
@@ -276,18 +276,18 @@ test_that("no output with refresh = 0", {
   skip_on_cran()
   mod <- testing_model("logistic")
   data_list <- testing_data("logistic")
-  output <- utils::capture.output(tmp <- mod$variational(data = data_list))
+  output <- utils::capture.output(tmp <- mod$variational(data = data_list, seed = 123))
   expect_gt(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$optimize(data = data_list))
+  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, seed = 123))
   expect_gt(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$sample(data = data_list, chains = 1))
+  output <- utils::capture.output(tmp <- mod$sample(data = data_list, chains = 1, seed = 123))
   expect_gt(length(output), 1)
 
-  output <- utils::capture.output(tmp <- mod$variational(data = data_list, refresh = 0))
+  output <- utils::capture.output(tmp <- mod$variational(data = data_list, refresh = 0, seed = 123))
   expect_equal(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, refresh = 0))
+  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, refresh = 0, seed = 123))
   expect_equal(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$sample(data = data_list, refresh = 0, chains = 1))
+  output <- utils::capture.output(tmp <- mod$sample(data = data_list, refresh = 0, chains = 1, seed = 123))
   expect_equal(length(output), 3)
 })
 
@@ -378,21 +378,21 @@ test_that("sig_figs works with all methods", {
     c(0.12, 0.12345, 0.123456789)
   )
   utils::capture.output(
-    opt <- mod$optimize(sig_figs = 2, refresh = 0, data = testing_data("logistic"))
+    opt <- mod$optimize(sig_figs = 2, refresh = 0, data = testing_data("logistic"), seed = 123)
   )
   expect_equal(
     as.numeric(opt$mle()[c("p2","p5", "p9")]),
     c(0.12, 0.12, 0.12)
   )
   utils::capture.output(
-    opt <- mod$optimize(sig_figs = 5, refresh = 0, data = testing_data("logistic"))
+    opt <- mod$optimize(sig_figs = 5, refresh = 0, data = testing_data("logistic"), seed = 123)
   )
   expect_equal(
     as.numeric(opt$mle()[c("p2","p5", "p9")]),
     c(0.12, 0.12345, 0.12346)
   )
   utils::capture.output(
-    opt <- mod$optimize(sig_figs = 10, refresh = 0, data = testing_data("logistic"))
+    opt <- mod$optimize(sig_figs = 10, refresh = 0, data = testing_data("logistic"), seed = 123)
   )
   expect_equal(
     as.numeric(opt$mle()[c("p2","p5", "p9")]),

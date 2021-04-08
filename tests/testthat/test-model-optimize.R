@@ -52,7 +52,7 @@ test_that("optimize() method runs when all arguments specified validly", {
   expect_is(fit1, "CmdStanMLE")
 
   # leaving all at default (except 'data')
-  expect_optim_output(fit2 <- mod$optimize(data = data_list))
+  expect_optim_output(fit2 <- mod$optimize(data = data_list, seed = 123))
   expect_is(fit2, "CmdStanMLE")
 })
 
@@ -66,7 +66,8 @@ test_that("optimize() method runs when arguments are specified in scientific not
 
 test_that("optimize() warns if threads specified but not enabled", {
   expect_warning(
-    expect_optim_output(fit <- mod$optimize(data = data_list, threads = 2)),
+    expect_optim_output(fit <- mod$optimize(data = data_list, threads = 2,
+                                            seed = 123)),
     "'threads' will have no effect"
   )
 })
@@ -131,7 +132,8 @@ test_that("optimize() works with (L-)BFGS tolerances specified", {
       tol_grad = 5e-07,
       tol_rel_grad = 10000001,
       tol_param = 5e-07,
-      history_size = 6
+      history_size = 6,
+      seed = 123
     )
   )
   metadata <- fit$metadata()

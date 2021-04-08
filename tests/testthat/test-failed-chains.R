@@ -160,13 +160,13 @@ test_that("optimize error on bad data", {
   mod <- testing_model("bernoulli")
   suppressWarnings(
     expect_output(
-      mod$optimize(data = list(a = c(1,2,3))),
+      mod$optimize(data = list(a = c(1,2,3)), seed = 123),
       "Exception: variable does not exist"
     )
   )
   expect_warning(
     utils::capture.output(
-      fit <- mod$optimize(data = list(a = c(1,2,3)))
+      fit <- mod$optimize(data = list(a = c(1,2,3)), seed = 123)
     ),
     "Fitting finished unexpectedly!"
   )
