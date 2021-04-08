@@ -28,7 +28,7 @@ test_that("all fitting methods work with provided init files", {
 
   # broadcasting
   expect_sample_output(
-    fit <- mod$sample(data = data_list, chains = 2, init = init_json_1)
+    fit <- mod$sample(data = data_list, chains = 2, init = init_json_1, seed = 123)
   )
   expect_identical(
     fit$init(),
@@ -43,11 +43,11 @@ test_that("sample method works with valid numeric init values", {
   skip_on_cran()
 
   expect_sample_output(
-    mod$sample(data = data_list, chains = 1, init = 0)
+    mod$sample(data = data_list, chains = 1, init = 0, seed = 123)
   )
 
   expect_sample_output(
-    mod$sample(data = data_list, chains = 1, init = 2)
+    mod$sample(data = data_list, chains = 1, init = 2, seed = 123)
   )
 })
 
@@ -55,7 +55,7 @@ test_that("sample method throws error for invalid init argument", {
   skip_on_cran()
 
   expect_error(
-    mod$sample(data = data_list, chains = 2, init = -10),
+    mod$sample(data = data_list, chains = 2, init = -10, seed = 123),
     "If 'init' is numeric it must be a single real number >= 0",
     fixed = TRUE
   )
@@ -96,12 +96,12 @@ test_that("init can be a list of lists", {
     )
   )
   expect_optim_output(
-    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_list[1])
+    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_list[1], seed = 123)
   )
   expect_length(fit$metadata()$init, 1)
 
   expect_sample_output(
-    fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
+    fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list, seed = 123),
     num_chains = 2
   )
 
@@ -147,7 +147,7 @@ test_that("error if init list is specified incorrectly", {
     list(alpha = 1, beta = 1:3)
   )
   expect_error(
-    mod_logistic$optimize(data = data_list_logistic, init = init_list),
+    mod_logistic$optimize(data = data_list_logistic, init = init_list, seed = 123),
     "'init' has the wrong length"
   )
 
@@ -177,7 +177,7 @@ test_that("init can be a function", {
     list(alpha = 0, beta = 1:3)
   }
   expect_optim_output(
-    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_fun)
+    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_fun, seed = 123)
   )
   expect_sample_output(
     fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
@@ -197,7 +197,7 @@ test_that("init can be a function", {
     list(alpha = 0, beta = 1:3)
   }
   expect_optim_output(
-    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_fun)
+    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_fun, seed = 123)
   )
   expect_sample_output(
     fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),

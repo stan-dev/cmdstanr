@@ -119,7 +119,7 @@ read_cmdstan_csv <- function(files,
                              variables = NULL,
                              sampler_diagnostics = NULL,
                              draws_format = getOption("cmdstanr_format", NULL)) {
-  valid_draws_formats <- c("draws_array", "draws_matrix", "draws_list")
+  valid_draws_formats <- c("draws_array", "draws_matrix", "draws_list", "draws_df")
   if (!is.null(draws_format) && !(valid_draws_formats %in% valid_draws_formats)) {
     stop("The supplied 'draws_format' is not a valid draws format.", call. = FALSE)
   }
@@ -173,6 +173,10 @@ read_cmdstan_csv <- function(files,
     }
   }
   metadata <- csv_metadata[[1]]
+  uniq_seed <- unique(metadata$seed)
+  if (length(uniq_seed) == 1) {
+    metadata$seed <- uniq_seed
+  }  
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$model_params
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
@@ -734,6 +738,8 @@ as_draws_format_fun <- function(draws_format) {
     f <- posterior::as_draws_matrix
   } else if (draws_format == "draws_list") {
     f <- posterior::as_draws_list
+  } else if (draws_format == "draws_df") {
+    f <- posterior::as_draws_df
   }
   f
 }
