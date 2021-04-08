@@ -58,7 +58,7 @@ test_that("variational() method runs when all arguments specified validly", {
 
 test_that("variational() warns if threads specified but not enabled", {
   expect_warning(
-    expect_vb_output(fit <- mod$variational(data = data_list, threads = 2)),
+    expect_vb_output(fit <- mod$variational(data = data_list, threads = 2, seed = 123)),
     "'threads' will have no effect"
   )
 })
