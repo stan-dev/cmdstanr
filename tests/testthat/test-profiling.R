@@ -7,7 +7,7 @@ test_that("profiling works if profiling data is present", {
   skip_if(cmdstan_version() < "2.26.0")
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
-    fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
+    fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
   )
   expect_equal(length(fit$profile_files()), 4)
   profiles <- fit$profiles()
@@ -21,7 +21,7 @@ test_that("profiling errors if no profiling files are present", {
   mod <- testing_model("logistic")
   suppressWarnings(
     utils::capture.output(
-      fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
+      fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
     )
   )
   expect_error(
@@ -40,7 +40,7 @@ test_that("saving profile csv output works", {
   skip_if(cmdstan_version() < "2.26.0")
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
-    fit <- mod$sample(data = testing_data("logistic"), refresh = 0)
+    fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
   )
   old_paths <- fit$profile_files()
   checkmate::expect_file_exists(old_paths, extension = "csv")
