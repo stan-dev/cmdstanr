@@ -394,8 +394,8 @@ read_sample_csv <- function(files,
 #'   be performed after reading in the files? The default is `TRUE` but set to
 #'   `FALSE` to avoid checking for problems with divergences and treedepth.
 #'
-as_cmdstan_fit <- function(files, check_diagnostics = TRUE) {
-  csv_contents <- read_cmdstan_csv(files)
+as_cmdstan_fit <- function(files, check_diagnostics = TRUE, draws_format = getOption("cmdstanr_format", NULL)) {
+  csv_contents <- read_cmdstan_csv(files, draws_format = draws_format)
   switch(
     csv_contents$metadata$method,
     "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),

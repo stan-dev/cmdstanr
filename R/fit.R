@@ -803,7 +803,7 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     # override the CmdStanFit draws method
-    draws = function(variables = NULL, inc_warmup = FALSE) {
+    draws = function(variables = NULL, inc_warmup = FALSE, draws_format = getOption("cmdstanr_format", NULL)) {
       if (inc_warmup && !private$metadata_$save_warmup) {
         stop("Warmup draws were requested from a fit object without them! ",
              "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
@@ -815,7 +815,7 @@ CmdStanMCMC <- R6::R6Class(
         all = private$metadata_$model_params
       )
       if (is.null(to_read) || any(nzchar(to_read))) {
-        private$read_csv_(variables = to_read, sampler_diagnostics = "")
+        private$read_csv_(variables = to_read, sampler_diagnostics = "", draws_format = draws_format)
       }
       if (is.null(variables)) {
         variables <- private$metadata_$model_params
@@ -828,9 +828,9 @@ CmdStanMCMC <- R6::R6Class(
         variables <- matching_res$matching
       }
       if (inc_warmup) {
-        posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")[,,variables]
+        posterior::subset_draws(posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration"), variable = variables)
       } else {
-        private$draws_[,,variables]
+        posterior::subset_draws(private$draws_, variable = variables)
       }
     }
   ),
@@ -840,14 +840,15 @@ CmdStanMCMC <- R6::R6Class(
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     inv_metric_ = NULL,
-    read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
+    read_csv_ = function(variables = NULL, sampler_diagnostics = NULL, draws_format = getOption("cmdstanr_format", NULL)) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
-        sampler_diagnostics = sampler_diagnostics
+        sampler_diagnostics = sampler_diagnostics,
+        draws_format = draws_format
       )
       private$inv_metric_ <- csv_contents$inv_metric
       private$metadata_ <- csv_contents$metadata
@@ -859,7 +860,7 @@ CmdStanMCMC <- R6::R6Class(
           missing_variables <- !(posterior::variables(csv_contents$post_warmup_draws) %in% posterior::variables(private$draws_))
           private$draws_ <- posterior::bind_draws(
             private$draws_,
-            csv_contents$post_warmup_draws[,,missing_variables],
+            posterior::subset_draws(csv_contents$post_warmup_draws, variable = missing_variables),
             along="variable"
           )
         }
@@ -871,7 +872,7 @@ CmdStanMCMC <- R6::R6Class(
           missing_variables <- !(posterior::variables(csv_contents$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))
           private$sampler_diagnostics_ <- posterior::bind_draws(
             private$sampler_diagnostics_,
-            csv_contents$post_warmup_sampler_diagnostics[,,missing_variables],
+            posterior::subset_draws(csv_contents$post_warmup_sampler_diagnostics, variable = missing_variables),
             along="variable"
           )
         }
@@ -885,7 +886,7 @@ CmdStanMCMC <- R6::R6Class(
             missing_variables <- !(posterior::variables(csv_contents$warmup_draws) %in% posterior::variables(private$warmup_draws_))
             private$warmup_draws_ <- posterior::bind_draws(
               private$warmup_draws_,
-              csv_contents$warmup_draws[,,missing_variables],
+              posterior::subset_draws(csv_contents$warmup_draws, variable = missing_variables),
               along="variable"
             )
           }
@@ -897,7 +898,7 @@ CmdStanMCMC <- R6::R6Class(
             missing_variables <- !(posterior::variables(csv_contents$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))
             private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
               private$warmup_sampler_diagnostics_,
-              csv_contents$warmup_sampler_diagnostics[,,missing_variables],
+              posterior::subset_draws(csv_contents$warmup_sampler_diagnostics, variable = missing_variables),
               along="variable"
             )
           }
