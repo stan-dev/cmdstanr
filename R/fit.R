@@ -803,7 +803,7 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     # override the CmdStanFit draws method
-    draws = function(variables = NULL, inc_warmup = FALSE, draws_format = getOption("cmdstanr_format", NULL)) {
+    draws = function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", NULL)) {
       if (inc_warmup && !private$metadata_$save_warmup) {
         stop("Warmup draws were requested from a fit object without them! ",
              "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
@@ -815,7 +815,7 @@ CmdStanMCMC <- R6::R6Class(
         all = private$metadata_$model_params
       )
       if (is.null(to_read) || any(nzchar(to_read))) {
-        private$read_csv_(variables = to_read, sampler_diagnostics = "", draws_format = draws_format)
+        private$read_csv_(variables = to_read, sampler_diagnostics = "", format = format)
       }
       if (is.null(variables)) {
         variables <- private$metadata_$model_params
@@ -840,7 +840,7 @@ CmdStanMCMC <- R6::R6Class(
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     inv_metric_ = NULL,
-    read_csv_ = function(variables = NULL, sampler_diagnostics = NULL, draws_format = getOption("cmdstanr_format", NULL)) {
+    read_csv_ = function(variables = NULL, sampler_diagnostics = NULL, format = getOption("cmdstanr_draws_format", NULL)) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
       }
@@ -848,7 +848,7 @@ CmdStanMCMC <- R6::R6Class(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
         sampler_diagnostics = sampler_diagnostics,
-        draws_format = draws_format
+        format = format
       )
       private$inv_metric_ <- csv_contents$inv_metric
       private$metadata_ <- csv_contents$metadata

@@ -118,10 +118,11 @@
 read_cmdstan_csv <- function(files,
                              variables = NULL,
                              sampler_diagnostics = NULL,
-                             draws_format = getOption("cmdstanr_format", NULL)) {
-  valid_draws_formats <- c("draws_array", "draws_matrix", "draws_list", "draws_df")
-  if (!is.null(draws_format) && !(valid_draws_formats %in% valid_draws_formats)) {
-    stop("The supplied 'draws_format' is not a valid draws format.", call. = FALSE)
+                             format = getOption("cmdstanr_draws_format", NULL)) {
+  valid_draws_formats <- c("draws_array", "array", "draws_matrix", "matrix",
+                           "draws_list", "list", "draws_df", "df", "data.frame")
+  if (!is.null(format) && !(format %in% valid_draws_formats)) {
+    stop("The supplied draws format is not valid.", call. = FALSE)
   }
   checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
@@ -276,10 +277,10 @@ read_cmdstan_csv <- function(files,
   metadata$stan_variables <- names(model_param_dims)
 
   if (metadata$method == "sample") {
-    if (is.null(draws_format)) {
-      draws_format <- "draws_array"
+    if (is.null(format)) {
+      format <- "draws_array"
     }
-    as_draws_format <- as_draws_format_fun(draws_format)
+    as_draws_format <- as_draws_format_fun(format)
     if (length(warmup_draws) > 0) {
       warmup_draws <- do.call(as_draws_format, list(warmup_draws))
       posterior::variables(warmup_draws) <- repaired_variables
@@ -325,10 +326,10 @@ read_cmdstan_csv <- function(files,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics
     )
   } else if (metadata$method == "variational") {
-    if (is.null(draws_format)) {
-      draws_format <- "draws_matrix"
+    if (is.null(format)) {
+      format <- "draws_matrix"
     }
-    as_draws_format <- as_draws_format_fun(draws_format)
+    as_draws_format <- as_draws_format_fun(format)
     variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop=FALSE]))
     if (!is.null(variational_draws)) {
       if ("log_p__" %in% posterior::variables(variational_draws)) {
@@ -344,10 +345,10 @@ read_cmdstan_csv <- function(files,
       draws = variational_draws
     )
   } else if (metadata$method == "optimize") {
-    if (is.null(draws_format)) {
-      draws_format <- "draws_matrix"
+    if (is.null(format)) {
+      format <- "draws_matrix"
     }
-    as_draws_format <- as_draws_format_fun(draws_format)
+    as_draws_format <- as_draws_format_fun(format)
     point_estimates <- do.call(as_draws_format, list(draws[[1]][1,, drop=FALSE]))
     point_estimates <- posterior::subset_draws(point_estimates, variable = variables)
     if (!is.null(point_estimates)) {
@@ -358,10 +359,10 @@ read_cmdstan_csv <- function(files,
       point_estimates = point_estimates
     )
   } else if (metadata$method == "generate_quantities") {
-    if (is.null(draws_format)) {
-      draws_format <- "draws_array"
+    if (is.null(format)) {
+      format <- "draws_array"
     }
-    as_draws_format <- as_draws_format_fun(draws_format)
+    as_draws_format <- as_draws_format_fun(format)
     draws <- do.call(as_draws_format, list(draws))
     if (!is.null(draws)) {
       posterior::variables(draws) <- repaired_variables
@@ -394,8 +395,8 @@ read_sample_csv <- function(files,
 #'   be performed after reading in the files? The default is `TRUE` but set to
 #'   `FALSE` to avoid checking for problems with divergences and treedepth.
 #'
-as_cmdstan_fit <- function(files, check_diagnostics = TRUE, draws_format = getOption("cmdstanr_format", NULL)) {
-  csv_contents <- read_cmdstan_csv(files, draws_format = draws_format)
+as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("cmdstanr_draws_format", NULL)) {
+  csv_contents <- read_cmdstan_csv(files, format = format)
   switch(
     csv_contents$metadata$method,
     "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
@@ -730,16 +731,14 @@ check_csv_metadata_matches <- function(csv_metadata) {
 }
 
 as_draws_format_fun <- function(draws_format) {
-  if (draws_format == "draws_array") {
+  if (draws_format %in% c("draws_array", "array")) {
     f <- posterior::as_draws_array
-  } else if (draws_format == "draws_df") {
+  } else if (draws_format %in% c("draws_df", "df", "data.frame")) {
     f <- posterior::as_draws_df
-  } else if (draws_format == "draws_matrix") {
+  } else if (draws_format %in% c("draws_matrix", "matrix")) {
     f <- posterior::as_draws_matrix
-  } else if (draws_format == "draws_list") {
+  } else if (draws_format %in% c("draws_list", "list")) {
     f <- posterior::as_draws_list
-  } else if (draws_format == "draws_df") {
-    f <- posterior::as_draws_df
   }
   f
 }
