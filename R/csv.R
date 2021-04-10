@@ -22,6 +22,11 @@
 #' @param sampler_diagnostics Works the same way as `variables` but for sampler
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #'   Ignored if the model was not fit using MCMC.
+#' @param format The format of the returned draws or point estimates. By default,
+#'   the sampling draws and generated quantities are returned as 'draws_array',
+#'   while point estimates from optimization and variational inference draws are
+#'   returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
+#'   'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.
 #'
 #' @return
 #'
