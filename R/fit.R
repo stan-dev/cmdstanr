@@ -118,6 +118,11 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   default) then all variables are included.
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to
 #'   `FALSE`. Ignored except when used with [CmdStanMCMC] objects.
+#' @param format The format of the returned draws or point estimates. By default,
+#'   the sampling draws and generated quantities are returned as 'draws_array',
+#'   while point estimates from optimization and variational inference draws are
+#'   returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
+#'   'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.
 #'
 #' @return
 #' * For [MCMC][model-method-sample], a 3-D
@@ -166,7 +171,7 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
 #' }
 #'
-draws <- function(variables = NULL, inc_warmup = FALSE) {
+draws <- function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_matrix")) {
   # CmdStanMCMC and CmdStanGQ have separate implementations,
   # this is used for CmdStanVB and CmdStanMLE
   if (!length(self$output_files(include_failed = FALSE))) {
@@ -177,8 +182,9 @@ draws <- function(variables = NULL, inc_warmup = FALSE) {
             call. = FALSE)
   }
   if (is.null(private$draws_)) {
-    private$read_csv_()
+    private$read_csv_(format = format)
   }
+  private$draws_ <- maybe_convert_draws_format(private$draws_, format)
   posterior::subset_draws(private$draws_, variable = variables)
 }
 CmdStanFit$set("public", name = "draws", value = draws)
@@ -1133,11 +1139,11 @@ CmdStanMLE <- R6::R6Class(
   public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function() {
+    read_csv_ = function(format = getOption("cmdstanr_draws_format", NULL)) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Optimization failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files())
+      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -1235,11 +1241,11 @@ CmdStanVB <- R6::R6Class(
   public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function() {
+    read_csv_ = function(format = getOption("cmdstanr_draws_format", NULL)) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Variational inference failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files())
+      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -1310,7 +1316,7 @@ CmdStanGQ <- R6::R6Class(
       super$num_procs()
     },
     # override CmdStanFit draws method
-    draws = function(variables = NULL, inc_warmup = FALSE) {
+    draws = function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", NULL)) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
@@ -1349,14 +1355,15 @@ CmdStanGQ <- R6::R6Class(
   ),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function(variables = NULL) {
+    read_csv_ = function(variables = NULL, format = getOption("cmdstanr_draws_format", NULL)) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
-        sampler_diagnostics = ""
+        sampler_diagnostics = "",
+        format = format
       )
       private$metadata_ <- csv_contents$metadata
       if (!is.null(csv_contents$generated_quantities)) {

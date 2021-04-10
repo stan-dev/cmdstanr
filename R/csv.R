@@ -399,6 +399,11 @@ read_sample_csv <- function(files,
 #' @param check_diagnostics For models fit using MCMC, should diagnostic checks
 #'   be performed after reading in the files? The default is `TRUE` but set to
 #'   `FALSE` to avoid checking for problems with divergences and treedepth.
+#' @param format The format of the returned draws or point estimates. By default,
+#'   the sampling draws and generated quantities are returned as 'draws_array',
+#'   while point estimates from optimization and variational inference draws are
+#'   returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
+#'   'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.
 #'
 as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("cmdstanr_draws_format", NULL)) {
   csv_contents <- read_cmdstan_csv(files, format = format)
@@ -733,19 +738,6 @@ check_csv_metadata_matches <- function(csv_metadata) {
             paste(not_matching_list, collapse = ", "), call. = FALSE)
   }
   NULL
-}
-
-as_draws_format_fun <- function(draws_format) {
-  if (draws_format %in% c("draws_array", "array")) {
-    f <- posterior::as_draws_array
-  } else if (draws_format %in% c("draws_df", "df", "data.frame")) {
-    f <- posterior::as_draws_df
-  } else if (draws_format %in% c("draws_matrix", "matrix")) {
-    f <- posterior::as_draws_matrix
-  } else if (draws_format %in% c("draws_list", "list")) {
-    f <- posterior::as_draws_list
-  }
-  f
 }
 
 # convert names like beta.1.1 to beta[1,1]
