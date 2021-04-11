@@ -16,14 +16,17 @@ if (not_on_cran()) {
 
   make_some_fail <- function(x) {
     num_files <- 0
+    attempt <- 1
     while (num_files == 0 || num_files == 4) {
       utils::capture.output(
         check_some_fail <- x$sample(
           data = list(pr_fail = 0.5),
-          save_latent_dynamics = TRUE
+          save_latent_dynamics = TRUE,
+          seed = base::sample(.Machine$integer.max, 4)
         )
       )
       num_files <- length(check_some_fail$output_files(include_failed = FALSE))
+      attempt <- attempt + 1
     }
     check_some_fail
   }
@@ -157,13 +160,13 @@ test_that("optimize error on bad data", {
   mod <- testing_model("bernoulli")
   suppressWarnings(
     expect_output(
-      mod$optimize(data = list(a = c(1,2,3))),
+      mod$optimize(data = list(a = c(1,2,3)), seed = 123),
       "Exception: variable does not exist"
     )
   )
   expect_warning(
     utils::capture.output(
-      fit <- mod$optimize(data = list(a = c(1,2,3)))
+      fit <- mod$optimize(data = list(a = c(1,2,3)), seed = 123)
     ),
     "Fitting finished unexpectedly!"
   )

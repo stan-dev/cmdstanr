@@ -4,9 +4,9 @@
 # model = model1
 # method = sample (Default)
 #   sample
-#     num_samples = 100 (Default)
-#     num_warmup = 100 (Default)
-#     save_warmup = 1
+#     num_samples = 1
+#     num_warmup = 1
+#     save_warmup = 0
 #     thin = 1 (Default)
 #     adapt
 #       engaged = 1 (Default)
