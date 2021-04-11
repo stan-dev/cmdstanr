@@ -134,3 +134,15 @@ test_that("fitted_params_files() works", {
     fit$output_files()
   )
 })
+
+test_that("draws() works for different formats", {
+  skip_on_cran()
+  a <- fit_gq$draws()
+  expect_true(posterior::is_draws_array(a))
+  a <- fit_gq$draws(format = "list")
+  expect_true(posterior::is_draws_list(a))
+  a <- fit_gq$draws(format = "array")
+  expect_true(posterior::is_draws_array(a))
+  a <- fit_gq$draws(format = "df")
+  expect_true(posterior::is_draws_df(a))
+})

@@ -75,4 +75,3 @@ test_that("draws() works for different formats", {
   a <- fit_mle$draws(format = "df")
   expect_true(posterior::is_draws_df(a))
 })
-
