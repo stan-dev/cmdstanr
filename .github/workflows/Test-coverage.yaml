@@ -80,7 +80,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Test coverage
-        run: covr::codecov(type = "all")
+        run: covr::codecov(type = "tests")
         shell: Rscript {0}
 
   test-coverage-windows:
@@ -131,5 +131,5 @@ jobs:
       - name: Test coverage
         run: |
           options(covr.gcov = 'C:/rtools40/mingw64/bin/gcov.exe');
-          covr::codecov(type = "all", function_exclusions = "sample_mpi")
+          covr::codecov(type = "tests", function_exclusions = "sample_mpi")
         shell: Rscript {0}
