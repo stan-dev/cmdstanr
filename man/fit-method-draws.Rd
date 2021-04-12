@@ -5,7 +5,11 @@
 \alias{draws}
 \title{Extract posterior draws}
 \usage{
-draws(variables = NULL, inc_warmup = FALSE)
+draws(
+  variables = NULL,
+  inc_warmup = FALSE,
+  format = getOption("cmdstanr_draws_format", "draws_matrix")
+)
 }
 \arguments{
 \item{variables}{(character vector) The variables to read in. If \code{NULL} (the
@@ -13,6 +17,12 @@ default) then all variables are included.}
 
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to
 \code{FALSE}. Ignored except when used with \link{CmdStanMCMC} objects.}
+
+\item{format}{The format of the returned draws or point estimates. By default,
+the sampling draws and generated quantities are returned as 'draws_array',
+while point estimates from optimization and variational inference draws are
+returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
+'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.}
 }
 \value{
 \itemize{

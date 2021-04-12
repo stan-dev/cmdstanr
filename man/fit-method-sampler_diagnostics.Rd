@@ -5,7 +5,10 @@
 \alias{sampler_diagnostics}
 \title{Extract sampler diagnostics after MCMC}
 \usage{
-sampler_diagnostics(inc_warmup = FALSE)
+sampler_diagnostics(
+  inc_warmup = FALSE,
+  format = getOption("cmdstanr_draws_format", "draws_array")
+)
 }
 \arguments{
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to \code{FALSE}.}
