@@ -1334,7 +1334,6 @@ generate_quantities <- function(fitted_params,
 }
 CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities)
 
-
 check_opencl <- function(cpp_options, opencl_ids) {
   if (is.null(cpp_options[["stan_opencl"]])
       && !is.null(opencl_ids)) {
@@ -1343,3 +1342,61 @@ check_opencl <- function(cpp_options, opencl_ids) {
            call. = FALSE)   
   }
 }
+
+#' Run Stan's diagnose method
+#'
+#' @name model-method-diagnose
+#' @aliases diagnose
+#' @family CmdStanModel methods
+#'
+#' @description The `$diagnose()` method of a [`CmdStanModel`] object
+#'   runs Stan's basic diagnostic feature that will calculate the gradients
+#'   of the initial state and compare them with gradients calculated by
+#'   finite differences. Discrepancies between the two indicate that there is
+#'   a problem with the model or initial states or else there is a bug in Stan.
+#'
+#' @inheritParams model-method-diagnose
+#' @param epsilon (positive real) The finite difference step size. Default
+#'   value is 1e-6.
+#' @param error (positive real)  The error threshold. Default value is 1e-6.
+#'
+#' @return A [`CmdStanDiagnose`] object.
+#'
+#' @template seealso-docs
+#' @inherit cmdstan_model examples
+#'
+diagnose_method <- function(data = NULL,
+                            epsilon = NULL,
+                            error = NULL,                            
+                            seed = NULL,
+                            init = NULL,
+                            output_dir = NULL,
+                            output_basename = NULL,
+                            sig_figs = NULL) {
+  diagnose_args <- DiagnoseArgs$new(
+    epsilon = epsilon,
+    error = error
+  )
+  cmdstan_args <- CmdStanArgs$new(
+    method_args = diagnose_args,
+    model_name = self$model_name(),
+    exe_file = self$exe_file(),
+    proc_ids = 1,
+    data_file = process_data(data),
+    seed = seed,
+    init = init,
+    output_dir = output_dir,
+    output_basename = output_basename,
+    sig_figs = sig_figs
+  )
+  cmdstan_procs <- CmdStanProcs$new(
+    num_procs = 1,
+    show_stdout_messages = FALSE,
+    show_stderr_messages = TRUE
+  )
+  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset$run_cmdstan()
+  
+  CmdStanDiagnose$new(runset)
+}
+CmdStanModel$set("public", name = "diagnose", value = diagnose_method)

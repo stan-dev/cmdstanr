@@ -2,7 +2,7 @@
 #' CmdStanFit superclass
 #'
 #' @noRd
-#' @description CmdStanMCMC, CmdStanMLE, CmdStanVB, and CmdStanGQ all share the
+#' @description CmdStanMCMC, CmdStanMLE, CmdStanVB, CmdStanGQ all share the
 #'   methods of the superclass CmdStanFit and also have their own unique methods.
 #'
 CmdStanFit <- R6::R6Class(
@@ -63,6 +63,49 @@ CmdStanFit <- R6::R6Class(
     draws_ = NULL,
     metadata_ = NULL,
     init_ = NULL
+  )
+)
+
+CmdStanDiagnose <- R6::R6Class(
+  classname = "CmdStanDiagnose",
+  public = list(
+    runset = NULL,
+    initialize = function(runset) {
+      checkmate::assert_r6(runset, classes = "CmdStanRun")
+      self$runset <- runset
+      csv_data <- read_cmdstan_csv(self$runset$output_files())
+      private$metadata_ <- csv_data$metadata
+      private$gradients_ <- csv_data$gradients
+      invisible(self)
+    },
+    metadata = function() {
+      private$metadata_
+    },
+    gradients = function() {
+      private$gradients_
+    },
+    print = function(digits = 2, max_rows = getOption("cmdstanr_max_rows", 10)) {
+      total_rows <- dim(private$gradients_)[1]
+      if (max_rows < total_rows) {
+        tmp_max_rows <- max_rows
+      } else {
+        tmp_max_rows <- total_rows
+      }
+      out <- private$gradients_[1:tmp_max_rows,]
+      out[,  1] <- format(out[, 1], justify = "left")
+      out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)      
+      base::print(out, row.names = FALSE)
+      if (max_rows < total_rows) {
+        cat("\n # showing", max_rows, "of", total_rows,
+            "rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)\n")
+      }
+      invisible(self)
+    }
+  ),
+  private = list(
+    metadata_ = NULL,
+    gradients_ = NULL,
+    init_ = NULL    
   )
 )
 
@@ -250,6 +293,7 @@ init <- function() {
   private$init_
 }
 CmdStanFit$set("public", name = "init", value = init)
+CmdStanDiagnose$set("public", name = "init", value = init)
 
 #' Extract log probability (target)
 #'
@@ -496,6 +540,7 @@ save_output_files <- function(dir = ".",
   self$runset$save_output_files(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_output_files", value = save_output_files)
+CmdStanDiagnose$set("public", name = "save_output_files", value = save_output_files)
 
 #' @rdname fit-method-save_output_files
 save_latent_dynamics_files <- function(dir = ".",
@@ -523,6 +568,7 @@ save_data_file <- function(dir = ".",
   self$runset$save_data_file(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
+CmdStanDiagnose$set("public", name = "save_data_file", value = save_data_file)
 
 
 #' @rdname fit-method-save_output_files
@@ -532,6 +578,7 @@ output_files <- function(include_failed = FALSE) {
   self$runset$output_files(include_failed)
 }
 CmdStanFit$set("public", name = "output_files", value = output_files)
+CmdStanDiagnose$set("public", name = "output_files", value = output_files)
 
 #' @rdname fit-method-save_output_files
 profile_files <- function(include_failed = FALSE) {
@@ -550,6 +597,7 @@ data_file <- function() {
   self$runset$data_file()
 }
 CmdStanFit$set("public", name = "data_file", value = data_file)
+CmdStanDiagnose$set("public", name = "data_file", value = data_file)
 
 #' Report timing of CmdStan runs
 #'
@@ -1413,3 +1461,4 @@ CmdStanGQ <- R6::R6Class(
     }
   )
 )
+

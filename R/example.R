@@ -48,7 +48,7 @@
 #'
 cmdstanr_example <-
   function(example = c("logistic", "schools", "schools_ncp"),
-           method = c("sample", "optimize", "variational"),
+           method = c("sample", "optimize", "variational", "diagnose"),
            ...,
            quiet = TRUE) {
 
