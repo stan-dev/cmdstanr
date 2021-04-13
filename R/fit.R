@@ -982,7 +982,12 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #'   chain of MCMC.
 #'
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to `FALSE`.
-#'
+#' @param format The format of the returned draws or point estimates. By default,
+#'   the sampling draws and generated quantities are returned as 'draws_array',
+#'   while point estimates from optimization and variational inference draws are
+#'   returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
+#'   'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.
+
 #' @return
 #' A 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable). The variables for Stan's default MCMC algorithm are

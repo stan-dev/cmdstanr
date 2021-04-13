@@ -12,6 +12,12 @@ sampler_diagnostics(
 }
 \arguments{
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to \code{FALSE}.}
+
+\item{format}{The format of the returned draws or point estimates. By default,
+the sampling draws and generated quantities are returned as 'draws_array',
+while point estimates from optimization and variational inference draws are
+returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
+'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.}
 }
 \value{
 A 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
