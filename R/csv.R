@@ -1,10 +1,9 @@
 #' Read CmdStan CSV files into R
 #'
 #' @description `read_cmdstan_csv()` is used internally by CmdStanR to read
-#'   CmdStan's output CSV files into \R. It can
-#'   also be used by CmdStan users as a more flexible and efficient alternative
-#'   to `rstan::read_stan_csv()`. See the **Value** section for details on the
-#'   structure of the returned list.
+#'   CmdStan's output CSV files into \R. It can also be used by CmdStan users as
+#'   a more flexible and efficient alternative to `rstan::read_stan_csv()`. See
+#'   the **Value** section for details on the structure of the returned list.
 #'
 #'   It is also possible to create CmdStanR's fitted model objects directly from
 #'   CmdStan CSV files using the `as_cmdstan_fit()` function.
@@ -22,11 +21,9 @@
 #' @param sampler_diagnostics Works the same way as `variables` but for sampler
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #'   Ignored if the model was not fit using MCMC.
-#' @param format The format of the returned draws or point estimates. By default,
-#'   the sampling draws and generated quantities are returned as 'draws_array',
-#'   while point estimates from optimization and variational inference draws are
-#'   returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
-#'   'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.
+#' @param format The format for storing the draws or point estimates. The
+#'   default depends on the method used to fit the model. See
+#'   [draws][fit-method-draws] for details.
 #'
 #' @return
 #'
@@ -54,14 +51,16 @@
 #' or their diagonals, depending on the type of metric used.
 #' * `step_size`: A list (one element per chain) of the step sizes used.
 #' * `warmup_draws`:  If `save_warmup` was `TRUE` when fitting the model then a
-#' [`draws_array`][posterior::draws_array] of warmup draws.
-#' * `post_warmup_draws`: A [`draws_array`][posterior::draws_array] of
-#' post-warmup draws.
+#' [`draws_array`][posterior::draws_array] (or different format if `format` is
+#' specified) of warmup draws.
+#' * `post_warmup_draws`: A [`draws_array`][posterior::draws_array] (or
+#' different format if `format` is specified) of post-warmup draws.
 #' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` when fitting the
-#' model then a [`draws_array`][posterior::draws_array] of warmup draws of the
-#' sampler diagnostic variables.
-#' * `post_warmup_sampler_diagnostics`: A [`draws_array`][posterior::draws_array]
-#' of post-warmup draws of the sampler diagnostic variables.
+#' model then a [`draws_array`][posterior::draws_array] (or different format if
+#' `format` is specified) of warmup draws of the sampler diagnostic variables.
+#' * `post_warmup_sampler_diagnostics`: A
+#' [`draws_array`][posterior::draws_array] (or different format if `format` is
+#' specified) of post-warmup draws of the sampler diagnostic variables.
 #'
 #' For [optimization][model-method-optimize] the returned list also includes the
 #' following components:
@@ -71,8 +70,9 @@
 #' For [variational inference][model-method-variational] the returned list also
 #' includes the following components:
 #'
-#' * `draws`: A [`draws_matrix`][posterior::draws_matrix] of draws from the
-#' approximate posterior distribution.
+#' * `draws`: A [`draws_matrix`][posterior::draws_matrix] (or different format
+#' if `format` is specified) of draws from the approximate posterior
+#' distribution.
 #'
 #' For [standalone generated quantities][model-method-generate-quantities] the
 #' returned list also includes the following components:
@@ -182,7 +182,7 @@ read_cmdstan_csv <- function(files,
   uniq_seed <- unique(metadata$seed)
   if (length(uniq_seed) == 1) {
     metadata$seed <- uniq_seed
-  }  
+  }
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$model_params
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
@@ -235,14 +235,14 @@ read_cmdstan_csv <- function(files,
         )
       )
       if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
-        warmup_sampler_diagnostics[[warmup_sd_id]] <- 
+        warmup_sampler_diagnostics[[warmup_sd_id]] <-
           post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws,,drop = FALSE]
         if (num_post_warmup_draws > 0) {
-          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- 
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <-
             post_warmup_sampler_diagnostics[[post_warmup_sd_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
         } else {
           post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- NULL
-        }          
+        }
       }
     }
     if (length(variables) > 0) {
@@ -256,7 +256,7 @@ read_cmdstan_csv <- function(files,
         )
       )
       if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
-        warmup_draws[[warmup_draws_list_id]] <- 
+        warmup_draws[[warmup_draws_list_id]] <-
           draws[[draws_list_id]][1:num_warmup_draws,,drop = FALSE]
         if (num_post_warmup_draws > 0) {
           draws[[draws_list_id]] <- draws[[draws_list_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
@@ -342,7 +342,7 @@ read_cmdstan_csv <- function(files,
       }
       if ("log_g__" %in% posterior::variables(variational_draws)) {
         variational_draws <- posterior::rename_variables(variational_draws, lp_approx__ = "log_g__")
-      }    
+      }
       posterior::variables(variational_draws) <- repaired_variables
     }
     list(
@@ -399,11 +399,6 @@ read_sample_csv <- function(files,
 #' @param check_diagnostics For models fit using MCMC, should diagnostic checks
 #'   be performed after reading in the files? The default is `TRUE` but set to
 #'   `FALSE` to avoid checking for problems with divergences and treedepth.
-#' @param format The format of the returned draws or point estimates. By default,
-#'   the sampling draws and generated quantities are returned as 'draws_array',
-#'   while point estimates from optimization and variational inference draws are
-#'   returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
-#'   'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.
 #'
 as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("cmdstanr_draws_format", NULL)) {
   csv_contents <- read_cmdstan_csv(files, format = format)
@@ -687,7 +682,7 @@ read_csv_metadata <- function(csv_file) {
 check_csv_metadata_matches <- function(csv_metadata) {
   model_name <- sapply(csv_metadata, function(x) x$model_name)
   if (!all(model_name == model_name[1])) {
-    stop("Supplied CSV files were not generated with the same model!", call. = FALSE)    
+    stop("Supplied CSV files were not generated with the same model!", call. = FALSE)
   }
   method <- sapply(csv_metadata, function(x) x$method)
   if (!all(method == method[1])) {

@@ -118,13 +118,22 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   default) then all variables are included.
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to
 #'   `FALSE`. Ignored except when used with [CmdStanMCMC] objects.
-#' @param format The format of the returned draws or point estimates. By default,
-#'   the sampling draws and generated quantities are returned as 'draws_array',
-#'   while point estimates from optimization and variational inference draws are
-#'   returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
-#'   'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.
+#' @param format (string) The format of the returned draws or point estimates.
+#'   Must be a valid format from the \pkg{posterior} package. The default can be
+#'   set using the option `"cmdstanr_draws_format"`, otherwise the defaults are
+#'   the following.
+#'
+#'   * For sampling and generated quantities the default is
+#'   [`"draws_array"`][posterior::draws_array].
+#'   * For point estimates from optimization and approximate draws from
+#'   variational inference the default is
+#'   [`"draws_matrix"`][posterior::draws_array].
+#'
+#'   To use a different format it can be specified as the full name (e.g.
+#'   `"draws_df"`) or omitting the `"draws_"` prefix (e.g. `"df"`).
 #'
 #' @return
+#' Depends on the value of `format`. The defaults are:
 #' * For [MCMC][model-method-sample], a 3-D
 #' [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable).
@@ -160,6 +169,9 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'
 #' # can easily convert to other formats (data frame, matrix, list)
 #' as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
+#'
+#' # or can specify 'format' argument to avoid manual conversion
+#' draws <- fit$draws(format = "df")
 #'
 #' # can select specific parameters
 #' fit$draws("alpha")
@@ -743,7 +755,7 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  [`$draws()`][fit-method-draws] |  Return posterior draws as a [`draws_array`][posterior::draws_array]. |
+#'  [`$draws()`][fit-method-draws] |  Return posterior draws using formats from the \pkg{posterior} package. |
 #'  [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] |  Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. |
 #'  [`$lp()`][fit-method-lp] |  Return the total log probability density (`target`). |
 #'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
@@ -876,7 +888,7 @@ CmdStanMCMC <- R6::R6Class(
         }
       }
       if (!is.null(csv_contents$post_warmup_sampler_diagnostics)) {
-        
+
         if (is.null(private$sampler_diagnostics_)) {
           private$sampler_diagnostics_ <- csv_contents$post_warmup_sampler_diagnostics
         } else {
@@ -982,14 +994,12 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #'   chain of MCMC.
 #'
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to `FALSE`.
-#' @param format The format of the returned draws or point estimates. By default,
-#'   the sampling draws and generated quantities are returned as 'draws_array',
-#'   while point estimates from optimization and variational inference draws are
-#'   returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
-#'   'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.
+#' @param format The draws format to return. See [draws][fit-method-draws] for
+#'   details.
 
 #' @return
-#' A 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
+#' Depends on `format`, but the default is a 3-D
+#' [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable). The variables for Stan's default MCMC algorithm are
 #' `"accept_stat__"`, `"stepsize__"`, `"treedepth__"`, `"n_leapfrog__"`,
 #' `"divergent__"`, `"energy__"`.
@@ -1004,6 +1014,9 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #'
 #' library(posterior)
 #' as_draws_df(sampler_diagnostics)
+#'
+#' # or specify format to get a data frame instead of calling as_draws_df
+#' fit$sampler_diagnostics(format = "df")
 #' }
 #'
 sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {

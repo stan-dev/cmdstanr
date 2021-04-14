@@ -18,13 +18,23 @@ default) then all variables are included.}
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to
 \code{FALSE}. Ignored except when used with \link{CmdStanMCMC} objects.}
 
-\item{format}{The format of the returned draws or point estimates. By default,
-the sampling draws and generated quantities are returned as 'draws_array',
-while point estimates from optimization and variational inference draws are
-returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
-'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.}
+\item{format}{(string) The format of the returned draws or point estimates.
+Must be a valid format from the \pkg{posterior} package. The default can be
+set using the option \code{"cmdstanr_draws_format"}, otherwise the defaults are
+the following.
+\itemize{
+\item For sampling and generated quantities the default is
+\code{\link[posterior:draws_array]{"draws_array"}}.
+\item For point estimates from optimization and approximate draws from
+variational inference the default is
+\code{\link[posterior:draws_array]{"draws_matrix"}}.
+}
+
+To use a different format it can be specified as the full name (e.g.
+\code{"draws_df"}) or omitting the \code{"draws_"} prefix (e.g. \code{"df"}).}
 }
 \value{
+Depends on the value of \code{format}. The defaults are:
 \itemize{
 \item For \link[=model-method-sample]{MCMC}, a 3-D
 \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
@@ -68,6 +78,9 @@ str(draws)
 
 # can easily convert to other formats (data frame, matrix, list)
 as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
+
+# or can specify 'format' argument to avoid manual conversion
+draws <- fit$draws(format = "df")
 
 # can select specific parameters
 fit$draws("alpha")

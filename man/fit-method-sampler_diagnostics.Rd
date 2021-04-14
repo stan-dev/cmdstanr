@@ -13,14 +13,12 @@ sampler_diagnostics(
 \arguments{
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to \code{FALSE}.}
 
-\item{format}{The format of the returned draws or point estimates. By default,
-the sampling draws and generated quantities are returned as 'draws_array',
-while point estimates from optimization and variational inference draws are
-returned as 'draws_matrix'. Options are 'draws_array', 'array', 'draws_matrix',
-'matrix', 'draws_list', 'list', 'draws_df', 'df', 'data.frame'.}
+\item{format}{The draws format to return. See \link[=fit-method-draws]{draws} for
+details.}
 }
 \value{
-A 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
+Depends on \code{format}, but the default is a 3-D
+\code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
 variable). The variables for Stan's default MCMC algorithm are
 \code{"accept_stat__"}, \code{"stepsize__"}, \code{"treedepth__"}, \code{"n_leapfrog__"},
 \code{"divergent__"}, \code{"energy__"}.
@@ -37,6 +35,9 @@ str(sampler_diagnostics)
 
 library(posterior)
 as_draws_df(sampler_diagnostics)
+
+# or specify format to get a data frame instead of calling as_draws_df
+fit$sampler_diagnostics(format = "df")
 }
 
 }
