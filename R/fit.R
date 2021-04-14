@@ -131,6 +131,12 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'
 #'   To use a different format it can be specified as the full name (e.g.
 #'   `"draws_df"`) or omitting the `"draws_"` prefix (e.g. `"df"`).
+#'   
+#'   We recommend using the `draws_list` format when dealing with models
+#'   with large number of parameters (20k+) and multiple chains as this
+#'   `draws_list` is the most efficient and RAM friendly when combining
+#'   draws from multiple chains. If speed or memory is not a constraint
+#'   select the format that most suits the coding style of the post processing phase.
 #'
 #' @return
 #' Depends on the value of `format`. The defaults are:

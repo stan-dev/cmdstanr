@@ -31,7 +31,13 @@ variational inference the default is
 }
 
 To use a different format it can be specified as the full name (e.g.
-\code{"draws_df"}) or omitting the \code{"draws_"} prefix (e.g. \code{"df"}).}
+\code{"draws_df"}) or omitting the \code{"draws_"} prefix (e.g. \code{"df"}).
+
+We recommend using the \code{draws_list} format when dealing with models
+with large number of parameters (20k+) and multiple chains as this
+\code{draws_list} is the most efficient and RAM friendly when combining
+draws from multiple chains. If speed or memory is not a constraint
+select the format that most suits the coding style of the post processing phase.}
 }
 \value{
 Depends on the value of \code{format}. The defaults are:
