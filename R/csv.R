@@ -23,7 +23,8 @@
 #'   Ignored if the model was not fit using MCMC.
 #' @param format The format for storing the draws or point estimates. The
 #'   default depends on the method used to fit the model. See
-#'   [draws][fit-method-draws] for details.
+#'   [draws][fit-method-draws] for details, in particular the note about speed
+#'   and memory for models with many parameters.
 #'
 #' @return
 #'

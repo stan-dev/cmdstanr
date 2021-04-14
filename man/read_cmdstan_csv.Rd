@@ -40,7 +40,8 @@ Ignored if the model was not fit using MCMC.}
 
 \item{format}{The format for storing the draws or point estimates. The
 default depends on the method used to fit the model. See
-\link[=fit-method-draws]{draws} for details.}
+\link[=fit-method-draws]{draws} for details, in particular the note about speed
+and memory for models with many parameters.}
 
 \item{check_diagnostics}{For models fit using MCMC, should diagnostic checks
 be performed after reading in the files? The default is \code{TRUE} but set to
