@@ -5,7 +5,11 @@
 \alias{draws}
 \title{Extract posterior draws}
 \usage{
-draws(variables = NULL, inc_warmup = FALSE)
+draws(
+  variables = NULL,
+  inc_warmup = FALSE,
+  format = getOption("cmdstanr_draws_format", "draws_matrix")
+)
 }
 \arguments{
 \item{variables}{(character vector) The variables to read in. If \code{NULL} (the
@@ -13,8 +17,30 @@ default) then all variables are included.}
 
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to
 \code{FALSE}. Ignored except when used with \link{CmdStanMCMC} objects.}
+
+\item{format}{(string) The format of the returned draws or point estimates.
+Must be a valid format from the \pkg{posterior} package. The default can be
+set using the option \code{"cmdstanr_draws_format"}, otherwise the defaults are
+the following.
+\itemize{
+\item For sampling and generated quantities the default is
+\code{\link[posterior:draws_array]{"draws_array"}}.
+\item For point estimates from optimization and approximate draws from
+variational inference the default is
+\code{\link[posterior:draws_array]{"draws_matrix"}}.
+}
+
+To use a different format it can be specified as the full name (e.g.
+\code{"draws_df"}) or omitting the \code{"draws_"} prefix (e.g. \code{"df"}).
+
+For models with a large number of parameters (20k+) we recommend using the
+\code{draws_list} format, which is the most efficient and RAM friendly when
+combining draws from multiple chains. If speed or memory is not a
+constraint we recommend selecting the format that most suits the coding
+style of the post processing phase.}
 }
 \value{
+Depends on the value of \code{format}. The defaults are:
 \itemize{
 \item For \link[=model-method-sample]{MCMC}, a 3-D
 \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
@@ -58,6 +84,9 @@ str(draws)
 
 # can easily convert to other formats (data frame, matrix, list)
 as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
+
+# or can specify 'format' argument to avoid manual conversion
+draws <- fit$draws(format = "df")
 
 # can select specific parameters
 fit$draws("alpha")

@@ -118,8 +118,28 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   default) then all variables are included.
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to
 #'   `FALSE`. Ignored except when used with [CmdStanMCMC] objects.
+#' @param format (string) The format of the returned draws or point estimates.
+#'   Must be a valid format from the \pkg{posterior} package. The default can be
+#'   set using the option `"cmdstanr_draws_format"`, otherwise the defaults are
+#'   the following.
+#'
+#'   * For sampling and generated quantities the default is
+#'   [`"draws_array"`][posterior::draws_array].
+#'   * For point estimates from optimization and approximate draws from
+#'   variational inference the default is
+#'   [`"draws_matrix"`][posterior::draws_array].
+#'
+#'   To use a different format it can be specified as the full name (e.g.
+#'   `"draws_df"`) or omitting the `"draws_"` prefix (e.g. `"df"`).
+#'
+#'   For models with a large number of parameters (20k+) we recommend using the
+#'   `draws_list` format, which is the most efficient and RAM friendly when
+#'   combining draws from multiple chains. If speed or memory is not a
+#'   constraint we recommend selecting the format that most suits the coding
+#'   style of the post processing phase.
 #'
 #' @return
+#' Depends on the value of `format`. The defaults are:
 #' * For [MCMC][model-method-sample], a 3-D
 #' [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable).
@@ -156,6 +176,9 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' # can easily convert to other formats (data frame, matrix, list)
 #' as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
 #'
+#' # or can specify 'format' argument to avoid manual conversion
+#' draws <- fit$draws(format = "df")
+#'
 #' # can select specific parameters
 #' fit$draws("alpha")
 #' fit$draws("beta")  # selects entire vector beta
@@ -166,7 +189,7 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
 #' }
 #'
-draws <- function(variables = NULL, inc_warmup = FALSE) {
+draws <- function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_matrix")) {
   # CmdStanMCMC and CmdStanGQ have separate implementations,
   # this is used for CmdStanVB and CmdStanMLE
   if (!length(self$output_files(include_failed = FALSE))) {
@@ -177,8 +200,9 @@ draws <- function(variables = NULL, inc_warmup = FALSE) {
             call. = FALSE)
   }
   if (is.null(private$draws_)) {
-    private$read_csv_()
+    private$read_csv_(format = format)
   }
+  private$draws_ <- maybe_convert_draws_format(private$draws_, format)
   posterior::subset_draws(private$draws_, variable = variables)
 }
 CmdStanFit$set("public", name = "draws", value = draws)
@@ -737,7 +761,7 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  [`$draws()`][fit-method-draws] |  Return posterior draws as a [`draws_array`][posterior::draws_array]. |
+#'  [`$draws()`][fit-method-draws] |  Return posterior draws using formats from the \pkg{posterior} package. |
 #'  [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] |  Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. |
 #'  [`$lp()`][fit-method-lp] |  Return the total log probability density (`target`). |
 #'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
@@ -803,7 +827,7 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     # override the CmdStanFit draws method
-    draws = function(variables = NULL, inc_warmup = FALSE) {
+    draws = function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
       if (inc_warmup && !private$metadata_$save_warmup) {
         stop("Warmup draws were requested from a fit object without them! ",
              "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
@@ -811,11 +835,15 @@ CmdStanMCMC <- R6::R6Class(
 
       to_read <- remaining_columns_to_read(
         requested = variables,
-        currently_read = dimnames(private$draws_)$variable,
+        currently_read = posterior::variables(private$draws_),
         all = private$metadata_$model_params
       )
+      private$draws_ <- maybe_convert_draws_format(private$draws_, format)
+      private$warmup_draws_ <- maybe_convert_draws_format(private$warmup_draws_, format)
+      private$sampler_diagnostics_ <- maybe_convert_draws_format(private$sampler_diagnostics_, format)
+      private$warmup_sampler_diagnostics_ <- maybe_convert_draws_format(private$warmup_sampler_diagnostics_, format)
       if (is.null(to_read) || any(nzchar(to_read))) {
-        private$read_csv_(variables = to_read, sampler_diagnostics = "")
+        private$read_csv_(variables = to_read, sampler_diagnostics = "", format = format)
       }
       if (is.null(variables)) {
         variables <- private$metadata_$model_params
@@ -828,9 +856,9 @@ CmdStanMCMC <- R6::R6Class(
         variables <- matching_res$matching
       }
       if (inc_warmup) {
-        posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration")[,,variables]
+        posterior::subset_draws(posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration"), variable = variables)
       } else {
-        private$draws_[,,variables]
+        posterior::subset_draws(private$draws_, variable = variables)
       }
     }
   ),
@@ -840,14 +868,15 @@ CmdStanMCMC <- R6::R6Class(
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     inv_metric_ = NULL,
-    read_csv_ = function(variables = NULL, sampler_diagnostics = NULL) {
+    read_csv_ = function(variables = NULL, sampler_diagnostics = NULL, format = getOption("cmdstanr_draws_format", "draws_array")) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
-        sampler_diagnostics = sampler_diagnostics
+        sampler_diagnostics = sampler_diagnostics,
+        format = format
       )
       private$inv_metric_ <- csv_contents$inv_metric
       private$metadata_ <- csv_contents$metadata
@@ -856,22 +885,23 @@ CmdStanMCMC <- R6::R6Class(
         if (is.null(private$draws_)) {
           private$draws_ <- csv_contents$post_warmup_draws
         } else {
-          missing_variables <- !(posterior::variables(csv_contents$post_warmup_draws) %in% posterior::variables(private$draws_))
+          missing_variables <- posterior::variables(csv_contents$post_warmup_draws)[!(posterior::variables(csv_contents$post_warmup_draws) %in% posterior::variables(private$draws_))]
           private$draws_ <- posterior::bind_draws(
             private$draws_,
-            csv_contents$post_warmup_draws[,,missing_variables],
+            posterior::subset_draws(csv_contents$post_warmup_draws, variable = missing_variables),
             along="variable"
           )
         }
       }
       if (!is.null(csv_contents$post_warmup_sampler_diagnostics)) {
+
         if (is.null(private$sampler_diagnostics_)) {
           private$sampler_diagnostics_ <- csv_contents$post_warmup_sampler_diagnostics
         } else {
-          missing_variables <- !(posterior::variables(csv_contents$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))
+          missing_variables <- posterior::variables(csv_contents$post_warmup_sampler_diagnostics)[!(posterior::variables(csv_contents$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))]
           private$sampler_diagnostics_ <- posterior::bind_draws(
             private$sampler_diagnostics_,
-            csv_contents$post_warmup_sampler_diagnostics[,,missing_variables],
+            posterior::subset_draws(csv_contents$post_warmup_sampler_diagnostics, variable = missing_variables),
             along="variable"
           )
         }
@@ -882,10 +912,10 @@ CmdStanMCMC <- R6::R6Class(
           if (is.null(private$warmup_draws_)) {
             private$warmup_draws_ <- csv_contents$warmup_draws
           } else {
-            missing_variables <- !(posterior::variables(csv_contents$warmup_draws) %in% posterior::variables(private$warmup_draws_))
+            missing_variables <- posterior::variables(csv_contents$warmup_draws)[!(posterior::variables(csv_contents$warmup_draws) %in% posterior::variables(private$warmup_draws_))]
             private$warmup_draws_ <- posterior::bind_draws(
               private$warmup_draws_,
-              csv_contents$warmup_draws[,,missing_variables],
+              posterior::subset_draws(csv_contents$warmup_draws, variable = missing_variables),
               along="variable"
             )
           }
@@ -894,10 +924,10 @@ CmdStanMCMC <- R6::R6Class(
           if (is.null(private$warmup_sampler_diagnostics_)) {
             private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
           } else {
-            missing_variables <- !(posterior::variables(csv_contents$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))
+            missing_variables <- posterior::variables(csv_contents$warmup_sampler_diagnostics)[!(posterior::variables(csv_contents$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))]
             private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
               private$warmup_sampler_diagnostics_,
-              csv_contents$warmup_sampler_diagnostics[,,missing_variables],
+              posterior::subset_draws(csv_contents$warmup_sampler_diagnostics, variable = missing_variables),
               along="variable"
             )
           }
@@ -970,9 +1000,12 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #'   chain of MCMC.
 #'
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to `FALSE`.
-#'
+#' @param format The draws format to return. See [draws][fit-method-draws] for
+#'   details.
+
 #' @return
-#' A 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
+#' Depends on `format`, but the default is a 3-D
+#' [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable). The variables for Stan's default MCMC algorithm are
 #' `"accept_stat__"`, `"stepsize__"`, `"treedepth__"`, `"n_leapfrog__"`,
 #' `"divergent__"`, `"energy__"`.
@@ -987,20 +1020,25 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #'
 #' library(posterior)
 #' as_draws_df(sampler_diagnostics)
+#'
+#' # or specify format to get a data frame instead of calling as_draws_df
+#' fit$sampler_diagnostics(format = "df")
 #' }
 #'
-sampler_diagnostics <- function(inc_warmup = FALSE) {
+sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
   if (is.null(private$sampler_diagnostics_) &&
       !length(self$output_files(include_failed = FALSE))) {
     stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.", call. = FALSE)
   }
   to_read <- remaining_columns_to_read(
     requested = NULL,
-    currently_read = dimnames(private$sampler_diagnostics_)$variable,
+    currently_read = posterior::variables(private$sampler_diagnostics_),
     all = private$metadata_$sampler_diagnostics
   )
+  private$warmup_sampler_diagnostics_ <- maybe_convert_draws_format(private$warmup_sampler_diagnostics_, format)
+  private$sampler_diagnostics_ <- maybe_convert_draws_format(private$sampler_diagnostics_, format)
   if (is.null(to_read) || any(nzchar(to_read))) {
-    private$read_csv_(variables = "", sampler_diagnostics = NULL)
+    private$read_csv_(variables = "", sampler_diagnostics = NULL, format = format)
   }
   if (inc_warmup) {
     if (!private$metadata_$save_warmup) {
@@ -1132,11 +1170,11 @@ CmdStanMLE <- R6::R6Class(
   public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function() {
+    read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Optimization failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files())
+      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -1234,11 +1272,11 @@ CmdStanVB <- R6::R6Class(
   public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function() {
+    read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Variational inference failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files())
+      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -1309,7 +1347,7 @@ CmdStanGQ <- R6::R6Class(
       super$num_procs()
     },
     # override CmdStanFit draws method
-    draws = function(variables = NULL, inc_warmup = FALSE) {
+    draws = function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
@@ -1322,8 +1360,9 @@ CmdStanGQ <- R6::R6Class(
         currently_read = dimnames(private$draws_)$variable,
         all = private$metadata_$model_params
       )
+      private$draws_ <- maybe_convert_draws_format(private$draws_, format)
       if (is.null(to_read) || any(nzchar(to_read))) {
-        private$read_csv_(variables = to_read)
+        private$read_csv_(variables = to_read, format = format)
       }
       if (is.null(variables)) {
         variables <- private$metadata_$model_params
@@ -1335,7 +1374,7 @@ CmdStanGQ <- R6::R6Class(
         }
         variables <- matching_res$matching
       }
-      private$draws_[,,variables]
+      posterior::subset_draws(private$draws_, variable = variables)
     },
     # override CmdStanFit output method
     output = function(id = NULL) {
@@ -1348,21 +1387,23 @@ CmdStanGQ <- R6::R6Class(
   ),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function(variables = NULL) {
+    read_csv_ = function(variables = NULL, format = getOption("cmdstanr_draws_format", "draws_array")) {
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
-        sampler_diagnostics = ""
+        sampler_diagnostics = "",
+        format = format
       )
       private$metadata_ <- csv_contents$metadata
       if (!is.null(csv_contents$generated_quantities)) {
+        missing_variables <- posterior::variables(csv_contents$generated_quantities)[!(posterior::variables(csv_contents$generated_quantities) %in% posterior::variables(private$draws_))]
         private$draws_ <-
           posterior::bind_draws(
             private$draws_,
-            csv_contents$generated_quantities,
+            posterior::subset_draws(csv_contents$generated_quantities, variable = missing_variables),
             along="variable"
           )
       }

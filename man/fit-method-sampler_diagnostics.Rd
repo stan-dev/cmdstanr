@@ -5,13 +5,20 @@
 \alias{sampler_diagnostics}
 \title{Extract sampler diagnostics after MCMC}
 \usage{
-sampler_diagnostics(inc_warmup = FALSE)
+sampler_diagnostics(
+  inc_warmup = FALSE,
+  format = getOption("cmdstanr_draws_format", "draws_array")
+)
 }
 \arguments{
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to \code{FALSE}.}
+
+\item{format}{The draws format to return. See \link[=fit-method-draws]{draws} for
+details.}
 }
 \value{
-A 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
+Depends on \code{format}, but the default is a 3-D
+\code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
 variable). The variables for Stan's default MCMC algorithm are
 \code{"accept_stat__"}, \code{"stepsize__"}, \code{"treedepth__"}, \code{"n_leapfrog__"},
 \code{"divergent__"}, \code{"energy__"}.
@@ -28,6 +35,9 @@ str(sampler_diagnostics)
 
 library(posterior)
 as_draws_df(sampler_diagnostics)
+
+# or specify format to get a data frame instead of calling as_draws_df
+fit$sampler_diagnostics(format = "df")
 }
 
 }
