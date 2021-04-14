@@ -297,3 +297,14 @@ test_that("loo errors if it can't find log lik variables", {
   )
 })
 
+test_that("draws() works for different formats", {
+  skip_on_cran()
+  a <- fit_mcmc$draws()
+  expect_true(posterior::is_draws_array(a))
+  a <- fit_mcmc$draws(format = "list")
+  expect_true(posterior::is_draws_list(a))
+  a <- fit_mcmc$draws(format = "array")
+  expect_true(posterior::is_draws_array(a))
+  a <- fit_mcmc$draws(format = "df")
+  expect_true(posterior::is_draws_df(a))
+})

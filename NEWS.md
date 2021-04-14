@@ -28,8 +28,13 @@ Stan programs requires CmdStan >= 2.26. (#434)
 
 * Suppressing compilation messages when not in interactive mode. (#462, @wlandau)
 
-* Add a new `error_on_NA` argument to `cmdstan_version()` to optionally return `NULL`
-if the CmdStan path is not found (#467, @wlandau).
+* New `error_on_NA` argument for `cmdstan_version()` to optionally return `NULL`
+(instead of erroring) if the CmdStan path is not found (#467, @wlandau).
+
+* New `format` argument for `$draws()`, `$sampler_diagnostics()`,
+`read_cmdstan_csv()`, and `as_cmdstan_fit`(). This controls the format of the
+draws returned or stored in the object. Changing the format can improve speed
+and memory usage for large models. (#482)
 
 # cmdstanr 0.3.0
 

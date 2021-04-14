@@ -341,3 +341,39 @@ variable_dims <- function(variable_names = NULL) {
   dims
 }
 
+as_draws_format_fun <- function(draws_format) {
+  if (draws_format %in% c("draws_array", "array")) {
+    f <- posterior::as_draws_array
+  } else if (draws_format %in% c("draws_df", "df", "data.frame")) {
+    f <- posterior::as_draws_df
+  } else if (draws_format %in% c("draws_matrix", "matrix")) {
+    f <- posterior::as_draws_matrix
+  } else if (draws_format %in% c("draws_list", "list")) {
+    f <- posterior::as_draws_list
+  }
+  f
+}
+
+maybe_convert_draws_format <- function(draws, draws_format) {
+  if (!is.null(draws)) {  
+    if (draws_format %in% c("draws_array", "array")) {
+      if (!posterior::is_draws_array(draws)) {
+        draws <- posterior::as_draws_array(draws)
+      }
+    } else if (draws_format %in% c("draws_df", "df", "data.frame")) {
+      if (!posterior::is_draws_df(draws)) {
+        draws <- posterior::as_draws_df(draws)
+      }
+    } else if (draws_format %in% c("draws_matrix", "matrix")) {
+      if (!posterior::is_draws_matrix(draws)) {
+        draws <- posterior::as_draws_matrix(draws)
+      }
+    } else if (draws_format %in% c("draws_list", "list")) {
+      if (!posterior::is_draws_list(draws)) {
+        draws <- posterior::as_draws_list(draws)
+      }
+    }
+  }
+  draws
+}
+

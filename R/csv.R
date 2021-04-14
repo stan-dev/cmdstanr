@@ -1,10 +1,9 @@
 #' Read CmdStan CSV files into R
 #'
 #' @description `read_cmdstan_csv()` is used internally by CmdStanR to read
-#'   CmdStan's output CSV files into \R. It can
-#'   also be used by CmdStan users as a more flexible and efficient alternative
-#'   to `rstan::read_stan_csv()`. See the **Value** section for details on the
-#'   structure of the returned list.
+#'   CmdStan's output CSV files into \R. It can also be used by CmdStan users as
+#'   a more flexible and efficient alternative to `rstan::read_stan_csv()`. See
+#'   the **Value** section for details on the structure of the returned list.
 #'
 #'   It is also possible to create CmdStanR's fitted model objects directly from
 #'   CmdStan CSV files using the `as_cmdstan_fit()` function.
@@ -22,6 +21,10 @@
 #' @param sampler_diagnostics Works the same way as `variables` but for sampler
 #'   diagnostic variables (e.g., `"treedepth__"`, `"accept_stat__"`, etc.).
 #'   Ignored if the model was not fit using MCMC.
+#' @param format The format for storing the draws or point estimates. The
+#'   default depends on the method used to fit the model. See
+#'   [draws][fit-method-draws] for details, in particular the note about speed
+#'   and memory for models with many parameters.
 #'
 #' @return
 #'
@@ -49,14 +52,16 @@
 #' or their diagonals, depending on the type of metric used.
 #' * `step_size`: A list (one element per chain) of the step sizes used.
 #' * `warmup_draws`:  If `save_warmup` was `TRUE` when fitting the model then a
-#' [`draws_array`][posterior::draws_array] of warmup draws.
-#' * `post_warmup_draws`: A [`draws_array`][posterior::draws_array] of
-#' post-warmup draws.
+#' [`draws_array`][posterior::draws_array] (or different format if `format` is
+#' specified) of warmup draws.
+#' * `post_warmup_draws`: A [`draws_array`][posterior::draws_array] (or
+#' different format if `format` is specified) of post-warmup draws.
 #' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` when fitting the
-#' model then a [`draws_array`][posterior::draws_array] of warmup draws of the
-#' sampler diagnostic variables.
-#' * `post_warmup_sampler_diagnostics`: A [`draws_array`][posterior::draws_array]
-#' of post-warmup draws of the sampler diagnostic variables.
+#' model then a [`draws_array`][posterior::draws_array] (or different format if
+#' `format` is specified) of warmup draws of the sampler diagnostic variables.
+#' * `post_warmup_sampler_diagnostics`: A
+#' [`draws_array`][posterior::draws_array] (or different format if `format` is
+#' specified) of post-warmup draws of the sampler diagnostic variables.
 #'
 #' For [optimization][model-method-optimize] the returned list also includes the
 #' following components:
@@ -66,8 +71,9 @@
 #' For [variational inference][model-method-variational] the returned list also
 #' includes the following components:
 #'
-#' * `draws`: A [`draws_matrix`][posterior::draws_matrix] of draws from the
-#' approximate posterior distribution.
+#' * `draws`: A [`draws_matrix`][posterior::draws_matrix] (or different format
+#' if `format` is specified) of draws from the approximate posterior
+#' distribution.
 #'
 #' For [standalone generated quantities][model-method-generate-quantities] the
 #' returned list also includes the following components:
@@ -117,7 +123,13 @@
 #'
 read_cmdstan_csv <- function(files,
                              variables = NULL,
-                             sampler_diagnostics = NULL) {
+                             sampler_diagnostics = NULL,
+                             format = getOption("cmdstanr_draws_format", NULL)) {
+  valid_draws_formats <- c("draws_array", "array", "draws_matrix", "matrix",
+                           "draws_list", "list", "draws_df", "df", "data.frame")
+  if (!is.null(format) && !(format %in% valid_draws_formats)) {
+    stop("The supplied draws format is not valid.", call. = FALSE)
+  }
   checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
   warmup_draws <- list()
@@ -171,7 +183,7 @@ read_cmdstan_csv <- function(files,
   uniq_seed <- unique(metadata$seed)
   if (length(uniq_seed) == 1) {
     metadata$seed <- uniq_seed
-  }  
+  }
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$model_params
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
@@ -224,14 +236,14 @@ read_cmdstan_csv <- function(files,
         )
       )
       if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
-        warmup_sampler_diagnostics[[warmup_sd_id]] <- 
+        warmup_sampler_diagnostics[[warmup_sd_id]] <-
           post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws,,drop = FALSE]
         if (num_post_warmup_draws > 0) {
-          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- 
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <-
             post_warmup_sampler_diagnostics[[post_warmup_sd_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
         } else {
           post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- NULL
-        }          
+        }
       }
     }
     if (length(variables) > 0) {
@@ -245,7 +257,7 @@ read_cmdstan_csv <- function(files,
         )
       )
       if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
-        warmup_draws[[warmup_draws_list_id]] <- 
+        warmup_draws[[warmup_draws_list_id]] <-
           draws[[draws_list_id]][1:num_warmup_draws,,drop = FALSE]
         if (num_post_warmup_draws > 0) {
           draws[[draws_list_id]] <- draws[[draws_list_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
@@ -271,8 +283,12 @@ read_cmdstan_csv <- function(files,
   metadata$stan_variables <- names(model_param_dims)
 
   if (metadata$method == "sample") {
+    if (is.null(format)) {
+      format <- "draws_array"
+    }
+    as_draws_format <- as_draws_format_fun(format)
     if (length(warmup_draws) > 0) {
-      warmup_draws <- posterior::as_draws_array(warmup_draws)
+      warmup_draws <- do.call(as_draws_format, list(warmup_draws))
       posterior::variables(warmup_draws) <- repaired_variables
       if (posterior::niterations(warmup_draws) == 0) {
         warmup_draws <- NULL
@@ -281,7 +297,7 @@ read_cmdstan_csv <- function(files,
       warmup_draws <- NULL
     }
     if (length(draws) > 0) {
-      draws <-  posterior::as_draws_array(draws)
+      draws <-  do.call(as_draws_format, list(draws))
       posterior::variables(draws) <- repaired_variables
       if (posterior::niterations(draws) == 0) {
         draws <- NULL
@@ -290,7 +306,7 @@ read_cmdstan_csv <- function(files,
       draws <- NULL
     }
     if (length(warmup_sampler_diagnostics) > 0) {
-      warmup_sampler_diagnostics <- posterior::as_draws_array(warmup_sampler_diagnostics)
+      warmup_sampler_diagnostics <- do.call(as_draws_format, list(warmup_sampler_diagnostics))
       if (posterior::niterations(warmup_sampler_diagnostics) == 0) {
         warmup_sampler_diagnostics <- NULL
       }
@@ -298,7 +314,7 @@ read_cmdstan_csv <- function(files,
       warmup_sampler_diagnostics <- NULL
     }
     if (length(post_warmup_sampler_diagnostics) > 0) {
-      post_warmup_sampler_diagnostics <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
+      post_warmup_sampler_diagnostics <- do.call(as_draws_format, list(post_warmup_sampler_diagnostics))
       if (posterior::niterations(post_warmup_sampler_diagnostics) == 0) {
         post_warmup_sampler_diagnostics <- NULL
       }
@@ -316,16 +332,18 @@ read_cmdstan_csv <- function(files,
       post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics
     )
   } else if (metadata$method == "variational") {
-    variational_draws <- posterior::as_draws_matrix(
-      draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop=FALSE]
-    )
+    if (is.null(format)) {
+      format <- "draws_matrix"
+    }
+    as_draws_format <- as_draws_format_fun(format)
+    variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop=FALSE]))
     if (!is.null(variational_draws)) {
       if ("log_p__" %in% posterior::variables(variational_draws)) {
         variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
       }
       if ("log_g__" %in% posterior::variables(variational_draws)) {
         variational_draws <- posterior::rename_variables(variational_draws, lp_approx__ = "log_g__")
-      }    
+      }
       posterior::variables(variational_draws) <- repaired_variables
     }
     list(
@@ -333,7 +351,12 @@ read_cmdstan_csv <- function(files,
       draws = variational_draws
     )
   } else if (metadata$method == "optimize") {
-    point_estimates <- posterior::as_draws_matrix(draws[[1]][1,, drop=FALSE])[, variables]
+    if (is.null(format)) {
+      format <- "draws_matrix"
+    }
+    as_draws_format <- as_draws_format_fun(format)
+    point_estimates <- do.call(as_draws_format, list(draws[[1]][1,, drop=FALSE]))
+    point_estimates <- posterior::subset_draws(point_estimates, variable = variables)
     if (!is.null(point_estimates)) {
       posterior::variables(point_estimates) <- repaired_variables
     }
@@ -342,7 +365,11 @@ read_cmdstan_csv <- function(files,
       point_estimates = point_estimates
     )
   } else if (metadata$method == "generate_quantities") {
-    draws <- posterior::as_draws_array(draws)
+    if (is.null(format)) {
+      format <- "draws_array"
+    }
+    as_draws_format <- as_draws_format_fun(format)
+    draws <- do.call(as_draws_format, list(draws))
     if (!is.null(draws)) {
       posterior::variables(draws) <- repaired_variables
     }
@@ -374,8 +401,8 @@ read_sample_csv <- function(files,
 #'   be performed after reading in the files? The default is `TRUE` but set to
 #'   `FALSE` to avoid checking for problems with divergences and treedepth.
 #'
-as_cmdstan_fit <- function(files, check_diagnostics = TRUE) {
-  csv_contents <- read_cmdstan_csv(files)
+as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("cmdstanr_draws_format", NULL)) {
+  csv_contents <- read_cmdstan_csv(files, format = format)
   switch(
     csv_contents$metadata$method,
     "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
@@ -656,7 +683,7 @@ read_csv_metadata <- function(csv_file) {
 check_csv_metadata_matches <- function(csv_metadata) {
   model_name <- sapply(csv_metadata, function(x) x$model_name)
   if (!all(model_name == model_name[1])) {
-    stop("Supplied CSV files were not generated with the same model!", call. = FALSE)    
+    stop("Supplied CSV files were not generated with the same model!", call. = FALSE)
   }
   method <- sapply(csv_metadata, function(x) x$method)
   if (!all(method == method[1])) {

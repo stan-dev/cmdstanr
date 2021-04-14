@@ -566,4 +566,191 @@ test_that("read_cmdstan_csv reads seed correctly", {
   expect_equal(smp$metadata$seed, 123)
 })
 
+test_that("read_cmdstan_csv works with sampling and draws_df format", {
+  bern_samp_array <- read_cmdstan_csv(fit_bernoulli_thin_1$output_files())
 
+  bern_samp_df <- read_cmdstan_csv(fit_bernoulli_thin_1$output_files(), format = "df")
+  expect_equal(posterior::niterations(bern_samp_array$post_warmup_draws),
+               posterior::niterations(bern_samp_df$post_warmup_draws))
+  expect_equal(posterior::nchains(bern_samp_array$post_warmup_draws),
+               posterior::nchains(bern_samp_df$post_warmup_draws))
+  expect_equal(posterior::nvariables(bern_samp_array$post_warmup_draws),
+               posterior::nvariables(bern_samp_df$post_warmup_draws))
+  expect_equal(posterior::variables(bern_samp_array$post_warmup_draws),
+               posterior::variables(bern_samp_df$post_warmup_draws))
+
+  theta_array_chain_1 <- posterior::subset_draws(bern_samp_array$post_warmup_draws, variable = "theta", chain = 1)
+  theta_df_chain_1 <- posterior::subset_draws(bern_samp_df$post_warmup_draws, variable = "theta", chain = 1)
+  theta_array_chain_2 <- posterior::subset_draws(bern_samp_array$post_warmup_draws, variable = "theta", chain = 2)
+  theta_df_chain_2 <- posterior::subset_draws(bern_samp_df$post_warmup_draws, variable = "theta", chain = 2)
+
+  expect_true(all(theta_array_chain_1 == theta_df_chain_1$theta))
+  expect_true(all(theta_array_chain_2 == theta_df_chain_2$theta))
+})
+
+test_that("read_cmdstan_csv works with sampling and draws_list format", {
+  bern_samp_array <- read_cmdstan_csv(fit_bernoulli_thin_1$output_files())
+  bern_samp_list <- read_cmdstan_csv(fit_bernoulli_thin_1$output_files(), format = "list")
+
+  expect_equal(posterior::niterations(bern_samp_array$post_warmup_draws),
+               posterior::niterations(bern_samp_list$post_warmup_draws))
+  expect_equal(posterior::nchains(bern_samp_array$post_warmup_draws),
+               posterior::nchains(bern_samp_list$post_warmup_draws))
+  expect_equal(posterior::nvariables(bern_samp_array$post_warmup_draws),
+               posterior::nvariables(bern_samp_list$post_warmup_draws))
+  expect_equal(posterior::variables(bern_samp_array$post_warmup_draws),
+               posterior::variables(bern_samp_list$post_warmup_draws))
+
+  theta_array_chain_1 <- posterior::subset_draws(bern_samp_array$post_warmup_draws, variable = "theta", chain = 1)
+  theta_list_chain_1 <- posterior::subset_draws(bern_samp_list$post_warmup_draws, variable = "theta", chain = 1)
+  theta_array_chain_2 <- posterior::subset_draws(bern_samp_array$post_warmup_draws, variable = "theta", chain = 2)
+  theta_list_chain_2 <- posterior::subset_draws(bern_samp_list$post_warmup_draws, variable = "theta", chain = 2)
+
+  expect_true(all(theta_array_chain_1 == theta_list_chain_1[[1]]$theta))
+  expect_true(all(theta_array_chain_2 == theta_list_chain_2[[1]]$theta))
+})
+
+test_that("read_cmdstan_csv works with optimization and draws_array format", {
+  bern_opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
+  bern_opt_array <- read_cmdstan_csv(fit_bernoulli_optimize$output_files(), format = "array")
+
+  expect_equal(posterior::niterations(bern_opt$point_estimates),
+               posterior::niterations(bern_opt_array$point_estimates))
+  expect_equal(posterior::nvariables(bern_opt$point_estimates),
+               posterior::nvariables(bern_opt_array$point_estimates))
+  expect_equal(posterior::variables(bern_opt$point_estimates),
+               posterior::variables(bern_opt_array$point_estimates))
+
+  expect_equal(as.numeric(posterior::subset_draws(bern_opt$point_estimates, variable = "theta")),
+               as.numeric(posterior::subset_draws(bern_opt_array$point_estimates, variable = "theta")))
+})
+
+test_that("read_cmdstan_csv works with optimization and draws_df format", {
+  bern_opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
+
+  bern_opt_df <- read_cmdstan_csv(fit_bernoulli_optimize$output_files(), format = "df")
+
+  expect_equal(posterior::niterations(bern_opt$point_estimates),
+               posterior::niterations(bern_opt_df$point_estimates))
+  expect_equal(posterior::nchains(bern_opt$point_estimates),
+               posterior::nchains(bern_opt_df$point_estimates))
+  expect_equal(posterior::nvariables(bern_opt$point_estimates),
+               posterior::nvariables(bern_opt_df$point_estimates))
+  expect_equal(posterior::variables(bern_opt$point_estimates),
+               posterior::variables(bern_opt_df$point_estimates))
+
+  expect_equal(as.numeric(posterior::subset_draws(bern_opt$point_estimates, variable = "theta")),
+               as.numeric(posterior::subset_draws(bern_opt_df$point_estimates, variable = "theta")$theta))
+})
+
+test_that("read_cmdstan_csv works with optimization and draws_list format", {
+  bern_opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
+  bern_opt_list <- read_cmdstan_csv(fit_bernoulli_optimize$output_files(), format = "list")
+
+  expect_equal(posterior::niterations(bern_opt$point_estimates),
+               posterior::niterations(bern_opt_list$point_estimates))
+  expect_equal(posterior::nchains(bern_opt$point_estimates),
+               posterior::nchains(bern_opt_list$point_estimates))
+  expect_equal(posterior::nvariables(bern_opt$point_estimates),
+               posterior::nvariables(bern_opt_list$point_estimates))
+  expect_equal(posterior::variables(bern_opt$point_estimates),
+               posterior::variables(bern_opt_list$point_estimates))
+
+  expect_equal(as.numeric(posterior::subset_draws(bern_opt$point_estimates, variable = "theta")),
+               as.numeric(posterior::subset_draws(bern_opt_list$point_estimates, variable = "theta")[[1]]$theta))
+
+})
+
+test_that("read_cmdstan_csv works with VI and draws_array format", {
+    bern_vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
+    bern_vi_array <- read_cmdstan_csv(fit_bernoulli_variational$output_files(), format = "array")
+
+    expect_equal(posterior::niterations(bern_vi$draws),
+                 posterior::niterations(bern_vi_array$draws))
+    expect_equal(posterior::nvariables(bern_vi$draws),
+                 posterior::nvariables(bern_vi_array$draws))
+    expect_equal(posterior::variables(bern_vi$draws),
+                 posterior::variables(bern_vi_array$draws))
+
+    expect_equal(as.numeric(posterior::subset_draws(bern_vi$draws, variable = "theta")),
+                 as.numeric(posterior::subset_draws(bern_vi_array$draws, variable = "theta")))
+  })
+
+test_that("read_cmdstan_csv works with VI and draws_df format", {
+  bern_vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
+  bern_vi_df <- read_cmdstan_csv(fit_bernoulli_variational$output_files(), format = "df")
+
+  expect_equal(posterior::niterations(bern_vi$draws),
+               posterior::niterations(bern_vi_df$draws))
+  expect_equal(posterior::nchains(bern_vi$draws),
+               posterior::nchains(bern_vi_df$draws))
+  expect_equal(posterior::nvariables(bern_vi$draws),
+               posterior::nvariables(bern_vi_df$draws))
+  expect_equal(posterior::variables(bern_vi$draws),
+               posterior::variables(bern_vi_df$draws))
+
+  expect_equal(as.numeric(posterior::subset_draws(bern_vi$draws, variable = "theta")),
+               as.numeric(posterior::subset_draws(bern_vi_df$draws, variable = "theta")$theta))
+})
+
+test_that("read_cmdstan_csv works with VI and draws_list format", {
+  bern_vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
+  bern_vi_list <- read_cmdstan_csv(fit_bernoulli_variational$output_files(), format = "list")
+
+  expect_equal(posterior::niterations(bern_vi$draws),
+               posterior::niterations(bern_vi_list$draws))
+  expect_equal(posterior::nchains(bern_vi$draws),
+               posterior::nchains(bern_vi_list$draws))
+  expect_equal(posterior::nvariables(bern_vi$draws),
+               posterior::nvariables(bern_vi_list$draws))
+  expect_equal(posterior::variables(bern_vi$draws),
+               posterior::variables(bern_vi_list$draws))
+
+  expect_equal(as.numeric(posterior::subset_draws(bern_vi$draws, variable = "theta")),
+               as.numeric(posterior::subset_draws(bern_vi_list$draws, variable = "theta")[[1]]$theta))
+
+})
+
+test_that("read_cmdstan_csv works with GQ and draws_df format", {
+  bern_gq <- read_cmdstan_csv(fit_gq$output_files())
+  bern_gq_df <- read_cmdstan_csv(fit_gq$output_files(), format = "df")
+
+  expect_equal(posterior::niterations(bern_gq$generated_quantities),
+               posterior::niterations(bern_gq_df$generated_quantities))
+  expect_equal(posterior::nchains(bern_gq$generated_quantities),
+               posterior::nchains(bern_gq_df$generated_quantities))
+  expect_equal(posterior::nvariables(bern_gq$generated_quantities),
+               posterior::nvariables(bern_gq_df$generated_quantities))
+  expect_equal(posterior::variables(bern_gq$generated_quantities),
+               posterior::variables(bern_gq_df$generated_quantities))
+
+  sum_y_array_chain_1 <- posterior::subset_draws(bern_gq$generated_quantities, variable = "sum_y", chain = 1)
+  sum_y_df_chain_1 <- posterior::subset_draws(bern_gq_df$generated_quantities, variable = "sum_y", chain = 1)
+  sum_y_array_chain_2 <- posterior::subset_draws(bern_gq$generated_quantities, variable = "sum_y", chain = 2)
+  sum_y_df_chain_2 <- posterior::subset_draws(bern_gq_df$generated_quantities, variable = "sum_y", chain = 2)
+
+  expect_true(all(sum_y_array_chain_1 == sum_y_df_chain_1$sum_y))
+  expect_true(all(sum_y_array_chain_2 == sum_y_df_chain_2$sum_y))
+})
+
+test_that("read_cmdstan_csv works with GQ and draws_list format", {
+  bern_gq <- read_cmdstan_csv(fit_gq$output_files())
+  bern_gq_list <- read_cmdstan_csv(fit_gq$output_files(), format = "list")
+
+  expect_equal(posterior::niterations(bern_gq$generated_quantities),
+               posterior::niterations(bern_gq_list$generated_quantities))
+  expect_equal(posterior::nchains(bern_gq$generated_quantities),
+               posterior::nchains(bern_gq_list$generated_quantities))
+  expect_equal(posterior::nvariables(bern_gq$generated_quantities),
+               posterior::nvariables(bern_gq_list$generated_quantities))
+  expect_equal(posterior::variables(bern_gq$generated_quantities),
+               posterior::variables(bern_gq_list$generated_quantities))
+
+  sum_y_array_chain_1 <- posterior::subset_draws(bern_gq$generated_quantities, variable = "sum_y", chain = 1)
+  sum_y_list_chain_1 <- posterior::subset_draws(bern_gq_list$generated_quantities, variable = "sum_y", chain = 1)
+  sum_y_array_chain_2 <- posterior::subset_draws(bern_gq$generated_quantities, variable = "sum_y", chain = 2)
+  sum_y_list_chain_2 <- posterior::subset_draws(bern_gq_list$generated_quantities, variable = "sum_y", chain = 2)
+
+  expect_true(all(sum_y_array_chain_1 == sum_y_list_chain_1[[1]]$sum_y))
+  expect_true(all(sum_y_array_chain_2 == sum_y_list_chain_2[[1]]$sum_y))
+})

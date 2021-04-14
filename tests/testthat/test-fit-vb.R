@@ -105,3 +105,16 @@ test_that("time is reported after vb", {
   )
 })
 
+
+
+test_that("draws() works for different formats", {
+  skip_on_cran()
+  a <- fit_vb$draws()
+  expect_true(posterior::is_draws_matrix(a))
+  a <- fit_vb$draws(format = "list")
+  expect_true(posterior::is_draws_list(a))
+  a <- fit_vb$draws(format = "array")
+  expect_true(posterior::is_draws_array(a))
+  a <- fit_vb$draws(format = "df")
+  expect_true(posterior::is_draws_df(a))
+})
