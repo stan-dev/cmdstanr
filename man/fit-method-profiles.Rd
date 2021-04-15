@@ -20,10 +20,11 @@ Support for profiling Stan programs is available with CmdStan >= 2.26 and
 requires adding profiling statements to the Stan program.
 }
 \examples{
+
 \dontrun{
 # first fit a model using MCMC
 mcmc_program <- write_stan_file(
-  "data {
+  'data {
     int<lower=0> N;
     int<lower=0,upper=1> y[N];
   }
@@ -41,7 +42,7 @@ mcmc_program <- write_stan_file(
       y_rep = bernoulli_rng(rep_vector(theta, N));
     }
   }
-"
+'
 )
 mod_mcmc <- cmdstan_model(mcmc_program)
 

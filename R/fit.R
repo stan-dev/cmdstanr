@@ -699,11 +699,13 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'   were created.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#'
 #' @examples
+#'
 #' \dontrun{
 #' # first fit a model using MCMC
 #' mcmc_program <- write_stan_file(
-#'   "data {
+#'   'data {
 #'     int<lower=0> N;
 #'     int<lower=0,upper=1> y[N];
 #'   }
@@ -721,7 +723,7 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'       y_rep = bernoulli_rng(rep_vector(theta, N));
 #'     }
 #'   }
-#' "
+#' '
 #' )
 #' mod_mcmc <- cmdstan_model(mcmc_program)
 #'
