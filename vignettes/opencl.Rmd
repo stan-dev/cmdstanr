@@ -75,7 +75,7 @@ Some fake data will be useful to run this model:
 library(cmdstanr)
 
 # Generate some fake data
-n <- 200000
+n <- 250000
 k <- 20
 X <- matrix(rnorm(n * k), ncol = k)
 y <- rbinom(n, size = 1, prob = plogis(3 * X[,1] - 2 * X[,2] + 1))
