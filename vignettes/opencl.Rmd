@@ -30,7 +30,8 @@ speedup. The biggest speedups are expected when using the specialized GLM
 functions.
 
 In order to establish the bottlenecks in your model we recommend using
-[profiling](../profiling.Rmd), which was introduced in Stan version 2.26.0. 
+[profiling](https://mc-stan.org/cmdstanr/articles/profiling.html), 
+which was introduced in Stan version 2.26.0. 
 
 ## OpenCL runtime
 

@@ -145,7 +145,7 @@
 <p>This vignette demonstrates how to use the OpenCL capabilities of CmdStan with CmdStanR. The functionality described in this vignette requires CmdStan 2.26.1 or newer.</p>
 <p>As of version 2.26.1, users can expect speedups with OpenCL when using vectorized probability distribution functions (functions with the <code>_lpdf</code> or <code>_lpmf</code> suffix) and when the input variables contain at least 20,000 elements.</p>
 <p>The actual speedup for a model will depend on the particular <code>lpdf/lpmf</code> functions used and whether the <code>lpdf/lpmf</code> functions are the bottlenecks of the model. The more computationally complex the function is, the larger the expected speedup. The biggest speedups are expected when using the specialized GLM functions.</p>
-<p>In order to establish the bottlenecks in your model we recommend using <a href="../profiling.Rmd">profiling</a>, which was introduced in Stan version 2.26.0.</p>
+<p>In order to establish the bottlenecks in your model we recommend using <a href="https://mc-stan.org/cmdstanr/articles/profiling.html">profiling</a>, which was introduced in Stan version 2.26.0.</p>
 </div>
 <div id="opencl-runtime" class="section level2">
 <h2 class="hasAnchor">
