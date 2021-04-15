@@ -81,7 +81,7 @@ from the CmdStan run(s). A return code of 0 indicates a successful run." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -89,7 +89,7 @@ from the CmdStan run(s). A return code of 0 indicates a successful run." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -142,19 +142,19 @@ from the CmdStan run(s). A return code of 0 indicates a successful run." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -195,8 +195,8 @@ CmdStan runs (number of chains for MCMC and one otherwise).</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='co'># example with return codes all zero</span>
-<span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"schools"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"sample"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='output co'>#&gt; <span class='message'>Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</span></div><div class='output co'>#&gt; <span class='message'>Chain 1 Exception: normal_lpdf: Scale parameter is 0, but must be &gt; 0! (in '/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/model-2ed21886c09b.stan', line 14, column 2 to column 41)</span></div><div class='output co'>#&gt; <span class='message'>Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</span></div><div class='output co'>#&gt; <span class='message'>Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.</span></div><div class='output co'>#&gt; <span class='message'>Chain 1 </span></div><div class='output co'>#&gt; <span class='message'></span>
-#&gt; <span class='message'>Warning: 114 of 4000 (3.0%) transitions ended with a divergence.</span>
+<span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"schools"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"sample"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Warning: 219 of 4000 (5.0%) transitions ended with a divergence.</span>
 #&gt; <span class='message'>This may indicate insufficient exploration of the posterior distribution.</span>
 #&gt; <span class='message'>Possible remedies include: </span>
 #&gt; <span class='message'>  * Increasing adapt_delta closer to 1 (default is 0.8) </span>

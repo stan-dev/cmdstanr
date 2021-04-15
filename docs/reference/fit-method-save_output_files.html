@@ -87,7 +87,7 @@ the current file paths without moving any files." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -95,7 +95,7 @@ the current file paths without moving any files." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -148,19 +148,19 @@ the current file paths without moving any files." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -202,9 +202,13 @@ the current file paths without moving any files.</p>
   <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )
 
+<span class='fu'>save_profile_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"."</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+
 <span class='fu'>save_data_file</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"."</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 
 <span class='fu'>output_files</span>(<span class='kw'>include_failed</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
+
+<span class='fu'>profile_files</span>(<span class='kw'>include_failed</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
 <span class='fu'>latent_dynamics_files</span>(<span class='kw'>include_failed</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
@@ -261,6 +265,9 @@ the form <code>basename-timestamp-id-random</code>, where</p><ul>
 <p>For <code>$save_latent_dynamics_files()</code> everything is the same as for
 <code>$save_output_files()</code> except <code>"-diagnostic-"</code> is included in the new
 file name after <code>basename</code>.</p>
+<p>For <code>$save_profile_files()</code> everything is the same as for
+<code>$save_output_files()</code> except <code>"-profile-"</code> is included in the new
+file name after <code>basename</code>.</p>
 <p>For <code>$save_data_file()</code> no <code>id</code> is included in the file name because even
 with multiple MCMC chains the data file is the same.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
@@ -269,25 +276,25 @@ with multiple MCMC chains the data file is the same.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>()</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>output_files</span>()</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171339-1-578cb5.csv"
-#&gt; [2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171339-2-578cb5.csv"
-#&gt; [3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171339-3-578cb5.csv"
-#&gt; [4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171339-4-578cb5.csv"</div><div class='input'><span class='no'>fit</span>$<span class='fu'>data_file</span>()</div><div class='output co'>#&gt; [1] "/private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpOUu4d5/temp_libpath1f1e474979aa/cmdstanr/logistic.data.json"</div><div class='input'>
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>()</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>output_files</span>()</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151126-1-228c8b.csv"
+#&gt; [2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151126-2-228c8b.csv"
+#&gt; [3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151126-3-228c8b.csv"
+#&gt; [4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151126-4-228c8b.csv"</div><div class='input'><span class='no'>fit</span>$<span class='fu'>data_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/Documents/Stan/cmdstanr/inst/logistic.data.json"</div><div class='input'>
 <span class='co'># just using tempdir for the example</span>
 <span class='no'>my_dir</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>()
 <span class='no'>fit</span>$<span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='no'>my_dir</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='st'>"banana"</span>)</div><div class='output co'>#&gt; <span class='message'>Moved 4 files and set internal paths to new locations:</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/banana-202012171339-1-518bfc.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/banana-202012171339-2-518bfc.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/banana-202012171339-3-518bfc.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/banana-202012171339-4-518bfc.csv</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='no'>my_dir</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='st'>"tomato"</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='message'>Moved 4 files and set internal paths to new locations:</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/tomato-1-2c2672.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/tomato-2-2c2672.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/tomato-3-2c2672.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/tomato-4-2c2672.csv</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='no'>my_dir</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='st'>"lettuce"</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='message'>Moved 4 files and set internal paths to new locations:</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/lettuce-1.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/lettuce-2.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/lettuce-3.csv</span>
-#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/lettuce-4.csv</span></div><div class='input'># }
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/banana-202104151126-1-2c9f5d.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/banana-202104151126-2-2c9f5d.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/banana-202104151126-3-2c9f5d.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/banana-202104151126-4-2c9f5d.csv</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='no'>my_dir</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='st'>"tomato"</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='message'>Moved 4 files and set internal paths to new locations:</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/tomato-1-41668b.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/tomato-2-41668b.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/tomato-3-41668b.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/tomato-4-41668b.csv</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>save_output_files</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='no'>my_dir</span>, <span class='kw'>basename</span> <span class='kw'>=</span> <span class='st'>"lettuce"</span>, <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>random</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='message'>Moved 4 files and set internal paths to new locations:</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/lettuce-1.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/lettuce-2.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/lettuce-3.csv</span>
+#&gt; <span class='message'>- /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/lettuce-4.csv</span></div><div class='input'># }
 
 </div></pre>
   </div>

@@ -85,7 +85,7 @@ the console output." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -93,7 +93,7 @@ the console output." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -146,19 +146,19 @@ the console output." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -234,19 +234,20 @@ MCMC.</p></td>
 #&gt;         stepsize_jitter = 0 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpOUu4d5/temp_libpath1f1e474979aa/cmdstanr/logistic.data.json
+#&gt;   file = /Users/jgabry/Documents/Stan/cmdstanr/inst/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
-#&gt;   seed = 984374382
+#&gt;   seed = 1784795992
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171338-1-74a0f0.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151126-1-7ad45e.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt;   sig_figs = -1 (Default)
+#&gt;   profile_file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-profile-202104151126-1-6a6f7b.csv
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 2.8e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.28 seconds.
+#&gt; Gradient evaluation took 2.4e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.24 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -273,14 +274,14 @@ MCMC.</p></td>
 #&gt; Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #&gt; Iteration: 2000 / 2000 [100%]  (Sampling)
 #&gt; 
-#&gt;  Elapsed Time: 0.035 seconds (Warm-up)
-#&gt;                0.137 seconds (Sampling)
-#&gt;                0.172 seconds (Total)</div><div class='input'><span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='no'>fit_mcmc</span>$<span class='fu'>output</span>()
+#&gt;  Elapsed Time: 0.038 seconds (Warm-up)
+#&gt;                0.103 seconds (Sampling)
+#&gt;                0.141 seconds (Total)</div><div class='input'><span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='no'>fit_mcmc</span>$<span class='fu'>output</span>()
 <span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>out</span>)</div><div class='output co'>#&gt; List of 4
-#&gt;  $ : chr [1:70] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
-#&gt;  $ : chr [1:70] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
-#&gt;  $ : chr [1:70] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
-#&gt;  $ : chr [1:70] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...</div><div class='input'>
+#&gt;  $ : chr [1:71] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
+#&gt;  $ : chr [1:71] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
+#&gt;  $ : chr [1:71] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...
+#&gt;  $ : chr [1:71] "" "method = sample (Default)" "  sample" "    num_samples = 1000 (Default)" ...</div><div class='input'>
 <span class='no'>fit_mle</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit_mle</span>$<span class='fu'>output</span>()</div><div class='output co'>#&gt; 
 #&gt; method = optimize
 #&gt;   optimize
@@ -297,19 +298,20 @@ MCMC.</p></td>
 #&gt;     save_iterations = 0 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpOUu4d5/temp_libpath1f1e474979aa/cmdstanr/logistic.data.json
+#&gt;   file = /Users/jgabry/Documents/Stan/cmdstanr/inst/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
-#&gt;   seed = 432754710
+#&gt;   seed = 1387062275
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171338-1-30f448.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151126-1-040e61.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt;   sig_figs = -1 (Default)
+#&gt;   profile_file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-profile-202104151126-1-9267d9.csv
 #&gt; 
-#&gt; Initial log joint probability = -103.426
+#&gt; Initial log joint probability = -159.493
 #&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes 
-#&gt;        7      -63.9218   0.000113707   0.000210786           1           1        9   
+#&gt;        7      -63.9218   0.000205219   0.000240972      0.9791      0.9791       10   
 #&gt; Optimization terminated normally: 
 #&gt;   Convergence detected: relative gradient magnitude is below tolerance</div><div class='input'>
 <span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"variational"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit_vb</span>$<span class='fu'>output</span>()</div><div class='output co'>#&gt; 
@@ -329,15 +331,16 @@ MCMC.</p></td>
 #&gt;     output_samples = 1000 (Default)
 #&gt; id = 1
 #&gt; data
-#&gt;   file = /private/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpOUu4d5/temp_libpath1f1e474979aa/cmdstanr/logistic.data.json
+#&gt;   file = /Users/jgabry/Documents/Stan/cmdstanr/inst/logistic.data.json
 #&gt; init = 2 (Default)
 #&gt; random
-#&gt;   seed = 1062574477
+#&gt;   seed = 2130144276
 #&gt; output
-#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/logistic-202012171338-1-7dd145.csv
+#&gt;   file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151126-1-571a18.csv
 #&gt;   diagnostic_file =  (Default)
 #&gt;   refresh = 100 (Default)
 #&gt;   sig_figs = -1 (Default)
+#&gt;   profile_file = /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-profile-202104151126-1-7e8c1f.csv
 #&gt; 
 #&gt; ------------------------------------------------------------
 #&gt; EXPERIMENTAL ALGORITHM:
@@ -347,8 +350,8 @@ MCMC.</p></td>
 #&gt; 
 #&gt; 
 #&gt; 
-#&gt; Gradient evaluation took 2.8e-05 seconds
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.28 seconds.
+#&gt; Gradient evaluation took 3e-05 seconds
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.3 seconds.
 #&gt; Adjust your expectations accordingly!
 #&gt; 
 #&gt; 
@@ -362,9 +365,9 @@ MCMC.</p></td>
 #&gt; 
 #&gt; Begin stochastic gradient ascent.
 #&gt;   iter             ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
-#&gt;    100          -66.324             1.000            1.000
-#&gt;    200          -66.614             0.502            1.000
-#&gt;    300          -66.607             0.335            0.004   MEDIAN ELBO CONVERGED
+#&gt;    100          -66.185             1.000            1.000
+#&gt;    200          -66.436             0.502            1.000
+#&gt;    300          -66.320             0.335            0.004   MEDIAN ELBO CONVERGED
 #&gt; 
 #&gt; Drawing a sample of size 1000 from the approximate posterior... 
 #&gt; COMPLETED.</div><div class='input'># }

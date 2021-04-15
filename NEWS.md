@@ -1,4 +1,4 @@
-# cmdstanr 0.3.0.9000
+# cmdstanr 0.4.0
 
 ### Bug fixes
 

@@ -82,7 +82,7 @@ parsing succeeds. If invalid syntax in found an error is thrown." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -90,7 +90,7 @@ parsing succeeds. If invalid syntax in found an error is thrown." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -143,19 +143,19 @@ parsing succeeds. If invalid syntax in found an error is thrown." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -223,8 +223,8 @@ the error message will be printed.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The <code>$check_syntax()</code> method returns <code>TRUE</code> (invisibly) if
-the model is valid.</p>
+    <p>The <code>$check_syntax()</code> method returns <code>TRUE</code> (invisibly) if the model
+is valid.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>The CmdStanR website
@@ -264,7 +264,7 @@ model {
 <span class='no'>mod</span>$<span class='fu'>check_syntax</span>()</div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'>
 <span class='co'># pedantic mode will warn that lambda should be constrained to be positive</span>
 <span class='co'># and that lambda has no prior distribution</span>
-<span class='no'>mod</span>$<span class='fu'>check_syntax</span>(<span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='message'>Warning:</span></div><div class='output co'>#&gt; <span class='message'>  The parameter lambda has no priors.</span></div><div class='output co'>#&gt; <span class='message'>Warning at '/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpGraDrG/file2ed27f29a77b.stan', line 11, column 14 to column 20:</span></div><div class='output co'>#&gt; <span class='message'>  A poisson distribution is given parameter lambda as a rate parameter</span></div><div class='output co'>#&gt; <span class='message'>  (argument 1), but lambda was not constrained to be strictly positive.</span></div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'># }
+<span class='no'>mod</span>$<span class='fu'>check_syntax</span>(<span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='message'>Warning:</span></div><div class='output co'>#&gt; <span class='message'>  The parameter lambda has no priors.</span></div><div class='output co'>#&gt; <span class='message'>Warning at '/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/file1700031e704e7.stan', line 11, column 14 to column 20:</span></div><div class='output co'>#&gt; <span class='message'>  A poisson distribution is given parameter lambda as a rate parameter</span></div><div class='output co'>#&gt; <span class='message'>  (argument 1), but lambda was not constrained to be strictly positive.</span></div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'># }
 
 </div></pre>
   </div>

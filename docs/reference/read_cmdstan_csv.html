@@ -47,9 +47,12 @@
 
 
 <meta property="og:title" content="Read CmdStan CSV files into R — read_cmdstan_csv" />
-<meta property="og:description" content="read_cmdstan_csv() is used internally by CmdStanR to read CmdStan's output
-CSV files into R. It can also be used by CmdStan users as a more flexible
-and efficient alternative to rstan::read_stan_csv()." />
+<meta property="og:description" content="read_cmdstan_csv() is used internally by CmdStanR to read
+CmdStan's output CSV files into R. It can also be used by CmdStan users as
+a more flexible and efficient alternative to rstan::read_stan_csv(). See
+the Value section for details on the structure of the returned list.
+It is also possible to create CmdStanR's fitted model objects directly from
+CmdStan CSV files using the as_cmdstan_fit() function." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -82,7 +85,7 @@ and efficient alternative to rstan::read_stan_csv()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -90,7 +93,7 @@ and efficient alternative to rstan::read_stan_csv()." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -143,19 +146,19 @@ and efficient alternative to rstan::read_stan_csv()." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -173,24 +176,39 @@ and efficient alternative to rstan::read_stan_csv()." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Read CmdStan CSV files into R</h1>
-    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/read_csv.R'><code>R/read_csv.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/csv.R'><code>R/csv.R</code></a></small>
     <div class="hidden name"><code>read_cmdstan_csv.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><code>read_cmdstan_csv()</code> is used internally by CmdStanR to read CmdStan's output
-CSV files into <span style="R">R</span>. It can also be used by CmdStan users as a more flexible
-and efficient alternative to <code><a href='https://mc-stan.org/rstan/reference/stan_csv.html'>rstan::read_stan_csv()</a></code>.</p>
+    <p><code>read_cmdstan_csv()</code> is used internally by CmdStanR to read
+CmdStan's output CSV files into <span style="R">R</span>. It can also be used by CmdStan users as
+a more flexible and efficient alternative to <code><a href='https://mc-stan.org/rstan/reference/stan_csv.html'>rstan::read_stan_csv()</a></code>. See
+the <strong>Value</strong> section for details on the structure of the returned list.</p>
+<p>It is also possible to create CmdStanR's fitted model objects directly from
+CmdStan CSV files using the <code>as_cmdstan_fit()</code> function.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>read_cmdstan_csv</span>(<span class='no'>files</span>, <span class='kw'>variables</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>read_cmdstan_csv</span>(
+  <span class='no'>files</span>,
+  <span class='kw'>variables</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>format</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"cmdstanr_draws_format"</span>, <span class='kw'>NULL</span>)
+)
+
+<span class='fu'>as_cmdstan_fit</span>(
+  <span class='no'>files</span>,
+  <span class='kw'>check_diagnostics</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>format</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"cmdstanr_draws_format"</span>, <span class='kw'>NULL</span>)
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>files</th>
-      <td><p>A character vector of paths to the CSV files to read.</p></td>
+      <td><p>A character vector of paths to the CmdStan CSV files. These can
+be files generated by running CmdStanR or running CmdStan directly.</p></td>
     </tr>
     <tr>
       <th>variables</th>
@@ -210,11 +228,28 @@ and efficient alternative to <code><a href='https://mc-stan.org/rstan/reference/
 diagnostic variables (e.g., <code>"treedepth__"</code>, <code>"accept_stat__"</code>, etc.).
 Ignored if the model was not fit using MCMC.</p></td>
     </tr>
+    <tr>
+      <th>format</th>
+      <td><p>The format for storing the draws or point estimates. The
+default depends on the method used to fit the model. See
+<a href='fit-method-draws.html'>draws</a> for details, in particular the note about speed
+and memory for models with many parameters.</p></td>
+    </tr>
+    <tr>
+      <th>check_diagnostics</th>
+      <td><p>For models fit using MCMC, should diagnostic checks
+be performed after reading in the files? The default is <code>TRUE</code> but set to
+<code>FALSE</code> to avoid checking for problems with divergences and treedepth.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A named list with the following components:</p><ul>
+    <p><code>as_cmdstan_fit()</code> returns a <a href='CmdStanMCMC.html'>CmdStanMCMC</a>, <a href='CmdStanMLE.html'>CmdStanMLE</a>, or
+<a href='CmdStanVB.html'>CmdStanVB</a> object. Some methods typically defined for those objects will not
+work (e.g. <code><a href='fit-method-save_output_files.html'>save_data_file()</a></code>) but the important methods like <code>$summary()</code>,
+<code>$draws()</code>, <code>$sampler_diagnostics()</code> and others will work fine.</p>
+<p><code>read_cmdstan_csv()</code> returns a named list with the following components:</p><ul>
 <li><p><code>metadata</code>: A list of the meta information from the run that produced the
 CSV file(s). See <strong>Examples</strong> below.</p></li>
 </ul>
@@ -223,18 +258,24 @@ CSV file(s). See <strong>Examples</strong> below.</p></li>
 the CSV file(s).</p>
 <p>For <a href='model-method-sample.html'>sampling</a> the returned list also includes the
 following components:</p><ul>
+<li><p><code>time</code>: Run time information for the individual chains. The returned object
+is the same as for the <a href='fit-method-time.html'>$time()</a> method except the total run
+time can't be inferred from the CSV files (the chains may have been run in
+parallel) and is therefore <code>NA</code>.</p></li>
 <li><p><code>inv_metric</code>: A list (one element per chain) of inverse mass matrices
 or their diagonals, depending on the type of metric used.</p></li>
 <li><p><code>step_size</code>: A list (one element per chain) of the step sizes used.</p></li>
 <li><p><code>warmup_draws</code>:  If <code>save_warmup</code> was <code>TRUE</code> when fitting the model then a
-<code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> of warmup draws.</p></li>
-<li><p><code>post_warmup_draws</code>: A <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> of
-post-warmup draws.</p></li>
+<code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> (or different format if <code>format</code> is
+specified) of warmup draws.</p></li>
+<li><p><code>post_warmup_draws</code>: A <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> (or
+different format if <code>format</code> is specified) of post-warmup draws.</p></li>
 <li><p><code>warmup_sampler_diagnostics</code>:  If <code>save_warmup</code> was <code>TRUE</code> when fitting the
-model then a <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> of warmup draws of the
-sampler diagnostic variables.</p></li>
-<li><p><code>post_warmup_sampler_diagnostics</code>: A <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code>
-of post-warmup draws of the sampler diagnostic variables.</p></li>
+model then a <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> (or different format if
+<code>format</code> is specified) of warmup draws of the sampler diagnostic variables.</p></li>
+<li><p><code>post_warmup_sampler_diagnostics</code>: A
+<code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> (or different format if <code>format</code> is
+specified) of post-warmup draws of the sampler diagnostic variables.</p></li>
 </ul>
 
 <p>For <a href='model-method-optimize.html'>optimization</a> the returned list also includes the
@@ -244,8 +285,9 @@ following components:</p><ul>
 
 <p>For <a href='model-method-variational.html'>variational inference</a> the returned list also
 includes the following components:</p><ul>
-<li><p><code>draws</code>: A <code><a href='https://mc-stan.org/posterior/reference/draws_matrix.html'>draws_matrix</a></code> of draws from the
-approximate posterior distribution.</p></li>
+<li><p><code>draws</code>: A <code><a href='https://mc-stan.org/posterior/reference/draws_matrix.html'>draws_matrix</a></code> (or different format
+if <code>format</code> is specified) of draws from the approximate posterior
+distribution.</p></li>
 </ul>
 
 <p>For <a href='model-method-generate-quantities.html'>standalone generated quantities</a> the
@@ -257,31 +299,25 @@ the generated quantities.</p></li>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(
-  <span class='st'>"parameters {
-    real alpha_scalar;
-    vector[2] theta_vector;
-    matrix[2,2] tau_matrix;
-  }
-  model {
-    alpha_scalar ~ std_normal();
-    theta_vector ~ std_normal();
-    to_vector(tau_matrix) ~ std_normal();
-  }"</span>
-)
+<span class='co'># Generate some CSV files to use for demonstration</span>
+<span class='no'>fit1</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"sample"</span>, <span class='kw'>save_warmup</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>csv_files</span> <span class='kw'>&lt;-</span> <span class='no'>fit1</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>()
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>csv_files</span>)</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151128-1-875d79.csv"
+#&gt; [2] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151128-2-875d79.csv"
+#&gt; [3] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151128-3-875d79.csv"
+#&gt; [4] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-202104151128-4-875d79.csv"</div><div class='input'>
+<span class='co'># Creating fitting model objects</span>
 
-<span class='co'># only using capture.output to avoid too much printed output in example</span>
-<span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>utils</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/r/utils/capture.output.html'>capture.output</a></span>(
-  <span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>stan_program</span>),
-  <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(<span class='kw'>save_warmup</span><span class='kw'>=</span><span class='fl'>TRUE</span>)
-)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'>
+<span class='co'># Create a CmdStanMCMC object from the CSV files</span>
+<span class='no'>fit2</span> <span class='kw'>&lt;-</span> <span class='fu'>as_cmdstan_mcmc</span>(<span class='no'>csv_files</span>)</div><div class='output co'>#&gt; <span class='error'>Error in as_cmdstan_mcmc(csv_files): could not find function "as_cmdstan_mcmc"</span></div><div class='input'><span class='no'>fit2</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'fit2' not found</span></div><div class='input'>
+<span class='co'># Using read_cmdstan_csv</span>
+<span class='co'>#</span>
 <span class='co'># Read in everything</span>
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_cmdstan_csv</span>(<span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>())
-<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; List of 7
-#&gt;  $ metadata                       :List of 33
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_cmdstan_csv</span>(<span class='no'>csv_files</span>)
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>x</span>)</div><div class='output co'>#&gt; List of 8
+#&gt;  $ metadata                       :List of 36
 #&gt;   ..$ stan_version_major  : num 2
-#&gt;   ..$ stan_version_minor  : num 25
-#&gt;   ..$ stan_version_patch  : num 0
+#&gt;   ..$ stan_version_minor  : num 26
+#&gt;   ..$ stan_version_patch  : num 1
 #&gt;   ..$ method              : chr "sample"
 #&gt;   ..$ save_warmup         : num 1
 #&gt;   ..$ thin                : num 1
@@ -297,73 +333,87 @@ the generated quantities.</p></li>
 #&gt;   ..$ stepsize_jitter     : num 0
 #&gt;   ..$ id                  : num [1:4] 1 2 3 4
 #&gt;   ..$ init                : num [1:4] 2 2 2 2
-#&gt;   ..$ seed                : num [1:4] 2.28e+08 9.36e+08 5.51e+07 7.81e+08
+#&gt;   ..$ seed                : num 8.64e+08
 #&gt;   ..$ refresh             : num 100
 #&gt;   ..$ sig_figs            : num -1
+#&gt;   ..$ profile_file        : chr "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/logistic-profile-202104151128-1-5ea144.csv"
+#&gt;   ..$ stanc_version       : chr "stanc3 v2.26.1"
 #&gt;   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#&gt;   ..$ model_params        : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;   ..$ step_size_adaptation: num [1:4] 0.738 0.663 0.784 0.726
-#&gt;   ..$ model_name          : chr "file2ed23068f793_model"
+#&gt;   ..$ model_params        : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
+#&gt;   ..$ step_size_adaptation: num [1:4] 0.73 0.716 0.704 0.736
+#&gt;   ..$ model_name          : chr "logistic_model"
 #&gt;   ..$ adapt_engaged       : num 1
 #&gt;   ..$ adapt_delta         : num 0.8
 #&gt;   ..$ max_treedepth       : num 10
 #&gt;   ..$ step_size           : num [1:4] 1 1 1 1
 #&gt;   ..$ iter_warmup         : num 1000
 #&gt;   ..$ iter_sampling       : num 1000
+#&gt;   ..$ time                :'data.frame':	1 obs. of  4 variables:
+#&gt;   .. ..$ chain_id: num 1
+#&gt;   .. ..$ warmup  : num 0.104
+#&gt;   .. ..$ sampling: num 0.114
+#&gt;   .. ..$ total   : num 0.218
 #&gt;   ..$ stan_variable_dims  :List of 4
-#&gt;   .. ..$ lp__        : num 1
-#&gt;   .. ..$ alpha_scalar: num 1
-#&gt;   .. ..$ theta_vector: num 2
-#&gt;   .. ..$ tau_matrix  : num [1:2] 2 2
-#&gt;   ..$ stan_variables      : chr [1:4] "lp__" "alpha_scalar" "theta_vector" "tau_matrix"
+#&gt;   .. ..$ lp__   : num 1
+#&gt;   .. ..$ alpha  : num 1
+#&gt;   .. ..$ beta   : num 3
+#&gt;   .. ..$ log_lik: num 100
+#&gt;   ..$ stan_variables      : chr [1:4] "lp__" "alpha" "beta" "log_lik"
+#&gt;  $ time                           :List of 2
+#&gt;   ..$ total : int NA
+#&gt;   ..$ chains:'data.frame':	4 obs. of  4 variables:
+#&gt;   .. ..$ chain_id: num [1:4] 1 2 3 4
+#&gt;   .. ..$ warmup  : num [1:4] 0.104 0.136 0.134 0.124
+#&gt;   .. ..$ sampling: num [1:4] 0.114 0.146 0.101 0.108
+#&gt;   .. ..$ total   : num [1:4] 0.218 0.282 0.235 0.232
 #&gt;  $ inv_metric                     :List of 4
-#&gt;   ..$ 1: num [1:7] 0.924 1.057 0.981 0.958 1.153 ...
-#&gt;   ..$ 2: num [1:7] 1.128 0.872 1.114 0.84 0.93 ...
-#&gt;   ..$ 3: num [1:7] 0.823 1.038 1.009 0.976 1.071 ...
-#&gt;   ..$ 4: num [1:7] 1.004 0.989 0.964 0.852 0.951 ...
+#&gt;   ..$ 1: num [1:4] 0.0472 0.0636 0.0529 0.0609
+#&gt;   ..$ 2: num [1:4] 0.0435 0.056 0.0437 0.0624
+#&gt;   ..$ 3: num [1:4] 0.0421 0.063 0.0601 0.0694
+#&gt;   ..$ 4: num [1:4] 0.0448 0.0688 0.0481 0.0637
 #&gt;  $ step_size                      :List of 4
-#&gt;   ..$ 1: num 0.738
-#&gt;   ..$ 2: num 0.663
-#&gt;   ..$ 3: num 0.784
-#&gt;   ..$ 4: num 0.726
-#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:8] -2.37 -2.37 -2.37 -4.28 -2.85 ...
+#&gt;   ..$ 1: num 0.73
+#&gt;   ..$ 2: num 0.716
+#&gt;   ..$ 3: num 0.704
+#&gt;   ..$ 4: num 0.736
+#&gt;  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:105] -82.2 -82.2 -82.2 -69.1 -65.3 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
-#&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:8] -2.25 -1.48 -2.59 -2.24 -3.21 ...
+#&gt;   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
+#&gt;  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -65.3 -64.1 -64.8 -64.4 -66.3 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
-#&gt;   .. ..$ variable : chr [1:8] "lp__" "alpha_scalar" "theta_vector[1]" "theta_vector[2]" ...
-#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 9.99e-01 0.00 2.07e-10 9.81e-01 9.97e-01 ...
+#&gt;   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
+#&gt;  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 1 0 0 1 1 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.88 0.988 0.915 0.852 0.832 ...
+#&gt;  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 1 0.978 0.788 1 0.774 ...
 #&gt;   ..- attr(*, "dimnames")=List of 3
 #&gt;   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</div><div class='input'>
 <span class='co'># Don't read in any of the sampler diagnostic variables</span>
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_cmdstan_csv</span>(<span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>(), <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='st'>""</span>)
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_cmdstan_csv</span>(<span class='no'>csv_files</span>, <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='st'>""</span>)
 
 <span class='co'># Don't read in any of the parameters or generated quantities</span>
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_cmdstan_csv</span>(<span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>(), <span class='kw'>variables</span> <span class='kw'>=</span> <span class='st'>""</span>)
+<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_cmdstan_csv</span>(<span class='no'>csv_files</span>, <span class='kw'>variables</span> <span class='kw'>=</span> <span class='st'>""</span>)
 
 <span class='co'># Read in only specific parameters and sampler diagnostics</span>
 <span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_cmdstan_csv</span>(
-  <span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>(),
-  <span class='kw'>variables</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha_scalar"</span>, <span class='st'>"theta_vector[2]"</span>),
+  <span class='no'>csv_files</span>,
+  <span class='kw'>variables</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta[2]"</span>),
   <span class='kw'>sampler_diagnostics</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"n_leapfrog__"</span>, <span class='st'>"accept_stat__"</span>)
 )
 
 <span class='co'># For non-scalar parameters all elements can be selected or only some elements,</span>
-<span class='co'># e.g. all of "theta_vector" but only one element of "tau_matrix"</span>
+<span class='co'># e.g. all of the vector "beta" but only one element of the vector "log_lik"</span>
 <span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>read_cmdstan_csv</span>(
-  <span class='no'>fit</span>$<span class='fu'><a href='fit-method-save_output_files.html'>output_files</a></span>(),
-  <span class='kw'>variables</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"theta_vector"</span>, <span class='st'>"tau_matrix[2,1]"</span>)
+  <span class='no'>csv_files</span>,
+  <span class='kw'>variables</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"beta"</span>, <span class='st'>"log_lik[3]"</span>)
 )
 <span class='co'># }</span></div></pre>
   </div>

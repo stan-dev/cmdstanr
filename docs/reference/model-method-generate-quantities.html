@@ -82,7 +82,7 @@ based on previously fitted parameters." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -90,7 +90,7 @@ based on previously fitted parameters." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -143,19 +143,19 @@ based on previously fitted parameters." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -188,9 +188,11 @@ based on previously fitted parameters.</p>
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>seed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>output_dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>output_basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>sig_figs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parallel_chains</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"mc.cores"</span>, <span class='fl'>1</span>),
-  <span class='kw'>threads_per_chain</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  <span class='kw'>threads_per_chain</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>opencl_ids</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -219,7 +221,15 @@ appendices in the CmdStan manual for details on using these formats.</p></li>
     </tr>
     <tr>
       <th>seed</th>
-      <td><p>(positive integer) A seed for the (P)RNG to pass to CmdStan.</p></td>
+      <td><p>(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
+In the case of multi-chain sampling the single <code>seed</code> will automatically be
+augmented by the the run (chain) ID so that each chain uses a different
+seed. The exception is the <code>transformed data</code> block, which defaults to
+using same seed for all chains so that the same data is generated for all
+chains if RNG functions are used. The only time <code>seed</code> should be specified
+as a vector (one element per chain) is if RNG functions are used in
+<code>transformed data</code> and the goal is to generate <em>different</em> data for each
+chain.</p></td>
     </tr>
     <tr>
       <th>output_dir</th>
@@ -236,6 +246,14 @@ files are removed when the fitted model object is
 <a href='https://rdrr.io/r/base/gc.html'>garbage collected</a> (manually or automatically).</p></li>
 <li><p>If a path, then the files are created in <code>output_dir</code> with names
 corresponding to the defaults used by <code>$save_output_files()</code>.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>output_basename</th>
+      <td><p>(string) A string to use as a prefix for the
+names of the output CSV files of CmdStan.</p><ul>
+<li><p>If <code>NULL</code> (the default), the basename of the output CSV files
+will be comprised from the model name, timestamp and 5 random characters.</p></li>
 </ul></td>
     </tr>
     <tr>
@@ -264,6 +282,13 @@ contrast with <code>parallel_chains</code>, which specifies the number of chains
 run in parallel. The actual number of CPU cores used use is
 <code>parallel_chains*threads_per_chain</code>. For an example of using threading see
 the Stan case study <a href='https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html'>Reduce Sum: A Minimal Example</a>.</p></td>
+    </tr>
+    <tr>
+      <th>opencl_ids</th>
+      <td><p>(integer vector of length 2) The platform and
+device IDs of the OpenCL device to use for fitting. The model must
+be compiled with <code>cpp_options = list(stan_opencl = TRUE)</code> for this
+argument to have an effect.</p></td>
     </tr>
     </table>
 
@@ -303,7 +328,7 @@ documentation and tutorials.</p>
     y ~ bernoulli(theta);
   }"</span>
 )
-<span class='no'>mod_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>mcmc_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'>
+<span class='no'>mod_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>mcmc_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/ </div><div class='input'>
 <span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>))
 <span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='no'>mod_mcmc</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>, <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>)</div><div class='output co'>#&gt; Running MCMC with 4 sequential chains...
 #&gt; 
@@ -314,7 +339,7 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.6 seconds.</div><div class='input'>
+#&gt; Total execution time: 0.7 seconds.</div><div class='input'>
 <span class='co'># stan program for standalone generated quantities</span>
 <span class='co'># (could keep model block, but not necessary so removing it)</span>
 <span class='no'>gq_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(
@@ -330,7 +355,7 @@ documentation and tutorials.</p>
   }"</span>
 )
 
-<span class='no'>mod_gq</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>gq_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='input'><span class='no'>fit_gq</span> <span class='kw'>&lt;-</span> <span class='no'>mod_gq</span>$<span class='fu'>generate_quantities</span>(<span class='no'>fit_mcmc</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...
+<span class='no'>mod_gq</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>gq_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/ </div><div class='input'><span class='no'>fit_gq</span> <span class='kw'>&lt;-</span> <span class='no'>mod_gq</span>$<span class='fu'>generate_quantities</span>(<span class='no'>fit_mcmc</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...
 #&gt; 
 #&gt; Chain 1 finished in 0.0 seconds.
 #&gt; Chain 2 finished in 0.0 seconds.
@@ -339,7 +364,7 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.5 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
+#&gt; Total execution time: 0.6 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"

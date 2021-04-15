@@ -90,7 +90,7 @@ to be able to return them to the user. See Examples." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -98,7 +98,7 @@ to be able to return them to the user. See Examples." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -151,19 +151,19 @@ to be able to return them to the user. See Examples." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -227,67 +227,67 @@ which is the standard behavior for print methods in <span style="R">R</span>.</p
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>summary</span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 105 x 10</span><span>
-#&gt;    variable    mean  median     sd    mad       q5      q95  rhat ess_bulk
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> lp__     -</span><span style='color: #BB0000;'>65.9</span><span>   -</span><span style='color: #BB0000;'>65.6</span><span>   1.45   1.22   -</span><span style='color: #BB0000;'>68.8</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>     1.00    </span><span style='text-decoration: underline;'>2</span><span>041.
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> alpha      0.379   0.381 0.220  0.220    0.026</span><span style='text-decoration: underline;'>9</span><span>   0.753   1.00    </span><span style='text-decoration: underline;'>4</span><span>096.
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.659</span><span>  -</span><span style='color: #BB0000;'>0.655</span><span> 0.250  0.252   -</span><span style='color: #BB0000;'>1.08</span><span>    -</span><span style='color: #BB0000;'>0.261</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>764.
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.273</span><span>  -</span><span style='color: #BB0000;'>0.271</span><span> 0.225  0.216   -</span><span style='color: #BB0000;'>0.646</span><span>    0.088</span><span style='text-decoration: underline;'>8</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>440.
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> beta[3]    0.681   0.677 0.261  0.259    0.271    1.12    1.00    </span><span style='text-decoration: underline;'>4</span><span>279.
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.517</span><span>  -</span><span style='color: #BB0000;'>0.510</span><span> 0.098</span><span style='text-decoration: underline;'>8</span><span> 0.098</span><span style='text-decoration: underline;'>9</span><span>  -</span><span style='color: #BB0000;'>0.686</span><span>   -</span><span style='color: #BB0000;'>0.367</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>990.
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.403</span><span>  -</span><span style='color: #BB0000;'>0.385</span><span> 0.146  0.135   -</span><span style='color: #BB0000;'>0.677</span><span>   -</span><span style='color: #BB0000;'>0.200</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>584.
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.499</span><span>  -</span><span style='color: #BB0000;'>0.466</span><span> 0.220  0.204   -</span><span style='color: #BB0000;'>0.891</span><span>   -</span><span style='color: #BB0000;'>0.210</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>330.
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.450</span><span>  -</span><span style='color: #BB0000;'>0.432</span><span> 0.152  0.150   -</span><span style='color: #BB0000;'>0.726</span><span>   -</span><span style='color: #BB0000;'>0.238</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>179.
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> log_lik…  -</span><span style='color: #BB0000;'>1.18</span><span>   -</span><span style='color: #BB0000;'>1.16</span><span>  0.282  0.284   -</span><span style='color: #BB0000;'>1.68</span><span>    -</span><span style='color: #BB0000;'>0.756</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>453.
+#&gt;    variable    mean  median    sd    mad       q5      q95  rhat ess_bulk
+#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> lp__     -</span><span style='color: #BB0000;'>65.9</span><span>   -</span><span style='color: #BB0000;'>65.6</span><span>   1.46  1.24   -</span><span style='color: #BB0000;'>68.9</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>     1.00    </span><span style='text-decoration: underline;'>2</span><span>044.
+#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> alpha      0.371   0.369 0.221 0.215    0.010</span><span style='text-decoration: underline;'>8</span><span>   0.739   1.00    </span><span style='text-decoration: underline;'>4</span><span>090.
+#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.667</span><span>  -</span><span style='color: #BB0000;'>0.661</span><span> 0.243 0.243   -</span><span style='color: #BB0000;'>1.07</span><span>    -</span><span style='color: #BB0000;'>0.279</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>136.
+#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.284</span><span>  -</span><span style='color: #BB0000;'>0.283</span><span> 0.222 0.219   -</span><span style='color: #BB0000;'>0.652</span><span>    0.085</span><span style='text-decoration: underline;'>8</span><span>  1.00    </span><span style='text-decoration: underline;'>3</span><span>682.
+#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> beta[3]    0.675   0.671 0.270 0.277    0.243    1.12    1.00    </span><span style='text-decoration: underline;'>4</span><span>106.
+#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.520</span><span>  -</span><span style='color: #BB0000;'>0.515</span><span> 0.101 0.098</span><span style='text-decoration: underline;'>6</span><span>  -</span><span style='color: #BB0000;'>0.697</span><span>   -</span><span style='color: #BB0000;'>0.365</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>126.
+#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.405</span><span>  -</span><span style='color: #BB0000;'>0.387</span><span> 0.150 0.144   -</span><span style='color: #BB0000;'>0.680</span><span>   -</span><span style='color: #BB0000;'>0.197</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>192.
+#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.509</span><span>  -</span><span style='color: #BB0000;'>0.476</span><span> 0.219 0.208   -</span><span style='color: #BB0000;'>0.918</span><span>   -</span><span style='color: #BB0000;'>0.215</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>766.
+#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.445</span><span>  -</span><span style='color: #BB0000;'>0.424</span><span> 0.153 0.149   -</span><span style='color: #BB0000;'>0.726</span><span>   -</span><span style='color: #BB0000;'>0.231</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>764.
+#&gt; </span><span style='color: #BCBCBC;'>10</span><span> log_lik…  -</span><span style='color: #BB0000;'>1.17</span><span>   -</span><span style='color: #BB0000;'>1.15</span><span>  0.279 0.280   -</span><span style='color: #BB0000;'>1.66</span><span>    -</span><span style='color: #BB0000;'>0.748</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>560.
 #&gt; </span><span style='color: #949494;'># … with 95 more rows, and 1 more variable: ess_tail </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span></div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</div><div class='output co'>#&gt;    variable   mean median   sd  mad     q5    q95 rhat ess_bulk ess_tail
-#&gt;  lp__       -65.95 -65.59 1.45 1.22 -68.80 -64.29 1.00     2040     2693
-#&gt;  alpha        0.38   0.38 0.22 0.22   0.03   0.75 1.00     4096     2697
-#&gt;  beta[1]     -0.66  -0.65 0.25 0.25  -1.08  -0.26 1.00     3764     2833
-#&gt;  beta[2]     -0.27  -0.27 0.22 0.22  -0.65   0.09 1.00     4440     2925
-#&gt;  beta[3]      0.68   0.68 0.26 0.26   0.27   1.12 1.00     4279     2926
-#&gt;  log_lik[1]  -0.52  -0.51 0.10 0.10  -0.69  -0.37 1.00     3989     2987
-#&gt;  log_lik[2]  -0.40  -0.39 0.15 0.13  -0.68  -0.20 1.00     4583     2861
-#&gt;  log_lik[3]  -0.50  -0.47 0.22 0.20  -0.89  -0.21 1.00     4329     3207
-#&gt;  log_lik[4]  -0.45  -0.43 0.15 0.15  -0.73  -0.24 1.00     4178     3105
-#&gt;  log_lik[5]  -1.18  -1.16 0.28 0.28  -1.68  -0.76 1.00     4452     3084
+#&gt;  lp__       -65.94 -65.59 1.46 1.24 -68.88 -64.29 1.00     2044     2715
+#&gt;  alpha        0.37   0.37 0.22 0.22   0.01   0.74 1.00     4090     3028
+#&gt;  beta[1]     -0.67  -0.66 0.24 0.24  -1.07  -0.28 1.00     4135     2836
+#&gt;  beta[2]     -0.28  -0.28 0.22 0.22  -0.65   0.09 1.00     3682     2922
+#&gt;  beta[3]      0.68   0.67 0.27 0.28   0.24   1.12 1.00     4106     2984
+#&gt;  log_lik[1]  -0.52  -0.51 0.10 0.10  -0.70  -0.37 1.00     4126     3037
+#&gt;  log_lik[2]  -0.40  -0.39 0.15 0.14  -0.68  -0.20 1.00     4192     2991
+#&gt;  log_lik[3]  -0.51  -0.48 0.22 0.21  -0.92  -0.21 1.00     3766     3168
+#&gt;  log_lik[4]  -0.44  -0.42 0.15 0.15  -0.73  -0.23 1.00     3764     2935
+#&gt;  log_lik[5]  -1.17  -1.15 0.28 0.28  -1.66  -0.75 1.00     4559     3086
 #&gt; 
-#&gt;  # showing 10 of 105 rows (change via 'max_rows' argument)</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='kw'>max_rows</span> <span class='kw'>=</span> <span class='fl'>2</span>) <span class='co'># same as print(fit, max_rows = 2)</span></div><div class='output co'>#&gt;  variable   mean median   sd  mad     q5    q95 rhat ess_bulk ess_tail
-#&gt;     lp__  -65.95 -65.59 1.45 1.22 -68.80 -64.29 1.00     2040     2693
-#&gt;     alpha   0.38   0.38 0.22 0.22   0.03   0.75 1.00     4096     2697
+#&gt;  # showing 10 of 105 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='kw'>max_rows</span> <span class='kw'>=</span> <span class='fl'>2</span>) <span class='co'># same as print(fit, max_rows = 2)</span></div><div class='output co'>#&gt;  variable   mean median   sd  mad     q5    q95 rhat ess_bulk ess_tail
+#&gt;     lp__  -65.94 -65.59 1.46 1.24 -68.88 -64.29 1.00     2044     2715
+#&gt;     alpha   0.37   0.37 0.22 0.22   0.01   0.74 1.00     4090     3028
 #&gt; 
-#&gt;  # showing 2 of 105 rows (change via 'max_rows' argument)</div><div class='input'>
+#&gt;  # showing 2 of 105 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)</div><div class='input'>
 <span class='co'># include only certain variables</span>
 <span class='no'>fit</span>$<span class='fu'>summary</span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 3 x 10</span><span>
 #&gt;   variable   mean median    sd   mad     q5     q95  rhat ess_bulk ess_tail
 #&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> beta[1]  -</span><span style='color: #BB0000;'>0.659</span><span> -</span><span style='color: #BB0000;'>0.655</span><span> 0.250 0.252 -</span><span style='color: #BB0000;'>1.08</span><span>  -</span><span style='color: #BB0000;'>0.261</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>764.    </span><span style='text-decoration: underline;'>2</span><span>834.
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> beta[2]  -</span><span style='color: #BB0000;'>0.273</span><span> -</span><span style='color: #BB0000;'>0.271</span><span> 0.225 0.216 -</span><span style='color: #BB0000;'>0.646</span><span>  0.088</span><span style='text-decoration: underline;'>8</span><span>  1.00    </span><span style='text-decoration: underline;'>4</span><span>440.    </span><span style='text-decoration: underline;'>2</span><span>926.
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[3]   0.681  0.677 0.261 0.259  0.271  1.12    1.00    </span><span style='text-decoration: underline;'>4</span><span>279.    </span><span style='text-decoration: underline;'>2</span><span>926.</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta[2]"</span>))</div><div class='output co'>#&gt;  variable  mean median   sd  mad    q5  q95 rhat ess_bulk ess_tail
-#&gt;   alpha    0.38   0.38 0.22 0.22  0.03 0.75 1.00     4096     2697
-#&gt;   beta[2] -0.27  -0.27 0.22 0.22 -0.65 0.09 1.00     4440     2925</div><div class='input'>
+#&gt; </span><span style='color: #BCBCBC;'>1</span><span> beta[1]  -</span><span style='color: #BB0000;'>0.667</span><span> -</span><span style='color: #BB0000;'>0.661</span><span> 0.243 0.243 -</span><span style='color: #BB0000;'>1.07</span><span>  -</span><span style='color: #BB0000;'>0.279</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>136.    </span><span style='text-decoration: underline;'>2</span><span>837.
+#&gt; </span><span style='color: #BCBCBC;'>2</span><span> beta[2]  -</span><span style='color: #BB0000;'>0.284</span><span> -</span><span style='color: #BB0000;'>0.283</span><span> 0.222 0.219 -</span><span style='color: #BB0000;'>0.652</span><span>  0.085</span><span style='text-decoration: underline;'>8</span><span>  1.00    </span><span style='text-decoration: underline;'>3</span><span>682.    </span><span style='text-decoration: underline;'>2</span><span>922.
+#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[3]   0.675  0.671 0.270 0.277  0.243  1.12    1.00    </span><span style='text-decoration: underline;'>4</span><span>106.    </span><span style='text-decoration: underline;'>2</span><span>985.</div><div class='input'><span class='no'>fit</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"beta[2]"</span>))</div><div class='output co'>#&gt;  variable  mean median   sd  mad    q5  q95 rhat ess_bulk ess_tail
+#&gt;   alpha    0.37   0.37 0.22 0.22  0.01 0.74 1.00     4090     3028
+#&gt;   beta[2] -0.28  -0.28 0.22 0.22 -0.65 0.09 1.00     3682     2922</div><div class='input'>
 <span class='co'># include all variables but only certain summaries</span>
 <span class='no'>fit</span>$<span class='fu'>summary</span>(<span class='kw'>NULL</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"mean"</span>, <span class='st'>"sd"</span>))</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 105 x 3</span><span>
-#&gt;    variable      mean     sd
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> lp__       -</span><span style='color: #BB0000;'>65.9</span><span>   1.45  
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> alpha        0.379 0.220 
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> beta[1]     -</span><span style='color: #BB0000;'>0.659</span><span> 0.250 
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> beta[2]     -</span><span style='color: #BB0000;'>0.273</span><span> 0.225 
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> beta[3]      0.681 0.261 
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> log_lik[1]  -</span><span style='color: #BB0000;'>0.517</span><span> 0.098</span><span style='text-decoration: underline;'>8</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> log_lik[2]  -</span><span style='color: #BB0000;'>0.403</span><span> 0.146 
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> log_lik[3]  -</span><span style='color: #BB0000;'>0.499</span><span> 0.220 
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> log_lik[4]  -</span><span style='color: #BB0000;'>0.450</span><span> 0.152 
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> log_lik[5]  -</span><span style='color: #BB0000;'>1.18</span><span>  0.282 
+#&gt;    variable      mean    sd
+#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> lp__       -</span><span style='color: #BB0000;'>65.9</span><span>   1.46 
+#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> alpha        0.371 0.221
+#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> beta[1]     -</span><span style='color: #BB0000;'>0.667</span><span> 0.243
+#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> beta[2]     -</span><span style='color: #BB0000;'>0.284</span><span> 0.222
+#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> beta[3]      0.675 0.270
+#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> log_lik[1]  -</span><span style='color: #BB0000;'>0.520</span><span> 0.101
+#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> log_lik[2]  -</span><span style='color: #BB0000;'>0.405</span><span> 0.150
+#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> log_lik[3]  -</span><span style='color: #BB0000;'>0.509</span><span> 0.219
+#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> log_lik[4]  -</span><span style='color: #BB0000;'>0.445</span><span> 0.153
+#&gt; </span><span style='color: #BCBCBC;'>10</span><span> log_lik[5]  -</span><span style='color: #BB0000;'>1.17</span><span>  0.279
 #&gt; </span><span style='color: #949494;'># … with 95 more rows</span><span></div><div class='input'>
 <span class='co'># can use functions created from formulas</span>
 <span class='co'># for example, calculate Pr(beta &gt; 0)</span>
 <span class='no'>fit</span>$<span class='fu'>summary</span>(<span class='st'>"beta"</span>, <span class='kw'>prob_gt_0</span> <span class='kw'>=</span> ~ <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span>(<span class='no'>.</span> <span class='kw'>&gt;</span> <span class='fl'>0</span>))</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 3 x 2</span><span>
 #&gt;   variable prob_gt_0
 #&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> beta[1]      0.003
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> beta[2]      0.112
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[3]      0.995</div><div class='input'># }
+#&gt; </span><span style='color: #BCBCBC;'>1</span><span> beta[1]    0.002</span><span style='text-decoration: underline;'>75</span><span>
+#&gt; </span><span style='color: #BCBCBC;'>2</span><span> beta[2]    0.101  
+#&gt; </span><span style='color: #BCBCBC;'>3</span><span> beta[3]    0.995  </div><div class='input'># }
 
 </div></span></pre>
   </div>

@@ -48,17 +48,14 @@
 
 <meta property="og:title" content="Install CmdStan or clean and rebuild an existing installation — install_cmdstan" />
 <meta property="og:description" content="The install_cmdstan() function attempts to download and
-install the latest release of
-CmdStan. Installing
-a previous release or a new release candidate is also possible by
-specifying the release_url argument. Currently the necessary C++ tool
-chain is assumed to be available, but in the future CmdStanR may help
-install the requirements. See the first few sections of the
-CmdStan installation guide
-for details on the required toolchain.
-The rebuild_cmdstan() function cleans and rebuilds the cmdstan
-installation. Use this function in case of any issues when compiling
-models.
+install the latest release of CmdStan.
+Installing a previous release or a new release candidate is also possible
+by specifying the release_url argument.
+See the first few sections of the CmdStan
+installation guide
+for details on the C++ toolchain required for installing CmdStan.
+The rebuild_cmdstan() function cleans and rebuilds the CmdStan
+installation. Use this function in case of any issues when compiling models.
 The cmdstan_make_local() function is used to read/write makefile flags
 and variables from/to the make/local file of a CmdStan installation.
 Writing to the make/local file can be used to permanently add makefile
@@ -97,7 +94,7 @@ should typically be followed by calling rebuild_cmdstan()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -105,7 +102,7 @@ should typically be followed by calling rebuild_cmdstan()." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -158,19 +155,19 @@ should typically be followed by calling rebuild_cmdstan()." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -194,17 +191,14 @@ should typically be followed by calling rebuild_cmdstan()." />
 
     <div class="ref-description">
     <p>The <code>install_cmdstan()</code> function attempts to download and
-install the latest release of
-<a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan</a>. Installing
-a previous release or a new release candidate is also possible by
-specifying the <code>release_url</code> argument. Currently the necessary C++ tool
-chain is assumed to be available, but in the future CmdStanR may help
-install the requirements. See the first few sections of the
-CmdStan <a href='https://mc-stan.org/docs/2_24/cmdstan-guide/cmdstan-installation.html'>installation guide</a>
-for details on the required toolchain.</p>
-<p>The <code>rebuild_cmdstan()</code> function cleans and rebuilds the cmdstan
-installation. Use this function in case of any issues when compiling
-models.</p>
+install the latest release of <a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan</a>.
+Installing a previous release or a new release candidate is also possible
+by specifying the <code>release_url</code> argument.
+See the first few sections of the CmdStan
+<a href='https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html'>installation guide</a>
+for details on the C++ toolchain required for installing CmdStan.</p>
+<p>The <code>rebuild_cmdstan()</code> function cleans and rebuilds the CmdStan
+installation. Use this function in case of any issues when compiling models.</p>
 <p>The <code>cmdstan_make_local()</code> function is used to read/write makefile flags
 and variables from/to the <code>make/local</code> file of a CmdStan installation.
 Writing to the <code>make/local</code> file can be used to permanently add makefile
@@ -258,34 +252,34 @@ been set then the default is <code>2</code>.</p></td>
       <td><p>For <code>install_cmdstan()</code>, should the verbose output from the
 system processes be suppressed when building the CmdStan binaries?
 The default is <code>FALSE</code>.
-For <code>check_cmdstan_toolchain()</code>, should the function supress
-printing informational messages? The default is <code>FALSE</code>.
-If <code>TRUE</code> <code>check_cmdstan_toolchain()</code> only outputs errors.</p></td>
+For <code>check_cmdstan_toolchain()</code>, should the function suppress printing
+informational messages? The default is <code>FALSE</code>. If <code>TRUE</code> only errors will
+be printed.</p></td>
     </tr>
     <tr>
       <th>overwrite</th>
-      <td><p>When an existing installation is found in <code>dir</code>, should
-CmdStan still be downloaded and reinstalled? The default is <code>FALSE</code>, in
-which case an informative error is thrown instead of overwriting the user's
-installation.</p></td>
+      <td><p>Should CmdStan still be downloaded and installed even if an
+installation of the same version is found in <code>dir</code>? The default is <code>FALSE</code>,
+in which case an informative error is thrown instead of overwriting the
+user's installation.</p></td>
     </tr>
     <tr>
       <th>timeout</th>
-      <td><p>Timeout (in seconds) for the CmdStan build stage of the
-installation process.</p></td>
+      <td><p>Timeout (in seconds) for the build stage of the installation.</p></td>
     </tr>
     <tr>
       <th>version</th>
-      <td><p>Specifies the Cmdstan release version to be
-installed. By default set to <code>NULL</code>, which downloads the latest stable
-release from <a href='https://github.com/stan-dev/cmdstan/releases'>GitHub</a>.</p></td>
+      <td><p>The CmdStan release version to install. The default is <code>NULL</code>,
+which downloads the latest stable release from
+<a href='https://github.com/stan-dev/cmdstan/releases'>https://github.com/stan-dev/cmdstan/releases</a>.</p></td>
     </tr>
     <tr>
       <th>release_url</th>
-      <td><p>Specifies the URL to a specific Cmdstan release to be
-installed. By default set to <code>NULL</code>, which downloads the latest stable
-release from <a href='https://github.com/stan-dev/cmdstan/releases'>GitHub</a>. If
-<code>version</code> and <code>release_url</code> are set, <code>version</code> is used.</p></td>
+      <td><p>The URL for the specific CmdStan release or
+release candidate to install. See <a href='https://github.com/stan-dev/cmdstan/releases'>https://github.com/stan-dev/cmdstan/releases</a>.
+The URL should point to the tarball (<code>.tar.gz.</code> file) itself, e.g.,
+<code>release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"</code>.
+If both <code>version</code> and <code>release_url</code> are specified then <code>version</code> will be used.</p></td>
     </tr>
     <tr>
       <th>cpp_options</th>
@@ -295,9 +289,8 @@ will force the use of clang for compilation.</p></td>
     </tr>
     <tr>
       <th>check_toolchain</th>
-      <td><p>Should <code>install_cmdstan()</code> check that the
-required toolchain is installed and properly configured.
-The default is <code>TRUE</code>.</p></td>
+      <td><p>Should <code>install_cmdstan()</code> attempt to check that the
+required toolchain is installed and properly configured. The default is <code>TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>append</th>
@@ -321,7 +314,9 @@ contents of <code>make/local</code> are returned without writing anything, other
 the updated contents are returned.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># install_cmdstan(cores = 4)</span>
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='fu'>check_cmdstan_toolchain</span>()</div><div class='output co'>#&gt; <span class='message'>The C++ toolchain required for CmdStan is setup properly!</span></div><div class='input'>
+<span class='co'># install_cmdstan(cores = 4)</span>
 
 <span class='no'>cpp_options</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
   <span class='st'>"CXX"</span> <span class='kw'>=</span> <span class='st'>"clang++"</span>,
@@ -330,8 +325,7 @@ the updated contents are returned.</p>
 )
 <span class='co'># cmdstan_make_local(cpp_options = cpp_options)</span>
 <span class='co'># rebuild_cmdstan()</span>
-
-<span class='co'># check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)</span></div></pre>
+<span class='co'># }</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

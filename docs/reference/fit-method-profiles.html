@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get or set the file path to the CmdStan installation — set_cmdstan_path • cmdstanr</title>
+<title>Return profiling data — fit-method-profiles • cmdstanr</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,12 +46,12 @@
 
 
 
-<meta property="og:title" content="Get or set the file path to the CmdStan installation — set_cmdstan_path" />
-<meta property="og:description" content="Use the set_cmdstan_path() function to tell CmdStanR where the
-CmdStan installation in located. Once the path has been set,
-cmdstan_path() will return the full path to the CmdStan installation and
-cmdstan_version() will return the CmdStan version number. See Details
-for how to avoid manually setting the path in each R session." />
+<meta property="og:title" content="Return profiling data — fit-method-profiles" />
+<meta property="og:description" content="The $profiles() method returns a list of data frames with
+profiling data if any profiling data was written to the profile CSV files.
+See save_profile_files() to control where the files are saved.
+Support for profiling Stan programs is available with CmdStan &amp;gt;= 2.26 and
+requires adding profiling statements to the Stan program." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -174,69 +174,101 @@ for how to avoid manually setting the path in each R session." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get or set the file path to the CmdStan installation</h1>
-    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/path.R'><code>R/path.R</code></a></small>
-    <div class="hidden name"><code>set_cmdstan_path.Rd</code></div>
+    <h1>Return profiling data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R'><code>R/fit.R</code></a></small>
+    <div class="hidden name"><code>fit-method-profiles.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Use the <code>set_cmdstan_path()</code> function to tell CmdStanR where the
-CmdStan installation in located. Once the path has been set,
-<code>cmdstan_path()</code> will return the full path to the CmdStan installation and
-<code>cmdstan_version()</code> will return the CmdStan version number. See <strong>Details</strong>
-for how to avoid manually setting the path in each <span style="R">R</span> session.</p>
+    <p>The <code>$profiles()</code> method returns a list of data frames with
+profiling data if any profiling data was written to the profile CSV files.
+See <code><a href='fit-method-save_output_files.html'>save_profile_files()</a></code> to control where the files are saved.</p>
+<p>Support for profiling Stan programs is available with CmdStan &gt;= 2.26 and
+requires adding profiling statements to the Stan program.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>set_cmdstan_path</span>(<span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)
+    <pre class="usage"><span class='fu'>profiles</span>()</pre>
 
-<span class='fu'>cmdstan_path</span>()
-
-<span class='fu'>cmdstan_version</span>(<span class='kw'>error_on_NA</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
-
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>path</th>
-      <td><p>The full file path to the CmdStan installation as a string. If
-<code>NULL</code> (the default) then the path is set to the default path used by
-<code><a href='install_cmdstan.html'>install_cmdstan()</a></code> if it exists.</p></td>
-    </tr>
-    <tr>
-      <th>error_on_NA</th>
-      <td><p>Logical of length 1, whether to
-throw an error if CmdStan is not found.
-If <code>FALSE</code>, <code>cmdstan_version()</code> returns <code>NULL</code>.</p></td>
-    </tr>
-    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A string. Either the file path to the CmdStan installation or the
-CmdStan version number.</p>
-<p>CmdStan version string if available. If CmdStan
-is not found and <code>error_on_NA</code> is <code>FALSE</code>,
-<code>cmdstan_version()</code> returns <code>NULL</code>.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <p>A list of data frames with profiling data if the profiling CSV files
+were created.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <p>Before the package can be used it needs to know where the CmdStan
-installation is located. When the package is loaded it tries to help automate
-this to avoid having to manually set the path every session:</p><ul>
-<li><p>If the <a href='https://rdrr.io/r/base/Sys.setenv.html'>environment variable</a> <code>"CMDSTAN"</code> exists at load time
-then its value will be automatically set as the default path to CmdStan for
-the <span style="R">R</span> session.</p></li>
-<li><p>If no environment variable is found when loaded but any directory in the form
-<code>".cmdstanr/cmdstan-[version]"</code>, for example <code>".cmdstanr/cmdstan-2.23.0"</code>,
-exists in the user's home directory (<code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("HOME")</a></code>,
-<em>not</em> the current working directory) then the path to the cmdstan with the largest
-version number will be set as the path to CmdStan for the <span style="R">R</span> session.
-This is the same as the default directory that <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> would use to
-install the latest version of CmdStan.</p></li>
-</ul>
+    <div class='dont-index'><p><code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>, <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>, <code><a href='CmdStanVB.html'>CmdStanVB</a></code>, <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code></p></div>
 
-<p>It is always possible to change the path after loading the package using
-<code>set_cmdstan_path(path)</code>.</p>
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'>
+<span class='co'># \dontrun{</span>
+<span class='co'># first fit a model using MCMC</span>
+<span class='no'>mcmc_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(
+  <span class='st'>'data {
+    int&lt;lower=0&gt; N;
+    int&lt;lower=0,upper=1&gt; y[N];
+  }
+  parameters {
+    real&lt;lower=0,upper=1&gt; theta;
+  }
+  model {
+    profile("likelihood") {
+      y ~ bernoulli(theta);
+    }
+  }
+  generated quantities {
+    int y_rep[N];
+    profile("gq") {
+      y_rep = bernoulli_rng(rep_vector(theta, N));
+    }
+  }
+'</span>
+)
+<span class='no'>mod_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>mcmc_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/ </div><div class='input'>
+<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>))
+<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='no'>mod_mcmc</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>, <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>)</div><div class='output co'>#&gt; Running MCMC with 4 sequential chains...
+#&gt; 
+#&gt; Chain 1 finished in 0.0 seconds.
+#&gt; Chain 2 finished in 0.0 seconds.
+#&gt; Chain 3 finished in 0.0 seconds.
+#&gt; Chain 4 finished in 0.0 seconds.
+#&gt; 
+#&gt; All 4 chains finished successfully.
+#&gt; Mean chain execution time: 0.0 seconds.
+#&gt; Total execution time: 0.6 seconds.</div><div class='input'>
+<span class='no'>fit</span>$<span class='fu'>profiles</span>()</div><div class='output co'>#&gt; [[1]]
+#&gt;         name   thread_id  total_time forward_time reverse_time chain_stack
+#&gt; 1         gq 0x104d47dc0 0.000402785  0.000402785  0.000000000           0
+#&gt; 2 likelihood 0x104d47dc0 0.001322870  0.001002200  0.000320669        7169
+#&gt;   no_chain_stack autodiff_calls no_autodiff_calls
+#&gt; 1              0              0              1000
+#&gt; 2              0           7169                 1
+#&gt; 
+#&gt; [[2]]
+#&gt;         name   thread_id total_time forward_time reverse_time chain_stack
+#&gt; 1         gq 0x1118cadc0 0.00037295   0.00037295  0.000000000           0
+#&gt; 2 likelihood 0x1118cadc0 0.00135248   0.00103213  0.000320351        7006
+#&gt;   no_chain_stack autodiff_calls no_autodiff_calls
+#&gt; 1              0              0              1000
+#&gt; 2              0           7006                 1
+#&gt; 
+#&gt; [[3]]
+#&gt;         name   thread_id  total_time forward_time reverse_time chain_stack
+#&gt; 1         gq 0x112449dc0 0.000417121  0.000417121  0.000000000           0
+#&gt; 2 likelihood 0x112449dc0 0.001384950  0.001047380  0.000337566        7049
+#&gt;   no_chain_stack autodiff_calls no_autodiff_calls
+#&gt; 1              0              0              1000
+#&gt; 2              0           7049                 1
+#&gt; 
+#&gt; [[4]]
+#&gt;         name   thread_id  total_time forward_time reverse_time chain_stack
+#&gt; 1         gq 0x104b05dc0 0.000390676  0.000390676  0.000000000           0
+#&gt; 2 likelihood 0x104b05dc0 0.001306610  0.000993724  0.000312886        6838
+#&gt;   no_chain_stack autodiff_calls no_autodiff_calls
+#&gt; 1              0              0              1000
+#&gt; 2              0           6838                 1
+#&gt; </div><div class='input'># }
 
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -81,7 +81,7 @@ chain of MCMC." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -89,7 +89,7 @@ chain of MCMC." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -142,19 +142,19 @@ chain of MCMC." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fa fa-twitter"></span>
+    <span class="fas fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fa fa-github"></span>
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fa fa-users"></span>
+    <span class="fas fa-users"></span>
      
   </a>
 </li>
@@ -181,7 +181,10 @@ chain of MCMC." />
 chain of MCMC.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>sampler_diagnostics</span>(<span class='kw'>inc_warmup</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>sampler_diagnostics</span>(
+  <span class='kw'>inc_warmup</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>format</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"cmdstanr_draws_format"</span>, <span class='st'>"draws_array"</span>)
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -190,11 +193,17 @@ chain of MCMC.</p>
       <th>inc_warmup</th>
       <td><p>(logical) Should warmup draws be included? Defaults to <code>FALSE</code>.</p></td>
     </tr>
+    <tr>
+      <th>format</th>
+      <td><p>The draws format to return. See <a href='fit-method-draws.html'>draws</a> for
+details.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A 3-D <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> object (iteration x chain x
+    <p>Depends on <code>format</code>, but the default is a 3-D
+<code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code> object (iteration x chain x
 variable). The variables for Stan's default MCMC algorithm are
 <code>"accept_stat__"</code>, <code>"stepsize__"</code>, <code>"treedepth__"</code>, <code>"n_leapfrog__"</code>,
 <code>"divergent__"</code>, <code>"energy__"</code>.</p>
@@ -205,24 +214,39 @@ variable). The variables for Stan's default MCMC algorithm are
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>sampler_diagnostics</span> <span class='kw'>&lt;-</span> <span class='no'>fit</span>$<span class='fu'>sampler_diagnostics</span>()
-<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>sampler_diagnostics</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:6] 0.936 0.942 0.996 0.979 0.859 ...
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>sampler_diagnostics</span>)</div><div class='output co'>#&gt;  'draws_array' num [1:1000, 1:4, 1:6] 2 2 3 2 3 3 2 1 3 3 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
-#&gt;   ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</div><div class='input'>
+#&gt;   ..$ variable : chr [1:6] "treedepth__" "divergent__" "accept_stat__" "stepsize__" ...</div><div class='input'>
 <span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)
 <span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>sampler_diagnostics</span>)</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 6 variables
-#&gt;    accept_stat__ stepsize__ treedepth__ n_leapfrog__ divergent__ energy__
-#&gt; 1           0.94       0.68           3            7           0       67
-#&gt; 2           0.94       0.68           3            7           0       69
-#&gt; 3           1.00       0.68           3            7           0       66
-#&gt; 4           0.98       0.68           3            7           0       67
-#&gt; 5           0.86       0.68           3            7           0       69
-#&gt; 6           0.90       0.68           2            7           0       71
-#&gt; 7           0.96       0.68           2            7           0       69
-#&gt; 8           1.00       0.68           3            7           0       68
-#&gt; 9           0.82       0.68           3            7           0       70
-#&gt; 10          1.00       0.68           3            7           0       70
+#&gt;    treedepth__ divergent__ accept_stat__ stepsize__ n_leapfrog__ energy__
+#&gt; 1            2           0          1.00       0.72            3       66
+#&gt; 2            2           0          0.78       0.72            3       67
+#&gt; 3            3           0          0.99       0.72            7       68
+#&gt; 4            2           0          0.80       0.72            3       70
+#&gt; 5            3           0          0.95       0.72            7       69
+#&gt; 6            3           0          0.95       0.72            7       69
+#&gt; 7            2           0          0.93       0.72            3       68
+#&gt; 8            1           0          1.00       0.72            1       66
+#&gt; 9            3           0          0.92       0.72            7       67
+#&gt; 10           3           0          0.90       0.72            7       67
+#&gt; # ... with 3990 more draws
+#&gt; # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</div><div class='input'>
+<span class='co'># or specify format to get a data frame instead of calling as_draws_df</span>
+<span class='no'>fit</span>$<span class='fu'>sampler_diagnostics</span>(<span class='kw'>format</span> <span class='kw'>=</span> <span class='st'>"df"</span>)</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 6 variables
+#&gt;    treedepth__ divergent__ accept_stat__ stepsize__ n_leapfrog__ energy__
+#&gt; 1            2           0          1.00       0.72            3       66
+#&gt; 2            2           0          0.78       0.72            3       67
+#&gt; 3            3           0          0.99       0.72            7       68
+#&gt; 4            2           0          0.80       0.72            3       70
+#&gt; 5            3           0          0.95       0.72            7       69
+#&gt; 6            3           0          0.95       0.72            7       69
+#&gt; 7            2           0          0.93       0.72            3       68
+#&gt; 8            1           0          1.00       0.72            1       66
+#&gt; 9            3           0          0.92       0.72            7       67
+#&gt; 10           3           0          0.90       0.72            7       67
 #&gt; # ... with 3990 more draws
 #&gt; # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</div><div class='input'># }
 

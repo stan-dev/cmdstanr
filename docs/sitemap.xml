@@ -67,6 +67,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-output.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-profiles.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-return_codes.html</loc>
   </url>
   <url>
@@ -133,10 +136,19 @@
     <loc>https://mc-stan.org/cmdstanr/reference/write_stan_tempfile.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/articles/children/settings-knitr.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/articles/cmdstanr.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/articles/opencl.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/articles/profiling.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/articles/r-markdown.html</loc>
