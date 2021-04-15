@@ -1,3 +1,7 @@
+# cmdstanr 0.4.0.9000
+
+* Items for next release
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
