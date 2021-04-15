@@ -15,8 +15,8 @@ but currently they are only available to R users via RStan:
   - `rstan::grad_log_prob()`
   - `rstan::expose_stan_functions()`
   
-* Allows others developers to create packages like **rstanarm** with
-_pre-compiled_ Stan programs on CRAN.
+* Allows other developers to distribute R packages with
+_pre-compiled_ Stan programs (like **rstanarm**) on CRAN.
 
 ### Advantages of CmdStanR
 

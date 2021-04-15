@@ -56,8 +56,7 @@ user's installation.}
 \item{timeout}{Timeout (in seconds) for the build stage of the installation.}
 
 \item{version}{The CmdStan release version to install. The default is \code{NULL},
-which downloads the latest stable release from
-\url{https://github.com/stan-dev/cmdstan/releases}.}
+which downloads the latest stable release from \url{https://github.com/stan-dev/cmdstan/releases}.}
 
 \item{release_url}{The URL for the specific CmdStan release or
 release candidate to install. See \url{https://github.com/stan-dev/cmdstan/releases}.
@@ -90,7 +89,7 @@ the updated contents are returned.
 The \code{install_cmdstan()} function attempts to download and
 install the latest release of \href{https://github.com/stan-dev/cmdstan/releases/latest}{CmdStan}.
 Installing a previous release or a new release candidate is also possible
-by specifying the \code{release_url} argument.
+by specifying the \code{version} or \code{release_url} argument.
 See the first few sections of the CmdStan
 \href{https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html}{installation guide}
 for details on the C++ toolchain required for installing CmdStan.

@@ -40,8 +40,8 @@ of RStan but currently they are only available to R users via RStan:
 \item \code{rstan::grad_log_prob()}
 \item \code{rstan::expose_stan_functions()}
 }
-\item Allows others developers to create packages like \strong{rstanarm} with
-\emph{pre-compiled} Stan programs on CRAN.
+\item Allows other developers to distribute R packages with \emph{pre-compiled}
+Stan programs (like \strong{rstanarm}) on CRAN.
 }
 }
 

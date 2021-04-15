@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #' @details
-#' A `CmdStanArgs` object stores arguments _not_ specific to particular methods,
+#' A `CmdStanArgs` object stores arguments common to all methods,
 #' as well as one of the following objects containing the method-specific
 #' arguments:
 #'
@@ -503,7 +503,7 @@ validate_cmdstan_args = function(self) {
     if (cmdstan_version() < "2.25") {
       stop("Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer.", call. = FALSE)
     }
-    checkmate::assert_vector(self$opencl_ids, len = 2)    
+    checkmate::assert_vector(self$opencl_ids, len = 2)
   }
   invisible(TRUE)
 }

@@ -40,7 +40,6 @@ write_stan_json <- function(data, file) {
     data[[var_name]] <- var
   }
 
-  # call to write JSON with
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
   # handling factors as integers
   jsonlite::write_json(
