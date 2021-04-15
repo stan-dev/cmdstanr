@@ -18,18 +18,28 @@ files. (#414)
 
 * Faster CSV reading for multiple chains. (#419)
 
-* New `profiles()` method for fitted model objects accesses profiling
+* New `$profiles()` method for fitted model objects accesses profiling
 information from R if profiling used in the Stan program. Support for profiling
 Stan programs requires CmdStan >= 2.26. (#434)
 
 * New vignette on profiling Stan programs. (#435)
 
-* New check for invalid parameter names when supplying init values. (#452)
+* New vignette on running Stan on the GPU with OpenCL. OpenCL device ids can 
+now also be specified at runtime. (#439)
+
+* New check for invalid parameter names when supplying init values. (#452, @mike-lawrence)
 
 * Suppressing compilation messages when not in interactive mode. (#462, @wlandau)
 
 * New `error_on_NA` argument for `cmdstan_version()` to optionally return `NULL`
 (instead of erroring) if the CmdStan path is not found (#467, @wlandau).
+
+* Global option `cmdstanr_max_rows` can be set as an alternative to specifying 
+`max_rows` argument to the `$print()` method. (#470)
+
+* New `output_basename` argument for the model fitting methods. Can be used in
+conjunction with `output_dir` to get completely predictable output CSV file
+paths. (#471)
 
 * New `format` argument for `$draws()`, `$sampler_diagnostics()`,
 `read_cmdstan_csv()`, and `as_cmdstan_fit`(). This controls the format of the
