@@ -122,7 +122,7 @@ the device ID.
 
 ```{r fit-opencl}
 fit_cl <- mod_cl$sample(data = mdata, chains = 4, parallel_chains = 4,
-                        opencl_ids = c(0, 0))
+                        opencl_ids = c(0, 0), refresh = 0)
 ```
 
 We'll also run a version without OpenCL and compare the run times. 
