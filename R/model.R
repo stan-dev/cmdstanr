@@ -698,6 +698,7 @@ sample <- function(data = NULL,
                    parallel_chains = getOption("mc.cores", 1),
                    chain_ids = seq_len(chains),
                    threads_per_chain = NULL,
+                   opencl_ids = NULL,
                    iter_warmup = NULL,
                    iter_sampling = NULL,
                    save_warmup = FALSE,
@@ -782,6 +783,7 @@ sample <- function(data = NULL,
            call. = FALSE)
     }
   }
+  check_opencl(self$cpp_options(), opencl_ids)
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
     iter_sampling = iter_sampling,
@@ -812,7 +814,8 @@ sample <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    validate_csv = validate_csv
+    validate_csv = validate_csv,
+    opencl_ids = opencl_ids
   )
   cmdstan_procs <- CmdStanMCMCProcs$new(
     num_procs = chains,
@@ -1021,6 +1024,7 @@ optimize <- function(data = NULL,
                      output_basename = NULL,
                      sig_figs = NULL,
                      threads = NULL,
+                     opencl_ids = NULL,
                      algorithm = NULL,
                      init_alpha = NULL,
                      iter = NULL,
@@ -1045,6 +1049,7 @@ optimize <- function(data = NULL,
            call. = FALSE)
     }
   }
+  check_opencl(self$cpp_options(), opencl_ids)
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
@@ -1068,7 +1073,8 @@ optimize <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
-    sig_figs = sig_figs
+    sig_figs = sig_figs,
+    opencl_ids = opencl_ids
   )
 
   cmdstan_procs <- CmdStanProcs$new(
@@ -1143,6 +1149,7 @@ variational <- function(data = NULL,
                         output_basename = NULL,
                         sig_figs = NULL,
                         threads = NULL,
+                        opencl_ids = NULL,
                         algorithm = NULL,
                         iter = NULL,
                         grad_samples = NULL,
@@ -1168,6 +1175,7 @@ variational <- function(data = NULL,
            call. = FALSE)
     }
   }
+  check_opencl(self$cpp_options(), opencl_ids)
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -1192,7 +1200,8 @@ variational <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
-    sig_figs = sig_figs
+    sig_figs = sig_figs,
+    opencl_ids = opencl_ids
   )
 
   cmdstan_procs <- CmdStanProcs$new(
@@ -1278,7 +1287,8 @@ generate_quantities <- function(fitted_params,
                                 output_basename = NULL,
                                 sig_figs = NULL,
                                 parallel_chains = getOption("mc.cores", 1),
-                                threads_per_chain = NULL) {
+                                threads_per_chain = NULL,
+                                opencl_ids = NULL) {
   checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
   checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
   if (is.null(self$cpp_options()[["stan_threads"]])) {
@@ -1295,7 +1305,7 @@ generate_quantities <- function(fitted_params,
            call. = FALSE)
     }
   }
-
+  check_opencl(self$cpp_options(), opencl_ids)
   fitted_params <- process_fitted_params(fitted_params)
   chains <- length(fitted_params)
   generate_quantities_args <- GenerateQuantitiesArgs$new(
@@ -1310,7 +1320,8 @@ generate_quantities <- function(fitted_params,
     seed = seed,
     output_dir = output_dir,
     output_basename = output_basename,
-    sig_figs = sig_figs
+    sig_figs = sig_figs,
+    opencl_ids = opencl_ids
   )
   cmdstan_procs <- CmdStanGQProcs$new(
     num_procs = chains,
@@ -1322,3 +1333,13 @@ generate_quantities <- function(fitted_params,
   CmdStanGQ$new(runset)
 }
 CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities)
+
+
+check_opencl <- function(cpp_options, opencl_ids) {
+  if (is.null(cpp_options[["stan_opencl"]])
+      && !is.null(opencl_ids)) {
+     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+           "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
+           call. = FALSE)   
+  }
+}

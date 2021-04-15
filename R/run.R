@@ -824,9 +824,6 @@ CmdStanMCMCProcs <- R6::R6Class(
             state <- 1.5
             next_state <- 1.5
           }
-          if (state < 3 && grepl("profile_file =", line, perl = TRUE)) {
-            next_state <- 3
-          }
           if (state <= 3 && grepl("Rejecting initial value:", line, perl = TRUE)) {
             state <- 2
             next_state <- 2

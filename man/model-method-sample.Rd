@@ -18,6 +18,7 @@ sample(
   parallel_chains = getOption("mc.cores", 1),
   chain_ids = seq_len(chains),
   threads_per_chain = NULL,
+  opencl_ids = NULL,
   iter_warmup = NULL,
   iter_sampling = NULL,
   save_warmup = FALSE,
@@ -153,6 +154,11 @@ contrast with \code{parallel_chains}, which specifies the number of chains to
 run in parallel. The actual number of CPU cores used use is
 \code{parallel_chains*threads_per_chain}. For an example of using threading see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
+
+\item{opencl_ids}{(integer vector of length 2) The platform and
+device IDs of the OpenCL device to use for fitting. The model must
+be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
+argument to have an effect.}
 
 \item{iter_warmup}{(positive integer) The number of warmup iterations to run
 per chain. Note: in the CmdStan User's Guide this is referred to as
