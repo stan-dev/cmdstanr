@@ -40,8 +40,10 @@ You can install the latest beta release of the **cmdstanr** R package with
 # we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
+This does not install the vignettes, which take a long time to build, but they are always available
+online at https://mc-stan.org/cmdstanr/articles/.
 
-or you can install the latest development version from GitHub:
+To instead install the latest development version of the package from GitHub use
 
 ```r
 # install.packages("remotes")
