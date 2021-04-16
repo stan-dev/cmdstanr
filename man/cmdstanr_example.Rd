@@ -25,7 +25,8 @@ divergences.
 model that fixes the problem with divergences.
 }
 
-To print the Stan code for a given example use \code{print_example_program()}.}
+To print the Stan code for a given \code{example} use
+\code{print_example_program(example)}.}
 
 \item{method}{Which fitting method should be used? The default is the
 \code{"sample"} method (MCMC).}

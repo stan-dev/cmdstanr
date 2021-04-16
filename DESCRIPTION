@@ -1,6 +1,6 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.4.0
+Version: 0.4.0.9000
 Date: 2021-04-15
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
@@ -16,8 +16,7 @@ Authors@R:
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command 
     line interface for compilation and running algorithms instead of interfacing 
-    with C++ via 'Rcpp'. Methods are provided for conveniently reading the 
-    results into R.
+    with C++ via 'Rcpp'.
 License: BSD_3_clause + file LICENSE
 URL: https://mc-stan.org/cmdstanr, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues

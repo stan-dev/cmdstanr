@@ -953,7 +953,7 @@ CmdStanMCMC <- R6::R6Class(
 #' @param variables (character vector) The name(s) of the variable(s) in the
 #'   Stan program containing the pointwise log-likelihood. The default is to
 #'   look for `"log_lik"`. This argument is passed to the
-#'   [`$draws()][fit-method-draws] method.
+#'   [`$draws()`][fit-method-draws] method.
 #' @param r_eff There are several options:
 #'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
 #'   to compute the `r_eff` argument to pass to [loo::loo.array()].

@@ -9,7 +9,8 @@
 #'   * `"schools_ncp"`: non-centered parameterization of the "eight schools"
 #'   model that fixes the problem with divergences.
 #'
-#'   To print the Stan code for a given example use `print_example_program()`.
+#'   To print the Stan code for a given `example` use
+#'   `print_example_program(example)`.
 #'
 #' @param method Which fitting method should be used? The default is the
 #'   `"sample"` method (MCMC).

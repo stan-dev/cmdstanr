@@ -3,7 +3,7 @@
 #' @description The `install_cmdstan()` function attempts to download and
 #'   install the latest release of [CmdStan](https://github.com/stan-dev/cmdstan/releases/latest).
 #'   Installing a previous release or a new release candidate is also possible
-#'   by specifying the `release_url` argument.
+#'   by specifying the `version` or `release_url` argument.
 #'   See the first few sections of the CmdStan
 #'   [installation guide](https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html)
 #'   for details on the C++ toolchain required for installing CmdStan.
@@ -39,8 +39,7 @@
 #'   user's installation.
 #' @param timeout Timeout (in seconds) for the build stage of the installation.
 #' @param version The CmdStan release version to install. The default is `NULL`,
-#'   which downloads the latest stable release from
-#'   <https://github.com/stan-dev/cmdstan/releases>.
+#'   which downloads the latest stable release from <https://github.com/stan-dev/cmdstan/releases>.
 #' @param release_url The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
 #'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
@@ -289,7 +288,7 @@ download_with_retries <- function(download_url,
                                   retries = 5,
                                   pause_sec = 5,
                                   quiet = TRUE) {
-        
+
     download_rc <- 1
     while (retries > 0 && download_rc != 0) {
       try(

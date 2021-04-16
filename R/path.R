@@ -24,11 +24,11 @@
 #' the \R session.
 #' * If no environment variable is found when loaded but any directory in the form
 #' `".cmdstanr/cmdstan-[version]"`, for example `".cmdstanr/cmdstan-2.23.0"`,
-#' exists in the user's home directory (`Sys.getenv("HOME")`,
-#' *not* the current working directory) then the path to the cmdstan with the largest
-#' version number will be set as the path to CmdStan for the \R session.
-#' This is the same as the default directory that [install_cmdstan()] would use to
-#' install the latest version of CmdStan.
+#' exists in the user's home directory (`Sys.getenv("HOME")`, *not* the current
+#' working directory) then the path to the cmdstan with the largest version
+#' number will be set as the path to CmdStan for the \R session. This is the
+#' same as the default directory that [install_cmdstan()] would use to install
+#' the latest version of CmdStan.
 #'
 #' It is always possible to change the path after loading the package using
 #' `set_cmdstan_path(path)`.
@@ -53,22 +53,18 @@ set_cmdstan_path <- function(path = NULL) {
 cmdstan_path <- function() {
   path <- .cmdstanr$PATH %||% stop_no_path()
   path <- repair_path(path)
-
   if (is.null(.cmdstanr$VERSION)) {
     .cmdstanr$VERSION <- read_cmdstan_version(path)
   }
-
   path
 }
 
 #' @rdname set_cmdstan_path
 #' @export
-#' @return CmdStan version string if available. If CmdStan
-#'   is not found and `error_on_NA` is `FALSE`,
-#'   `cmdstan_version()` returns `NULL`.
-#' @param error_on_NA Logical of length 1, whether to
-#'   throw an error if CmdStan is not found.
-#'   If `FALSE`, `cmdstan_version()` returns `NULL`.
+#' @param error_on_NA Logical of length 1, whether to throw an error if CmdStan
+#'   is not found. If `FALSE`, `cmdstan_version()` returns `NULL`.
+#' @return CmdStan version string if available. If CmdStan is not found and
+#'   `error_on_NA` is `FALSE`, `cmdstan_version()` returns `NULL`.
 cmdstan_version <- function(error_on_NA = TRUE) {
   version <- .cmdstanr$VERSION
   if (is.null(version) && error_on_NA) {

@@ -11,7 +11,7 @@ loo(variables = "log_lik", r_eff = TRUE, ...)
 \item{variables}{(character vector) The name(s) of the variable(s) in the
 Stan program containing the pointwise log-likelihood. The default is to
 look for \code{"log_lik"}. This argument is passed to the
-\link[=fit-method-draws]{`$draws()} method.}
+\code{\link[=fit-method-draws]{$draws()}} method.}
 
 \item{r_eff}{There are several options:
 \itemize{
