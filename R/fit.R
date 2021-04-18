@@ -351,6 +351,10 @@ lp <- function() {
 }
 CmdStanFit$set("public", name = "lp", value = lp)
 
+lp_diagnose <- function() {
+  as.numeric(self$metadata()$lp)
+}
+CmdStanDiagnose$set("public", name = "lp", value = lp_diagnose)
 
 #' Compute a summary table of estimates and diagnostics
 #'
