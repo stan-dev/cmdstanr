@@ -7,7 +7,7 @@
 \usage{
 cmdstanr_example(
   example = c("logistic", "schools", "schools_ncp"),
-  method = c("sample", "optimize", "variational"),
+  method = c("sample", "optimize", "variational", "diagnose"),
   ...,
   quiet = TRUE
 )
