@@ -1371,8 +1371,7 @@ diagnose_method <- function(data = NULL,
                             seed = NULL,
                             init = NULL,
                             output_dir = NULL,
-                            output_basename = NULL,
-                            sig_figs = NULL) {
+                            output_basename = NULL) {
   diagnose_args <- DiagnoseArgs$new(
     epsilon = epsilon,
     error = error
@@ -1386,8 +1385,7 @@ diagnose_method <- function(data = NULL,
     seed = seed,
     init = init,
     output_dir = output_dir,
-    output_basename = output_basename,
-    sig_figs = sig_figs
+    output_basename = output_basename
   )
   cmdstan_procs <- CmdStanProcs$new(
     num_procs = 1,
