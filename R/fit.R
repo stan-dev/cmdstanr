@@ -66,6 +66,27 @@ CmdStanFit <- R6::R6Class(
   )
 )
 
+#' Extract gradients of the diagnostic
+#'
+#' @name fit-method-gradients
+#' @aliases init
+#' @description Return the data frame containing the gradients
+#'   for all parameters in the 
+#'
+#' @return A list of lists. See **Examples**.
+#'
+#' @seealso [`CmdStanDiagnose`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic", method = "diagnose")
+#'
+#' # retrieve the log of the probability density/mass function
+#' fit$lp()
+#' # retrieve the gradients
+#' fit$gradients()
+#' }
+#'
 CmdStanDiagnose <- R6::R6Class(
   classname = "CmdStanDiagnose",
   public = list(
@@ -83,23 +104,6 @@ CmdStanDiagnose <- R6::R6Class(
     },
     gradients = function() {
       private$gradients_
-    },
-    print = function(digits = 2, max_rows = getOption("cmdstanr_max_rows", 10)) {
-      total_rows <- dim(private$gradients_)[1]
-      if (max_rows < total_rows) {
-        tmp_max_rows <- max_rows
-      } else {
-        tmp_max_rows <- total_rows
-      }
-      out <- private$gradients_[1:tmp_max_rows,]
-      out[,  1] <- format(out[, 1], justify = "left")
-      out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)      
-      base::print(out, row.names = FALSE)
-      if (max_rows < total_rows) {
-        cat("\n # showing", max_rows, "of", total_rows,
-            "rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)\n")
-      }
-      invisible(self)
     }
   ),
   private = list(
