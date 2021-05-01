@@ -3,7 +3,7 @@
 \name{fit-method-gradients}
 \alias{fit-method-gradients}
 \alias{CmdStanDiagnose}
-\alias{init}
+\alias{gradients}
 \title{Extract gradients of the diagnostic}
 \value{
 A list of lists. See \strong{Examples}.
@@ -16,8 +16,6 @@ for all parameters in the
 \dontrun{
 fit <- cmdstanr_example("logistic", method = "diagnose")
 
-# retrieve the log of the probability density/mass function
-fit$lp()
 # retrieve the gradients
 fit$gradients()
 }

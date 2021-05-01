@@ -69,7 +69,7 @@ CmdStanFit <- R6::R6Class(
 #' Extract gradients of the diagnostic
 #'
 #' @name fit-method-gradients
-#' @aliases init
+#' @aliases gradients
 #' @description Return the data frame containing the gradients
 #'   for all parameters in the 
 #'
@@ -81,8 +81,6 @@ CmdStanFit <- R6::R6Class(
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic", method = "diagnose")
 #'
-#' # retrieve the log of the probability density/mass function
-#' fit$lp()
 #' # retrieve the gradients
 #' fit$gradients()
 #' }
