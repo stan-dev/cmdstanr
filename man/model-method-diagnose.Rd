@@ -17,10 +17,76 @@ diagnose_method(
 )
 }
 \arguments{
+\item{data}{(multiple options) The data to use for the variables specified in
+the \code{data} block of the Stan program. One of the following:
+\itemize{
+\item A named list of \R objects (like for RStan). Internally this list is then
+written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
+\item A path to a data file compatible with CmdStan (JSON or \R dump). See the
+appendices in the CmdStan manual for details on using these formats.
+\item \code{NULL} or an empty list if the Stan program has no \code{data} block.
+}}
+
 \item{epsilon}{(positive real) The finite difference step size. Default
 value is 1e-6.}
 
 \item{error}{(positive real)  The error threshold. Default value is 1e-6.}
+
+\item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
+In the case of multi-chain sampling the single \code{seed} will automatically be
+augmented by the the run (chain) ID so that each chain uses a different
+seed. The exception is the \verb{transformed data} block, which defaults to
+using same seed for all chains so that the same data is generated for all
+chains if RNG functions are used. The only time \code{seed} should be specified
+as a vector (one element per chain) is if RNG functions are used in
+\verb{transformed data} and the goal is to generate \emph{different} data for each
+chain.}
+
+\item{init}{(multiple options) The initialization method to use for the
+variables declared in the \code{parameters} block of the Stan program:
+\itemize{
+\item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
+\verb{[-x,x]} (on the \emph{unconstrained} parameter space);
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0};
+\item A character vector of paths (one per chain) to JSON or Rdump files
+containing initial values for all or some parameters. See
+\code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
+CmdStan.
+\item A list of lists containing initial values for all or some parameters. For
+MCMC the list should contain a sublist for each chain. For optimization and
+variational inference there should be just one sublist. The sublists should
+have named elements corresponding to the parameters for which you are
+specifying initial values. See \strong{Examples}.
+\item A function that returns a single list with names corresponding to the
+parameters for which you are specifying initial values. The function can
+take no arguments or a single argument \code{chain_id}. For MCMC, if the function
+has argument \code{chain_id} it will be supplied with the chain id (from 1 to
+number of chains) when called to generate the initial values. See
+\strong{Examples}.
+}}
+
+\item{output_dir}{(string) A path to a directory where CmdStan should write
+its output CSV files. For interactive use this can typically be left at
+\code{NULL} (temporary directory) since CmdStanR makes the CmdStan output
+(posterior draws and diagnostics) available in \R via methods of the fitted
+model objects. The behavior of \code{output_dir} is as follows:
+\itemize{
+\item If \code{NULL} (the default), then the CSV files are written to a temporary
+directory and only saved permanently if the user calls one of the \verb{$save_*}
+methods of the fitted model object (e.g.,
+\code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
+files are removed when the fitted model object is
+\link[base:gc]{garbage collected} (manually or automatically).
+\item If a path, then the files are created in \code{output_dir} with names
+corresponding to the defaults used by \verb{$save_output_files()}.
+}}
+
+\item{output_basename}{(string) A string to use as a prefix for the
+names of the output CSV files of CmdStan.
+\itemize{
+\item If \code{NULL} (the default), the basename of the output CSV files
+will be comprised from the model name, timestamp and 5 random characters.
+}}
 }
 \value{
 A \code{\link{CmdStanDiagnose}} object.

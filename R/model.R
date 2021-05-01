@@ -1355,7 +1355,7 @@ check_opencl <- function(cpp_options, opencl_ids) {
 #'   finite differences. Discrepancies between the two indicate that there is
 #'   a problem with the model or initial states or else there is a bug in Stan.
 #'
-#' @inheritParams model-method-diagnose
+#' @inheritParams model-method-sample
 #' @param epsilon (positive real) The finite difference step size. Default
 #'   value is 1e-6.
 #' @param error (positive real)  The error threshold. Default value is 1e-6.
