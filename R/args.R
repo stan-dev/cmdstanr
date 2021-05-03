@@ -13,7 +13,8 @@
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
-#' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`.
+#' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`
+#' * `DiagnoseArgs`: stores arguments specific to `method=diagnose`
 #'
 CmdStanArgs <- R6::R6Class(
   "CmdStanArgs",
@@ -482,7 +483,7 @@ DiagnoseArgs <- R6::R6Class(
       invisible(self)
     },
 
-    # Compose arguments to CmdStan command for generate_quantities method
+    # Compose arguments to CmdStan command for diagnose method
     compose = function(idx = NULL, args = NULL) {
       .make_arg <- function(arg_name, cmdstan_arg_name = NULL, idx = NULL) {
         compose_arg(self, arg_name = arg_name, cmdstan_arg_name = cmdstan_arg_name, idx = idx)
