@@ -1339,7 +1339,7 @@ check_opencl <- function(cpp_options, opencl_ids) {
       && !is.null(opencl_ids)) {
      stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
            "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
-           call. = FALSE)   
+           call. = FALSE)
   }
 }
 
@@ -1363,11 +1363,11 @@ check_opencl <- function(cpp_options, opencl_ids) {
 #' @return A [`CmdStanDiagnose`] object.
 #'
 #' @template seealso-docs
-#' @inherit cmdstan_model examples
+#' @inherit CmdStanDiagnose examples
 #'
 diagnose_method <- function(data = NULL,
                             epsilon = NULL,
-                            error = NULL,                            
+                            error = NULL,
                             seed = NULL,
                             init = NULL,
                             output_dir = NULL,
@@ -1394,7 +1394,7 @@ diagnose_method <- function(data = NULL,
   )
   runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
   runset$run_cmdstan()
-  
+
   CmdStanDiagnose$new(runset)
 }
 CmdStanModel$set("public", name = "diagnose", value = diagnose_method)

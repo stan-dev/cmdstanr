@@ -16,10 +16,10 @@ parameters.
 }
 \examples{
 \dontrun{
-fit <- cmdstanr_example("logistic", method = "diagnose")
+test <- cmdstanr_example("logistic", method = "diagnose")
 
 # retrieve the gradients
-fit$gradients()
+test$gradients()
 }
 
 }

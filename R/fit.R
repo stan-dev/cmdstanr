@@ -1416,6 +1416,8 @@ CmdStanGQ <- R6::R6Class(
 
 # CmdStan Diagnose --------------------------------------------------------
 #' CmdStanDiagnose objects
+#'
+#' @name CmdStanDiagnose
 #' @family fitted model objects
 #' @template seealso-docs
 #'
@@ -1433,6 +1435,14 @@ CmdStanGQ <- R6::R6Class(
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
+#'
+#' @examples
+#' \dontrun{
+#' test <- cmdstanr_example("logistic", method = "diagnose")
+#'
+#' # retrieve the gradients
+#' test$gradients()
+#' }
 #'
 CmdStanDiagnose <- R6::R6Class(
   classname = "CmdStanDiagnose",
@@ -1467,14 +1477,7 @@ CmdStanDiagnose <- R6::R6Class(
 #' @return A list of lists. See **Examples**.
 #'
 #' @seealso [`CmdStanDiagnose`]
-#'
-#' @examples
-#' \dontrun{
-#' fit <- cmdstanr_example("logistic", method = "diagnose")
-#'
-#' # retrieve the gradients
-#' fit$gradients()
-#' }
+#' @inherit CmdStanDiagnose examples
 #'
 gradients <- function() {
   private$gradients_

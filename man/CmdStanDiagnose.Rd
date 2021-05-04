@@ -20,6 +20,15 @@ methods:\tabular{ll}{
 }
 }
 
+\examples{
+\dontrun{
+test <- cmdstanr_example("logistic", method = "diagnose")
+
+# retrieve the gradients
+test$gradients()
+}
+
+}
 \seealso{
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online

@@ -1,6 +1,7 @@
 # cmdstanr 0.4.0.9000
 
-* Items for next release
+* Expose CmdStan's `diagnose` method that compares Stan's gradient computations
+to gradients computed via finite differences. (#485)
 
 # cmdstanr 0.4.0
 
