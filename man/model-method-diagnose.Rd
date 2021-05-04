@@ -8,12 +8,12 @@
 \usage{
 diagnose_method(
   data = NULL,
-  epsilon = NULL,
-  error = NULL,
   seed = NULL,
   init = NULL,
   output_dir = NULL,
-  output_basename = NULL
+  output_basename = NULL,
+  epsilon = NULL,
+  error = NULL
 )
 }
 \arguments{
@@ -26,11 +26,6 @@ written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json(
 appendices in the CmdStan manual for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no \code{data} block.
 }}
-
-\item{epsilon}{(positive real) The finite difference step size. Default
-value is 1e-6.}
-
-\item{error}{(positive real)  The error threshold. Default value is 1e-6.}
 
 \item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
 In the case of multi-chain sampling the single \code{seed} will automatically be
@@ -87,6 +82,11 @@ names of the output CSV files of CmdStan.
 \item If \code{NULL} (the default), the basename of the output CSV files
 will be comprised from the model name, timestamp and 5 random characters.
 }}
+
+\item{epsilon}{(positive real) The finite difference step size. Default
+value is 1e-6.}
+
+\item{error}{(positive real)  The error threshold. Default value is 1e-6.}
 }
 \value{
 A \code{\link{CmdStanDiagnose}} object.
