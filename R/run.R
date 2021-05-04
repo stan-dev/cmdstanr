@@ -307,14 +307,7 @@ check_target_exe <- function(exe) {
     }
     mpi_args[["exe"]] <- self$exe_file()
   }
-  # add path to the TBB library to the PATH variable
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }
-  }
+  check_tbb_path()
   if (procs$num_procs() == 1) {
     start_msg <- "Running MCMC with 1 chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
@@ -389,15 +382,7 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 .run_generate_quantities <- function() {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-
-  # add path to the TBB library to the PATH variable
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }
-  }
+  check_tbb_path()
   if (procs$num_procs() == 1) {
     start_msg <- "Running standalone generated quantities after 1 MCMC chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
@@ -456,14 +441,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 
 .run_other <- function() {
   procs <- self$procs
-  # add path to the TBB library to the PATH variable
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }
-  }
+  check_tbb_path()
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
   }
@@ -511,14 +489,7 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs
-  # add path to the TBB library to the PATH variable
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }
-  }
+  check_tbb_path()
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
   }
@@ -1068,3 +1039,14 @@ CmdStanGQProcs <- R6::R6Class(
     }
   )
 )
+
+# add path to the TBB library to the PATH variable
+check_tbb_path <- function() {
+  if (cmdstan_version() >= "2.21" && os_is_windows()) {
+    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
+    current_path <- Sys.getenv("PATH")
+    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
+      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+    }
+  }
+}
