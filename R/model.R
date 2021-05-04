@@ -1366,12 +1366,12 @@ check_opencl <- function(cpp_options, opencl_ids) {
 #' @inherit CmdStanDiagnose examples
 #'
 diagnose_method <- function(data = NULL,
-                            epsilon = NULL,
-                            error = NULL,
                             seed = NULL,
                             init = NULL,
                             output_dir = NULL,
-                            output_basename = NULL) {
+                            output_basename = NULL,
+                            epsilon = NULL,
+                            error = NULL) {
   diagnose_args <- DiagnoseArgs$new(
     epsilon = epsilon,
     error = error
