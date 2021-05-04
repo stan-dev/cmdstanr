@@ -475,7 +475,7 @@ compile <- function(quiet = TRUE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  if (!is.null(cpp_options$stan_opencl)) {
+  if (isTRUE(cpp_options$stan_opencl)) {
     stanc_options[["use-opencl"]] <- TRUE
   }
   if (is.null(stanc_options[["name"]])) {
@@ -1340,6 +1340,6 @@ check_opencl <- function(cpp_options, opencl_ids) {
       && !is.null(opencl_ids)) {
      stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
            "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
-           call. = FALSE)   
+           call. = FALSE)
   }
 }
