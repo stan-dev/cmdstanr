@@ -389,13 +389,13 @@ compile <- function(quiet = TRUE,
   }
 
   exe_suffix <- NULL
-  if (!is.null(cpp_options$stan_threads)) {
+  if (isTRUE(cpp_options$stan_threads)) {
     exe_suffix <- c(exe_suffix, "threads")
   }
-  if (!is.null(cpp_options$stan_mpi)) {
+  if (isTRUE(cpp_options$stan_mpi)) {
     exe_suffix <- c(exe_suffix, "mpi")
   }
-  if (!is.null(cpp_options$stan_opencl)) {
+  if (isTRUE(cpp_options$stan_opencl)) {
     exe_suffix <- c(exe_suffix, "opencl")
   }
   exe_suffix <- paste0(exe_suffix, collapse = "_")
@@ -475,7 +475,7 @@ compile <- function(quiet = TRUE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  if (!is.null(cpp_options$stan_opencl)) {
+  if (isTRUE(cpp_options$stan_opencl)) {
     stanc_options[["use-opencl"]] <- TRUE
   }
   if (is.null(stanc_options[["name"]])) {
@@ -1340,6 +1340,6 @@ check_opencl <- function(cpp_options, opencl_ids) {
       && !is.null(opencl_ids)) {
      stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
            "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
-           call. = FALSE)   
+           call. = FALSE)
   }
 }
