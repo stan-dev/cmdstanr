@@ -2,15 +2,17 @@
 % Please edit documentation in R/fit.R
 \name{fit-method-gradients}
 \alias{fit-method-gradients}
-\alias{CmdStanDiagnose}
 \alias{gradients}
-\title{Extract gradients of the diagnostic}
+\title{Extract gradients after diagnostic mode}
+\usage{
+gradients()
+}
 \value{
 A list of lists. See \strong{Examples}.
 }
 \description{
-Return the data frame containing the gradients
-for all parameters in the
+Return the data frame containing the gradients for all
+parameters.
 }
 \examples{
 \dontrun{

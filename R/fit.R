@@ -66,51 +66,6 @@ CmdStanFit <- R6::R6Class(
   )
 )
 
-#' Extract gradients of the diagnostic
-#'
-#' @name fit-method-gradients
-#' @aliases gradients
-#' @description Return the data frame containing the gradients
-#'   for all parameters in the 
-#'
-#' @return A list of lists. See **Examples**.
-#'
-#' @seealso [`CmdStanDiagnose`]
-#'
-#' @examples
-#' \dontrun{
-#' fit <- cmdstanr_example("logistic", method = "diagnose")
-#'
-#' # retrieve the gradients
-#' fit$gradients()
-#' }
-#'
-CmdStanDiagnose <- R6::R6Class(
-  classname = "CmdStanDiagnose",
-  public = list(
-    runset = NULL,
-    initialize = function(runset) {
-      checkmate::assert_r6(runset, classes = "CmdStanRun")
-      self$runset <- runset
-      csv_data <- read_cmdstan_csv(self$runset$output_files())
-      private$metadata_ <- csv_data$metadata
-      private$gradients_ <- csv_data$gradients
-      invisible(self)
-    },
-    metadata = function() {
-      private$metadata_
-    },
-    gradients = function() {
-      private$gradients_
-    }
-  ),
-  private = list(
-    metadata_ = NULL,
-    gradients_ = NULL,
-    init_ = NULL    
-  )
-)
-
 #' Save fitted model object to a file
 #'
 #' @name fit-method-save_object
@@ -295,7 +250,6 @@ init <- function() {
   private$init_
 }
 CmdStanFit$set("public", name = "init", value = init)
-CmdStanDiagnose$set("public", name = "init", value = init)
 
 #' Extract log probability (target)
 #'
@@ -352,11 +306,6 @@ lp <- function() {
   as.numeric(lp__)
 }
 CmdStanFit$set("public", name = "lp", value = lp)
-
-lp_diagnose <- function() {
-  as.numeric(self$metadata()$lp)
-}
-CmdStanDiagnose$set("public", name = "lp", value = lp_diagnose)
 
 #' Compute a summary table of estimates and diagnostics
 #'
@@ -546,7 +495,6 @@ save_output_files <- function(dir = ".",
   self$runset$save_output_files(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_output_files", value = save_output_files)
-CmdStanDiagnose$set("public", name = "save_output_files", value = save_output_files)
 
 #' @rdname fit-method-save_output_files
 save_latent_dynamics_files <- function(dir = ".",
@@ -574,8 +522,6 @@ save_data_file <- function(dir = ".",
   self$runset$save_data_file(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
-CmdStanDiagnose$set("public", name = "save_data_file", value = save_data_file)
-
 
 #' @rdname fit-method-save_output_files
 #' @param include_failed Should CmdStan runs that failed also be included? The
@@ -584,7 +530,6 @@ output_files <- function(include_failed = FALSE) {
   self$runset$output_files(include_failed)
 }
 CmdStanFit$set("public", name = "output_files", value = output_files)
-CmdStanDiagnose$set("public", name = "output_files", value = output_files)
 
 #' @rdname fit-method-save_output_files
 profile_files <- function(include_failed = FALSE) {
@@ -603,7 +548,7 @@ data_file <- function() {
   self$runset$data_file()
 }
 CmdStanFit$set("public", name = "data_file", value = data_file)
-CmdStanDiagnose$set("public", name = "data_file", value = data_file)
+
 
 #' Report timing of CmdStan runs
 #'
@@ -1468,3 +1413,81 @@ CmdStanGQ <- R6::R6Class(
   )
 )
 
+
+# CmdStan Diagnose --------------------------------------------------------
+#' CmdStanDiagnose objects
+#' @family fitted model objects
+#' @template seealso-docs
+#'
+#' @description A `CmdStanDiagnose` object is the object returned by the
+#'   [`$diagnose()`][model-method-diagnose] method of a [`CmdStanModel`] object.
+#'
+#' @section Methods: `CmdStanDiagnose` objects have the following associated
+#'   methods:
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$gradients()`][fit-method-gradients] |  Return gradients from diagnostic mode. |
+#'  [`$lp()`][fit-method-lp] |  Return the total log probability density (`target`). |
+#'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
+#'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
+#'
+CmdStanDiagnose <- R6::R6Class(
+  classname = "CmdStanDiagnose",
+  public = list(
+    runset = NULL,
+    initialize = function(runset) {
+      checkmate::assert_r6(runset, classes = "CmdStanRun")
+      self$runset <- runset
+      csv_data <- read_cmdstan_csv(self$runset$output_files())
+      private$metadata_ <- csv_data$metadata
+      private$gradients_ <- csv_data$gradients
+      invisible(self)
+    },
+    metadata = function() {
+      private$metadata_
+    }
+  ),
+  private = list(
+    metadata_ = NULL,
+    gradients_ = NULL,
+    init_ = NULL
+  )
+)
+
+#' Extract gradients after diagnostic mode
+#'
+#' @name fit-method-gradients
+#' @aliases gradients
+#' @description Return the data frame containing the gradients for all
+#'   parameters.
+#'
+#' @return A list of lists. See **Examples**.
+#'
+#' @seealso [`CmdStanDiagnose`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic", method = "diagnose")
+#'
+#' # retrieve the gradients
+#' fit$gradients()
+#' }
+#'
+gradients <- function() {
+  private$gradients_
+}
+
+lp_diagnose <- function() {
+  as.numeric(self$metadata()$lp)
+}
+
+CmdStanDiagnose$set("public", name = "gradients", value = gradients)
+CmdStanDiagnose$set("public", name = "lp", value = lp_diagnose)
+CmdStanDiagnose$set("public", name = "init", value = init)
+CmdStanDiagnose$set("public", name = "save_output_files", value = save_output_files)
+CmdStanDiagnose$set("public", name = "output_files", value = output_files)
+CmdStanDiagnose$set("public", name = "save_data_file", value = save_data_file)
+CmdStanDiagnose$set("public", name = "data_file", value = data_file)
