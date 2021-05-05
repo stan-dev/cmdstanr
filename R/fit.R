@@ -1454,6 +1454,7 @@ CmdStanDiagnose <- R6::R6Class(
       csv_data <- read_cmdstan_csv(self$runset$output_files())
       private$metadata_ <- csv_data$metadata
       private$gradients_ <- csv_data$gradients
+      private$lp_ <- csv_data$lp
       invisible(self)
     },
     metadata = function() {
@@ -1463,6 +1464,7 @@ CmdStanDiagnose <- R6::R6Class(
   private = list(
     metadata_ = NULL,
     gradients_ = NULL,
+    lp_ = NULL,
     init_ = NULL
   )
 )
@@ -1484,7 +1486,7 @@ gradients <- function() {
 }
 
 lp_diagnose <- function() {
-  as.numeric(self$metadata()$lp)
+  as.numeric(private$lp_)
 }
 
 CmdStanDiagnose$set("public", name = "gradients", value = gradients)

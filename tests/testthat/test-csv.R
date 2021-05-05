@@ -754,3 +754,17 @@ test_that("read_cmdstan_csv works with GQ and draws_list format", {
   expect_true(all(sum_y_array_chain_1 == sum_y_list_chain_1[[1]]$sum_y))
   expect_true(all(sum_y_array_chain_2 == sum_y_list_chain_2[[1]]$sum_y))
 })
+
+test_that("read_cmdstan_csv works with diagnose results", {
+  csv_file <- test_path("resources", "csv", "logistic-diagnose.csv")
+
+  diagnose_results <- read_cmdstan_csv(csv_file)
+  expect_true(is.numeric(diagnose_results$lp))
+  expect_true(is.data.frame(diagnose_results$gradients))
+  expect_equal(diagnose_results$lp, -88.1497)
+  expect_equal(diagnose_results$gradients$param_idx, c(0, 1, 2, 3))
+  expect_equal(diagnose_results$gradients$value, c(0.037817, -1.26198, 1.16792, 0.933592))
+  expect_equal(diagnose_results$gradients$model, c(8.83081, 4.07931, -25.7167, -4.11423))
+  expect_equal(diagnose_results$gradients$finite_diff, c(8.83081, 4.07931, -25.7167, -4.11423))
+  expect_equal(diagnose_results$gradients$error, c(9.919e-09, 3.13568e-08, -5.31186e-09, 5.87693e-09))
+})

@@ -1,0 +1,32 @@
+# stan_version_major = 2
+# stan_version_minor = 26
+# stan_version_patch = 1
+# model = logistic_model
+# method = diagnose
+#   diagnose
+#     test = gradient (Default)
+#       gradient
+#         epsilon = 9.9999999999999995e-07 (Default)
+#         error = 9.9999999999999995e-07 (Default)
+# id = 1
+# data
+#   file = /home/rok/R/x86_64-pc-linux-gnu-library/4.0/cmdstanr/logistic.data.json
+# init = 2 (Default)
+# random
+#   seed = 343476408
+# output
+#   file = /tmp/RtmpMYURXb/logistic-202105051949-1-7b84f0.csv
+#   diagnostic_file =  (Default)
+#   refresh = 100 (Default)
+#   sig_figs = -1 (Default)
+#   profile_file = /tmp/RtmpMYURXb/logistic-profile-202105051949-1-7b7eca.csv
+# stanc_version = stanc3 v2.26.1
+# stancflags = --name=logistic_model
+# 
+#  Log probability=-88.1497
+# 
+#  param idx           value           model     finite diff           error
+#          0        0.037817         8.83081         8.83081       9.919e-09
+#          1        -1.26198         4.07931         4.07931     3.13568e-08
+#          2         1.16792        -25.7167        -25.7167    -5.31186e-09
+#          3        0.933592        -4.11423        -4.11423     5.87693e-09

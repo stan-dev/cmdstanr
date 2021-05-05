@@ -187,9 +187,12 @@ read_cmdstan_csv <- function(files,
   if (metadata$method == "diagnose") {
     gradients <- metadata$gradients
     metadata$gradients <- NULL
+    lp <- metadata$lp
+    metadata$lp <- NULL
     return(list(
       metadata = metadata,
-      gradients = gradients
+      gradients = gradients,
+      lp = lp
     ))
   }
   if (is.null(variables)) { # variables = NULL returns all
