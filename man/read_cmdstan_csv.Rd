@@ -125,7 +125,7 @@ print(csv_files)
 # Creating fitting model objects
 
 # Create a CmdStanMCMC object from the CSV files
-fit2 <- as_cmdstan_mcmc(csv_files)
+fit2 <- as_cmdstan_fit(csv_files)
 fit2$print("beta")
 
 # Using read_cmdstan_csv

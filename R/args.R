@@ -13,7 +13,8 @@
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
-#' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`.
+#' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`
+#' * `DiagnoseArgs`: stores arguments specific to `method=diagnose`
 #'
 CmdStanArgs <- R6::R6Class(
   "CmdStanArgs",
@@ -465,6 +466,41 @@ VariationalArgs <- R6::R6Class(
   )
 )
 
+# DiagnoseArgs -------------------------------------------------------------
+
+DiagnoseArgs <- R6::R6Class(
+  "DiagnoseArgs",
+  lock_objects = FALSE,
+  public = list(
+    method = "diagnose",
+    initialize = function(epsilon = NULL, error = NULL) {
+      self$epsilon <- epsilon
+      self$error <- error
+      invisible(self)
+    },
+    validate = function(num_procs) {
+      validate_diagnose_args(self)
+      invisible(self)
+    },
+
+    # Compose arguments to CmdStan command for diagnose method
+    compose = function(idx = NULL, args = NULL) {
+      .make_arg <- function(arg_name, cmdstan_arg_name = NULL, idx = NULL) {
+        compose_arg(self, arg_name = arg_name, cmdstan_arg_name = cmdstan_arg_name, idx = idx)
+      }
+      new_args <- list(
+        "method=diagnose",
+        if (!is.null(self$epsilon) || !is.null(self$error))
+          "test=gradient",
+        .make_arg("epsilon"),
+        .make_arg("error")
+      )
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
+    }
+  )
+)
+
 
 # Validate the 'Args' objects --------------------------------------------
 
@@ -645,6 +681,18 @@ validate_generate_quantities_args <- function(self) {
     checkmate::assert_file_exists(self$fitted_params, access = "r")
   }
 
+  invisible(TRUE)
+}
+
+#' Validate arguments for diagnose
+#' @noRd
+#' @param self A `DiagnoseArgs` object.
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_diagnose_args <- function(self) {
+  checkmate::assert_number(self$epsilon, null.ok = TRUE,
+                           lower = .Machine$double.eps)
+  checkmate::assert_number(self$error, null.ok = TRUE,
+                           lower = .Machine$double.eps)
   invisible(TRUE)
 }
 

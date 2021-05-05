@@ -59,6 +59,7 @@ The Stan and CmdStan documentation:
 }
 
 Other fitted model objects: 
+\code{\link{CmdStanDiagnose}},
 \code{\link{CmdStanGQ}},
 \code{\link{CmdStanMCMC}},
 \code{\link{CmdStanVB}}

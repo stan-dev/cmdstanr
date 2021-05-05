@@ -184,6 +184,17 @@ read_cmdstan_csv <- function(files,
   if (length(uniq_seed) == 1) {
     metadata$seed <- uniq_seed
   }
+  if (metadata$method == "diagnose") {
+    gradients <- metadata$gradients
+    metadata$gradients <- NULL
+    lp <- metadata$lp
+    metadata$lp <- NULL
+    return(list(
+      metadata = metadata,
+      gradients = gradients,
+      lp = lp
+    ))
+  }
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$model_params
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
@@ -536,6 +547,8 @@ read_csv_metadata <- function(csv_file) {
   inv_metric_rows <- -1
   parsing_done <- FALSE
   dense_inv_metric <- FALSE
+  diagnose_gradients <- FALSE
+  gradients <- data.frame()
   warmup_time <- 0
   sampling_time <-0
   total_time <- 0
@@ -594,6 +607,19 @@ read_csv_metadata <- function(csv_file) {
           inv_metric_next <- FALSE
         }
         parse_key_val <- FALSE
+      } else if(diagnose_gradients){
+        parse_key_val <- FALSE
+        tmp <- gsub("#", "", line, fixed = TRUE)
+        if (nzchar(tmp)) {
+          tmp <- strsplit(tmp, split = " ", fixed = TRUE)[[1]]
+          if (!("param" %in% tmp)) {
+            tmp <- as.numeric(tmp[nzchar(tmp)])
+            gradients <- rbind(gradients, tmp)
+            if (dim(gradients)[1] == 1) {
+              colnames(gradients) <- c("param_idx", "value", "model", "finite_diff", "error")
+            }
+          }
+        }
       }
       if (parse_key_val) {
         tmp <- gsub("#", "", line, fixed = TRUE)
@@ -603,6 +629,9 @@ read_csv_metadata <- function(csv_file) {
         key_val <- rapply(key_val, trimws)
         if (any(key_val[1] == "Step size")) {
           key_val[1] <- "step_size_adaptation"
+        }
+        if (any(key_val[1] == "Log probability")) {
+          key_val[1] <- "lp"
         }
         if (length(key_val) == 2) {
           numeric_val <- suppressWarnings(as.numeric(key_val[2]))
@@ -624,10 +653,16 @@ read_csv_metadata <- function(csv_file) {
           tmp <- gsub("seconds (Total)", "", tmp, fixed = TRUE)
           total_time <- as.numeric(tmp)
         }
+        if (!is.null(csv_file_info$method) &&
+            csv_file_info$method == "diagnose" &&
+            any(key_val[1] == "lp")) {
+          diagnose_gradients <- TRUE
+        }
       }
     }
   }
-  if (length(csv_file_info$sampler_diagnostics) == 0 &&
+  if (csv_file_info$method != "diagnose" &&
+      length(csv_file_info$sampler_diagnostics) == 0 &&
       length(csv_file_info$model_params) == 0) {
     stop("Supplied CSV file does not contain any variable names or data!", call. = FALSE)
   }
@@ -669,7 +704,9 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
   csv_file_info$num_threads <- NULL
-
+  if (length(gradients) > 0) {
+    csv_file_info$gradients <- gradients
+  }
   csv_file_info
 }
 
