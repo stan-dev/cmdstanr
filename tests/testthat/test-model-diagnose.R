@@ -80,7 +80,7 @@ test_that("diagnose() errors with bad combination of arguments", {
   )
 })
 
-test_that("diagnose() works with specified", {
+test_that("diagnose() works with specified args", {
   skip_on_cran()
   fit <- mod$diagnose(
     data = data_list,
@@ -89,7 +89,20 @@ test_that("diagnose() works with specified", {
     epsilon = 1e-6,
     error = 1e-6
   )
+  expect_true(is.data.frame(fit$gradients()))
   expect_equal(dim(fit$gradients()), c(1, 5))
   expect_true(is.numeric(fit$lp()))
+})
+
+test_that("diagnose() works examples", {
+  skip_on_cran()
+  fit_logistic <- cmdstanr_example(example = "logistic", method = "diagnose")
+  expect_true(is.data.frame(fit_logistic$gradients()))
+  expect_equal(dim(fit_logistic$gradients()), c(4, 5))
+  expect_true(is.numeric(fit_logistic$lp()))
+  fit_schools <- cmdstanr_example(example = "schools", method = "diagnose")
+  expect_true(is.data.frame(fit_schools$gradients()))
+  expect_equal(dim(fit_schools$gradients()), c(10, 5))
+  expect_true(is.numeric(fit_schools$lp()))
 })
 
