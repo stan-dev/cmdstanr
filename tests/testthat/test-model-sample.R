@@ -165,7 +165,7 @@ test_that("sample works for warmup-only run", {
   skip_on_cran()
   expect_output(
     fit <- mod$sample(chains = 2, data = data_list, iter_sampling = 0),
-    "Iteration: 1000 / 1000 [100%]  (Warmup)",
+    "1: 100% | 2: 100% |",
     fixed = TRUE
   )
 })
@@ -180,7 +180,7 @@ test_that("sampling in parallel works", {
 
   expect_output(
     mod$sample(data = data_list, chains = 2, parallel_chains = 2),
-    "Both chains finished successfully",
+    "All chains finished successfully",
     fixed = TRUE
   )
 })

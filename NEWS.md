@@ -51,6 +51,8 @@ paths. (#471)
 draws returned or stored in the object. Changing the format can improve speed
 and memory usage for large models. (#482)
 
+* Improved progress indicators (#422, @mike-lawrence)
+
 # cmdstanr 0.3.0
 
 ### Bug fixes
