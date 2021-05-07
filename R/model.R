@@ -767,7 +767,7 @@ sample <- function(data = NULL,
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = check_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
+    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_messages
   )
   sample_args <- SampleArgs$new(
@@ -801,7 +801,7 @@ sample <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     validate_csv = validate_csv,
-    opencl_ids = check_opencl(opencl_ids, self$cpp_options())
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1014,7 +1014,7 @@ optimize <- function(data = NULL,
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
-    threads_per_proc = check_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
@@ -1040,7 +1040,7 @@ optimize <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = check_opencl(opencl_ids, self$cpp_options())
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1123,7 +1123,7 @@ variational <- function(data = NULL,
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
-    threads_per_proc = check_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
@@ -1150,7 +1150,7 @@ variational <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = check_opencl(opencl_ids, self$cpp_options())
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1236,7 +1236,7 @@ generate_quantities <- function(fitted_params,
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = check_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
+    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
   )
   gq_args <- GenerateQuantitiesArgs$new(fitted_params = fitted_params)
   args <- CmdStanArgs$new(
@@ -1249,7 +1249,7 @@ generate_quantities <- function(fitted_params,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = check_opencl(opencl_ids, self$cpp_options())
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1317,17 +1317,17 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose_method)
 
 # internal ----------------------------------------------------------------
 
-check_opencl <- function(opencl_ids, cpp_options) {
+assert_valid_opencl <- function(opencl_ids, cpp_options) {
   if (is.null(cpp_options[["stan_opencl"]])
       && !is.null(opencl_ids)) {
     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
          "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
          call. = FALSE)
   }
-  opencl_ids
+  invisible(opencl_ids)
 }
 
-check_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
+assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)
@@ -1350,6 +1350,6 @@ check_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
       )
     }
   }
-  threads
+  invisible(threads)
 }
 
