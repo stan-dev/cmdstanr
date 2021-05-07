@@ -1238,7 +1238,7 @@ generate_quantities <- function(fitted_params,
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
   )
-  gq_args <- GenerateQuantitiesArgs$new(fitted_params = fitted_params)
+  gq_args <- GenerateQuantitiesArgs$new(fitted_params = fitted_params_files)
   args <- CmdStanArgs$new(
     method_args = gq_args,
     model_name = self$model_name(),
