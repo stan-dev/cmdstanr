@@ -444,7 +444,7 @@ compile <- function(quiet = TRUE,
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   temp_file_no_ext <- strip_ext(temp_stan_file)
   tmp_exe <- cmdstan_ext(temp_file_no_ext) # adds .exe on Windows
-  if(os_is_windows()) {
+  if (os_is_windows()) {
     tmp_exe <- utils::shortPathName(tmp_exe)
   }
   private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
@@ -764,26 +764,12 @@ sample <- function(data = NULL,
     parallel_chains <- 1
     save_warmup <- FALSE
   }
-
-  checkmate::assert_integerish(chains, lower = 1, len = 1)
-  checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
-  checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
-  checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE)
-  if (is.null(self$cpp_options()[["stan_threads"]])) {
-    if (!is.null(threads_per_chain)) {
-      warning("'threads_per_chain' is set but the model was not compiled with ",
-              "'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
-              call. = FALSE)
-      threads_per_chain <- NULL
-    }
-  } else {
-    if (is.null(threads_per_chain)) {
-      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-           "but 'threads_per_chain' was not set!",
-           call. = FALSE)
-    }
-  }
-  check_opencl(self$cpp_options(), opencl_ids)
+  procs <- CmdStanMCMCProcs$new(
+    num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
+    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
+    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
+    show_stderr_messages = show_messages
+  )
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
     iter_sampling = iter_sampling,
@@ -801,11 +787,11 @@ sample <- function(data = NULL,
     window = window,
     fixed_param = fixed_param
   )
-  cmdstan_args <- CmdStanArgs$new(
+  args <- CmdStanArgs$new(
     method_args = sample_args,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
-    proc_ids = chain_ids,
+    proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
     data_file = process_data(data),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
@@ -815,15 +801,9 @@ sample <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     validate_csv = validate_csv,
-    opencl_ids = opencl_ids
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
   )
-  cmdstan_procs <- CmdStanMCMCProcs$new(
-    num_procs = chains,
-    parallel_procs = parallel_chains,
-    threads_per_proc = threads_per_chain,
-    show_stderr_messages = show_messages
-  )
-  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
 }
@@ -920,9 +900,11 @@ sample_mpi <- function(data = NULL,
     chains <- 1
     save_warmup <- FALSE
   }
-
-  checkmate::assert_integerish(chains, lower = 1, len = 1)
-  checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE)
+  procs <- CmdStanMCMCProcs$new(
+    num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
+    parallel_procs = 1,
+    show_stderr_messages = show_messages
+  )
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
     iter_sampling = iter_sampling,
@@ -940,11 +922,11 @@ sample_mpi <- function(data = NULL,
     window = window,
     fixed_param = fixed_param
   )
-  cmdstan_args <- CmdStanArgs$new(
+  args <- CmdStanArgs$new(
     method_args = sample_args,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
-    proc_ids = chain_ids,
+    proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
     data_file = process_data(data),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
@@ -955,12 +937,7 @@ sample_mpi <- function(data = NULL,
     validate_csv = validate_csv,
     sig_figs = sig_figs
   )
-  cmdstan_procs <- CmdStanMCMCProcs$new(
-    num_procs = chains,
-    parallel_procs = 1,
-    show_stderr_messages = show_messages
-  )
-  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
   CmdStanMCMC$new(runset)
 }
@@ -1034,22 +1011,11 @@ optimize <- function(data = NULL,
                      tol_rel_grad = NULL,
                      tol_param = NULL,
                      history_size = NULL) {
-  checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
-  if (is.null(self$cpp_options()[["stan_threads"]])) {
-    if (!is.null(threads)) {
-      warning("'threads' is set but the model was not compiled with ",
-              "'cpp_options = list(stan_threads = TRUE)' so 'threads' will have no effect!",
-              call. = FALSE)
-      threads <- NULL
-    }
-  } else {
-    if (is.null(threads)) {
-      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-           "but 'threads' was not set!",
-           call. = FALSE)
-    }
-  }
-  check_opencl(self$cpp_options(), opencl_ids)
+  procs <- CmdStanProcs$new(
+    num_procs = 1,
+    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+  )
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
@@ -1061,7 +1027,7 @@ optimize <- function(data = NULL,
     tol_param = tol_param,
     history_size = history_size
   )
-  cmdstan_args <- CmdStanArgs$new(
+  args <- CmdStanArgs$new(
     method_args = optimize_args,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
@@ -1074,15 +1040,9 @@ optimize <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = opencl_ids
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
   )
-
-  cmdstan_procs <- CmdStanProcs$new(
-    num_procs = 1,
-    show_stdout_messages = (is.null(refresh) || refresh != 0),
-    threads_per_proc = threads
-  )
-  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
   CmdStanMLE$new(runset)
 }
@@ -1160,22 +1120,11 @@ variational <- function(data = NULL,
                         tol_rel_obj = NULL,
                         eval_elbo = NULL,
                         output_samples = NULL) {
-  checkmate::assert_integerish(threads, lower = 1, len = 1, null.ok = TRUE)
-  if (is.null(self$cpp_options()[["stan_threads"]])) {
-    if (!is.null(threads)) {
-      warning("'threads' is set but the model was not compiled with ",
-              "'cpp_options = list(stan_threads = TRUE)' so 'threads' will have no effect!",
-              call. = FALSE)
-      threads <- NULL
-    }
-  } else {
-    if (is.null(threads)) {
-      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-           "but 'threads' was not set!",
-           call. = FALSE)
-    }
-  }
-  check_opencl(self$cpp_options(), opencl_ids)
+  procs <- CmdStanProcs$new(
+    num_procs = 1,
+    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+  )
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -1188,7 +1137,7 @@ variational <- function(data = NULL,
     eval_elbo = eval_elbo,
     output_samples = output_samples
   )
-  cmdstan_args <- CmdStanArgs$new(
+  args <- CmdStanArgs$new(
     method_args = variational_args,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
@@ -1201,15 +1150,9 @@ variational <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = opencl_ids
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
   )
-
-  cmdstan_procs <- CmdStanProcs$new(
-    num_procs = 1,
-    show_stdout_messages = (is.null(refresh) || refresh != 0),
-    threads_per_proc = threads
-  )
-  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
   CmdStanVB$new(runset)
 }
@@ -1289,59 +1232,30 @@ generate_quantities <- function(fitted_params,
                                 parallel_chains = getOption("mc.cores", 1),
                                 threads_per_chain = NULL,
                                 opencl_ids = NULL) {
-  checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE)
-  checkmate::assert_integerish(threads_per_chain, lower = 1, len = 1, null.ok = TRUE)
-  if (is.null(self$cpp_options()[["stan_threads"]])) {
-    if (!is.null(threads_per_chain)) {
-      warning("'threads_per_chain' is set but the model was not compiled with ",
-              "'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
-              call. = FALSE)
-      threads_per_chain <- NULL
-    }
-  } else {
-    if (is.null(threads_per_chain)) {
-      stop("The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-           "but 'threads_per_chain' was not set!",
-           call. = FALSE)
-    }
-  }
-  check_opencl(self$cpp_options(), opencl_ids)
-  fitted_params <- process_fitted_params(fitted_params)
-  chains <- length(fitted_params)
-  generate_quantities_args <- GenerateQuantitiesArgs$new(
-    fitted_params = fitted_params
+  fitted_params_files <- process_fitted_params(fitted_params)
+  procs <- CmdStanGQProcs$new(
+    num_procs = length(fitted_params_files),
+    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
+    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
   )
-  cmdstan_args <- CmdStanArgs$new(
-    method_args = generate_quantities_args,
+  gq_args <- GenerateQuantitiesArgs$new(fitted_params = fitted_params_files)
+  args <- CmdStanArgs$new(
+    method_args = gq_args,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
-    proc_ids = seq_len(chains),
+    proc_ids = seq_along(fitted_params_files),
     data_file = process_data(data),
     seed = seed,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = opencl_ids
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
   )
-  cmdstan_procs <- CmdStanGQProcs$new(
-    num_procs = chains,
-    parallel_procs = parallel_chains,
-    threads_per_proc = threads_per_chain
-  )
-  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
   CmdStanGQ$new(runset)
 }
 CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities)
-
-check_opencl <- function(cpp_options, opencl_ids) {
-  if (is.null(cpp_options[["stan_opencl"]])
-      && !is.null(opencl_ids)) {
-     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
-           "\nRecompile the model with the 'cpp_options = list(stan_opencl = TRUE)'",
-           call. = FALSE)
-  }
-}
 
 #' Run Stan's diagnose method
 #'
@@ -1372,11 +1286,16 @@ diagnose_method <- function(data = NULL,
                             output_basename = NULL,
                             epsilon = NULL,
                             error = NULL) {
+  procs <- CmdStanProcs$new(
+    num_procs = 1,
+    show_stdout_messages = FALSE,
+    show_stderr_messages = TRUE
+  )
   diagnose_args <- DiagnoseArgs$new(
     epsilon = epsilon,
     error = error
   )
-  cmdstan_args <- CmdStanArgs$new(
+  args <- CmdStanArgs$new(
     method_args = diagnose_args,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
@@ -1387,14 +1306,50 @@ diagnose_method <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename
   )
-  cmdstan_procs <- CmdStanProcs$new(
-    num_procs = 1,
-    show_stdout_messages = FALSE,
-    show_stderr_messages = TRUE
-  )
-  runset <- CmdStanRun$new(args = cmdstan_args, procs = cmdstan_procs)
+  runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
 
   CmdStanDiagnose$new(runset)
 }
 CmdStanModel$set("public", name = "diagnose", value = diagnose_method)
+
+
+
+# internal ----------------------------------------------------------------
+
+assert_valid_opencl <- function(opencl_ids, cpp_options) {
+  if (is.null(cpp_options[["stan_opencl"]])
+      && !is.null(opencl_ids)) {
+    stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+         "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
+         call. = FALSE)
+  }
+  invisible(opencl_ids)
+}
+
+assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
+  threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
+  checkmate::assert_integerish(threads, .var.name = threads_arg,
+                               null.ok = TRUE, lower = 1, len = 1)
+  if (is.null(cpp_options[["stan_threads"]])) {
+    if (!is.null(threads)) {
+      warning(
+        "'", threads_arg, "' is set but the model was not compiled with ",
+        "'cpp_options = list(stan_threads = TRUE)' ",
+        "so '", threads_arg, "' will have no effect!",
+        call. = FALSE
+      )
+      threads <- NULL
+    }
+  } else {
+    if (is.null(threads)) {
+      stop(
+        "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
+        "but '", threads_arg, "' was not set!",
+        call. = FALSE
+      )
+    }
+  }
+  invisible(threads)
+}
+
