@@ -4,7 +4,13 @@
 \alias{write_stan_file}
 \title{Write Stan code to a file}
 \usage{
-write_stan_file(code, dir = tempdir(), basename = NULL)
+write_stan_file(
+  code,
+  dir = tempdir(),
+  basename = NULL,
+  force_overwrite = FALSE,
+  hash_salt = ""
+)
 }
 \arguments{
 \item{code}{A single string containing a Stan program or a character vector
@@ -15,7 +21,13 @@ If omitted, a \link[base:tempfile]{temporary directory} is used by default.}
 
 \item{basename}{If \code{dir} is specified, an optional string providing the
 basename for the file created. If not specified a file name is generated
-via \code{\link[base:tempfile]{base::tempfile()}}.}
+via \code{\link[rlang:hash]{rlang::hash()}} of the code.}
+
+\item{force_overwrite}{if set to \code{TRUE} the file will always be
+overwritten and thus the resulting model will always be recompiled}
+
+\item{hash_salt}{will be added to model code prior hashing to determine
+filename if the \code{basename} param is not set.}
 }
 \value{
 The path to the file.
@@ -23,6 +35,13 @@ The path to the file.
 \description{
 Convenience function for writing Stan code to a (possibly
 \link[base:tempfile]{temporary}) file with a \code{.stan} extension.
+By default, the filename is chosen deterministically based on the Stan code
+via \code{\link[rlang:hash]{rlang::hash()}},
+and the file is not overwritten if it already has correct contents.
+This means that calling this function multiple times with the same Stan code
+will reuse the compiled model. This also however means that the function
+is potentially not thread-safe. Using \code{hash_salt = Sys.getpid()} should
+ensure thread-safety in the rare cases when it is needed.
 }
 \examples{
 # stan program as a single string

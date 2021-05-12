@@ -91,6 +91,13 @@ print_example_program <-
 #'
 #' Convenience function for writing Stan code to a (possibly
 #' [temporary][base::tempfile]) file with a `.stan` extension.
+#' By default, the filename is chosen deterministically based on the Stan code
+#' via [rlang::hash()],
+#' and the file is not overwritten if it already has correct contents.
+#' This means that calling this function multiple times with the same Stan code
+#' will reuse the compiled model. This also however means that the function
+#' is potentially not thread-safe. Using \code{hash_salt = Sys.getpid()} should
+#' ensure thread-safety in the rare cases when it is needed.
 #'
 #' @export
 #' @param code A single string containing a Stan program or a character vector
@@ -99,7 +106,11 @@ print_example_program <-
 #'   If omitted, a [temporary directory][base::tempdir] is used by default.
 #' @param basename If `dir` is specified, an optional string providing the
 #'   basename for the file created. If not specified a file name is generated
-#'   via [base::tempfile()].
+#'   via [rlang::hash()] of the code.
+#' @param force_overwrite if set to \code{TRUE} the file will always be
+#'   overwritten and thus the resulting model will always be recompiled
+#' @param hash_salt will be added to model code prior hashing to determine
+#'   filename if the \code{basename} param is not set.
 #' @return The path to the file.
 #'
 #' @examples
@@ -128,7 +139,9 @@ print_example_program <-
 #' f2 <- write_stan_file(lines)
 #' identical(readLines(f), readLines(f2))
 #'
-write_stan_file <- function(code, dir = tempdir(), basename = NULL, hash_salt = "") {
+write_stan_file <- function(code, dir = tempdir(), basename = NULL,
+                            force_overwrite = FALSE,
+                            hash_salt = "") {
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
   }
@@ -141,11 +154,11 @@ write_stan_file <- function(code, dir = tempdir(), basename = NULL, hash_salt = 
     file <- file.path(dir, basename)
   } else {
     hash <- rlang::hash(paste0(hash_salt, collapsed_code))
-    file <- file.path(dir, paste0(hash, ".stan"))
+    file <- file.path(dir, paste0("model_", hash, ".stan"))
   }
   overwrite <- TRUE
   # Do not overwrite file if it has the correct contents (to avoid recompilation)
-  if(file.exists(file)) {
+  if(!force_overwrite && file.exists(file)) {
    tryCatch({
       file_contents <- paste0(readLines(file), collapse = "\n")
       if(gsub("\r|\n", "\n", file_contents) == gsub("\r|\n", "\n", collapsed_code)) {
