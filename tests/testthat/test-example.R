@@ -86,10 +86,17 @@ test_that("write_stan_file by default creates the same file for the same Stan mo
   mtime3 <- file.info(f3)$mtime
   expect_equal(mtime1, mtime3)
 
-  # f4 <- write_stan_file(stan_program, hash_salt = "aaa")
-  # expect_true(f1 != f4)
+  f4 <- write_stan_file(stan_program, dir = dir, hash_salt = "aaa")
+  expect_true(f1 != f4)
 
-  try(file.remove(f1, f2, f3, f4), silent = TRUE)
+  f5 <- write_stan_file(stan_program, dir = dir, force_overwrite = TRUE)
+  expect_equal(f1, f5)
+
+  mtime5 <- file.info(f5)$mtime
+  expect_true(mtime1 < mtime5)
+
+
+  try(file.remove(f1, f2, f4), silent = TRUE)
 })
 
 test_that("write_stan_tempfile is deprecated", {
