@@ -107,10 +107,10 @@ print_example_program <-
 #' @param basename If `dir` is specified, an optional string providing the
 #'   basename for the file created. If not specified a file name is generated
 #'   via [rlang::hash()] of the code.
-#' @param force_overwrite if set to \code{TRUE} the file will always be
-#'   overwritten and thus the resulting model will always be recompiled
-#' @param hash_salt will be added to model code prior hashing to determine
-#'   filename if the \code{basename} param is not set.
+#' @param force_overwrite If set to `TRUE` the file will always be
+#'   overwritten and thus the resulting model will always be recompiled.
+#' @param hash_salt A string that will be added to model code prior to hashing to determine
+#'   the file name if `basename` is not set.
 #' @return The path to the file.
 #'
 #' @examples
@@ -158,7 +158,7 @@ write_stan_file <- function(code, dir = tempdir(), basename = NULL,
   }
   overwrite <- TRUE
   # Do not overwrite file if it has the correct contents (to avoid recompilation)
-  if(!force_overwrite && file.exists(file)) {
+  if (!force_overwrite && file.exists(file)) {
    tryCatch({
       file_contents <- paste0(readLines(file), collapse = "\n")
       if(gsub("\r|\n", "\n", file_contents) == gsub("\r|\n", "\n", collapsed_code)) {
@@ -185,4 +185,3 @@ write_stan_tempfile <- function(code, dir = tempdir()) {
           call. = FALSE)
   write_stan_file(code, dir)
 }
-
