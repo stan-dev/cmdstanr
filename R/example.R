@@ -128,19 +128,35 @@ print_example_program <-
 #' f2 <- write_stan_file(lines)
 #' identical(readLines(f), readLines(f2))
 #'
-write_stan_file <- function(code, dir = tempdir(), basename = NULL) {
+write_stan_file <- function(code, dir = tempdir(), basename = NULL, hash_salt = "") {
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
   }
+  collapsed_code <- paste0(code, collapse = "\n")
+
   if (!is.null(basename)) {
     if (!endsWith(basename, ".stan")) {
       basename <- paste0(basename, ".stan")
     }
     file <- file.path(dir, basename)
   } else {
-    file <- tempfile(fileext = ".stan", tmpdir = dir)
+    hash <- rlang::hash(paste0(hash_salt, collapsed_code))
+    file <- file.path(dir, paste0(hash, ".stan"))
   }
-  cat(code, file = file, sep = "\n")
+  overwrite <- TRUE
+  # Do not overwrite file if it has the correct contents (to avoid recompilation)
+  if(file.exists(file)) {
+   tryCatch({
+      file_contents <- paste0(readLines(file), collapse = "\n")
+      if(gsub("\r|\n", "\n", file_contents) == gsub("\r|\n", "\n", collapsed_code)) {
+        overwrite <- FALSE
+      }
+   }, error = function(e) { warning("Error when checking old file contents", e) })
+  }
+
+  if(overwrite) {
+    cat(code, file = file, sep = "\n")
+  }
   file
 }
 
