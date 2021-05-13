@@ -1,19 +1,19 @@
 #' @param data (multiple options) The data to use for the variables specified in
-#'   the `data` block of the Stan program. One of the following:
+#'   the data block of the Stan program. One of the following:
 #'  * A named list of \R objects (like for RStan). Internally this list is then
 #'  written to JSON for CmdStan using [write_stan_json()].
 #'  * A path to a data file compatible with CmdStan (JSON or \R dump). See the
 #'  appendices in the CmdStan manual for details on using these formats.
-#'  * `NULL` or an empty list if the Stan program has no `data` block.
+#'  * `NULL` or an empty list if the Stan program has no data block.
 #'
 #' @param seed (positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
 #'   In the case of multi-chain sampling the single `seed` will automatically be
 #'   augmented by the the run (chain) ID so that each chain uses a different
-#'   seed. The exception is the `transformed data` block, which defaults to
+#'   seed. The exception is the transformed data block, which defaults to
 #'   using same seed for all chains so that the same data is generated for all
 #'   chains if RNG functions are used. The only time `seed` should be specified
 #'   as a vector (one element per chain) is if RNG functions are used in
-#'   `transformed data` and the goal is to generate *different* data for each
+#'   transformed data and the goal is to generate *different* data for each
 #'   chain.
 #'
 #' @param refresh (non-negative integer) The number of iterations between
@@ -21,7 +21,7 @@
 #'   printed.
 #'
 #' @param init (multiple options) The initialization method to use for the
-#'   variables declared in the `parameters` block of the Stan program:
+#'   variables declared in the parameters block of the Stan program:
 #'  * A real number `x>0`. This initializes _all_ parameters randomly between
 #'  `[-x,x]` (on the _unconstrained_ parameter space);
 #'  * The number `0`. This initializes _all_ parameters to `0`;
@@ -75,10 +75,10 @@
 #'   values with 6 significant figures. The upper limit for `sig_figs` is 18.
 #'   Increasing this value will result in larger output CSV files and thus an
 #'   increased usage of disk space.
-#' 
-#' @param opencl_ids (integer vector of length 2) The platform and 
-#'   device IDs of the OpenCL device to use for fitting. The model must 
+#'
+#' @param opencl_ids (integer vector of length 2) The platform and
+#'   device IDs of the OpenCL device to use for fitting. The model must
 #'   be compiled with `cpp_options = list(stan_opencl = TRUE)` for this
 #'   argument to have an effect.
 #'
-#' 
+#'

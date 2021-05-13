@@ -118,3 +118,11 @@ test_that("draws() works for different formats", {
   a <- fit_vb$draws(format = "df")
   expect_true(posterior::is_draws_df(a))
 })
+
+test_that("draws() errors if invalid format", {
+  skip_on_cran()
+  expect_error(
+    fit_vb$draws(format = "bad_format"),
+    "The supplied draws format is not valid"
+  )
+})

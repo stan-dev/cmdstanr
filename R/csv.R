@@ -125,11 +125,7 @@ read_cmdstan_csv <- function(files,
                              variables = NULL,
                              sampler_diagnostics = NULL,
                              format = getOption("cmdstanr_draws_format", NULL)) {
-  valid_draws_formats <- c("draws_array", "array", "draws_matrix", "matrix",
-                           "draws_list", "list", "draws_df", "df", "data.frame")
-  if (!is.null(format) && !(format %in% valid_draws_formats)) {
-    stop("The supplied draws format is not valid.", call. = FALSE)
-  }
+  format <- assert_valid_draws_format(format)
   checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
   warmup_draws <- list()

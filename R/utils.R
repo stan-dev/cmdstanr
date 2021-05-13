@@ -354,8 +354,24 @@ as_draws_format_fun <- function(draws_format) {
   f
 }
 
+assert_valid_draws_format <- function(format) {
+  if (!is.null(format) &&
+      !format %in% valid_draws_formats()) {
+    stop(
+      "The supplied draws format is not valid. ",
+      call. = FALSE
+    )
+  }
+  invisible(format)
+}
+
+valid_draws_formats <- function() {
+  c("draws_array", "array", "draws_matrix", "matrix",
+    "draws_list", "list", "draws_df", "df", "data.frame")
+}
+
 maybe_convert_draws_format <- function(draws, draws_format) {
-  if (!is.null(draws)) {  
+  if (!is.null(draws)) {
     if (draws_format %in% c("draws_array", "array")) {
       if (!posterior::is_draws_array(draws)) {
         draws <- posterior::as_draws_array(draws)

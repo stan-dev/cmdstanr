@@ -110,33 +110,41 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   draws after variational approximation using formats provided by the
 #'   \pkg{posterior} package.
 #'
-#'   The variables include the `parameters`, `transformed parameters`, and
-#'   `generated quantities` from the Stan program as well as `lp__`, the total
-#'   log probability (`target`) accumulated in the `model` block.
+#'   The variables include the parameters, transformed parameters, and
+#'   generated quantities from the Stan program as well as `lp__`, the total
+#'   log probability (`target`) accumulated in the model block.
 #'
-#' @param variables (character vector) The variables to read in. If `NULL` (the
-#'   default) then all variables are included.
+#' @inheritParams read_cmdstan_csv
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to
 #'   `FALSE`. Ignored except when used with [CmdStanMCMC] objects.
 #' @param format (string) The format of the returned draws or point estimates.
-#'   Must be a valid format from the \pkg{posterior} package. The default can be
-#'   set using the option `"cmdstanr_draws_format"`, otherwise the defaults are
-#'   the following.
+#'   Must be a valid format from the \pkg{posterior} package. The defaults
+#'   are the following.
 #'
 #'   * For sampling and generated quantities the default is
-#'   [`"draws_array"`][posterior::draws_array].
+#'   [`"draws_array"`][posterior::draws_array]. This format keeps the chains
+#'   separate. To combine the chains use any of the other formats (e.g.
+#'   `"draws_matrix"`).
+#'
 #'   * For point estimates from optimization and approximate draws from
 #'   variational inference the default is
 #'   [`"draws_matrix"`][posterior::draws_array].
 #'
-#'   To use a different format it can be specified as the full name (e.g.
-#'   `"draws_df"`) or omitting the `"draws_"` prefix (e.g. `"df"`).
+#'   To use a different format it can be specified as the full name of the
+#'   format from the \pkg{posterior} package (e.g. `format = "draws_df"`) or
+#'   omitting the `"draws_"` prefix (e.g. `format = "df"`).
 #'
-#'   For models with a large number of parameters (20k+) we recommend using the
-#'   `draws_list` format, which is the most efficient and RAM friendly when
-#'   combining draws from multiple chains. If speed or memory is not a
-#'   constraint we recommend selecting the format that most suits the coding
-#'   style of the post processing phase.
+#'   **Changing the default format**: To change the default format for an entire
+#'   R session use `options(cmdstanr_draws_format = format)`, where `format` is
+#'   the name (in quotes) of a valid format from the posterior package. For
+#'   example `options(cmdstanr_draws_format = "draws_df")` will change the
+#'   default to a data frame.
+#'
+#'   **Note about efficiency**: For models with a large number of parameters
+#'   (20k+) we recommend using the `"draws_list"` format, which is the most
+#'   efficient and RAM friendly when combining draws from multiple chains. If
+#'   speed or memory is not a constraint we recommend selecting the format that
+#'   most suits the coding style of the post processing phase.
 #'
 #' @return
 #' Depends on the value of `format`. The defaults are:
@@ -147,10 +155,10 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable).
 #' * For [variational inference][model-method-variational], a 2-D
-#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable). An
-#' additional variable `lp_approx__` is also included, which is the log density
-#' of the variational approximation to the posterior evaluated at each of the
-#' draws.
+#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable) because
+#' there are no chains. An additional variable `lp_approx__` is also included,
+#' which is the log density of the variational approximation to the posterior
+#' evaluated at each of the draws.
 #' * For [optimization][model-method-optimize], a 1-row
 #' [`draws_matrix`][posterior::draws_matrix] with one column per variable. These
 #' are *not* actually draws, just point estimates stored in the `draws_matrix`
@@ -161,12 +169,8 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'
 #' @examples
 #' \dontrun{
-#' library(posterior)
-#' library(bayesplot)
-#' color_scheme_set("brightblue")
-#'
 #' # logistic regression with intercept alpha and coefficients beta
-#' fit <- cmdstanr_example("logistic")
+#' fit <- cmdstanr_example("logistic", method = "sample")
 #'
 #' # returned as 3-D array (see ?posterior::draws_array)
 #' draws <- fit$draws()
@@ -174,10 +178,13 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' str(draws)
 #'
 #' # can easily convert to other formats (data frame, matrix, list)
-#' as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
+#' # using the posterior package
+#' head(posterior::as_draws_matrix(draws))
 #'
 #' # or can specify 'format' argument to avoid manual conversion
-#' draws <- fit$draws(format = "df")
+#' # matrix format combines all chains
+#' draws <- fit$draws(format = "matrix")
+#' head(draws)
 #'
 #' # can select specific parameters
 #' fit$draws("alpha")
@@ -185,13 +192,25 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' fit$draws(c("alpha", "beta[2]"))
 #'
 #' # can be passed directly to bayesplot plotting functions
-#' mcmc_dens(fit$draws(c("alpha", "beta")))
-#' mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
+#' bayesplot::color_scheme_set("brightblue")
+#' bayesplot::mcmc_dens(fit$draws(c("alpha", "beta")))
+#' bayesplot::mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
+#'
+#'
+#' # example using variational inference
+#' fit <- cmdstanr_example("logistic", method = "variational")
+#' head(fit$draws("beta")) # a matrix by default
+#' head(fit$draws("beta", format = "df"))
 #' }
 #'
-draws <- function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_matrix")) {
+draws <- function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format")) {
   # CmdStanMCMC and CmdStanGQ have separate implementations,
   # this is used for CmdStanVB and CmdStanMLE
+  if (is.null(format)) {
+    format <- "draws_matrix"
+  } else {
+    format <- assert_valid_draws_format(format)
+  }
   if (!length(self$output_files(include_failed = FALSE))) {
     stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
   }
@@ -256,7 +275,7 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @name fit-method-lp
 #' @aliases lp lp_approx
 #' @description The `$lp()` method extracts `lp__`, the total log probability
-#'   (`target`) accumulated in the `model` block of the Stan program. For
+#'   (`target`) accumulated in the model block of the Stan program. For
 #'   variational inference the log density of the variational approximation to
 #'   the posterior is also available via the `$lp_approx()` method.
 #'
@@ -833,7 +852,7 @@ CmdStanMCMC <- R6::R6Class(
         stop("Warmup draws were requested from a fit object without them! ",
              "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
       }
-
+      format <- assert_valid_draws_format(format)
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = posterior::variables(private$draws_),
@@ -1191,7 +1210,7 @@ CmdStanMLE <- R6::R6Class(
 #' It returns the penalized maximum likelihood estimate (posterior mode) as a
 #' numeric vector with one element per variable. The returned vector does *not*
 #' include `lp__`, the total log probability (`target`) accumulated in the
-#' `model` block of the Stan program, which is available via the
+#' model block of the Stan program, which is available via the
 #' [`$lp()`][fit-method-lp] method and also included in the
 #' [`$draws()`][fit-method-draws] method.
 #'
@@ -1356,6 +1375,7 @@ CmdStanGQ <- R6::R6Class(
         warning("'inc_warmup' is ignored except when used with CmdStanMCMC objects.",
                 call. = FALSE)
       }
+      format <- assert_valid_draws_format(format)
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = dimnames(private$draws_)$variable,
