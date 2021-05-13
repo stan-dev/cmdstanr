@@ -13,7 +13,7 @@ Stan program containing the pointwise log-likelihood. The default is to
 look for \code{"log_lik"}. This argument is passed to the
 \code{\link[=fit-method-draws]{$draws()}} method.}
 
-\item{r_eff}{There are several options:
+\item{r_eff}{(multiple options) How to handle the \code{r_eff} argument for \code{loo()}:
 \itemize{
 \item \code{TRUE} (the default) will automatically call \code{\link[loo:relative_eff]{loo::relative_eff.array()}}
 to compute the \code{r_eff} argument to pass to \code{\link[loo:loo]{loo::loo.array()}}.

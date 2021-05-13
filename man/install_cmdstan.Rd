@@ -31,49 +31,51 @@ cmdstan_make_local(dir = cmdstan_path(), cpp_options = NULL, append = TRUE)
 check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{dir}{Path to the directory in which to install CmdStan. The default is
-to install it in a directory called \code{.cmdstanr} within the user's home
-directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstanr")}).}
+\item{dir}{(string) The path to the directory in which to install CmdStan.
+The default is to install it in a directory called \code{.cmdstanr} within the
+user's home directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstanr")}).}
 
-\item{cores}{The number of CPU cores to use to parallelize building CmdStan
-and speed up installation. If \code{cores} is not specified then the default is
-to look for the option \code{"mc.cores"}, which can be set for an entire \R
-session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
-been set then the default is \code{2}.}
+\item{cores}{(integer) The number of CPU cores to use to parallelize building
+CmdStan and speed up installation. If \code{cores} is not specified then the
+default is to look for the option \code{"mc.cores"}, which can be set for an
+entire \R session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option
+has not been set then the default is \code{2}.}
 
-\item{quiet}{For \code{install_cmdstan()}, should the verbose output from the
-system processes be suppressed when building the CmdStan binaries?
-The default is \code{FALSE}.
-For \code{check_cmdstan_toolchain()}, should the function suppress printing
-informational messages? The default is \code{FALSE}. If \code{TRUE} only errors will
-be printed.}
+\item{quiet}{(logical) For \code{install_cmdstan()}, should the verbose output
+from the system processes be suppressed when building the CmdStan binaries?
+The default is \code{FALSE}. For \code{check_cmdstan_toolchain()}, should the
+function suppress printing informational messages? The default is \code{FALSE}.
+If \code{TRUE} only errors will be printed.}
 
-\item{overwrite}{Should CmdStan still be downloaded and installed even if an
-installation of the same version is found in \code{dir}? The default is \code{FALSE},
-in which case an informative error is thrown instead of overwriting the
-user's installation.}
+\item{overwrite}{(logical) Should CmdStan still be downloaded and installed
+even if an installation of the same version is found in \code{dir}? The default
+is \code{FALSE}, in which case an informative error is thrown instead of
+overwriting the user's installation.}
 
-\item{timeout}{Timeout (in seconds) for the build stage of the installation.}
+\item{timeout}{(positive real) Timeout (in seconds) for the build stage of
+the installation.}
 
-\item{version}{The CmdStan release version to install. The default is \code{NULL},
-which downloads the latest stable release from \url{https://github.com/stan-dev/cmdstan/releases}.}
+\item{version}{(string) The CmdStan release version to install. The default
+is \code{NULL}, which downloads the latest stable release from
+\url{https://github.com/stan-dev/cmdstan/releases}.}
 
-\item{release_url}{The URL for the specific CmdStan release or
+\item{release_url}{(string) The URL for the specific CmdStan release or
 release candidate to install. See \url{https://github.com/stan-dev/cmdstan/releases}.
 The URL should point to the tarball (\code{.tar.gz.} file) itself, e.g.,
 \code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"}.
 If both \code{version} and \code{release_url} are specified then \code{version} will be used.}
 
-\item{cpp_options}{A list specifying any makefile flags/variables to be
-written to the \code{make/local} file. For example, \code{list("CXX" = "clang++")}
-will force the use of clang for compilation.}
+\item{cpp_options}{(list) Any makefile flags/variables to be written to
+the \code{make/local} file. For example, \code{list("CXX" = "clang++")} will force
+the use of clang for compilation.}
 
-\item{check_toolchain}{Should \code{install_cmdstan()} attempt to check that the
-required toolchain is installed and properly configured. The default is \code{TRUE}.}
+\item{check_toolchain}{(logical) Should \code{install_cmdstan()} attempt to check
+that the required toolchain is installed and properly configured. The
+default is \code{TRUE}.}
 
-\item{append}{For \code{cmdstan_make_local()}, should the listed makefile flags be
-appended to the end of the existing \code{make/local} file? The default is \code{TRUE}.
-If \code{FALSE} the file is overwritten.}
+\item{append}{(logical) For \code{cmdstan_make_local()}, should the listed
+makefile flags be appended to the end of the existing \code{make/local} file?
+The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
 
 \item{fix}{For \code{check_cmdstan_toolchain()}, should CmdStanR attempt to fix
 any detected toolchain problems? Currently this option is only available on

@@ -543,8 +543,8 @@ save_data_file <- function(dir = ".",
 CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
 
 #' @rdname fit-method-save_output_files
-#' @param include_failed Should CmdStan runs that failed also be included? The
-#'   default is `FALSE.`
+#' @param include_failed (logical) Should CmdStan runs that failed also be
+#'   included? The default is `FALSE.`
 output_files <- function(include_failed = FALSE) {
   self$runset$output_files(include_failed)
 }
@@ -972,7 +972,7 @@ CmdStanMCMC <- R6::R6Class(
 #'   Stan program containing the pointwise log-likelihood. The default is to
 #'   look for `"log_lik"`. This argument is passed to the
 #'   [`$draws()`][fit-method-draws] method.
-#' @param r_eff There are several options:
+#' @param r_eff (multiple options) How to handle the `r_eff` argument for `loo()`:
 #'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
 #'   to compute the `r_eff` argument to pass to [loo::loo.array()].
 #'   * `FALSE` or `NULL` will avoid computing `r_eff` (which can sometimes be slow)
@@ -1020,9 +1020,9 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #'   chain of MCMC.
 #'
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to `FALSE`.
-#' @param format The draws format to return. See [draws][fit-method-draws] for
-#'   details.
-
+#' @param format (string) The draws format to return. See
+#'   [draws][fit-method-draws] for details.
+#'
 #' @return
 #' Depends on `format`, but the default is a 3-D
 #' [`draws_array`][posterior::draws_array] object (iteration x chain x

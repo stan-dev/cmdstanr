@@ -142,9 +142,9 @@ is to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
 been set then the default is \code{1}.}
 
-\item{chain_ids}{(vector) A vector of chain IDs. Must contain \code{chains} unique
-positive integers. If not set, the default chain IDs are used (integers
-starting from \code{1}).}
+\item{chain_ids}{(integer vector) A vector of chain IDs. Must contain
+\code{chains} unique positive integers. If not set, the default chain IDs are
+used (integers starting from \code{1}).}
 
 \item{threads_per_chain}{(positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of
@@ -194,12 +194,12 @@ statistic.}
 approximation to continuous Hamiltonian dynamics. This is further tuned
 during warmup.}
 
-\item{metric}{(character) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
+\item{metric}{(string) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
 specifying the geometry of the base manifold. See the \emph{Euclidean Metric}
 section of the CmdStan User's Guide for more details. To specify a
 precomputed (inverse) metric, see the \code{inv_metric} argument below.}
 
-\item{metric_file}{(character) A character vector containing paths to JSON or
+\item{metric_file}{(character vector) The paths to JSON or
 Rdump files (one per chain) compatible with CmdStan that contain
 precomputed inverse metrics. The \code{metric_file} argument is inherited from
 CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be

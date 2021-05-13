@@ -7,7 +7,8 @@
 eng_cmdstan(options)
 }
 \arguments{
-\item{options}{Chunk options, as provided by \code{knitr} during chunk execution.}
+\item{options}{(named list) Chunk options, as provided by \code{knitr} during
+chunk execution.}
 }
 \description{
 This provides a knitr engine for Stan, suitable for usage when attempting

@@ -51,8 +51,8 @@ Defaults to \code{TRUE}. See \strong{Details}.}
 \item{random}{(logical) Should random alphanumeric characters be added to the
 end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.}
 
-\item{include_failed}{Should CmdStan runs that failed also be included? The
-default is \code{FALSE.}}
+\item{include_failed}{(logical) Should CmdStan runs that failed also be
+included? The default is \code{FALSE.}}
 }
 \value{
 The \verb{$save_*} methods print a message with the new file paths and (invisibly)

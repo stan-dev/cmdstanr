@@ -7,8 +7,8 @@
 #'
 #' @export
 #'
-#' @param override Override knitr's built-in, RStan-based engine for Stan? The
-#'   default is `TRUE`. See **Details**.
+#' @param override (logical) Override knitr's built-in, RStan-based engine for
+#'   Stan? The default is `TRUE`. See **Details**.
 #'
 #' @details
 #' If `override = TRUE` (default), this registers CmdStanR's knitr engine as the
@@ -56,7 +56,8 @@ register_knitr_engine <- function(override = TRUE) {
 #' [R Markdown CmdStan Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html)
 #' for an example.
 #'
-#' @param options Chunk options, as provided by `knitr` during chunk execution.
+#' @param options (named list) Chunk options, as provided by `knitr` during
+#'   chunk execution.
 #' @examples \dontrun{
 #' knitr::knit_engines$set(stan = cmdstanr::eng_cmdstan)
 #' }

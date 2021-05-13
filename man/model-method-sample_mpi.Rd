@@ -48,7 +48,7 @@ appendices in the CmdStan manual for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
-\item{mpi_cmd}{(character vector) The MPI launcher used for launching MPI
+\item{mpi_cmd}{(string) The MPI launcher used for launching MPI
 processes. The default launcher is \code{"mpiexec"}.}
 
 \item{mpi_args}{(list) A list of arguments to use when launching MPI
@@ -129,9 +129,9 @@ will be comprised from the model name, timestamp and 5 random characters.
 \item{chains}{(positive integer) The number of Markov chains to run. The
 default is 4.}
 
-\item{chain_ids}{(vector) A vector of chain IDs. Must contain \code{chains} unique
-positive integers. If not set, the default chain IDs are used (integers
-starting from \code{1}).}
+\item{chain_ids}{(integer vector) A vector of chain IDs. Must contain
+\code{chains} unique positive integers. If not set, the default chain IDs are
+used (integers starting from \code{1}).}
 
 \item{iter_warmup}{(positive integer) The number of warmup iterations to run
 per chain. Note: in the CmdStan User's Guide this is referred to as
@@ -167,12 +167,12 @@ statistic.}
 approximation to continuous Hamiltonian dynamics. This is further tuned
 during warmup.}
 
-\item{metric}{(character) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
+\item{metric}{(string) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
 specifying the geometry of the base manifold. See the \emph{Euclidean Metric}
 section of the CmdStan User's Guide for more details. To specify a
 precomputed (inverse) metric, see the \code{inv_metric} argument below.}
 
-\item{metric_file}{(character) A character vector containing paths to JSON or
+\item{metric_file}{(character vector) The paths to JSON or
 Rdump files (one per chain) compatible with CmdStan that contain
 precomputed inverse metrics. The \code{metric_file} argument is inherited from
 CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be

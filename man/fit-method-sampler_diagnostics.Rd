@@ -13,8 +13,8 @@ sampler_diagnostics(
 \arguments{
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to \code{FALSE}.}
 
-\item{format}{The draws format to return. See \link[=fit-method-draws]{draws} for
-details.}
+\item{format}{(string) The draws format to return. See
+\link[=fit-method-draws]{draws} for details.}
 }
 \value{
 Depends on \code{format}, but the default is a 3-D

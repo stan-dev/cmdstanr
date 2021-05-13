@@ -4,10 +4,10 @@
 #' Create a new [`CmdStanModel`] object from a file containing a Stan program.
 #'
 #' @export
-#' @param stan_file The path to a `.stan` file containing a Stan program. The
-#'   helper function [write_stan_file()] is provided for cases when it is
-#'   more convenient to specify the Stan program as a string.
-#' @param compile Do compilation? The default is `TRUE`. If `FALSE`
+#' @param stan_file (string) The path to a `.stan` file containing a Stan
+#'   program. The helper function [write_stan_file()] is provided for cases when
+#'   it is more convenient to specify the Stan program as a string.
+#' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
 #' @param ... Optionally, additional arguments to pass to the
@@ -846,7 +846,7 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   `mpi_args = list("n" = n_procs)`.
 #'
 #' @inheritParams model-method-sample
-#' @param mpi_cmd (character vector) The MPI launcher used for launching MPI
+#' @param mpi_cmd (string) The MPI launcher used for launching MPI
 #'   processes. The default launcher is `"mpiexec"`.
 #' @param mpi_args (list) A list of arguments to use when launching MPI
 #'   processes. For example, `mpi_args = list("n" = 4)` launches the executable

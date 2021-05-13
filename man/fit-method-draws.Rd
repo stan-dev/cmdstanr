@@ -12,7 +12,7 @@ draws(
 )
 }
 \arguments{
-\item{variables}{Optionally, a character vector naming the variables
+\item{variables}{(character vector) Optionally, the names of the variables
 (parameters, transformed parameters, and generated quantities) to read in.
 \itemize{
 \item If \code{NULL} (the default) then all variables are included.

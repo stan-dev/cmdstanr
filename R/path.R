@@ -8,7 +8,7 @@
 #'
 #' @export
 #'
-#' @param path The full file path to the CmdStan installation as a string. If
+#' @param path (string) The full file path to the CmdStan installation. If
 #'   `NULL` (the default) then the path is set to the default path used by
 #'   [install_cmdstan()] if it exists.
 #' @return A string. Either the file path to the CmdStan installation or the
@@ -61,8 +61,9 @@ cmdstan_path <- function() {
 
 #' @rdname set_cmdstan_path
 #' @export
-#' @param error_on_NA Logical of length 1, whether to throw an error if CmdStan
-#'   is not found. If `FALSE`, `cmdstan_version()` returns `NULL`.
+#' @param error_on_NA (logical) Should an error be thrown if CmdStan is not
+#'   found. The default is `TRUE`. If `FALSE`, `cmdstan_version()` returns
+#'   `NULL`.
 #' @return CmdStan version string if available. If CmdStan is not found and
 #'   `error_on_NA` is `FALSE`, `cmdstan_version()` returns `NULL`.
 cmdstan_version <- function(error_on_NA = TRUE) {
