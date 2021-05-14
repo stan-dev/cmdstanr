@@ -1,7 +1,8 @@
 #' Fit models for use in examples
 #'
 #' @export
-#' @param example Name of the example. The currently available examples are:
+#' @param example (string) The name of the example. The currently available
+#'   examples are
 #'   * `"logistic"`: logistic regression with intercept and 3 predictors.
 #'   * `"schools"`: the so-called "eight schools" model, a hierarchical
 #'   meta-analysis. Fitting this model will result in warnings about
@@ -12,12 +13,12 @@
 #'   To print the Stan code for a given `example` use
 #'   `print_example_program(example)`.
 #'
-#' @param method Which fitting method should be used? The default is the
-#'   `"sample"` method (MCMC).
+#' @param method (string) Which fitting method should be used? The default is
+#'   the `"sample"` method (MCMC).
 #' @param ... Arguments passed to the chosen `method`. See the help pages for
 #'   the individual methods for details.
-#' @param quiet If `TRUE` (the default) then fitting the model is wrapped in
-#'   [utils::capture.output()].
+#' @param quiet (logical) If `TRUE` (the default) then fitting the model is
+#'   wrapped in [utils::capture.output()].
 #'
 #' @return
 #' The fitted model object returned by the selected `method`.
@@ -93,13 +94,15 @@ print_example_program <-
 #' [temporary][base::tempfile]) file with a `.stan` extension.
 #'
 #' @export
-#' @param code A single string containing a Stan program or a character vector
-#'   containing the individual lines of a Stan program. See **Examples**.
-#' @param dir An optional path to the directory where the file will be written.
-#'   If omitted, a [temporary directory][base::tempdir] is used by default.
-#' @param basename If `dir` is specified, an optional string providing the
-#'   basename for the file created. If not specified a file name is generated
-#'   via [base::tempfile()].
+#' @param code (multiple options) The Stan code:
+#'   * A single string containing a Stan program
+#'   * A character vector containing the individual lines of a Stan program.
+#' @param dir (string) An optional path to the directory where the file will be
+#'   written. If omitted, a [temporary directory][base::tempdir] is used by
+#'   default.
+#' @param basename (string) If `dir` is specified, optionally the basename to
+#'   use for the file created. If not specified a file name is generated via
+#'   [base::tempfile()].
 #' @return The path to the file.
 #'
 #' @examples

@@ -1,9 +1,8 @@
 #' Write data to a JSON file readable by CmdStan
 #'
 #' @export
-#' @param data A named list of \R objects.
-#' @param file A string specifying the path to where the data file should be
-#'   written.
+#' @param data (list) A named list of \R objects.
+#' @param file (string) The path to where the data file should be written.
 #'
 #' @examples
 #' x <- matrix(rnorm(10), 5, 2)

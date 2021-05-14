@@ -7,8 +7,8 @@
 register_knitr_engine(override = TRUE)
 }
 \arguments{
-\item{override}{Override knitr's built-in, RStan-based engine for Stan? The
-default is \code{TRUE}. See \strong{Details}.}
+\item{override}{(logical) Override knitr's built-in, RStan-based engine for
+Stan? The default is \code{TRUE}. See \strong{Details}.}
 }
 \description{
 Registers CmdStanR's knitr engine \code{\link[=eng_cmdstan]{eng_cmdstan()}} for processing Stan chunks.

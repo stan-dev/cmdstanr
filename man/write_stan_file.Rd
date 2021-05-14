@@ -7,15 +7,19 @@
 write_stan_file(code, dir = tempdir(), basename = NULL)
 }
 \arguments{
-\item{code}{A single string containing a Stan program or a character vector
-containing the individual lines of a Stan program. See \strong{Examples}.}
+\item{code}{(multiple options) The Stan code:
+\itemize{
+\item A single string containing a Stan program
+\item A character vector containing the individual lines of a Stan program.
+}}
 
-\item{dir}{An optional path to the directory where the file will be written.
-If omitted, a \link[base:tempfile]{temporary directory} is used by default.}
+\item{dir}{(string) An optional path to the directory where the file will be
+written. If omitted, a \link[base:tempfile]{temporary directory} is used by
+default.}
 
-\item{basename}{If \code{dir} is specified, an optional string providing the
-basename for the file created. If not specified a file name is generated
-via \code{\link[base:tempfile]{base::tempfile()}}.}
+\item{basename}{(string) If \code{dir} is specified, optionally the basename to
+use for the file created. If not specified a file name is generated via
+\code{\link[base:tempfile]{base::tempfile()}}.}
 }
 \value{
 The path to the file.

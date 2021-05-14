@@ -39,16 +39,16 @@ sample_mpi(
 }
 \arguments{
 \item{data}{(multiple options) The data to use for the variables specified in
-the \code{data} block of the Stan program. One of the following:
+the data block of the Stan program. One of the following:
 \itemize{
 \item A named list of \R objects (like for RStan). Internally this list is then
 written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
 \item A path to a data file compatible with CmdStan (JSON or \R dump). See the
 appendices in the CmdStan manual for details on using these formats.
-\item \code{NULL} or an empty list if the Stan program has no \code{data} block.
+\item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
-\item{mpi_cmd}{(character vector) The MPI launcher used for launching MPI
+\item{mpi_cmd}{(string) The MPI launcher used for launching MPI
 processes. The default launcher is \code{"mpiexec"}.}
 
 \item{mpi_args}{(list) A list of arguments to use when launching MPI
@@ -59,11 +59,11 @@ model executable.}
 \item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
 In the case of multi-chain sampling the single \code{seed} will automatically be
 augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the \verb{transformed data} block, which defaults to
+seed. The exception is the transformed data block, which defaults to
 using same seed for all chains so that the same data is generated for all
 chains if RNG functions are used. The only time \code{seed} should be specified
 as a vector (one element per chain) is if RNG functions are used in
-\verb{transformed data} and the goal is to generate \emph{different} data for each
+transformed data and the goal is to generate \emph{different} data for each
 chain.}
 
 \item{refresh}{(non-negative integer) The number of iterations between
@@ -71,7 +71,7 @@ printed screen updates. If \code{refresh = 0}, only error messages will be
 printed.}
 
 \item{init}{(multiple options) The initialization method to use for the
-variables declared in the \code{parameters} block of the Stan program:
+variables declared in the parameters block of the Stan program:
 \itemize{
 \item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
 \verb{[-x,x]} (on the \emph{unconstrained} parameter space);
@@ -129,9 +129,9 @@ will be comprised from the model name, timestamp and 5 random characters.
 \item{chains}{(positive integer) The number of Markov chains to run. The
 default is 4.}
 
-\item{chain_ids}{(vector) A vector of chain IDs. Must contain \code{chains} unique
-positive integers. If not set, the default chain IDs are used (integers
-starting from \code{1}).}
+\item{chain_ids}{(integer vector) A vector of chain IDs. Must contain
+\code{chains} unique positive integers. If not set, the default chain IDs are
+used (integers starting from \code{1}).}
 
 \item{iter_warmup}{(positive integer) The number of warmup iterations to run
 per chain. Note: in the CmdStan User's Guide this is referred to as
@@ -167,12 +167,12 @@ statistic.}
 approximation to continuous Hamiltonian dynamics. This is further tuned
 during warmup.}
 
-\item{metric}{(character) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
+\item{metric}{(string) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
 specifying the geometry of the base manifold. See the \emph{Euclidean Metric}
 section of the CmdStan User's Guide for more details. To specify a
 precomputed (inverse) metric, see the \code{inv_metric} argument below.}
 
-\item{metric_file}{(character) A character vector containing paths to JSON or
+\item{metric_file}{(character vector) The paths to JSON or
 Rdump files (one per chain) compatible with CmdStan that contain
 precomputed inverse metrics. The \code{metric_file} argument is inherited from
 CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
