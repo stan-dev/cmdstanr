@@ -3,6 +3,10 @@
 * Expose CmdStan's `diagnose` method that compares Stan's gradient computations
 to gradients computed via finite differences. (#485)
 
+* `write_stan_file()` now choose file names deterministically based on the code
+so that models do not get unnecessarily recompiled when calling the function
+multiple times with the same code. (#495, @martinmodrak)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
