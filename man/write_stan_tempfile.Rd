@@ -7,11 +7,10 @@
 write_stan_tempfile(code, dir = tempdir())
 }
 \arguments{
-\item{code}{(multiple options) The Stan code:
-\itemize{
-\item A single string containing a Stan program
-\item A character vector containing the individual lines of a Stan program.
-}}
+\item{code}{(character vector) The Stan code to write to the file. This can
+be a character vector of length one (a string) containing the entire Stan
+program or a character vector with each element containing one line of the
+Stan program.}
 
 \item{dir}{(string) An optional path to the directory where the file will be
 written. If omitted, a \link[base:tempfile]{temporary directory} is used by
