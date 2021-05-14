@@ -8,36 +8,53 @@
 draws(
   variables = NULL,
   inc_warmup = FALSE,
-  format = getOption("cmdstanr_draws_format", "draws_matrix")
+  format = getOption("cmdstanr_draws_format")
 )
 }
 \arguments{
-\item{variables}{(character vector) The variables to read in. If \code{NULL} (the
-default) then all variables are included.}
+\item{variables}{(character vector) Optionally, the names of the variables
+(parameters, transformed parameters, and generated quantities) to read in.
+\itemize{
+\item If \code{NULL} (the default) then all variables are included.
+\item If an empty string (\code{variables=""}) then none are included.
+\item For non-scalar variables all elements or specific elements can be selected:
+\itemize{
+\item \code{variables = "theta"} selects all elements of \code{theta};
+\item \code{variables = c("theta[1]", "theta[3]")} selects only the 1st and 3rd elements.
+}
+}}
 
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to
 \code{FALSE}. Ignored except when used with \link{CmdStanMCMC} objects.}
 
 \item{format}{(string) The format of the returned draws or point estimates.
-Must be a valid format from the \pkg{posterior} package. The default can be
-set using the option \code{"cmdstanr_draws_format"}, otherwise the defaults are
-the following.
+Must be a valid format from the \pkg{posterior} package. The defaults
+are the following.
 \itemize{
 \item For sampling and generated quantities the default is
-\code{\link[posterior:draws_array]{"draws_array"}}.
+\code{\link[posterior:draws_array]{"draws_array"}}. This format keeps the chains
+separate. To combine the chains use any of the other formats (e.g.
+\code{"draws_matrix"}).
 \item For point estimates from optimization and approximate draws from
 variational inference the default is
 \code{\link[posterior:draws_array]{"draws_matrix"}}.
 }
 
-To use a different format it can be specified as the full name (e.g.
-\code{"draws_df"}) or omitting the \code{"draws_"} prefix (e.g. \code{"df"}).
+To use a different format it can be specified as the full name of the
+format from the \pkg{posterior} package (e.g. \code{format = "draws_df"}) or
+omitting the \code{"draws_"} prefix (e.g. \code{format = "df"}).
 
-For models with a large number of parameters (20k+) we recommend using the
-\code{draws_list} format, which is the most efficient and RAM friendly when
-combining draws from multiple chains. If speed or memory is not a
-constraint we recommend selecting the format that most suits the coding
-style of the post processing phase.}
+\strong{Changing the default format}: To change the default format for an entire
+R session use \code{options(cmdstanr_draws_format = format)}, where \code{format} is
+the name (in quotes) of a valid format from the posterior package. For
+example \code{options(cmdstanr_draws_format = "draws_df")} will change the
+default to a data frame.
+
+\strong{Note about efficiency}: For models with a large number of parameters
+(20k+) we recommend using the \code{"draws_list"} format, which is the most
+efficient and RAM friendly when combining draws from multiple chains. If
+speed or memory is not a constraint we recommend selecting the format that
+most suits the coding style of the post processing phase.}
 }
 \value{
 Depends on the value of \code{format}. The defaults are:
@@ -49,10 +66,10 @@ variable).
 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
 variable).
 \item For \link[=model-method-variational]{variational inference}, a 2-D
-\code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable). An
-additional variable \code{lp_approx__} is also included, which is the log density
-of the variational approximation to the posterior evaluated at each of the
-draws.
+\code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable) because
+there are no chains. An additional variable \code{lp_approx__} is also included,
+which is the log density of the variational approximation to the posterior
+evaluated at each of the draws.
 \item For \link[=model-method-optimize]{optimization}, a 1-row
 \code{\link[posterior:draws_matrix]{draws_matrix}} with one column per variable. These
 are \emph{not} actually draws, just point estimates stored in the \code{draws_matrix}
@@ -64,18 +81,14 @@ Extract posterior draws after MCMC or approximate posterior
 draws after variational approximation using formats provided by the
 \pkg{posterior} package.
 
-The variables include the \code{parameters}, \verb{transformed parameters}, and
-\verb{generated quantities} from the Stan program as well as \code{lp__}, the total
-log probability (\code{target}) accumulated in the \code{model} block.
+The variables include the parameters, transformed parameters, and
+generated quantities from the Stan program as well as \code{lp__}, the total
+log probability (\code{target}) accumulated in the model block.
 }
 \examples{
 \dontrun{
-library(posterior)
-library(bayesplot)
-color_scheme_set("brightblue")
-
 # logistic regression with intercept alpha and coefficients beta
-fit <- cmdstanr_example("logistic")
+fit <- cmdstanr_example("logistic", method = "sample")
 
 # returned as 3-D array (see ?posterior::draws_array)
 draws <- fit$draws()
@@ -83,10 +96,13 @@ dim(draws)
 str(draws)
 
 # can easily convert to other formats (data frame, matrix, list)
-as_draws_df(draws)  # see also as_draws_matrix, as_draws_list
+# using the posterior package
+head(posterior::as_draws_matrix(draws))
 
 # or can specify 'format' argument to avoid manual conversion
-draws <- fit$draws(format = "df")
+# matrix format combines all chains
+draws <- fit$draws(format = "matrix")
+head(draws)
 
 # can select specific parameters
 fit$draws("alpha")
@@ -94,8 +110,15 @@ fit$draws("beta")  # selects entire vector beta
 fit$draws(c("alpha", "beta[2]"))
 
 # can be passed directly to bayesplot plotting functions
-mcmc_dens(fit$draws(c("alpha", "beta")))
-mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
+bayesplot::color_scheme_set("brightblue")
+bayesplot::mcmc_dens(fit$draws(c("alpha", "beta")))
+bayesplot::mcmc_scatter(fit$draws(c("beta[1]", "beta[2]")), alpha = 0.3)
+
+
+# example using variational inference
+fit <- cmdstanr_example("logistic", method = "variational")
+head(fit$draws("beta")) # a matrix by default
+head(fit$draws("beta", format = "df"))
 }
 
 }

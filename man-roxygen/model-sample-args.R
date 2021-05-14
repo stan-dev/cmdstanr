@@ -5,9 +5,9 @@
 #'   is to look for the option `"mc.cores"`, which can be set for an entire \R
 #'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
 #'   been set then the default is `1`.
-#' @param chain_ids (vector) A vector of chain IDs. Must contain `chains` unique
-#'   positive integers. If not set, the default chain IDs are used (integers
-#'   starting from `1`).
+#' @param chain_ids (integer vector) A vector of chain IDs. Must contain
+#'   `chains` unique positive integers. If not set, the default chain IDs are
+#'   used (integers starting from `1`).
 #' @param threads_per_chain (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
@@ -57,11 +57,11 @@
 #' @param step_size (positive real) The _initial_ step size for the discrete
 #'   approximation to continuous Hamiltonian dynamics. This is further tuned
 #'   during warmup.
-#' @param metric (character) One of `"diag_e"`, `"dense_e"`, or `"unit_e"`,
+#' @param metric (string) One of `"diag_e"`, `"dense_e"`, or `"unit_e"`,
 #'   specifying the geometry of the base manifold. See the _Euclidean Metric_
 #'   section of the CmdStan User's Guide for more details. To specify a
 #'   precomputed (inverse) metric, see the `inv_metric` argument below.
-#' @param metric_file (character) A character vector containing paths to JSON or
+#' @param metric_file (character vector) The paths to JSON or
 #'   Rdump files (one per chain) compatible with CmdStan that contain
 #'   precomputed inverse metrics. The `metric_file` argument is inherited from
 #'   CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
@@ -81,7 +81,6 @@
 #'   adaptation interval during warmup.
 #' @param window (nonnegative integer) Initial width of slow timestep/metric
 #'   adaptation interval.
-#'
 #' @param fixed_param (logical) When `TRUE`, call CmdStan with argument
 #'   `"algorithm=fixed_param"`. The default is `FALSE`. The fixed parameter
 #'   sampler generates a new sample without changing the current state of the

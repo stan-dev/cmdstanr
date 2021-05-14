@@ -1,7 +1,8 @@
 #' Fit models for use in examples
 #'
 #' @export
-#' @param example Name of the example. The currently available examples are:
+#' @param example (string) The name of the example. The currently available
+#'   examples are
 #'   * `"logistic"`: logistic regression with intercept and 3 predictors.
 #'   * `"schools"`: the so-called "eight schools" model, a hierarchical
 #'   meta-analysis. Fitting this model will result in warnings about
@@ -12,12 +13,12 @@
 #'   To print the Stan code for a given `example` use
 #'   `print_example_program(example)`.
 #'
-#' @param method Which fitting method should be used? The default is the
-#'   `"sample"` method (MCMC).
+#' @param method (string) Which fitting method should be used? The default is
+#'   the `"sample"` method (MCMC).
 #' @param ... Arguments passed to the chosen `method`. See the help pages for
 #'   the individual methods for details.
-#' @param quiet If `TRUE` (the default) then fitting the model is wrapped in
-#'   [utils::capture.output()].
+#' @param quiet (logical) If `TRUE` (the default) then fitting the model is
+#'   wrapped in [utils::capture.output()].
 #'
 #' @return
 #' The fitted model object returned by the selected `method`.
@@ -90,27 +91,29 @@ print_example_program <-
 #' Write Stan code to a file
 #'
 #' Convenience function for writing Stan code to a (possibly
-#' [temporary][base::tempfile]) file with a `.stan` extension.
-#' By default, the filename is chosen deterministically based on the Stan code
-#' via [rlang::hash()],
-#' and the file is not overwritten if it already has correct contents.
-#' This means that calling this function multiple times with the same Stan code
-#' will reuse the compiled model. This also however means that the function
-#' is potentially not thread-safe. Using \code{hash_salt = Sys.getpid()} should
-#' ensure thread-safety in the rare cases when it is needed.
+#' [temporary][base::tempfile]) file with a `.stan` extension. By default, the
+#' file name is chosen deterministically based on a [hash][rlang::hash()]
+#' of the Stan code, and the file is not overwritten if it already has correct
+#' contents. This means that calling this function multiple times with the same
+#' Stan code will reuse the compiled model. This also however means that the
+#' function is potentially not thread-safe. Using `hash_salt = Sys.getpid()`
+#' should ensure thread-safety in the rare cases when it is needed.
 #'
 #' @export
-#' @param code A single string containing a Stan program or a character vector
-#'   containing the individual lines of a Stan program. See **Examples**.
-#' @param dir An optional path to the directory where the file will be written.
-#'   If omitted, a [temporary directory][base::tempdir] is used by default.
-#' @param basename If `dir` is specified, an optional string providing the
-#'   basename for the file created. If not specified a file name is generated
-#'   via [rlang::hash()] of the code.
-#' @param force_overwrite If set to `TRUE` the file will always be
+#' @param code (character vector) The Stan code to write to the file. This can
+#'   be a character vector of length one (a string) containing the entire Stan
+#'   program or a character vector with each element containing one line of the
+#'   Stan program.
+#' @param dir (string) An optional path to the directory where the file will be
+#'   written. If omitted, a [temporary directory][base::tempdir] is used by
+#'   default.
+#' @param basename (string) If `dir` is specified, optionally the basename to
+#'   use for the file created. If not specified a file name is generated
+#'   from [hashing][rlang::hash()] the code.
+#' @param force_overwrite (logical) If set to `TRUE` the file will always be
 #'   overwritten and thus the resulting model will always be recompiled.
-#' @param hash_salt A string that will be added to model code prior to hashing to determine
-#'   the file name if `basename` is not set.
+#' @param hash_salt (string) Text to add to the model code prior to hashing to
+#'   determine the file name if `basename` is not set.
 #' @return The path to the file.
 #'
 #' @examples
@@ -140,8 +143,7 @@ print_example_program <-
 #' identical(readLines(f), readLines(f2))
 #'
 write_stan_file <- function(code, dir = tempdir(), basename = NULL,
-                            force_overwrite = FALSE,
-                            hash_salt = "") {
+                            force_overwrite = FALSE, hash_salt = "") {
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
   }
@@ -167,7 +169,7 @@ write_stan_file <- function(code, dir = tempdir(), basename = NULL,
    }, error = function(e) { warning("Error when checking old file contents", e) })
   }
 
-  if(overwrite) {
+  if (overwrite) {
     cat(code, file = file, sep = "\n")
   }
   file

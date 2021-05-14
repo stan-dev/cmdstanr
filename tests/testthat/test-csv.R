@@ -755,6 +755,13 @@ test_that("read_cmdstan_csv works with GQ and draws_list format", {
   expect_true(all(sum_y_array_chain_2 == sum_y_list_chain_2[[1]]$sum_y))
 })
 
+test_that("read_cmdstan_csv errors if bad draws format", {
+  expect_error(
+    read_cmdstan_csv(fit_bernoulli_thin_1$output_files(), format = "bad_format"),
+    "The supplied draws format is not valid"
+  )
+})
+
 test_that("read_cmdstan_csv works with diagnose results", {
   csv_file <- test_path("resources", "csv", "logistic-diagnose.csv")
 

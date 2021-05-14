@@ -7,10 +7,9 @@
 write_stan_json(data, file)
 }
 \arguments{
-\item{data}{A named list of \R objects.}
+\item{data}{(list) A named list of \R objects.}
 
-\item{file}{A string specifying the path to where the data file should be
-written.}
+\item{file}{(string) The path to where the data file should be written.}
 }
 \description{
 Write data to a JSON file readable by CmdStan

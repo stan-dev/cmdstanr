@@ -19,37 +19,39 @@
 #'   should typically be followed by calling `rebuild_cmdstan()`.
 #'
 #' @export
-#' @param dir Path to the directory in which to install CmdStan. The default is
-#'   to install it in a directory called `.cmdstanr` within the user's home
-#'   directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstanr")`).
-#' @param cores The number of CPU cores to use to parallelize building CmdStan
-#'   and speed up installation. If `cores` is not specified then the default is
-#'   to look for the option `"mc.cores"`, which can be set for an entire \R
-#'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
-#'   been set then the default is `2`.
-#' @param quiet For `install_cmdstan()`, should the verbose output from the
-#'   system processes be suppressed when building the CmdStan binaries?
-#'   The default is `FALSE`.
-#'   For `check_cmdstan_toolchain()`, should the function suppress printing
-#'   informational messages? The default is `FALSE`. If `TRUE` only errors will
-#'   be printed.
-#' @param overwrite Should CmdStan still be downloaded and installed even if an
-#'   installation of the same version is found in `dir`? The default is `FALSE`,
-#'   in which case an informative error is thrown instead of overwriting the
-#'   user's installation.
-#' @param timeout Timeout (in seconds) for the build stage of the installation.
-#' @param version The CmdStan release version to install. The default is `NULL`,
-#'   which downloads the latest stable release from <https://github.com/stan-dev/cmdstan/releases>.
-#' @param release_url The URL for the specific CmdStan release or
+#' @param dir (string) The path to the directory in which to install CmdStan.
+#'   The default is to install it in a directory called `.cmdstanr` within the
+#'   user's home directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstanr")`).
+#' @param cores (integer) The number of CPU cores to use to parallelize building
+#'   CmdStan and speed up installation. If `cores` is not specified then the
+#'   default is to look for the option `"mc.cores"`, which can be set for an
+#'   entire \R session by `options(mc.cores=value)`. If the `"mc.cores"` option
+#'   has not been set then the default is `2`.
+#' @param quiet (logical) For `install_cmdstan()`, should the verbose output
+#'   from the system processes be suppressed when building the CmdStan binaries?
+#'   The default is `FALSE`. For `check_cmdstan_toolchain()`, should the
+#'   function suppress printing informational messages? The default is `FALSE`.
+#'   If `TRUE` only errors will be printed.
+#' @param overwrite (logical) Should CmdStan still be downloaded and installed
+#'   even if an installation of the same version is found in `dir`? The default
+#'   is `FALSE`, in which case an informative error is thrown instead of
+#'   overwriting the user's installation.
+#' @param timeout (positive real) Timeout (in seconds) for the build stage of
+#'   the installation.
+#' @param version (string) The CmdStan release version to install. The default
+#'   is `NULL`, which downloads the latest stable release from
+#'   <https://github.com/stan-dev/cmdstan/releases>.
+#' @param release_url (string) The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
 #'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
 #'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
-#' @param cpp_options A list specifying any makefile flags/variables to be
-#'   written to the `make/local` file. For example, `list("CXX" = "clang++")`
-#'   will force the use of clang for compilation.
-#' @param check_toolchain Should `install_cmdstan()` attempt to check that the
-#'   required toolchain is installed and properly configured. The default is `TRUE`.
+#' @param cpp_options (list) Any makefile flags/variables to be written to
+#'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
+#'   the use of clang for compilation.
+#' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
+#'   that the required toolchain is installed and properly configured. The
+#'   default is `TRUE`.
 #'
 #' @examples
 #' \dontrun{
@@ -198,9 +200,9 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 
 #' @rdname install_cmdstan
 #' @export
-#' @param append For `cmdstan_make_local()`, should the listed makefile flags be
-#'   appended to the end of the existing `make/local` file? The default is `TRUE`.
-#'   If `FALSE` the file is overwritten.
+#' @param append (logical) For `cmdstan_make_local()`, should the listed
+#'   makefile flags be appended to the end of the existing `make/local` file?
+#'   The default is `TRUE`. If `FALSE` the file is overwritten.
 #' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
 #'   contents of `make/local` are returned without writing anything, otherwise
 #'   the updated contents are returned.

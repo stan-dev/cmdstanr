@@ -15,7 +15,8 @@ cmdstanr_example(
 print_example_program(example = c("logistic", "schools", "schools_ncp"))
 }
 \arguments{
-\item{example}{Name of the example. The currently available examples are:
+\item{example}{(string) The name of the example. The currently available
+examples are
 \itemize{
 \item \code{"logistic"}: logistic regression with intercept and 3 predictors.
 \item \code{"schools"}: the so-called "eight schools" model, a hierarchical
@@ -28,14 +29,14 @@ model that fixes the problem with divergences.
 To print the Stan code for a given \code{example} use
 \code{print_example_program(example)}.}
 
-\item{method}{Which fitting method should be used? The default is the
-\code{"sample"} method (MCMC).}
+\item{method}{(string) Which fitting method should be used? The default is
+the \code{"sample"} method (MCMC).}
 
 \item{...}{Arguments passed to the chosen \code{method}. See the help pages for
 the individual methods for details.}
 
-\item{quiet}{If \code{TRUE} (the default) then fitting the model is wrapped in
-\code{\link[utils:capture.output]{utils::capture.output()}}.}
+\item{quiet}{(logical) If \code{TRUE} (the default) then fitting the model is
+wrapped in \code{\link[utils:capture.output]{utils::capture.output()}}.}
 }
 \value{
 The fitted model object returned by the selected \code{method}.

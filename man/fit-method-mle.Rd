@@ -20,7 +20,7 @@ The \verb{$mle()} method is only available for \code{\link{CmdStanMLE}} objects.
 It returns the penalized maximum likelihood estimate (posterior mode) as a
 numeric vector with one element per variable. The returned vector does \emph{not}
 include \code{lp__}, the total log probability (\code{target}) accumulated in the
-\code{model} block of the Stan program, which is available via the
+model block of the Stan program, which is available via the
 \code{\link[=fit-method-lp]{$lp()}} method and also included in the
 \code{\link[=fit-method-draws]{$draws()}} method.
 }

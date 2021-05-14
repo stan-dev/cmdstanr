@@ -184,7 +184,7 @@ There are three data formats that CmdStanR allows when fitting a model:
 ### Named list of R objects
 
 Like the RStan interface, CmdStanR accepts a named list of R objects where the
-names correspond to variables declared in the `data` block of the Stan program. 
+names correspond to variables declared in the data block of the Stan program. 
 In the Bernoulli model the data is `N`, the number of data points, and `y`
 an integer array of observations. 
 
