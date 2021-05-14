@@ -67,6 +67,38 @@ test_that("write_stan_file creates dir if necessary", {
   )
 })
 
+test_that("write_stan_file by default creates the same file for the same Stan model", {
+  dir <- file.path(test_path(), "answers")
+
+  f1 <- write_stan_file(stan_program, dir = dir)
+  mtime1 <- file.info(f1)$mtime
+
+  f2 <- write_stan_file(paste0(stan_program, "\n\n"), dir = dir)
+  expect_true(f1 != f2)
+
+  # Test that writing the some model will not touch the file
+  # Wait a tiny bit to make sure the modified time will be different if
+  # overwrite happened
+  Sys.sleep(0.001)
+  f3 <- write_stan_file(stan_program, dir = dir)
+  expect_equal(f1, f3)
+
+  mtime3 <- file.info(f3)$mtime
+  expect_equal(mtime1, mtime3)
+
+  f4 <- write_stan_file(stan_program, dir = dir, hash_salt = "aaa")
+  expect_true(f1 != f4)
+
+  f5 <- write_stan_file(stan_program, dir = dir, force_overwrite = TRUE)
+  expect_equal(f1, f5)
+
+  mtime5 <- file.info(f5)$mtime
+  expect_true(mtime1 < mtime5)
+
+
+  try(file.remove(f1, f2, f4), silent = TRUE)
+})
+
 test_that("write_stan_tempfile is deprecated", {
   expect_warning(write_stan_tempfile(stan_program), "deprecated")
 })

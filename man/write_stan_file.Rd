@@ -4,29 +4,46 @@
 \alias{write_stan_file}
 \title{Write Stan code to a file}
 \usage{
-write_stan_file(code, dir = tempdir(), basename = NULL)
+write_stan_file(
+  code,
+  dir = tempdir(),
+  basename = NULL,
+  force_overwrite = FALSE,
+  hash_salt = ""
+)
 }
 \arguments{
-\item{code}{(multiple options) The Stan code:
-\itemize{
-\item A single string containing a Stan program
-\item A character vector containing the individual lines of a Stan program.
-}}
+\item{code}{(character vector) The Stan code to write to the file. This can
+be a character vector of length one (a string) containing the entire Stan
+program or a character vector with each element containing one line of the
+Stan program.}
 
 \item{dir}{(string) An optional path to the directory where the file will be
 written. If omitted, a \link[base:tempfile]{temporary directory} is used by
 default.}
 
 \item{basename}{(string) If \code{dir} is specified, optionally the basename to
-use for the file created. If not specified a file name is generated via
-\code{\link[base:tempfile]{base::tempfile()}}.}
+use for the file created. If not specified a file name is generated
+from \link[rlang:hash]{hashing} the code.}
+
+\item{force_overwrite}{(logical) If set to \code{TRUE} the file will always be
+overwritten and thus the resulting model will always be recompiled.}
+
+\item{hash_salt}{(string) Text to add to the model code prior to hashing to
+determine the file name if \code{basename} is not set.}
 }
 \value{
 The path to the file.
 }
 \description{
 Convenience function for writing Stan code to a (possibly
-\link[base:tempfile]{temporary}) file with a \code{.stan} extension.
+\link[base:tempfile]{temporary}) file with a \code{.stan} extension. By default, the
+file name is chosen deterministically based on a \link[rlang:hash]{hash}
+of the Stan code, and the file is not overwritten if it already has correct
+contents. This means that calling this function multiple times with the same
+Stan code will reuse the compiled model. This also however means that the
+function is potentially not thread-safe. Using \code{hash_salt = Sys.getpid()}
+should ensure thread-safety in the rare cases when it is needed.
 }
 \examples{
 # stan program as a single string
