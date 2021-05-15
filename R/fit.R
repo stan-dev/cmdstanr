@@ -829,10 +829,11 @@ CmdStanMCMC <- R6::R6Class(
         if (self$runset$args$validate_csv) {
           fixed_param <- runset$args$method_args$fixed_param
           private$read_csv_(variables = "",
-                           sampler_diagnostics = if (!fixed_param) c("treedepth__", "divergent__") else "")
+                           sampler_diagnostics = if (!fixed_param) c("treedepth__", "divergent__", "energy__") else "")
           if (!fixed_param) {
             check_divergences(private$sampler_diagnostics_)
             check_sampler_transitions_treedepth(private$sampler_diagnostics_, private$metadata_)
+            check_bfmi(private$sampler_diagnostics_)
           }
         }
       }
