@@ -277,39 +277,6 @@ matching_variables <- function(variable_filters, variables) {
   )
 }
 
-#' Returns a list of dimensions for the input variables.
-#'
-#' @noRd
-#' @param variable_names A character vector of variable names including all
-#'   individual elements (e.g., `c("beta[1]", "beta[2]")`, not just `"beta"`).
-#' @return A list giving the dimensions of the variables. The equivalent of the
-#'   `par_dims` slot of RStan's stanfit objects, except that scalars have
-#'   dimension `1` instead of `0`.
-#' @note For this function to return the correct dimensions the input must be
-#'   already sorted in ascending order. Since CmdStan always has the variables
-#'   sorted correctly we avoid a sort by not sorting again here.
-#'
-variable_dims <- function(variable_names = NULL) {
-  if (is.null(variable_names)) {
-    return(NULL)
-  }
-  dims <- list()
-  uniq_variable_names <- unique(gsub("\\[.*\\]", "", variable_names))
-  var_names <- gsub("\\]", "", variable_names)
-  for (var in uniq_variable_names) {
-    pattern <- paste0("^", var, "\\[")
-    var_indices <- var_names[grep(pattern, var_names)]
-    var_indices <- gsub(pattern, "", var_indices)
-    if (length(var_indices)) {
-      var_indices <- strsplit(var_indices[length(var_indices)], ",")[[1]]
-      dims[[var]] <- as.numeric(var_indices)
-    } else {
-      dims[[var]] <- 1
-    }
-  }
-  dims
-}
-
 
 # draws formatting --------------------------------------------------------
 
