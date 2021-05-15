@@ -1372,3 +1372,20 @@ assert_valid_stanc_options <- function(stanc_options) {
   invisible(stanc_options)
 }
 
+cpp_options_to_compile_flags <- function(cpp_options) {
+  if (length(cpp_options) == 0) {
+    return(NULL)
+  }
+  cpp_built_options <- c()
+  for (i in seq_along(cpp_options)) {
+    option_name <- names(cpp_options)[i]
+    if (is.null(option_name) || !nzchar(option_name)) {
+      cpp_built_options <- c(cpp_built_options, toupper(cpp_options[[i]]))
+    } else {
+      cpp_built_options <- c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+    }
+  }
+  cpp_built_options
+}
+
+

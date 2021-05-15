@@ -106,20 +106,6 @@ test_that("list_to_array fails for non-numeric values", {
                "All elements in list 'test-list' must be numeric!")
 })
 
-test_that("cpp_options_to_compile_flags() works", {
-  options = list(
-    stan_threads = TRUE
-  )
-  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE")
-  options = list(
-    stan_threads = TRUE,
-    stanc2 = TRUE
-  )
-  expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=TRUE", "STANC2=TRUE"))
-  options = list()
-  expect_equal(cpp_options_to_compile_flags(options), NULL)
-})
-
 test_that("cmdstan_make_local() works", {
   exisiting_make_local <- cmdstan_make_local()
   make_local_path <- file.path(cmdstan_path(), "make", "local")

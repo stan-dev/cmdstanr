@@ -446,3 +446,16 @@ test_that("compiliation errors if folder with the model name exists", {
                "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.")
 })
 
+test_that("cpp_options_to_compile_flags() works", {
+  options = list(
+    stan_threads = TRUE
+  )
+  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE")
+  options = list(
+    stan_threads = TRUE,
+    stanc2 = TRUE
+  )
+  expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=TRUE", "STANC2=TRUE"))
+  options = list()
+  expect_equal(cpp_options_to_compile_flags(options), NULL)
+})
