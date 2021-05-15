@@ -194,41 +194,8 @@ generate_file_names <-
     new_names
   }
 
+# threading helpers (deprecated) ------------------------------------------
 
-cpp_options_to_compile_flags <- function(cpp_options) {
-  if (length(cpp_options) == 0) {
-    return(NULL)
-  }
-  cpp_built_options = c()
-  for (i in seq_len(length(cpp_options))) {
-    option_name <- names(cpp_options)[i]
-    if (is.null(option_name) || !nzchar(option_name)) {
-      cpp_built_options = c(cpp_built_options, toupper(cpp_options[[i]]))
-    } else {
-      cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
-    }
-  }
-  cpp_built_options
-}
-
-check_stanc_options <- function(stanc_options) {
-  i <- 1
-  names <- names(stanc_options)
-  for (s in stanc_options){
-    if (!is.null(names[i]) && nzchar(names[i])) {
-      name <- names[i]
-    } else {
-      name <- s
-    }
-    if (startsWith(name, "--")) {
-      stop("No leading hyphens allowed in stanc options (", name, "). ",
-           "Use options without leading hyphens, like for example ",
-           "`stanc_options = list('allow-undefined')`",
-           call. = FALSE)
-    }
-    i <- i + 1
-  }
-}
 
 #' Set or get the number of threads used to execute Stan models
 #'
@@ -253,6 +220,8 @@ set_num_threads <- function(num_threads) {
        call. = FALSE)
 }
 
+
+# convergence checks ------------------------------------------------------
 check_divergences <- function(post_warmup_sampler_diagnostics) {
   if (!is.null(post_warmup_sampler_diagnostics)) {
     divergences <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "divergent__")
@@ -341,6 +310,9 @@ variable_dims <- function(variable_names = NULL) {
   dims
 }
 
+
+# draws formatting --------------------------------------------------------
+
 as_draws_format_fun <- function(draws_format) {
   if (draws_format %in% c("draws_array", "array")) {
     f <- posterior::as_draws_array
@@ -370,26 +342,19 @@ valid_draws_formats <- function() {
     "draws_list", "list", "draws_df", "df", "data.frame")
 }
 
-maybe_convert_draws_format <- function(draws, draws_format) {
-  if (!is.null(draws)) {
-    if (draws_format %in% c("draws_array", "array")) {
-      if (!posterior::is_draws_array(draws)) {
-        draws <- posterior::as_draws_array(draws)
-      }
-    } else if (draws_format %in% c("draws_df", "df", "data.frame")) {
-      if (!posterior::is_draws_df(draws)) {
-        draws <- posterior::as_draws_df(draws)
-      }
-    } else if (draws_format %in% c("draws_matrix", "matrix")) {
-      if (!posterior::is_draws_matrix(draws)) {
-        draws <- posterior::as_draws_matrix(draws)
-      }
-    } else if (draws_format %in% c("draws_list", "list")) {
-      if (!posterior::is_draws_list(draws)) {
-        draws <- posterior::as_draws_list(draws)
-      }
-    }
+maybe_convert_draws_format <- function(draws, format) {
+  if (is.null(draws)) {
+    return(draws)
   }
-  draws
+  format <- sub("^draws_", "", format)
+  switch(
+    format,
+    "array" = posterior::as_draws_array(draws),
+    "df" = posterior::as_draws_df(draws),
+    "data.frame" = posterior::as_draws_df(draws),
+    "list" = posterior::as_draws_list(draws),
+    "matrix" = posterior::as_draws_matrix(draws),
+    stop("Invalid draws format.", call. = FALSE)
+  )
 }
 

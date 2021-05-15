@@ -199,14 +199,13 @@ CmdStanModel <- R6::R6Class(
   ),
   public = list(
     initialize = function(stan_file, compile, ...) {
+      args <- list(...)
       checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
       checkmate::assert_flag(compile)
       private$stan_file_ <- absolute_path(stan_file)
       private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
-      args <- list(...)
-      check_stanc_options(args$stanc_options)
       private$precompile_cpp_options_ <- args$cpp_options %||% list()
-      private$precompile_stanc_options_ <- args$stanc_options %||% list()
+      private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
       private$precompile_include_paths_ <- args$include_paths
       private$dir_ <- args$dir
 
@@ -368,7 +367,7 @@ compile <- function(quiet = TRUE,
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
-  check_stanc_options(stanc_options)
+  stanc_options <- assert_valid_stanc_options(stanc_options)
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
@@ -1351,5 +1350,25 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
     }
   }
   invisible(threads)
+}
+
+assert_valid_stanc_options <- function(stanc_options) {
+  i <- 1
+  names <- names(stanc_options)
+  for (s in stanc_options){
+    if (!is.null(names[i]) && nzchar(names[i])) {
+      name <- names[i]
+    } else {
+      name <- s
+    }
+    if (startsWith(name, "--")) {
+      stop("No leading hyphens allowed in stanc options (", name, "). ",
+           "Use options without leading hyphens, for example ",
+           "`stanc_options = list('allow-undefined')`",
+           call. = FALSE)
+    }
+    i <- i + 1
+  }
+  invisible(stanc_options)
 }
 
