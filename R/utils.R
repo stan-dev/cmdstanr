@@ -16,6 +16,24 @@ is_verbose_mode <- function() {
   if (is.null(x) || length(x) == 0) y else x
 }
 
+# used in both fit.R and csv.R for variable filtering
+matching_variables <- function(variable_filters, variables) {
+  not_found <- c()
+  selected_variables <- c()
+  for(v in variable_filters) {
+    selected <- variables == v | startsWith(variables, paste0(v, "["))
+    selected_variables <- c(selected_variables, variables[selected])
+    variables <- variables[!selected]
+    if (!any(selected)) {
+      not_found <- c(not_found, v)
+    }
+  }
+  list(
+    matching = selected_variables,
+    not_found = not_found
+  )
+}
+
 
 # checks for OS and hardware ----------------------------------------------
 
@@ -258,23 +276,6 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
               "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n")
     }
   }
-}
-
-matching_variables <- function(variable_filters, variables) {
-  not_found <- c()
-  selected_variables <- c()
-  for(v in variable_filters) {
-    selected <- variables == v | startsWith(variables, paste0(v, "["))
-    selected_variables <- c(selected_variables, variables[selected])
-    variables <- variables[!selected]
-    if (!any(selected)) {
-      not_found <- c(not_found, v)
-    }
-  }
-  list(
-    matching = selected_variables,
-    not_found = not_found
-  )
 }
 
 
