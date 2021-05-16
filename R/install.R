@@ -18,6 +18,11 @@
 #'   switches, changing the C++ compiler, etc. A change to the `make/local` file
 #'   should typically be followed by calling `rebuild_cmdstan()`.
 #'
+#'   The `check_cmdstan_toolchain()` function attempts to check for the required
+#'   C++ toolchain. It is called internally by `install_cmdstan()` but can also
+#'   be called directly by the user.
+#'
+#'
 #' @export
 #' @param dir (string) The path to the directory in which to install CmdStan.
 #'   The default is to install it in a directory called `.cmdstanr` within the
@@ -235,6 +240,34 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
     return(NULL)
   }
 }
+
+#' @rdname install_cmdstan
+#' @export
+#' @param fix For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix
+#'   any detected toolchain problems? Currently this option is only available on
+#'   Windows. The default is `FALSE`, in which case problems are only reported
+#'   along with suggested fixes.
+#'
+check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
+  if (os_is_windows()) {
+    if (R.version$major >= "4") {
+      check_rtools40_windows_toolchain(fix = fix, quiet = quiet)
+    } else {
+      check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
+    }
+  } else {
+    check_unix_make()
+    check_unix_cpp_compiler()
+  }
+  if (!checkmate::test_directory(dirname(tempdir()), access = "w")) {
+    stop("No write permissions to the temporary folder! Please change the permissions or location of the temporary folder.", call. = FALSE)
+  }
+  if (!quiet) {
+    message("The C++ toolchain required for CmdStan is setup properly!")
+  }
+  invisible(NULL)
+}
+
 
 # internal ----------------------------------------------------------------
 
@@ -588,31 +621,4 @@ check_unix_cpp_compiler <- function() {
       stop("A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain().", call. = FALSE)
     }
   }
-}
-
-#' @rdname install_cmdstan
-#' @export
-#' @param fix For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix
-#'   any detected toolchain problems? Currently this option is only available on
-#'   Windows. The default is `FALSE`, in which case problems are only reported
-#'   along with suggested fixes.
-#'
-check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
-  if (os_is_windows()) {
-    if (R.version$major >= "4") {
-      check_rtools40_windows_toolchain(fix = fix, quiet = quiet)
-    } else {
-      check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
-    }
-  } else {
-    check_unix_make()
-    check_unix_cpp_compiler()
-  }
-  if (!checkmate::test_directory(dirname(tempdir()), access = "w")) {
-    stop("No write permissions to the temporary folder! Please change the permissions or location of the temporary folder.", call. = FALSE)
-  }
-  if (!quiet) {
-    message("The C++ toolchain required for CmdStan is setup properly!")
-  }
-  invisible(NULL)
 }
