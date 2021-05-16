@@ -108,18 +108,19 @@ cmdstan_default_install_path <- function() {
 
 #' cmdstan_default_path
 #'
-#' Returns the path to the installation of cmdstan with the most recent release version.
+#' Returns the path to the installation of CmdStan with the most recent release
+#' version.
 #'
-#' @keywords internal
-#' @return Path to the cmdstan installation with the most recent release version, NULL if no
-#' installation found.
 #' @export
+#' @keywords internal
+#' @return Path to the CmdStan installation with the most recent release
+#'   version, or `NULL` if no installation found.
+#'
 cmdstan_default_path <- function() {
-  installs_path <- file.path(Sys.getenv("HOME"), ".cmdstanr")
+  installs_path <- cmdstan_default_install_path()
   if (dir.exists(installs_path)) {
     cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-    # if installed in folder cmdstan, with no version
-    # move to cmdstan-version folder
+    # if installed in cmdstan folder with no version move to cmdstan-version folder
     if ("cmdstan" %in% cmdstan_installs) {
       ver <- read_cmdstan_version(file.path(installs_path, "cmdstan"))
       old_path <- file.path(installs_path, "cmdstan")
@@ -135,10 +136,10 @@ cmdstan_default_path <- function() {
           latest_cmdstan <- non_rc_path
         }
       }
-      return(file.path(installs_path,latest_cmdstan))
+      return(file.path(installs_path, latest_cmdstan))
     }
   }
-  return(NULL)
+  NULL
 }
 
 # unset the path (only used in tests)
@@ -148,7 +149,7 @@ unset_cmdstan_path <- function() {
 }
 
 
-#' Find the version of cmdstan from makefile
+#' Find the version of CmdStan from makefile
 #' @noRd
 #' @param path Path to installation.
 #' @return Version number as a string.

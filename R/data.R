@@ -30,7 +30,7 @@ write_stan_json <- function(data, file) {
     }
 
     if (is.logical(var)) {
-      mode(var) <- "integer" # convert TRUE/FALSE to 1/0
+      mode(var) <- "integer"
     } else if (is.data.frame(var)) {
       var <- data.matrix(var)
     } else if (is.list(var)) {
@@ -40,7 +40,6 @@ write_stan_json <- function(data, file) {
   }
 
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
-  # handling factors as integers
   jsonlite::write_json(
     data,
     path = file,
@@ -111,9 +110,7 @@ process_data <- function(data) {
 
 # check if any objects in the data list have zero as one of their dimensions
 any_zero_dims <- function(data) {
-  has_zero_dims <- sapply(data, function(x) {
-    any(dim(x) == 0)
-  })
+  has_zero_dims <- sapply(data, function(x) any(dim(x) == 0))
   any(has_zero_dims)
 }
 
@@ -153,7 +150,11 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
   } else { # create a dummy lp__ if it does not exist
     lp__ <- posterior::draws_array(lp__ = zeros, .nchains = n_chains)
   }
-  all_variables <- c("lp__", posterior::variables(sampler_diagnostics), draws_variables[!(draws_variables %in% c("lp__", "lp_approx__"))])
+  all_variables <- c(
+    "lp__",
+    posterior::variables(sampler_diagnostics),
+    draws_variables[!(draws_variables %in% c("lp__", "lp_approx__"))]
+  )
   draws <- posterior::subset_draws(
     posterior::bind_draws(draws, sampler_diagnostics, lp__, along = "variable"),
     variable = all_variables
@@ -192,31 +193,34 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
 process_fitted_params <- function(fitted_params) {
   if (is.character(fitted_params)) {
     paths <- absolute_path(fitted_params)
-  } else if (checkmate::test_r6(fitted_params, classes = "CmdStanMCMC") &&
-              all(file.exists(fitted_params$output_files()))) {
+  } else if (checkmate::test_r6(fitted_params, "CmdStanMCMC") &&
+             all(file.exists(fitted_params$output_files()))) {
       paths <- absolute_path(fitted_params$output_files())
-  } else if(checkmate::test_r6(fitted_params, classes = c("CmdStanMCMC"))) {
-    draws <- tryCatch(fitted_params$draws(),
-      error=function(cond) {
-          stop("Unable to obtain draws from the fit object.", call. = FALSE)
+  } else if (checkmate::test_r6(fitted_params, "CmdStanMCMC")) {
+    draws <- tryCatch(
+      fitted_params$draws(),
+      error = function(cond) {
+        stop("Unable to obtain draws from the fit object.", call. = FALSE)
       }
     )
-    sampler_diagnostics <- tryCatch(fitted_params$sampler_diagnostics(),
-      error=function(cond) {
-          NULL
+    sampler_diagnostics <- tryCatch(
+      fitted_params$sampler_diagnostics(),
+      error = function(cond) {
+        NULL
       }
     )
     paths <- draws_to_csv(draws, sampler_diagnostics)
-  } else if(checkmate::test_r6(fitted_params, classes = c("CmdStanVB"))) {
-    draws <- tryCatch(fitted_params$draws(),
-      error=function(cond) {
-          stop("Unable to obtain draws from the fit object.", call. = FALSE)
+  } else if (checkmate::test_r6(fitted_params, "CmdStanVB")) {
+    draws <- tryCatch(
+      fitted_params$draws(),
+      error = function(cond) {
+        stop("Unable to obtain draws from the fit object.", call. = FALSE)
       }
     )
     paths <- draws_to_csv(posterior::as_draws_array(draws))
-  } else if (any(class(fitted_params) == "draws_array")){
+  } else if (any(class(fitted_params) == "draws_array")) {
     paths <- draws_to_csv(fitted_params)
-  } else if (any(class(fitted_params) == "draws_matrix")){
+  } else if (any(class(fitted_params) == "draws_matrix")) {
     paths <- draws_to_csv(posterior::as_draws_array(fitted_params))
   } else {
     stop(
