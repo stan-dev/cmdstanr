@@ -20,7 +20,7 @@ is_verbose_mode <- function() {
 matching_variables <- function(variable_filters, variables) {
   not_found <- c()
   selected_variables <- c()
-  for(v in variable_filters) {
+  for (v in variable_filters) {
     selected <- variables == v | startsWith(variables, paste0(v, "["))
     selected_variables <- c(selected_variables, variables[selected])
     variables <- variables[!selected]
@@ -201,7 +201,7 @@ generate_file_names <-
     }
     if (random) {
       rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
-      rand <- format(as.hexmode(rand_num_pid) , width = 6)
+      rand <- format(as.hexmode(rand_num_pid), width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
 
@@ -246,7 +246,7 @@ check_divergences <- function(post_warmup_sampler_diagnostics) {
     num_of_draws <- length(divergences)
     num_of_divergences <- sum(divergences)
     if (!is.na(num_of_divergences) && num_of_divergences > 0) {
-      percentage_divergences <- (num_of_divergences)/num_of_draws*100
+      percentage_divergences <- 100 * num_of_divergences / num_of_draws
       message(
         "\nWarning: ", num_of_divergences, " of ", num_of_draws,
         " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
@@ -267,13 +267,15 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
     num_of_draws <- length(treedepth)
     max_treedepth_hit <- sum(treedepth >= metadata$max_treedepth)
     if (!is.na(max_treedepth_hit) && max_treedepth_hit > 0) {
-      percentage_max_treedepth <- (max_treedepth_hit)/num_of_draws*100
-      message(max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
-              " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
-              " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
-              "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
-              "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
-              "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n")
+      percentage_max_treedepth <- 100 * max_treedepth_hit / num_of_draws
+      message(
+        max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
+        " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
+        " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
+        "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
+        "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
+        "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n"
+      )
     }
   }
 }
@@ -325,4 +327,3 @@ maybe_convert_draws_format <- function(draws, format) {
     stop("Invalid draws format.", call. = FALSE)
   )
 }
-

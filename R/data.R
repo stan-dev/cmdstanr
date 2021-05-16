@@ -65,7 +65,7 @@ list_to_array <- function(x, name = NULL) {
   }
   all_numeric <- all(sapply(x, function(a) is.numeric(a)))
   if (!all_numeric) {
-    stop("All elements in list '", name,"' must be numeric!", call. = FALSE)
+    stop("All elements in list '", name, "' must be numeric!", call. = FALSE)
   }
   element_num_of_dim <- length(all_dims[[1]])
   x <- unlist(x)

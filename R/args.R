@@ -90,7 +90,7 @@ CmdStanArgs <- R6::R6Class(
       if (type ==  "output" && !is.null(self$output_basename)) {
         basename <- self$output_basename
       }
-      generate_file_names( # defined in utils.R
+      generate_file_names(
         basename = basename,
         ext = ".csv",
         ids = self$proc_ids,
@@ -508,7 +508,7 @@ DiagnoseArgs <- R6::R6Class(
 #' @noRd
 #' @param self A `CmdStanArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
-validate_cmdstan_args = function(self) {
+validate_cmdstan_args <- function(self) {
   validate_exe_file(self$exe_file)
 
   checkmate::assert_directory_exists(self$output_dir, access = "rw")
@@ -755,7 +755,7 @@ validate_exe_file <- function(exe_file) {
   if (!length(exe_file) ||
       !nzchar(exe_file) ||
       !file.exists(exe_file)) {
-    stop('Model not compiled. Try running the compile() method first.',
+    stop("Model not compiled. Try running the compile() method first.",
          call. = FALSE)
   }
   invisible(TRUE)
@@ -776,8 +776,13 @@ process_init_list <- function(init, num_procs) {
   if (any(sapply(init, function(x) length(x) == 0))) {
     stop("'init' contains empty lists.", call. = FALSE)
   }
-  if (any(grepl("\\[",names(unlist(init))))) {
-    stop("'init' contains entries with parameter names that include square-brackets, which is not permitted. To supply inits for a vector, matrix or array of parameters, create a single entry with the parameter's name in the init list and specify init values for the entire parameter container.", call. = FALSE)
+  if (any(grepl("\\[", names(unlist(init))))) {
+    stop(
+      "'init' contains entries with parameter names that include square-brackets, which is not permitted. ",
+      "To supply inits for a vector, matrix or array of parameters, ",
+      "create a single entry with the parameter's name in the 'init' list ",
+      "and specify initial values for the entire parameter container.",
+      call. = FALSE)
   }
   init_paths <-
     tempfile(

@@ -110,8 +110,8 @@ install_cmdstan <- function(dir = NULL,
     message("* Installing CmdStan from ", release_url)
     download_url <- release_url
     split_url <- strsplit(release_url, "/")
-    tar_name <- utils::tail(split_url[[1]], n=1)
-    cmdstan_ver <- substr(tar_name, 0, nchar(tar_name)-7)
+    tar_name <- utils::tail(split_url[[1]], n = 1)
+    cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
     dir_cmdstan <- file.path(dir, cmdstan_ver)
     dest_file <- file.path(dir, tar_gz_file)
@@ -170,7 +170,7 @@ install_cmdstan <- function(dir = NULL,
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
-        CXX="arch -arch arm64e clang++"
+        CXX = "arch -arch arm64e clang++"
       ),
       append = TRUE
     )
@@ -217,18 +217,18 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
                                append = TRUE) {
   make_local_path <- file.path(dir, "make", "local")
   if (!is.null(cpp_options)) {
-    built_flags = c()
+    built_flags <- c()
     for (i in seq_len(length(cpp_options))) {
       option_name <- names(cpp_options)[i]
       if (isTRUE(as.logical(cpp_options[[i]]))) {
-        built_flags = c(built_flags, paste0(option_name, "=true"))
+        built_flags <- c(built_flags, paste0(option_name, "=true"))
       } else if (isFALSE(as.logical(cpp_options[[i]]))) {
-        built_flags = c(built_flags, paste0(option_name, "=false"))
+        built_flags <- c(built_flags, paste0(option_name, "=false"))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
-          built_flags = c(built_flags, paste0(cpp_options[[i]]))
+          built_flags <- c(built_flags, paste0(cpp_options[[i]]))
         } else {
-          built_flags = c(built_flags, paste0(option_name, "=", cpp_options[[i]]))
+          built_flags <- c(built_flags, paste0(option_name, "=", cpp_options[[i]]))
         }
       }
     }
@@ -353,8 +353,8 @@ build_cmdstan <- function(dir,
                           timeout) {
   translation_args <- NULL
   if (is_rosetta2()) {
-    run_cmd <- '/usr/bin/arch'
-    translation_args <- c('-arch', 'arm64e', 'make')
+    run_cmd <- "/usr/bin/arch"
+    translation_args <- c("-arch", "arm64e", "make")
   } else {
     run_cmd <- make_cmd()
   }
@@ -366,7 +366,7 @@ build_cmdstan <- function(dir,
     echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if (quiet) message(x) },
+    stderr_line_callback = function(x, p) { if (quiet) message(x) },
     timeout = timeout
   )
 }
@@ -412,7 +412,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if (quiet) message(x) }
+    stderr_line_callback = function(x, p) { if (quiet) message(x) }
   )
   clean_compile_helper_files()
 }
@@ -426,7 +426,7 @@ build_example <- function(dir, cores, quiet, timeout) {
     echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x,p) { if (quiet) message(x) },
+    stderr_line_callback = function(x, p) { if (quiet) message(x) },
     timeout = timeout
   )
 }
@@ -476,7 +476,7 @@ install_mingw32_make <- function(quiet = FALSE) {
   if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
   processx::run(
     "pacman",
-    args = c("-Syu", "mingw-w64-x86_64-make","--noconfirm"),
+    args = c("-Syu", "mingw-w64-x86_64-make", "--noconfirm"),
     wd = rtools_usr_bin,
     error_on_status = TRUE,
     echo_cmd = is_verbose_mode(),
@@ -484,7 +484,7 @@ install_mingw32_make <- function(quiet = FALSE) {
   )
   write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
   Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
-	invisible(NULL)
+  invisible(NULL)
 }
 
 check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
@@ -520,7 +520,7 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     } else {
       install_mingw32_make(quiet = quiet)
       check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
-	    return(invisible(NULL))
+      return(invisible(NULL))
     }
   }
   # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
@@ -542,7 +542,9 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
 check_rtools35_windows_toolchain <- function(fix = FALSE,
                                              quiet = FALSE,
                                              paths = NULL) {
-  if (is.null(paths)) paths <- c( file.path("C:/", "Rtools"), file.path("C:/", "Rtools35"))
+  if (is.null(paths)) {
+    paths <- c(file.path("C:/", "Rtools"), file.path("C:/", "Rtools35"))
+  }
   mingw32_make_path <- dirname(Sys.which("mingw32-make"))
   gpp_path <- dirname(Sys.which("g++"))
   # If mingw32-make and g++ are not found, we check typical RTools 3.5 folders.
@@ -579,13 +581,13 @@ check_rtools35_windows_toolchain <- function(fix = FALSE,
         message("Writing RTools path to ~/.Renviron ...")
       }
       if (!nzchar(Sys.getenv("RTOOLS35_HOME"))) {
-        write(paste0('RTOOLS35_HOME=', rtools_path), file = "~/.Renviron", append = TRUE)
-		    Sys.setenv(RTOOLS35_HOME = rtools_path)
+        write(paste0("RTOOLS35_HOME=", rtools_path), file = "~/.Renviron", append = TRUE)
+        Sys.setenv(RTOOLS35_HOME = rtools_path)
       }
       write('PATH="${RTOOLS35_HOME}\\bin;${RTOOLS35_HOME}\\mingw_64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-	    Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS35_HOME"), "\\mingw_64\\bin;", Sys.getenv("PATH")))
+      Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS35_HOME"), "\\mingw_64\\bin;", Sys.getenv("PATH")))
       check_rtools35_windows_toolchain(fix = FALSE, quiet = quiet)
-	    return(invisible(NULL))
+      return(invisible(NULL))
     } else {
       stop(
         "\nA toolchain was not found. Please install RTools 3.5 and run",
@@ -603,9 +605,19 @@ check_unix_make <- function() {
   make_path <- dirname(Sys.which("make"))
   if (!nzchar(make_path)) {
     if (os_is_macos()) {
-      stop("The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain().", call. = FALSE)
+      stop(
+        "The 'make' tool was not found. ",
+        "Please install the command line tools for Mac with 'xcode-select --install' ",
+        "or install Xcode from the app store. ",
+        "Then restart R and run check_cmdstan_toolchain().",
+        call. = FALSE
+      )
     } else {
-      stop("The 'make' tool was not found. Please install 'make', restart R, and then run check_cmdstan_toolchain().", call. = FALSE)
+      stop(
+        "The 'make' tool was not found. ",
+        "Please install 'make', restart R, and then run check_cmdstan_toolchain().",
+        call. = FALSE
+      )
     }
 
   }
@@ -616,9 +628,20 @@ check_unix_cpp_compiler <- function() {
   clang_path <- dirname(Sys.which("clang++"))
   if (!nzchar(gpp_path) && !nzchar(clang_path)) {
     if (os_is_macos()) {
-      stop("A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain().", call. = FALSE)
+      stop(
+        "A suitable C++ compiler was not found. ",
+        "Please install the command line tools for Mac with 'xcode-select --install' ",
+        "or install Xcode from the app store. ",
+        "Then restart R and run check_cmdstan_toolchain().",
+        call. = FALSE
+      )
     } else {
-      stop("A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain().", call. = FALSE)
+      stop(
+        "A C++ compiler was not found. ",
+        "Please install the 'clang++' or 'g++' compiler, restart R, ",
+        "and run check_cmdstan_toolchain().",
+        call. = FALSE
+      )
     }
   }
 }
