@@ -243,33 +243,33 @@ test_that("compiling stops on hyphens in stanc_options", {
   stan_file <- testing_stan_file("bernoulli")
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens, compile = FALSE),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
     fixed = TRUE
   )
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens2, compile = FALSE),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
     fixed = TRUE
   )
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens3, compile = FALSE),
-    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
     fixed = TRUE
   )
   mod <- cmdstan_model(stan_file, compile = FALSE)
   expect_error(
     mod$compile(stanc_options = hyphens),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
     fixed = TRUE
   )
   expect_error(
     mod$compile(stanc_options = hyphens2),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
     fixed = TRUE
   )
   expect_error(
     mod$compile(stanc_options = hyphens3),
-    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, like for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
     fixed = TRUE
   )
 })
@@ -442,8 +442,10 @@ test_that("compiliation errors if folder with the model name exists", {
     }
     dir.create(exe)
   }
-  expect_error(cmdstan_model(stan_file),
-               "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.")
+  expect_error(
+    cmdstan_model(stan_file),
+    "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again."
+  )
 })
 
 test_that("cpp_options_to_compile_flags() works", {
