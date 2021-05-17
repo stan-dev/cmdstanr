@@ -294,6 +294,7 @@ check_bfmi <- function(post_warmup_sampler_diagnostics) {
   }
 }
 
+
 # draws formatting --------------------------------------------------------
 
 as_draws_format_fun <- function(draws_format) {
