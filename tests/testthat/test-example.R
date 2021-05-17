@@ -35,6 +35,7 @@ stan_program <- "
   "
 
 test_that("write_stan_file writes Stan file correctly", {
+  skip_if_not_installed("rlang")
   f1 <- write_stan_file(stan_program)
   checkmate::expect_file_exists(f1, extension = "stan")
   f1_lines <- readLines(f1)
@@ -48,8 +49,7 @@ test_that("write_stan_file writes Stan file correctly", {
 
 test_that("write_stan_file writes to specified directory and filename", {
   dir <- file.path(test_path(), "answers")
-
-  expect_equal(dirname(f1 <- write_stan_file(stan_program, dir = dir)), dir)
+  expect_equal(dirname(f1 <- write_stan_file(stan_program, dir = dir, basename = "pasta")), dir)
   expect_equal(f2 <- write_stan_file(stan_program, dir = dir, basename = "fruit.stan"),
                file.path(dir, "fruit.stan"))
   expect_equal(f3 <- write_stan_file(stan_program, dir = dir, basename = "vegetable"),
@@ -68,6 +68,7 @@ test_that("write_stan_file creates dir if necessary", {
 })
 
 test_that("write_stan_file by default creates the same file for the same Stan model", {
+  skip_if_not_installed("rlang")
   dir <- file.path(test_path(), "answers")
 
   f1 <- write_stan_file(stan_program, dir = dir)
