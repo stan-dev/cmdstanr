@@ -1,6 +1,6 @@
 # misc --------------------------------------------------------------------
 
-suggest_package <- function(pkg) {
+require_suggested_package <- function(pkg) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     stop("Please install the ", pkg, " package to use this function.",
          call. = FALSE)
