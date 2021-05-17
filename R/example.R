@@ -161,12 +161,15 @@ write_stan_file <- function(code, dir = tempdir(), basename = NULL,
   overwrite <- TRUE
   # Do not overwrite file if it has the correct contents (to avoid recompilation)
   if (!force_overwrite && file.exists(file)) {
-   tryCatch({
+    tryCatch({
       file_contents <- paste0(readLines(file), collapse = "\n")
-      if(gsub("\r|\n", "\n", file_contents) == gsub("\r|\n", "\n", collapsed_code)) {
+      if (gsub("\r|\n", "\n", file_contents) == gsub("\r|\n", "\n", collapsed_code)) {
         overwrite <- FALSE
       }
-   }, error = function(e) { warning("Error when checking old file contents", e) })
+    },
+    error = function(e) {
+      warning("Error when checking old file contents", e)
+    })
   }
 
   if (overwrite) {

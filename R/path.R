@@ -22,8 +22,8 @@
 #' * If the [environment variable][Sys.setenv()] `"CMDSTAN"` exists at load time
 #' then its value will be automatically set as the default path to CmdStan for
 #' the \R session.
-#' * If no environment variable is found when loaded but any directory in the form
-#' `".cmdstanr/cmdstan-[version]"`, for example `".cmdstanr/cmdstan-2.23.0"`,
+#' * If no environment variable is found when loaded but any directory in the
+#' form `".cmdstanr/cmdstan-[version]"` (e.g., `".cmdstanr/cmdstan-2.23.0"`),
 #' exists in the user's home directory (`Sys.getenv("HOME")`, *not* the current
 #' working directory) then the path to the cmdstan with the largest version
 #' number will be set as the path to CmdStan for the \R session. This is the
@@ -108,22 +108,23 @@ cmdstan_default_install_path <- function() {
 
 #' cmdstan_default_path
 #'
-#' Returns the path to the installation of cmdstan with the most recent release version.
+#' Returns the path to the installation of CmdStan with the most recent release
+#' version.
 #'
-#' @keywords internal
-#' @return Path to the cmdstan installation with the most recent release version, NULL if no
-#' installation found.
 #' @export
+#' @keywords internal
+#' @return Path to the CmdStan installation with the most recent release
+#'   version, or `NULL` if no installation found.
+#'
 cmdstan_default_path <- function() {
-  installs_path <- file.path(Sys.getenv("HOME"), ".cmdstanr")
+  installs_path <- cmdstan_default_install_path()
   if (dir.exists(installs_path)) {
     cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-    # if installed in folder cmdstan, with no version
-    # move to cmdstan-version folder
+    # if installed in cmdstan folder with no version move to cmdstan-version folder
     if ("cmdstan" %in% cmdstan_installs) {
       ver <- read_cmdstan_version(file.path(installs_path, "cmdstan"))
       old_path <- file.path(installs_path, "cmdstan")
-      new_path <- file.path(installs_path, paste0("cmdstan-",ver))
+      new_path <- file.path(installs_path, paste0("cmdstan-", ver))
       file.rename(old_path, new_path)
       cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
     }
@@ -131,14 +132,14 @@ cmdstan_default_path <- function() {
       latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
       if (is_release_candidate(latest_cmdstan)) {
         non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
-        if (dir.exists(file.path(installs_path,non_rc_path))) {
+        if (dir.exists(file.path(installs_path, non_rc_path))) {
           latest_cmdstan <- non_rc_path
         }
       }
-      return(file.path(installs_path,latest_cmdstan))
+      return(file.path(installs_path, latest_cmdstan))
     }
   }
-  return(NULL)
+  NULL
 }
 
 # unset the path (only used in tests)
@@ -148,7 +149,7 @@ unset_cmdstan_path <- function() {
 }
 
 
-#' Find the version of cmdstan from makefile
+#' Find the version of CmdStan from makefile
 #' @noRd
 #' @param path Path to installation.
 #' @return Version number as a string.

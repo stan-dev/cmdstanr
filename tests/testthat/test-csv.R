@@ -775,3 +775,29 @@ test_that("read_cmdstan_csv works with diagnose results", {
   expect_equal(diagnose_results$gradients$finite_diff, c(8.83081, 4.07931, -25.7167, -4.11423))
   expect_equal(diagnose_results$gradients$error, c(9.919e-09, 3.13568e-08, -5.31186e-09, 5.87693e-09))
 })
+
+test_that("variable_dims() works", {
+  expect_null(variable_dims(NULL))
+
+  vars <- c("a", "b[1]", "b[2]", "b[3]", "c[1,1]", "c[1,2]")
+  vars_dims <- list(a = 1, b = 3, c = c(1,2))
+  expect_equal(variable_dims(vars), vars_dims)
+
+  vars <- c("a", "b")
+  vars_dims <- list(a = 1, b = 1)
+  expect_equal(variable_dims(vars), vars_dims)
+
+  vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,1]", "c[2,2]", "c[2,3]", "b[1]", "b[2]", "b[3]", "b[4]")
+  vars_dims <- list(c = c(2,3), b = 4)
+  expect_equal(variable_dims(vars), vars_dims)
+
+  # make sure not confused by one name being last substring of another name
+  vars <- c("a[1]", "a[2]", "aa[1]", "aa[2]", "aa[3]")
+  expect_equal(variable_dims(vars), list(a = 2, aa = 3))
+
+  # wrong dimensions for descending order
+  vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,3]", "c[2,2]", "c[2,1]", "b[4]", "b[2]", "b[3]", "b[1]")
+  vars_dims <- list(c = c(2,1), b = 1)
+  expect_equal(variable_dims(vars), vars_dims)
+})
+

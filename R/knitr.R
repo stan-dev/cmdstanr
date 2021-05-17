@@ -90,4 +90,3 @@ eng_cmdstan <- function(options) {
   code <- paste(options$code, collapse = "\n")
   knitr::engine_output(options, code, '')
 }
-

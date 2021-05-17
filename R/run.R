@@ -223,7 +223,7 @@ CmdStanRun <- R6::R6Class(
         stop("No CmdStan runs finished successfully. ",
              "Unable to run bin/", tool, ".", call. = FALSE)
       }
-      target_exe = file.path("bin", cmdstan_ext(tool))
+      target_exe <- file.path("bin", cmdstan_ext(tool))
       check_target_exe(target_exe)
       run_log <- processx::run(
         command = target_exe,
@@ -303,7 +303,7 @@ check_target_exe <- function(exe) {
   on.exit(procs$cleanup(), add = TRUE)
   if (!is.null(mpi_cmd)) {
     if (is.null(mpi_args)) {
-      mpi_args = list()
+      mpi_args <- list()
     }
     mpi_args[["exe"]] <- self$exe_file()
   }
@@ -560,11 +560,11 @@ CmdStanProcs <- R6::R6Class(
       private$proc_ids_ <- seq_len(num_procs)
       zeros <- rep(0, num_procs)
       names(zeros) <- private$proc_ids_
-      private$proc_state_ = zeros
-      private$proc_start_time_ = zeros
-      private$proc_total_time_ = zeros
-      private$show_stderr_messages_ = show_stderr_messages
-      private$show_stdout_messages_ = show_stdout_messages
+      private$proc_state_ <- zeros
+      private$proc_start_time_ <- zeros
+      private$proc_total_time_ <- zeros
+      private$show_stderr_messages_ <- show_stderr_messages
+      private$show_stdout_messages_ <- show_stdout_messages
       invisible(self)
     },
     num_procs = function() {
@@ -602,7 +602,7 @@ CmdStanProcs <- R6::R6Class(
         for (i in names(mpi_args)) {
           mpi_args_vector <- c(paste0("-", i), mpi_args[[i]], mpi_args_vector)
         }
-        args = c(mpi_args_vector, exe_name, args)
+        args <- c(mpi_args_vector, exe_name, args)
         command <- mpi_cmd
       }
       private$processes_[[id]] <- processx::process$new(
@@ -868,11 +868,11 @@ CmdStanMCMCProcs <- R6::R6Class(
             next_state <- 5
             state <- 5
           }
-          if (grepl("Gradient evaluation took",line, fixed = TRUE)
-              || grepl("leapfrog steps per transition would take",line, fixed = TRUE)
-              || grepl("Adjust your expectations accordingly!",line, fixed = TRUE)
-              || grepl("stanc_version",line, fixed = TRUE)
-              || grepl("stancflags",line, fixed = TRUE)) {
+          if (grepl("Gradient evaluation took", line, fixed = TRUE)
+              || grepl("leapfrog steps per transition would take", line, fixed = TRUE)
+              || grepl("Adjust your expectations accordingly!", line, fixed = TRUE)
+              || grepl("stanc_version", line, fixed = TRUE)
+              || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
           if ((state > 1.5 && state < 5 && !ignore_line) || is_verbose_mode()) {
