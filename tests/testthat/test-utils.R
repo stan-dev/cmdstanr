@@ -171,3 +171,10 @@ test_that("matching_variables() works", {
   )
   expect_equal(length(ret$not_found), 0)
 })
+
+test_that("require_suggested_package() works", {
+  expect_error(
+    require_suggested_package("not_a_real_package"),
+    "Please install the 'not_a_real_package' package to use this function."
+  )
+})
