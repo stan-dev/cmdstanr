@@ -210,7 +210,7 @@ read_cmdstan_csv <- function(files,
     selected_sampler_diag <- rep(FALSE, length(metadata$sampler_diagnostics))
     not_found <- NULL
     for (p in sampler_diagnostics) {
-      matches <- metadata$sampler_diagnostics == p | startsWith(metadata$sampler_diagnostics, paste0(p,"."))
+      matches <- metadata$sampler_diagnostics == p | startsWith(metadata$sampler_diagnostics, paste0(p, "."))
       if (!any(matches)) {
         not_found <- c(not_found, p)
       }
@@ -243,10 +243,10 @@ read_cmdstan_csv <- function(files,
       )
       if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
         warmup_sampler_diagnostics[[warmup_sd_id]] <-
-          post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws,,drop = FALSE]
+          post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws, , drop = FALSE]
         if (num_post_warmup_draws > 0) {
           post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <-
-            post_warmup_sampler_diagnostics[[post_warmup_sd_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
+            post_warmup_sampler_diagnostics[[post_warmup_sd_id]][(num_warmup_draws + 1):(num_warmup_draws + num_post_warmup_draws), , drop = FALSE]
         } else {
           post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- NULL
         }
@@ -264,9 +264,9 @@ read_cmdstan_csv <- function(files,
       )
       if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
         warmup_draws[[warmup_draws_list_id]] <-
-          draws[[draws_list_id]][1:num_warmup_draws,,drop = FALSE]
+          draws[[draws_list_id]][1:num_warmup_draws, , drop = FALSE]
         if (num_post_warmup_draws > 0) {
-          draws[[draws_list_id]] <- draws[[draws_list_id]][(num_warmup_draws+1):(num_warmup_draws + num_post_warmup_draws),,drop = FALSE]
+          draws[[draws_list_id]] <- draws[[draws_list_id]][(num_warmup_draws + 1):(num_warmup_draws + num_post_warmup_draws), , drop = FALSE]
         } else {
           draws[[draws_list_id]] <- NULL
         }
@@ -342,7 +342,7 @@ read_cmdstan_csv <- function(files,
       format <- "draws_matrix"
     }
     as_draws_format <- as_draws_format_fun(format)
-    variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop=FALSE]))
+    variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop = FALSE]))
     if (!is.null(variational_draws)) {
       if ("log_p__" %in% posterior::variables(variational_draws)) {
         variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
@@ -361,7 +361,7 @@ read_cmdstan_csv <- function(files,
       format <- "draws_matrix"
     }
     as_draws_format <- as_draws_format_fun(format)
-    point_estimates <- do.call(as_draws_format, list(draws[[1]][1,, drop=FALSE]))
+    point_estimates <- do.call(as_draws_format, list(draws[[1]][1, , drop = FALSE]))
     point_estimates <- posterior::subset_draws(point_estimates, variable = variables)
     if (!is.null(point_estimates)) {
       posterior::variables(point_estimates) <- repaired_variables
@@ -534,20 +534,16 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
 #'
 read_csv_metadata <- function(csv_file) {
   checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
-  adaptation_terminated <- FALSE
-  param_names_read <- FALSE
   inv_metric_next <- FALSE
-  inv_metric_diagonal_next <- FALSE
   csv_file_info <- list()
   csv_file_info$inv_metric <- NULL
   inv_metric_rows_to_read <- -1
   inv_metric_rows <- -1
-  parsing_done <- FALSE
   dense_inv_metric <- FALSE
   diagnose_gradients <- FALSE
   gradients <- data.frame()
   warmup_time <- 0
-  sampling_time <-0
+  sampling_time <- 0
   total_time <- 0
   if (os_is_windows()) {
     grep_path <- repair_path(Sys.which("grep.exe"))
@@ -562,7 +558,7 @@ read_csv_metadata <- function(csv_file) {
       stringsAsFactors = FALSE,
       fill = TRUE,
       sep = "",
-      header= FALSE
+      header = FALSE
     )
   )
   if (is.null(metadata) || length(metadata) == 0) {
@@ -604,7 +600,7 @@ read_csv_metadata <- function(csv_file) {
           inv_metric_next <- FALSE
         }
         parse_key_val <- FALSE
-      } else if(diagnose_gradients){
+      } else if (diagnose_gradients) {
         parse_key_val <- FALSE
         tmp <- gsub("#", "", line, fixed = TRUE)
         if (nzchar(tmp)) {
@@ -665,8 +661,8 @@ read_csv_metadata <- function(csv_file) {
   }
   if (inv_metric_rows > 0 && csv_file_info$metric == "dense_e") {
     rows <- inv_metric_rows
-    cols <- length(csv_file_info$inv_metric)/inv_metric_rows
-    dim(csv_file_info$inv_metric) <- c(rows,cols)
+    cols <- length(csv_file_info$inv_metric) / inv_metric_rows
+    dim(csv_file_info$inv_metric) <- c(rows, cols)
   }
 
   # rename from old cmdstan names to new cmdstanX names
@@ -723,7 +719,7 @@ check_csv_metadata_matches <- function(csv_metadata) {
   if (!all(method == method[1])) {
     stop("Supplied CSV files were produced by different methods and need to be read in separately!", call. = FALSE)
   }
-  for(i in 2:length(csv_metadata)) {
+  for (i in 2:length(csv_metadata)) {
     if (length(csv_metadata[[1]]$model_params) != length(csv_metadata[[i]]$model_params) ||
       !all(csv_metadata[[1]]$model_params == csv_metadata[[i]]$model_params)) {
       stop("Supplied CSV files have samples for different variables!", call. = FALSE)
@@ -736,7 +732,7 @@ check_csv_metadata_matches <- function(csv_metadata) {
     iter_warmup <- sapply(csv_metadata, function(x) x$iter_warmup)
     if (!all(iter_sampling == iter_sampling[1]) ||
         !all(thin == thin[1]) ||
-        !all(save_warmup == save_warmup[1])||
+        !all(save_warmup == save_warmup[1]) ||
         (save_warmup[1] == 1 && !all(iter_warmup == iter_warmup[1]))) {
       stop("Supplied CSV files do not match in the number of output samples!", call. = FALSE)
     }
@@ -782,8 +778,8 @@ repair_variable_names <- function(names) {
 # convert names like beta[1,1] to beta.1.1
 unrepair_variable_names <- function(names) {
   names <- sub("\\[", "\\.", names)
-  names <- gsub(",","\\.",  names)
-  names <- gsub("\\]","",  names)
+  names <- gsub(",", "\\.",  names)
+  names <- gsub("\\]", "",  names)
   names
 }
 
@@ -806,7 +802,7 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
       if (any(all_remaining == p)) {
         unread <- c(unread, p)
       }
-      is_unread_element <- startsWith(all_remaining, paste0(p,"["))
+      is_unread_element <- startsWith(all_remaining, paste0(p, "["))
       if (any(is_unread_element)) {
         unread <- c(unread, all_remaining[is_unread_element])
       }
@@ -817,4 +813,37 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
   } else {
     ""
   }
+}
+
+#' Returns a list of dimensions for the input variables.
+#'
+#' @noRd
+#' @param variable_names A character vector of variable names including all
+#'   individual elements (e.g., `c("beta[1]", "beta[2]")`, not just `"beta"`).
+#' @return A list giving the dimensions of the variables. The equivalent of the
+#'   `par_dims` slot of RStan's stanfit objects, except that scalars have
+#'   dimension `1` instead of `0`.
+#' @note For this function to return the correct dimensions the input must be
+#'   already sorted in ascending order. Since CmdStan always has the variables
+#'   sorted correctly we avoid a sort by not sorting again here.
+#'
+variable_dims <- function(variable_names = NULL) {
+  if (is.null(variable_names)) {
+    return(NULL)
+  }
+  dims <- list()
+  uniq_variable_names <- unique(gsub("\\[.*\\]", "", variable_names))
+  var_names <- gsub("\\]", "", variable_names)
+  for (var in uniq_variable_names) {
+    pattern <- paste0("^", var, "\\[")
+    var_indices <- var_names[grep(pattern, var_names)]
+    var_indices <- gsub(pattern, "", var_indices)
+    if (length(var_indices)) {
+      var_indices <- strsplit(var_indices[length(var_indices)], ",")[[1]]
+      dims[[var]] <- as.numeric(var_indices)
+    } else {
+      dims[[var]] <- 1
+    }
+  }
+  dims
 }

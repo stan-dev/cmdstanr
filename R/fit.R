@@ -638,7 +638,7 @@ CmdStanFit$set("public", name = "time", value = time)
 output <- function(id = NULL) {
   # MCMC has separate implementation but doc is shared
   # Non-MCMC fit is obtained with one process only so id is ignored
-  cat(paste(self$runset$procs$proc_output(1), collapse="\n"))
+  cat(paste(self$runset$procs$proc_output(1), collapse = "\n"))
 }
 CmdStanFit$set("public", name = "output", value = output)
 
@@ -843,7 +843,7 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(id)) {
         self$runset$procs$proc_output()
       } else {
-        cat(paste(self$runset$procs$proc_output(id), collapse="\n"))
+        cat(paste(self$runset$procs$proc_output(id), collapse = "\n"))
       }
     },
 
@@ -877,7 +877,7 @@ CmdStanMCMC <- R6::R6Class(
         variables <- matching_res$matching
       }
       if (inc_warmup) {
-        posterior::subset_draws(posterior::bind_draws(private$warmup_draws_, private$draws_, along="iteration"), variable = variables)
+        posterior::subset_draws(posterior::bind_draws(private$warmup_draws_, private$draws_, along = "iteration"), variable = variables)
       } else {
         posterior::subset_draws(private$draws_, variable = variables)
       }
@@ -910,7 +910,7 @@ CmdStanMCMC <- R6::R6Class(
           private$draws_ <- posterior::bind_draws(
             private$draws_,
             posterior::subset_draws(csv_contents$post_warmup_draws, variable = missing_variables),
-            along="variable"
+            along = "variable"
           )
         }
       }
@@ -923,7 +923,7 @@ CmdStanMCMC <- R6::R6Class(
           private$sampler_diagnostics_ <- posterior::bind_draws(
             private$sampler_diagnostics_,
             posterior::subset_draws(csv_contents$post_warmup_sampler_diagnostics, variable = missing_variables),
-            along="variable"
+            along = "variable"
           )
         }
       }
@@ -937,7 +937,7 @@ CmdStanMCMC <- R6::R6Class(
             private$warmup_draws_ <- posterior::bind_draws(
               private$warmup_draws_,
               posterior::subset_draws(csv_contents$warmup_draws, variable = missing_variables),
-              along="variable"
+              along = "variable"
             )
           }
         }
@@ -949,7 +949,7 @@ CmdStanMCMC <- R6::R6Class(
             private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
               private$warmup_sampler_diagnostics_,
               posterior::subset_draws(csv_contents$warmup_sampler_diagnostics, variable = missing_variables),
-              along="variable"
+              along = "variable"
             )
           }
         }
@@ -1069,7 +1069,7 @@ sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr
     posterior::bind_draws(
       private$warmup_sampler_diagnostics_,
       private$sampler_diagnostics_,
-      along="iteration"
+      along = "iteration"
     )
   } else {
     private$sampler_diagnostics_
@@ -1134,7 +1134,7 @@ CmdStanMCMC$set("public", name = "inv_metric", value = inv_metric)
 #' fit_mcmc$num_chains()
 #' }
 #'
-num_chains = function() {
+num_chains <- function() {
   super$num_procs()
 }
 CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
@@ -1403,7 +1403,7 @@ CmdStanGQ <- R6::R6Class(
       if (is.null(id)) {
         self$runset$procs$proc_output()
       } else {
-        cat(paste(self$runset$procs$proc_output(id), collapse="\n"))
+        cat(paste(self$runset$procs$proc_output(id), collapse = "\n"))
       }
     }
   ),
@@ -1426,7 +1426,7 @@ CmdStanGQ <- R6::R6Class(
           posterior::bind_draws(
             private$draws_,
             posterior::subset_draws(csv_contents$generated_quantities, variable = missing_variables),
-            along="variable"
+            along = "variable"
           )
       }
       invisible(self)

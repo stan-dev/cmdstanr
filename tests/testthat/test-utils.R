@@ -106,20 +106,6 @@ test_that("list_to_array fails for non-numeric values", {
                "All elements in list 'test-list' must be numeric!")
 })
 
-test_that("cpp_options_to_compile_flags() works", {
-  options = list(
-    stan_threads = TRUE
-  )
-  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE")
-  options = list(
-    stan_threads = TRUE,
-    stanc2 = TRUE
-  )
-  expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=TRUE", "STANC2=TRUE"))
-  options = list()
-  expect_equal(cpp_options_to_compile_flags(options), NULL)
-})
-
 test_that("cmdstan_make_local() works", {
   exisiting_make_local <- cmdstan_make_local()
   make_local_path <- file.path(cmdstan_path(), "make", "local")
@@ -151,31 +137,6 @@ test_that("cmdstan_make_local() works", {
   expect_equal(cmdstan_make_local(cpp_options = list("TEST4" = TRUE), append = FALSE),
                c("TEST4=true"))
   cmdstan_make_local(cpp_options = as.list(exisiting_make_local), append = FALSE)
-})
-
-test_that("variable_dims() works", {
-  expect_null(variable_dims(NULL))
-
-  vars <- c("a", "b[1]", "b[2]", "b[3]", "c[1,1]", "c[1,2]")
-  vars_dims <- list(a = 1, b = 3, c = c(1,2))
-  expect_equal(variable_dims(vars), vars_dims)
-
-  vars <- c("a", "b")
-  vars_dims <- list(a = 1, b = 1)
-  expect_equal(variable_dims(vars), vars_dims)
-
-  vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,1]", "c[2,2]", "c[2,3]", "b[1]", "b[2]", "b[3]", "b[4]")
-  vars_dims <- list(c = c(2,3), b = 4)
-  expect_equal(variable_dims(vars), vars_dims)
-
-  # make sure not confused by one name being last substring of another name
-  vars <- c("a[1]", "a[2]", "aa[1]", "aa[2]", "aa[3]")
-  expect_equal(variable_dims(vars), list(a = 2, aa = 3))
-
-  # wrong dimensions for descending order
-  vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,3]", "c[2,2]", "c[2,1]", "b[4]", "b[2]", "b[3]", "b[1]")
-  vars_dims <- list(c = c(2,1), b = 1)
-  expect_equal(variable_dims(vars), vars_dims)
 })
 
 test_that("matching_variables() works", {

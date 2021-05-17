@@ -16,6 +16,24 @@ is_verbose_mode <- function() {
   if (is.null(x) || length(x) == 0) y else x
 }
 
+# used in both fit.R and csv.R for variable filtering
+matching_variables <- function(variable_filters, variables) {
+  not_found <- c()
+  selected_variables <- c()
+  for (v in variable_filters) {
+    selected <- variables == v | startsWith(variables, paste0(v, "["))
+    selected_variables <- c(selected_variables, variables[selected])
+    variables <- variables[!selected]
+    if (!any(selected)) {
+      not_found <- c(not_found, v)
+    }
+  }
+  list(
+    matching = selected_variables,
+    not_found = not_found
+  )
+}
+
 
 # checks for OS and hardware ----------------------------------------------
 
@@ -183,7 +201,7 @@ generate_file_names <-
     }
     if (random) {
       rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
-      rand <- format(as.hexmode(rand_num_pid) , width = 6)
+      rand <- format(as.hexmode(rand_num_pid), width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
 
@@ -194,41 +212,8 @@ generate_file_names <-
     new_names
   }
 
+# threading helpers (deprecated) ------------------------------------------
 
-cpp_options_to_compile_flags <- function(cpp_options) {
-  if (length(cpp_options) == 0) {
-    return(NULL)
-  }
-  cpp_built_options = c()
-  for (i in seq_len(length(cpp_options))) {
-    option_name <- names(cpp_options)[i]
-    if (is.null(option_name) || !nzchar(option_name)) {
-      cpp_built_options = c(cpp_built_options, toupper(cpp_options[[i]]))
-    } else {
-      cpp_built_options = c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
-    }
-  }
-  cpp_built_options
-}
-
-check_stanc_options <- function(stanc_options) {
-  i <- 1
-  names <- names(stanc_options)
-  for (s in stanc_options){
-    if (!is.null(names[i]) && nzchar(names[i])) {
-      name <- names[i]
-    } else {
-      name <- s
-    }
-    if (startsWith(name, "--")) {
-      stop("No leading hyphens allowed in stanc options (", name, "). ",
-           "Use options without leading hyphens, like for example ",
-           "`stanc_options = list('allow-undefined')`",
-           call. = FALSE)
-    }
-    i <- i + 1
-  }
-}
 
 #' Set or get the number of threads used to execute Stan models
 #'
@@ -253,13 +238,15 @@ set_num_threads <- function(num_threads) {
        call. = FALSE)
 }
 
+
+# convergence checks ------------------------------------------------------
 check_divergences <- function(post_warmup_sampler_diagnostics) {
   if (!is.null(post_warmup_sampler_diagnostics)) {
     divergences <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "divergent__")
     num_of_draws <- length(divergences)
     num_of_divergences <- sum(divergences)
     if (!is.na(num_of_divergences) && num_of_divergences > 0) {
-      percentage_divergences <- (num_of_divergences)/num_of_draws*100
+      percentage_divergences <- 100 * num_of_divergences / num_of_draws
       message(
         "\nWarning: ", num_of_divergences, " of ", num_of_draws,
         " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
@@ -280,13 +267,15 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
     num_of_draws <- length(treedepth)
     max_treedepth_hit <- sum(treedepth >= metadata$max_treedepth)
     if (!is.na(max_treedepth_hit) && max_treedepth_hit > 0) {
-      percentage_max_treedepth <- (max_treedepth_hit)/num_of_draws*100
-      message(max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
-              " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
-              " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
-              "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
-              "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
-              "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n")
+      percentage_max_treedepth <- 100 * max_treedepth_hit / num_of_draws
+      message(
+        max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
+        " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
+        " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
+        "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
+        "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
+        "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n"
+      )
     }
   }
 }
@@ -299,61 +288,13 @@ check_bfmi <- function(post_warmup_sampler_diagnostics) {
     })
     if (any(ebfmi < .3)) {
       message(sum(ebfmi < .3), " of ", length(ebfmi) , " chains had estimated Bayesian fraction
-      of missing information(E-BFMI) less than 0.3, which may indicate poor exploration of the 
+      of missing information(E-BFMI) less than 0.3, which may indicate poor exploration of the
       posterior. Try to reparameterize the model.")
     }
   }
 }
 
-matching_variables <- function(variable_filters, variables) {
-  not_found <- c()
-  selected_variables <- c()
-  for(v in variable_filters) {
-    selected <- variables == v | startsWith(variables, paste0(v, "["))
-    selected_variables <- c(selected_variables, variables[selected])
-    variables <- variables[!selected]
-    if (!any(selected)) {
-      not_found <- c(not_found, v)
-    }
-  }
-  list(
-    matching = selected_variables,
-    not_found = not_found
-  )
-}
-
-#' Returns a list of dimensions for the input variables.
-#'
-#' @noRd
-#' @param variable_names A character vector of variable names including all
-#'   individual elements (e.g., `c("beta[1]", "beta[2]")`, not just `"beta"`).
-#' @return A list giving the dimensions of the variables. The equivalent of the
-#'   `par_dims` slot of RStan's stanfit objects, except that scalars have
-#'   dimension `1` instead of `0`.
-#' @note For this function to return the correct dimensions the input must be
-#'   already sorted in ascending order. Since CmdStan always has the variables
-#'   sorted correctly we avoid a sort by not sorting again here.
-#'
-variable_dims <- function(variable_names = NULL) {
-  if (is.null(variable_names)) {
-    return(NULL)
-  }
-  dims <- list()
-  uniq_variable_names <- unique(gsub("\\[.*\\]", "", variable_names))
-  var_names <- gsub("\\]", "", variable_names)
-  for (var in uniq_variable_names) {
-    pattern <- paste0("^", var, "\\[")
-    var_indices <- var_names[grep(pattern, var_names)]
-    var_indices <- gsub(pattern, "", var_indices)
-    if (length(var_indices)) {
-      var_indices <- strsplit(var_indices[length(var_indices)], ",")[[1]]
-      dims[[var]] <- as.numeric(var_indices)
-    } else {
-      dims[[var]] <- 1
-    }
-  }
-  dims
-}
+# draws formatting --------------------------------------------------------
 
 as_draws_format_fun <- function(draws_format) {
   if (draws_format %in% c("draws_array", "array")) {
@@ -384,26 +325,18 @@ valid_draws_formats <- function() {
     "draws_list", "list", "draws_df", "df", "data.frame")
 }
 
-maybe_convert_draws_format <- function(draws, draws_format) {
-  if (!is.null(draws)) {
-    if (draws_format %in% c("draws_array", "array")) {
-      if (!posterior::is_draws_array(draws)) {
-        draws <- posterior::as_draws_array(draws)
-      }
-    } else if (draws_format %in% c("draws_df", "df", "data.frame")) {
-      if (!posterior::is_draws_df(draws)) {
-        draws <- posterior::as_draws_df(draws)
-      }
-    } else if (draws_format %in% c("draws_matrix", "matrix")) {
-      if (!posterior::is_draws_matrix(draws)) {
-        draws <- posterior::as_draws_matrix(draws)
-      }
-    } else if (draws_format %in% c("draws_list", "list")) {
-      if (!posterior::is_draws_list(draws)) {
-        draws <- posterior::as_draws_list(draws)
-      }
-    }
+maybe_convert_draws_format <- function(draws, format) {
+  if (is.null(draws)) {
+    return(draws)
   }
-  draws
+  format <- sub("^draws_", "", format)
+  switch(
+    format,
+    "array" = posterior::as_draws_array(draws),
+    "df" = posterior::as_draws_df(draws),
+    "data.frame" = posterior::as_draws_df(draws),
+    "list" = posterior::as_draws_list(draws),
+    "matrix" = posterior::as_draws_matrix(draws),
+    stop("Invalid draws format.", call. = FALSE)
+  )
 }
-

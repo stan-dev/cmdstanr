@@ -7,10 +7,11 @@
 cmdstan_default_path()
 }
 \value{
-Path to the cmdstan installation with the most recent release version, NULL if no
-installation found.
+Path to the CmdStan installation with the most recent release
+version, or \code{NULL} if no installation found.
 }
 \description{
-Returns the path to the installation of cmdstan with the most recent release version.
+Returns the path to the installation of CmdStan with the most recent release
+version.
 }
 \keyword{internal}
