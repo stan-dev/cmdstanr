@@ -2,7 +2,7 @@ context("read_cmdstan_csv")
 
 if (not_on_cran()) {
   set_cmdstan_path()
-  fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 1234)
+  fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 123)
   fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", seed = 123)
   fit_logistic_optimize <- testing_fit("logistic", method = "optimize", seed = 123)
   fit_logistic_variational <- testing_fit("logistic", method = "variational", seed = 123)
