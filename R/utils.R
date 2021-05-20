@@ -297,7 +297,7 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .3, r
       "of missing information (E-BFMI) less than ", ebfmi_threshold, ", which may indicate poor exploration of the", 
       "posterior."))
     }
-    if(return_ebfmi) {
+    if (return_ebfmi) {
       ebfmi
     }
   }
