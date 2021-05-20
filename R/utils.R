@@ -293,7 +293,7 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .3, r
     })
     if (any(fmi < ebfmi_threshold)) {
       message(sum(fmi < ebfmi_threshold), " of ", length(fmi) , " chains had estimated Bayesian fraction
-      of missing information(E-BFMI) less than 0.3, which may indicate poor exploration of the
+      of missing information(E-BFMI) less than " threshold ", which may indicate poor exploration of the
       posterior. ")
     }
     if(return_ebfmi) {
