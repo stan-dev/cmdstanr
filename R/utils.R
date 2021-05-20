@@ -296,9 +296,9 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .3, r
       of missing information(E-BFMI) less than 0.3, which may indicate poor exploration of the
       posterior. ")
     }
-  }
-  if(return_ebfmi) {
-    fmi
+    if(return_ebfmi) {
+      fmi
+    }
   }
 }
 
