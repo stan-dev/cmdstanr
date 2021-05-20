@@ -284,7 +284,7 @@ check_bfmi <- function(post_warmup_sampler_diagnostics) {
   if (!is.null(post_warmup_sampler_diagnostics)) {
     energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
     ebfmi <- apply(energy, 2, function(x) {
-      (sum(diff(x)^2)/length(x))/var(x)
+      (sum(diff(x)^2)/length(x))/stats::var(x)
     })
     if (any(ebfmi < .3)) {
       message(sum(ebfmi < .3), " of ", length(ebfmi) , " chains had estimated Bayesian fraction
