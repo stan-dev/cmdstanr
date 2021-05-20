@@ -288,11 +288,11 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .2, r
     } else {
       stop("E-BFMI not computed as the 'energy__' diagnostic could not be located")
     }
-  } else if (dim(pwsd)[1] <= 1) {
+  } else if (dim(pwsd)[1] <= 2) {
     if (! return_ebfmi) {
-      warning("E-BFMI is undefined for posterior chains of length less than 2")
+      warning("E-BFMI is undefined for posterior chains of length less than 3")
     } else {
-      stop("E-BFMI is undefined for posterior chains of length less than 2")
+      stop("E-BFMI is undefined for posterior chains of length less than 3")
     }
   } else {
     energy <- posterior::extract_variable_matrix(pwsd, "energy__")

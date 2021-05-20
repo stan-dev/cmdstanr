@@ -185,8 +185,8 @@ test_that("check_ebfmi works", {
   expect_equal(suppressMessages(check_ebfmi(energy_df, return_ebfmi = TRUE)), 
                (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec))
   energy_df <- data.frame("energy__" = 0)
-  expect_error(check_ebfmi(energy_df, return_ebfmi = TRUE), "E-BFMI is undefined for posterior chains of length less than 2")
-  expect_warning(check_ebfmi(energy_df), "E-BFMI is undefined for posterior chains of length less than 2")
+  expect_error(check_ebfmi(energy_df, return_ebfmi = TRUE), "E-BFMI is undefined for posterior chains of length less than 3")
+  expect_warning(check_ebfmi(energy_df), "E-BFMI is undefined for posterior chains of length less than 3")
 })
 
 test_that("require_suggested_package() works", {
