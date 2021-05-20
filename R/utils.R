@@ -280,14 +280,29 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
   }
 }
 
-check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .3, return_ebfmi = F) {
+check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .2, return_ebfmi = F) {
   pwsd <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
   if (!("energy__" %in% dimnames(pwsd)$variable)) {
-    warning("E-BFMI not computed as the 'energy__' diagnostic could not be located")
+    if (! return_ebfmi) {
+      warning("E-BFMI not computed as the 'energy__' diagnostic could not be located")
+    } else {
+      stop("E-BFMI not computed as the 'energy__' diagnostic could not be located")
+    }
   } else if (dim(pwsd)[1] <= 1) {
-    warning("E-BFMI is undefined for posterior chains of length 1")
+    if (! return_ebfmi) {
+      warning("E-BFMI is undefined for posterior chains of length less than 2")
+    } else {
+      stop("E-BFMI is undefined for posterior chains of length less than 2")
+    }
   } else {
     energy <- posterior::extract_variable_matrix(pwsd, "energy__")
+    if (any is.na(energy)) {
+      if (! return_ebfmi) {
+        warning("E-BFMI not computed 'energy__' contains NAs")
+      } else {
+        stop("E-BFMI not computed 'energy__' contains NAs")
+      }
+    }
     ebfmi <- apply(energy, 2, function(x) {
       (sum(diff(x)^2) / length(x)) / stats::var(x)
     }
