@@ -501,7 +501,7 @@ compile <- function(quiet = TRUE,
     echo = !quiet || is_verbose_mode(),
     echo_cmd = is_verbose_mode(),
     spinner = quiet && interactive(),
-    stderr_line_callback = function(x, p) {
+    stderr_callback = function(x, p) {
       if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
         message(x)
       }
@@ -643,7 +643,7 @@ check_syntax <- function(pedantic = FALSE,
     stdout_line_callback = function(x, p) {
       if (!quiet) cat(x)
     },
-    stderr_line_callback = function(x, p) {
+    stderr_callback = function(x, p) {
       message(x)
     },
     error_on_status = FALSE

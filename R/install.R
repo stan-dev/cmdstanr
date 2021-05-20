@@ -366,7 +366,7 @@ build_cmdstan <- function(dir,
     echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x, p) { if (quiet) message(x) },
+    stderr_callback = function(x, p) { if (quiet) message(x) },
     timeout = timeout
   )
 }
@@ -412,7 +412,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x, p) { if (quiet) message(x) }
+    stderr_callback = function(x, p) { if (quiet) message(x) }
   )
   clean_compile_helper_files()
 }
@@ -426,7 +426,7 @@ build_example <- function(dir, cores, quiet, timeout) {
     echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_line_callback = function(x, p) { if (quiet) message(x) },
+    stderr_callback = function(x, p) { if (quiet) message(x) },
     timeout = timeout
   )
 }

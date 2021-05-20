@@ -999,7 +999,7 @@ CmdStanMCMC <- R6::R6Class(
 #' }
 #'
 loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
-  suggest_package("loo")
+  require_suggested_package("loo")
   LLarray <- self$draws(variables)
   if (is.logical(r_eff)) {
     if (isTRUE(r_eff)) {

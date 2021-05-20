@@ -185,3 +185,10 @@ test_that("check_ebfmi works", {
   expect_equal(suppressMessages(check_ebfmi(energy_df, return_ebfmi = TRUE)), 
                (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec))
 })
+
+test_that("require_suggested_package() works", {
+  expect_error(
+    require_suggested_package("not_a_real_package"),
+    "Please install the 'not_a_real_package' package to use this function."
+  )
+})
