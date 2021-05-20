@@ -280,17 +280,25 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
   }
 }
 
-check_bfmi <- function(post_warmup_sampler_diagnostics) {
-  if (!is.null(post_warmup_sampler_diagnostics)) {
-    energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
-    ebfmi <- apply(energy, 2, function(x) {
-      (sum(diff(x)^2)/length(x))/stats::var(x)
+check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .3, return_ebfmi = F) {
+  pwsd <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
+  if (! ("energy__" %in% dimnames(pwsd)$variable)) {
+    warning("e-bfmi not computed as the 'energy__' diagnostic could not be located")
+  } else if (dim(pwsd)[1] <= 1) {
+    warning("e-bfmi is undefined for posterior chains of length 1")
+  } else {
+    energy <- posterior::extract_variable_matrix(pwsd, "energy___")
+    fmi <- apply(energy, 2, function(x) {
+      (sum(diff(x)^2) / length(x)) / stats::var(x)
     })
-    if (any(ebfmi < .3)) {
-      message(sum(ebfmi < .3), " of ", length(ebfmi) , " chains had estimated Bayesian fraction
+    if (any(fmi < ebfmi_threshold)) {
+      message(sum(fmi < ebfmi_threshold), " of ", length(fmi) , " chains had estimated Bayesian fraction
       of missing information(E-BFMI) less than 0.3, which may indicate poor exploration of the
-      posterior. Try to reparameterize the model.")
+      posterior. ")
     }
+  }
+  if(return_ebfmi) {
+    fmi
   }
 }
 
