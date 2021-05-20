@@ -171,3 +171,17 @@ test_that("matching_variables() works", {
   )
   expect_equal(length(ret$not_found), 0)
 })
+
+test_that("check_ebfmi works", {
+  set.seed(1)
+  energy_df <- data.frame("energy__" = rnorm(1000))
+  expect_error(check_ebfmi(energy_df), NA)
+  energy_df[1] <- 0
+  for(i in 1:999){
+    energy_df$energy__[i+1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
+  }
+  expect_message(check_ebfmi(energy_df), "fraction of missing information \\(E-BFMI\\) less than")
+  energy_vec <- energy_df$energy__
+  expect_equal(suppressMessages(check_ebfmi(energy_df, return_ebfmi = TRUE)), 
+               (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec))
+})
