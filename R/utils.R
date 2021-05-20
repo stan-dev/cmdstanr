@@ -288,17 +288,17 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .3, r
     warning("e-bfmi is undefined for posterior chains of length 1")
   } else {
     energy <- posterior::extract_variable_matrix(pwsd, "energy__")
-    fmi <- apply(energy, 2, function(x) {
+    ebfmi <- apply(energy, 2, function(x) {
       (sum(diff(x)^2) / length(x)) / stats::var(x)
     }
     )
-    if (any(fmi < ebfmi_threshold)) {
-      message(paste0(sum(fmi < ebfmi_threshold), " of ", length(fmi), " chains had estimated Bayesian fraction ",
+    if (any(ebfmi < ebfmi_threshold)) {
+      message(paste0(sum(ebfmi < ebfmi_threshold), " of ", length(ebfmi), " chains had estimated Bayesian fraction ",
       "of missing information (E-BFMI) less than ", ebfmi_threshold, ", which may indicate poor exploration of the", 
       "posterior."))
     }
     if(return_ebfmi) {
-      fmi
+      ebfmi
     }
   }
 }
