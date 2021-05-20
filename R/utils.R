@@ -296,11 +296,11 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .2, r
     }
   } else {
     energy <- posterior::extract_variable_matrix(pwsd, "energy__")
-    if (any is.na(energy)) {
+    if (any(is.na(energy))) {
       if (! return_ebfmi) {
-        warning("E-BFMI not computed 'energy__' contains NAs")
+        warning("E-BFMI not computed because 'energy__' contains NAs")
       } else {
-        stop("E-BFMI not computed 'energy__' contains NAs")
+        stop("E-BFMI not computed because 'energy__' contains NAs")
       }
     }
     ebfmi <- apply(energy, 2, function(x) {
