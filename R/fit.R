@@ -833,7 +833,7 @@ CmdStanMCMC <- R6::R6Class(
           if (!fixed_param) {
             check_divergences(private$sampler_diagnostics_)
             check_sampler_transitions_treedepth(private$sampler_diagnostics_, private$metadata_)
-            check_bfmi(private$sampler_diagnostics_)
+            check_ebfmi(private$sampler_diagnostics_)
           }
         }
       }
