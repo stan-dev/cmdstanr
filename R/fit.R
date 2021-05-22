@@ -98,6 +98,7 @@ save_object <- function(file, ...) {
   self$draws()
   try(self$sampler_diagnostics(), silent = TRUE)
   try(self$init(), silent = TRUE)
+  try(self$profiles(), silent = TRUE)
   saveRDS(self, file = file, ...)
   invisible(self)
 }
