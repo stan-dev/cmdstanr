@@ -14,6 +14,18 @@ test_that("profiling works if profiling data is present", {
   expect_equal(length(profiles), 4)
   expect_equal(dim(profiles[[1]]), c(3,9))
   expect_equal(profiles[[1]][,"name"], c("glm", "priors", "udf"))
+
+  file.remove(fit$profile_files())
+  expect_error(
+    fit$profile_files(),
+    "No profile files found. The model that produced the fit did not use any profiling.",
+    fixed = TRUE
+  )
+
+  profiles_no_csv <- fit$profiles()
+  expect_equal(length(profiles_no_csv), 4)
+  expect_equal(dim(profiles_no_csv[[1]]), c(3,9))
+  expect_equal(profiles_no_csv[[1]][,"name"], c("glm", "priors", "udf"))
 })
 
 test_that("profiling errors if no profiling files are present", {

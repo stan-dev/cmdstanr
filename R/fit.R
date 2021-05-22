@@ -62,7 +62,8 @@ CmdStanFit <- R6::R6Class(
   private = list(
     draws_ = NULL,
     metadata_ = NULL,
-    init_ = NULL
+    init_ = NULL,
+    profiles_ = NULL
   )
 )
 
@@ -752,13 +753,15 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #' }
 #'
 profiles <- function() {
-  profiles <- list()
-  i <- 1
-  for (f in self$profile_files()) {
-    profiles[[i]] <- data.table::fread(f, data.table = FALSE)
-    i <- i + 1
-  }
-  profiles
+  if (is.null(private$profiles_)) {
+    private$profiles_ <- list()
+    i <- 1
+    for (f in self$profile_files()) {
+      private$profiles_[[i]] <- data.table::fread(f, integer64 = "character", data.table = FALSE)
+      i <- i + 1
+    }
+  }  
+  private$profiles_
 }
 CmdStanFit$set("public", name = "profiles", value = profiles)
 
