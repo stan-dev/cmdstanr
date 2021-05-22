@@ -4,7 +4,6 @@ if (not_on_cran()) {
 
 test_that("profiling works if profiling data is present", {
   skip_on_cran()
-  skip_if(cmdstan_version() < "2.26.0")
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
     fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
@@ -14,6 +13,18 @@ test_that("profiling works if profiling data is present", {
   expect_equal(length(profiles), 4)
   expect_equal(dim(profiles[[1]]), c(3,9))
   expect_equal(profiles[[1]][,"name"], c("glm", "priors", "udf"))
+
+  file.remove(fit$profile_files())
+  expect_error(
+    fit$profile_files(),
+    "No profile files found. The model that produced the fit did not use any profiling.",
+    fixed = TRUE
+  )
+
+  profiles_no_csv <- fit$profiles()
+  expect_equal(length(profiles_no_csv), 4)
+  expect_equal(dim(profiles_no_csv[[1]]), c(3,9))
+  expect_equal(profiles_no_csv[[1]][,"name"], c("glm", "priors", "udf"))
 })
 
 test_that("profiling errors if no profiling files are present", {
@@ -37,7 +48,6 @@ test_that("profiling errors if no profiling files are present", {
 
 test_that("saving profile csv output works", {
   skip_on_cran()
-  skip_if(cmdstan_version() < "2.26.0")
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
     fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
