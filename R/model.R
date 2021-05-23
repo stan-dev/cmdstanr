@@ -513,6 +513,13 @@ compile <- function(quiet = TRUE,
           call. = FALSE
         )
       }
+      if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
+        warning(
+          "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
+          "See the above error for more details.",
+          call. = FALSE
+        )
+      }
     },
     error_on_status = FALSE
   )
