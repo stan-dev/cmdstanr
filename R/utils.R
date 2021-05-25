@@ -281,7 +281,7 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
 }
 
 check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .2, return_ebfmi = F) {
-  if (!is.null(post_warmup_sampler_diagnostics) && posterior::niterations(post_warmup_sampler_diagnostics) > 0) {
+  if (!is.null(post_warmup_sampler_diagnostics)) {
     pwsd <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
     if (!("energy__" %in% dimnames(pwsd)$variable)) {
       if (! return_ebfmi) {
