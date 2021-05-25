@@ -281,41 +281,43 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
 }
 
 check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .2, return_ebfmi = F) {
-  pwsd <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
-  if (!("energy__" %in% dimnames(pwsd)$variable)) {
-    if (! return_ebfmi) {
-      warning("E-BFMI not computed as the 'energy__' diagnostic could not be located")
-    } else {
-      stop("E-BFMI not computed as the 'energy__' diagnostic could not be located")
-    }
-  } else if (dim(pwsd)[1] <= 2) {
-    if (! return_ebfmi) {
-      warning("E-BFMI is undefined for posterior chains of length less than 3")
-    } else {
-      stop("E-BFMI is undefined for posterior chains of length less than 3")
-    }
-  } else {
-    energy <- posterior::extract_variable_matrix(pwsd, "energy__")
-    if (any(is.na(energy))) {
+  if (!is.null(post_warmup_sampler_diagnostics) && posterior::niterations(post_warmup_sampler_diagnostics) > 0) {
+    pwsd <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
+    if (!("energy__" %in% dimnames(pwsd)$variable)) {
       if (! return_ebfmi) {
-        warning("E-BFMI not computed because 'energy__' contains NAs")
+        warning("E-BFMI not computed as the 'energy__' diagnostic could not be located")
       } else {
-        stop("E-BFMI not computed because 'energy__' contains NAs")
+        stop("E-BFMI not computed as the 'energy__' diagnostic could not be located")
+      }
+    } else if (dim(pwsd)[1] <= 2) {
+      if (! return_ebfmi) {
+        warning("E-BFMI is undefined for posterior chains of length less than 3")
+      } else {
+        stop("E-BFMI is undefined for posterior chains of length less than 3")
+      }
+    } else {
+      energy <- posterior::extract_variable_matrix(pwsd, "energy__")
+      if (any(is.na(energy))) {
+        if (! return_ebfmi) {
+          warning("E-BFMI not computed because 'energy__' contains NAs")
+        } else {
+          stop("E-BFMI not computed because 'energy__' contains NAs")
+        }
+      }
+      ebfmi <- apply(energy, 2, function(x) {
+        (sum(diff(x)^2) / length(x)) / stats::var(x)
+      }
+      )
+      if (any(ebfmi < ebfmi_threshold)) {
+        message(paste0(sum(ebfmi < ebfmi_threshold), " of ", length(ebfmi), " chains had energy-based Bayesian fraction ",
+        "of missing information (E-BFMI) less than ", ebfmi_threshold, ", which may indicate poor exploration of the ", 
+        "posterior"))
+      }
+      if (return_ebfmi) {
+        ebfmi
       }
     }
-    ebfmi <- apply(energy, 2, function(x) {
-      (sum(diff(x)^2) / length(x)) / stats::var(x)
-    }
-    )
-    if (any(ebfmi < ebfmi_threshold)) {
-      message(paste0(sum(ebfmi < ebfmi_threshold), " of ", length(ebfmi), " chains had energy-based Bayesian fraction ",
-      "of missing information (E-BFMI) less than ", ebfmi_threshold, ", which may indicate poor exploration of the ", 
-      "posterior"))
-    }
-    if (return_ebfmi) {
-      ebfmi
-    }
-  }
+  }  
 }
 
 
