@@ -159,7 +159,7 @@ test_that("init warnings are shown", {
 test_that("optimize error on bad data", {
   mod <- testing_model("bernoulli")
   suppressWarnings(
-    expect_output(
+    expect_message(
       mod$optimize(data = list(a = c(1,2,3)), seed = 123),
       "Exception: variable does not exist"
     )
@@ -198,18 +198,14 @@ test_that("gq chains error on wrong input CSV", {
   mod <- testing_model("bernoulli_ppc")
   data_list <- testing_data("bernoulli_ppc")
   suppressWarnings(
-    expect_output(
+    expect_message(
       mod$generate_quantities(data = data_list, fitted_params = fit_logistic$output_files()),
       "Mismatch between model and fitted_parameters csv"
     )
   )
-  if (cmdstan_version() < "2.26") {
-    err_msg <- "Error reading fitted param names"
-  } else {
-    err_msg <- "Mismatch between model and fitted_parameters csv file"
-  }
+  err_msg <- "Mismatch between model and fitted_parameters csv file"
   suppressWarnings(
-    expect_output(
+    expect_message(
       mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv")),
       err_msg
     )

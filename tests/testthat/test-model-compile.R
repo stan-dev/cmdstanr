@@ -413,12 +413,12 @@ test_that("check_syntax() works with pedantic=TRUE", {
   mod_dep_warning <- cmdstan_model(stan_file, compile = FALSE)
   expect_message(
     mod_dep_warning$compile(),
-    "Warning: deprecated language construct used in",
+    "deprecated in the Stan language",
     fixed = TRUE
   )
   expect_message(
     mod_dep_warning$check_syntax(),
-    "Warning: deprecated language construct used in",
+    "deprecated in the Stan language",
     fixed = TRUE
   )
 })
