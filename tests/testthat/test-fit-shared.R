@@ -174,6 +174,21 @@ test_that("save_object() method works", {
   expect_identical(fit$summary(), s)
 })
 
+test_that("save_object() method works with profiles", {
+  skip_on_cran()
+  mod <- testing_model("logistic_profiling")
+  utils::capture.output(
+    fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
+  )
+  # check after garbage collection too
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  fit$save_object(temp_rds_file)
+  s <- fit$profiles()
+  rm(fit); gc()
+  fit <- readRDS(temp_rds_file)
+  expect_identical(fit$profiles(), s)
+})
+
 test_that("metadata() returns list", {
   for (method in all_methods) {
     fit <- fits[[method]]
