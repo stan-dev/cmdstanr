@@ -195,7 +195,8 @@ CmdStanModel <- R6::R6Class(
     include_paths_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
-    precompile_include_paths_ = NULL
+    precompile_include_paths_ = NULL,
+    variables_ = NULL
   ),
   public = list(
     initialize = function(stan_file, compile, ...) {
@@ -537,6 +538,54 @@ compile <- function(quiet = TRUE,
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile)
+
+
+variables <- function() {
+  if (cmdstan_version() < "2.27") {
+    stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
+  }
+  if (is.null(private$variables_)) {
+    out_file <- tempfile(fileext = ".json")
+    run_log <- processx::run(
+      command = stanc_cmd(),
+      args = c(self$stan_file(), "--info"),
+      wd = cmdstan_path(),
+      echo = FALSE,
+      echo_cmd = FALSE,
+      stdout = out_file,
+      error_on_status = TRUE
+    )
+    variables <- jsonlite::read_json(out_file, na = "null")
+    if (length(variables$inputs) == 0) {
+      data <- NULL
+    } else {
+      data <- variables$inputs
+    }
+    if (length(variables$parameters) == 0) {
+      params <- NULL
+    } else {
+      params <- variables$parameters
+    }
+    if (length(variables[["transformed parameters"]]) == 0) {
+      tp <- NULL
+    } else {
+      tp <- variables[["transformed parameters"]]
+    }
+    if (length(variables[["generated quantities"]]) == 0) {
+      gq <- NULL
+    } else {
+      gq <- variables[["generated quantities"]]
+    }
+    private$variables_ <- list(
+      data = data,
+      parameters =  params,
+      transformed_parameters = tp,
+      generated_quantities = gq
+    )
+  }
+  private$variables_
+}
+CmdStanModel$set("public", name = "variables", value = variables)
 
 #' Check syntax of a Stan program
 #'
