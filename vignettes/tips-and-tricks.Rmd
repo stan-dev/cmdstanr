@@ -1,0 +1,107 @@
+---
+title: "Tips and tricks"
+author: "Rok Češnovar and Jonah Gabry"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+vignette: >
+  %\VignetteIndexEntry{Tips and tricks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r child="children/settings-knitr.Rmd"}
+```
+
+## Introduction
+
+This vignette is intended to showcase some of the minor tips and tricks
+when using Stan and CmdStanR.
+
+```{r setup, message=FALSE}
+library(cmdstanr)
+```
+
+## Disabling range checks
+
+When assigning to or reading from with vectors, row_vectors, matrices
+or arrays using indexing, Stan performs cheks that a supplied index is
+valid (not out of range). These check avoids segmentation faults and
+other runtime errors that can be difficult to debug. For some models
+(those that use a lot of indexing and loops) these checks can represent
+a nonnegligilbe part of the models execution time.
+
+As of CmdStan 2.27, users can disable the range checks to speedup
+their models. This can be done by setting `STAN_NO_RANGE_CHECKS` to 
+`TRUE` in list supplied to the `cpp_options` argument of `cmdstan_model()`.
+
+By default the model will use checks:
+```{r bernoulli-loop-checks}
+code <- "
+data {
+  int<lower=0> N;
+  array[N] int<lower=0,upper=1> y;
+}
+parameters {
+  real<lower=0,upper=1> theta;
+}
+model {
+  theta ~ beta(1,1);
+  for (i in 1:N) {
+    y[i] ~ bernoulli(theta);
+  }
+}
+"
+data_list <- list(N = 40000, y = rbinom(40000, 1, 0.3))
+
+range_checks_stan_file <- write_stan_file(code)
+mod_checks <- cmdstan_model(range_checks_stan_file, force_recompile = TRUE)
+fit_checks <- mod_checks$sample(data = data_list, iter_warmup = 500, iter_sampling = 500, chains = 1, refresh = 0, seed = 123)
+fit_checks$time()$total
+```
+If the model was not modified, only modifying the `cpp_options` will not trigger
+recompiling, but can be force using `force_recompile = TRUE`.
+```{r bernoulli-loop-no-checks}
+mod_no_checks <- cmdstan_model(range_checks_stan_file, cpp_options = list("STAN_NO_RANGE_CHECKS" = TRUE), force_recompile = TRUE)
+fit_no_checks <- mod_checks$sample(data = data_list, iter_warmup = 500, iter_sampling = 500, chains = 1, refresh = 0, seed = 123)
+fit_no_checks$time()$total
+```
+
+The maximum expected time gain is 5-10% if the models
+use any sort of indexing. Fully vectorized models will experience
+no speedup. *Use this flag with caution and only once the indexing has been
+validated.* In case of any unexpected behavior remove the flag for easier
+debugging.
+
+## Dealing with large number of parameters or generated quantities
+
+The `$draws()` method of the  `CmdStanMCMC` object can return draws as
+`draws_array`, `draws_list` or `draws_df`, all of which are draws formats
+of the `posterior` package. By default, it will return a `draws_array`.
+
+Due to how R memory managment works internally with arrays, the `draws_array`
+is not the most efficient format when dealing with large number of parameters
+or generated quantities and using multiple chains. For those cases, we advise
+using the `draws_list` format. In addition to being faster, returning multiple
+chains as a list is also more memory efficient.
+
+```{r compare-draws-format-speed}
+fit_a <- cmdstanr_example("logistic", iter_sampling = 5000)
+start_draws_array <- Sys.time()
+draws <- fit_a$draws()
+stop_draws_array <- Sys.time()
+stop_draws_array - start_draws_array
+
+fit_l <- cmdstanr_example("logistic", iter_sampling = 5000)
+start_draws_list <- Sys.time()
+draws <- fit_l$draws(format = "draws_list")
+stop_draws_list <- Sys.time()
+stop_draws_list - start_draws_list
+```
+
+The draws format can also be set as an options with 
+- options
+- switching draws

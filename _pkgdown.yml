@@ -73,6 +73,7 @@ articles:
       - r-markdown
       - profiling
       - opencl
+      - tips-and-tricks
 
 reference:
   - title: "Package description"
