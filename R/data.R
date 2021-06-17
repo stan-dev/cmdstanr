@@ -4,6 +4,31 @@
 #' @param data (list) A named list of \R objects.
 #' @param file (string) The path to where the data file should be written.
 #'
+#' @details
+#' `write_stan_json()` performs several conversions before writing the JSON
+#' file:
+#'
+#' * `logical` -> `integer` (`TRUE` -> `1`, `FALSE` -> `0`)
+#' * `data.frame` -> `matrix` (via [data.matrix()])
+#' * `list` -> `array`
+#'
+#' The `list` to `array` conversion is intended to make it easier to prepare
+#' the data for certain Stan declarations involving arrays:
+#'
+#' * `vector[J] v[K]` (or equivalently `array[K] vector[J] v ` as of Stan 2.27)
+#' can be constructed in \R as a list with `K` elements where each element a
+#' vector of length `J`
+#' * `matrix[I,J] v[K]` (or equivalently `array[K] matrix[I,J] m ` as of Stan
+#' 2.27 ) can be constructed in \R as a list with `K` elements where each element
+#' an `IxJ` matrix
+#'
+#' These can also be passed in from \R as arrays instead of lists but the list
+#' option is provided for convenience. Unfortunately for arrays with more than
+#' one dimension, e.g., `vector[J] v[K,L]` (or equivalently
+#' `array[K,L] vector[J] v ` as of Stan 2.27) it is not possible to use an \R
+#' list and an array must be used instead. For this example the array in \R
+#' should have dimensions `KxLxJ`.
+#'
 #' @examples
 #' x <- matrix(rnorm(10), 5, 2)
 #' y <- rpois(nrow(x), lambda = 10)
@@ -15,6 +40,15 @@
 #' write_stan_json(data, file)
 #'
 #' # check the contents of the file
+#' cat(readLines(file), sep = "\n")
+#'
+#'
+#' # demonstrating list to array conversion
+#' # suppose x is declared as `vector[3] x[2]` (or equivalently `array[2] vector[3] x`)
+#' # we can use a list of length 2 where each element is a vector of length 3
+#' data <- list(x = list(1:3, 4:6))
+#' file <- tempfile(fileext = ".json")
+#' write_stan_json(data, file)
 #' cat(readLines(file), sep = "\n")
 #'
 write_stan_json <- function(data, file) {
