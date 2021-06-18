@@ -2,7 +2,7 @@ context("read_cmdstan_csv")
 
 if (not_on_cran()) {
   set_cmdstan_path()
-  fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 123)
+  fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 1234)
   fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", seed = 123)
   fit_logistic_optimize <- testing_fit("logistic", method = "optimize", seed = 123)
   fit_logistic_variational <- testing_fit("logistic", method = "variational", seed = 123)
@@ -561,7 +561,7 @@ test_that("read_cmdstan_csv reads seed correctly", {
   opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
   smp <- read_cmdstan_csv(fit_bernoulli_diag_e_no_samples$output_files())
-  expect_equal(opt$metadata$seed, 123)
+  expect_equal(opt$metadata$seed, 1234)
   expect_equal(vi$metadata$seed, 123)
   expect_equal(smp$metadata$seed, 123)
 })
