@@ -23,7 +23,7 @@
 #' then its value will be automatically set as the default path to CmdStan for
 #' the \R session.
 #' * If no environment variable is found when loaded but any directory in the
-#' form `".cmdstanr/cmdstan-[version]"` (e.g., `".cmdstanr/cmdstan-2.23.0"`),
+#' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.23.0"`),
 #' exists in the user's home directory (`Sys.getenv("HOME")`, *not* the current
 #' working directory) then the path to the cmdstan with the largest version
 #' number will be set as the path to CmdStan for the \R session. This is the
@@ -103,7 +103,7 @@ stop_no_path <- function() {
 #' @return The installation path.
 #' @export
 cmdstan_default_install_path <- function() {
-  file.path(Sys.getenv("HOME"), ".cmdstanr")
+  file.path(Sys.getenv("HOME"), ".cmdstan")
 }
 
 #' cmdstan_default_path

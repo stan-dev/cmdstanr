@@ -1,5 +1,8 @@
 # cmdstanr 0.4.0.9000
 
+* Default directory changed to `.cmdstan` instead of `.cmdstanr` so that
+CmdStanPy and CmdStanR can use the same CmdStan installations. (#454)
+
 * Expose CmdStan's `diagnose` method that compares Stan's gradient computations
 to gradients computed via finite differences. (#485)
 

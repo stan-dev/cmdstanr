@@ -25,7 +25,7 @@ jobs:
     steps:
       - name: cmdstan env vars
         run: |
-          echo "CMDSTAN_PATH=${HOME}/.cmdstanr" >> $GITHUB_ENV
+          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
 
       - uses: n1hility/cancel-previous-runs@v2
