@@ -100,10 +100,16 @@ stop_no_path <- function() {
 #' Path to where  [install_cmdstan()] with default settings installs CmdStan.
 #'
 #' @keywords internal
+#' @param old Should the old default path (.cmdstanr) be used instead of the new
+#'   one (.cmdstan)? Defaults to `FALSE` and may be removed in a future release.
 #' @return The installation path.
 #' @export
-cmdstan_default_install_path <- function() {
-  file.path(Sys.getenv("HOME"), ".cmdstan")
+cmdstan_default_install_path <- function(old = FALSE) {
+  if (old) {
+    file.path(Sys.getenv("HOME"), ".cmdstanr")
+  } else {
+    file.path(Sys.getenv("HOME"), ".cmdstan")
+  }
 }
 
 #' cmdstan_default_path
@@ -113,11 +119,12 @@ cmdstan_default_install_path <- function() {
 #'
 #' @export
 #' @keywords internal
+#' @param old See [cmdstan_default_install_path()].
 #' @return Path to the CmdStan installation with the most recent release
 #'   version, or `NULL` if no installation found.
 #'
-cmdstan_default_path <- function() {
-  installs_path <- cmdstan_default_install_path()
+cmdstan_default_path <- function(old = FALSE) {
+  installs_path <- cmdstan_default_install_path(old)
   if (dir.exists(installs_path)) {
     cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
     # if installed in cmdstan folder with no version move to cmdstan-version folder
