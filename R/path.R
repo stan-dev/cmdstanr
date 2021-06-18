@@ -35,7 +35,7 @@
 #'
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
-    path <- cmdstan_default_path()
+    path <- cmdstan_default_path() || cmdstan_default_path(old = TRUE)
   }
   if (dir.exists(path)) {
     path <- absolute_path(path)
