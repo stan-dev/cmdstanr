@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: cmdstan env vars
         run: |
-          echo "CMDSTAN_PATH=${HOME}/.cmdstanr" >> $GITHUB_ENV
+          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
 
       - uses: n1hility/cancel-previous-runs@v2
@@ -96,7 +96,7 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
-          install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
+          remotes::install_local(path = ".")
           install.packages("curl")
         shell: Rscript {0}
 

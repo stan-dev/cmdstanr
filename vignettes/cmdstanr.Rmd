@@ -84,7 +84,7 @@ is useful if your CmdStan installation is not located in the default directory
 that would have been used by `install_cmdstan()` (see #2).
 
 2. If no environment variable is found when loaded but any directory in the form
-`".cmdstanr/cmdstan-[version]"`, for example `".cmdstanr/cmdstan-2.23.0"`,
+`".cmdstan/cmdstan-[version]"`, for example `".cmdstan/cmdstan-2.23.0"`,
 exists in the user's home directory (`Sys.getenv("HOME")`,
 *not* the current working directory) then the path to the CmdStan with the
 largest version number will be set as the path to CmdStan for the R session.
