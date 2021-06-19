@@ -1,5 +1,9 @@
 # cmdstanr 0.4.0.9000
 
+### Bug fixes
+
+### New features
+
 * Default directory changed to `.cmdstan` instead of `.cmdstanr` so that
 CmdStanPy and CmdStanR can use the same CmdStan installations. Using `.cmdstanr`
 will continue to be supported until version 1.0 but `install_cmdstan()` will now
@@ -12,6 +16,9 @@ to gradients computed via finite differences. (#485)
 * `write_stan_file()` now choose file names deterministically based on the code
 so that models do not get unnecessarily recompiled when calling the function
 multiple times with the same code. (#495, @martinmodrak)
+
+* New `$variables()` method for CmdstanModel that returns a list of variables
+in the Stan model, their types and number of dimensions.
 
 # cmdstanr 0.4.0
 
