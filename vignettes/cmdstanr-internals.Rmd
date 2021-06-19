@@ -332,7 +332,8 @@ str(csv_contents)
 
 ### as_cmdstan_fit()
 
-The create fitted model objects from CmdStan CSV files use `as_cmdstan_fit()`.
+If you need to manually create fitted model objects from CmdStan CSV files use
+`as_cmdstan_fit()`.
 
 ```{r as_cmdstan_fit}
 fit2 <- as_cmdstan_fit(fit$output_files())
