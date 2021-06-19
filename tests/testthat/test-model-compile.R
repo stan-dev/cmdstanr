@@ -468,11 +468,13 @@ test_that("include_paths_stanc3_args() works", {
   if (!dir.exists(path_1)) {
     dir.create(path_1)
   }
+  path1 <- repair_path(path1)
   expect_equal(include_paths_stanc3_args(path_1), paste0(" ", "--include-paths=", path_1, " "))
   path_2 <- file.path(tempdir(), "folder2")
   if (!dir.exists(path_2)) {
     dir.create(path_2)
   }
+  path2 <- repair_path(path2)
   expect_equal(
     include_paths_stanc3_args(c(path_1, path_2)),
     c(
