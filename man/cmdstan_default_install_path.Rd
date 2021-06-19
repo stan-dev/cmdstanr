@@ -4,7 +4,11 @@
 \alias{cmdstan_default_install_path}
 \title{cmdstan_default_install_path}
 \usage{
-cmdstan_default_install_path()
+cmdstan_default_install_path(old = FALSE)
+}
+\arguments{
+\item{old}{Should the old default path (.cmdstanr) be used instead of the new
+one (.cmdstan)? Defaults to \code{FALSE} and may be removed in a future release.}
 }
 \value{
 The installation path.

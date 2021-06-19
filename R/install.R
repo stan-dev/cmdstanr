@@ -25,8 +25,8 @@
 #'
 #' @export
 #' @param dir (string) The path to the directory in which to install CmdStan.
-#'   The default is to install it in a directory called `.cmdstanr` within the
-#'   user's home directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstanr")`).
+#'   The default is to install it in a directory called `.cmdstan` within the
+#'   user's home directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstan")`).
 #' @param cores (integer) The number of CPU cores to use to parallelize building
 #'   CmdStan and speed up installation. If `cores` is not specified then the
 #'   default is to look for the option `"mc.cores"`, which can be set for an
