@@ -56,7 +56,12 @@ write_stan_json <- function(data, file) {
     stop("The supplied filename is invalid!", call. = FALSE)
   }
 
-  for (var_name in names(data)) {
+  data_names <- names(data)
+  if (anyDuplicated(data_names) != 0) {
+    stop("Duplicate names not allowed in 'data'.", call. = FALSE)
+  }
+
+  for (var_name in data_names) {
     var <- data[[var_name]]
     if (!(is.numeric(var) || is.factor(var) || is.logical(var) ||
           is.data.frame(var) || is.list(var))) {
