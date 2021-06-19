@@ -59,7 +59,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("posterior", "cmdstanr", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          install.packages(c("posterior", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          remotes::install_local(path = ".")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           remotes::install_cran("gridExtra")
@@ -121,7 +122,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("posterior", "cmdstanr", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          install.packages(c("posterior", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          remotes::install_local(path = ".")
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
