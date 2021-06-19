@@ -17,8 +17,9 @@ to gradients computed via finite differences. (#485)
 so that models do not get unnecessarily recompiled when calling the function
 multiple times with the same code. (#495, @martinmodrak)
 
-* New `$variables()` method for CmdstanModel that returns a list of variables
-in the Stan model, their types and number of dimensions.
+* New method `$variables()` for CmdstanModel objects that returns a list of
+variables in the Stan model, their types and number of dimensions. Does
+not require the model to be compiled.
 
 # cmdstanr 0.4.0
 
