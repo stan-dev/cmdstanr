@@ -36,7 +36,7 @@ library(cmdstanr)
 
 The `cmdstan_model()` function creates a new `CmdStanModel` object. The
 `CmdStanModel` object stores the path to a Stan program as well as the 
-path to a compiled executable: 
+path to a compiled executable.
 
 ```{r start-clean, include=FALSE}
 exe <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli")
@@ -52,7 +52,7 @@ mod$exe_file()
 ```
 
 Subsequently, if you create a `CmdStanModel` object from the same Stan file
-then compilation will be skipped (assuming the file hasn't changed):
+then compilation will be skipped (assuming the file hasn't changed).
 
 ```{r already-compiled}
 mod <- cmdstan_model(stan_file)
@@ -60,8 +60,7 @@ mod <- cmdstan_model(stan_file)
  
 Internally, `cmdstan_model()` first creates the `CmdStanModel` object from
 just the Stan file and then calls its [`$compile()`](http://mc-stan.org/cmdstanr/reference/model-method-compile.html) 
-method. Optional arguments to the `$compile()` method can be passed via `...`, 
-for example:
+method. Optional arguments to the `$compile()` method can be passed via `...`.
 
 ```{r compile-options, eval=FALSE}
 mod <- cmdstan_model(
@@ -77,8 +76,8 @@ mod <- cmdstan_model(
 ### Delayed compilation
 
 It is also possible to delay compilation when creating the `CmdStanModel` object
-by specifying `compile=FALSE`. You can later call the `$compile()` method
-directly:
+by specifying `compile=FALSE` and then later calling the `$compile()` method
+directly.
 
 ```{r compile-method}
 unlink(mod$exe_file())
@@ -112,6 +111,10 @@ prior distribution.
 value.
 - Strict or nonsensical parameter bounds: a parameter is given questionable
 bounds.
+
+For the latest information on the checks performed in pedantic mode see the
+[Pedantic mode chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html)
+in the Stan Reference Manual.
 
 Pedantic mode is available when compiling the model or when using the separate
 `$check_syntax()` method of a `CmdStanModel` object. Internally this corresponds
@@ -167,7 +170,7 @@ mod_pedantic$check_syntax(pedantic = TRUE)
 
 By default, the executable is created in the same directory as the file
 containing the Stan program. You can also specify a different location with the
-`dir` argument:
+`dir` argument.
 
 ```{r compile-with-dir, eval = FALSE}
 mod <- cmdstan_model(stan_file, dir = "path/to/directory/for/executable")
@@ -200,7 +203,7 @@ fit <- mod$sample(data = data_list)
 
 Because CmdStan doesn't accept lists of R objects, CmdStanR will first write the
 data to a temporary JSON file using `write_stan_json()`. This happens
-internally, but it is also possible to call `write_stan_json()` directly:
+internally, but it is also possible to call `write_stan_json()` directly.
 
 ```{r write_stan_json}
 data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
@@ -244,7 +247,7 @@ fit <- mod$sample(data = data_list)
 ```
 
 When fitting a model, the default behavior is to write the output from CmdStan 
-to CSV files in a temporary directory:
+to CSV files in a temporary directory.
 
 ```{r output_files}
 fit$output_files()
@@ -268,8 +271,7 @@ file.exists(files)
 
 To save these files to a non-temporary location there are two options. You 
 can either specify the `output_dir` argument to `mod$sample()` or use 
-`fit$save_output_files()` after fitting the model: 
-
+`fit$save_output_files()` after fitting the model.
 
 ```{r save_output_files, eval=FALSE}
 # see ?save_output_files for info on optional arguments
@@ -292,7 +294,7 @@ With the exception of some diagnostic information, the CSV files are not read
 into R until their contents are requested by calling a method that requires them
 (e.g., `fit$draws()`, `fit$summary()`, etc.). If we examine the structure of the
 `fit` object, notice how the `Private` slot `draws_` is `NULL`, indicating that
-the CSV files haven't yet been read into R:
+the CSV files haven't yet been read into R.
 
 ```{r refit, include=FALSE}
 fit <- mod$sample(data = data_list)
@@ -303,7 +305,7 @@ str(fit)
 
 After we call a method that requires the draws then if we reexamine the 
 structure of the object we will see that the `draws_` slot in `Private` 
-is no longer empty: 
+is no longer empty.
 
 ```{r for-csv-reading}
 draws <- fit$draws() # force CSVs to be read into R
@@ -319,7 +321,7 @@ variables (unless they have already been read in).
 
 Internally, the `read_cmdstan_csv()` function is used to read the CmdStan CSV
 files into R. This function is exposed to users, so you can also call it
-directly:
+directly.
 
 ```{r read_cmdstan_csv}
 # see ?read_cmdstan_csv for info on optional arguments controlling 
@@ -328,6 +330,17 @@ csv_contents <- read_cmdstan_csv(fit$output_files())
 str(csv_contents)
 ```
 
+### as_cmdstan_fit()
+
+The create fitted model objects from CmdStan CSV files use `as_cmdstan_fit()`.
+
+```{r as_cmdstan_fit}
+fit2 <- as_cmdstan_fit(fit$output_files())
+```
+
+This is pointless in our case since we have the original `fit` object, but this
+function can be used to create fitted model objects (`CmdStanMCMC`,
+`CmdStanMLE`, etc.) from any CmdStan CSV files.
 
 ### Saving and accessing advanced algorithm info (latent dynamics)
 
@@ -337,7 +350,7 @@ quantities used under the hood by Stan's implementation of dynamic Hamiltonian
 Monte Carlo.
 
 CmdStanR does not yet provide a special method for processing these files but
-they can be read into R using R's standard CSV reading functions:
+they can be read into R using R's standard CSV reading functions.
 
 
 ```{r save_latent_dynamics, results = "hide"}
@@ -354,7 +367,7 @@ head(x)
 The column `lp__` is also provided via `fit$draws()`, and the columns
 `accept_stat__`, `stepsize__`, `treedepth__`, `n_leapfrog__`, `divergent__`, and
 `energy__` are also provided by `fit$sampler_diagnostics()`, but there are 
-several columns unique to the latent dynamics file:
+several columns unique to the latent dynamics file.
 
 ```{r explore-latent-dynamics}
 head(x[, c("theta", "p_theta", "g_theta")])
@@ -375,7 +388,7 @@ _all_ of the posterior draws and sampler diagnostics you should either make sure
 to call `fit$draws()` and `fit$sampler_diagnostics()` before saving the object
 `fit`, or use the special `$save_object()` method provided by CmdStanR, which
 will ensure that everything has been read into R before saving the object using
-`saveRDS()`:
+`saveRDS()`.
 
 ```{r save-fit}
 temp_rds_file <- tempfile(fileext = ".RDS") # temporary file just for demonstration
@@ -383,7 +396,7 @@ fit$save_object(file = temp_rds_file)
 ```
 
 We can check that this worked by removing `fit` and loading it back in from
-the save file:
+the save file.
 
 ```{r load-fit}
 rm(fit); gc()
