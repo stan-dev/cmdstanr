@@ -1,5 +1,12 @@
 # cmdstanr 0.4.0.9000
 
+### Bug fixes
+
+* Fixed bug that caused stdour/stderr not being read at the end of
+optimization. (#522)
+
+### New features
+
 * Default directory changed to `.cmdstan` instead of `.cmdstanr` so that
 CmdStanPy and CmdStanR can use the same CmdStan installations. Using `.cmdstanr`
 will continue to be supported until version 1.0 but `install_cmdstan()` will now
