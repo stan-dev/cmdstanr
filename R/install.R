@@ -389,7 +389,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
 build_example <- function(dir, cores, quiet, timeout) {
   processx::run(
     make_cmd(),
-    args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "berrnoulli", "bernoulli"))),
+    args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
     wd = dir,
     echo_cmd = is_verbose_mode(),
     echo = !quiet || is_verbose_mode(),

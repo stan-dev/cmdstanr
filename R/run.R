@@ -840,7 +840,7 @@ CmdStanMCMCProcs <- R6::R6Class(
             next_state <- 3
           }
           if (state < 3 && grepl("Elapsed Time:", line, perl = TRUE)) {
-            state <- 5 # 5 = end of samp+ling
+            state <- 5 # 5 = end of sampling
             next_state <- 5
           }
           if (private$proc_state_[[id]] == 3 &&
