@@ -154,7 +154,7 @@ install_cmdstan <- function(dir = NULL,
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   version <- read_cmdstan_version(dir_cmdstan)
   if (os_is_windows()) {
-    if (version >= "2.24" && R.version$major >= "4") {
+    if (version >= "2.24" && R.version$major >= "4" && !("PRECOMPILED_HEADERS" %in% toupper(names(cpp_options)))) {
       # cmdstan 2.24 can use precompiled headers with RTools 4.0 to speedup compiling
       cmdstan_make_local(
         dir = dir_cmdstan,
