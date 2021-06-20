@@ -540,9 +540,24 @@ compile <- function(quiet = TRUE,
 CmdStanModel$set("public", name = "compile", value = compile)
 
 
-variables <- function() {
+variables <- function(block = NULL) {
   if (cmdstan_version() < "2.27") {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
+  }
+  if (!is.null(block)) {
+    allowed_block <- c(
+      "data", "transformed data", "transformed_data", "parameters",
+      "transformed parameters", "transformed_parameters",
+      "generated quantities", "generated_quantities"
+    )
+    if (!all(block %in% allowed_block)) {
+      stop(
+        "Unexpected value in 'block'. Allowed values are: ",
+        paste0(allowed_block, collapse = ", "),
+        "."
+        call. = FALSE
+      )
+    }
   }
   if (is.null(private$variables_)) {
     out_file <- tempfile(fileext = ".json")
