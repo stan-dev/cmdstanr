@@ -480,7 +480,7 @@ compile <- function(quiet = TRUE,
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
   }
-  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
+  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
   run_log <- processx::run(
     command = make_cmd(),
     args = c(tmp_exe,
@@ -1380,11 +1380,11 @@ include_paths_stanc3_args <- function(include_paths = NULL) {
     include_paths <- absolute_path(include_paths)
     include_paths <- paste0(include_paths, collapse = ",")
     if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- " --include-paths="
+      include_paths_flag <- "--include-paths="
     } else {
-      include_paths_flag <- " --include_paths="
+      include_paths_flag <- "--include_paths="
     }
-    stancflags <- paste0(stancflags, include_paths_flag, include_paths, " ")
+    stancflags <- paste0(stancflags, include_paths_flag, include_paths)
   }
   stancflags
 }
