@@ -20,7 +20,7 @@ jobs:
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         config:
           - {os: macOS-latest, r: 'devel'}
@@ -35,12 +35,12 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
-      CMDSTAN_VERSION: "2.26.1"
+      CMDSTAN_VERSION: "2.27.0"
 
     steps:
       - name: cmdstan env vars
         run: |
-          echo "CMDSTAN_PATH=${HOME}/.cmdstanr" >> $GITHUB_ENV
+          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
 
       - uses: n1hility/cancel-previous-runs@v2
@@ -96,7 +96,7 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
-          install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
+          remotes::install_local(path = ".")
           install.packages("curl")
         shell: Rscript {0}
 

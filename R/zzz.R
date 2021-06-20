@@ -27,7 +27,6 @@ startup_messages <- function() {
   }
 }
 
-
 cmdstanr_initialize <- function() {
   # First check for environment variable CMDSTAN, but if not found
   # then see if default
@@ -37,19 +36,22 @@ cmdstanr_initialize <- function() {
       path <- absolute_path(path)
       suppressMessages(set_cmdstan_path(path))
     } else {
-      warning("Can't find directory specified by environment variable",
-              " 'CMDSTAN'. Path not set.", call. = FALSE)
+      warning(
+        "Can't find directory specified by environment variable 'CMDSTAN'. ",
+        "Path not set.",
+        call. = FALSE
+      )
       .cmdstanr$PATH <- NULL
     }
 
   } else { # environment variable not found
-    path <- cmdstan_default_path()
+    path <- cmdstan_default_path() %||% cmdstan_default_path(old = TRUE)
     if (!is.null(path)) {
       suppressMessages(set_cmdstan_path(path))
     }
   }
 
-  if (getRversion() < '3.5.0') {
+  if (getRversion() < "3.5.0") {
     .cmdstanr$TEMP_DIR <- tempdir()
   } else {
     .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)

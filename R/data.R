@@ -4,6 +4,31 @@
 #' @param data (list) A named list of \R objects.
 #' @param file (string) The path to where the data file should be written.
 #'
+#' @details
+#' `write_stan_json()` performs several conversions before writing the JSON
+#' file:
+#'
+#' * `logical` -> `integer` (`TRUE` -> `1`, `FALSE` -> `0`)
+#' * `data.frame` -> `matrix` (via [data.matrix()])
+#' * `list` -> `array`
+#'
+#' The `list` to `array` conversion is intended to make it easier to prepare
+#' the data for certain Stan declarations involving arrays:
+#'
+#' * `vector[J] v[K]` (or equivalently `array[K] vector[J] v ` as of Stan 2.27)
+#' can be constructed in \R as a list with `K` elements where each element a
+#' vector of length `J`
+#' * `matrix[I,J] v[K]` (or equivalently `array[K] matrix[I,J] m ` as of Stan
+#' 2.27 ) can be constructed in \R as a list with `K` elements where each element
+#' an `IxJ` matrix
+#'
+#' These can also be passed in from \R as arrays instead of lists but the list
+#' option is provided for convenience. Unfortunately for arrays with more than
+#' one dimension, e.g., `vector[J] v[K,L]` (or equivalently
+#' `array[K,L] vector[J] v ` as of Stan 2.27) it is not possible to use an \R
+#' list and an array must be used instead. For this example the array in \R
+#' should have dimensions `KxLxJ`.
+#'
 #' @examples
 #' x <- matrix(rnorm(10), 5, 2)
 #' y <- rpois(nrow(x), lambda = 10)
@@ -17,12 +42,26 @@
 #' # check the contents of the file
 #' cat(readLines(file), sep = "\n")
 #'
+#'
+#' # demonstrating list to array conversion
+#' # suppose x is declared as `vector[3] x[2]` (or equivalently `array[2] vector[3] x`)
+#' # we can use a list of length 2 where each element is a vector of length 3
+#' data <- list(x = list(1:3, 4:6))
+#' file <- tempfile(fileext = ".json")
+#' write_stan_json(data, file)
+#' cat(readLines(file), sep = "\n")
+#'
 write_stan_json <- function(data, file) {
   if (!is.character(file) || !nzchar(file)) {
     stop("The supplied filename is invalid!", call. = FALSE)
   }
 
-  for (var_name in names(data)) {
+  data_names <- names(data)
+  if (anyDuplicated(data_names) != 0) {
+    stop("Duplicate names not allowed in 'data'.", call. = FALSE)
+  }
+
+  for (var_name in data_names) {
     var <- data[[var_name]]
     if (!(is.numeric(var) || is.factor(var) || is.logical(var) ||
           is.data.frame(var) || is.list(var))) {
@@ -30,7 +69,7 @@ write_stan_json <- function(data, file) {
     }
 
     if (is.logical(var)) {
-      mode(var) <- "integer" # convert TRUE/FALSE to 1/0
+      mode(var) <- "integer"
     } else if (is.data.frame(var)) {
       var <- data.matrix(var)
     } else if (is.list(var)) {
@@ -40,7 +79,6 @@ write_stan_json <- function(data, file) {
   }
 
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
-  # handling factors as integers
   jsonlite::write_json(
     data,
     path = file,
@@ -66,7 +104,7 @@ list_to_array <- function(x, name = NULL) {
   }
   all_numeric <- all(sapply(x, function(a) is.numeric(a)))
   if (!all_numeric) {
-    stop("All elements in list '", name,"' must be numeric!", call. = FALSE)
+    stop("All elements in list '", name, "' must be numeric!", call. = FALSE)
   }
   element_num_of_dim <- length(all_dims[[1]])
   x <- unlist(x)
@@ -111,9 +149,7 @@ process_data <- function(data) {
 
 # check if any objects in the data list have zero as one of their dimensions
 any_zero_dims <- function(data) {
-  has_zero_dims <- sapply(data, function(x) {
-    any(dim(x) == 0)
-  })
+  has_zero_dims <- sapply(data, function(x) any(dim(x) == 0))
   any(has_zero_dims)
 }
 
@@ -153,7 +189,11 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
   } else { # create a dummy lp__ if it does not exist
     lp__ <- posterior::draws_array(lp__ = zeros, .nchains = n_chains)
   }
-  all_variables <- c("lp__", posterior::variables(sampler_diagnostics), draws_variables[!(draws_variables %in% c("lp__", "lp_approx__"))])
+  all_variables <- c(
+    "lp__",
+    posterior::variables(sampler_diagnostics),
+    draws_variables[!(draws_variables %in% c("lp__", "lp_approx__"))]
+  )
   draws <- posterior::subset_draws(
     posterior::bind_draws(draws, sampler_diagnostics, lp__, along = "variable"),
     variable = all_variables
@@ -192,31 +232,34 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
 process_fitted_params <- function(fitted_params) {
   if (is.character(fitted_params)) {
     paths <- absolute_path(fitted_params)
-  } else if (checkmate::test_r6(fitted_params, classes = "CmdStanMCMC") &&
-              all(file.exists(fitted_params$output_files()))) {
+  } else if (checkmate::test_r6(fitted_params, "CmdStanMCMC") &&
+             all(file.exists(fitted_params$output_files()))) {
       paths <- absolute_path(fitted_params$output_files())
-  } else if(checkmate::test_r6(fitted_params, classes = c("CmdStanMCMC"))) {
-    draws <- tryCatch(fitted_params$draws(),
-      error=function(cond) {
-          stop("Unable to obtain draws from the fit object.", call. = FALSE)
+  } else if (checkmate::test_r6(fitted_params, "CmdStanMCMC")) {
+    draws <- tryCatch(
+      fitted_params$draws(),
+      error = function(cond) {
+        stop("Unable to obtain draws from the fit object.", call. = FALSE)
       }
     )
-    sampler_diagnostics <- tryCatch(fitted_params$sampler_diagnostics(),
-      error=function(cond) {
-          NULL
+    sampler_diagnostics <- tryCatch(
+      fitted_params$sampler_diagnostics(),
+      error = function(cond) {
+        NULL
       }
     )
     paths <- draws_to_csv(draws, sampler_diagnostics)
-  } else if(checkmate::test_r6(fitted_params, classes = c("CmdStanVB"))) {
-    draws <- tryCatch(fitted_params$draws(),
-      error=function(cond) {
-          stop("Unable to obtain draws from the fit object.", call. = FALSE)
+  } else if (checkmate::test_r6(fitted_params, "CmdStanVB")) {
+    draws <- tryCatch(
+      fitted_params$draws(),
+      error = function(cond) {
+        stop("Unable to obtain draws from the fit object.", call. = FALSE)
       }
     )
     paths <- draws_to_csv(posterior::as_draws_array(draws))
-  } else if (any(class(fitted_params) == "draws_array")){
+  } else if (any(class(fitted_params) == "draws_array")) {
     paths <- draws_to_csv(fitted_params)
-  } else if (any(class(fitted_params) == "draws_matrix")){
+  } else if (any(class(fitted_params) == "draws_matrix")) {
     paths <- draws_to_csv(posterior::as_draws_array(fitted_params))
   } else {
     stop(

@@ -1,7 +1,10 @@
 #' @param data (multiple options) The data to use for the variables specified in
 #'   the data block of the Stan program. One of the following:
-#'  * A named list of \R objects (like for RStan). Internally this list is then
-#'  written to JSON for CmdStan using [write_stan_json()].
+#'  * A named list of \R objects with the names corresponding to variables
+#'  declared in the data block of the Stan program. Internally this list is then
+#'  written to JSON for CmdStan using [write_stan_json()]. See
+#'  [write_stan_json()] for details on the conversions performed on \R objects
+#'  before they are passed to Stan.
 #'  * A path to a data file compatible with CmdStan (JSON or \R dump). See the
 #'  appendices in the CmdStan manual for details on using these formats.
 #'  * `NULL` or an empty list if the Stan program has no data block.

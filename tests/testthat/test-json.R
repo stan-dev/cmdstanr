@@ -119,4 +119,9 @@ test_that("write_stan_json() throws correct errors", {
     write_stan_json(list(N = "STRING"), file = "abc.txt"),
     "Variable 'N' is of invalid type"
   )
+
+  expect_error(
+    write_stan_json(list(x = 1, y = 2, x = 3), file = tempfile()),
+    "Duplicate names not allowed in 'data'"
+  )
 })

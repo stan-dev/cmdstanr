@@ -32,8 +32,8 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{dir}{(string) The path to the directory in which to install CmdStan.
-The default is to install it in a directory called \code{.cmdstanr} within the
-user's home directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstanr")}).}
+The default is to install it in a directory called \code{.cmdstan} within the
+user's home directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstan")}).}
 
 \item{cores}{(integer) The number of CPU cores to use to parallelize building
 CmdStan and speed up installation. If \code{cores} is not specified then the
@@ -105,6 +105,10 @@ Writing to the \code{make/local} file can be used to permanently add makefile
 flags/variables to an installation. For example adding specific compiler
 switches, changing the C++ compiler, etc. A change to the \code{make/local} file
 should typically be followed by calling \code{rebuild_cmdstan()}.
+
+The \code{check_cmdstan_toolchain()} function attempts to check for the required
+C++ toolchain. It is called internally by \code{install_cmdstan()} but can also
+be called directly by the user.
 }
 \examples{
 \dontrun{
