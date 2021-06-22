@@ -243,10 +243,7 @@ process_fitted_params <- function(fitted_params) {
       }
     )
     sampler_diagnostics <- tryCatch(
-      fitted_params$sampler_diagnostics(),
-      error = function(cond) {
-        NULL
-      }
+      fitted_params$sampler_diagnostics()
     )
     paths <- draws_to_csv(draws, sampler_diagnostics)
   } else if (checkmate::test_r6(fitted_params, "CmdStanVB")) {

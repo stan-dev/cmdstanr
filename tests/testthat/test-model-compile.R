@@ -277,7 +277,7 @@ test_that("compiling stops on hyphens in stanc_options", {
 test_that("compiling works with only names in list", {
   skip_on_cran()
   stan_file <- testing_stan_file("bernoulli")
-  mod <- cmdstan_model(stan_file, stanc_options = list("warn-pedantic"), force_recompile = TRUE, quiet = FALSE)
+  mod <- cmdstan_model(stan_file, stanc_options = list("warn-pedantic"), force_recompile = TRUE)
   checkmate::expect_r6(
     mod,
     "CmdStanModel"
@@ -460,4 +460,25 @@ test_that("cpp_options_to_compile_flags() works", {
   expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=TRUE", "STANC2=TRUE"))
   options = list()
   expect_equal(cpp_options_to_compile_flags(options), NULL)
+})
+
+test_that("include_paths_stanc3_args() works", {
+  expect_equal(include_paths_stanc3_args(), NULL)
+  path_1 <- file.path(tempdir(), "folder1")
+  if (!dir.exists(path_1)) {
+    dir.create(path_1)
+  }
+  path_1 <- repair_path(path_1)
+  expect_equal(include_paths_stanc3_args(path_1), paste0("--include-paths=", path_1))
+  path_2 <- file.path(tempdir(), "folder2")
+  if (!dir.exists(path_2)) {
+    dir.create(path_2)
+  }
+  path_2 <- repair_path(path_2)
+  expect_equal(
+    include_paths_stanc3_args(c(path_1, path_2)),
+    c(
+      paste0("--include-paths=", path_1, ",", path_2)
+    )
+  )
 })
