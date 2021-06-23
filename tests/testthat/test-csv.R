@@ -801,3 +801,14 @@ test_that("variable_dims() works", {
   expect_equal(variable_dims(vars), vars_dims)
 })
 
+test_that("read_cmdstan_csv works if no variables are specified", {
+  expect_silent(
+    read_cmdstan_csv(fit_bernoulli_optimize$output_files(), variables = "", sampler_diagnostics = "")
+  )
+  expect_silent(
+    read_cmdstan_csv(fit_bernoulli_variational$output_files(), variables = "", sampler_diagnostics = "")
+  )
+  expect_silent(
+    read_cmdstan_csv(fit_bernoulli_thin_1$output_files(), variables = "", sampler_diagnostics = "")
+  )
+})
