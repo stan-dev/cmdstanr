@@ -42,9 +42,9 @@ test_that("error if data contains NA elements", {
   data_list2$y[3] <- NA
   data_list3$X[3, 2] <- NA
 
-  expect_error(mod$sample(data = data_list1), "Data includes NA values")
-  expect_error(mod$sample(data = data_list2), "Data includes NA values")
-  expect_error(mod$sample(data = data_list3), "Data includes NA values")
+  expect_error(mod$sample(data = data_list1), "Variable 'N' has NA values")
+  expect_error(mod$sample(data = data_list2), "Variable 'y' has NA values")
+  expect_error(mod$sample(data = data_list3), "Variable 'X' has NA values")
 })
 
 test_that("empty data list doesn't error if no data block", {
