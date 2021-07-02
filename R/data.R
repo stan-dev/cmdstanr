@@ -69,6 +69,13 @@ write_stan_json <- function(data, file) {
     }
 
     if (is.logical(var)) {
+    if (is.table(var)) {
+      var <- unclass(var)
+      if (length(dim(var)) == 1) {
+        # make sure just a vector not array
+        var <- as.numeric(var)
+      }
+    } else if (is.logical(var)) {
       mode(var) <- "integer"
     } else if (is.data.frame(var)) {
       var <- data.matrix(var)
