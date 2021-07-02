@@ -79,6 +79,7 @@ test_that("JSON output for list of matrices is correct", {
 test_that("JSON output for table is correct", {
   temp_file <- tempfile()
   f <- factor(rep(1:4, each = 5))
+
   write_stan_json(list(x = table(f)), file = temp_file)
   json_output <- readLines(temp_file)
   expect_known_output(cat(json_output, sep = "\n"),
