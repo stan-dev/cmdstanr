@@ -20,6 +20,9 @@ to gradients computed via finite differences. (#485)
 so that models do not get unnecessarily recompiled when calling the function
 multiple times with the same code. (#495, @martinmodrak)
 
+* `write_stan_json()` now handles data of class `"table"`. Tables are converted
+to vector, matrix, or array depending on the dimensions of the table. (#528)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
