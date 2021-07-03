@@ -76,19 +76,62 @@ test_that("JSON output for list of matrices is correct", {
                       file = test_path("answers", "json-matrix-lists.json"))
 })
 
-test_that("write_stan_json() throws correct errors", {
-  skip_on_cran()
+test_that("JSON output for table is correct", {
+  temp_file <- tempfile()
+  f <- factor(rep(1:4, each = 5))
+
+  write_stan_json(list(x = table(f)), file = temp_file)
+  json_output <- readLines(temp_file)
+  expect_known_output(cat(json_output, sep = "\n"),
+                      file = test_path("answers", "json-table-vector.json"))
+
+  write_stan_json(list(x = table(f, f)), file = temp_file)
+  json_output <- readLines(temp_file)
+  expect_known_output(cat(json_output, sep = "\n"),
+                      file = test_path("answers", "json-table-matrix.json"))
+
+  write_stan_json(list(x = table(f, f, f)), file = temp_file)
+  json_output <- readLines(temp_file)
+  expect_known_output(cat(json_output, sep = "\n"),
+                      file = test_path("answers", "json-table-array.json"))
+})
+
+test_that("write_stan_json errors if NAs", {
+  expect_error(
+    write_stan_json(list(y = 1, N = NA), tempfile()),
+    "Variable 'N' has NA values"
+  )
+  expect_error(
+    write_stan_json(list(x = matrix(NA, 1, 1)), tempfile()),
+    "Variable 'x' has NA values"
+  )
+  expect_error(
+    write_stan_json(list(x = list(1, NA)), tempfile()),
+    "Variable 'x' has NA values"
+  )
+})
+
+test_that("write_stan_json() errors if data is not a list", {
+  expect_error(
+    write_stan_json(1:10),
+    "'data' must be a list"
+  )
+})
+
+test_that("write_stan_json() errors if bad filename", {
   temp_file <- tempfile()
 
   expect_error(
-    write_stan_json(list(N = c(1.0, 2.0, 3, 4)), file = c(1,2)),
+    write_stan_json(list(N = 10), file = c(1,2)),
     "The supplied filename is invalid!"
   )
   expect_error(
-    write_stan_json(list(N = N), file = ""),
+    write_stan_json(list(N = 10), file = ""),
     "The supplied filename is invalid!"
   )
+})
 
+test_that("write_stan_json() errors if vectors/matrices in same list are different sizes", {
   expect_error(
     write_stan_json(list(N = list(c(26, 26, 26), c(26, 26))), file = "abc.txt"),
     "All matrices/vectors in list 'N' must be the same size!"
@@ -109,7 +152,9 @@ test_that("write_stan_json() throws correct errors", {
     write_stan_json(list(N = list(matrix(1:8, ncol = 2), matrix(1:9, ncol = 3))), file = "abc.txt"),
     "All matrices/vectors in list 'N' must be the same size!"
   )
+})
 
+test_that("write_stan_json() errors if invalid types", {
   expect_error(
     write_stan_json(list(N = list("abc", "def")), file = "abc.txt"),
     "All elements in list 'N' must be numeric!"
@@ -119,9 +164,21 @@ test_that("write_stan_json() throws correct errors", {
     write_stan_json(list(N = "STRING"), file = "abc.txt"),
     "Variable 'N' is of invalid type"
   )
+})
 
+test_that("write_stan_json() errors if bad names", {
   expect_error(
     write_stan_json(list(x = 1, y = 2, x = 3), file = tempfile()),
     "Duplicate names not allowed in 'data'"
+  )
+
+  expect_error(
+    write_stan_json(list(1, 2), tempfile()),
+    "All elements in 'data' list must have names"
+  )
+
+  expect_error(
+    write_stan_json(list(a = 1, 2), tempfile()),
+    "All elements in 'data' list must have names"
   )
 })

@@ -11,6 +11,7 @@
 #' * `logical` -> `integer` (`TRUE` -> `1`, `FALSE` -> `0`)
 #' * `data.frame` -> `matrix` (via [data.matrix()])
 #' * `list` -> `array`
+#' * `table` -> `vector`, `matrix`, or `array` (depending on dimensions of table)
 #'
 #' The `list` to `array` conversion is intended to make it easier to prepare
 #' the data for certain Stan declarations involving arrays:
@@ -52,11 +53,20 @@
 #' cat(readLines(file), sep = "\n")
 #'
 write_stan_json <- function(data, file) {
+  if (!is.list(data)) {
+    stop("'data' must be a list.", call. = FALSE)
+  }
   if (!is.character(file) || !nzchar(file)) {
     stop("The supplied filename is invalid!", call. = FALSE)
   }
 
   data_names <- names(data)
+  if (length(data) > 0 &&
+      (length(data_names) == 0 ||
+       length(data_names) != sum(nzchar(data_names)))) {
+    stop("All elements in 'data' list must have names.", call. = FALSE)
+
+  }
   if (anyDuplicated(data_names) != 0) {
     stop("Duplicate names not allowed in 'data'.", call. = FALSE)
   }
@@ -67,8 +77,13 @@ write_stan_json <- function(data, file) {
           is.data.frame(var) || is.list(var))) {
       stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
     }
+    if (anyNA(var)) {
+      stop("Variable '", var_name, "' has NA values.", call. = FALSE)
+    }
 
-    if (is.logical(var)) {
+    if (is.table(var)) {
+      var <- unclass(var)
+    } else if (is.logical(var)) {
       mode(var) <- "integer"
     } else if (is.data.frame(var)) {
       var <- data.matrix(var)
@@ -136,9 +151,6 @@ process_data <- function(data) {
         call. = FALSE
       )
     }
-    if (any_na_elements(data)) {
-      stop("Data includes NA values.", call. = FALSE)
-    }
     path <- tempfile(pattern = "standata-", fileext = ".json")
     write_stan_json(data = data, file = path)
   } else {
@@ -151,12 +163,6 @@ process_data <- function(data) {
 any_zero_dims <- function(data) {
   has_zero_dims <- sapply(data, function(x) any(dim(x) == 0))
   any(has_zero_dims)
-}
-
-# check if any objects in the data list contain NAs
-any_na_elements <- function(data) {
-  has_na_elements <- sapply(data, anyNA)
-  any(has_na_elements)
 }
 
 #' Write posterior draws objects to csv files
