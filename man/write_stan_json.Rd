@@ -21,6 +21,7 @@ file:
 \item \code{logical} -> \code{integer} (\code{TRUE} -> \code{1}, \code{FALSE} -> \code{0})
 \item \code{data.frame} -> \code{matrix} (via \code{\link[=data.matrix]{data.matrix()}})
 \item \code{list} -> \code{array}
+\item \code{table} -> \code{vector}, \code{matrix}, or \code{array} (depending on dimensions of table)
 }
 
 The \code{list} to \code{array} conversion is intended to make it easier to prepare

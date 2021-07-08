@@ -2,6 +2,9 @@
 
 ### Bug fixes
 
+* Fixed bug that caused stdour/stderr not being read at the end of
+optimization. (#522)
+
 ### New features
 
 * Default directory changed to `.cmdstan` instead of `.cmdstanr` so that
@@ -20,6 +23,9 @@ multiple times with the same code. (#495, @martinmodrak)
 * New method `$variables()` for CmdstanModel objects that returns a list of
 variables in the Stan model, their types and number of dimensions. Does
 not require the model to be compiled.
+
+* `write_stan_json()` now handles data of class `"table"`. Tables are converted
+to vector, matrix, or array depending on the dimensions of the table. (#528)
 
 # cmdstanr 0.4.0
 

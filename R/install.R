@@ -154,7 +154,7 @@ install_cmdstan <- function(dir = NULL,
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   version <- read_cmdstan_version(dir_cmdstan)
   if (os_is_windows()) {
-    if (version >= "2.24" && R.version$major >= "4") {
+    if (version >= "2.24" && R.version$major >= "4" && !("PRECOMPILED_HEADERS" %in% toupper(names(cpp_options)))) {
       # cmdstan 2.24 can use precompiled headers with RTools 4.0 to speedup compiling
       cmdstan_make_local(
         dir = dir_cmdstan,
@@ -371,36 +371,6 @@ build_cmdstan <- function(dir,
   )
 }
 
-# Removes files that are used to simplify switching to using threading, opencl or mpi.
-clean_compile_helper_files <- function() {
-  # remove main_.*.o files and model_header_.*.hpp.gch files
-  files_to_remove <- c(
-    list.files(
-      path = file.path(cmdstan_path(), "src", "cmdstan"),
-      pattern = "main.*\\.o$",
-      full.names = TRUE
-    ),
-    list.files(
-      path = file.path(cmdstan_path(), "src", "cmdstan"),
-      pattern = "main.*\\.d$",
-      full.names = TRUE
-    ),
-    list.files(
-      path = file.path(cmdstan_path(), "stan", "src", "stan", "model"),
-      pattern = "model_header.*\\.hpp.gch$",
-      full.names = TRUE
-    ),
-    list.files(
-      path = file.path(cmdstan_path(), "stan", "src", "stan", "model"),
-      pattern = "model_header.*\\.d$",
-      full.names = TRUE
-    )
-  )
-  if (!is.null(files_to_remove)) {
-    file.remove(files_to_remove)
-  }
-}
-
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
@@ -414,13 +384,12 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     error_on_status = FALSE,
     stderr_callback = function(x, p) { if (quiet) message(x) }
   )
-  clean_compile_helper_files()
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
   processx::run(
     make_cmd(),
-    args = c(paste0("-j", cores), cmdstan_ext("examples/bernoulli/bernoulli")),
+    args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
     wd = dir,
     echo_cmd = is_verbose_mode(),
     echo = !quiet || is_verbose_mode(),

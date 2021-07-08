@@ -458,18 +458,7 @@ compile <- function(quiet = TRUE,
     }
   }
 
-  stancflags_val <- ""
-  if (!is.null(include_paths)) {
-    checkmate::assert_directory_exists(include_paths, access = "r")
-    include_paths <- absolute_path(include_paths)
-    include_paths <- paste0(include_paths, collapse = ",")
-    if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- " --include-paths="
-    } else {
-      include_paths_flag <- " --include_paths="
-    }
-    stancflags_val <- paste0(stancflags_val, include_paths_flag, include_paths, " ")
-  }
+  stancflags_val <- include_paths_stanc3_args(include_paths)
 
   if (pedantic) {
     stanc_options[["warn-pedantic"]] <- TRUE
@@ -492,7 +481,7 @@ compile <- function(quiet = TRUE,
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
   }
-  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(stanc_built_options, collapse = " "))
+  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
   run_log <- processx::run(
     command = make_cmd(),
     args = c(tmp_exe,
@@ -676,18 +665,7 @@ check_syntax <- function(pedantic = FALSE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  stancflags_val <- NULL
-  if (!is.null(include_paths)) {
-    checkmate::assert_directory_exists(include_paths, access = "r")
-    include_paths <- absolute_path(include_paths)
-    include_paths <- paste0(include_paths, collapse = ",")
-    if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- " --include-paths="
-    } else {
-      include_paths_flag <- " --include_paths="
-    }
-    stancflags_val <- trimws(paste0(include_paths_flag, include_paths, " "))
-  }
+  stancflags_val <- include_paths_stanc3_args(include_paths)
 
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
@@ -1457,4 +1435,20 @@ cpp_options_to_compile_flags <- function(cpp_options) {
     }
   }
   cpp_built_options
+}
+
+include_paths_stanc3_args <- function(include_paths = NULL) {
+  stancflags <- NULL
+  if (!is.null(include_paths)) {
+    checkmate::assert_directory_exists(include_paths, access = "r")
+    include_paths <- absolute_path(include_paths)
+    include_paths <- paste0(include_paths, collapse = ",")
+    if (cmdstan_version() >= "2.24") {
+      include_paths_flag <- "--include-paths="
+    } else {
+      include_paths_flag <- "--include_paths="
+    }
+    stancflags <- paste0(stancflags, include_paths_flag, include_paths)
+  }
+  stancflags
 }
