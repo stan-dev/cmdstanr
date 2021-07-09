@@ -543,7 +543,7 @@ variables <- function(block = NULL) {
       stop(
         "Unexpected value in 'block'. Allowed values are: ",
         paste0(allowed_block, collapse = ", "),
-        "."
+        ".",
         call. = FALSE
       )
     }
