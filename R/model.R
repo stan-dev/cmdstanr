@@ -528,25 +528,40 @@ compile <- function(quiet = TRUE,
 }
 CmdStanModel$set("public", name = "compile", value = compile)
 
-
-variables <- function(block = NULL) {
+#' Input and output variables of a Stan program
+#'
+#' @name model-method-variables
+#' @aliases variables
+#' @family CmdStanModel methods
+#'
+#' @description The `$variables()` method of a [`CmdStanModel`] object returns
+#'   a list, each element representing a Stan model block: `data`, `parameters`,
+#'   `transformed_parameters` and `generated_quantities`.
+#'   
+#'   Each element contains a list of variables, with each variables represented
+#'   as a list with infromation on its scalar type (`real` or `int`) and
+#'   number of dimensions.
+#'
+#'   `transformed data` is not included, as variables in that block are not
+#'   part of the model's input or output.
+#'
+#' @return The `$variables()` returns a list with information on input and
+#'   output variables for each of the Stan model blocks.
+#'
+#' @examples
+#' \dontrun{
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#'
+#' # create a `CmdStanModel` object, compiling the model is not required
+#' mod <- cmdstan_model(file, compile = FALSE)
+#' 
+#' mod$variables()
+#'
+#' }
+#'
+variables <- function() {
   if (cmdstan_version() < "2.27") {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
-  }
-  if (!is.null(block)) {
-    allowed_block <- c(
-      "data", "transformed data", "transformed_data", "parameters",
-      "transformed parameters", "transformed_parameters",
-      "generated quantities", "generated_quantities"
-    )
-    if (!all(block %in% allowed_block)) {
-      stop(
-        "Unexpected value in 'block'. Allowed values are: ",
-        paste0(allowed_block, collapse = ", "),
-        ".",
-        call. = FALSE
-      )
-    }
   }
   if (is.null(private$variables_)) {
     out_file <- tempfile(fileext = ".json")
