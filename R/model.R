@@ -564,43 +564,7 @@ variables <- function() {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
   }
   if (is.null(private$variables_)) {
-    out_file <- tempfile(fileext = ".json")
-    run_log <- processx::run(
-      command = stanc_cmd(),
-      args = c(self$stan_file(), "--info"),
-      wd = cmdstan_path(),
-      echo = FALSE,
-      echo_cmd = FALSE,
-      stdout = out_file,
-      error_on_status = TRUE
-    )
-    variables <- jsonlite::read_json(out_file, na = "null")
-    if (length(variables$inputs) == 0) {
-      data <- NULL
-    } else {
-      data <- variables$inputs
-    }
-    if (length(variables$parameters) == 0) {
-      params <- NULL
-    } else {
-      params <- variables$parameters
-    }
-    if (length(variables[["transformed parameters"]]) == 0) {
-      tp <- NULL
-    } else {
-      tp <- variables[["transformed parameters"]]
-    }
-    if (length(variables[["generated quantities"]]) == 0) {
-      gq <- NULL
-    } else {
-      gq <- variables[["generated quantities"]]
-    }
-    private$variables_ <- list(
-      data = data,
-      parameters =  params,
-      transformed_parameters = tp,
-      generated_quantities = gq
-    )
+    private$variables_ <- model_variables(self$stan_file())
   }
   private$variables_
 }
@@ -1466,4 +1430,25 @@ include_paths_stanc3_args <- function(include_paths = NULL) {
     stancflags <- paste0(stancflags, include_paths_flag, include_paths)
   }
   stancflags
+}
+
+model_variables <- function(stan_file) {
+  out_file <- tempfile(fileext = ".json")
+  run_log <- processx::run(
+    command = stanc_cmd(),
+    args = c(stan_file, "--info"),
+    wd = cmdstan_path(),
+    echo = FALSE,
+    echo_cmd = FALSE,
+    stdout = out_file,
+    error_on_status = TRUE
+  )
+  variables <- jsonlite::read_json(out_file, na = "null")
+  if (length(variables$inputs) == 0) {
+    variables[["data"]] <- NULL
+  } else {
+    variables[["data"]] <- variables$inputs
+  }
+  variables$inputs <- NULL
+  variables
 }
