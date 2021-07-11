@@ -1444,11 +1444,9 @@ model_variables <- function(stan_file) {
     error_on_status = TRUE
   )
   variables <- jsonlite::read_json(out_file, na = "null")
-  if (length(variables$inputs) == 0) {
-    variables[["data"]] <- NULL
-  } else {
-    variables[["data"]] <- variables$inputs
-  }
+  variables$data <- variables$inputs
   variables$inputs <- NULL
+  variables$functions <- NULL
+  variables$distributions <- NULL
   variables
 }
