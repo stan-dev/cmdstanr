@@ -8,7 +8,40 @@ if (not_on_cran()) {
 }
 
 test_that("empty data list converted to NULL", {
+  skip_on_cran()
+  stan_file <- write_stan_file("
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  ")
   expect_null(process_data(list()))
+  expect_null(process_data(list(), stan_file = stan_file))
+})
+
+test_that("process_data works for inputs of length one", {
+  skip_on_cran()
+  data <- list(val = 5)
+  stan_file <- write_stan_file("
+  data {
+    real val;
+  }
+  ")
+  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = 5))
+  stan_file <- write_stan_file("
+  data {
+    int val;
+  }
+  ")
+  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = 5))
+  stan_file <- write_stan_file("
+  data {
+    vector[1] val;
+  }
+  ")
+  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = list(5)))
 })
 
 test_that("process_fitted_params() works with basic input types", {

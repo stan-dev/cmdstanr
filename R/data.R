@@ -133,8 +133,10 @@ list_to_array <- function(x, name = NULL) {
 #' @noRd
 #' @param data If not `NULL`, then either a path to a data file compatible with
 #'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
+#' @param stan_file If not `NULL`, then either a path to a data file compatible with
+#'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
 #' @return Path to data file.
-process_data <- function(data) {
+process_data <- function(data, stan_file = NULL) {
   if (length(data) == 0) {
     data <- NULL
   }
@@ -150,6 +152,28 @@ process_data <- function(data) {
         "or specify data as a file created by rstan::stan_rdump().",
         call. = FALSE
       )
+    }
+    if (cmdstan_version() > "2.26" && !is.null(stan_file)) {
+        stan_file <- absolute_path(stan_file)
+        if (file.exists(stan_file)) {
+          data_variables <- model_variables(stan_file)$data
+          is_data_supplied <- names(data_variables) %in%  names(data)
+          if (!all(is_data_supplied)) {
+            missing <- names(data_variables[!is_data_supplied])
+            stop(
+              "Missing input data for the following data variables:",
+              paste0(missing, collapse = ", "),
+              ".",
+              call. = FALSE
+            )
+          }          
+          for(var_name in names(data)) {
+            if (length(data[[var_name]]) == 1 
+                && data_variables[[var_name]]$dimensions == 1) {
+                data[[var_name]] <- array(data[[var_name]], dim = 1)
+            }
+          }
+        }
     }
     path <- tempfile(pattern = "standata-", fileext = ".json")
     write_stan_json(data = data, file = path)
