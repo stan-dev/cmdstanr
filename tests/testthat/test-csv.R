@@ -442,7 +442,7 @@ test_that("read_cmdstan_csv() errors for files from different methods", {
   )
 })
 
-test_that("stan_variables and stan_variable_dims works in read_cdmstan_csv()", {
+test_that("stan_variables and stan_variable_sizes works in read_cdmstan_csv()", {
   skip_on_cran()
   bern_opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   bern_vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
@@ -462,15 +462,15 @@ test_that("stan_variables and stan_variable_dims works in read_cdmstan_csv()", {
 
   expect_equal(gq$metadata$stan_variables, c("y_rep","sum_y"))
 
-  expect_equal(bern_opt$metadata$stan_variable_dims, list(lp__ = 1, theta = 1))
-  expect_equal(bern_vi$metadata$stan_variable_dims, list(lp__ = 1, lp_approx__ = 1, theta = 1))
-  expect_equal(bern_samp$metadata$stan_variable_dims, list(lp__ = 1, theta = 1))
+  expect_equal(bern_opt$metadata$stan_variable_sizes, list(lp__ = 1, theta = 1))
+  expect_equal(bern_vi$metadata$stan_variable_sizes, list(lp__ = 1, lp_approx__ = 1, theta = 1))
+  expect_equal(bern_samp$metadata$stan_variable_sizes, list(lp__ = 1, theta = 1))
 
-  expect_equal(log_opt$metadata$stan_variable_dims, list(lp__ = 1, alpha = 1, beta = 3))
-  expect_equal(log_vi$metadata$stan_variable_dims, list(lp__ = 1, lp_approx__ = 1, alpha = 1, beta = 3))
-  expect_equal(log_samp$metadata$stan_variable_dims, list(lp__ = 1, alpha = 1, beta = 3))
+  expect_equal(log_opt$metadata$stan_variable_sizes, list(lp__ = 1, alpha = 1, beta = 3))
+  expect_equal(log_vi$metadata$stan_variable_sizes, list(lp__ = 1, lp_approx__ = 1, alpha = 1, beta = 3))
+  expect_equal(log_samp$metadata$stan_variable_sizes, list(lp__ = 1, alpha = 1, beta = 3))
 
-  expect_equal(gq$metadata$stan_variable_dims, list(y_rep = 10, sum_y = 1))
+  expect_equal(gq$metadata$stan_variable_sizes, list(y_rep = 10, sum_y = 1))
 })
 
 test_that("returning time works for read_cmdstan_csv", {
