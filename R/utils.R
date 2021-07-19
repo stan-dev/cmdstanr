@@ -280,11 +280,11 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
   }
 }
 
-check_ebfmi <- function(post_warmup_sampler_diagnostics, ebfmi_threshold = .2, return_ebfmi = F) {
+check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2, return_ebfmi = FALSE) {
   if (!is.null(post_warmup_sampler_diagnostics)) {
     pwsd <- posterior::as_draws_array(post_warmup_sampler_diagnostics)
     if (!("energy__" %in% dimnames(pwsd)$variable)) {
-      if (! return_ebfmi) {
+      if (!return_ebfmi) {
         warning("E-BFMI not computed as the 'energy__' diagnostic could not be located")
       } else {
         stop("E-BFMI not computed as the 'energy__' diagnostic could not be located")
