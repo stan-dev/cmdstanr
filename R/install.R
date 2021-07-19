@@ -622,7 +622,7 @@ cmdstan_arch_suffix <- function(version = NULL) {
   if (grepl("linux", R.version$os) && grepl("aarch64", R.version$arch)) {
     arch <- "-linux-arm64"
   }  
-  if (!is.null(version) && version < "2.26" && !is.null(arch_suffix)) {
+  if (!is.null(version) && version < "2.26") {
     # pre-CmdStan 2.26, only the x85 tarball was provided
     arch <- NULL
   }
