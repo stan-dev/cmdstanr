@@ -446,6 +446,7 @@ CmdStanMCMC_CSV <- R6::R6Class(
       if (check_diagnostics) {
         check_divergences(csv_contents$post_warmup_sampler_diagnostics)
         check_sampler_transitions_treedepth(csv_contents$post_warmup_sampler_diagnostics, csv_contents$metadata)
+        check_ebfmi(csv_contents$post_warmup_sampler_diagnostics)
       }
       private$output_files_ <- files
       private$metadata_ <- csv_contents$metadata
