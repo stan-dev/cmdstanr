@@ -23,6 +23,8 @@ multiple times with the same code. (#495, @martinmodrak)
 * `write_stan_json()` now handles data of class `"table"`. Tables are converted
 to vector, matrix, or array depending on the dimensions of the table. (#528)
 
+* Added E-BFMI checks that run automatically post sampling. (#500, @jsocolar)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
