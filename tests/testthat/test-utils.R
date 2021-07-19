@@ -175,17 +175,20 @@ test_that("matching_variables() works", {
 test_that("check_ebfmi works", {
   set.seed(1)
   energy_df <- data.frame("energy__" = rnorm(1000))
-  expect_error(check_ebfmi(energy_df), NA)
+  expect_error(suppressWarnings(check_ebfmi(posterior::as_draws(energy_df))), NA)
   energy_df[1] <- 0
   for(i in 1:999){
     energy_df$energy__[i+1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
   }
+  energy_df <- posterior::as_draws(energy_df)
   expect_message(check_ebfmi(energy_df), "fraction of missing information \\(E-BFMI\\) less than")
   energy_vec <- energy_df$energy__
-  expect_equal(suppressMessages(check_ebfmi(energy_df, return_ebfmi = TRUE)), 
-               (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec))
-  energy_df <- data.frame("energy__" = 0)
-  expect_error(check_ebfmi(energy_df, return_ebfmi = TRUE), "E-BFMI is undefined for posterior chains of length less than 3")
+  check_val <- (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec)
+  expect_equal(as.numeric(check_ebfmi(energy_df)), check_val)
+  expect_equal(as.numeric(check_ebfmi(posterior::as_draws_array(energy_df))), check_val)
+  expect_equal(as.numeric(check_ebfmi(posterior::as_draws_list(energy_df))), check_val)
+  expect_equal(as.numeric(check_ebfmi(posterior::as_draws_matrix(energy_df))), check_val)
+  energy_df <- posterior::as_draws(data.frame("energy__" = 0))
   expect_warning(check_ebfmi(energy_df), "E-BFMI is undefined for posterior chains of length less than 3")
 })
 
