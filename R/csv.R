@@ -342,7 +342,11 @@ read_cmdstan_csv <- function(files,
       format <- "draws_matrix"
     }
     as_draws_format <- as_draws_format_fun(format)
-    variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop = FALSE]))
+    if (length(draws) == 0) {
+      variational_draws <- NULL
+    } else {
+      variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop = FALSE]))
+    }
     if (!is.null(variational_draws)) {
       if ("log_p__" %in% posterior::variables(variational_draws)) {
         variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
@@ -361,8 +365,12 @@ read_cmdstan_csv <- function(files,
       format <- "draws_matrix"
     }
     as_draws_format <- as_draws_format_fun(format)
-    point_estimates <- do.call(as_draws_format, list(draws[[1]][1, , drop = FALSE]))
-    point_estimates <- posterior::subset_draws(point_estimates, variable = variables)
+    if (length(draws) == 0) {
+      point_estimates <- NULL
+    } else {
+      point_estimates <- do.call(as_draws_format, list(draws[[1]][1, , drop = FALSE]))
+      point_estimates <- posterior::subset_draws(point_estimates, variable = variables)
+    }
     if (!is.null(point_estimates)) {
       posterior::variables(point_estimates) <- repaired_variables
     }

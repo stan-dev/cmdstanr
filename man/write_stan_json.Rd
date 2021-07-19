@@ -14,6 +14,34 @@ write_stan_json(data, file)
 \description{
 Write data to a JSON file readable by CmdStan
 }
+\details{
+\code{write_stan_json()} performs several conversions before writing the JSON
+file:
+\itemize{
+\item \code{logical} -> \code{integer} (\code{TRUE} -> \code{1}, \code{FALSE} -> \code{0})
+\item \code{data.frame} -> \code{matrix} (via \code{\link[=data.matrix]{data.matrix()}})
+\item \code{list} -> \code{array}
+\item \code{table} -> \code{vector}, \code{matrix}, or \code{array} (depending on dimensions of table)
+}
+
+The \code{list} to \code{array} conversion is intended to make it easier to prepare
+the data for certain Stan declarations involving arrays:
+\itemize{
+\item \verb{vector[J] v[K]} (or equivalently \verb{array[K] vector[J] v } as of Stan 2.27)
+can be constructed in \R as a list with \code{K} elements where each element a
+vector of length \code{J}
+\item \verb{matrix[I,J] v[K]} (or equivalently \verb{array[K] matrix[I,J] m } as of Stan
+2.27 ) can be constructed in \R as a list with \code{K} elements where each element
+an \code{IxJ} matrix
+}
+
+These can also be passed in from \R as arrays instead of lists but the list
+option is provided for convenience. Unfortunately for arrays with more than
+one dimension, e.g., \verb{vector[J] v[K,L]} (or equivalently
+\verb{array[K,L] vector[J] v } as of Stan 2.27) it is not possible to use an \R
+list and an array must be used instead. For this example the array in \R
+should have dimensions \code{KxLxJ}.
+}
 \examples{
 x <- matrix(rnorm(10), 5, 2)
 y <- rpois(nrow(x), lambda = 10)
@@ -25,6 +53,15 @@ file <- tempfile(fileext = ".json")
 write_stan_json(data, file)
 
 # check the contents of the file
+cat(readLines(file), sep = "\n")
+
+
+# demonstrating list to array conversion
+# suppose x is declared as `vector[3] x[2]` (or equivalently `array[2] vector[3] x`)
+# we can use a list of length 2 where each element is a vector of length 3
+data <- list(x = list(1:3, 4:6))
+file <- tempfile(fileext = ".json")
+write_stan_json(data, file)
 cat(readLines(file), sep = "\n")
 
 }

@@ -20,12 +20,12 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
-      CMDSTAN_VERSION: "2.26.1"
+      CMDSTAN_VERSION: "2.27.0"
 
     steps:
       - name: cmdstan env vars
         run: |
-          echo "CMDSTAN_PATH=${HOME}/.cmdstanr" >> $GITHUB_ENV
+          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
 
       - uses: n1hility/cancel-previous-runs@v2
@@ -59,7 +59,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("posterior", "cmdstanr", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          install.packages(c("remotes", "curl"), dependencies = TRUE)
+          remotes::install_local(path = ".")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           remotes::install_cran("gridExtra")
@@ -121,7 +122,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("posterior", "cmdstanr", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          install.packages(c("remotes", "curl"), dependencies = TRUE)
+          remotes::install_local(path = ".")
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")

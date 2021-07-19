@@ -32,8 +32,11 @@ variational(
 \item{data}{(multiple options) The data to use for the variables specified in
 the data block of the Stan program. One of the following:
 \itemize{
-\item A named list of \R objects (like for RStan). Internally this list is then
-written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}.
+\item A named list of \R objects with the names corresponding to variables
+declared in the data block of the Stan program. Internally this list is then
+written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}. See
+\code{\link[=write_stan_json]{write_stan_json()}} for details on the conversions performed on \R objects
+before they are passed to Stan.
 \item A path to a data file compatible with CmdStan (JSON or \R dump). See the
 appendices in the CmdStan manual for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.

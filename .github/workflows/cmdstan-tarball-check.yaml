@@ -78,8 +78,7 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
-          install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
-          install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
+          remotes::install_local(path = ".")
           if (Sys.getenv("CMDSTAN_TEST_TARBALL_URL") == "latest") {
             cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           } else {

@@ -4,6 +4,32 @@
 #' @param data (list) A named list of \R objects.
 #' @param file (string) The path to where the data file should be written.
 #'
+#' @details
+#' `write_stan_json()` performs several conversions before writing the JSON
+#' file:
+#'
+#' * `logical` -> `integer` (`TRUE` -> `1`, `FALSE` -> `0`)
+#' * `data.frame` -> `matrix` (via [data.matrix()])
+#' * `list` -> `array`
+#' * `table` -> `vector`, `matrix`, or `array` (depending on dimensions of table)
+#'
+#' The `list` to `array` conversion is intended to make it easier to prepare
+#' the data for certain Stan declarations involving arrays:
+#'
+#' * `vector[J] v[K]` (or equivalently `array[K] vector[J] v ` as of Stan 2.27)
+#' can be constructed in \R as a list with `K` elements where each element a
+#' vector of length `J`
+#' * `matrix[I,J] v[K]` (or equivalently `array[K] matrix[I,J] m ` as of Stan
+#' 2.27 ) can be constructed in \R as a list with `K` elements where each element
+#' an `IxJ` matrix
+#'
+#' These can also be passed in from \R as arrays instead of lists but the list
+#' option is provided for convenience. Unfortunately for arrays with more than
+#' one dimension, e.g., `vector[J] v[K,L]` (or equivalently
+#' `array[K,L] vector[J] v ` as of Stan 2.27) it is not possible to use an \R
+#' list and an array must be used instead. For this example the array in \R
+#' should have dimensions `KxLxJ`.
+#'
 #' @examples
 #' x <- matrix(rnorm(10), 5, 2)
 #' y <- rpois(nrow(x), lambda = 10)
@@ -17,19 +43,47 @@
 #' # check the contents of the file
 #' cat(readLines(file), sep = "\n")
 #'
+#'
+#' # demonstrating list to array conversion
+#' # suppose x is declared as `vector[3] x[2]` (or equivalently `array[2] vector[3] x`)
+#' # we can use a list of length 2 where each element is a vector of length 3
+#' data <- list(x = list(1:3, 4:6))
+#' file <- tempfile(fileext = ".json")
+#' write_stan_json(data, file)
+#' cat(readLines(file), sep = "\n")
+#'
 write_stan_json <- function(data, file) {
+  if (!is.list(data)) {
+    stop("'data' must be a list.", call. = FALSE)
+  }
   if (!is.character(file) || !nzchar(file)) {
     stop("The supplied filename is invalid!", call. = FALSE)
   }
 
-  for (var_name in names(data)) {
+  data_names <- names(data)
+  if (length(data) > 0 &&
+      (length(data_names) == 0 ||
+       length(data_names) != sum(nzchar(data_names)))) {
+    stop("All elements in 'data' list must have names.", call. = FALSE)
+
+  }
+  if (anyDuplicated(data_names) != 0) {
+    stop("Duplicate names not allowed in 'data'.", call. = FALSE)
+  }
+
+  for (var_name in data_names) {
     var <- data[[var_name]]
     if (!(is.numeric(var) || is.factor(var) || is.logical(var) ||
           is.data.frame(var) || is.list(var))) {
       stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
     }
+    if (anyNA(var)) {
+      stop("Variable '", var_name, "' has NA values.", call. = FALSE)
+    }
 
-    if (is.logical(var)) {
+    if (is.table(var)) {
+      var <- unclass(var)
+    } else if (is.logical(var)) {
       mode(var) <- "integer"
     } else if (is.data.frame(var)) {
       var <- data.matrix(var)
@@ -97,9 +151,6 @@ process_data <- function(data) {
         call. = FALSE
       )
     }
-    if (any_na_elements(data)) {
-      stop("Data includes NA values.", call. = FALSE)
-    }
     path <- tempfile(pattern = "standata-", fileext = ".json")
     write_stan_json(data = data, file = path)
   } else {
@@ -112,12 +163,6 @@ process_data <- function(data) {
 any_zero_dims <- function(data) {
   has_zero_dims <- sapply(data, function(x) any(dim(x) == 0))
   any(has_zero_dims)
-}
-
-# check if any objects in the data list contain NAs
-any_na_elements <- function(data) {
-  has_na_elements <- sapply(data, anyNA)
-  any(has_na_elements)
 }
 
 #' Write posterior draws objects to csv files
@@ -204,10 +249,7 @@ process_fitted_params <- function(fitted_params) {
       }
     )
     sampler_diagnostics <- tryCatch(
-      fitted_params$sampler_diagnostics(),
-      error = function(cond) {
-        NULL
-      }
+      fitted_params$sampler_diagnostics()
     )
     paths <- draws_to_csv(draws, sampler_diagnostics)
   } else if (checkmate::test_r6(fitted_params, "CmdStanVB")) {
