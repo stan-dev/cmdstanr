@@ -280,8 +280,8 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
   }
 }
 
-check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
-  ebfmi <- NULL
+ebfmi <- function(post_warmup_sampler_diagnostics) {
+  efbmi_val <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
     if (!("energy__" %in% posterior::variables(post_warmup_sampler_diagnostics))) {
       warning("E-BFMI not computed as the 'energy__' diagnostic could not be located.", call. = FALSE)
@@ -292,18 +292,23 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
       if (any(is.na(energy))) {
         warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
       } else {
-        ebfmi <- apply(energy, 2, function(x) {
+        efbmi_val <- apply(energy, 2, function(x) {
           (sum(diff(x)^2) / length(x)) / stats::var(x)
         })
-        if (!is.null(threshold) && any(ebfmi < threshold)) {
-          message(paste0(sum(ebfmi < threshold), " of ", length(ebfmi), " chains had energy-based Bayesian fraction ",
-          "of missing information (E-BFMI) less than ", threshold, ", which may indicate poor exploration of the ", 
-          "posterior."))
-        }
       }
     }
   }
-  ebfmi
+  efbmi_val
+}
+
+check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
+  efbmi_val <- ebfmi(post_warmup_sampler_diagnostics)
+  if (any(efbmi_val < threshold)) {
+    message(paste0(sum(efbmi_val < threshold), " of ", length(efbmi_val), " chains had energy-based Bayesian fraction ",
+    "of missing information (E-BFMI) less than ", threshold, ", which may indicate poor exploration of the ", 
+    "posterior."))
+  }
+  invisible(NULL)
 }
 
 
