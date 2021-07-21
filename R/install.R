@@ -99,8 +99,9 @@ install_cmdstan <- function(dir = NULL,
       warning("version and release_url shouldn't both be specified!",
               "\nrelease_url will be ignored.", call. = FALSE)
     }
+
     release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
-                          version, "/cmdstan-", version, ".tar.gz")
+                          version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
   }
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
@@ -118,7 +119,7 @@ install_cmdstan <- function(dir = NULL,
   } else {
     ver <- latest_released_version()
     message("* Latest CmdStan release is v", ver)
-    cmdstan_ver <- paste0("cmdstan-", ver)
+    cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
     dir_cmdstan <- file.path(dir, cmdstan_ver)
     message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
@@ -300,9 +301,10 @@ github_auth_token <- function() {
 
 # construct url for download from cmdstan version number
 github_download_url <- function(version_number) {
+
   base_url <- "https://github.com/stan-dev/cmdstan/releases/download/"
   paste0(base_url, "v", version_number,
-         "/cmdstan-", version_number, ".tar.gz")
+         "/cmdstan-", version_number, cmdstan_arch_suffix(), ".tar.gz")
 }
 
 # get version number of latest release
@@ -613,4 +615,16 @@ check_unix_cpp_compiler <- function() {
       )
     }
   }
+}
+
+cmdstan_arch_suffix <- function(version = NULL) {
+  arch <- NULL
+  if (grepl("linux", R.version$os) && grepl("aarch64", R.version$arch)) {
+    arch <- "-linux-arm64"
+  }  
+  if (!is.null(version) && version < "2.26") {
+    # pre-CmdStan 2.26, only the x85 tarball was provided
+    arch <- NULL
+  }
+  arch
 }
