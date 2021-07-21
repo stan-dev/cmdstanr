@@ -23,6 +23,9 @@ multiple times with the same code. (#495, @martinmodrak)
 * `write_stan_json()` now handles data of class `"table"`. Tables are converted
 to vector, matrix, or array depending on the dimensions of the table. (#528)
 
+* `install_cmdstan()` now automatically installs the Linux ARM CmdStan when
+Linux distributions running on ARM CPUs are detected. (#531)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
