@@ -22,7 +22,7 @@ multiple times with the same code. (#495, @martinmodrak)
 
 * New method `$variables()` for CmdstanModel objects that returns a list of
 variables in the Stan model, their types and number of dimensions. Does
-not require the model to be compiled.
+not require the model to be compiled. (#519)
 
 * `write_stan_json()` now handles data of class `"table"`. Tables are converted
 to vector, matrix, or array depending on the dimensions of the table. (#528)

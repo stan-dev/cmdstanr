@@ -198,8 +198,8 @@ variables <- mod_v$variables()
 
 The `$variables()` method returns a list with `data`, `parameters`,
 `transformed_parameters` and `generated_quantities` elements, each
-corresponding to variables in their respective model block. Transformed 
-data variables are not listed as they are not used in the models input
+corresponding to variables in their respective block of the program. Transformed 
+data variables are not listed as they are not used in the model's input
 or output.
 
 ```{r variables-list-names}
@@ -211,7 +211,7 @@ names(variables$generated_quantities)
 ```
 
 Each variable is represented as a list containing the type
-information (`real` or `int`) and the number of dimensions.
+information (currently limited to `real` or `int`) and the number of dimensions.
 
 ```{r variable-type-dims}
 variables$data$J
