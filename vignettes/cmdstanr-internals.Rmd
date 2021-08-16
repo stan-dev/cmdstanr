@@ -206,7 +206,7 @@ or output.
 names(variables)
 names(variables$data)
 names(variables$parameters)
-names(variables$transformed_parameters)
+names(variables$`transformed parameters`)
 names(variables$generated_quantities)
 ```
 
@@ -216,7 +216,8 @@ information (currently limited to `real` or `int`) and the number of dimensions.
 ```{r variable-type-dims}
 variables$data$J
 variables$data$sigma
-variables$transformed_parameters$theta
+variables$parameters$tau
+variables$`transformed parameters`$theta
 ```
 
 ### Executable location
