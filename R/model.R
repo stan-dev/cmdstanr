@@ -195,7 +195,8 @@ CmdStanModel <- R6::R6Class(
     include_paths_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
-    precompile_include_paths_ = NULL
+    precompile_include_paths_ = NULL,
+    variables_ = NULL
   ),
   public = list(
     initialize = function(stan_file, compile, ...) {
@@ -526,6 +527,48 @@ compile <- function(quiet = TRUE,
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile)
+
+#' Input and output variables of a Stan program
+#'
+#' @name model-method-variables
+#' @aliases variables
+#' @family CmdStanModel methods
+#'
+#' @description The `$variables()` method of a [`CmdStanModel`] object returns
+#'   a list, each element representing a Stan model block: `data`, `parameters`,
+#'   `transformed_parameters` and `generated_quantities`.
+#'   
+#'   Each element contains a list of variables, with each variables represented
+#'   as a list with infromation on its scalar type (`real` or `int`) and
+#'   number of dimensions.
+#'
+#'   `transformed data` is not included, as variables in that block are not
+#'   part of the model's input or output.
+#'
+#' @return The `$variables()` returns a list with information on input and
+#'   output variables for each of the Stan model blocks.
+#'
+#' @examples
+#' \dontrun{
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#'
+#' # create a `CmdStanModel` object, compiling the model is not required
+#' mod <- cmdstan_model(file, compile = FALSE)
+#' 
+#' mod$variables()
+#'
+#' }
+#'
+variables <- function() {
+  if (cmdstan_version() < "2.27") {
+    stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
+  }
+  if (is.null(private$variables_)) {
+    private$variables_ <- model_variables(self$stan_file())
+  }
+  private$variables_
+}
+CmdStanModel$set("public", name = "variables", value = variables)
 
 #' Check syntax of a Stan program
 #'
@@ -1387,4 +1430,27 @@ include_paths_stanc3_args <- function(include_paths = NULL) {
     stancflags <- paste0(stancflags, include_paths_flag, include_paths)
   }
   stancflags
+}
+
+model_variables <- function(stan_file) {
+  out_file <- tempfile(fileext = ".json")
+  run_log <- processx::run(
+    command = stanc_cmd(),
+    args = c(stan_file, "--info"),
+    wd = cmdstan_path(),
+    echo = FALSE,
+    echo_cmd = FALSE,
+    stdout = out_file,
+    error_on_status = TRUE
+  )
+  variables <- jsonlite::read_json(out_file, na = "null")
+  variables$data <- variables$inputs
+  variables$inputs <- NULL
+  variables$transformed_parameters <- variables[["transformed parameters"]]
+  variables[["transformed parameters"]] <- NULL
+  variables$generated_quantities <- variables[["generated quantities"]]
+  variables[["generated quantities"]] <- NULL
+  variables$functions <- NULL
+  variables$distributions <- NULL
+  variables
 }
