@@ -206,8 +206,8 @@ or output.
 names(variables)
 names(variables$data)
 names(variables$parameters)
-names(variables$`transformed parameters`)
-names(variables$`generated quantities`)
+names(variables$transformed_parameters)
+names(variables$generated_quantities)
 ```
 
 Each variable is represented as a list containing the type
@@ -217,7 +217,7 @@ information (currently limited to `real` or `int`) and the number of dimensions.
 variables$data$J
 variables$data$sigma
 variables$parameters$tau
-variables$`transformed parameters`$theta
+variables$transformed_parameters$theta
 ```
 
 ### Executable location
