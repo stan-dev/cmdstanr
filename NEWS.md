@@ -30,6 +30,9 @@ to vector, matrix, or array depending on the dimensions of the table. (#528)
 * `install_cmdstan()` now automatically installs the Linux ARM CmdStan when
 Linux distributions running on ARM CPUs are detected. (#531)
 
+* The `dir` argument for `write_stan_file()` can now be set with a global
+option. (#537)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes

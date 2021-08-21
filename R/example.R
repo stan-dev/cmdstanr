@@ -143,7 +143,7 @@ print_example_program <-
 #' identical(readLines(f), readLines(f2))
 #'
 write_stan_file <- function(code,
-                            dir = tempdir(),
+                            dir = getOption("cmdstanr_write_stan_file_dir", tempdir()),
                             basename = NULL,
                             force_overwrite = FALSE,
                             hash_salt = "") {
