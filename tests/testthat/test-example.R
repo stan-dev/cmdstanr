@@ -112,10 +112,10 @@ test_that("cmdstanr_write_stan_file_dir option works", {
   }
   options("cmdstanr_write_stan_file_dir" = test_dir)
   file <- write_stan_file(stan_program)
-  expect_equal(dirname(file), test_dir)
+  expect_equal(repair_path(dirname(file)), repair_path(test_dir))
   options("cmdstanr_write_stan_file_dir" = NULL)
   file <- write_stan_file(stan_program)
-  expect_equal(dirname(file), base_dir)
+  expect_equal(repair_path(dirname(file)), repair_path(base_dir))
   if (!dir.exists(test_dir)) {
     file.remove(test_dir)
   }
