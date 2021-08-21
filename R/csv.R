@@ -294,7 +294,12 @@ read_cmdstan_csv <- function(files,
     }
     as_draws_format <- as_draws_format_fun(format)
     if (length(warmup_draws) > 0) {
-      warmup_draws <- do.call(as_draws_format, list(warmup_draws))
+      if (sub("^draws_", "", format) == "rvars") {
+        warmup_draws <- do.call(posterior::as_draws_list, list(warmup_draws))
+        warmup_draws <- posterior::as_draws_rvars(warmup_draws)
+      } else {
+        warmup_draws <- do.call(as_draws_format, list(warmup_draws))
+      }      
       posterior::variables(warmup_draws) <- repaired_variables
       if (posterior::niterations(warmup_draws) == 0) {
         warmup_draws <- NULL
@@ -303,7 +308,12 @@ read_cmdstan_csv <- function(files,
       warmup_draws <- NULL
     }
     if (length(draws) > 0) {
-      draws <-  do.call(as_draws_format, list(draws))
+      if (sub("^draws_", "", format) == "rvars") {
+        draws <- do.call(posterior::as_draws_list, list(draws))
+        draws <- posterior::as_draws_rvars(draws)
+      } else {
+        draws <-  do.call(as_draws_format, list(draws))
+      }
       posterior::variables(draws) <- repaired_variables
       if (posterior::niterations(draws) == 0) {
         draws <- NULL
@@ -312,7 +322,12 @@ read_cmdstan_csv <- function(files,
       draws <- NULL
     }
     if (length(warmup_sampler_diagnostics) > 0) {
-      warmup_sampler_diagnostics <- do.call(as_draws_format, list(warmup_sampler_diagnostics))
+      if (sub("^draws_", "", format) == "rvars") {
+        warmup_sampler_diagnostics <- do.call(posterior::as_draws_list, list(warmup_sampler_diagnostics))
+        warmup_sampler_diagnostics <- posterior::as_draws_rvars(warmup_sampler_diagnostics)
+      } else {
+        warmup_sampler_diagnostics <- do.call(as_draws_format, list(warmup_sampler_diagnostics))
+      }
       if (posterior::niterations(warmup_sampler_diagnostics) == 0) {
         warmup_sampler_diagnostics <- NULL
       }
@@ -320,7 +335,12 @@ read_cmdstan_csv <- function(files,
       warmup_sampler_diagnostics <- NULL
     }
     if (length(post_warmup_sampler_diagnostics) > 0) {
-      post_warmup_sampler_diagnostics <- do.call(as_draws_format, list(post_warmup_sampler_diagnostics))
+      if (sub("^draws_", "", format) == "rvars") {
+        post_warmup_sampler_diagnostics <- do.call(posterior::as_draws_list, list(post_warmup_sampler_diagnostics))
+        post_warmup_sampler_diagnostics <- posterior::as_draws_rvars(post_warmup_sampler_diagnostics)
+      } else {
+        post_warmup_sampler_diagnostics <- do.call(as_draws_format, list(post_warmup_sampler_diagnostics))
+      }      
       if (posterior::niterations(post_warmup_sampler_diagnostics) == 0) {
         post_warmup_sampler_diagnostics <- NULL
       }
@@ -341,11 +361,17 @@ read_cmdstan_csv <- function(files,
     if (is.null(format)) {
       format <- "draws_matrix"
     }
+    
     as_draws_format <- as_draws_format_fun(format)
     if (length(draws) == 0) {
       variational_draws <- NULL
     } else {
-      variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop = FALSE]))
+      if (sub("^draws_", "", format) == "rvars") {
+        variational_draws <- do.call(posterior::as_draws_list, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop = FALSE]))
+        variational_draws <- posterior::as_draws_rvars(variational_draws)
+      } else {
+        variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop = FALSE]))
+      }
     }
     if (!is.null(variational_draws)) {
       if ("log_p__" %in% posterior::variables(variational_draws)) {
@@ -368,7 +394,12 @@ read_cmdstan_csv <- function(files,
     if (length(draws) == 0) {
       point_estimates <- NULL
     } else {
-      point_estimates <- do.call(as_draws_format, list(draws[[1]][1, , drop = FALSE]))
+      if (sub("^draws_", "", format) == "rvars") {
+        point_estimates <- do.call(posterior::as_draws_list, list(draws[[1]][1, , drop = FALSE]))
+        point_estimates <- posterior::as_draws_rvars(point_estimates)
+      } else {
+        point_estimates <- do.call(as_draws_format, list(draws[[1]][1, , drop = FALSE]))
+      }
       point_estimates <- posterior::subset_draws(point_estimates, variable = variables)
     }
     if (!is.null(point_estimates)) {
@@ -383,7 +414,12 @@ read_cmdstan_csv <- function(files,
       format <- "draws_array"
     }
     as_draws_format <- as_draws_format_fun(format)
-    draws <- do.call(as_draws_format, list(draws))
+    if (sub("^draws_", "", format) == "rvars") {
+      draws <- do.call(posterior::as_draws_list, list(draws))
+      draws <- posterior::as_draws_rvars(draws)
+    } else {
+      draws <- do.call(as_draws_format, list(draws))
+    }
     if (!is.null(draws)) {
       posterior::variables(draws) <- repaired_variables
     }
