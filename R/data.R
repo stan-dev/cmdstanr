@@ -133,8 +133,12 @@ list_to_array <- function(x, name = NULL) {
 #' @noRd
 #' @param data If not `NULL`, then either a path to a data file compatible with
 #'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
-#' @param stan_file If not `NULL`, then either a path to a data file compatible with
-#'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
+#' @param stan_file If not `NULL`, the path to the Stan model for which to
+#'   process the named list suppiled to the `data` argument. The Stan model
+#'   is used for checking whether the supplied named list has all the
+#'   required elements/Stan variables and to help differentiate between a
+#'   vector of length 1 and a scalar when genereting the JSON file. This
+#'   argument is ignored when a path to a data file is supplied for `data`.
 #' @return Path to data file.
 process_data <- function(data, stan_file = NULL) {
   if (length(data) == 0) {
@@ -154,26 +158,26 @@ process_data <- function(data, stan_file = NULL) {
       )
     }
     if (cmdstan_version() > "2.26" && !is.null(stan_file)) {
-        stan_file <- absolute_path(stan_file)
-        if (file.exists(stan_file)) {
-          data_variables <- model_variables(stan_file)$data
-          is_data_supplied <- names(data_variables) %in%  names(data)
-          if (!all(is_data_supplied)) {
-            missing <- names(data_variables[!is_data_supplied])
-            stop(
-              "Missing input data for the following data variables:",
-              paste0(missing, collapse = ", "),
-              ".",
-              call. = FALSE
-            )
-          }          
-          for(var_name in names(data)) {
-            if (length(data[[var_name]]) == 1 
-                && data_variables[[var_name]]$dimensions == 1) {
-                data[[var_name]] <- array(data[[var_name]], dim = 1)
-            }
+      stan_file <- absolute_path(stan_file)
+      if (file.exists(stan_file)) {
+        data_variables <- model_variables(stan_file)$data
+        is_data_supplied <- names(data_variables) %in%  names(data)
+        if (!all(is_data_supplied)) {
+          missing <- names(data_variables[!is_data_supplied])
+          stop(
+            "Missing input data for the following data variables:",
+            paste0(missing, collapse = ", "),
+            ".",
+            call. = FALSE
+          )
+        }          
+        for(var_name in names(data)) {
+          if (length(data[[var_name]]) == 1 
+              && data_variables[[var_name]]$dimensions == 1) {
+              data[[var_name]] <- array(data[[var_name]], dim = 1)
           }
         }
+      }
     }
     path <- tempfile(pattern = "standata-", fileext = ".json")
     write_stan_json(data = data, file = path)
