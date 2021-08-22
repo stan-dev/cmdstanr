@@ -100,6 +100,7 @@ write_stan_json <- function(data, file) {
     auto_unbox = TRUE,
     factor = "integer",
     digits = NA,
+    always_decimal = TRUE,
     pretty = TRUE
   )
 }
