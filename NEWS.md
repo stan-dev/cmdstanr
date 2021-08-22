@@ -33,7 +33,7 @@ Linux distributions running on ARM CPUs are detected. (#531)
 * Improved processing of named lists supplied to the `data` argument for all
 the methods: checking whether the list includes all required elements/Stan
 variables; improved differentiating arrays/vectors of length 1 and scalars
-when generating JSON data files.
+when generating JSON data files. (#538)
 
 # cmdstanr 0.4.0
 
