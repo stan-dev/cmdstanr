@@ -1446,6 +1446,10 @@ model_variables <- function(stan_file) {
   variables <- jsonlite::read_json(out_file, na = "null")
   variables$data <- variables$inputs
   variables$inputs <- NULL
+  variables$transformed_parameters <- variables[["transformed parameters"]]
+  variables[["transformed parameters"]] <- NULL
+  variables$generated_quantities <- variables[["generated quantities"]]
+  variables[["generated quantities"]] <- NULL
   variables$functions <- NULL
   variables$distributions <- NULL
   variables

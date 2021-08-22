@@ -95,7 +95,6 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
-          install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
           remotes::install_local(path = ".")
           install.packages("curl")
         shell: Rscript {0}

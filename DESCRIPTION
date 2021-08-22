@@ -29,7 +29,7 @@ Imports:
     checkmate,
     data.table,
     jsonlite (>= 1.2.0),
-    posterior (>= 0.1.5),
+    posterior (>= 1.0.0),
     processx (>= 3.5.0),
     R6 (>= 2.4.0)
 Suggests: 
@@ -39,7 +39,4 @@ Suggests:
     rlang (>= 0.4.7),
     rmarkdown,
     testthat (>= 2.1.0)
-Additional_repositories:
-    https://mc-stan.org/r-packages/
 VignetteBuilder: knitr
-Remotes: stan-dev/posterior
