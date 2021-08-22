@@ -165,13 +165,13 @@ process_data <- function(data, stan_file = NULL) {
         if (!all(is_data_supplied)) {
           missing <- names(data_variables[!is_data_supplied])
           stop(
-            "Missing input data for the following data variables:",
+            "Missing input data for the following data variables: ",
             paste0(missing, collapse = ", "),
             ".",
             call. = FALSE
           )
         }          
-        for(var_name in names(data)) {
+        for(var_name in names(data_variables)) {
           if (length(data[[var_name]]) == 1 
               && data_variables[[var_name]]$dimensions == 1) {
               data[[var_name]] <- array(data[[var_name]], dim = 1)
