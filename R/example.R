@@ -105,8 +105,9 @@ print_example_program <-
 #'   program or a character vector with each element containing one line of the
 #'   Stan program.
 #' @param dir (string) An optional path to the directory where the file will be
-#'   written. If omitted, a [temporary directory][base::tempdir] is used by
-#'   default.
+#'   written. If omitted, a global option `cmdstanr_write_stan_file_dir` is
+#'   used. If the global options is not set, [temporary directory][base::tempdir]
+#'   is used.
 #' @param basename (string) If `dir` is specified, optionally the basename to
 #'   use for the file created. If not specified a file name is generated
 #'   from [hashing][rlang::hash()] the code.
@@ -143,7 +144,7 @@ print_example_program <-
 #' identical(readLines(f), readLines(f2))
 #'
 write_stan_file <- function(code,
-                            dir = tempdir(),
+                            dir = getOption("cmdstanr_write_stan_file_dir", tempdir()),
                             basename = NULL,
                             force_overwrite = FALSE,
                             hash_salt = "") {

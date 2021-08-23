@@ -13,8 +13,9 @@ program or a character vector with each element containing one line of the
 Stan program.}
 
 \item{dir}{(string) An optional path to the directory where the file will be
-written. If omitted, a \link[base:tempfile]{temporary directory} is used by
-default.}
+written. If omitted, a global option \code{cmdstanr_write_stan_file_dir} is
+used. If the global options is not set, \link[base:tempfile]{temporary directory}
+is used.}
 }
 \description{
 This function is deprecated. Please use \code{\link[=write_stan_file]{write_stan_file()}} instead.
