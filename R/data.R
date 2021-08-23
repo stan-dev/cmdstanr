@@ -3,6 +3,10 @@
 #' @export
 #' @param data (list) A named list of \R objects.
 #' @param file (string) The path to where the data file should be written.
+#' @param always_decimal (logical) Force generate non-integers with decimal
+#' points to better distinguish between integers and floating point values.
+#' If `TRUE` all \R objects in `data` intended for integers must be of integer
+#' type. 
 #'
 #' @details
 #' `write_stan_json()` performs several conversions before writing the JSON
@@ -52,7 +56,7 @@
 #' write_stan_json(data, file)
 #' cat(readLines(file), sep = "\n")
 #'
-write_stan_json <- function(data, file) {
+write_stan_json <- function(data, file, always_decimal = FALSE) {
   if (!is.list(data)) {
     stop("'data' must be a list.", call. = FALSE)
   }
@@ -99,6 +103,7 @@ write_stan_json <- function(data, file) {
     path = file,
     auto_unbox = TRUE,
     factor = "integer",
+    always_decimal = always_decimal,
     digits = NA,
     pretty = TRUE
   )
@@ -133,8 +138,14 @@ list_to_array <- function(x, name = NULL) {
 #' @noRd
 #' @param data If not `NULL`, then either a path to a data file compatible with
 #'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
+#' @param stan_file If not `NULL`, the path to the Stan model for which to
+#'   process the named list suppiled to the `data` argument. The Stan model
+#'   is used for checking whether the supplied named list has all the
+#'   required elements/Stan variables and to help differentiate between a
+#'   vector of length 1 and a scalar when genereting the JSON file. This
+#'   argument is ignored when a path to a data file is supplied for `data`.
 #' @return Path to data file.
-process_data <- function(data) {
+process_data <- function(data, stan_file = NULL) {
   if (length(data) == 0) {
     data <- NULL
   }
@@ -151,8 +162,37 @@ process_data <- function(data) {
         call. = FALSE
       )
     }
+    if (cmdstan_version() > "2.26" && !is.null(stan_file)) {
+      stan_file <- absolute_path(stan_file)
+      if (file.exists(stan_file)) {
+        data_variables <- model_variables(stan_file)$data
+        is_data_supplied <- names(data_variables) %in%  names(data)
+        if (!all(is_data_supplied)) {
+          missing <- names(data_variables[!is_data_supplied])
+          stop(
+            "Missing input data for the following data variables: ",
+            paste0(missing, collapse = ", "),
+            ".",
+            call. = FALSE
+          )
+        }          
+        for(var_name in names(data_variables)) {
+          # distinguish between scalars and arrays/vectors of length 1
+          if (length(data[[var_name]]) == 1 
+              && data_variables[[var_name]]$dimensions == 1) {
+              data[[var_name]] <- array(data[[var_name]], dim = 1)
+          }
+          # Make sure integer inputs are of integer type to avoid
+          # generating a decimal point in write_stan_json
+          if (data_variables[[var_name]]$type == "int"
+              && !is.integer(data[[var_name]])) {
+                data[[var_name]] <- as.integer(data[[var_name]])
+          }
+        }
+      }
+    }
     path <- tempfile(pattern = "standata-", fileext = ".json")
-    write_stan_json(data = data, file = path)
+    write_stan_json(data = data, file = path, always_decimal = (cmdstan_version() > "2.26"))
   } else {
     stop("'data' should be a path or a named list.", call. = FALSE)
   }
