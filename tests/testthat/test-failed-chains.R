@@ -158,22 +158,10 @@ test_that("init warnings are shown", {
 
 test_that("optimize error on bad data", {
   mod <- testing_model("bernoulli")
-  suppressWarnings(
-    expect_message(
-      mod$optimize(data = list(a = c(1,2,3)), seed = 123),
-      "Exception: variable does not exist"
-    )
+  expect_error(
+    mod$optimize(data = list(a = c(1,2,3)), seed = 123),
+    "Missing input data for the following data variables: N, y."
   )
-  expect_warning(
-    utils::capture.output(
-      fit <- mod$optimize(data = list(a = c(1,2,3)), seed = 123)
-    ),
-    "Fitting finished unexpectedly!"
-  )
-  expect_error(fit$print(), "Fitting failed. Unable to print.")
-  expect_error(fit$summary(), "Fitting failed. Unable to retrieve the draws.")
-  expect_error(fit$draws(), "Fitting failed. Unable to retrieve the draws.")
-  expect_error(fit$metadata(), "Fitting failed. Unable to retrieve the metadata.")
 })
 
 test_that("errors when using draws after variational fais", {
