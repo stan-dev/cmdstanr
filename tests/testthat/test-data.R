@@ -8,7 +8,40 @@ if (not_on_cran()) {
 }
 
 test_that("empty data list converted to NULL", {
+  skip_on_cran()
+  stan_file <- write_stan_file("
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  ")
   expect_null(process_data(list()))
+  expect_null(process_data(list(), stan_file = stan_file))
+})
+
+test_that("process_data works for inputs of length one", {
+  skip_on_cran()
+  data <- list(val = 5)
+  stan_file <- write_stan_file("
+  data {
+    real val;
+  }
+  ")
+  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = 5))
+  stan_file <- write_stan_file("
+  data {
+    int val;
+  }
+  ")
+  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = 5))
+  stan_file <- write_stan_file("
+  data {
+    vector[1] val;
+  }
+  ")
+  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = list(5)))
 })
 
 test_that("process_fitted_params() works with basic input types", {
@@ -240,5 +273,61 @@ test_that("process_fitted_params() works with draws_matrix", {
   expect_equal(
     posterior::subset_draws(posterior::as_draws_array(fit$draws()), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]")),
     posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  )
+})
+
+test_that("process_data() errors on missing variables", {
+  stan_file <- write_stan_file("
+  data {
+    real val1;
+    real val2;
+  }
+  ")
+  expect_error(
+    process_data(data = list(val1 = 5), stan_file = stan_file),
+    "Missing input data for the following data variables: val2."
+  )
+  expect_error(
+    process_data(data = list(val = 1), stan_file = stan_file),
+    "Missing input data for the following data variables: val1, val2."
+  )
+  stan_file_no_data <- write_stan_file("
+  transformed data {
+    real val1 = 1;
+    real val2 = 2;
+  }
+  ")
+  v <- process_data(data = list(val1 = 5), stan_file = stan_file_no_data)
+  expect_type(v, "character")
+})
+
+test_that("process_data() corrrectly casts integers and floating point numbers", {
+  stan_file <- write_stan_file("
+  data {
+    int a;
+    real b;
+  }
+  ")
+  test_file <- process_data(list(a = 1, b = 2), stan_file = stan_file)
+  expect_match(
+    "  \"a\": 1,",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "  \"b\": 2.0",
+    readLines(test_file)[3],
+    fixed = TRUE
+  )
+  test_file <- process_data(list(a = 1L, b = 1774000000), stan_file = stan_file)
+  expect_match(
+    "  \"a\": 1,",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "  \"b\": 1774000000.0",
+    readLines(test_file)[3],
+    fixed = TRUE
   )
 })

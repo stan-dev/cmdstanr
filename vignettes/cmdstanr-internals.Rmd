@@ -163,6 +163,63 @@ mod_pedantic <- cmdstan_model(stan_file_pedantic, compile = FALSE)
 mod_pedantic$check_syntax(pedantic = TRUE)
 ```
 
+### Stan model variables
+
+If using CmdStan 2.27 or newer, you can obtain the names, types
+and dimensions of the data, parameters, transformed parameters
+and generated quantities variables of a Stan model using the
+`$variables()` method of the `CmdStanModel` object.
+
+```{r stan_file_variables}
+stan_file_variables <- write_stan_file("
+data {
+  int<lower=1> J;
+  vector<lower=0>[J] sigma;
+  vector[J] y;
+}
+parameters {
+  real mu;
+  real<lower=0> tau;
+  vector[J] theta_raw;
+}
+transformed parameters {
+  vector[J] theta = mu + tau * theta_raw;
+}
+model {
+  target += normal_lpdf(tau | 0, 10);
+  target += normal_lpdf(mu | 0, 10);
+  target += normal_lpdf(theta_raw | 0, 1);
+  target += normal_lpdf(y | theta, sigma);
+}
+")
+mod_v <- cmdstan_model(stan_file_variables)
+variables <- mod_v$variables()
+```
+
+The `$variables()` method returns a list with `data`, `parameters`,
+`transformed_parameters` and `generated_quantities` elements, each
+corresponding to variables in their respective block of the program. Transformed 
+data variables are not listed as they are not used in the model's input
+or output.
+
+```{r variables-list-names}
+names(variables)
+names(variables$data)
+names(variables$parameters)
+names(variables$transformed_parameters)
+names(variables$generated_quantities)
+```
+
+Each variable is represented as a list containing the type
+information (currently limited to `real` or `int`) and the number of dimensions.
+
+```{r variable-type-dims}
+variables$data$J
+variables$data$sigma
+variables$parameters$tau
+variables$transformed_parameters$theta
+```
+
 ### Executable location
 
 By default, the executable is created in the same directory as the file

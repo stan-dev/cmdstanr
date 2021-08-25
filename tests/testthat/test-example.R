@@ -103,3 +103,20 @@ test_that("write_stan_file by default creates the same file for the same Stan mo
 test_that("write_stan_tempfile is deprecated", {
   expect_warning(write_stan_tempfile(stan_program), "deprecated")
 })
+
+test_that("cmdstanr_write_stan_file_dir option works", {
+  base_dir <- tempdir()
+  test_dir <- file.path(base_dir, "option_test")
+  if (!dir.exists(test_dir)) {
+    dir.create(test_dir)
+  }
+  options("cmdstanr_write_stan_file_dir" = test_dir)
+  file <- write_stan_file(stan_program)
+  expect_equal(repair_path(dirname(file)), repair_path(test_dir))
+  options("cmdstanr_write_stan_file_dir" = NULL)
+  file <- write_stan_file(stan_program)
+  expect_equal(repair_path(dirname(file)), repair_path(base_dir))
+  if (!dir.exists(test_dir)) {
+    file.remove(test_dir)
+  }
+})
