@@ -242,3 +242,37 @@ test_that("error if init function specified incorrectly", {
     "'init' contains empty lists."
   )
 })
+
+test_that("print message if not all parameters are initialized", {
+  skip_on_cran()
+
+  init_list <- list(
+    list(
+      alpha = 1
+    )
+  )
+  expect_message(
+    utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = init_list, seed = 123)),
+    "beta",
+    fixed = TRUE
+  )
+  expect_message(
+    utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = list(list(a = 0)), seed = 123)),
+    "alpha, beta",
+    fixed = TRUE
+  )
+
+  init_list <- list(list(alpha = 1),list(alpha = 1))
+  expect_message(
+    utils::capture.output(mod_logistic$sample(data = data_list_logistic, init = init_list, seed = 123, chains = 2)),
+    "- chain 2: beta",
+    fixed = TRUE
+  )
+
+  init_list <- list(list(alpha = 1),list(a = 1))
+  expect_message(
+    utils::capture.output(mod_logistic$sample(data = data_list_logistic, init = init_list, seed = 123, chains = 2)),
+    "- chain 2: alpha, beta",
+    fixed = TRUE
+  )
+})
