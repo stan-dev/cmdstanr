@@ -791,7 +791,7 @@ process_init_list <- function(init, num_procs, stan_file = NULL) {
       }
       if (length(missing_parameter_values) > 0) {
         warning_message <- c(
-          "Init values were only set for a subset of parameters. Missing init values for the following parameters:\n"
+          "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
         )
         for (i in seq_along(missing_parameter_values)) {
           if (length(init) > 1) {
