@@ -22,6 +22,7 @@ CmdStanArgs <- R6::R6Class(
   public = list(
     method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
     initialize = function(model_name,
+                          stan_file = NULL,
                           exe_file,
                           proc_ids,
                           method_args,
@@ -56,9 +57,9 @@ CmdStanArgs <- R6::R6Class(
       self$output_dir <- repair_path(self$output_dir)
       self$output_basename <- output_basename
       if (is.function(init)) {
-        init <- process_init_function(init, length(self$proc_ids))
+        init <- process_init_function(init, length(self$proc_ids), stan_file)
       } else if (is.list(init) && !is.data.frame(init)) {
-        init <- process_init_list(init, length(self$proc_ids))
+        init <- process_init_list(init, length(self$proc_ids), stan_file)
       }
       self$init <- init
       self$opencl_ids <- opencl_ids
@@ -765,8 +766,9 @@ validate_exe_file <- function(exe_file) {
 #' @noRd
 #' @param init List of init lists.
 #' @param num_procs Number of CmdStan processes.
+#' @param stan_file Path to the Stan model file.
 #' @return A character vector of file paths.
-process_init_list <- function(init, num_procs) {
+process_init_list <- function(init, num_procs, stan_file = NULL) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
     stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
   }
@@ -775,6 +777,35 @@ process_init_list <- function(init, num_procs) {
   }
   if (any(sapply(init, function(x) length(x) == 0))) {
     stop("'init' contains empty lists.", call. = FALSE)
+  }
+  if (cmdstan_version() > "2.26.1" && !is.null(stan_file)) {
+    stan_file <- absolute_path(stan_file)
+    if (file.exists(stan_file)) {
+      missing_parameter_values <- list()
+      parameter_names <- names(model_variables(stan_file)$parameters)
+      for (i in seq_along(init)) {
+        is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
+        if (!all(is_parameter_value_supplied)) {
+          missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
+        }
+      }
+      if (length(missing_parameter_values) > 0) {
+        warning_message <- c(
+          "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
+        )
+        for (i in seq_along(missing_parameter_values)) {
+          if (length(init) > 1) {
+            line_text <- paste0(" - chain ", i, ": ")
+          } else {
+            line_text <- ""
+          }
+          if (length(missing_parameter_values[[i]]) > 0) {
+            warning_message <- c(warning_message, paste0(line_text, paste0(missing_parameter_values[[i]], collapse = ", "), "\n"))
+          }
+        }
+        message(warning_message)
+      }
+    }
   }
   if (any(grepl("\\[", names(unlist(init))))) {
     stop(
@@ -800,8 +831,9 @@ process_init_list <- function(init, num_procs) {
 #' @noRd
 #' @param init Function generating a single list of initial values.
 #' @param num_procs Number of CmdStan processes.
+#' @param stan_file Path to the Stan model file.
 #' @return A character vector of file paths.
-process_init_function <- function(init, num_procs) {
+process_init_function <- function(init, num_procs, stan_file = NULL) {
   args <- formals(init)
   if (is.null(args)) {
     fn_test <- init()
@@ -817,7 +849,7 @@ process_init_function <- function(init, num_procs) {
   if (!is.list(fn_test) || is.data.frame(fn_test)) {
     stop("If 'init' is a function it must return a single list.")
   }
-  process_init_list(init_list, num_procs)
+  process_init_list(init_list, num_procs, stan_file)
 }
 
 #' Validate initial values
