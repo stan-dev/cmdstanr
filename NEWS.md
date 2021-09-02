@@ -5,6 +5,9 @@
 * Fixed bug that caused stdour/stderr not being read at the end of
 optimization. (#522)
 
+* Fixed issue with handling `NA` as the reported external process
+status. (#544, @myshkin)
+
 ### New features
 
 * Default directory changed to `.cmdstan` instead of `.cmdstanr` so that
