@@ -513,7 +513,7 @@ compile <- function(quiet = TRUE,
     },
     error_on_status = FALSE
   )
-  if (run_log$status != 0) {
+  if (is.na(run_log$status) || run_log$status != 0) {
     stop("An error occured during compilation! See the message above for more information.",
          call. = FALSE)
   }
@@ -676,7 +676,7 @@ check_syntax <- function(pedantic = FALSE,
     },
     error_on_status = FALSE
   )
-  if (run_log$status != 0) {
+  if (is.na(run_log$status) || run_log$status != 0) {
     stop("Syntax error found! See the message above for more information.",
          call. = FALSE)
   }
