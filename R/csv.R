@@ -191,11 +191,11 @@ read_cmdstan_csv <- function(files,
     ))
   }
   if (is.null(variables)) { # variables = NULL returns all
-    variables <- metadata$model_params
+    variables <- metadata$variables
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
     variables <- NULL
   } else { # filter using variables
-    res <- matching_variables(variables, repair_variable_names(metadata$model_params))
+    res <- matching_variables(variables, repair_variable_names(metadata$variables))
     if (length(res$not_found)) {
       stop("Can't find the following variable(s) in the output: ",
             paste(res$not_found, collapse = ", "), call. = FALSE)
@@ -274,20 +274,21 @@ read_cmdstan_csv <- function(files,
     }
   }
   metadata$inv_metric <- NULL
-  metadata$model_params <- repair_variable_names(metadata$model_params)
+  metadata$variables <- repair_variable_names(metadata$variables)
   repaired_variables <- repair_variable_names(variables)
   if (metadata$method == "variational") {
-    metadata$model_params <- metadata$model_params[metadata$model_params != "lp__"]
-    metadata$model_params <- gsub("log_p__", "lp__", metadata$model_params)
-    metadata$model_params <- gsub("log_g__", "lp_approx__", metadata$model_params)
+    metadata$variables <- metadata$variables[metadata$variables != "lp__"]
+    metadata$variables <- gsub("log_p__", "lp__", metadata$variables)
+    metadata$variables <- gsub("log_g__", "lp_approx__", metadata$variables)
     repaired_variables <- repaired_variables[repaired_variables != "lp__"]
     repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
     repaired_variables <- gsub("log_g__", "lp_approx__", repaired_variables)
   }
-  model_param_dims <- variable_dims(metadata$model_params)
+  model_param_dims <- variable_dims(metadata$variables)
   metadata$stan_variable_sizes <- model_param_dims
   metadata$stan_variables <- names(model_param_dims)
-
+  # $model_params is deprecated, remove for release 1.0 
+  metadata$model_params <- metadata$variables 
   if (metadata$method == "sample") {
     if (is.null(format)) {
       format <- "draws_array"
@@ -572,15 +573,15 @@ read_csv_metadata <- function(csv_file) {
     stop("Supplied CSV file is corrupt!", call. = FALSE)
   }
   for (line in metadata[[1]]) {
-    if (!startsWith(line, "#") && is.null(csv_file_info[["model_params"]])) {
+    if (!startsWith(line, "#") && is.null(csv_file_info[["variables"]])) {
       # if no # at the start of line, the line is the CSV header
       all_names <- strsplit(line, ",")[[1]]
       if (all(csv_file_info$algorithm != "fixed_param")) {
         csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
         csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__"))]
-        csv_file_info[["model_params"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
+        csv_file_info[["variables"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
       } else {
-        csv_file_info[["model_params"]] <- all_names[!endsWith(all_names, "__")]
+        csv_file_info[["variables"]] <- all_names[!endsWith(all_names, "__")]
       }
     } else {
       parse_key_val <- TRUE
@@ -663,7 +664,7 @@ read_csv_metadata <- function(csv_file) {
   }
   if (csv_file_info$method != "diagnose" &&
       length(csv_file_info$sampler_diagnostics) == 0 &&
-      length(csv_file_info$model_params) == 0) {
+      length(csv_file_info$variables) == 0) {
     stop("Supplied CSV file does not contain any variable names or data!", call. = FALSE)
   }
   if (inv_metric_rows > 0 && csv_file_info$metric == "dense_e") {
@@ -727,8 +728,8 @@ check_csv_metadata_matches <- function(csv_metadata) {
     stop("Supplied CSV files were produced by different methods and need to be read in separately!", call. = FALSE)
   }
   for (i in 2:length(csv_metadata)) {
-    if (length(csv_metadata[[1]]$model_params) != length(csv_metadata[[i]]$model_params) ||
-      !all(csv_metadata[[1]]$model_params == csv_metadata[[i]]$model_params)) {
+    if (length(csv_metadata[[1]]$variables) != length(csv_metadata[[i]]$variables) ||
+      !all(csv_metadata[[1]]$variables == csv_metadata[[i]]$variables)) {
       stop("Supplied CSV files have samples for different variables!", call. = FALSE)
     }
   }

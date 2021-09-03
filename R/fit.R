@@ -25,7 +25,7 @@ CmdStanFit <- R6::R6Class(
 
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
-      all_variables <- self$metadata()$model_params
+      all_variables <- self$metadata()$variables
       if (is.null(variables)) {
         total_rows <- length(all_variables)
         variables_to_print <- all_variables[seq_len(max_rows)]
@@ -860,7 +860,7 @@ CmdStanMCMC <- R6::R6Class(
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = posterior::variables(private$draws_),
-        all = private$metadata_$model_params
+        all = private$metadata_$variables
       )
       private$draws_ <- maybe_convert_draws_format(private$draws_, format)
       private$warmup_draws_ <- maybe_convert_draws_format(private$warmup_draws_, format)
@@ -870,9 +870,9 @@ CmdStanMCMC <- R6::R6Class(
         private$read_csv_(variables = to_read, sampler_diagnostics = "", format = format)
       }
       if (is.null(variables)) {
-        variables <- private$metadata_$model_params
+        variables <- private$metadata_$variables
       } else {
-        matching_res <- matching_variables(variables, private$metadata_$model_params)
+        matching_res <- matching_variables(variables, private$metadata_$variables)
         if (length(matching_res$not_found)) {
           stop("Can't find the following variable(s) in the output: ",
               paste(matching_res$not_found, collapse = ", "), call. = FALSE)
@@ -1383,16 +1383,16 @@ CmdStanGQ <- R6::R6Class(
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = dimnames(private$draws_)$variable,
-        all = private$metadata_$model_params
+        all = private$metadata_$variables
       )
       private$draws_ <- maybe_convert_draws_format(private$draws_, format)
       if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = to_read, format = format)
       }
       if (is.null(variables)) {
-        variables <- private$metadata_$model_params
+        variables <- private$metadata_$variables
       } else {
-        matching_res <- matching_variables(variables, private$metadata_$model_params)
+        matching_res <- matching_variables(variables, private$metadata_$variables)
         if (length(matching_res$not_found)) {
           stop("Can't find the following variable(s) in the output: ",
               paste(matching_res$not_found, collapse = ", "), call. = FALSE)
