@@ -162,7 +162,7 @@ process_data <- function(data, stan_file = NULL) {
         call. = FALSE
       )
     }
-    if (cmdstan_version() > "2.26" && !is.null(stan_file)) {
+    if (cmdstan_version() >= "2.27.0" && !is.null(stan_file)) {
       stan_file <- absolute_path(stan_file)
       if (file.exists(stan_file)) {
         data_variables <- model_variables(stan_file)$data
