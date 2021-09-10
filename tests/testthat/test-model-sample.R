@@ -313,3 +313,20 @@ test_that("seed works for multi chain sampling", {
   expect_false(all(chain_tdata_1 == chain_tdata_2))
 })
 
+test_that("fixed_param is set when the model has no parameters", {
+  skip_on_cran()
+  code <- "
+model {}
+generated quantities  {
+  real y = normal_rng(0, 1);
+}
+"
+
+  stan_file <- write_stan_file(code)
+
+  m <- cmdstan_model(stan_file)
+  expect_warning(capture.output(fit <- m$sample()), "Model contains no parameters. Automatically setting fixed_param = TRUE.")
+  expect_null(fit$sampler_diagnostics())
+  expect_equal(posterior::variables(fit$draws()), "y")
+})
+
