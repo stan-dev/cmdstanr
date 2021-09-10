@@ -8,6 +8,9 @@ optimization. (#522)
 * Fixed issue with handling `NA` as the reported external process
 status. (#544, @myshkin)
 
+* Fixed issue with handling models with no parameters and Cmdstan
+2.27+.
+
 ### New features
 
 * Default directory changed to `.cmdstan` instead of `.cmdstanr` so that

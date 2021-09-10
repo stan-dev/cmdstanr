@@ -207,15 +207,15 @@ test_that("sample() method runs when fixed_param = TRUE", {
   skip_on_cran()
   mod_fp$compile()
 
-  expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 1)
+  expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 4)
   expect_is(fit_1000, "CmdStanMCMC")
-  expect_equal(dim(fit_1000$draws()), c(1000,1,10))
+  expect_equal(dim(fit_1000$draws()), c(1000,4,10))
 
-  expect_sample_output(fit_500 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500), 1)
-  expect_equal(dim(fit_500$draws()), c(500,1,10))
+  expect_sample_output(fit_500 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500), 4)
+  expect_equal(dim(fit_500$draws()), c(500,4,10))
 
-  expect_sample_output(fit_500_w <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500, iter_warmup = 5000), 1)
-  expect_equal(dim(fit_500_w$draws()), c(500,1,10))
+  expect_sample_output(fit_500_w <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500, iter_warmup = 5000), 4)
+  expect_equal(dim(fit_500_w$draws()), c(500,4,10))
 
   expect_equal(fit_1000$metadata()$algorithm, "fixed_param")
   expect_equal(fit_500$metadata()$algorithm, "fixed_param")
@@ -311,5 +311,22 @@ test_that("seed works for multi chain sampling", {
   chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 1)
   chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 2)
   expect_false(all(chain_tdata_1 == chain_tdata_2))
+})
+
+test_that("fixed_param is set when the model has no parameters", {
+  skip_on_cran()
+  code <- "
+model {}
+generated quantities  {
+  real y = normal_rng(0, 1);
+}
+"
+
+  stan_file <- write_stan_file(code)
+
+  m <- cmdstan_model(stan_file)
+  expect_warning(capture.output(fit <- m$sample()), "Model contains no parameters. Automatically setting fixed_param = TRUE.")
+  expect_null(fit$sampler_diagnostics())
+  expect_equal(posterior::variables(fit$draws()), "y")
 })
 
