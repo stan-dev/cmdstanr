@@ -209,13 +209,13 @@ test_that("sample() method runs when fixed_param = TRUE", {
 
   expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 4)
   expect_is(fit_1000, "CmdStanMCMC")
-  expect_equal(dim(fit_1000$draws()), c(1000,1,10))
+  expect_equal(dim(fit_1000$draws()), c(1000,4,10))
 
   expect_sample_output(fit_500 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500), 4)
-  expect_equal(dim(fit_500$draws()), c(500,1,10))
+  expect_equal(dim(fit_500$draws()), c(500,4,10))
 
   expect_sample_output(fit_500_w <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500, iter_warmup = 5000), 4)
-  expect_equal(dim(fit_500_w$draws()), c(500,1,10))
+  expect_equal(dim(fit_500_w$draws()), c(500,4,10))
 
   expect_equal(fit_1000$metadata()$algorithm, "fixed_param")
   expect_equal(fit_500$metadata()$algorithm, "fixed_param")
