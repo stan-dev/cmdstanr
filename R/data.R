@@ -192,7 +192,7 @@ process_data <- function(data, stan_file = NULL) {
       }
     }
     path <- tempfile(pattern = "standata-", fileext = ".json")
-    write_stan_json(data = data, file = path, always_decimal = (cmdstan_version() > "2.26"))
+    write_stan_json(data = data, file = path, always_decimal = (cmdstan_version() > "2.26.1"))
   } else {
     stop("'data' should be a path or a named list.", call. = FALSE)
   }
