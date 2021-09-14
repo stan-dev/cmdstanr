@@ -35,7 +35,8 @@ CmdStanArgs <- R6::R6Class(
                           output_basename = NULL,
                           validate_csv = TRUE,
                           sig_figs = NULL,
-                          opencl_ids = NULL) {
+                          opencl_ids = NULL,
+                          include_paths = NULL) {
 
       self$model_name <- model_name
       self$exe_file <- exe_file
@@ -59,7 +60,7 @@ CmdStanArgs <- R6::R6Class(
       if (is.function(init)) {
         init <- process_init_function(init, length(self$proc_ids), stan_file)
       } else if (is.list(init) && !is.data.frame(init)) {
-        init <- process_init_list(init, length(self$proc_ids), stan_file)
+        init <- process_init_list(init, length(self$proc_ids), stan_file, include_paths)
       }
       self$init <- init
       self$opencl_ids <- opencl_ids
@@ -767,8 +768,9 @@ validate_exe_file <- function(exe_file) {
 #' @param init List of init lists.
 #' @param num_procs Number of CmdStan processes.
 #' @param stan_file Path to the Stan model file.
+#' @param include_paths Folders with Stan files included in the Stan model file.
 #' @return A character vector of file paths.
-process_init_list <- function(init, num_procs, stan_file = NULL) {
+process_init_list <- function(init, num_procs, stan_file = NULL, include_paths = NULL) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
     stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
   }
@@ -782,7 +784,7 @@ process_init_list <- function(init, num_procs, stan_file = NULL) {
     stan_file <- absolute_path(stan_file)
     if (file.exists(stan_file)) {
       missing_parameter_values <- list()
-      parameter_names <- names(model_variables(stan_file)$parameters)
+      parameter_names <- names(model_variables(stan_file, include_paths)$parameters)
       for (i in seq_along(init)) {
         is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
         if (!all(is_parameter_value_supplied)) {
@@ -832,8 +834,9 @@ process_init_list <- function(init, num_procs, stan_file = NULL) {
 #' @param init Function generating a single list of initial values.
 #' @param num_procs Number of CmdStan processes.
 #' @param stan_file Path to the Stan model file.
+#' @param include_paths Folders with Stan files included in the Stan model file.
 #' @return A character vector of file paths.
-process_init_function <- function(init, num_procs, stan_file = NULL) {
+process_init_function <- function(init, num_procs, stan_file = NULL, include_paths = NULL) {
   args <- formals(init)
   if (is.null(args)) {
     fn_test <- init()
@@ -849,7 +852,7 @@ process_init_function <- function(init, num_procs, stan_file = NULL) {
   if (!is.list(fn_test) || is.data.frame(fn_test)) {
     stop("If 'init' is a function it must return a single list.")
   }
-  process_init_list(init_list, num_procs, stan_file)
+  process_init_list(init_list, num_procs, stan_file, include_paths)
 }
 
 #' Validate initial values
