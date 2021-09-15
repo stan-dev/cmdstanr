@@ -450,7 +450,7 @@ test_that("draws are returned for model with spaces", {
   expect_equal(dim(fit$draws()), c(1000, 1, 1))
 })
 
-test_that("compilation works with include_paths", {
+test_that("sampling with inits works with include_paths", {
   skip_on_cran()
 
   stan_program_w_include <- testing_stan_file("bernoulli_include")
