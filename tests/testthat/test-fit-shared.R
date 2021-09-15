@@ -449,3 +449,30 @@ test_that("draws are returned for model with spaces", {
   )
   expect_equal(dim(fit$draws()), c(1000, 1, 1))
 })
+
+test_that("sampling with inits works with include_paths", {
+  skip_on_cran()
+
+  stan_program_w_include <- testing_stan_file("bernoulli_include")
+  exe <- cmdstan_ext(strip_ext(stan_program_w_include))
+  if(file.exists(exe)) {
+    file.remove(exe)
+  }
+
+  expect_interactive_message(
+    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
+                                   include_paths = test_path("resources", "stan")),
+    "Compiling Stan program"
+  )
+
+  data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+
+  fit <- mod_w_include$sample(
+    data = data_list,
+    seed = 123,
+    chains = 4,
+    parallel_chains = 4,
+    refresh = 500,
+    init = list(list(theta = 0.25), list(theta = 0.25), list(theta = 0.25), list(theta = 0.25))
+  )
+})

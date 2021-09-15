@@ -144,8 +144,9 @@ list_to_array <- function(x, name = NULL) {
 #'   required elements/Stan variables and to help differentiate between a
 #'   vector of length 1 and a scalar when genereting the JSON file. This
 #'   argument is ignored when a path to a data file is supplied for `data`.
+#' @param include_paths Folders with Stan files included in the Stan model file.
 #' @return Path to data file.
-process_data <- function(data, stan_file = NULL) {
+process_data <- function(data, stan_file = NULL, include_paths = NULL) {
   if (length(data) == 0) {
     data <- NULL
   }
@@ -165,7 +166,7 @@ process_data <- function(data, stan_file = NULL) {
     if (cmdstan_version() >= "2.27.0" && !is.null(stan_file)) {
       stan_file <- absolute_path(stan_file)
       if (file.exists(stan_file)) {
-        data_variables <- model_variables(stan_file)$data
+        data_variables <- model_variables(stan_file, include_paths)$data
         is_data_supplied <- names(data_variables) %in%  names(data)
         if (!all(is_data_supplied)) {
           missing <- names(data_variables[!is_data_supplied])
