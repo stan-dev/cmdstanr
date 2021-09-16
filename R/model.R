@@ -841,7 +841,8 @@ sample <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     validate_csv = validate_csv,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -980,7 +981,8 @@ sample_mpi <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     validate_csv = validate_csv,
-    sig_figs = sig_figs
+    sig_figs = sig_figs,
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
@@ -1090,7 +1092,8 @@ optimize <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1205,7 +1208,8 @@ variational <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1309,7 +1313,8 @@ generate_quantities <- function(fitted_params,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options())
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1369,7 +1374,8 @@ diagnose_method <- function(data = NULL,
     seed = seed,
     init = init,
     output_dir = output_dir,
-    output_basename = output_basename
+    output_basename = output_basename,
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
