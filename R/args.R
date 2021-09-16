@@ -36,7 +36,7 @@ CmdStanArgs <- R6::R6Class(
                           validate_csv = TRUE,
                           sig_figs = NULL,
                           opencl_ids = NULL,
-                          include_paths = NULL) {
+                          model_variables = NULL) {
 
       self$model_name <- model_name
       self$exe_file <- exe_file
@@ -58,9 +58,9 @@ CmdStanArgs <- R6::R6Class(
       self$output_dir <- repair_path(self$output_dir)
       self$output_basename <- output_basename
       if (is.function(init)) {
-        init <- process_init_function(init, length(self$proc_ids), stan_file)
+        init <- process_init_function(init, length(self$proc_ids), model_variables)
       } else if (is.list(init) && !is.data.frame(init)) {
-        init <- process_init_list(init, length(self$proc_ids), stan_file, include_paths)
+        init <- process_init_list(init, length(self$proc_ids), model_variables)
       }
       self$init <- init
       self$opencl_ids <- opencl_ids
@@ -767,10 +767,10 @@ validate_exe_file <- function(exe_file) {
 #' @noRd
 #' @param init List of init lists.
 #' @param num_procs Number of CmdStan processes.
-#' @param stan_file Path to the Stan model file.
-#' @param include_paths Folders with Stan files included in the Stan model file.
+#' @param model_variables  A list of all parameters with their types and 
+#'   number of dimensions. Typically the output of model$variables().
 #' @return A character vector of file paths.
-process_init_list <- function(init, num_procs, stan_file = NULL, include_paths = NULL) {
+process_init_list <- function(init, num_procs, model_variables = NULL) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
     stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
   }
@@ -780,33 +780,30 @@ process_init_list <- function(init, num_procs, stan_file = NULL, include_paths =
   if (any(sapply(init, function(x) length(x) == 0))) {
     stop("'init' contains empty lists.", call. = FALSE)
   }
-  if (cmdstan_version() > "2.26.1" && !is.null(stan_file)) {
-    stan_file <- absolute_path(stan_file)
-    if (file.exists(stan_file)) {
-      missing_parameter_values <- list()
-      parameter_names <- names(model_variables(stan_file, include_paths)$parameters)
-      for (i in seq_along(init)) {
-        is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
-        if (!all(is_parameter_value_supplied)) {
-          missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
+  if (!is.null(model_variables)) {
+    missing_parameter_values <- list()
+    parameter_names <- names(model_variables$parameters)
+    for (i in seq_along(init)) {
+      is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
+      if (!all(is_parameter_value_supplied)) {
+        missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
+      }
+    }
+    if (length(missing_parameter_values) > 0) {
+      warning_message <- c(
+        "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
+      )
+      for (i in seq_along(missing_parameter_values)) {
+        if (length(init) > 1) {
+          line_text <- paste0(" - chain ", i, ": ")
+        } else {
+          line_text <- ""
+        }
+        if (length(missing_parameter_values[[i]]) > 0) {
+          warning_message <- c(warning_message, paste0(line_text, paste0(missing_parameter_values[[i]], collapse = ", "), "\n"))
         }
       }
-      if (length(missing_parameter_values) > 0) {
-        warning_message <- c(
-          "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
-        )
-        for (i in seq_along(missing_parameter_values)) {
-          if (length(init) > 1) {
-            line_text <- paste0(" - chain ", i, ": ")
-          } else {
-            line_text <- ""
-          }
-          if (length(missing_parameter_values[[i]]) > 0) {
-            warning_message <- c(warning_message, paste0(line_text, paste0(missing_parameter_values[[i]], collapse = ", "), "\n"))
-          }
-        }
-        message(warning_message)
-      }
+      message(warning_message)
     }
   }
   if (any(grepl("\\[", names(unlist(init))))) {
@@ -833,10 +830,10 @@ process_init_list <- function(init, num_procs, stan_file = NULL, include_paths =
 #' @noRd
 #' @param init Function generating a single list of initial values.
 #' @param num_procs Number of CmdStan processes.
-#' @param stan_file Path to the Stan model file.
-#' @param include_paths Folders with Stan files included in the Stan model file.
+#' @param model_variables A list of all parameters with their types and 
+#'   number of dimensions. Typically the output of model$variables().
 #' @return A character vector of file paths.
-process_init_function <- function(init, num_procs, stan_file = NULL, include_paths = NULL) {
+process_init_function <- function(init, num_procs, model_variables = NULL) {
   args <- formals(init)
   if (is.null(args)) {
     fn_test <- init()
@@ -852,7 +849,7 @@ process_init_function <- function(init, num_procs, stan_file = NULL, include_pat
   if (!is.list(fn_test) || is.data.frame(fn_test)) {
     stop("If 'init' is a function it must return a single list.")
   }
-  process_init_list(init_list, num_procs, stan_file, include_paths)
+  process_init_list(init_list, num_procs, model_variables)
 }
 
 #' Validate initial values
