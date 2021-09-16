@@ -564,7 +564,7 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' }
 #'
 variables <- function() {
-  if (cmdstan_version() < "2.27") {
+  if (cmdstan_version() < "2.27.0") {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
   }
   if (is.null(private$variables_)) {
@@ -805,6 +805,10 @@ sample <- function(data = NULL,
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_messages
   )
+  model_variables <- NULL
+  if (cmdstan_version() >= "2.27.0") {
+    model_variables <- self$variables()
+  }
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
     iter_sampling = iter_sampling,
@@ -821,14 +825,14 @@ sample <- function(data = NULL,
     term_buffer = term_buffer,
     window = window,
     fixed_param = fixed_param
-  )
+  )  
   args <- CmdStanArgs$new(
     method_args = sample_args,
     stan_file = self$stan_file(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
-    data_file = process_data(data, self$stan_file(), self$include_paths()),
+    data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
@@ -838,7 +842,7 @@ sample <- function(data = NULL,
     sig_figs = sig_figs,
     validate_csv = validate_csv,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    include_paths = self$include_paths()
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -942,6 +946,10 @@ sample_mpi <- function(data = NULL,
     parallel_procs = 1,
     show_stderr_messages = show_messages
   )
+  model_variables <- NULL
+  if (cmdstan_version() >= "2.27.0") {
+    model_variables <- self$variables()
+  }
   sample_args <- SampleArgs$new(
     iter_warmup = iter_warmup,
     iter_sampling = iter_sampling,
@@ -965,7 +973,7 @@ sample_mpi <- function(data = NULL,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
-    data_file = process_data(data, self$stan_file(), self$include_paths()),
+    data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
@@ -974,7 +982,7 @@ sample_mpi <- function(data = NULL,
     output_basename = output_basename,
     validate_csv = validate_csv,
     sig_figs = sig_figs,
-    include_paths = self$include_paths()
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
@@ -1055,6 +1063,10 @@ optimize <- function(data = NULL,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
+  model_variables <- NULL
+  if (cmdstan_version() >= "2.27.0") {
+    model_variables <- self$variables()
+  }
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
     init_alpha = init_alpha,
@@ -1072,7 +1084,7 @@ optimize <- function(data = NULL,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
-    data_file = process_data(data, self$stan_file(), self$include_paths()),
+    data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
@@ -1081,7 +1093,7 @@ optimize <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    include_paths = self$include_paths()
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1166,6 +1178,10 @@ variational <- function(data = NULL,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
+  model_variables <- NULL
+  if (cmdstan_version() >= "2.27.0") {
+    model_variables <- self$variables()
+  }
   variational_args <- VariationalArgs$new(
     algorithm = algorithm,
     iter = iter,
@@ -1184,7 +1200,7 @@ variational <- function(data = NULL,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
-    data_file = process_data(data, self$stan_file(), self$include_paths()),
+    data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
     init = init,
@@ -1193,7 +1209,7 @@ variational <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    include_paths = self$include_paths()
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1281,6 +1297,10 @@ generate_quantities <- function(fitted_params,
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
   )
+  model_variables <- NULL
+  if (cmdstan_version() >= "2.27.0") {
+    model_variables <- self$variables()
+  }
   gq_args <- GenerateQuantitiesArgs$new(fitted_params = fitted_params_files)
   args <- CmdStanArgs$new(
     method_args = gq_args,
@@ -1288,13 +1308,13 @@ generate_quantities <- function(fitted_params,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = seq_along(fitted_params_files),
-    data_file = process_data(data, self$stan_file(), self$include_paths()),
+    data_file = process_data(data, model_variables),
     seed = seed,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    include_paths = self$include_paths()
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1336,6 +1356,10 @@ diagnose_method <- function(data = NULL,
     show_stdout_messages = FALSE,
     show_stderr_messages = TRUE
   )
+  model_variables <- NULL
+  if (cmdstan_version() >= "2.27.0") {
+    model_variables <- self$variables()
+  }
   diagnose_args <- DiagnoseArgs$new(
     epsilon = epsilon,
     error = error
@@ -1346,12 +1370,12 @@ diagnose_method <- function(data = NULL,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
-    data_file = process_data(data, self$stan_file(), self$include_paths()),
+    data_file = process_data(data, model_variables),
     seed = seed,
     init = init,
     output_dir = output_dir,
     output_basename = output_basename,
-    include_paths = self$include_paths()
+    model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()

@@ -18,7 +18,8 @@ test_that("empty data list converted to NULL", {
   }
   ")
   expect_null(process_data(list()))
-  expect_null(process_data(list(), stan_file = stan_file))
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_null(process_data(list(), model_variables = mod$variables()))
 })
 
 test_that("process_data works for inputs of length one", {
@@ -29,19 +30,22 @@ test_that("process_data works for inputs of length one", {
     real val;
   }
   ")
-  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = 5))
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = 5))
   stan_file <- write_stan_file("
   data {
     int val;
   }
   ")
-  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = 5))
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = 5))
   stan_file <- write_stan_file("
   data {
     vector[1] val;
   }
   ")
-  expect_equal(jsonlite::read_json(process_data(data, stan_file = stan_file)), list(val = list(5)))
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = list(5)))
 })
 
 test_that("process_fitted_params() works with basic input types", {
@@ -283,12 +287,13 @@ test_that("process_data() errors on missing variables", {
     real val2;
   }
   ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
   expect_error(
-    process_data(data = list(val1 = 5), stan_file = stan_file),
+    process_data(data = list(val1 = 5), model_variables = mod$variables()),
     "Missing input data for the following data variables: val2."
   )
   expect_error(
-    process_data(data = list(val = 1), stan_file = stan_file),
+    process_data(data = list(val = 1), model_variables = mod$variables()),
     "Missing input data for the following data variables: val1, val2."
   )
   stan_file_no_data <- write_stan_file("
@@ -297,7 +302,8 @@ test_that("process_data() errors on missing variables", {
     real val2 = 2;
   }
   ")
-  v <- process_data(data = list(val1 = 5), stan_file = stan_file_no_data)
+  mod <- cmdstan_model(stan_file_no_data, compile = FALSE)
+  v <- process_data(data = list(val1 = 5), model_variables = mod$variables())
   expect_type(v, "character")
 })
 
@@ -308,7 +314,8 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
     real b;
   }
   ")
-  test_file <- process_data(list(a = 1, b = 2), stan_file = stan_file)
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  test_file <- process_data(list(a = 1, b = 2), model_variables = mod$variables())
   expect_match(
     "  \"a\": 1,",
     readLines(test_file)[2],
@@ -319,7 +326,7 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
     readLines(test_file)[3],
     fixed = TRUE
   )
-  test_file <- process_data(list(a = 1L, b = 1774000000), stan_file = stan_file)
+  test_file <- process_data(list(a = 1L, b = 1774000000), model_variables = mod$variables())
   expect_match(
     "  \"a\": 1,",
     readLines(test_file)[2],

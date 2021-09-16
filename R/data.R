@@ -144,9 +144,10 @@ list_to_array <- function(x, name = NULL) {
 #'   required elements/Stan variables and to help differentiate between a
 #'   vector of length 1 and a scalar when genereting the JSON file. This
 #'   argument is ignored when a path to a data file is supplied for `data`.
-#' @param include_paths Folders with Stan files included in the Stan model file.
+#' @param model_variables A list of all parameters with their types and 
+#'   number of dimensions. Typically the output of model$variables().
 #' @return Path to data file.
-process_data <- function(data, stan_file = NULL, include_paths = NULL) {
+process_data <- function(data, model_variables = NULL) {
   if (length(data) == 0) {
     data <- NULL
   }
@@ -163,32 +164,29 @@ process_data <- function(data, stan_file = NULL, include_paths = NULL) {
         call. = FALSE
       )
     }
-    if (cmdstan_version() >= "2.27.0" && !is.null(stan_file)) {
-      stan_file <- absolute_path(stan_file)
-      if (file.exists(stan_file)) {
-        data_variables <- model_variables(stan_file, include_paths)$data
-        is_data_supplied <- names(data_variables) %in%  names(data)
-        if (!all(is_data_supplied)) {
-          missing <- names(data_variables[!is_data_supplied])
-          stop(
-            "Missing input data for the following data variables: ",
-            paste0(missing, collapse = ", "),
-            ".",
-            call. = FALSE
-          )
-        }          
-        for(var_name in names(data_variables)) {
-          # distinguish between scalars and arrays/vectors of length 1
-          if (length(data[[var_name]]) == 1 
-              && data_variables[[var_name]]$dimensions == 1) {
-              data[[var_name]] <- array(data[[var_name]], dim = 1)
-          }
-          # Make sure integer inputs are of integer type to avoid
-          # generating a decimal point in write_stan_json
-          if (data_variables[[var_name]]$type == "int"
-              && !is.integer(data[[var_name]])) {
-                data[[var_name]] <- as.integer(data[[var_name]])
-          }
+    if (!is.null(model_variables)) {
+      data_variables <- model_variables$data
+      is_data_supplied <- names(data_variables) %in%  names(data)
+      if (!all(is_data_supplied)) {
+        missing <- names(data_variables[!is_data_supplied])
+        stop(
+          "Missing input data for the following data variables: ",
+          paste0(missing, collapse = ", "),
+          ".",
+          call. = FALSE
+        )
+      }          
+      for(var_name in names(data_variables)) {
+        # distinguish between scalars and arrays/vectors of length 1
+        if (length(data[[var_name]]) == 1 
+            && data_variables[[var_name]]$dimensions == 1) {
+            data[[var_name]] <- array(data[[var_name]], dim = 1)
+        }
+        # Make sure integer inputs are of integer type to avoid
+        # generating a decimal point in write_stan_json
+        if (data_variables[[var_name]]$type == "int"
+            && !is.integer(data[[var_name]])) {
+              data[[var_name]] <- as.integer(data[[var_name]])
         }
       }
     }
