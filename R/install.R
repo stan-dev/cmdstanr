@@ -85,6 +85,14 @@ install_cmdstan <- function(dir = NULL,
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   }
+  make_local_msg <- NULL
+  if (!is.null(cmdstan_version(error_on_NA = FALSE))) {
+    current_make_local_contents <- cmdstan_make_local()
+    if (length(current_make_local_contents) > 0) {
+      old_cmdstan_path <- cmdstan_path()
+      make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", cmdstan_path(), "\"))")
+    }
+  }
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
@@ -190,6 +198,15 @@ install_cmdstan <- function(dir = NULL,
 
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
   set_cmdstan_path(dir_cmdstan)
+  if (!is.null(make_local_msg) && old_cmdstan_path != cmdstan_path()) {
+    message(
+      "\nThe previous installation of CmdStan had a non-empty make/local file.\n",
+      "If you wish to copy the file to the new installation, run the following commands:\n",
+      "\n",
+      make_local_msg,
+      "\nrebuild_cmdstan(cores = ...)"
+    )
+  }
 }
 
 
