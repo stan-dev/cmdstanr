@@ -193,6 +193,7 @@ CmdStanModel <- R6::R6Class(
     cpp_options_ = list(),
     stanc_options_ = list(),
     include_paths_ = NULL,
+    compile_info_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -210,9 +211,17 @@ CmdStanModel <- R6::R6Class(
       private$precompile_include_paths_ <- args$include_paths
       private$include_paths_ <- args$include_paths
       private$dir_ <- args$dir
-
       if (compile) {
         self$compile(...)
+      }
+      if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
+        cpp_options <- model_compile_info(self$exe_file())
+        for (cpp_option_name in names(cpp_options)) {
+          if (cpp_option_name != "stan_version" &&
+              (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
+            private$cpp_options_[[cpp_option_name]] <- cpp_options[[cpp_option_name]]
+          }
+        }
       }
       invisible(self)
     },
@@ -1497,4 +1506,34 @@ model_variables <- function(stan_file, include_paths = NULL) {
   variables$functions <- NULL
   variables$distributions <- NULL
   variables
+}
+
+model_compile_info <- function(exe_file) {
+  info <- NULL
+  if (cmdstan_version() > "2.26.1") {
+    ret <- processx::run(
+      command = exe_file,
+      args = c("info"),
+      error_on_status = FALSE
+    )
+    if (ret$status == 0) {
+      info <- list()
+      info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
+      for (key_val in info_raw) {
+        if (length(key_val) > 1) {
+          key_val <- trimws(key_val)
+          val <- key_val[2]
+          if (!is.na(as.logical(val))) {
+            val <- as.logical(val)
+          }
+          info[[tolower(key_val[1])]] <- val
+        }
+      }
+      info[["stan_version"]] <- paste0(info[["stan_version_major"]], ".", info[["stan_version_minor"]], ".", info[["stan_version_patch"]])
+      info[["stan_version_major"]] <- NULL
+      info[["stan_version_minor"]] <- NULL
+      info[["stan_version_patch"]] <- NULL
+    }
+  }
+  info
 }
