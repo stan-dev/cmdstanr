@@ -7,6 +7,8 @@
 #' @param stan_file (string) The path to a `.stan` file containing a Stan
 #'   program. The helper function [write_stan_file()] is provided for cases when
 #'   it is more convenient to specify the Stan program as a string.
+#' @param exe_file (string) The path to an existing Stan model executable. This
+#'   argument can only be used with Cmdstan 2.27+.
 #' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -133,10 +135,12 @@
 #' fit_optim_w_init_list$init()
 #' }
 #'
-cmdstan_model <- function(stan_file, compile = TRUE, ...) {
-  CmdStanModel$new(stan_file = stan_file, compile = compile, ...)
+cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...) {
+  if (cmdstan_version() < "2.27.0" && !is.null(exe_file)) {
+    stop("'exe_file' argument is only supported with CmdStan 2.27 and newer.", call. = FALSE)
+  }
+  CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
 }
-
 
 # CmdStanModel -----------------------------------------------------------------
 
@@ -199,18 +203,28 @@ CmdStanModel <- R6::R6Class(
     variables_ = NULL
   ),
   public = list(
-    initialize = function(stan_file, compile, ...) {
+    initialize = function(stan_file = NULL, exe_file = NULL, compile, ...) {
       args <- list(...)
-      checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
-      checkmate::assert_flag(compile)
-      private$stan_file_ <- absolute_path(stan_file)
-      private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
-      private$precompile_cpp_options_ <- args$cpp_options %||% list()
-      private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
-      private$precompile_include_paths_ <- args$include_paths
-      private$include_paths_ <- args$include_paths
       private$dir_ <- args$dir
-      if (compile) {
+      if (!is.null(stan_file)) {
+        checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
+        checkmate::assert_flag(compile)
+        private$stan_file_ <- absolute_path(stan_file)
+        private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
+        private$precompile_cpp_options_ <- args$cpp_options %||% list()
+        private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
+        private$precompile_include_paths_ <- args$include_paths
+        private$include_paths_ <- args$include_paths
+      }      
+      if (!is.null(exe_file)) {
+        ext <- if (os_is_windows()) ".exe" else ""
+        checkmate::assert_file_exists(exe_file, access = "r", extension = ext)
+        private$exe_file_ <- absolute_path(exe_file)
+        if (is.null(stan_file)) {
+          private$model_name_ <- sub(" ", "_", strip_ext(basename(private$exe_file_)))
+        }
+      }
+      if (!is.null(stan_file) && compile) {
         self$compile(...)
       }
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
@@ -575,7 +589,7 @@ variables <- function() {
   if (cmdstan_version() < "2.27.0") {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
   }
-  if (is.null(private$variables_)) {
+  if (is.null(private$variables_) && length(self$stan_file()) > 0 && file.exists(self$stan_file())) {
     private$variables_ <- model_variables(self$stan_file(), self$include_paths())
   }
   private$variables_
@@ -642,6 +656,12 @@ check_syntax <- function(pedantic = FALSE,
                          include_paths = NULL,
                          stanc_options = list(),
                          quiet = FALSE) {
+  if (length(self$stan_file()) == 0) {
+    stop("$check_syntax() can not be used as the Stan file was not defined for the 'CmdStanModel' object.", call. = FALSE)
+  }
+  if (!file.exists(self$stan_file())) {
+    stop("$check_syntax() can not be used as the Stan file does not exist.", call. = FALSE)
+  }
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
@@ -799,7 +819,7 @@ sample <- function(data = NULL,
   }
 
   if (cmdstan_version() >= "2.27.0" && !fixed_param) {
-    if (length(self$variables()$parameters) == 0) {
+    if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
       warning("Model contains no parameters. Automatically setting fixed_param = TRUE.")
       fixed_param <- TRUE
     }
