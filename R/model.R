@@ -193,7 +193,6 @@ CmdStanModel <- R6::R6Class(
     cpp_options_ = list(),
     stanc_options_ = list(),
     include_paths_ = NULL,
-    compile_info_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -1526,13 +1525,13 @@ model_compile_info <- function(exe_file) {
           if (!is.na(as.logical(val))) {
             val <- as.logical(val)
           }
-          info[[tolower(key_val[1])]] <- val
+          info[[toupper(key_val[1])]] <- val
         }
       }
-      info[["stan_version"]] <- paste0(info[["stan_version_major"]], ".", info[["stan_version_minor"]], ".", info[["stan_version_patch"]])
-      info[["stan_version_major"]] <- NULL
-      info[["stan_version_minor"]] <- NULL
-      info[["stan_version_patch"]] <- NULL
+      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
+      info[["STAN_VERSION_MAJOR"]] <- NULL
+      info[["STAN_VERSION_MINOR"]] <- NULL
+      info[["STAN_VERSION_PATCH"]] <- NULL
     }
   }
   info

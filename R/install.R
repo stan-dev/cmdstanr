@@ -239,14 +239,14 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
     for (i in seq_len(length(cpp_options))) {
       option_name <- names(cpp_options)[i]
       if (isTRUE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(option_name, "=true"))
+        built_flags <- c(built_flags, paste0(toupper(option_name), "=true"))
       } else if (isFALSE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(option_name, "=false"))
+        built_flags <- c(built_flags, paste0(toupper(option_name), "=false"))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
           built_flags <- c(built_flags, paste0(cpp_options[[i]]))
         } else {
-          built_flags <- c(built_flags, paste0(option_name, "=", cpp_options[[i]]))
+          built_flags <- c(built_flags, paste0(toupper(option_name), "=", cpp_options[[i]]))
         }
       }
     }
