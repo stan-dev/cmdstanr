@@ -482,3 +482,29 @@ test_that("include_paths_stanc3_args() works", {
     )
   )
 })
+
+test_that("cpp_options work with settings in make/local", {
+  backup <- cmdstan_make_local()
+
+  if (length(mod$exe_file()) > 0 && file.exists(mod$exe_file())) {
+    file.remove(mod$exe_file())
+  }
+
+  cmdstan_make_local(cpp_options = list(), append = FALSE)
+
+  mod <- cmdstan_model(stan_file = stan_program)
+  expect_null(mod$cpp_options()$STAN_THREADS)
+
+  file.remove(mod$exe_file())
+
+  cmdstan_make_local(cpp_options = list(stan_threads = TRUE))
+
+  file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+  mod <- cmdstan_model(file)
+  expect_true(mod$cpp_options()$STAN_THREADS)
+
+  file.remove(mod$exe_file())
+
+  # restore
+  cmdstan_make_local(cpp_options = backup, append = FALSE)
+})

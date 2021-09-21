@@ -210,9 +210,17 @@ CmdStanModel <- R6::R6Class(
       private$precompile_include_paths_ <- args$include_paths
       private$include_paths_ <- args$include_paths
       private$dir_ <- args$dir
-
       if (compile) {
         self$compile(...)
+      }
+      if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
+        cpp_options <- model_compile_info(self$exe_file())
+        for (cpp_option_name in names(cpp_options)) {
+          if (cpp_option_name != "stan_version" &&
+              (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
+            private$cpp_options_[[cpp_option_name]] <- cpp_options[[cpp_option_name]]
+          }
+        }
       }
       invisible(self)
     },
@@ -1497,4 +1505,34 @@ model_variables <- function(stan_file, include_paths = NULL) {
   variables$functions <- NULL
   variables$distributions <- NULL
   variables
+}
+
+model_compile_info <- function(exe_file) {
+  info <- NULL
+  if (cmdstan_version() > "2.26.1") {
+    ret <- processx::run(
+      command = exe_file,
+      args = c("info"),
+      error_on_status = FALSE
+    )
+    if (ret$status == 0) {
+      info <- list()
+      info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
+      for (key_val in info_raw) {
+        if (length(key_val) > 1) {
+          key_val <- trimws(key_val)
+          val <- key_val[2]
+          if (!is.na(as.logical(val))) {
+            val <- as.logical(val)
+          }
+          info[[toupper(key_val[1])]] <- val
+        }
+      }
+      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
+      info[["STAN_VERSION_MAJOR"]] <- NULL
+      info[["STAN_VERSION_MINOR"]] <- NULL
+      info[["STAN_VERSION_PATCH"]] <- NULL
+    }
+  }
+  info
 }
