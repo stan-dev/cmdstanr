@@ -350,6 +350,22 @@ test_that("check_syntax() works", {
     mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic"), quiet = TRUE),
     regexp = NA
   )
+
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file_tmp <- write_stan_file(code)
+  mod_removed_stan_file <- cmdstan_model(stan_file_tmp)
+  file.remove(stan_file_tmp)
+  expect_error(
+    mod_removed_stan_file$check_syntax(),
+    "The Stan file used to create the `CmdStanModel` object does not exist."
+  )
 })
 
 test_that("check_syntax() works with pedantic=TRUE", {
