@@ -152,7 +152,7 @@ test_that("optimize() method runs when the stan file is removed", {
   file.copy(testing_stan_file("bernoulli"), stan_file_tmp)
   mod_tmp <- cmdstan_model(stan_file_tmp)
   file.remove(stan_file_tmp)
-  expect_sample_output(
+  expect_optim_output(
     mod_tmp$optimize(data = data_list)
   )
 })
