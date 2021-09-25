@@ -142,7 +142,7 @@ test_that("sample() method runs when all arguments specified", {
 
 test_that("sample() method runs when the stan file is removed", {
   skip_on_cran()
-  stan_file_tmp <- tempfile(fileext = ".stan")
+  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
   file.copy(stan_program, stan_file_tmp)
   mod_tmp <- cmdstan_model(stan_file_tmp)
   file.remove(stan_file_tmp)
