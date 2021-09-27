@@ -85,6 +85,22 @@ test_that("code() and print() methods work", {
 
   expect_known_output(mod$print(), file = test_path("answers", "model-print-output.stan"))
   expect_known_value(mod$code(), file = test_path("answers", "model-code-output.rds"))
+
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file_tmp <- write_stan_file(code)
+  mod_removed_stan_file <- cmdstan_model(stan_file_tmp)
+  file.remove(stan_file_tmp)
+  expect_error(
+    mod_removed_stan_file$code(),
+    "The Stan file used to create the `CmdStanModel` object does not exist."
+  )
 })
 
 test_that("sample() method works with data list", {
@@ -122,6 +138,17 @@ test_that("sample() method runs when all arguments specified", {
 
   expect_sample_output(fit <- do.call(mod$sample, ok_arg_values), 2)
   expect_is(fit, "CmdStanMCMC")
+})
+
+test_that("sample() method runs when the stan file is removed", {
+  skip_on_cran()
+  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
+  file.copy(stan_program, stan_file_tmp)
+  mod_tmp <- cmdstan_model(stan_file_tmp)
+  file.remove(stan_file_tmp)
+  expect_sample_output(
+    mod_tmp$sample(data = data_list)
+  )
 })
 
 test_that("sample() prints informational messages depening on show_messages", {
