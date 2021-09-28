@@ -9,9 +9,17 @@ test_that("eng_cmdstan throws correct errors", {
 test_that("eng_cmdstan works", {
   skip_on_cran()
   skip_if_not_installed("knitr")
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
   opts <- knitr::opts_chunk$merge(list(
     output.var = "ABC",
-    file = testing_stan_file("bernoulli"),
+    code = code,
     cache = TRUE,
     cache.path = tempdir()
   ))
