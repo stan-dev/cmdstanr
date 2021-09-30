@@ -337,4 +337,23 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
     readLines(test_file)[3],
     fixed = TRUE
   )
+
+  stan_file <- write_stan_file("
+  data {
+    int<lower=0> k[3,3];
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  test_file <- process_data(list(k = matrix(c(18, 18, 16, 13, 9, 6, 4, 4, 4), nrow=3, ncol=3, byrow=T)), model_variables = mod$variables())
+  print(readLines(test_file)[2:3])
+  expect_match(
+    "  \"k\": [",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "    [18, 18, 16],",
+    readLines(test_file)[3],
+    fixed = TRUE
+  )
 })
