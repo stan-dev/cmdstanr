@@ -347,14 +347,9 @@ test_that("check_syntax() works", {
     "Stan program is syntactically correct",
     fixed = TRUE
   )
-  if (cmdstan_version() < "2.28.0") {
-    warn <- NA
-  } else {
-    warn <- " *"
-  }
   expect_message(
     mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic"), quiet = TRUE),
-    regexp = warn
+    regexp = NA
   )
 
   code <- "
