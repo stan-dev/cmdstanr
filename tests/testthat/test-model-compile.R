@@ -317,7 +317,6 @@ test_that("*hpp_file() functions work", {
   expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))))
 })
 
-
 test_that("check_syntax() works", {
   skip_on_cran()
   stan_file <- testing_stan_file("fail")
@@ -365,8 +364,16 @@ test_that("check_syntax() works", {
   file.remove(stan_file_tmp)
   expect_error(
     mod_removed_stan_file$check_syntax(),
-    "The Stan file used to create the `CmdStanModel` object does not exist."
+    "The Stan file used to create the `CmdStanModel` object does not exist.",
+    fixed = TRUE
   )
+  mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
+  expect_error(
+    mod_exe$check_syntax(),
+    "'$check_syntax()' can not be used as the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+
 })
 
 test_that("check_syntax() works with pedantic=TRUE", {
@@ -525,4 +532,34 @@ test_that("cpp_options work with settings in make/local", {
 
   # restore
   cmdstan_make_local(cpp_options = backup, append = FALSE)
+})
+
+test_that("cmdstan_model works with exe_file", {
+  stan_file <- testing_stan_file("bernoulli")
+  mod <- cmdstan_model(stan_file)
+  expect_true(file.exists(mod$exe_file()))
+  default_exe_file <- mod$exe_file()
+  file.remove(mod$exe_file())
+
+  tmp_exe_file <- tempfile()
+  mod <- cmdstan_model(
+    stan_file = stan_file,
+    exe_file = tmp_exe_file
+  )
+  expect_match(
+    mod$exe_file(),
+    tmp_exe_file
+  )
+  expect_true(file.exists(mod$exe_file()))
+  expect_false(file.exists(default_exe_file))
+
+  mod <- cmdstan_model(
+    exe_file = tmp_exe_file
+  )
+  expect_match(
+    mod$exe_file(),
+    tmp_exe_file
+  )
+  expect_true(file.exists(mod$exe_file()))
+  expect_false(file.exists(default_exe_file))
 })

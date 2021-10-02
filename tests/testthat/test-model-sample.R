@@ -101,6 +101,12 @@ test_that("code() and print() methods work", {
     mod_removed_stan_file$code(),
     "The Stan file used to create the `CmdStanModel` object does not exist."
   )
+  mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
+  expect_error(
+    mod_exe$check_syntax(),
+    "'$check_syntax()' can not be used as the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
 })
 
 test_that("sample() method works with data list", {
@@ -356,4 +362,3 @@ generated quantities  {
   expect_null(fit$sampler_diagnostics())
   expect_equal(posterior::variables(fit$draws()), "y")
 })
-
