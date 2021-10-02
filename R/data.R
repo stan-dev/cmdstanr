@@ -186,7 +186,7 @@ process_data <- function(data, model_variables = NULL) {
         # generating a decimal point in write_stan_json
         if (data_variables[[var_name]]$type == "int"
             && !is.integer(data[[var_name]])) {
-              data[[var_name]] <- as.integer(data[[var_name]])
+          mode(data[[var_name]]) <- "integer"            
         }
       }
     }

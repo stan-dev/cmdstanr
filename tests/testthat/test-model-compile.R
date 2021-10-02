@@ -344,11 +344,28 @@ test_that("check_syntax() works", {
   )
   expect_message(
     mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic")),
-    "Stan program is syntactically correct"
+    "Stan program is syntactically correct",
+    fixed = TRUE
   )
   expect_message(
     mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic"), quiet = TRUE),
     regexp = NA
+  )
+
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file_tmp <- write_stan_file(code)
+  mod_removed_stan_file <- cmdstan_model(stan_file_tmp)
+  file.remove(stan_file_tmp)
+  expect_error(
+    mod_removed_stan_file$check_syntax(),
+    "The Stan file used to create the `CmdStanModel` object does not exist."
   )
 })
 
@@ -446,6 +463,7 @@ test_that("compiliation errors if folder with the model name exists", {
     cmdstan_model(stan_file),
     "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again."
   )
+  file.remove(exe)
 })
 
 test_that("cpp_options_to_compile_flags() works", {

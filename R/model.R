@@ -242,6 +242,7 @@ CmdStanModel <- R6::R6Class(
       private$include_paths_
     },
     code = function() {
+      assert_stan_file_exists(self$stan_file())
       readLines(self$stan_file())
     },
     print = function() {
@@ -657,10 +658,10 @@ check_syntax <- function(pedantic = FALSE,
                          stanc_options = list(),
                          quiet = FALSE) {
   if (length(self$stan_file()) == 0) {
-    stop("$check_syntax() can not be used as the Stan file was not defined for the 'CmdStanModel' object.", call. = FALSE)
+    stop("'$check_syntax()' can not be used as the 'CmdStanModel' was not created with Stan files.", call. = FALSE)
   }
   if (!file.exists(self$stan_file())) {
-    stop("$check_syntax() can not be used as the Stan file does not exist.", call. = FALSE)
+    stop("'$check_syntax()' can not be used as the Stan file does not exist.", call. = FALSE)
   }
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
@@ -817,11 +818,12 @@ sample <- function(data = NULL,
     warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
     save_latent_dynamics <- save_extra_diagnostics
   }
-
   if (cmdstan_version() >= "2.27.0" && !fixed_param) {
-    if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
-      warning("Model contains no parameters. Automatically setting fixed_param = TRUE.")
-      fixed_param <- TRUE
+    if (file.exists(self$stan_file())) {
+      if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
+        warning("Model contains no parameters. Automatically setting fixed_param = TRUE.")
+        fixed_param <- TRUE
+      }
     }
   }
   if (fixed_param) {
@@ -834,7 +836,7 @@ sample <- function(data = NULL,
     show_stderr_messages = show_messages
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0") {
+  if (cmdstan_version() >= "2.27.0" && file.exists(self$stan_file())) {
     model_variables <- self$variables()
   }
   sample_args <- SampleArgs$new(
@@ -975,7 +977,7 @@ sample_mpi <- function(data = NULL,
     show_stderr_messages = show_messages
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0") {
+  if (cmdstan_version() >= "2.27.0" && file.exists(self$stan_file())) {
     model_variables <- self$variables()
   }
   sample_args <- SampleArgs$new(
@@ -1092,7 +1094,7 @@ optimize <- function(data = NULL,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0") {
+  if (cmdstan_version() >= "2.27.0" && file.exists(self$stan_file())) {
     model_variables <- self$variables()
   }
   optimize_args <- OptimizeArgs$new(
@@ -1207,7 +1209,7 @@ variational <- function(data = NULL,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0") {
+  if (cmdstan_version() >= "2.27.0" && file.exists(self$stan_file())) {
     model_variables <- self$variables()
   }
   variational_args <- VariationalArgs$new(
@@ -1326,7 +1328,7 @@ generate_quantities <- function(fitted_params,
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0") {
+  if (cmdstan_version() >= "2.27.0" && file.exists(self$stan_file())) {
     model_variables <- self$variables()
   }
   gq_args <- GenerateQuantitiesArgs$new(fitted_params = fitted_params_files)
@@ -1385,7 +1387,7 @@ diagnose_method <- function(data = NULL,
     show_stderr_messages = TRUE
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0") {
+  if (cmdstan_version() >= "2.27.0" && file.exists(self$stan_file())) {
     model_variables <- self$variables()
   }
   diagnose_args <- DiagnoseArgs$new(
@@ -1470,6 +1472,12 @@ assert_valid_stanc_options <- function(stanc_options) {
     i <- i + 1
   }
   invisible(stanc_options)
+}
+
+assert_stan_file_exists <- function(stan_file) {
+  if (!file.exists(stan_file)) {
+    stop("The Stan file used to create the `CmdStanModel` object does not exist.", call. = FALSE)
+  }
 }
 
 cpp_options_to_compile_flags <- function(cpp_options) {
