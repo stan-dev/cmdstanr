@@ -244,6 +244,9 @@ CmdStanModel <- R6::R6Class(
       private$include_paths_
     },
     code = function() {
+      if (length(self$stan_file()) == 0) {
+        stop("The `CmdStanModel` object was not created with a Stan file. '$code()' can not be used.", call. = FALSE)
+      }
       assert_stan_file_exists(self$stan_file())
       readLines(self$stan_file())
     },

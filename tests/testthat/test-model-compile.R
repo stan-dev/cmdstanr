@@ -563,3 +563,23 @@ test_that("cmdstan_model works with exe_file", {
   expect_true(file.exists(mod$exe_file()))
   expect_false(file.exists(default_exe_file))
 })
+
+test_that("cmdstan_model created only with exe_file errors for check_syntax, code, ... ", {
+  mod <- testing_model("bernoulli")
+  mod_exe <- cmdstan_model(exe_file = mod$exe_file())
+  expect_error(
+    mod_exe$code(),
+    "The `CmdStanModel` object was not created with a Stan file. '$code()' can not be used.",
+    fixed = TRUE
+  )
+  expect_error(
+    mod_exe$check_syntax(),
+    "$check_syntax()' can not be used as the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+  expect_error(
+    mod_exe$variables(),
+    "The `CmdStanModel` object was not created with a Stan file. '$variables()' can not be used.",
+    fixed = TRUE
+  )
+})
