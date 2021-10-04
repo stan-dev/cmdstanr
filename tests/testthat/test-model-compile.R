@@ -548,7 +548,7 @@ test_that("cmdstan_model works with exe_file", {
   )
   expect_match(
     mod$exe_file(),
-    tmp_exe_file
+    repair_path(tmp_exe_file)
   )
   expect_true(file.exists(mod$exe_file()))
   expect_false(file.exists(default_exe_file))
@@ -558,7 +558,7 @@ test_that("cmdstan_model works with exe_file", {
   )
   expect_match(
     mod$exe_file(),
-    tmp_exe_file
+    repair_path(tmp_exe_file)
   )
   expect_true(file.exists(mod$exe_file()))
   expect_false(file.exists(default_exe_file))
