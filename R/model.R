@@ -416,6 +416,9 @@ compile <- function(quiet = TRUE,
   if (!is.null(dir)) {
     dir <- repair_path(dir)
     checkmate::assert_directory_exists(dir, access = "rw")
+    if (length(self$exe_file()) != 0) {
+      private$exe_file_ <- file.path(dir, basename(self$exe_file()))
+    }
   }
 
   # temporary deprecation warnings
@@ -425,27 +428,12 @@ compile <- function(quiet = TRUE,
   }
 
   if (length(self$exe_file()) == 0) {
-    exe_suffix <- NULL
-    if (isTRUE(cpp_options$stan_threads)) {
-      exe_suffix <- c(exe_suffix, "threads")
-    }
-    if (isTRUE(cpp_options$stan_mpi)) {
-      exe_suffix <- c(exe_suffix, "mpi")
-    }
-    if (isTRUE(cpp_options$stan_opencl)) {
-      exe_suffix <- c(exe_suffix, "opencl")
-    }
-    exe_suffix <- paste0(exe_suffix, collapse = "_")
-    if (nzchar(exe_suffix)) {
-      exe_suffix <- paste0("_", exe_suffix)
-    }
-
     if (is.null(dir)) {
       exe_base <- self$stan_file()
     } else {
       exe_base <- file.path(dir, basename(self$stan_file()))
     }
-    exe <- cmdstan_ext(paste0(strip_ext(exe_base), exe_suffix))
+    exe <- cmdstan_ext(strip_ext(exe_base))
     if (dir.exists(exe)) {
       stop("There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.", call. = FALSE)
     }
