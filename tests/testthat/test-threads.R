@@ -23,7 +23,7 @@ test_that("using threads_per_chain without stan_threads set in compile() warns",
 
 test_that("threading works with sample()", {
   skip_on_cran()
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
   expect_error(
     mod$sample(data = data_file_json),
