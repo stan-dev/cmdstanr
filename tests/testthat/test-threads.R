@@ -57,7 +57,7 @@ test_that("threading works with sample()", {
 
 test_that("threading works with optimize()", {
   skip_on_cran()
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
   expect_error(
     mod$optimize(data = data_file_json),
@@ -92,7 +92,7 @@ test_that("threading works with optimize()", {
 
 test_that("threading works with variational()", {
   skip_on_cran()
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
   expect_error(
     mod$variational(data = data_file_json),
@@ -127,8 +127,8 @@ test_that("threading works with variational()", {
 
 test_that("threading works with generate_quantities()", {
   skip_on_cran()
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
-  mod_gq <- cmdstan_model(stan_gq_program, cpp_options = list(stan_threads = TRUE))
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
+  mod_gq <- cmdstan_model(stan_gq_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
   expect_output(
     f <- mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
     "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
