@@ -318,7 +318,7 @@ test_that("loo works for all draws storage formats", {
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
   # reset option
-  options(cmdstanr_draws_format = "draws_array")
+  options(cmdstanr_draws_format = NULL)
 })
 
 test_that("draws() works for different formats", {
