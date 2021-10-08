@@ -217,9 +217,9 @@ CmdStanModel <- R6::R6Class(
         private$include_paths_ <- args$include_paths
       }
       if (!is.null(exe_file)) {
-        ext <- if (os_is_windows()) ".exe" else ""
         if (is.null(stan_file)) {
-          checkmate::assert_file_exists(exe_file, access = "r", extension = ext)
+          print(exe_file)
+          checkmate::assert_file_exists(exe_file, access = "r", extension = cmdstan_ext())
         }
         private$exe_file_ <- absolute_path(exe_file)
         if (is.null(stan_file)) {
