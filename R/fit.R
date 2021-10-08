@@ -761,7 +761,7 @@ profiles <- function() {
       private$profiles_[[i]] <- data.table::fread(f, integer64 = "character", data.table = FALSE)
       i <- i + 1
     }
-  }  
+  }
   private$profiles_
 }
 CmdStanFit$set("public", name = "profiles", value = profiles)
@@ -1003,7 +1003,7 @@ CmdStanMCMC <- R6::R6Class(
 #'
 loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
   require_suggested_package("loo")
-  LLarray <- self$draws(variables)
+  LLarray <- self$draws(variables, format = "draws_array")
   if (is.logical(r_eff)) {
     if (isTRUE(r_eff)) {
       r_eff_cores <- list(...)[["cores"]] %||% getOption("mc.cores", 1)
