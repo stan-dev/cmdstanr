@@ -541,7 +541,7 @@ test_that("cmdstan_model works with exe_file", {
   default_exe_file <- mod$exe_file()
   file.remove(mod$exe_file())
 
-  tmp_exe_file <- tempfile()
+  tmp_exe_file <- tempfile(filext = cmdstan_ext())
   mod <- cmdstan_model(
     stan_file = stan_file,
     exe_file = tmp_exe_file
