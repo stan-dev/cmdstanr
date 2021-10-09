@@ -218,10 +218,10 @@ CmdStanModel <- R6::R6Class(
       }
       if (!is.null(exe_file)) {
         ext <- if (os_is_windows()) ".exe" else ""
+        private$exe_file_ <- repair_path(absolute_path(exe_file))
         if (is.null(stan_file)) {
-          checkmate::assert_file_exists(exe_file, access = "r", extension = ext)
+          checkmate::assert_file_exists(private$exe_file_, access = "r", extension = ext)
         }
-        private$exe_file_ <- absolute_path(exe_file)
         if (is.null(stan_file)) {
           private$model_name_ <- sub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
