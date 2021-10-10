@@ -45,6 +45,8 @@ variables; improved differentiating arrays/vectors of length 1 and scalars
 when generating JSON data files; generating floating point numbers with
 decimal points to fix issue with parsing large numbers. (#538)
 
+* Added the option to creat `CmdStanModel` from the executable only with the
+`exe_file` argument.
 
 # cmdstanr 0.4.0
 
