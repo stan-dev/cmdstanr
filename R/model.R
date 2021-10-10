@@ -480,6 +480,12 @@ compile <- function(quiet = TRUE,
   if (isTRUE(cpp_options$stan_opencl)) {
     stanc_options[["use-opencl"]] <- TRUE
   }
+  if (!is.null(cpp_options[["USER_HEADER"]])) {
+    cpp_options[["USER_HEADER"]] <- absolute_path(cpp_options[["USER_HEADER"]])
+  }
+  if (!is.null(cpp_options[["user_header"]])) {
+    cpp_options[["user_header"]] <- absolute_path(cpp_options[["user_header"]])
+  }
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
