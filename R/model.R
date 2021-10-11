@@ -1,14 +1,18 @@
 #' Create a new CmdStanModel object
 #'
 #' \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-#' Create a new [`CmdStanModel`] object from a file containing a Stan program.
+#' Create a new [`CmdStanModel`] object from a file containing a Stan program
+#' or from an existing Stan executable.
 #'
 #' @export
 #' @param stan_file (string) The path to a `.stan` file containing a Stan
 #'   program. The helper function [write_stan_file()] is provided for cases when
-#'   it is more convenient to specify the Stan program as a string.
-#' @param exe_file (string) The path to an existing Stan model executable. This
-#'   argument can only be used with Cmdstan 2.27+.
+#'   it is more convenient to specify the Stan program as a string. If
+#'   `stan_file` is not specified then `exe_file` must be specified.
+#' @param exe_file (string) The path to an existing Stan model executable. Can
+#'   be provided instead of or in addition to `stan_file` (if `stan_file` is
+#'   omitted some `CmdStanModel` methods like `$code()` and `$print()` will not
+#'   work). This argument can only be used with CmdStan 2.27+.
 #' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -565,7 +569,7 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' @description The `$variables()` method of a [`CmdStanModel`] object returns
 #'   a list, each element representing a Stan model block: `data`, `parameters`,
 #'   `transformed_parameters` and `generated_quantities`.
-#'   
+#'
 #'   Each element contains a list of variables, with each variables represented
 #'   as a list with infromation on its scalar type (`real` or `int`) and
 #'   number of dimensions.
@@ -582,7 +586,7 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'
 #' # create a `CmdStanModel` object, compiling the model is not required
 #' mod <- cmdstan_model(file, compile = FALSE)
-#' 
+#'
 #' mod$variables()
 #'
 #' }
@@ -858,7 +862,7 @@ sample <- function(data = NULL,
     term_buffer = term_buffer,
     window = window,
     fixed_param = fixed_param
-  )  
+  )
   args <- CmdStanArgs$new(
     method_args = sample_args,
     stan_file = self$stan_file(),

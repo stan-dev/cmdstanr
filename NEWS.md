@@ -8,7 +8,7 @@ optimization. (#522)
 * Fixed issue with handling `NA` as the reported external process
 status. (#544, @myshkin)
 
-* Fixed issue with handling models with no parameters and Cmdstan
+* Fixed issue with handling models with no parameters and CmdStan
 2.27+.
 
 ### New features
@@ -46,7 +46,7 @@ when generating JSON data files; generating floating point numbers with
 decimal points to fix issue with parsing large numbers. (#538)
 
 * Added the option to creat `CmdStanModel` from the executable only with the
-`exe_file` argument.
+`exe_file` argument. (#564)
 
 # cmdstanr 0.4.0
 
