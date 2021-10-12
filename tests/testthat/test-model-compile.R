@@ -370,7 +370,7 @@ test_that("check_syntax() works", {
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
     mod_exe$check_syntax(),
-    "'$check_syntax()' can not be used as the 'CmdStanModel' was not created with a Stan file.",
+    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
 
@@ -569,7 +569,7 @@ test_that("cmdstan_model created only with exe_file errors for check_syntax, cod
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
     mod_exe$code(),
-    "The `CmdStanModel` object was not created with a Stan file. '$code()' can not be used.",
+    "'$code()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
   expect_error(
@@ -579,7 +579,7 @@ test_that("cmdstan_model created only with exe_file errors for check_syntax, cod
   )
   expect_error(
     mod_exe$variables(),
-    "The `CmdStanModel` object was not created with a Stan file. '$variables()' can not be used.",
+    "'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
 })

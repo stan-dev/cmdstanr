@@ -104,7 +104,7 @@ test_that("code() and print() methods work", {
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
     mod_exe$check_syntax(),
-    "'$check_syntax()' can not be used as the 'CmdStanModel' was not created with a Stan file.",
+    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
 })

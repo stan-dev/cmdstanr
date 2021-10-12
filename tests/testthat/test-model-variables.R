@@ -97,7 +97,7 @@ test_that("$variables() errors on no stan_file", {
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
     mod_exe$variables(),
-    "The `CmdStanModel` object was not created with a Stan file. '$variables()' can not be used.",
+    "'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
 })
