@@ -262,7 +262,7 @@ CmdStanModel <- R6::R6Class(
     stan_file = function() {
       private$stan_file_
     },
-    has_stan_file = function {
+    has_stan_file = function() {
       length(self$stan_file()) > 0
     },
     model_name = function() {
