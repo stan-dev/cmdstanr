@@ -574,7 +574,7 @@ test_that("cmdstan_model created only with exe_file errors for check_syntax, cod
   )
   expect_error(
     mod_exe$check_syntax(),
-    "$check_syntax()' can not be used as the 'CmdStanModel' was not created with a Stan file.",
+    "'$check_syntax()' can not be used as the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
   expect_error(
