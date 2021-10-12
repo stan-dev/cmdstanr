@@ -582,4 +582,17 @@ test_that("cmdstan_model created only with exe_file errors for check_syntax, cod
     "'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
+  expect_error(
+    mod_exe$compile(),
+    "'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+})
+
+test_that("cmdstan_model errors with no args ", {
+  expect_error(
+    cmdstan_model(),
+    "Unable to create a `CmdStanModel` object. Both 'stan_file' and 'exe_file' are undefined.",
+    fixed = TRUE
+  )
 })
