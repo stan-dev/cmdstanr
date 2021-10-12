@@ -249,7 +249,7 @@ CmdStanModel <- R6::R6Class(
     },
     code = function() {
       if (length(self$stan_file()) == 0) {
-        stop("The `CmdStanModel` object was not created with a Stan file. '$code()' can not be used.", call. = FALSE)
+        stop("'$code()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
       }
       assert_stan_file_exists(self$stan_file())
       readLines(self$stan_file())
@@ -398,7 +398,7 @@ compile <- function(quiet = TRUE,
                     #deprecated
                     threads = FALSE) {
   if (length(self$stan_file()) == 0) {
-    stop("The `CmdStanModel` object was not created with a Stan file. '$compile()' can not be used.", call. = FALSE)
+    stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
@@ -596,7 +596,7 @@ variables <- function() {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
   }
   if (length(self$stan_file()) == 0) {
-    stop("The `CmdStanModel` object was not created with a Stan file. '$variables()' can not be used.", call. = FALSE)
+    stop("'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
   if (is.null(private$variables_) && length(self$stan_file()) > 0 && file.exists(self$stan_file())) {
@@ -667,7 +667,7 @@ check_syntax <- function(pedantic = FALSE,
                          stanc_options = list(),
                          quiet = FALSE) {
   if (length(self$stan_file()) == 0) {
-    stop("'$check_syntax()' can not be used as the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop("'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
