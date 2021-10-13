@@ -73,7 +73,7 @@ test_that("variational() method errors for any invalid argument before calling c
   }
 })
 
-test_that("sample() method runs when the stan file is removed", {
+test_that("variational() method runs when the stan file is removed", {
   skip_on_cran()
   stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
   file.copy(testing_stan_file("bernoulli"), stan_file_tmp)
