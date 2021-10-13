@@ -197,6 +197,7 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     stan_file_ = character(),
+    stan_code_ = character(),
     model_name_ = character(),
     exe_file_ = character(),
     hpp_file_ = character(),
@@ -217,6 +218,7 @@ CmdStanModel <- R6::R6Class(
         checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
         checkmate::assert_flag(compile)
         private$stan_file_ <- absolute_path(stan_file)
+        private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_cpp_options_ <- args$cpp_options %||% list()
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
@@ -249,13 +251,15 @@ CmdStanModel <- R6::R6Class(
       private$include_paths_
     },
     code = function() {
-      if (length(self$stan_file()) == 0) {
+      if (length(private$stan_code_) == 0) {
         stop("'$code()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
       }
-      assert_stan_file_exists(self$stan_file())
-      readLines(self$stan_file())
+      private$stan_code_
     },
     print = function() {
+      if (length(private$stan_code_) == 0) {
+        stop("'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+      }
       cat(self$code(), sep = "\n")
       invisible(self)
     },
