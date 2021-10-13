@@ -530,3 +530,12 @@ test_that("CmdStanModel created with exe_file works",{
   )
   expect_equal(fit_diagnose$gradients(), fit_diagnose_exe$gradients())
 })
+
+test_that("code() works with all fitted model objects", {
+  code_ans <- readLines(testing_stan_file("logistic"))
+  for (method in c("sample", "optimize", "variational")) {
+    expect_identical(fits[[method]]$code(), code_ans)
+  }
+  code_ans_gq <- readLines(testing_stan_file("bernoulli_ppc"))
+  expect_identical(fits[["generate_quantities"]]$code(), code_ans_gq)
+})

@@ -167,7 +167,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  `$stan_file()` | Return the file path to the Stan program. |
-#'  `$code()` | Return Stan program as a string. |
+#'  `$code()` | Return Stan program as a character vector. |
 #'  `$print()`|  Print readable version of Stan program. |
 #'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
 #'
@@ -252,7 +252,8 @@ CmdStanModel <- R6::R6Class(
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
-        stop("'$code()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        return(NULL)
       }
       private$stan_code_
     },
@@ -874,6 +875,7 @@ sample <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = sample_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1015,6 +1017,7 @@ sample_mpi <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = sample_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1126,6 +1129,7 @@ optimize <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = optimize_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1242,6 +1246,7 @@ variational <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = variational_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1350,6 +1355,7 @@ generate_quantities <- function(fitted_params,
   args <- CmdStanArgs$new(
     method_args = gq_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = seq_along(fitted_params_files),
@@ -1412,6 +1418,7 @@ diagnose_method <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = diagnose_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
