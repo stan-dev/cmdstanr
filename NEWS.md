@@ -48,6 +48,9 @@ decimal points to fix issue with parsing large numbers. (#538)
 * Added the option to creat `CmdStanModel` from the executable only with the
 `exe_file` argument. (#564)
 
+* New method `$code()` for all fitted model objects that returns the Stan code
+associated with the fitted model. (#575)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
