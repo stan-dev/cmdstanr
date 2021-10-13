@@ -80,35 +80,6 @@ if (not_on_cran()) {
   )
 }
 
-test_that("code() and print() methods work", {
-  skip_on_cran()
-
-  expect_known_output(mod$print(), file = test_path("answers", "model-print-output.stan"))
-  expect_known_value(mod$code(), file = test_path("answers", "model-code-output.rds"))
-
-  code <- "
-  parameters {
-    real y;
-  }
-  model {
-    y ~ std_normal();
-  }
-  "
-  stan_file_tmp <- write_stan_file(code)
-  mod_removed_stan_file <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_error(
-    mod_removed_stan_file$code(),
-    "The Stan file used to create the `CmdStanModel` object does not exist."
-  )
-  mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
-  expect_error(
-    mod_exe$check_syntax(),
-    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
-    fixed = TRUE
-  )
-})
-
 test_that("sample() method works with data list", {
   skip_on_cran()
 
