@@ -14,6 +14,8 @@ test_that("code() and print() methods work", {
 })
 
 test_that("code() and print() still work if file is removed", {
+  skip_on_cran()
+
   code <- "
   parameters {
     real y;
@@ -30,6 +32,8 @@ test_that("code() and print() still work if file is removed", {
 })
 
 test_that("code() doesn't change when file changes (unless model is recreated)", {
+  skip_on_cran()
+
   code_1 <- "
   parameters {
     real y;
@@ -66,6 +70,8 @@ test_that("code() doesn't change when file changes (unless model is recreated)",
 })
 
 test_that("code() warns and print() errors if only exe and no Stan file", {
+  skip_on_cran()
+
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_warning(
     expect_null(mod_exe$code()),
@@ -80,6 +86,8 @@ test_that("code() warns and print() errors if only exe and no Stan file", {
 })
 
 test_that("check_syntax() errors if only exe and no Stan file", {
+  skip_on_cran()
+
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
     mod_exe$check_syntax(),
