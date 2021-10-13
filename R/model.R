@@ -204,6 +204,7 @@ CmdStanModel <- R6::R6Class(
     cpp_options_ = list(),
     stanc_options_ = list(),
     include_paths_ = NULL,
+    using_user_header_ = FALSE,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -220,6 +221,9 @@ CmdStanModel <- R6::R6Class(
         private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_cpp_options_ <- args$cpp_options %||% list()
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
+        if (!is.null(args$user_header)) {
+          private$using_user_header_ <- TRUE
+        }
         private$precompile_include_paths_ <- args$include_paths
         private$include_paths_ <- args$include_paths
       }
@@ -396,6 +400,7 @@ compile <- function(quiet = TRUE,
                     dir = NULL,
                     pedantic = FALSE,
                     include_paths = NULL,
+                    user_header = NULL,
                     cpp_options = list(),
                     stanc_options = list(),
                     force_recompile = FALSE,
@@ -502,6 +507,10 @@ compile <- function(quiet = TRUE,
 
   if (isTRUE(cpp_options$stan_opencl)) {
     stanc_options[["use-opencl"]] <- TRUE
+  }
+  if (!is.null(user_header)) {
+    cpp_options[["USER_HEADER"]] <- user_header
+    stanc_options[["allow-undefined"]] <- TRUE
   }
   if (!is.null(cpp_options[["USER_HEADER"]])) {
     cpp_options[["USER_HEADER"]] <- absolute_path(cpp_options[["USER_HEADER"]])
@@ -610,7 +619,7 @@ variables <- function() {
   }
   assert_stan_file_exists(self$stan_file())
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
-    private$variables_ <- model_variables(self$stan_file(), self$include_paths())
+    private$variables_ <- model_variables(self$stan_file(), self$include_paths(), allow_undefined = private$using_user_header_)
   }
   private$variables_
 }
@@ -1529,11 +1538,16 @@ include_paths_stanc3_args <- function(include_paths = NULL) {
   stancflags
 }
 
-model_variables <- function(stan_file, include_paths = NULL) {
+model_variables <- function(stan_file, include_paths = NULL, allow_undefined = FALSE) {
+  if (allow_undefined) {
+    allow_undefined_arg <- "--allow-undefined"
+  } else {
+    allow_undefined_arg <- NULL
+  }  
   out_file <- tempfile(fileext = ".json")
   run_log <- processx::run(
     command = stanc_cmd(),
-    args = c(stan_file, "--info", include_paths_stanc3_args(include_paths)),
+    args = c(stan_file, "--info", include_paths_stanc3_args(include_paths), allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,
     echo_cmd = FALSE,
