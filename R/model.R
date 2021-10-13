@@ -257,6 +257,9 @@ CmdStanModel <- R6::R6Class(
       private$stan_code_
     },
     print = function() {
+      if (length(private$stan_code_) == 0) {
+        stop("'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+      }
       cat(self$code(), sep = "\n")
       invisible(self)
     },
