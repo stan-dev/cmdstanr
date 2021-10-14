@@ -350,6 +350,8 @@ CmdStanModel <- R6::R6Class(
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
+#' @param user_header (string) The path to a C++ file (with a .hpp extension)
+#'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
 #'   otherwise write in the `make/local` file.
