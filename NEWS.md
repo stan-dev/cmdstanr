@@ -48,7 +48,7 @@ decimal points to fix issue with parsing large numbers. (#538)
 * Added the option to create `CmdStanModel` from the executable only with the
 `exe_file` argument. (#564)
 
-* Added a convenience argument `user_header` to `$compile()` and `cmdstan_model`
+* Added a convenience argument `user_header` to `$compile()` and `cmdstan_model()`
 that simplifies the use of an external .hpp file to compile with the model.
 
 # cmdstanr 0.4.0
