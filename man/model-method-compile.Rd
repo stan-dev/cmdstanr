@@ -10,6 +10,7 @@ compile(
   dir = NULL,
   pedantic = FALSE,
   include_paths = NULL,
+  user_header = NULL,
   cpp_options = list(),
   stanc_options = list(),
   force_recompile = FALSE,
@@ -36,6 +37,9 @@ that is already compiled use the
 \item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
 program.}
+
+\item{user_header}{(string) The path to a C++ file (with a .hpp extension)
+to compile with the Stan model.}
 
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
 model (\code{STAN_THREADS}, \code{STAN_MPI}, \code{STAN_OPENCL}, etc.). Anything you would
