@@ -377,7 +377,7 @@ test_that("read_cmdstan_csv() works for variational", {
   csv_output_3 <- read_cmdstan_csv(csv_file)
   expect_equal(as.numeric(csv_output_3$draws[1,"theta"]), 0.230751)
   expect_equal(dim(csv_output_3$draws), c(50, 3))
-  expect_equal(csv_output_3$metadata$model_params, c("lp__", "lp_approx__", "theta"))
+  expect_equal(csv_output_3$metadata$variables, c("lp__", "lp_approx__", "theta"))
 
   # variable filtering
   csv_output_4 <- read_cmdstan_csv(fit_logistic_variational$output_files(), variables = "beta")
@@ -406,7 +406,7 @@ test_that("read_cmdstan_csv() works for generate_quantities", {
   expect_equal(as.numeric(csv_output_3$generated_quantities[2,1,"y_rep[2]"]), 1)
   expect_equal(as.numeric(csv_output_3$generated_quantities[4,1,]), c(0,0,0,0,0,1,0,0,0,1))
   expect_equal(dim(csv_output_3$generated_quantities), c(5, 1, 10))
-  expect_equal(csv_output_3$metadata$model_params, y_rep_params)
+  expect_equal(csv_output_3$metadata$variables, y_rep_params)
 
   # variable filtering
   csv_output_4 <- read_cmdstan_csv(fit_gq$output_files(), variables = "y_rep")

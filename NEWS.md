@@ -5,6 +5,12 @@
 * Fixed bug that caused stdour/stderr not being read at the end of
 optimization. (#522)
 
+* Fixed issue with handling `NA` as the reported external process
+status. (#544, @myshkin)
+
+* Fixed issue with handling models with no parameters and CmdStan
+2.27+.
+
 ### New features
 
 * Default directory changed to `.cmdstan` instead of `.cmdstanr` so that
@@ -38,6 +44,12 @@ data files: checking whether the list includes all required elements/Stan
 variables; improved differentiating arrays/vectors of length 1 and scalars
 when generating JSON data files; generating floating point numbers with
 decimal points to fix issue with parsing large numbers. (#538)
+
+* Added the option to create `CmdStanModel` from the executable only with the
+`exe_file` argument. (#564)
+
+* Added a convenience argument `user_header` to `$compile()` and `cmdstan_model()`
+that simplifies the use of an external .hpp file to compile with the model.
 
 * Added E-BFMI checks that run automatically post sampling. (#500, @jsocolar)
 

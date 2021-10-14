@@ -75,3 +75,29 @@ test_that("$variables() work correctly with example models", {
   expect_equal(mod$variables()$transformed_parameters$pp$type, "real")
   expect_equal(mod$variables()$transformed_parameters$pp$dimensions, 3)
 })
+
+test_that("$variables() errors on no stan_file", {
+  skip_on_cran()
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file <- write_stan_file(code)
+  mod <- cmdstan_model(stan_file)
+  file.remove(stan_file)
+  expect_error(
+    mod$variables(),
+    "The Stan file used to create the `CmdStanModel` object does not exist.",
+    fixed = TRUE
+  )
+  mod_exe <- cmdstan_model(exe_file = mod$exe_file())
+  expect_error(
+    mod_exe$variables(),
+    "'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+})

@@ -499,7 +499,7 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
     stdout = stdout_file,
     error_on_status = FALSE
   )
-  if (ret$status != 0) {
+  if (is.na(ret$status) || ret$status != 0) {
     if (file.exists(stdout_file)) {
       cat(readLines(stdout_file), sep = "\n")
     }

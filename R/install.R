@@ -85,6 +85,14 @@ install_cmdstan <- function(dir = NULL,
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   }
+  make_local_msg <- NULL
+  if (!is.null(cmdstan_version(error_on_NA = FALSE))) {
+    current_make_local_contents <- cmdstan_make_local()
+    if (length(current_make_local_contents) > 0) {
+      old_cmdstan_path <- cmdstan_path()
+      make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", cmdstan_path(), "\"))")
+    }
+  }
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
@@ -190,6 +198,15 @@ install_cmdstan <- function(dir = NULL,
 
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
   set_cmdstan_path(dir_cmdstan)
+  if (!is.null(make_local_msg) && old_cmdstan_path != cmdstan_path()) {
+    message(
+      "\nThe previous installation of CmdStan had a non-empty make/local file.\n",
+      "If you wish to copy the file to the new installation, run the following commands:\n",
+      "\n",
+      make_local_msg,
+      "\nrebuild_cmdstan(cores = ...)"
+    )
+  }
 }
 
 
@@ -222,14 +239,14 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
     for (i in seq_len(length(cpp_options))) {
       option_name <- names(cpp_options)[i]
       if (isTRUE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(option_name, "=true"))
+        built_flags <- c(built_flags, paste0(toupper(option_name), "=true"))
       } else if (isFALSE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(option_name, "=false"))
+        built_flags <- c(built_flags, paste0(toupper(option_name), "=false"))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
           built_flags <- c(built_flags, paste0(cpp_options[[i]]))
         } else {
-          built_flags <- c(built_flags, paste0(option_name, "=", cpp_options[[i]]))
+          built_flags <- c(built_flags, paste0(toupper(option_name), "=", cpp_options[[i]]))
         }
       }
     }

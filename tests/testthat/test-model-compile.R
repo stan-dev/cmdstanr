@@ -317,7 +317,6 @@ test_that("*hpp_file() functions work", {
   expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))))
 })
 
-
 test_that("check_syntax() works", {
   skip_on_cran()
   stan_file <- testing_stan_file("fail")
@@ -344,12 +343,37 @@ test_that("check_syntax() works", {
   )
   expect_message(
     mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic")),
-    "Stan program is syntactically correct"
+    "Stan program is syntactically correct",
+    fixed = TRUE
   )
   expect_message(
     mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic"), quiet = TRUE),
     regexp = NA
   )
+
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file_tmp <- write_stan_file(code)
+  mod_removed_stan_file <- cmdstan_model(stan_file_tmp)
+  file.remove(stan_file_tmp)
+  expect_error(
+    mod_removed_stan_file$check_syntax(),
+    "The Stan file used to create the `CmdStanModel` object does not exist.",
+    fixed = TRUE
+  )
+  mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
+  expect_error(
+    mod_exe$check_syntax(),
+    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+
 })
 
 test_that("check_syntax() works with pedantic=TRUE", {
@@ -446,6 +470,7 @@ test_that("compiliation errors if folder with the model name exists", {
     cmdstan_model(stan_file),
     "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again."
   )
+  file.remove(exe)
 })
 
 test_that("cpp_options_to_compile_flags() works", {
@@ -481,4 +506,118 @@ test_that("include_paths_stanc3_args() works", {
       paste0("--include-paths=", path_1, ",", path_2)
     )
   )
+})
+
+test_that("cpp_options work with settings in make/local", {
+  backup <- cmdstan_make_local()
+
+  if (length(mod$exe_file()) > 0 && file.exists(mod$exe_file())) {
+    file.remove(mod$exe_file())
+  }
+
+  cmdstan_make_local(cpp_options = list(), append = FALSE)
+
+  mod <- cmdstan_model(stan_file = stan_program)
+  expect_null(mod$cpp_options()$STAN_THREADS)
+
+  file.remove(mod$exe_file())
+
+  cmdstan_make_local(cpp_options = list(stan_threads = TRUE))
+
+  file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+  mod <- cmdstan_model(file)
+  expect_true(mod$cpp_options()$STAN_THREADS)
+
+  file.remove(mod$exe_file())
+
+  # restore
+  cmdstan_make_local(cpp_options = backup, append = FALSE)
+})
+
+test_that("cmdstan_model works with exe_file", {
+  stan_file <- testing_stan_file("bernoulli")
+  mod <- cmdstan_model(stan_file)
+  expect_true(file.exists(mod$exe_file()))
+  default_exe_file <- mod$exe_file()
+  file.remove(mod$exe_file())
+
+  tmp_exe_file <- tempfile(fileext = cmdstan_ext())
+  mod <- cmdstan_model(
+    stan_file = stan_file,
+    exe_file = tmp_exe_file
+  )
+  expect_match(
+    mod$exe_file(),
+    repair_path(tmp_exe_file)
+  )
+  expect_true(file.exists(mod$exe_file()))
+  expect_false(file.exists(default_exe_file))
+
+  mod <- cmdstan_model(
+    exe_file = tmp_exe_file
+  )
+  expect_match(
+    mod$exe_file(),
+    repair_path(tmp_exe_file)
+  )
+  expect_true(file.exists(mod$exe_file()))
+  expect_false(file.exists(default_exe_file))
+})
+
+test_that("cmdstan_model created only with exe_file errors for check_syntax, code, ... ", {
+  mod <- testing_model("bernoulli")
+  mod_exe <- cmdstan_model(exe_file = mod$exe_file())
+  expect_error(
+    mod_exe$code(),
+    "'$code()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+  expect_error(
+    mod_exe$check_syntax(),
+    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+  expect_error(
+    mod_exe$variables(),
+    "'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+  expect_error(
+    mod_exe$compile(),
+    "'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+})
+
+test_that("cmdstan_model errors with no args ", {
+  expect_error(
+    cmdstan_model(),
+    "Unable to create a `CmdStanModel` object. Both 'stan_file' and 'exe_file' are undefined.",
+    fixed = TRUE
+  )
+})
+
+test_that("cmdstan_model works with user_header", {
+  tmpfile <- tempfile(fileext = ".hpp")
+  hpp <-
+  "
+  #include <boost/math/tools/promotion.hpp>
+  #include <ostream>
+
+  namespace bernoulli_external_model_namespace
+  {
+      template <typename T0__>
+      inline typename boost::math::tools::promote_args<T0__>::type make_odds(const T0__ &
+                                                                                 theta,
+                                                                             std::ostream *pstream__)
+      {
+          return theta / (1 - theta);
+      }
+  }"
+  cat(hpp, file = tmpfile, sep = "\n")
+  mod <- cmdstan_model(
+    stan_file = testing_stan_file("bernoulli_external"),
+    user_header = tmpfile
+  )
+  expect_true(file.exists(mod$exe_file()))
 })

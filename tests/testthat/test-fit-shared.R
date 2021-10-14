@@ -449,3 +449,84 @@ test_that("draws are returned for model with spaces", {
   )
   expect_equal(dim(fit$draws()), c(1000, 1, 1))
 })
+
+test_that("sampling with inits works with include_paths", {
+  skip_on_cran()
+
+  stan_program_w_include <- testing_stan_file("bernoulli_include")
+  exe <- cmdstan_ext(strip_ext(stan_program_w_include))
+  if(file.exists(exe)) {
+    file.remove(exe)
+  }
+
+  expect_interactive_message(
+    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
+                                   include_paths = test_path("resources", "stan")),
+    "Compiling Stan program"
+  )
+
+  data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+
+  fit <- mod_w_include$sample(
+    data = data_list,
+    seed = 123,
+    chains = 4,
+    parallel_chains = 4,
+    refresh = 500,
+    init = list(list(theta = 0.25), list(theta = 0.25), list(theta = 0.25), list(theta = 0.25))
+  )
+})
+
+test_that("CmdStanModel created with exe_file works",{
+  stan_program <- testing_stan_file("bernoulli")
+  data_list <- testing_data("bernoulli")
+
+  mod <- cmdstan_model(stan_file = stan_program)
+  mod_exe <- cmdstan_model(exe_file = mod$exe_file())
+
+  utils::capture.output(
+    fit_optimize <- mod$optimize(data = data_list, seed = 123)
+  )
+  utils::capture.output(
+    fit_optimize_exe <- mod_exe$optimize(data = data_list, seed = 123)
+  )
+  expect_equal(fit_optimize$mle(), fit_optimize_exe$mle())
+
+  utils::capture.output(
+    fit_variational <- mod$variational(data = data_list, seed = 123)
+  )
+  utils::capture.output(
+    fit_variational_exe <- mod_exe$variational(data = data_list, seed = 123)
+  )
+  expect_equal(fit_variational$draws(), fit_variational_exe$draws())
+
+  utils::capture.output(
+    fit_sample <- mod$sample(data = data_list, chains = 1, seed = 123)
+  )
+  utils::capture.output(
+    fit_sample_exe <- mod_exe$sample(data = data_list, chains = 1, seed = 123)
+  )
+  expect_equal(fit_sample$draws(), fit_sample_exe$draws())
+
+  stan_ppc_program <- testing_stan_file("bernoulli_ppc")
+  data_ppc_list <- testing_data("bernoulli_ppc")
+
+  mod_bern_ppc <- cmdstan_model(stan_file = stan_ppc_program)
+  mod_bern_ppc_exe <- cmdstan_model(exe_file = mod_bern_ppc$exe_file())
+
+  utils::capture.output(
+    fit_generate_quantities <- mod_bern_ppc$generate_quantities(fitted_params = fit_sample, data = data_list, seed = 123)
+  )
+  utils::capture.output(
+    fit_generate_quantities_exe <- mod_bern_ppc_exe$generate_quantities(fitted_params = fit_sample, data = data_list, seed = 123)
+  )
+  expect_equal(fit_generate_quantities$draws(), fit_generate_quantities_exe$draws())
+
+  utils::capture.output(
+    fit_diagnose <- mod$diagnose(data = data_list, seed = 123)
+  )
+  utils::capture.output(
+    fit_diagnose_exe <- mod_exe$diagnose(data = data_list, seed = 123)
+  )
+  expect_equal(fit_diagnose$gradients(), fit_diagnose_exe$gradients())
+})
