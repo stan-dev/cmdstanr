@@ -15,6 +15,7 @@ all of which have their own (linked) documentation pages.
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return the generated quantities as a \code{\link[posterior:draws_array]{draws_array}}. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+   \code{\link[=fit-method-code]{$code()}} \tab Return Stan code as a character vector. \cr
 }
 
 }
