@@ -45,8 +45,11 @@ variables; improved differentiating arrays/vectors of length 1 and scalars
 when generating JSON data files; generating floating point numbers with
 decimal points to fix issue with parsing large numbers. (#538)
 
-* Added the option to creat `CmdStanModel` from the executable only with the
+* Added the option to create `CmdStanModel` from the executable only with the
 `exe_file` argument. (#564)
+
+* Added a convenience argument `user_header` to `$compile()` and `cmdstan_model()`
+that simplifies the use of an external .hpp file to compile with the model.
 
 * New method `$code()` for all fitted model objects that returns the Stan code
 associated with the fitted model. (#575)

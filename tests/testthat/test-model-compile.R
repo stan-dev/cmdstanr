@@ -591,3 +591,28 @@ test_that("cmdstan_model errors with no args ", {
     fixed = TRUE
   )
 })
+
+test_that("cmdstan_model works with user_header", {
+  tmpfile <- tempfile(fileext = ".hpp")
+  hpp <-
+  "
+  #include <boost/math/tools/promotion.hpp>
+  #include <ostream>
+
+  namespace bernoulli_external_model_namespace
+  {
+      template <typename T0__>
+      inline typename boost::math::tools::promote_args<T0__>::type make_odds(const T0__ &
+                                                                                 theta,
+                                                                             std::ostream *pstream__)
+      {
+          return theta / (1 - theta);
+      }
+  }"
+  cat(hpp, file = tmpfile, sep = "\n")
+  mod <- cmdstan_model(
+    stan_file = testing_stan_file("bernoulli_external"),
+    user_header = tmpfile
+  )
+  expect_true(file.exists(mod$exe_file()))
+})
