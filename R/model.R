@@ -410,7 +410,7 @@ compile <- function(quiet = TRUE,
                     user_header = NULL,
                     cpp_options = list(),
                     stanc_options = list(),
-                    force_recompile = getOption("cmdstanr_force_recompile", FALSE),
+                    force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     #deprecated
                     threads = FALSE) {
   if (length(self$stan_file()) == 0) {

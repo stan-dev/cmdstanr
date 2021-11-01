@@ -51,6 +51,9 @@ decimal points to fix issue with parsing large numbers. (#538)
 * Added a convenience argument `user_header` to `$compile()` and `cmdstan_model()`
 that simplifies the use of an external .hpp file to compile with the model.
 
+* Added the `cmdstanr_force_recompile` global option that is used for forcing
+recompilation of Stan models. (#580)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
