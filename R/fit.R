@@ -1549,3 +1549,51 @@ CmdStanDiagnose$set("public", name = "save_output_files", value = save_output_fi
 CmdStanDiagnose$set("public", name = "output_files", value = output_files)
 CmdStanDiagnose$set("public", name = "save_data_file", value = save_data_file)
 CmdStanDiagnose$set("public", name = "data_file", value = data_file)
+
+
+
+# as_draws ----------------------------------------------------------------
+#' Create a `draws` object from a CmdStanR fitted model object
+#'
+#' Create a `draws` object supported by the \pkg{posterior} package. This is
+#' just a wrapper around the [`$draws()`][fit-method-draws] method provided for
+#' convenience.
+#'
+#' @aliases as_draws
+#' @importFrom posterior as_draws
+#' @export
+#' @export as_draws
+#'
+#' @param x A CmdStanR fitted model object.
+#' @param ... Arguments passed to the [`$draws()`][fit-method-draws] method.
+#'
+#' @details To subset iterations, chains, or draws, use the
+#'   [posterior::subset_draws()] method after creating the `draws` object.
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example()
+#' as_draws(fit) # same as fit$draws()
+#' }
+#'
+as_draws.CmdStanMCMC <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanMLE <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanVB <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanGQ <- function(x, ...) {
+  x$draws(...)
+}
