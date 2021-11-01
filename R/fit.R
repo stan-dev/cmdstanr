@@ -25,7 +25,7 @@ CmdStanFit <- R6::R6Class(
 
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
-      all_variables <- self$metadata()$model_params
+      all_variables <- self$metadata()$variables
       if (is.null(variables)) {
         total_rows <- length(all_variables)
         variables_to_print <- all_variables[seq_len(max_rows)]
@@ -761,10 +761,35 @@ profiles <- function() {
       private$profiles_[[i]] <- data.table::fread(f, integer64 = "character", data.table = FALSE)
       i <- i + 1
     }
-  }  
+  }
   private$profiles_
 }
 CmdStanFit$set("public", name = "profiles", value = profiles)
+
+#' Return Stan code
+#'
+#' @name fit-method-code
+#' @aliases code
+#' @return A character vector with one element per line of code.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#'
+#' @examples
+#'
+#' \dontrun{
+#' fit <- cmdstanr_example()
+#' fit$code() # character vector
+#' cat(fit$code(), sep = "\n") # pretty print
+#' }
+#'
+code <- function() {
+  stan_code <- self$runset$stan_code()
+  if (is.null(stan_code)) {
+    warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+  }
+  stan_code
+}
+CmdStanFit$set("public", name = "code", value = code)
 
 # CmdStanMCMC -------------------------------------------------------------
 #' CmdStanMCMC objects
@@ -791,7 +816,8 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
-#'  [`$num_chains()`][fit-method-num_chains] | Returns the number of MCMC chains. |
+#'  [`$num_chains()`][fit-method-num_chains] | Return the number of MCMC chains. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences and diagnostics
 #'
@@ -860,7 +886,7 @@ CmdStanMCMC <- R6::R6Class(
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = posterior::variables(private$draws_),
-        all = private$metadata_$model_params
+        all = private$metadata_$variables
       )
       private$draws_ <- maybe_convert_draws_format(private$draws_, format)
       private$warmup_draws_ <- maybe_convert_draws_format(private$warmup_draws_, format)
@@ -870,9 +896,9 @@ CmdStanMCMC <- R6::R6Class(
         private$read_csv_(variables = to_read, sampler_diagnostics = "", format = format)
       }
       if (is.null(variables)) {
-        variables <- private$metadata_$model_params
+        variables <- private$metadata_$variables
       } else {
-        matching_res <- matching_variables(variables, private$metadata_$model_params)
+        matching_res <- matching_variables(variables, private$metadata_$variables)
         if (length(matching_res$not_found)) {
           stop("Can't find the following variable(s) in the output: ",
               paste(matching_res$not_found, collapse = ", "), call. = FALSE)
@@ -1003,7 +1029,7 @@ CmdStanMCMC <- R6::R6Class(
 #'
 loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
   require_suggested_package("loo")
-  LLarray <- self$draws(variables)
+  LLarray <- self$draws(variables, format = "draws_array")
   if (is.logical(r_eff)) {
     if (isTRUE(r_eff)) {
       r_eff_cores <- list(...)[["cores"]] %||% getOption("mc.cores", 1)
@@ -1165,6 +1191,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`). |
 #'  [`$init()`][fit-method-init]  |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
@@ -1265,6 +1292,7 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the variational approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
@@ -1335,6 +1363,7 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws] | Return the generated quantities as a [`draws_array`][posterior::draws_array]. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
@@ -1383,16 +1412,16 @@ CmdStanGQ <- R6::R6Class(
       to_read <- remaining_columns_to_read(
         requested = variables,
         currently_read = dimnames(private$draws_)$variable,
-        all = private$metadata_$model_params
+        all = private$metadata_$variables
       )
       private$draws_ <- maybe_convert_draws_format(private$draws_, format)
       if (is.null(to_read) || any(nzchar(to_read))) {
         private$read_csv_(variables = to_read, format = format)
       }
       if (is.null(variables)) {
-        variables <- private$metadata_$model_params
+        variables <- private$metadata_$variables
       } else {
-        matching_res <- matching_variables(variables, private$metadata_$model_params)
+        matching_res <- matching_variables(variables, private$metadata_$variables)
         if (length(matching_res$not_found)) {
           stop("Can't find the following variable(s) in the output: ",
               paste(matching_res$not_found, collapse = ", "), call. = FALSE)
@@ -1520,3 +1549,56 @@ CmdStanDiagnose$set("public", name = "save_output_files", value = save_output_fi
 CmdStanDiagnose$set("public", name = "output_files", value = output_files)
 CmdStanDiagnose$set("public", name = "save_data_file", value = save_data_file)
 CmdStanDiagnose$set("public", name = "data_file", value = data_file)
+
+
+
+# as_draws ----------------------------------------------------------------
+#' Create a `draws` object from a CmdStanR fitted model object
+#'
+#' Create a `draws` object supported by the \pkg{posterior} package. These
+#' methods are just wrappers around CmdStanR's [`$draws()`][fit-method-draws]
+#' method provided for convenience.
+#'
+#' @aliases as_draws
+#' @importFrom posterior as_draws
+#' @export
+#' @export as_draws
+#'
+#' @param x A CmdStanR fitted model object.
+#' @param ... Optional arguments passed to the [`$draws()`][fit-method-draws]
+#'   method (e.g., `variables`, `inc_warmup`, etc.).
+#'
+#' @details To subset iterations, chains, or draws, use the
+#'   [posterior::subset_draws()] method after creating the `draws` object.
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example()
+#' as_draws(fit)
+#'
+#' # posterior's as_draws_*() methods will also work
+#' posterior::as_draws_rvars(fit)
+#' posterior::as_draws_list(fit)
+#' }
+#'
+as_draws.CmdStanMCMC <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanMLE <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanVB <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanGQ <- function(x, ...) {
+  x$draws(...)
+}

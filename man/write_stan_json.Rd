@@ -4,12 +4,17 @@
 \alias{write_stan_json}
 \title{Write data to a JSON file readable by CmdStan}
 \usage{
-write_stan_json(data, file)
+write_stan_json(data, file, always_decimal = FALSE)
 }
 \arguments{
 \item{data}{(list) A named list of \R objects.}
 
 \item{file}{(string) The path to where the data file should be written.}
+
+\item{always_decimal}{(logical) Force generate non-integers with decimal
+points to better distinguish between integers and floating point values.
+If \code{TRUE} all \R objects in \code{data} intended for integers must be of integer
+type.}
 }
 \description{
 Write data to a JSON file readable by CmdStan
@@ -21,6 +26,7 @@ file:
 \item \code{logical} -> \code{integer} (\code{TRUE} -> \code{1}, \code{FALSE} -> \code{0})
 \item \code{data.frame} -> \code{matrix} (via \code{\link[=data.matrix]{data.matrix()}})
 \item \code{list} -> \code{array}
+\item \code{table} -> \code{vector}, \code{matrix}, or \code{array} (depending on dimensions of table)
 }
 
 The \code{list} to \code{array} conversion is intended to make it easier to prepare

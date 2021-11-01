@@ -34,6 +34,7 @@ CmdStanRun <- R6::R6Class(
     num_procs = function() self$procs$num_procs(),
     proc_ids = function() self$procs$proc_ids(),
     exe_file = function() self$args$exe_file,
+    stan_code = function() self$args$stan_code,
     model_name = function() self$args$model_name,
     method = function() self$args$method,
     data_file = function() self$args$data_file,
@@ -364,10 +365,8 @@ check_target_exe <- function(exe) {
       procs$poll(0)
       for (chain_id in chains) {
         if (!procs$is_queued(chain_id)) {
-          output <- procs$get_proc(chain_id)$read_output_lines()
-          procs$process_output(output, chain_id)
-          error_output <- procs$get_proc(chain_id)$read_error_lines()
-          procs$process_error_output(error_output, chain_id)
+          procs$process_output(chain_id)
+          procs$process_error_output(chain_id)
         }
       }
       procs$set_active_procs(procs$num_alive())
@@ -424,10 +423,8 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
       procs$poll(0)
       for (chain_id in chains) {
         if (!procs$is_queued(chain_id)) {
-          output <- procs$get_proc(chain_id)$read_output_lines()
-          procs$process_output(output, chain_id)
-          error_output <- procs$get_proc(chain_id)$read_error_lines()
-          procs$process_error_output(error_output, chain_id)
+          procs$process_output(chain_id)
+          procs$process_error_output(chain_id)
         }
       }
       procs$set_active_procs(procs$num_alive())
@@ -460,13 +457,13 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     procs$wait(0.1)
     procs$poll(0)
     if (!procs$is_queued(id)) {
-      output <- procs$get_proc(id)$read_output_lines()
-      procs$process_output(output, id)
-      error_output <- procs$get_proc(id)$read_error_lines()
-      procs$process_error_output(error_output, id)
+      procs$process_output(id)
+      procs$process_error_output(id)
     }
     procs$set_active_procs(procs$num_alive())
   }
+  procs$process_output(id)
+  procs$process_error_output(id)
   successful_fit <- FALSE
   if (self$method() == "optimize") {
     if (procs$proc_state(id = id) > 3) {
@@ -503,7 +500,7 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
     stdout = stdout_file,
     error_on_status = FALSE
   )
-  if (ret$status != 0) {
+  if (is.na(ret$status) || ret$status != 0) {
     if (file.exists(stdout_file)) {
       cat(readLines(stdout_file), sep = "\n")
     }
@@ -651,10 +648,8 @@ CmdStanProcs <- R6::R6Class(
         if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
           # if the process just finished make sure we process all
           # input and mark the process finished
-          output <- self$get_proc(id)$read_output_lines()
-          self$process_output(output, id)
-          error_output <- self$get_proc(id)$read_error_lines()
-          self$process_error_output(error_output, id)
+          self$process_output(id)
+          self$process_error_output(id)
           self$mark_proc_stop(id)
           self$report_time(id)
         }
@@ -723,7 +718,8 @@ CmdStanProcs <- R6::R6Class(
       (grepl("A method must be specified!", line, perl = TRUE)) ||
       (grepl("is not a valid value for", line, perl = TRUE))
     },
-    process_error_output = function(err_out, id) {
+    process_error_output = function(id) {
+      err_out <- self$get_proc(id)$read_error_lines()
       if (length(err_out)) {
         for (err_line in err_out) {
           private$proc_output_[[id]] <- c(private$proc_output_[[id]], err_line)
@@ -733,7 +729,8 @@ CmdStanProcs <- R6::R6Class(
         }
       }
     },
-    process_output = function(out, id) {
+    process_output = function(id) {
+      out <- self$get_proc(id)$read_output_lines()
       if (length(out) == 0) {
         return(NULL)
       }
@@ -809,7 +806,8 @@ CmdStanMCMCProcs <- R6::R6Class(
   classname = "CmdStanMCMCProcs",
   inherit = CmdStanProcs,
   public = list(
-    process_output = function(out, id) {
+    process_output = function(id) {
+      out <- self$get_proc(id)$read_output_lines()
       if (length(out) == 0) {
         return(invisible(NULL))
       }
@@ -843,7 +841,7 @@ CmdStanMCMCProcs <- R6::R6Class(
             next_state <- 3
           }
           if (state < 3 && grepl("Elapsed Time:", line, perl = TRUE)) {
-            state <- 5 # 5 = end of samp+ling
+            state <- 5 # 5 = end of sampling
             next_state <- 5
           }
           if (private$proc_state_[[id]] == 3 &&
@@ -968,7 +966,8 @@ CmdStanGQProcs <- R6::R6Class(
       }
       invisible(self)
     },
-    process_output = function(out, id) {
+    process_output = function(id) {
+      out <- self$get_proc(id)$read_output_lines()
       if (length(out) == 0) {
         return(NULL)
       }

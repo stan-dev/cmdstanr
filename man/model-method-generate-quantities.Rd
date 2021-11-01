@@ -169,6 +169,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-optimize}},
 \code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
+\code{\link{model-method-variables}},
 \code{\link{model-method-variational}}
 }
 \concept{CmdStanModel methods}

@@ -6,7 +6,7 @@
 \usage{
 write_stan_file(
   code,
-  dir = tempdir(),
+  dir = getOption("cmdstanr_write_stan_file_dir", tempdir()),
   basename = NULL,
   force_overwrite = FALSE,
   hash_salt = ""
@@ -19,8 +19,9 @@ program or a character vector with each element containing one line of the
 Stan program.}
 
 \item{dir}{(string) An optional path to the directory where the file will be
-written. If omitted, a \link[base:tempfile]{temporary directory} is used by
-default.}
+written. If omitted, a global option \code{cmdstanr_write_stan_file_dir} is
+used. If the global options is not set, \link[base:tempfile]{temporary directory}
+is used.}
 
 \item{basename}{(string) If \code{dir} is specified, optionally the basename to
 use for the file created. If not specified a file name is generated

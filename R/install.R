@@ -85,6 +85,14 @@ install_cmdstan <- function(dir = NULL,
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   }
+  make_local_msg <- NULL
+  if (!is.null(cmdstan_version(error_on_NA = FALSE))) {
+    current_make_local_contents <- cmdstan_make_local()
+    if (length(current_make_local_contents) > 0) {
+      old_cmdstan_path <- cmdstan_path()
+      make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", cmdstan_path(), "\"))")
+    }
+  }
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path()
     if (!dir.exists(dir)) {
@@ -99,8 +107,9 @@ install_cmdstan <- function(dir = NULL,
       warning("version and release_url shouldn't both be specified!",
               "\nrelease_url will be ignored.", call. = FALSE)
     }
+
     release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
-                          version, "/cmdstan-", version, ".tar.gz")
+                          version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
   }
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
@@ -118,7 +127,7 @@ install_cmdstan <- function(dir = NULL,
   } else {
     ver <- latest_released_version()
     message("* Latest CmdStan release is v", ver)
-    cmdstan_ver <- paste0("cmdstan-", ver)
+    cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
     dir_cmdstan <- file.path(dir, cmdstan_ver)
     message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
@@ -154,7 +163,7 @@ install_cmdstan <- function(dir = NULL,
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   version <- read_cmdstan_version(dir_cmdstan)
   if (os_is_windows()) {
-    if (version >= "2.24" && R.version$major >= "4") {
+    if (version >= "2.24" && R.version$major >= "4" && !("PRECOMPILED_HEADERS" %in% toupper(names(cpp_options)))) {
       # cmdstan 2.24 can use precompiled headers with RTools 4.0 to speedup compiling
       cmdstan_make_local(
         dir = dir_cmdstan,
@@ -189,6 +198,15 @@ install_cmdstan <- function(dir = NULL,
 
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
   set_cmdstan_path(dir_cmdstan)
+  if (!is.null(make_local_msg) && old_cmdstan_path != cmdstan_path()) {
+    message(
+      "\nThe previous installation of CmdStan had a non-empty make/local file.\n",
+      "If you wish to copy the file to the new installation, run the following commands:\n",
+      "\n",
+      make_local_msg,
+      "\nrebuild_cmdstan(cores = ...)"
+    )
+  }
 }
 
 
@@ -221,14 +239,14 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
     for (i in seq_len(length(cpp_options))) {
       option_name <- names(cpp_options)[i]
       if (isTRUE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(option_name, "=true"))
+        built_flags <- c(built_flags, paste0(toupper(option_name), "=true"))
       } else if (isFALSE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(option_name, "=false"))
+        built_flags <- c(built_flags, paste0(toupper(option_name), "=false"))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
           built_flags <- c(built_flags, paste0(cpp_options[[i]]))
         } else {
-          built_flags <- c(built_flags, paste0(option_name, "=", cpp_options[[i]]))
+          built_flags <- c(built_flags, paste0(toupper(option_name), "=", cpp_options[[i]]))
         }
       }
     }
@@ -300,9 +318,10 @@ github_auth_token <- function() {
 
 # construct url for download from cmdstan version number
 github_download_url <- function(version_number) {
+
   base_url <- "https://github.com/stan-dev/cmdstan/releases/download/"
   paste0(base_url, "v", version_number,
-         "/cmdstan-", version_number, ".tar.gz")
+         "/cmdstan-", version_number, cmdstan_arch_suffix(), ".tar.gz")
 }
 
 # get version number of latest release
@@ -371,36 +390,6 @@ build_cmdstan <- function(dir,
   )
 }
 
-# Removes files that are used to simplify switching to using threading, opencl or mpi.
-clean_compile_helper_files <- function() {
-  # remove main_.*.o files and model_header_.*.hpp.gch files
-  files_to_remove <- c(
-    list.files(
-      path = file.path(cmdstan_path(), "src", "cmdstan"),
-      pattern = "main.*\\.o$",
-      full.names = TRUE
-    ),
-    list.files(
-      path = file.path(cmdstan_path(), "src", "cmdstan"),
-      pattern = "main.*\\.d$",
-      full.names = TRUE
-    ),
-    list.files(
-      path = file.path(cmdstan_path(), "stan", "src", "stan", "model"),
-      pattern = "model_header.*\\.hpp.gch$",
-      full.names = TRUE
-    ),
-    list.files(
-      path = file.path(cmdstan_path(), "stan", "src", "stan", "model"),
-      pattern = "model_header.*\\.d$",
-      full.names = TRUE
-    )
-  )
-  if (!is.null(files_to_remove)) {
-    file.remove(files_to_remove)
-  }
-}
-
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
@@ -414,13 +403,12 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     error_on_status = FALSE,
     stderr_callback = function(x, p) { if (quiet) message(x) }
   )
-  clean_compile_helper_files()
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
   processx::run(
     make_cmd(),
-    args = c(paste0("-j", cores), cmdstan_ext("examples/bernoulli/bernoulli")),
+    args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
     wd = dir,
     echo_cmd = is_verbose_mode(),
     echo = !quiet || is_verbose_mode(),
@@ -644,4 +632,16 @@ check_unix_cpp_compiler <- function() {
       )
     }
   }
+}
+
+cmdstan_arch_suffix <- function(version = NULL) {
+  arch <- NULL
+  if (grepl("linux", R.version$os) && grepl("aarch64", R.version$arch)) {
+    arch <- "-linux-arm64"
+  }  
+  if (!is.null(version) && version < "2.26") {
+    # pre-CmdStan 2.26, only the x85 tarball was provided
+    arch <- NULL
+  }
+  arch
 }

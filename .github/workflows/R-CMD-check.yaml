@@ -64,11 +64,12 @@ jobs:
           Get-Command mingw32-make | Select-Object -ExpandProperty Definition
         shell: powershell
 
-      - name: Install MPI
+      - name: Install system dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y openmpi-bin
+          sudo apt-get install -y libcurl4-openssl-dev || true
+          sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev || true
 
       - uses: r-lib/actions/setup-r@v1
         with:
@@ -95,7 +96,6 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
-          install.packages("posterior", repos = c("https://mc-stan.org/r-packages/", getOption("repos")), type="source")
           remotes::install_local(path = ".")
           install.packages("curl")
         shell: Rscript {0}

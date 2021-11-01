@@ -16,7 +16,7 @@ jobs:
   test-coverage-ubuntu:
     name: "Linux"
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
@@ -59,19 +59,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("posterior", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          install.packages(c("remotes", "curl"), dependencies = TRUE)
           remotes::install_local(path = ".")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           remotes::install_cran("gridExtra")
         shell: Rscript {0}
-
-      - name: Cache cmdstan
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.CMDSTAN_PATH }}
-          key: ${{ runner.os }}-codecov-cmdstan-${{ env.CMDSTAN_VERSION }}
-          restore-keys: ${{ runner.os }}-codecov-cmdstan-
 
       - name: Install cmdstan
         run: |
@@ -122,7 +115,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("posterior", "remotes", "curl"),repos = c("https://mc-stan.org/r-packages/", getOption("repos")), dependencies = TRUE)
+          install.packages(c("remotes", "curl"), dependencies = TRUE)
           remotes::install_local(path = ".")
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           remotes::install_deps(dependencies = TRUE)

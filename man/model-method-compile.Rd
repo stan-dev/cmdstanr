@@ -10,9 +10,10 @@ compile(
   dir = NULL,
   pedantic = FALSE,
   include_paths = NULL,
+  user_header = NULL,
   cpp_options = list(),
   stanc_options = list(),
-  force_recompile = FALSE,
+  force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   threads = FALSE
 )
 }
@@ -37,6 +38,9 @@ that is already compiled use the
 should look for files specified in \verb{#include} directives in the Stan
 program.}
 
+\item{user_header}{(string) The path to a C++ file (with a .hpp extension)
+to compile with the Stan model.}
+
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
 model (\code{STAN_THREADS}, \code{STAN_MPI}, \code{STAN_OPENCL}, etc.). Anything you would
 otherwise write in the \code{make/local} file.}
@@ -47,7 +51,8 @@ when compiling the model. See the \strong{Examples} section below as well as the
 https://mc-stan.org/docs/cmdstan-guide/stanc.html.}
 
 \item{force_recompile}{(logical) Should the model be recompiled even if was
-not modified since last compiled. The default is \code{FALSE}.}
+not modified since last compiled. The default is \code{FALSE}. Can also be set
+via a global \code{cmdstanr_force_recompile} option.}
 
 \item{threads}{Deprecated and will be removed in a future release. Please
 turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
@@ -128,6 +133,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-optimize}},
 \code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
+\code{\link{model-method-variables}},
 \code{\link{model-method-variational}}
 }
 \concept{CmdStanModel methods}

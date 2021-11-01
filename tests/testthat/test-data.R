@@ -8,14 +8,44 @@ if (not_on_cran()) {
 }
 
 test_that("empty data list converted to NULL", {
+  skip_on_cran()
+  stan_file <- write_stan_file("
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  ")
   expect_null(process_data(list()))
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_null(process_data(list(), model_variables = mod$variables()))
 })
 
-test_that("NAs detected in data list", {
-  expect_false(any_na_elements(list(y = 1)))
-  expect_true(any_na_elements(list(y = 1, N = NA)))
-  expect_true(any_na_elements(list(x = matrix(NA, 1, 1))))
-  expect_true(any_na_elements(list(x = list(1, NA))))
+test_that("process_data works for inputs of length one", {
+  skip_on_cran()
+  data <- list(val = 5)
+  stan_file <- write_stan_file("
+  data {
+    real val;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = 5))
+  stan_file <- write_stan_file("
+  data {
+    int val;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = 5))
+  stan_file <- write_stan_file("
+  data {
+    vector[1] val;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = list(5)))
 })
 
 test_that("process_fitted_params() works with basic input types", {
@@ -247,5 +277,83 @@ test_that("process_fitted_params() works with draws_matrix", {
   expect_equal(
     posterior::subset_draws(posterior::as_draws_array(fit$draws()), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]")),
     posterior::subset_draws(fit_params_tmp, variable = c("alpha", "beta[1]", "beta[2]", "beta[3]"))
+  )
+})
+
+test_that("process_data() errors on missing variables", {
+  stan_file <- write_stan_file("
+  data {
+    real val1;
+    real val2;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_error(
+    process_data(data = list(val1 = 5), model_variables = mod$variables()),
+    "Missing input data for the following data variables: val2."
+  )
+  expect_error(
+    process_data(data = list(val = 1), model_variables = mod$variables()),
+    "Missing input data for the following data variables: val1, val2."
+  )
+  stan_file_no_data <- write_stan_file("
+  transformed data {
+    real val1 = 1;
+    real val2 = 2;
+  }
+  ")
+  mod <- cmdstan_model(stan_file_no_data, compile = FALSE)
+  v <- process_data(data = list(val1 = 5), model_variables = mod$variables())
+  expect_type(v, "character")
+})
+
+test_that("process_data() corrrectly casts integers and floating point numbers", {
+  stan_file <- write_stan_file("
+  data {
+    int a;
+    real b;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  test_file <- process_data(list(a = 1, b = 2), model_variables = mod$variables())
+  expect_match(
+    "  \"a\": 1,",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "  \"b\": 2.0",
+    readLines(test_file)[3],
+    fixed = TRUE
+  )
+  test_file <- process_data(list(a = 1L, b = 1774000000), model_variables = mod$variables())
+  expect_match(
+    "  \"a\": 1,",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "  \"b\": 1774000000.0",
+    readLines(test_file)[3],
+    fixed = TRUE
+  )
+
+  stan_file <- write_stan_file("
+  data {
+    int<lower=0> k[3,3];
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  test_file <- process_data(list(k = matrix(c(18, 18, 16, 13, 9, 6, 4, 4, 4), nrow=3, ncol=3, byrow=T)), model_variables = mod$variables())
+  print(readLines(test_file)[2:3])
+  expect_match(
+    "  \"k\": [",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "    [18, 18, 16],",
+    readLines(test_file)[3],
+    fixed = TRUE
   )
 })

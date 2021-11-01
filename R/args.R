@@ -1,3 +1,5 @@
+# CmdStanArgs -------------------------------------------------------------
+
 #' Internal objects for storing CmdStan arguments
 #'
 #' These objects store arguments for creating the call to CmdStan and provide a
@@ -22,6 +24,8 @@ CmdStanArgs <- R6::R6Class(
   public = list(
     method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
     initialize = function(model_name,
+                          stan_file = NULL,
+                          stan_code = NULL,
                           exe_file,
                           proc_ids,
                           method_args,
@@ -34,9 +38,11 @@ CmdStanArgs <- R6::R6Class(
                           output_basename = NULL,
                           validate_csv = TRUE,
                           sig_figs = NULL,
-                          opencl_ids = NULL) {
+                          opencl_ids = NULL,
+                          model_variables = NULL) {
 
       self$model_name <- model_name
+      self$stan_code <- stan_code
       self$exe_file <- exe_file
       self$proc_ids <- proc_ids
       self$data_file <- data_file
@@ -56,9 +62,9 @@ CmdStanArgs <- R6::R6Class(
       self$output_dir <- repair_path(self$output_dir)
       self$output_basename <- output_basename
       if (is.function(init)) {
-        init <- process_init_function(init, length(self$proc_ids))
+        init <- process_init_function(init, length(self$proc_ids), model_variables)
       } else if (is.list(init) && !is.data.frame(init)) {
-        init <- process_init_list(init, length(self$proc_ids))
+        init <- process_init_list(init, length(self$proc_ids), model_variables)
       }
       self$init <- init
       self$opencl_ids <- opencl_ids
@@ -765,8 +771,10 @@ validate_exe_file <- function(exe_file) {
 #' @noRd
 #' @param init List of init lists.
 #' @param num_procs Number of CmdStan processes.
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
 #' @return A character vector of file paths.
-process_init_list <- function(init, num_procs) {
+process_init_list <- function(init, num_procs, model_variables = NULL) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
     stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
   }
@@ -775,6 +783,32 @@ process_init_list <- function(init, num_procs) {
   }
   if (any(sapply(init, function(x) length(x) == 0))) {
     stop("'init' contains empty lists.", call. = FALSE)
+  }
+  if (!is.null(model_variables)) {
+    missing_parameter_values <- list()
+    parameter_names <- names(model_variables$parameters)
+    for (i in seq_along(init)) {
+      is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
+      if (!all(is_parameter_value_supplied)) {
+        missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
+      }
+    }
+    if (length(missing_parameter_values) > 0) {
+      warning_message <- c(
+        "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
+      )
+      for (i in seq_along(missing_parameter_values)) {
+        if (length(init) > 1) {
+          line_text <- paste0(" - chain ", i, ": ")
+        } else {
+          line_text <- ""
+        }
+        if (length(missing_parameter_values[[i]]) > 0) {
+          warning_message <- c(warning_message, paste0(line_text, paste0(missing_parameter_values[[i]], collapse = ", "), "\n"))
+        }
+      }
+      message(warning_message)
+    }
   }
   if (any(grepl("\\[", names(unlist(init))))) {
     stop(
@@ -800,8 +834,10 @@ process_init_list <- function(init, num_procs) {
 #' @noRd
 #' @param init Function generating a single list of initial values.
 #' @param num_procs Number of CmdStan processes.
+#' @param model_variables A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
 #' @return A character vector of file paths.
-process_init_function <- function(init, num_procs) {
+process_init_function <- function(init, num_procs, model_variables = NULL) {
   args <- formals(init)
   if (is.null(args)) {
     fn_test <- init()
@@ -817,7 +853,7 @@ process_init_function <- function(init, num_procs) {
   if (!is.list(fn_test) || is.data.frame(fn_test)) {
     stop("If 'init' is a function it must return a single list.")
   }
-  process_init_list(init_list, num_procs)
+  process_init_list(init_list, num_procs, model_variables)
 }
 
 #' Validate initial values
