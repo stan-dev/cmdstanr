@@ -552,7 +552,7 @@ compile <- function(quiet = TRUE,
       if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
         message(x)
       }
-      if (grepl("PCH file", x)) {
+      if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
         warning(
           "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
           "If your model failed to compile please run rebuild_cmdstan().\n",
