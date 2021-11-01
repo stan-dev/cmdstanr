@@ -1,3 +1,5 @@
+# CmdStanArgs -------------------------------------------------------------
+
 #' Internal objects for storing CmdStan arguments
 #'
 #' These objects store arguments for creating the call to CmdStan and provide a
@@ -23,6 +25,7 @@ CmdStanArgs <- R6::R6Class(
     method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
     initialize = function(model_name,
                           stan_file = NULL,
+                          stan_code = NULL,
                           exe_file,
                           proc_ids,
                           method_args,
@@ -39,6 +42,7 @@ CmdStanArgs <- R6::R6Class(
                           model_variables = NULL) {
 
       self$model_name <- model_name
+      self$stan_code <- stan_code
       self$exe_file <- exe_file
       self$proc_ids <- proc_ids
       self$data_file <- data_file
@@ -767,7 +771,7 @@ validate_exe_file <- function(exe_file) {
 #' @noRd
 #' @param init List of init lists.
 #' @param num_procs Number of CmdStan processes.
-#' @param model_variables  A list of all parameters with their types and 
+#' @param model_variables  A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
 #' @return A character vector of file paths.
 process_init_list <- function(init, num_procs, model_variables = NULL) {
@@ -830,7 +834,7 @@ process_init_list <- function(init, num_procs, model_variables = NULL) {
 #' @noRd
 #' @param init Function generating a single list of initial values.
 #' @param num_procs Number of CmdStan processes.
-#' @param model_variables A list of all parameters with their types and 
+#' @param model_variables A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
 #' @return A character vector of file paths.
 process_init_function <- function(init, num_procs, model_variables = NULL) {

@@ -766,6 +766,31 @@ profiles <- function() {
 }
 CmdStanFit$set("public", name = "profiles", value = profiles)
 
+#' Return Stan code
+#'
+#' @name fit-method-code
+#' @aliases code
+#' @return A character vector with one element per line of code.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#'
+#' @examples
+#'
+#' \dontrun{
+#' fit <- cmdstanr_example()
+#' fit$code() # character vector
+#' cat(fit$code(), sep = "\n") # pretty print
+#' }
+#'
+code <- function() {
+  stan_code <- self$runset$stan_code()
+  if (is.null(stan_code)) {
+    warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+  }
+  stan_code
+}
+CmdStanFit$set("public", name = "code", value = code)
+
 # CmdStanMCMC -------------------------------------------------------------
 #' CmdStanMCMC objects
 #'
@@ -791,7 +816,8 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
-#'  [`$num_chains()`][fit-method-num_chains] | Returns the number of MCMC chains. |
+#'  [`$num_chains()`][fit-method-num_chains] | Return the number of MCMC chains. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences and diagnostics
 #'
@@ -1165,6 +1191,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`). |
 #'  [`$init()`][fit-method-init]  |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
@@ -1265,6 +1292,7 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the variational approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
@@ -1335,6 +1363,7 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws] | Return the generated quantities as a [`draws_array`][posterior::draws_array]. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
