@@ -54,6 +54,9 @@ that simplifies the use of an external .hpp file to compile with the model.
 * New method `$code()` for all fitted model objects that returns the Stan code
 associated with the fitted model. (#575)
 
+* New methods for `posterior::as_draws()` for CmdStanR fitted model objects.
+These are just wrappers around the `$draws()` method provided for convenience. (#532)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes

@@ -1555,9 +1555,9 @@ CmdStanDiagnose$set("public", name = "data_file", value = data_file)
 # as_draws ----------------------------------------------------------------
 #' Create a `draws` object from a CmdStanR fitted model object
 #'
-#' Create a `draws` object supported by the \pkg{posterior} package. This is
-#' just a wrapper around the [`$draws()`][fit-method-draws] method provided for
-#' convenience.
+#' Create a `draws` object supported by the \pkg{posterior} package. These
+#' methods are just wrappers around CmdStanR's [`$draws()`][fit-method-draws]
+#' method provided for convenience.
 #'
 #' @aliases as_draws
 #' @importFrom posterior as_draws
@@ -1565,7 +1565,8 @@ CmdStanDiagnose$set("public", name = "data_file", value = data_file)
 #' @export as_draws
 #'
 #' @param x A CmdStanR fitted model object.
-#' @param ... Arguments passed to the [`$draws()`][fit-method-draws] method.
+#' @param ... Optional arguments passed to the [`$draws()`][fit-method-draws]
+#'   method (e.g., `variables`, `inc_warmup`, etc.).
 #'
 #' @details To subset iterations, chains, or draws, use the
 #'   [posterior::subset_draws()] method after creating the `draws` object.
@@ -1573,7 +1574,11 @@ CmdStanDiagnose$set("public", name = "data_file", value = data_file)
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example()
-#' as_draws(fit) # same as fit$draws()
+#' as_draws(fit)
+#'
+#' # posterior's as_draws_*() methods will also work
+#' posterior::as_draws_rvars(fit)
+#' posterior::as_draws_list(fit)
 #' }
 #'
 as_draws.CmdStanMCMC <- function(x, ...) {

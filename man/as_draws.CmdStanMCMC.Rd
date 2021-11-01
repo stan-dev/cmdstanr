@@ -19,12 +19,13 @@
 \arguments{
 \item{x}{A CmdStanR fitted model object.}
 
-\item{...}{Arguments passed to the \code{\link[=fit-method-draws]{$draws()}} method.}
+\item{...}{Optional arguments passed to the \code{\link[=fit-method-draws]{$draws()}}
+method (e.g., \code{variables}, \code{inc_warmup}, etc.).}
 }
 \description{
-Create a \code{draws} object supported by the \pkg{posterior} package. This is
-just a wrapper around the \code{\link[=fit-method-draws]{$draws()}} method provided for
-convenience.
+Create a \code{draws} object supported by the \pkg{posterior} package. These
+methods are just wrappers around CmdStanR's \code{\link[=fit-method-draws]{$draws()}}
+method provided for convenience.
 }
 \details{
 To subset iterations, chains, or draws, use the
@@ -32,8 +33,12 @@ To subset iterations, chains, or draws, use the
 }
 \examples{
 \dontrun{
-fit <- cmdstanr_example(method = "var")
-as_draws(fit) # same as fit$draws()
+fit <- cmdstanr_example()
+as_draws(fit)
+
+# posterior's as_draws_*() methods will also work
+posterior::as_draws_rvars(fit)
+posterior::as_draws_list(fit)
 }
 
 }
