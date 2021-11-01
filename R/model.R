@@ -360,7 +360,8 @@ CmdStanModel <- R6::R6Class(
 #'   `stanc` chapter of the CmdStan Guide for more details on available options:
 #'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
 #' @param force_recompile (logical) Should the model be recompiled even if was
-#'   not modified since last compiled. The default is `FALSE`.
+#'   not modified since last compiled. The default is `FALSE`. Can also be set
+#'   via a global `cmdstanr_force_recompile` option.
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
@@ -409,7 +410,7 @@ compile <- function(quiet = TRUE,
                     user_header = NULL,
                     cpp_options = list(),
                     stanc_options = list(),
-                    force_recompile = FALSE,
+                    force_recompile = getOption("cmdstanr_force_recompile", FALSE),
                     #deprecated
                     threads = FALSE) {
   if (length(self$stan_file()) == 0) {
