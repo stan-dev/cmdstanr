@@ -154,6 +154,21 @@ test_that("draws() method returns a 'draws' object", {
   }
 })
 
+test_that("as_draws() is equivalent to draws()", {
+  skip_on_cran()
+  for (method in all_methods) {
+    fit <- fits[[method]]
+    expect_identical(as_draws(fit), fit$draws())
+
+    if (method != "generate_quantities") {
+      expect_identical(
+        as_draws(fit, variables = c("beta[1]", "alpha")),
+        fit$draws(variables = c("beta[1]", "alpha"))
+      )
+    }
+  }
+})
+
 test_that("save_object() method works", {
   skip_on_cran()
   for (method in all_methods) {

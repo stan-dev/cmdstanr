@@ -57,6 +57,9 @@ associated with the fitted model. (#575)
 * Added the `cmdstanr_force_recompile` global option that is used for forcing
 recompilation of Stan models. (#580)
 
+* New methods for `posterior::as_draws()` for CmdStanR fitted model objects.
+These are just wrappers around the `$draws()` method provided for convenience. (#532)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
