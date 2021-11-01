@@ -199,8 +199,7 @@ The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
 method can be used to extract the posterior draws in formats provided by the
 [**posterior**](https://mc-stan.org/posterior/) package. Here we demonstrate
 only the `draws_array` and `draws_df` formats, but the **posterior** package
-supports other useful formats as well (including the new 
-`rvar` (random variable) format.
+supports other useful formats as well.
 
 ```{r draws, message=FALSE}
 # default is a 3-D draws_array object from the posterior package
