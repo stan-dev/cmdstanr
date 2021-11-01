@@ -13,7 +13,7 @@ compile(
   user_header = NULL,
   cpp_options = list(),
   stanc_options = list(),
-  force_recompile = FALSE,
+  force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   threads = FALSE
 )
 }
@@ -51,7 +51,8 @@ when compiling the model. See the \strong{Examples} section below as well as the
 https://mc-stan.org/docs/cmdstan-guide/stanc.html.}
 
 \item{force_recompile}{(logical) Should the model be recompiled even if was
-not modified since last compiled. The default is \code{FALSE}.}
+not modified since last compiled. The default is \code{FALSE}. Can also be set
+via a global \code{cmdstanr_force_recompile} option.}
 
 \item{threads}{Deprecated and will be removed in a future release. Please
 turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
