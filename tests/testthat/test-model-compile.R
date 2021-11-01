@@ -568,11 +568,6 @@ test_that("cmdstan_model created only with exe_file errors for check_syntax, cod
   mod <- testing_model("bernoulli")
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
-    mod_exe$code(),
-    "'$code()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
-    fixed = TRUE
-  )
-  expect_error(
     mod_exe$check_syntax(),
     "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE

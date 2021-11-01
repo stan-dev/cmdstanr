@@ -477,7 +477,8 @@ test_that("sampling with inits works with include_paths", {
   )
 })
 
-test_that("CmdStanModel created with exe_file works",{
+test_that("CmdStanModel created with exe_file works", {
+  skip_on_cran()
   stan_program <- testing_stan_file("bernoulli")
   data_list <- testing_data("bernoulli")
 
@@ -529,4 +530,28 @@ test_that("CmdStanModel created with exe_file works",{
     fit_diagnose_exe <- mod_exe$diagnose(data = data_list, seed = 123)
   )
   expect_equal(fit_diagnose$gradients(), fit_diagnose_exe$gradients())
+})
+
+test_that("code() works with all fitted model objects", {
+  skip_on_cran()
+  code_ans <- readLines(testing_stan_file("logistic"))
+  for (method in c("sample", "optimize", "variational")) {
+    expect_identical(fits[[method]]$code(), code_ans)
+  }
+  code_ans_gq <- readLines(testing_stan_file("bernoulli_ppc"))
+  expect_identical(fits[["generate_quantities"]]$code(), code_ans_gq)
+})
+
+test_that("code() warns if model not created with Stan file", {
+  skip_on_cran()
+  stan_program <- testing_stan_file("bernoulli")
+  mod <- testing_model("bernoulli")
+  mod_exe <- cmdstan_model(exe_file = mod$exe_file())
+  fit_exe <- mod_exe$sample(data = list(N = 10, y = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1)),
+                            refresh = 0)
+  expect_warning(
+    expect_null(fit_exe$code()),
+    "'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file",
+    fixed = TRUE
+  )
 })

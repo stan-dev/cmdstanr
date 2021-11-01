@@ -18,6 +18,7 @@ all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-lp]{$lp_approx()}} \tab Return the log density of the variational approximation to the posterior. \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+   \code{\link[=fit-method-code]{$code()}} \tab Return Stan code as a character vector. \cr
 }
 
 }
