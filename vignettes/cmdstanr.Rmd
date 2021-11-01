@@ -193,11 +193,14 @@ fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 
 ### Posterior draws
 
+#### Extracting draws
+
 The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
 method can be used to extract the posterior draws in formats provided by the
 [**posterior**](https://mc-stan.org/posterior/) package. Here we demonstrate
 only the `draws_array` and `draws_df` formats, but the **posterior** package
-supports several other useful formats as well.
+supports other useful formats as well (including the new 
+`rvar` (random variable) format.
 
 ```{r draws, message=FALSE}
 # default is a 3-D draws_array object from the posterior package
@@ -220,9 +223,15 @@ draws_df_2 <- as_draws_df(draws_arr)
 identical(draws_df, draws_df_2)
 ```
 
+In general, converting to a different draws format in this way will be slower
+than just setting the appropriate format initially in the call to the `$draws()`
+method, but in most cases the speed difference will be minor.
+
+#### Plotting draws 
+
 Plotting posterior distributions is as easy as passing the object returned by
-the `$draws()` method directly to plotting functions in
-[**bayesplot**](https://mc-stan.org/bayesplot/).
+the `$draws()` method directly to plotting functions in our
+[**bayesplot**](https://mc-stan.org/bayesplot/) package.
 
 ```{r plots, message=FALSE}
 mcmc_hist(fit$draws("theta"))
@@ -348,3 +357,20 @@ fit2 <- readRDS("fit.RDS")
 
 ```{r child="children/comparison-with-rstan.md"}
 ```
+
+## Additional resources
+
+There are additional vignettes available that discuss other aspects of using
+CmdStanR. These can be found online at the CmdStanR website:
+
+* https://mc-stan.org/cmdstanr/articles/index.html
+
+To ask a question please post on the Stan forums: 
+
+* https://discourse.mc-stan.org/
+
+To report a bug, suggest a feature (including additions to these vignettes), or to start contributing to CmdStanR
+development (new contributors welcome!) please open an issue on GitHub:
+
+* https://github.com/stan-dev/cmdstanr/issues
+
