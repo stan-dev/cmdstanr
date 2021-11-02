@@ -193,24 +193,44 @@ fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 
 ### Posterior draws
 
+#### Extracting draws
+
 The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
-method can be used to extract the posterior draws as a 3-D array (iteration x
-chain x variable). The **posterior** package can then be used to easily convert
-to other formats, like data frames and matrices of draws.
+method can be used to extract the posterior draws in formats provided by the
+[**posterior**](https://mc-stan.org/posterior/) package. Here we demonstrate
+only the `draws_array` and `draws_df` formats, but the **posterior** package
+supports other useful formats as well.
 
 ```{r draws, message=FALSE}
-# this is a draws_array object from the posterior package
-draws_array <- fit$draws()
-str(draws_array)
+# default is a 3-D draws_array object from the posterior package
+# iterations x chains x variables
+draws_arr <- fit$draws() # or format="array"
+str(draws_arr)
 
-# convert to matrix or data frame 
-draws_df <- as_draws_df(draws_array) # as_draws_matrix() for matrix
+# draws x variables data frame
+draws_df <- fit$draws(format = "df")
+str(draws_df)
 print(draws_df)
 ```
 
+To convert an existing draws object to a different format use the
+`posterior::as_draws_*()` functions.
+
+```{r as_draws}
+# this should be identical to draws_df created via draws(format = "df")
+draws_df_2 <- as_draws_df(draws_arr)
+identical(draws_df, draws_df_2)
+```
+
+In general, converting to a different draws format in this way will be slower
+than just setting the appropriate format initially in the call to the `$draws()`
+method, but in most cases the speed difference will be minor.
+
+#### Plotting draws 
+
 Plotting posterior distributions is as easy as passing the object returned by
-the `$draws()` method directly to plotting functions in
-[**bayesplot**](https://mc-stan.org/bayesplot/):
+the `$draws()` method directly to plotting functions in our
+[**bayesplot**](https://mc-stan.org/bayesplot/) package.
 
 ```{r plots, message=FALSE}
 mcmc_hist(fit$draws("theta"))
@@ -221,7 +241,7 @@ mcmc_hist(fit$draws("theta"))
 The
 [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html)
 method extracts the values of the sampler parameters (`treedepth__`,
-`divergent__`, etc.) as a 3-D array (iteration x chain x variable):
+`divergent__`, etc.) as a 3-D array (iteration x chain x variable).
 
 ```{r sampler_diagnostics}
 # this is a draws_array object from the posterior package
@@ -236,7 +256,7 @@ print(diagnostics_df)
 
 The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
 and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-methods call CmdStan's `diagnose` and `stansummary` utilities:
+methods call CmdStan's `diagnose` and `stansummary` utilities.
 
 ```{r summary-and-diagnose}
 fit$cmdstan_diagnose()
@@ -249,7 +269,7 @@ fit$cmdstan_summary()
 If you have RStan installed then it is also possible to create a `stanfit` 
 object from the csv output files written by CmdStan. This can be done by using
 `rstan::read_stan_csv()` in combination with the `$output_files()` method of the
-`CmdStanMCMC` object:
+`CmdStanMCMC` object.
 
 ```{r stanfit, eval=FALSE}
 stanfit <- rstan::read_stan_csv(fit$output_files())
@@ -266,7 +286,7 @@ the `$sample()` method demonstrated above.
 
 ### Optimization
 
-We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html):
+We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
 ```{r optimize}
 fit_mle <- mod$optimize(data = data_list, seed = 123) 
@@ -274,28 +294,30 @@ fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
 fit_mle$mle("theta") 
 ```
 
-Here's a plot comparing the MLE to the posterior distribution of `theta`:
+Here's a plot comparing the penalized MLE to the posterior distribution of
+`theta`.
 
 ```{r plot-mle, message = FALSE}
 mcmc_hist(fit$draws("theta")) + 
-  vline_at(fit_mle$mle(), size = 1.5)
+  vline_at(fit_mle$mle("theta"), size = 1.5)
 ```
 
 ### Variational Bayes
 
 We can run Stan's experimental variational Bayes algorithm (ADVI) using the 
 [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html) 
-method:
+method.
 
 ```{r variational}
 fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000) 
 fit_vb$summary("theta")
 ```
+
 The `$draws()` method can be used to access the approximate posterior draws.
 Let's extract the draws, make the same plot we made after MCMC, and compare the
 two. In this trivial example the distributions look quite similar, although
 the variational approximation slightly underestimates the posterior 
-standard deviation:
+standard deviation.
 
 ```{r plot-variational, message = FALSE}
 bayesplot_grid(
@@ -308,7 +330,7 @@ bayesplot_grid(
 
 
 For more details on the `$optimize()` and `$variational()` methods, follow
-these thinks to their documentation pages:
+these thinks to their documentation pages.
 
 * [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
 * [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
@@ -321,7 +343,7 @@ contents are available when reading the object back into R, we recommend using t
 [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
 method provided by CmdStanR. The reason for this is discussed in detail in the vignette
 [_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html), 
-so here we just demonstrate how to use the method:
+so here we just demonstrate how to use the method.
 
 ```{r save_object, eval=FALSE}
 fit$save_object(file = "fit.RDS")
@@ -334,3 +356,20 @@ fit2 <- readRDS("fit.RDS")
 
 ```{r child="children/comparison-with-rstan.md"}
 ```
+
+## Additional resources
+
+There are additional vignettes available that discuss other aspects of using
+CmdStanR. These can be found online at the CmdStanR website:
+
+* https://mc-stan.org/cmdstanr/articles/index.html
+
+To ask a question please post on the Stan forums: 
+
+* https://discourse.mc-stan.org/
+
+To report a bug, suggest a feature (including additions to these vignettes), or to start contributing to CmdStanR
+development (new contributors welcome!) please open an issue on GitHub:
+
+* https://github.com/stan-dev/cmdstanr/issues
+
