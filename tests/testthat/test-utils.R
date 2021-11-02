@@ -190,12 +190,12 @@ test_that("check_ebfmi and computing ebfmi works", {
   expect_equal(as.numeric(ebfmi(posterior::as_draws_list(energy_df))), check_val)
   expect_equal(as.numeric(ebfmi(posterior::as_draws_matrix(energy_df))), check_val)
   energy_df <- posterior::as_draws(data.frame("energy__" = 0))
-  expect_warning(check_ebfmi(energy_df), "E-BFMI is undefined for posterior chains of length less than 3.")
-  expect_warning(ebfmi(energy_df), "E-BFMI is undefined for posterior chains of length less than 3.")
+  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
+  expect_warning(ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
 
   energy_df <- posterior::as_draws(data.frame("somethingelse" = 0))
-  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed as the 'energy__' diagnostic could not be located.")
-  expect_warning(ebfmi(energy_df), "E-BFMI not computed as the 'energy__' diagnostic could not be located.")
+  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
+  expect_warning(ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
 
 })
 
