@@ -304,8 +304,8 @@ read_cmdstan_csv <- function(files,
       warmup_draws <- NULL
     }
     if (length(draws) > 0) {
-      draws <-  do.call(as_draws_format, list(draws))
       posterior::variables(draws) <- repaired_variables
+      draws <-  do.call(as_draws_format, list(draws))      
       if (posterior::niterations(draws) == 0) {
         draws <- NULL
       }
