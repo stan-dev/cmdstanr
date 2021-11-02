@@ -167,7 +167,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  `$stan_file()` | Return the file path to the Stan program. |
-#'  `$code()` | Return Stan program as a string. |
+#'  `$code()` | Return Stan program as a character vector. |
 #'  `$print()`|  Print readable version of Stan program. |
 #'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
 #'
@@ -256,7 +256,8 @@ CmdStanModel <- R6::R6Class(
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
-        stop("'$code()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        return(NULL)
       }
       private$stan_code_
     },
@@ -360,7 +361,8 @@ CmdStanModel <- R6::R6Class(
 #'   `stanc` chapter of the CmdStan Guide for more details on available options:
 #'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
 #' @param force_recompile (logical) Should the model be recompiled even if was
-#'   not modified since last compiled. The default is `FALSE`.
+#'   not modified since last compiled. The default is `FALSE`. Can also be set
+#'   via a global `cmdstanr_force_recompile` option.
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
@@ -409,7 +411,7 @@ compile <- function(quiet = TRUE,
                     user_header = NULL,
                     cpp_options = list(),
                     stanc_options = list(),
-                    force_recompile = FALSE,
+                    force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     #deprecated
                     threads = FALSE) {
   if (length(self$stan_file()) == 0) {
@@ -552,7 +554,7 @@ compile <- function(quiet = TRUE,
       if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
         message(x)
       }
-      if (grepl("PCH file", x)) {
+      if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
         warning(
           "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
           "If your model failed to compile please run rebuild_cmdstan().\n",
@@ -891,6 +893,7 @@ sample <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = sample_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1032,6 +1035,7 @@ sample_mpi <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = sample_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1143,6 +1147,7 @@ optimize <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = optimize_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1259,6 +1264,7 @@ variational <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = variational_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1367,6 +1373,7 @@ generate_quantities <- function(fitted_params,
   args <- CmdStanArgs$new(
     method_args = gq_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = seq_along(fitted_params_files),
@@ -1429,6 +1436,7 @@ diagnose_method <- function(data = NULL,
   args <- CmdStanArgs$new(
     method_args = diagnose_args,
     stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,

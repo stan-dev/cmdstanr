@@ -766,6 +766,31 @@ profiles <- function() {
 }
 CmdStanFit$set("public", name = "profiles", value = profiles)
 
+#' Return Stan code
+#'
+#' @name fit-method-code
+#' @aliases code
+#' @return A character vector with one element per line of code.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#'
+#' @examples
+#'
+#' \dontrun{
+#' fit <- cmdstanr_example()
+#' fit$code() # character vector
+#' cat(fit$code(), sep = "\n") # pretty print
+#' }
+#'
+code <- function() {
+  stan_code <- self$runset$stan_code()
+  if (is.null(stan_code)) {
+    warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+  }
+  stan_code
+}
+CmdStanFit$set("public", name = "code", value = code)
+
 # CmdStanMCMC -------------------------------------------------------------
 #' CmdStanMCMC objects
 #'
@@ -791,7 +816,8 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
-#'  [`$num_chains()`][fit-method-num_chains] | Returns the number of MCMC chains. |
+#'  [`$num_chains()`][fit-method-num_chains] | Return the number of MCMC chains. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences and diagnostics
 #'
@@ -1166,6 +1192,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`). |
 #'  [`$init()`][fit-method-init]  |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
@@ -1266,6 +1293,7 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the variational approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
@@ -1336,6 +1364,7 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws] | Return the generated quantities as a [`draws_array`][posterior::draws_array]. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
@@ -1521,3 +1550,56 @@ CmdStanDiagnose$set("public", name = "save_output_files", value = save_output_fi
 CmdStanDiagnose$set("public", name = "output_files", value = output_files)
 CmdStanDiagnose$set("public", name = "save_data_file", value = save_data_file)
 CmdStanDiagnose$set("public", name = "data_file", value = data_file)
+
+
+
+# as_draws ----------------------------------------------------------------
+#' Create a `draws` object from a CmdStanR fitted model object
+#'
+#' Create a `draws` object supported by the \pkg{posterior} package. These
+#' methods are just wrappers around CmdStanR's [`$draws()`][fit-method-draws]
+#' method provided for convenience.
+#'
+#' @aliases as_draws
+#' @importFrom posterior as_draws
+#' @export
+#' @export as_draws
+#'
+#' @param x A CmdStanR fitted model object.
+#' @param ... Optional arguments passed to the [`$draws()`][fit-method-draws]
+#'   method (e.g., `variables`, `inc_warmup`, etc.).
+#'
+#' @details To subset iterations, chains, or draws, use the
+#'   [posterior::subset_draws()] method after creating the `draws` object.
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example()
+#' as_draws(fit)
+#'
+#' # posterior's as_draws_*() methods will also work
+#' posterior::as_draws_rvars(fit)
+#' posterior::as_draws_list(fit)
+#' }
+#'
+as_draws.CmdStanMCMC <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanMLE <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanVB <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanGQ <- function(x, ...) {
+  x$draws(...)
+}

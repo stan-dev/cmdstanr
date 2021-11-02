@@ -287,8 +287,8 @@ read_cmdstan_csv <- function(files,
   model_param_dims <- variable_dims(metadata$variables)
   metadata$stan_variable_sizes <- model_param_dims
   metadata$stan_variables <- names(model_param_dims)
-  # $model_params is deprecated, remove for release 1.0 
-  metadata$model_params <- metadata$variables 
+  # $model_params is deprecated, remove for release 1.0
+  metadata$model_params <- metadata$variables
   if (metadata$method == "sample") {
     if (is.null(format)) {
       format <- "draws_array"
@@ -514,6 +514,7 @@ unavailable_methods_CmdStanFit_CSV <- c(
     "init",
     "output",
     "return_codes",
+    "code",
     "num_procs",
     "save_profile_files", "profile_files", "profiles",
     "time" # available for MCMC not others
