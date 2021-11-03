@@ -33,8 +33,9 @@ sample_mpi(
   window = NULL,
   fixed_param = FALSE,
   sig_figs = NULL,
-  validate_csv = TRUE,
-  show_messages = TRUE
+  show_messages = TRUE,
+  diagnostics = c("divergences", "treedepth", "ebfmi"),
+  validate_csv = TRUE
 )
 }
 \arguments{
@@ -215,17 +216,22 @@ values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
 Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
 
-\item{validate_csv}{(logical) When \code{TRUE} (the default), validate the
-sampling results in the csv files. Disable if you wish to manually read in
-the sampling results and validate them yourself, for example using
-\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.}
-
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all
 informational messages, for example rejection of the current proposal.
 Disable if you wish silence these messages, but this is not recommended
 unless you are very sure that the model is correct up to numerical error.
 If the messages are silenced then the \verb{$output()} method of the resulting
 fit object can be used to display all the silenced messages.}
+
+\item{diagnostics}{(character vector) The diagnostics to automatically check
+and warn about after sampling. Setting this to an empty string \code{""} or
+\code{NULL} can be used to prevent CmdStanR from automatically reading in the
+sampler diagnostics from CSV if you wish to manually read in the results
+and validate them yourself, for example using \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}. The
+currently available diagnostics are \code{"divergences"}, \code{"treedepth"},
+\code{"ebfmi"} (the default is to check all of them).}
+
+\item{validate_csv}{Deprecated and will be removed in a future release.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

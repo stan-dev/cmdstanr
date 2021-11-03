@@ -772,7 +772,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'
 #' @template model-common-args
 #' @template model-sample-args
-#' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize
+#' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize,validate_csv
 #'   Deprecated and will be removed in a future release.
 #'
 #' @return A [`CmdStanMCMC`] object.
@@ -808,14 +808,15 @@ sample <- function(data = NULL,
                    term_buffer = NULL,
                    window = NULL,
                    fixed_param = FALSE,
-                   validate_csv = TRUE,
                    show_messages = TRUE,
+                   diagnostics = c("divergences", "treedepth", "ebfmi"),
                    # deprecated
                    cores = NULL,
                    num_cores = NULL,
                    num_chains = NULL,
                    num_warmup = NULL,
                    num_samples = NULL,
+                   validate_csv = NULL,
                    save_extra_diagnostics = NULL,
                    max_depth = NULL,
                    stepsize = NULL) {
@@ -852,6 +853,17 @@ sample <- function(data = NULL,
     warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
     save_latent_dynamics <- save_extra_diagnostics
   }
+  if (!is.null(validate_csv)) {
+    warning("'validate_csv' is deprecated. Please set 'diagnostics=NULL' instead.")
+    if (is.logical(validate_csv)) {
+      if (validate_csv) {
+        diagnostics <- c("divergences", "treedepth", "ebfmi")
+      } else {
+        diagnostics <- NULL
+      }
+    }
+  }
+
   if (cmdstan_version() >= "2.27.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
@@ -888,7 +900,8 @@ sample <- function(data = NULL,
     init_buffer = init_buffer,
     term_buffer = term_buffer,
     window = window,
-    fixed_param = fixed_param
+    fixed_param = fixed_param,
+    diagnostics = diagnostics
   )
   args <- CmdStanArgs$new(
     method_args = sample_args,
@@ -905,7 +918,6 @@ sample <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    validate_csv = validate_csv,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables
   )
@@ -1000,8 +1012,22 @@ sample_mpi <- function(data = NULL,
                        window = NULL,
                        fixed_param = FALSE,
                        sig_figs = NULL,
-                       validate_csv = TRUE,
-                       show_messages = TRUE) {
+                       show_messages = TRUE,
+                       diagnostics = c("divergences", "treedepth", "ebfmi"),
+                       # deprecated
+                       validate_csv = TRUE) {
+
+  if (!is.null(validate_csv)) {
+    warning("'validate_csv' is deprecated. Please set 'diagnostics=NULL' instead.")
+    if (is.logical(validate_csv)) {
+      if (validate_csv) {
+        diagnostics <- c("divergences", "treedepth", "ebfmi")
+      } else {
+        diagnostics <- NULL
+      }
+    }
+  }
+
   if (fixed_param) {
     chains <- 1
     save_warmup <- FALSE
@@ -1030,7 +1056,8 @@ sample_mpi <- function(data = NULL,
     init_buffer = init_buffer,
     term_buffer = term_buffer,
     window = window,
-    fixed_param = fixed_param
+    fixed_param = fixed_param,
+    diagnostics = diagnostics
   )
   args <- CmdStanArgs$new(
     method_args = sample_args,
@@ -1046,7 +1073,6 @@ sample_mpi <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
-    validate_csv = validate_csv,
     sig_figs = sig_figs,
     model_variables = model_variables
   )
@@ -1557,7 +1583,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     allow_undefined_arg <- "--allow-undefined"
   } else {
     allow_undefined_arg <- NULL
-  }  
+  }
   out_file <- tempfile(fileext = ".json")
   run_log <- processx::run(
     command = stanc_cmd(),

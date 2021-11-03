@@ -17,19 +17,6 @@
 #'   `parallel_chains*threads_per_chain`. For an example of using threading see
 #'   the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
-#'
-#' @param show_messages (logical) When `TRUE` (the default), prints all
-#'   informational messages, for example rejection of the current proposal.
-#'   Disable if you wish silence these messages, but this is not recommended
-#'   unless you are very sure that the model is correct up to numerical error.
-#'   If the messages are silenced then the `$output()` method of the resulting
-#'   fit object can be used to display all the silenced messages.
-#'
-#' @param validate_csv (logical) When `TRUE` (the default), validate the
-#'   sampling results in the csv files. Disable if you wish to manually read in
-#'   the sampling results and validate them yourself, for example using
-#'   [read_cmdstan_csv()].
-#'
 #' @param iter_sampling (positive integer) The number of post-warmup iterations
 #'   to run per chain. Note: in the CmdStan User's Guide this is referred to as
 #'   `num_samples`.
@@ -42,7 +29,6 @@
 #'   accessing the draws.
 #' @param thin (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning) unless memory is a problem.
-#'
 #' @param max_treedepth (positive integer) The maximum allowed tree depth for
 #'   the NUTS engine. See the _Tree Depth_ section of the CmdStan User's Guide
 #'   for more details.
@@ -89,4 +75,17 @@
 #'   quantities block. If the parameters block is empty then using
 #'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
 #'   `parallel_chains` arguments will be set to `1`.
+#' @param show_messages (logical) When `TRUE` (the default), prints all
+#'   informational messages, for example rejection of the current proposal.
+#'   Disable if you wish silence these messages, but this is not recommended
+#'   unless you are very sure that the model is correct up to numerical error.
+#'   If the messages are silenced then the `$output()` method of the resulting
+#'   fit object can be used to display all the silenced messages.
+#' @param diagnostics (character vector) The diagnostics to automatically check
+#'   and warn about after sampling. Setting this to an empty string `""` or
+#'   `NULL` can be used to prevent CmdStanR from automatically reading in the
+#'   sampler diagnostics from CSV if you wish to manually read in the results
+#'   and validate them yourself, for example using [read_cmdstan_csv()]. The
+#'   currently available diagnostics are `"divergences"`, `"treedepth"`,
+#'   `"ebfmi"` (the default is to check all of them).
 #'
