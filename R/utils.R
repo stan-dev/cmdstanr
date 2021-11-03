@@ -313,10 +313,11 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
       "\nThis may indicate poor exploration of the posterior.\n"
     )
   }
-  invisible(efbmi_val)
+  invisible(unname(efbmi_val))
 }
 
-# used in various places to validate the selected diagnostics
+# used in various places (e.g., fit$diagnose_sampler() and validate_sample_args())
+# to validate the selected diagnostics
 available_diagnostics <- function() {
   c("divergences", "treedepth", "ebfmi")
 }
