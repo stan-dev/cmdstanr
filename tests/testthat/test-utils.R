@@ -6,18 +6,29 @@ if (not_on_cran()) {
                           seed = 123, chains = 2)
 }
 
+
+# diagnostic checks -------------------------------------------------------
+
 test_that("check_divergences() works", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "14 of 100 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_equal(divs, 14)
 
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
                  test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "28 of 200 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_equal(divs, c(14, 14))
+
+  # force different number of divergences per chain just to test
+  csv_output$post_warmup_sampler_diagnostics[1, 1:2, "divergent__"] <- c(0, 1)
+  output <- "27 of 200 \\(14.0%\\) transitions ended with a divergence."
+  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_equal(divs, c(13, 14))
 
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
@@ -30,9 +41,10 @@ test_that("check_divergences() works", {
                           iter_sampling = 0,
                           iter_warmup = 10,
                           save_warmup = TRUE,
-                          validate_csv = FALSE)
+                          diagnostics = "")
   csv_output <- read_cmdstan_csv(fit_wramup_no_samples$output_files())
-  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), regexp = NA)
+  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), regexp = NA)
+  expect_null(divs)
 })
 
 test_that("check_max_treedepth() works", {
@@ -41,22 +53,35 @@ test_that("check_max_treedepth() works", {
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "16 of 100 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
   expect_message(
-    check_max_treedepth(
+    max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
       csv_output$metadata),
     output
   )
+  expect_equal(max_tds, 16)
 
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
                  test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "32 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
   expect_message(
-    check_max_treedepth(
+    max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
       csv_output$metadata),
     output
   )
+  expect_equal(max_tds, c(16, 16))
+
+  # force different number of max treedepths per chain just to test
+  csv_output$post_warmup_sampler_diagnostics[1, 1:2, "treedepth__"] <- c(1, 15)
+  output <- "31 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
+  expect_message(
+    max_tds <- check_max_treedepth(
+      csv_output$post_warmup_sampler_diagnostics,
+      csv_output$metadata),
+    output
+  )
+  expect_equal(max_tds, c(15, 16))
 
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
@@ -68,6 +93,35 @@ test_that("check_max_treedepth() works", {
     output
   )
 })
+
+test_that("check_ebfmi and computing ebfmi works", {
+  set.seed(1)
+  energy_df <- data.frame("energy__" = rnorm(1000))
+  expect_error(suppressWarnings(check_ebfmi(posterior::as_draws(energy_df))), NA)
+  expect_error(suppressWarnings(ebfmi(posterior::as_draws(energy_df))), NA)
+  energy_df[1] <- 0
+  for(i in 1:999){
+    energy_df$energy__[i+1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
+  }
+  energy_df <- posterior::as_draws(energy_df)
+  expect_message(check_ebfmi(energy_df), "fraction of missing information \\(E-BFMI\\) less than")
+  energy_vec <- energy_df$energy__
+  check_val <- (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec)
+  expect_equal(as.numeric(ebfmi(energy_df)), check_val)
+  expect_equal(as.numeric(ebfmi(posterior::as_draws_array(energy_df))), check_val)
+  expect_equal(as.numeric(ebfmi(posterior::as_draws_list(energy_df))), check_val)
+  expect_equal(as.numeric(ebfmi(posterior::as_draws_matrix(energy_df))), check_val)
+  energy_df <- posterior::as_draws(data.frame("energy__" = 0))
+  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
+  expect_warning(ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
+
+  energy_df <- posterior::as_draws(data.frame("somethingelse" = 0))
+  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
+  expect_warning(ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
+})
+
+
+# cmdstan utilities -------------------------------------------------------
 
 test_that("cmdstan_summary works if bin/stansummary deleted file", {
   skip_on_cran()
@@ -86,6 +140,9 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
   }
   expect_output(delete_and_run(), "Checking sampler transitions treedepth")
 })
+
+
+# misc --------------------------------------------------------------------
 
 test_that("repair_path() fixes slashes", {
   # all slashes should be single "/", and no trailing slash
@@ -172,36 +229,10 @@ test_that("matching_variables() works", {
   expect_equal(length(ret$not_found), 0)
 })
 
-test_that("check_ebfmi and computing ebfmi works", {
-  set.seed(1)
-  energy_df <- data.frame("energy__" = rnorm(1000))
-  expect_error(suppressWarnings(check_ebfmi(posterior::as_draws(energy_df))), NA)
-  expect_error(suppressWarnings(ebfmi(posterior::as_draws(energy_df))), NA)
-  energy_df[1] <- 0
-  for(i in 1:999){
-    energy_df$energy__[i+1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
-  }
-  energy_df <- posterior::as_draws(energy_df)
-  expect_message(check_ebfmi(energy_df), "fraction of missing information \\(E-BFMI\\) less than")
-  energy_vec <- energy_df$energy__
-  check_val <- (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec)
-  expect_equal(as.numeric(ebfmi(energy_df)), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_array(energy_df))), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_list(energy_df))), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_matrix(energy_df))), check_val)
-  energy_df <- posterior::as_draws(data.frame("energy__" = 0))
-  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
-  expect_warning(ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
-
-  energy_df <- posterior::as_draws(data.frame("somethingelse" = 0))
-  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
-  expect_warning(ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
-
-})
-
 test_that("require_suggested_package() works", {
   expect_error(
     require_suggested_package("not_a_real_package"),
     "Please install the 'not_a_real_package' package to use this function."
   )
 })
+

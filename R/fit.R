@@ -1127,9 +1127,9 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #'
 #' @return A list with as many named elements as `diagnostics` selected. The
 #'   possible elements and their values are:
-#'   * `"divergences"`: The number of divergences.
-#'   * `"max_treedepths"`: The number of times `max_treedepth` was hit.
-#'   * `"ebfmi"`: A vector of E-BFMI values, one per chain.
+#'   * `"divergences"`: A vector of the number of divergences per chain.
+#'   * `"max_treedepths"`: A vector of the number of times `max_treedepth` was hit per chain.
+#'   * `"ebfmi"`: A vector of E-BFMI values per chain.
 #'
 #' @seealso [`CmdStanMCMC`] and the
 #'   [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] method

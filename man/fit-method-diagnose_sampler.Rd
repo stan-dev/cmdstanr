@@ -24,9 +24,9 @@ displayed.}
 A list with as many named elements as \code{diagnostics} selected. The
 possible elements and their values are:
 \itemize{
-\item \code{"divergences"}: The number of divergences.
-\item \code{"max_treedepths"}: The number of times \code{max_treedepth} was hit.
-\item \code{"ebfmi"}: A vector of E-BFMI values, one per chain.
+\item \code{"divergences"}: A vector of the number of divergences per chain.
+\item \code{"max_treedepths"}: A vector of the number of times \code{max_treedepth} was hit per chain.
+\item \code{"ebfmi"}: A vector of E-BFMI values per chain.
 }
 }
 \description{

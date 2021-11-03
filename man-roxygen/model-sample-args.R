@@ -87,5 +87,15 @@
 #'   sampler diagnostics from CSV if you wish to manually read in the results
 #'   and validate them yourself, for example using [read_cmdstan_csv()]. The
 #'   currently available diagnostics are `"divergences"`, `"treedepth"`,
-#'   `"ebfmi"` (the default is to check all of them).
+#'   and `"ebfmi"` (the default is to check all of them).
+#'
+#'   These diagnostics are also available after fitting. The
+#'   [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] method provides
+#'   access the diagnostic values for each iteration and the
+#'   [`$diagnose_sampler()`][fit-method-diagnose_sampler] method provides
+#'   summaries of the diagnostics and can regenerate the warning messages.
+#'
+#'   Diagnostics like R-hat and effective sample size are not currently
+#'   available via the `diagnostics` argument but can be checked after fitting
+#'   using the [`$summary()`][fit-method-summary] method.
 #'

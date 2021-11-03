@@ -250,7 +250,17 @@ and warn about after sampling. Setting this to an empty string \code{""} or
 sampler diagnostics from CSV if you wish to manually read in the results
 and validate them yourself, for example using \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}. The
 currently available diagnostics are \code{"divergences"}, \code{"treedepth"},
-\code{"ebfmi"} (the default is to check all of them).}
+and \code{"ebfmi"} (the default is to check all of them).
+
+These diagnostics are also available after fitting. The
+\code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}} method provides
+access the diagnostic values for each iteration and the
+\code{\link[=fit-method-diagnose_sampler]{$diagnose_sampler()}} method provides
+summaries of the diagnostics and can regenerate the warning messages.
+
+Diagnostics like R-hat and effective sample size are not currently
+available via the \code{diagnostics} argument but can be checked after fitting
+using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
 \item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
 }
@@ -267,6 +277,9 @@ Any argument left as \code{NULL} will default to the default value used by the
 installed version of CmdStan. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
+
+After model fitting any diagnostics specified via the \code{diagnostics}
+argument will be checked and warnings will be printed if warranted.
 }
 \examples{
 \dontrun{

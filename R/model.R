@@ -770,6 +770,9 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
+#'   After model fitting any diagnostics specified via the `diagnostics`
+#'   argument will be checked and warnings will be printed if warranted.
+#'
 #' @template model-common-args
 #' @template model-sample-args
 #' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize,validate_csv
@@ -854,7 +857,7 @@ sample <- function(data = NULL,
     save_latent_dynamics <- save_extra_diagnostics
   }
   if (!is.null(validate_csv)) {
-    warning("'validate_csv' is deprecated. Please set 'diagnostics=NULL' instead.")
+    warning("'validate_csv' is deprecated. Please use 'diagnostics' instead.")
     if (is.logical(validate_csv)) {
       if (validate_csv) {
         diagnostics <- c("divergences", "treedepth", "ebfmi")

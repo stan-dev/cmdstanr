@@ -239,15 +239,16 @@ set_num_threads <- function(num_threads) {
 
 # convergence checks ------------------------------------------------------
 check_divergences <- function(post_warmup_sampler_diagnostics) {
-  num_of_divergences <- NULL
+  num_divergences_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
     divergences <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "divergent__")
-    num_of_draws <- length(divergences)
-    num_of_divergences <- sum(divergences)
-    if (!is.na(num_of_divergences) && num_of_divergences > 0) {
-      percentage_divergences <- 100 * num_of_divergences / num_of_draws
+    num_divergences_per_chain <- colSums(divergences)
+    num_divergences <- sum(num_divergences_per_chain)
+    num_draws <- length(divergences)
+    if (!is.na(num_divergences) && num_divergences > 0) {
+      percentage_divergences <- 100 * num_divergences / num_draws
       message(
-        "\nWarning: ", num_of_divergences, " of ", num_of_draws,
+        "\nWarning: ", num_divergences, " of ", num_draws,
         " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
         " transitions ended with a divergence.\n",
         "This may indicate insufficient exploration of the posterior distribution.\n",
@@ -258,19 +259,20 @@ check_divergences <- function(post_warmup_sampler_diagnostics) {
       )
     }
   }
-  invisible(num_of_divergences)
+  invisible(unname(num_divergences_per_chain))
 }
 
 check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
-  max_treedepth_hit <- NULL
+  num_max_treedepths_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
-    treedepth <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "treedepth__")
-    num_of_draws <- length(treedepth)
-    max_treedepth_hit <- sum(treedepth >= metadata$max_treedepth)
-    if (!is.na(max_treedepth_hit) && max_treedepth_hit > 0) {
-      percentage_max_treedepth <- 100 * max_treedepth_hit / num_of_draws
+    treedepths <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "treedepth__")
+    num_max_treedepths_per_chain <- apply(treedepths, 2, function(x) sum(x >= metadata$max_treedepth))
+    num_max_treedepths <- sum(num_max_treedepths_per_chain)
+    num_draws <- length(treedepths)
+    if (!is.na(num_max_treedepths) && num_max_treedepths > 0) {
+      percentage_max_treedepths <- 100 * num_max_treedepths / num_draws
       message(
-        max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
+        num_max_treedepths, " of ", num_draws, " (", (format(round(percentage_max_treedepths, 0), nsmall = 1)), "%)",
         " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
         " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
         "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
@@ -279,11 +281,11 @@ check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
       )
     }
   }
-  invisible(max_treedepth_hit)
+  invisible(unname(num_max_treedepths_per_chain))
 }
 
 ebfmi <- function(post_warmup_sampler_diagnostics) {
-  efbmi_val <- NULL
+  efbmi_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
     if (!("energy__" %in% posterior::variables(post_warmup_sampler_diagnostics))) {
       warning("E-BFMI not computed because the 'energy__' diagnostic could not be located.", call. = FALSE)
@@ -294,26 +296,26 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
       if (any(is.na(energy))) {
         warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
       } else {
-        efbmi_val <- apply(energy, 2, function(x) {
+        efbmi_per_chain <- apply(energy, 2, function(x) {
           (sum(diff(x)^2) / length(x)) / stats::var(x)
         })
       }
     }
   }
-  efbmi_val
+  efbmi_per_chain
 }
 
 check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
-  efbmi_val <- ebfmi(post_warmup_sampler_diagnostics)
-  if (any(efbmi_val < threshold)) {
+  efbmi_per_chain <- ebfmi(post_warmup_sampler_diagnostics)
+  if (any(efbmi_per_chain < threshold)) {
     message(
-      "Warning: ", sum(efbmi_val < threshold), " of ", length(efbmi_val),
+      "Warning: ", sum(efbmi_per_chain < threshold), " of ", length(efbmi_per_chain),
       " chains had energy-based Bayesian fraction of missing information (E-BFMI)",
       " less than ", threshold, ".",
       "\nThis may indicate poor exploration of the posterior.\n"
     )
   }
-  invisible(unname(efbmi_val))
+  invisible(unname(efbmi_per_chain))
 }
 
 # used in various places (e.g., fit$diagnose_sampler() and validate_sample_args())

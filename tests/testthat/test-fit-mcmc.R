@@ -340,3 +340,23 @@ test_that("draws() errors if invalid format", {
     "The supplied draws format is not valid"
   )
 })
+
+test_that("diagnose_sampler() works", {
+  fit <- suppressMessages(cmdstanr_example("schools"))
+  expect_message(
+    diagnostics <- fit$diagnose_sampler(),
+    "transitions ended with a divergence"
+  )
+  expect_equal(
+    diagnostics$divergences,
+    suppressMessages(check_divergences(fit$sampler_diagnostics()))
+  )
+  expect_equal(
+    diagnostics$max_treedepths,
+    suppressMessages(check_max_treedepth(fit$sampler_diagnostics(), fit$metadata()))
+  )
+  expect_equal(
+    diagnostics$ebfmi,
+    suppressMessages(check_ebfmi(fit$sampler_diagnostics()))
+  )
+})
