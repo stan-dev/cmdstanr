@@ -35,13 +35,13 @@ test_that("check_divergences() works", {
   expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), regexp = NA)
 })
 
-test_that("check_sampler_transitions_treedepth() works", {
+test_that("check_max_treedepth() works", {
   skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "16 of 100 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
   expect_message(
-    check_sampler_transitions_treedepth(
+    check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
       csv_output$metadata),
     output
@@ -52,7 +52,7 @@ test_that("check_sampler_transitions_treedepth() works", {
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "32 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
   expect_message(
-    check_sampler_transitions_treedepth(
+    check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
       csv_output$metadata),
     output
@@ -62,7 +62,7 @@ test_that("check_sampler_transitions_treedepth() works", {
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "1 of 100 \\(1.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
   expect_message(
-    check_sampler_transitions_treedepth(
+    check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
       csv_output$metadata),
     output

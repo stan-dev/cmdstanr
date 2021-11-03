@@ -239,6 +239,7 @@ set_num_threads <- function(num_threads) {
 
 # convergence checks ------------------------------------------------------
 check_divergences <- function(post_warmup_sampler_diagnostics) {
+  num_of_divergences <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
     divergences <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "divergent__")
     num_of_draws <- length(divergences)
@@ -257,9 +258,11 @@ check_divergences <- function(post_warmup_sampler_diagnostics) {
       )
     }
   }
+  invisible(num_of_divergences)
 }
 
-check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
+check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
+  max_treedepth_hit <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
     treedepth <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "treedepth__")
     num_of_draws <- length(treedepth)
@@ -276,6 +279,7 @@ check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics,
       )
     }
   }
+  invisible(max_treedepth_hit)
 }
 
 ebfmi <- function(post_warmup_sampler_diagnostics) {
@@ -306,12 +310,16 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
       "Warning: ", sum(efbmi_val < threshold), " of ", length(efbmi_val),
       " chains had energy-based Bayesian fraction of missing information (E-BFMI)",
       " less than ", threshold, ".",
-      "\nThis may indicate poor exploration of the posterior."
+      "\nThis may indicate poor exploration of the posterior.\n"
     )
   }
-  invisible(NULL)
+  invisible(efbmi_val)
 }
 
+# used in various places to validate the selected diagnostics
+available_diagnostics <- function() {
+  c("divergences", "treedepth", "ebfmi")
+}
 
 # draws formatting --------------------------------------------------------
 
