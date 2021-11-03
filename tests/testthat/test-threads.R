@@ -164,3 +164,24 @@ test_that("threading works with generate_quantities()", {
   expect_equal(f_gq$metadata()$threads_per_chain, 4)
 })
 
+test_that("stan", {
+  skip_on_cran()
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE), force_recompile = TRUE)
+  expect_output(
+    mod$sample(data = data_file_json),
+    "Running MCMC with 4 sequential chains",
+    fixed = TRUE
+  )
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = "dummy string"), force_recompile = TRUE)
+  expect_output(
+    mod$sample(data = data_file_json),
+    "Running MCMC with 4 sequential chains",
+    fixed = TRUE
+  )
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE), force_recompile = TRUE)
+  expect_warning(
+    mod$sample(data = data_file_json, threads_per_chain = 4),
+    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+    fixed = TRUE
+  )
+})
