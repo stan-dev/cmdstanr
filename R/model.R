@@ -417,10 +417,6 @@ compile <- function(quiet = TRUE,
   if (length(self$stan_file()) == 0) {
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
-  if (!is.null(cpp_options[["stan_threads"]]) && !is.logical(cpp_options[["stan_threads"]]) ||
-      !is.null(private$precompile_cpp_options_[["stan_threads"]]) && !is.logical(private$precompile_cpp_options_[["stan_threads"]])) {
-    warning("'stan_threads' was assigned a non-logical value. Please use 'TRUE' or 'FALSE'.")
-  }
   assert_stan_file_exists(self$stan_file())
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
