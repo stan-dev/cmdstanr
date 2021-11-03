@@ -329,3 +329,29 @@ maybe_convert_draws_format <- function(draws, format) {
     stop("Invalid draws format.", call. = FALSE)
   )
 }
+
+
+# convert draws --------------------------------------------------------
+
+#' Convert CmdStanMCMC object to mcmc.list object in coda package
+#'
+#' @noRd
+#' @param fit CmdStanMCMC object
+#' @return mcmc.list object in coda package
+#' @export
+as_mcmc_list <- function(fit) {
+  sample_matrix <- fit$draws()
+  class(sample_matrix) <- 'array'
+  n_chain <- dim(sample_matrix)[[2]]
+  n_iteration <- dim(sample_matrix)[[1]]
+  mcmc_list <- lapply(seq_len(n_chain), function(chain) {
+    x <- sample_matrix[, chain, ]
+    dimnames(x) <- list(iteration = dimnames(sample_matrix)$iteration,
+                        variable  = dimnames(sample_matrix)$variable)
+    attr(x, 'mcpar') <- c(1, n_iteration, 1)
+    class(x) <- 'mcmc'
+    x
+  })
+  class(mcmc_list) <- 'mcmc.list'
+  return(mcmc_list)
+}
