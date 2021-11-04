@@ -857,13 +857,17 @@ CmdStanMCMC <- R6::R6Class(
         warning("No chains finished successfully. Unable to retrieve the fit.",
                 call. = FALSE)
       } else {
+        # throw diagnostic warnings if user asked for them and if not fixed_param
         if (!is.null(self$runset$args$method_args$diagnostics)) {
-          diagnostics <- self$runset$method_args$diagnostics
+          diagnostics <- self$runset$args$method_args$diagnostics
           fixed_param <- runset$args$method_args$fixed_param
-          private$read_csv_(
-            variables = "",
-            sampler_diagnostics = if (!fixed_param) diagnostics else ""
-          )
+          if (!fixed_param) {
+            # convert user friendly names to actual diagnostic names (e.g. divergences --> divergent__)
+            diagnostics_to_read <- convert_diagnostic_names(diagnostics)
+          } else {
+            diagnostics_to_read <- ""
+          }
+          private$read_csv_(variables = "", sampler_diagnostics = diagnostics_to_read)
           if (!fixed_param) {
             invisible(self$diagnose_sampler(diagnostics = diagnostics, quiet = FALSE))
           }
@@ -1120,13 +1124,10 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #'   chain use the [`$sampler_diagnostics()`][fit-method-sampler_diagnostics]
 #'   method.
 #'
-#'   This method is similar to [`$cmdstan_diagnose()`][fit-method-cmdstan_summary]
-#'   but everything is done in \R (rather than calling CmdStan utilities) and
-#'   the summaries are returned as a list (not just printed).
-#'
 #'   Currently parameter-specific diagnostics like R-hat and effective sample
 #'   size are not handled by this method. Those diagnostics are provided via the
-#'   [`$summary()`][fit-method-summary] method.
+#'   [`$summary()`][fit-method-summary] method (using
+#'   [posterior::summarize_draws()]).
 #'
 #' @param diagnostics (character vector) One or more diagnostics to check. The
 #'   currently supported diagnostics are `"divergences`, `"treedepth"`, and

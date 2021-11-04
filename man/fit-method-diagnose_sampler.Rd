@@ -34,13 +34,10 @@ the underlying values of the sampler diagnostics for each iteration and
 chain use the \code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}}
 method.
 
-This method is similar to \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}}
-but everything is done in \R (rather than calling CmdStan utilities) and
-the summaries are returned as a list (not just printed).
-
 Currently parameter-specific diagnostics like R-hat and effective sample
 size are not handled by this method. Those diagnostics are provided via the
-\code{\link[=fit-method-summary]{$summary()}} method.
+\code{\link[=fit-method-summary]{$summary()}} method (using
+\code{\link[posterior:draws_summary]{posterior::summarize_draws()}}).
 }
 \examples{
 \dontrun{

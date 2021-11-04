@@ -1021,7 +1021,7 @@ sample_mpi <- function(data = NULL,
                        validate_csv = TRUE) {
 
   if (!is.null(validate_csv)) {
-    warning("'validate_csv' is deprecated. Please set 'diagnostics=NULL' instead.")
+    warning("'validate_csv' is deprecated. Please use 'diagnostics' instead.")
     if (is.logical(validate_csv)) {
       if (validate_csv) {
         diagnostics <- c("divergences", "treedepth", "ebfmi")

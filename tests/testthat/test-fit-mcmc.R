@@ -41,7 +41,7 @@ test_that("draws() stops for unkown variables", {
 test_that("draws() works when gradually adding variables", {
   skip_on_cran()
   fit <- testing_fit("logistic", method = "sample", refresh = 0,
-                     validate_csv = TRUE, save_warmup = TRUE)
+                     save_warmup = TRUE)
 
   draws_lp__ <- fit$draws(variables = c("lp__"), inc_warmup = TRUE)
   sampler_diagnostics <- fit$sampler_diagnostics(inc_warmup = TRUE)
@@ -342,21 +342,31 @@ test_that("draws() errors if invalid format", {
 })
 
 test_that("diagnose_sampler() works", {
+  # will have divergences
   fit <- suppressMessages(cmdstanr_example("schools"))
+
   expect_message(
     diagnostics <- fit$diagnose_sampler(),
     "transitions ended with a divergence"
   )
   expect_equal(
-    diagnostics$divergences,
+    diagnostics$num_divergent,
     suppressMessages(check_divergences(fit$sampler_diagnostics()))
   )
   expect_equal(
-    diagnostics$max_treedepths,
+    diagnostics$num_max_treedepth,
     suppressMessages(check_max_treedepth(fit$sampler_diagnostics(), fit$metadata()))
   )
   expect_equal(
     diagnostics$ebfmi,
     suppressMessages(check_ebfmi(fit$sampler_diagnostics()))
   )
+
+  # ebfmi not defined if iter < 3
+  fit <- suppressWarnings(suppressMessages(cmdstanr_example("schools", iter_sampling = 2)))
+  expect_warning(
+    diagnostics <- fit$diagnose_sampler(),
+    "E-BFMI not computed"
+  )
+  expect_equal(diagnostics$ebfmi, NA)
 })

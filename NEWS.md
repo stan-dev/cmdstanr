@@ -65,6 +65,9 @@ These are just wrappers around the `$draws()` method provided for convenience. (
 * New method `$diagnose_sampler()` that summarizes the sampler diagnostics
 (divergences, treedepth, ebfmi) and can regenerate the related warning messages. (#205)
 
+* New `diagnostics` argument for the `$sample()` method to specify which 
+diagnostics are checked after sampling. Replaces `validate_csv` argument. (#205)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes

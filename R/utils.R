@@ -324,6 +324,25 @@ available_diagnostics <- function() {
   c("divergences", "treedepth", "ebfmi")
 }
 
+# in some places we need to convert user friendly names
+# to the names used in the sampler diagnostics files:
+#   * ebfmi --> energy__
+#   * divergences --> divergent__
+#   * treedepth --> treedepth__
+convert_diagnostic_names <- function(diagnostics) {
+  diagnostic_names <- c()
+  if ("divergences" %in% diagnostics) {
+    diagnostic_names <- c(diagnostic_names, "divergent__")
+  }
+  if ("treedepth" %in% diagnostics) {
+    diagnostic_names <- c(diagnostic_names, "treedepth__")
+  }
+  if ("ebfmi" %in% diagnostics) {
+    diagnostic_names <- c(diagnostic_names, "energy__")
+  }
+  diagnostic_names
+}
+
 # draws formatting --------------------------------------------------------
 
 as_draws_format_fun <- function(draws_format) {
