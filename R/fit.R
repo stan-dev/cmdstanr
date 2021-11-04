@@ -824,6 +824,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$summary()`][fit-method-summary] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
+#'  [`$diagnostic_summary()`][fit-method-diagnostic_summary] |  Get summaries of sampler diagnostics and warning messages. |
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
 #'  [`$loo()`][fit-method-loo]  |  Run [loo::loo.array()] for approximate LOO-CV |
@@ -1049,7 +1050,9 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #' @name fit-method-sampler_diagnostics
 #' @aliases sampler_diagnostics
 #' @description Extract the values of sampler diagnostics for each iteration and
-#'   chain of MCMC.
+#'   chain of MCMC. To instead get summaries of these diagnostics and associated
+#'   warning messages use the
+#'   [`$diagnostic_summary()`][fit-method-diagnostic_summary] method.
 #'
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to `FALSE`.
 #' @param format (string) The draws format to return. See
@@ -1108,7 +1111,7 @@ sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr
 }
 CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnostics)
 
-#' Warnings and summaries of sampler diagnostics
+#' Sampler diagnostic summaries and warnings
 #'
 #' @name fit-method-diagnostic_summary
 #' @aliases diagnostic_summary
@@ -1135,8 +1138,8 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #'
 #' @return A list with as many named elements as `diagnostics` selected. The
 #'   possible elements and their values are:
-#'   * `"divergences"`: A vector of the number of divergences per chain.
-#'   * `"max_treedepths"`: A vector of the number of times `max_treedepth` was hit per chain.
+#'   * `"num_divergent"`: A vector of the number of divergences per chain.
+#'   * `"num_max_treedepth"`: A vector of the number of times `max_treedepth` was hit per chain.
 #'   * `"ebfmi"`: A vector of E-BFMI values per chain.
 #'
 #' @seealso [`CmdStanMCMC`] and the
@@ -1167,7 +1170,7 @@ diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfm
     } else {
       divergences <- check_divergences(post_warmup_sampler_diagnostics)
     }
-    out[["divergences"]] <- divergences
+    out[["num_divergent"]] <- divergences
   }
   if ("treedepth" %in% diagnostics) {
     if (quiet) {
@@ -1175,7 +1178,7 @@ diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfm
     } else {
       max_treedepth_hit <- check_max_treedepth(post_warmup_sampler_diagnostics, self$metadata())
     }
-    out[["max_treedepths"]] <- max_treedepth_hit
+    out[["num_max_treedepth"]] <- max_treedepth_hit
   }
   if ("ebfmi" %in% diagnostics) {
     if (quiet) {

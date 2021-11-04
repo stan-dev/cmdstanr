@@ -51,8 +51,6 @@ decimal points to fix issue with parsing large numbers. (#538)
 * Added a convenience argument `user_header` to `$compile()` and `cmdstan_model()`
 that simplifies the use of an external .hpp file to compile with the model.
 
-* Added E-BFMI checks that run automatically post sampling. (#500, @jsocolar)
-
 * New method `$code()` for all fitted model objects that returns the Stan code
 associated with the fitted model. (#575)
 
@@ -61,6 +59,11 @@ recompilation of Stan models. (#580)
 
 * New methods for `posterior::as_draws()` for CmdStanR fitted model objects.
 These are just wrappers around the `$draws()` method provided for convenience. (#532)
+
+* Added E-BFMI checks that run automatically post sampling. (#500, @jsocolar)
+
+* New method `$diagnostic_summary()` that summarizes the sampler diagnostics
+(divergences, treedepth, ebfmi) and can regenerate the related warning messages. (#205)
 
 # cmdstanr 0.4.0
 
