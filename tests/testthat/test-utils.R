@@ -178,3 +178,15 @@ test_that("require_suggested_package() works", {
     "Please install the 'not_a_real_package' package to use this function."
   )
 })
+
+test_that("as_mcmc.list() works", {
+  x <- as_mcmc.list(fit_mcmc)
+  expect_length(x, fit_mcmc$num_chains())
+  expect_s3_class(x, "mcmc.list")
+  expect_s3_class(x[[1]], "mcmc")
+
+  draws <- fit_mcmc$draws()
+  x1 <- x[[1]]
+  expect_equal(dim(x1), c(posterior::niterations(draws), posterior::nvariables(draws)))
+  expect_equal(dimnames(x1)$variable, posterior::variables(draws))
+})

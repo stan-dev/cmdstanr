@@ -352,7 +352,7 @@ as_mcmc.list <- function(x) {
     stop("Currently only CmdStanMCMC objects can be converted to mcmc.list.",
          call. = FALSE)
   }
-  sample_array <- x$draws(variables = variables, format = "array")
+  sample_array <- x$draws(format = "array")
   n_chain <- posterior::nchains(sample_array)
   n_iteration <- posterior::niterations(sample_array)
   class(sample_array) <- 'array'
