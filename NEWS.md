@@ -60,6 +60,9 @@ recompilation of Stan models. (#580)
 * New methods for `posterior::as_draws()` for CmdStanR fitted model objects.
 These are just wrappers around the `$draws()` method provided for convenience. (#532)
 
+* New function `as_mcmc.list()` for converting CmdStanMCMC objects to mcmc.list
+objects from the coda package. (#584, @MatsuuraKentaro)
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
