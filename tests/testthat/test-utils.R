@@ -4,6 +4,7 @@ if (not_on_cran()) {
   set_cmdstan_path()
   fit_mcmc <- testing_fit("logistic", method = "sample",
                           seed = 123, chains = 2)
+  fit_mle <- testing_fit("logistic", method = "opt", seed = 123)
 }
 
 test_that("check_divergences() works", {
@@ -189,4 +190,9 @@ test_that("as_mcmc.list() works", {
   x1 <- x[[1]]
   expect_equal(dim(x1), c(posterior::niterations(draws), posterior::nvariables(draws)))
   expect_equal(dimnames(x1)$variable, posterior::variables(draws))
+
+  expect_error(
+    as_mcmc.list(fit_mle),
+    "Currently only CmdStanMCMC objects can be converted to mcmc.list"
+  )
 })
