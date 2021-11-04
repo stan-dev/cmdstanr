@@ -331,23 +331,35 @@ maybe_convert_draws_format <- function(draws, format) {
 }
 
 
-# convert draws --------------------------------------------------------
+# convert draws for external packages ------------------------------------------
 
-#' Convert CmdStanMCMC object to mcmc.list object in coda package
+#' Convert `CmdStanMCMC` to `mcmc.list`
 #'
-#' @noRd
-#' @param fit CmdStanMCMC object
-#' @return mcmc.list object in coda package
+#' Convert a `CmdStanMCMC` object to an `mcmc.list` object compatible with the
+#' \pkg{coda} package.
+#'
 #' @export
-as_mcmc_list <- function(fit) {
-  sample_matrix <- fit$draws()
-  class(sample_matrix) <- 'array'
-  n_chain <- dim(sample_matrix)[[2]]
-  n_iteration <- dim(sample_matrix)[[1]]
+#' @param x A CmdStanMCMC object.
+#' @return An `mcmc.list` object compatible with the \pkg{coda} package.
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("schools_ncp", adapt_delta = 0.95)
+#' x <- as_mcmc.list(fit)
+#' }
+#'
+as_mcmc.list <- function(x) {
+  if (!inherits(x, "CmdStanMCMC")) {
+    stop("Currently only CmdStanMCMC objects can be converted to mcmc.list.",
+         call. = FALSE)
+  }
+  sample_array <- x$draws(variables = variables, format = "array")
+  n_chain <- posterior::nchains(sample_array)
+  n_iteration <- posterior::niterations(sample_array)
+  class(sample_array) <- 'array'
   mcmc_list <- lapply(seq_len(n_chain), function(chain) {
-    x <- sample_matrix[, chain, ]
-    dimnames(x) <- list(iteration = dimnames(sample_matrix)$iteration,
-                        variable  = dimnames(sample_matrix)$variable)
+    x <- sample_array[, chain, ]
+    dimnames(x) <- list(iteration = dimnames(sample_array)$iteration,
+                        variable  = dimnames(sample_array)$variable)
     attr(x, 'mcpar') <- c(1, n_iteration, 1)
     class(x) <- 'mcmc'
     x
