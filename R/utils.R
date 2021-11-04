@@ -335,15 +335,20 @@ maybe_convert_draws_format <- function(draws, format) {
 
 #' Convert `CmdStanMCMC` to `mcmc.list`
 #'
-#' Convert a `CmdStanMCMC` object to an `mcmc.list` object compatible with the
-#' \pkg{coda} package.
+#' This function converts a `CmdStanMCMC` object to an `mcmc.list` object
+#' compatible with the \pkg{coda} package. This is primarily intended for users
+#' of Stan coming from BUGS/JAGS who are used to \pkg{coda} for plotting and
+#' diagnostics. In general we recommend the more recent MCMC diagnostics in
+#' \pkg{posterior} and the \pkg{ggplot2}-based plotting functions in
+#' \pkg{bayesplot}, but for users who prefer \pkg{coda} this function provides
+#' compatibility.
 #'
 #' @export
-#' @param x A CmdStanMCMC object.
+#' @param x A [CmdStanMCMC] object.
 #' @return An `mcmc.list` object compatible with the \pkg{coda} package.
 #' @examples
 #' \dontrun{
-#' fit <- cmdstanr_example("schools_ncp", adapt_delta = 0.95)
+#' fit <- cmdstanr_example()
 #' x <- as_mcmc.list(fit)
 #' }
 #'
