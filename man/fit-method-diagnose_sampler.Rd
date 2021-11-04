@@ -15,10 +15,9 @@ diagnose_sampler(
 currently supported diagnostics are \verb{"divergences}, \code{"treedepth"}, and
 \verb{"ebfmi}.}
 
-\item{quiet}{(logical) Should messages about the diagnostics be displayed?
-The values of the diagnostics are always returned but if \code{quiet = FALSE}
-(the default) the warning messages about the diagnostics are also
-displayed.}
+\item{quiet}{(logical) Should warning messages about the diagnostics be
+suppressed? The default is \code{FALSE}, in which case warning messages are
+printed in addition to returning the values of the diagnostics.}
 }
 \value{
 A list with as many named elements as \code{diagnostics} selected. The

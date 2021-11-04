@@ -1131,10 +1131,9 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #' @param diagnostics (character vector) One or more diagnostics to check. The
 #'   currently supported diagnostics are `"divergences`, `"treedepth"`, and
 #'   `"ebfmi`.
-#' @param quiet (logical) Should messages about the diagnostics be displayed?
-#'   The values of the diagnostics are always returned but if `quiet = FALSE`
-#'   (the default) the warning messages about the diagnostics are also
-#'   displayed.
+#' @param quiet (logical) Should warning messages about the diagnostics be
+#'   suppressed? The default is `FALSE`, in which case warning messages are
+#'   printed in addition to returning the values of the diagnostics.
 #'
 #' @return A list with as many named elements as `diagnostics` selected. The
 #'   possible elements and their values are:
