@@ -342,8 +342,8 @@ test_that("draws() errors if invalid format", {
 })
 
 test_that("diagnose_sampler() works", {
-  # will have divergences
-  fit <- suppressMessages(cmdstanr_example("schools"))
+  # will have divergences and treedepth problems
+  fit <- suppressMessages(testing_fit("schools", max_treedepth = 3, seed = 123))
 
   expect_message(
     diagnostics <- fit$diagnose_sampler(),
@@ -352,6 +352,10 @@ test_that("diagnose_sampler() works", {
   expect_equal(
     diagnostics$num_divergent,
     suppressMessages(check_divergences(fit$sampler_diagnostics()))
+  )
+  expect_message(
+    diagnostics <- fit$diagnose_sampler(),
+    "transitions hit the maximum treedepth limit of 3"
   )
   expect_equal(
     diagnostics$num_max_treedepth,
@@ -363,7 +367,7 @@ test_that("diagnose_sampler() works", {
   )
 
   # ebfmi not defined if iter < 3
-  fit <- suppressWarnings(suppressMessages(cmdstanr_example("schools", iter_sampling = 2)))
+  fit <- suppressWarnings(suppressMessages(testing_fit("schools", iter_sampling = 2)))
   expect_warning(
     diagnostics <- fit$diagnose_sampler(),
     "E-BFMI not computed"
