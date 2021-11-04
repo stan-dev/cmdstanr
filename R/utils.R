@@ -318,7 +318,7 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
   invisible(unname(efbmi_per_chain))
 }
 
-# used in various places (e.g., fit$diagnostic_summary() and validate_sample_args())
+# used in various places (e.g., fit$diagnose_sampler() and validate_sample_args())
 # to validate the selected diagnostics
 available_diagnostics <- function() {
   c("divergences", "treedepth", "ebfmi")
