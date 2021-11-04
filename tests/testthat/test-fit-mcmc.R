@@ -341,10 +341,10 @@ test_that("draws() errors if invalid format", {
   )
 })
 
-test_that("diagnose_sampler() works", {
+test_that("diagnostic_summary() works", {
   fit <- suppressMessages(cmdstanr_example("schools"))
   expect_message(
-    diagnostics <- fit$diagnose_sampler(),
+    diagnostics <- fit$diagnostic_summary(),
     "transitions ended with a divergence"
   )
   expect_equal(
