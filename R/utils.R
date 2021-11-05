@@ -329,3 +329,46 @@ maybe_convert_draws_format <- function(draws, format) {
     stop("Invalid draws format.", call. = FALSE)
   )
 }
+
+
+# convert draws for external packages ------------------------------------------
+
+#' Convert `CmdStanMCMC` to `mcmc.list`
+#'
+#' This function converts a `CmdStanMCMC` object to an `mcmc.list` object
+#' compatible with the \pkg{coda} package. This is primarily intended for users
+#' of Stan coming from BUGS/JAGS who are used to \pkg{coda} for plotting and
+#' diagnostics. In general we recommend the more recent MCMC diagnostics in
+#' \pkg{posterior} and the \pkg{ggplot2}-based plotting functions in
+#' \pkg{bayesplot}, but for users who prefer \pkg{coda} this function provides
+#' compatibility.
+#'
+#' @export
+#' @param x A [CmdStanMCMC] object.
+#' @return An `mcmc.list` object compatible with the \pkg{coda} package.
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example()
+#' x <- as_mcmc.list(fit)
+#' }
+#'
+as_mcmc.list <- function(x) {
+  if (!inherits(x, "CmdStanMCMC")) {
+    stop("Currently only CmdStanMCMC objects can be converted to mcmc.list.",
+         call. = FALSE)
+  }
+  sample_array <- x$draws(format = "array")
+  n_chain <- posterior::nchains(sample_array)
+  n_iteration <- posterior::niterations(sample_array)
+  class(sample_array) <- 'array'
+  mcmc_list <- lapply(seq_len(n_chain), function(chain) {
+    x <- sample_array[, chain, ]
+    dimnames(x) <- list(iteration = dimnames(sample_array)$iteration,
+                        variable  = dimnames(sample_array)$variable)
+    attr(x, 'mcpar') <- c(1, n_iteration, 1)
+    class(x) <- 'mcmc'
+    x
+  })
+  class(mcmc_list) <- 'mcmc.list'
+  return(mcmc_list)
+}
