@@ -65,8 +65,12 @@ These are just wrappers around the `$draws()` method provided for convenience. (
 * New method `$diagnose_sampler()` that summarizes the sampler diagnostics
 (divergences, treedepth, ebfmi) and can regenerate the related warning messages. (#205)
 
-* New `diagnostics` argument for the `$sample()` method to specify which 
+* New `diagnostics` argument for the `$sample()` method to specify which
 diagnostics are checked after sampling. Replaces `validate_csv` argument. (#205)
+
+* New function `as_mcmc.list()` for converting CmdStanMCMC objects to mcmc.list
+objects from the coda package. (#584, @MatsuuraKentaro)
+
 
 # cmdstanr 0.4.0
 
@@ -94,7 +98,7 @@ Stan programs requires CmdStan >= 2.26. (#434)
 
 * New vignette on profiling Stan programs. (#435)
 
-* New vignette on running Stan on the GPU with OpenCL. OpenCL device ids can 
+* New vignette on running Stan on the GPU with OpenCL. OpenCL device ids can
 now also be specified at runtime. (#439)
 
 * New check for invalid parameter names when supplying init values. (#452, @mike-lawrence)
@@ -104,7 +108,7 @@ now also be specified at runtime. (#439)
 * New `error_on_NA` argument for `cmdstan_version()` to optionally return `NULL`
 (instead of erroring) if the CmdStan path is not found (#467, @wlandau).
 
-* Global option `cmdstanr_max_rows` can be set as an alternative to specifying 
+* Global option `cmdstanr_max_rows` can be set as an alternative to specifying
 `max_rows` argument to the `$print()` method. (#470)
 
 * New `output_basename` argument for the model fitting methods. Can be used in

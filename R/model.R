@@ -1501,7 +1501,7 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)
-  if (is.null(cpp_options[["stan_threads"]])) {
+  if (is.null(cpp_options[["stan_threads"]]) || !isTRUE(cpp_options[["stan_threads"]])) {
     if (!is.null(threads)) {
       warning(
         "'", threads_arg, "' is set but the model was not compiled with ",
@@ -1511,14 +1511,12 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
       )
       threads <- NULL
     }
-  } else {
-    if (is.null(threads)) {
-      stop(
-        "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-        "but '", threads_arg, "' was not set!",
-        call. = FALSE
-      )
-    }
+  } else if (isTRUE(cpp_options[["stan_threads"]]) && is.null(threads)) {
+    stop(
+      "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
+      "but '", threads_arg, "' was not set!",
+      call. = FALSE
+    )
   }
   invisible(threads)
 }
