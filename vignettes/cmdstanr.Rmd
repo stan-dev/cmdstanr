@@ -4,7 +4,7 @@ author: "Jonah Gabry and Rok Češnovar"
 output: 
   rmarkdown::html_vignette:
     toc: true
-    toc_depth: 4
+    toc_depth: 3
 params:
   EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
 vignette: >
@@ -160,7 +160,7 @@ fit <- mod$sample(
   seed = 123, 
   chains = 4, 
   parallel_chains = 4,
-  refresh = 500
+  refresh = 500 # print update every 500 iters
 )
 ```
 
@@ -178,18 +178,28 @@ the most important methods. For a full list, follow this link to the
 
 ### Posterior summary statistics
 
+#### Summaries from the posterior package
+
 The
 [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
-method calls `summarise_draws()` from the **posterior** package:
+method calls `summarise_draws()` from the **posterior** package. The 
+first argument specifies the variables to summarize and any arguments
+after that are passed on to `posterior::summarise_draws()` to specify
+which summaries to compute, whether to use multiple cores, etc.
 
 ```{r summary}
 fit$summary()
-fit$summary("theta", "mean", "sd")
+fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
 # use a formula to summarize arbitrary functions, e.g. Pr(theta <= 0.5)
 fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 ```
 
+#### CmdStan's stansummary utility 
+
+CmdStan itself provides a `stansummary` utility that can be called using the
+`$cmdstan_summary()` method. This method will print summaries but won't return
+anything.
 
 ### Posterior draws
 
@@ -238,38 +248,66 @@ mcmc_hist(fit$draws("theta"))
 
 ### Sampler diagnostics
 
+#### Extracting diagnostic values for each iteration and chain
+
 The
 [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html)
 method extracts the values of the sampler parameters (`treedepth__`,
-`divergent__`, etc.) as a 3-D array (iteration x chain x variable).
+`divergent__`, etc.) in formats supported by the **posterior** package. The
+default is as a 3-D array (iteration x chain x variable).
 
 ```{r sampler_diagnostics}
 # this is a draws_array object from the posterior package
 str(fit$sampler_diagnostics())
 
-# convert to matrix or data frame using posterior package
-diagnostics_df <- as_draws_df(fit$sampler_diagnostics())
-print(diagnostics_df)
+# this is a draws_df object from the posterior package
+str(fit$sampler_diagnostics(format = "df"))
 ```
 
-### CmdStan utilities
+#### Sampler diagnostic warnings and summaries
 
-The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-methods call CmdStan's `diagnose` and `stansummary` utilities.
+The `$diagnose_sampler()` method will display any sampler diagnostic warnings and return a summary of diagnostics for each chain. 
 
-```{r summary-and-diagnose}
-fit$cmdstan_diagnose()
-fit$cmdstan_summary()
+```{r diagnose_sampler}
+fit$diagnose_sampler()
 ```
+
+We see the number of divergences for each of the four chains, the number
+of times the maximum treedepth was hit for each chain, and the E-BFMI
+for each chain. 
+
+In this case there were no warnings, so in order to demonstrate the warning
+messages we'll use one of the CmdStanR example models that suffers from
+divergences.
+
+```{r fit-with-warnings, results='hold'}
+fit_with_warning <- cmdstanr_example("schools")
+```
+After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit$diagnose_sampler()`. 
+
+```{r diagnose_sampler-with-warnings}
+diagnostics <- fit_with_warning$diagnose_sampler()
+print(diagnostics)
+
+# number of divergences reported in warning is the sum of the per chain values
+sum(diagnostics$num_divergent) 
+```
+
+#### CmdStan's diagnose utility 
+
+CmdStan itself provides a `diagnose` utility that can be called using 
+the `$cmdstan_diagnose()` method. This method will print warnings but won't return anything.
 
 
 ### Create a `stanfit` object
 
-If you have RStan installed then it is also possible to create a `stanfit` 
+If you have RStan installed then it is also possible to create a `stanfit`
 object from the csv output files written by CmdStan. This can be done by using
 `rstan::read_stan_csv()` in combination with the `$output_files()` method of the
-`CmdStanMCMC` object.
+`CmdStanMCMC` object. This is only needed if you want to fit a model with
+CmdStanR but already have a lot of post-processing code that assumes a `stanfit`
+object. Otherwise we recommend using the post-processing functionality provided
+by CmdStanR itself.
 
 ```{r stanfit, eval=FALSE}
 stanfit <- rstan::read_stan_csv(fit$output_files())
