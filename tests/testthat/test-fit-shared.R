@@ -22,7 +22,7 @@ test_that("*_files() methods return the right number of paths", {
   }
 })
 
-test_that("saving csv output files works",
+test_that("saving csv output files works", {
   for (method in all_methods) {
     fit <- fits[[method]]
     old_paths <- fit$output_files()
