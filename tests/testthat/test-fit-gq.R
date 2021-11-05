@@ -1,15 +1,13 @@
 context("fitted-gq")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  fit <- testing_fit("bernoulli", method = "sample", seed = 123)
-  fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
-  PARAM_NAMES <- c("y_rep[1]", "y_rep[2]", "y_rep[3]", "y_rep[4]", "y_rep[5]",
-                   "y_rep[6]", "y_rep[7]", "y_rep[8]", "y_rep[9]", "y_rep[10]", "sum_y")
-}
+set_cmdstan_path()
+fit <- testing_fit("bernoulli", method = "sample", seed = 123)
+fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
+PARAM_NAMES <- c("y_rep[1]", "y_rep[2]", "y_rep[3]", "y_rep[4]", "y_rep[5]",
+                 "y_rep[6]", "y_rep[7]", "y_rep[8]", "y_rep[9]", "y_rep[10]",
+                 "sum_y")
 
 test_that("draws() stops for unkown variables", {
-  skip_on_cran()
   expect_error(
     fit_gq$draws(variables = "ABCD"),
     "Can't find the following variable(s) in the output: ABCD",
@@ -24,7 +22,6 @@ test_that("draws() stops for unkown variables", {
 })
 
 test_that("draws() method returns draws_array (reading csv works)", {
-  skip_on_cran()
   draws <- fit_gq$draws()
   draws_ys <- fit_gq$draws(variables = "y_rep")
   draws_y <- fit_gq$draws(variables = "y_rep[1]")
@@ -59,7 +56,6 @@ test_that("draws() method returns draws_array (reading csv works)", {
 })
 
 test_that("summary() method works after gq", {
-  skip_on_cran()
   x <- fit_gq$summary()
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, PARAM_NAMES)
@@ -70,7 +66,6 @@ test_that("summary() method works after gq", {
 })
 
 test_that("print() method works after gq", {
-  skip_on_cran()
   expect_output(expect_s3_class(fit_gq$print(), "CmdStanGQ"), "variable")
   expect_output(fit_gq$print(max_rows = 1), "# showing 1 of 11 rows")
   expect_output(fit_gq$print(NULL, c("mad")), "mad")
@@ -102,7 +97,6 @@ test_that("print() method works after gq", {
 })
 
 test_that("output() method works after gq", {
-  skip_on_cran()
   checkmate::expect_list(
     fit_gq$output(),
     types = "character",
@@ -113,7 +107,6 @@ test_that("output() method works after gq", {
 })
 
 test_that("time() works after gq", {
-  skip_on_cran()
   run_times <- fit_gq$time()
   checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
   testthat::expect_named(run_times, c("total", "chains"))
@@ -128,7 +121,6 @@ test_that("time() works after gq", {
 })
 
 test_that("fitted_params_files() works", {
-  skip_on_cran()
   expect_equal(
     fit_gq$fitted_params_files(),
     fit$output_files()
@@ -136,7 +128,6 @@ test_that("fitted_params_files() works", {
 })
 
 test_that("draws() works for different formats", {
-  skip_on_cran()
   a <- fit_gq$draws()
   expect_true(posterior::is_draws_array(a))
   a <- fit_gq$draws(format = "list")
@@ -148,7 +139,6 @@ test_that("draws() works for different formats", {
 })
 
 test_that("draws() errors if invalid format", {
-  skip_on_cran()
   expect_error(
     fit_gq$draws(format = "bad_format"),
     "The supplied draws format is not valid"

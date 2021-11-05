@@ -1,14 +1,11 @@
 context("install")
 
-if (not_on_cran()) {
-  cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
-  if (!nzchar(cmdstan_test_tarball_url)) {
-    cmdstan_test_tarball_url <- NULL
-  }
+cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+if (!nzchar(cmdstan_test_tarball_url)) {
+  cmdstan_test_tarball_url <- NULL
 }
 
 test_that("install_cmdstan() successfully installs cmdstan", {
-  skip_on_cran()
   skip_if_offline()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
@@ -29,7 +26,7 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   skip_if_offline()
-  skip_on_cran()
+
   if (not_on_cran()) {
     # want to test passing NULL to install_cmdstan but need a real dir to
     # check in dir.exists() below so also create dir_check
@@ -50,7 +47,6 @@ test_that("install_cmdstan() errors if installation already exists", {
 })
 
 test_that("install_cmdstan() errors if it times out", {
-  skip_on_cran()
   skip_if_offline()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
@@ -101,7 +97,6 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 })
 
 test_that("install_cmdstan() works with version and release_url", {
-  skip_on_cran()
   skip_if_offline()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
@@ -140,7 +135,6 @@ test_that("install_cmdstan() works with version and release_url", {
 })
 
 test_that("toolchain checks on Unix work", {
-  skip_on_cran()
   skip_if(os_is_windows())
   path_backup <- Sys.getenv("PATH")
   Sys.setenv("PATH" = "")
@@ -165,7 +159,6 @@ test_that("toolchain checks on Unix work", {
 })
 
 test_that("toolchain checks on Windows with RTools 3.5 work", {
-  skip_on_cran()
   skip_if_not(os_is_windows())
   skip_if(R.Version()$major > "3")
 
@@ -197,7 +190,6 @@ test_that("toolchain checks on Windows with RTools 3.5 work", {
 })
 
 test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
-  skip_on_cran()
   skip_if_not(os_is_windows())
   skip_if(R.Version()$major < "4")
 
@@ -238,7 +230,6 @@ test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
 })
 
 test_that("clean and rebuild works", {
-  skip_on_cran()
   expect_output(
     rebuild_cmdstan(),
     paste0("CmdStan v", cmdstan_version(), " built"),

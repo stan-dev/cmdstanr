@@ -1,44 +1,42 @@
 context("read_cmdstan_csv")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 1234)
-  fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", seed = 123)
-  fit_logistic_optimize <- testing_fit("logistic", method = "optimize", seed = 123)
-  fit_logistic_variational <- testing_fit("logistic", method = "variational", seed = 123)
-  fit_logistic_variational_short <- testing_fit("logistic", method = "variational", output_samples = 100, seed = 123)
+set_cmdstan_path()
+fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 1234)
+fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", seed = 123)
+fit_logistic_optimize <- testing_fit("logistic", method = "optimize", seed = 123)
+fit_logistic_variational <- testing_fit("logistic", method = "variational", seed = 123)
+fit_logistic_variational_short <- testing_fit("logistic", method = "variational", output_samples = 100, seed = 123)
 
-  fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
-  fit_bernoulli_dense_e_no_samples <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 0, metric = "dense_e")
-  fit_bernoulli_dense_e_no_samples_warmup <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2,
-                                                         iter_warmup = 100, iter_sampling = 0, save_warmup = 1,
-                                                         metric = "dense_e")
-  fit_bernoulli_thin_1 <- testing_fit("bernoulli", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
-  fit_logistic_thin_1 <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
-  fit_logistic_thin_1a <- testing_fit("logistic", method = "sample",
-                                     seed = 123, chains = 2, iter_sampling = 500, iter_warmup = 1000, thin = 1)
-  fit_logistic_thin_1b <- testing_fit("logistic", method = "sample",
-                                      seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 500, thin = 1)
-  fit_logistic_thin_1_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1, save_warmup = 1)
-  fit_logistic_thin_3 <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 3)
-  fit_logistic_thin_3_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 3, save_warmup = 1)
-  fit_logistic_thin_10 <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 0)
-  fit_logistic_thin_10_with_warmup <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 1)
+fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
+                                               seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
+fit_bernoulli_dense_e_no_samples <- testing_fit("bernoulli", method = "sample",
+                                                seed = 123, chains = 2, iter_sampling = 0, metric = "dense_e")
+fit_bernoulli_dense_e_no_samples_warmup <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2,
+                                                       iter_warmup = 100, iter_sampling = 0, save_warmup = 1,
+                                                       metric = "dense_e")
+fit_bernoulli_thin_1 <- testing_fit("bernoulli", method = "sample",
+                                    seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
+fit_logistic_thin_1 <- testing_fit("logistic", method = "sample",
+                                   seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
+fit_logistic_thin_1a <- testing_fit("logistic", method = "sample",
+                                    seed = 123, chains = 2, iter_sampling = 500, iter_warmup = 1000, thin = 1)
+fit_logistic_thin_1b <- testing_fit("logistic", method = "sample",
+                                    seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 500, thin = 1)
+fit_logistic_thin_1_with_warmup <- testing_fit("logistic", method = "sample",
+                                               seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1, save_warmup = 1)
+fit_logistic_thin_3 <- testing_fit("logistic", method = "sample",
+                                   seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 3)
+fit_logistic_thin_3_with_warmup <- testing_fit("logistic", method = "sample",
+                                               seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 3, save_warmup = 1)
+fit_logistic_thin_10 <- testing_fit("logistic", method = "sample",
+                                    seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 0)
+fit_logistic_thin_10_with_warmup <- testing_fit("logistic", method = "sample",
+                                                seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 10, save_warmup = 1)
 
-  fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit_bernoulli_thin_1)
-}
+fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit_bernoulli_thin_1)
+
 
 test_that("read_cmdstan_csv() fails for different model names", {
-  skip_on_cran()
   csv_files <- c(fit_bernoulli_thin_1$output_files(),
                  fit_logistic_thin_1$output_files())
   expect_error(read_cmdstan_csv(csv_files),
@@ -46,7 +44,6 @@ test_that("read_cmdstan_csv() fails for different model names", {
 })
 
 test_that("read_cmdstan_csv() fails for different number of samples in csv", {
-  skip_on_cran()
   csv_files <- c(fit_logistic_thin_1$output_files(),
                  fit_logistic_thin_10$output_files())
   expect_error(read_cmdstan_csv(csv_files),
@@ -66,7 +63,6 @@ test_that("read_cmdstan_csv() fails for different number of samples in csv", {
 })
 
 test_that("read_cmdstan_csv() fails for different variables", {
-  skip_on_cran()
   csv_files <- c(fit_bernoulli_thin_1$output_files(),
                  test_path("resources", "csv", "bernoulli-3-diff_params.csv"))
   expect_error(read_cmdstan_csv(csv_files),
@@ -74,7 +70,6 @@ test_that("read_cmdstan_csv() fails for different variables", {
 })
 
 test_that("read_cmdstan_csv() fails if the file does not exist", {
-  skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-doesntexist.csv"))
   expect_error(read_cmdstan_csv(csv_files),
                "Assertion on 'files' failed: File does not exist: 'resources/csv/model1-1-doesntexist.csv'.")
@@ -85,7 +80,6 @@ test_that("read_cmdstan_csv() fails if the file does not exist", {
 })
 
 test_that("read_cmdstan_csv() fails with empty csv file", {
-  skip_on_cran()
   file_path <- test_path("resources", "csv", "empty.csv")
   file.create(file_path)
   expect_error(read_cmdstan_csv(file_path),
@@ -94,14 +88,12 @@ test_that("read_cmdstan_csv() fails with empty csv file", {
 })
 
 test_that("read_cmdstan_csv() fails with the no params listed", {
-  skip_on_cran()
   file_path <- test_path("resources", "csv", "model1-3-no-params.csv")
   expect_error(read_cmdstan_csv(file_path),
                "Supplied CSV file does not contain any variable names or data!")
 })
 
 test_that("read_cmdstan_csv() matches utils::read.csv", {
-  skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
                  test_path("resources", "csv", "model1-2-warmup.csv"))
 
@@ -136,7 +128,6 @@ test_that("read_cmdstan_csv() matches utils::read.csv", {
 })
 
 test_that("read_cmdstan_csv() matches utils::read.csv for csv file without warmup", {
-  skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
 
   draws_array <- utils::read.csv(test_path("resources", "csv", "model1-2-no-warmup.csv"), comment.char = "#")
@@ -152,7 +143,6 @@ test_that("read_cmdstan_csv() matches utils::read.csv for csv file without warmu
 })
 
 test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", {
-  skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(as.vector(csv_output$inv_metric[[as.character(2)]]),
@@ -166,7 +156,6 @@ test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", 
 })
 
 test_that("read_cmdstan_csv() returns correct dense inverse mass matrix", {
-  skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   expect_equal(as.vector(csv_output$inv_metric[[1]]),
@@ -183,7 +172,6 @@ test_that("read_cmdstan_csv() returns correct dense inverse mass matrix", {
 })
 
 test_that("read_cmdstan_csv() returns correct dense inverse mass matrix for 2 csv files ", {
-  skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"),
                  test_path("resources", "csv", "model1-2-dense_e_metric.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
@@ -212,8 +200,6 @@ test_that("read_cmdstan_csv() returns correct dense inverse mass matrix for 2 cs
 })
 
 test_that("read_cmdstan_csv() works with thin", {
-  skip_on_cran()
-
   csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files())
   csv_output_3 <- read_cmdstan_csv(fit_logistic_thin_3$output_files())
   csv_output_10 <- read_cmdstan_csv(fit_logistic_thin_10$output_files())
@@ -232,7 +218,6 @@ test_that("read_cmdstan_csv() works with thin", {
 })
 
 test_that("read_cmdstan_csv() works with filtered variables", {
-  skip_on_cran()
   csv_output_1 <- read_cmdstan_csv(fit_logistic_thin_1$output_files(), variables = NULL, sampler_diagnostics = list())
   expect_equal(dim(csv_output_1$post_warmup_draws), c(1000, 2, 5))
   expect_equal(dim(csv_output_1$post_warmup_sampler_diagnostics), NULL)
@@ -273,8 +258,6 @@ test_that("read_cmdstan_csv returned filtered variables in correct order", {
 })
 
 test_that("read_cmdstan_csv() works with no samples", {
-  skip_on_cran()
-
   csv_output_diag_e_0 <- read_cmdstan_csv(fit_bernoulli_diag_e_no_samples$output_files())
   expect_equal(csv_output_diag_e_0$post_warmup_draws, NULL)
   csv_output_dense_e_0 <- read_cmdstan_csv(fit_bernoulli_dense_e_no_samples$output_files())
@@ -290,8 +273,6 @@ test_that("read_cmdstan_csv() works with no samples", {
 })
 
 test_that("read_cmdstan_csv() reads values up to adaptation", {
-  skip_on_cran()
-
   csv_files <- test_path("resources", "csv", "bernoulli-3-diff_params.csv")
 
   csv_out <- read_cmdstan_csv(csv_files)
@@ -329,8 +310,6 @@ test_that("remaining_columns_to_read() works", {
 })
 
 test_that("read_cmdstan_csv() reads adaptation step size correctly", {
-  skip_on_cran()
-
   csv_files <- test_path("resources", "csv", "model1-2-no-warmup.csv")
 
   csv_out <- read_cmdstan_csv(csv_files)
@@ -345,8 +324,6 @@ test_that("read_cmdstan_csv() reads adaptation step size correctly", {
 })
 
 test_that("read_cmdstan_csv() works for optimize", {
-  skip_on_cran()
-
   csv_output_1 <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   csv_output_2 <- read_cmdstan_csv(fit_logistic_optimize$output_files())
   expect_equal(dim(csv_output_1$point_estimates), c(1, 2))
@@ -366,8 +343,6 @@ test_that("read_cmdstan_csv() works for optimize", {
 
 
 test_that("read_cmdstan_csv() works for variational", {
-  skip_on_cran()
-
   csv_output_1 <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
   csv_output_2 <- read_cmdstan_csv(fit_logistic_variational$output_files())
   expect_equal(dim(csv_output_1$draws), c(1000, 3))
@@ -394,8 +369,6 @@ test_that("read_cmdstan_csv() works for variational", {
 })
 
 test_that("read_cmdstan_csv() works for generate_quantities", {
-  skip_on_cran()
-
   csv_output_1 <- read_cmdstan_csv(fit_gq$output_files())
   expect_equal(dim(csv_output_1$generated_quantities), c(1000, 2, 11))
   y_rep_params <- c("y_rep[1]", "y_rep[2]", "y_rep[3]", "y_rep[4]", "y_rep[5]",
@@ -419,7 +392,6 @@ test_that("read_cmdstan_csv() works for generate_quantities", {
 })
 
 test_that("read_cmdstan_csv() errors for files from different methods", {
-  skip_on_cran()
   files <- c(fit_bernoulli_variational$output_files(),fit_bernoulli_optimize$output_files())
   expect_error(
     read_cmdstan_csv(files),
@@ -443,7 +415,6 @@ test_that("read_cmdstan_csv() errors for files from different methods", {
 })
 
 test_that("stan_variables and stan_variable_sizes works in read_cdmstan_csv()", {
-  skip_on_cran()
   bern_opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   bern_vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
   log_opt <- read_cmdstan_csv(fit_logistic_optimize$output_files())

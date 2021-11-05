@@ -1,10 +1,9 @@
-if (not_on_cran()) {
-  set_cmdstan_path()
-  fit <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
-}
+context("opencl")
+
+set_cmdstan_path()
+fit <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
 
 test_that("all methods error when opencl_ids is used with non OpenCL model", {
-  skip_on_cran()
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file = stan_file)
   expect_error(
@@ -32,7 +31,6 @@ test_that("all methods error when opencl_ids is used with non OpenCL model", {
 })
 
 test_that("all methods error on invalid opencl_ids", {
-  skip_on_cran()
   skip_if(Sys.getenv("CMDSTANR_OPENCL_TESTS")!="1")
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE))
@@ -69,7 +67,6 @@ test_that("all methods error on invalid opencl_ids", {
 })
 
 test_that("all methods run with valid opencl_ids", {
-  skip_on_cran()
   skip_if(Sys.getenv("CMDSTANR_OPENCL_TESTS")!="1")
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE))
@@ -105,5 +102,3 @@ test_that("all methods run with valid opencl_ids", {
   expect_false(is.null(fit$metadata()$opencl_platform_name))
   expect_false(is.null(fit$metadata()$opencl_ids_name))
 })
-
-

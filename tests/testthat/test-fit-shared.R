@@ -1,21 +1,18 @@
 context("fitted-shared-methods")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
+set_cmdstan_path()
+fits <- list()
+fits[["sample"]] <- testing_fit("logistic", method = "sample",
+                                seed = 123, save_latent_dynamics = TRUE)
+fits[["variational"]] <- testing_fit("logistic", method = "variational",
+                                     seed = 123, save_latent_dynamics = TRUE)
+fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
+fit_bern <- testing_fit("bernoulli", method = "sample", seed = 123)
+fits[["generate_quantities"]] <- testing_fit("bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern, seed = 123)
+all_methods <- c("sample", "optimize", "variational", "generate_quantities")
 
-  fits <- list()
-  fits[["sample"]] <- testing_fit("logistic", method = "sample",
-                                  seed = 123, save_latent_dynamics = TRUE)
-  fits[["variational"]] <- testing_fit("logistic", method = "variational",
-                                       seed = 123, save_latent_dynamics = TRUE)
-  fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
-  fit_bern <- testing_fit("bernoulli", method = "sample", seed = 123)
-  fits[["generate_quantities"]] <- testing_fit("bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern, seed = 123)
-  all_methods <- c("sample", "optimize", "variational", "generate_quantities")
-}
 
 test_that("*_files() methods return the right number of paths", {
-  skip_on_cran()
   for (method in all_methods) {
     expect_length(fits[[method]]$output_files(), fits[[method]]$num_procs())
     expect_length(fits[[method]]$data_file(), 1)
@@ -25,9 +22,7 @@ test_that("*_files() methods return the right number of paths", {
   }
 })
 
-test_that("saving csv output files works", {
-  skip_on_cran()
-
+test_that("saving csv output files works",
   for (method in all_methods) {
     fit <- fits[[method]]
     old_paths <- fit$output_files()
@@ -54,8 +49,6 @@ test_that("saving csv output files works", {
 })
 
 test_that("saving diagnostic csv output works", {
-  skip_on_cran()
-
   for (method in all_methods) {
     fit <- fits[[method]]
     if (!(method %in% c("sample", "variational"))) {
@@ -92,8 +85,6 @@ test_that("saving diagnostic csv output works", {
 })
 
 test_that("saving data file works", {
-  skip_on_cran()
-
   for (method in all_methods) {
     fit <- fits[[method]]
     old_path <- fit$data_file()
@@ -117,7 +108,6 @@ test_that("saving data file works", {
 })
 
 test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
-  skip_on_cran()
   for (method in all_methods) {
     fit <- fits[[method]]
     if (method == "optimize") {
@@ -134,7 +124,6 @@ test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
 })
 
 test_that("draws() method returns a 'draws' object", {
-  skip_on_cran()
   for (method in all_methods) {
     fit <- fits[[method]]
     draws <- fit$draws()
@@ -155,7 +144,6 @@ test_that("draws() method returns a 'draws' object", {
 })
 
 test_that("as_draws() is equivalent to draws()", {
-  skip_on_cran()
   for (method in all_methods) {
     fit <- fits[[method]]
     expect_identical(as_draws(fit), fit$draws())
@@ -170,7 +158,6 @@ test_that("as_draws() is equivalent to draws()", {
 })
 
 test_that("save_object() method works", {
-  skip_on_cran()
   for (method in all_methods) {
     fit <- fits[[method]]
     temp_rds_file <- tempfile(fileext = ".RDS")
@@ -190,7 +177,6 @@ test_that("save_object() method works", {
 })
 
 test_that("save_object() method works with profiles", {
-  skip_on_cran()
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
     fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
@@ -221,7 +207,6 @@ test_that("init() errors if no inits specified", {
 })
 
 test_that("return_codes method works properly", {
-  skip_on_cran()
   expect_equal(fits[["variational"]]$return_codes(), 0)
   expect_equal(fits[["optimize"]]$return_codes(), 0)
   expect_equal(fits[["sample"]]$return_codes(), c(0,0,0,0))
@@ -233,7 +218,6 @@ test_that("return_codes method works properly", {
 })
 
 test_that("output and latent dynamics files are cleaned up correctly", {
-  skip_on_cran()
   for (method in c("sample", "variational")) {
     fit <- testing_fit("logistic", method = method, seed = 123, save_latent_dynamics = TRUE)
     out_files <- fit$output_files()
@@ -286,7 +270,6 @@ test_that("output and latent dynamics files are cleaned up correctly", {
 })
 
 test_that("CmdStanArgs erorrs if idx is out of proc_ids range", {
-  skip_on_cran()
   data_file <- test_path("resources", "data", "bernoulli.data.json")
   mod <- testing_model("bernoulli")
   arg <- CmdStanArgs$new(
@@ -303,7 +286,6 @@ test_that("CmdStanArgs erorrs if idx is out of proc_ids range", {
 })
 
 test_that("no output with refresh = 0", {
-  skip_on_cran()
   mod <- testing_model("logistic")
   data_list <- testing_data("logistic")
   output <- utils::capture.output(tmp <- mod$variational(data = data_list, seed = 123))
@@ -322,7 +304,6 @@ test_that("no output with refresh = 0", {
 })
 
 test_that("sig_figs works with all methods", {
-  skip_on_cran()
   m <- "data {
     int<lower=0> N;
     int<lower=0> K;
@@ -431,7 +412,6 @@ test_that("sig_figs works with all methods", {
 })
 
 test_that("draws are returned for model with spaces", {
-  skip_on_cran()
   m <- "
   parameters {
     real y;
@@ -466,8 +446,6 @@ test_that("draws are returned for model with spaces", {
 })
 
 test_that("sampling with inits works with include_paths", {
-  skip_on_cran()
-
   stan_program_w_include <- testing_stan_file("bernoulli_include")
   exe <- cmdstan_ext(strip_ext(stan_program_w_include))
   if(file.exists(exe)) {
@@ -493,7 +471,6 @@ test_that("sampling with inits works with include_paths", {
 })
 
 test_that("CmdStanModel created with exe_file works", {
-  skip_on_cran()
   stan_program <- testing_stan_file("bernoulli")
   data_list <- testing_data("bernoulli")
 
@@ -548,7 +525,6 @@ test_that("CmdStanModel created with exe_file works", {
 })
 
 test_that("code() works with all fitted model objects", {
-  skip_on_cran()
   code_ans <- readLines(testing_stan_file("logistic"))
   for (method in c("sample", "optimize", "variational")) {
     expect_identical(fits[[method]]$code(), code_ans)
@@ -558,7 +534,6 @@ test_that("code() works with all fitted model objects", {
 })
 
 test_that("code() warns if model not created with Stan file", {
-  skip_on_cran()
   stan_program <- testing_stan_file("bernoulli")
   mod <- testing_model("bernoulli")
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
