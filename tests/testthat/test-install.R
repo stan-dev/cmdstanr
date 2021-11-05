@@ -26,14 +26,7 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   skip_if_offline()
-
-  if (not_on_cran()) {
-    # want to test passing NULL to install_cmdstan but need a real dir to
-    # check in dir.exists() below so also create dir_check
-    install_dir <- cmdstan_default_install_path()
-  } else {
-    install_dir <- tempdir()
-  }
+  install_dir <- cmdstan_default_install_path()
   dir <- file.path(install_dir, "cmdstan-2.23.0")
   if (!dir.exists(dir)) {
     dir.create(dir)
