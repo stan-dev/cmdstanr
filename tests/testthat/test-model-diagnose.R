@@ -1,42 +1,37 @@
 context("model-diagnose")
 
-# Setup -------------------------------------------------------------------
-if (not_on_cran()) {
-  set_cmdstan_path()
-  mod <- testing_model("bernoulli")
-  data_list <- testing_data("bernoulli")
+set_cmdstan_path()
+mod <- testing_model("bernoulli")
+data_list <- testing_data("bernoulli")
 
-  # these are all valid for diagnose()
-  ok_arg_values <- list(
-    data = data_list,
-    init = NULL,
-    seed = 12345,
-    epsilon = 0.000001,
-    error = 0.000001
-  )
+# these are all valid for diagnose()
+ok_arg_values <- list(
+  data = data_list,
+  init = NULL,
+  seed = 12345,
+  epsilon = 0.000001,
+  error = 0.000001
+)
 
-  # using any of these should cause diagnose() to error
-  bad_arg_values <- list(
-    data = "NOT_A_FILE",
-    init = "NOT_A_FILE",
-    seed = "NOT_A_SEED",
-    epsilon = -10,
-    error = -10
-  )
+# using any of these should cause diagnose() to error
+bad_arg_values <- list(
+  data = "NOT_A_FILE",
+  init = "NOT_A_FILE",
+  seed = "NOT_A_SEED",
+  epsilon = -10,
+  error = -10
+)
 
-  ok_arg_sci_nota_values <- list(
-    data = data_list,
-    init = NULL,
-    seed = 12345,
-    epsilon = 1e-6,
-    error = 1e-6
-  )
-}
+ok_arg_sci_nota_values <- list(
+  data = data_list,
+  init = NULL,
+  seed = 12345,
+  epsilon = 1e-6,
+  error = 1e-6
+)
 
 
 test_that("diagnose() method runs when all arguments specified validly", {
-  skip_on_cran()
-
   # specifying all arguments validly
   fit1 <- do.call(mod$diagnose, ok_arg_values)
   expect_is(fit1, "CmdStanDiagnose")
@@ -47,7 +42,7 @@ test_that("diagnose() method runs when all arguments specified validly", {
 })
 
 test_that("diagnose() method runs when arguments are specified in scientific notation", {
-  skip_on_cran()
+
 
   # specifying all arguments validly
   fit1 <- do.call(mod$diagnose, ok_arg_sci_nota_values)
@@ -55,7 +50,6 @@ test_that("diagnose() method runs when arguments are specified in scientific not
 })
 
 test_that("diagnose() method errors for any invalid argument before calling cmdstan", {
-  skip_on_cran()
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
@@ -64,8 +58,6 @@ test_that("diagnose() method errors for any invalid argument before calling cmds
 })
 
 test_that("diagnose() errors with bad combination of arguments", {
-  skip_on_cran()
-
   # check a few examples (if these errors are correct then they will be correct
   # for all similar args because of how it's implemented)
   expect_error(
@@ -81,7 +73,6 @@ test_that("diagnose() errors with bad combination of arguments", {
 })
 
 test_that("diagnose() works with specified args", {
-  skip_on_cran()
   fit <- mod$diagnose(
     data = data_list,
     init = 3,
@@ -95,7 +86,6 @@ test_that("diagnose() works with specified args", {
 })
 
 test_that("diagnose() works examples", {
-  skip_on_cran()
   fit_logistic <- cmdstanr_example(example = "logistic", method = "diagnose")
   expect_true(is.data.frame(fit_logistic$gradients()))
   expect_equal(dim(fit_logistic$gradients()), c(4, 5))

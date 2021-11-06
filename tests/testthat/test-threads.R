@@ -1,15 +1,13 @@
 context("threading")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  stan_program <- testing_stan_file("bernoulli")
-  stan_gq_program <- testing_stan_file("bernoulli_ppc")
-  data_file_gq_json <- testing_data("bernoulli_ppc")
-  data_file_json <- test_path("resources", "data", "bernoulli.data.json")
-}
+set_cmdstan_path()
+stan_program <- testing_stan_file("bernoulli")
+stan_gq_program <- testing_stan_file("bernoulli_ppc")
+data_file_gq_json <- testing_data("bernoulli_ppc")
+data_file_json <- test_path("resources", "data", "bernoulli.data.json")
+
 
 test_that("using threads_per_chain without stan_threads set in compile() warns", {
-  skip_on_cran()
   mod <- cmdstan_model(stan_program)
   expect_warning(
     expect_output(
@@ -22,7 +20,6 @@ test_that("using threads_per_chain without stan_threads set in compile() warns",
 })
 
 test_that("threading works with sample()", {
-  skip_on_cran()
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
   expect_error(
@@ -56,7 +53,6 @@ test_that("threading works with sample()", {
 })
 
 test_that("threading works with optimize()", {
-  skip_on_cran()
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
   expect_error(
@@ -91,7 +87,6 @@ test_that("threading works with optimize()", {
 })
 
 test_that("threading works with variational()", {
-  skip_on_cran()
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
   expect_error(
@@ -126,7 +121,6 @@ test_that("threading works with variational()", {
 })
 
 test_that("threading works with generate_quantities()", {
-  skip_on_cran()
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
   mod_gq <- cmdstan_model(stan_gq_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
   expect_output(
@@ -164,8 +158,7 @@ test_that("threading works with generate_quantities()", {
   expect_equal(f_gq$metadata()$threads_per_chain, 4)
 })
 
-test_that("stan", {
-  skip_on_cran()
+test_that("correct output when stan_threads not TRUE", {
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE), force_recompile = TRUE)
   expect_output(
     mod$sample(data = data_file_json),

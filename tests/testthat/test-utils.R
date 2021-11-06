@@ -1,14 +1,12 @@
 context("utils")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  fit_mcmc <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2)
-  fit_mle <- testing_fit("logistic", method = "opt", seed = 123)
-}
+set_cmdstan_path()
+fit_mcmc <- testing_fit("logistic", method = "sample",
+                        seed = 123, chains = 2)
+fit_mle <- testing_fit("logistic", method = "opt", seed = 123)
+
 
 test_that("check_divergences() works", {
-  skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "14 of 100 \\(14.0%\\) transitions ended with a divergence."
@@ -37,7 +35,6 @@ test_that("check_divergences() works", {
 })
 
 test_that("check_sampler_transitions_treedepth() works", {
-  skip_on_cran()
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "16 of 100 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
@@ -71,7 +68,6 @@ test_that("check_sampler_transitions_treedepth() works", {
 })
 
 test_that("cmdstan_summary works if bin/stansummary deleted file", {
-  skip_on_cran()
   delete_and_run <- function() {
     file.remove(file.path(cmdstan_path(), "bin", cmdstan_ext("stansummary")))
     fit_mcmc$cmdstan_summary()
@@ -80,7 +76,6 @@ test_that("cmdstan_summary works if bin/stansummary deleted file", {
 })
 
 test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
-  skip_on_cran()
   delete_and_run <- function() {
     file.remove(file.path(cmdstan_path(), "bin", cmdstan_ext("diagnose")))
     fit_mcmc$cmdstan_diagnose()

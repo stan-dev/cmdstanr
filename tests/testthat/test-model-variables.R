@@ -1,11 +1,9 @@
-context("model-compile")
+context("model-variables")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-}
+set_cmdstan_path()
+
 
 test_that("$variables() work correctly with example models", {
-  skip_on_cran()
   mod <- testing_model("bernoulli")
   expect_equal(names(mod$variables()$data), c("N", "y"))
   expect_equal(names(mod$variables()$parameters), c("theta"))
@@ -45,7 +43,6 @@ test_that("$variables() work correctly with example models", {
 })
 
 test_that("$variables() work correctly with example models", {
-  skip_on_cran()
   code <- "
   data {
     array[1,2,3,4,5,6,7,8] int y;
@@ -77,7 +74,6 @@ test_that("$variables() work correctly with example models", {
 })
 
 test_that("$variables() errors on no stan_file", {
-  skip_on_cran()
   code <- "
   parameters {
     real y;

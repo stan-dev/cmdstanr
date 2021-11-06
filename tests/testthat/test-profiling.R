@@ -1,9 +1,9 @@
-if (not_on_cran()) {
-  set_cmdstan_path()
-}
+context("profiling")
+
+set_cmdstan_path()
+
 
 test_that("profiling works if profiling data is present", {
-  skip_on_cran()
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
     fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
@@ -28,7 +28,6 @@ test_that("profiling works if profiling data is present", {
 })
 
 test_that("profiling errors if no profiling files are present", {
-  skip_on_cran()
   mod <- testing_model("logistic")
   suppressWarnings(
     utils::capture.output(
@@ -47,7 +46,6 @@ test_that("profiling errors if no profiling files are present", {
 })
 
 test_that("saving profile csv output works", {
-  skip_on_cran()
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
     fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)

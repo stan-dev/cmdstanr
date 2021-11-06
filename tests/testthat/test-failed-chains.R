@@ -1,47 +1,45 @@
-if (not_on_cran()) {
-  set_cmdstan_path()
-  stan_program <- testing_stan_file("chain_fails")
-  stan_program_init_warnings <- testing_stan_file("init_warnings")
+context("failed chains")
+set_cmdstan_path()
+stan_program <- testing_stan_file("chain_fails")
+stan_program_init_warnings <- testing_stan_file("init_warnings")
 
-  mod <- cmdstan_model(stan_file = stan_program)
-  mod_init_warnings <- cmdstan_model(stan_file = stan_program_init_warnings)
+mod <- cmdstan_model(stan_file = stan_program)
+mod_init_warnings <- cmdstan_model(stan_file = stan_program_init_warnings)
 
-  make_all_fail <- function(x) {
-    utils::capture.output(
-      all_fail <- x$sample(data = list(pr_fail = 1),
-                           save_latent_dynamics = TRUE)
-    )
-    all_fail
-  }
-
-  make_some_fail <- function(x) {
-    num_files <- 0
-    attempt <- 1
-    while (num_files == 0 || num_files == 4) {
-      utils::capture.output(
-        check_some_fail <- x$sample(
-          data = list(pr_fail = 0.5),
-          save_latent_dynamics = TRUE,
-          seed = base::sample(.Machine$integer.max, 4)
-        )
-      )
-      num_files <- length(check_some_fail$output_files(include_failed = FALSE))
-      attempt <- attempt + 1
-    }
-    check_some_fail
-  }
-
-  # called here and also in tests below
-  suppressWarnings(
-    utils::capture.output(
-      fit_all_fail <- make_all_fail(mod),
-      fit_some_fail <- make_some_fail(mod)
-    )
+make_all_fail <- function(x) {
+  utils::capture.output(
+    all_fail <- x$sample(data = list(pr_fail = 1),
+                         save_latent_dynamics = TRUE)
   )
+  all_fail
 }
 
+make_some_fail <- function(x) {
+  num_files <- 0
+  attempt <- 1
+  while (num_files == 0 || num_files == 4) {
+    utils::capture.output(
+      check_some_fail <- x$sample(
+        data = list(pr_fail = 0.5),
+        save_latent_dynamics = TRUE,
+        seed = base::sample(.Machine$integer.max, 4)
+      )
+    )
+    num_files <- length(check_some_fail$output_files(include_failed = FALSE))
+    attempt <- attempt + 1
+  }
+  check_some_fail
+}
+
+# called here and also in tests below
+suppressWarnings(
+  utils::capture.output(
+    fit_all_fail <- make_all_fail(mod),
+    fit_some_fail <- make_some_fail(mod)
+  )
+)
+
 test_that("correct warnings are thrown when all chains fail", {
-  skip_on_cran()
   expect_warning(
     make_all_fail(mod),
     "All chains finished unexpectedly!"
@@ -52,7 +50,6 @@ test_that("correct warnings are thrown when all chains fail", {
 })
 
 test_that("correct warnings are thrown when some chains fail", {
-  skip_on_cran()
   expect_warning(
      fit_tmp <- make_some_fail(mod),
      paste(4 - length(fit_tmp$output_files(include_failed = FALSE)), "chain(s) finished unexpectedly"),
@@ -66,7 +63,6 @@ test_that("correct warnings are thrown when some chains fail", {
 })
 
 test_that("$output_files() and latent_dynamic_files() returns path to all files regardless of chain failure", {
-  skip_on_cran()
   expect_equal(
     length(fit_all_fail$output_files(include_failed = TRUE)),
     4
@@ -102,7 +98,6 @@ test_that("$output_files() and latent_dynamic_files() returns path to all files 
 })
 
 test_that("$save_* methods save all files regardless of chain failure", {
-  skip_on_cran()
   expect_message(
     fit_all_fail$save_output_files(dir = tempdir()),
     "Moved 4 files"
@@ -123,7 +118,6 @@ test_that("$save_* methods save all files regardless of chain failure", {
 })
 
 test_that("errors when using draws after all chains fail", {
-  skip_on_cran()
   expect_error(fit_all_fail$summary(), "No chains finished successfully")
   expect_error(fit_all_fail$draws(), "No chains finished successfully")
   expect_error(fit_all_fail$sampler_diagnostics(), "No chains finished successfully")
@@ -136,7 +130,6 @@ test_that("errors when using draws after all chains fail", {
 })
 
 test_that("can use draws after some chains fail", {
-  skip_on_cran()
   expect_s3_class(fit_some_fail$summary(), "draws_summary")
   expect_s3_class(fit_some_fail$draws(), "draws_array")
   expect_output(fit_some_fail$cmdstan_summary(), "Inference for Stan model")
@@ -145,7 +138,6 @@ test_that("can use draws after some chains fail", {
 })
 
 test_that("init warnings are shown", {
-  skip_on_cran()
   suppressWarnings(
     expect_message(
       utils::capture.output(
@@ -180,7 +172,6 @@ test_that("errors when using draws after variational fais", {
 })
 
 test_that("gq chains error on wrong input CSV", {
-  skip_on_cran()
   fit_bernoulli <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2)
   fit_logistic <- testing_fit("logistic", method = "sample", seed = 123, chains = 4)
   mod <- testing_model("bernoulli_ppc")
@@ -225,6 +216,3 @@ test_that("gq chains error on wrong input CSV", {
     fixed = TRUE
   )
 })
-
-
-

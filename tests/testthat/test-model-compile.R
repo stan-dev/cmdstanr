@@ -1,13 +1,11 @@
 context("model-compile")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  stan_program <- cmdstan_example_file()
-  mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
-}
+set_cmdstan_path()
+stan_program <- cmdstan_example_file()
+mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
+
 
 test_that("object initialized correctly", {
-  skip_on_cran()
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
   expect_error(
@@ -18,7 +16,6 @@ test_that("object initialized correctly", {
 })
 
 test_that("error if no compile() before model fitting", {
-  skip_on_cran()
   expect_error(
     mod$sample(),
     "Model not compiled. Try running the compile() method first.",
@@ -27,7 +24,6 @@ test_that("error if no compile() before model fitting", {
 })
 
 test_that("compile() method works", {
-  skip_on_cran()
   # remove executable if exists
   exe <- cmdstan_ext(strip_ext(mod$stan_file()))
   if (file.exists(exe)) {
@@ -43,7 +39,6 @@ test_that("compile() method works", {
 })
 
 test_that("compile() method forces recompilation force_recompile = TRUE", {
-  skip_on_cran()
   mod$compile(quiet = TRUE)
   expect_interactive_message(
     mod$compile(quiet = TRUE, force_recompile = TRUE),
@@ -52,7 +47,6 @@ test_that("compile() method forces recompilation force_recompile = TRUE", {
 })
 
 test_that("compile() method forces recompilation if model modified", {
-  skip_on_cran()
   # remove executable if exists
   exe <- cmdstan_ext(strip_ext(mod$stan_file()))
   if (!file.exists(exe)) {
@@ -63,7 +57,6 @@ test_that("compile() method forces recompilation if model modified", {
 })
 
 test_that("compile() method works with spaces in path", {
-  skip_on_cran()
   stan_file <- testing_stan_file("bernoulli")
   stan_model_with_spaces <- testing_stan_file("folder spaces/bernoulli spaces")
 
@@ -85,7 +78,6 @@ test_that("compile() method works with spaces in path", {
 })
 
 test_that("compile() method overwrites binaries", {
-  skip_on_cran()
   mod$compile(quiet = TRUE)
   old_time = file.mtime(mod$exe_file())
   mod$compile(quiet = TRUE, force_recompile = TRUE)
@@ -94,8 +86,6 @@ test_that("compile() method overwrites binaries", {
 })
 
 test_that("compilation works with include_paths", {
-  skip_on_cran()
-
   stan_program_w_include <- testing_stan_file("bernoulli_include")
   exe <- cmdstan_ext(strip_ext(stan_program_w_include))
   if(file.exists(exe)) {
@@ -126,7 +116,6 @@ test_that("compilation works with include_paths", {
 })
 
 test_that("name in STANCFLAGS is set correctly", {
-  skip_on_cran()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows()) {
     out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
@@ -142,7 +131,6 @@ test_that("name in STANCFLAGS is set correctly", {
 
 
 test_that("switching threads on and off works without rebuild", {
-  skip_on_cran()
   main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
   main_path_threads_o <- file.path(cmdstan_path(), "src", "cmdstan", "main_threads.o")
   if (file.exists(main_path_threads_o)) {
@@ -171,7 +159,6 @@ test_that("switching threads on and off works without rebuild", {
 })
 
 test_that("multiple cpp_options work", {
-  skip_on_cran()
   stan_file <- testing_stan_file("bernoulli")
   expect_interactive_message(
     mod <- cmdstan_model(stan_file, cpp_options = list("DUMMY_TEST2"="1", "DUMMY_TEST2"="1",  "DUMMY_TEST3"="1"), force_recompile = TRUE),
@@ -188,7 +175,6 @@ test_that("multiple cpp_options work", {
 })
 
 test_that("compile errors are shown", {
-  skip_on_cran()
   stan_file <- testing_stan_file("fail")
   expect_error(
     cmdstan_model(stan_file),
@@ -197,7 +183,6 @@ test_that("compile errors are shown", {
 })
 
 test_that("dir arg works for cmdstan_model and $compile()", {
-  skip_on_cran()
   tmp_dir <- tempdir()
   tmp_dir_2 <- tempdir()
 
@@ -236,7 +221,6 @@ test_that("dir arg works for cmdstan_model and $compile()", {
 })
 
 test_that("compiling stops on hyphens in stanc_options", {
-  skip_on_cran()
   hyphens <- list("--allow-undefined")
   hyphens2 <- list("--allow-undefined" = TRUE)
   hyphens3 <- list("--o" = "something")
@@ -275,7 +259,6 @@ test_that("compiling stops on hyphens in stanc_options", {
 })
 
 test_that("compiling works with only names in list", {
-  skip_on_cran()
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file, stanc_options = list("warn-pedantic"), force_recompile = TRUE)
   checkmate::expect_r6(
@@ -285,7 +268,6 @@ test_that("compiling works with only names in list", {
 })
 
 test_that("compile() works with pedantic=TRUE", {
-  skip_on_cran()
   stan_file <- write_stan_file("
   parameters {
     real y;
@@ -302,7 +284,6 @@ test_that("compile() works with pedantic=TRUE", {
 })
 
 test_that("*hpp_file() functions work", {
-  skip_on_cran()
   tmp_dir <- tempdir()
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file, force_recompile = TRUE)
@@ -318,7 +299,6 @@ test_that("*hpp_file() functions work", {
 })
 
 test_that("check_syntax() works", {
-  skip_on_cran()
   stan_file <- testing_stan_file("fail")
   mod_fail <- cmdstan_model(stan_file, compile = FALSE)
   expect_error(
@@ -377,7 +357,6 @@ test_that("check_syntax() works", {
 })
 
 test_that("check_syntax() works with pedantic=TRUE", {
-  skip_on_cran()
   model_code <- "
   parameters {
     real y;
@@ -415,8 +394,6 @@ test_that("check_syntax() works with pedantic=TRUE", {
 })
 
 test_that("check_syntax() works with include_paths", {
-  skip_on_cran()
-
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
   mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=FALSE,
@@ -426,7 +403,6 @@ test_that("check_syntax() works with include_paths", {
 })
 
 test_that("check_syntax() works with pedantic=TRUE", {
-  skip_on_cran()
   model_code <- "
   transformed data {
     real a;
@@ -448,7 +424,6 @@ test_that("check_syntax() works with pedantic=TRUE", {
 })
 
 test_that("compiliation errors if folder with the model name exists", {
-  skip_on_cran()
   skip_if(os_is_windows())
   model_code <- "
   parameters {

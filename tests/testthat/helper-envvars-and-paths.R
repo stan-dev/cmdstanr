@@ -6,10 +6,6 @@ on_ci <- function() {
   isTRUE(as.logical(Sys.getenv("CI")))
 }
 
-not_on_cran <- function() {
-  on_ci() || identical(Sys.getenv("NOT_CRAN"), "true")
-}
-
 mpi_toolchain_present <- function() {
   tryCatch(
     processx::run(command = "mpicxx", args = "--version")$status == 0 &&

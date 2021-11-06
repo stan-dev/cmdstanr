@@ -1,14 +1,11 @@
 context("data-utils")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  fit <- testing_fit("bernoulli", method = "sample", seed = 123)
-  fit_vb <- testing_fit("bernoulli", method = "variational", seed = 123)
-  fit_optimize <- testing_fit("bernoulli", method = "optimize", seed = 123)
-}
+set_cmdstan_path()
+fit <- testing_fit("bernoulli", method = "sample", seed = 123)
+fit_vb <- testing_fit("bernoulli", method = "variational", seed = 123)
+fit_optimize <- testing_fit("bernoulli", method = "optimize", seed = 123)
 
 test_that("empty data list converted to NULL", {
-  skip_on_cran()
   stan_file <- write_stan_file("
   parameters {
     real y;
@@ -23,7 +20,6 @@ test_that("empty data list converted to NULL", {
 })
 
 test_that("process_data works for inputs of length one", {
-  skip_on_cran()
   data <- list(val = 5)
   stan_file <- write_stan_file("
   data {

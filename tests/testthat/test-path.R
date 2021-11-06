@@ -1,15 +1,10 @@
 context("paths")
 
 Sys.unsetenv("CMDSTAN")
-
-if (not_on_cran()) {
-  PATH <- absolute_path(set_cmdstan_path())
-  VERSION <- cmdstan_version()
-} else { # CRAN
-  PATH <- absolute_path(Sys.getenv("HOME")) # not actually installed, just a valid path
-}
-
+PATH <- absolute_path(set_cmdstan_path())
+VERSION <- cmdstan_version()
 unset_cmdstan_path()
+
 
 # Setting paths -----------------------------------------------------------
 test_that("Setting path works and confirms with message", {
@@ -39,8 +34,6 @@ test_that("Setting bad path from env leads to warning (can't find directory)", {
 })
 
 test_that("Setting path from env var is detected", {
-  skip_on_cran()
-
   unset_cmdstan_path()
   expect_true(is.null(.cmdstanr$VERSION))
   Sys.setenv(CMDSTAN = PATH)
@@ -51,8 +44,6 @@ test_that("Setting path from env var is detected", {
 })
 
 test_that("cmdstanr_initialize() also looks for default path", {
-  skip_on_cran()
-
   unset_cmdstan_path()
   cmdstanr_initialize()
   expect_equal(tolower(cmdstan_path()), tolower(PATH))
@@ -61,8 +52,6 @@ test_that("cmdstanr_initialize() also looks for default path", {
 
 # Getting path and version ------------------------------------------------
 test_that("Getting a valid path works", {
-  skip_on_cran()
-
   unset_cmdstan_path()
   set_cmdstan_path(PATH)
   expect_equal(cmdstan_path(), PATH)
@@ -78,8 +67,6 @@ test_that("Getting missing path leads to error (path not set)", {
 })
 
 test_that("CmdStan version detected when setting path", {
-  skip_on_cran()
-
   unset_cmdstan_path()
   set_cmdstan_path(PATH)
   expect_equal(cmdstan_path(), PATH)
