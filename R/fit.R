@@ -857,20 +857,15 @@ CmdStanMCMC <- R6::R6Class(
         warning("No chains finished successfully. Unable to retrieve the fit.",
                 call. = FALSE)
       } else {
-        # throw diagnostic warnings if user asked for them and if not fixed_param
-        if (!is.null(self$runset$args$method_args$diagnostics)) {
+        if (runset$args$method_args$fixed_param) {
+          private$read_csv_(variables = "", sampler_diagnostics = "")
+        } else {
           diagnostics <- self$runset$args$method_args$diagnostics
-          fixed_param <- runset$args$method_args$fixed_param
-          if (!fixed_param) {
-            # convert user friendly names to actual diagnostic names (e.g. divergences --> divergent__)
-            diagnostics_to_read <- convert_hmc_diagnostic_names(diagnostics)
-          } else {
-            diagnostics_to_read <- ""
-          }
-          private$read_csv_(variables = "", sampler_diagnostics = diagnostics_to_read)
-          if (!fixed_param) {
-            invisible(self$diagnostic_summary(diagnostics = diagnostics, quiet = FALSE))
-          }
+          private$read_csv_(
+            variables = "",
+            sampler_diagnostics = convert_hmc_diagnostic_names(diagnostics)
+          )
+          invisible(self$diagnostic_summary(diagnostics, quiet = FALSE))
         }
       }
     },
@@ -1153,13 +1148,16 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #' }
 #'
 diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfmi"), quiet = FALSE) {
+  out <- list()
+  if (is.null(diagnostics) || identical(diagnostics, "")) {
+    return(out)
+  }
   diagnostics <- match.arg(
     diagnostics,
-    choices = available_hmc_diagnostics(),
+    choices = c(available_hmc_diagnostics()),
     several.ok = TRUE
   )
   post_warmup_sampler_diagnostics <- self$sampler_diagnostics(inc_warmup = FALSE)
-  out <- list()
   if ("divergences" %in% diagnostics) {
     if (quiet) {
       divergences <- suppressMessages(check_divergences(post_warmup_sampler_diagnostics))

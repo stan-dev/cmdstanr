@@ -919,7 +919,7 @@ CmdStanMCMCProcs <- R6::R6Class(
                 "seconds.\n")
             cat("Total execution time:",
                 format(round(self$total_time(), 1), nsmall = 1),
-                "seconds.\n")
+                "seconds.\n\n")
           } else if (num_failed == num_chains) {
             warning("All chains finished unexpectedly! Use the $output(chain_id) method for more information.\n", call. = FALSE)
             warning("Use read_cmdstan_csv() to read the results of the failed chains.",

@@ -248,7 +248,7 @@ check_divergences <- function(post_warmup_sampler_diagnostics) {
     if (!is.na(num_divergences) && num_divergences > 0) {
       percentage_divergences <- 100 * num_divergences / num_draws
       message(
-        "\nWarning: ", num_divergences, " of ", num_draws,
+        "Warning: ", num_divergences, " of ", num_draws,
         " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
         " transitions ended with a divergence.\n",
         "This may indicate insufficient exploration of the posterior distribution.\n",
@@ -272,7 +272,7 @@ check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
     if (!is.na(num_max_treedepths) && num_max_treedepths > 0) {
       percentage_max_treedepths <- 100 * num_max_treedepths / num_draws
       message(
-        num_max_treedepths, " of ", num_draws, " (", (format(round(percentage_max_treedepths, 0), nsmall = 1)), "%)",
+        "Warning: ", num_max_treedepths, " of ", num_draws, " (", (format(round(percentage_max_treedepths, 0), nsmall = 1)), "%)",
         " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
         " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
         "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
@@ -339,6 +339,9 @@ convert_hmc_diagnostic_names <- function(diagnostics) {
   }
   if ("ebfmi" %in% diagnostics) {
     diagnostic_names <- c(diagnostic_names, "energy__")
+  }
+  if (length(diagnostic_names) == 0) {
+    diagnostic_names <- ""
   }
   diagnostic_names
 }

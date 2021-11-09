@@ -333,3 +333,4 @@ generated quantities  {
   expect_null(fit$sampler_diagnostics())
   expect_equal(posterior::variables(fit$draws()), "y")
 })
+

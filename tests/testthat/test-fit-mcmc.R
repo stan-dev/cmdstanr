@@ -373,4 +373,7 @@ test_that("diagnostic_summary() works", {
     "E-BFMI not computed"
   )
   expect_equal(diagnostics$ebfmi, NA)
+
+  expect_equal(fit$diagnostic_summary(""), list())
+  expect_equal(fit$diagnostic_summary(NULL), list())
 })
