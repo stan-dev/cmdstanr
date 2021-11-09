@@ -358,7 +358,9 @@ CmdStanModel <- R6::R6Class(
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
-#'   otherwise write in the `make/local` file.
+#'   otherwise write in the `make/local` file. For an example of using threading
+#'   see the Stan case study
+#'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   `stanc` chapter of the CmdStan Guide for more details on available options:
