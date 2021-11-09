@@ -6,7 +6,6 @@ if (!nzchar(cmdstan_test_tarball_url)) {
 }
 
 test_that("install_cmdstan() successfully installs cmdstan", {
-  skip_if_offline()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -25,10 +24,6 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 })
 
 test_that("install_cmdstan() errors if installation already exists", {
-  # skip_if_offline()
-  if (not_on_cran()) {
-    print("foo")
-  }
   install_dir <- cmdstan_default_install_path()
   dir <- file.path(install_dir, "cmdstan-2.23.0")
   if (!dir.exists(dir)) {
@@ -43,7 +38,6 @@ test_that("install_cmdstan() errors if installation already exists", {
 })
 
 test_that("install_cmdstan() errors if it times out", {
-  skip_if_offline()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -77,7 +71,6 @@ test_that("install_cmdstan() errors if it times out", {
 })
 
 test_that("install_cmdstan() errors if invalid version or URL", {
-  skip_if_offline()
   expect_error(
     install_cmdstan(version = "2.23.2"),
     "Download of CmdStan failed. Please check if the supplied version number is valid."
@@ -93,7 +86,6 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 })
 
 test_that("install_cmdstan() works with version and release_url", {
-  skip_if_offline()
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
