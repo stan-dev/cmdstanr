@@ -1126,7 +1126,7 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #'
 #' @param diagnostics (character vector) One or more diagnostics to check. The
 #'   currently supported diagnostics are `"divergences`, `"treedepth"`, and
-#'   `"ebfmi`.
+#'   `"ebfmi`. The default is to check all of them.
 #' @param quiet (logical) Should warning messages about the diagnostics be
 #'   suppressed? The default is `FALSE`, in which case warning messages are
 #'   printed in addition to returning the values of the diagnostics.

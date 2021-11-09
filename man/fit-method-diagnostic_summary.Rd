@@ -13,7 +13,7 @@ diagnostic_summary(
 \arguments{
 \item{diagnostics}{(character vector) One or more diagnostics to check. The
 currently supported diagnostics are \verb{"divergences}, \code{"treedepth"}, and
-\verb{"ebfmi}.}
+\verb{"ebfmi}. The default is to check all of them.}
 
 \item{quiet}{(logical) Should warning messages about the diagnostics be
 suppressed? The default is \code{FALSE}, in which case warning messages are
