@@ -760,10 +760,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @aliases sample
 #' @family CmdStanModel methods
 #'
-#' @description The `$sample()` method of a [`CmdStanModel`] object runs the
-#'   default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce
-#'   a set of draws from the posterior distribution of a model conditioned on
-#'   some data.
+#' @description The `$sample()` method of a [`CmdStanModel`] object runs Stan's
+#'   main Markov chain Monte Carlo algorithm.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the
@@ -1555,7 +1553,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     allow_undefined_arg <- "--allow-undefined"
   } else {
     allow_undefined_arg <- NULL
-  }  
+  }
   out_file <- tempfile(fileext = ".json")
   run_log <- processx::run(
     command = stanc_cmd(),
