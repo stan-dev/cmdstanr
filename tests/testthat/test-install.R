@@ -26,6 +26,9 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   skip_if_offline()
+  if (not_on_cran()) {
+    print("foo")
+  }
   install_dir <- cmdstan_default_install_path()
   dir <- file.path(install_dir, "cmdstan-2.23.0")
   if (!dir.exists(dir)) {
