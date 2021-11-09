@@ -1,19 +1,16 @@
 context("model-output_dir-output-basename")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  if (getRversion() < '3.5.0') {
-    sandbox <- file.path(tempdir(), "sandbox")
-  } else {
-    sandbox <- file.path(tempdir(check = TRUE), "sandbox")
-  }
-  if (!dir.exists(sandbox)) {
-    dir.create(sandbox)
-  }
+set_cmdstan_path()
+if (getRversion() < '3.5.0') {
+  sandbox <- file.path(tempdir(), "sandbox")
+} else {
+  sandbox <- file.path(tempdir(check = TRUE), "sandbox")
+}
+if (!dir.exists(sandbox)) {
+  dir.create(sandbox)
 }
 
 test_that("all fitting methods work with output_dir", {
-  skip_on_cran()
   for (method in c("sample", "optimize", "variational")) {
     method_dir <- file.path(sandbox, method)
     if (!dir.exists(method_dir)) {
@@ -52,8 +49,6 @@ test_that("all fitting methods work with output_dir", {
 })
 
 test_that("error if output_dir is invalid", {
-  skip_on_cran()
-
   expect_error(
     testing_fit("bernoulli", output_dir = "NOT_A_DIR"),
     "Directory 'NOT_A_DIR' does not exist",
@@ -77,7 +72,6 @@ test_that("error if output_dir is invalid", {
 })
 
 test_that("output_dir works with trailing /", {
-  skip_on_cran()
   test_dir <- file.path(sandbox, "trailing")
   dir.create(test_dir)
   fit <- testing_fit(

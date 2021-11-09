@@ -1,30 +1,28 @@
 context("fitted-mcmc")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  fit_mcmc <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2)
-  fit_mcmc_0 <- testing_fit("logistic", method = "sample",
-                            seed = 123, chains = 2,
-                            refresh = 0)
-  fit_mcmc_1 <- testing_fit("logistic", method = "sample",
-                            seed = 123, chains = 2,
-                            refresh = 0, save_warmup = TRUE)
-  fit_mcmc_2 <- testing_fit("logistic", method = "sample",
-                            seed = 1234, chains = 1,
-                            iter_sampling = 10000,
-                            refresh = 0, metric = "dense_e")
-  fit_mcmc_3 <- testing_fit("logistic", method = "sample",
-                            seed = 1234, chains = 1,
-                            iter_warmup = 100,
-                            iter_sampling = 0,
-                            save_warmup = 1,
-                            refresh = 0, metric = "dense_e")
-  PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
-}
+set_cmdstan_path()
+fit_mcmc <- testing_fit("logistic", method = "sample",
+                        seed = 123, chains = 2)
+fit_mcmc_0 <- testing_fit("logistic", method = "sample",
+                          seed = 123, chains = 2,
+                          refresh = 0)
+fit_mcmc_1 <- testing_fit("logistic", method = "sample",
+                          seed = 123, chains = 2,
+                          refresh = 0, save_warmup = TRUE)
+fit_mcmc_2 <- testing_fit("logistic", method = "sample",
+                          seed = 1234, chains = 1,
+                          iter_sampling = 10000,
+                          refresh = 0, metric = "dense_e")
+fit_mcmc_3 <- testing_fit("logistic", method = "sample",
+                          seed = 1234, chains = 1,
+                          iter_warmup = 100,
+                          iter_sampling = 0,
+                          save_warmup = 1,
+                          refresh = 0, metric = "dense_e")
+PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
+
 
 test_that("draws() stops for unkown variables", {
-  skip_on_cran()
   expect_error(
     draws_betas <- fit_mcmc$draws(variables = "ABCD"),
     "Can't find the following variable(s) in the output: ABCD",
@@ -39,7 +37,6 @@ test_that("draws() stops for unkown variables", {
 })
 
 test_that("draws() works when gradually adding variables", {
-  skip_on_cran()
   fit <- testing_fit("logistic", method = "sample", refresh = 0,
                      save_warmup = TRUE)
 
@@ -62,7 +59,6 @@ test_that("draws() works when gradually adding variables", {
 })
 
 test_that("draws() method returns draws_array (reading csv works)", {
-  skip_on_cran()
   draws <- fit_mcmc$draws()
   draws_betas <- fit_mcmc$draws(variables = "beta")
   draws_beta <- fit_mcmc$draws(variables = "beta[1]")
@@ -91,8 +87,7 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_equal(posterior::variables(draws_beta_alpha), c("beta[1]", "beta[2]", "beta[3]", "alpha"))
 })
 
-test_that("inv_metric method works after mcmc", {
-  skip_on_cran()
+test_that("inv_metric() method works after mcmc", {
   x <- fit_mcmc_1$inv_metric()
   expect_length(x, fit_mcmc_1$num_chains())
   checkmate::expect_matrix(x[[1]])
@@ -112,7 +107,6 @@ test_that("inv_metric method works after mcmc", {
 })
 
 test_that("summary() method works after mcmc", {
-  skip_on_cran()
   x <- fit_mcmc$summary()
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", PARAM_NAMES))
@@ -126,7 +120,6 @@ test_that("summary() method works after mcmc", {
 })
 
 test_that("print() method works after mcmc", {
-  skip_on_cran()
   expect_output(expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"), "variable")
   expect_output(fit_mcmc$print(max_rows = 1), "# showing 1 of 5 rows")
   expect_output(fit_mcmc$print(NULL, c("ess_sd")), "ess_sd")
@@ -161,7 +154,6 @@ test_that("print() method works after mcmc", {
 })
 
 test_that("output() method works after mcmc", {
-  skip_on_cran()
   checkmate::expect_list(
     fit_mcmc$output(),
     types = "character",
@@ -172,7 +164,6 @@ test_that("output() method works after mcmc", {
 })
 
 test_that("time() method works after mcmc", {
-  skip_on_cran()
   run_times <- fit_mcmc$time()
   checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)
   testthat::expect_named(run_times, c("total", "chains"))
@@ -225,7 +216,6 @@ test_that("time() method works after mcmc", {
 })
 
 test_that("inc_warmup in draws() works", {
-  skip_on_cran()
   x0 <- fit_mcmc_0$draws(inc_warmup = FALSE)
   x1 <- fit_mcmc_1$draws(inc_warmup = FALSE)
   x2 <- fit_mcmc_1$draws(inc_warmup = TRUE)
@@ -255,7 +245,6 @@ test_that("inc_warmup in draws() works", {
 })
 
 test_that("inc_warmup in draws() works", {
-  skip_on_cran()
   x3 <- fit_mcmc_2$draws(inc_warmup = FALSE)
   expect_equal(dim(x3), c(10000, 1, 5))
   expect_error(fit_mcmc_2$draws(inc_warmup = TRUE),
@@ -265,7 +254,6 @@ test_that("inc_warmup in draws() works", {
 })
 
 test_that("output() shows informational messages depening on show_messages", {
-  skip_on_cran()
   fit_info_msg <- testing_fit("info_message")
   expect_output(
     fit_info_msg$output(1),
@@ -279,7 +267,6 @@ test_that("output() shows informational messages depening on show_messages", {
 })
 
 test_that("loo method works if log_lik is available", {
-  skip_on_cran()
   skip_if_not_installed("loo")
   fit_bernoulli <- testing_fit("bernoulli_log_lik")
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(cores = 1, save_psis = TRUE)), "loo")
@@ -287,7 +274,6 @@ test_that("loo method works if log_lik is available", {
 })
 
 test_that("loo errors if it can't find log lik variables", {
-  skip_on_cran()
   skip_if_not_installed("loo")
   fit_schools <- testing_fit("schools")
   expect_error(
@@ -298,7 +284,6 @@ test_that("loo errors if it can't find log lik variables", {
 })
 
 test_that("loo works for all draws storage formats", {
-  skip_on_cran()
   skip_if_not_installed("loo")
   fit <- testing_fit("bernoulli_log_lik")
 
@@ -322,7 +307,6 @@ test_that("loo works for all draws storage formats", {
 })
 
 test_that("draws() works for different formats", {
-  skip_on_cran()
   a <- fit_mcmc$draws()
   expect_true(posterior::is_draws_array(a))
   a <- fit_mcmc$draws(format = "list")
@@ -334,7 +318,6 @@ test_that("draws() works for different formats", {
 })
 
 test_that("draws() errors if invalid format", {
-  skip_on_cran()
   expect_error(
     fit_mcmc$draws(format = "bad_format"),
     "The supplied draws format is not valid"

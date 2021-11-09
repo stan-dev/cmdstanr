@@ -7,7 +7,6 @@ test_that("eng_cmdstan throws correct errors", {
 })
 
 test_that("eng_cmdstan works", {
-  skip_on_cran()
   skip_if_not_installed("knitr")
   code <- "
   parameters {

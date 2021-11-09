@@ -1,95 +1,90 @@
 context("model-sample")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  stan_program <- testing_stan_file("bernoulli")
-  mod <- testing_model("bernoulli")
-  stan_program_fp <- testing_stan_file("bernoulli_fp")
-  mod_fp <- testing_model("bernoulli_fp")
+set_cmdstan_path()
+stan_program <- testing_stan_file("bernoulli")
+mod <- testing_model("bernoulli")
+stan_program_fp <- testing_stan_file("bernoulli_fp")
+mod_fp <- testing_model("bernoulli_fp")
 
-  # valid ways to supply data
-  data_list <- testing_data("bernoulli")
-  data_file_r <- test_path("resources", "data", "bernoulli.data.R")
-  data_file_json <- test_path("resources", "data", "bernoulli.data.json")
+# valid ways to supply data
+data_list <- testing_data("bernoulli")
+data_file_r <- test_path("resources", "data", "bernoulli.data.R")
+data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 
-  # these are all valid for sample()
-  ok_arg_values <- list(
-    data = data_list,
-    output_dir = tempdir(),
-    chains = 2,
-    parallel_chains = 1,
-    iter_warmup = 50,
-    iter_sampling = 100,
-    save_warmup = FALSE,
-    thin = 2,
-    refresh = 5,
-    init = 1.5,
-    seed = 12345,
-    max_treedepth = 6,
-    metric = "dense_e",
-    step_size = 1.1,
-    adapt_engaged = TRUE,
-    adapt_delta = 0.7,
-    save_latent_dynamics = FALSE,
-    init_buffer = 20,
-    term_buffer = 0,
-    window = 15
-  )
+# these are all valid for sample()
+ok_arg_values <- list(
+  data = data_list,
+  output_dir = tempdir(),
+  chains = 2,
+  parallel_chains = 1,
+  iter_warmup = 50,
+  iter_sampling = 100,
+  save_warmup = FALSE,
+  thin = 2,
+  refresh = 5,
+  init = 1.5,
+  seed = 12345,
+  max_treedepth = 6,
+  metric = "dense_e",
+  step_size = 1.1,
+  adapt_engaged = TRUE,
+  adapt_delta = 0.7,
+  save_latent_dynamics = FALSE,
+  init_buffer = 20,
+  term_buffer = 0,
+  window = 15
+)
 
-  # using any one of these should cause sample() to error
-  bad_arg_values <- list(
-    data = "NOT_A_FILE",
-    output_dir = "NOT_A_DIRECTORY",
-    chains = -1,
-    parallel_chains = -1,
-    iter_warmup = -1,
-    iter_sampling = -1,
-    save_warmup = "NO",
-    thin = 0,
-    refresh = -10,
-    init = -10,
-    seed = -10,
-    max_treedepth = 0,
-    metric = "NOT_A_METRIC",
-    step_size = 0,
-    adapt_engaged = "NO",
-    adapt_delta = 2,
-    save_latent_dynamics = "NOT_LOGICAL",
-    init_buffer = "NOT_INTEGER",
-    term_buffer = "NOT_INTEGER",
-    window = "NOT_INTEGER"
-  )
+# using any one of these should cause sample() to error
+bad_arg_values <- list(
+  data = "NOT_A_FILE",
+  output_dir = "NOT_A_DIRECTORY",
+  chains = -1,
+  parallel_chains = -1,
+  iter_warmup = -1,
+  iter_sampling = -1,
+  save_warmup = "NO",
+  thin = 0,
+  refresh = -10,
+  init = -10,
+  seed = -10,
+  max_treedepth = 0,
+  metric = "NOT_A_METRIC",
+  step_size = 0,
+  adapt_engaged = "NO",
+  adapt_delta = 2,
+  save_latent_dynamics = "NOT_LOGICAL",
+  init_buffer = "NOT_INTEGER",
+  term_buffer = "NOT_INTEGER",
+  window = "NOT_INTEGER"
+)
 
-  bad_arg_values_2 <- list(
-    data = matrix(1:10),
-    output_dir = 1,
-    chains = "NOT_A_NUMBER",
-    parallel_chains = "NOT_A_NUMBER",
-    init = "NOT_A_FILE",
-    seed = 1:10,
-    step_size = 1:10,
-    metric = c("AA", "BB"),
-    init_buffer = -5,
-    term_buffer = -6,
-    window = -7
-  )
+bad_arg_values_2 <- list(
+  data = matrix(1:10),
+  output_dir = 1,
+  chains = "NOT_A_NUMBER",
+  parallel_chains = "NOT_A_NUMBER",
+  init = "NOT_A_FILE",
+  seed = 1:10,
+  step_size = 1:10,
+  metric = c("AA", "BB"),
+  init_buffer = -5,
+  term_buffer = -6,
+  window = -7
+)
 
-  bad_arg_values_3 <- list(
-    init = rep("NOT_A_FILE", 10),
-    metric = c("AA", "BB", "CC")
-  )
-}
+bad_arg_values_3 <- list(
+  init = rep("NOT_A_FILE", 10),
+  metric = c("AA", "BB", "CC")
+)
+
 
 test_that("sample() method works with data list", {
-  skip_on_cran()
-
   expect_sample_output(fit <- mod$sample(data = data_list, chains = 1), 1)
   expect_is(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method works with data files", {
-  skip_on_cran()
-
   expect_sample_output(fit_r <- mod$sample(data = data_file_r, chains = 1), 1)
   expect_is(fit_r, "CmdStanMCMC")
 
@@ -98,8 +93,6 @@ test_that("sample() method works with data files", {
 })
 
 test_that("sample() method works with init file", {
-  skip_on_cran()
-
   init_list <- list(theta = 0.5)
   init_file <- tempfile(
     tmpdir = cmdstan_tempdir(),
@@ -111,14 +104,11 @@ test_that("sample() method works with init file", {
 })
 
 test_that("sample() method runs when all arguments specified", {
-  skip_on_cran()
-
   expect_sample_output(fit <- do.call(mod$sample, ok_arg_values), 2)
   expect_is(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method runs when the stan file is removed", {
-  skip_on_cran()
   stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
   file.copy(stan_program, stan_file_tmp)
   mod_tmp <- cmdstan_model(stan_file_tmp)
@@ -129,7 +119,6 @@ test_that("sample() method runs when the stan file is removed", {
 })
 
 test_that("sample() prints informational messages depening on show_messages", {
-  skip_on_cran()
   mod_info_msg <- testing_model("info_message")
   expect_sample_output(
     expect_message(
@@ -143,8 +132,6 @@ test_that("sample() prints informational messages depening on show_messages", {
 })
 
 test_that("sample() method errors for any invalid arguments before calling cmdstan", {
-  skip_on_cran()
-
   utils::capture.output(mod$compile())
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
@@ -166,7 +153,6 @@ test_that("sample() method errors for any invalid arguments before calling cmdst
 })
 
 test_that("sample works for warmup-only run", {
-  skip_on_cran()
   expect_output(
     fit <- mod$sample(chains = 2, data = data_list, iter_sampling = 0),
     "Iteration: 1000 / 1000 [100%]  (Warmup)",
@@ -175,7 +161,6 @@ test_that("sample works for warmup-only run", {
 })
 
 test_that("sampling in parallel works", {
-  skip_on_cran()
   expect_output(
     mod$sample(data = data_list, chains = 2, parallel_chains = 2),
     "Running MCMC with 2 parallel chains",
@@ -190,8 +175,6 @@ test_that("sampling in parallel works", {
 })
 
 test_that("mc.cores option detected", {
-  skip_on_cran()
-
   options(mc.cores = 3)
   expect_output(
     mod$sample(data = data_list, chains = 3),
@@ -208,7 +191,6 @@ test_that("mc.cores option detected", {
 })
 
 test_that("sample() method runs when fixed_param = TRUE", {
-  skip_on_cran()
   mod_fp$compile()
 
   expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 4)
@@ -227,7 +209,6 @@ test_that("sample() method runs when fixed_param = TRUE", {
 })
 
 test_that("chain_ids work with sample()", {
-  skip_on_cran()
   mod$compile()
   expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
   expect_is(fit12, "CmdStanMCMC")
@@ -270,7 +251,6 @@ test_that("print statements in transformed data work", {
 })
 
 test_that("seed works for multi chain sampling", {
-  skip_on_cran()
   m <- "
   transformed data {
     int N = 100;
@@ -318,18 +298,18 @@ test_that("seed works for multi chain sampling", {
 })
 
 test_that("fixed_param is set when the model has no parameters", {
-  skip_on_cran()
   code <- "
-model {}
-generated quantities  {
-  real y = normal_rng(0, 1);
-}
-"
-
+  model {}
+  generated quantities  {
+    real y = normal_rng(0, 1);
+  }
+  "
   stan_file <- write_stan_file(code)
-
   m <- cmdstan_model(stan_file)
-  expect_warning(capture.output(fit <- m$sample()), "Model contains no parameters. Automatically setting fixed_param = TRUE.")
+  expect_warning(
+    capture.output(fit <- m$sample()),
+    "Model contains no parameters. Automatically setting fixed_param = TRUE."
+  )
   expect_null(fit$sampler_diagnostics())
   expect_equal(posterior::variables(fit$draws()), "y")
 })

@@ -1,33 +1,28 @@
 context("model-generate-quantities")
 
-# Setup -------------------------------------------------------------------
-if (not_on_cran()) {
-  set_cmdstan_path()
-  fit <- testing_fit("bernoulli", method = "sample", seed = 123)
-  mod_gq <- testing_model("bernoulli_ppc")
-  data_list <- testing_data("bernoulli")
+set_cmdstan_path()
+fit <- testing_fit("bernoulli", method = "sample", seed = 123)
+mod_gq <- testing_model("bernoulli_ppc")
+data_list <- testing_data("bernoulli")
 
-  # these are all valid for generate_quantities()
-  ok_arg_values <- list(
-    fitted_params = fit,
-    data = data_list,
-    seed = 12345,
-    parallel_chains = 1
-  )
+# these are all valid for generate_quantities()
+ok_arg_values <- list(
+  fitted_params = fit,
+  data = data_list,
+  seed = 12345,
+  parallel_chains = 1
+)
 
-  # using any of these should cause optimize() to error
-  bad_arg_values <- list(
-    fitter_params = "NOT_A_FILE",
-    data = "NOT_A_FILE",
-    seed = "NOT_A_SEED",
-    parallel_chains = -20
-  )
-}
+# using any of these should cause optimize() to error
+bad_arg_values <- list(
+  fitter_params = "NOT_A_FILE",
+  data = "NOT_A_FILE",
+  seed = "NOT_A_SEED",
+  parallel_chains = -20
+)
 
 
 test_that("generate_quantities() method runs when all arguments specified validly", {
-  skip_on_cran()
-
   # specifying all arguments validly
   expect_gq_output(fit1 <- do.call(mod_gq$generate_quantities, ok_arg_values))
   expect_is(fit1, "CmdStanGQ")
@@ -38,8 +33,6 @@ test_that("generate_quantities() method runs when all arguments specified validl
 })
 
 test_that("generate_quantities() method errors for any invalid argument before calling cmdstan", {
-  skip_on_cran()
-
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
@@ -48,7 +41,6 @@ test_that("generate_quantities() method errors for any invalid argument before c
 })
 
 test_that("generate_quantities work for different chains and parallel_chains", {
-  skip_on_cran()
   fit_1_chain <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
   fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
   expect_gq_output(
@@ -72,7 +64,6 @@ test_that("generate_quantities work for different chains and parallel_chains", {
 })
 
 test_that("generate_quantities works with draws_array", {
-  skip_on_cran()
   fit_1_chain <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain$draws())
@@ -86,7 +77,6 @@ test_that("generate_quantities works with draws_array", {
 })
 
 test_that("generate_quantities works with VB and draws_matrix", {
-  skip_on_cran()
   fit <- testing_fit("bernoulli", method = "variational", seed = 123)
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit)

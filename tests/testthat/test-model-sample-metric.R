@@ -1,14 +1,11 @@
 context("model-sample-metric")
 
-if (not_on_cran()) {
-  set_cmdstan_path()
-  mod <- testing_model("bernoulli")
-  data_list <- testing_data("bernoulli")
-}
+set_cmdstan_path()
+mod <- testing_model("bernoulli")
+data_list <- testing_data("bernoulli")
+
 
 test_that("sample() method works with provided inv_metrics", {
-  skip_on_cran()
-
   inv_metric_vector <- array(1, dim = c(1))
   inv_metric_matrix <- matrix(1, nrow = 1, ncol = 1)
 
@@ -58,8 +55,6 @@ test_that("sample() method works with provided inv_metrics", {
 
 
 test_that("sample() method works with lists of inv_metrics", {
-  skip_on_cran()
-
   inv_metric_vector <- array(1, dim = c(1))
   inv_metric_vector_json <- test_path("resources", "metric", "bernoulli.inv_metric.diag_e.json")
 
@@ -106,8 +101,6 @@ test_that("sample() method works with lists of inv_metrics", {
 })
 
 test_that("sample() method fails if metric_file and inv_metric both provided", {
-  skip_on_cran()
-
   inv_metric_vector <- array(1, dim = c(1))
   inv_metric_vector_json <- test_path("resources", "metric", "bernoulli.inv_metric.diag_e.json")
 
