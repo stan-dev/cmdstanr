@@ -266,10 +266,10 @@ str(fit$sampler_diagnostics(format = "df"))
 
 #### Sampler diagnostic warnings and summaries
 
-The `$diagnose_sampler()` method will display any sampler diagnostic warnings and return a summary of diagnostics for each chain. 
+The `$diagnostic_summary()` method will display any sampler diagnostic warnings and return a summary of diagnostics for each chain. 
 
-```{r diagnose_sampler}
-fit$diagnose_sampler()
+```{r diagnostic_summary}
+fit$diagnostic_summary()
 ```
 
 We see the number of divergences for each of the four chains, the number
@@ -283,10 +283,10 @@ divergences.
 ```{r fit-with-warnings, results='hold'}
 fit_with_warning <- cmdstanr_example("schools")
 ```
-After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit$diagnose_sampler()`. 
+After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit$diagnostic_summary()`. 
 
-```{r diagnose_sampler-with-warnings}
-diagnostics <- fit_with_warning$diagnose_sampler()
+```{r diagnostic_summary-with-warnings}
+diagnostics <- fit_with_warning$diagnostic_summary()
 print(diagnostics)
 
 # number of divergences reported in warning is the sum of the per chain values

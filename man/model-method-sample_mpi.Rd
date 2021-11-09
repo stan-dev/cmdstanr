@@ -234,7 +234,7 @@ and \code{"ebfmi"} (the default is to check all of them).
 These diagnostics are also available after fitting. The
 \code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}} method provides
 access the diagnostic values for each iteration and the
-\code{\link[=fit-method-diagnose_sampler]{$diagnose_sampler()}} method provides
+\code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} method provides
 summaries of the diagnostics and can regenerate the warning messages.
 
 Diagnostics like R-hat and effective sample size are not currently

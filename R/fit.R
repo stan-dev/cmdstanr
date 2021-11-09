@@ -824,7 +824,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$summary()`][fit-method-summary] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
-#'  [`$diagnose_sampler()`][fit-method-diagnose_sampler] |  Get summaries of sampler diagnostics and warning messages. |
+#'  [`$diagnostic_summary()`][fit-method-diagnostic_summary] |  Get summaries of sampler diagnostics and warning messages. |
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
 #'  [`$loo()`][fit-method-loo]  |  Run [loo::loo.array()] for approximate LOO-CV |
@@ -863,13 +863,13 @@ CmdStanMCMC <- R6::R6Class(
           fixed_param <- runset$args$method_args$fixed_param
           if (!fixed_param) {
             # convert user friendly names to actual diagnostic names (e.g. divergences --> divergent__)
-            diagnostics_to_read <- convert_diagnostic_names(diagnostics)
+            diagnostics_to_read <- convert_hmc_diagnostic_names(diagnostics)
           } else {
             diagnostics_to_read <- ""
           }
           private$read_csv_(variables = "", sampler_diagnostics = diagnostics_to_read)
           if (!fixed_param) {
-            invisible(self$diagnose_sampler(diagnostics = diagnostics, quiet = FALSE))
+            invisible(self$diagnostic_summary(diagnostics = diagnostics, quiet = FALSE))
           }
         }
       }
@@ -1056,7 +1056,7 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #' @description Extract the values of sampler diagnostics for each iteration and
 #'   chain of MCMC. To instead get summaries of these diagnostics and associated
 #'   warning messages use the
-#'   [`$diagnose_sampler()`][fit-method-diagnose_sampler] method.
+#'   [`$diagnostic_summary()`][fit-method-diagnostic_summary] method.
 #'
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to `FALSE`.
 #' @param format (string) The draws format to return. See
@@ -1117,16 +1117,16 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 
 #' Sampler diagnostic summaries and warnings
 #'
-#' @name fit-method-diagnose_sampler
-#' @aliases diagnose_sampler
+#' @name fit-method-diagnostic_summary
+#' @aliases diagnostic_summary
 #' @description Warnings and summaries of sampler diagnostics. To instead get
 #'   the underlying values of the sampler diagnostics for each iteration and
 #'   chain use the [`$sampler_diagnostics()`][fit-method-sampler_diagnostics]
 #'   method.
 #'
 #'   Currently parameter-specific diagnostics like R-hat and effective sample
-#'   size are not handled by this method. Those diagnostics are provided via the
-#'   [`$summary()`][fit-method-summary] method (using
+#'   size are _not_ handled by this method. Those diagnostics are provided via
+#'   the [`$summary()`][fit-method-summary] method (using
 #'   [posterior::summarize_draws()]).
 #'
 #' @param diagnostics (character vector) One or more diagnostics to check. The
@@ -1148,18 +1148,14 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example("schools")
-#' fit$diagnose_sampler()
-#' fit$diagnose_sampler(quiet = TRUE)
+#' fit$diagnostic_summary()
+#' fit$diagnostic_summary(quiet = TRUE)
 #' }
 #'
-diagnose_sampler <- function(diagnostics = c("divergences", "treedepth", "ebfmi"), quiet = FALSE) {
-  if (is.null(private$sampler_diagnostics_) &&
-      !length(self$output_files(include_failed = FALSE))) {
-    stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.", call. = FALSE)
-  }
+diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfmi"), quiet = FALSE) {
   diagnostics <- match.arg(
     diagnostics,
-    choices = available_diagnostics(),
+    choices = available_hmc_diagnostics(),
     several.ok = TRUE
   )
   post_warmup_sampler_diagnostics <- self$sampler_diagnostics(inc_warmup = FALSE)
@@ -1190,7 +1186,7 @@ diagnose_sampler <- function(diagnostics = c("divergences", "treedepth", "ebfmi"
   }
   out
 }
-CmdStanMCMC$set("public", name = "diagnose_sampler", value = diagnose_sampler)
+CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summary)
 
 
 #' Extract inverse metric (mass matrix) after MCMC

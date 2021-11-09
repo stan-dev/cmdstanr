@@ -642,7 +642,7 @@ validate_sample_args <- function(self, num_procs) {
 
   checkmate::assert_character(self$diagnostics, null.ok = TRUE, any.missing = FALSE)
   if (!is.null(self$diagnostics)) {
-    checkmate::assert_subset(self$diagnostics, empty.ok = FALSE, choices = available_diagnostics())
+    checkmate::assert_subset(self$diagnostics, empty.ok = FALSE, choices = available_hmc_diagnostics())
   }
 
   invisible(TRUE)

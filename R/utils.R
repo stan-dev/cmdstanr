@@ -237,7 +237,7 @@ set_num_threads <- function(num_threads) {
 }
 
 
-# convergence checks ------------------------------------------------------
+# hmc diagnostics ------------------------------------------------------
 check_divergences <- function(post_warmup_sampler_diagnostics) {
   num_divergences_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
@@ -318,9 +318,9 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
   invisible(unname(efbmi_per_chain))
 }
 
-# used in various places (e.g., fit$diagnose_sampler() and validate_sample_args())
+# used in various places (e.g., fit$diagnostic_summary() and validate_sample_args())
 # to validate the selected diagnostics
-available_diagnostics <- function() {
+available_hmc_diagnostics <- function() {
   c("divergences", "treedepth", "ebfmi")
 }
 
@@ -329,7 +329,7 @@ available_diagnostics <- function() {
 #   * ebfmi --> energy__
 #   * divergences --> divergent__
 #   * treedepth --> treedepth__
-convert_diagnostic_names <- function(diagnostics) {
+convert_hmc_diagnostic_names <- function(diagnostics) {
   diagnostic_names <- c()
   if ("divergences" %in% diagnostics) {
     diagnostic_names <- c(diagnostic_names, "divergent__")

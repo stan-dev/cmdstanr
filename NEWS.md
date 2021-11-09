@@ -62,7 +62,7 @@ These are just wrappers around the `$draws()` method provided for convenience. (
 
 * Added E-BFMI checks that run automatically post sampling. (#500, @jsocolar)
 
-* New method `$diagnose_sampler()` that summarizes the sampler diagnostics
+* New method `$diagnostic_summary()` that summarizes the sampler diagnostics
 (divergences, treedepth, ebfmi) and can regenerate the related warning messages. (#205)
 
 * New `diagnostics` argument for the `$sample()` method to specify which
