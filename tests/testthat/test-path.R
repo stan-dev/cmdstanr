@@ -73,7 +73,7 @@ test_that("CmdStan version detected when setting path", {
   expect_equal(cmdstan_version(), VERSION)
 })
 
-test_that("cmdstan_version() behavior when version is not set", {
+test_that("cmdstan_version() behaves correctly when version is not set", {
   version <- .cmdstanr$VERSION
   on.exit(.cmdstanr$VERSION <- version)
   .cmdstanr$VERSION <- NULL
@@ -87,6 +87,13 @@ test_that("Warning message is thrown if can't detect version number", {
     set_cmdstan_path(path),
     "Can't find CmdStan makefile to detect version number"
   )
+})
+
+test_that("cmdstan_path() sets version number if not set", {
+  fake_cmdstan_version(NULL)
+  expect_true(is.null(cmdstan_version(error_on_NA = FALSE)))
+  cmdstan_path()
+  expect_false(is.null(cmdstan_version(error_on_NA = FALSE)))
 })
 
 test_that("cmdstan_ext() works", {

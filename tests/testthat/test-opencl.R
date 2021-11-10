@@ -102,3 +102,18 @@ test_that("all methods run with valid opencl_ids", {
   expect_false(is.null(fit$metadata()$opencl_platform_name))
   expect_false(is.null(fit$metadata()$opencl_ids_name))
 })
+
+test_that("error for runtime selection of OpenCL devices if version less than 2.26", {
+  skip_if(Sys.getenv("CMDSTANR_OPENCL_TESTS")!="1")
+  fake_cmdstan_version("2.25.0")
+
+  stan_file <- testing_stan_file("bernoulli")
+  mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE),
+                       force_recompile = TRUE)
+  expect_error(
+    mod$sample(data = data_list, chains = 1, refresh = 0, opencl_ids = c(1,1)),
+    "Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer",
+    fixed = TRUE
+  )
+  reset_cmdstan_version()
+})

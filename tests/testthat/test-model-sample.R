@@ -313,3 +313,13 @@ test_that("fixed_param is set when the model has no parameters", {
   expect_null(fit$sampler_diagnostics())
   expect_equal(posterior::variables(fit$draws()), "y")
 })
+
+test_that("sig_figs warning if version less than 2.25", {
+  fake_cmdstan_version("2.24.0")
+  expect_warning(
+    expect_sample_output(mod$sample(data = data_list, chains = 1, refresh = 0, sig_figs = 3)),
+    "The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!",
+    fixed = TRUE
+  )
+  reset_cmdstan_version()
+})

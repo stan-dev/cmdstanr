@@ -2,11 +2,10 @@
 % Please edit documentation in R/model.R
 \name{model-method-diagnose}
 \alias{model-method-diagnose}
-\alias{diagnose_method}
 \alias{diagnose}
 \title{Run Stan's diagnose method}
 \usage{
-diagnose_method(
+diagnose(
   data = NULL,
   seed = NULL,
   init = NULL,

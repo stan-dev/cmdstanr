@@ -85,7 +85,7 @@ test_that("diagnose() works with specified args", {
   expect_true(is.numeric(fit$lp()))
 })
 
-test_that("diagnose() works examples", {
+test_that("diagnose() works for examples", {
   fit_logistic <- cmdstanr_example(example = "logistic", method = "diagnose")
   expect_true(is.data.frame(fit_logistic$gradients()))
   expect_equal(dim(fit_logistic$gradients()), c(4, 5))
@@ -94,5 +94,7 @@ test_that("diagnose() works examples", {
   expect_true(is.data.frame(fit_schools$gradients()))
   expect_equal(dim(fit_schools$gradients()), c(10, 5))
   expect_true(is.numeric(fit_schools$lp()))
+  expect_true(is.list(test$metadata()))
+  expect_equal(test$metadata()$test, "gradient")
 })
 
