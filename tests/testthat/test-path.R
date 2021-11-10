@@ -89,13 +89,6 @@ test_that("Warning message is thrown if can't detect version number", {
   )
 })
 
-test_that("cmdstan_path() sets version number if not set", {
-  fake_cmdstan_version(NULL)
-  expect_true(is.null(cmdstan_version(error_on_NA = FALSE)))
-  cmdstan_path()
-  expect_false(is.null(cmdstan_version(error_on_NA = FALSE)))
-})
-
 test_that("cmdstan_ext() works", {
   if (os_is_windows()) {
     expect_identical(cmdstan_ext(), ".exe")

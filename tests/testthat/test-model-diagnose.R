@@ -94,7 +94,7 @@ test_that("diagnose() works for examples", {
   expect_true(is.data.frame(fit_schools$gradients()))
   expect_equal(dim(fit_schools$gradients()), c(10, 5))
   expect_true(is.numeric(fit_schools$lp()))
-  expect_true(is.list(test$metadata()))
-  expect_equal(test$metadata()$test, "gradient")
+  expect_true(is.list(fit_schools$metadata()))
+  expect_equal(fit_schools$metadata()$test, "gradient")
 })
 
