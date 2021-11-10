@@ -17,7 +17,9 @@ Authors@R:
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command 
     line interface for compilation and running algorithms instead of interfacing 
-    with C++ via 'Rcpp'.
+    with C++ via 'Rcpp'. This has many benefits including always being compatible 
+    with the latest version of Stan, fewer installation errors, fewer unexpected 
+    crashes in RStudio, and a more permissive license. 
 License: BSD_3_clause + file LICENSE
 URL: https://mc-stan.org/cmdstanr, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues

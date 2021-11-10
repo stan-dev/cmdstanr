@@ -48,7 +48,7 @@ written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json(
 \code{\link[=write_stan_json]{write_stan_json()}} for details on the conversions performed on \R objects
 before they are passed to Stan.
 \item A path to a data file compatible with CmdStan (JSON or \R dump). See the
-appendices in the CmdStan manual for details on using these formats.
+appendices in the CmdStan guide for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
@@ -75,10 +75,11 @@ printed screen updates. If \code{refresh = 0}, only error messages will be
 printed.}
 
 \item{init}{(multiple options) The initialization method to use for the
-variables declared in the parameters block of the Stan program:
+variables declared in the parameters block of the Stan program. One of
+the following:
 \itemize{
 \item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} (on the \emph{unconstrained} parameter space);
+\verb{[-x,x]} on the \emph{unconstrained} parameter space.;
 \item The number \code{0}. This initializes \emph{all} parameters to \code{0};
 \item A character vector of paths (one per chain) to JSON or Rdump files
 containing initial values for all or some parameters. See
@@ -123,19 +124,17 @@ files are removed when the fitted model object is
 corresponding to the defaults used by \verb{$save_output_files()}.
 }}
 
-\item{output_basename}{(string) A string to use as a prefix for the
-names of the output CSV files of CmdStan.
-\itemize{
-\item If \code{NULL} (the default), the basename of the output CSV files
-will be comprised from the model name, timestamp and 5 random characters.
-}}
+\item{output_basename}{(string) A string to use as a prefix for the names of
+the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
+the output CSV files will be comprised from the model name, timestamp, and
+5 random characters.}
 
 \item{chains}{(positive integer) The number of Markov chains to run. The
 default is 4.}
 
-\item{chain_ids}{(integer vector) A vector of chain IDs. Must contain
-\code{chains} unique positive integers. If not set, the default chain IDs are
-used (integers starting from \code{1}).}
+\item{chain_ids}{(integer vector) A vector of chain IDs. Must contain as many
+unique positive integers as the number of chains. If not set, the default
+chain IDs are used (integers starting from \code{1}).}
 
 \item{iter_warmup}{(positive integer) The number of warmup iterations to run
 per chain. Note: in the CmdStan User's Guide this is referred to as
@@ -146,9 +145,7 @@ to run per chain. Note: in the CmdStan User's Guide this is referred to as
 \code{num_samples}.}
 
 \item{save_warmup}{(logical) Should warmup iterations be saved? The default
-is \code{FALSE}. If \code{save_warmup=TRUE} then you can use
-\link[=fit-method-draws]{$draws(inc_warmup=TRUE)} to include warmup when
-accessing the draws.}
+is \code{FALSE}.}
 
 \item{thin}{(positive integer) The period between saved samples. This should
 typically be left at its default (no thinning) unless memory is a problem.}
@@ -218,10 +215,11 @@ increased usage of disk space.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all
 informational messages, for example rejection of the current proposal.
-Disable if you wish silence these messages, but this is not recommended
-unless you are very sure that the model is correct up to numerical error.
-If the messages are silenced then the \verb{$output()} method of the resulting
-fit object can be used to display all the silenced messages.}
+Disable if you wish to silence these messages, but this is not usually
+recommended unless you are very confident that the model is correct up to
+numerical error. If the messages are silenced then the
+\code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
+used to display the silenced messages.}
 
 \item{diagnostics}{(character vector) The diagnostics to automatically check
 and warn about after sampling. Setting this to an empty string \code{""} or

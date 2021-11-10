@@ -1,12 +1,12 @@
 startup_messages <- function() {
   packageStartupMessage("This is cmdstanr version ", utils::packageVersion("cmdstanr"))
-  packageStartupMessage("- Online documentation and vignettes at mc-stan.org/cmdstanr")
+  packageStartupMessage("- CmdStanR documentation and vignettes: mc-stan.org/cmdstanr")
   if (is.null(.cmdstanr$PATH)) {
     packageStartupMessage("- Use set_cmdstan_path() to set the path to CmdStan")
     packageStartupMessage("- Use install_cmdstan() to install CmdStan")
   } else {
-    packageStartupMessage("- CmdStan path set to: ", cmdstan_path(), "")
-    packageStartupMessage("- Use set_cmdstan_path() to change the path")
+    packageStartupMessage("- CmdStan path: ", cmdstan_path())
+    packageStartupMessage("- CmdStan version: ", cmdstan_version(error_on_NA = FALSE))
   }
 
   skip_version_check <- isTRUE(getOption(

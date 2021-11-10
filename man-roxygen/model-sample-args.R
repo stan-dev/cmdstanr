@@ -5,18 +5,19 @@
 #'   is to look for the option `"mc.cores"`, which can be set for an entire \R
 #'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
 #'   been set then the default is `1`.
-#' @param chain_ids (integer vector) A vector of chain IDs. Must contain
-#'   `chains` unique positive integers. If not set, the default chain IDs are
-#'   used (integers starting from `1`).
+#' @param chain_ids (integer vector) A vector of chain IDs. Must contain as many
+#'   unique positive integers as the number of chains. If not set, the default
+#'   chain IDs are used (integers starting from `1`).
 #' @param threads_per_chain (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
 #'   contrast with `parallel_chains`, which specifies the number of chains to
-#'   run in parallel. The actual number of CPU cores used use is
+#'   run in parallel. The actual number of CPU cores used is
 #'   `parallel_chains*threads_per_chain`. For an example of using threading see
-#'   the Stan case study [Reduce Sum: A Minimal
-#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'   the Stan case study
+#'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'
 #' @param iter_sampling (positive integer) The number of post-warmup iterations
 #'   to run per chain. Note: in the CmdStan User's Guide this is referred to as
 #'   `num_samples`.
@@ -24,9 +25,7 @@
 #'   per chain. Note: in the CmdStan User's Guide this is referred to as
 #'   `num_warmup`.
 #' @param save_warmup (logical) Should warmup iterations be saved? The default
-#'   is `FALSE`. If `save_warmup=TRUE` then you can use
-#'   [$draws(inc_warmup=TRUE)][fit-method-draws] to include warmup when
-#'   accessing the draws.
+#'   is `FALSE`.
 #' @param thin (positive integer) The period between saved samples. This should
 #'   typically be left at its default (no thinning) unless memory is a problem.
 #' @param max_treedepth (positive integer) The maximum allowed tree depth for
@@ -77,10 +76,11 @@
 #'   `parallel_chains` arguments will be set to `1`.
 #' @param show_messages (logical) When `TRUE` (the default), prints all
 #'   informational messages, for example rejection of the current proposal.
-#'   Disable if you wish silence these messages, but this is not recommended
-#'   unless you are very sure that the model is correct up to numerical error.
-#'   If the messages are silenced then the `$output()` method of the resulting
-#'   fit object can be used to display all the silenced messages.
+#'   Disable if you wish to silence these messages, but this is not usually
+#'   recommended unless you are very confident that the model is correct up to
+#'   numerical error. If the messages are silenced then the
+#'   [`$output()`][fit-method-output] method of the resulting fit object can be
+#'   used to display the silenced messages.
 #' @param diagnostics (character vector) The diagnostics to automatically check
 #'   and warn about after sampling. Setting this to an empty string `""` or
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the

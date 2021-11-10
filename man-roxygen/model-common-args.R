@@ -6,7 +6,7 @@
 #'  [write_stan_json()] for details on the conversions performed on \R objects
 #'  before they are passed to Stan.
 #'  * A path to a data file compatible with CmdStan (JSON or \R dump). See the
-#'  appendices in the CmdStan manual for details on using these formats.
+#'  appendices in the CmdStan guide for details on using these formats.
 #'  * `NULL` or an empty list if the Stan program has no data block.
 #'
 #' @param seed (positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
@@ -24,9 +24,10 @@
 #'   printed.
 #'
 #' @param init (multiple options) The initialization method to use for the
-#'   variables declared in the parameters block of the Stan program:
+#'   variables declared in the parameters block of the Stan program. One of
+#'   the following:
 #'  * A real number `x>0`. This initializes _all_ parameters randomly between
-#'  `[-x,x]` (on the _unconstrained_ parameter space);
+#'  `[-x,x]` on the _unconstrained_ parameter space.;
 #'  * The number `0`. This initializes _all_ parameters to `0`;
 #'  * A character vector of paths (one per chain) to JSON or Rdump files
 #'  containing initial values for all or some parameters. See
@@ -68,10 +69,10 @@
 #'   * If a path, then the files are created in `output_dir` with names
 #'   corresponding to the defaults used by `$save_output_files()`.
 #'
-#' @param output_basename (string) A string to use as a prefix for the
-#'   names of the output CSV files of CmdStan.
-#'   * If `NULL` (the default), the basename of the output CSV files
-#'   will be comprised from the model name, timestamp and 5 random characters.
+#' @param output_basename (string) A string to use as a prefix for the names of
+#'   the output CSV files of CmdStan. If `NULL` (the default), the basename of
+#'   the output CSV files will be comprised from the model name, timestamp, and
+#'   5 random characters.
 #'
 #' @param sig_figs (positive integer) The number of significant figures used
 #'   when storing the output values. By default, CmdStan represent the output
@@ -83,5 +84,4 @@
 #'   device IDs of the OpenCL device to use for fitting. The model must
 #'   be compiled with `cpp_options = list(stan_opencl = TRUE)` for this
 #'   argument to have an effect.
-#'
 #'

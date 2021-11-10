@@ -38,7 +38,7 @@ written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json(
 \code{\link[=write_stan_json]{write_stan_json()}} for details on the conversions performed on \R objects
 before they are passed to Stan.
 \item A path to a data file compatible with CmdStan (JSON or \R dump). See the
-appendices in the CmdStan manual for details on using these formats.
+appendices in the CmdStan guide for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
@@ -57,10 +57,11 @@ printed screen updates. If \code{refresh = 0}, only error messages will be
 printed.}
 
 \item{init}{(multiple options) The initialization method to use for the
-variables declared in the parameters block of the Stan program:
+variables declared in the parameters block of the Stan program. One of
+the following:
 \itemize{
 \item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} (on the \emph{unconstrained} parameter space);
+\verb{[-x,x]} on the \emph{unconstrained} parameter space.;
 \item The number \code{0}. This initializes \emph{all} parameters to \code{0};
 \item A character vector of paths (one per chain) to JSON or Rdump files
 containing initial values for all or some parameters. See
@@ -105,12 +106,10 @@ files are removed when the fitted model object is
 corresponding to the defaults used by \verb{$save_output_files()}.
 }}
 
-\item{output_basename}{(string) A string to use as a prefix for the
-names of the output CSV files of CmdStan.
-\itemize{
-\item If \code{NULL} (the default), the basename of the output CSV files
-will be comprised from the model name, timestamp and 5 random characters.
-}}
+\item{output_basename}{(string) A string to use as a prefix for the names of
+the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
+the output CSV files will be comprised from the model name, timestamp, and
+5 random characters.}
 
 \item{sig_figs}{(positive integer) The number of significant figures used
 when storing the output values. By default, CmdStan represent the output
