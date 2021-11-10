@@ -6,12 +6,15 @@ output:
     toc: true
     toc_depth: 4
 params:
-  EVAL: !r identical(Sys.getenv("CMDSTANR_OPENCL_TESTS"), "true")
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true") && isTRUE(Sys.getenv("CMDSTANR_OPENCL_TESTS") %in% c("true", "1"))
 vignette: >
   %\VignetteIndexEntry{Running Stan on the GPU with OpenCL}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+```{r child="children/settings-knitr.Rmd"}
+```
 
 ## Introduction
 
