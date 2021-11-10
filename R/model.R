@@ -1416,13 +1416,13 @@ CmdStanModel$set("public", name = "generate_quantities", value = generate_quanti
 #' @template seealso-docs
 #' @inherit CmdStanDiagnose examples
 #'
-diagnose_method <- function(data = NULL,
-                            seed = NULL,
-                            init = NULL,
-                            output_dir = NULL,
-                            output_basename = NULL,
-                            epsilon = NULL,
-                            error = NULL) {
+diagnose <- function(data = NULL,
+                     seed = NULL,
+                     init = NULL,
+                     output_dir = NULL,
+                     output_basename = NULL,
+                     epsilon = NULL,
+                     error = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = FALSE,
@@ -1455,7 +1455,7 @@ diagnose_method <- function(data = NULL,
 
   CmdStanDiagnose$new(runset)
 }
-CmdStanModel$set("public", name = "diagnose", value = diagnose_method)
+CmdStanModel$set("public", name = "diagnose", value = diagnose)
 
 
 

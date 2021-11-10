@@ -149,12 +149,6 @@ cmdstan_default_path <- function(old = FALSE) {
   NULL
 }
 
-# unset the path (only used in tests)
-unset_cmdstan_path <- function() {
-  .cmdstanr$PATH <- NULL
-  .cmdstanr$VERSION <- NULL
-}
-
 
 #' Find the version of CmdStan from makefile
 #' @noRd
@@ -187,4 +181,18 @@ is_release_candidate <- function(path) {
     path <- substr(path, 1, nchar(path) - 1)
   }
   grepl(pattern = "-rc[0-9]*$", x = path)
+}
+
+# unset the path (only used in tests)
+unset_cmdstan_path <- function() {
+  .cmdstanr$PATH <- NULL
+  .cmdstanr$VERSION <- NULL
+}
+
+# fake a cmdstan version (only used in tests)
+fake_cmdstan_version <- function(version) {
+  .cmdstanr$VERSION <- version
+}
+reset_cmdstan_version <- function() {
+  .cmdstanr$VERSION <- read_cmdstan_version(cmdstan_path())
 }
