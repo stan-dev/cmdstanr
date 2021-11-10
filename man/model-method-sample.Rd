@@ -241,7 +241,7 @@ Disable if you wish to silence these messages, but this is not usually
 recommended unless you are very confident that the model is correct up to
 numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
-used to display all the silenced messages.}
+used to display the silenced messages.}
 
 \item{diagnostics}{(character vector) The diagnostics to automatically check
 and warn about after sampling. Setting this to an empty string \code{""} or
