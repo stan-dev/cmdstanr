@@ -36,7 +36,7 @@ written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json(
 \code{\link[=write_stan_json]{write_stan_json()}} for details on the conversions performed on \R objects
 before they are passed to Stan.
 \item A path to a data file compatible with CmdStan (JSON or \R dump). See the
-appendices in the CmdStan manual for details on using these formats.
+appendices in the CmdStan guide for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
@@ -66,12 +66,10 @@ files are removed when the fitted model object is
 corresponding to the defaults used by \verb{$save_output_files()}.
 }}
 
-\item{output_basename}{(string) A string to use as a prefix for the
-names of the output CSV files of CmdStan.
-\itemize{
-\item If \code{NULL} (the default), the basename of the output CSV files
-will be comprised from the model name, timestamp and 5 random characters.
-}}
+\item{output_basename}{(string) A string to use as a prefix for the names of
+the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
+the output CSV files will be comprised from the model name, timestamp, and
+5 random characters.}
 
 \item{sig_figs}{(positive integer) The number of significant figures used
 when storing the output values. By default, CmdStan represent the output
@@ -90,9 +88,10 @@ been set then the default is \code{1}.}
 threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
 contrast with \code{parallel_chains}, which specifies the number of chains to
-run in parallel. The actual number of CPU cores used use is
+run in parallel. The actual number of CPU cores used is
 \code{parallel_chains*threads_per_chain}. For an example of using threading see
-the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
+the Stan case study
+\href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and
 device IDs of the OpenCL device to use for fitting. The model must

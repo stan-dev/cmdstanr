@@ -15,7 +15,7 @@
 \pkg{CmdStanR}: the \R interface to CmdStan.
 }
 \details{
-CmdStanR (\pkg{cmdstanr} package) is a lightweight interface to Stan
+CmdStanR (\pkg{cmdstanr} package) is an interface to Stan
 (\href{https://mc-stan.org}{mc-stan.org}) for \R users. It provides the
 necessary objects and functions to compile a Stan program and run Stan's
 algorithms from \R via CmdStan, the shell interface to Stan
@@ -66,9 +66,9 @@ the same license used for CmdStan and the Stan C++ source code.
 }
 \section{Getting started}{
  CmdStanR requires a working version of CmdStan. If
-you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
-started, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} for help with installation.
-The vignette \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
+you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get started,
+otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} to install CmdStan. The vignette
+\href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
 demonstrates the basic functionality of the package.
 }
 

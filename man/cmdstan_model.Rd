@@ -28,9 +28,12 @@ method.}
 A \code{\link{CmdStanModel}} object.
 }
 \description{
-\if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-Create a new \code{\link{CmdStanModel}} object from a file containing a Stan program
-or from an existing Stan executable.
+\if{html}{\figure{logo.png}{options: width="25px"
+alt="https://mc-stan.org/about/logo/"}} Create a new \code{\link{CmdStanModel}} object
+from a file containing a Stan program or from an existing Stan executable.
+The \code{\link{CmdStanModel}} object stores the path to a Stan program and compiled
+executable (once created), and provides methods for fitting the model using
+Stan's algorithms.
 }
 \examples{
 \dontrun{

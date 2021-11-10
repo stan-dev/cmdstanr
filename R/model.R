@@ -1,8 +1,11 @@
 #' Create a new CmdStanModel object
 #'
-#' \if{html}{\figure{logo.png}{options: width="25px" alt="https://mc-stan.org/about/logo/"}}
-#' Create a new [`CmdStanModel`] object from a file containing a Stan program
-#' or from an existing Stan executable.
+#' \if{html}{\figure{logo.png}{options: width="25px"
+#' alt="https://mc-stan.org/about/logo/"}} Create a new [`CmdStanModel`] object
+#' from a file containing a Stan program or from an existing Stan executable.
+#' The [`CmdStanModel`] object stores the path to a Stan program and compiled
+#' executable (once created), and provides methods for fitting the model using
+#' Stan's algorithms.
 #'
 #' @export
 #' @param stan_file (string) The path to a `.stan` file containing a Stan
@@ -355,7 +358,9 @@ CmdStanModel <- R6::R6Class(
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
-#'   otherwise write in the `make/local` file.
+#'   otherwise write in the `make/local` file. For an example of using threading
+#'   see the Stan case study
+#'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   `stanc` chapter of the CmdStan Guide for more details on available options:
@@ -760,10 +765,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @aliases sample
 #' @family CmdStanModel methods
 #'
-#' @description The `$sample()` method of a [`CmdStanModel`] object runs the
-#'   default MCMC algorithm in CmdStan (`algorithm=hmc engine=nuts`), to produce
-#'   a set of draws from the posterior distribution of a model conditioned on
-#'   some data.
+#' @description The `$sample()` method of a [`CmdStanModel`] object runs Stan's
+#'   main Markov chain Monte Carlo algorithm.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the
@@ -1555,7 +1558,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     allow_undefined_arg <- "--allow-undefined"
   } else {
     allow_undefined_arg <- NULL
-  }  
+  }
   out_file <- tempfile(fileext = ".json")
   run_log <- processx::run(
     command = stanc_cmd(),
