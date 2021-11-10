@@ -95,7 +95,7 @@
 #'   [`$diagnostic_summary()`][fit-method-diagnostic_summary] method provides
 #'   summaries of the diagnostics and can regenerate the warning messages.
 #'
-#'   Diagnostics like R-hat and effective sample size are not currently
+#'   Diagnostics like R-hat and effective sample size are _not_ currently
 #'   available via the `diagnostics` argument but can be checked after fitting
 #'   using the [`$summary()`][fit-method-summary] method.
 #'

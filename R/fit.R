@@ -1154,7 +1154,7 @@ diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfm
   }
   diagnostics <- match.arg(
     diagnostics,
-    choices = c(available_hmc_diagnostics()),
+    choices = available_hmc_diagnostics(),
     several.ok = TRUE
   )
   post_warmup_sampler_diagnostics <- self$sampler_diagnostics(inc_warmup = FALSE)

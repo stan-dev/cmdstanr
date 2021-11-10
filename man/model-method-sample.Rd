@@ -257,7 +257,7 @@ access the diagnostic values for each iteration and the
 \code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} method provides
 summaries of the diagnostics and can regenerate the warning messages.
 
-Diagnostics like R-hat and effective sample size are not currently
+Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
