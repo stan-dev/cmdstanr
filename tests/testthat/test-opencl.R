@@ -31,7 +31,7 @@ test_that("all methods error when opencl_ids is used with non OpenCL model", {
 })
 
 test_that("all methods error on invalid opencl_ids", {
-  skip_if(Sys.getenv("CMDSTANR_OPENCL_TESTS")!="1")
+  skip_if_not(Sys.getenv("CMDSTANR_OPENCL_TESTS") %in% c("1", "true"))
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE))
   utils::capture.output(
@@ -67,7 +67,7 @@ test_that("all methods error on invalid opencl_ids", {
 })
 
 test_that("all methods run with valid opencl_ids", {
-  skip_if(Sys.getenv("CMDSTANR_OPENCL_TESTS")!="1")
+  skip_if_not(Sys.getenv("CMDSTANR_OPENCL_TESTS") %in% c("1", "true"))
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE))
   expect_sample_output(
