@@ -118,7 +118,7 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.23.0")))
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.26.1")))
   set_cmdstan_path(cmdstan_default_path())
 })
 
