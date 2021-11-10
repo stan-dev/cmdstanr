@@ -539,6 +539,15 @@ test_that("cmdstan_model works with exe_file", {
   expect_false(file.exists(default_exe_file))
 })
 
+test_that("cmdstan_model errors if exe_file specified and version less than 2.27", {
+  fake_cmdstan_version("2.26.0")
+  expect_error(
+    cmdstan_model(exe_file = "foo"),
+    "'exe_file' argument is only supported with CmdStan 2.27 and newer"
+  )
+  reset_cmdstan_version()
+})
+
 test_that("cmdstan_model created only with exe_file errors for check_syntax, code, ... ", {
   mod <- testing_model("bernoulli")
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
