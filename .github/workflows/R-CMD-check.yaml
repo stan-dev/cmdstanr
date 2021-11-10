@@ -97,7 +97,7 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           remotes::install_local(path = ".")
-          install.packages("curl")
+          install.packages(c("curl", "gridExtra"))
         shell: Rscript {0}
 
       - name: Cache cmdstan
