@@ -97,7 +97,7 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           remotes::install_local(path = ".")
-          install.packages(c("curl", "gridExtra"))
+          install.packages("curl")
         shell: Rscript {0}
 
       - name: Cache cmdstan
@@ -124,7 +124,9 @@ jobs:
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_: false
-        run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
+        run: |
+          install.packages("gridExtra")
+          rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
         shell: Rscript {0}
 
       - name: Show testthat output
