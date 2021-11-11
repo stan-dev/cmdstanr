@@ -357,18 +357,15 @@ two. In this trivial example the distributions look quite similar, although
 the variational approximation slightly underestimates the posterior 
 standard deviation.
 
-```{r plot-variational, message = FALSE}
-bayesplot_grid(
-  mcmc_hist(fit$draws("theta"), binwidth = 0.025),    
-  mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025),
-  titles = c("Posterior distribution from MCMC", "Approximate posterior from VB"),
-  xlim = c(0, 1)
-)
+```{r plot-variational-1, message = FALSE, fig.cap="Posterior from MCMC"}
+mcmc_hist(fit$draws("theta"), binwidth = 0.025)
+```
+```{r plot-variational-2, message = FALSE, fig.cap="Posterior from variational"}
+mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
 ```
 
-
 For more details on the `$optimize()` and `$variational()` methods, follow
-these thinks to their documentation pages.
+these links to their documentation pages.
 
 * [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
 * [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)

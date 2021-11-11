@@ -5,7 +5,6 @@ output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
-bibliography: profiling-files/profiling.bib
 params:
   EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
 vignette: >
@@ -30,7 +29,11 @@ However, be aware that the statistical assumptions that go into a model are
 the most important factors in overall model performance. It is often not
 possible to make up for model problems with just brute force computation. For
 ideas on how to address performance of your model from a statistical
-perspective, see [@gelman2020bayesian].
+perspective, see Gelman (2020).
+
+```{r library, message=FALSE}
+library(cmdstanr)
+```
 
 ## Adding profiling statements to a Stan program
 
@@ -70,13 +73,40 @@ profile("likelihood") {
 }
 ```
 
-We can then run the model as usual and Stan will collect the profiling information for any sections with `profile` statements.
+In general we recommend using a separate `.stan` file, but for convenience in
+this vignette we'll write the Stan program as a string and use
+`write_stan_file()` to write it to a temporary file.
+
+```{r profiling_bernoulli_logit.stan}
+profiling_bernoulli_logit <- write_stan_file('
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  int y[n];
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  profile("priors") {
+    target += std_normal_lpdf(beta);
+    target += std_normal_lpdf(alpha);
+  }
+  profile("likelihood") {
+    target += bernoulli_logit_lpmf(y | X * beta + alpha);
+  }
+}
+')
+```
+
+We can then run the model as usual and Stan will collect the profiling
+information for any sections with `profile` statements.
 
 ```{r fit-model, message=FALSE, results='hide'}
-library(cmdstanr)
-
 # Compile the model
-model <- cmdstan_model("profiling-files/profiling_bernoulli_logit.stan")
+model <- cmdstan_model(profiling_bernoulli_logit)
 
 # Generate some fake data
 n <- 1000
@@ -86,17 +116,19 @@ X <- matrix(rnorm(n * k), ncol = k)
 y <- 3 * X[,1] - 2 * X[,2] + 1
 p <- runif(n)
 y <- ifelse(p < (1 / (1 + exp(-y))), 1, 0)
-mdata <- list(k = ncol(X), n = nrow(X), y = y, X = X)
+stan_data <- list(k = ncol(X), n = nrow(X), y = y, X = X)
 
 # Run one chain of the model
-fit <- model$sample(data = mdata, chains = 1)
+fit <- model$sample(data = stan_data, chains = 1)
 ```
+
 ## Accessing the profiling information from R 
 
 The raw profiling information can then be accessed with the `$profiles()`
-method, which returns one data frame per chain (profiles across multiple
-chains are not automatically aggregated). Details on the column names are
-available in the [CmdStan documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
+method, which returns a list containing one data frame per chain (profiles
+across multiple chains are not automatically aggregated). Details on the column
+names are available in the 
+[CmdStan documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
 
 ```{r profiles}
 fit$profiles()
@@ -106,6 +138,8 @@ The `total_time` column is the total time spent inside a given profile
 statement. It is clear that the vast majority of time is spent in the likelihood
 function.
 
+## Comparing to a faster version of the model 
+
 Stan's specialized glm functions can be used to make models like this faster. In
 this case the likelihood can be replaced with
 
@@ -113,19 +147,44 @@ this case the likelihood can be replaced with
 target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
 ```
 
-The profiling information for the new model is collected automatically just
-like the last one.
+We'll keep the same `profile()` statements so that the profiling information for
+the new model is collected automatically just like for the previous one.
+
+```{r profiling_bernoulli_logit_glm.stan}
+profiling_bernoulli_logit_glm <- write_stan_file('
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  int y[n];
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  profile("priors") {
+    target += std_normal_lpdf(beta);
+    target += std_normal_lpdf(alpha);
+  }
+  profile("likelihood") {
+    target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
+  }
+}
+')
+```
 
 ```{r fit-model-glm, message=FALSE, results='hide'}
-model_glm <- cmdstan_model("profiling-files/profiling_bernoulli_logit_glm.stan")
-fit_glm <- model_glm$sample(data = mdata, chains = 1)
+model_glm <- cmdstan_model(profiling_bernoulli_logit_glm)
+fit_glm <- model_glm$sample(data = stan_data, chains = 1)
 ```
 
 ```{r profiles-glm}
 fit_glm$profiles()
 ```
 
-We can see from the `total_time` column that this is much faster.
+We can see from the `total_time` column that this is much faster than the 
+previous model. 
 
 ## Per-gradient timings, and memory usage
 
@@ -144,11 +203,11 @@ seeds). To compute these, use the `autodiff_calls` column.
 
 ```{r per-gradient}
 profile_chain_1 <- fit$profiles()[[1]]
-per_gradient_timing <- profile_chain_1["total_time"]/profile_chain_1["autodiff_calls"]
-print(per_gradient_timing)
+per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
+print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-## Accessing the profile files
+## Accessing and saving the profile files
 
 After sampling (or optimization or variational inference) finishes, CmdStan stores
 the profiling data in CSV files in a temporary location. 
@@ -168,4 +227,6 @@ fit$save_profile_files(dir = "path/to/directory")
 
 # References
 
-<!-- profiling.bib specified at the top -->
+Gelman, Andrew, Aki Vehtari, Daniel Simpson, Charles C. Margossian, Bob
+Carpenter, Yuling Yao, Lauren Kennedy, Jonah Gabry, Paul-Christian Bürkner, and
+Martin Modrák. 2020. "Bayesian Workflow." https://arxiv.org/abs/2011.01808.

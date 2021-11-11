@@ -28,6 +28,7 @@
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
+#' @import R6
 #'
 NULL
 

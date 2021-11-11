@@ -73,7 +73,7 @@ test_that("CmdStan version detected when setting path", {
   expect_equal(cmdstan_version(), VERSION)
 })
 
-test_that("cmdstan_version() behavior when version is not set", {
+test_that("cmdstan_version() behaves correctly when version is not set", {
   version <- .cmdstanr$VERSION
   on.exit(.cmdstanr$VERSION <- version)
   .cmdstanr$VERSION <- NULL

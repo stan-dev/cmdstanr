@@ -23,7 +23,7 @@ algorithms from \R via CmdStan, the shell interface to Stan
 
 \subsection{Different ways of interfacing with Stan’s C++}{
 
-The RStan interface (\href{https://mc-stan.org/rstan}{\strong{rstan}} package) is
+The RStan interface (\href{https://mc-stan.org/rstan/}{\strong{rstan}} package) is
 an in-memory interface to Stan and relies on R packages like \strong{Rcpp}
 and \strong{inline} to call C++ code from R. On the other hand, the CmdStanR
 interface does not directly call any C++ code from R, instead relying on
