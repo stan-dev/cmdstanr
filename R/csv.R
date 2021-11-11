@@ -123,9 +123,29 @@
 read_cmdstan_csv <- function(files,
                              variables = NULL,
                              sampler_diagnostics = NULL,
-                             format = getOption("cmdstanr_draws_format", NULL)) {
+                             format = getOption("cmdstanr_draws_format", NULL),
+                             parse_metadata = TRUE) {
   format <- assert_valid_draws_format(format)
   checkmate::assert_file_exists(files, access = "r", extension = "csv")
+  # the fastest method of reading in just the draws
+  if (isFALSE(parse_metadata)) {
+    draws <- list()
+    for (f in files) {
+      draws_list_id <- length(draws) + 1
+      suppressWarnings(
+        draws[[draws_list_id]] <- data.table::fread(
+          cmd = fread_cmd(f),
+          select = c(variables, sampler_diagnostics),
+          data.table = FALSE
+        )
+      )
+    }
+    if (is.null(format)) {
+      format <- "draws_array"
+    }
+    draws <- do.call(as_draws_format_fun(format), list(draws))
+    return(draws)
+  }
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -225,18 +245,12 @@ read_cmdstan_csv <- function(files,
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
   num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
   for (output_file in files) {
-    if (os_is_windows()) {
-      grep_path <- repair_path(Sys.which("grep.exe"))
-      fread_cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
-    } else {
-      fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
-    }
     if (length(sampler_diagnostics) > 0) {
       post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
       warmup_sd_id <- length(warmup_sampler_diagnostics) + 1
       suppressWarnings(
         post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- data.table::fread(
-          cmd = fread_cmd,
+          cmd = fread_cmd(output_file),
           select = sampler_diagnostics,
           data.table = FALSE
         )
@@ -257,7 +271,7 @@ read_cmdstan_csv <- function(files,
       warmup_draws_list_id <- length(warmup_draws) + 1
       suppressWarnings(
         draws[[draws_list_id]] <- data.table::fread(
-          cmd = fread_cmd,
+          cmd = fread_cmd(output_file),
           select = variables,
           data.table = FALSE
         )
@@ -856,3 +870,14 @@ variable_dims <- function(variable_names = NULL) {
   }
   dims
 }
+
+
+fread_cmd <- function(output_file) {
+  if (os_is_windows()) {
+    grep_path <- repair_path(Sys.which("grep.exe"))
+    cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
+  } else {
+    cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
+  }
+  cmd
+} 
