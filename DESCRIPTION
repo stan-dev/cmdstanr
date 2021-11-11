@@ -20,7 +20,7 @@ Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     with the latest version of Stan, fewer installation errors, fewer unexpected 
     crashes in RStudio, and a more permissive license. 
 License: BSD_3_clause + file LICENSE
-URL: https://mc-stan.org/cmdstanr, https://discourse.mc-stan.org
+URL: https://mc-stan.org/cmdstanr/, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues
 Encoding: UTF-8
 LazyData: true
