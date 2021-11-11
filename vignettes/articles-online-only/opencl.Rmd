@@ -1,7 +1,7 @@
 ---
 title: "Running Stan on the GPU with OpenCL"
 author: "Rok Češnovar and Jonah Gabry"
-output: 
+output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
@@ -13,7 +13,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r child="children/settings-knitr.Rmd"}
+```{r child="../children/settings-knitr.Rmd"}
 ```
 
 ## Introduction
@@ -33,14 +33,14 @@ speedup. The biggest speedups are expected when using the specialized GLM
 functions.
 
 In order to establish the bottlenecks in your model we recommend using
-[profiling](https://mc-stan.org/cmdstanr/articles/profiling.html), 
-which was introduced in Stan version 2.26.0. 
+[profiling](https://mc-stan.org/cmdstanr/articles/profiling.html),
+which was introduced in Stan version 2.26.0.
 
 ## OpenCL runtime
 
 OpenCL is supported on most modern CPUs and GPUs. In order to use
 OpenCL in CmdStanR, an OpenCL runtime for the target device must be installed.
-A guide for the most common devices is available in the CmdStan manual's 
+A guide for the most common devices is available in the CmdStan manual's
 [chapter on parallelization](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl).
 
 ## Compiling a model with OpenCL
@@ -88,7 +88,7 @@ mdata <- list(k = k, n = n, y = y, X = X)
 
 In this model, most of the computation will be handled by the
 `bernoulli_logit_glm_lpmf` function. Because this is a supported GPU function,
-it should be possible to accelerate it with OpenCL. Check 
+it should be possible to accelerate it with OpenCL. Check
 [here](http://mc-stan.org/math/opencl_support.html) for a list of functions
 with OpenCL support.
 
@@ -129,7 +129,7 @@ fit_cl <- mod_cl$sample(data = mdata, chains = 4, parallel_chains = 4,
                         opencl_ids = c(0, 0), refresh = 0)
 ```
 
-We'll also run a version without OpenCL and compare the run times. 
+We'll also run a version without OpenCL and compare the run times.
 
 ```{r fit-cpu, message=FALSE}
 # no OpenCL version

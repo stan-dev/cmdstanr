@@ -1,6 +1,6 @@
 ### Different ways of interfacing with Stan's C++
 
-The RStan interface ([**rstan**](https://mc-stan.org/rstan) package) is an
+The RStan interface ([**rstan**](https://mc-stan.org/rstan/) package) is an
 in-memory interface to Stan and relies on R packages like **Rcpp** and
 **inline** to call C++ code from R. On the other hand, the CmdStanR interface
 does not directly call any C++ code from R, instead relying on the CmdStan

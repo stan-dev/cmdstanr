@@ -11,7 +11,4 @@
 ^LICENSE\.md$
 ^\.appveyor\.yml$
 ^\.github$
-vignettes/profiling-files/profiling_bernoulli_logit_glm
-vignettes/profiling-files/profiling_bernoulli_logit
-vignettes/opencl-files/bernoulli_logit_glm_opencl
-vignettes/opencl-files/bernoulli_logit_glm
+^vignettes/articles-online-only$

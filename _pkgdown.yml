@@ -72,7 +72,7 @@ articles:
       - cmdstanr-internals
       - r-markdown
       - profiling
-      - opencl
+      - articles-online-only/opencl
 
 reference:
   - title: "Package description"

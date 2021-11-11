@@ -1,6 +1,4 @@
 *.html
 *.R
-profiling-files/profiling_bernoulli_logit_glm
-profiling-files/profiling_bernoulli_logit
-opencl-files/bernoulli_logit_glm_opencl
-opencl-files/bernoulli_logit_glm
+articles-online-only/opencl-files/bernoulli_logit_glm_opencl
+articles-online-only/opencl-files/bernoulli_logit_glm
