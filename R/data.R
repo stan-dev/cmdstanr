@@ -6,7 +6,7 @@
 #' @param always_decimal (logical) Force generate non-integers with decimal
 #' points to better distinguish between integers and floating point values.
 #' If `TRUE` all \R objects in `data` intended for integers must be of integer
-#' type. 
+#' type.
 #'
 #' @details
 #' `write_stan_json()` performs several conversions before writing the JSON
@@ -144,7 +144,7 @@ list_to_array <- function(x, name = NULL) {
 #'   required elements/Stan variables and to help differentiate between a
 #'   vector of length 1 and a scalar when genereting the JSON file. This
 #'   argument is ignored when a path to a data file is supplied for `data`.
-#' @param model_variables A list of all parameters with their types and 
+#' @param model_variables A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
 #' @return Path to data file.
 process_data <- function(data, model_variables = NULL) {
@@ -175,10 +175,10 @@ process_data <- function(data, model_variables = NULL) {
           ".",
           call. = FALSE
         )
-      }          
+      }
       for(var_name in names(data_variables)) {
         # distinguish between scalars and arrays/vectors of length 1
-        if (length(data[[var_name]]) == 1 
+        if (length(data[[var_name]]) == 1
             && data_variables[[var_name]]$dimensions == 1) {
             data[[var_name]] <- array(data[[var_name]], dim = 1)
         }
@@ -186,7 +186,7 @@ process_data <- function(data, model_variables = NULL) {
         # generating a decimal point in write_stan_json
         if (data_variables[[var_name]]$type == "int"
             && !is.integer(data[[var_name]])) {
-          mode(data[[var_name]]) <- "integer"            
+          mode(data[[var_name]]) <- "integer"
         }
       }
     }
@@ -254,8 +254,8 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
       file = path,
       append = FALSE
     )
-    utils::write.table(
-      posterior::subset_draws(draws, chain = chain),
+    data.table::fwrite(
+      posterior::as_draws_df(posterior::subset_draws(draws, chain = chain)),
       sep = ",",
       file = path,
       col.names = FALSE,
