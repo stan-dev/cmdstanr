@@ -535,14 +535,14 @@ test_that("as_cmdstan_fit can check MCMC diagnostics", {
                 show_messages = FALSE)
   )
   expect_message(
-    as_cmdstan_fit(fit$output_files()),
+    as_cmdstan_fit(fit_schools$output_files()),
     "transitions ended with a divergence"
   )
   expect_message(
-    as_cmdstan_fit(fit$output_files()),
+    as_cmdstan_fit(fit_schools$output_files()),
     "transitions hit the maximum treedepth"
   )
-  expect_silent(as_cmdstan_fit(fit$output_files(), check_diagnostics = FALSE))
+  expect_silent(as_cmdstan_fit(fit_schools$output_files(), check_diagnostics = FALSE))
 })
 
 test_that("read_cmdstan_csv reads seed correctly", {
