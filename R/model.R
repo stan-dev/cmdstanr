@@ -872,7 +872,7 @@ sample <- function(data = NULL,
     show_stderr_messages = show_messages
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   sample_args <- SampleArgs$new(
@@ -1014,7 +1014,7 @@ sample_mpi <- function(data = NULL,
     show_stderr_messages = show_messages
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   sample_args <- SampleArgs$new(
@@ -1132,7 +1132,7 @@ optimize <- function(data = NULL,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   optimize_args <- OptimizeArgs$new(
@@ -1248,7 +1248,7 @@ variational <- function(data = NULL,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   variational_args <- VariationalArgs$new(
@@ -1368,7 +1368,7 @@ generate_quantities <- function(fitted_params,
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   gq_args <- GenerateQuantitiesArgs$new(fitted_params = fitted_params_files)
@@ -1428,7 +1428,7 @@ diagnose <- function(data = NULL,
     show_stderr_messages = TRUE
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   diagnose_args <- DiagnoseArgs$new(
@@ -1608,4 +1608,8 @@ model_compile_info <- function(exe_file) {
     }
   }
   info
+}
+
+is_variables_method_supported <- function(mod) {
+  cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
 }
