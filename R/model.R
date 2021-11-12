@@ -1,11 +1,14 @@
 #' Create a new CmdStanModel object
 #'
-#' \if{html}{\figure{logo.png}{options: width="25px"
-#' alt="https://mc-stan.org/about/logo/"}} Create a new [`CmdStanModel`] object
-#' from a file containing a Stan program or from an existing Stan executable.
-#' The [`CmdStanModel`] object stores the path to a Stan program and compiled
-#' executable (once created), and provides methods for fitting the model using
-#' Stan's algorithms.
+#' @description \if{html}{\figure{logo.png}{options: width="25px"
+#'   alt="https://mc-stan.org/about/logo/"}} Create a new [`CmdStanModel`]
+#'   object from a file containing a Stan program or from an existing Stan
+#'   executable. The [`CmdStanModel`] object stores the path to a Stan program
+#'   and compiled executable (once created), and provides methods for fitting
+#'   the model using Stan's algorithms.
+#'
+#'   See the `compile` and `...` arguments for control over whether and how
+#'   compilation happens.
 #'
 #' @export
 #' @param stan_file (string) The path to a `.stan` file containing a Stan
@@ -20,7 +23,10 @@
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
 #' @param ... Optionally, additional arguments to pass to the
-#'   [`$compile()`][model-method-compile] method if `compile=TRUE`.
+#'   [`$compile()`][model-method-compile] method if `compile=TRUE`. These
+#'   options include specifying the directory for saving the executable, turning
+#'   on pedantic mode, specifying include paths, configuring C++ options, and
+#'   more. See [`$compile()`][model-method-compile] for details.
 #'
 #' @return A [`CmdStanModel`] object.
 #'
@@ -349,8 +355,8 @@ CmdStanModel <- R6::R6Class(
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
 #'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
-#'   that is already compiled use the
-#'   [`$check_syntax()`][model-method-check_syntax] method instead.
+#'   without compiling it or for a model that is already compiled the
+#'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
