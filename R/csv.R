@@ -444,11 +444,6 @@ CmdStanMCMC_CSV <- R6::R6Class(
   inherit = CmdStanMCMC,
   public = list(
     initialize = function(csv_contents, files, check_diagnostics = TRUE) {
-      if (check_diagnostics) {
-        check_divergences(csv_contents$post_warmup_sampler_diagnostics)
-        check_max_treedepth(csv_contents$post_warmup_sampler_diagnostics, csv_contents$metadata)
-        check_ebfmi(csv_contents$post_warmup_sampler_diagnostics)
-      }
       private$output_files_ <- files
       private$metadata_ <- csv_contents$metadata
       private$time_ <- csv_contents$time
@@ -457,6 +452,10 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
       private$warmup_draws_ <- csv_contents$warmup_draws
       private$draws_ <- csv_contents$post_warmup_draws
+      if (check_diagnostics) {
+        invisible(self$diagnostic_summary())
+      }
+      invisible(self)
     },
     # override some methods so they work without a CmdStanRun object
     output_files = function(...) {
@@ -482,6 +481,7 @@ CmdStanMLE_CSV <- R6::R6Class(
       private$output_files_ <- files
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
+      invisible(self)
     },
     output_files = function(...) {
       private$output_files_
@@ -497,6 +497,7 @@ CmdStanVB_CSV <- R6::R6Class(
       private$output_files_ <- files
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
+      invisible(self)
     },
     output_files = function(...) {
       private$output_files_
