@@ -495,9 +495,6 @@ compile <- function(quiet = TRUE,
     self$exe_file(exe)
     return(invisible(self))
   } else {
-    if (file.exists(exe)) {
-      file.remove(exe)
-    }
     if (interactive()) {
       message("Compiling Stan program...")
     }
@@ -590,7 +587,9 @@ compile <- function(quiet = TRUE,
     stop("An error occured during compilation! See the message above for more information.",
          call. = FALSE)
   }
-
+  if (file.exists(exe)) {
+    file.remove(exe)
+  }
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
