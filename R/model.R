@@ -495,6 +495,9 @@ compile <- function(quiet = TRUE,
     self$exe_file(exe)
     return(invisible(self))
   } else {
+    if (file.exists(self$exe_file())) {
+      file.remove(self$exe_file())
+    }
     if (interactive()) {
       message("Compiling Stan program...")
     }
