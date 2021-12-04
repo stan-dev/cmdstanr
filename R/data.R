@@ -239,7 +239,10 @@ any_zero_dims <- function(data) {
 #' draws_csv_files <- draws_to_csv(draws)
 #' }
 #'
-draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
+draws_to_csv <- function(draws,
+                         sampler_diagnostics = NULL,
+                         dir = tempdir(),
+                         basename = "fittedParams") {
   sampler_diagnostics_names <- c(
     "accept_stat__", "stepsize__", "treedepth__",
     "n_leapfrog__", "divergent__", "energy__"
@@ -286,8 +289,8 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
   )
 
   chains <- posterior::chain_ids(draws)
-  paths <- generate_file_names(basename = "fittedParams", ids = chains)
-  paths <- file.path(tempdir(), paths)
+  paths <- generate_file_names(basename = basename, ids = chains)
+  paths <- file.path(dir, paths)
   chain <- 1
   for (path in paths) {
     write(
