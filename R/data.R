@@ -204,27 +204,68 @@ any_zero_dims <- function(data) {
   any(has_zero_dims)
 }
 
-#' Write posterior draws objects to csv files
-#' @noRd
-#' @param draws A `draws_array` from posterior pkg
-#' @param sampler_diagnostics Either `NULL` or a `draws_array` of sampler diagnostics
+#' Write posterior draws objects to CSV files suitable for running standalone generated
+#' quantities with CmdStan.
+#'
+#' @export
+#' @param draws A `posterior::draws_*` object.
+#' @param sampler_diagnostics Either `NULL` or a `posterior::draws_*` object
+#'  of sampler diagnostics.
+#' @param dir (string) An optional path to the directory where the CSV files will be
+#'   written. If not set, [temporary directory][base::tempdir] is used.
+#' @param basename (string) If `dir` is specified, `basename`` is used for naming
+#' the output CSV files. If not specified, the file names are randomly generated.
+#'
 #' @return Paths to CSV files (one per chain).
 #'
+#' @details
+#' `draws_to_csv()` generates a CSV suitable for running standalone generated
+#' quantities with CmdStan. The CSV file contains a single comment `#num_samples`,
+#' which equals the number of iterations in the supplied draws object.
+#'
+#' The comment is followed by the column names. The first column is the `lp__` value,
+#' followed by sampler diagnostics and finnaly other variables of the draws object.
+#' #' If the draws object does not contain the `lp__` or sampler diagnostics variables,
+#' columns with zeros are created in order to conform with the requirements of the
+#' standalone generated quantities method of CmdStan.
+#'
+#' The column names line is finally followed by the values of the draws in the same
+#' order as the column names.
+#'
+#' @examples
+#' \dontrun{
+#' draws <- posterior::example_draws()
+#'
+#' draws_csv_files <- draws_to_csv(draws)
+#' }
+#'
 draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
+  sampler_diagnostics_names <- c(
+    "accept_stat__", "stepsize__", "treedepth__",
+    "n_leapfrog__", "divergent__", "energy__"
+  )
   n <- posterior::niterations(draws)
   n_chains <- posterior::nchains(draws)
+  draws_variables <- posterior::variables(draws)
+  sampler_diagnostics_variables <- posterior::variables(sampler_diagnostics)
+
+  # create dummy sampler diagnostics due to CmdStan requirement for all columns in GQ if needed
   zeros <- rep(0, n * n_chains) # filler for creating dummy sampler diagnostics and lp__ if necessary
   if (is.null(sampler_diagnostics)) {
-    # create dummy sampler diagnostics due to CmdStan requirement for all columns in GQ
-    sampler_diagnostics <- posterior::draws_array(
-      accept_stat__ = zeros,
-      stepsize__ = zeros,
-      treedepth__ = zeros,
-      n_leapfrog__ = zeros,
-      divergent__ = zeros,
-      energy__ = zeros,
-      .nchains = n_chains
-    )
+    missing_sampler_diagnostics <- sampler_diagnostics_names[!(sampler_diagnostics_names %in% draws_variables)]
+
+  } else {
+    missing_sampler_diagnostics <- sampler_diagnostics_names[!(sampler_diagnostics_names %in% draws_variables)]
+    missing_sampler_diagnostics <- missing_sampler_diagnostics[!(missing_sampler_diagnostics %in% draws_variables)]
+  }
+  if (length(missing_sampler_diagnostics) > 0) {
+    additional_sampler_diagnostics <- list()
+    for (name in missing_sampler_diagnostics) {
+      additional_sampler_diagnostics[[name]] <- zeros
+    }
+    additional_sampler_diagnostics[[".nchains"]] <- n_chains
+    additional_sampler_diagnostics <- do.call(posterior::draws_array, additional_sampler_diagnostics)
+    sampler_diagnostics <- posterior::bind_draws(sampler_diagnostics, additional_sampler_diagnostics)
   }
 
   # the columns must be in order "lp__, sampler_diagnostics, parameters"
@@ -236,8 +277,8 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
   }
   all_variables <- c(
     "lp__",
-    posterior::variables(sampler_diagnostics),
-    draws_variables[!(draws_variables %in% c("lp__", "lp_approx__"))]
+    sampler_diagnostics_names,
+    draws_variables[!(draws_variables %in% c("lp__", "lp_approx__", sampler_diagnostics_names))]
   )
   draws <- posterior::subset_draws(
     posterior::bind_draws(draws, sampler_diagnostics, lp__, along = "variable"),
@@ -254,8 +295,13 @@ draws_to_csv <- function(draws, sampler_diagnostics = NULL) {
       file = path,
       append = FALSE
     )
+    data <- posterior::as_draws_df(posterior::subset_draws(draws, chain = chain))
+    class(data) <- "data.frame"
+    data$.chain <- NULL
+    data$.iteration <- NULL
+    data$.draw <- NULL
     data.table::fwrite(
-      posterior::as_draws_df(posterior::subset_draws(draws, chain = chain)),
+      data,
       sep = ",",
       file = path,
       col.names = FALSE,

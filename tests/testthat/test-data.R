@@ -353,3 +353,59 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
     fixed = TRUE
   )
 })
+
+test_that("draws_to_csv() works sampler diagnostics defined in different ways", {
+  read_csv <- function(files) {
+    draws <- list()
+    for (f in files) {
+      if (cmdstanr:::os_is_windows()) {
+        grep_path <- repair_path(Sys.which("grep.exe"))
+        cmd <- paste0(grep_path, " -v '^#' --color=never '", f, "'")
+      } else {
+        cmd <- paste0("grep -v '^#' --color=never '", f, "'")
+      }
+      draws_list_id <- length(draws) + 1
+      suppressWarnings(
+        draws[[draws_list_id]] <- data.table::fread(
+          cmd = cmd,
+          data.table = FALSE
+        )
+      )
+    }
+    draws <- do.call(posterior::as_draws_array, list(draws))
+    return(draws)
+  }
+  sampler_diagnostics_names <- c(
+    "accept_stat__", "stepsize__", "treedepth__",
+    "n_leapfrog__", "divergent__", "energy__"
+  )
+  d <- posterior::example_draws()
+  n <- posterior::niterations(d)
+  n_chains <- posterior::nchains(d)
+  ones <- rep(1, n * n_chains)
+
+  files <- draws_to_csv(d)
+  draws_csv_1 <- read_csv(files)
+
+  expect_true(all(sampler_diagnostics_names %in% posterior::variables(draws_csv_1)))
+  expect_true(all(posterior::subset_draws(draws_csv_1, variable = sampler_diagnostics_names) == 0))
+
+  zeros <- rep(0, n * n_chains)
+  sampler_diagnostics <- posterior::draws_array(
+    accept_stat__ = zeros, stepsize__ = zeros, treedepth__ = zeros, n_leapfrog__ = zeros,
+    divergent__ = zeros, energy__ = zeros, .nchains = n_chains
+  )
+  d <- posterior::bind_draws(d, sampler_diagnostics)
+  files <- draws_to_csv(d)
+  draws_csv_2 <- read_csv(files)
+  expect_equal(draws_csv_1, draws_csv_2)
+
+  stepsize <- posterior::draws_array(
+    stepsize__ = ones,
+    .nchains = n_chains
+  )
+  d <- posterior::bind_draws(d, stepsize)
+  files <- draws_to_csv(d)
+  draws_csv_3 <- read_csv(files)
+  expect_true(all(posterior::subset_draws(draws_csv_3, variable = "stepsize__") == 1))
+})
