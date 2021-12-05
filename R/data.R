@@ -263,7 +263,7 @@ draws_to_csv <- function(draws,
 
   } else {
     missing_sampler_diagnostics <- sampler_diagnostics_names[!(sampler_diagnostics_names %in% draws_variables)]
-    missing_sampler_diagnostics <- missing_sampler_diagnostics[!(missing_sampler_diagnostics %in% draws_variables)]
+    missing_sampler_diagnostics <- missing_sampler_diagnostics[!(missing_sampler_diagnostics %in% sampler_diagnostics_variables)]
   }
   if (length(missing_sampler_diagnostics) > 0) {
     additional_sampler_diagnostics <- list()
