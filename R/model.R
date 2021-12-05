@@ -587,7 +587,9 @@ compile <- function(quiet = TRUE,
     stop("An error occured during compilation! See the message above for more information.",
          call. = FALSE)
   }
-
+  if (file.exists(exe)) {
+    file.remove(exe)
+  }
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
