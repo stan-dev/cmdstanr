@@ -5,7 +5,12 @@
 \title{Write posterior draws objects to CSV files suitable for running standalone generated
 quantities with CmdStan.}
 \usage{
-draws_to_csv(draws, sampler_diagnostics = NULL)
+draws_to_csv(
+  draws,
+  sampler_diagnostics = NULL,
+  dir = tempdir(),
+  basename = "fittedParams"
+)
 }
 \arguments{
 \item{draws}{A \verb{posterior::draws_*} object.}
@@ -34,30 +39,21 @@ which equals the number of iterations in the supplied draws object.
 The comment is followed by the column names. The first column is the \code{lp__} value,
 followed by sampler diagnostics and finnaly other variables of the draws object.
 #' If the draws object does not contain the \code{lp__} or sampler diagnostics variables,
-columns with zeros are created in order to conform with the CmdStan requirements.
+columns with zeros are created in order to conform with the requirements of the
+standalone generated quantities method of CmdStan.
+
+The column names line is finally followed by the values of the draws in the same
+order as the column names.
 }
 \examples{
 \dontrun{
-print_example_program("logistic")
-fit_logistic_mcmc <- cmdstanr_example("logistic", chains = 2)
-fit_logistic_mcmc$summary()
+draws <- posterior::example_draws()
 
-fit_logistic_optim <- cmdstanr_example("logistic", method = "optimize")
-fit_logistic_optim$summary()
-
-fit_logistic_vb <- cmdstanr_example("logistic", method = "variational")
-fit_logistic_vb$summary()
-
-print_example_program("schools")
-fit_schools_mcmc <- cmdstanr_example("schools")
-fit_schools_mcmc$summary()
-
-print_example_program("schools_ncp")
-fit_schools_ncp_mcmc <- cmdstanr_example("schools_ncp")
-fit_schools_ncp_mcmc$summary()
-
-# optimization fails for hierarchical model
-cmdstanr_example("schools", "optimize", quiet = FALSE)
+draws_csv_files <- draws_to_csv(draws)
+draws_csv_files <- draws_to_csv(draws,
+                                sampler_diagnostic = sampler_diagnostics,
+                                dir = "~/my_folder",
+                                basename = "my-samples")
 }
 
 }
