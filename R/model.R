@@ -1313,6 +1313,13 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
 #'
+#' NOTE: if you plan on making many calls to `$generate_quantities()` then the
+#' most efficient option is to pass the paths of the CmdStan CSV output files
+#' (this avoids CmdStanR having to rewrite the draws contained in the fitted
+#' model object to CSV each time). If you no longer have the CSV files you can
+#' use [draws_to_csv()] once to write them and then pass the resulting file
+#' paths to `$generate_quantities()` as many times as needed.
+#'
 #' @return A [`CmdStanGQ`] object.
 #'
 #' @template seealso-docs

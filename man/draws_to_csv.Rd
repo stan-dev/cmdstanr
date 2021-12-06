@@ -50,10 +50,12 @@ order as the column names.
 draws <- posterior::example_draws()
 
 draws_csv_files <- draws_to_csv(draws)
-draws_csv_files <- draws_to_csv(draws,
-                                sampler_diagnostic = sampler_diagnostics,
-                                dir = "~/my_folder",
-                                basename = "my-samples")
+print(draws_csv_files)
+
+# draws_csv_files <- draws_to_csv(draws,
+#                                 sampler_diagnostic = sampler_diagnostics,
+#                                 dir = "~/my_folder",
+#                                 basename = "my-samples")
 }
 
 }
