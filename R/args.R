@@ -15,6 +15,7 @@
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
+#' * `PathfinderArgs`: stores arguments specific to `method=pathfinder`
 #' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`
 #' * `DiagnoseArgs`: stores arguments specific to `method=diagnose`
 #'
@@ -472,6 +473,73 @@ VariationalArgs <- R6::R6Class(
   )
 )
 
+# PathfinderArgs ---------------------------------------------------------
+
+PathfinderArgs <- R6::R6Class(
+  "PathfinderArgs",
+  lock_objects = FALSE,
+  public = list(
+    method = "pathfinder",
+      initialize = function(init_alpha = NULL,
+                            tol_obj = NULL,
+                            tol_rel_obj = NULL,
+                            tol_grad = NULL,
+                            tol_rel_grad = NULL,
+                            tol_param = NULL,
+                            history_size = NULL,
+                            algorithm = NULL,
+                            iter = NULL,
+                            save_iterations = NULL,
+                            num_elbo_draws = NULL,
+                            num_draws = NULL) {
+        self$init_alpha <- init_alpha
+        self$tol_obj <- tol_obj
+        self$tol_rel_obj <- tol_rel_obj
+        self$tol_grad <- tol_grad
+        self$tol_rel_grad <- tol_rel_grad
+        self$tol_param <- tol_param
+        self$history_size <- history_size
+        self$algorithm <- algorithm
+        self$iter <- iter
+        self$save_iterations <- save_iterations
+        self$num_elbo_draws <- num_elbo_draws
+        self$num_draws <- num_draws
+
+      invisible(self)
+    },
+
+    validate = function(num_procs) {
+      validate_pathfinder_args(self)
+    },
+
+    # Compose arguments to CmdStan command for variational-specific
+    # non-default arguments. Works the same way as compose for sampler args,
+    # but `idx` is ignored (no multiple chains for optimize or variational)
+    compose = function(idx = NULL, args = NULL) {
+      .make_arg <- function(arg_name) {
+        compose_arg(self, arg_name, idx = NULL)
+      }
+      new_args <- list(
+        "method=pathfinder",
+        .make_arg("init_alpha"),
+        .make_arg("tol_obj"),
+        .make_arg("tol_rel_obj"),
+        .make_arg("tol_grad"),
+        .make_arg("tol_rel_grad"),
+        .make_arg("tol_param"),
+        .make_arg("history_size"),
+        .make_arg("algorithm"),
+        .make_arg("iter"),
+        .make_arg("save_iterations"),
+        .make_arg("num_elbo_draws"),
+        .make_arg("num_draws")
+      )
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
+    }
+  )
+)
+
 # DiagnoseArgs -------------------------------------------------------------
 
 DiagnoseArgs <- R6::R6Class(
@@ -747,6 +815,14 @@ validate_variational_args <- function(self) {
   checkmate::assert_number(self$tol_rel_obj, null.ok = TRUE,
                            lower = .Machine$double.eps)
 
+  invisible(TRUE)
+}
+
+#' Validate arguments for pathfinder inference
+#' @noRd
+#' @param self A `PathfinderArgs` object.
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_pathfinder_args <- function(self) {
   invisible(TRUE)
 }
 

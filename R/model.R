@@ -1295,6 +1295,127 @@ variational <- function(data = NULL,
 }
 CmdStanModel$set("public", name = "variational", value = variational)
 
+
+#' Run Stan's variational approximation algorithms
+#'
+#' @name model-method-pathfinder
+#' @aliases pathfinder
+#' @family CmdStanModel methods
+#'
+#' @description The `$pathfinder()` method of a [`CmdStanModel`] object runs
+#'   Stan's Pathfinder algorithms.
+#'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the
+#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   for more details.
+#'
+#' @details CmdStan can fit a variational approximation to the posterior. The
+#'   approximation is a Gaussian in the unconstrained variable space. Stan
+#'   implements two variational algorithms. The `algorithm="meanfield"` option
+#'   uses a fully factorized Gaussian for the approximation. The
+#'   `algorithm="fullrank"` option uses a Gaussian with a full-rank covariance
+#'   matrix for the approximation.
+#'
+#'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
+#'
+#' @template model-common-args
+#' @param threads (positive integer) If the model was
+#'   [compiled][model-method-compile] with threading support, the number of
+#'   threads to use in parallelized sections (e.g., when using the Stan
+#'   functions `reduce_sum()` or `map_rect()`).
+#' @param algorithm (string) The algorithm. Either `"meanfield"` or
+#'   `"fullrank"`.
+#' @param iter (positive integer) The _maximum_ number of iterations.
+#' @param grad_samples (positive integer) The number of samples for Monte Carlo
+#'   estimate of gradients.
+#' @param elbo_samples (positive integer) The number of samples for Monte Carlo
+#'   estimate of ELBO (objective function).
+#' @param eta (positive real) The step size weighting parameter for adaptive
+#'   step size sequence.
+#' @param adapt_engaged (logical) Do warmup adaptation?
+#' @param adapt_iter (positive integer) The _maximum_ number of adaptation
+#'   iterations.
+#' @param tol_rel_obj (positive real) Convergence tolerance on the relative norm
+#'   of the objective.
+#' @param eval_elbo (positive integer) Evaluate ELBO every Nth iteration.
+#' @param output_samples (positive integer) Number of approximate posterior
+#'   samples to draw and save.
+#'
+#' @return A [`CmdStanVB`] object.
+#'
+#' @template seealso-docs
+#' @inherit cmdstan_model examples
+#'
+pathfinder <- function(data = NULL,
+                        seed = NULL,
+                        refresh = NULL,
+                        init = NULL,
+                        save_latent_dynamics = FALSE,
+                        output_dir = NULL,
+                        output_basename = NULL,
+                        sig_figs = NULL,
+                        threads = NULL,
+                        opencl_ids = NULL,
+                        init_alpha = NULL,
+                        tol_obj = NULL,
+                        tol_rel_obj = NULL,
+                        tol_grad = NULL,
+                        tol_rel_grad = NULL,
+                        tol_param = NULL,
+                        history_size = NULL,
+                        algorithm = NULL,
+                        iter = NULL,
+                        save_iterations = NULL,
+                        num_elbo_draws = NULL,
+                        num_draws = NULL) {
+  procs <- CmdStanProcs$new(
+    num_procs = 1,
+    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+  )
+  model_variables <- NULL
+  if (is_variables_method_supported(self)) {
+    model_variables <- self$variables()
+  }
+  pathfinder_args <- PathfinderArgs$new(
+    init_alpha = init_alpha,
+    tol_obj = tol_obj,
+    tol_rel_obj = tol_rel_obj,
+    tol_grad = tol_grad,
+    tol_rel_grad = tol_rel_grad,
+    tol_param = tol_param,
+    history_size = history_size,
+    algorithm = algorithm,
+    iter = iter,
+    save_iterations = save_iterations,
+    num_elbo_draws = num_elbo_draws,
+    num_draws = num_draws  )
+  args <- CmdStanArgs$new(
+    method_args = pathfinder_args,
+    stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
+    model_name = self$model_name(),
+    exe_file = self$exe_file(),
+    proc_ids = 1,
+    data_file = process_data(data, model_variables),
+    save_latent_dynamics = save_latent_dynamics,
+    seed = seed,
+    init = init,
+    refresh = refresh,
+    output_dir = output_dir,
+    output_basename = output_basename,
+    sig_figs = sig_figs,
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    model_variables = model_variables
+  )
+  runset <- CmdStanRun$new(args, procs)
+  runset$run_cmdstan()
+  CmdStanPathfinder$new(runset)
+}
+CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
+
+
 #' Run Stan's standalone generated quantities method
 #'
 #' @name model-method-generate-quantities

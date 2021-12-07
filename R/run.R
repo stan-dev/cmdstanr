@@ -469,6 +469,10 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     if (procs$proc_state(id = id) > 3) {
       successful_fit <- TRUE
     }
+  } else if (self$method() == "pathfinder") {
+    if (procs$proc_state(id = id) > 3 | procs$get_proc(id)$get_exit_status() == 0) {
+      successful_fit <- TRUE
+    }
   } else if (procs$get_proc(id)$get_exit_status() == 0) {
     successful_fit <- TRUE
   }
@@ -483,6 +487,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 }
 CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
 CmdStanRun$set("private", name = "run_variational_", value = .run_other)
+CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs
