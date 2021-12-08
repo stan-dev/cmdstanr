@@ -401,6 +401,7 @@ read_cmdstan_csv <- function(files,
       pathfinder_draws <- NULL
     } else {
       pathfinder_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]), drop = FALSE]))
+      posterior::variables(pathfinder_draws) <- repaired_variables
     }
     list(
       metadata = metadata,
