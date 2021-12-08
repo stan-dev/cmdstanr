@@ -1357,6 +1357,7 @@ pathfinder <- function(data = NULL,
                         sig_figs = NULL,
                         threads = NULL,
                         opencl_ids = NULL,
+                        num_threads = NULL,
                         init_alpha = NULL,
                         tol_obj = NULL,
                         tol_rel_obj = NULL,
@@ -1368,7 +1369,7 @@ pathfinder <- function(data = NULL,
                         iter = NULL,
                         save_iterations = NULL,
                         num_elbo_draws = NULL,
-                        num_draws = NULL) {
+                        num_draws = NULL, psis_draws = NULL, num_paths = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
@@ -1390,7 +1391,9 @@ pathfinder <- function(data = NULL,
     iter = iter,
     save_iterations = save_iterations,
     num_elbo_draws = num_elbo_draws,
-    num_draws = num_draws  )
+    num_draws = num_draws,
+    psis_draws = psis_draws,
+    num_paths = num_paths)
   args <- CmdStanArgs$new(
     method_args = pathfinder_args,
     stan_file = self$stan_file(),
@@ -1407,7 +1410,8 @@ pathfinder <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    model_variables = model_variables
+    model_variables = model_variables,
+    num_threads = num_threads
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()

@@ -40,7 +40,8 @@ CmdStanArgs <- R6::R6Class(
                           validate_csv = TRUE,
                           sig_figs = NULL,
                           opencl_ids = NULL,
-                          model_variables = NULL) {
+                          model_variables = NULL,
+                          num_threads = NULL) {
 
       self$model_name <- model_name
       self$stan_code <- stan_code
@@ -69,6 +70,7 @@ CmdStanArgs <- R6::R6Class(
       }
       self$init <- init
       self$opencl_ids <- opencl_ids
+      self$num_threads = NULL
       self$method_args$validate(num_procs = length(self$proc_ids))
       self$validate()
     },
@@ -165,6 +167,9 @@ CmdStanArgs <- R6::R6Class(
       }
       if (!is.null(self$opencl_ids)) {
         args$opencl <- c("opencl", paste0("platform=", self$opencl_ids[1]), paste0("device=", self$opencl_ids[2]))
+      }
+      if (!is.null(self$num_threads)) {
+        num_threads <- c(args$output, paste0("num_threads=", self$num_threads))
       }
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
@@ -491,7 +496,8 @@ PathfinderArgs <- R6::R6Class(
                             iter = NULL,
                             save_iterations = NULL,
                             num_elbo_draws = NULL,
-                            num_draws = NULL) {
+                            num_draws = NULL,
+                            psis_draws = NULL, num_paths = NULL) {
         self$init_alpha <- init_alpha
         self$tol_obj <- tol_obj
         self$tol_rel_obj <- tol_rel_obj
@@ -504,7 +510,8 @@ PathfinderArgs <- R6::R6Class(
         self$save_iterations <- save_iterations
         self$num_elbo_draws <- num_elbo_draws
         self$num_draws <- num_draws
-
+        self$psis_draws <- psis_draws
+        self$num_paths <- num_paths
       invisible(self)
     },
 
@@ -519,21 +526,41 @@ PathfinderArgs <- R6::R6Class(
       .make_arg <- function(arg_name) {
         compose_arg(self, arg_name, idx = NULL)
       }
-      new_args <- list(
-        "method=pathfinder",
-        .make_arg("init_alpha"),
-        .make_arg("tol_obj"),
-        .make_arg("tol_rel_obj"),
-        .make_arg("tol_grad"),
-        .make_arg("tol_rel_grad"),
-        .make_arg("tol_param"),
-        .make_arg("history_size"),
-        .make_arg("algorithm"),
-        .make_arg("iter"),
-        .make_arg("save_iterations"),
-        .make_arg("num_elbo_draws"),
-        .make_arg("num_draws")
-      )
+      if (self$algorithm == "single") {
+        new_args <- list(
+          "method=pathfinder",
+          .make_arg("init_alpha"),
+          .make_arg("tol_obj"),
+          .make_arg("tol_rel_obj"),
+          .make_arg("tol_grad"),
+          .make_arg("tol_rel_grad"),
+          .make_arg("tol_param"),
+          .make_arg("history_size"),
+          .make_arg("iter"),
+          .make_arg("save_iterations"),
+          .make_arg("num_elbo_draws"),
+          .make_arg("num_draws")
+        )
+      # default of multi
+      } else {#if (self$algorithm == "multi") {
+        new_args <- list(
+          "method=pathfinder",
+          "algorithm=multi",
+          .make_arg("psis_draws"),
+          .make_arg("num_paths"),
+          .make_arg("init_alpha"),
+          .make_arg("tol_obj"),
+          .make_arg("tol_rel_obj"),
+          .make_arg("tol_grad"),
+          .make_arg("tol_rel_grad"),
+          .make_arg("tol_param"),
+          .make_arg("history_size"),
+          .make_arg("iter"),
+          .make_arg("save_iterations"),
+          .make_arg("num_elbo_draws"),
+          .make_arg("num_draws")
+        )
+      }
       new_args <- do.call(c, new_args)
       c(args, new_args)
     }
