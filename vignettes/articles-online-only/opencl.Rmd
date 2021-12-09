@@ -48,7 +48,7 @@ If you experience issue compiling the model with OpenCL, run the below script an
 `path_to_opencl_lib` to the path to the `OpenCL.lib` file on your system.
 If you are using CUDA, the path should be similar to the one listed here.
 
-```{r windows-opencl, message=FALSE, results='hide'}
+```{r windows-opencl, eval=FALSE}
 path_to_opencl_lib <- "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64"
 cpp_options = list(
   paste0("LDFLAGS+= -L\"",path_to_opencl_lib,"\" -lOpenCL")
@@ -56,7 +56,6 @@ cpp_options = list(
 
 cmdstanr::cmdstan_make_local(cpp_options = cpp_options)
 cmdstanr::rebuild_cmdstan()
-```
 
 ## Compiling a model with OpenCL
 
