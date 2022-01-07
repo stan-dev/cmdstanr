@@ -36,7 +36,7 @@ Imports:
     R6 (>= 2.4.0)
 Suggests: 
     bayesplot,
-    knitr,
+    knitr (>= 1.37),
     loo (>= 2.0.0),
     rlang (>= 0.4.7),
     rmarkdown,

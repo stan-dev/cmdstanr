@@ -29,12 +29,12 @@ Behind the scenes, the engine relies on RStan to compile the model code into an
 in-memory `stanmodel`, which is assigned to a variable with the name given by
 the `output.var` chunk option. For example:
 
-````
-`r ''````{stan, output.var="model"}
+````{verbatim}
+```{stan, output.var="model"}
 // Stan model code
 ```
 
-`r ''````{r}
+```{r}
 rstan::sampling(model)
 ```
 ````
@@ -53,12 +53,12 @@ chunks are processed with CmdStanR, not RStan. Of course, this also means that
 the variable specified by `output.var` will no longer be a `stanmodel` object,
 but instead a `CmdStanModel` object, so the code above would look like this:
 
-````
-`r ''````{stan, output.var="model"}
+````{verbatim}
+```{stan, output.var="model"}
 // Stan model code
 ```
 
-`r ''````{r}
+```{r}
 model$sample()
 ```
 ````
@@ -112,20 +112,20 @@ register_knitr_engine(override = FALSE)
 This will cause `stan` chunks to be processed by knitr's built-in, RStan-based
 engine and only use CmdStanR's knitr engine for `cmdstan` chunks:
 
-````
-`r ''````{stan, output.var="model_obj1"}
+````{verbatim}
+```{stan, output.var="model_obj1"}
 // Results in a stanmodel object
 ```
 
-`r ''````{r}
+```{r}
 rstan::sampling(model_obj1)
 ```
 
-`r ''````{cmdstan, output.var="model_obj2"}
+```{cmdstan, output.var="model_obj2"}
 // Results in a CmdStanModel object
 ```
 
-`r ''````{r}
+```{r}
 model_obj2$sample()
 ```
 ````
