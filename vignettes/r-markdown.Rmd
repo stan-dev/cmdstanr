@@ -43,6 +43,7 @@ CmdStanR provides a replacement engine, which can be registered as follows:
 
 ```{r setup, message=FALSE}
 library(cmdstanr)
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 
 register_knitr_engine()
 ```
