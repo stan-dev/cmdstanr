@@ -306,12 +306,10 @@ test_that("fixed_param is set when the model has no parameters", {
   "
   stan_file <- write_stan_file(code)
   m <- cmdstan_model(stan_file)
-  expect_warning(
-    capture.output(fit <- m$sample()),
-    "Model contains no parameters. Automatically setting fixed_param = TRUE."
+  expect_error(
+    m$sample(),
+    "Model contains no parameters. Please use 'fixed_param = TRUE'."
   )
-  expect_null(fit$sampler_diagnostics())
-  expect_equal(posterior::variables(fit$draws()), "y")
 })
 
 test_that("sig_figs warning if version less than 2.25", {

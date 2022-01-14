@@ -600,3 +600,15 @@ test_that("cmdstan_model works with user_header", {
   )
   expect_true(file.exists(mod$exe_file()))
 })
+
+test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
+  file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+  cpp_options <- list(
+    "CXXFLAGS_OPTIM += -Dsomething_not_used"
+  )
+  options("cmdstanr_verbose" = TRUE)
+  out <- utils::capture.output(
+    mod <- cmdstan_model(file, cpp_options = cpp_options, force_recompile = TRUE)
+  )
+  expect_output(print(out), "-Dsomething_not_used")
+})

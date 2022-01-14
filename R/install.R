@@ -161,19 +161,6 @@ install_cmdstan <- function(dir = NULL,
   }
   file.remove(dest_file)
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
-  version <- read_cmdstan_version(dir_cmdstan)
-  if (os_is_windows()) {
-    if (version >= "2.24" && R.version$major >= "4" && !("PRECOMPILED_HEADERS" %in% toupper(names(cpp_options)))) {
-      # cmdstan 2.24 can use precompiled headers with RTools 4.0 to speedup compiling
-      cmdstan_make_local(
-        dir = dir_cmdstan,
-        cpp_options = list(
-          PRECOMPILED_HEADERS = TRUE
-        ),
-        append = TRUE
-      )
-    }
-  }
   # Setting up native M1 compilation of CmdStan and its downstream libraries
   if (is_rosetta2()) {
     cmdstan_make_local(
@@ -638,7 +625,7 @@ cmdstan_arch_suffix <- function(version = NULL) {
   arch <- NULL
   if (grepl("linux", R.version$os) && grepl("aarch64", R.version$arch)) {
     arch <- "-linux-arm64"
-  }  
+  }
   if (!is.null(version) && version < "2.26") {
     # pre-CmdStan 2.26, only the x85 tarball was provided
     arch <- NULL

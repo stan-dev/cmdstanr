@@ -1,11 +1,14 @@
 #' Create a new CmdStanModel object
 #'
-#' \if{html}{\figure{logo.png}{options: width="25px"
-#' alt="https://mc-stan.org/about/logo/"}} Create a new [`CmdStanModel`] object
-#' from a file containing a Stan program or from an existing Stan executable.
-#' The [`CmdStanModel`] object stores the path to a Stan program and compiled
-#' executable (once created), and provides methods for fitting the model using
-#' Stan's algorithms.
+#' @description \if{html}{\figure{logo.png}{options: width="25px"
+#'   alt="https://mc-stan.org/about/logo/"}} Create a new [`CmdStanModel`]
+#'   object from a file containing a Stan program or from an existing Stan
+#'   executable. The [`CmdStanModel`] object stores the path to a Stan program
+#'   and compiled executable (once created), and provides methods for fitting
+#'   the model using Stan's algorithms.
+#'
+#'   See the `compile` and `...` arguments for control over whether and how
+#'   compilation happens.
 #'
 #' @export
 #' @param stan_file (string) The path to a `.stan` file containing a Stan
@@ -20,7 +23,10 @@
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
 #' @param ... Optionally, additional arguments to pass to the
-#'   [`$compile()`][model-method-compile] method if `compile=TRUE`.
+#'   [`$compile()`][model-method-compile] method if `compile=TRUE`. These
+#'   options include specifying the directory for saving the executable, turning
+#'   on pedantic mode, specifying include paths, configuring C++ options, and
+#'   more. See [`$compile()`][model-method-compile] for details.
 #'
 #' @return A [`CmdStanModel`] object.
 #'
@@ -349,8 +355,8 @@ CmdStanModel <- R6::R6Class(
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
 #'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
-#'   that is already compiled use the
-#'   [`$check_syntax()`][model-method-check_syntax] method instead.
+#'   without compiling it or for a model that is already compiled the
+#'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -581,7 +587,9 @@ compile <- function(quiet = TRUE,
     stop("An error occured during compilation! See the message above for more information.",
          call. = FALSE)
   }
-
+  if (file.exists(exe)) {
+    file.remove(exe)
+  }
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
@@ -858,8 +866,7 @@ sample <- function(data = NULL,
   if (cmdstan_version() >= "2.27.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
-        warning("Model contains no parameters. Automatically setting fixed_param = TRUE.")
-        fixed_param <- TRUE
+        stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
       }
     }
   }
@@ -873,7 +880,7 @@ sample <- function(data = NULL,
     show_stderr_messages = show_messages
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   sample_args <- SampleArgs$new(
@@ -1015,7 +1022,7 @@ sample_mpi <- function(data = NULL,
     show_stderr_messages = show_messages
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   sample_args <- SampleArgs$new(
@@ -1133,7 +1140,7 @@ optimize <- function(data = NULL,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   optimize_args <- OptimizeArgs$new(
@@ -1249,7 +1256,7 @@ variational <- function(data = NULL,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   variational_args <- VariationalArgs$new(
@@ -1305,6 +1312,13 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'  * A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for
 #'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
+#'
+#' NOTE: if you plan on making many calls to `$generate_quantities()` then the
+#' most efficient option is to pass the paths of the CmdStan CSV output files
+#' (this avoids CmdStanR having to rewrite the draws contained in the fitted
+#' model object to CSV each time). If you no longer have the CSV files you can
+#' use [draws_to_csv()] once to write them and then pass the resulting file
+#' paths to `$generate_quantities()` as many times as needed.
 #'
 #' @return A [`CmdStanGQ`] object.
 #'
@@ -1369,7 +1383,7 @@ generate_quantities <- function(fitted_params,
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   gq_args <- GenerateQuantitiesArgs$new(fitted_params = fitted_params_files)
@@ -1429,7 +1443,7 @@ diagnose <- function(data = NULL,
     show_stderr_messages = TRUE
   )
   model_variables <- NULL
-  if (cmdstan_version() >= "2.27.0" && self$has_stan_file() && file.exists(self$stan_file())) {
+  if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
   }
   diagnose_args <- DiagnoseArgs$new(
@@ -1529,7 +1543,7 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   for (i in seq_along(cpp_options)) {
     option_name <- names(cpp_options)[i]
     if (is.null(option_name) || !nzchar(option_name)) {
-      cpp_built_options <- c(cpp_built_options, toupper(cpp_options[[i]]))
+      cpp_built_options <- c(cpp_built_options, cpp_options[[i]])
     } else {
       cpp_built_options <- c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
     }
@@ -1609,4 +1623,8 @@ model_compile_info <- function(exe_file) {
     }
   }
   info
+}
+
+is_variables_method_supported <- function(mod) {
+  cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
 }
