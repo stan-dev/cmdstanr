@@ -1369,7 +1369,10 @@ pathfinder <- function(data = NULL,
                         iter = NULL,
                         save_iterations = NULL,
                         num_elbo_draws = NULL,
-                        num_draws = NULL, psis_draws = NULL, num_paths = NULL) {
+                        num_draws = NULL,
+                        num_eval_attempts = NULL,
+                        psis_draws = NULL,
+                        num_paths = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
@@ -1392,6 +1395,7 @@ pathfinder <- function(data = NULL,
     save_iterations = save_iterations,
     num_elbo_draws = num_elbo_draws,
     num_draws = num_draws,
+    num_eval_attempts = num_eval_attempts,
     psis_draws = psis_draws,
     num_paths = num_paths)
   args <- CmdStanArgs$new(

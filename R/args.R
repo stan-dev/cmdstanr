@@ -497,6 +497,7 @@ PathfinderArgs <- R6::R6Class(
                             save_iterations = NULL,
                             num_elbo_draws = NULL,
                             num_draws = NULL,
+                            num_eval_attempts = NULL,
                             psis_draws = NULL, num_paths = NULL) {
         self$init_alpha <- init_alpha
         self$tol_obj <- tol_obj
@@ -509,6 +510,7 @@ PathfinderArgs <- R6::R6Class(
         self$iter <- iter
         self$save_iterations <- save_iterations
         self$num_elbo_draws <- num_elbo_draws
+        self$num_eval_attempts <- num_eval_attempts
         self$num_draws <- num_draws
         self$psis_draws <- psis_draws
         self$num_paths <- num_paths
@@ -529,6 +531,7 @@ PathfinderArgs <- R6::R6Class(
       if (self$algorithm == "single") {
         new_args <- list(
           "method=pathfinder",
+          .make_arg("num_eval_attempts"),
           .make_arg("init_alpha"),
           .make_arg("tol_obj"),
           .make_arg("tol_rel_obj"),
@@ -545,6 +548,7 @@ PathfinderArgs <- R6::R6Class(
       } else {#if (self$algorithm == "multi") {
         new_args <- list(
           "method=pathfinder",
+          .make_arg("num_eval_attempts"),
           "algorithm=multi",
           .make_arg("psis_draws"),
           .make_arg("num_paths"),

@@ -237,7 +237,7 @@ CmdStanRun <- R6::R6Class(
     },
 
     time = function() {
-      if (self$method() %in% c("optimize", "variational")) {
+      if (self$method() %in% c("optimize", "variational", "pathfinder")) {
         time <- list(total = self$procs$total_time())
       } else if (self$method() == "generate_quantities") {
         chain_time <- data.frame(
