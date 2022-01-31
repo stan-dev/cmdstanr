@@ -72,7 +72,7 @@ test_that("cmdstan_summary works if bin/stansummary deleted file", {
     file.remove(file.path(cmdstan_path(), "bin", cmdstan_ext("stansummary")))
     fit_mcmc$cmdstan_summary()
   }
-  expect_output(delete_and_run(), "Inference for Stan model: logistic_model\\n2 chains: each with iter")
+  expect_output(delete_and_run(), "Inference for Stan model: logistic_model")
 })
 
 test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
