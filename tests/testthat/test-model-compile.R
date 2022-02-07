@@ -279,7 +279,8 @@ test_that("compile() works with pedantic=TRUE", {
   ")
   expect_message(
     mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 })
 
@@ -375,19 +376,22 @@ test_that("check_syntax() works with pedantic=TRUE", {
 
   expect_message(
     mod_pedantic_warn$check_syntax(pedantic = TRUE),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 
   # should also still work if specified via stanc_options
   expect_message(
     mod_pedantic_warn$check_syntax(stanc_options = list("warn-pedantic" = TRUE)),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 
   expect_output(
     expect_message(
       mod_pedantic_warn$check_syntax(pedantic = TRUE),
-      "The parameter x was declared but was not used in the density calculation."
+      "The parameter x was declared but was not used",
+      fixed = TRUE
     ),
     regexp = NA
   )
