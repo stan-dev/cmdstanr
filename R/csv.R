@@ -179,6 +179,7 @@ read_cmdstan_csv <- function(files,
   if (length(uniq_seed) == 1) {
     metadata$seed <- uniq_seed
   }
+  metadata$time <- time
   if (metadata$method == "diagnose") {
     gradients <- metadata$gradients
     metadata$gradients <- NULL
