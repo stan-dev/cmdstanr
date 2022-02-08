@@ -587,7 +587,9 @@ compile <- function(quiet = TRUE,
     stop("An error occured during compilation! See the message above for more information.",
          call. = FALSE)
   }
-
+  if (file.exists(exe)) {
+    file.remove(exe)
+  }
   file.copy(tmp_exe, exe, overwrite = TRUE)
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
@@ -1311,6 +1313,13 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
 #'
+#' NOTE: if you plan on making many calls to `$generate_quantities()` then the
+#' most efficient option is to pass the paths of the CmdStan CSV output files
+#' (this avoids CmdStanR having to rewrite the draws contained in the fitted
+#' model object to CSV each time). If you no longer have the CSV files you can
+#' use [draws_to_csv()] once to write them and then pass the resulting file
+#' paths to `$generate_quantities()` as many times as needed.
+#'
 #' @return A [`CmdStanGQ`] object.
 #'
 #' @template seealso-docs
@@ -1534,7 +1543,7 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   for (i in seq_along(cpp_options)) {
     option_name <- names(cpp_options)[i]
     if (is.null(option_name) || !nzchar(option_name)) {
-      cpp_built_options <- c(cpp_built_options, toupper(cpp_options[[i]]))
+      cpp_built_options <- c(cpp_built_options, cpp_options[[i]])
     } else {
       cpp_built_options <- c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
     }

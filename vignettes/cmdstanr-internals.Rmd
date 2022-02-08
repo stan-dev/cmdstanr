@@ -28,6 +28,7 @@ methods work in a similar way under the hood.
 
 ```{r setup, message=FALSE}
 library(cmdstanr)
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 ```
 
 ## Compilation

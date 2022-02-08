@@ -279,7 +279,8 @@ test_that("compile() works with pedantic=TRUE", {
   ")
   expect_message(
     mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 })
 
@@ -375,19 +376,22 @@ test_that("check_syntax() works with pedantic=TRUE", {
 
   expect_message(
     mod_pedantic_warn$check_syntax(pedantic = TRUE),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 
   # should also still work if specified via stanc_options
   expect_message(
     mod_pedantic_warn$check_syntax(stanc_options = list("warn-pedantic" = TRUE)),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 
   expect_output(
     expect_message(
       mod_pedantic_warn$check_syntax(pedantic = TRUE),
-      "The parameter x was declared but was not used in the density calculation."
+      "The parameter x was declared but was not used",
+      fixed = TRUE
     ),
     regexp = NA
   )
@@ -599,4 +603,16 @@ test_that("cmdstan_model works with user_header", {
     user_header = tmpfile
   )
   expect_true(file.exists(mod$exe_file()))
+})
+
+test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
+  file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+  cpp_options <- list(
+    "CXXFLAGS_OPTIM += -Dsomething_not_used"
+  )
+  options("cmdstanr_verbose" = TRUE)
+  out <- utils::capture.output(
+    mod <- cmdstan_model(file, cpp_options = cpp_options, force_recompile = TRUE)
+  )
+  expect_output(print(out), "-Dsomething_not_used")
 })
