@@ -21,7 +21,6 @@ fit_mcmc_3 <- testing_fit("logistic", method = "sample",
                           refresh = 0, metric = "dense_e")
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
-
 test_that("draws() stops for unkown variables", {
   expect_error(
     draws_betas <- fit_mcmc$draws(variables = "ABCD"),
@@ -322,4 +321,12 @@ test_that("draws() errors if invalid format", {
     fit_mcmc$draws(format = "bad_format"),
     "The supplied draws format is not valid"
   )
+})
+
+test_that("metadata()$time has chains rowss", {
+  expect_equal(nrow(fit_mcmc$metadata()$time), fit_mcmc$num_chains())
+  expect_equal(nrow(fit_mcmc_0$metadata()$time), fit_mcmc_0$num_chains())
+  expect_equal(nrow(fit_mcmc_1$metadata()$time), fit_mcmc_1$num_chains())
+  expect_equal(nrow(fit_mcmc_2$metadata()$time), fit_mcmc_2$num_chains())
+  expect_equal(nrow(fit_mcmc_3$metadata()$time), fit_mcmc_3$num_chains())
 })
