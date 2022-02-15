@@ -43,8 +43,8 @@ CmdStanFit <- R6::R6Class(
 
       out <- self$summary(variables_to_print, ...)
       out <- as.data.frame(out)
-      out[,  1] <- format(out[, 1], justify = "left")
-      out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
+      out[,  1] <- base::format(out[, 1], justify = "left")
+      out[, -1] <- base::format(round(out[, -1], digits = digits), nsmall = digits)
       for (col in grep("ess_", colnames(out), value = TRUE)) {
         out[[col]] <- as.integer(out[[col]])
       }

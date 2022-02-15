@@ -767,6 +767,127 @@ check_syntax <- function(pedantic = FALSE,
 }
 CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 
+#' Run stanc's auto-formatter on the model code. 
+#'
+#' @name model-method-format
+#' @aliases format
+#' @family CmdStanModel methods
+#'
+#' @description The `$format()` method of a [`CmdStanModel`] object
+#'   run the stanc's auto-formatter on the model code. Either saves the formatted
+#'   model directly back to the file or prints it for inspection.
+#'
+#' @param overwrite_file (logical) Should the formatted code be written back
+#'   to the input model file. The default is `FALSE`.
+#' @param canonicalize (list or logical) Defines whether or not the compiler
+#'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
+#'   Default is `FALSE``. If `TRUE`, all canonicalizations are run. You can also
+#'   supply a list of strings which represent options. In that case the options
+#'   are passed to stanc (new in Stan 2.29). See the [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
+#'   for available canonicalization options.
+#' @param backup (logical) If `TRUE`, create stanfile.bak backups before
+#'   writing to the file. Disable this option if you're sure you have other
+#'   copies of the file or are using a version control system like Git. Defaults
+#'   to `TRUE`. The value is ignored if `overwrite_file = FALSE`.
+#' @param max_line_length (integer) The maximum length of a line when formatting.
+#'   The default is `NULL`, which defers to the default line length of stanc.
+#'
+#' @return The `$format()` method returns `TRUE` (invisibly) if the model
+#'   is valid.
+#'
+#' @template seealso-docs
+#'
+#' @examples
+#' \dontrun{
+#' file <- write_stan_file("
+#' data {
+#'   int N;
+#'   int y[N];
+#' }
+#' parameters {
+#'   real                     lambda;
+#' }
+#' model {
+#'   target += 
+#'  poisson_log(y | lambda);
+#' }
+#' ")
+#' mod <- cmdstan_model(file, compile = FALSE)
+#' mod$format(canonicalize = TRUE)
+#' }
+#'
+format <- function(overwrite_file = FALSE,
+                   canonicalize = FALSE,
+                   backup = TRUE,
+                   max_line_length = NULL) {
+  if (length(self$stan_file()) == 0) {
+    stop(
+      "'$check_syntax()' cannot be used because the 'CmdStanModel'",
+      " was not created with a Stan file.", call. = FALSE
+    )
+  }
+  assert_stan_file_exists(self$stan_file())
+  checkmate::assert_integerish(
+    max_line_length,
+    lower = 1, len = 1, null.ok = TRUE
+  )
+  stanc_options <- private$precompile_stanc_options_  
+  stancflags_val <- include_paths_stanc3_args(private$precompile_include_paths_)
+  stanc_options["auto-format"] <- TRUE
+  if (!is.null(max_line_length)) {
+    stanc_options["max-line-length"] <- max_line_length
+  }
+  if (isTRUE(canonicalize)) {
+    stanc_options["canonicalize"] <- TRUE
+  } else if (is.list(canonicalize) && length(canonicalize) > 0){
+    stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
+  }
+  for (i in seq_len(length(stanc_options))) {
+    option_name <- names(stanc_options)[i]
+    if (isTRUE(as.logical(stanc_options[[i]])) && !is.numeric(stanc_options[[i]])) {
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
+    } else if (is.null(option_name) || !nzchar(option_name)) {
+      stanc_built_options <- c(
+        stanc_built_options,
+        paste0("--", stanc_options[[i]])
+      )
+      
+    } else {
+      stanc_built_options <- c(
+        stanc_built_options,
+        paste0("--", option_name, "=", stanc_options[[i]])
+      )
+    }
+  }
+
+  run_log <- processx::run(
+    command = stanc_cmd(),
+    args = c(self$stan_file(), stanc_built_options, stancflags_val),
+    wd = cmdstan_path(),
+    echo = is_verbose_mode(),
+    echo_cmd = is_verbose_mode(),
+    spinner = FALSE,
+    stderr_callback = function(x, p) {
+      message(x)
+    },
+    error_on_status = FALSE
+  )
+  if (is.na(run_log$status) || run_log$status != 0) {
+    stop("Syntax error found! See the message above for more information.",
+         call. = FALSE)
+  }
+  out_file <- ""
+  if (isTRUE(overwrite_file)) {
+    if (backup) {
+      file.copy(self$stan_file(), paste0(self$stan_file(), ".bak"))
+    }
+    out_file <- self$stan_file()
+  }
+  cat(run_log$stdout, file = out_file, sep = "\n")
+  invisible(TRUE)
+}
+CmdStanModel$set("public", name = "format", value = format)
+
 #' Run Stan's MCMC algorithms
 #'
 #' @name model-method-sample
