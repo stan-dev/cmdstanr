@@ -18,7 +18,7 @@ to the input model file. The default is \code{FALSE}.}
 
 \item{canonicalize}{(list or logical) Defines whether or not the compiler
 should 'canonicalize' the Stan model, removing things like deprecated syntax.
-Default is \verb{FALSE``. If }TRUE`, all canonicalizations are run. You can also
+Default is \code{FALSE}. If \code{TRUE}, all canonicalizations are run. You can also
 supply a list of strings which represent options. In that case the options
 are passed to stanc (new in Stan 2.29). See the \href{https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing}{User's guide section}
 for available canonicalization options.}
@@ -37,7 +37,7 @@ is valid.
 }
 \description{
 The \verb{$format()} method of a \code{\link{CmdStanModel}} object
-run the stanc's auto-formatter on the model code. Either saves the formatted
+runs stanc's auto-formatter on the model code. Either saves the formatted
 model directly back to the file or prints it for inspection.
 }
 \examples{
