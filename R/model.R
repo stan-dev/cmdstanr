@@ -838,10 +838,11 @@ format <- function(overwrite_file = FALSE,
     stanc_options["max-line-length"] <- max_line_length
   }
   if (isTRUE(canonicalize)) {
-    stanc_options["canonicalize"] <- TRUE
+    stanc_options["print-canonical"] <- TRUE
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
     stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
   }
+  stanc_built_options <- c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
     if (isTRUE(as.logical(stanc_options[[i]])) && !is.numeric(stanc_options[[i]])) {
