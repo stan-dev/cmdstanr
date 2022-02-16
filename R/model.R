@@ -774,14 +774,14 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @family CmdStanModel methods
 #'
 #' @description The `$format()` method of a [`CmdStanModel`] object
-#'   run the stanc's auto-formatter on the model code. Either saves the formatted
+#'   runs stanc's auto-formatter on the model code. Either saves the formatted
 #'   model directly back to the file or prints it for inspection.
 #'
 #' @param overwrite_file (logical) Should the formatted code be written back
 #'   to the input model file. The default is `FALSE`.
 #' @param canonicalize (list or logical) Defines whether or not the compiler
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
-#'   Default is `FALSE``. If `TRUE`, all canonicalizations are run. You can also
+#'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
 #'   supply a list of strings which represent options. In that case the options
 #'   are passed to stanc (new in Stan 2.29). See the [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
@@ -822,7 +822,7 @@ format <- function(overwrite_file = FALSE,
                    max_line_length = NULL) {
   if (length(self$stan_file()) == 0) {
     stop(
-      "'$check_syntax()' cannot be used because the 'CmdStanModel'",
+      "'$format()' cannot be used because the 'CmdStanModel'",
       " was not created with a Stan file.", call. = FALSE
     )
   }
