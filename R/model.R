@@ -820,6 +820,18 @@ format <- function(overwrite_file = FALSE,
                    canonicalize = FALSE,
                    backup = TRUE,
                    max_line_length = NULL) {
+  if (cmdstan_version() < "2.29.0" && !is.null(max_line_length)) {
+    stop(
+      "'max_line_length' is only supported with CmdStan 2.29.0 or newer.",
+      call. = FALSE
+    )
+  }
+  if (cmdstan_version() < "2.29.0" && !is.logical(canonicalize)) {
+    stop(
+      "A list can be supplied to the 'canonicalize' argument with CmdStan 2.29.0 or newer.",
+      call. = FALSE
+    )
+  }
   if (length(self$stan_file()) == 0) {
     stop(
       "'$format()' cannot be used because the 'CmdStanModel'",
@@ -839,6 +851,9 @@ format <- function(overwrite_file = FALSE,
   }
   if (isTRUE(canonicalize)) {
     stanc_options["print-canonical"] <- TRUE
+    if (cmdstan_version() < "2.29.0") {
+      stanc_options["auto-format"] <- NULL
+    }
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
     stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
   }
@@ -852,7 +867,6 @@ format <- function(overwrite_file = FALSE,
         stanc_built_options,
         paste0("--", stanc_options[[i]])
       )
-      
     } else {
       stanc_built_options <- c(
         stanc_built_options,
