@@ -4,7 +4,6 @@ set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 
-
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
@@ -723,5 +722,41 @@ test_that("format() works with include_paths", {
     mod_w_include$format(canonicalize = list('includes')),
     "real divide_real_by_two",
     fixed = TRUE
+  )
+})
+
+test_that("overwrite_file works with format()", {
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+  target +=         normal_lpdf(y| 0, 5);
+  }
+  "
+  stan_file_tmp <- write_stan_file(code)
+  mod_1 <- cmdstan_model(stan_file_tmp, compile = FALSE)
+  expect_false(
+    any(
+      grepl(paste0(basename(mod_1$stan_file()), ".bak"),
+            list.files(dirname(mod_1$stan_file()))
+      )
+    )
+  )
+  mod_1$format(overwrite_file = TRUE, backup = FALSE)
+  expect_false(
+    any(
+      grepl(paste0(basename(mod_1$stan_file()), ".bak"),
+            list.files(dirname(mod_1$stan_file()))
+      )
+    )
+  )
+  mod_1$format(overwrite_file = TRUE, backup = TRUE)
+  expect_true(
+    any(
+      grepl(paste0(basename(mod_1$stan_file()), ".bak"),
+            list.files(dirname(mod_1$stan_file()))
+      )
+    )
   )
 })
