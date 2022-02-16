@@ -63,6 +63,8 @@ These are just wrappers around the `$draws()` method provided for convenience. (
 * New function `as_mcmc.list()` for converting CmdStanMCMC objects to mcmc.list
 objects from the coda package. (#584, @MatsuuraKentaro)
 
+* New method `$format()` for auto-formatting and canonicalizing the Stan models.
+
 # cmdstanr 0.4.0
 
 ### Bug fixes
