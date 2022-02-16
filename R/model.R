@@ -791,6 +791,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   to `TRUE`. The value is ignored if `overwrite_file = FALSE`.
 #' @param max_line_length (integer) The maximum length of a line when formatting.
 #'   The default is `NULL`, which defers to the default line length of stanc.
+#' @param quiet (logical) Should informational messages be suppressed? The
+#'   default is `FALSE`.
 #'
 #' @return The `$format()` method returns `TRUE` (invisibly) if the model
 #'   is valid.
@@ -819,7 +821,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 format <- function(overwrite_file = FALSE,
                    canonicalize = FALSE,
                    backup = TRUE,
-                   max_line_length = NULL) {
+                   max_line_length = NULL,
+                   quiet = FALSE) {
   if (cmdstan_version() < "2.29.0" && !is.null(max_line_length)) {
     stop(
       "'max_line_length' is only supported with CmdStan 2.29.0 or newer.",
@@ -894,11 +897,20 @@ format <- function(overwrite_file = FALSE,
   out_file <- ""
   if (isTRUE(overwrite_file)) {
     if (backup) {
-      file.copy(self$stan_file(), paste0(self$stan_file(), ".bak"))
+      backup_file <- paste0(self$stan_file(), ".bak-", base::format(Sys.time(), "%Y%m%d%H%M%S"))
+      file.copy(self$stan_file(), backup_file)
+      if (!quiet) {
+        message(
+          "Old version of the model stored to ",
+          backup_file,
+          "."
+        )
+      }
     }
     out_file <- self$stan_file()
   }
   cat(run_log$stdout, file = out_file, sep = "\n")
+  
   invisible(TRUE)
 }
 CmdStanModel$set("public", name = "format", value = format)

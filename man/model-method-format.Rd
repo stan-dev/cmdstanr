@@ -9,7 +9,8 @@ format(
   overwrite_file = FALSE,
   canonicalize = FALSE,
   backup = TRUE,
-  max_line_length = NULL
+  max_line_length = NULL,
+  quiet = FALSE
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ to \code{TRUE}. The value is ignored if \code{overwrite_file = FALSE}.}
 
 \item{max_line_length}{(integer) The maximum length of a line when formatting.
 The default is \code{NULL}, which defers to the default line length of stanc.}
+
+\item{quiet}{(logical) Should informational messages be suppressed? The
+default is \code{FALSE}.}
 }
 \value{
 The \verb{$format()} method returns \code{TRUE} (invisibly) if the model
