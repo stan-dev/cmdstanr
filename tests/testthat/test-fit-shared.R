@@ -36,7 +36,7 @@ test_that("saving csv output files works", {
     expect_true(all(file.size(paths) > 0))
 
     should_match <- paste0("testing-output-",
-                           format(Sys.time(), "%Y%m%d%H%M"),
+                           base::format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
                            seq_len(fit$num_procs()))
     for (j in seq_along(paths)) {
@@ -71,7 +71,7 @@ test_that("saving diagnostic csv output works", {
     expect_true(all(file.size(paths) > 0))
 
     should_match <- paste0("testing-output-diagnostic-",
-                           format(Sys.time(), "%Y%m%d%H%M"),
+                           base::format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
                            seq_len(fit$num_procs()))
 
