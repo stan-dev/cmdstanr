@@ -179,6 +179,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  `$code()` | Return Stan program as a character vector. |
 #'  `$print()`|  Print readable version of Stan program. |
 #'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
+#'  [`$format()`][model-method-format]  |  Format and canonicalize the Stan model code. |
 #'
 #'  ## Compilation
 #'
