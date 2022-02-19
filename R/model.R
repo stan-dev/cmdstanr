@@ -236,7 +236,7 @@ CmdStanModel <- R6::R6Class(
         if (!is.null(args$user_header)) {
           private$using_user_header_ <- TRUE
         }
-        if (is.null(args$include_paths)) {
+        if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(stan_file)
         } else {
           private$precompile_include_paths_ <- args$include_paths
