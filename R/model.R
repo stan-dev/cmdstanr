@@ -236,7 +236,11 @@ CmdStanModel <- R6::R6Class(
         if (!is.null(args$user_header)) {
           private$using_user_header_ <- TRUE
         }
-        private$precompile_include_paths_ <- args$include_paths
+        if (is.null(args$include_paths)) {
+          private$precompile_include_paths_ <- dirname(stan_file)
+        } else {
+          private$precompile_include_paths_ <- args$user_header
+        }
         private$include_paths_ <- args$include_paths
       }
       if (!is.null(exe_file)) {
@@ -439,9 +443,6 @@ compile <- function(quiet = TRUE,
   stanc_options <- assert_valid_stanc_options(stanc_options)
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
-  }
-  if (is.null(include_paths)) {
-    include_paths <- dirname(self$stan_file())
   }
   private$include_paths_ <- include_paths  
   if (is.null(dir) && !is.null(private$dir_)) {
