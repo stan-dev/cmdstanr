@@ -440,7 +440,10 @@ compile <- function(quiet = TRUE,
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
-  private$include_paths_ <- include_paths
+  if (is.null(include_paths)) {
+    include_paths <- dirname(self$stan_file())
+  }
+  private$include_paths_ <- include_paths  
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
