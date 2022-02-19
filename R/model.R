@@ -233,7 +233,8 @@ CmdStanModel <- R6::R6Class(
         private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_cpp_options_ <- args$cpp_options %||% list()
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
-        if (!is.null(args$user_header)) {
+        if (!is.null(args$user_header) || !is.null(args$cpp_options[["USER_HEADER"]]) ||
+            !is.null(args$cpp_options[["user_header"]])) {
           private$using_user_header_ <- TRUE
         }
         private$precompile_include_paths_ <- args$include_paths
