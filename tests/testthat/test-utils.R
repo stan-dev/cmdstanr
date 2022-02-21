@@ -111,7 +111,7 @@ test_that("cmdstan_make_local() works", {
   expect_equal(cmdstan_make_local(), NULL)
   cpp_options = list(
    "CXX" = "clang++",
-   "CXXFLAGS+=  -march=native",
+   "CXXFLAGS+= -march=native",
    TEST1 = TRUE,
    "TEST2" = FALSE
   )
