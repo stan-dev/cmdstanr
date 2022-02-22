@@ -767,3 +767,29 @@ test_that("overwrite_file works with format()", {
     )
   )
 })
+
+test_that("dirname of stan_file is used as include path if no other paths supplied", {
+  data_code <- "
+  data {
+    int N;
+  }
+  "
+
+  model_code <- "
+  #include separate_file.stan
+  parameters {
+    vector[N] y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  tmpdir <- tempdir()
+  stan_data_file <- write_stan_file(data_code, basename = "separate_file.stan", dir = tmpdir)
+  stan_file <- write_stan_file(model_code, dir = tmpdir)
+
+  mod_tmp <- cmdstan_model(stan_file, compile = FALSE)
+  expect_true(mod_tmp$check_syntax())
+  expect_true(mod_tmp$format())
+  expect_s3_class(mod_tmp$compile(), "CmdStanModel")
+})

@@ -237,8 +237,11 @@ CmdStanModel <- R6::R6Class(
             !is.null(args$cpp_options[["user_header"]])) {
           private$using_user_header_ <- TRUE
         }
-        private$precompile_include_paths_ <- args$include_paths
-        private$include_paths_ <- args$include_paths
+        if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
+          private$precompile_include_paths_ <- dirname(stan_file)
+        } else {
+          private$precompile_include_paths_ <- args$include_paths
+        }
       }
       if (!is.null(exe_file)) {
         ext <- if (os_is_windows()) "exe" else ""
@@ -441,7 +444,7 @@ compile <- function(quiet = TRUE,
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
-  private$include_paths_ <- include_paths
+  private$include_paths_ <- include_paths  
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
@@ -1706,6 +1709,8 @@ include_paths_stanc3_args <- function(include_paths = NULL) {
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
     include_paths <- absolute_path(include_paths)
+    paths_w_space <- grep(" ", include_paths)
+    include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     include_paths <- paste0(include_paths, collapse = ",")
     if (cmdstan_version() >= "2.24") {
       include_paths_flag <- "--include-paths="
