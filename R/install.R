@@ -66,7 +66,7 @@
 #'
 #' cpp_options <- list(
 #'   "CXX" = "clang++",
-#'   "CXXFLAGS+= -march-native",
+#'   "CXXFLAGS+= -march=native",
 #'   PRECOMPILED_HEADERS = TRUE
 #' )
 #' # cmdstan_make_local(cpp_options = cpp_options)

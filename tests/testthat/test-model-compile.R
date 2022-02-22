@@ -602,6 +602,13 @@ test_that("cmdstan_model works with user_header", {
     user_header = tmpfile
   )
   expect_true(file.exists(mod$exe_file()))
+  file.remove(mod$exe_file())
+  mod_2 <- cmdstan_model(
+    stan_file = testing_stan_file("bernoulli_external"),
+    cpp_options=list(USER_HEADER=tmpfile),
+    stanc_options = list("allow-undefined")
+  )
+  expect_true(file.exists(mod_2$exe_file()))
 })
 
 test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
