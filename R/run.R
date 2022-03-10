@@ -769,7 +769,7 @@ CmdStanProcs <- R6::R6Class(
         warning("Fitting finished unexpectedly! Use the $output() method for more information.\n", immediate. = TRUE, call. = FALSE)
       } else {
         cat("Finished in ",
-            format(round(self$total_time(), 1), nsmall = 1),
+            base::format(round(self$total_time(), 1), nsmall = 1),
             "seconds.\n")
       }
     },
@@ -901,7 +901,7 @@ CmdStanMCMCProcs <- R6::R6Class(
         if (self$proc_state(id) == 7) {
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
         } else {
-          cat("Chain", id, "finished in", format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+          cat("Chain", id, "finished in", base::format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
         }
         return(invisible(NULL))
       } else {
@@ -915,10 +915,10 @@ CmdStanMCMCProcs <- R6::R6Class(
               cat("\nAll", num_chains, "chains finished successfully.\n")
             }
             cat("Mean chain execution time:",
-                format(round(mean(self$proc_total_time()), 1), nsmall = 1),
+                base::format(round(mean(self$proc_total_time()), 1), nsmall = 1),
                 "seconds.\n")
             cat("Total execution time:",
-                format(round(self$total_time(), 1), nsmall = 1),
+                base::format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n\n")
           } else if (num_failed == num_chains) {
             warning("All chains finished unexpectedly! Use the $output(chain_id) method for more information.\n", call. = FALSE)
@@ -930,7 +930,7 @@ CmdStanMCMCProcs <- R6::R6Class(
                     immediate. = TRUE,
                     call. = FALSE)
             cat("The remaining chains had a mean execution time of",
-                format(round(mean(self$total_time()), 1), nsmall = 1),
+                base::format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
             warning("The returned fit object will only read in results of successful chains. ",
               "Please use read_cmdstan_csv() to read the results of the failed chains separately.",
@@ -994,7 +994,7 @@ CmdStanGQProcs <- R6::R6Class(
         if (self$proc_state(id) == 7) {
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
         } else {
-          cat("Chain", id, "finished in", format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+          cat("Chain", id, "finished in", base::format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
         }
         return(invisible(NULL))
       } else {
@@ -1008,10 +1008,10 @@ CmdStanGQProcs <- R6::R6Class(
               cat("\nAll", num_chains, "chains finished successfully.\n")
             }
             cat("Mean chain execution time:",
-                format(round(mean(self$proc_total_time()), 1), nsmall = 1),
+                base::format(round(mean(self$proc_total_time()), 1), nsmall = 1),
                 "seconds.\n")
             cat("Total execution time:",
-                format(round(self$total_time(), 1), nsmall = 1),
+                base::format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n")
           } else if (num_failed == num_chains) {
             warning("All chains finished unexpectedly!\n", call. = FALSE)
@@ -1024,7 +1024,7 @@ CmdStanGQProcs <- R6::R6Class(
                     immediate. = TRUE,
                     call. = FALSE)
             cat("The remaining chains had a mean execution time of",
-                format(round(mean(self$total_time()), 1), nsmall = 1),
+                base::format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
             warning("The returned fit object will only read in results of successful chains. ",
                     "Please use read_cmdstan_csv() to read the results of the failed chains separately.",

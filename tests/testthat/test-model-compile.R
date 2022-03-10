@@ -4,7 +4,6 @@ set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 
-
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
@@ -279,7 +278,8 @@ test_that("compile() works with pedantic=TRUE", {
   ")
   expect_message(
     mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 })
 
@@ -375,19 +375,22 @@ test_that("check_syntax() works with pedantic=TRUE", {
 
   expect_message(
     mod_pedantic_warn$check_syntax(pedantic = TRUE),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 
   # should also still work if specified via stanc_options
   expect_message(
     mod_pedantic_warn$check_syntax(stanc_options = list("warn-pedantic" = TRUE)),
-    "The parameter x was declared but was not used in the density calculation."
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 
   expect_output(
     expect_message(
       mod_pedantic_warn$check_syntax(pedantic = TRUE),
-      "The parameter x was declared but was not used in the density calculation."
+      "The parameter x was declared but was not used",
+      fixed = TRUE
     ),
     regexp = NA
   )
@@ -599,4 +602,194 @@ test_that("cmdstan_model works with user_header", {
     user_header = tmpfile
   )
   expect_true(file.exists(mod$exe_file()))
+  file.remove(mod$exe_file())
+  mod_2 <- cmdstan_model(
+    stan_file = testing_stan_file("bernoulli_external"),
+    cpp_options=list(USER_HEADER=tmpfile),
+    stanc_options = list("allow-undefined")
+  )
+  expect_true(file.exists(mod_2$exe_file()))
+})
+
+test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
+  file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+  cpp_options <- list(
+    "CXXFLAGS_OPTIM += -Dsomething_not_used"
+  )
+  options("cmdstanr_verbose" = TRUE)
+  out <- utils::capture.output(
+    mod <- cmdstan_model(file, cpp_options = cpp_options, force_recompile = TRUE)
+  )
+  expect_output(print(out), "-Dsomething_not_used")
+})
+
+test_that("format() works", {
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+  target +=         normal_log(y, 0, 1);
+  }
+  "
+  stan_file_tmp <- write_stan_file(code)
+  mod_1 <- cmdstan_model(stan_file_tmp, compile = FALSE)
+
+  expect_output(
+    expect_message(
+      mod_1$format(),
+      "is deprecated",
+      fixed = TRUE
+    ),
+    "target += normal_log(y, 0, 1);",
+    fixed = TRUE
+  )
+
+  expect_output(
+    mod_1$format(canonicalize = TRUE),
+    "target += normal_lpdf(y | 0, 1);",
+    fixed = TRUE
+  )
+  expect_output(
+    mod_1$format(canonicalize = list("deprecations")),
+    "target += normal_lpdf(y | 0, 1);",
+    fixed = TRUE
+  )
+  expect_output(
+    expect_message(
+      mod_1$format(canonicalize = list("includes")),
+      "is deprecated",
+      fixed = TRUE
+    ),
+    "target += normal_log(y, 0, 1);",
+    fixed = TRUE
+  )
+
+  stan_file <- testing_stan_file("bernoulli_external")
+  mod_2 <- cmdstan_model(stan_file, compile = FALSE, stanc_options = list("allow-undefined"))
+  expect_output(
+    mod_2$format(),
+    "make_odds(theta);",
+    fixed = TRUE
+  )
+  mod_3 <- cmdstan_model(
+    stan_file,
+    compile = FALSE,
+    stanc_options = list("allow-undefined", "warn-pedantic")
+  )
+  expect_output(
+    expect_message(
+      mod_2$format(),
+      regexp = NA
+    ),
+    "make_odds(theta);",
+    fixed = TRUE
+  )
+
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  stan_file_tmp <- write_stan_file(code)
+  mod_removed_stan_file <- cmdstan_model(stan_file_tmp)
+  file.remove(stan_file_tmp)
+  expect_error(
+    mod_removed_stan_file$format(),
+    "The Stan file used to create the `CmdStanModel` object does not exist.",
+    fixed = TRUE
+  )
+  mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
+  expect_error(
+    mod_exe$format(),
+    "'$format()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    fixed = TRUE
+  )
+})
+
+test_that("format() works with include_paths", {
+  stan_program_w_include <- testing_stan_file("bernoulli_include")
+
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=FALSE,
+                                   include_paths = test_path("resources", "stan"))
+  expect_output(
+    mod_w_include$format(),
+    "#include ",
+    fixed = TRUE
+  )
+  expect_output(
+    mod_w_include$format(canonicalize = list('deprecations', 'parentheses', 'braces')),
+    "#include ",
+    fixed = TRUE
+  )
+    expect_output(
+    mod_w_include$format(canonicalize = list('includes')),
+    "real divide_real_by_two",
+    fixed = TRUE
+  )
+})
+
+test_that("overwrite_file works with format()", {
+  code <- "
+  parameters {
+    real y;
+  }
+  model {
+  target +=         normal_lpdf(y| 0, 5);
+  }
+  "
+  stan_file_tmp <- write_stan_file(code)
+  mod_1 <- cmdstan_model(stan_file_tmp, compile = FALSE)
+  expect_false(
+    any(
+      grepl(paste0(basename(mod_1$stan_file()), ".bak"),
+            list.files(dirname(mod_1$stan_file()))
+      )
+    )
+  )
+  mod_1$format(overwrite_file = TRUE, backup = FALSE)
+  expect_false(
+    any(
+      grepl(paste0(basename(mod_1$stan_file()), ".bak"),
+            list.files(dirname(mod_1$stan_file()))
+      )
+    )
+  )
+  mod_1$format(overwrite_file = TRUE, backup = TRUE)
+  expect_true(
+    any(
+      grepl(paste0(basename(mod_1$stan_file()), ".bak"),
+            list.files(dirname(mod_1$stan_file()))
+      )
+    )
+  )
+})
+
+test_that("dirname of stan_file is used as include path if no other paths supplied", {
+  data_code <- "
+  data {
+    int N;
+  }
+  "
+
+  model_code <- "
+  #include separate_file.stan
+  parameters {
+    vector[N] y;
+  }
+  model {
+    y ~ std_normal();
+  }
+  "
+  tmpdir <- tempdir()
+  stan_data_file <- write_stan_file(data_code, basename = "separate_file.stan", dir = tmpdir)
+  stan_file <- write_stan_file(model_code, dir = tmpdir)
+
+  mod_tmp <- cmdstan_model(stan_file, compile = FALSE)
+  expect_true(mod_tmp$check_syntax())
+  expect_true(mod_tmp$format())
+  expect_s3_class(mod_tmp$compile(), "CmdStanModel")
 })

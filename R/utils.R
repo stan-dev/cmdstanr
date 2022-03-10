@@ -191,7 +191,7 @@ generate_file_names <-
            random = TRUE) {
     new_names <- basename
     if (timestamp) {
-      stamp <- format(Sys.time(), "%Y%m%d%H%M")
+      stamp <- base::format(Sys.time(), "%Y%m%d%H%M")
       new_names <- paste0(new_names, "-", stamp)
     }
     if (!is.null(ids)) {
@@ -199,7 +199,7 @@ generate_file_names <-
     }
     if (random) {
       rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
-      rand <- format(as.hexmode(rand_num_pid), width = 6)
+      rand <- base::format(as.hexmode(rand_num_pid), width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
 
@@ -249,7 +249,7 @@ check_divergences <- function(post_warmup_sampler_diagnostics) {
       percentage_divergences <- 100 * num_divergences / num_draws
       message(
         "Warning: ", num_divergences, " of ", num_draws,
-        " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
+        " (", (base::format(round(percentage_divergences, 0), nsmall = 1)), "%)",
         " transitions ended with a divergence.\n",
         "This may indicate insufficient exploration of the posterior distribution.\n",
         "Possible remedies include: \n",
@@ -272,7 +272,7 @@ check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
     if (!is.na(num_max_treedepths) && num_max_treedepths > 0) {
       percentage_max_treedepths <- 100 * num_max_treedepths / num_draws
       message(
-        "Warning: ", num_max_treedepths, " of ", num_draws, " (", (format(round(percentage_max_treedepths, 0), nsmall = 1)), "%)",
+        "Warning: ", num_max_treedepths, " of ", num_draws, " (", (base::format(round(percentage_max_treedepths, 0), nsmall = 1)), "%)",
         " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
         " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
         "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",

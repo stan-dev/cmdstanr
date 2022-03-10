@@ -179,6 +179,7 @@ read_cmdstan_csv <- function(files,
   if (length(uniq_seed) == 1) {
     metadata$seed <- uniq_seed
   }
+  metadata$time <- time
   if (metadata$method == "diagnose") {
     gradients <- metadata$gradients
     metadata$gradients <- NULL
@@ -226,7 +227,7 @@ read_cmdstan_csv <- function(files,
   num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
   for (output_file in files) {
     if (os_is_windows()) {
-      grep_path <- repair_path(Sys.which("grep.exe"))
+      grep_path <- paste0('"', repair_path(Sys.which("grep.exe")), '"')
       fread_cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
     } else {
       fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
@@ -557,7 +558,7 @@ read_csv_metadata <- function(csv_file) {
   sampling_time <- 0
   total_time <- 0
   if (os_is_windows()) {
-    grep_path <- repair_path(Sys.which("grep.exe"))
+    grep_path <- paste0('"', repair_path(Sys.which("grep.exe")), '"')
     fread_cmd <- paste0(grep_path, " '^[#a-zA-Z]' --color=never '", csv_file, "'")
   } else {
     fread_cmd <- paste0("grep '^[#a-zA-Z]' --color=never '", csv_file, "'")

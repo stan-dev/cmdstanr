@@ -1,6 +1,6 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.4.0.9000
+Version: 0.4.0.9001
 Date: 2021-04-15
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
@@ -37,7 +37,7 @@ Imports:
     R6 (>= 2.4.0)
 Suggests: 
     bayesplot,
-    knitr,
+    knitr (>= 1.37),
     loo (>= 2.0.0),
     rlang (>= 0.4.7),
     rmarkdown,

@@ -38,6 +38,7 @@ later in examples.
 
 ```{r library, message=FALSE}
 library(cmdstanr)
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 library(posterior)
 library(bayesplot)
 color_scheme_set("brightblue")

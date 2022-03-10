@@ -22,18 +22,24 @@ compilation can be done later via the \code{\link[=model-method-compile]{$compil
 method.}
 
 \item{...}{Optionally, additional arguments to pass to the
-\code{\link[=model-method-compile]{$compile()}} method if \code{compile=TRUE}.}
+\code{\link[=model-method-compile]{$compile()}} method if \code{compile=TRUE}. These
+options include specifying the directory for saving the executable, turning
+on pedantic mode, specifying include paths, configuring C++ options, and
+more. See \code{\link[=model-method-compile]{$compile()}} for details.}
 }
 \value{
 A \code{\link{CmdStanModel}} object.
 }
 \description{
 \if{html}{\figure{logo.png}{options: width="25px"
-alt="https://mc-stan.org/about/logo/"}} Create a new \code{\link{CmdStanModel}} object
-from a file containing a Stan program or from an existing Stan executable.
-The \code{\link{CmdStanModel}} object stores the path to a Stan program and compiled
-executable (once created), and provides methods for fitting the model using
-Stan's algorithms.
+  alt="https://mc-stan.org/about/logo/"}} Create a new \code{\link{CmdStanModel}}
+object from a file containing a Stan program or from an existing Stan
+executable. The \code{\link{CmdStanModel}} object stores the path to a Stan program
+and compiled executable (once created), and provides methods for fitting
+the model using Stan's algorithms.
+
+See the \code{compile} and \code{...} arguments for control over whether and how
+compilation happens.
 }
 \examples{
 \dontrun{

@@ -31,8 +31,8 @@ same location as the Stan program.}
 \code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
 Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/reference-manual/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
 the Stan Reference Manual. \strong{Note:} to do a pedantic check for a model
-that is already compiled use the
-\code{\link[=model-method-check_syntax]{$check_syntax()}} method instead.}
+without compiling it or for a model that is already compiled the
+\code{\link[=model-method-check_syntax]{$check_syntax()}} method can be used instead.}
 
 \item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
@@ -131,6 +131,7 @@ The Stan and CmdStan documentation:
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-diagnose}},
+\code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-sample_mpi}},

@@ -71,6 +71,7 @@ diagnostics are checked after sampling. Replaces `validate_csv` argument. (#205)
 * New function `as_mcmc.list()` for converting CmdStanMCMC objects to mcmc.list
 objects from the coda package. (#584, @MatsuuraKentaro)
 
+* New method `$format()` for auto-formatting and canonicalizing the Stan models.
 
 # cmdstanr 0.4.0
 
