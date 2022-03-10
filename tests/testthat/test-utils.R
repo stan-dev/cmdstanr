@@ -49,7 +49,7 @@ test_that("check_divergences() works", {
 test_that("check_max_treedepth() works", {
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  output <- "16 of 100 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
+  output <- "16 of 100 \\(16.0%\\) transitions hit the maximum treedepth limit of 5."
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
@@ -61,7 +61,7 @@ test_that("check_max_treedepth() works", {
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
                  test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  output <- "32 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
+  output <- "32 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5."
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
@@ -72,7 +72,7 @@ test_that("check_max_treedepth() works", {
 
   # force different number of max treedepths per chain just to test
   csv_output$post_warmup_sampler_diagnostics[1, 1:2, "treedepth__"] <- c(1, 15)
-  output <- "31 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
+  output <- "31 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5."
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
@@ -83,7 +83,7 @@ test_that("check_max_treedepth() works", {
 
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  output <- "1 of 100 \\(1.0%\\) transitions hit the maximum treedepth limit of 5 or 2\\^5-1 leapfrog steps."
+  output <- "1 of 100 \\(1.0%\\) transitions hit the maximum treedepth limit of 5."
   expect_message(
     check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
@@ -102,7 +102,7 @@ test_that("check_ebfmi and computing ebfmi works", {
     energy_df$energy__[i+1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
   }
   energy_df <- posterior::as_draws(energy_df)
-  expect_message(check_ebfmi(energy_df), "fraction of missing information \\(E-BFMI\\) less than")
+  expect_message(check_ebfmi(energy_df), "had an E-BFMI less than")
   energy_vec <- energy_df$energy__
   check_val <- (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec)
   expect_equal(as.numeric(ebfmi(energy_df)), check_val)

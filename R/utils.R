@@ -251,11 +251,7 @@ check_divergences <- function(post_warmup_sampler_diagnostics) {
         "Warning: ", num_divergences, " of ", num_draws,
         " (", (base::format(round(percentage_divergences, 0), nsmall = 1)), "%)",
         " transitions ended with a divergence.\n",
-        "This may indicate insufficient exploration of the posterior distribution.\n",
-        "Possible remedies include: \n",
-        "  * Increasing adapt_delta closer to 1 (default is 0.8) \n",
-        "  * Reparameterizing the model (e.g. using a non-centered parameterization)\n",
-        "  * Using informative or weakly informative prior distributions \n"
+        "See https://mc-stan.org/misc/warnings for details.\n"
       )
     }
   }
@@ -273,11 +269,8 @@ check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
       percentage_max_treedepths <- 100 * num_max_treedepths / num_draws
       message(
         "Warning: ", num_max_treedepths, " of ", num_draws, " (", (base::format(round(percentage_max_treedepths, 0), nsmall = 1)), "%)",
-        " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
-        " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
-        "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
-        "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
-        "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n"
+        " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,".\n",
+        "See https://mc-stan.org/misc/warnings for details.\n"
       )
     }
   }
@@ -310,9 +303,8 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
   if (any(efbmi_per_chain < threshold)) {
     message(
       "Warning: ", sum(efbmi_per_chain < threshold), " of ", length(efbmi_per_chain),
-      " chains had energy-based Bayesian fraction of missing information (E-BFMI)",
-      " less than ", threshold, ".",
-      "\nThis may indicate poor exploration of the posterior.\n"
+      " chains had an E-BFMI less than ", threshold, ".\n",
+      "See https://mc-stan.org/misc/warnings for details.\n"
     )
   }
   invisible(unname(efbmi_per_chain))
