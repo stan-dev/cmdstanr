@@ -36,7 +36,6 @@ CmdStanArgs <- R6::R6Class(
                           refresh = NULL,
                           output_dir = NULL,
                           output_basename = NULL,
-                          validate_csv = TRUE,
                           sig_figs = NULL,
                           opencl_ids = NULL,
                           model_variables = NULL) {
@@ -52,7 +51,6 @@ CmdStanArgs <- R6::R6Class(
       self$method_args <- method_args
       self$method <- self$method_args$method
       self$save_latent_dynamics <- save_latent_dynamics
-      self$validate_csv <- validate_csv
       self$using_tempdir <- is.null(output_dir)
       if (getRversion() < "3.5.0") {
         self$output_dir <- output_dir %||% tempdir()
@@ -196,7 +194,8 @@ SampleArgs <- R6::R6Class(
                           init_buffer = NULL,
                           term_buffer = NULL,
                           window = NULL,
-                          fixed_param = FALSE) {
+                          fixed_param = FALSE,
+                          diagnostics = NULL) {
 
       self$iter_warmup <- iter_warmup
       self$iter_sampling <- iter_sampling
@@ -209,6 +208,11 @@ SampleArgs <- R6::R6Class(
       self$metric <- metric
       self$inv_metric <- inv_metric
       self$fixed_param <- fixed_param
+      self$diagnostics <- diagnostics
+      if (identical(self$diagnostics, "")) {
+        self$diagnostics <- NULL
+      }
+
       if (!is.null(inv_metric)) {
         if (!is.null(metric_file)) {
           stop("Only one of inv_metric and metric_file can be specified.",
@@ -635,6 +639,11 @@ validate_sample_args <- function(self, num_procs) {
 
   validate_metric(self$metric)
   validate_metric_file(self$metric_file, num_procs)
+
+  checkmate::assert_character(self$diagnostics, null.ok = TRUE, any.missing = FALSE)
+  if (!is.null(self$diagnostics)) {
+    checkmate::assert_subset(self$diagnostics, empty.ok = FALSE, choices = available_hmc_diagnostics())
+  }
 
   invisible(TRUE)
 }

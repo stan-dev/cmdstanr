@@ -37,7 +37,7 @@ test_that("draws() stops for unkown variables", {
 
 test_that("draws() works when gradually adding variables", {
   fit <- testing_fit("logistic", method = "sample", refresh = 0,
-                     validate_csv = TRUE, save_warmup = TRUE)
+                     save_warmup = TRUE)
 
   draws_lp__ <- fit$draws(variables = c("lp__"), inc_warmup = TRUE)
   sampler_diagnostics <- fit$sampler_diagnostics(inc_warmup = TRUE)
@@ -46,7 +46,7 @@ test_that("draws() works when gradually adding variables", {
   expect_equal(posterior::variables(draws_lp__), c("lp__"))
   expect_type(sampler_diagnostics, "double")
   expect_s3_class(sampler_diagnostics, "draws_array")
-  expect_equal(posterior::variables(sampler_diagnostics), c(c("treedepth__", "divergent__", "accept_stat__", "stepsize__", "n_leapfrog__", "energy__")))
+  expect_equal(posterior::variables(sampler_diagnostics), c(c("treedepth__", "divergent__", "energy__", "accept_stat__", "stepsize__", "n_leapfrog__")))
   draws_alpha <- fit$draws(variables = c("alpha"), inc_warmup = TRUE)
   expect_type(draws_alpha, "double")
   expect_s3_class(draws_alpha, "draws_array")
@@ -321,6 +321,43 @@ test_that("draws() errors if invalid format", {
     fit_mcmc$draws(format = "bad_format"),
     "The supplied draws format is not valid"
   )
+})
+
+test_that("diagnostic_summary() works", {
+  # will have divergences and treedepth problems
+  fit <- suppressMessages(testing_fit("schools", max_treedepth = 3, seed = 123))
+
+  expect_message(
+    diagnostics <- fit$diagnostic_summary(),
+    "transitions ended with a divergence"
+  )
+  expect_equal(
+    diagnostics$num_divergent,
+    suppressMessages(check_divergences(fit$sampler_diagnostics()))
+  )
+  expect_message(
+    diagnostics <- fit$diagnostic_summary(),
+    "transitions hit the maximum treedepth limit of 3"
+  )
+  expect_equal(
+    diagnostics$num_max_treedepth,
+    suppressMessages(check_max_treedepth(fit$sampler_diagnostics(), fit$metadata()))
+  )
+  expect_equal(
+    diagnostics$ebfmi,
+    suppressMessages(check_ebfmi(fit$sampler_diagnostics()))
+  )
+
+  # ebfmi not defined if iter < 3
+  fit <- suppressWarnings(suppressMessages(testing_fit("schools", iter_sampling = 2)))
+  expect_warning(
+    diagnostics <- fit$diagnostic_summary(),
+    "E-BFMI not computed"
+  )
+  expect_equal(diagnostics$ebfmi, NA)
+
+  expect_equal(fit$diagnostic_summary(""), list())
+  expect_equal(fit$diagnostic_summary(NULL), list())
 })
 
 test_that("metadata()$time has chains rowss", {
