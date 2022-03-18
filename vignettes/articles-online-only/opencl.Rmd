@@ -56,6 +56,7 @@ cpp_options = list(
 
 cmdstanr::cmdstan_make_local(cpp_options = cpp_options)
 cmdstanr::rebuild_cmdstan()
+```
 
 ## Compiling a model with OpenCL
 
