@@ -1,11 +1,10 @@
 #' Create a new CmdStanModel object
 #'
-#' @description \if{html}{\figure{logo.png}{options: width="25px"
-#'   alt="https://mc-stan.org/about/logo/"}} Create a new [`CmdStanModel`]
-#'   object from a file containing a Stan program or from an existing Stan
-#'   executable. The [`CmdStanModel`] object stores the path to a Stan program
-#'   and compiled executable (once created), and provides methods for fitting
-#'   the model using Stan's algorithms.
+#' @description \if{html}{\figure{logo.png}{options: width="25"}}
+#'   Create a new [`CmdStanModel`] object from a file containing a Stan program
+#'   or from an existing Stan executable. The [`CmdStanModel`] object stores the
+#'   path to a Stan program and compiled executable (once created), and provides
+#'   methods for fitting the model using Stan's algorithms.
 #'
 #'   See the `compile` and `...` arguments for control over whether and how
 #'   compilation happens.
@@ -444,7 +443,7 @@ compile <- function(quiet = TRUE,
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
-  private$include_paths_ <- include_paths  
+  private$include_paths_ <- include_paths
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
@@ -772,7 +771,7 @@ check_syntax <- function(pedantic = FALSE,
 }
 CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 
-#' Run stanc's auto-formatter on the model code. 
+#' Run stanc's auto-formatter on the model code.
 #'
 #' @name model-method-format
 #' @aliases format
@@ -815,7 +814,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   real                     lambda;
 #' }
 #' model {
-#'   target += 
+#'   target +=
 #'  poisson_log(y | lambda);
 #' }
 #' ")
@@ -851,7 +850,7 @@ format <- function(overwrite_file = FALSE,
     max_line_length,
     lower = 1, len = 1, null.ok = TRUE
   )
-  stanc_options <- private$precompile_stanc_options_  
+  stanc_options <- private$precompile_stanc_options_
   stancflags_val <- include_paths_stanc3_args(private$precompile_include_paths_)
   stanc_options["auto-format"] <- TRUE
   if (!is.null(max_line_length)) {
@@ -915,7 +914,7 @@ format <- function(overwrite_file = FALSE,
     out_file <- self$stan_file()
   }
   cat(run_log$stdout, file = out_file, sep = "\n")
-  
+
   invisible(TRUE)
 }
 CmdStanModel$set("public", name = "format", value = format)

@@ -29,12 +29,12 @@ Behind the scenes, the engine relies on RStan to compile the model code into an
 in-memory `stanmodel`, which is assigned to a variable with the name given by
 the `output.var` chunk option. For example:
 
-````{verbatim}
-```{stan, output.var="model"}
+````markdown
+`r ''````{stan, output.var="model"}
 // Stan model code
 ```
 
-```{r}
+`r ''````{r}
 rstan::sampling(model)
 ```
 ````
@@ -53,12 +53,12 @@ chunks are processed with CmdStanR, not RStan. Of course, this also means that
 the variable specified by `output.var` will no longer be a `stanmodel` object,
 but instead a `CmdStanModel` object, so the code above would look like this:
 
-````{verbatim}
-```{stan, output.var="model"}
+````markdown
+`r ''````{stan, output.var="model"}
 // Stan model code
 ```
 
-```{r}
+`r ''````{r}
 model$sample()
 ```
 ````
@@ -66,9 +66,10 @@ model$sample()
 ## Example
 
 ```{stan ex1, output.var="ex1"}
-// This stan chunk results in a CmdStanModel object called "ex1"
+// This stan chunk results in a CmdStanModel object called "ex1" (by setting output.var="ex1")
+
 parameters {
-  real y[2];
+  array[2] real y;
 }
 model {
   y[1] ~ normal(0, 1);
@@ -105,30 +106,33 @@ same document or project, the option to use both exists. When registering
 CmdStanR's knitr engine, set `override = FALSE` to register the engine as a
 `cmdstan` engine:
 
-``` r
+```r
 register_knitr_engine(override = FALSE)
 ```
 
 This will cause `stan` chunks to be processed by knitr's built-in, RStan-based
 engine and only use CmdStanR's knitr engine for `cmdstan` chunks:
 
-````{verbatim}
-```{stan, output.var="model_obj1"}
-// Results in a stanmodel object
+````markdown
+`r ''````{stan, output.var="model_obj1"}
+// Results in a stanmodel object from RStan
 ```
 
-```{r}
+`r ''````{r}
 rstan::sampling(model_obj1)
 ```
+````
 
-```{cmdstan, output.var="model_obj2"}
-// Results in a CmdStanModel object
+````markdown
+`r ''````{cmdstan, output.var="model_obj2"}
+// Results in a CmdStanModel object from CmdStanR
 ```
 
-```{r}
+`r ''````{r}
 model_obj2$sample()
 ```
 ````
+
 
 ## Running interactively
 

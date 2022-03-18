@@ -101,6 +101,7 @@ reference:
       - CmdStanMLE
       - CmdStanVB
       - CmdStanGQ
+      - CmdStanDiagnose
       - starts_with("fit-method")
   - title: "Other tools for working with CmdStan"
     contents:
