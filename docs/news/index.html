@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -87,7 +87,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -140,19 +140,19 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -173,21 +173,58 @@
       <small>Source: <a href='https://github.com/stan-dev/cmdstanr/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="cmdstanr-040" class="section level1">
-<h1 class="page-header" data-toc-text="0.4.0">
-<a href="#cmdstanr-040" class="anchor"></a>cmdstanr 0.4.0</h1>
+    <div id="cmdstanr-050" class="section level1">
+<h1 class="page-header" data-toc-text="0.5.0">
+<a href="#cmdstanr-050" class="anchor"></a>cmdstanr 0.5.0</h1>
 <div id="bug-fixes" class="section level3">
 <h3 class="hasAnchor">
 <a href="#bug-fixes" class="anchor"></a>Bug fixes</h3>
+<ul>
+<li><p>Fixed bug that caused stdour/stderr not being read at the end of optimization. (<a href='https://github.com/stan-dev/cmdstanr/issues/522'>#522</a>)</p></li>
+<li><p>Fixed issue with handling <code>NA</code> as the reported external process status. (<a href='https://github.com/stan-dev/cmdstanr/issues/544'>#544</a>, <a href='https://github.com/myshkin'>@myshkin</a>)</p></li>
+<li><p>Fixed issue with handling models with no parameters and CmdStan 2.27+.</p></li>
+</ul>
+</div>
+<div id="new-features" class="section level3">
+<h3 class="hasAnchor">
+<a href="#new-features" class="anchor"></a>New features</h3>
+<ul>
+<li><p>Default directory changed to <code>.cmdstan</code> instead of <code>.cmdstanr</code> so that CmdStanPy and CmdStanR can use the same CmdStan installations. Using <code>.cmdstanr</code> will continue to be supported until version 1.0 but <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> will now default to <code>.cmdstan</code> and CmdStanR will first look for <code>.cmdstan</code> before falling back on <code>.cmdstanr</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/454'>#454</a>)</p></li>
+<li><p>New method <code><a href="../reference/model-method-diagnose.html">diagnose()</a></code> for CmdstanModel objects exposes CmdStan’s <code>diagnose</code> method for comparing Stan’s gradient computations to gradients computed via finite differences. (<a href='https://github.com/stan-dev/cmdstanr/issues/485'>#485</a>)</p></li>
+<li><p>New method <code>$variables()</code> for CmdstanModel objects that returns a list of variables in the Stan model, their types and number of dimensions. Does not require the model to be compiled. (<a href='https://github.com/stan-dev/cmdstanr/issues/519'>#519</a>)</p></li>
+<li><p>New method <code>$format()</code> for auto-formatting and canonicalizing the Stan models. (<a href='https://github.com/stan-dev/cmdstanr/issues/625'>#625</a>)</p></li>
+<li><p>Added the option to create <code>CmdStanModel</code> from the executable only with the <code>exe_file</code> argument. (<a href='https://github.com/stan-dev/cmdstanr/issues/564'>#564</a>)</p></li>
+<li><p>Added a convenience argument <code>user_header</code> to <code>$compile()</code> and <code><a href="../reference/cmdstan_model.html">cmdstan_model()</a></code> that simplifies the use of an external .hpp file to compile with the model.</p></li>
+<li><p>Added the <code>cmdstanr_force_recompile</code> global option that is used for forcing recompilation of Stan models. (<a href='https://github.com/stan-dev/cmdstanr/issues/580'>#580</a>)</p></li>
+<li><p>New method <code>$code()</code> for all fitted model objects that returns the Stan code associated with the fitted model. (<a href='https://github.com/stan-dev/cmdstanr/issues/575'>#575</a>)</p></li>
+<li><p>New method <code>$diagnostic_summary()</code> for CmdStanMCMC objects that summarizes the sampler diagnostics (divergences, treedepth, ebfmi) and can regenerate the related warning messages. (<a href='https://github.com/stan-dev/cmdstanr/issues/205'>#205</a>)</p></li>
+<li><p>New <code>diagnostics</code> argument for the <code>$sample()</code> method to specify which diagnostics are checked after sampling. Replaces <code>validate_csv</code> argument. (<a href='https://github.com/stan-dev/cmdstanr/issues/205'>#205</a>)</p></li>
+<li><p>Added E-BFMI checks that run automatically post sampling. (<a href='https://github.com/stan-dev/cmdstanr/issues/500'>#500</a>, <a href='https://github.com/jsocolar'>@jsocolar</a>)</p></li>
+<li><p>New methods for <code><a href="https://mc-stan.org/posterior/reference/draws.html">posterior::as_draws()</a></code> for CmdStanR fitted model objects. These are just wrappers around the <code>$draws()</code> method provided for convenience. (<a href='https://github.com/stan-dev/cmdstanr/issues/532'>#532</a>)</p></li>
+<li><p><code><a href="../reference/write_stan_file.html">write_stan_file()</a></code> now choose file names deterministically based on the code so that models do not get unnecessarily recompiled when calling the function multiple times with the same code. (<a href='https://github.com/stan-dev/cmdstanr/issues/495'>#495</a>, <a href='https://github.com/martinmodrak'>@martinmodrak</a>)</p></li>
+<li><p>The <code>dir</code> argument for <code><a href="../reference/write_stan_file.html">write_stan_file()</a></code> can now be set with a global option. (<a href='https://github.com/stan-dev/cmdstanr/issues/537'>#537</a>)</p></li>
+<li><p><code><a href="../reference/write_stan_json.html">write_stan_json()</a></code> now handles data of class <code>"table"</code>. Tables are converted to vector, matrix, or array depending on the dimensions of the table. (<a href='https://github.com/stan-dev/cmdstanr/issues/528'>#528</a>)</p></li>
+<li><p>Improved processing of named lists supplied to the <code>data</code> argument to JSON data files: checking whether the list includes all required elements/Stan variables; improved differentiating arrays/vectors of length 1 and scalars when generating JSON data files; generating floating point numbers with decimal points to fix issue with parsing large numbers. (<a href='https://github.com/stan-dev/cmdstanr/issues/538'>#538</a>)</p></li>
+<li><p><code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> now automatically installs the Linux ARM CmdStan when Linux distributions running on ARM CPUs are detected. (<a href='https://github.com/stan-dev/cmdstanr/issues/531'>#531</a>)</p></li>
+<li><p>New function <code><a href="../reference/as_mcmc.list.html">as_mcmc.list()</a></code> for converting CmdStanMCMC objects to mcmc.list objects from the coda package. (<a href='https://github.com/stan-dev/cmdstanr/issues/584'>#584</a>, <a href='https://github.com/MatsuuraKentaro'>@MatsuuraKentaro</a>)</p></li>
+</ul>
+</div>
+</div>
+    <div id="cmdstanr-040" class="section level1">
+<h1 class="page-header" data-toc-text="0.4.0">
+<a href="#cmdstanr-040" class="anchor"></a>cmdstanr 0.4.0</h1>
+<div id="bug-fixes-1" class="section level3">
+<h3 class="hasAnchor">
+<a href="#bug-fixes-1" class="anchor"></a>Bug fixes</h3>
 <ul>
 <li><p>Fixed issue with retrieving draws with models with spaces in their names. (<a href='https://github.com/stan-dev/cmdstanr/issues/453'>#453</a>)</p></li>
 <li><p>Fixed bug with spaces in path to the temporary folder on Windows. (<a href='https://github.com/stan-dev/cmdstanr/issues/460'>#460</a>)</p></li>
 <li><p>Fixed issue with not reporting model executable name clashing with folder name. (<a href='https://github.com/stan-dev/cmdstanr/issues/461'>#461</a>)</p></li>
 </ul>
 </div>
-<div id="new-features" class="section level3">
+<div id="new-features-1" class="section level3">
 <h3 class="hasAnchor">
-<a href="#new-features" class="anchor"></a>New features</h3>
+<a href="#new-features-1" class="anchor"></a>New features</h3>
 <ul>
 <li><p>New function <code><a href="../reference/read_cmdstan_csv.html">as_cmdstan_fit()</a></code> that creates CmdStanMCMC/MLE/VB objects directly from CmdStan CSV files. (<a href='https://github.com/stan-dev/cmdstanr/issues/412'>#412</a>)</p></li>
 <li><p><code><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv()</a></code> now also returns chain run times for MCMC sampling CSV files. (<a href='https://github.com/stan-dev/cmdstanr/issues/414'>#414</a>)</p></li>
@@ -207,17 +244,17 @@
     <div id="cmdstanr-030" class="section level1">
 <h1 class="page-header" data-toc-text="0.3.0">
 <a href="#cmdstanr-030" class="anchor"></a>cmdstanr 0.3.0</h1>
-<div id="bug-fixes-1" class="section level3">
+<div id="bug-fixes-2" class="section level3">
 <h3 class="hasAnchor">
-<a href="#bug-fixes-1" class="anchor"></a>Bug fixes</h3>
+<a href="#bug-fixes-2" class="anchor"></a>Bug fixes</h3>
 <ul>
 <li><p>Fixed reading inverse mass matrix with values written in scientific format in the CSV. (<a href='https://github.com/stan-dev/cmdstanr/issues/394'>#394</a>)</p></li>
 <li><p>Fixed error caused by an empty data list. Previously if a model didn’t require data then <code>data</code> had to either be NULL or be a non-empty list, but now <code><a href="https://rdrr.io/r/base/list.html">list()</a></code> is allowed. (<a href='https://github.com/stan-dev/cmdstanr/issues/403'>#403</a>)</p></li>
 </ul>
 </div>
-<div id="new-features-1" class="section level3">
+<div id="new-features-2" class="section level3">
 <h3 class="hasAnchor">
-<a href="#new-features-1" class="anchor"></a>New features</h3>
+<a href="#new-features-2" class="anchor"></a>New features</h3>
 <ul>
 <li><p>Added <code>$sample_mpi()</code> for MCMC sampling with MPI. (<a href='https://github.com/stan-dev/cmdstanr/issues/350'>#350</a>)</p></li>
 <li><p>Added informative messages on compile errors caused by precompiled headers (PCH). (<a href='https://github.com/stan-dev/cmdstanr/issues/384'>#384</a>)</p></li>
@@ -232,17 +269,17 @@
     <div id="cmdstanr-022" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.2">
 <a href="#cmdstanr-022" class="anchor"></a>cmdstanr 0.2.2</h1>
-<div id="bug-fixes-2" class="section level3">
+<div id="bug-fixes-3" class="section level3">
 <h3 class="hasAnchor">
-<a href="#bug-fixes-2" class="anchor"></a>Bug fixes</h3>
+<a href="#bug-fixes-3" class="anchor"></a>Bug fixes</h3>
 <ul>
 <li><p>Fixed bug with reading Stan CSV when grep used coloring by default (<a href='https://github.com/stan-dev/cmdstanr/issues/364'>#364</a>,<a href='https://github.com/stan-dev/cmdstanr/issues/371'>#371</a>)</p></li>
 <li><p>Depend on posterior v0.1.3 to avoid a potential error in <code>$summary()</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/383'>#383</a>)</p></li>
 </ul>
 </div>
-<div id="new-features-2" class="section level3">
+<div id="new-features-3" class="section level3">
 <h3 class="hasAnchor">
-<a href="#new-features-2" class="anchor"></a>New features</h3>
+<a href="#new-features-3" class="anchor"></a>New features</h3>
 <ul>
 <li><p>Added support for native execution on the macOS with the M1 ARM-based CPU. (<a href='https://github.com/stan-dev/cmdstanr/issues/375'>#375</a>)</p></li>
 <li><p>Added threading support via <code>threads</code> argument for <code>$optimize()</code> and <code>$variational()</code> (was already available via <code>threads_per_chain</code> for <code>$sample()</code>). (<a href='https://github.com/stan-dev/cmdstanr/issues/369'>#369</a>)</p></li>
@@ -252,17 +289,17 @@
     <div id="cmdstanr-021" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.1">
 <a href="#cmdstanr-021" class="anchor"></a>cmdstanr 0.2.1</h1>
-<div id="bug-fixes-3" class="section level3">
+<div id="bug-fixes-4" class="section level3">
 <h3 class="hasAnchor">
-<a href="#bug-fixes-3" class="anchor"></a>Bug fixes</h3>
+<a href="#bug-fixes-4" class="anchor"></a>Bug fixes</h3>
 <ul>
 <li><p>Fixed bug with processing stanc_options in <code><a href="../reference/model-method-check_syntax.html">check_syntax()</a></code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/345'>#345</a>)</p></li>
 <li><p>Fixed bug on access to one variable via <code><a href="../reference/fit-method-draws.html">draws()</a></code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/348'>#348</a>)</p></li>
 </ul>
 </div>
-<div id="new-features-3" class="section level3">
+<div id="new-features-4" class="section level3">
 <h3 class="hasAnchor">
-<a href="#new-features-3" class="anchor"></a>New features</h3>
+<a href="#new-features-4" class="anchor"></a>New features</h3>
 <ul>
 <li>
 <code><a href="../reference/model-method-compile.html">compile()</a></code> and <code><a href="../reference/model-method-check_syntax.html">check_syntax()</a></code> methods gain argument <code>pedantic</code> for turning on pedantic mode, which warns about issues with the model beyond syntax errors. (<a href='https://github.com/stan-dev/cmdstanr/issues/361'>#361</a>)</li>
@@ -272,9 +309,9 @@
     <div id="cmdstanr-020" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.0">
 <a href="#cmdstanr-020" class="anchor"></a>cmdstanr 0.2.0</h1>
-<div id="bug-fixes-4" class="section level3">
+<div id="bug-fixes-5" class="section level3">
 <h3 class="hasAnchor">
-<a href="#bug-fixes-4" class="anchor"></a>Bug fixes</h3>
+<a href="#bug-fixes-5" class="anchor"></a>Bug fixes</h3>
 <ul>
 <li><p>Fix potential indexing error if using <code><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv()</a></code> with CSV files created by CmdStan without CmdStanR. (<a href='https://github.com/stan-dev/cmdstanr/issues/291'>#291</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/292'>#292</a>, <a href='https://github.com/johnlees'>@johnlees</a>)</p></li>
 <li><p>Fix error when returning draws or sampler diagnostics for a fit with only warmup and no samples. (<a href='https://github.com/stan-dev/cmdstanr/issues/288'>#288</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/293'>#293</a>)</p></li>
@@ -286,9 +323,9 @@
 <li><p>Fix missing <code>include_paths</code> in <code>$syntax_check()</code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/335'>#335</a>, <a href='https://github.com/mike-lawrence'>@mike-lawrence</a>)</p></li>
 </ul>
 </div>
-<div id="new-features-4" class="section level3">
+<div id="new-features-5" class="section level3">
 <h3 class="hasAnchor">
-<a href="#new-features-4" class="anchor"></a>New features</h3>
+<a href="#new-features-5" class="anchor"></a>New features</h3>
 <ul>
 <li><p>CSV reading is now faster by using <code><a href="https://Rdatatable.gitlab.io/data.table/reference/fread.html">data.table::fread()</a></code>. (<a href='https://github.com/stan-dev/cmdstanr/issues/318'>#318</a>)</p></li>
 <li><p><code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> gains argument <code>version</code> for specifying which version of CmdStan to install. (<a href='https://github.com/stan-dev/cmdstanr/issues/300'>#300</a>, <a href='https://github.com/stan-dev/cmdstanr/issues/308'>#308</a>)</p></li>
@@ -345,7 +382,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

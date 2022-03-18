@@ -29,6 +29,9 @@ Behind the scenes, the engine relies on RStan to compile the model code into an
 in-memory `stanmodel`, which is assigned to a variable with the name given by
 the `output.var` chunk option. For example:
 
+<!-- trick for using verbatim chunks taken from  -->
+<!-- https://support.rstudio.com/hc/en-us/articles/360018181633-Including-verbatim-R-code-chunks-inside-R-Markdown -->
+
 ````markdown
 `r ''````{stan, output.var="model"}
 // Stan model code
@@ -132,7 +135,6 @@ rstan::sampling(model_obj1)
 model_obj2$sample()
 ```
 ````
-
 
 ## Running interactively
 

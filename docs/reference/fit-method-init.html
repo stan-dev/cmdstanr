@@ -85,7 +85,7 @@ this in the future." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -93,7 +93,7 @@ this in the future." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -146,19 +146,19 @@ this in the future." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -189,7 +189,7 @@ values generated automatically by CmdStan, although CmdStan may support
 this in the future.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>init</span>()</pre>
+    <pre class="usage"><span class='fu'>init</span><span class='op'>(</span><span class='op'>)</span></pre>
 
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -201,28 +201,35 @@ this in the future.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>init_fun</span> <span class='kw'>&lt;-</span> <span class='kw'>function</span>() <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fl'>1</span>), <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fl'>3</span>))
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>init</span> <span class='kw'>=</span> <span class='no'>init_fun</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit</span>$<span class='fu'>init</span>())</div><div class='output co'>#&gt; List of 2
+<span class='va'>init_fun</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>alpha <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span>, beta <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span><span class='op'>(</span><span class='st'>"logistic"</span>, init <span class='op'>=</span> <span class='va'>init_fun</span>, chains <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>$</span><span class='fu'>init</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; List of 2
 #&gt;  $ :List of 2
-#&gt;   ..$ alpha: num -2.07
-#&gt;   ..$ beta : num [1:3] 0.531 -1.797 -0.324
+#&gt;   ..$ alpha: num 0.0834
+#&gt;   ..$ beta : num [1:3] 0.8592 0.0505 2.3089
 #&gt;  $ :List of 2
-#&gt;   ..$ alpha: num -0.0203
-#&gt;   ..$ beta : num [1:3] 0.496 -0.316 1.669</div><div class='input'>
+#&gt;   ..$ alpha: num -0.859
+#&gt;   ..$ beta : num [1:3] 1.54 -1.61 -1.08</div><div class='input'>
 <span class='co'># partial inits (only specifying for a subset of parameters)</span>
-<span class='no'>init_list</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
-  <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>tau</span> <span class='kw'>=</span> <span class='fl'>2</span>),
-  <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>mu</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>tau</span> <span class='kw'>=</span> <span class='fl'>1</span>)
-)
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"schools_ncp"</span>, <span class='kw'>init</span> <span class='kw'>=</span> <span class='no'>init_list</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>adapt_delta</span> <span class='kw'>=</span> <span class='fl'>0.9</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'>
+<span class='va'>init_list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>mu <span class='op'>=</span> <span class='fl'>10</span>, tau <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span>,
+  <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>mu <span class='op'>=</span> <span class='op'>-</span><span class='fl'>10</span>, tau <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>
+<span class='op'>)</span>
+<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span><span class='op'>(</span><span class='st'>"schools_ncp"</span>, init <span class='op'>=</span> <span class='va'>init_list</span>, chains <span class='op'>=</span> <span class='fl'>2</span>, adapt_delta <span class='op'>=</span> <span class='fl'>0.9</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Init values were only set for a subset of parameters. </span>
+#&gt; <span class='message'>Missing init values for the following parameters:</span>
+#&gt; <span class='message'> - chain 1: theta_raw</span>
+#&gt; <span class='message'> - chain 2: theta_raw</span></div><div class='input'>
 <span class='co'># only user-specified inits returned</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit</span>$<span class='fu'>init</span>())</div><div class='output co'>#&gt; List of 2
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>$</span><span class='fu'>init</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; List of 2
 #&gt;  $ :List of 2
 #&gt;   ..$ mu : int 10
 #&gt;   ..$ tau: int 2
 #&gt;  $ :List of 2
 #&gt;   ..$ mu : int -10
-#&gt;   ..$ tau: int 1</div><div class='input'># }
+#&gt;   ..$ tau: int 1</div><div class='input'><span class='co'># }</span>
 
 </div></pre>
   </div>
@@ -240,7 +247,7 @@ this in the future.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

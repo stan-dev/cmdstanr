@@ -94,7 +94,7 @@ $save_hpp_file(dir)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -102,7 +102,7 @@ $save_hpp_file(dir)." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -155,19 +155,19 @@ $save_hpp_file(dir)." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -207,16 +207,17 @@ temporary directory. To save the C++ code to a non-temporary location use
 <code>$save_hpp_file(dir)</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>compile</span>(
-  <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>include_paths</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
-  <span class='kw'>stanc_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
-  <span class='kw'>force_recompile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>threads</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>compile</span><span class='op'>(</span>
+  quiet <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  dir <span class='op'>=</span> <span class='cn'>NULL</span>,
+  pedantic <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  include_paths <span class='op'>=</span> <span class='cn'>NULL</span>,
+  user_header <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cpp_options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  stanc_options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  force_recompile <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span><span class='op'>(</span><span class='st'>"cmdstanr_force_recompile"</span>, default <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>,
+  threads <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -240,8 +241,8 @@ same location as the Stan program.</p></td>
 <code>FALSE</code>. Pedantic mode attempts to warn you about potential issues in your
 Stan program beyond syntax errors. For details see the <a href='https://mc-stan.org/docs/reference-manual/pedantic-mode.html'><em>Pedantic mode</em> chapter</a> in
 the Stan Reference Manual. <strong>Note:</strong> to do a pedantic check for a model
-that is already compiled use the
-<code><a href='model-method-check_syntax.html'>$check_syntax()</a></code> method instead.</p></td>
+without compiling it or for a model that is already compiled the
+<code><a href='model-method-check_syntax.html'>$check_syntax()</a></code> method can be used instead.</p></td>
     </tr>
     <tr>
       <th>include_paths</th>
@@ -250,10 +251,17 @@ should look for files specified in <code>#include</code> directives in the Stan
 program.</p></td>
     </tr>
     <tr>
+      <th>user_header</th>
+      <td><p>(string) The path to a C++ file (with a .hpp extension)
+to compile with the Stan model.</p></td>
+    </tr>
+    <tr>
       <th>cpp_options</th>
       <td><p>(list) Any makefile options to be used when compiling the
 model (<code>STAN_THREADS</code>, <code>STAN_MPI</code>, <code>STAN_OPENCL</code>, etc.). Anything you would
-otherwise write in the <code>make/local</code> file.</p></td>
+otherwise write in the <code>make/local</code> file. For an example of using threading
+see the Stan case study
+<a href='https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html'>Reduce Sum: A Minimal Example</a>.</p></td>
     </tr>
     <tr>
       <th>stanc_options</th>
@@ -265,7 +273,8 @@ https://mc-stan.org/docs/cmdstan-guide/stanc.html.</p></td>
     <tr>
       <th>force_recompile</th>
       <td><p>(logical) Should the model be recompiled even if was
-not modified since last compiled. The default is <code>FALSE</code>.</p></td>
+not modified since last compiled. The default is <code>FALSE</code>. Can also be set
+via a global <code>cmdstanr_force_recompile</code> option.</p></td>
     </tr>
     <tr>
       <th>threads</th>
@@ -295,33 +304,43 @@ documentation and tutorials.</p>
 
 <p>Other CmdStanModel methods: 
 <code><a href='model-method-check_syntax.html'>model-method-check_syntax</a></code>,
+<code><a href='model-method-diagnose.html'>model-method-diagnose</a></code>,
+<code><a href='model-method-format.html'>model-method-format</a></code>,
 <code><a href='model-method-generate-quantities.html'>model-method-generate-quantities</a></code>,
 <code><a href='model-method-optimize.html'>model-method-optimize</a></code>,
 <code><a href='model-method-sample_mpi.html'>model-method-sample_mpi</a></code>,
 <code><a href='model-method-sample.html'>model-method-sample</a></code>,
+<code><a href='model-method-variables.html'>model-method-variables</a></code>,
 <code><a href='model-method-variational.html'>model-method-variational</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
+<span class='va'>file</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span><span class='op'>(</span><span class='op'>)</span>, <span class='st'>"examples/bernoulli/bernoulli.stan"</span><span class='op'>)</span>
 
 <span class='co'># by default compilation happens when cmdstan_model() is called.</span>
 <span class='co'># to delay compilation until calling the $compile() method set compile=FALSE</span>
-<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='no'>mod</span>$<span class='fu'>compile</span>()</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan-2.26.1/examples/bernoulli/bernoulli"</div><div class='input'>
+<span class='va'>mod</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span><span class='op'>(</span><span class='va'>file</span>, compile <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+<span class='va'>mod</span><span class='op'>$</span><span class='fu'>compile</span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>mod</span><span class='op'>$</span><span class='fu'>exe_file</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstan/cmdstan-2.29.1/examples/bernoulli/bernoulli"</div><div class='input'>
 <span class='co'># turn on threading support (for using functions that support within-chain parallelization)</span>
-<span class='no'>mod</span>$<span class='fu'>compile</span>(<span class='kw'>force_recompile</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>stan_threads</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/- </div><div class='input'><span class='no'>mod</span>$<span class='fu'>exe_file</span>()</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstanr/cmdstan-2.26.1/examples/bernoulli/bernoulli_threads"</div><div class='input'>
+<span class='va'>mod</span><span class='op'>$</span><span class='fu'>compile</span><span class='op'>(</span>force_recompile <span class='op'>=</span> <span class='cn'>TRUE</span>, cpp_options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>stan_threads <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>mod</span><span class='op'>$</span><span class='fu'>exe_file</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "/Users/jgabry/.cmdstan/cmdstan-2.29.1/examples/bernoulli/bernoulli"</div><div class='input'>
 <span class='co'># turn on pedantic mode (new in Stan v2.24)</span>
-<span class='no'>file_pedantic</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(<span class='st'>"
+<span class='va'>file_pedantic</span> <span class='op'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span><span class='op'>(</span><span class='st'>"
 parameters {
   real sigma;  // pedantic mode will warn about missing &lt;lower=0&gt;
 }
 model {
   sigma ~ exponential(1);
 }
-"</span>)
-<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file_pedantic</span>, <span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\</div><div class='output co'>#&gt; <span class='message'>Warning at '/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/model-17000629ebae3.stan', line 6, column 2 to column 7:</span></div><div class='output co'>#&gt; <span class='message'>  Parameter sigma is given a exponential distribution, which has strictly</span></div><div class='output co'>#&gt; <span class='message'>  positive support, but sigma was not constrained to be strictly positive.</span></div><div class='output co'>#&gt; |/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/- </div><div class='input'>
-# }
+"</span><span class='op'>)</span>
+<span class='va'>mod</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span><span class='op'>(</span><span class='va'>file_pedantic</span>, pedantic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model-d65457acfdf5.stan', line 6, column 2: Parameter</span>
+#&gt; <span class='message'>    sigma is given a exponential distribution, which has strictly positive</span>
+#&gt; <span class='message'>    support, but sigma was not constrained to be strictly positive.</span></div><div class='input'>
+<span class='co'># }</span>
 
 </div></pre>
   </div>
@@ -339,7 +358,7 @@ model {
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

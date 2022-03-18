@@ -48,7 +48,13 @@
 
 <meta property="og:title" content="Write Stan code to a file — write_stan_file" />
 <meta property="og:description" content="Convenience function for writing Stan code to a (possibly
-temporary) file with a .stan extension." />
+temporary) file with a .stan extension. By default, the
+file name is chosen deterministically based on a hash
+of the Stan code, and the file is not overwritten if it already has correct
+contents. This means that calling this function multiple times with the same
+Stan code will reuse the compiled model. This also however means that the
+function is potentially not thread-safe. Using hash_salt = Sys.getpid()
+should ensure thread-safety in the rare cases when it is needed." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -81,7 +87,7 @@ temporary) file with a .stan extension." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -89,7 +95,7 @@ temporary) file with a .stan extension." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -142,19 +148,19 @@ temporary) file with a .stan extension." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -178,29 +184,55 @@ temporary) file with a .stan extension." />
 
     <div class="ref-description">
     <p>Convenience function for writing Stan code to a (possibly
-<a href='https://rdrr.io/r/base/tempfile.html'>temporary</a>) file with a <code>.stan</code> extension.</p>
+<a href='https://rdrr.io/r/base/tempfile.html'>temporary</a>) file with a <code>.stan</code> extension. By default, the
+file name is chosen deterministically based on a <a href='https://rlang.r-lib.org/reference/hash.html'>hash</a>
+of the Stan code, and the file is not overwritten if it already has correct
+contents. This means that calling this function multiple times with the same
+Stan code will reuse the compiled model. This also however means that the
+function is potentially not thread-safe. Using <code>hash_salt = Sys.getpid()</code>
+should ensure thread-safety in the rare cases when it is needed.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>write_stan_file</span>(<span class='no'>code</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>(), <span class='kw'>basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>write_stan_file</span><span class='op'>(</span>
+  <span class='va'>code</span>,
+  dir <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span><span class='op'>(</span><span class='st'>"cmdstanr_write_stan_file_dir"</span>, <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,
+  basename <span class='op'>=</span> <span class='cn'>NULL</span>,
+  force_overwrite <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  hash_salt <span class='op'>=</span> <span class='st'>""</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>code</th>
-      <td><p>A single string containing a Stan program or a character vector
-containing the individual lines of a Stan program. See <strong>Examples</strong>.</p></td>
+      <td><p>(character vector) The Stan code to write to the file. This can
+be a character vector of length one (a string) containing the entire Stan
+program or a character vector with each element containing one line of the
+Stan program.</p></td>
     </tr>
     <tr>
       <th>dir</th>
-      <td><p>An optional path to the directory where the file will be written.
-If omitted, a <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory</a> is used by default.</p></td>
+      <td><p>(string) An optional path to the directory where the file will be
+written. If omitted, a global option <code>cmdstanr_write_stan_file_dir</code> is
+used. If the global options is not set, <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory</a>
+is used.</p></td>
     </tr>
     <tr>
       <th>basename</th>
-      <td><p>If <code>dir</code> is specified, an optional string providing the
-basename for the file created. If not specified a file name is generated
-via <code><a href='https://rdrr.io/r/base/tempfile.html'>base::tempfile()</a></code>.</p></td>
+      <td><p>(string) If <code>dir</code> is specified, optionally the basename to
+use for the file created. If not specified a file name is generated
+from <a href='https://rlang.r-lib.org/reference/hash.html'>hashing</a> the code.</p></td>
+    </tr>
+    <tr>
+      <th>force_overwrite</th>
+      <td><p>(logical) If set to <code>TRUE</code> the file will always be
+overwritten and thus the resulting model will always be recompiled.</p></td>
+    </tr>
+    <tr>
+      <th>hash_salt</th>
+      <td><p>(string) Text to add to the model code prior to hashing to
+determine the file name if <code>basename</code> is not set.</p></td>
     </tr>
     </table>
 
@@ -210,7 +242,7 @@ via <code><a href='https://rdrr.io/r/base/tempfile.html'>base::tempfile()</a></c
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># stan program as a single string</span>
-<span class='no'>stan_program</span> <span class='kw'>&lt;-</span> <span class='st'>"
+<span class='va'>stan_program</span> <span class='op'>&lt;-</span> <span class='st'>"
 data {
   int&lt;lower=0&gt; N;
   int&lt;lower=0,upper=1&gt; y[N];
@@ -223,15 +255,18 @@ model {
 }
 "</span>
 
-<span class='no'>f</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_file</span>(<span class='no'>stan_program</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>f</span>)</div><div class='output co'>#&gt; [1] "/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T//RtmpEmZKF5/file1700011c49bd3.stan"</div><div class='input'>
-<span class='no'>lines</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>lines</span>)</div><div class='output co'>#&gt;  [1] ""                               "data {"                        
+<span class='va'>f</span> <span class='op'>&lt;-</span> <span class='fu'>write_stan_file</span><span class='op'>(</span><span class='va'>stan_program</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>f</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T//RtmpmzUYEz/model_08f9e456ca04f3d3244db00f16ea5748.stan"</div><div class='input'>
+<span class='va'>lines</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span><span class='op'>(</span><span class='va'>f</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>lines</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;  [1] ""                               "data {"                        
 #&gt;  [3] "  int&lt;lower=0&gt; N;"              "  int&lt;lower=0,upper=1&gt; y[N];"  
 #&gt;  [5] "}"                              "parameters {"                  
 #&gt;  [7] "  real&lt;lower=0,upper=1&gt; theta;" "}"                             
 #&gt;  [9] "model {"                        "  y ~ bernoulli(theta);"       
-#&gt; [11] "}"                              ""                              </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='no'>lines</span>, <span class='kw'>sep</span> <span class='kw'>=</span> <span class='st'>"\n"</span>)</div><div class='output co'>#&gt; 
+#&gt; [11] "}"                              ""                              </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='va'>lines</span>, sep <span class='op'>=</span> <span class='st'>"\n"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; 
 #&gt; data {
 #&gt;   int&lt;lower=0&gt; N;
 #&gt;   int&lt;lower=0,upper=1&gt; y[N];
@@ -244,8 +279,9 @@ model {
 #&gt; }
 #&gt; </div><div class='input'>
 <span class='co'># stan program as character vector of lines</span>
-<span class='no'>f2</span> <span class='kw'>&lt;-</span> <span class='fu'>write_stan_file</span>(<span class='no'>lines</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/identical.html'>identical</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f</span>), <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>f2</span>))</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
+<span class='va'>f2</span> <span class='op'>&lt;-</span> <span class='fu'>write_stan_file</span><span class='op'>(</span><span class='va'>lines</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/identical.html'>identical</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span><span class='op'>(</span><span class='va'>f</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span><span class='op'>(</span><span class='va'>f2</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -262,7 +298,7 @@ model {
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

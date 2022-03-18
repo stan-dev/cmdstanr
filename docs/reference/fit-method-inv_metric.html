@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -141,19 +141,19 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -179,7 +179,7 @@
     <p>Extract the inverse metric (mass matrix) for each MCMC chain.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>inv_metric</span>(<span class='kw'>matrix</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>inv_metric</span><span class='op'>(</span>matrix <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -202,73 +202,78 @@ argument for details.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>()</div><div class='output co'>#&gt; $`1`
-#&gt;           [,1]      [,2]      [,3]      [,4]
-#&gt; [1,] 0.0409791 0.0000000 0.0000000 0.0000000
-#&gt; [2,] 0.0000000 0.0699631 0.0000000 0.0000000
-#&gt; [3,] 0.0000000 0.0000000 0.0478488 0.0000000
-#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0720792
+<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span><span class='op'>(</span><span class='st'>"logistic"</span><span class='op'>)</span>
+<span class='va'>fit</span><span class='op'>$</span><span class='fu'>inv_metric</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; $`1`
+#&gt;           [,1]    [,2]      [,3]      [,4]
+#&gt; [1,] 0.0481393 0.00000 0.0000000 0.0000000
+#&gt; [2,] 0.0000000 0.05628 0.0000000 0.0000000
+#&gt; [3,] 0.0000000 0.00000 0.0407205 0.0000000
+#&gt; [4,] 0.0000000 0.00000 0.0000000 0.0702359
 #&gt; 
 #&gt; $`2`
 #&gt;           [,1]      [,2]      [,3]      [,4]
-#&gt; [1,] 0.0521783 0.0000000 0.0000000 0.0000000
-#&gt; [2,] 0.0000000 0.0651446 0.0000000 0.0000000
-#&gt; [3,] 0.0000000 0.0000000 0.0503775 0.0000000
-#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0796248
+#&gt; [1,] 0.0462024 0.0000000 0.0000000 0.0000000
+#&gt; [2,] 0.0000000 0.0708086 0.0000000 0.0000000
+#&gt; [3,] 0.0000000 0.0000000 0.0509179 0.0000000
+#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0663432
 #&gt; 
 #&gt; $`3`
-#&gt;           [,1]     [,2]      [,3]      [,4]
-#&gt; [1,] 0.0476085 0.000000 0.0000000 0.0000000
-#&gt; [2,] 0.0000000 0.067774 0.0000000 0.0000000
-#&gt; [3,] 0.0000000 0.000000 0.0545375 0.0000000
-#&gt; [4,] 0.0000000 0.000000 0.0000000 0.0657108
+#&gt;           [,1]      [,2]      [,3]      [,4]
+#&gt; [1,] 0.0401421 0.0000000 0.0000000 0.0000000
+#&gt; [2,] 0.0000000 0.0599614 0.0000000 0.0000000
+#&gt; [3,] 0.0000000 0.0000000 0.0409305 0.0000000
+#&gt; [4,] 0.0000000 0.0000000 0.0000000 0.0636495
 #&gt; 
 #&gt; $`4`
-#&gt;           [,1]      [,2]     [,3]      [,4]
-#&gt; [1,] 0.0473458 0.0000000 0.000000 0.0000000
-#&gt; [2,] 0.0000000 0.0639189 0.000000 0.0000000
-#&gt; [3,] 0.0000000 0.0000000 0.062392 0.0000000
-#&gt; [4,] 0.0000000 0.0000000 0.000000 0.0728948
-#&gt; </div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>(<span class='kw'>matrix</span><span class='kw'>=</span><span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; $`1`
-#&gt; [1] 0.0409791 0.0699631 0.0478488 0.0720792
+#&gt;          [,1]      [,2]     [,3]      [,4]
+#&gt; [1,] 0.048948 0.0000000 0.000000 0.0000000
+#&gt; [2,] 0.000000 0.0612541 0.000000 0.0000000
+#&gt; [3,] 0.000000 0.0000000 0.053141 0.0000000
+#&gt; [4,] 0.000000 0.0000000 0.000000 0.0843771
+#&gt; </div><div class='input'><span class='va'>fit</span><span class='op'>$</span><span class='fu'>inv_metric</span><span class='op'>(</span>matrix<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; $`1`
+#&gt; [1] 0.0481393 0.0562800 0.0407205 0.0702359
 #&gt; 
 #&gt; $`2`
-#&gt; [1] 0.0521783 0.0651446 0.0503775 0.0796248
+#&gt; [1] 0.0462024 0.0708086 0.0509179 0.0663432
 #&gt; 
 #&gt; $`3`
-#&gt; [1] 0.0476085 0.0677740 0.0545375 0.0657108
+#&gt; [1] 0.0401421 0.0599614 0.0409305 0.0636495
 #&gt; 
 #&gt; $`4`
-#&gt; [1] 0.0473458 0.0639189 0.0623920 0.0728948
+#&gt; [1] 0.0489480 0.0612541 0.0531410 0.0843771
 #&gt; </div><div class='input'>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>metric</span> <span class='kw'>=</span> <span class='st'>"dense_e"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>inv_metric</span>()</div><div class='output co'>#&gt; $`1`
-#&gt;              [,1]        [,2]         [,3]        [,4]
-#&gt; [1,]  0.051420700  0.00120054 -0.000585942  0.00104648
-#&gt; [2,]  0.001200540  0.06446300 -0.012509400 -0.00647790
-#&gt; [3,] -0.000585942 -0.01250940  0.043045100 -0.00969323
-#&gt; [4,]  0.001046480 -0.00647790 -0.009693230  0.06779780
+<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span><span class='op'>(</span><span class='st'>"logistic"</span>, metric <span class='op'>=</span> <span class='st'>"dense_e"</span><span class='op'>)</span>
+<span class='va'>fit</span><span class='op'>$</span><span class='fu'>inv_metric</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; $`1`
+#&gt;             [,1]         [,2]         [,3]        [,4]
+#&gt; [1,]  0.04674080 -0.003735660  0.002672980  0.00238423
+#&gt; [2,] -0.00373566  0.068142800 -0.000262148 -0.01289230
+#&gt; [3,]  0.00267298 -0.000262148  0.046002800 -0.01442680
+#&gt; [4,]  0.00238423 -0.012892300 -0.014426800  0.07403270
 #&gt; 
 #&gt; $`2`
 #&gt;             [,1]        [,2]        [,3]        [,4]
-#&gt; [1,]  0.04722150 -0.00314819  0.00108351  0.00300970
-#&gt; [2,] -0.00314819  0.05286400  0.00134121 -0.00685724
-#&gt; [3,]  0.00108351  0.00134121  0.04952160 -0.01142720
-#&gt; [4,]  0.00300970 -0.00685724 -0.01142720  0.06245950
+#&gt; [1,]  0.04818520 -0.00541596  0.00262377  0.00791809
+#&gt; [2,] -0.00541596  0.06098370 -0.00895976 -0.00360963
+#&gt; [3,]  0.00262377 -0.00895976  0.06049940 -0.01483090
+#&gt; [4,]  0.00791809 -0.00360963 -0.01483090  0.06889970
 #&gt; 
 #&gt; $`3`
 #&gt;             [,1]         [,2]         [,3]        [,4]
-#&gt; [1,]  0.04664440 -0.002356350  0.000594790  0.00696777
-#&gt; [2,] -0.00235635  0.065111800  0.000294205 -0.00373292
-#&gt; [3,]  0.00059479  0.000294205  0.047578700 -0.01097830
-#&gt; [4,]  0.00696777 -0.003732920 -0.010978300  0.06668740
+#&gt; [1,]  0.04188870 -0.003366470  0.002556630  0.00143941
+#&gt; [2,] -0.00336647  0.072588600 -0.000749238 -0.01014960
+#&gt; [3,]  0.00255663 -0.000749238  0.062633300 -0.01869750
+#&gt; [4,]  0.00143941 -0.010149600 -0.018697500  0.06842820
 #&gt; 
 #&gt; $`4`
-#&gt;             [,1]        [,2]        [,3]        [,4]
-#&gt; [1,]  0.04962380 -0.00332921  0.00168712  0.00224150
-#&gt; [2,] -0.00332921  0.05970130 -0.00491432 -0.00774457
-#&gt; [3,]  0.00168712 -0.00491432  0.04630120 -0.00663267
-#&gt; [4,]  0.00224150 -0.00774457 -0.00663267  0.07457350
-#&gt; </div><div class='input'># }
+#&gt;              [,1]        [,2]         [,3]        [,4]
+#&gt; [1,]  0.050144300 -0.00512010 -0.000121339  0.00550570
+#&gt; [2,] -0.005120100  0.05424960  0.005528330 -0.00520478
+#&gt; [3,] -0.000121339  0.00552833  0.047886100 -0.01343470
+#&gt; [4,]  0.005505700 -0.00520478 -0.013434700  0.07104140
+#&gt; </div><div class='input'><span class='co'># }</span>
 
 </div></pre>
   </div>
@@ -286,7 +291,7 @@ argument for details.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

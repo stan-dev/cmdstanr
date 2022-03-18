@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -87,7 +87,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -140,19 +140,19 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -263,6 +263,18 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="model-method-diagnose.html">diagnose()</a></code> </p>
+        </td>
+        <td><p>Run Stan's diagnose method</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="model-method-format.html">format()</a></code> </p>
+        </td>
+        <td><p>Run stanc's auto-formatter on the model code.</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="model-method-generate-quantities.html">generate_quantities()</a></code> </p>
         </td>
         <td><p>Run Stan's standalone generated quantities method</p></td>
@@ -284,6 +296,12 @@
           <p><code><a href="model-method-sample_mpi.html">sample_mpi()</a></code> </p>
         </td>
         <td><p>Run Stan's MCMC algorithms with MPI</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="model-method-variables.html">variables()</a></code> </p>
+        </td>
+        <td><p>Input and output variables of a Stan program</p></td>
       </tr><tr>
         
         <td>
@@ -336,15 +354,39 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="CmdStanDiagnose.html">CmdStanDiagnose</a></code> </p>
+        </td>
+        <td><p>CmdStanDiagnose objects</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="fit-method-cmdstan_summary.html">cmdstan_summary()</a></code> <code><a href="fit-method-cmdstan_summary.html">cmdstan_diagnose()</a></code> </p>
         </td>
         <td><p>Run CmdStan's <code>stansummary</code> and <code>diagnose</code> utilities</p></td>
       </tr><tr>
         
         <td>
+          <p><code><a href="fit-method-code.html">code()</a></code> </p>
+        </td>
+        <td><p>Return Stan code</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="fit-method-diagnostic_summary.html">diagnostic_summary()</a></code> </p>
+        </td>
+        <td><p>Sampler diagnostic summaries and warnings</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="fit-method-draws.html">draws()</a></code> </p>
         </td>
         <td><p>Extract posterior draws</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="fit-method-gradients.html">gradients()</a></code> </p>
+        </td>
+        <td><p>Extract gradients after diagnostic mode</p></td>
       </tr><tr>
         
         <td>
@@ -466,6 +508,13 @@
           <p><code><a href="write_stan_file.html">write_stan_file()</a></code> </p>
         </td>
         <td><p>Write Stan code to a file</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="draws_to_csv.html">draws_to_csv()</a></code> </p>
+        </td>
+        <td><p>Write posterior draws objects to CSV files suitable for running standalone generated
+quantities with CmdStan.</p></td>
       </tr>
     </tbody><tbody>
       <tr>
@@ -510,7 +559,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
