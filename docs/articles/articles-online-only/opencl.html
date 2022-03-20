@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -125,7 +125,7 @@
 
       
 
-      </header><script src="opencl_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Running Stan on the GPU with OpenCL</h1>
@@ -213,14 +213,14 @@ Platform #1: Intel(R) CPU Runtime for OpenCL(TM) Applications
                         opencl_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></code></pre></div>
 <pre><code>Running MCMC with 4 parallel chains...
 
-Chain 1 finished in 63.1 seconds.
-Chain 4 finished in 63.1 seconds.
-Chain 2 finished in 63.4 seconds.
-Chain 3 finished in 63.7 seconds.
+Chain 4 finished in 88.3 seconds.
+Chain 2 finished in 88.6 seconds.
+Chain 1 finished in 88.1 seconds.
+Chain 3 finished in 88.9 seconds.
 
 All 4 chains finished successfully.
-Mean chain execution time: 63.3 seconds.
-Total execution time: 67.0 seconds.</code></pre>
+Mean chain execution time: 88.5 seconds.
+Total execution time: 91.7 seconds.</code></pre>
 <p>We’ll also run a version without OpenCL and compare the run times.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># no OpenCL version</span>
@@ -228,18 +228,18 @@ Total execution time: 67.0 seconds.</code></pre>
 <span class="va">fit_cpu</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">mdata</span>, chains <span class="op">=</span> <span class="fl">4</span>, parallel_chains <span class="op">=</span> <span class="fl">4</span>, refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></code></pre></div>
 <pre><code>Running MCMC with 4 parallel chains...
 
-Chain 3 finished in 602.5 seconds.
-Chain 4 finished in 604.3 seconds.
-Chain 1 finished in 605.4 seconds.
-Chain 2 finished in 605.0 seconds.
+Chain 3 finished in 548.4 seconds.
+Chain 2 finished in 552.2 seconds.
+Chain 1 finished in 551.6 seconds.
+Chain 4 finished in 553.7 seconds.
 
 All 4 chains finished successfully.
-Mean chain execution time: 604.3 seconds.
-Total execution time: 608.7 seconds.</code></pre>
+Mean chain execution time: 551.5 seconds.
+Total execution time: 556.7 seconds.</code></pre>
 <p>The speedup of the OpenCL model is:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit_cpu</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span> <span class="op">/</span> <span class="va">fit_cl</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span></code></pre></div>
-<pre><code>[1] 9.085929</code></pre>
+<pre><code>[1] 6.070158</code></pre>
 <p>This speedup will be determined by the particular GPU/CPU used, the input problem sizes (data as well as parameters) and if the model uses functions that can be run on the GPU or other OpenCL devices.</p>
 </div>
   </div>

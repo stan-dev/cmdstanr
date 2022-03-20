@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -141,19 +141,19 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -179,46 +179,93 @@
     <p>Write data to a JSON file readable by CmdStan</p>
     </div>
 
-    <pre class="usage"><span class='fu'>write_stan_json</span>(<span class='no'>data</span>, <span class='no'>file</span>)</pre>
+    <pre class="usage"><span class='fu'>write_stan_json</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>file</span>, always_decimal <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>data</th>
-      <td><p>A named list of <span style="R">R</span> objects.</p></td>
+      <td><p>(list) A named list of <span style="R">R</span> objects.</p></td>
     </tr>
     <tr>
       <th>file</th>
-      <td><p>A string specifying the path to where the data file should be
-written.</p></td>
+      <td><p>(string) The path to where the data file should be written.</p></td>
+    </tr>
+    <tr>
+      <th>always_decimal</th>
+      <td><p>(logical) Force generate non-integers with decimal
+points to better distinguish between integers and floating point values.
+If <code>TRUE</code> all <span style="R">R</span> objects in <code>data</code> intended for integers must be of integer
+type.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p><code>write_stan_json()</code> performs several conversions before writing the JSON
+file:</p><ul>
+<li><p><code>logical</code> -&gt; <code>integer</code> (<code>TRUE</code> -&gt; <code>1</code>, <code>FALSE</code> -&gt; <code>0</code>)</p></li>
+<li><p><code>data.frame</code> -&gt; <code>matrix</code> (via <code><a href='https://rdrr.io/r/base/data.matrix.html'>data.matrix()</a></code>)</p></li>
+<li><p><code>list</code> -&gt; <code>array</code></p></li>
+<li><p><code>table</code> -&gt; <code>vector</code>, <code>matrix</code>, or <code>array</code> (depending on dimensions of table)</p></li>
+</ul>
+
+<p>The <code>list</code> to <code>array</code> conversion is intended to make it easier to prepare
+the data for certain Stan declarations involving arrays:</p><ul>
+<li><p><code>vector[J] v[K]</code> (or equivalently <code>array[K] vector[J] v </code> as of Stan 2.27)
+can be constructed in <span style="R">R</span> as a list with <code>K</code> elements where each element a
+vector of length <code>J</code></p></li>
+<li><p><code>matrix[I,J] v[K]</code> (or equivalently <code>array[K] matrix[I,J] m </code> as of Stan
+2.27 ) can be constructed in <span style="R">R</span> as a list with <code>K</code> elements where each element
+an <code>IxJ</code> matrix</p></li>
+</ul>
+
+<p>These can also be passed in from <span style="R">R</span> as arrays instead of lists but the list
+option is provided for convenience. Unfortunately for arrays with more than
+one dimension, e.g., <code>vector[J] v[K,L]</code> (or equivalently
+<code>array[K,L] vector[J] v </code> as of Stan 2.27) it is not possible to use an <span style="R">R</span>
+list and an array must be used instead. For this example the array in <span style="R">R</span>
+should have dimensions <code>KxLxJ</code>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fl'>10</span>), <span class='fl'>5</span>, <span class='fl'>2</span>)
-<span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Poisson.html'>rpois</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>x</span>), <span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>10</span>)
-<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>TRUE</span>, <span class='fl'>FALSE</span>)
-<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>x</span>), <span class='kw'>K</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='no'>x</span>), <span class='kw'>x</span> <span class='kw'>=</span> <span class='no'>x</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='no'>y</span>, <span class='kw'>z</span> <span class='kw'>=</span> <span class='no'>z</span>)
+    <pre class="examples"><div class='input'><span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='fl'>10</span><span class='op'>)</span>, <span class='fl'>5</span>, <span class='fl'>2</span><span class='op'>)</span>
+<span class='va'>y</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Poisson.html'>rpois</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>, lambda <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>z</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>TRUE</span>, <span class='cn'>FALSE</span><span class='op'>)</span>
+<span class='va'>data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>N <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>, K <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>, x <span class='op'>=</span> <span class='va'>x</span>, y <span class='op'>=</span> <span class='va'>y</span>, z <span class='op'>=</span> <span class='va'>z</span><span class='op'>)</span>
 
 <span class='co'># write data to json file</span>
-<span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>(<span class='kw'>fileext</span> <span class='kw'>=</span> <span class='st'>".json"</span>)
-<span class='fu'>write_stan_json</span>(<span class='no'>data</span>, <span class='no'>file</span>)
+<span class='va'>file</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span><span class='op'>(</span>fileext <span class='op'>=</span> <span class='st'>".json"</span><span class='op'>)</span>
+<span class='fu'>write_stan_json</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>file</span><span class='op'>)</span>
 
 <span class='co'># check the contents of the file</span>
-<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span>(<span class='no'>file</span>), <span class='kw'>sep</span> <span class='kw'>=</span> <span class='st'>"\n"</span>)</div><div class='output co'>#&gt; {
+<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span><span class='op'>(</span><span class='va'>file</span><span class='op'>)</span>, sep <span class='op'>=</span> <span class='st'>"\n"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; {
 #&gt;   "N": 5,
 #&gt;   "K": 2,
 #&gt;   "x": [
-#&gt;     [-0.46463062606926, 0.906218004651404],
-#&gt;     [1.21428942140779, 0.781674865660302],
-#&gt;     [0.661948915176096, -0.257065264504065],
-#&gt;     [-0.925800297746062, -1.19855619881824],
-#&gt;     [-0.778266018414021, -1.03512066022385]
+#&gt;     [0.552235993548325, 0.721685253131368],
+#&gt;     [1.40374671287315, -0.278162254251497],
+#&gt;     [0.512051509623765, -0.524699374531002],
+#&gt;     [0.660479109910809, 0.0625388737657775],
+#&gt;     [-0.519175154088263, -0.450598871694098]
 #&gt;   ],
-#&gt;   "y": [8, 13, 9, 10, 14],
+#&gt;   "y": [16, 11, 7, 7, 6],
 #&gt;   "z": [1, 0]
+#&gt; }</div><div class='input'>
+
+<span class='co'># demonstrating list to array conversion</span>
+<span class='co'># suppose x is declared as `vector[3] x[2]` (or equivalently `array[2] vector[3] x`)</span>
+<span class='co'># we can use a list of length 2 where each element is a vector of length 3</span>
+<span class='va'>data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>x <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span>, <span class='fl'>4</span><span class='op'>:</span><span class='fl'>6</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>file</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span><span class='op'>(</span>fileext <span class='op'>=</span> <span class='st'>".json"</span><span class='op'>)</span>
+<span class='fu'>write_stan_json</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>file</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span><span class='op'>(</span><span class='va'>file</span><span class='op'>)</span>, sep <span class='op'>=</span> <span class='st'>"\n"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; {
+#&gt;   "x": [
+#&gt;     [1, 2, 3],
+#&gt;     [4, 5, 6]
+#&gt;   ]
 #&gt; }</div><div class='input'>
 </div></pre>
   </div>
@@ -236,7 +283,7 @@ written.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -82,7 +82,7 @@ CmdStanModel object." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -90,7 +90,7 @@ CmdStanModel object." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -143,19 +143,19 @@ CmdStanModel object." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -188,17 +188,18 @@ CmdStanModel object." />
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     <p><code>CmdStanGQ</code> objects have the following associated methods,
-all of which have their own (linked) documentation pages.</p><h3>Extract contents of generated quantities object</h3>
+all of which have their own (linked) documentation pages.</p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Extract contents of generated quantities object</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='fit-method-draws.html'>$draws()</a></code></td><td>Return the generated quantities as a <code><a href='https://mc-stan.org/posterior/reference/draws_array.html'>draws_array</a></code>.</td></tr>
 <tr><td><code><a href='fit-method-metadata.html'>$metadata()</a></code></td><td>Return a list of metadata gathered from the CmdStan CSV files.</td></tr>
+<tr><td><code><a href='fit-method-code.html'>$code()</a></code></td><td>Return Stan code as a character vector.</td></tr>
 </table>
 
 
 
 
-<h3>Summarize inferences</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Summarize inferences</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
@@ -207,7 +208,7 @@ all of which have their own (linked) documentation pages.</p><h3>Extract content
 
 
 
-<h3>Save fitted model object and temporary files</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Save fitted model object and temporary files</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='fit-method-save_object.html'>$save_object()</a></code></td><td>Save fitted model object to a file.</td></tr>
@@ -218,7 +219,7 @@ all of which have their own (linked) documentation pages.</p><h3>Extract content
 
 
 
-<h3>Report run times, console output, return codes</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Report run times, console output, return codes</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='fit-method-time.html'>$time()</a></code></td><td>Report the total run time.</td></tr>
@@ -240,6 +241,7 @@ documentation and tutorials.</p>
 </ul>
 
 <p>Other fitted model objects: 
+<code><a href='CmdStanDiagnose.html'>CmdStanDiagnose</a></code>,
 <code><a href='CmdStanMCMC.html'>CmdStanMCMC</a></code>,
 <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>,
 <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
@@ -247,7 +249,7 @@ documentation and tutorials.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
 <span class='co'># first fit a model using MCMC</span>
-<span class='no'>mcmc_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(
+<span class='va'>mcmc_program</span> <span class='op'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span><span class='op'>(</span>
   <span class='st'>"data {
     int&lt;lower=0&gt; N;
     int&lt;lower=0,upper=1&gt; y[N];
@@ -258,10 +260,16 @@ documentation and tutorials.</p>
   model {
     y ~ bernoulli(theta);
   }"</span>
-)
-<span class='no'>mod_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>mcmc_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\| </div><div class='input'>
-<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>))
-<span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='no'>mod_mcmc</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>, <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>)</div><div class='output co'>#&gt; Running MCMC with 4 sequential chains...
+<span class='op'>)</span>
+<span class='va'>mod_mcmc</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span><span class='op'>(</span><span class='va'>mcmc_program</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model-d654db71ed5.stan', line 3, column 4: Declaration</span>
+#&gt; <span class='message'>    of arrays by placing brackets after a variable name is deprecated and</span>
+#&gt; <span class='message'>    will be removed in Stan 2.32.0. Instead use the array keyword before the</span>
+#&gt; <span class='message'>    type. This can be changed automatically using the auto-format flag to</span>
+#&gt; <span class='message'>    stanc</span></div><div class='input'>
+<span class='va'>data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>N <span class='op'>=</span> <span class='fl'>10</span>, y <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>fit_mcmc</span> <span class='op'>&lt;-</span> <span class='va'>mod_mcmc</span><span class='op'>$</span><span class='fu'>sample</span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>data</span>, seed <span class='op'>=</span> <span class='fl'>123</span>, refresh <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; Running MCMC with 4 sequential chains...
 #&gt; 
 #&gt; Chain 1 finished in 0.0 seconds.
 #&gt; Chain 2 finished in 0.0 seconds.
@@ -270,10 +278,11 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.7 seconds.</div><div class='input'>
+#&gt; Total execution time: 0.7 seconds.
+#&gt; </div><div class='input'>
 <span class='co'># stan program for standalone generated quantities</span>
 <span class='co'># (could keep model block, but not necessary so removing it)</span>
-<span class='no'>gq_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(
+<span class='va'>gq_program</span> <span class='op'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span><span class='op'>(</span>
   <span class='st'>"data {
     int&lt;lower=0&gt; N;
     int&lt;lower=0,upper=1&gt; y[N];
@@ -284,9 +293,20 @@ documentation and tutorials.</p>
   generated quantities {
     int y_rep[N] = bernoulli_rng(rep_vector(theta, N));
   }"</span>
-)
+<span class='op'>)</span>
 
-<span class='no'>mod_gq</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>gq_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\| </div><div class='input'><span class='no'>fit_gq</span> <span class='kw'>&lt;-</span> <span class='no'>mod_gq</span>$<span class='fu'><a href='model-method-generate-quantities.html'>generate_quantities</a></span>(<span class='no'>fit_mcmc</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...
+<span class='va'>mod_gq</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span><span class='op'>(</span><span class='va'>gq_program</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model-d654260c210e.stan', line 3, column 4: Declaration</span>
+#&gt; <span class='message'>    of arrays by placing brackets after a variable name is deprecated and</span>
+#&gt; <span class='message'>    will be removed in Stan 2.32.0. Instead use the array keyword before the</span>
+#&gt; <span class='message'>    type. This can be changed automatically using the auto-format flag to</span>
+#&gt; <span class='message'>    stanc</span>
+#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model-d654260c210e.stan', line 9, column 4: Declaration</span>
+#&gt; <span class='message'>    of arrays by placing brackets after a variable name is deprecated and</span>
+#&gt; <span class='message'>    will be removed in Stan 2.32.0. Instead use the array keyword before the</span>
+#&gt; <span class='message'>    type. This can be changed automatically using the auto-format flag to</span>
+#&gt; <span class='message'>    stanc</span></div><div class='input'><span class='va'>fit_gq</span> <span class='op'>&lt;-</span> <span class='va'>mod_gq</span><span class='op'>$</span><span class='fu'>generate_quantities</span><span class='op'>(</span><span class='va'>fit_mcmc</span>, data <span class='op'>=</span> <span class='va'>data</span>, seed <span class='op'>=</span> <span class='fl'>123</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...
 #&gt; 
 #&gt; Chain 1 finished in 0.0 seconds.
 #&gt; Chain 2 finished in 0.0 seconds.
@@ -295,12 +315,18 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.6 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt;  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
+#&gt; Total execution time: 0.5 seconds.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='va'>fit_gq</span><span class='op'>$</span><span class='fu'>draws</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 0 1 0 1 0 0 0 ...
 #&gt;  - attr(*, "dimnames")=List of 3
 #&gt;   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #&gt;   ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #&gt;   ..$ variable : chr [1:10] "y_rep[1]" "y_rep[2]" "y_rep[3]" "y_rep[4]" ...</div><div class='input'>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)</div><div class='output co'>#&gt; <span class='message'>This is posterior version 0.1.3</span></div><div class='input'><span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>fit_gq</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>())</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 10 variables
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://mc-stan.org/posterior/'>posterior</a></span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='warning'>Warning: package ‘posterior’ was built under R version 4.1.2</span></div><div class='output co'>#&gt; <span class='message'>This is posterior version 1.2.1</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Attaching package: ‘posterior’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:stats’:</span>
+#&gt; <span class='message'></span>
+#&gt; <span class='message'>    mad, sd, var</span></div><div class='input'><span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span><span class='op'>(</span><span class='va'>fit_gq</span><span class='op'>$</span><span class='fu'>draws</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 4 chains, and 10 variables
 #&gt;    y_rep[1] y_rep[2] y_rep[3] y_rep[4] y_rep[5] y_rep[6] y_rep[7] y_rep[8]
 #&gt; 1         0        0        0        0        0        0        0        0
 #&gt; 2         0        1        1        1        1        1        1        1
@@ -313,7 +339,7 @@ documentation and tutorials.</p>
 #&gt; 9         0        1        0        1        1        1        1        1
 #&gt; 10        0        1        0        1        0        0        0        0
 #&gt; # ... with 3990 more draws, and 2 more variables
-#&gt; # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</div><div class='input'># }
+#&gt; # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</div><div class='input'><span class='co'># }</span>
 
 </div></pre>
   </div>
@@ -331,7 +357,7 @@ documentation and tutorials.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

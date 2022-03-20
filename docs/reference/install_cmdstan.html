@@ -50,7 +50,7 @@
 <meta property="og:description" content="The install_cmdstan() function attempts to download and
 install the latest release of CmdStan.
 Installing a previous release or a new release candidate is also possible
-by specifying the release_url argument.
+by specifying the version or release_url argument.
 See the first few sections of the CmdStan
 installation guide
 for details on the C++ toolchain required for installing CmdStan.
@@ -61,7 +61,10 @@ and variables from/to the make/local file of a CmdStan installation.
 Writing to the make/local file can be used to permanently add makefile
 flags/variables to an installation. For example adding specific compiler
 switches, changing the C++ compiler, etc. A change to the make/local file
-should typically be followed by calling rebuild_cmdstan()." />
+should typically be followed by calling rebuild_cmdstan().
+The check_cmdstan_toolchain() function attempts to check for the required
+C++ toolchain. It is called internally by install_cmdstan() but can also
+be called directly by the user." />
 <meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png" />
 
 
@@ -94,7 +97,7 @@ should typically be followed by calling rebuild_cmdstan()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -102,7 +105,7 @@ should typically be followed by calling rebuild_cmdstan()." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -155,19 +158,19 @@ should typically be followed by calling rebuild_cmdstan()." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -193,7 +196,7 @@ should typically be followed by calling rebuild_cmdstan()." />
     <p>The <code>install_cmdstan()</code> function attempts to download and
 install the latest release of <a href='https://github.com/stan-dev/cmdstan/releases/latest'>CmdStan</a>.
 Installing a previous release or a new release candidate is also possible
-by specifying the <code>release_url</code> argument.
+by specifying the <code>version</code> or <code>release_url</code> argument.
 See the first few sections of the CmdStan
 <a href='https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html'>installation guide</a>
 for details on the C++ toolchain required for installing CmdStan.</p>
@@ -205,77 +208,80 @@ Writing to the <code>make/local</code> file can be used to permanently add makef
 flags/variables to an installation. For example adding specific compiler
 switches, changing the C++ compiler, etc. A change to the <code>make/local</code> file
 should typically be followed by calling <code>rebuild_cmdstan()</code>.</p>
+<p>The <code>check_cmdstan_toolchain()</code> function attempts to check for the required
+C++ toolchain. It is called internally by <code>install_cmdstan()</code> but can also
+be called directly by the user.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>install_cmdstan</span>(
-  <span class='kw'>dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"mc.cores"</span>, <span class='fl'>2</span>),
-  <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>overwrite</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>timeout</span> <span class='kw'>=</span> <span class='fl'>1200</span>,
-  <span class='kw'>version</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>release_url</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
-  <span class='kw'>check_toolchain</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)
+    <pre class="usage"><span class='fu'>install_cmdstan</span><span class='op'>(</span>
+  dir <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cores <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span><span class='op'>(</span><span class='st'>"mc.cores"</span>, <span class='fl'>2</span><span class='op'>)</span>,
+  quiet <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  overwrite <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  timeout <span class='op'>=</span> <span class='fl'>1200</span>,
+  version <span class='op'>=</span> <span class='cn'>NULL</span>,
+  release_url <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cpp_options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  check_toolchain <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
 
-<span class='fu'>rebuild_cmdstan</span>(
-  <span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(),
-  <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"mc.cores"</span>, <span class='fl'>2</span>),
-  <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>timeout</span> <span class='kw'>=</span> <span class='fl'>600</span>
-)
+<span class='fu'>rebuild_cmdstan</span><span class='op'>(</span>
+  dir <span class='op'>=</span> <span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span><span class='op'>(</span><span class='op'>)</span>,
+  cores <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span><span class='op'>(</span><span class='st'>"mc.cores"</span>, <span class='fl'>2</span><span class='op'>)</span>,
+  quiet <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  timeout <span class='op'>=</span> <span class='fl'>600</span>
+<span class='op'>)</span>
 
-<span class='fu'>cmdstan_make_local</span>(<span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>append</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='fu'>cmdstan_make_local</span><span class='op'>(</span>dir <span class='op'>=</span> <span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span><span class='op'>(</span><span class='op'>)</span>, cpp_options <span class='op'>=</span> <span class='cn'>NULL</span>, append <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 
-<span class='fu'>check_cmdstan_toolchain</span>(<span class='kw'>fix</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+<span class='fu'>check_cmdstan_toolchain</span><span class='op'>(</span>fix <span class='op'>=</span> <span class='cn'>FALSE</span>, quiet <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>dir</th>
-      <td><p>Path to the directory in which to install CmdStan. The default is
-to install it in a directory called <code>.cmdstanr</code> within the user's home
-directory (i.e, <code><a href='https://rdrr.io/r/base/file.path.html'>file.path(Sys.getenv("HOME"), ".cmdstanr")</a></code>).</p></td>
+      <td><p>(string) The path to the directory in which to install CmdStan.
+The default is to install it in a directory called <code>.cmdstan</code> within the
+user's home directory (i.e, <code><a href='https://rdrr.io/r/base/file.path.html'>file.path(Sys.getenv("HOME"), ".cmdstan")</a></code>).</p></td>
     </tr>
     <tr>
       <th>cores</th>
-      <td><p>The number of CPU cores to use to parallelize building CmdStan
-and speed up installation. If <code>cores</code> is not specified then the default is
-to look for the option <code>"mc.cores"</code>, which can be set for an entire <span style="R">R</span>
-session by <code><a href='https://rdrr.io/r/base/options.html'>options(mc.cores=value)</a></code>. If the <code>"mc.cores"</code> option has not
-been set then the default is <code>2</code>.</p></td>
+      <td><p>(integer) The number of CPU cores to use to parallelize building
+CmdStan and speed up installation. If <code>cores</code> is not specified then the
+default is to look for the option <code>"mc.cores"</code>, which can be set for an
+entire <span style="R">R</span> session by <code><a href='https://rdrr.io/r/base/options.html'>options(mc.cores=value)</a></code>. If the <code>"mc.cores"</code> option
+has not been set then the default is <code>2</code>.</p></td>
     </tr>
     <tr>
       <th>quiet</th>
-      <td><p>For <code>install_cmdstan()</code>, should the verbose output from the
-system processes be suppressed when building the CmdStan binaries?
-The default is <code>FALSE</code>.
-For <code>check_cmdstan_toolchain()</code>, should the function suppress printing
-informational messages? The default is <code>FALSE</code>. If <code>TRUE</code> only errors will
-be printed.</p></td>
+      <td><p>(logical) For <code>install_cmdstan()</code>, should the verbose output
+from the system processes be suppressed when building the CmdStan binaries?
+The default is <code>FALSE</code>. For <code>check_cmdstan_toolchain()</code>, should the
+function suppress printing informational messages? The default is <code>FALSE</code>.
+If <code>TRUE</code> only errors will be printed.</p></td>
     </tr>
     <tr>
       <th>overwrite</th>
-      <td><p>Should CmdStan still be downloaded and installed even if an
-installation of the same version is found in <code>dir</code>? The default is <code>FALSE</code>,
-in which case an informative error is thrown instead of overwriting the
-user's installation.</p></td>
+      <td><p>(logical) Should CmdStan still be downloaded and installed
+even if an installation of the same version is found in <code>dir</code>? The default
+is <code>FALSE</code>, in which case an informative error is thrown instead of
+overwriting the user's installation.</p></td>
     </tr>
     <tr>
       <th>timeout</th>
-      <td><p>Timeout (in seconds) for the build stage of the installation.</p></td>
+      <td><p>(positive real) Timeout (in seconds) for the build stage of
+the installation.</p></td>
     </tr>
     <tr>
       <th>version</th>
-      <td><p>The CmdStan release version to install. The default is <code>NULL</code>,
-which downloads the latest stable release from
+      <td><p>(string) The CmdStan release version to install. The default
+is <code>NULL</code>, which downloads the latest stable release from
 <a href='https://github.com/stan-dev/cmdstan/releases'>https://github.com/stan-dev/cmdstan/releases</a>.</p></td>
     </tr>
     <tr>
       <th>release_url</th>
-      <td><p>The URL for the specific CmdStan release or
+      <td><p>(string) The URL for the specific CmdStan release or
 release candidate to install. See <a href='https://github.com/stan-dev/cmdstan/releases'>https://github.com/stan-dev/cmdstan/releases</a>.
 The URL should point to the tarball (<code>.tar.gz.</code> file) itself, e.g.,
 <code>release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"</code>.
@@ -283,20 +289,21 @@ If both <code>version</code> and <code>release_url</code> are specified then <co
     </tr>
     <tr>
       <th>cpp_options</th>
-      <td><p>A list specifying any makefile flags/variables to be
-written to the <code>make/local</code> file. For example, <code><a href='https://rdrr.io/r/base/list.html'>list("CXX" = "clang++")</a></code>
-will force the use of clang for compilation.</p></td>
+      <td><p>(list) Any makefile flags/variables to be written to
+the <code>make/local</code> file. For example, <code><a href='https://rdrr.io/r/base/list.html'>list("CXX" = "clang++")</a></code> will force
+the use of clang for compilation.</p></td>
     </tr>
     <tr>
       <th>check_toolchain</th>
-      <td><p>Should <code>install_cmdstan()</code> attempt to check that the
-required toolchain is installed and properly configured. The default is <code>TRUE</code>.</p></td>
+      <td><p>(logical) Should <code>install_cmdstan()</code> attempt to check
+that the required toolchain is installed and properly configured. The
+default is <code>TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>append</th>
-      <td><p>For <code>cmdstan_make_local()</code>, should the listed makefile flags be
-appended to the end of the existing <code>make/local</code> file? The default is <code>TRUE</code>.
-If <code>FALSE</code> the file is overwritten.</p></td>
+      <td><p>(logical) For <code>cmdstan_make_local()</code>, should the listed
+makefile flags be appended to the end of the existing <code>make/local</code> file?
+The default is <code>TRUE</code>. If <code>FALSE</code> the file is overwritten.</p></td>
     </tr>
     <tr>
       <th>fix</th>
@@ -315,17 +322,20 @@ the updated contents are returned.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='fu'>check_cmdstan_toolchain</span>()</div><div class='output co'>#&gt; <span class='message'>The C++ toolchain required for CmdStan is setup properly!</span></div><div class='input'>
+<span class='fu'>check_cmdstan_toolchain</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>The C++ toolchain required for CmdStan is setup properly!</span></div><div class='input'>
 <span class='co'># install_cmdstan(cores = 4)</span>
 
-<span class='no'>cpp_options</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
-  <span class='st'>"CXX"</span> <span class='kw'>=</span> <span class='st'>"clang++"</span>,
+<span class='va'>cpp_options</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+  <span class='st'>"CXX"</span> <span class='op'>=</span> <span class='st'>"clang++"</span>,
   <span class='st'>"CXXFLAGS+= -march=native"</span>,
-  <span class='kw'>PRECOMPILED_HEADERS</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)
+  PRECOMPILED_HEADERS <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
 <span class='co'># cmdstan_make_local(cpp_options = cpp_options)</span>
 <span class='co'># rebuild_cmdstan()</span>
-<span class='co'># }</span></div></pre>
+<span class='co'># }</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -341,7 +351,7 @@ the updated contents are returned.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

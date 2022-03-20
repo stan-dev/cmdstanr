@@ -60,6 +60,7 @@ MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 An example of compiling with MPI:mpi_options = list(STAN_MPI=TRUE, CXX=&quot;mpicxx&quot;, TBB_CXX_TYPE=&quot;gcc&quot;)
 mod = cmdstan_model(&quot;model.stan&quot;, cpp_options = mpi_options)
 
+
 The C++ options that must be supplied to the
 compile call are:
 STAN_MPI: Enables the use of MPI with Stan if TRUE.
@@ -105,7 +106,7 @@ mpi_args = list(&quot;n&quot; = n_procs)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -113,7 +114,7 @@ mpi_args = list(&quot;n&quot; = n_procs)." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -166,19 +167,19 @@ mpi_args = list(&quot;n&quot; = n_procs)." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -211,8 +212,9 @@ chains and threading support for within-chain parallelization.</p>
 installed. For Unix systems the most commonly used implementations are
 MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 (for example mpicxx), which is required to compile the model.</p>
-<p>An example of compiling with MPI:</p><pre><span class='no'>mpi_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>STAN_MPI</span><span class='kw'>=</span><span class='fl'>TRUE</span>, <span class='kw'>CXX</span><span class='kw'>=</span><span class='st'>"mpicxx"</span>, <span class='kw'>TBB_CXX_TYPE</span><span class='kw'>=</span><span class='st'>"gcc"</span>)
-<span class='no'>mod</span> <span class='kw'>=</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='st'>"model.stan"</span>, <span class='kw'>cpp_options</span> <span class='kw'>=</span> <span class='no'>mpi_options</span>)</pre>
+<p>An example of compiling with MPI:</p><pre><span class='va'>mpi_options</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>STAN_MPI<span class='op'>=</span><span class='cn'>TRUE</span>, CXX<span class='op'>=</span><span class='st'>"mpicxx"</span>, TBB_CXX_TYPE<span class='op'>=</span><span class='st'>"gcc"</span><span class='op'>)</span>
+<span class='va'>mod</span> <span class='op'>=</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span><span class='op'>(</span><span class='st'>"model.stan"</span>, cpp_options <span class='op'>=</span> <span class='va'>mpi_options</span><span class='op'>)</span>
+</pre>
 
 <p>The C++ options that must be supplied to the
 <a href='model-method-compile.html'>compile</a> call are:</p><ul>
@@ -229,37 +231,38 @@ only define the number of processes. To use <code>n_procs</code> processes speci
 <code>mpi_args = list("n" = n_procs)</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>sample_mpi</span>(
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>mpi_cmd</span> <span class='kw'>=</span> <span class='st'>"mpiexec"</span>,
-  <span class='kw'>mpi_args</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>init</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>save_latent_dynamics</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>output_dir</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>output_basename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>chain_ids</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq_len</a></span>(<span class='no'>chains</span>),
-  <span class='kw'>iter_warmup</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>iter_sampling</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>save_warmup</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>thin</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>max_treedepth</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>adapt_engaged</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>adapt_delta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>step_size</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>metric</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>metric_file</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>inv_metric</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>init_buffer</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>term_buffer</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>window</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>fixed_param</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>sig_figs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>validate_csv</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>show_messages</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>sample_mpi</span><span class='op'>(</span>
+  data <span class='op'>=</span> <span class='cn'>NULL</span>,
+  mpi_cmd <span class='op'>=</span> <span class='st'>"mpiexec"</span>,
+  mpi_args <span class='op'>=</span> <span class='cn'>NULL</span>,
+  seed <span class='op'>=</span> <span class='cn'>NULL</span>,
+  refresh <span class='op'>=</span> <span class='cn'>NULL</span>,
+  init <span class='op'>=</span> <span class='cn'>NULL</span>,
+  save_latent_dynamics <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  output_dir <span class='op'>=</span> <span class='cn'>NULL</span>,
+  output_basename <span class='op'>=</span> <span class='cn'>NULL</span>,
+  chains <span class='op'>=</span> <span class='fl'>1</span>,
+  chain_ids <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq_len</a></span><span class='op'>(</span><span class='va'>chains</span><span class='op'>)</span>,
+  iter_warmup <span class='op'>=</span> <span class='cn'>NULL</span>,
+  iter_sampling <span class='op'>=</span> <span class='cn'>NULL</span>,
+  save_warmup <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  thin <span class='op'>=</span> <span class='cn'>NULL</span>,
+  max_treedepth <span class='op'>=</span> <span class='cn'>NULL</span>,
+  adapt_engaged <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  adapt_delta <span class='op'>=</span> <span class='cn'>NULL</span>,
+  step_size <span class='op'>=</span> <span class='cn'>NULL</span>,
+  metric <span class='op'>=</span> <span class='cn'>NULL</span>,
+  metric_file <span class='op'>=</span> <span class='cn'>NULL</span>,
+  inv_metric <span class='op'>=</span> <span class='cn'>NULL</span>,
+  init_buffer <span class='op'>=</span> <span class='cn'>NULL</span>,
+  term_buffer <span class='op'>=</span> <span class='cn'>NULL</span>,
+  window <span class='op'>=</span> <span class='cn'>NULL</span>,
+  fixed_param <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  sig_figs <span class='op'>=</span> <span class='cn'>NULL</span>,
+  show_messages <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  diagnostics <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"divergences"</span>, <span class='st'>"treedepth"</span>, <span class='st'>"ebfmi"</span><span class='op'>)</span>,
+  validate_csv <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -267,17 +270,20 @@ only define the number of processes. To use <code>n_procs</code> processes speci
     <tr>
       <th>data</th>
       <td><p>(multiple options) The data to use for the variables specified in
-the <code>data</code> block of the Stan program. One of the following:</p><ul>
-<li><p>A named list of <span style="R">R</span> objects (like for RStan). Internally this list is then
-written to JSON for CmdStan using <code><a href='write_stan_json.html'>write_stan_json()</a></code>.</p></li>
+the data block of the Stan program. One of the following:</p><ul>
+<li><p>A named list of <span style="R">R</span> objects with the names corresponding to variables
+declared in the data block of the Stan program. Internally this list is then
+written to JSON for CmdStan using <code><a href='write_stan_json.html'>write_stan_json()</a></code>. See
+<code><a href='write_stan_json.html'>write_stan_json()</a></code> for details on the conversions performed on <span style="R">R</span> objects
+before they are passed to Stan.</p></li>
 <li><p>A path to a data file compatible with CmdStan (JSON or <span style="R">R</span> dump). See the
-appendices in the CmdStan manual for details on using these formats.</p></li>
-<li><p><code>NULL</code> or an empty list if the Stan program has no <code>data</code> block.</p></li>
+appendices in the CmdStan guide for details on using these formats.</p></li>
+<li><p><code>NULL</code> or an empty list if the Stan program has no data block.</p></li>
 </ul></td>
     </tr>
     <tr>
       <th>mpi_cmd</th>
-      <td><p>(character vector) The MPI launcher used for launching MPI
+      <td><p>(string) The MPI launcher used for launching MPI
 processes. The default launcher is <code>"mpiexec"</code>.</p></td>
     </tr>
     <tr>
@@ -292,11 +298,11 @@ model executable.</p></td>
       <td><p>(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
 In the case of multi-chain sampling the single <code>seed</code> will automatically be
 augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the <code>transformed data</code> block, which defaults to
+seed. The exception is the transformed data block, which defaults to
 using same seed for all chains so that the same data is generated for all
 chains if RNG functions are used. The only time <code>seed</code> should be specified
 as a vector (one element per chain) is if RNG functions are used in
-<code>transformed data</code> and the goal is to generate <em>different</em> data for each
+transformed data and the goal is to generate <em>different</em> data for each
 chain.</p></td>
     </tr>
     <tr>
@@ -308,9 +314,10 @@ printed.</p></td>
     <tr>
       <th>init</th>
       <td><p>(multiple options) The initialization method to use for the
-variables declared in the <code>parameters</code> block of the Stan program:</p><ul>
+variables declared in the parameters block of the Stan program. One of
+the following:</p><ul>
 <li><p>A real number <code>x&gt;0</code>. This initializes <em>all</em> parameters randomly between
-<code>[-x,x]</code> (on the <em>unconstrained</em> parameter space);</p></li>
+<code>[-x,x]</code> on the <em>unconstrained</em> parameter space.;</p></li>
 <li><p>The number <code>0</code>. This initializes <em>all</em> parameters to <code>0</code>;</p></li>
 <li><p>A character vector of paths (one per chain) to JSON or Rdump files
 containing initial values for all or some parameters. See
@@ -360,11 +367,10 @@ corresponding to the defaults used by <code>$save_output_files()</code>.</p></li
     </tr>
     <tr>
       <th>output_basename</th>
-      <td><p>(string) A string to use as a prefix for the
-names of the output CSV files of CmdStan.</p><ul>
-<li><p>If <code>NULL</code> (the default), the basename of the output CSV files
-will be comprised from the model name, timestamp and 5 random characters.</p></li>
-</ul></td>
+      <td><p>(string) A string to use as a prefix for the names of
+the output CSV files of CmdStan. If <code>NULL</code> (the default), the basename of
+the output CSV files will be comprised from the model name, timestamp, and
+5 random characters.</p></td>
     </tr>
     <tr>
       <th>chains</th>
@@ -373,9 +379,9 @@ default is 4.</p></td>
     </tr>
     <tr>
       <th>chain_ids</th>
-      <td><p>(vector) A vector of chain IDs. Must contain <code>chains</code> unique
-positive integers. If not set, the default chain IDs are used (integers
-starting from <code>1</code>).</p></td>
+      <td><p>(integer vector) A vector of chain IDs. Must contain as many
+unique positive integers as the number of chains. If not set, the default
+chain IDs are used (integers starting from <code>1</code>).</p></td>
     </tr>
     <tr>
       <th>iter_warmup</th>
@@ -392,9 +398,7 @@ to run per chain. Note: in the CmdStan User's Guide this is referred to as
     <tr>
       <th>save_warmup</th>
       <td><p>(logical) Should warmup iterations be saved? The default
-is <code>FALSE</code>. If <code>save_warmup=TRUE</code> then you can use
-<a href='fit-method-draws.html'>$draws(inc_warmup=TRUE)</a> to include warmup when
-accessing the draws.</p></td>
+is <code>FALSE</code>.</p></td>
     </tr>
     <tr>
       <th>thin</th>
@@ -429,14 +433,14 @@ during warmup.</p></td>
     </tr>
     <tr>
       <th>metric</th>
-      <td><p>(character) One of <code>"diag_e"</code>, <code>"dense_e"</code>, or <code>"unit_e"</code>,
+      <td><p>(string) One of <code>"diag_e"</code>, <code>"dense_e"</code>, or <code>"unit_e"</code>,
 specifying the geometry of the base manifold. See the <em>Euclidean Metric</em>
 section of the CmdStan User's Guide for more details. To specify a
 precomputed (inverse) metric, see the <code>inv_metric</code> argument below.</p></td>
     </tr>
     <tr>
       <th>metric_file</th>
-      <td><p>(character) A character vector containing paths to JSON or
+      <td><p>(character vector) The paths to JSON or
 Rdump files (one per chain) compatible with CmdStan that contain
 precomputed inverse metrics. The <code>metric_file</code> argument is inherited from
 CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
@@ -489,20 +493,36 @@ Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.</p></td>
     </tr>
     <tr>
-      <th>validate_csv</th>
-      <td><p>(logical) When <code>TRUE</code> (the default), validate the
-sampling results in the csv files. Disable if you wish to manually read in
-the sampling results and validate them yourself, for example using
-<code><a href='read_cmdstan_csv.html'>read_cmdstan_csv()</a></code>.</p></td>
-    </tr>
-    <tr>
       <th>show_messages</th>
       <td><p>(logical) When <code>TRUE</code> (the default), prints all
 informational messages, for example rejection of the current proposal.
-Disable if you wish silence these messages, but this is not recommended
-unless you are very sure that the model is correct up to numerical error.
-If the messages are silenced then the <code>$output()</code> method of the resulting
-fit object can be used to display all the silenced messages.</p></td>
+Disable if you wish to silence these messages, but this is not usually
+recommended unless you are very confident that the model is correct up to
+numerical error. If the messages are silenced then the
+<code><a href='fit-method-output.html'>$output()</a></code> method of the resulting fit object can be
+used to display the silenced messages.</p></td>
+    </tr>
+    <tr>
+      <th>diagnostics</th>
+      <td><p>(character vector) The diagnostics to automatically check
+and warn about after sampling. Setting this to an empty string <code>""</code> or
+<code>NULL</code> can be used to prevent CmdStanR from automatically reading in the
+sampler diagnostics from CSV if you wish to manually read in the results
+and validate them yourself, for example using <code><a href='read_cmdstan_csv.html'>read_cmdstan_csv()</a></code>. The
+currently available diagnostics are <code>"divergences"</code>, <code>"treedepth"</code>,
+and <code>"ebfmi"</code> (the default is to check all of them).</p>
+<p>These diagnostics are also available after fitting. The
+<code><a href='fit-method-sampler_diagnostics.html'>$sampler_diagnostics()</a></code> method provides
+access the diagnostic values for each iteration and the
+<code><a href='fit-method-diagnostic_summary.html'>$diagnostic_summary()</a></code> method provides
+summaries of the diagnostics and can regenerate the warning messages.</p>
+<p>Diagnostics like R-hat and effective sample size are <em>not</em> currently
+available via the <code>diagnostics</code> argument but can be checked after fitting
+using the <code><a href='fit-method-summary.html'>$summary()</a></code> method.</p></td>
+    </tr>
+    <tr>
+      <th>validate_csv</th>
+      <td><p>Deprecated and will be removed in a future release.</p></td>
     </tr>
     </table>
 
@@ -525,17 +545,20 @@ details on MPI support in Stan.</p>
 <p>Other CmdStanModel methods: 
 <code><a href='model-method-check_syntax.html'>model-method-check_syntax</a></code>,
 <code><a href='model-method-compile.html'>model-method-compile</a></code>,
+<code><a href='model-method-diagnose.html'>model-method-diagnose</a></code>,
+<code><a href='model-method-format.html'>model-method-format</a></code>,
 <code><a href='model-method-generate-quantities.html'>model-method-generate-quantities</a></code>,
 <code><a href='model-method-optimize.html'>model-method-optimize</a></code>,
 <code><a href='model-method-sample.html'>model-method-sample</a></code>,
+<code><a href='model-method-variables.html'>model-method-variables</a></code>,
 <code><a href='model-method-variational.html'>model-method-variational</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'># \dontrun{
-# mpi_options &lt;- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
-# mod &lt;- cmdstan_model("model.stan", cpp_options = mpi_options)
-# fit &lt;- mod$sample_mpi(..., mpi_args = list("n" = 4))
-# }
+    <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
+<span class='co'># mpi_options &lt;- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")</span>
+<span class='co'># mod &lt;- cmdstan_model("model.stan", cpp_options = mpi_options)</span>
+<span class='co'># fit &lt;- mod$sample_mpi(..., mpi_args = list("n" = 4))</span>
+<span class='co'># }</span>
 
 </div></pre>
   </div>
@@ -553,7 +576,7 @@ details on MPI support in Stan.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

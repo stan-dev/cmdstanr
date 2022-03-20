@@ -4,6 +4,9 @@
     <loc>https://mc-stan.org/cmdstanr/index.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/CmdStanDiagnose.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanGQ.html</loc>
   </url>
   <url>
@@ -17,6 +20,12 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/CmdStanVB.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/as_draws.CmdStanMCMC.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/as_mcmc.list.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_default_install_path.html</loc>
@@ -34,13 +43,25 @@
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstanr_example.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/draws_to_csv.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/eng_cmdstan.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-code.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-diagnostic_summary.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-draws.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/fit-method-gradients.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/fit-method-init.html</loc>
@@ -97,6 +118,12 @@
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-compile.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-diagnose.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-format.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.html</loc>
   </url>
   <url>
@@ -107,6 +134,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-sample_mpi.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/model-method-variables.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/model-method-variational.html</loc>
@@ -136,6 +166,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/write_stan_tempfile.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/articles/articles-online-only/opencl.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/articles/children/settings-knitr.html</loc>
   </url>
   <url>
@@ -143,9 +176,6 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/articles/cmdstanr.html</loc>
-  </url>
-  <url>
-    <loc>https://mc-stan.org/cmdstanr/articles/opencl.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/articles/profiling.html</loc>

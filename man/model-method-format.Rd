@@ -55,7 +55,7 @@ parameters {
   real                     lambda;
 }
 model {
-  target += 
+  target +=
  poisson_log(y | lambda);
 }
 ")

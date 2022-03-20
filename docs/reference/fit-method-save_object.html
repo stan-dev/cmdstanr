@@ -84,7 +84,7 @@ safest way to guarantee that everything has been read in before saving." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -92,7 +92,7 @@ safest way to guarantee that everything has been read in before saving." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -145,19 +145,19 @@ safest way to guarantee that everything has been read in before saving." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -187,7 +187,7 @@ read into R lazily (i.e., as needed), the <code>$save_object()</code> method is 
 safest way to guarantee that everything has been read in before saving.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>save_object</span>(<span class='no'>file</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>save_object</span><span class='op'>(</span><span class='va'>file</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -208,28 +208,30 @@ safest way to guarantee that everything has been read in before saving.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'>
-<span class='no'>temp_rds_file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>(<span class='kw'>fileext</span> <span class='kw'>=</span> <span class='st'>".RDS"</span>)
-<span class='no'>fit</span>$<span class='fu'>save_object</span>(<span class='kw'>file</span> <span class='kw'>=</span> <span class='no'>temp_rds_file</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/rm.html'>rm</a></span>(<span class='no'>fit</span>)
+<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span><span class='op'>(</span><span class='st'>"logistic"</span><span class='op'>)</span>
 
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span>(<span class='no'>temp_rds_file</span>)
-<span class='no'>fit</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 105 x 10</span><span>
-#&gt;    variable    mean  median     sd    mad       q5      q95  rhat ess_bulk
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> lp__     -</span><span style='color: #BB0000;'>66.0</span><span>   -</span><span style='color: #BB0000;'>65.7</span><span>   1.46   1.23   -</span><span style='color: #BB0000;'>68.7</span><span>    -</span><span style='color: #BB0000;'>64.3</span><span>     1.00    </span><span style='text-decoration: underline;'>2</span><span>070.
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> alpha      0.381   0.384 0.217  0.221    0.030</span><span style='text-decoration: underline;'>4</span><span>   0.735   1.00    </span><span style='text-decoration: underline;'>4</span><span>458.
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> beta[1]   -</span><span style='color: #BB0000;'>0.668</span><span>  -</span><span style='color: #BB0000;'>0.659</span><span> 0.252  0.240   -</span><span style='color: #BB0000;'>1.09</span><span>    -</span><span style='color: #BB0000;'>0.271</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>489.
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> beta[2]   -</span><span style='color: #BB0000;'>0.271</span><span>  -</span><span style='color: #BB0000;'>0.266</span><span> 0.229  0.230   -</span><span style='color: #BB0000;'>0.655</span><span>    0.088</span><span style='text-decoration: underline;'>5</span><span>  1.00    </span><span style='text-decoration: underline;'>3</span><span>487.
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> beta[3]    0.678   0.672 0.272  0.269    0.247    1.14    1.00    </span><span style='text-decoration: underline;'>4</span><span>261.
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.514</span><span>  -</span><span style='color: #BB0000;'>0.507</span><span> 0.099</span><span style='text-decoration: underline;'>0</span><span> 0.097</span><span style='text-decoration: underline;'>1</span><span>  -</span><span style='color: #BB0000;'>0.690</span><span>   -</span><span style='color: #BB0000;'>0.361</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>269.
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.404</span><span>  -</span><span style='color: #BB0000;'>0.385</span><span> 0.148  0.144   -</span><span style='color: #BB0000;'>0.676</span><span>   -</span><span style='color: #BB0000;'>0.197</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>515.
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.497</span><span>  -</span><span style='color: #BB0000;'>0.458</span><span> 0.224  0.208   -</span><span style='color: #BB0000;'>0.906</span><span>   -</span><span style='color: #BB0000;'>0.199</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>985.
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> log_lik…  -</span><span style='color: #BB0000;'>0.452</span><span>  -</span><span style='color: #BB0000;'>0.433</span><span> 0.154  0.153   -</span><span style='color: #BB0000;'>0.730</span><span>   -</span><span style='color: #BB0000;'>0.235</span><span>   1.00    </span><span style='text-decoration: underline;'>3</span><span>939.
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> log_lik…  -</span><span style='color: #BB0000;'>1.18</span><span>   -</span><span style='color: #BB0000;'>1.16</span><span>  0.286  0.285   -</span><span style='color: #BB0000;'>1.68</span><span>    -</span><span style='color: #BB0000;'>0.754</span><span>   1.00    </span><span style='text-decoration: underline;'>4</span><span>741.
-#&gt; </span><span style='color: #949494;'># … with 95 more rows, and 1 more variable: ess_tail </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span></div><div class='input'># }
+<span class='va'>temp_rds_file</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span><span class='op'>(</span>fileext <span class='op'>=</span> <span class='st'>".RDS"</span><span class='op'>)</span>
+<span class='va'>fit</span><span class='op'>$</span><span class='fu'>save_object</span><span class='op'>(</span>file <span class='op'>=</span> <span class='va'>temp_rds_file</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/rm.html'>rm</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span>
 
-</div></span></pre>
+<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span><span class='op'>(</span><span class='va'>temp_rds_file</span><span class='op'>)</span>
+<span class='va'>fit</span><span class='op'>$</span><span class='fu'>summary</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 105 × 10</span>
+#&gt;    variable      mean  median     sd    mad       q5      q95  rhat ess_bulk
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>        <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'> 1</span> lp__       -<span style='color: #BB0000;'>65.9</span>   -<span style='color: #BB0000;'>65.6</span>   1.43   1.20   -<span style='color: #BB0000;'>68.8</span>    -<span style='color: #BB0000;'>64.3</span>     1.00    <span style='text-decoration: underline;'>2</span>291.
+#&gt; <span style='color: #BCBCBC;'> 2</span> alpha        0.379   0.380 0.216  0.220    0.021<span style='text-decoration: underline;'>4</span>   0.735   1.00    <span style='text-decoration: underline;'>4</span>664.
+#&gt; <span style='color: #BCBCBC;'> 3</span> beta[1]     -<span style='color: #BB0000;'>0.668</span>  -<span style='color: #BB0000;'>0.663</span> 0.252  0.250   -<span style='color: #BB0000;'>1.09</span>    -<span style='color: #BB0000;'>0.259</span>   1.00    <span style='text-decoration: underline;'>4</span>187.
+#&gt; <span style='color: #BCBCBC;'> 4</span> beta[2]     -<span style='color: #BB0000;'>0.273</span>  -<span style='color: #BB0000;'>0.265</span> 0.225  0.224   -<span style='color: #BB0000;'>0.646</span>    0.085<span style='text-decoration: underline;'>6</span>  1.00    <span style='text-decoration: underline;'>3</span>736.
+#&gt; <span style='color: #BCBCBC;'> 5</span> beta[3]      0.682   0.679 0.261  0.258    0.260    1.10    1.00    <span style='text-decoration: underline;'>3</span>626.
+#&gt; <span style='color: #BCBCBC;'> 6</span> log_lik[1]  -<span style='color: #BB0000;'>0.515</span>  -<span style='color: #BB0000;'>0.509</span> 0.097<span style='text-decoration: underline;'>9</span> 0.097<span style='text-decoration: underline;'>0</span>  -<span style='color: #BB0000;'>0.683</span>   -<span style='color: #BB0000;'>0.366</span>   1.00    <span style='text-decoration: underline;'>4</span>695.
+#&gt; <span style='color: #BCBCBC;'> 7</span> log_lik[2]  -<span style='color: #BB0000;'>0.401</span>  -<span style='color: #BB0000;'>0.380</span> 0.144  0.136   -<span style='color: #BB0000;'>0.666</span>   -<span style='color: #BB0000;'>0.200</span>   1.00    <span style='text-decoration: underline;'>4</span>367.
+#&gt; <span style='color: #BCBCBC;'> 8</span> log_lik[3]  -<span style='color: #BB0000;'>0.496</span>  -<span style='color: #BB0000;'>0.462</span> 0.218  0.200   -<span style='color: #BB0000;'>0.899</span>   -<span style='color: #BB0000;'>0.206</span>   1.00    <span style='text-decoration: underline;'>4</span>031.
+#&gt; <span style='color: #BCBCBC;'> 9</span> log_lik[4]  -<span style='color: #BB0000;'>0.449</span>  -<span style='color: #BB0000;'>0.432</span> 0.150  0.144   -<span style='color: #BB0000;'>0.722</span>   -<span style='color: #BB0000;'>0.237</span>   1.00    <span style='text-decoration: underline;'>3</span>885.
+#&gt; <span style='color: #BCBCBC;'>10</span> log_lik[5]  -<span style='color: #BB0000;'>1.18</span>   -<span style='color: #BB0000;'>1.17</span>  0.276  0.276   -<span style='color: #BB0000;'>1.68</span>    -<span style='color: #BB0000;'>0.769</span>   1.00    <span style='text-decoration: underline;'>4</span>020.
+#&gt; <span style='color: #949494;'># … with 95 more rows, and 1 more variable: ess_tail &lt;dbl&gt;</span></div><div class='input'><span class='co'># }</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -245,7 +247,7 @@ safest way to guarantee that everything has been read in before saving.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

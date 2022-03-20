@@ -82,7 +82,7 @@ parsing succeeds. If invalid syntax in found an error is thrown." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -90,7 +90,7 @@ parsing succeeds. If invalid syntax in found an error is thrown." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -143,19 +143,19 @@ parsing succeeds. If invalid syntax in found an error is thrown." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -183,12 +183,12 @@ checks the Stan program for syntax errors and returns <code>TRUE</code> (invisib
 parsing succeeds. If invalid syntax in found an error is thrown.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>check_syntax</span>(
-  <span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>include_paths</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>stanc_options</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
-  <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>check_syntax</span><span class='op'>(</span>
+  pedantic <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  include_paths <span class='op'>=</span> <span class='cn'>NULL</span>,
+  stanc_options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  quiet <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -237,15 +237,18 @@ documentation and tutorials.</p>
 
 <p>Other CmdStanModel methods: 
 <code><a href='model-method-compile.html'>model-method-compile</a></code>,
+<code><a href='model-method-diagnose.html'>model-method-diagnose</a></code>,
+<code><a href='model-method-format.html'>model-method-format</a></code>,
 <code><a href='model-method-generate-quantities.html'>model-method-generate-quantities</a></code>,
 <code><a href='model-method-optimize.html'>model-method-optimize</a></code>,
 <code><a href='model-method-sample_mpi.html'>model-method-sample_mpi</a></code>,
 <code><a href='model-method-sample.html'>model-method-sample</a></code>,
+<code><a href='model-method-variables.html'>model-method-variables</a></code>,
 <code><a href='model-method-variational.html'>model-method-variational</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(<span class='st'>"
+<span class='va'>file</span> <span class='op'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span><span class='op'>(</span><span class='st'>"
 data {
   int N;
   int y[N];
@@ -257,14 +260,28 @@ parameters {
 model {
   y ~ poisson(lambda);
 }
-"</span>)
-<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file</span>, <span class='kw'>compile</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
+"</span><span class='op'>)</span>
+<span class='va'>mod</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span><span class='op'>(</span><span class='va'>file</span>, compile <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
 
 <span class='co'># the program is syntactically correct, however...</span>
-<span class='no'>mod</span>$<span class='fu'>check_syntax</span>()</div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'>
+<span class='va'>mod</span><span class='op'>$</span><span class='fu'>check_syntax</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model_74b584fd23ea8c78eceda86d1d425fe8.stan', line 4, column 2: Declaration</span>
+#&gt; <span class='message'>    of arrays by placing brackets after a variable name is deprecated and</span>
+#&gt; <span class='message'>    will be removed in Stan 2.32.0. Instead use the array keyword before the</span>
+#&gt; <span class='message'>    type. This can be changed automatically using the auto-format flag to</span>
+#&gt; <span class='message'>    stanc</span></div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'>
 <span class='co'># pedantic mode will warn that lambda should be constrained to be positive</span>
 <span class='co'># and that lambda has no prior distribution</span>
-<span class='no'>mod</span>$<span class='fu'>check_syntax</span>(<span class='kw'>pedantic</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='message'>Warning:</span></div><div class='output co'>#&gt; <span class='message'>  The parameter lambda has no priors.</span></div><div class='output co'>#&gt; <span class='message'>Warning at '/var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/file1700031e704e7.stan', line 11, column 14 to column 20:</span></div><div class='output co'>#&gt; <span class='message'>  A poisson distribution is given parameter lambda as a rate parameter</span></div><div class='output co'>#&gt; <span class='message'>  (argument 1), but lambda was not constrained to be strictly positive.</span></div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'># }
+<span class='va'>mod</span><span class='op'>$</span><span class='fu'>check_syntax</span><span class='op'>(</span>pedantic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model_74b584fd23ea8c78eceda86d1d425fe8.stan', line 4, column 2: Declaration</span>
+#&gt; <span class='message'>    of arrays by placing brackets after a variable name is deprecated and</span>
+#&gt; <span class='message'>    will be removed in Stan 2.32.0. Instead use the array keyword before the</span>
+#&gt; <span class='message'>    type. This can be changed automatically using the auto-format flag to</span>
+#&gt; <span class='message'>    stanc</span>
+#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model_74b584fd23ea8c78eceda86d1d425fe8.stan', line 11, column 14: A</span>
+#&gt; <span class='message'>    poisson distribution is given parameter lambda as a rate parameter</span>
+#&gt; <span class='message'>    (argument 1), but lambda was not constrained to be strictly positive.</span>
+#&gt; <span class='message'>Warning: The parameter lambda has no priors.</span></div><div class='output co'>#&gt; <span class='message'>Stan program is syntactically correct</span></div><div class='input'><span class='co'># }</span>
 
 </div></pre>
   </div>
@@ -282,7 +299,7 @@ model {
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

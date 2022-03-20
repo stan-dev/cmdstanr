@@ -84,7 +84,7 @@ requires adding profiling statements to the Stan program." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -92,7 +92,7 @@ requires adding profiling statements to the Stan program." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -145,19 +145,19 @@ requires adding profiling statements to the Stan program." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -187,7 +187,7 @@ See <code><a href='fit-method-save_output_files.html'>save_profile_files()</a></
 requires adding profiling statements to the Stan program.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>profiles</span>()</pre>
+    <pre class="usage"><span class='fu'>profiles</span><span class='op'>(</span><span class='op'>)</span></pre>
 
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -202,7 +202,7 @@ were created.</p>
     <pre class="examples"><div class='input'>
 <span class='co'># \dontrun{</span>
 <span class='co'># first fit a model using MCMC</span>
-<span class='no'>mcmc_program</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span>(
+<span class='va'>mcmc_program</span> <span class='op'>&lt;-</span> <span class='fu'><a href='write_stan_file.html'>write_stan_file</a></span><span class='op'>(</span>
   <span class='st'>'data {
     int&lt;lower=0&gt; N;
     int&lt;lower=0,upper=1&gt; y[N];
@@ -222,10 +222,21 @@ were created.</p>
     }
   }
 '</span>
-)
-<span class='no'>mod_mcmc</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>mcmc_program</span>)</div><div class='output co'>#&gt; <span class='message'>Compiling Stan program...</span></div><div class='output co'>#&gt; -\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/ </div><div class='input'>
-<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>))
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='no'>mod_mcmc</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>, <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>)</div><div class='output co'>#&gt; Running MCMC with 4 sequential chains...
+<span class='op'>)</span>
+<span class='va'>mod_mcmc</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span><span class='op'>(</span><span class='va'>mcmc_program</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model-d65431ed4576.stan', line 3, column 4: Declaration</span>
+#&gt; <span class='message'>    of arrays by placing brackets after a variable name is deprecated and</span>
+#&gt; <span class='message'>    will be removed in Stan 2.32.0. Instead use the array keyword before the</span>
+#&gt; <span class='message'>    type. This can be changed automatically using the auto-format flag to</span>
+#&gt; <span class='message'>    stanc</span>
+#&gt; <span class='message'>Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/model-d65431ed4576.stan', line 14, column 4: Declaration</span>
+#&gt; <span class='message'>    of arrays by placing brackets after a variable name is deprecated and</span>
+#&gt; <span class='message'>    will be removed in Stan 2.32.0. Instead use the array keyword before the</span>
+#&gt; <span class='message'>    type. This can be changed automatically using the auto-format flag to</span>
+#&gt; <span class='message'>    stanc</span></div><div class='input'>
+<span class='va'>data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>N <span class='op'>=</span> <span class='fl'>10</span>, y <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='va'>mod_mcmc</span><span class='op'>$</span><span class='fu'>sample</span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>data</span>, seed <span class='op'>=</span> <span class='fl'>123</span>, refresh <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; Running MCMC with 4 sequential chains...
 #&gt; 
 #&gt; Chain 1 finished in 0.0 seconds.
 #&gt; Chain 2 finished in 0.0 seconds.
@@ -234,39 +245,41 @@ were created.</p>
 #&gt; 
 #&gt; All 4 chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.6 seconds.</div><div class='input'>
-<span class='no'>fit</span>$<span class='fu'>profiles</span>()</div><div class='output co'>#&gt; [[1]]
+#&gt; Total execution time: 0.5 seconds.
+#&gt; </div><div class='input'>
+<span class='va'>fit</span><span class='op'>$</span><span class='fu'>profiles</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [[1]]
 #&gt;         name   thread_id  total_time forward_time reverse_time chain_stack
-#&gt; 1         gq 0x104d47dc0 0.000402785  0.000402785  0.000000000           0
-#&gt; 2 likelihood 0x104d47dc0 0.001322870  0.001002200  0.000320669        7169
+#&gt; 1         gq 0x10f232e00 0.000386068  0.000386068  0.000000000           0
+#&gt; 2 likelihood 0x10f232e00 0.001285670  0.000903227  0.000382445        7169
 #&gt;   no_chain_stack autodiff_calls no_autodiff_calls
 #&gt; 1              0              0              1000
 #&gt; 2              0           7169                 1
 #&gt; 
 #&gt; [[2]]
-#&gt;         name   thread_id total_time forward_time reverse_time chain_stack
-#&gt; 1         gq 0x1118cadc0 0.00037295   0.00037295  0.000000000           0
-#&gt; 2 likelihood 0x1118cadc0 0.00135248   0.00103213  0.000320351        7006
+#&gt;         name   thread_id  total_time forward_time reverse_time chain_stack
+#&gt; 1         gq 0x101daee00 0.000393415  0.000393415  0.000000000           0
+#&gt; 2 likelihood 0x101daee00 0.001305930  0.000932404  0.000373525        7155
 #&gt;   no_chain_stack autodiff_calls no_autodiff_calls
 #&gt; 1              0              0              1000
-#&gt; 2              0           7006                 1
+#&gt; 2              0           7155                 1
 #&gt; 
 #&gt; [[3]]
 #&gt;         name   thread_id  total_time forward_time reverse_time chain_stack
-#&gt; 1         gq 0x112449dc0 0.000417121  0.000417121  0.000000000           0
-#&gt; 2 likelihood 0x112449dc0 0.001384950  0.001047380  0.000337566        7049
+#&gt; 1         gq 0x1121b1e00 0.000534289  0.000534289  0.000000000           0
+#&gt; 2 likelihood 0x1121b1e00 0.001384640  0.000993686  0.000390953        6879
 #&gt;   no_chain_stack autodiff_calls no_autodiff_calls
 #&gt; 1              0              0              1000
-#&gt; 2              0           7049                 1
+#&gt; 2              0           6879                 1
 #&gt; 
 #&gt; [[4]]
 #&gt;         name   thread_id  total_time forward_time reverse_time chain_stack
-#&gt; 1         gq 0x104b05dc0 0.000390676  0.000390676  0.000000000           0
-#&gt; 2 likelihood 0x104b05dc0 0.001306610  0.000993724  0.000312886        6838
+#&gt; 1         gq 0x113ecce00 0.000356809  0.000356809  0.000000000           0
+#&gt; 2 likelihood 0x113ecce00 0.001137030  0.000803924  0.000333102        6892
 #&gt;   no_chain_stack autodiff_calls no_autodiff_calls
 #&gt; 1              0              0              1000
-#&gt; 2              0           6838                 1
-#&gt; </div><div class='input'># }
+#&gt; 2              0           6892                 1
+#&gt; </div><div class='input'><span class='co'># }</span>
 
 </div></pre>
   </div>
@@ -284,7 +297,7 @@ were created.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
