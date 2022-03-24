@@ -28,7 +28,9 @@ LazyData: true
 RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: CmdStan (https://mc-stan.org/users/interfaces/cmdstan)
-Imports: 
+Depends:
+    R (>= 3.5.0)
+Imports:
     checkmate,
     data.table,
     jsonlite (>= 1.2.0),
