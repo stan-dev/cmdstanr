@@ -579,37 +579,38 @@ test_that("cmdstan_model errors with no args ", {
   )
 })
 
-# test_that("cmdstan_model works with user_header", {
-#   tmpfile <- tempfile(fileext = ".hpp")
-#   hpp <-
-#   "
-#   #include <boost/math/tools/promotion.hpp>
-#   #include <ostream>
-#
-#   namespace bernoulli_external_model_namespace
-#   {
-#       template <typename T0__>
-#       inline typename boost::math::tools::promote_args<T0__>::type make_odds(const T0__ &
-#                                                                                  theta,
-#                                                                              std::ostream *pstream__)
-#       {
-#           return theta / (1 - theta);
-#       }
-#   }"
-#   cat(hpp, file = tmpfile, sep = "\n")
-#   mod <- cmdstan_model(
-#     stan_file = testing_stan_file("bernoulli_external"),
-#     user_header = tmpfile
-#   )
-#   expect_true(file.exists(mod$exe_file()))
-#   file.remove(mod$exe_file())
-#   mod_2 <- cmdstan_model(
-#     stan_file = testing_stan_file("bernoulli_external"),
-#     cpp_options=list(USER_HEADER=tmpfile),
-#     stanc_options = list("allow-undefined")
-#   )
-#   expect_true(file.exists(mod_2$exe_file()))
-# })
+test_that("cmdstan_model works with user_header", {
+  tmpfile <- tempfile(fileext = ".hpp")
+  hpp <-
+  "
+  #include <stan/math.hpp>
+  #include <boost/math/tools/promotion.hpp>
+  #include <ostream>
+
+  namespace bernoulli_external_model_namespace
+  {
+      template <typename T0__, stan::require_stan_scalar_t<T0__>* = nullptr>
+      inline typename boost::math::tools::promote_args<T0__>::type make_odds(const T0__ &
+                                                                                 theta,
+                                                                             std::ostream *pstream__)
+      {
+          return theta / (1 - theta);
+      }
+  }"
+  cat(hpp, file = tmpfile, sep = "\n")
+  mod <- cmdstan_model(
+    stan_file = testing_stan_file("bernoulli_external"),
+    user_header = tmpfile
+  )
+  expect_true(file.exists(mod$exe_file()))
+  file.remove(mod$exe_file())
+  mod_2 <- cmdstan_model(
+    stan_file = testing_stan_file("bernoulli_external"),
+    cpp_options=list(USER_HEADER=tmpfile),
+    stanc_options = list("allow-undefined")
+  )
+  expect_true(file.exists(mod_2$exe_file()))
+})
 
 test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
   file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
