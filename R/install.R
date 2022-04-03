@@ -503,21 +503,33 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     )
   }
   toolchain_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
-  mingw32_make_path <- dirname(Sys.which("mingw32-make"))
-  gpp_path <- dirname(Sys.which("g++"))
-  if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
+  if (is_mingw32_make_installed(path = toolchain_path)) {
     if (!fix) {
       stop(
-        "\nRTools installation found but PATH was not properly set.",
+        "\nRTools installation found but mingw32-make is missing.",
         "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
         call. = FALSE
       )
     } else {
       install_mingw32_make(quiet = quiet)
       check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
-      return(invisible(NULL))
     }
-  }
+  } else {
+    mingw32_make_path <- dirname(Sys.which("mingw32-make"))
+    gpp_path <- dirname(Sys.which("g++"))
+    if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
+      if (!fix) {
+        stop(
+          "\nRTools installation found but PATH was not properly set.",
+          "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
+          call. = FALSE
+        )
+      } else {      
+        check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
+        return(invisible(NULL))
+      }
+    }
+  }  
   # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
   if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
     if (!fix) {
@@ -651,4 +663,15 @@ cmdstan_arch_suffix <- function(version = NULL) {
     arch <- NULL
   }
   arch
+}
+
+is_mingw32_make_installed(path) {
+  res <- processx::run(
+    "mingw32-make",
+    args = c("--versiSyu", "mingw-w64-x86_64-make", "--noconfirm"),
+    wd = rtools_usr_bin,
+    error_on_status = FALSE,
+    echo_cmd = is_verbose_mode(),
+    echo = is_verbose_mode()
+  )
 }
