@@ -503,7 +503,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     )
   }
   toolchain_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
-  if (is_mingw32_make_installed(path = toolchain_path)) {
+  if (!is_mingw32_make_installed(path = toolchain_path)) {
     if (!fix) {
       stop(
         "\nRTools installation found but mingw32-make is missing.",
