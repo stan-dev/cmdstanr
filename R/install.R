@@ -524,7 +524,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   print(toolchain_path)
   print(mingw32_make_path)
   gpp_path <- dirname(Sys.which("g++"))
-  print(gpp_path != toolchain_path)
+  print(gpp_path)
   # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
   if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
     if (!fix) {
@@ -669,6 +669,5 @@ is_mingw32_make_installed <- function(path) {
     echo_cmd = is_verbose_mode(),
     echo = is_verbose_mode()
   )
-  print(res$status)
   res$status == 0
 }
