@@ -184,14 +184,14 @@ test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
   rtools40_home_backup <- Sys.getenv("RTOOLS40_HOME")
   Sys.setenv("RTOOLS40_HOME" = "")
   expect_error(
-    check_rtools40_windows_toolchain(),
+    check_rtools4x_windows_toolchain(),
     "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
     fixed = TRUE
   )
 
   Sys.setenv("RTOOLS40_HOME" = "C:/with spaces/")
   expect_error(
-    check_rtools40_windows_toolchain(),
+    check_rtools4x_windows_toolchain(),
     "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
     fixed = TRUE
   )
@@ -200,7 +200,7 @@ test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
   path_backup <- Sys.getenv("PATH")
   Sys.setenv("PATH" = "")
   expect_error(
-    check_rtools40_windows_toolchain(),
+    check_rtools4x_windows_toolchain(),
     "\nRTools installation found but PATH was not properly set.\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
     fixed = TRUE
   )
@@ -210,7 +210,7 @@ test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
   file.copy(gpp_location, file.path(tmpdir, "g++.exe"))
   Sys.setenv("PATH" = paste0(tmpdir, ";", path_backup))
   expect_error(
-    check_rtools40_windows_toolchain(),
+    check_rtools4x_windows_toolchain(),
     "\nOther C++ toolchains installed on your system conflict with RTools.\nPlease run check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
     fixed = TRUE
   )

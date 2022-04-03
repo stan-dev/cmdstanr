@@ -256,7 +256,7 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (os_is_windows()) {
     if (R.version$major >= "4") {
-      check_rtools40_windows_toolchain(fix = fix, quiet = quiet)
+      check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     } else {
       check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
     }
@@ -442,8 +442,17 @@ build_status_ok <- function(process_log, quiet = FALSE) {
   TRUE
 }
 
+
+
 install_mingw32_make <- function(quiet = FALSE) {
-  rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
+  if (R.version$minor < "2.0") {
+    rtools_path <- Sys.getenv("RTOOLS40_HOME")
+    rtools_version <- "40"
+  } else {
+    rtools_path <- Sys.getenv("RTOOLS42_HOME")
+    rtools_version <- "42"
+  }
+  
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
     warning("No write permissions in the RTools folder. This might prevent installing mingw32-make.",
             " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
@@ -457,18 +466,29 @@ install_mingw32_make <- function(quiet = FALSE) {
     echo_cmd = is_verbose_mode(),
     echo = is_verbose_mode()
   )
-  write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-  Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
+  if (R.version$minor < "2.0") {
+    write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
+    Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
+  } else {
+    write('PATH="${RTOOLS42_HOME}\\usr\\bin;${RTOOLS42_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
+    Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS42_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS42_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
+  }  
   invisible(NULL)
 }
 
-check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
-  rtools_path <- Sys.getenv("RTOOLS40_HOME")
-  # If RTOOLS40_HOME is not set (the env. variable gets set on install)
+check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
+  if (R.version$minor < "2.0") {
+    rtools_path <- Sys.getenv("RTOOLS40_HOME")
+    rtools_version <- "40"
+  } else {
+    rtools_path <- Sys.getenv("RTOOLS42_HOME")
+    rtools_version <- "42"
+  }
+  # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
     stop(
-      "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
+      "\nRTools", rtools_version, " was not found but is required to run CmdStan with R version 4.x.",
       "\nPlease install RTools 4.0 and run check_cmdstan_toolchain().",
       call. = FALSE
     )
@@ -477,8 +497,8 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   # we error as this path is not valid
   if (grepl("\\(|)| ", rtools_path)) {
     stop(
-      "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain().",
+      "\nRTools", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
+      "\nPlease reinstall RTools", rtools_version, " to a valid path, restart R, and then run check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
@@ -494,7 +514,7 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       )
     } else {
       install_mingw32_make(quiet = quiet)
-      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
+      check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
       return(invisible(NULL))
     }
   }
@@ -508,7 +528,7 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       )
     } else {
       install_mingw32_make(quiet = quiet)
-      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
+      check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
       return(invisible(NULL))
     }
   }
