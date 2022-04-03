@@ -469,7 +469,7 @@ install_mingw32_make <- function(quiet = FALSE) {
   invisible(NULL)
 }
 
-fix_PATH <- function() {
+fix_rtools_PATH <- function() {
   if (R.version$minor < "2.0") {
     write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
     Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
@@ -515,7 +515,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       )
     } else {
       install_mingw32_make(quiet = quiet)
-      fix_PATH()
+      fix_rtools_PATH()
       check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
       return(invisible(NULL))
     }
@@ -529,7 +529,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
         call. = FALSE
       )
     } else {
-      fix_PATH()
+      fix_rtools_PATH()
       check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
       return(invisible(NULL))
     }
