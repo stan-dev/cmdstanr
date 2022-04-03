@@ -465,15 +465,18 @@ install_mingw32_make <- function(quiet = FALSE) {
     error_on_status = TRUE,
     echo_cmd = is_verbose_mode(),
     echo = is_verbose_mode()
-  )
+  )  
+  invisible(NULL)
+}
+
+fix_PATH <- function() {
   if (R.version$minor < "2.0") {
     write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
     Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
   } else {
     write('PATH="${RTOOLS42_HOME}\\usr\\bin;${RTOOLS42_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
     Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS42_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS42_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
-  }  
-  invisible(NULL)
+  }
 }
 
 check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
@@ -512,24 +515,11 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       )
     } else {
       install_mingw32_make(quiet = quiet)
+      fix_PATH()
       check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
+      return(invisible(NULL))
     }
-  } else {
-    mingw32_make_path <- dirname(Sys.which("mingw32-make"))
-    gpp_path <- dirname(Sys.which("g++"))
-    if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
-      if (!fix) {
-        stop(
-          "\nRTools installation found but PATH was not properly set.",
-          "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-          call. = FALSE
-        )
-      } else {      
-        check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
-        return(invisible(NULL))
-      }
-    }
-  }  
+  } 
   # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
   if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
     if (!fix) {
@@ -539,7 +529,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
         call. = FALSE
       )
     } else {
-      install_mingw32_make(quiet = quiet)
+      fix_PATH()
       check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
       return(invisible(NULL))
     }
