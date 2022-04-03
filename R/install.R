@@ -446,10 +446,10 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 
 install_mingw32_make <- function(quiet = FALSE) {
   if (R.version$minor < "2.0") {
-    rtools_path <- Sys.getenv("RTOOLS40_HOME")
+    rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
     rtools_version <- "40"
   } else {
-    rtools_path <- Sys.getenv("RTOOLS42_HOME")
+    rtools_usr_bin <- file.path(Sys.getenv("RTOOLS42_HOME"), "usr", "bin")
     rtools_version <- "42"
   }
   
