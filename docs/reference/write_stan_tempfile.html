@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -141,19 +141,19 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -179,20 +179,24 @@
     <p>This function is deprecated. Please use <code><a href='write_stan_file.html'>write_stan_file()</a></code> instead.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>write_stan_tempfile</span>(<span class='no'>code</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>())</pre>
+    <pre class="usage"><span class='fu'>write_stan_tempfile</span><span class='op'>(</span><span class='va'>code</span>, dir <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>code</th>
-      <td><p>A single string containing a Stan program or a character vector
-containing the individual lines of a Stan program. See <strong>Examples</strong>.</p></td>
+      <td><p>(character vector) The Stan code to write to the file. This can
+be a character vector of length one (a string) containing the entire Stan
+program or a character vector with each element containing one line of the
+Stan program.</p></td>
     </tr>
     <tr>
       <th>dir</th>
-      <td><p>An optional path to the directory where the file will be written.
-If omitted, a <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory</a> is used by default.</p></td>
+      <td><p>(string) An optional path to the directory where the file will be
+written. If omitted, a global option <code>cmdstanr_write_stan_file_dir</code> is
+used. If the global options is not set, <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory</a>
+is used.</p></td>
     </tr>
     </table>
 
@@ -212,7 +216,7 @@ If omitted, a <a href='https://rdrr.io/r/base/tempfile.html'>temporary directory
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

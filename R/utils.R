@@ -191,7 +191,7 @@ generate_file_names <-
            random = TRUE) {
     new_names <- basename
     if (timestamp) {
-      stamp <- format(Sys.time(), "%Y%m%d%H%M")
+      stamp <- base::format(Sys.time(), "%Y%m%d%H%M")
       new_names <- paste0(new_names, "-", stamp)
     }
     if (!is.null(ids)) {
@@ -199,7 +199,7 @@ generate_file_names <-
     }
     if (random) {
       rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
-      rand <- format(as.hexmode(rand_num_pid), width = 6)
+      rand <- base::format(as.hexmode(rand_num_pid), width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
 
@@ -237,47 +237,106 @@ set_num_threads <- function(num_threads) {
 }
 
 
-# convergence checks ------------------------------------------------------
+# hmc diagnostics ------------------------------------------------------
 check_divergences <- function(post_warmup_sampler_diagnostics) {
+  num_divergences_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
     divergences <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "divergent__")
-    num_of_draws <- length(divergences)
-    num_of_divergences <- sum(divergences)
-    if (!is.na(num_of_divergences) && num_of_divergences > 0) {
-      percentage_divergences <- 100 * num_of_divergences / num_of_draws
+    num_divergences_per_chain <- colSums(divergences)
+    num_divergences <- sum(num_divergences_per_chain)
+    num_draws <- length(divergences)
+    if (!is.na(num_divergences) && num_divergences > 0) {
+      percentage_divergences <- 100 * num_divergences / num_draws
       message(
-        "\nWarning: ", num_of_divergences, " of ", num_of_draws,
-        " (", (format(round(percentage_divergences, 0), nsmall = 1)), "%)",
+        "Warning: ", num_divergences, " of ", num_draws,
+        " (", (base::format(round(percentage_divergences, 0), nsmall = 1)), "%)",
         " transitions ended with a divergence.\n",
-        "This may indicate insufficient exploration of the posterior distribution.\n",
-        "Possible remedies include: \n",
-        "  * Increasing adapt_delta closer to 1 (default is 0.8) \n",
-        "  * Reparameterizing the model (e.g. using a non-centered parameterization)\n",
-        "  * Using informative or weakly informative prior distributions \n"
+        "See https://mc-stan.org/misc/warnings for details.\n"
       )
     }
   }
+  invisible(unname(num_divergences_per_chain))
 }
 
-check_sampler_transitions_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
+check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
+  num_max_treedepths_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
-    treedepth <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "treedepth__")
-    num_of_draws <- length(treedepth)
-    max_treedepth_hit <- sum(treedepth >= metadata$max_treedepth)
-    if (!is.na(max_treedepth_hit) && max_treedepth_hit > 0) {
-      percentage_max_treedepth <- 100 * max_treedepth_hit / num_of_draws
+    treedepths <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "treedepth__")
+    num_max_treedepths_per_chain <- apply(treedepths, 2, function(x) sum(x >= metadata$max_treedepth))
+    num_max_treedepths <- sum(num_max_treedepths_per_chain)
+    num_draws <- length(treedepths)
+    if (!is.na(num_max_treedepths) && num_max_treedepths > 0) {
+      percentage_max_treedepths <- 100 * num_max_treedepths / num_draws
       message(
-        max_treedepth_hit, " of ", num_of_draws, " (", (format(round(percentage_max_treedepth, 0), nsmall = 1)), "%)",
-        " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,
-        " or 2^", metadata$max_treedepth, "-1 leapfrog steps.\n",
-        "Trajectories that are prematurely terminated due to this limit will result in slow exploration.\n",
-        "Increasing the max_treedepth limit can avoid this at the expense of more computation.\n",
-        "If increasing max_treedepth does not remove warnings, try to reparameterize the model.\n"
+        "Warning: ", num_max_treedepths, " of ", num_draws, " (", (base::format(round(percentage_max_treedepths, 0), nsmall = 1)), "%)",
+        " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,".\n",
+        "See https://mc-stan.org/misc/warnings for details.\n"
       )
     }
   }
+  invisible(unname(num_max_treedepths_per_chain))
 }
 
+ebfmi <- function(post_warmup_sampler_diagnostics) {
+  efbmi_per_chain <- NULL
+  if (!is.null(post_warmup_sampler_diagnostics)) {
+    if (!("energy__" %in% posterior::variables(post_warmup_sampler_diagnostics))) {
+      warning("E-BFMI not computed because the 'energy__' diagnostic could not be located.", call. = FALSE)
+    } else if (posterior::niterations(post_warmup_sampler_diagnostics) < 3) {
+      warning("E-BFMI not computed because it is undefined for posterior chains of length less than 3.", call. = FALSE)
+    } else {
+      energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
+      if (any(is.na(energy))) {
+        warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
+      } else {
+        efbmi_per_chain <- apply(energy, 2, function(x) {
+          (sum(diff(x)^2) / length(x)) / stats::var(x)
+        })
+      }
+    }
+  }
+  efbmi_per_chain
+}
+
+check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
+  efbmi_per_chain <- ebfmi(post_warmup_sampler_diagnostics)
+  if (any(efbmi_per_chain < threshold)) {
+    message(
+      "Warning: ", sum(efbmi_per_chain < threshold), " of ", length(efbmi_per_chain),
+      " chains had an E-BFMI less than ", threshold, ".\n",
+      "See https://mc-stan.org/misc/warnings for details.\n"
+    )
+  }
+  invisible(unname(efbmi_per_chain))
+}
+
+# used in various places (e.g., fit$diagnostic_summary() and validate_sample_args())
+# to validate the selected diagnostics
+available_hmc_diagnostics <- function() {
+  c("divergences", "treedepth", "ebfmi")
+}
+
+# in some places we need to convert user friendly names
+# to the names used in the sampler diagnostics files:
+#   * ebfmi --> energy__
+#   * divergences --> divergent__
+#   * treedepth --> treedepth__
+convert_hmc_diagnostic_names <- function(diagnostics) {
+  diagnostic_names <- c()
+  if ("divergences" %in% diagnostics) {
+    diagnostic_names <- c(diagnostic_names, "divergent__")
+  }
+  if ("treedepth" %in% diagnostics) {
+    diagnostic_names <- c(diagnostic_names, "treedepth__")
+  }
+  if ("ebfmi" %in% diagnostics) {
+    diagnostic_names <- c(diagnostic_names, "energy__")
+  }
+  if (length(diagnostic_names) == 0) {
+    diagnostic_names <- ""
+  }
+  diagnostic_names
+}
 
 # draws formatting --------------------------------------------------------
 

@@ -86,7 +86,7 @@ $draws() method." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -94,7 +94,7 @@ $draws() method." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -147,19 +147,19 @@ $draws() method." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -186,12 +186,12 @@ $draws() method." />
 It returns the penalized maximum likelihood estimate (posterior mode) as a
 numeric vector with one element per variable. The returned vector does <em>not</em>
 include <code>lp__</code>, the total log probability (<code>target</code>) accumulated in the
-<code>model</code> block of the Stan program, which is available via the
+model block of the Stan program, which is available via the
 <code><a href='fit-method-lp.html'>$lp()</a></code> method and also included in the
 <code><a href='fit-method-draws.html'>$draws()</a></code> method.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mle</span>(<span class='kw'>variables</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>mle</span><span class='op'>(</span>variables <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -213,10 +213,14 @@ then all variables are included.</p></td>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='no'>fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span>(<span class='st'>"logistic"</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"optimize"</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"alpha"</span>)</div><div class='output co'>#&gt;    alpha 
-#&gt; 0.364454 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta"</span>)</div><div class='output co'>#&gt;   beta[1]   beta[2]   beta[3] 
-#&gt; -0.631598 -0.258930  0.648465 </div><div class='input'><span class='no'>fit</span>$<span class='fu'>mle</span>(<span class='st'>"beta[2]"</span>)</div><div class='output co'>#&gt;  beta[2] 
-#&gt; -0.25893 </div><div class='input'># }
+<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstanr_example.html'>cmdstanr_example</a></span><span class='op'>(</span><span class='st'>"logistic"</span>, method <span class='op'>=</span> <span class='st'>"optimize"</span><span class='op'>)</span>
+<span class='va'>fit</span><span class='op'>$</span><span class='fu'>mle</span><span class='op'>(</span><span class='st'>"alpha"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;    alpha 
+#&gt; 0.364475 </div><div class='input'><span class='va'>fit</span><span class='op'>$</span><span class='fu'>mle</span><span class='op'>(</span><span class='st'>"beta"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;   beta[1]   beta[2]   beta[3] 
+#&gt; -0.631555 -0.258975  0.648491 </div><div class='input'><span class='va'>fit</span><span class='op'>$</span><span class='fu'>mle</span><span class='op'>(</span><span class='st'>"beta[2]"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;   beta[2] 
+#&gt; -0.258975 </div><div class='input'><span class='co'># }</span>
 
 </div></pre>
   </div>
@@ -234,7 +238,7 @@ then all variables are included.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

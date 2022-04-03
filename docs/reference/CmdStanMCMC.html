@@ -83,7 +83,7 @@ objects." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -91,7 +91,7 @@ objects." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -144,19 +144,19 @@ objects." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -181,7 +181,7 @@ objects." />
     <div class="ref-description">
     <p>A <code>CmdStanMCMC</code> object is the fitted model object returned by
 the <code><a href='model-method-sample.html'>$sample()</a></code> method of a <code><a href='CmdStanModel.html'>CmdStanModel</a></code> object.
-Like <code>CmdStanModel</code> objects, <code>CmdStanMCMC</code> objects are <a href='https://rdrr.io/pkg/R6/man/R6Class.html'>R6</a>
+Like <code>CmdStanModel</code> objects, <code>CmdStanMCMC</code> objects are <a href='https://r6.r-lib.org/reference/R6Class.html'>R6</a>
 objects.</p>
     </div>
 
@@ -190,7 +190,7 @@ objects.</p>
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     <p><code>CmdStanMCMC</code> objects have the following associated
-methods, all of which have their own (linked) documentation pages.</p><h3>Extract contents of fitted model object</h3>
+methods, all of which have their own (linked) documentation pages.</p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Extract contents of fitted model object</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='fit-method-draws.html'>$draws()</a></code></td><td>Return posterior draws using formats from the <span class="pkg">posterior</span> package.</td></tr>
@@ -199,16 +199,18 @@ methods, all of which have their own (linked) documentation pages.</p><h3>Extrac
 <tr><td><code><a href='fit-method-inv_metric.html'>$inv_metric()</a></code></td><td>Return the inverse metric for each chain.</td></tr>
 <tr><td><code><a href='fit-method-init.html'>$init()</a></code></td><td>Return user-specified initial values.</td></tr>
 <tr><td><code><a href='fit-method-metadata.html'>$metadata()</a></code></td><td>Return a list of metadata gathered from the CmdStan CSV files.</td></tr>
-<tr><td><code><a href='fit-method-num_chains.html'>$num_chains()</a></code></td><td>Returns the number of MCMC chains.</td></tr>
+<tr><td><code><a href='fit-method-num_chains.html'>$num_chains()</a></code></td><td>Return the number of MCMC chains.</td></tr>
+<tr><td><code><a href='fit-method-code.html'>$code()</a></code></td><td>Return Stan code as a character vector.</td></tr>
 </table>
 
 
 
 
-<h3>Summarize inferences and diagnostics</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Summarize inferences and diagnostics</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='fit-method-summary.html'>$summary()</a></code></td><td>Run <code><a href='https://mc-stan.org/posterior/reference/draws_summary.html'>posterior::summarise_draws()</a></code>.</td></tr>
+<tr><td><code><a href='fit-method-diagnostic_summary.html'>$diagnostic_summary()</a></code></td><td>Get summaries of sampler diagnostics and warning messages.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_summary()</a></code></td><td>Run and print CmdStan's <code>bin/stansummary</code>.</td></tr>
 <tr><td><code><a href='fit-method-cmdstan_summary.html'>$cmdstan_diagnose()</a></code></td><td>Run and print CmdStan's <code>bin/diagnose</code>.</td></tr>
 <tr><td><code><a href='fit-method-loo.html'>$loo()</a></code></td><td>Run <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo::loo.array()</a></code> for approximate LOO-CV</td></tr>
@@ -217,7 +219,7 @@ methods, all of which have their own (linked) documentation pages.</p><h3>Extrac
 
 
 
-<h3>Save fitted model object and temporary files</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Save fitted model object and temporary files</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='fit-method-save_object.html'>$save_object()</a></code></td><td>Save fitted model object to a file.</td></tr>
@@ -229,7 +231,7 @@ methods, all of which have their own (linked) documentation pages.</p><h3>Extrac
 
 
 
-<h3>Report run times, console output, return codes</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Report run times, console output, return codes</h3>
 <table class='table'>
 <tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr>
 <tr><td><code><a href='fit-method-output.html'>$output()</a></code></td><td>Return the stdout and stderr of all chains or pretty print the output for a single chain.</td></tr>
@@ -251,6 +253,7 @@ documentation and tutorials.</p>
 </ul>
 
 <p>Other fitted model objects: 
+<code><a href='CmdStanDiagnose.html'>CmdStanDiagnose</a></code>,
 <code><a href='CmdStanGQ.html'>CmdStanGQ</a></code>,
 <code><a href='CmdStanMLE.html'>CmdStanMLE</a></code>,
 <code><a href='CmdStanVB.html'>CmdStanVB</a></code></p></div>
@@ -270,7 +273,7 @@ documentation and tutorials.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

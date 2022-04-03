@@ -43,6 +43,21 @@ OpenCL in CmdStanR, an OpenCL runtime for the target device must be installed.
 A guide for the most common devices is available in the CmdStan manual's
 [chapter on parallelization](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl).
 
+In case of using Windows, CmdStan requires the `OpenCL.lib` to compile the model.
+If you experience issue compiling the model with OpenCL, run the below script and set
+`path_to_opencl_lib` to the path to the `OpenCL.lib` file on your system.
+If you are using CUDA, the path should be similar to the one listed here.
+
+```{r windows-opencl, eval=FALSE}
+path_to_opencl_lib <- "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64"
+cpp_options = list(
+  paste0("LDFLAGS+= -L\"",path_to_opencl_lib,"\" -lOpenCL")
+)
+
+cmdstanr::cmdstan_make_local(cpp_options = cpp_options)
+cmdstanr::rebuild_cmdstan()
+```
+
 ## Compiling a model with OpenCL
 
 By default, models in CmdStanR are compiled *without* OpenCL support. Once OpenCL
@@ -133,7 +148,7 @@ We'll also run a version without OpenCL and compare the run times.
 
 ```{r fit-cpu, message=FALSE}
 # no OpenCL version
-mod <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan")
+mod <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan", force_recompile = TRUE)
 fit_cpu <- mod$sample(data = mdata, chains = 4, parallel_chains = 4, refresh = 0)
 ```
 

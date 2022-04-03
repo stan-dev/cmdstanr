@@ -1,4 +1,4 @@
-# cmdstanr 0.4.0.9000
+# cmdstanr 0.5.0
 
 ### Bug fixes
 
@@ -19,31 +19,15 @@ will continue to be supported until version 1.0 but `install_cmdstan()` will now
 default to `.cmdstan` and CmdStanR will first look for `.cmdstan` before falling
 back on `.cmdstanr`. (#454)
 
-* Expose CmdStan's `diagnose` method that compares Stan's gradient computations
-to gradients computed via finite differences. (#485)
-
-* `write_stan_file()` now choose file names deterministically based on the code
-so that models do not get unnecessarily recompiled when calling the function
-multiple times with the same code. (#495, @martinmodrak)
+* New method `diagnose()` for CmdstanModel objects exposes CmdStan's `diagnose`
+method for comparing Stan's gradient computations to gradients computed via
+finite differences. (#485)
 
 * New method `$variables()` for CmdstanModel objects that returns a list of
 variables in the Stan model, their types and number of dimensions. Does
 not require the model to be compiled. (#519)
 
-* `write_stan_json()` now handles data of class `"table"`. Tables are converted
-to vector, matrix, or array depending on the dimensions of the table. (#528)
-
-* `install_cmdstan()` now automatically installs the Linux ARM CmdStan when
-Linux distributions running on ARM CPUs are detected. (#531)
-
-* The `dir` argument for `write_stan_file()` can now be set with a global
-option. (#537)
-
-* Improved processing of named lists supplied to the `data` argument to JSON
-data files: checking whether the list includes all required elements/Stan
-variables; improved differentiating arrays/vectors of length 1 and scalars
-when generating JSON data files; generating floating point numbers with
-decimal points to fix issue with parsing large numbers. (#538)
+* New method `$format()` for auto-formatting and canonicalizing the Stan models. (#625)
 
 * Added the option to create `CmdStanModel` from the executable only with the
 `exe_file` argument. (#564)
@@ -51,17 +35,46 @@ decimal points to fix issue with parsing large numbers. (#538)
 * Added a convenience argument `user_header` to `$compile()` and `cmdstan_model()`
 that simplifies the use of an external .hpp file to compile with the model.
 
+* Added the `cmdstanr_force_recompile` global option that is used for forcing
+recompilation of Stan models. (#580)
+
 * New method `$code()` for all fitted model objects that returns the Stan code
 associated with the fitted model. (#575)
 
-* Added the `cmdstanr_force_recompile` global option that is used for forcing
-recompilation of Stan models. (#580)
+* New method `$diagnostic_summary()` for CmdStanMCMC objects that summarizes the
+sampler diagnostics (divergences, treedepth, ebfmi) and can regenerate the
+related warning messages. (#205)
+
+* New `diagnostics` argument for the `$sample()` method to specify which
+diagnostics are checked after sampling. Replaces `validate_csv` argument. (#205)
+
+* Added E-BFMI checks that run automatically post sampling. (#500, @jsocolar)
 
 * New methods for `posterior::as_draws()` for CmdStanR fitted model objects.
 These are just wrappers around the `$draws()` method provided for convenience. (#532)
 
+* `write_stan_file()` now choose file names deterministically based on the code
+so that models do not get unnecessarily recompiled when calling the function
+multiple times with the same code. (#495, @martinmodrak)
+
+* The `dir` argument for `write_stan_file()` can now be set with a global
+option. (#537)
+
+* `write_stan_json()` now handles data of class `"table"`. Tables are converted
+to vector, matrix, or array depending on the dimensions of the table. (#528)
+
+* Improved processing of named lists supplied to the `data` argument to JSON
+data files: checking whether the list includes all required elements/Stan
+variables; improved differentiating arrays/vectors of length 1 and scalars
+when generating JSON data files; generating floating point numbers with
+decimal points to fix issue with parsing large numbers. (#538)
+
+* `install_cmdstan()` now automatically installs the Linux ARM CmdStan when
+Linux distributions running on ARM CPUs are detected. (#531)
+
 * New function `as_mcmc.list()` for converting CmdStanMCMC objects to mcmc.list
 objects from the coda package. (#584, @MatsuuraKentaro)
+
 
 # cmdstanr 0.4.0
 
@@ -89,7 +102,7 @@ Stan programs requires CmdStan >= 2.26. (#434)
 
 * New vignette on profiling Stan programs. (#435)
 
-* New vignette on running Stan on the GPU with OpenCL. OpenCL device ids can 
+* New vignette on running Stan on the GPU with OpenCL. OpenCL device ids can
 now also be specified at runtime. (#439)
 
 * New check for invalid parameter names when supplying init values. (#452, @mike-lawrence)
@@ -99,7 +112,7 @@ now also be specified at runtime. (#439)
 * New `error_on_NA` argument for `cmdstan_version()` to optionally return `NULL`
 (instead of erroring) if the CmdStan path is not found (#467, @wlandau).
 
-* Global option `cmdstanr_max_rows` can be set as an alternative to specifying 
+* Global option `cmdstanr_max_rows` can be set as an alternative to specifying
 `max_rows` argument to the `$print()` method. (#470)
 
 * New `output_basename` argument for the model fitting methods. Can be used in

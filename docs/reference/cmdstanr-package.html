@@ -82,7 +82,7 @@ CmdStanR: the R interface to CmdStan." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -90,7 +90,7 @@ CmdStanR: the R interface to CmdStan." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -143,19 +143,19 @@ CmdStanR: the R interface to CmdStan." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -187,22 +187,22 @@ CmdStanR: the R interface to CmdStan." />
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>CmdStanR (<span class="pkg">cmdstanr</span> package) is a lightweight interface to Stan
+    <p>CmdStanR (<span class="pkg">cmdstanr</span> package) is an interface to Stan
 (<a href='https://mc-stan.org'>mc-stan.org</a>) for <span style="R">R</span> users. It provides the
 necessary objects and functions to compile a Stan program and run Stan's
 algorithms from <span style="R">R</span> via CmdStan, the shell interface to Stan
 (<a href='https://mc-stan.org/users/interfaces/cmdstan'>mc-stan.org/users/interfaces/cmdstan</a>).</p>
-<h3>Different ways of interfacing with Stan’s C++</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Different ways of interfacing with Stan’s C++</h3>
 
 
-<p>The RStan interface (<a href='https://mc-stan.org/rstan'><strong>rstan</strong></a> package) is
+<p>The RStan interface (<a href='https://mc-stan.org/rstan/'><strong>rstan</strong></a> package) is
 an in-memory interface to Stan and relies on R packages like <strong>Rcpp</strong>
 and <strong>inline</strong> to call C++ code from R. On the other hand, the CmdStanR
 interface does not directly call any C++ code from R, instead relying on
 the CmdStan interface behind the scenes for compilation, running
 algorithms, and writing results to output files.</p>
 
-<h3>Advantages of RStan</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Advantages of RStan</h3>
 
 <ul>
 <li><p>Advanced features. We are working on making these available outside
@@ -211,12 +211,12 @@ of RStan but currently they are only available to R users via RStan:</p><ul>
 <li><p><code><a href='https://mc-stan.org/rstan/reference/stanfit-method-logprob.html'>rstan::grad_log_prob()</a></code></p></li>
 <li><p><code><a href='https://mc-stan.org/rstan/reference/expose_stan_functions.html'>rstan::expose_stan_functions()</a></code></p></li>
 </ul></li>
-<li><p>Allows others developers to create packages like <strong>rstanarm</strong> with
-<em>pre-compiled</em> Stan programs on CRAN.</p></li>
+<li><p>Allows other developers to distribute R packages with <em>pre-compiled</em>
+Stan programs (like <strong>rstanarm</strong>) on CRAN.</p></li>
 </ul>
 
 
-<h3>Advantages of CmdStanR</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Advantages of CmdStanR</h3>
 
 <ul>
 <li><p>Compatible with latest versions of Stan. Keeping up with Stan
@@ -239,9 +239,9 @@ the same license used for CmdStan and the Stan C++ source code.</p></li>
     <h2 class="hasAnchor" id="getting-started"><a class="anchor" href="#getting-started"></a>Getting started</h2>
 
     <p>CmdStanR requires a working version of CmdStan. If
-you already have CmdStan installed see <code><a href='cmdstan_model.html'>cmdstan_model()</a></code> to get
-started, otherwise see <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> for help with installation.
-The vignette <a href='https://mc-stan.org/cmdstanr/articles/cmdstanr.html'><em>Getting started with CmdStanR</em></a>
+you already have CmdStan installed see <code><a href='cmdstan_model.html'>cmdstan_model()</a></code> to get started,
+otherwise see <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> to install CmdStan. The vignette
+<a href='https://mc-stan.org/cmdstanr/articles/cmdstanr.html'><em>Getting started with CmdStanR</em></a>
 demonstrates the basic functionality of the package.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
@@ -256,23 +256,26 @@ documentation and tutorials.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \dontrun{</span>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>cmdstanr</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>posterior</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>bayesplot</span>)
-<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/bayesplot-colors.html'>color_scheme_set</a></span>(<span class='st'>"brightblue"</span>)
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://mc-stan.org/cmdstanr/'>cmdstanr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://mc-stan.org/posterior/'>posterior</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://mc-stan.org/bayesplot/'>bayesplot</a></span><span class='op'>)</span>
+<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/bayesplot-colors.html'>color_scheme_set</a></span><span class='op'>(</span><span class='st'>"brightblue"</span><span class='op'>)</span>
 
 <span class='co'># Set path to CmdStan</span>
 <span class='co'># (Note: if you installed CmdStan via install_cmdstan() with default settings</span>
 <span class='co'># then setting the path is unnecessary but the default below should still work.</span>
 <span class='co'># Otherwise use the `path` argument to specify the location of your</span>
 <span class='co'># CmdStan installation.)</span>
-<span class='fu'><a href='set_cmdstan_path.html'>set_cmdstan_path</a></span>(<span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</div><div class='output co'>#&gt; <span class='message'>CmdStan path set to: /Users/jgabry/.cmdstanr/cmdstan-2.26.1</span></div><div class='input'>
+<span class='fu'><a href='set_cmdstan_path.html'>set_cmdstan_path</a></span><span class='op'>(</span>path <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>CmdStan path set to: /Users/jgabry/.cmdstan/cmdstan-2.29.1</span></div><div class='input'>
 <span class='co'># Create a CmdStanModel object from a Stan program,</span>
 <span class='co'># here using the example model that comes with CmdStan</span>
-<span class='no'>file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.stan"</span>)
-<span class='no'>mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span>(<span class='no'>file</span>)</div><div class='output co'>#&gt; <span class='message'>Model executable is up to date!</span></div><div class='input'><span class='no'>mod</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</div><div class='output co'>#&gt; data {
+<span class='va'>file</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span><span class='op'>(</span><span class='op'>)</span>, <span class='st'>"examples/bernoulli/bernoulli.stan"</span><span class='op'>)</span>
+<span class='va'>mod</span> <span class='op'>&lt;-</span> <span class='fu'><a href='cmdstan_model.html'>cmdstan_model</a></span><span class='op'>(</span><span class='va'>file</span><span class='op'>)</span>
+<span class='va'>mod</span><span class='op'>$</span><span class='fu'>print</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; data {
 #&gt;   int&lt;lower=0&gt; N;
-#&gt;   int&lt;lower=0,upper=1&gt; y[N];
+#&gt;   array[N] int&lt;lower=0,upper=1&gt; y; // or int&lt;lower=0,upper=1&gt; y[N];
 #&gt; }
 #&gt; parameters {
 #&gt;   real&lt;lower=0,upper=1&gt; theta;
@@ -282,15 +285,16 @@ documentation and tutorials.</p>
 #&gt;   y ~ bernoulli(theta);
 #&gt; }</div><div class='input'>
 <span class='co'># Data as a named list (like RStan)</span>
-<span class='no'>stan_data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>y</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>))
+<span class='va'>stan_data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>N <span class='op'>=</span> <span class='fl'>10</span>, y <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
 
 <span class='co'># Run MCMC using the 'sample' method</span>
-<span class='no'>fit_mcmc</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
-  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
-  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>,
-  <span class='kw'>parallel_chains</span> <span class='kw'>=</span> <span class='fl'>2</span>
-)</div><div class='output co'>#&gt; Running MCMC with 2 parallel chains...
+<span class='va'>fit_mcmc</span> <span class='op'>&lt;-</span> <span class='va'>mod</span><span class='op'>$</span><span class='fu'>sample</span><span class='op'>(</span>
+  data <span class='op'>=</span> <span class='va'>stan_data</span>,
+  seed <span class='op'>=</span> <span class='fl'>123</span>,
+  chains <span class='op'>=</span> <span class='fl'>2</span>,
+  parallel_chains <span class='op'>=</span> <span class='fl'>2</span>
+<span class='op'>)</span>
+</div><div class='output co'>#&gt; Running MCMC with 2 parallel chains...
 #&gt; 
 #&gt; Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
 #&gt; Chain 1 Iteration:  100 / 2000 [  5%]  (Warmup) 
@@ -341,56 +345,62 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; Both chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.2 seconds.</div><div class='input'>
+#&gt; Total execution time: 0.2 seconds.
+#&gt; </div><div class='input'>
 <span class='co'># Use 'posterior' package for summaries</span>
-<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 2 x 10</span><span>
+<span class='va'>fit_mcmc</span><span class='op'>$</span><span class='fu'>summary</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 2 × 10</span>
 #&gt;   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
-#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__     -</span><span style='color: #BB0000;'>7.29</span><span>  -</span><span style='color: #BB0000;'>7.00</span><span>  0.754 0.347 -</span><span style='color: #BB0000;'>8.80</span><span>   -</span><span style='color: #BB0000;'>6.75</span><span>   1.00     872.     638.
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> theta     0.253  0.236 0.123 0.124  0.075</span><span style='text-decoration: underline;'>5</span><span>  0.482  1.00     603.     533.</div><div class='input'>
+#&gt;   <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>     <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'>1</span> lp__     -<span style='color: #BB0000;'>7.30</span>  -<span style='color: #BB0000;'>7.03</span>  0.721 0.380 -<span style='color: #BB0000;'>8.82</span>   -<span style='color: #BB0000;'>6.75</span>   1.00     902.    <span style='text-decoration: underline;'>1</span>006.
+#&gt; <span style='color: #BCBCBC;'>2</span> theta     0.247  0.233 0.122 0.129  0.078<span style='text-decoration: underline;'>6</span>  0.470  1.00     762.     712.</div><div class='input'>
 <span class='co'># Get posterior draws</span>
-<span class='no'>draws</span> <span class='kw'>&lt;-</span> <span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>()
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 2 chains, and 2 variables
+<span class='va'>draws</span> <span class='op'>&lt;-</span> <span class='va'>fit_mcmc</span><span class='op'>$</span><span class='fu'>draws</span><span class='op'>(</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>draws</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; # A draws_array: 1000 iterations, 2 chains, and 2 variables
 #&gt; , , variable = lp__
 #&gt; 
 #&gt;          chain
 #&gt; iteration    1    2
-#&gt;         1 -6.8 -8.5
-#&gt;         2 -7.3 -8.7
-#&gt;         3 -7.1 -6.8
-#&gt;         4 -7.1 -6.8
-#&gt;         5 -7.1 -7.3
+#&gt;         1 -6.8 -6.8
+#&gt;         2 -6.9 -6.8
+#&gt;         3 -7.0 -7.0
+#&gt;         4 -6.9 -7.1
+#&gt;         5 -6.7 -7.0
 #&gt; 
 #&gt; , , variable = theta
 #&gt; 
 #&gt;          chain
 #&gt; iteration    1    2
-#&gt;         1 0.30 0.51
-#&gt;         2 0.13 0.53
-#&gt;         3 0.16 0.31
-#&gt;         4 0.37 0.31
-#&gt;         5 0.15 0.14
+#&gt;         1 0.28 0.21
+#&gt;         2 0.19 0.20
+#&gt;         3 0.16 0.17
+#&gt;         4 0.20 0.36
+#&gt;         5 0.25 0.34
 #&gt; 
 #&gt; # ... with 995 more iterations</div><div class='input'>
 <span class='co'># Convert to data frame using posterior::as_draws_df</span>
-<span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span>(<span class='no'>draws</span>)</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 2 chains, and 2 variables
+<span class='fu'><a href='https://mc-stan.org/posterior/reference/draws_df.html'>as_draws_df</a></span><span class='op'>(</span><span class='va'>draws</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; # A draws_df: 1000 iterations, 2 chains, and 2 variables
 #&gt;    lp__ theta
-#&gt; 1  -6.8  0.30
-#&gt; 2  -7.3  0.13
-#&gt; 3  -7.1  0.16
-#&gt; 4  -7.1  0.37
-#&gt; 5  -7.1  0.15
-#&gt; 6  -7.5  0.12
-#&gt; 7  -7.2  0.38
-#&gt; 8  -6.8  0.22
-#&gt; 9  -7.0  0.34
-#&gt; 10 -6.8  0.22
+#&gt; 1  -6.8  0.28
+#&gt; 2  -6.9  0.19
+#&gt; 3  -7.0  0.16
+#&gt; 4  -6.9  0.20
+#&gt; 5  -6.7  0.25
+#&gt; 6  -7.1  0.36
+#&gt; 7  -9.0  0.55
+#&gt; 8  -7.2  0.15
+#&gt; 9  -6.8  0.23
+#&gt; 10 -7.5  0.42
 #&gt; # ... with 1990 more draws
 #&gt; # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</div><div class='input'>
 <span class='co'># Plot posterior using bayesplot (ggplot2)</span>
-<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='cmdstanr-package-1.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span><span class='op'>(</span><span class='va'>fit_mcmc</span><span class='op'>$</span><span class='fu'>draws</span><span class='op'>(</span><span class='st'>"theta"</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='cmdstanr-package-1.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># Call CmdStan's diagnose and stansummary utilities</span>
-<span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_diagnose</a></span>()</div><div class='output co'>#&gt; Processing csv files: /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/bernoulli-202104151124-1-1820ff.csv, /var/folders/h6/14xy_35x4wd2tz542dn0qhtc0000gn/T/RtmpEmZKF5/bernoulli-202104151124-2-1820ff.csv
+<span class='va'>fit_mcmc</span><span class='op'>$</span><span class='fu'>cmdstan_diagnose</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; Processing csv files: /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/bernoulli-202203181224-1-8f6e7b.csv, /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpmzUYEz/bernoulli-202203181224-2-8f6e7b.csv
 #&gt; 
 #&gt; Checking sampler transitions treedepth.
 #&gt; Treedepth satisfactory for all transitions.
@@ -399,29 +409,30 @@ documentation and tutorials.</p>
 #&gt; No divergent transitions found.
 #&gt; 
 #&gt; Checking E-BFMI - sampler transitions HMC potential energy.
-#&gt; E-BFMI satisfactory for all transitions.
+#&gt; E-BFMI satisfactory.
 #&gt; 
 #&gt; Effective sample size satisfactory.
 #&gt; 
 #&gt; Split R-hat values satisfactory all parameters.
 #&gt; 
-#&gt; Processing complete, no problems detected.</div><div class='input'><span class='no'>fit_mcmc</span>$<span class='fu'><a href='fit-method-cmdstan_summary.html'>cmdstan_summary</a></span>()</div><div class='output co'>#&gt; Inference for Stan model: bernoulli_model
+#&gt; Processing complete, no problems detected.</div><div class='input'><span class='va'>fit_mcmc</span><span class='op'>$</span><span class='fu'>cmdstan_summary</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; Inference for Stan model: bernoulli_model
 #&gt; 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.
 #&gt; 
-#&gt; Warmup took (0.0070, 0.0060) seconds, 0.013 seconds total
-#&gt; Sampling took (0.017, 0.016) seconds, 0.033 seconds total
+#&gt; Warmup took (0.0050, 0.0040) seconds, 0.0090 seconds total
+#&gt; Sampling took (0.015, 0.019) seconds, 0.034 seconds total
 #&gt; 
 #&gt;                 Mean     MCSE  StdDev     5%   50%   95%    N_Eff  N_Eff/s    R_hat
 #&gt; 
-#&gt; lp__            -7.3  3.0e-02    0.75   -8.8  -7.0  -6.8      628    19030      1.0
-#&gt; accept_stat__   0.93  2.6e-03    0.11   0.67  0.97   1.0  1.9e+03  5.6e+04  1.0e+00
-#&gt; stepsize__      0.96  3.0e-02   0.030   0.93  0.99  0.99  1.0e+00  3.0e+01  1.1e+13
-#&gt; treedepth__      1.4  2.2e-02    0.51    1.0   1.0   2.0  5.5e+02  1.7e+04  1.0e+00
-#&gt; n_leapfrog__     2.7  2.8e-01     1.5    1.0   3.0   7.0  2.9e+01  8.8e+02  1.0e+00
+#&gt; lp__            -7.3  2.6e-02    0.72   -8.8  -7.0  -6.8      781    22972      1.0
+#&gt; accept_stat__   0.92  8.3e-03    0.13   0.64  0.97   1.0  2.3e+02  6.9e+03  1.0e+00
+#&gt; stepsize__      0.95  7.9e-02   0.079   0.87   1.0   1.0  1.0e+00  3.0e+01  2.0e+13
+#&gt; treedepth__      1.4  1.1e-02    0.48    1.0   1.0   2.0  1.9e+03  5.5e+04  1.0e+00
+#&gt; n_leapfrog__     2.5  1.4e-01     1.3    1.0   3.0   3.0  8.9e+01  2.6e+03  1.0e+00
 #&gt; divergent__     0.00      nan    0.00   0.00  0.00  0.00      nan      nan      nan
-#&gt; energy__         7.8  3.9e-02     1.0    6.8   7.5   9.9  7.0e+02  2.1e+04  1.0e+00
+#&gt; energy__         7.8  3.6e-02    1.00    6.8   7.5   9.6  7.7e+02  2.3e+04  1.0e+00
 #&gt; 
-#&gt; theta           0.25  5.0e-03    0.12  0.075  0.24  0.48      608    18439     1.00
+#&gt; theta           0.25  4.3e-03    0.12  0.079  0.23  0.47      796    23422      1.0
 #&gt; 
 #&gt; Samples were drawn using hmc with nuts.
 #&gt; For each parameter, N_Eff is a crude measure of effective sample size,
@@ -435,27 +446,30 @@ documentation and tutorials.</p>
 
 <span class='co'># Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)</span>
 <span class='co'># and also demonstrate specifying data as a path to a file instead of a list</span>
-<span class='no'>my_data_file</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span>(), <span class='st'>"examples/bernoulli/bernoulli.data.json"</span>)
-<span class='no'>fit_optim</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-optimize.html'>optimize</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>my_data_file</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; Initial log joint probability = -9.51104 
+<span class='va'>my_data_file</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='fu'><a href='set_cmdstan_path.html'>cmdstan_path</a></span><span class='op'>(</span><span class='op'>)</span>, <span class='st'>"examples/bernoulli/bernoulli.data.json"</span><span class='op'>)</span>
+<span class='va'>fit_optim</span> <span class='op'>&lt;-</span> <span class='va'>mod</span><span class='op'>$</span><span class='fu'>optimize</span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>my_data_file</span>, seed <span class='op'>=</span> <span class='fl'>123</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; Initial log joint probability = -9.51104 
 #&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
 #&gt;        6      -5.00402   0.000103557   2.55661e-07           1           1        9    
 #&gt; Optimization terminated normally:  
 #&gt;   Convergence detected: relative gradient magnitude is below tolerance 
-#&gt; Finished in  0.3 seconds.</div><div class='input'>
-<span class='no'>fit_optim</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 2 x 2</span><span>
+#&gt; Finished in  0.1 seconds.</div><div class='input'>
+<span class='va'>fit_optim</span><span class='op'>$</span><span class='fu'>summary</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 2 × 2</span>
 #&gt;   variable estimate
-#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>       </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__        -</span><span style='color: #BB0000;'>5.00</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> theta        0.2 </div><div class='input'>
+#&gt;   <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>       <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'>1</span> lp__        -<span style='color: #BB0000;'>5.00</span>
+#&gt; <span style='color: #BCBCBC;'>2</span> theta        0.2 </div><div class='input'>
 
 <span class='co'># Run 'variational' method to approximate the posterior (default is meanfield ADVI)</span>
-<span class='no'>fit_vb</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-variational.html'>variational</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>, <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>)</div><div class='output co'>#&gt; ------------------------------------------------------------ 
+<span class='va'>fit_vb</span> <span class='op'>&lt;-</span> <span class='va'>mod</span><span class='op'>$</span><span class='fu'>variational</span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>stan_data</span>, seed <span class='op'>=</span> <span class='fl'>123</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; ------------------------------------------------------------ 
 #&gt; EXPERIMENTAL ALGORITHM: 
 #&gt;   This procedure has not been thoroughly tested and may be unstable 
 #&gt;   or buggy. The interface is subject to change. 
 #&gt; ------------------------------------------------------------ 
-#&gt; Gradient evaluation took 9e-06 seconds 
-#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds. 
+#&gt; Gradient evaluation took 5e-06 seconds 
+#&gt; 1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds. 
 #&gt; Adjust your expectations accordingly! 
 #&gt; Begin eta adaptation. 
 #&gt; Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -472,46 +486,53 @@ documentation and tutorials.</p>
 #&gt; Drawing a sample of size 1000 from the approximate posterior...  
 #&gt; COMPLETED. 
 #&gt; Finished in  0.1 seconds.</div><div class='input'>
-<span class='no'>fit_vb</span>$<span class='fu'><a href='fit-method-summary.html'>summary</a></span>()</div><div class='output co'>#&gt; </span><span style='color: #949494;'># A tibble: 3 x 7</span><span>
+<span class='va'>fit_vb</span><span class='op'>$</span><span class='fu'>summary</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 3 × 7</span>
 #&gt;   variable      mean median    sd   mad     q5      q95
-#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> lp__        -</span><span style='color: #BB0000;'>7.18</span><span>  -</span><span style='color: #BB0000;'>6.94</span><span>  0.588 0.259 -</span><span style='color: #BB0000;'>8.36</span><span>  -</span><span style='color: #BB0000;'>6.75</span><span>   
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> lp_approx__ -</span><span style='color: #BB0000;'>0.515</span><span> -</span><span style='color: #BB0000;'>0.221</span><span> 0.692 0.303 -</span><span style='color: #BB0000;'>2.06</span><span>  -</span><span style='color: #BB0000;'>0.002</span><span style='color: #BB0000;text-decoration: underline;'>57</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> theta        0.263  0.246 0.115 0.113  0.106  0.481  </div><div class='input'>
+#&gt;   <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>        <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'>1</span> lp__        -<span style='color: #BB0000;'>7.18</span>  -<span style='color: #BB0000;'>6.94</span>  0.588 0.259 -<span style='color: #BB0000;'>8.36</span>  -<span style='color: #BB0000;'>6.75</span>   
+#&gt; <span style='color: #BCBCBC;'>2</span> lp_approx__ -<span style='color: #BB0000;'>0.515</span> -<span style='color: #BB0000;'>0.221</span> 0.692 0.303 -<span style='color: #BB0000;'>2.06</span>  -<span style='color: #BB0000;'>0.002</span><span style='color: #BB0000; text-decoration: underline;'>57</span>
+#&gt; <span style='color: #BCBCBC;'>3</span> theta        0.263  0.246 0.115 0.113  0.106  0.481  </div><div class='input'>
 <span class='co'># Plot approximate posterior using bayesplot</span>
-<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span>(<span class='no'>fit_vb</span>$<span class='fu'><a href='fit-method-draws.html'>draws</a></span>(<span class='st'>"theta"</span>))</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='cmdstanr-package-2.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='fu'><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>mcmc_hist</a></span><span class='op'>(</span><span class='va'>fit_vb</span><span class='op'>$</span><span class='fu'>draws</span><span class='op'>(</span><span class='st'>"theta"</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></div><div class='img'><img src='cmdstanr-package-2.png' alt='' width='700' height='433' /></div><div class='input'>
 
 <span class='co'># Specifying initial values as a function</span>
-<span class='no'>fit_mcmc_w_init_fun</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
-  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
-  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>,
-  <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>init</span> <span class='kw'>=</span> <span class='kw'>function</span>() <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span>(<span class='fl'>1</span>))
-)</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
+<span class='va'>fit_mcmc_w_init_fun</span> <span class='op'>&lt;-</span> <span class='va'>mod</span><span class='op'>$</span><span class='fu'>sample</span><span class='op'>(</span>
+  data <span class='op'>=</span> <span class='va'>stan_data</span>,
+  seed <span class='op'>=</span> <span class='fl'>123</span>,
+  chains <span class='op'>=</span> <span class='fl'>2</span>,
+  refresh <span class='op'>=</span> <span class='fl'>0</span>,
+  init <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>theta <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>)</span>
+</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
 #&gt; 
 #&gt; Chain 1 finished in 0.0 seconds.
 #&gt; Chain 2 finished in 0.0 seconds.
 #&gt; 
 #&gt; Both chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.4 seconds.</div><div class='input'><span class='no'>fit_mcmc_w_init_fun_2</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
-  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
-  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>,
-  <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>init</span> <span class='kw'>=</span> <span class='kw'>function</span>(<span class='no'>chain_id</span>) {
+#&gt; Total execution time: 0.3 seconds.
+#&gt; </div><div class='input'><span class='va'>fit_mcmc_w_init_fun_2</span> <span class='op'>&lt;-</span> <span class='va'>mod</span><span class='op'>$</span><span class='fu'>sample</span><span class='op'>(</span>
+  data <span class='op'>=</span> <span class='va'>stan_data</span>,
+  seed <span class='op'>=</span> <span class='fl'>123</span>,
+  chains <span class='op'>=</span> <span class='fl'>2</span>,
+  refresh <span class='op'>=</span> <span class='fl'>0</span>,
+  init <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>chain_id</span><span class='op'>)</span> <span class='op'>{</span>
     <span class='co'># silly but demonstrates optional use of chain_id</span>
-    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>1</span> / (<span class='no'>chain_id</span> + <span class='fl'>1</span>))
-  }
-)</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>theta <span class='op'>=</span> <span class='fl'>1</span> <span class='op'>/</span> <span class='op'>(</span><span class='va'>chain_id</span> <span class='op'>+</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
+  <span class='op'>}</span>
+<span class='op'>)</span>
+</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
 #&gt; 
 #&gt; Chain 1 finished in 0.0 seconds.
 #&gt; Chain 2 finished in 0.0 seconds.
 #&gt; 
 #&gt; Both chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.3 seconds.</div><div class='input'><span class='no'>fit_mcmc_w_init_fun_2</span>$<span class='fu'><a href='fit-method-init.html'>init</a></span>()</div><div class='output co'>#&gt; [[1]]
+#&gt; Total execution time: 0.3 seconds.
+#&gt; </div><div class='input'><span class='va'>fit_mcmc_w_init_fun_2</span><span class='op'>$</span><span class='fu'>init</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [[1]]
 #&gt; [[1]]$theta
 #&gt; [1] 0.5
 #&gt; 
@@ -522,40 +543,44 @@ documentation and tutorials.</p>
 #&gt; 
 #&gt; </div><div class='input'>
 <span class='co'># Specifying initial values as a list of lists</span>
-<span class='no'>fit_mcmc_w_init_list</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-sample.html'>sample</a></span>(
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
-  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
-  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>2</span>,
-  <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>init</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
-    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>0.75</span>), <span class='co'># chain 1</span>
-    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>0.25</span>)  <span class='co'># chain 2</span>
-  )
-)</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
+<span class='va'>fit_mcmc_w_init_list</span> <span class='op'>&lt;-</span> <span class='va'>mod</span><span class='op'>$</span><span class='fu'>sample</span><span class='op'>(</span>
+  data <span class='op'>=</span> <span class='va'>stan_data</span>,
+  seed <span class='op'>=</span> <span class='fl'>123</span>,
+  chains <span class='op'>=</span> <span class='fl'>2</span>,
+  refresh <span class='op'>=</span> <span class='fl'>0</span>,
+  init <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>theta <span class='op'>=</span> <span class='fl'>0.75</span><span class='op'>)</span>, <span class='co'># chain 1</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>theta <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span>  <span class='co'># chain 2</span>
+  <span class='op'>)</span>
+<span class='op'>)</span>
+</div><div class='output co'>#&gt; Running MCMC with 2 sequential chains...
 #&gt; 
 #&gt; Chain 1 finished in 0.0 seconds.
 #&gt; Chain 2 finished in 0.0 seconds.
 #&gt; 
 #&gt; Both chains finished successfully.
 #&gt; Mean chain execution time: 0.0 seconds.
-#&gt; Total execution time: 0.3 seconds.</div><div class='input'><span class='no'>fit_optim_w_init_list</span> <span class='kw'>&lt;-</span> <span class='no'>mod</span>$<span class='fu'><a href='model-method-optimize.html'>optimize</a></span>(
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>stan_data</span>,
-  <span class='kw'>seed</span> <span class='kw'>=</span> <span class='fl'>123</span>,
-  <span class='kw'>init</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
-    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>0.75</span>)
-  )
-)</div><div class='output co'>#&gt; Initial log joint probability = -11.6657 
+#&gt; Total execution time: 0.3 seconds.
+#&gt; </div><div class='input'><span class='va'>fit_optim_w_init_list</span> <span class='op'>&lt;-</span> <span class='va'>mod</span><span class='op'>$</span><span class='fu'>optimize</span><span class='op'>(</span>
+  data <span class='op'>=</span> <span class='va'>stan_data</span>,
+  seed <span class='op'>=</span> <span class='fl'>123</span>,
+  init <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>theta <span class='op'>=</span> <span class='fl'>0.75</span><span class='op'>)</span>
+  <span class='op'>)</span>
+<span class='op'>)</span>
+</div><div class='output co'>#&gt; Initial log joint probability = -11.6657 
 #&gt;     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
 #&gt;        6      -5.00402   0.000237915   9.55309e-07           1           1        9    
 #&gt; Optimization terminated normally:  
 #&gt;   Convergence detected: relative gradient magnitude is below tolerance 
-#&gt; Finished in  0.1 seconds.</div><div class='input'><span class='no'>fit_optim_w_init_list</span>$<span class='fu'><a href='fit-method-init.html'>init</a></span>()</div><div class='output co'>#&gt; [[1]]
+#&gt; Finished in  0.1 seconds.</div><div class='input'><span class='va'>fit_optim_w_init_list</span><span class='op'>$</span><span class='fu'>init</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [[1]]
 #&gt; [[1]]$theta
 #&gt; [1] 0.75
 #&gt; 
-#&gt; </div><div class='input'># }
+#&gt; </div><div class='input'><span class='co'># }</span>
 
-</div></span></pre>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -571,7 +596,7 @@ documentation and tutorials.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

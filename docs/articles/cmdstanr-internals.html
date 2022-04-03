@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -145,7 +145,8 @@
 <p>This vignette is intended to be read after the <a href="http://mc-stan.org/cmdstanr/articles/cmdstanr.html"><em>Getting started with CmdStanR</em></a> vignette. Please read that first for important background. In this document we provide additional details about compiling models, passing in data, and how CmdStan output is saved and read back into R.</p>
 <p>We will only use the <code>$sample()</code> method in examples, but all model fitting methods work in a similar way under the hood.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr">cmdstanr</a></span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/">cmdstanr</a></span><span class="op">)</span>
+<span class="fu"><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain</a></span><span class="op">(</span>fix <span class="op">=</span> <span class="cn">TRUE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="compilation" class="section level2">
 <h2 class="hasAnchor">
@@ -171,10 +172,10 @@ model {
 }</code></pre>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mod</span><span class="op">$</span><span class="fu">stan_file</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.28.1/examples/bernoulli/bernoulli.stan"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.29.1/examples/bernoulli/bernoulli.stan"</code></pre>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.28.1/examples/bernoulli/bernoulli"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.29.1/examples/bernoulli/bernoulli"</code></pre>
 <p>Subsequently, if you create a <code>CmdStanModel</code> object from the same Stan file then compilation will be skipped (assuming the file hasn’t changed).</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">stan_file</span><span class="op">)</span></code></pre></div>
@@ -199,7 +200,7 @@ model {
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span><span class="op">)</span>
 <span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.28.1/examples/bernoulli/bernoulli"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.29.1/examples/bernoulli/bernoulli"</code></pre>
 </div>
 <div id="pedantic-check" class="section level3">
 <h3 class="hasAnchor">
@@ -233,13 +234,27 @@ model {
 "</span><span class="op">)</span></code></pre></div>
 <p>To turn on pedantic mode at compile time you can set <code>pedantic=TRUE</code> in the call to <code><a href="../reference/cmdstan_model.html">cmdstan_model()</a></code> (or when calling the <code>$compile()</code> method directly if using the delayed compilation approach described above).</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>mod_pedantic <span class="ot">&lt;-</span> <span class="fu">cmdstan_model</span>(stan_file_pedantic, <span class="at">pedantic =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e62213b1a50.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A poisson distribution is given parameter lambda as a rate <span class="fu">parameter</span> (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors.</span></code></pre></div>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56281c2c0.stan'</span>, line <span class="dv">4</span>, column <span class="dv">2</span><span class="sc">:</span> Declaration</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    of arrays by placing brackets after a variable name is deprecated and</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    will be removed <span class="cf">in</span> Stan <span class="dv">2</span>.<span class="dv">32</span>.<span class="fl">0.</span> Instead use the array keyword before the</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    type. This can be changed automatically using the auto<span class="sc">-</span>format flag to</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    stanc</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56281c2c0.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    poisson distribution is given parameter lambda as a rate parameter</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors.</span></code></pre></div>
 <p>To turn on pedantic mode separately from compilation use the <code>pedantic</code> argument to the <code>$check_syntax()</code> method.</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>mod_pedantic<span class="sc">$</span><span class="fu">check_syntax</span>(<span class="at">pedantic =</span> <span class="cn">TRUE</span>) </span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model_74b584fd23ea8c78eceda86d1d425fe8.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A poisson distribution is given parameter lambda as a rate <span class="fu">parameter</span> (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors.</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>Stan program is syntactically correct</span></code></pre></div>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model_74b584fd23ea8c78eceda86d1d425fe8.stan'</span>, line <span class="dv">4</span>, column <span class="dv">2</span><span class="sc">:</span> Declaration</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    of arrays by placing brackets after a variable name is deprecated and</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    will be removed <span class="cf">in</span> Stan <span class="dv">2</span>.<span class="dv">32</span>.<span class="fl">0.</span> Instead use the array keyword before the</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    type. This can be changed automatically using the auto<span class="sc">-</span>format flag to</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    stanc</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model_74b584fd23ea8c78eceda86d1d425fe8.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    poisson distribution is given parameter lambda as a rate parameter</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors.</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>Stan program is syntactically correct</span></code></pre></div>
 <p>Using <code>pedantic=TRUE</code> via the <code>$check_syntax()</code> method also has the advantage that it can be used even if the model hasn’t been compiled yet. This can be helpful because the pedantic and syntax checks themselves are much faster than compilation.</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">file.remove</span>(mod_pedantic<span class="sc">$</span><span class="fu">exe_file</span>()) <span class="co"># delete compiled executable</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>[<span class="dv">1</span>] <span class="cn">TRUE</span></span>
@@ -247,9 +262,16 @@ model {
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>mod_pedantic <span class="ot">&lt;-</span> <span class="fu">cmdstan_model</span>(stan_file_pedantic, <span class="at">compile =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>mod_pedantic<span class="sc">$</span><span class="fu">check_syntax</span>(<span class="at">pedantic =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model_74b584fd23ea8c78eceda86d1d425fe8.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A poisson distribution is given parameter lambda as a rate <span class="fu">parameter</span> (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors.</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>Stan program is syntactically correct</span></code></pre></div>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model_74b584fd23ea8c78eceda86d1d425fe8.stan'</span>, line <span class="dv">4</span>, column <span class="dv">2</span><span class="sc">:</span> Declaration</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    of arrays by placing brackets after a variable name is deprecated and</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    will be removed <span class="cf">in</span> Stan <span class="dv">2</span>.<span class="dv">32</span>.<span class="fl">0.</span> Instead use the array keyword before the</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    type. This can be changed automatically using the auto<span class="sc">-</span>format flag to</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    stanc</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model_74b584fd23ea8c78eceda86d1d425fe8.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    poisson distribution is given parameter lambda as a rate parameter</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors.</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>Stan program is syntactically correct</span></code></pre></div>
 </div>
 <div id="stan-model-variables" class="section level3">
 <h3 class="hasAnchor">
@@ -405,10 +427,10 @@ model {
 <p>When fitting a model, the default behavior is to write the output from CmdStan to CSV files in a temporary directory.</p>
 <div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>[1] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-202111011615-1-59118c.csv"
-[2] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-202111011615-2-59118c.csv"
-[3] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-202111011615-3-59118c.csv"
-[4] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-202111011615-4-59118c.csv"</code></pre>
+<pre><code>[1] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-202203181228-1-9912f0.csv"
+[2] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-202203181228-2-9912f0.csv"
+[3] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-202203181228-3-9912f0.csv"
+[4] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-202203181228-4-9912f0.csv"</code></pre>
 <p>These files will be lost if you end your R session or if you remove the <code>fit</code> object and force (or wait for) garbage collection.</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">files</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span>
@@ -417,9 +439,9 @@ model {
 <div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/rm.html">rm</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/gc.html">gc</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>          used (Mb) gc trigger  (Mb) limit (Mb) max used (Mb)
-Ncells 1110632 59.4    2289441 122.3         NA  1415465 75.6
-Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
+<pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used  (Mb)
+Ncells 1135293 60.7    2208007  118         NA  2208007 118.0
+Vcells 2043878 15.6    8388608   64      32768  3361903  25.7</code></pre>
 <div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.exists</a></span><span class="op">(</span><span class="va">files</span><span class="op">)</span></code></pre></div>
 <pre><code>[1] FALSE FALSE FALSE FALSE</code></pre>
@@ -455,6 +477,7 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
     cmdstan_summary: function (flags = NULL) 
     code: function () 
     data_file: function () 
+    diagnostic_summary: function (diagnostics = c("divergences", "treedepth", "ebfmi"), 
     draws: function (variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", 
     init: function () 
     initialize: function (runset) 
@@ -487,7 +510,7 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
     metadata_: list
     profiles_: NULL
     read_csv_: function (variables = NULL, sampler_diagnostics = NULL, format = getOption("cmdstanr_draws_format", 
-    sampler_diagnostics_: 1 2 2 2 1 1 1 1 1 1 1 1 2 2 2 2 1 2 1 2 1 2 2 1 2 2 2 2  ...
+    sampler_diagnostics_: 1 2 2 1 2 1 1 2 1 1 1 1 2 2 1 2 1 1 2 1 2 1 1 1 1 2 1 1  ...
     warmup_draws_: NULL
     warmup_sampler_diagnostics_: NULL </code></pre>
 <p>After we call a method that requires the draws then if we reexamine the structure of the object we will see that the <code>draws_</code> slot in <code>Private</code> is no longer empty.</p>
@@ -502,6 +525,7 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
     cmdstan_summary: function (flags = NULL) 
     code: function () 
     data_file: function () 
+    diagnostic_summary: function (diagnostics = c("divergences", "treedepth", "ebfmi"), 
     draws: function (variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", 
     init: function () 
     initialize: function (runset) 
@@ -528,13 +552,13 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
     summary: function (variables = NULL, ...) 
     time: function () 
   Private:
-    draws_: -7.17967 -7.04746 -6.97336 -7.29513 -7.42614 -7.79834 -7 ...
+    draws_: -7.82818 -7.71698 -7.1161 -7.09583 -7.51485 -8.04188 -7. ...
     init_: NULL
     inv_metric_: list
     metadata_: list
     profiles_: NULL
     read_csv_: function (variables = NULL, sampler_diagnostics = NULL, format = getOption("cmdstanr_draws_format", 
-    sampler_diagnostics_: 1 2 2 2 1 1 1 1 1 1 1 1 2 2 2 2 1 2 1 2 1 2 2 1 2 2 2 2  ...
+    sampler_diagnostics_: 1 2 2 1 2 1 1 2 1 1 1 1 2 2 1 2 1 1 2 1 2 1 1 1 1 2 1 1  ...
     warmup_draws_: NULL
     warmup_sampler_diagnostics_: NULL </code></pre>
 <p>For models with many parameters, transformed parameters, or generated quantities, if only some are requested (e.g., by specifying the <code>variables</code> argument to <code>fit$draws()</code>) then CmdStanR will only read in the requested variables (unless they have already been read in).</p>
@@ -551,9 +575,9 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
 <pre><code>List of 8
  $ metadata                       :List of 40
   ..$ stan_version_major  : num 2
-  ..$ stan_version_minor  : num 28
+  ..$ stan_version_minor  : num 29
   ..$ stan_version_patch  : num 1
-  ..$ start_datetime      : chr "2021-11-01 22:15:07 UTC"
+  ..$ start_datetime      : chr "2022-03-18 18:28:03 UTC"
   ..$ method              : chr "sample"
   ..$ save_warmup         : num 0
   ..$ thin                : num 1
@@ -570,14 +594,14 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
   ..$ num_chains          : num 1
   ..$ id                  : num [1:4] 1 2 3 4
   ..$ init                : num [1:4] 2 2 2 2
-  ..$ seed                : num 1.49e+09
+  ..$ seed                : num 1.13e+09
   ..$ refresh             : num 100
   ..$ sig_figs            : num -1
-  ..$ profile_file        : chr "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-profile-202111011615-1-4efe9f.csv"
-  ..$ stanc_version       : chr "stanc3 v2.28.1"
+  ..$ profile_file        : chr "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-profile-202203181228-1-6c529e.csv"
+  ..$ stanc_version       : chr "stanc3 v2.29.1"
   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
   ..$ variables           : chr [1:2] "lp__" "theta"
-  ..$ step_size_adaptation: num [1:4] 1.193 0.886 0.957 1.008
+  ..$ step_size_adaptation: num [1:4] 1.062 0.9 0.966 0.973
   ..$ model_name          : chr "bernoulli_model"
   ..$ adapt_engaged       : num 1
   ..$ adapt_delta         : num 0.8
@@ -586,11 +610,11 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
   ..$ iter_warmup         : num 1000
   ..$ iter_sampling       : num 1000
   ..$ threads_per_chain   : num 1
-  ..$ time                :'data.frame':    1 obs. of  4 variables:
-  .. ..$ chain_id: num 1
-  .. ..$ warmup  : num 0.004
-  .. ..$ sampling: num 0.01
-  .. ..$ total   : num 0.014
+  ..$ time                :'data.frame':    4 obs. of  4 variables:
+  .. ..$ chain_id: num [1:4] 1 2 3 4
+  .. ..$ warmup  : num [1:4] 0.004 0.005 0.005 0.004
+  .. ..$ sampling: num [1:4] 0.012 0.013 0.018 0.014
+  .. ..$ total   : num [1:4] 0.016 0.018 0.023 0.018
   ..$ stan_variable_sizes :List of 2
   .. ..$ lp__ : num 1
   .. ..$ theta: num 1
@@ -600,27 +624,27 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
   ..$ total : int NA
   ..$ chains:'data.frame':  4 obs. of  4 variables:
   .. ..$ chain_id: num [1:4] 1 2 3 4
-  .. ..$ warmup  : num [1:4] 0.004 0.004 0.004 0.004
-  .. ..$ sampling: num [1:4] 0.01 0.01 0.01 0.011
-  .. ..$ total   : num [1:4] 0.014 0.014 0.014 0.015
+  .. ..$ warmup  : num [1:4] 0.004 0.005 0.005 0.004
+  .. ..$ sampling: num [1:4] 0.012 0.013 0.018 0.014
+  .. ..$ total   : num [1:4] 0.016 0.018 0.023 0.018
  $ inv_metric                     :List of 4
-  ..$ 1: num 0.534
-  ..$ 2: num 0.584
-  ..$ 3: num 0.632
-  ..$ 4: num 0.515
+  ..$ 1: num 0.532
+  ..$ 2: num 0.497
+  ..$ 3: num 0.514
+  ..$ 4: num 0.539
  $ step_size                      :List of 4
-  ..$ 1: num 1.19
-  ..$ 2: num 0.886
-  ..$ 3: num 0.957
-  ..$ 4: num 1.01
+  ..$ 1: num 1.06
+  ..$ 2: num 0.9
+  ..$ 3: num 0.966
+  ..$ 4: num 0.973
  $ warmup_draws                   : NULL
- $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:2] -7.18 -7.05 -6.97 -7.3 -7.43 ...
+ $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:2] -7.83 -7.72 -7.12 -7.1 -7.51 ...
   ..- attr(*, "dimnames")=List of 3
   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
   .. ..$ variable : chr [1:2] "lp__" "theta"
  $ warmup_sampler_diagnostics     : NULL
- $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.108 1 1 0.917 0.966 ...
+ $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 1 1 1 1 0.888 ...
   ..- attr(*, "dimnames")=List of 3
   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
@@ -643,38 +667,38 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
 <code class="sourceCode R"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, save_latent_dynamics <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit</span><span class="op">$</span><span class="fu">latent_dynamics_files</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>[1] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-diagnostic-202111011615-1-65e6b5.csv"
-[2] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-diagnostic-202111011615-2-65e6b5.csv"
-[3] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-diagnostic-202111011615-3-65e6b5.csv"
-[4] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-diagnostic-202111011615-4-65e6b5.csv"</code></pre>
+<pre><code>[1] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-diagnostic-202203181228-1-263c4e.csv"
+[2] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-diagnostic-202203181228-2-263c4e.csv"
+[3] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-diagnostic-202203181228-3-263c4e.csv"
+[4] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-diagnostic-202203181228-4-263c4e.csv"</code></pre>
 <div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># read one of the files in</span>
 <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">latent_dynamics_files</span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, comment.char <span class="op">=</span> <span class="st">"#"</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></code></pre></div>
 <pre><code>      lp__ accept_stat__ stepsize__ treedepth__ n_leapfrog__ divergent__
-1 -6.87497      0.962375   0.898712           1            3           0
-2 -6.82158      0.971676   0.898712           1            3           0
-3 -6.78646      1.000000   0.898712           1            1           0
-4 -6.79509      0.981789   0.898712           1            3           0
-5 -6.79409      1.000000   0.898712           1            1           0
-6 -7.70763      0.817958   0.898712           1            3           0
-  energy__     theta   p_theta   g_theta
-1  6.98988 -1.444820 -0.711497 -0.710404
-2  7.14519 -0.847985  1.194020  0.598270
-3  6.81592 -0.916478 -0.360253  0.428112
-4  6.92528 -1.306840  0.757346 -0.443801
-5  6.80344 -1.304580 -0.202911 -0.439262
-6  8.28493 -0.229702 -1.594770  2.313910</code></pre>
+1 -7.29215      0.999807   0.944718           2            3           0
+2 -6.81105      0.988812   0.944718           1            3           0
+3 -8.51410      0.694033   0.944718           1            3           0
+4 -7.89903      1.000000   0.944718           1            1           0
+5 -8.72776      0.925309   0.944718           1            1           0
+6 -6.87320      1.000000   0.944718           2            3           0
+  energy__    theta    p_theta   g_theta
+1  7.38144 -1.84247 -0.6346060 -1.358890
+2  7.27073 -1.34029  1.4398900 -0.510444
+3  9.26904 -2.53206 -1.8452700 -2.116310
+4  8.47008 -2.22096  1.6048800 -1.825390
+5  8.72848 -2.63117  0.0571749 -2.194090
+6  8.50747 -1.44232 -2.7149800 -0.705762</code></pre>
 <p>The column <code>lp__</code> is also provided via <code>fit$draws()</code>, and the columns <code>accept_stat__</code>, <code>stepsize__</code>, <code>treedepth__</code>, <code>n_leapfrog__</code>, <code>divergent__</code>, and <code>energy__</code> are also provided by <code>fit$sampler_diagnostics()</code>, but there are several columns unique to the latent dynamics file.</p>
 <div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">x</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"theta"</span>, <span class="st">"p_theta"</span>, <span class="st">"g_theta"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></code></pre></div>
-<pre><code>      theta   p_theta   g_theta
-1 -1.444820 -0.711497 -0.710404
-2 -0.847985  1.194020  0.598270
-3 -0.916478 -0.360253  0.428112
-4 -1.306840  0.757346 -0.443801
-5 -1.304580 -0.202911 -0.439262
-6 -0.229702 -1.594770  2.313910</code></pre>
+<pre><code>     theta    p_theta   g_theta
+1 -1.84247 -0.6346060 -1.358890
+2 -1.34029  1.4398900 -0.510444
+3 -2.53206 -1.8452700 -2.116310
+4 -2.22096  1.6048800 -1.825390
+5 -2.63117  0.0571749 -2.194090
+6 -1.44232 -2.7149800 -0.705762</code></pre>
 <p>Our model has a single parameter <code>theta</code> and the three columns above correspond to <code>theta</code> in the <em>unconstrained</em> space (<code>theta</code> on the constrained space is accessed via <code>fit$draws()</code>), the auxiliary momentum <code>p_theta</code>, and the gradient <code>g_theta</code>. In general, each of these three columns will exist for <em>every</em> parameter in the model.</p>
 </div>
 </div>
@@ -688,17 +712,17 @@ Vcells 2012546 15.4    8388608  64.0      32768  2914863 22.3</code></pre>
 <p>We can check that this worked by removing <code>fit</code> and loading it back in from the save file.</p>
 <div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/rm.html">rm</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/gc.html">gc</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>          used (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-Ncells 1141353 61.0    2289441 122.3         NA  2289441 122.3
-Vcells 2191283 16.8    8388608  64.0      32768  3681884  28.1</code></pre>
+<pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used  (Mb)
+Ncells 1159655 62.0    2208007  118         NA  2208007 118.0
+Vcells 2197871 16.8    8388608   64      32768  3895933  29.8</code></pre>
 <div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="va">temp_rds_file</span><span class="op">)</span>
 <span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <pre><code># A tibble: 2 × 10
   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
   &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
-1 lp__     -7.26  -6.99  0.703 0.325 -8.74   -6.75   1.00    1980.    2151.
-2 theta     0.250  0.236 0.119 0.121  0.0793  0.464  1.00    1513.    1732.</code></pre>
+1 lp__     -7.25  -6.97  0.732 0.309 -8.71   -6.75   1.00    2009.    1714.
+2 theta     0.250  0.235 0.118 0.118  0.0821  0.463  1.00    1445.    1640.</code></pre>
 </div>
 <div id="developing-using-cmdstanr" class="section level2">
 <h2 class="hasAnchor">
@@ -713,16 +737,16 @@ Vcells 2191283 16.8    8388608  64.0      32768  3681884  28.1</code></pre>
 
 <span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">stan_file</span>, force_recompile <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <pre><code>Running make \
-  /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3adf4 \
+  /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56119ce10 \
   "STANCFLAGS +=  --name='bernoulli_model'"
 
 --- Translating Stan model to C++ code ---
-bin/stanc --name='bernoulli_model' --o=/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3adf4.hpp /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3adf4.stan
+bin/stanc --name='bernoulli_model' --o=/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56119ce10.hpp /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56119ce10.stan
 
 --- Compiling, linking C++ code ---
-clang++ -std=c++1y -Wno-unknown-warning-option -Wno-tautological-compare -Wno-sign-compare -D_REENTRANT -Wno-ignored-attributes      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.3.9 -I stan/lib/stan_math/lib/boost_1.75.0 -I stan/lib/stan_math/lib/sundials_5.7.0/include    -DBOOST_DISABLE_ASSERTS          -c -include-pch stan/src/stan/model/model_header.hpp.gch -x c++ -o /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3adf4.o /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3adf4.hpp
-clang++ -std=c++1y -Wno-unknown-warning-option -Wno-tautological-compare -Wno-sign-compare -D_REENTRANT -Wno-ignored-attributes      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.3.9 -I stan/lib/stan_math/lib/boost_1.75.0 -I stan/lib/stan_math/lib/sundials_5.7.0/include    -DBOOST_DISABLE_ASSERTS                -Wl,-L,"/Users/jgabry/.cmdstan/cmdstan-2.28.1/stan/lib/stan_math/lib/tbb" -Wl,-rpath,"/Users/jgabry/.cmdstan/cmdstan-2.28.1/stan/lib/stan_math/lib/tbb"      /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3adf4.o src/cmdstan/main.o        -Wl,-L,"/Users/jgabry/.cmdstan/cmdstan-2.28.1/stan/lib/stan_math/lib/tbb" -Wl,-rpath,"/Users/jgabry/.cmdstan/cmdstan-2.28.1/stan/lib/stan_math/lib/tbb"   stan/lib/stan_math/lib/sundials_5.7.0/lib/libsundials_nvecserial.a stan/lib/stan_math/lib/sundials_5.7.0/lib/libsundials_cvodes.a stan/lib/stan_math/lib/sundials_5.7.0/lib/libsundials_idas.a stan/lib/stan_math/lib/sundials_5.7.0/lib/libsundials_kinsol.a  stan/lib/stan_math/lib/tbb/libtbb.dylib stan/lib/stan_math/lib/tbb/libtbbmalloc.dylib stan/lib/stan_math/lib/tbb/libtbbmalloc_proxy.dylib -o /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3adf4
-rm -f /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3adf4.o</code></pre>
+clang++ -std=c++1y -Wno-unknown-warning-option -Wno-tautological-compare -Wno-sign-compare -D_REENTRANT -Wno-ignored-attributes      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.3.9 -I stan/lib/stan_math/lib/boost_1.75.0 -I stan/lib/stan_math/lib/sundials_6.0.0/include -I stan/lib/stan_math/lib/sundials_6.0.0/src/sundials    -DBOOST_DISABLE_ASSERTS          -c -include-pch stan/src/stan/model/model_header.hpp.gch -x c++ -o /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56119ce10.o /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56119ce10.hpp
+clang++ -std=c++1y -Wno-unknown-warning-option -Wno-tautological-compare -Wno-sign-compare -D_REENTRANT -Wno-ignored-attributes      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.3.9 -I stan/lib/stan_math/lib/boost_1.75.0 -I stan/lib/stan_math/lib/sundials_6.0.0/include -I stan/lib/stan_math/lib/sundials_6.0.0/src/sundials    -DBOOST_DISABLE_ASSERTS                -Wl,-L,"/Users/jgabry/.cmdstan/cmdstan-2.29.1/stan/lib/stan_math/lib/tbb" -Wl,-rpath,"/Users/jgabry/.cmdstan/cmdstan-2.29.1/stan/lib/stan_math/lib/tbb"      /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56119ce10.o src/cmdstan/main.o        -Wl,-L,"/Users/jgabry/.cmdstan/cmdstan-2.29.1/stan/lib/stan_math/lib/tbb" -Wl,-rpath,"/Users/jgabry/.cmdstan/cmdstan-2.29.1/stan/lib/stan_math/lib/tbb"   stan/lib/stan_math/lib/sundials_6.0.0/lib/libsundials_nvecserial.a stan/lib/stan_math/lib/sundials_6.0.0/lib/libsundials_cvodes.a stan/lib/stan_math/lib/sundials_6.0.0/lib/libsundials_idas.a stan/lib/stan_math/lib/sundials_6.0.0/lib/libsundials_kinsol.a  stan/lib/stan_math/lib/tbb/libtbb.dylib stan/lib/stan_math/lib/tbb/libtbbmalloc.dylib stan/lib/stan_math/lib/tbb/libtbbmalloc_proxy.dylib -o /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56119ce10
+rm -f /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/model-dfb56119ce10.o</code></pre>
 <div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>
   data <span class="op">=</span> <span class="va">data_list</span>,
@@ -732,11 +756,11 @@ rm -f /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/model-7e624fd3
 <span class="op">)</span></code></pre></div>
 <pre><code>Running MCMC with 1 chain...
 
-Running ./bernoulli 'id=1' random 'seed=1517042608' data \
-  'file=/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/standata-7e62669d8161.json' \
+Running ./bernoulli 'id=1' random 'seed=911816340' data \
+  'file=/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/standata-dfb528f42a87.json' \
   output \
-  'file=/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-202111011615-1-824e93.csv' \
-  'profile_file=/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-profile-202111011615-1-320034.csv' \
+  'file=/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-202203181228-1-036a9c.csv' \
+  'profile_file=/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-profile-202203181228-1-7b073f.csv' \
   'method=sample' 'num_samples=100' 'num_warmup=100' 'save_warmup=0' \
   'algorithm=hmc' 'engine=nuts' adapt 'engaged=1'
 Chain 1 method = sample (Default) 
@@ -766,19 +790,19 @@ Chain 1         stepsize_jitter = 0 (Default)
 Chain 1     num_chains = 1 (Default) 
 Chain 1 id = 1 (Default) 
 Chain 1 data 
-Chain 1   file = /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/standata-7e62669d8161.json 
+Chain 1   file = /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/standata-dfb528f42a87.json 
 Chain 1 init = 2 (Default) 
 Chain 1 random 
-Chain 1   seed = 1517042608 
+Chain 1   seed = 911816340 
 Chain 1 output 
-Chain 1   file = /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-202111011615-1-824e93.csv 
+Chain 1   file = /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-202203181228-1-036a9c.csv 
 Chain 1   diagnostic_file =  (Default) 
 Chain 1   refresh = 100 (Default) 
 Chain 1   sig_figs = -1 (Default) 
-Chain 1   profile_file = /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpRURify/bernoulli-profile-202111011615-1-320034.csv 
+Chain 1   profile_file = /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpMNhFrl/bernoulli-profile-202203181228-1-7b073f.csv 
 Chain 1 num_threads = 1 (Default) 
-Chain 1 Gradient evaluation took 4e-06 seconds 
-Chain 1 1000 transitions using 10 leapfrog steps per transition would take 0.04 seconds. 
+Chain 1 Gradient evaluation took 6e-06 seconds 
+Chain 1 1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds. 
 Chain 1 Adjust your expectations accordingly! 
 Chain 1 WARNING: There aren't enough warmup iterations to fit the 
 Chain 1          three stages of adaptation as currently configured. 

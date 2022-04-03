@@ -33,8 +33,9 @@ sample_mpi(
   window = NULL,
   fixed_param = FALSE,
   sig_figs = NULL,
-  validate_csv = TRUE,
-  show_messages = TRUE
+  show_messages = TRUE,
+  diagnostics = c("divergences", "treedepth", "ebfmi"),
+  validate_csv = TRUE
 )
 }
 \arguments{
@@ -212,18 +213,33 @@ values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
 Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
 
-\item{validate_csv}{(logical) When \code{TRUE} (the default), validate the
-sampling results in the csv files. Disable if you wish to manually read in
-the sampling results and validate them yourself, for example using
-\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}.}
-
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all
 informational messages, for example rejection of the current proposal.
 Disable if you wish to silence these messages, but this is not usually
 recommended unless you are very confident that the model is correct up to
 numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
-used to display all the silenced messages.}
+used to display the silenced messages.}
+
+\item{diagnostics}{(character vector) The diagnostics to automatically check
+and warn about after sampling. Setting this to an empty string \code{""} or
+\code{NULL} can be used to prevent CmdStanR from automatically reading in the
+sampler diagnostics from CSV if you wish to manually read in the results
+and validate them yourself, for example using \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}. The
+currently available diagnostics are \code{"divergences"}, \code{"treedepth"},
+and \code{"ebfmi"} (the default is to check all of them).
+
+These diagnostics are also available after fitting. The
+\code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}} method provides
+access the diagnostic values for each iteration and the
+\code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} method provides
+summaries of the diagnostics and can regenerate the warning messages.
+
+Diagnostics like R-hat and effective sample size are \emph{not} currently
+available via the \code{diagnostics} argument but can be checked after fitting
+using the \code{\link[=fit-method-summary]{$summary()}} method.}
+
+\item{validate_csv}{Deprecated and will be removed in a future release.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
@@ -287,6 +303,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
+\code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-sample}},

@@ -84,7 +84,7 @@ for how to avoid manually setting the path in each R session." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -92,7 +92,7 @@ for how to avoid manually setting the path in each R session." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -145,19 +145,19 @@ for how to avoid manually setting the path in each R session." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://twitter.com/mcmc_stan">
-    <span class="fas fa-twitter"></span>
+    <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr">
-    <span class="fas fa-github"></span>
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/">
-    <span class="fas fa-users"></span>
+    <span class="fa fa-users"></span>
      
   </a>
 </li>
@@ -187,26 +187,26 @@ CmdStan installation in located. Once the path has been set,
 for how to avoid manually setting the path in each <span style="R">R</span> session.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>set_cmdstan_path</span>(<span class='kw'>path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)
+    <pre class="usage"><span class='fu'>set_cmdstan_path</span><span class='op'>(</span>path <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
 
-<span class='fu'>cmdstan_path</span>()
+<span class='fu'>cmdstan_path</span><span class='op'>(</span><span class='op'>)</span>
 
-<span class='fu'>cmdstan_version</span>(<span class='kw'>error_on_NA</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+<span class='fu'>cmdstan_version</span><span class='op'>(</span>error_on_NA <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>path</th>
-      <td><p>The full file path to the CmdStan installation as a string. If
+      <td><p>(string) The full file path to the CmdStan installation. If
 <code>NULL</code> (the default) then the path is set to the default path used by
 <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> if it exists.</p></td>
     </tr>
     <tr>
       <th>error_on_NA</th>
-      <td><p>Logical of length 1, whether to
-throw an error if CmdStan is not found.
-If <code>FALSE</code>, <code>cmdstan_version()</code> returns <code>NULL</code>.</p></td>
+      <td><p>(logical) Should an error be thrown if CmdStan is not
+found. The default is <code>TRUE</code>. If <code>FALSE</code>, <code>cmdstan_version()</code> returns
+<code>NULL</code>.</p></td>
     </tr>
     </table>
 
@@ -214,9 +214,8 @@ If <code>FALSE</code>, <code>cmdstan_version()</code> returns <code>NULL</code>.
 
     <p>A string. Either the file path to the CmdStan installation or the
 CmdStan version number.</p>
-<p>CmdStan version string if available. If CmdStan
-is not found and <code>error_on_NA</code> is <code>FALSE</code>,
-<code>cmdstan_version()</code> returns <code>NULL</code>.</p>
+<p>CmdStan version string if available. If CmdStan is not found and
+<code>error_on_NA</code> is <code>FALSE</code>, <code>cmdstan_version()</code> returns <code>NULL</code>.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Before the package can be used it needs to know where the CmdStan
@@ -225,13 +224,13 @@ this to avoid having to manually set the path every session:</p><ul>
 <li><p>If the <a href='https://rdrr.io/r/base/Sys.setenv.html'>environment variable</a> <code>"CMDSTAN"</code> exists at load time
 then its value will be automatically set as the default path to CmdStan for
 the <span style="R">R</span> session.</p></li>
-<li><p>If no environment variable is found when loaded but any directory in the form
-<code>".cmdstanr/cmdstan-[version]"</code>, for example <code>".cmdstanr/cmdstan-2.23.0"</code>,
-exists in the user's home directory (<code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("HOME")</a></code>,
-<em>not</em> the current working directory) then the path to the cmdstan with the largest
-version number will be set as the path to CmdStan for the <span style="R">R</span> session.
-This is the same as the default directory that <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> would use to
-install the latest version of CmdStan.</p></li>
+<li><p>If no environment variable is found when loaded but any directory in the
+form <code>".cmdstan/cmdstan-[version]"</code> (e.g., <code>".cmdstan/cmdstan-2.23.0"</code>),
+exists in the user's home directory (<code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("HOME")</a></code>, <em>not</em> the current
+working directory) then the path to the cmdstan with the largest version
+number will be set as the path to CmdStan for the <span style="R">R</span> session. This is the
+same as the default directory that <code><a href='install_cmdstan.html'>install_cmdstan()</a></code> would use to install
+the latest version of CmdStan.</p></li>
 </ul>
 
 <p>It is always possible to change the path after loading the package using
@@ -252,7 +251,7 @@ install the latest version of CmdStan.</p></li>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
