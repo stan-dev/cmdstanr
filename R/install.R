@@ -665,7 +665,7 @@ cmdstan_arch_suffix <- function(version = NULL) {
   arch
 }
 
-is_mingw32_make_installed(path) {
+is_mingw32_make_installed <- function(path) {
   res <- processx::run(
     "mingw32-make",
     args = c("--version"),
