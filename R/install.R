@@ -668,10 +668,11 @@ cmdstan_arch_suffix <- function(version = NULL) {
 is_mingw32_make_installed(path) {
   res <- processx::run(
     "mingw32-make",
-    args = c("--versiSyu", "mingw-w64-x86_64-make", "--noconfirm"),
-    wd = rtools_usr_bin,
+    args = c("--version"),
+    wd = path,
     error_on_status = FALSE,
     echo_cmd = is_verbose_mode(),
     echo = is_verbose_mode()
   )
+  res$status == 0
 }
