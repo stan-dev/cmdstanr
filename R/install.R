@@ -483,10 +483,13 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (R.version$minor < "2.0") {
     rtools_path <- Sys.getenv("RTOOLS40_HOME")
     rtools_version <- "40"
+    gpp_expected_path <- mingw32_expected_path
   } else {
     rtools_path <- Sys.getenv("RTOOLS42_HOME")
     rtools_version <- "42"
+    gpp_expected_path <- repair_path(file.path(rtools_path, "x86_64-w64-mingw32.static.posix", "bin"))
   }
+  mingw32_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
@@ -505,8 +508,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       call. = FALSE
     )
   }
-  toolchain_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
-  if (!is_mingw32_make_installed(path = toolchain_path)) {
+  if (!is_mingw32_make_installed(path = mingw32_expected_path)) {
     if (!fix) {
       stop(
         "\nRTools installation found but mingw32-make is not installed.",
@@ -520,13 +522,10 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       return(invisible(NULL))
     }
   }
-  mingw32_make_path <- dirname(Sys.which("mingw32-make"))
-  print(toolchain_path)
-  print(mingw32_make_path)
-  gpp_path <- dirname(Sys.which("g++"))
-  print(gpp_path)
+  mingw32_make_path <- normalizePath(dirname(Sys.which("mingw32-make")))
+  gpp_path <- normalizePath(dirname(Sys.which("g++")))
   # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
-  if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
+  if (mingw32_make_path != mingw32_expected_path || gpp_path != gpp_expected_path) {
     if (!fix) {
       stop(
         "\nOther C++ toolchains installed on your system conflict with RTools.",
@@ -661,13 +660,21 @@ cmdstan_arch_suffix <- function(version = NULL) {
 }
 
 is_mingw32_make_installed <- function(path) {
-  res <- processx::run(
-    "mingw32-make",
-    args = c("--version"),
-    wd = path,
-    error_on_status = FALSE,
-    echo_cmd = is_verbose_mode(),
-    echo = is_verbose_mode()
+  res <- tryCatch(
+    {
+      processx::run(
+        "mingw32-make",
+        args = c("--version"),
+        wd = path,
+        error_on_status = FALSE,
+        echo_cmd = is_verbose_mode(),
+        echo = is_verbose_mode()
+      )
+      return(TRUE)
+    },
+    error = function(cond) {
+      return(FALSE)
+    }
   )
-  res$status == 0
+  res
 }
