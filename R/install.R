@@ -522,12 +522,8 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       return(invisible(NULL))
     }
   }
-  mingw32_make_path <- normalizePath(dirname(Sys.which("mingw32-make")))
-  gpp_path <- normalizePath(dirname(Sys.which("g++")))
-  print(gpp_expected_path)
-  print(gpp_path)
-  print(mingw32_expected_path)
-  print(mingw32_make_path)
+  mingw32_make_path <- repair_path(normalizePath(dirname(Sys.which("mingw32-make"))))
+  gpp_path <- repair_path(normalizePath(dirname(Sys.which("g++"))))
   # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
   if (mingw32_make_path != mingw32_expected_path || gpp_path != gpp_expected_path) {
     if (!fix) {
