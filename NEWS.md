@@ -1,3 +1,9 @@
+# cmdstanr 0.5.1
+
+* Temporarily disable `format="draws_rvars"` in the `$draws()` method due to a
+bug. Until this is fixed users can make use of `posterior::as_draws_rvars()` to
+convert draws from CmdStanR to the `draws_rvars` format. (#640)
+
 # cmdstanr 0.5.0
 
 ### Bug fixes
