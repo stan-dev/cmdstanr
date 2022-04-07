@@ -363,6 +363,12 @@ assert_valid_draws_format <- function(format) {
       call. = FALSE
     )
   }
+  if (format %in% c("rvars", "draws_rvars")) {
+    stop(
+      "\nWe are fixing a bug in fit$draws(format = 'draws_rvars').",
+      "\nFor now please use posterior::as_draws_rvars(fit$draws()) instead."
+    )
+  }
   invisible(format)
 }
 

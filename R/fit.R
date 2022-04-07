@@ -823,6 +823,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$print()`][fit-method-print] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'  [`$summary()`][fit-method-summary] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'  [`$diagnostic_summary()`][fit-method-diagnostic_summary] |  Get summaries of sampler diagnostics and warning messages. |
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
