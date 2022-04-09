@@ -5,6 +5,8 @@ output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
+resource_files:
+   - deprecations-files/logistic.stan
 params:
   EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
 vignette: >
