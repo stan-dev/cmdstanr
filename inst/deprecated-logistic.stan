@@ -12,6 +12,6 @@ model {
   # priors
   target += std_normal_log(beta);
   alpha ~ std_normal();
-  
+
   y ~ bernoulli_logit(X * beta + alpha);
 }

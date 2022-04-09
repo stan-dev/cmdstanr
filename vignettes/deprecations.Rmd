@@ -64,7 +64,7 @@ model {
 When compiling the model we receive a few warnings:
 
 ```{r compile, message=FALSE}
-mod <- cmdstan_model(stan_file = "deprecations-files/logistic.stan")
+mod <- cmdstan_model(stan_file = system.file("deprecated-logistic.stan", package = "cmdstanr"))
 ```
 
 The first warning is about using the deprecated array syntax:
