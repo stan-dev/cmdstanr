@@ -35,6 +35,10 @@ cmdstanr_initialize <- function() {
     if (dir.exists(path)) {
       path <- absolute_path(path)
       suppressMessages(set_cmdstan_path(path))
+      if (is.null(cmdstan_version(error_on_NA = FALSE))) {
+        .cmdstanr$INSTALL_FOLDER <- path
+        set_cmdstan_path()
+      }
     } else {
       warning(
         "Can't find directory specified by environment variable 'CMDSTAN'. ",
