@@ -34,10 +34,19 @@ cmdstanr_initialize <- function() {
   if (isTRUE(nzchar(path))) { # CMDSTAN environment variable found
     if (dir.exists(path)) {
       path <- absolute_path(path)
-      suppressMessages(set_cmdstan_path(path))
+      suppressWarnings(suppressMessages(set_cmdstan_path(path)))
       if (is.null(cmdstan_version(error_on_NA = FALSE))) {
-        .cmdstanr$INSTALL_FOLDER <- path
-        set_cmdstan_path()
+        path <- cmdstan_default_path(dir = path)
+        if (is.null(path)) {
+          warning(
+            "No CmdStan installation found in the path specified ",
+            "by the environment variable 'CMDSTAN'.",
+            call. = FALSE
+          )
+          .cmdstanr$PATH <- NULL
+        } else {
+          set_cmdstan_path(path)
+        }
       }
     } else {
       warning(

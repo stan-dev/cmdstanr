@@ -85,7 +85,6 @@ cmdstan_version <- function(error_on_NA = TRUE) {
 # number, and path to temp dir
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- NULL
-.cmdstanr$INSTALL_FOLDER <- NULL
 .cmdstanr$VERSION <- NULL
 .cmdstanr$TEMP_DIR <- NULL
 
@@ -110,14 +109,10 @@ stop_no_path <- function() {
 #' @return The installation path.
 #' @export
 cmdstan_default_install_path <- function(old = FALSE) {
-  if (!is.null(.cmdstanr$INSTALL_FOLDER)) {
-    .cmdstanr$INSTALL_FOLDER
+  if (old) {
+    file.path(Sys.getenv("HOME"), ".cmdstanr")
   } else {
-    if (old) {
-      file.path(Sys.getenv("HOME"), ".cmdstanr")
-    } else {
-      file.path(Sys.getenv("HOME"), ".cmdstan")
-    }
+    file.path(Sys.getenv("HOME"), ".cmdstan")
   }
 }
 
@@ -129,11 +124,16 @@ cmdstan_default_install_path <- function(old = FALSE) {
 #' @export
 #' @keywords internal
 #' @param old See [cmdstan_default_install_path()].
+#' @param dir Path to a custom install folder with CmdStan installations.
 #' @return Path to the CmdStan installation with the most recent release
 #'   version, or `NULL` if no installation found.
 #'
-cmdstan_default_path <- function(old = FALSE) {
-  installs_path <- cmdstan_default_install_path(old)
+cmdstan_default_path <- function(old = FALSE, dir = NULL) {
+  if (!is.null(dir)) {
+    installs_path <- dir
+  } else {
+    installs_path <- cmdstan_default_install_path(old)
+  }
   if (dir.exists(installs_path)) {
     cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
     # if installed in cmdstan folder with no version move to cmdstan-version folder
