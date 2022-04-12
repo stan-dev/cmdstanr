@@ -21,7 +21,11 @@
 #'
 #' * If the [environment variable][Sys.setenv()] `"CMDSTAN"` exists at load time
 #' then its value will be automatically set as the default path to CmdStan for
-#' the \R session.
+#' the \R session. If the environment variable `"CMDSTAN"` is set, but a valid
+#' CmdStan is not found in the supplied path, the path is treated as a top
+#' folder that contains CmdStan installations. In that case, the CmdStan
+#' installation with the largest version number will be set as the path to
+#' CmdStan for the \R session.
 #' * If no environment variable is found when loaded but any directory in the
 #' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.23.0"`),
 #' exists in the user's home directory (`Sys.getenv("HOME")`, *not* the current
@@ -120,11 +124,16 @@ cmdstan_default_install_path <- function(old = FALSE) {
 #' @export
 #' @keywords internal
 #' @param old See [cmdstan_default_install_path()].
+#' @param dir Path to a custom install folder with CmdStan installations.
 #' @return Path to the CmdStan installation with the most recent release
 #'   version, or `NULL` if no installation found.
 #'
-cmdstan_default_path <- function(old = FALSE) {
-  installs_path <- cmdstan_default_install_path(old)
+cmdstan_default_path <- function(old = FALSE, dir = NULL) {
+  if (!is.null(dir)) {
+    installs_path <- dir
+  } else {
+    installs_path <- cmdstan_default_install_path(old)
+  }
   if (dir.exists(installs_path)) {
     cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
     # if installed in cmdstan folder with no version move to cmdstan-version folder

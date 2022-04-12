@@ -4,10 +4,12 @@
 \alias{cmdstan_default_path}
 \title{cmdstan_default_path}
 \usage{
-cmdstan_default_path(old = FALSE)
+cmdstan_default_path(old = FALSE, dir = NULL)
 }
 \arguments{
 \item{old}{See \code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}.}
+
+\item{dir}{Path to a custom install folder with CmdStan installations.}
 }
 \value{
 Path to the CmdStan installation with the most recent release
