@@ -912,6 +912,7 @@ format <- function(overwrite_file = FALSE,
       }
     }
     out_file <- self$stan_file()
+    private$stan_code_ <- run_log$stdout
   }
   cat(run_log$stdout, file = out_file, sep = "\n")
 
