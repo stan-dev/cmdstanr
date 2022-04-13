@@ -119,7 +119,7 @@ model directly to the Stan model file. That can be enabled by setting
 `overwrite_file = TRUE`. The previous version of the file will automatically
 be backed up to a file with the `.stan.bak` suffix. If that is not desired or 
 you are using a version system and making a backup is redundant, 
-you can disable it by setting `backup = FALSE`:
+you can disable it by setting `backup = FALSE`.
 
 ```{r overwrite_file}
 mod$format(
