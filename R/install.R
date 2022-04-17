@@ -452,7 +452,7 @@ install_mingw32_make <- function(quiet = FALSE) {
   } else {
     rtools_usr_bin <- file.path(Sys.getenv("RTOOLS42_HOME"), "usr", "bin")
     rtools_version <- "42"
-    install_pks <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
+    install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
   }
   
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
