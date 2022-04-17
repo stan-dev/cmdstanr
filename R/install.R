@@ -454,7 +454,6 @@ install_mingw32_make <- function(quiet = FALSE) {
     rtools_version <- "42"
     install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
   }
-  
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
     warning("No write permissions in the RTools folder. This might prevent installing mingw32-make.",
             " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
@@ -491,7 +490,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     rtools_path <- Sys.getenv("RTOOLS42_HOME")
     rtools_version <- "42"
     gpp_expected_path <- repair_path(file.path(rtools_path, "ucrt64", "bin"))
-    mingw32_expected_path <- repair_path(file.path(rtools_path, "ucrt64", "bin"))
+    mingw32_expected_path <- gpp_expected_path
   }
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
@@ -519,9 +518,11 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
         call. = FALSE
       )
     } else {
+      print("install")
       install_mingw32_make(quiet = quiet)
       fix_rtools_PATH()
-      check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
+      print("install-over")
+      #check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
       return(invisible(NULL))
     }
   }
