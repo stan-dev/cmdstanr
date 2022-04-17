@@ -718,21 +718,19 @@ is_toolchain_installed <- function(app, path) {
 }
 
 rtools42_toolchain_path <- function() {
-  repair_path(file.path(rtools_path, "ucrt64", "bin"))
+  repair_path(file.path(Sys.getenv("RTOOLS42_HOME"), "ucrt64", "bin"))
 }
 
 build_run_env <- function() {
   run_env <- NULL
-  if (os_is_windows()) {
-    if (R.version$major == "4" && R.version$minor >= "2.0") {
-      run_env <- c(
-        "current",
-        PATH = paste0(
-          rtools42_toolchain_path, ";",
-          Sys.getenv("PATH")
-        )
+  if (is_rtools42_toolchain()) {
+    run_env <- c(
+      "current",
+      PATH = paste0(
+        rtools42_toolchain_path(), ";",
+        Sys.getenv("PATH")
       )
-    }
+    )
   }
   run_env
 }
