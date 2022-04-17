@@ -1,6 +1,6 @@
 #' Create a new CmdStanModel object
 #'
-#' @description \if{html}{\figure{logo.png}{options: width="25"}}
+#' @description \if{html}{\figure{logo.png}{options: width="25px"}}
 #'   Create a new [`CmdStanModel`] object from a file containing a Stan program
 #'   or from an existing Stan executable. The [`CmdStanModel`] object stores the
 #'   path to a Stan program and compiled executable (once created), and provides
@@ -914,6 +914,9 @@ format <- function(overwrite_file = FALSE,
     out_file <- self$stan_file()
   }
   cat(run_log$stdout, file = out_file, sep = "\n")
+  if (isTRUE(overwrite_file)) {
+    private$stan_code_ <- readLines(self$stan_file())
+  }
 
   invisible(TRUE)
 }

@@ -71,6 +71,7 @@ articles:
     contents:
       - cmdstanr-internals
       - r-markdown
+      - deprecations
       - profiling
       - articles-online-only/opencl
 

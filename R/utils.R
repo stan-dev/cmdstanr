@@ -356,12 +356,19 @@ as_draws_format_fun <- function(draws_format) {
 }
 
 assert_valid_draws_format <- function(format) {
-  if (!is.null(format) &&
-      !format %in% valid_draws_formats()) {
-    stop(
-      "The supplied draws format is not valid. ",
-      call. = FALSE
-    )
+  if (!is.null(format)) {
+    if (!format %in% valid_draws_formats()) {
+      stop(
+        "The supplied draws format is not valid. ",
+        call. = FALSE
+      )
+    }
+    if (format %in% c("rvars", "draws_rvars")) {
+      stop(
+        "\nWe are fixing a bug in fit$draws(format = 'draws_rvars').",
+        "\nFor now please use posterior::as_draws_rvars(fit$draws()) instead."
+      )
+    }
   }
   invisible(format)
 }
