@@ -448,9 +448,11 @@ install_mingw32_make <- function(quiet = FALSE) {
   if (R.version$minor < "2.0") {
     rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
     rtools_version <- "40"
+    install_pkgs <- "mingw-w64-x86_64-make"
   } else {
     rtools_usr_bin <- file.path(Sys.getenv("RTOOLS42_HOME"), "usr", "bin")
     rtools_version <- "42"
+    install_pks <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
   }
   
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
@@ -460,12 +462,12 @@ install_mingw32_make <- function(quiet = FALSE) {
   if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
   processx::run(
     "pacman",
-    args = c("-Syu", "mingw-w64-x86_64-make", "--noconfirm"),
+    args = c("-Syu", install_pkgs, "--noconfirm"),
     wd = rtools_usr_bin,
     error_on_status = TRUE,
     echo_cmd = is_verbose_mode(),
     echo = is_verbose_mode()
-  )  
+  )
   invisible(NULL)
 }
 
@@ -474,8 +476,8 @@ fix_rtools_PATH <- function() {
     write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
     Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
   } else {
-    write('PATH="${RTOOLS42_HOME}\\usr\\bin;${RTOOLS42_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-    Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS42_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS42_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
+    write('PATH="${RTOOLS42_HOME}\\usr\\bin;${RTOOLS42_HOME}\\ucrt64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
+    Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS42_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS42_HOME"), "\\ucrt64\\bin;", Sys.getenv("PATH")))
   }
 }
 
@@ -487,7 +489,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   } else {
     rtools_path <- Sys.getenv("RTOOLS42_HOME")
     rtools_version <- "42"
-    gpp_expected_path <- repair_path(file.path(rtools_path, "x86_64-w64-mingw32.static.posix", "bin"))
+    gpp_expected_path <- repair_path(file.path(rtools_path, "ucrt64", "bin"))
   }
   mingw32_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
