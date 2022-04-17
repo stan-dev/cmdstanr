@@ -486,12 +486,13 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     rtools_path <- Sys.getenv("RTOOLS40_HOME")
     rtools_version <- "40"
     gpp_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
+    mingw32_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
   } else {
     rtools_path <- Sys.getenv("RTOOLS42_HOME")
     rtools_version <- "42"
     gpp_expected_path <- repair_path(file.path(rtools_path, "ucrt64", "bin"))
+    mingw32_expected_path <- repair_path(file.path(rtools_path, "ucrt64", "bin"))
   }
-  mingw32_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
