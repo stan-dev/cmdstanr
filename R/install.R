@@ -442,8 +442,6 @@ build_status_ok <- function(process_log, quiet = FALSE) {
   TRUE
 }
 
-
-
 install_mingw32_make <- function(quiet = FALSE) {
   if (R.version$minor < "2.0") {
     rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
@@ -480,23 +478,54 @@ fix_rtools_PATH <- function() {
   }
 }
 
-check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
-  if (R.version$minor < "2.0") {
-    rtools_path <- Sys.getenv("RTOOLS40_HOME")
-    rtools_version <- "40"
-    gpp_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
-    mingw32_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
-  } else {
-    rtools_path <- Sys.getenv("RTOOLS42_HOME")
-    rtools_version <- "42"
-    gpp_expected_path <- repair_path(file.path(rtools_path, "ucrt64", "bin"))
-    mingw32_expected_path <- gpp_expected_path
-  }
+check_rtools42_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
+  rtools_path <- Sys.getenv("RTOOLS42_HOME")
+  rtools_version <- "42"
+  toolchain_path <- repair_path(file.path(rtools_path, "ucrt64", "bin"))
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
     stop(
-      "\nRTools", rtools_version, " was not found but is required to run CmdStan with R version 4.x.",
+      "\nRTools42 was not found but is required to run CmdStan with R version 4.2+.",
+      "\nPlease install RTools42 and run check_cmdstan_toolchain().",
+      call. = FALSE
+    )
+  }
+  # If RTools is installed in a path with spaces or brackets
+  # we error as this path is not valid
+  if (grepl("\\(|)| ", rtools_path)) {
+    stop(
+      "\nRTools42 is installed in a path with spaces or brackets, which is not supported.",
+      "\nPlease reinstall RTools42 to a valid path, restart R, and then run check_cmdstan_toolchain().",
+      call. = FALSE
+    )
+  }
+  if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
+      !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
+    if (!fix) {
+      stop(
+        "\nRTools installation found but mingw32-make or g++ not installed.",
+        "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
+        call. = FALSE
+      )
+    } else {
+      install_mingw32_make(quiet = quiet)
+      check_rtools42_windows_toolchain(fix = FALSE, quiet = quiet)
+      return(invisible(NULL))
+    }
+  }
+}
+
+check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
+  rtools_path <- Sys.getenv("RTOOLS40_HOME")
+  rtools_version <- "40"
+  gpp_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
+  mingw32_expected_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
+  # If RTOOLS40_HOME is not set (the env. variable gets set on install)
+  # we assume that RTools 40 is not installed.
+  if (!nzchar(rtools_path)) {
+    stop(
+      "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
       "\nPlease install RTools 4.0 and run check_cmdstan_toolchain().",
       call. = FALSE
     )
@@ -505,12 +534,12 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   # we error as this path is not valid
   if (grepl("\\(|)| ", rtools_path)) {
     stop(
-      "\nRTools", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall RTools", rtools_version, " to a valid path, restart R, and then run check_cmdstan_toolchain().",
+      "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
+      "\nPlease reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
-  if (!is_mingw32_make_installed(path = mingw32_expected_path)) {
+  if (!is_toolchain_installed(app = "mingw32-make", path = mingw32_expected_path)) {
     if (!fix) {
       stop(
         "\nRTools installation found but mingw32-make is not installed.",
@@ -518,17 +547,15 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
         call. = FALSE
       )
     } else {
-      print("install")
       install_mingw32_make(quiet = quiet)
       fix_rtools_PATH()
-      print("install-over")
-      #check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
+      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
       return(invisible(NULL))
     }
   }
   mingw32_make_path <- repair_path(normalizePath(dirname(Sys.which("mingw32-make"))))
   gpp_path <- repair_path(normalizePath(dirname(Sys.which("g++"))))
-  # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
+  # Check if the mingw32-make and g++ get picked up by default and are the RTools-supplied ones
   if (mingw32_make_path != mingw32_expected_path || gpp_path != gpp_expected_path) {
     if (!fix) {
       stop(
@@ -538,7 +565,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       )
     } else {
       fix_rtools_PATH()
-      check_rtools4x_windows_toolchain(fix = FALSE, quiet = quiet)
+      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
       return(invisible(NULL))
     }
   }
@@ -663,11 +690,11 @@ cmdstan_arch_suffix <- function(version = NULL) {
   arch
 }
 
-is_mingw32_make_installed <- function(path) {
+is_toolchain_installed <- function(app, path) {
   res <- tryCatch(
     {
       processx::run(
-        "mingw32-make",
+        app,
         args = c("--version"),
         wd = path,
         error_on_status = FALSE,
