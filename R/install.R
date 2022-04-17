@@ -463,7 +463,7 @@ install_mingw32_make <- function(quiet = FALSE) {
   if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
   processx::run(
     "pacman",
-    args = c("-Syu", install_pkgs, "--noconfirm"),
+    args = c("-Sy", install_pkgs, "--noconfirm"),
     wd = rtools_usr_bin,
     error_on_status = TRUE,
     echo_cmd = is_verbose_mode(),
