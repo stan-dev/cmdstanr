@@ -294,7 +294,8 @@ check_target_exe <- function(exe) {
       wd = cmdstan_path(),
       echo_cmd = TRUE,
       echo = TRUE,
-      error_on_status = TRUE
+      error_on_status = TRUE,
+      env = build_run_env()
     )
   }
 }

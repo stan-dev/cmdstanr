@@ -377,7 +377,8 @@ build_cmdstan <- function(dir,
     spinner = quiet,
     error_on_status = FALSE,
     stderr_callback = function(x, p) { if (quiet) message(x) },
-    timeout = timeout
+    timeout = timeout,
+    env = build_run_env()
   )
 }
 
@@ -392,7 +393,8 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     echo = !quiet || is_verbose_mode(),
     spinner = quiet,
     error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) }
+    stderr_callback = function(x, p) { if (quiet) message(x) },
+    env = build_run_env()
   )
 }
 
@@ -406,7 +408,8 @@ build_example <- function(dir, cores, quiet, timeout) {
     spinner = quiet,
     error_on_status = FALSE,
     stderr_callback = function(x, p) { if (quiet) message(x) },
-    timeout = timeout
+    timeout = timeout,
+    env = build_run_env()
   )
 }
 
@@ -485,7 +488,7 @@ fix_rtools_PATH <- function() {
 check_rtools42_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   rtools_path <- Sys.getenv("RTOOLS42_HOME")
   rtools_version <- "42"
-  toolchain_path <- repair_path(file.path(rtools_path, "ucrt64", "bin"))
+  toolchain_path <- rtools42_toolchain_path()
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
@@ -712,4 +715,24 @@ is_toolchain_installed <- function(app, path) {
     }
   )
   res
+}
+
+rtools42_toolchain_path <- function() {
+  repair_path(file.path(rtools_path, "ucrt64", "bin"))
+}
+
+build_run_env <- function() {
+  run_env <- NULL
+  if (os_is_windows()) {
+    if (R.version$major == "4" && R.version$minor >= "2.0") {
+      run_env <- c(
+        "current",
+        PATH = paste0(
+          rtools42_toolchain_path, ";",
+          Sys.getenv("PATH")
+        )
+      )
+    }
+  }
+  run_env
 }

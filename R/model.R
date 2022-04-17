@@ -585,7 +585,8 @@ compile <- function(quiet = TRUE,
         )
       }
     },
-    error_on_status = FALSE
+    error_on_status = FALSE,
+    env = build_run_env()
   )
   if (is.na(run_log$status) || run_log$status != 0) {
     stop("An error occured during compilation! See the message above for more information.",
