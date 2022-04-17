@@ -171,6 +171,16 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
+  if (is_rtools42_toolchain()) {
+    cmdstan_make_local(
+      dir = dir_cmdstan,
+      cpp_options = list(
+        "CXXFLAGS += -Wno-nonnull",
+        "TBB_CXXFLAGS= -U__MSVCRT_VERSION__ -D__MSVCRT_VERSION__=0x0E00"
+      ),
+      append = TRUE
+    )
+  }
 
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
@@ -454,16 +464,17 @@ install_mingw32_make <- function(quiet = FALSE) {
     rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
     rtools_version <- "40"
     install_pkgs <- "mingw-w64-x86_64-make"
+    if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
   } else {
     rtools_usr_bin <- file.path(Sys.getenv("RTOOLS42_HOME"), "usr", "bin")
     rtools_version <- "42"
     install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
+    if (!quiet) message("Installing mingw32-make and g++ with RTools42.")
   }
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
     warning("No write permissions in the RTools folder. This might prevent installing mingw32-make.",
             " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
   }
-  if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
   processx::run(
     "pacman",
     args = c("-Sy", install_pkgs, "--noconfirm"),
