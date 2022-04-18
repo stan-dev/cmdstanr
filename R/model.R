@@ -556,37 +556,39 @@ compile <- function(quiet = TRUE,
     }
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
-  run_log <- processx::run(
-    command = make_cmd(),
-    args = c(tmp_exe,
-             cpp_options_to_compile_flags(cpp_options),
-             stancflags_val),
-    wd = cmdstan_path(),
-    echo = !quiet || is_verbose_mode(),
-    echo_cmd = is_verbose_mode(),
-    spinner = quiet && interactive(),
-    stderr_callback = function(x, p) {
-      if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
-        message(x)
-      }
-      if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
-        warning(
-          "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
-          "If your model failed to compile please run rebuild_cmdstan().\n",
-          "If the issue persists please open a bug report.",
-          call. = FALSE
-        )
-      }
-      if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
-        warning(
-          "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
-          "See the above error for more details.",
-          call. = FALSE
-        )
-      }
-    },
-    error_on_status = FALSE,
-    env = build_run_env()
+  withr::with_path(
+    temporary_cmdstan_PATH_env(),
+    run_log <- processx::run(
+      command = make_cmd(),
+      args = c(tmp_exe,
+              cpp_options_to_compile_flags(cpp_options),
+              stancflags_val),
+      wd = cmdstan_path(),
+      echo = !quiet || is_verbose_mode(),
+      echo_cmd = is_verbose_mode(),
+      spinner = quiet && interactive(),
+      stderr_callback = function(x, p) {
+        if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
+          message(x)
+        }
+        if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
+          warning(
+            "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
+            "If your model failed to compile please run rebuild_cmdstan().\n",
+            "If the issue persists please open a bug report.",
+            call. = FALSE
+          )
+        }
+        if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
+          warning(
+            "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
+            "See the above error for more details.",
+            call. = FALSE
+          )
+        }
+      },
+      error_on_status = FALSE
+    )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
     stop("An error occured during compilation! See the message above for more information.",

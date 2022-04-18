@@ -374,48 +374,54 @@ build_cmdstan <- function(dir,
   } else {
     run_cmd <- make_cmd()
   }
-  processx::run(
-    run_cmd,
-    args = c(translation_args, paste0("-j", cores), "build"),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) },
-    timeout = timeout,
-    env = build_run_env()
+  withr::with_path(
+    temporary_cmdstan_PATH_env(),
+    processx::run(
+      run_cmd,
+      args = c(translation_args, paste0("-j", cores), "build"),
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) },
+      timeout = timeout
+    )
   )
 }
 
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
-  processx::run(
-    make_cmd(),
-    args = c("clean-all"),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) },
-    env = build_run_env()
+  withr::with_path(
+    temporary_cmdstan_PATH_env(),
+    processx::run(
+      make_cmd(),
+      args = c("clean-all"),
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) }
+    )
   )
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
-  processx::run(
-    make_cmd(),
-    args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) },
-    timeout = timeout,
-    env = build_run_env()
+  withr::with_path(
+    temporary_cmdstan_PATH_env(),
+    processx::run(
+      make_cmd(),
+      args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) },
+      timeout = timeout
+    )
   )
 }
 
@@ -664,20 +670,16 @@ is_toolchain_installed <- function(app, path) {
   res
 }
 
-build_run_env <- function() {
-  run_env <- NULL
+temporary_cmdstan_PATH_env <- function() {
+  path <- ""
   if (is_rtools42_toolchain() || is_rtools40_toolchain()) {
     rtools_home <- rtools4x_home_path()
-    run_env <- c(
-      "current",
-      PATH = paste0(
-        repair_path(file.path(rtools_home, "usr", "bin")), ";",
-        rtools4x_toolchain_path(), ";",
-        Sys.getenv("PATH")
-      )
+    path <- paste0(
+      repair_path(file.path(rtools_home, "usr", "bin")), ";",
+      rtools4x_toolchain_path()
     )
   }
-  run_env
+  path
 }
 
 rtools4x_toolchain_path <- function() {

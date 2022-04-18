@@ -288,14 +288,16 @@ CmdStanRun <- R6::R6Class(
 check_target_exe <- function(exe) {
   exe_path <- file.path(cmdstan_path(), exe)
   if (!file.exists(exe_path)) {
-    run_log <- processx::run(
-      command = make_cmd(),
-      args = exe,
-      wd = cmdstan_path(),
-      echo_cmd = TRUE,
-      echo = TRUE,
-      error_on_status = TRUE,
-      env = build_run_env()
+    withr::with_path(
+      temporary_cmdstan_PATH_env(),
+      run_log <- processx::run(
+        command = make_cmd(),
+        args = exe,
+        wd = cmdstan_path(),
+        echo_cmd = TRUE,
+        echo = TRUE,
+        error_on_status = TRUE
+      )
     )
   }
 }
