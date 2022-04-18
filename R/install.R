@@ -375,7 +375,10 @@ build_cmdstan <- function(dir,
     run_cmd <- make_cmd()
   }
   withr::with_path(
-    toolchain_PATH_env_var(),
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
     processx::run(
       run_cmd,
       args = c(translation_args, paste0("-j", cores), "build"),
@@ -394,7 +397,10 @@ clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
   withr::with_path(
-    toolchain_PATH_env_var(),
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
     processx::run(
       make_cmd(),
       args = c("clean-all"),
@@ -410,7 +416,10 @@ clean_cmdstan <- function(dir = cmdstan_path(),
 
 build_example <- function(dir, cores, quiet, timeout) {
   withr::with_path(
-    toolchain_PATH_env_var(),
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
     processx::run(
       make_cmd(),
       args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),

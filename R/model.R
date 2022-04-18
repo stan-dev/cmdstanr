@@ -513,15 +513,6 @@ compile <- function(quiet = TRUE,
   }
   private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
 
-  # add path to the TBB library to the PATH variable to avoid copying the dll file
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }
-  }
-
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
   if (pedantic) {
@@ -557,7 +548,10 @@ compile <- function(quiet = TRUE,
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
   withr::with_path(
-    toolchain_PATH_env_var(),
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
     run_log <- processx::run(
       command = make_cmd(),
       args = c(tmp_exe,
@@ -749,7 +743,10 @@ check_syntax <- function(pedantic = FALSE,
   }
 
   withr::with_path(
-    toolchain_PATH_env_var(),
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
     run_log <- processx::run(
       command = stanc_cmd(),
       args = c(self$stan_file(), stanc_built_options, stancflags_val),
@@ -888,7 +885,10 @@ format <- function(overwrite_file = FALSE,
     }
   }
   withr::with_path(
-    toolchain_PATH_env_var(),
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
     run_log <- processx::run(
       command = stanc_cmd(),
       args = c(self$stan_file(), stanc_built_options, stancflags_val),
@@ -1793,7 +1793,10 @@ model_compile_info <- function(exe_file) {
   info <- NULL
   if (cmdstan_version() > "2.26.1") {
     withr::with_path(
-      toolchain_PATH_env_var(),
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path()
+      ),
       ret <- processx::run(
         command = exe_file,
         args = c("info"),
