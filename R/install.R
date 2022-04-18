@@ -266,11 +266,7 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (os_is_windows()) {
     if (R.version$major >= "4") {
-      if (R.version$minor >= "2.0") {
-        check_rtools42_windows_toolchain(fix = fix, quiet = quiet)
-      } else {
-        check_rtools40_windows_toolchain(fix = fix, quiet = quiet)
-      }      
+      check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     } else {
       check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
     }
