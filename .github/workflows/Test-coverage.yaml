@@ -34,7 +34,7 @@ jobs:
         if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
       - uses: actions/checkout@v2
 
-      - uses: r-lib/actions/setup-r@v1
+      - uses: r-lib/actions/setup-r@v2
       - uses: r-lib/actions/setup-pandoc@v1
 
       - name: Install Ubuntu dependencies
@@ -84,21 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set path for RTools 4.0
-        if: runner.os == 'Windows'
-        run: echo "C:/rtools40/usr/bin;C:/rtools40/mingw64/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-
-      - name: Install mingw32-make and check toolchain path
-        if: runner.os == 'Windows'
-        run: |
-          pacman -Syu mingw-w64-x86_64-make --noconfirm
-          g++ --version
-          Get-Command g++ | Select-Object -ExpandProperty Definition
-          mingw32-make --version
-          Get-Command mingw32-make | Select-Object -ExpandProperty Definition
-        shell: powershell
-
-      - uses: r-lib/actions/setup-r@v1
+      - uses: r-lib/actions/setup-r@v2
         with:
           r-version: 'release'
 
@@ -114,6 +100,7 @@ jobs:
         run: |
           install.packages(c("remotes", "curl"), dependencies = TRUE)
           remotes::install_local(path = ".")
+          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
           cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
