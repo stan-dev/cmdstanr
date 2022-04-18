@@ -377,7 +377,7 @@ build_cmdstan <- function(dir,
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
-      tbb_path()
+      tbb_path(dir = dir)
     ),
     processx::run(
       run_cmd,
@@ -399,7 +399,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
-      tbb_path()
+      tbb_path(dir = dir)
     ),
     processx::run(
       make_cmd(),
@@ -418,7 +418,7 @@ build_example <- function(dir, cores, quiet, timeout) {
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
-      tbb_path()
+      tbb_path(dir = dir)
     ),
     processx::run(
       make_cmd(),
@@ -701,6 +701,7 @@ rtools4x_toolchain_path <- function() {
 }
 
 rtools4x_home_path <- function() {
+  path <- NULL
   if (is_rtools42_toolchain()) {
     path <- Sys.getenv("RTOOLS42_HOME")
     if (nzchar(path)) {
