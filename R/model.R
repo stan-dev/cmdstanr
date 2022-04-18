@@ -748,20 +748,23 @@ check_syntax <- function(pedantic = FALSE,
     }
   }
 
-  run_log <- processx::run(
-    command = stanc_cmd(),
-    args = c(self$stan_file(), stanc_built_options, stancflags_val),
-    wd = cmdstan_path(),
-    echo = is_verbose_mode(),
-    echo_cmd = is_verbose_mode(),
-    spinner = quiet && interactive(),
-    stdout_line_callback = function(x, p) {
-      if (!quiet) cat(x)
-    },
-    stderr_callback = function(x, p) {
-      message(x)
-    },
-    error_on_status = FALSE
+  withr::with_path(
+    toolchain_PATH_env_var(),
+    run_log <- processx::run(
+      command = stanc_cmd(),
+      args = c(self$stan_file(), stanc_built_options, stancflags_val),
+      wd = cmdstan_path(),
+      echo = is_verbose_mode(),
+      echo_cmd = is_verbose_mode(),
+      spinner = quiet && interactive(),
+      stdout_line_callback = function(x, p) {
+        if (!quiet) cat(x)
+      },
+      stderr_callback = function(x, p) {
+        message(x)
+      },
+      error_on_status = FALSE
+    )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
     stop("Syntax error found! See the message above for more information.",
@@ -884,18 +887,20 @@ format <- function(overwrite_file = FALSE,
       )
     }
   }
-
-  run_log <- processx::run(
-    command = stanc_cmd(),
-    args = c(self$stan_file(), stanc_built_options, stancflags_val),
-    wd = cmdstan_path(),
-    echo = is_verbose_mode(),
-    echo_cmd = is_verbose_mode(),
-    spinner = FALSE,
-    stderr_callback = function(x, p) {
-      message(x)
-    },
-    error_on_status = FALSE
+  withr::with_path(
+    toolchain_PATH_env_var(),
+    run_log <- processx::run(
+      command = stanc_cmd(),
+      args = c(self$stan_file(), stanc_built_options, stancflags_val),
+      wd = cmdstan_path(),
+      echo = is_verbose_mode(),
+      echo_cmd = is_verbose_mode(),
+      spinner = FALSE,
+      stderr_callback = function(x, p) {
+        message(x)
+      },
+      error_on_status = FALSE
+    )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
     stop("Syntax error found! See the message above for more information.",
@@ -1787,10 +1792,13 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
 model_compile_info <- function(exe_file) {
   info <- NULL
   if (cmdstan_version() > "2.26.1") {
-    ret <- processx::run(
-      command = exe_file,
-      args = c("info"),
-      error_on_status = FALSE
+    withr::with_path(
+      toolchain_PATH_env_var(),
+      ret <- processx::run(
+        command = exe_file,
+        args = c("info"),
+        error_on_status = FALSE
+      )
     )
     if (ret$status == 0) {
       info <- list()

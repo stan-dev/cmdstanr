@@ -226,13 +226,16 @@ CmdStanRun <- R6::R6Class(
       }
       target_exe <- file.path("bin", cmdstan_ext(tool))
       check_target_exe(target_exe)
-      run_log <- processx::run(
-        command = target_exe,
-        args = c(self$output_files(include_failed = FALSE), flags),
-        wd = cmdstan_path(),
-        echo = TRUE,
-        echo_cmd = is_verbose_mode(),
-        error_on_status = TRUE
+      withr::with_path(
+        toolchain_PATH_env_var(),
+        run_log <- processx::run(
+          command = target_exe,
+          args = c(self$output_files(include_failed = FALSE), flags),
+          wd = cmdstan_path(),
+          echo = TRUE,
+          echo_cmd = is_verbose_mode(),
+          error_on_status = TRUE
+        )
       )
     },
 
@@ -495,13 +498,17 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
   }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
-  ret <- processx::run(
-    command = self$command(),
-    args = self$command_args()[[1]],
-    wd = dirname(self$exe_file()),
-    stderr = stderr_file,
-    stdout = stdout_file,
-    error_on_status = FALSE
+
+  withr::with_path(
+    toolchain_PATH_env_var(),
+    ret <- processx::run(
+      command = self$command(),
+      args = self$command_args()[[1]],
+      wd = dirname(self$exe_file()),
+      stderr = stderr_file,
+      stdout = stdout_file,
+      error_on_status = FALSE
+    )
   )
   if (is.na(ret$status) || ret$status != 0) {
     if (file.exists(stdout_file)) {
@@ -605,13 +612,16 @@ CmdStanProcs <- R6::R6Class(
         args <- c(mpi_args_vector, exe_name, args)
         command <- mpi_cmd
       }
-      private$processes_[[id]] <- processx::process$new(
-        command = command,
-        args = args,
-        wd = wd,
-        stdout = "|",
-        stderr = "|",
-        echo_cmd = is_verbose_mode()
+      withr::with_path(
+        toolchain_PATH_env_var(),
+        private$processes_[[id]] <- processx::process$new(
+          command = command,
+          args = args,
+          wd = wd,
+          stdout = "|",
+          stderr = "|",
+          echo_cmd = is_verbose_mode()
+        )
       )
       invisible(self)
     },
