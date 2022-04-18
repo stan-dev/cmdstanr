@@ -25,7 +25,7 @@ jobs:
         config:
           - {os: macOS-latest, r: 'devel'}
           - {os: macOS-latest, r: 'release'}
-          # - {os: windows-latest, r: 'devel'}
+          - {os: windows-latest, r: 'devel'}
           - {os: windows-latest, r: 'release'}
           - {os: windows-latest, r: 'oldrel'}
           - {os: ubuntu-20.04, r: 'devel'}
@@ -48,20 +48,6 @@ jobs:
         if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
 
       - uses: actions/checkout@v2
-
-      - name: Set path for RTools 4.0
-        if: runner.os == 'Windows'
-        run: echo "C:/rtools40/usr/bin;C:/rtools40/mingw64/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-
-      - name: Install mingw32-make and check toolchain path
-        if: runner.os == 'Windows'
-        run: |
-          pacman -Syu mingw-w64-x86_64-make --noconfirm
-          g++ --version
-          Get-Command g++ | Select-Object -ExpandProperty Definition
-          mingw32-make --version
-          Get-Command mingw32-make | Select-Object -ExpandProperty Definition
-        shell: powershell
 
       - name: Install system dependencies
         if: runner.os == 'Linux'
@@ -101,6 +87,7 @@ jobs:
 
       - name: Install cmdstan
         run: |
+          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
           cmdstanr::install_cmdstan(cores = 2)
         shell: Rscript {0}
 
