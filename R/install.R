@@ -491,7 +491,8 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
     stop(
-      "\n", rtools_version, " was not found but is required to run CmdStan with R version 4.2+.",
+      "\n", rtools_version, " was not found but is required to run CmdStan with R version ",
+      R.version$major, ".", R.version$minor, ".",
       "\nPlease install ", rtools_version, " and run check_cmdstan_toolchain().",
       call. = FALSE
     )
