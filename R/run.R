@@ -392,7 +392,6 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 .run_generate_quantities <- function() {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-  check_tbb_path()
   if (procs$num_procs() == 1) {
     start_msg <- "Running standalone generated quantities after 1 MCMC chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
@@ -449,7 +448,6 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 
 .run_other <- function() {
   procs <- self$procs
-  check_tbb_path()
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
   }
