@@ -289,7 +289,7 @@ check_target_exe <- function(exe) {
   exe_path <- file.path(cmdstan_path(), exe)
   if (!file.exists(exe_path)) {
     withr::with_path(
-      temporary_cmdstan_PATH_env(),
+      toolchain_PATH_env_var(),
       run_log <- processx::run(
         command = make_cmd(),
         args = exe,

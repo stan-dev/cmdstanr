@@ -557,7 +557,7 @@ compile <- function(quiet = TRUE,
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
   withr::with_path(
-    temporary_cmdstan_PATH_env(),
+    toolchain_PATH_env_var(),
     run_log <- processx::run(
       command = make_cmd(),
       args = c(tmp_exe,
