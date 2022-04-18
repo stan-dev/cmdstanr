@@ -703,6 +703,12 @@ rtools4x_toolchain_path <- function() {
 rtools4x_home_path <- function() {
   if (is_rtools42_toolchain()) {
     path <- Sys.getenv("RTOOLS42_HOME")
+    if (nzchar(path)) {
+      default_path <- repair_path(file.path("C:/rtools42"))
+      if (dir.exists(default_path)) {
+        path <- default_path
+      }
+    }
   } else {
     path <- Sys.getenv("RTOOLS40_HOME")
   }
