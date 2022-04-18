@@ -87,6 +87,8 @@ jobs:
 
       - name: Install cmdstan
         run: |
+          print(R.version$major)
+          print(R.version$minor)
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
           cmdstanr::install_cmdstan(cores = 2)
         shell: Rscript {0}
