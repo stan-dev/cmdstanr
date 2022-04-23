@@ -685,7 +685,7 @@ is_toolchain_installed <- function(app, path) {
         ),
         repair_path(dirname(Sys.which(app)))
       )
-      if (app_path != rtools4x_toolchain_path) {
+      if (app_path != rtools4x_toolchain_path()) {
         return(FALSE)
       }
       return(TRUE)
