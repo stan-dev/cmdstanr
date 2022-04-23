@@ -177,28 +177,6 @@ test_that("toolchain checks on Windows with RTools 3.5 work", {
   Sys.setenv("PATH" = path_backup)
 })
 
-test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
-  skip_if_not(os_is_windows())
-  skip_if(R.Version()$major < "4")
-
-  rtools40_home_backup <- Sys.getenv("RTOOLS40_HOME")
-  Sys.setenv("RTOOLS40_HOME" = "")
-  expect_error(
-    check_rtools4x_windows_toolchain(),
-    "\nRtools40 was not found but is required to run CmdStan with R version",
-    fixed = TRUE
-  )
-
-  Sys.setenv("RTOOLS40_HOME" = "C:/with spaces/")
-  expect_error(
-    check_rtools4x_windows_toolchain(),
-    "\nRtools40 is installed in a path with spaces or brackets, which is not supported.",
-    fixed = TRUE
-  )
-
-  Sys.setenv("RTOOLS40_HOME" = rtools40_home_backup)
-})
-
 test_that("clean and rebuild works", {
   expect_output(
     rebuild_cmdstan(),
