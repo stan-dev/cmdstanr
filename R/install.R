@@ -485,8 +485,7 @@ install_toolchain <- function(quiet = FALSE) {
   }
   withr::with_path(
     c(
-      toolchain_PATH_env_var(),
-      tbb_path()
+      toolchain_PATH_env_var()
     ),
     processx::run(
       "pacman",
@@ -669,8 +668,7 @@ is_toolchain_installed <- function(app, path) {
   res <- tryCatch({
       withr::with_path(
         c(
-          toolchain_PATH_env_var(),
-          tbb_path()
+          toolchain_PATH_env_var()
         ),
         processx::run(
           app,
