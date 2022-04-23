@@ -1,4 +1,4 @@
-# cmdstanr 0.5.1
+# cmdstanr 0.5.2
 
 * Refactored toolchain install and checks for R 4.x on Windows and added support
 for Rtools42.
