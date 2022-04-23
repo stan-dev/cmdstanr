@@ -483,13 +483,19 @@ install_toolchain <- function(quiet = FALSE) {
     warning("No write permissions in the RTools folder. This might prevent installing the toolchain.",
             " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
   }
-  processx::run(
-    "pacman",
-    args = c("-Sy", install_pkgs, "--noconfirm"),
-    wd = rtools_usr_bin,
-    error_on_status = TRUE,
-    echo_cmd = is_verbose_mode(),
-    echo = is_verbose_mode()
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    processx::run(
+      "pacman",
+      args = c("-Sy", install_pkgs, "--noconfirm"),
+      wd = rtools_usr_bin,
+      error_on_status = TRUE,
+      echo_cmd = is_verbose_mode(),
+      echo = is_verbose_mode()
+    )
   )
   invisible(NULL)
 }
@@ -660,16 +666,24 @@ cmdstan_arch_suffix <- function(version = NULL) {
 }
 
 is_toolchain_installed <- function(app, path) {
-  res <- tryCatch(
-    {
-      processx::run(
-        app,
-        args = c("--version"),
-        wd = path,
-        error_on_status = FALSE,
-        echo_cmd = is_verbose_mode(),
-        echo = is_verbose_mode()
+  res <- tryCatch({
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        processx::run(
+          app,
+          args = c("--version"),
+          wd = path,
+          error_on_status = FALSE,
+          echo_cmd = is_verbose_mode(),
+          echo = is_verbose_mode()
+        )
       )
+      if (Sys.which() != rtools4x_toolchain_path) {
+        return(FALSE)
+      }
       return(TRUE)
     },
     error = function(cond) {
