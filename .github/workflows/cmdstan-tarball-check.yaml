@@ -87,6 +87,7 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           remotes::install_local(path = ".")
+          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
           if (Sys.getenv("CMDSTAN_TEST_TARBALL_URL") == "latest") {
             cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
           } else {
