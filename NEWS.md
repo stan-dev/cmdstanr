@@ -1,5 +1,10 @@
 # cmdstanr 0.5.1
 
+* Refactored toolchain install and checks for R 4.x on Windows and added support
+for Rtools42.
+
+# cmdstanr 0.5.1
+
 * Temporarily disable `format="draws_rvars"` in the `$draws()` method due to a
 bug. Until this is fixed users can make use of `posterior::as_draws_rvars()` to
 convert draws from CmdStanR to the `draws_rvars` format. (#640)
