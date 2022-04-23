@@ -679,7 +679,13 @@ is_toolchain_installed <- function(app, path) {
           echo = is_verbose_mode()
         )
       )
-      if (Sys.which(app) != rtools4x_toolchain_path) {
+      app_path <- withr::with_path(
+        c(
+          toolchain_PATH_env_var()
+        ),
+        repair_path(dirname(Sys.which(app)))
+      )
+      if (app_path != rtools4x_toolchain_path) {
         return(FALSE)
       }
       return(TRUE)
