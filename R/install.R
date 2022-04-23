@@ -681,7 +681,7 @@ is_toolchain_installed <- function(app, path) {
           echo = is_verbose_mode()
         )
       )
-      if (Sys.which() != rtools4x_toolchain_path) {
+      if (Sys.which(app) != rtools4x_toolchain_path) {
         return(FALSE)
       }
       return(TRUE)
