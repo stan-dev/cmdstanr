@@ -513,15 +513,6 @@ compile <- function(quiet = TRUE,
   }
   private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
 
-  # add path to the TBB library to the PATH variable to avoid copying the dll file
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
-    }
-  }
-
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
   if (pedantic) {
@@ -556,36 +547,42 @@ compile <- function(quiet = TRUE,
     }
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
-  run_log <- processx::run(
-    command = make_cmd(),
-    args = c(tmp_exe,
-             cpp_options_to_compile_flags(cpp_options),
-             stancflags_val),
-    wd = cmdstan_path(),
-    echo = !quiet || is_verbose_mode(),
-    echo_cmd = is_verbose_mode(),
-    spinner = quiet && interactive(),
-    stderr_callback = function(x, p) {
-      if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
-        message(x)
-      }
-      if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
-        warning(
-          "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
-          "If your model failed to compile please run rebuild_cmdstan().\n",
-          "If the issue persists please open a bug report.",
-          call. = FALSE
-        )
-      }
-      if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
-        warning(
-          "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
-          "See the above error for more details.",
-          call. = FALSE
-        )
-      }
-    },
-    error_on_status = FALSE
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    run_log <- processx::run(
+      command = make_cmd(),
+      args = c(tmp_exe,
+              cpp_options_to_compile_flags(cpp_options),
+              stancflags_val),
+      wd = cmdstan_path(),
+      echo = !quiet || is_verbose_mode(),
+      echo_cmd = is_verbose_mode(),
+      spinner = quiet && interactive(),
+      stderr_callback = function(x, p) {
+        if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
+          message(x)
+        }
+        if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
+          warning(
+            "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
+            "If your model failed to compile please run rebuild_cmdstan().\n",
+            "If the issue persists please open a bug report.",
+            call. = FALSE
+          )
+        }
+        if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
+          warning(
+            "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
+            "See the above error for more details.",
+            call. = FALSE
+          )
+        }
+      },
+      error_on_status = FALSE
+    )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
     stop("An error occured during compilation! See the message above for more information.",
@@ -745,20 +742,26 @@ check_syntax <- function(pedantic = FALSE,
     }
   }
 
-  run_log <- processx::run(
-    command = stanc_cmd(),
-    args = c(self$stan_file(), stanc_built_options, stancflags_val),
-    wd = cmdstan_path(),
-    echo = is_verbose_mode(),
-    echo_cmd = is_verbose_mode(),
-    spinner = quiet && interactive(),
-    stdout_line_callback = function(x, p) {
-      if (!quiet) cat(x)
-    },
-    stderr_callback = function(x, p) {
-      message(x)
-    },
-    error_on_status = FALSE
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    run_log <- processx::run(
+      command = stanc_cmd(),
+      args = c(self$stan_file(), stanc_built_options, stancflags_val),
+      wd = cmdstan_path(),
+      echo = is_verbose_mode(),
+      echo_cmd = is_verbose_mode(),
+      spinner = quiet && interactive(),
+      stdout_line_callback = function(x, p) {
+        if (!quiet) cat(x)
+      },
+      stderr_callback = function(x, p) {
+        message(x)
+      },
+      error_on_status = FALSE
+    )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
     stop("Syntax error found! See the message above for more information.",
@@ -881,18 +884,23 @@ format <- function(overwrite_file = FALSE,
       )
     }
   }
-
-  run_log <- processx::run(
-    command = stanc_cmd(),
-    args = c(self$stan_file(), stanc_built_options, stancflags_val),
-    wd = cmdstan_path(),
-    echo = is_verbose_mode(),
-    echo_cmd = is_verbose_mode(),
-    spinner = FALSE,
-    stderr_callback = function(x, p) {
-      message(x)
-    },
-    error_on_status = FALSE
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    run_log <- processx::run(
+      command = stanc_cmd(),
+      args = c(self$stan_file(), stanc_built_options, stancflags_val),
+      wd = cmdstan_path(),
+      echo = is_verbose_mode(),
+      echo_cmd = is_verbose_mode(),
+      spinner = FALSE,
+      stderr_callback = function(x, p) {
+        message(x)
+      },
+      error_on_status = FALSE
+    )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
     stop("Syntax error found! See the message above for more information.",
@@ -1784,10 +1792,16 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
 model_compile_info <- function(exe_file) {
   info <- NULL
   if (cmdstan_version() > "2.26.1") {
-    ret <- processx::run(
-      command = exe_file,
-      args = c("info"),
-      error_on_status = FALSE
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path()
+      ),
+      ret <- processx::run(
+        command = exe_file,
+        args = c("info"),
+        error_on_status = FALSE
+      )
     )
     if (ret$status == 0) {
       info <- list()

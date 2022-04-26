@@ -171,6 +171,16 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
+  if (is_rtools42_toolchain()) {
+    cmdstan_make_local(
+      dir = dir_cmdstan,
+      cpp_options = list(
+        "CXXFLAGS += -Wno-nonnull",
+        "TBB_CXXFLAGS= -U__MSVCRT_VERSION__ -D__MSVCRT_VERSION__=0x0E00"
+      ),
+      append = TRUE
+    )
+  }
 
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
@@ -256,7 +266,7 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (os_is_windows()) {
     if (R.version$major >= "4") {
-      check_rtools40_windows_toolchain(fix = fix, quiet = quiet)
+      check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     } else {
       check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
     }
@@ -364,45 +374,63 @@ build_cmdstan <- function(dir,
   } else {
     run_cmd <- make_cmd()
   }
-  processx::run(
-    run_cmd,
-    args = c(translation_args, paste0("-j", cores), "build"),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) },
-    timeout = timeout
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path(dir = dir)
+    ),
+    processx::run(
+      run_cmd,
+      args = c(translation_args, paste0("-j", cores), "build"),
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) },
+      timeout = timeout
+    )
   )
 }
 
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
-  processx::run(
-    make_cmd(),
-    args = c("clean-all"),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) }
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path(dir = dir)
+    ),
+    processx::run(
+      make_cmd(),
+      args = c("clean-all"),
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) }
+    )
   )
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
-  processx::run(
-    make_cmd(),
-    args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) },
-    timeout = timeout
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path(dir = dir)
+    ),
+    processx::run(
+      make_cmd(),
+      args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) },
+      timeout = timeout
+    )
   )
 }
 
@@ -442,34 +470,46 @@ build_status_ok <- function(process_log, quiet = FALSE) {
   TRUE
 }
 
-install_mingw32_make <- function(quiet = FALSE) {
-  rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
+install_toolchain <- function(quiet = FALSE) {
+  rtools_usr_bin <- file.path(rtools4x_home_path(), "usr", "bin")
+  if (R.version$minor < "2.0") {
+    install_pkgs <- "mingw-w64-x86_64-make"
+    if (!quiet) message("Installing mingw32-make with Rtools40.")
+  } else {
+    install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
+    if (!quiet) message("Installing mingw32-make and g++ with Rtools42.")
+  }
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
-    warning("No write permissions in the RTools folder. This might prevent installing mingw32-make.",
+    warning("No write permissions in the RTools folder. This might prevent installing the toolchain.",
             " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
   }
-  if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
-  processx::run(
-    "pacman",
-    args = c("-Syu", "mingw-w64-x86_64-make", "--noconfirm"),
-    wd = rtools_usr_bin,
-    error_on_status = TRUE,
-    echo_cmd = is_verbose_mode(),
-    echo = is_verbose_mode()
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var()
+    ),
+    processx::run(
+      "pacman",
+      args = c("-Sy", install_pkgs, "--noconfirm"),
+      wd = rtools_usr_bin,
+      error_on_status = TRUE,
+      echo_cmd = is_verbose_mode(),
+      echo = is_verbose_mode()
+    )
   )
-  write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-  Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
   invisible(NULL)
 }
 
-check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
-  rtools_path <- Sys.getenv("RTOOLS40_HOME")
-  # If RTOOLS40_HOME is not set (the env. variable gets set on install)
+check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
+  rtools_path <- rtools4x_home_path()
+  rtools_version <- if (is_rtools42_toolchain()) "Rtools42" else "Rtools40"
+  toolchain_path <- rtools4x_toolchain_path()
+  # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
     stop(
-      "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
-      "\nPlease install RTools 4.0 and run check_cmdstan_toolchain().",
+      "\n", rtools_version, " was not found but is required to run CmdStan with R version ",
+      R.version$major, ".", R.version$minor, ".",
+      "\nPlease install ", rtools_version, " and run check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
@@ -477,38 +517,29 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   # we error as this path is not valid
   if (grepl("\\(|)| ", rtools_path)) {
     stop(
-      "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain().",
+      "\n", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
+      "\nPlease reinstall ", rtools_version, " to a valid path, restart R, and then run check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
-  toolchain_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
-  mingw32_make_path <- dirname(Sys.which("mingw32-make"))
-  gpp_path <- dirname(Sys.which("g++"))
-  if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
+  if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
+      !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
     if (!fix) {
       stop(
-        "\nRTools installation found but PATH was not properly set.",
+        "\n", rtools_version, " installation found but the toolchain was not installed.",
         "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
         call. = FALSE
       )
     } else {
-      install_mingw32_make(quiet = quiet)
-      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
-      return(invisible(NULL))
-    }
-  }
-  # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
-  if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
-    if (!fix) {
-      stop(
-        "\nOther C++ toolchains installed on your system conflict with RTools.",
-        "\nPlease run check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-        call. = FALSE
-      )
-    } else {
-      install_mingw32_make(quiet = quiet)
-      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
+      install_toolchain(quiet = quiet)
+      if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
+          !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
+        stop(
+          "\nInstallation of the toolchain failed. Try reinstalling RTools and trying again.",
+          "\nIf the issue persists, open a bug report at https://github.com/stan-dev/cmdstanr.",
+          call. = FALSE
+        )
+      }
       return(invisible(NULL))
     }
   }
@@ -627,8 +658,78 @@ cmdstan_arch_suffix <- function(version = NULL) {
     arch <- "-linux-arm64"
   }
   if (!is.null(version) && version < "2.26") {
-    # pre-CmdStan 2.26, only the x85 tarball was provided
+    # pre-CmdStan 2.26, only the x86 tarball was provided
     arch <- NULL
   }
   arch
+}
+
+is_toolchain_installed <- function(app, path) {
+  res <- tryCatch({
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var()
+        ),
+        processx::run(
+          app,
+          args = c("--version"),
+          wd = path,
+          error_on_status = FALSE,
+          echo_cmd = is_verbose_mode(),
+          echo = is_verbose_mode()
+        )
+      )
+      app_path <- withr::with_path(
+        c(
+          toolchain_PATH_env_var()
+        ),
+        repair_path(dirname(Sys.which(app)))
+      )
+      if (app_path != rtools4x_toolchain_path()) {
+        return(FALSE)
+      }
+      return(TRUE)
+    },
+    error = function(cond) {
+      return(FALSE)
+    }
+  )
+  res
+}
+
+toolchain_PATH_env_var <- function() {
+  path <- NULL
+  if (is_rtools42_toolchain() || is_rtools40_toolchain()) {
+    rtools_home <- rtools4x_home_path()
+    path <- paste0(
+      repair_path(file.path(rtools_home, "usr", "bin")), ";",
+      rtools4x_toolchain_path()
+    )
+  }
+  path
+}
+
+rtools4x_toolchain_path <- function() {
+  if (is_rtools42_toolchain()) {
+    path <- repair_path(file.path(rtools4x_home_path(), "ucrt64", "bin"))
+  } else {
+    path <- repair_path(file.path(rtools4x_home_path(), "mingw64", "bin"))
+  }
+  path
+}
+
+rtools4x_home_path <- function() {
+  path <- NULL
+  if (is_rtools42_toolchain()) {
+    path <- Sys.getenv("RTOOLS42_HOME")
+    if (!nzchar(path)) {
+      default_path <- repair_path(file.path("C:/rtools42"))
+      if (dir.exists(default_path)) {
+        path <- default_path
+      }
+    }
+  } else {
+    path <- Sys.getenv("RTOOLS40_HOME")
+  }
+  path
 }

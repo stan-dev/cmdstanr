@@ -226,13 +226,19 @@ CmdStanRun <- R6::R6Class(
       }
       target_exe <- file.path("bin", cmdstan_ext(tool))
       check_target_exe(target_exe)
-      run_log <- processx::run(
-        command = target_exe,
-        args = c(self$output_files(include_failed = FALSE), flags),
-        wd = cmdstan_path(),
-        echo = TRUE,
-        echo_cmd = is_verbose_mode(),
-        error_on_status = TRUE
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        run_log <- processx::run(
+          command = target_exe,
+          args = c(self$output_files(include_failed = FALSE), flags),
+          wd = cmdstan_path(),
+          echo = TRUE,
+          echo_cmd = is_verbose_mode(),
+          error_on_status = TRUE
+        )
       )
     },
 
@@ -288,13 +294,19 @@ CmdStanRun <- R6::R6Class(
 check_target_exe <- function(exe) {
   exe_path <- file.path(cmdstan_path(), exe)
   if (!file.exists(exe_path)) {
-    run_log <- processx::run(
-      command = make_cmd(),
-      args = exe,
-      wd = cmdstan_path(),
-      echo_cmd = TRUE,
-      echo = TRUE,
-      error_on_status = TRUE
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path()
+      ),
+      run_log <- processx::run(
+        command = make_cmd(),
+        args = exe,
+        wd = cmdstan_path(),
+        echo_cmd = TRUE,
+        echo = TRUE,
+        error_on_status = TRUE
+      )
     )
   }
 }
@@ -308,7 +320,6 @@ check_target_exe <- function(exe) {
     }
     mpi_args[["exe"]] <- self$exe_file()
   }
-  check_tbb_path()
   if (procs$num_procs() == 1) {
     start_msg <- "Running MCMC with 1 chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
@@ -381,7 +392,6 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 .run_generate_quantities <- function() {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-  check_tbb_path()
   if (procs$num_procs() == 1) {
     start_msg <- "Running standalone generated quantities after 1 MCMC chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
@@ -438,7 +448,6 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 
 .run_other <- function() {
   procs <- self$procs
-  check_tbb_path()
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
   }
@@ -486,19 +495,25 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs
-  check_tbb_path()
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
   }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
-  ret <- processx::run(
-    command = self$command(),
-    args = self$command_args()[[1]],
-    wd = dirname(self$exe_file()),
-    stderr = stderr_file,
-    stdout = stdout_file,
-    error_on_status = FALSE
+
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    ret <- processx::run(
+      command = self$command(),
+      args = self$command_args()[[1]],
+      wd = dirname(self$exe_file()),
+      stderr = stderr_file,
+      stdout = stdout_file,
+      error_on_status = FALSE
+    )
   )
   if (is.na(ret$status) || ret$status != 0) {
     if (file.exists(stdout_file)) {
@@ -602,13 +617,19 @@ CmdStanProcs <- R6::R6Class(
         args <- c(mpi_args_vector, exe_name, args)
         command <- mpi_cmd
       }
-      private$processes_[[id]] <- processx::process$new(
-        command = command,
-        args = args,
-        wd = wd,
-        stdout = "|",
-        stderr = "|",
-        echo_cmd = is_verbose_mode()
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        private$processes_[[id]] <- processx::process$new(
+          command = command,
+          args = args,
+          wd = wd,
+          stdout = "|",
+          stderr = "|",
+          echo_cmd = is_verbose_mode()
+        )
       )
       invisible(self)
     },
@@ -1039,13 +1060,13 @@ CmdStanGQProcs <- R6::R6Class(
   )
 )
 
-# add path to the TBB library to the PATH variable
-check_tbb_path <- function() {
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+tbb_path <- function(dir = NULL) {
+  path_to_TBB <- NULL
+  if (os_is_windows()) {
+    if (is.null(dir)) {
+      dir <- cmdstan_path()
     }
+    path_to_TBB <- file.path(dir, "stan", "lib", "stan_math", "lib", "tbb")
   }
+  path_to_TBB
 }

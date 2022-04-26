@@ -1,3 +1,8 @@
+# cmdstanr 0.5.2
+
+* Refactored toolchain install and checks for R 4.x on Windows and added support
+for Rtools42.
+
 # cmdstanr 0.5.1
 
 * Temporarily disable `format="draws_rvars"` in the `$draws()` method due to a

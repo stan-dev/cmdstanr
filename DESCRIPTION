@@ -1,7 +1,7 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.5.1.9000
-Date: 2022-04-06
+Version: 0.5.2
+Date: 2022-04-24
 Authors@R: 
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
@@ -36,7 +36,8 @@ Imports:
     jsonlite (>= 1.2.0),
     posterior (>= 1.1.0),
     processx (>= 3.5.0),
-    R6 (>= 2.4.0)
+    R6 (>= 2.4.0),
+    withr (>= 2.5.0)
 Suggests: 
     bayesplot,
     knitr (>= 1.37),
