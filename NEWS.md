@@ -1,7 +1,13 @@
 # cmdstanr 0.5.2
 
-* Refactored toolchain install and checks for R 4.x on Windows and added support
-for Rtools42.
+* Refactored toolchain installation and checks for R 4.x on Windows and added support
+for Rtools42. (#645)
+
+* Expanded the use of `CMDSTAN` environment variable to point to CmdStan installation
+_or_ directory containing CmdStan installations. (#643) 
+
+* New vignette on how to handle deprecations using the `$format()` method. (#644)
+
 
 # cmdstanr 0.5.1
 
