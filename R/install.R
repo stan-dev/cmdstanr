@@ -527,7 +527,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     if (!fix) {
       stop(
         "\n", rtools_version, " installation found but the toolchain was not installed.",
-        "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
+        "\nRun cmdstanr::check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
         call. = FALSE
       )
     } else {
@@ -615,13 +615,13 @@ check_unix_make <- function() {
         "The 'make' tool was not found. ",
         "Please install the command line tools for Mac with 'xcode-select --install' ",
         "or install Xcode from the app store. ",
-        "Then restart R and run check_cmdstan_toolchain().",
+        "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     } else {
       stop(
         "The 'make' tool was not found. ",
-        "Please install 'make', restart R, and then run check_cmdstan_toolchain().",
+        "Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     }
@@ -638,14 +638,14 @@ check_unix_cpp_compiler <- function() {
         "A suitable C++ compiler was not found. ",
         "Please install the command line tools for Mac with 'xcode-select --install' ",
         "or install Xcode from the app store. ",
-        "Then restart R and run check_cmdstan_toolchain().",
+        "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     } else {
       stop(
         "A C++ compiler was not found. ",
         "Please install the 'clang++' or 'g++' compiler, restart R, ",
-        "and run check_cmdstan_toolchain().",
+        "and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     }
