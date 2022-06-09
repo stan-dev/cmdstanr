@@ -1374,7 +1374,7 @@ pathfinder <- function(data = NULL,
                         psis_draws = NULL,
                         num_paths = NULL) {
   procs <- CmdStanProcs$new(
-    num_procs = 1,
+    num_procs = num_paths %||% 1,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
@@ -1404,7 +1404,7 @@ pathfinder <- function(data = NULL,
     stan_code = suppressWarnings(self$code()),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
-    proc_ids = 1,
+    proc_ids = if (!is.null(num_paths)) seq_len(num_paths) else 1,
     data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
