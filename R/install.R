@@ -509,7 +509,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     stop(
       "\n", rtools_version, " was not found but is required to run CmdStan with R version ",
       R.version$major, ".", R.version$minor, ".",
-      "\nPlease install ", rtools_version, " and run check_cmdstan_toolchain().",
+      "\nPlease install ", rtools_version, " and run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
@@ -518,7 +518,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (grepl("\\(|)| ", rtools_path)) {
     stop(
       "\n", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall ", rtools_version, " to a valid path, restart R, and then run check_cmdstan_toolchain().",
+      "\nPlease reinstall ", rtools_version, " to a valid path, restart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
