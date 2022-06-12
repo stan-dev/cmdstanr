@@ -62,7 +62,7 @@ jobs:
       - name: Install Rtools42
         if: runner.os == 'Windows'
         run: |
-          $source = 'https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-5168-5107.exe'
+          $source = 'https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-5253-5107.exe'
           $destination = '../rtools42.exe'
           Invoke-WebRequest -Uri $source -OutFile $destination
           Start-Process -FilePath ../rtools42.exe -ArgumentList /VERYSILENT -NoNewWindow -Wait
