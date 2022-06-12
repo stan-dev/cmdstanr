@@ -105,7 +105,8 @@ test_that("compilation works with include_paths", {
 
   expect_interactive_message(
     mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
-                                   include_paths = test_path("resources", "stan")),
+                                   include_paths = test_path("resources", "stan"),
+                                   force_recompile = TRUE),
     "Compiling Stan program"
   )
   expect_equal(
@@ -580,7 +581,7 @@ test_that("cmdstan_model errors with no args ", {
 })
 
 test_that("cmdstan_model works with user_header", {
-  skip_if(os_is_macos())
+  skip_if(os_is_macos() | os_is_windows()) 
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
   "
