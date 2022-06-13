@@ -236,7 +236,7 @@ read_cmdstan_csv <- function(files,
       grep_path_quotes <- paste0('"', grep_path_repaired, '"')
       fread_cmd <- paste0(
         grep_path_quotes,
-        " '^[#a-zA-Z]' --color=never '",
+        " -v '^#' --color=never '",
         output_file,
         "'"
       )
