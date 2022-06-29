@@ -236,9 +236,9 @@ read_cmdstan_csv <- function(files,
       grep_path_quotes <- paste0('"', grep_path_repaired, '"')
       fread_cmd <- paste0(
         grep_path_quotes,
-        " -v '^#' --color=never '",
+        " -v \"^#\" --color=never \"",
         output_file,
-        "'"
+        "\""
       )
     } else {
       fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
@@ -578,9 +578,9 @@ read_csv_metadata <- function(csv_file) {
     grep_path_quotes <- paste0('"', grep_path_repaired, '"')
     fread_cmd <- paste0(
       grep_path_quotes,
-      " '^[#a-zA-Z]' --color=never '",
+      " \"^[#a-zA-Z]\" --color=never \"",
       csv_file,
-      "'"
+      "\""
     )
   } else {
     fread_cmd <- paste0("grep '^[#a-zA-Z]' --color=never '", csv_file, "'")
