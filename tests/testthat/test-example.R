@@ -48,13 +48,14 @@ test_that("write_stan_file writes Stan file correctly", {
 
 test_that("write_stan_file writes to specified directory and filename", {
   dir <- file.path(test_path(), "answers")
-  expect_equal(dirname(f1 <- write_stan_file(stan_program, dir = dir, basename = "pasta")), dir)
+  expect_equal(dirname(f1 <- write_stan_file(stan_program, dir = dir, basename = "pasta")),
+               absolute_path(dir))
   expect_equal(f2 <- write_stan_file(stan_program, dir = dir, basename = "fruit.stan"),
-               file.path(dir, "fruit.stan"))
+               absolute_path(file.path(dir, "fruit.stan")))
   expect_equal(f3 <- write_stan_file(stan_program, dir = dir, basename = "vegetable"),
-               file.path(dir, "vegetable.stan")) # should add .stan extension if missing
+               absolute_path(file.path(dir, "vegetable.stan"))) # should add .stan extension if missing
   expect_equal(f4 <- write_stan_file(stan_program, dir = tempdir(), basename = "test"),
-               file.path(tempdir(), "test.stan"))
+               absolute_path(file.path(tempdir(), "test.stan")))
 
   try(file.remove(f1, f2, f3, f4), silent = TRUE)
 })

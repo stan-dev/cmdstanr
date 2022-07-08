@@ -591,7 +591,8 @@ test_that("cmdstan_model works with user_header", {
 
   namespace bernoulli_external_model_namespace
   {
-      template <typename T0__, stan::require_stan_scalar_t<T0__>* = nullptr>
+      template <typename T0__,
+            stan::require_all_t<stan::is_stan_scalar<T0__>>* = nullptr>
       inline typename boost::math::tools::promote_args<T0__>::type make_odds(const T0__ &
                                                                                  theta,
                                                                              std::ostream *pstream__)

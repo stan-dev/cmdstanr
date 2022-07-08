@@ -308,9 +308,17 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
 
 check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
   efbmi_per_chain <- ebfmi(post_warmup_sampler_diagnostics)
-  if (any(efbmi_per_chain < threshold)) {
+  nan_efbmi_count <- sum(is.nan(efbmi_per_chain))
+  efbmi_below_threshold <- sum(efbmi_per_chain < threshold)
+  if (nan_efbmi_count > 0) {
     message(
-      "Warning: ", sum(efbmi_per_chain < threshold), " of ", length(efbmi_per_chain),
+      "Warning: ", nan_efbmi_count, " of ", length(efbmi_per_chain),
+      " chains have a NaN E-BFMI.\n",
+      "See https://mc-stan.org/misc/warnings for details.\n"
+    )
+  } else if (efbmi_below_threshold > 0) {
+    message(
+      "Warning: ", efbmi_below_threshold, " of ", length(efbmi_per_chain),
       " chains had an E-BFMI less than ", threshold, ".\n",
       "See https://mc-stan.org/misc/warnings for details.\n"
     )
