@@ -148,6 +148,7 @@ write_stan_file <- function(code,
                             basename = NULL,
                             force_overwrite = FALSE,
                             hash_salt = "") {
+  dir <- absolute_path(dir)
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
   }
