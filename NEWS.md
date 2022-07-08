@@ -1,3 +1,18 @@
+# cmdstanr 0.4.0.9000
+
+### Bug fixes
+
+* In `cmdstan_default_path()` we now ignore directories inside `.cmdstan` that don't start 
+with `"cmdstan-"`. (#651)
+
+* Fixed Windows issue related to not locating `grep.exe` or when it is located in a path
+with spaces. (@weshinsley, #661, #663)
+
+* Fixed a bug with diagnostic checks when ebfmi is NaN.
+
+* Fixed a bug that caused issues when using `~` or `.` in paths supplied to the 
+`cmdstanr_write_stan_file_dir` global option.
+
 # cmdstanr 0.5.2
 
 * Refactored toolchain installation and checks for R 4.x on Windows and added support
