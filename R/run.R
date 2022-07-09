@@ -253,11 +253,12 @@ CmdStanRun <- R6::R6Class(
 
         time <- list(total = self$procs$total_time(), chains = chain_time)
       } else {
+        chain_ids <- names(self$procs$is_finished())
         chain_time <- data.frame(
-          chain_id = self$procs$proc_ids()[self$procs$is_finished()],
-          warmup = self$procs$proc_section_time("warmup")[self$procs$is_finished()],
-          sampling = self$procs$proc_section_time("sampling")[self$procs$is_finished()],
-          total = self$procs$proc_total_time()[self$procs$is_finished()]
+          chain_id = as.vector(self$procs$proc_ids()),
+          warmup = as.vector(self$procs$proc_section_time("warmup")),
+          sampling = as.vector(self$procs$proc_section_time("sampling")),
+          total = as.vector(self$procs$proc_total_time()[chain_ids])
         )
         time <- list(total = self$procs$total_time(), chains = chain_time)
       }
