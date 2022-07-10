@@ -247,9 +247,6 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
         }
       }
     }
-    if (file.exists(make_local_path)) {
-      file.create(make_local_path)
-    }
     write(built_flags, file = make_local_path, append = append)
   }
   if (file.exists(make_local_path)) {
