@@ -586,7 +586,7 @@ compile <- function(quiet = TRUE,
             warning(
               "The C++ compiler has errored due to incompatibility between the x86 and ",
               "Apple Silicon architectures.\n",
-              "If you are running R inside an IDE (RStudio, VSCode, ...), "
+              "If you are running R inside an IDE (RStudio, VSCode, ...), ",
               "make sure the IDE is a native Apple Silicon app.\n",
               call. = FALSE
             )
