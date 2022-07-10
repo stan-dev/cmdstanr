@@ -580,6 +580,18 @@ compile <- function(quiet = TRUE,
             call. = FALSE
           )
         }
+        if (os_is_macos()) {
+          if (R.version$arch == "aarch64" 
+              && grepl("but the current translation unit is being compiled for target", x)) {
+            warning(
+              "The C++ compiler has errored due to incompatibility between the x86 and ",
+              "Apple Silicon architectures.\n",
+              "If you are running R inside an IDE (RStudio, VSCode, ...), "
+              "make sure the IDE is a native Apple Silicon app.\n",
+              call. = FALSE
+            )
+          }
+        }
       },
       error_on_status = FALSE
     )
