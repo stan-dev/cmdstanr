@@ -238,6 +238,8 @@ summaries of the diagnostics and can regenerate the warning messages.
 Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
+
+\item{validate_csv}{Deprecated and will be removed in a future release.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
@@ -255,11 +257,9 @@ installed. For Unix systems the most commonly used implementations are
 MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 (for example mpicxx), which is required to compile the model.
 
-An example of compiling with MPI:
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+An example of compiling with MPI:\preformatted{mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
 mod = cmdstan_model("model.stan", cpp_options = mpi_options)
-}\if{html}{\out{</div>}}
+}
 
 The C++ options that must be supplied to the
 \link[=model-method-compile]{compile} call are:
