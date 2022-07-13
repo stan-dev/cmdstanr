@@ -104,6 +104,18 @@ jobs:
         run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
         shell: Rscript {0}
 
+      - name: Install cmdstan, stan, math from develop
+        run: |
+          cmdstanr::install_cmdstan(cores = 2, cmdstan_branch = "develop",
+                                    stan_branch = "develop", math_branch = "develop")
+        shell: Rscript {0}
+
+      - name: Check against upstream development
+        env:
+          _R_CHECK_CRAN_INCOMING_: false
+        run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
+        shell: Rscript {0}
+
       - name: Show testthat output
         if: always()
         run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
