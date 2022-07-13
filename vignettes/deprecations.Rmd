@@ -1,7 +1,7 @@
 ---
 title: "Handling deprecated Stan features with the canonicalizer in CmdStanR"
 author: "Rok Češnovar and Jonah Gabry"
-output: 
+output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
@@ -56,7 +56,7 @@ model {
   # priors
   target += std_normal_log(beta);
   alpha ~ std_normal();
-  
+
   y ~ bernoulli_logit(X * beta + alpha);
 }
 ")
@@ -89,11 +89,11 @@ in the next section.
 
 ## Using the canonicalizer
 
-The canonicalizer is available through the `canonicalize` argument of the 
+The canonicalizer is available through the `canonicalize` argument of the
 `$format()` method of the `CmdStanModel` class. The arguments accepts
-`TRUE` and `FALSE` values, in which case all or none of the features of the 
+`TRUE` and `FALSE` values, in which case all or none of the features of the
 canonicalizer are used. It can also accept a list of character vectors that
-determine which features of the canonicalizer to use. 
+determine which features of the canonicalizer to use.
 
 The canonincalizer in CmdStan 2.29.2 supports four features: `parentheses`,
 `braces`, `includes` and `deprecations`. The `parentheses` and `braces` features
@@ -117,8 +117,8 @@ with `std_normal_lpdf()`.
 You can also use the `$format()` method to write the updated version of the
 model directly to the Stan model file. That can be enabled by setting
 `overwrite_file = TRUE`. The previous version of the file will automatically
-be backed up to a file with the `.stan.bak` suffix. If that is not desired or 
-you are using a version system and making a backup is redundant, 
+be backed up to a file with the `.stan.bak` suffix. If that is not desired or
+you are using a version system and making a backup is redundant,
 you can disable it by setting `backup = FALSE`.
 
 ```{r overwrite_file}

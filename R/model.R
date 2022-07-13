@@ -581,7 +581,7 @@ compile <- function(quiet = TRUE,
           )
         }
         if (os_is_macos()) {
-          if (R.version$arch == "aarch64" 
+          if (R.version$arch == "aarch64"
               && grepl("but the current translation unit is being compiled for target", x)) {
             warning(
               "The C++ compiler has errored due to incompatibility between the x86 and ",
