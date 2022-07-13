@@ -165,21 +165,31 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
 #' @param path Path to installation.
 #' @return Version number as a string.
 read_cmdstan_version <- function(path) {
-  makefile_path <- file.path(path, "makefile")
-  if (!file.exists(makefile_path)) {
-    warning(
-      "Can't find CmdStan makefile to detect version number. ",
-      "Path may not point to valid installation.",
-      call. = FALSE
-    )
-    return(NULL)
+  # Return all repo branch names if cmdstan installed from Github
+  if (dir.exists(file.path(path, ".git"))) {
+    cmdstan_ref <- get_current_git_ref(path)
+    stan_ref <- get_current_git_ref(file.path(path, "stan"))
+    math_ref <- get_current_git_ref(file.path(path, "stan", "lib", "stan_math"))
+
+
+    paste0("CmdStan: ", cmdstan_ref, ", Stan: ", stan_ref, ", Math: ", math_ref)
+  } else {
+    makefile_path <- file.path(path, "makefile")
+    if (!file.exists(makefile_path)) {
+      warning(
+        "Can't find CmdStan makefile to detect version number. ",
+        "Path may not point to valid installation.",
+        call. = FALSE
+      )
+      return(NULL)
+    }
+    makefile <- readLines(makefile_path)
+    version_line <- grep("^CMDSTAN_VERSION :=", makefile, value = TRUE)
+    if (length(version_line) == 0) {
+      stop("CmdStan makefile is missing a version number.", call. = FALSE)
+    }
+    sub("CMDSTAN_VERSION := ", "", version_line)
   }
-  makefile <- readLines(makefile_path)
-  version_line <- grep("^CMDSTAN_VERSION :=", makefile, value = TRUE)
-  if (length(version_line) == 0) {
-    stop("CmdStan makefile is missing a version number.", call. = FALSE)
-  }
-  sub("CMDSTAN_VERSION := ", "", version_line)
 }
 
 #' Returns whether the supplied installation is a release candidate
@@ -205,4 +215,12 @@ fake_cmdstan_version <- function(version) {
 }
 reset_cmdstan_version <- function() {
   .cmdstanr$VERSION <- read_cmdstan_version(cmdstan_path())
+}
+
+get_current_git_ref <- function(path = ".") {
+  head <- readLines(file.path(path, ".git", "HEAD"))
+  current_branch <- strsplit(head, "/", fixed = TRUE)[[1]]
+  current_branch <- current_branch[length(current_branch)]
+  current_ref <- readLines(file.path(path, ".git", "refs", "heads", current_branch))
+  strtrim(current_ref, 7)
 }

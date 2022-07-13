@@ -51,6 +51,9 @@
 #'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
 #'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
+#' @param cmdstan_branch (string) The branch of the CmdStan GitHub repo to install
+#' @param stan_branch (string) The branch of the Stan GitHub repo to install
+#' @param math_branch (string) The branch of the Math GitHub repo to install
 #' @param cpp_options (list) Any makefile flags/variables to be written to
 #'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
 #'   the use of clang for compilation.
@@ -80,6 +83,9 @@ install_cmdstan <- function(dir = NULL,
                             timeout = 1200,
                             version = NULL,
                             release_url = NULL,
+                            cmdstan_branch = NULL,
+                            stan_branch = NULL,
+                            math_branch = NULL,
                             cpp_options = list(),
                             check_toolchain = TRUE) {
   if (check_toolchain) {
@@ -102,64 +108,86 @@ install_cmdstan <- function(dir = NULL,
     dir <- repair_path(dir)
     checkmate::assert_directory_exists(dir, access = "rwx")
   }
-  if (!is.null(version)) {
-    if (!is.null(release_url)) {
-      warning("version and release_url shouldn't both be specified!",
-              "\nrelease_url will be ignored.", call. = FALSE)
-    }
 
-    release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
-                          version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
+  cmdstan_from_github <- !is.null(cmdstan_branch) || !is.null(stan_branch) || !is.null(math_branch)
+  if (cmdstan_from_github && (!is.null(version) || !is.null(release_url))) {
+    warning("CmdStan Github branches and version/release_url shouldn't both be specified!",
+            "\nversion/release_url will be ignored.", call. = FALSE)
   }
-  if (!is.null(release_url)) {
-    if (!endsWith(release_url, ".tar.gz")) {
-      stop(release_url, " is not a .tar.gz archive!",
-           "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
-    }
-    message("* Installing CmdStan from ", release_url)
-    download_url <- release_url
-    split_url <- strsplit(release_url, "/")
-    tar_name <- utils::tail(split_url[[1]], n = 1)
-    cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
-    tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, cmdstan_ver)
-    dest_file <- file.path(dir, tar_gz_file)
-  } else {
-    ver <- latest_released_version()
-    message("* Latest CmdStan release is v", ver)
-    cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
-    tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, cmdstan_ver)
-    message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
-    message("* Downloading ", tar_gz_file, " from GitHub...")
-    download_url <- github_download_url(ver)
-    dest_file <- file.path(dir, tar_gz_file)
-  }
-  if (!check_install_dir(dir_cmdstan, overwrite)) {
-    return(invisible(NULL))
-  }
-  tar_downloaded <- download_with_retries(download_url, dest_file)
-  if (!tar_downloaded) {
+  if (!cmdstan_from_github) {
     if (!is.null(version)) {
-      stop("Download of CmdStan failed. Please check if the supplied version number is valid.", call. = FALSE)
+      if (!is.null(release_url)) {
+        warning("version and release_url shouldn't both be specified!",
+                "\nrelease_url will be ignored.", call. = FALSE)
+      }
+
+      release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
+                            version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
     }
     if (!is.null(release_url)) {
-      stop("Download of CmdStan failed. Please check if the supplied release URL is valid.", call. = FALSE)
+      if (!endsWith(release_url, ".tar.gz")) {
+        stop(release_url, " is not a .tar.gz archive!",
+            "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
+      }
+      message("* Installing CmdStan from ", release_url)
+      download_url <- release_url
+      split_url <- strsplit(release_url, "/")
+      tar_name <- utils::tail(split_url[[1]], n = 1)
+      cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
+      tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
+      dir_cmdstan <- file.path(dir, cmdstan_ver)
+      dest_file <- file.path(dir, tar_gz_file)
+    } else {
+      ver <- latest_released_version()
+      message("* Latest CmdStan release is v", ver)
+      cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
+      tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
+      dir_cmdstan <- file.path(dir, cmdstan_ver)
+      message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
+      message("* Downloading ", tar_gz_file, " from GitHub...")
+      download_url <- github_download_url(ver)
+      dest_file <- file.path(dir, tar_gz_file)
     }
-    stop("Download of CmdStan failed. Please try again.", call. = FALSE)
+    if (!check_install_dir(dir_cmdstan, overwrite)) {
+      return(invisible(NULL))
+    }
+    tar_downloaded <- download_with_retries(download_url, dest_file)
+    if (!tar_downloaded) {
+      if (!is.null(version)) {
+        stop("Download of CmdStan failed. Please check if the supplied version number is valid.", call. = FALSE)
+      }
+      if (!is.null(release_url)) {
+        stop("Download of CmdStan failed. Please check if the supplied release URL is valid.", call. = FALSE)
+      }
+      stop("Download of CmdStan failed. Please try again.", call. = FALSE)
+    }
+  } else {
+    # If a Stan/Math branch is specified, but not CmdStan, default to develop
+    cmdstan_branch <- ifelse(is.null(cmdstan_branch), "develop", cmdstan_branch)
+    cmdstan_ver <- paste0(c(cmdstan_branch, stan_branch, math_branch),
+                          collapse = "-")
+    dir_cmdstan <- file.path(dir, paste0("cmdstan-", cmdstan_ver))
+    checkout_github_cmdstan(
+      dir_cmdstan,
+      cmdstan_branch = cmdstan_branch,
+      stan_branch = stan_branch,
+      math_branch = math_branch,
+      quiet = quiet)
   }
   message("* Download complete")
 
-  message("* Unpacking archive...")
-  untar_rc <- utils::untar(
-    dest_file,
-    exdir = dir_cmdstan,
-    extras = "--strip-components 1"
-  )
-  if (untar_rc != 0) {
-    stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+  if (!cmdstan_from_github) {
+    message("* Unpacking archive...")
+    untar_rc <- utils::untar(
+      dest_file,
+      exdir = dir_cmdstan,
+      extras = "--strip-components 1"
+    )
+    if (untar_rc != 0) {
+      stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+    }
+    file.remove(dest_file)
   }
-  file.remove(dest_file)
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   # Setting up native M1 compilation of CmdStan and its downstream libraries
   if (is_rosetta2()) {
@@ -205,7 +233,6 @@ install_cmdstan <- function(dir = NULL,
     )
   }
 }
-
 
 #' @rdname install_cmdstan
 #' @export
@@ -732,4 +759,59 @@ rtools4x_home_path <- function() {
     path <- Sys.getenv("RTOOLS40_HOME")
   }
   path
+}
+
+checkout_github_cmdstan <- function(dir_cmdstan = NULL,
+                                    cmdstan_branch = NULL,
+                                    stan_branch = NULL,
+                                    math_branch = NULL,
+                                    quiet = FALSE) {
+  if (!requireNamespace("gert", quietly = TRUE)) {
+    stop(
+      "The \"gert\" package is required for downloading cmdstan from GitHub.",
+      call. = FALSE
+    )
+  }
+
+  message(paste0("* Downloading CmdStan ", cmdstan_branch, " branch"))
+  gert::git_clone(url = "https://github.com/stan-dev/cmdstan/",
+                  path = dir_cmdstan,
+                  branch = cmdstan_branch,
+                  verbose = !quiet)
+
+  # gert submodules have issues cloning if not in current repo directory
+  # so change current WD, but return once finished
+  current_wd <- getwd()
+  setwd(dir_cmdstan)
+
+  message(paste0(c("* Downloading Stan", stan_branch, "branch"),
+                  collapse = " "))
+
+  # Assign to output to avoid printing
+  sm <- gert::git_submodule_init("stan")
+  gert::git_submodule_fetch("stan", verbose = !quiet)
+
+  if (!is.null(stan_branch)) {
+    gert::git_submodule_set_to(
+      submodule = "stan",
+      ref = paste0("origin/", stan_branch),
+      checkout = TRUE)
+  }
+
+  message(paste0(c("* Downloading Math", math_branch, "branch"),
+                  collapse = " "))
+  setwd("stan")
+
+  # Assign to output to avoid printing
+  sm <- gert::git_submodule_init("lib/stan_math")
+  gert::git_submodule_fetch("lib/stan_math", verbose = !quiet)
+
+  if (!is.null(math_branch)) {
+    gert::git_submodule_set_to(
+      submodule = "lib/stan_math",
+      ref = paste0("origin/", math_branch),
+      checkout = TRUE)
+  }
+
+  setwd(current_wd)
 }
