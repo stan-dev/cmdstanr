@@ -1025,7 +1025,7 @@ compose_arg <- function(self, arg_name, cmdstan_arg_name = NULL, idx = NULL) {
     return(NULL)
   }
 
-  if (os_is_wsl() && (arg_name %in% c("fitted_params", "metric_file"))) {
+  if (os_is_wsl() && (arg_name %in% c("metric_file"))) {
     val <- sapply(val, wsl_path_compat)
   }
   if (!is.null(idx) && length(val) >= idx) {

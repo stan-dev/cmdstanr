@@ -91,6 +91,8 @@ make_cmd <- function() {
 stanc_cmd <- function() {
   if (os_is_windows() && !os_is_wsl()) {
     "bin/stanc.exe"
+  } else if (os_is_wsl()) {
+    "./bin/stanc"
   } else {
     "bin/stanc"
   }
@@ -154,19 +156,29 @@ absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 # When providing the model path to WSL, it needs to be in reference to the
 # to Windows mount point (/mnt/drive-letter) within the WSL install:
 # e.g., C:/Users/... -> /mnt/c/Users/...
-wsl_path_compat <- function(path) {
-  if (!is.character(path)) {
-    path
+wsl_path_compat <- function(path = NULL, revert = FALSE) {
+  if (!is.character(path) || is.null(path)) {
+    return(path)
   }
-  path_already_safe <- grepl("/mnt/", path)
-  if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
-    abs_path <- repair_path(path)
-    trim_lead_whitespace <- gsub("^\\s*", "", abs_path)
-    drive_letter <- tolower(strtrim(trim_lead_whitespace, 1))
-    path <- gsub(paste0(drive_letter, ":"),
-                 paste0("/mnt/", drive_letter),
-                 trim_lead_whitespace,
-                 ignore.case = TRUE)
+  if (revert) {
+    if (!grepl("^/mnt/", path)) {
+      return(path)
+    }
+    strip_mnt <- gsub("^/mnt/", "", path)
+    drive_letter <- strtrim(strip_mnt, 1)
+    path <- gsub(paste0("^/mnt/", drive_letter),
+                  paste0(toupper(drive_letter), ":"),
+                  path)
+  } else {
+    path_already_safe <- grepl("^/mnt/", path)
+    if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
+      abs_path <- repair_path(path)
+      drive_letter <- tolower(strtrim(abs_path, 1))
+      path <- gsub(paste0(drive_letter, ":"),
+                  paste0("/mnt/", drive_letter),
+                  abs_path,
+                  ignore.case = TRUE)
+    }
   }
   path
 }
@@ -176,7 +188,9 @@ wsl_compatible_run <- function(...) {
   if (os_is_wsl()) {
     command <- run_args$command
     run_args$command <- "wsl"
+    run_args$args[1] <- paste0("'", run_args$args[1], "'")
     run_args$args <- c(command, run_args$args)
+    run_args$windows_verbatim_args <- TRUE
   }
   do.call(processx::run, run_args)
 }

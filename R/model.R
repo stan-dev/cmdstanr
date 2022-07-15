@@ -731,7 +731,7 @@ check_syntax <- function(pedantic = FALSE,
   }
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
-  stanc_options[["o"]] <- temp_hpp_file
+  stanc_options[["o"]] <- wsl_path_compat(temp_hpp_file)
 
   if (pedantic) {
     stanc_options[["warn-pedantic"]] <- TRUE
