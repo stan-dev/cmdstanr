@@ -57,6 +57,8 @@
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
 #'   that the required toolchain is installed and properly configured. The
 #'   default is `TRUE`.
+#' @param wsl (logical) Should CmdStan be installed and run through the Windows
+#'  Subsystem for Linux (WSL). The default is `FALSE`.
 #'
 #' @examples
 #' \dontrun{

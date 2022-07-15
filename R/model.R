@@ -761,7 +761,7 @@ check_syntax <- function(pedantic = FALSE,
     ),
     run_log <- wsl_compatible_run(
       command = stanc_cmd(),
-      args = c(self$stan_file(), stanc_built_options, stancflags_val),
+      args = c(wsl_path_compat(self$stan_file()), stanc_built_options, stancflags_val),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),

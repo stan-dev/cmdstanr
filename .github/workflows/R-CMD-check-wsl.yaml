@@ -2,7 +2,7 @@
 # Github Actions workflow to check CmdStanR
 # yamllint disable rule:line-length
 
-name: Unit tests
+name: Unit tests - WSL Backend
 
 'on':
   push:
@@ -63,8 +63,7 @@ jobs:
             distribution: Ubuntu-22.04
             use-cache: 'true'
             set-as-default: 'true'
-            additional-packages: |
-              build-essential
+            additional-packages: build-essential
 
       - name: Install cmdstan
         run: |
