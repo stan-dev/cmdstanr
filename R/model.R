@@ -243,7 +243,7 @@ CmdStanModel <- R6::R6Class(
         }
       }
       if (!is.null(exe_file)) {
-        ext <- if (os_is_windows()) "exe" else ""
+        ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
         private$exe_file_ <- repair_path(absolute_path(exe_file))
         if (is.null(stan_file)) {
           checkmate::assert_file_exists(private$exe_file_, access = "r", extension = ext)
@@ -508,7 +508,7 @@ compile <- function(quiet = TRUE,
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   temp_file_no_ext <- strip_ext(temp_stan_file)
   tmp_exe <- cmdstan_ext(temp_file_no_ext) # adds .exe on Windows
-  if (os_is_windows()) {
+  if (os_is_windows() && !os_is_wsl()) {
     tmp_exe <- utils::shortPathName(tmp_exe)
   }
   private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
@@ -554,7 +554,9 @@ compile <- function(quiet = TRUE,
     ),
     run_log <- processx::run(
       command = make_cmd(),
-      args = c(tmp_exe,
+      args = c(
+              ifelse(os_is_wsl(), "make", ""),
+              tmp_exe,
               cpp_options_to_compile_flags(cpp_options),
               stancflags_val),
       wd = cmdstan_path(),
@@ -581,7 +583,7 @@ compile <- function(quiet = TRUE,
           )
         }
         if (os_is_macos()) {
-          if (R.version$arch == "aarch64" 
+          if (R.version$arch == "aarch64"
               && grepl("but the current translation unit is being compiled for target", x)) {
             warning(
               "The C++ compiler has errored due to incompatibility between the x86 and ",
@@ -653,7 +655,10 @@ variables <- function() {
   }
   assert_stan_file_exists(self$stan_file())
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
-    private$variables_ <- model_variables(self$stan_file(), self$include_paths(), allow_undefined = private$using_user_header_)
+    private$variables_ <- model_variables(
+      self$stan_file(),
+      self$include_paths(),
+      allow_undefined = private$using_user_header_)
   }
   private$variables_
 }
@@ -761,7 +766,8 @@ check_syntax <- function(pedantic = FALSE,
     ),
     run_log <- processx::run(
       command = stanc_cmd(),
-      args = c(self$stan_file(), stanc_built_options, stancflags_val),
+      args = c(ifelse(os_is_wsl(), "bin/stanc", ""),
+              self$stan_file(), stanc_built_options, stancflags_val),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -903,7 +909,8 @@ format <- function(overwrite_file = FALSE,
     ),
     run_log <- processx::run(
       command = stanc_cmd(),
-      args = c(self$stan_file(), stanc_built_options, stancflags_val),
+      args = c(ifelse(os_is_wsl(), "bin/stanc", ""),
+                self$stan_file(), stanc_built_options, stancflags_val),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -1780,9 +1787,11 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     allow_undefined_arg <- NULL
   }
   out_file <- tempfile(fileext = ".json")
+  stan_file <- stan_file
   run_log <- processx::run(
     command = stanc_cmd(),
-    args = c(stan_file, "--info", include_paths_stanc3_args(include_paths), allow_undefined_arg),
+    args = c(ifelse(os_is_wsl(), "bin/stanc", ""),
+              stan_file, "--info", include_paths_stanc3_args(include_paths), allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,
     echo_cmd = FALSE,
@@ -1810,8 +1819,8 @@ model_compile_info <- function(exe_file) {
         tbb_path()
       ),
       ret <- processx::run(
-        command = exe_file,
-        args = c("info"),
+        command = ifelse(os_is_wsl(), "wsl", exe_file),
+        args = c(ifelse(os_is_wsl(), exe_file, NULL),"info"),
         error_on_status = FALSE
       )
     )

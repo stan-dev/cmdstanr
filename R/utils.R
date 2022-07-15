@@ -41,6 +41,16 @@ os_is_windows <- function() {
   isTRUE(.Platform$OS.type == "windows")
 }
 
+os_is_wsl <- function() {
+  # Avoid errors if checking cmdstan_path before it has been set
+  wsl_in_path <- tryCatch({
+      grepl("wsl-cmdstan", cmdstan_path())
+  }, error = function(e) {
+      FALSE
+  })
+  os_is_windows() && (wsl_in_path || Sys.getenv("CMDSTANR_USE_WSL") == 1)
+}
+
 os_is_macos <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Darwin")
 }
@@ -68,7 +78,9 @@ is_rosetta2 <- function() {
 
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
-  if (os_is_windows()) {
+  if (os_is_wsl()) {
+    "wsl"
+  } else if (os_is_windows()) {
     "mingw32-make.exe"
   } else {
     "make"
@@ -77,7 +89,9 @@ make_cmd <- function() {
 
 # Returns the stanc exe path depending on the OS
 stanc_cmd <- function() {
-  if (os_is_windows()) {
+  if (os_is_wsl()) {
+    "wsl"
+  } else if (os_is_windows()) {
     "bin/stanc.exe"
   } else {
     "bin/stanc"
@@ -109,8 +123,8 @@ repair_path <- function(path) {
 #' @param path If not `NULL` then a path to add the extension to.
 #' @return If `path` is `NULL` then `".exe"` on Windows and `""` otherwise. If
 #'   `path` is not `NULL` then `.exe` is added as the extension on Windows.
-cmdstan_ext <- function(path = NULL, wsl = FALSE) {
-  ext <- if (os_is_windows() && !isTRUE(wsl)) ".exe" else ""
+cmdstan_ext <- function(path = NULL) {
+  ext <- if (os_is_windows() && !os_is_wsl()) ".exe" else ""
   if (is.null(path)) {
     return(ext)
   }
@@ -139,7 +153,25 @@ strip_ext <- function(file) {
 }
 absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 
+# When providing the model path to WSL, it needs to be in reference to the
+# to Windows mount point (/mnt/drive-letter) within the WSL install:
+# e.g., C:/Users/... -> /mnt/c/Users/...
+.wsl_path_compat <- function(path) {
+  path_already_safe <- grepl("^/mnt/", path)
+  if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
+    path <- normalizePath(path)
+    # Need forward-slashes for WSL
+    path <- gsub("\\\\", "/", path)
+    drive_letter <- tolower(strtrim(path, 1))
+    path <- gsub(paste0(drive_letter, ":"),
+                  paste0("/mnt/", drive_letter),
+                  path,
+                  ignore.case = TRUE)
+  }
+  path
+}
 
+wsl_path_compat <- Vectorize(.wsl_path_compat, USE.NAMES = FALSE)
 
 # read, write, and copy files --------------------------------------------
 

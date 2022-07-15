@@ -145,8 +145,24 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
       cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
     }
     if (length(cmdstan_installs) > 0) {
+      wsl_installs <- grep("^wsl-cmdstan-", cmdstan_installs, value = TRUE)
+      cmdstan_installs <- cmdstan_installs[!grepl("wsl-", cmdstan_installs)]
       cmdstan_installs <- grep("^cmdstan-", cmdstan_installs, value = TRUE)
-      latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
+      if (length(wsl_installs) > 0) {
+        wsl_installs_trim <- gsub("wsl-", "", wsl_installs, fixed = TRUE)
+        wsl_latest <- sort(wsl_installs_trim, decreasing = TRUE)[1]
+        if (length(cmdstan_installs) > 0) {
+          non_wsl_latest <- sort(cmdstan_installs, decreasing = TRUE)[1]
+          latest_cmdstan <- ifelse(wsl_latest > non_wsl_latest
+                                    || wsl_latest == non_wsl_latest,
+                                   grep(wsl_latest, wsl_installs, value = TRUE),
+                                   non_wsl_latest)
+        } else {
+          latest_cmdstan <- grep(wsl_latest, wsl_installs, value = TRUE)
+        }
+      } else {
+        latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
+      }
       if (is_release_candidate(latest_cmdstan)) {
         non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
         if (dir.exists(file.path(installs_path, non_rc_path))) {

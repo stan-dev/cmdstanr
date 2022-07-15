@@ -83,6 +83,11 @@ install_cmdstan <- function(dir = NULL,
                             cpp_options = list(),
                             check_toolchain = TRUE,
                             wsl = FALSE) {
+  # Use environment variable to record WSL usage throughout install,
+  # post-installation will simply check for 'wsl-' prefix in cmdstan path
+  if (isTRUE(wsl)) {
+    Sys.setenv("CMDSTANR_USE_WSL" = 1)
+  }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   }
@@ -185,12 +190,12 @@ install_cmdstan <- function(dir = NULL,
   }
 
   message("* Building CmdStan binaries...")
-  build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout, wsl)
+  build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
   if (!build_status_ok(build_log, quiet = quiet)) {
     return(invisible(build_log))
   }
 
-  example_log <- build_example(dir_cmdstan, cores, quiet, timeout, wsl)
+  example_log <- build_example(dir_cmdstan, cores, quiet, timeout)
   if (!build_status_ok(example_log, quiet = quiet)) {
     return(invisible(example_log))
   }
@@ -265,9 +270,9 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 #'   Windows. The default is `FALSE`, in which case problems are only reported
 #'   along with suggested fixes.
 #'
-check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE, wsl = FALSE) {
+check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (os_is_windows()) {
-    if (isTRUE(wsl)) {
+    if (os_is_wsl()) {
       check_wsl_toolchain()
     } else if (R.version$major >= "4") {
       check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
@@ -370,13 +375,12 @@ download_with_retries <- function(download_url,
 build_cmdstan <- function(dir,
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE,
-                          timeout,
-                          wsl = FALSE) {
+                          timeout) {
   translation_args <- NULL
   if (is_rosetta2()) {
     run_cmd <- "/usr/bin/arch"
     translation_args <- c("-arch", "arm64e", "make")
-  } else if (isTRUE(wsl)) {
+  } else if (os_is_wsl()) {
     run_cmd <- "wsl"
     translation_args <- "make"
   } else {
@@ -404,22 +408,15 @@ build_cmdstan <- function(dir,
 
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
-                          quiet = FALSE,
-                          wsl = FALSE) {
-  translation_args <- NULL
-  if (isTRUE(wsl)) {
-    run_cmd <- "wsl"
-    translation_args <- "make"
-  } else {
-    run_cmd <- make_cmd()
-  }
+                          quiet = FALSE) {
+  translation_args <- ifelse(os_is_wsl(), "make", NULL)
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
     processx::run(
-      run_cmd,
+      make_cmd(),
       args = c(translation_args, "clean-all"),
       wd = dir,
       echo_cmd = is_verbose_mode(),
@@ -431,24 +428,17 @@ clean_cmdstan <- function(dir = cmdstan_path(),
   )
 }
 
-build_example <- function(dir, cores, quiet, timeout, wsl = FALSE) {
-  translation_args <- NULL
-  if (isTRUE(wsl)) {
-    run_cmd <- "wsl"
-    translation_args <- "make"
-  } else {
-    run_cmd <- make_cmd()
-  }
+build_example <- function(dir, cores, quiet, timeout) {
+  translation_args <- ifelse(os_is_wsl(), "make", NULL)
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
     processx::run(
-      run_cmd,
+      make_cmd(),
       args = c(translation_args, paste0("-j", cores),
-                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"),
-                            wsl)),
+                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -537,17 +527,15 @@ check_wsl_toolchain <- function() {
   }
 
   make_not_present <- processx::run(command = "wsl",
-                                    args = "which make",
-                                    windows_verbatim_args = TRUE,
+                                    args = c("which", "make"),
                                     error_on_status = FALSE)
 
   gpp_not_present <- processx::run(command = "wsl",
-                                    args = "which g++",
-                                    windows_verbatim_args = TRUE,
+                                    args = c("which", "g++"),
                                     error_on_status = FALSE)
 
   clangpp_not_present <- processx::run(command = "wsl",
-                                   args = "which clang++",
+                                   args = c("which", "clang++"),
                                    windows_verbatim_args = TRUE,
                                    error_on_status = FALSE)
 
