@@ -632,7 +632,7 @@ CmdStanProcs <- R6::R6Class(
         private$processes_[[id]] <- processx::process$new(
           command = wsl_command(command),
           args = wsl_args(
-            command = paste0("./", command),
+            command = command,
             args = args
           ),
           wd = wd,

@@ -157,16 +157,24 @@ absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 # to Windows mount point (/mnt/drive-letter) within the WSL install:
 # e.g., C:/Users/... -> /mnt/c/Users/...
 wsl_path_compat <- function(path) {
-  path_already_safe <- grepl("^/mnt/", path)
+  path_already_safe <- grepl("/mnt/", path)
   if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
-    path <- normalizePath(path)
-    # Need forward-slashes for WSL
-    path <- gsub("\\\\", "/", path)
-    drive_letter <- tolower(strtrim(path, 1))
-    path <- gsub(paste0(drive_letter, ":"),
-                  paste0("/mnt/", drive_letter),
-                  path,
-                  ignore.case = TRUE)
+    abs_path <- repair_path(path)
+    # Special handling for arguments to be passed to stanc3
+    if(grepl("file=", path, fixed = TRUE)) {
+      abs_path <- gsub("file=", "", abs_path)
+    }
+    trim_lead_whitespace <- gsub("^\\s*", "", abs_path)
+    drive_letter <- tolower(strtrim(trim_lead_whitespace, 1))
+    trim_lead_whitespace <- gsub(paste0(drive_letter, ":"),
+                      paste0("/mnt/", drive_letter),
+                     trim_lead_whitespace,
+                      ignore.case = TRUE)
+    if(grepl("file=", path, fixed = TRUE)) {
+      path <- (paste0("file=", trim_lead_whitespace))
+    } else {
+      path <- trim_lead_whitespace
+    }
   }
   path
 }

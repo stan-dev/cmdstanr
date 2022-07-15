@@ -555,7 +555,7 @@ compile <- function(quiet = TRUE,
     run_log <- processx::run(
       command = make_cmd(),
       args = wsl_args(command = "make",
-                      args = c(tmp_exe,
+                      args = c(wsl_path_compat(tmp_exe),
                                 cpp_options_to_compile_flags(cpp_options),
                                 stancflags_val)),
       wd = cmdstan_path(),
@@ -1789,7 +1789,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     command = stanc_cmd(),
     args = wsl_args(
       command = "bin/stanc",
-      args = c(stan_file, "--info", include_paths_stanc3_args(include_paths),
+      args = c(wsl_path_compat(stan_file), "--info", include_paths_stanc3_args(include_paths),
                 allow_undefined_arg)
     ),
     wd = cmdstan_path(),
