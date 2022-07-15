@@ -81,7 +81,8 @@ install_cmdstan <- function(dir = NULL,
                             version = NULL,
                             release_url = NULL,
                             cpp_options = list(),
-                            check_toolchain = TRUE) {
+                            check_toolchain = TRUE,
+                            wsl = FALSE) {
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   }
@@ -111,6 +112,7 @@ install_cmdstan <- function(dir = NULL,
     release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
                           version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
   }
+  wsl_prefix <- ifelse(isTRUE(wsl), "wsl-", "")
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
@@ -122,14 +124,14 @@ install_cmdstan <- function(dir = NULL,
     tar_name <- utils::tail(split_url[[1]], n = 1)
     cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, cmdstan_ver)
+    dir_cmdstan <- file.path(dir, paste0(wsl_prefix, cmdstan_ver))
     dest_file <- file.path(dir, tar_gz_file)
   } else {
     ver <- latest_released_version()
     message("* Latest CmdStan release is v", ver)
     cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, cmdstan_ver)
+    dir_cmdstan <- file.path(dir, paste0(wsl_prefix, cmdstan_ver))
     message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
     message("* Downloading ", tar_gz_file, " from GitHub...")
     download_url <- github_download_url(ver)
@@ -171,7 +173,7 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
-  if (is_rtools42_toolchain()) {
+  if (is_rtools42_toolchain() && !isTRUE(wsl)) {
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
@@ -183,12 +185,12 @@ install_cmdstan <- function(dir = NULL,
   }
 
   message("* Building CmdStan binaries...")
-  build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
+  build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout, wsl)
   if (!build_status_ok(build_log, quiet = quiet)) {
     return(invisible(build_log))
   }
 
-  example_log <- build_example(dir_cmdstan, cores, quiet, timeout)
+  example_log <- build_example(dir_cmdstan, cores, quiet, timeout, wsl)
   if (!build_status_ok(example_log, quiet = quiet)) {
     return(invisible(example_log))
   }
@@ -263,9 +265,11 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 #'   Windows. The default is `FALSE`, in which case problems are only reported
 #'   along with suggested fixes.
 #'
-check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
+check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE, wsl = FALSE) {
   if (os_is_windows()) {
-    if (R.version$major >= "4") {
+    if (isTRUE(wsl)) {
+      check_wsl_toolchain()
+    } else if (R.version$major >= "4") {
       check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     } else {
       check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
@@ -366,14 +370,19 @@ download_with_retries <- function(download_url,
 build_cmdstan <- function(dir,
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE,
-                          timeout) {
+                          timeout,
+                          wsl = FALSE) {
   translation_args <- NULL
   if (is_rosetta2()) {
     run_cmd <- "/usr/bin/arch"
     translation_args <- c("-arch", "arm64e", "make")
+  } else if (isTRUE(wsl)) {
+    run_cmd <- "wsl"
+    translation_args <- "make"
   } else {
     run_cmd <- make_cmd()
   }
+
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -395,15 +404,23 @@ build_cmdstan <- function(dir,
 
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
-                          quiet = FALSE) {
+                          quiet = FALSE,
+                          wsl = FALSE) {
+  translation_args <- NULL
+  if (isTRUE(wsl)) {
+    run_cmd <- "wsl"
+    translation_args <- "make"
+  } else {
+    run_cmd <- make_cmd()
+  }
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
     processx::run(
-      make_cmd(),
-      args = c("clean-all"),
+      run_cmd,
+      args = c(translation_args, "clean-all"),
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -414,15 +431,22 @@ clean_cmdstan <- function(dir = cmdstan_path(),
   )
 }
 
-build_example <- function(dir, cores, quiet, timeout) {
+build_example <- function(dir, cores, quiet, timeout, wsl = FALSE) {
+  translation_args <- NULL
+  if (isTRUE(wsl)) {
+    run_cmd <- "wsl"
+    translation_args <- "make"
+  } else {
+    run_cmd <- make_cmd()
+  }
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
     processx::run(
-      make_cmd(),
-      args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+      run_cmd,
+      args = c(translation_args, paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -497,6 +521,44 @@ install_toolchain <- function(quiet = FALSE) {
     )
   )
   invisible(NULL)
+}
+
+check_wsl_toolchain <- function() {
+  wsl_inaccessible <- processx::run(command = "wsl",
+                                     args = "uname",
+                                     error_on_status = FALSE)
+  if (wsl_inaccessible$status) {
+    stop("\n", "A WSL distribution is not installed or is not accessible.",
+         "\n", "Please see the Microsoft documentation for guidance on installing WSL: ",
+         "\n", "https://docs.microsoft.com/en-us/windows/wsl/install",
+         call. = FALSE)
+  }
+
+  make_not_present <- processx::run(command = "wsl",
+                                    args = "which make",
+                                    windows_verbatim_args = TRUE,
+                                    error_on_status = FALSE)
+
+  gpp_not_present <- processx::run(command = "wsl",
+                                    args = "which g++",
+                                    windows_verbatim_args = TRUE,
+                                    error_on_status = FALSE)
+
+  clangpp_not_present <- processx::run(command = "wsl",
+                                   args = "which clang++",
+                                   windows_verbatim_args = TRUE,
+                                   error_on_status = FALSE)
+
+  if (make_not_present$status || (gpp_not_present$status
+        && clangpp_not_present$status)) {
+    stop("\n", "Your distribution is missing the needed utilities for compiling C++.",
+         "\n", "Please launch your WSL install them using the appropriate command:",
+         "\n", "Debian/Ubuntu: sudo apt-get install build-essential",
+         "\n", "Fedora: sudo dnf group install \"C Development Tools and Libraries\"",
+         "\n", "Arch: pacman -Sy base-devel",
+         call. = FALSE)
+  }
+
 }
 
 check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
