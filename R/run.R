@@ -232,9 +232,11 @@ CmdStanRun <- R6::R6Class(
           tbb_path()
         ),
         run_log <- processx::run(
-          command = ifelse(os_is_wsl(), "wsl", target_exe),
-          args = c(ifelse(os_is_wsl(), target_exe, NULL),
-                    self$output_files(include_failed = FALSE), flags),
+          command = wsl_command(target_exe),
+          args = wsl_args(
+            command = target_exe,
+            args = c(self$output_files(include_failed = FALSE), flags)
+          ),
           wd = cmdstan_path(),
           echo = TRUE,
           echo_cmd = is_verbose_mode(),
@@ -303,7 +305,7 @@ check_target_exe <- function(exe) {
       ),
       run_log <- processx::run(
         command = make_cmd(),
-        args = ifelse(os_is_wsl(), "make", exe),
+        args = wsl_args(command = "make", args = exe),
         wd = cmdstan_path(),
         echo_cmd = TRUE,
         echo = TRUE,
@@ -509,9 +511,11 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
       tbb_path()
     ),
     ret <- processx::run(
-      command = ifelse(os_is_wsl(), "wsl", self$command()),
-      args = c(ifelse(os_is_wsl(), self$command(), NULL),
-                self$command_args()[[1]]),
+      command = wsl_command(self$command()),
+      args = wsl_args(
+        command = self$command(),
+        args = self$command_args()[[1]]
+      ),
       wd = dirname(self$exe_file()),
       stderr = stderr_file,
       stdout = stdout_file,
@@ -626,8 +630,11 @@ CmdStanProcs <- R6::R6Class(
           tbb_path()
         ),
         private$processes_[[id]] <- processx::process$new(
-          command = ifelse(os_is_wsl(), "wsl", command),
-          args = c(ifelse(os_is_wsl(), paste0("./", command), NULL), args),
+          command = wsl_command(command),
+          args = wsl_args(
+            command = paste0("./", command),
+            args = args
+          ),
           wd = wd,
           stdout = "|",
           stderr = "|",

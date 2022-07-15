@@ -156,7 +156,7 @@ absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 # When providing the model path to WSL, it needs to be in reference to the
 # to Windows mount point (/mnt/drive-letter) within the WSL install:
 # e.g., C:/Users/... -> /mnt/c/Users/...
-.wsl_path_compat <- function(path) {
+wsl_path_compat <- function(path) {
   path_already_safe <- grepl("^/mnt/", path)
   if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
     path <- normalizePath(path)
@@ -171,7 +171,17 @@ absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
   path
 }
 
-wsl_path_compat <- Vectorize(.wsl_path_compat, USE.NAMES = FALSE)
+wsl_args <- function(command, args) {
+  if (os_is_wsl()) {
+    c(command, args)
+  } else {
+    args
+  }
+}
+
+wsl_command <- function(command) {
+  ifelse(os_is_wsl(), "wsl", command)
+}
 
 # read, write, and copy files --------------------------------------------
 

@@ -178,7 +178,7 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
-  if (is_rtools42_toolchain() && !isTRUE(wsl)) {
+  if (is_rtools42_toolchain() && !os_is_wsl()) {
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
@@ -210,6 +210,10 @@ install_cmdstan <- function(dir = NULL,
       make_local_msg,
       "\nrebuild_cmdstan(cores = ...)"
     )
+  }
+
+  if (isTRUE(wsl)) {
+    Sys.unsetenv("CMDSTANR_USE_WSL")
   }
 }
 
@@ -409,7 +413,6 @@ build_cmdstan <- function(dir,
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
-  translation_args <- ifelse(os_is_wsl(), "make", NULL)
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -417,7 +420,8 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     ),
     processx::run(
       make_cmd(),
-      args = c(translation_args, "clean-all"),
+      args = wsl_args(command = "make",
+                      args = "clean_all"),
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -429,7 +433,6 @@ clean_cmdstan <- function(dir = cmdstan_path(),
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
-  translation_args <- ifelse(os_is_wsl(), "make", NULL)
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -437,8 +440,11 @@ build_example <- function(dir, cores, quiet, timeout) {
     ),
     processx::run(
       make_cmd(),
-      args = c(translation_args, paste0("-j", cores),
-                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+      args = wsl_args(command = "make",
+                      args = c(paste0("-j", cores),
+                              cmdstan_ext(file.path("examples",
+                                                    "bernoulli",
+                                                    "bernoulli")))),
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -548,7 +554,6 @@ check_wsl_toolchain <- function() {
          "\n", "Arch: pacman -Sy base-devel",
          call. = FALSE)
   }
-
 }
 
 check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {

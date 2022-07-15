@@ -554,11 +554,10 @@ compile <- function(quiet = TRUE,
     ),
     run_log <- processx::run(
       command = make_cmd(),
-      args = c(
-              ifelse(os_is_wsl(), "make", ""),
-              tmp_exe,
-              cpp_options_to_compile_flags(cpp_options),
-              stancflags_val),
+      args = wsl_args(command = "make",
+                      args = c(tmp_exe,
+                                cpp_options_to_compile_flags(cpp_options),
+                                stancflags_val)),
       wd = cmdstan_path(),
       echo = !quiet || is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -655,10 +654,7 @@ variables <- function() {
   }
   assert_stan_file_exists(self$stan_file())
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
-    private$variables_ <- model_variables(
-      self$stan_file(),
-      self$include_paths(),
-      allow_undefined = private$using_user_header_)
+    private$variables_ <- model_variables(self$stan_file(), self$include_paths(), allow_undefined = private$using_user_header_)
   }
   private$variables_
 }
@@ -766,8 +762,9 @@ check_syntax <- function(pedantic = FALSE,
     ),
     run_log <- processx::run(
       command = stanc_cmd(),
-      args = c(ifelse(os_is_wsl(), "bin/stanc", ""),
-              self$stan_file(), stanc_built_options, stancflags_val),
+      args = wsl_args(command = "bin/stanc",
+                      args = c(self$stan_file(), stanc_built_options,
+                      stancflags_val)),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -909,8 +906,8 @@ format <- function(overwrite_file = FALSE,
     ),
     run_log <- processx::run(
       command = stanc_cmd(),
-      args = c(ifelse(os_is_wsl(), "bin/stanc", ""),
-                self$stan_file(), stanc_built_options, stancflags_val),
+      args = wsl_args(command = "bin/stanc",
+                      args = c(self$stan_file(), stanc_built_options, stancflags_val)),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -1790,8 +1787,11 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
   stan_file <- stan_file
   run_log <- processx::run(
     command = stanc_cmd(),
-    args = c(ifelse(os_is_wsl(), "bin/stanc", ""),
-              stan_file, "--info", include_paths_stanc3_args(include_paths), allow_undefined_arg),
+    args = wsl_args(
+      command = "bin/stanc",
+      args = c(stan_file, "--info", include_paths_stanc3_args(include_paths),
+                allow_undefined_arg)
+    ),
     wd = cmdstan_path(),
     echo = FALSE,
     echo_cmd = FALSE,
@@ -1819,8 +1819,9 @@ model_compile_info <- function(exe_file) {
         tbb_path()
       ),
       ret <- processx::run(
-        command = ifelse(os_is_wsl(), "wsl", exe_file),
-        args = c(ifelse(os_is_wsl(), exe_file, NULL),"info"),
+        command = wsl_command(exe_file),
+        args = wsl_args(command = exe_file,
+                        args = "info"),
         error_on_status = FALSE
       )
     )
