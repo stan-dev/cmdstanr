@@ -384,9 +384,6 @@ build_cmdstan <- function(dir,
   if (is_rosetta2()) {
     run_cmd <- "/usr/bin/arch"
     translation_args <- c("-arch", "arm64e", "make")
-  } else if (os_is_wsl()) {
-    run_cmd <- "wsl"
-    translation_args <- "make"
   } else {
     run_cmd <- make_cmd()
   }
@@ -396,8 +393,8 @@ build_cmdstan <- function(dir,
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
-    processx::run(
-      run_cmd,
+    wsl_compatible_run(
+      command = run_cmd,
       args = c(translation_args, paste0("-j", cores), "build"),
       wd = dir,
       echo_cmd = is_verbose_mode(),
@@ -418,10 +415,9 @@ clean_cmdstan <- function(dir = cmdstan_path(),
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
-    processx::run(
-      make_cmd(),
-      args = wsl_args(command = "make",
-                      args = "clean_all"),
+    wsl_compatible_run(
+      command = make_cmd(),
+      args = "clean_all",
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -438,13 +434,10 @@ build_example <- function(dir, cores, quiet, timeout) {
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
-    processx::run(
-      make_cmd(),
-      args = wsl_args(command = "make",
-                      args = c(paste0("-j", cores),
-                              cmdstan_ext(file.path("examples",
-                                                    "bernoulli",
-                                                    "bernoulli")))),
+    wsl_compatible_run(
+      command = make_cmd(),
+      args = c(paste0("-j", cores),
+                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -548,7 +541,7 @@ check_wsl_toolchain <- function() {
   if (make_not_present$status || (gpp_not_present$status
         && clangpp_not_present$status)) {
     stop("\n", "Your distribution is missing the needed utilities for compiling C++.",
-         "\n", "Please launch your WSL install them using the appropriate command:",
+         "\n", "Please launch your WSL and install them using the appropriate command:",
          "\n", "Debian/Ubuntu: sudo apt-get install build-essential",
          "\n", "Fedora: sudo dnf group install \"C Development Tools and Libraries\"",
          "\n", "Arch: pacman -Sy base-devel",

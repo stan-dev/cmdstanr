@@ -7,7 +7,7 @@ name: Test coverage
 'on':
   push:
     branches:
-      - master
+      - wsl-support
   pull_request:
     branches:
       - master

@@ -231,12 +231,12 @@ CmdStanRun <- R6::R6Class(
           toolchain_PATH_env_var(),
           tbb_path()
         ),
-        run_log <- processx::run(
-          command = wsl_command(target_exe),
-          args = wsl_args(
-            command = target_exe,
-            args = c(self$output_files(include_failed = FALSE), flags)
-          ),
+        run_log <- wsl_compatible_run(
+          command = target_exe,
+          args = c(
+            sapply(self$output_files(include_failed = FALSE),
+                   wsl_path_compat),
+            flags),
           wd = cmdstan_path(),
           echo = TRUE,
           echo_cmd = is_verbose_mode(),
@@ -303,9 +303,9 @@ check_target_exe <- function(exe) {
         toolchain_PATH_env_var(),
         tbb_path()
       ),
-      run_log <- processx::run(
+      run_log <- wsl_compatible_run(
         command = make_cmd(),
-        args = wsl_args(command = "make", args = exe),
+        args = exe,
         wd = cmdstan_path(),
         echo_cmd = TRUE,
         echo = TRUE,
@@ -510,12 +510,9 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
       toolchain_PATH_env_var(),
       tbb_path()
     ),
-    ret <- processx::run(
-      command = wsl_command(self$command()),
-      args = wsl_args(
-        command = self$command(),
-        args = self$command_args()[[1]]
-      ),
+    ret <- wsl_compatible_run(
+      command = self$command(),
+      args = self$command_args()[[1]],
       wd = dirname(self$exe_file()),
       stderr = stderr_file,
       stdout = stdout_file,
@@ -629,12 +626,9 @@ CmdStanProcs <- R6::R6Class(
           toolchain_PATH_env_var(),
           tbb_path()
         ),
-        private$processes_[[id]] <- processx::process$new(
-          command = wsl_command(command),
-          args = wsl_args(
-            command = command,
-            args = args
-          ),
+        private$processes_[[id]] <- wsl_compatible_process_new(
+          command = command,
+          args = args,
           wd = wd,
           stdout = "|",
           stderr = "|",

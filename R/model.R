@@ -552,12 +552,11 @@ compile <- function(quiet = TRUE,
       toolchain_PATH_env_var(),
       tbb_path()
     ),
-    run_log <- processx::run(
+    run_log <- wsl_compatible_run(
       command = make_cmd(),
-      args = wsl_args(command = "make",
-                      args = c(wsl_path_compat(tmp_exe),
-                                cpp_options_to_compile_flags(cpp_options),
-                                stancflags_val)),
+      args = c(wsl_path_compat(tmp_exe),
+              cpp_options_to_compile_flags(cpp_options),
+              stancflags_val),
       wd = cmdstan_path(),
       echo = !quiet || is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -760,11 +759,9 @@ check_syntax <- function(pedantic = FALSE,
       toolchain_PATH_env_var(),
       tbb_path()
     ),
-    run_log <- processx::run(
+    run_log <- wsl_compatible_run(
       command = stanc_cmd(),
-      args = wsl_args(command = "bin/stanc",
-                      args = c(self$stan_file(), stanc_built_options,
-                      stancflags_val)),
+      args = c(self$stan_file(), stanc_built_options, stancflags_val),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -904,10 +901,10 @@ format <- function(overwrite_file = FALSE,
       toolchain_PATH_env_var(),
       tbb_path()
     ),
-    run_log <- processx::run(
+    run_log <- wsl_compatible_run(
       command = stanc_cmd(),
-      args = wsl_args(command = "bin/stanc",
-                      args = c(self$stan_file(), stanc_built_options, stancflags_val)),
+      args = c(wsl_path_compat(self$stan_file()), stanc_built_options,
+                stancflags_val),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -1785,13 +1782,10 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
   }
   out_file <- tempfile(fileext = ".json")
   stan_file <- stan_file
-  run_log <- processx::run(
+  run_log <- wsl_compatible_run(
     command = stanc_cmd(),
-    args = wsl_args(
-      command = "bin/stanc",
-      args = c(wsl_path_compat(stan_file), "--info", include_paths_stanc3_args(include_paths),
-                allow_undefined_arg)
-    ),
+    args = c(wsl_path_compat(stan_file), "--info", include_paths_stanc3_args(include_paths),
+                allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,
     echo_cmd = FALSE,
@@ -1818,10 +1812,9 @@ model_compile_info <- function(exe_file) {
         toolchain_PATH_env_var(),
         tbb_path()
       ),
-      ret <- processx::run(
-        command = wsl_command(exe_file),
-        args = wsl_args(command = exe_file,
-                        args = "info"),
+      ret <- wsl_compatible_run(
+        command = exe_file,
+        args = "info",
         error_on_status = FALSE
       )
     )

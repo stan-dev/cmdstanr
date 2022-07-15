@@ -78,9 +78,7 @@ is_rosetta2 <- function() {
 
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
-  if (os_is_wsl()) {
-    "wsl"
-  } else if (os_is_windows()) {
+  if (os_is_windows() && !os_is_wsl()) {
     "mingw32-make.exe"
   } else {
     "make"
@@ -89,9 +87,7 @@ make_cmd <- function() {
 
 # Returns the stanc exe path depending on the OS
 stanc_cmd <- function() {
-  if (os_is_wsl()) {
-    "wsl"
-  } else if (os_is_windows()) {
+  if (os_is_windows() && !os_is_wsl()) {
     "bin/stanc.exe"
   } else {
     "bin/stanc"
@@ -160,35 +156,34 @@ wsl_path_compat <- function(path) {
   path_already_safe <- grepl("/mnt/", path)
   if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
     abs_path <- repair_path(path)
-    # Special handling for arguments to be passed to stanc3
-    if(grepl("file=", path, fixed = TRUE)) {
-      abs_path <- gsub("file=", "", abs_path)
-    }
     trim_lead_whitespace <- gsub("^\\s*", "", abs_path)
     drive_letter <- tolower(strtrim(trim_lead_whitespace, 1))
-    trim_lead_whitespace <- gsub(paste0(drive_letter, ":"),
-                      paste0("/mnt/", drive_letter),
-                     trim_lead_whitespace,
-                      ignore.case = TRUE)
-    if(grepl("file=", path, fixed = TRUE)) {
-      path <- (paste0("file=", trim_lead_whitespace))
-    } else {
-      path <- trim_lead_whitespace
-    }
+    path <- gsub(paste0(drive_letter, ":"),
+                 paste0("/mnt/", drive_letter),
+                 trim_lead_whitespace,
+                 ignore.case = TRUE)
   }
   path
 }
 
-wsl_args <- function(command, args) {
+wsl_compatible_run <- function(...) {
+  run_args <- list(...)
   if (os_is_wsl()) {
-    c(command, args)
-  } else {
-    args
+    command <- run_args$command
+    run_args$command <- "wsl"
+    run_args$args <- c(command, run_args$args)
   }
+  do.call(processx::run, run_args)
 }
 
-wsl_command <- function(command) {
-  ifelse(os_is_wsl(), "wsl", command)
+wsl_compatible_process_new <- function(...) {
+  run_args <- list(...)
+  if (os_is_wsl()) {
+    command <- run_args$command
+    run_args$command <- "wsl"
+    run_args$args <- c(command, run_args$args)
+  }
+  do.call(processx::process$new, run_args)
 }
 
 # read, write, and copy files --------------------------------------------
