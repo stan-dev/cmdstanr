@@ -138,7 +138,7 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(self$init)) {
-        args$init <- paste0("init=", self$init[idx])
+        args$init <- paste0("init=", wsl_path_compat(self$init[idx]))
       }
 
       if (!is.null(self$data_file)) {
@@ -1019,6 +1019,9 @@ available_metrics <- function() {
 #' @param idx Chain id (only applicable for MCMC).
 compose_arg <- function(self, arg_name, cmdstan_arg_name = NULL, idx = NULL) {
   val <- self[[arg_name]]
+  if (os_is_wsl() && (arg_name %in% c("fitted_params", "metric_file"))) {
+    val <- sapply(val, wsl_path_compat)
+  }
   cmdstan_arg_name <- cmdstan_arg_name %||% arg_name
 
   if (is.null(val)) {

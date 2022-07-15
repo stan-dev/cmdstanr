@@ -47,6 +47,8 @@ os_is_wsl <- function() {
       grepl("wsl-cmdstan", cmdstan_path())
   }, error = function(e) {
       FALSE
+  }, warning = function(e) {
+      FALSE
   })
   os_is_windows() && (wsl_in_path || Sys.getenv("CMDSTANR_USE_WSL") == 1)
 }
@@ -153,6 +155,9 @@ absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 # to Windows mount point (/mnt/drive-letter) within the WSL install:
 # e.g., C:/Users/... -> /mnt/c/Users/...
 wsl_path_compat <- function(path) {
+  if (!is.character(path)) {
+    path
+  }
   path_already_safe <- grepl("/mnt/", path)
   if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
     abs_path <- repair_path(path)

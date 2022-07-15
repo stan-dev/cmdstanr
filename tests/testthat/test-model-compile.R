@@ -73,7 +73,7 @@ test_that("compile() method works with spaces in path", {
   expect_interactive_message(mod_spaces$compile(), "Compiling Stan program...")
   file.remove(stan_model_with_spaces)
   file.remove(exe)
-  file.remove(dir_with_spaces)
+  unlink(dir_with_spaces, recursive = TRUE)
 })
 
 test_that("compile() method overwrites binaries", {
@@ -581,7 +581,7 @@ test_that("cmdstan_model errors with no args ", {
 })
 
 test_that("cmdstan_model works with user_header", {
-  skip_if(os_is_macos() | os_is_windows()) 
+  skip_if(os_is_macos() | os_is_windows())
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
   "

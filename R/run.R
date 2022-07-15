@@ -353,6 +353,10 @@ check_target_exe <- function(exe) {
   } else {
     cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -412,6 +416,10 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
   } else {
     cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -454,6 +462,10 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
   procs <- self$procs
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   id <- 1
@@ -501,6 +513,10 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
   procs <- self$procs
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   stdout_file <- tempfile()
   stderr_file <- tempfile()

@@ -1761,6 +1761,7 @@ include_paths_stanc3_args <- function(include_paths = NULL) {
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
     include_paths <- absolute_path(include_paths)
+    include_paths <- sapply(include_paths, wsl_path_compat)
     paths_w_space <- grep(" ", include_paths)
     include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     include_paths <- paste0(include_paths, collapse = ",")

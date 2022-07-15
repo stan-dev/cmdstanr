@@ -67,7 +67,7 @@ jobs:
 
       - name: Install cmdstan
         run: |
-          cmdstanr::install_cmdstan(cores = 2, wsl = TRUE)
+          cmdstanr::install_cmdstan(cores = 2, wsl = TRUE, overwrite = TRUE)
         shell: Rscript {0}
 
       - name: Session info
