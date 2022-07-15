@@ -446,7 +446,9 @@ build_example <- function(dir, cores, quiet, timeout, wsl = FALSE) {
     ),
     processx::run(
       run_cmd,
-      args = c(translation_args, paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+      args = c(translation_args, paste0("-j", cores),
+                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"),
+                            wsl)),
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),

@@ -109,8 +109,8 @@ repair_path <- function(path) {
 #' @param path If not `NULL` then a path to add the extension to.
 #' @return If `path` is `NULL` then `".exe"` on Windows and `""` otherwise. If
 #'   `path` is not `NULL` then `.exe` is added as the extension on Windows.
-cmdstan_ext <- function(path = NULL) {
-  ext <- if (os_is_windows()) ".exe" else ""
+cmdstan_ext <- function(path = NULL, wsl = FALSE) {
+  ext <- if (os_is_windows() && !isTRUE(wsl)) ".exe" else ""
   if (is.null(path)) {
     return(ext)
   }
