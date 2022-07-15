@@ -1019,13 +1019,14 @@ available_metrics <- function() {
 #' @param idx Chain id (only applicable for MCMC).
 compose_arg <- function(self, arg_name, cmdstan_arg_name = NULL, idx = NULL) {
   val <- self[[arg_name]]
-  if (os_is_wsl() && (arg_name %in% c("fitted_params", "metric_file"))) {
-    val <- sapply(val, wsl_path_compat)
-  }
   cmdstan_arg_name <- cmdstan_arg_name %||% arg_name
 
   if (is.null(val)) {
     return(NULL)
+  }
+
+  if (os_is_wsl() && (arg_name %in% c("fitted_params", "metric_file"))) {
+    val <- sapply(val, wsl_path_compat)
   }
   if (!is.null(idx) && length(val) >= idx) {
     val <- val[idx]
