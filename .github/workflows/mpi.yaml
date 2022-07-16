@@ -88,6 +88,7 @@ jobs:
         env:
           _R_CHECK_CRAN_INCOMING_: false
         run: |
+          library(cmdstanr)
           options("cmdstanr_verbose"=TRUE)
           mpi_file <- write_stan_file("
           functions {
