@@ -63,11 +63,12 @@ jobs:
             distribution: Ubuntu-22.04
             use-cache: 'true'
             set-as-default: 'true'
-      - name: WSL gzip version fix
+      - name: Install WSL Dependencies
         run: |
+          # Bugfix for current gzip under WSLv1:
+          # https://github.com/microsoft/WSL/issues/8219#issuecomment-1110508016
+          echo -en '\x10' | sudo dd of=/usr/bin/gzip count=1 bs=1 conv=notrunc seek=$((0x189))
           sudo apt-get update
-          sudo apt-get install -y gzip=1.10-4ubuntu1
-          sudo apt-mark hold gzip
           sudo apt-get install -y build-essential libopenmpi-dev
         shell: wsl-bash {0}
 
