@@ -63,9 +63,11 @@ jobs:
             distribution: Ubuntu-22.04
             use-cache: 'true'
             set-as-default: 'true'
-            additional-packages: |
-              build-essential
-              libopenmpi-dev
+      - name: WSL gzip version fix
+        run: |
+          sudo apt-get install -y gzip=1.10-4ubuntu1
+          sudo apt-mark hold gzip
+          sudo apt-get install -y build-essential libopenmpi-dev
 
       - name: Install cmdstan
         run: |
