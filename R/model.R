@@ -1814,7 +1814,7 @@ model_compile_info <- function(exe_file) {
         tbb_path()
       ),
       ret <- wsl_compatible_run(
-        command = exe_file,
+        command = wsl_path_compat(exe_file),
         args = "info",
         error_on_status = FALSE
       )
