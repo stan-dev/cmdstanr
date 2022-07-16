@@ -132,7 +132,7 @@ model_obj2$sample()
 
 ## Running interactively
 
-When running chunks interactively in RStudio (e.g. when using 
+When running chunks interactively in RStudio (e.g. when using
 [R Notebooks](https://bookdown.org/yihui/rmarkdown/notebook.html)), it has been
 observed that the built-in, RStan-based engine is used for `stan` chunks even
 when CmdStanR's engine has been registered in the session as the engine for

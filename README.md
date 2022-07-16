@@ -6,7 +6,7 @@
 [![Codecov test coverage](https://codecov.io/gh/stan-dev/cmdstanr/branch/master/graph/badge.svg)](https://app.codecov.io/gh/stan-dev/cmdstanr?branch=master)
 <!-- badges: end -->
 
-### Overview 
+### Overview
 
 CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).
@@ -23,7 +23,7 @@ If you are new to CmdStanR we recommend starting with these vignettes:
 releases.
 
 * R code that doesn't interface directly with C++, only calls compiled executables.
-      
+
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
 
@@ -34,7 +34,7 @@ analysis.
 
 #### Installing the R package
 
-You can install the latest beta release of the **cmdstanr** R package with 
+You can install the latest beta release of the **cmdstanr** R package with
 
 ```r
 # we recommend running this is a fresh R session or restarting your current session
@@ -53,22 +53,22 @@ remotes::install_github("stan-dev/cmdstanr")
 #### Installing CmdStan
 
 If you don't already have CmdStan installed then, in addition to installing the
-R package, it is also necessary to install CmdStan using CmdStanR's 
-`install_cmdstan()` function. A suitable C++ toolchain is also required. 
+R package, it is also necessary to install CmdStan using CmdStanR's
+`install_cmdstan()` function. A suitable C++ toolchain is also required.
 Instructions are provided in the [_Getting started with
-CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette. 
+CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette.
 
 
-### Contributing 
+### Contributing
 
-There is a lot of work still to be done and contributions are very welcome! 
+There is a lot of work still to be done and contributions are very welcome!
 If you are interested in contributing please comment on an open issue
-or open a new one if none are applicable.  
+or open a new one if none are applicable.
 
 ### License
 
-CmdStanR, like CmdStan and the core Stan C++ code, is licensed under the 
-following licenses: 
+CmdStanR, like CmdStan and the core Stan C++ code, is licensed under the
+following licenses:
 
 - Code: BSD 3-clause (https://opensource.org/licenses/BSD-3-Clause)
 - Documentation: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
