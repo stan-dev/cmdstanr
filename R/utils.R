@@ -91,13 +91,10 @@ make_cmd <- function() {
 stanc_cmd <- function() {
   if (os_is_windows() && !os_is_wsl()) {
     "bin/stanc.exe"
-  } else if (os_is_wsl()) {
-    "./bin/stanc"
   } else {
     "bin/stanc"
   }
 }
-
 
 # paths and extensions ----------------------------------------------------
 
@@ -157,7 +154,7 @@ absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 # to Windows mount point (/mnt/drive-letter) within the WSL install:
 # e.g., C:/Users/... -> /mnt/c/Users/...
 wsl_path_compat <- function(path = NULL, revert = FALSE) {
-  if (!is.character(path) || is.null(path)) {
+  if (!is.character(path) || is.null(path) || !os_is_wsl()) {
     return(path)
   }
   if (revert) {
@@ -188,9 +185,11 @@ wsl_compatible_run <- function(...) {
   if (os_is_wsl()) {
     command <- run_args$command
     run_args$command <- "wsl"
-    run_args$args[1] <- paste0("'", run_args$args[1], "'")
+    if (grepl("stanc", command)) {
+      run_args$args[1] <- paste0("'", run_args$args[1], "'")
+      run_args$windows_verbatim_args <- TRUE
+    }
     run_args$args <- c(command, run_args$args)
-    run_args$windows_verbatim_args <- TRUE
   }
   do.call(processx::run, run_args)
 }

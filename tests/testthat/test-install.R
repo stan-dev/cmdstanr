@@ -16,7 +16,8 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
-                      release_url = cmdstan_test_tarball_url),
+                      release_url = cmdstan_test_tarball_url,
+                      wsl = os_is_wsl()),
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
@@ -63,7 +64,8 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
-                      release_url = cmdstan_test_tarball_url),
+                      release_url = cmdstan_test_tarball_url,
+                      wsl = os_is_wsl()),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
@@ -112,7 +114,8 @@ test_that("install_cmdstan() works with version and release_url", {
         install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
                         version = "2.27.0",
                         # the URL is intentionally invalid to test that the version has higher priority
-                        release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz"),
+                        release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
+                        wsl = os_is_wsl()),
         "Compiling, linking C++ code",
         fixed = TRUE
       ),
@@ -122,7 +125,7 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.27.0")))
+  expect_true(dir.exists(file.path(dir, paste0(wsl_prefix, "cmdstan-2.27.0"))))
   set_cmdstan_path(cmdstan_default_path())
 })
 
@@ -152,6 +155,7 @@ test_that("toolchain checks on Unix work", {
 
 test_that("toolchain checks on Windows with RTools 3.5 work", {
   skip_if_not(os_is_windows())
+  skip_if(os_is_wsl())
   skip_if(R.Version()$major > "3")
 
   path_backup <- Sys.getenv("PATH")

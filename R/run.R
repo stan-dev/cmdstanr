@@ -322,7 +322,7 @@ check_target_exe <- function(exe) {
     if (is.null(mpi_args)) {
       mpi_args <- list()
     }
-    mpi_args[["exe"]] <- self$exe_file()
+    mpi_args[["exe"]] <- wsl_path_compat(self$exe_file())
   }
   if (procs$num_procs() == 1) {
     start_msg <- "Running MCMC with 1 chain"

@@ -523,14 +523,14 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
   if (!is.null(user_header)) {
-    cpp_options[["USER_HEADER"]] <- user_header
+    cpp_options[["USER_HEADER"]] <- wsl_path_compat(user_header)
     stanc_options[["allow-undefined"]] <- TRUE
   }
   if (!is.null(cpp_options[["USER_HEADER"]])) {
-    cpp_options[["USER_HEADER"]] <- absolute_path(cpp_options[["USER_HEADER"]])
+    cpp_options[["USER_HEADER"]] <- wsl_path_compat(absolute_path(cpp_options[["USER_HEADER"]]))
   }
   if (!is.null(cpp_options[["user_header"]])) {
-    cpp_options[["user_header"]] <- absolute_path(cpp_options[["user_header"]])
+    cpp_options[["user_header"]] <- wsl_path_compat(absolute_path(cpp_options[["user_header"]]))
   }
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")

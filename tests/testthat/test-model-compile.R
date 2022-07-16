@@ -117,7 +117,7 @@ test_that("compilation works with include_paths", {
 
 test_that("name in STANCFLAGS is set correctly", {
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
-  if(os_is_windows()) {
+  if(os_is_windows() && !os_is_wsl()) {
     out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
     out_name <- "bin/stanc.exe --name='bernoulli2_model' --o"
   } else {
@@ -428,7 +428,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
 })
 
 test_that("compiliation errors if folder with the model name exists", {
-  skip_if(os_is_windows())
+  skip_if(os_is_windows() && !os_is_wsl())
   model_code <- "
   parameters {
     real y;
@@ -449,7 +449,7 @@ test_that("compiliation errors if folder with the model name exists", {
     cmdstan_model(stan_file),
     "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again."
   )
-  file.remove(exe)
+  unlink(exe, recursive = TRUE)
 })
 
 test_that("cpp_options_to_compile_flags() works", {
@@ -585,7 +585,7 @@ test_that("cmdstan_model errors with no args ", {
 })
 
 test_that("cmdstan_model works with user_header", {
-  skip_if(os_is_macos() | os_is_windows())
+  skip_if(os_is_macos() | (os_is_windows() && !os_is_wsl()))
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
   "

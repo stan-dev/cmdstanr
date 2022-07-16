@@ -63,7 +63,9 @@ jobs:
             distribution: Ubuntu-22.04
             use-cache: 'true'
             set-as-default: 'true'
-            additional-packages: build-essential
+            additional-packages: |
+              build-essential
+              libopenmpi-dev
 
       - name: Install cmdstan
         run: |
