@@ -87,17 +87,36 @@ jobs:
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_: false
-        run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
+        run: |
+          options("cmdstanr_verbose"=TRUE)
+          mpi_file <- write_stan_file("
+          functions {
+            vector test(vector beta, vector theta, real[] x, int[] y) {
+              return theta;
+            }
+          }
+          transformed data {
+            vector[4] a;
+            vector[5] b[4] = {[1,1,1,1,1]', [2,2,2,2,2]', [3,3,3,3,3]', [4,4,4,4,4]'};
+            real x[4,4];
+            int y[4,4];
+          }
+          parameters {
+            real beta;
+          }
+          model {
+            beta ~ std_normal();
+          }
+          generated quantities {
+            vector[20] c = map_rect(test, a, b, x, y);
+          }
+          ")
+          tbb_cxx_type <- "gcc"
+          cpp_options = list(cxx="mpicxx", stan_mpi = TRUE, tbb_cxx_type=tbb_cxx_type)
+          mod_mpi <- cmdstan_model(mpi_file, cpp_options = cpp_options)
+
+          f <- mod_mpi$sample_mpi(chains = 1, mpi_args = list("n" = 1))
+
+          f$metadata()$mpi_enable
+
         shell: Rscript {0}
-
-      - name: Show testthat output
-        if: always()
-        run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
-        shell: bash
-
-      - name: Upload check results
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: wsl-backend-results
-          path: check

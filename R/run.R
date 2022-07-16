@@ -235,7 +235,7 @@ CmdStanRun <- R6::R6Class(
           command = target_exe,
           args = c(
             sapply(self$output_files(include_failed = FALSE),
-                   wsl_path_compat),
+                   wsl_safe_path),
             flags),
           wd = cmdstan_path(),
           echo = TRUE,
@@ -322,7 +322,7 @@ check_target_exe <- function(exe) {
     if (is.null(mpi_args)) {
       mpi_args <- list()
     }
-    mpi_args[["exe"]] <- wsl_path_compat(self$exe_file())
+    mpi_args[["exe"]] <- wsl_safe_path(self$exe_file())
   }
   if (procs$num_procs() == 1) {
     start_msg <- "Running MCMC with 1 chain"

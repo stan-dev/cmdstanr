@@ -735,10 +735,10 @@ read_csv_metadata <- function(csv_file) {
     csv_file_info$gradients <- gradients
   }
   if (os_is_wsl()) {
-    csv_file_info$init <- wsl_path_compat(csv_file_info$init, revert = TRUE)
-    csv_file_info$profile_file <- wsl_path_compat(csv_file_info$profile_file,
+    csv_file_info$init <- wsl_safe_path(csv_file_info$init, revert = TRUE)
+    csv_file_info$profile_file <- wsl_safe_path(csv_file_info$profile_file,
                                                   revert = TRUE)
-    csv_file_info$fitted_params <- wsl_path_compat(csv_file_info$fitted_params,
+    csv_file_info$fitted_params <- wsl_safe_path(csv_file_info$fitted_params,
                                                     revert = TRUE)
   }
   csv_file_info

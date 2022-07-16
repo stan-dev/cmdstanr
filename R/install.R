@@ -389,7 +389,6 @@ build_cmdstan <- function(dir,
   } else {
     run_cmd <- make_cmd()
   }
-
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -419,7 +418,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
     ),
     wsl_compatible_run(
       command = make_cmd(),
-      args = "clean_all",
+      args = "clean-all",
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),

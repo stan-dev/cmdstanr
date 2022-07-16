@@ -138,16 +138,16 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(self$init)) {
-        args$init <- paste0("init=", wsl_path_compat(self$init[idx]))
+        args$init <- paste0("init=", wsl_safe_path(self$init[idx]))
       }
 
       if (!is.null(self$data_file)) {
-        args$data <- c("data", paste0("file=", wsl_path_compat(self$data_file)))
+        args$data <- c("data", paste0("file=", wsl_safe_path(self$data_file)))
       }
 
-      args$output <- c("output", paste0("file=", wsl_path_compat(output_file)))
+      args$output <- c("output", paste0("file=", wsl_safe_path(output_file)))
       if (!is.null(latent_dynamics_file)) {
-        args$output <- c(args$output, paste0("diagnostic_file=", wsl_path_compat(latent_dynamics_file)))
+        args$output <- c(args$output, paste0("diagnostic_file=", wsl_safe_path(latent_dynamics_file)))
       }
       if (!is.null(self$refresh)) {
         args$output <- c(args$output, paste0("refresh=", self$refresh))
@@ -158,7 +158,7 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(profile_file)) {
-        args$output <- c(args$output, paste0("profile_file=", wsl_path_compat(profile_file)))
+        args$output <- c(args$output, paste0("profile_file=", wsl_safe_path(profile_file)))
       }
       if (!is.null(self$opencl_ids)) {
         args$opencl <- c("opencl", paste0("platform=", self$opencl_ids[1]), paste0("device=", self$opencl_ids[2]))
@@ -1026,7 +1026,7 @@ compose_arg <- function(self, arg_name, cmdstan_arg_name = NULL, idx = NULL) {
   }
 
   if (os_is_wsl() && (arg_name %in% c("metric_file", "fitted_params"))) {
-    val <- sapply(val, wsl_path_compat)
+    val <- sapply(val, wsl_safe_path)
   }
   if (!is.null(idx) && length(val) >= idx) {
     val <- val[idx]

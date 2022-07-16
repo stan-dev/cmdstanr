@@ -523,14 +523,14 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
   if (!is.null(user_header)) {
-    cpp_options[["USER_HEADER"]] <- wsl_path_compat(user_header)
+    cpp_options[["USER_HEADER"]] <- wsl_safe_path(user_header)
     stanc_options[["allow-undefined"]] <- TRUE
   }
   if (!is.null(cpp_options[["USER_HEADER"]])) {
-    cpp_options[["USER_HEADER"]] <- wsl_path_compat(absolute_path(cpp_options[["USER_HEADER"]]))
+    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
   }
   if (!is.null(cpp_options[["user_header"]])) {
-    cpp_options[["user_header"]] <- wsl_path_compat(absolute_path(cpp_options[["user_header"]]))
+    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
   }
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
@@ -554,7 +554,7 @@ compile <- function(quiet = TRUE,
     ),
     run_log <- wsl_compatible_run(
       command = make_cmd(),
-      args = c(wsl_path_compat(tmp_exe),
+      args = c(wsl_safe_path(tmp_exe),
               cpp_options_to_compile_flags(cpp_options),
               stancflags_val),
       wd = cmdstan_path(),
@@ -731,7 +731,7 @@ check_syntax <- function(pedantic = FALSE,
   }
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
-  stanc_options[["o"]] <- wsl_path_compat(temp_hpp_file)
+  stanc_options[["o"]] <- wsl_safe_path(temp_hpp_file)
 
   if (pedantic) {
     stanc_options[["warn-pedantic"]] <- TRUE
@@ -761,7 +761,7 @@ check_syntax <- function(pedantic = FALSE,
     ),
     run_log <- wsl_compatible_run(
       command = stanc_cmd(),
-      args = c(wsl_path_compat(self$stan_file()), stanc_built_options, stancflags_val),
+      args = c(wsl_safe_path(self$stan_file()), stanc_built_options, stancflags_val),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
@@ -903,7 +903,7 @@ format <- function(overwrite_file = FALSE,
     ),
     run_log <- wsl_compatible_run(
       command = stanc_cmd(),
-      args = c(wsl_path_compat(self$stan_file()), stanc_built_options,
+      args = c(wsl_safe_path(self$stan_file()), stanc_built_options,
                 stancflags_val),
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
@@ -1761,7 +1761,7 @@ include_paths_stanc3_args <- function(include_paths = NULL) {
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
     include_paths <- absolute_path(include_paths)
-    include_paths <- sapply(include_paths, wsl_path_compat)
+    include_paths <- sapply(include_paths, wsl_safe_path)
     paths_w_space <- grep(" ", include_paths)
     include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     include_paths <- paste0(include_paths, collapse = ",")
@@ -1785,7 +1785,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
   stan_file <- stan_file
   run_log <- wsl_compatible_run(
     command = stanc_cmd(),
-    args = c(wsl_path_compat(stan_file), "--info", include_paths_stanc3_args(include_paths),
+    args = c(wsl_safe_path(stan_file), "--info", include_paths_stanc3_args(include_paths),
                 allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,
@@ -1814,7 +1814,7 @@ model_compile_info <- function(exe_file) {
         tbb_path()
       ),
       ret <- wsl_compatible_run(
-        command = wsl_path_compat(exe_file),
+        command = wsl_safe_path(exe_file),
         args = "info",
         error_on_status = FALSE
       )

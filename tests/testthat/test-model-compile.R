@@ -473,7 +473,7 @@ test_that("include_paths_stanc3_args() works", {
     dir.create(path_1)
   }
   path_1 <- repair_path(path_1)
-  path_1_compare <- ifelse(os_is_wsl(), wsl_path_compat(path_1), path_1)
+  path_1_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_1), path_1)
   expect_equal(
     include_paths_stanc3_args(path_1),
     paste0("--include-paths=", path_1_compare))
@@ -482,7 +482,7 @@ test_that("include_paths_stanc3_args() works", {
     dir.create(path_2)
   }
   path_2 <- repair_path(path_2)
-  path_2_compare <- ifelse(os_is_wsl(), wsl_path_compat(path_2), path_2)
+  path_2_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_2), path_2)
   expect_equal(
     include_paths_stanc3_args(c(path_1, path_2)),
     c(
