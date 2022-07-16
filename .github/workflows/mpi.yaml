@@ -115,15 +115,14 @@ jobs:
           tbb_cxx_type <- "gcc"
           cpp_options = list(cxx="mpicxx", stan_mpi = TRUE, tbb_cxx_type=tbb_cxx_type)
           mod_mpi <- cmdstan_model(mpi_file, cpp_options = cpp_options)
-          mpi_args <- list("n" = 1)
-          if (os_is_wsl()) {
+          # if (os_is_wsl()) {
             # Default GHA WSL install runs as root, which MPI discourages
             # Specify that this is safe to ignore for this test
             Sys.setenv("OMPI_ALLOW_RUN_AS_ROOT"=1)
             Sys.setenv("OMPI_ALLOW_RUN_AS_ROOT_CONFIRM"=1)
             Sys.setenv("WSLENV"="OMPI_ALLOW_RUN_AS_ROOT/u:OMPI_ALLOW_RUN_AS_ROOT_CONFIRM/u")
-          }
-          f <- mod_mpi$sample_mpi(chains = 1, mpi_args)
+          # }
+          f <- mod_mpi$sample_mpi(chains = 1, list("n" = 1))
 
           f$metadata()$mpi_enable
 
