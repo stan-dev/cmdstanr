@@ -213,7 +213,6 @@ install_cmdstan <- function(dir = NULL,
       "\nrebuild_cmdstan(cores = ...)"
     )
   }
-
   if (isTRUE(wsl)) {
     Sys.unsetenv("CMDSTANR_USE_WSL")
   }

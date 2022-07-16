@@ -169,7 +169,7 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
   } else {
     path_already_safe <- grepl("^/mnt/", path)
     if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
-      abs_path <- repair_path(path)
+      abs_path <- repair_path(utils::shortPathName(path))
       drive_letter <- tolower(strtrim(abs_path, 1))
       path <- gsub(paste0(drive_letter, ":"),
                   paste0("/mnt/", drive_letter),
@@ -180,15 +180,15 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
   path
 }
 
+# Running commands through WSL requires using 'wsl' as the command with the
+# intended command (e.g., stanc) as the first argument. This function acts as
+# a wrapper around processx::run() to apply this change where necessary, and
+# forward all other arguments
 wsl_compatible_run <- function(...) {
   run_args <- list(...)
   if (os_is_wsl()) {
     command <- run_args$command
     run_args$command <- "wsl"
-    if (grepl("stanc", command)) {
-      run_args$args[1] <- paste0("'", run_args$args[1], "'")
-      run_args$windows_verbatim_args <- TRUE
-    }
     run_args$args <- c(command, run_args$args)
   }
   do.call(processx::run, run_args)

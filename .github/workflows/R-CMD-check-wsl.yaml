@@ -13,11 +13,11 @@ name: Unit tests - WSL Backend
       - master
 
 jobs:
-  R-CMD-check:
+  WSL-R-CMD-check:
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
     runs-on: windows-latest
 
-    name: WSL1 Backend
+    name: windows-latest-WSLv1
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -65,7 +65,7 @@ jobs:
             set-as-default: 'true'
       - name: Install WSL Dependencies
         run: |
-          # Bugfix for current gzip under WSLv1:
+          # Bugfix for current gzip (for unpacking apt packages) under WSLv1:
           # https://github.com/microsoft/WSL/issues/8219#issuecomment-1110508016
           echo -en '\x10' | sudo dd of=/usr/bin/gzip count=1 bs=1 conv=notrunc seek=$((0x189))
           sudo apt-get update

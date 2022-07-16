@@ -1760,8 +1760,7 @@ include_paths_stanc3_args <- function(include_paths = NULL) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
     checkmate::assert_directory_exists(include_paths, access = "r")
-    include_paths <- absolute_path(include_paths)
-    include_paths <- sapply(include_paths, wsl_safe_path)
+    include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
     paths_w_space <- grep(" ", include_paths)
     include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     include_paths <- paste0(include_paths, collapse = ",")
@@ -1782,11 +1781,12 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     allow_undefined_arg <- NULL
   }
   out_file <- tempfile(fileext = ".json")
-  stan_file <- stan_file
   run_log <- wsl_compatible_run(
     command = stanc_cmd(),
-    args = c(wsl_safe_path(stan_file), "--info", include_paths_stanc3_args(include_paths),
-                allow_undefined_arg),
+    args = c(wsl_safe_path(stan_file),
+              "--info",
+              include_paths_stanc3_args(include_paths),
+              allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,
     echo_cmd = FALSE,
