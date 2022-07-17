@@ -42,15 +42,7 @@ os_is_windows <- function() {
 }
 
 os_is_wsl <- function() {
-  # Avoid errors if checking cmdstan_path before it has been set
-  wsl_in_path <- tryCatch({
-      grepl("wsl-cmdstan", cmdstan_path())
-  }, error = function(e) {
-      FALSE
-  }, warning = function(e) {
-      FALSE
-  })
-  os_is_windows() && (wsl_in_path || Sys.getenv("CMDSTANR_USE_WSL") == 1)
+  os_is_windows() && (isTRUE(.cmdstanr$WSL) || Sys.getenv("CMDSTANR_USE_WSL") == 1)
 }
 
 os_is_macos <- function() {

@@ -45,6 +45,7 @@ set_cmdstan_path <- function(path = NULL) {
     path <- absolute_path(path)
     .cmdstanr$PATH <- path
     .cmdstanr$VERSION <- read_cmdstan_version(path)
+    .cmdstanr$WSL <- grepl("wsl-cmdstan", path)
     message("CmdStan path set to: ", path)
   } else {
     warning("Path not set. Can't find directory: ", path, call. = FALSE)

@@ -88,7 +88,13 @@ install_cmdstan <- function(dir = NULL,
   # Use environment variable to record WSL usage throughout install,
   # post-installation will simply check for 'wsl-' prefix in cmdstan path
   if (isTRUE(wsl)) {
-    Sys.setenv("CMDSTANR_USE_WSL" = 1)
+    if (!os_is_windows()) {
+      warning("wsl=TRUE is only available on Windows, and will be ignored!",
+              call. = FALSE)
+      wsl <- FALSE
+    } else {
+      Sys.setenv("CMDSTANR_USE_WSL" = 1)
+    }
   }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
