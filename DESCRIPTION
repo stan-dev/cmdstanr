@@ -1,6 +1,6 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.5.2.1
+Version: 0.5.3
 Date: 2022-04-24
 Authors@R:
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
@@ -27,7 +27,7 @@ URL: https://mc-stan.org/cmdstanr/, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: CmdStan (https://mc-stan.org/users/interfaces/cmdstan)
 Depends:
