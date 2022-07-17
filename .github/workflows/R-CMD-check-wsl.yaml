@@ -7,7 +7,7 @@ name: Unit tests - WSL Backend
 'on':
   push:
     branches:
-      - wsl-support
+      - master
   pull_request:
     branches:
       - master
