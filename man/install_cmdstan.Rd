@@ -16,7 +16,8 @@ install_cmdstan(
   version = NULL,
   release_url = NULL,
   cpp_options = list(),
-  check_toolchain = TRUE
+  check_toolchain = TRUE,
+  wsl = FALSE
 )
 
 rebuild_cmdstan(
@@ -72,6 +73,9 @@ the use of clang for compilation.}
 \item{check_toolchain}{(logical) Should \code{install_cmdstan()} attempt to check
 that the required toolchain is installed and properly configured. The
 default is \code{TRUE}.}
+
+\item{wsl}{(logical) Should CmdStan be installed and run through the Windows
+Subsystem for Linux (WSL). The default is \code{FALSE}.}
 
 \item{append}{(logical) For \code{cmdstan_make_local()}, should the listed
 makefile flags be appended to the end of the existing \code{make/local} file?

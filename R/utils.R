@@ -41,6 +41,10 @@ os_is_windows <- function() {
   isTRUE(.Platform$OS.type == "windows")
 }
 
+os_is_wsl <- function() {
+  os_is_windows() && (isTRUE(.cmdstanr$WSL) || Sys.getenv("CMDSTANR_USE_WSL") == 1)
+}
+
 os_is_macos <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Darwin")
 }
@@ -68,7 +72,7 @@ is_rosetta2 <- function() {
 
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
-  if (os_is_windows()) {
+  if (os_is_windows() && !os_is_wsl()) {
     "mingw32-make.exe"
   } else {
     "make"
@@ -77,13 +81,12 @@ make_cmd <- function() {
 
 # Returns the stanc exe path depending on the OS
 stanc_cmd <- function() {
-  if (os_is_windows()) {
+  if (os_is_windows() && !os_is_wsl()) {
     "bin/stanc.exe"
   } else {
     "bin/stanc"
   }
 }
-
 
 # paths and extensions ----------------------------------------------------
 
@@ -110,7 +113,7 @@ repair_path <- function(path) {
 #' @return If `path` is `NULL` then `".exe"` on Windows and `""` otherwise. If
 #'   `path` is not `NULL` then `.exe` is added as the extension on Windows.
 cmdstan_ext <- function(path = NULL) {
-  ext <- if (os_is_windows()) ".exe" else ""
+  ext <- if (os_is_windows() && !os_is_wsl()) ".exe" else ""
   if (is.null(path)) {
     return(ext)
   }
@@ -139,7 +142,62 @@ strip_ext <- function(file) {
 }
 absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 
+# When providing the model path to WSL, it needs to be in reference to the
+# to Windows mount point (/mnt/drive-letter) within the WSL install:
+# e.g., C:/Users/... -> /mnt/c/Users/...
+wsl_safe_path <- function(path = NULL, revert = FALSE) {
+  if (!is.character(path) || is.null(path) || !os_is_wsl()) {
+    return(path)
+  }
+  if (revert) {
+    if (!grepl("^/mnt/", path)) {
+      return(path)
+    }
+    strip_mnt <- gsub("^/mnt/", "", path)
+    drive_letter <- strtrim(strip_mnt, 1)
+    path <- gsub(paste0("^/mnt/", drive_letter),
+                  paste0(toupper(drive_letter), ":"),
+                  path)
+  } else {
+    path_already_safe <- grepl("^/mnt/", path)
+    if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
+      base_file <- basename(path)
+      path <- dirname(path)
+      abs_path <- repair_path(utils::shortPathName(path))
+      drive_letter <- tolower(strtrim(abs_path, 1))
+      path <- gsub(paste0(drive_letter, ":"),
+                  paste0("/mnt/", drive_letter),
+                  abs_path,
+                  ignore.case = TRUE)
+      path <- paste0(path, "/", base_file)
+    }
+  }
+  path
+}
 
+# Running commands through WSL requires using 'wsl' as the command with the
+# intended command (e.g., stanc) as the first argument. This function acts as
+# a wrapper around processx::run() to apply this change where necessary, and
+# forward all other arguments
+wsl_compatible_run <- function(...) {
+  run_args <- list(...)
+  if (os_is_wsl()) {
+    command <- run_args$command
+    run_args$command <- "wsl"
+    run_args$args <- c(command, run_args$args)
+  }
+  do.call(processx::run, run_args)
+}
+
+wsl_compatible_process_new <- function(...) {
+  run_args <- list(...)
+  if (os_is_wsl()) {
+    command <- run_args$command
+    run_args$command <- "wsl"
+    run_args$args <- c(command, run_args$args)
+  }
+  do.call(processx::process$new, run_args)
+}
 
 # read, write, and copy files --------------------------------------------
 

@@ -231,9 +231,12 @@ CmdStanRun <- R6::R6Class(
           toolchain_PATH_env_var(),
           tbb_path()
         ),
-        run_log <- processx::run(
+        run_log <- wsl_compatible_run(
           command = target_exe,
-          args = c(self$output_files(include_failed = FALSE), flags),
+          args = c(
+            sapply(self$output_files(include_failed = FALSE),
+                   wsl_safe_path),
+            flags),
           wd = cmdstan_path(),
           echo = TRUE,
           echo_cmd = is_verbose_mode(),
@@ -300,7 +303,7 @@ check_target_exe <- function(exe) {
         toolchain_PATH_env_var(),
         tbb_path()
       ),
-      run_log <- processx::run(
+      run_log <- wsl_compatible_run(
         command = make_cmd(),
         args = exe,
         wd = cmdstan_path(),
@@ -319,7 +322,7 @@ check_target_exe <- function(exe) {
     if (is.null(mpi_args)) {
       mpi_args <- list()
     }
-    mpi_args[["exe"]] <- self$exe_file()
+    mpi_args[["exe"]] <- wsl_safe_path(self$exe_file())
   }
   if (procs$num_procs() == 1) {
     start_msg <- "Running MCMC with 1 chain"
@@ -350,6 +353,10 @@ check_target_exe <- function(exe) {
   } else {
     cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -409,6 +416,10 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
   } else {
     cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -451,6 +462,10 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
   procs <- self$procs
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   id <- 1
@@ -498,6 +513,10 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
   procs <- self$procs
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
@@ -507,7 +526,7 @@ CmdStanRun$set("private", name = "run_variational_", value = .run_other)
       toolchain_PATH_env_var(),
       tbb_path()
     ),
-    ret <- processx::run(
+    ret <- wsl_compatible_run(
       command = self$command(),
       args = self$command_args()[[1]],
       wd = dirname(self$exe_file()),
@@ -623,7 +642,7 @@ CmdStanProcs <- R6::R6Class(
           toolchain_PATH_env_var(),
           tbb_path()
         ),
-        private$processes_[[id]] <- processx::process$new(
+        private$processes_[[id]] <- wsl_compatible_process_new(
           command = command,
           args = args,
           wd = wd,

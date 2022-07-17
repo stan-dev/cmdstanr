@@ -57,6 +57,8 @@
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
 #'   that the required toolchain is installed and properly configured. The
 #'   default is `TRUE`.
+#' @param wsl (logical) Should CmdStan be installed and run through the Windows
+#'  Subsystem for Linux (WSL). The default is `FALSE`.
 #'
 #' @examples
 #' \dontrun{
@@ -81,7 +83,19 @@ install_cmdstan <- function(dir = NULL,
                             version = NULL,
                             release_url = NULL,
                             cpp_options = list(),
-                            check_toolchain = TRUE) {
+                            check_toolchain = TRUE,
+                            wsl = FALSE) {
+  # Use environment variable to record WSL usage throughout install,
+  # post-installation will simply check for 'wsl-' prefix in cmdstan path
+  if (isTRUE(wsl)) {
+    if (!os_is_windows()) {
+      warning("wsl=TRUE is only available on Windows, and will be ignored!",
+              call. = FALSE)
+      wsl <- FALSE
+    } else {
+      Sys.setenv("CMDSTANR_USE_WSL" = 1)
+    }
+  }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   }
@@ -111,6 +125,7 @@ install_cmdstan <- function(dir = NULL,
     release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
                           version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
   }
+  wsl_prefix <- ifelse(isTRUE(wsl), "wsl-", "")
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
@@ -122,14 +137,14 @@ install_cmdstan <- function(dir = NULL,
     tar_name <- utils::tail(split_url[[1]], n = 1)
     cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, cmdstan_ver)
+    dir_cmdstan <- file.path(dir, paste0(wsl_prefix, cmdstan_ver))
     dest_file <- file.path(dir, tar_gz_file)
   } else {
     ver <- latest_released_version()
     message("* Latest CmdStan release is v", ver)
     cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, cmdstan_ver)
+    dir_cmdstan <- file.path(dir, paste0(wsl_prefix, cmdstan_ver))
     message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
     message("* Downloading ", tar_gz_file, " from GitHub...")
     download_url <- github_download_url(ver)
@@ -171,7 +186,7 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
-  if (is_rtools42_toolchain()) {
+  if (is_rtools42_toolchain() && !os_is_wsl()) {
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
@@ -203,6 +218,9 @@ install_cmdstan <- function(dir = NULL,
       make_local_msg,
       "\nrebuild_cmdstan(cores = ...)"
     )
+  }
+  if (isTRUE(wsl)) {
+    Sys.unsetenv("CMDSTANR_USE_WSL")
   }
 }
 
@@ -265,7 +283,9 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (os_is_windows()) {
-    if (R.version$major >= "4") {
+    if (os_is_wsl()) {
+      check_wsl_toolchain()
+    } else if (R.version$major >= "4") {
       check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     } else {
       check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
@@ -379,8 +399,8 @@ build_cmdstan <- function(dir,
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
-    processx::run(
-      run_cmd,
+    wsl_compatible_run(
+      command = run_cmd,
       args = c(translation_args, paste0("-j", cores), "build"),
       wd = dir,
       echo_cmd = is_verbose_mode(),
@@ -401,9 +421,9 @@ clean_cmdstan <- function(dir = cmdstan_path(),
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
-    processx::run(
-      make_cmd(),
-      args = c("clean-all"),
+    wsl_compatible_run(
+      command = make_cmd(),
+      args = "clean-all",
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -420,9 +440,10 @@ build_example <- function(dir, cores, quiet, timeout) {
       toolchain_PATH_env_var(),
       tbb_path(dir = dir)
     ),
-    processx::run(
-      make_cmd(),
-      args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+    wsl_compatible_run(
+      command = make_cmd(),
+      args = c(paste0("-j", cores),
+                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
       wd = dir,
       echo_cmd = is_verbose_mode(),
       echo = !quiet || is_verbose_mode(),
@@ -497,6 +518,41 @@ install_toolchain <- function(quiet = FALSE) {
     )
   )
   invisible(NULL)
+}
+
+check_wsl_toolchain <- function() {
+  wsl_inaccessible <- processx::run(command = "wsl",
+                                     args = "uname",
+                                     error_on_status = FALSE)
+  if (wsl_inaccessible$status) {
+    stop("\n", "A WSL distribution is not installed or is not accessible.",
+         "\n", "Please see the Microsoft documentation for guidance on installing WSL: ",
+         "\n", "https://docs.microsoft.com/en-us/windows/wsl/install",
+         call. = FALSE)
+  }
+
+  make_not_present <- processx::run(command = "wsl",
+                                    args = c("which", "make"),
+                                    error_on_status = FALSE)
+
+  gpp_not_present <- processx::run(command = "wsl",
+                                    args = c("which", "g++"),
+                                    error_on_status = FALSE)
+
+  clangpp_not_present <- processx::run(command = "wsl",
+                                   args = c("which", "clang++"),
+                                   windows_verbatim_args = TRUE,
+                                   error_on_status = FALSE)
+
+  if (make_not_present$status || (gpp_not_present$status
+        && clangpp_not_present$status)) {
+    stop("\n", "Your distribution is missing the needed utilities for compiling C++.",
+         "\n", "Please launch your WSL and install them using the appropriate command:",
+         "\n", "Debian/Ubuntu: sudo apt-get install build-essential",
+         "\n", "Fedora: sudo dnf group install \"C Development Tools and Libraries\"",
+         "\n", "Arch: pacman -Sy base-devel",
+         call. = FALSE)
+  }
 }
 
 check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {

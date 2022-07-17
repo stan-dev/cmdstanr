@@ -73,7 +73,7 @@ test_that("compile() method works with spaces in path", {
   expect_interactive_message(mod_spaces$compile(), "Compiling Stan program...")
   file.remove(stan_model_with_spaces)
   file.remove(exe)
-  file.remove(dir_with_spaces)
+  unlink(dir_with_spaces, recursive = TRUE)
 })
 
 test_that("compile() method overwrites binaries", {
@@ -117,7 +117,7 @@ test_that("compilation works with include_paths", {
 
 test_that("name in STANCFLAGS is set correctly", {
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
-  if(os_is_windows()) {
+  if(os_is_windows() && !os_is_wsl()) {
     out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
     out_name <- "bin/stanc.exe --name='bernoulli2_model' --o"
   } else {
@@ -428,7 +428,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
 })
 
 test_that("compiliation errors if folder with the model name exists", {
-  skip_if(os_is_windows())
+  skip_if(os_is_windows() && !os_is_wsl())
   model_code <- "
   parameters {
     real y;
@@ -449,7 +449,7 @@ test_that("compiliation errors if folder with the model name exists", {
     cmdstan_model(stan_file),
     "There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again."
   )
-  file.remove(exe)
+  unlink(exe, recursive = TRUE)
 })
 
 test_that("cpp_options_to_compile_flags() works", {
@@ -473,16 +473,20 @@ test_that("include_paths_stanc3_args() works", {
     dir.create(path_1)
   }
   path_1 <- repair_path(path_1)
-  expect_equal(include_paths_stanc3_args(path_1), paste0("--include-paths=", path_1))
+  path_1_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_1), path_1)
+  expect_equal(
+    include_paths_stanc3_args(path_1),
+    paste0("--include-paths=", path_1_compare))
   path_2 <- file.path(tempdir(), "folder2")
   if (!dir.exists(path_2)) {
     dir.create(path_2)
   }
   path_2 <- repair_path(path_2)
+  path_2_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_2), path_2)
   expect_equal(
     include_paths_stanc3_args(c(path_1, path_2)),
     c(
-      paste0("--include-paths=", path_1, ",", path_2)
+      paste0("--include-paths=", path_1_compare, ",", path_2_compare)
     )
   )
 })
@@ -581,7 +585,7 @@ test_that("cmdstan_model errors with no args ", {
 })
 
 test_that("cmdstan_model works with user_header", {
-  skip_if(os_is_macos() | os_is_windows())
+  skip_if(os_is_macos() | (os_is_windows() && !os_is_wsl()))
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
   "

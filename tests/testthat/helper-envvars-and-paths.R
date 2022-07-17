@@ -8,8 +8,8 @@ on_ci <- function() {
 
 mpi_toolchain_present <- function() {
   tryCatch(
-    processx::run(command = "mpicxx", args = "--version")$status == 0 &&
-    processx::run(command = "mpiexec", args = "--version")$status == 0,
+    wsl_compatible_run(command = "mpicxx", args = "--version")$status == 0 &&
+    wsl_compatible_run(command = "mpiexec", args = "--version")$status == 0,
     error=function(cond) {
       FALSE
     }
