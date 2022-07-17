@@ -1,4 +1,11 @@
-# cmdstanr 0.4.0.9000
+# cmdstanr 0.5.3
+
+### New features
+
+* On Windows, users can now install and use CmdStan with WSL (Windows
+Subsystem for Linux). Set `wsl=TRUE` in `install_cmdstan()` to install CmdStan
+for use with WSL. This can offer significant speedups compared to native
+Windows execution. (#677, @andrjohns)
 
 ### Bug fixes
 
@@ -12,6 +19,9 @@ with spaces. (@weshinsley, #661, #663)
 
 * Fixed a bug that caused issues when using `~` or `.` in paths supplied to the
 `cmdstanr_write_stan_file_dir` global option.
+
+* Fixed a bug that caused the `time()` method fail when some of the chains failed to finish
+succesfully.
 
 # cmdstanr 0.5.2
 

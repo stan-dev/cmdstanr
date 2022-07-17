@@ -19,4 +19,10 @@ version, or \code{NULL} if no installation found.
 Returns the path to the installation of CmdStan with the most recent release
 version.
 }
+\details{
+For Windows systems with WSL CmdStan installs, if there are side-by-side WSL
+and native installs with the same version then the WSL is preferred.
+Otherwise, the most recent release is chosen, regardless of whether it is
+native or WSL.
+}
 \keyword{internal}
