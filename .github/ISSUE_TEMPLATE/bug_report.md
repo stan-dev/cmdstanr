@@ -20,7 +20,7 @@ A description of what you expected to happen.
 Your operating system (e.g. mac os x 10.15, windows 10, etc.)
 
 **CmdStanR version number**
-Your CmdStanR version number (e.g. from `packageVersion("cmdstanr")`). 
+Your CmdStanR version number (e.g. from `packageVersion("cmdstanr")`).
 
 **Additional context**
 Add any other context about the problem here.
