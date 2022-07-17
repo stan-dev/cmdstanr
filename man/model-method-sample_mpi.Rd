@@ -238,6 +238,8 @@ summaries of the diagnostics and can regenerate the warning messages.
 Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
+
+\item{validate_csv}{Deprecated. Use \code{diagnostics} instead.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

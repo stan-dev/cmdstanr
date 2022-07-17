@@ -1159,6 +1159,7 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   processes. For example, `mpi_args = list("n" = 4)` launches the executable
 #'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
 #'   model executable.
+#' @param validate_csv Deprecated. Use `diagnostics` instead.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
