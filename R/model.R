@@ -653,7 +653,17 @@ variables <- function() {
   }
   assert_stan_file_exists(self$stan_file())
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
-    private$variables_ <- model_variables(self$stan_file(), self$include_paths(), allow_undefined = private$using_user_header_)
+    private$variables_ <- model_variables(
+      stan_file = self$stan_file(),
+      include_paths = {
+        if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
+          self$include_paths()
+        } else {
+          private$precompile_include_paths_
+        }
+      },
+      allow_undefined = private$using_user_header_
+    )
   }
   private$variables_
 }
