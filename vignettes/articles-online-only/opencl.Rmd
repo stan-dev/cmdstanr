@@ -104,7 +104,7 @@ mdata <- list(k = k, n = n, y = y, X = X)
 In this model, most of the computation will be handled by the
 `bernoulli_logit_glm_lpmf` function. Because this is a supported GPU function,
 it should be possible to accelerate it with OpenCL. Check
-[here](http://mc-stan.org/math/opencl_support.html) for a list of functions
+[here](http://mc-stan.org/math/d0/d8f/opencl_support.html) for a list of functions
 with OpenCL support.
 
 To build the model with OpenCL support, add
