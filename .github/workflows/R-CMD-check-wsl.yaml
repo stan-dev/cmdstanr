@@ -37,11 +37,11 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - uses: r-lib/actions/setup-r@v2.2.3
+      - uses: r-lib/actions/setup-r@v2.2.4
         with:
           r-version: 'release'
           rtools-version: '42'
-      - uses: r-lib/actions/setup-pandoc@v1
+      - uses: r-lib/actions/setup-pandoc@v2.2.4
 
       - name: Query dependencies
         run: |
