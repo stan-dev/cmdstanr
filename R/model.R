@@ -774,21 +774,19 @@ check_syntax <- function(pedantic = FALSE,
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
       spinner = quiet && interactive(),
-      stdout_line_callback = function(x, p) {
-        if (!quiet) cat(x)
-      },
       stderr_callback = function(x, p) {
         message(x)
       },
       error_on_status = FALSE
     )
   )
+  cat(run_log$stdout)
   if (is.na(run_log$status) || run_log$status != 0) {
     stop("Syntax error found! See the message above for more information.",
          call. = FALSE)
   }
   if (!quiet) {
-    message("Stan program is syntactically correct");
+    message("Stan program is syntactically correct")
   }
   invisible(TRUE)
 }
