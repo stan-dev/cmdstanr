@@ -99,7 +99,8 @@ repair_path <- function(path) {
   }
   path <- path.expand(path)
   path <- gsub("\\\\", "/", path)
-  path <- gsub("//", "/", path)
+  # WSl cmdstan path is a network path and needs the leading //
+  path <- gsub("//(?!wsl)", "/", path, perl = TRUE)
   if (endsWith(path, "/")) {
     # remove trailing "/"
     path <- substr(path, 1, nchar(path) - 1)
@@ -184,7 +185,9 @@ wsl_compatible_run <- function(...) {
   if (os_is_wsl()) {
     command <- run_args$command
     run_args$command <- "wsl"
-    run_args$args <- c(command, run_args$args)
+    wd <- gsub(wsl_dir_prefix(), "", run_args$wd, fixed = TRUE)
+    run_args$wd <- NULL
+    run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
   }
   do.call(processx::run, run_args)
 }
@@ -194,7 +197,9 @@ wsl_compatible_process_new <- function(...) {
   if (os_is_wsl()) {
     command <- run_args$command
     run_args$command <- "wsl"
-    run_args$args <- c(command, run_args$args)
+    wd <- gsub(wsl_dir_prefix(), "", run_args$wd, fixed = TRUE)
+    run_args$wd <- NULL
+    run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
   }
   do.call(processx::process$new, run_args)
 }
@@ -511,4 +516,32 @@ as_mcmc.list <- function(x) {
   })
   class(mcmc_list) <- 'mcmc.list'
   return(mcmc_list)
+}
+
+wsl_distro_name <- function() {
+  name <- processx::run(
+    command = "wsl",
+    args = c("echo", "$WSL_DISTRO_NAME")
+  )$stdout
+  gsub("\n", "", name, fixed = TRUE)
+}
+
+home_dir <- function() {
+  if (os_is_wsl()) {
+    dir <- processx::run(
+          command = "wsl",
+          args = c("cd", "~", "&&", "echo", "$(pwd)")
+    )$stdout
+    gsub("\n", "", dir, fixed = TRUE)
+  } else {
+    Sys.getenv("HOME")
+  }
+}
+
+wsl_dir_prefix <- function() {
+  if (os_is_wsl()) {
+    paste0("//wsl$/", wsl_distro_name())
+  } else {
+    ""
+  }
 }

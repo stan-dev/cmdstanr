@@ -125,7 +125,6 @@ install_cmdstan <- function(dir = NULL,
     release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
                           version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
   }
-  wsl_prefix <- ifelse(isTRUE(wsl), "wsl-", "")
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
@@ -137,14 +136,14 @@ install_cmdstan <- function(dir = NULL,
     tar_name <- utils::tail(split_url[[1]], n = 1)
     cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, paste0(wsl_prefix, cmdstan_ver))
+    dir_cmdstan <- file.path(dir, cmdstan_ver)
     dest_file <- file.path(dir, tar_gz_file)
   } else {
     ver <- latest_released_version()
     message("* Latest CmdStan release is v", ver)
     cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, paste0(wsl_prefix, cmdstan_ver))
+    dir_cmdstan <- file.path(dir, cmdstan_ver)
     message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
     message("* Downloading ", tar_gz_file, " from GitHub...")
     download_url <- github_download_url(ver)
@@ -164,17 +163,32 @@ install_cmdstan <- function(dir = NULL,
     stop("Download of CmdStan failed. Please try again.", call. = FALSE)
   }
   message("* Download complete")
-
   message("* Unpacking archive...")
-  untar_rc <- utils::untar(
-    dest_file,
-    exdir = dir_cmdstan,
-    extras = "--strip-components 1"
-  )
-  if (untar_rc != 0) {
-    stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+  # Significantly faster to use WSL to untar
+  if (os_is_wsl()) {
+    wsl_tar_gz_file <- gsub(paste0("//wsl$/", wsl_distro_name()), "",
+                            dest_file, fixed = TRUE)
+    untar_rc <- processx::run(
+      command = "wsl",
+      args = c("tar", "-xf", wsl_tar_gz_file, "-C",
+               gsub(tar_gz_file, "", wsl_tar_gz_file))
+    )
+    remove_rc <- processx::run(
+      command = "wsl",
+      args = c("rm", wsl_tar_gz_file)
+    )
+  } else {
+    untar_rc <- utils::untar(
+      dest_file,
+      exdir = dir_cmdstan,
+      extras = "--strip-components 1"
+    )
+    if (untar_rc != 0) {
+      stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+    }
+    file.remove(dest_file)
   }
-  file.remove(dest_file)
+
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   # Setting up native M1 compilation of CmdStan and its downstream libraries
   if (is_rosetta2()) {
