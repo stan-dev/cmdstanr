@@ -143,83 +143,6 @@ strip_ext <- function(file) {
 }
 absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 
-# When providing the model path to WSL, it needs to be in reference to the
-# to Windows mount point (/mnt/drive-letter) within the WSL install:
-# e.g., C:/Users/... -> /mnt/c/Users/...
-wsl_safe_path <- function(path = NULL, revert = FALSE) {
-  if (!is.character(path) || is.null(path) || !os_is_wsl()) {
-    return(path)
-  }
-  if (revert) {
-    if (!grepl("^/mnt/", path)) {
-      return(path)
-    }
-    strip_mnt <- gsub("^/mnt/", "", path)
-    drive_letter <- strtrim(strip_mnt, 1)
-    path <- gsub(paste0("^/mnt/", drive_letter),
-                  paste0(toupper(drive_letter), ":"),
-                  path)
-  } else {
-    path_already_safe <- grepl("^/mnt/", path)
-    if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
-      base_file <- basename(path)
-      path <- dirname(path)
-      abs_path <- repair_path(utils::shortPathName(path))
-      drive_letter <- tolower(strtrim(abs_path, 1))
-      path <- gsub(paste0(drive_letter, ":"),
-                  paste0("/mnt/", drive_letter),
-                  abs_path,
-                  ignore.case = TRUE)
-      path <- paste0(path, "/", base_file)
-    }
-  }
-  path
-}
-
-# Running commands through WSL requires using 'wsl' as the command with the
-# intended command (e.g., stanc) as the first argument. This function acts as
-# a wrapper around processx::run() to apply this change where necessary, and
-# forward all other arguments
-wsl_compatible_run <- function(...) {
-  run_args <- list(...)
-  if (os_is_wsl()) {
-    command <- run_args$command
-    run_args$command <- "wsl"
-    if (!is.null(run_args$wd)) {
-      if (grepl("^//wsl", run_args$wd)) {
-        wd <- gsub(wsl_dir_prefix(), "", run_args$wd, fixed = TRUE)
-      } else {
-        wd <- wsl_safe_path(run_args$wd)
-      }
-      run_args$wd <- NULL
-      run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
-    } else {
-      run_args$args <- c(command, run_args$args)
-    }
-  }
-  do.call(processx::run, run_args)
-}
-
-wsl_compatible_process_new <- function(...) {
-  run_args <- list(...)
-  if (os_is_wsl()) {
-    command <- run_args$command
-    run_args$command <- "wsl"
-    if (!is.null(run_args$wd)) {
-      if (grepl("^//wsl", run_args$wd)) {
-        wd <- gsub(wsl_dir_prefix(), "", run_args$wd, fixed = TRUE)
-      } else {
-        wd <- wsl_safe_path(run_args$wd)
-      }
-      run_args$wd <- NULL
-      run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
-    } else {
-      run_args$args <- c(command, run_args$args)
-    }
-  }
-  do.call(processx::process$new, run_args)
-}
-
 # read, write, and copy files --------------------------------------------
 
 #' Copy temporary files (e.g., output, data) to a different location
@@ -536,6 +459,77 @@ as_mcmc.list <- function(x) {
 
 # WSL-related helper functions ------------------------------------------
 
+# When providing the model path to WSL, it needs to be in reference to the
+# to Windows mount point (/mnt/drive-letter) within the WSL install:
+# e.g., C:/Users/... -> /mnt/c/Users/...
+wsl_safe_path <- function(path = NULL, revert = FALSE) {
+  if (!is.character(path) || is.null(path) || !os_is_wsl()) {
+    return(path)
+  }
+  if (revert) {
+    if (!grepl("^/mnt/", path)) {
+      return(path)
+    }
+    strip_mnt <- gsub("^/mnt/", "", path)
+    drive_letter <- strtrim(strip_mnt, 1)
+    path <- gsub(paste0("^/mnt/", drive_letter),
+                  paste0(toupper(drive_letter), ":"),
+                  path)
+  } else if (grepl("^//wsl", path)) {
+    path <- gsub(wsl_dir_prefix(), "", path, fixed = TRUE)
+  } else {
+    path_already_safe <- grepl("^/mnt/", path)
+    if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
+      base_file <- basename(path)
+      path <- dirname(path)
+      abs_path <- repair_path(utils::shortPathName(path))
+      drive_letter <- tolower(strtrim(abs_path, 1))
+      path <- gsub(paste0(drive_letter, ":"),
+                  paste0("/mnt/", drive_letter),
+                  abs_path,
+                  ignore.case = TRUE)
+      path <- paste0(path, "/", base_file)
+    }
+  }
+  path
+}
+
+# Running commands through WSL requires using 'wsl' as the command with the
+# intended command (e.g., stanc) as the first argument. This function acts as
+# a wrapper around processx::run() to apply this change where necessary, and
+# forward all other arguments
+wsl_compatible_run <- function(...) {
+  run_args <- list(...)
+  if (os_is_wsl()) {
+    command <- run_args$command
+    run_args$command <- "wsl"
+    if (!is.null(run_args$wd)) {
+      wd <- wsl_safe_path(run_args$wd)
+      run_args$wd <- NULL
+      run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
+    } else {
+      run_args$args <- c(command, run_args$args)
+    }
+  }
+  do.call(processx::run, run_args)
+}
+
+wsl_compatible_process_new <- function(...) {
+  run_args <- list(...)
+  if (os_is_wsl()) {
+    command <- run_args$command
+    run_args$command <- "wsl"
+    if (!is.null(run_args$wd)) {
+      wd <- wsl_safe_path(run_args$wd)
+      run_args$wd <- NULL
+      run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
+    } else {
+      run_args$args <- c(command, run_args$args)
+    }
+  }
+  do.call(processx::process$new, run_args)
+}
+
 wsl_installed <- function() {
   if (!os_is_windows()) {
     FALSE
@@ -572,4 +566,10 @@ wsl_dir_prefix <- function() {
   } else {
     ""
   }
+}
+
+wsl_tempdir <- function() {
+  dir <- processx::run(command = "wsl",
+                        args = c("mktemp", "-d"))$stdout
+  gsub("\n", "", dir, fixed = TRUE)
 }

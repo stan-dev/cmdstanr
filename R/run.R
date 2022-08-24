@@ -29,6 +29,12 @@ CmdStanRun <- R6::R6Class(
       if (self$args$save_latent_dynamics) {
         private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
       }
+      if (os_is_wsl()) {
+        wsl_tmpdir <- wsl_tempdir()
+        file.copy(from = args$exe_file, to = file.path(wsl_dir_prefix(), wsl_tmpdir))
+        args$exe_file <- file.path(wsl_tmpdir, basename(args$exe_file))
+        processx::run("wsl", args = c("chmod", "+x", args$exe_file))
+      }
       invisible(self)
     },
     num_procs = function() self$procs$num_procs(),

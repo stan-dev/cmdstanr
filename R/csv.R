@@ -125,7 +125,7 @@ read_cmdstan_csv <- function(files,
                              sampler_diagnostics = NULL,
                              format = getOption("cmdstanr_draws_format", NULL)) {
   format <- assert_valid_draws_format(format)
-  checkmate::assert_file_exists(files, access = "r", extension = "csv")
+  #checkmate::assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -556,7 +556,7 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
 #'   mass matrix (or its diagonal depending on the metric).
 #'
 read_csv_metadata <- function(csv_file) {
-  checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
+  #checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
   inv_metric_next <- FALSE
   csv_file_info <- list()
   csv_file_info$inv_metric <- NULL

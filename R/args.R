@@ -52,10 +52,14 @@ CmdStanArgs <- R6::R6Class(
       self$method <- self$method_args$method
       self$save_latent_dynamics <- save_latent_dynamics
       self$using_tempdir <- is.null(output_dir)
-      if (getRversion() < "3.5.0") {
-        self$output_dir <- output_dir %||% tempdir()
+      if (os_is_wsl()) {
+        self$output_dir <- file.path(wsl_dir_prefix(), wsl_tempdir())
       } else {
-        self$output_dir <- output_dir %||% tempdir(check = TRUE)
+        if (getRversion() < "3.5.0") {
+          self$output_dir <- output_dir %||% tempdir()
+        } else {
+          self$output_dir <- output_dir %||% tempdir(check = TRUE)
+        }
       }
       self$output_dir <- repair_path(self$output_dir)
       self$output_basename <- output_basename
@@ -521,7 +525,19 @@ DiagnoseArgs <- R6::R6Class(
 validate_cmdstan_args <- function(self) {
   validate_exe_file(self$exe_file)
 
-  checkmate::assert_directory_exists(self$output_dir, access = "rw")
+  if (os_is_wsl()) {
+    dir_check <- processx::run(
+      command = "wsl",
+      args = c("cd", wsl_safe_path(self$output_dir)),
+      error_on_status = TRUE
+    )
+    if (dir_check$status == 1) {
+      stop("Output directory: ", self$output_dir, " does not exist!",
+           call. = FALSE)
+    }
+  } else {
+    checkmate::assert_directory_exists(self$output_dir, access = "rw")
+  }
 
   # at least 1 run id (chain id)
   checkmate::assert_integerish(self$proc_ids,
