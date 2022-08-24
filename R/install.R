@@ -535,10 +535,7 @@ install_toolchain <- function(quiet = FALSE) {
 }
 
 check_wsl_toolchain <- function() {
-  wsl_inaccessible <- processx::run(command = "wsl",
-                                     args = "uname",
-                                     error_on_status = FALSE)
-  if (wsl_inaccessible$status) {
+  if (!wsl_installed()) {
     stop("\n", "A WSL distribution is not installed or is not accessible.",
          "\n", "Please see the Microsoft documentation for guidance on installing WSL: ",
          "\n", "https://docs.microsoft.com/en-us/windows/wsl/install",

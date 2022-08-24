@@ -99,7 +99,7 @@ repair_path <- function(path) {
   }
   path <- path.expand(path)
   path <- gsub("\\\\", "/", path)
-  # WSl cmdstan path is a network path and needs the leading //
+  # WSL cmdstan path is a network path and needs the leading //
   path <- gsub("//(?!wsl)", "/", path, perl = TRUE)
   if (endsWith(path, "/")) {
     # remove trailing "/"
@@ -516,6 +516,18 @@ as_mcmc.list <- function(x) {
   })
   class(mcmc_list) <- 'mcmc.list'
   return(mcmc_list)
+}
+
+# WSL-related helper functions ------------------------------------------
+
+wsl_installed <- function() {
+  if (!os_is_windows()) {
+    FALSE
+  } else {
+    wsl_callable <- processx::run(command = "wsl", args = "uname",
+                                    error_on_status = FALSE)
+    wsl_callable$status == 0
+  }
 }
 
 wsl_distro_name <- function() {
