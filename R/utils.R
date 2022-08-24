@@ -185,9 +185,17 @@ wsl_compatible_run <- function(...) {
   if (os_is_wsl()) {
     command <- run_args$command
     run_args$command <- "wsl"
-    wd <- gsub(wsl_dir_prefix(), "", run_args$wd, fixed = TRUE)
-    run_args$wd <- NULL
-    run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
+    if (!is.null(run_args$wd)) {
+      if (grepl("^//wsl", run_args$wd)) {
+        wd <- gsub(wsl_dir_prefix(), "", run_args$wd, fixed = TRUE)
+      } else {
+        wd <- wsl_safe_path(run_args$wd)
+      }
+      run_args$wd <- NULL
+      run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
+    } else {
+      run_args$args <- c(command, run_args$args)
+    }
   }
   do.call(processx::run, run_args)
 }
@@ -197,9 +205,17 @@ wsl_compatible_process_new <- function(...) {
   if (os_is_wsl()) {
     command <- run_args$command
     run_args$command <- "wsl"
-    wd <- gsub(wsl_dir_prefix(), "", run_args$wd, fixed = TRUE)
-    run_args$wd <- NULL
-    run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
+    if (!is.null(run_args$wd)) {
+      if (grepl("^//wsl", run_args$wd)) {
+        wd <- gsub(wsl_dir_prefix(), "", run_args$wd, fixed = TRUE)
+      } else {
+        wd <- wsl_safe_path(run_args$wd)
+      }
+      run_args$wd <- NULL
+      run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
+    } else {
+      run_args$args <- c(command, run_args$args)
+    }
   }
   do.call(processx::process$new, run_args)
 }
