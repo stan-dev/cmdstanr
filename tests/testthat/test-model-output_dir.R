@@ -17,6 +17,7 @@ test_that("all fitting methods work with output_dir", {
       dir.create(method_dir)
     }
 
+    # WSL models use internal WSL tempdir
     if (!os_is_wsl()) {
       # no output_dir means should use tempdir
       fit <- testing_fit("bernoulli", method = method, seed = 123)
@@ -25,6 +26,8 @@ test_that("all fitting methods work with output_dir", {
     # specifying output_dir
     fit <- testing_fit("bernoulli", method = method, seed = 123,
                         output_dir = method_dir)
+    # WSL path manipulations result in a short path which slightly differs
+    # from the original tempdir(), so need to normalise both for comparison
     expect_equal(normalizePath(fit$runset$args$output_dir),
                  normalizePath(method_dir))
     expect_equal(length(list.files(method_dir)), fit$num_procs())
