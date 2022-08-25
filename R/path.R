@@ -148,10 +148,10 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
     wsl_installs_path <- cmdstan_default_install_path(old)
     Sys.unsetenv("CMDSTANR_USE_WSL")
   }
-  if (dir.exists(installs_path) || dir.exists(wsl_installs_path)) {
+  if (dir.exists(installs_path) || !is.null(wsl_installs_path)) {
     latest_cmdstan <- ifelse(dir.exists(installs_path),
                              .latest_cmdstan_installed(installs_path), "")
-    latest_wsl_cmdstan <- ifelse(dir.exists(wsl_installs_path),
+    latest_wsl_cmdstan <- ifelse(!is.null(wsl_installs_path),
                                  .latest_cmdstan_installed(wsl_installs_path), "")
     if (latest_wsl_cmdstan >= latest_cmdstan) {
       return(file.path(wsl_installs_path, latest_wsl_cmdstan))
@@ -172,14 +172,15 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
     file.rename(old_path, new_path)
     cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
   }
+  latest_cmdstan <- ""
   if (length(cmdstan_installs) > 0) {
     cmdstan_installs <- grep("^cmdstan-", cmdstan_installs, value = TRUE)
-    latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
-  }
-  if (is_release_candidate(latest_cmdstan)) {
-    non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
-    if (dir.exists(file.path(installs_path, non_rc_path))) {
-      latest_cmdstan <- non_rc_path
+    latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)
+    if (is_release_candidate(latest_cmdstan)) {
+      non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
+      if (dir.exists(file.path(installs_path, non_rc_path))) {
+        latest_cmdstan <- non_rc_path
+      }
     }
   }
   latest_cmdstan
