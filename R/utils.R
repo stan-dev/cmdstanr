@@ -552,7 +552,7 @@ home_dir <- function() {
   if (os_is_wsl()) {
     dir <- processx::run(
           command = "wsl",
-          args = c("cd", "~", "&&", "echo", "$(pwd)")
+          args = c("echo", "$HOME")
     )$stdout
     gsub("\n", "", dir, fixed = TRUE)
   } else {
