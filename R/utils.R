@@ -573,3 +573,65 @@ wsl_tempdir <- function() {
                         args = c("mktemp", "-d"))$stdout
   gsub("\n", "", dir, fixed = TRUE)
 }
+
+check_dir_exists <- function(dir, access = NULL) {
+  if (os_is_wsl()) {
+    if (!checkmate::qtest(dir, "S+")) {
+      return("No directory provided.")
+    }
+    .wsl_check_exists(dir, is_dir = TRUE, access = access)
+  } else {
+    checkmate::checkDirectoryExists(dir, access = access)
+  }
+}
+
+check_file_exists <- function(files, access = NULL, ...) {
+  if (os_is_wsl()) {
+    if (!checkmate::qtest(files, "S+")) {
+      return("No file provided.")
+    }
+    checks <- sapply(files, .wsl_check_exists, is_dir = FALSE, access = access)
+    if (any(as.character(checks) != "TRUE")) {
+      grep("TRUE", checks, value = TRUE, invert = TRUE)[1]
+    } else {
+      TRUE
+    }
+  } else {
+    checkmate::checkFileExists(files, access = access, ...)
+  }
+}
+
+.wsl_check_exists <- function(path, is_dir = TRUE, access = NULL) {
+  path_check <- processx::run(
+    command = "wsl",
+    args = c("ls", "-la", wsl_safe_path(path)),
+    error_on_status = FALSE
+  )
+
+  if (path_check$status != 0) {
+    err <- ifelse(is_dir,
+                  paste0("Directory '", path, "' does not exist."),
+                  paste0("File does not exist: '", path, "'"))
+    return(err)
+  }
+
+  path_metadata <- strsplit(path_check$stdout, split = "\n",
+                            fixed = TRUE)[[1]]
+  path_metadata <- grep("total", path_metadata, invert = TRUE, value = TRUE)
+  path_metadata <- grep("root", path_metadata, invert = TRUE, value = TRUE)
+
+  if (is_dir && substr(path_metadata, 1, 1) != "d") {
+    return(paste0("Provided path: ", path, " is not a directory!"))
+  }
+
+  if (!is.null(access)) {
+    path_permissions <- strsplit(path_metadata, " ", fixed = TRUE)[[1]][1]
+    if (!grepl(access, path_permissions)) {
+      return(paste0("Specified ", ": ", path, " does not have access permission "))
+    }
+  }
+  TRUE
+}
+
+assert_dir_exists <- checkmate::makeAssertionFunction(check_dir_exists)
+assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)

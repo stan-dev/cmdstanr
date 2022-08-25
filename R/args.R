@@ -524,20 +524,7 @@ DiagnoseArgs <- R6::R6Class(
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_cmdstan_args <- function(self) {
   validate_exe_file(self$exe_file)
-
-  if (os_is_wsl()) {
-    dir_check <- processx::run(
-      command = "wsl",
-      args = c("cd", wsl_safe_path(self$output_dir)),
-      error_on_status = TRUE
-    )
-    if (dir_check$status == 1) {
-      stop("Output directory: ", self$output_dir, " does not exist!",
-           call. = FALSE)
-    }
-  } else {
-    checkmate::assert_directory_exists(self$output_dir, access = "rw")
-  }
+  assert_dir_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
   checkmate::assert_integerish(self$proc_ids,
@@ -709,7 +696,7 @@ validate_optimize_args <- function(self) {
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_generate_quantities_args <- function(self) {
   if (!is.null(self$fitted_params)) {
-    checkmate::assert_file_exists(self$fitted_params, access = "r")
+    assert_file_exists(self$fitted_params, access = "r")
   }
 
   invisible(TRUE)
