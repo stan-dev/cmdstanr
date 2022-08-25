@@ -17,14 +17,16 @@ test_that("all fitting methods work with output_dir", {
       dir.create(method_dir)
     }
 
-    # no output_dir means should use tempdir
-    fit <- testing_fit("bernoulli", method = method, seed = 123)
-    expect_equal(fit$runset$args$output_dir, absolute_path(tempdir()))
-
+    if (!os_is_wsl()) {
+      # no output_dir means should use tempdir
+      fit <- testing_fit("bernoulli", method = method, seed = 123)
+      expect_equal(fit$runset$args$output_dir, absolute_path(tempdir()))
+    }
     # specifying output_dir
     fit <- testing_fit("bernoulli", method = method, seed = 123,
                         output_dir = method_dir)
-    expect_equal(fit$runset$args$output_dir, absolute_path(method_dir))
+    expect_equal(normalizePath(fit$runset$args$output_dir),
+                 normalizePath(method_dir))
     expect_equal(length(list.files(method_dir)), fit$num_procs())
 
 
@@ -80,6 +82,7 @@ test_that("output_dir works with trailing /", {
     seed = 123,
     output_dir = paste0(test_dir,"/")
   )
-  expect_equal(fit$runset$args$output_dir, absolute_path(test_dir))
+  expect_equal(normalizePath(fit$runset$args$output_dir),
+               normalizePath(test_dir))
   expect_equal(length(list.files(test_dir)), fit$num_procs())
 })

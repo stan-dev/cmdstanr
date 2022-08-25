@@ -53,7 +53,9 @@ CmdStanArgs <- R6::R6Class(
       self$save_latent_dynamics <- save_latent_dynamics
       self$using_tempdir <- is.null(output_dir)
       if (os_is_wsl()) {
-        self$output_dir <- file.path(wsl_dir_prefix(), wsl_tempdir())
+        self$output_dir <- ifelse(is.null(output_dir),
+                                  file.path(wsl_dir_prefix(), wsl_tempdir()),
+                                  wsl_safe_path(output_dir))
       } else {
         if (getRversion() < "3.5.0") {
           self$output_dir <- output_dir %||% tempdir()
@@ -543,7 +545,7 @@ validate_cmdstan_args <- function(self) {
     self$refresh <- as.integer(self$refresh)
   }
   if (!is.null(self$data_file)) {
-    checkmate::assert_file_exists(self$data_file, access = "r")
+    assert_file_exists(self$data_file, access = "r")
   }
   num_procs <- length(self$proc_ids)
   validate_init(self$init, num_procs)
@@ -893,7 +895,7 @@ validate_init <- function(init, num_procs) {
            "length 1 or number of chains.",
            call. = FALSE)
     }
-    checkmate::assert_file_exists(init, access = "r")
+    assert_file_exists(init, access = "r")
   }
 
   invisible(TRUE)
@@ -981,7 +983,7 @@ validate_metric_file <- function(metric_file, num_procs) {
     return(invisible(TRUE))
   }
 
-  checkmate::assert_file_exists(metric_file, access = "r")
+  assert_file_exists(metric_file, access = "r")
 
   if (length(metric_file) != 1 && length(metric_file) != num_procs) {
     stop(length(metric_file), " metric(s) provided. Must provide ",

@@ -237,7 +237,7 @@ read_cmdstan_csv <- function(files,
       fread_cmd <- paste0(
         grep_path_quotes,
         " -v \"^#\" --color=never \"",
-        output_file,
+        wsl_safe_path(output_file, revert = TRUE),
         "\""
       )
     } else {
@@ -579,7 +579,7 @@ read_csv_metadata <- function(csv_file) {
     fread_cmd <- paste0(
       grep_path_quotes,
       " \"^[#a-zA-Z]\" --color=never \"",
-      csv_file,
+      wsl_safe_path(csv_file, revert = TRUE),
       "\""
     )
   } else {

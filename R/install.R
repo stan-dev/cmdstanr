@@ -114,7 +114,7 @@ install_cmdstan <- function(dir = NULL,
     }
   } else {
     dir <- repair_path(dir)
-    checkmate::assert_directory_exists(dir, access = "rwx")
+    assert_dir_exists(dir, access = "rwx")
   }
   if (!is.null(version)) {
     if (!is.null(release_url)) {
@@ -168,6 +168,7 @@ install_cmdstan <- function(dir = NULL,
   if (os_is_wsl()) {
     wsl_tar_gz_file <- gsub(paste0("//wsl$/", wsl_distro_name()), "",
                             dest_file, fixed = TRUE)
+    wsl_tar_gz_file <- wsl_safe_path(wsl_tar_gz_file)
     untar_rc <- processx::run(
       command = "wsl",
       args = c("tar", "-xf", wsl_tar_gz_file, "-C",

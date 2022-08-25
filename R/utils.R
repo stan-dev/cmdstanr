@@ -168,7 +168,7 @@ copy_temp_files <-
            timestamp = TRUE,
            random = TRUE,
            ext = ".csv") {
-    checkmate::assert_directory_exists(new_dir, access = "w")
+    assert_dir_exists(new_dir, access = "w")
     destinations <- generate_file_names(
       basename = new_basename,
       ext = ext,
@@ -579,7 +579,12 @@ check_dir_exists <- function(dir, access = NULL) {
     if (!checkmate::qtest(dir, "S+")) {
       return("No directory provided.")
     }
-    .wsl_check_exists(dir, is_dir = TRUE, access = access)
+    checks <- sapply(dir, .wsl_check_exists, is_dir = TRUE, access = access)
+    if (any(as.character(checks) != "TRUE")) {
+      grep("TRUE", checks, value = TRUE, invert = TRUE)[1]
+    } else {
+      TRUE
+    }
   } else {
     checkmate::checkDirectoryExists(dir, access = access)
   }
@@ -609,8 +614,9 @@ check_file_exists <- function(files, access = NULL, ...) {
   )
 
   if (path_check$status != 0) {
+    path <- gsub("^./", "", path)
     err <- ifelse(is_dir,
-                  paste0("Directory '", path, "' does not exist."),
+                  paste0("Directory '", path, "' does not exist"),
                   paste0("File does not exist: '", path, "'"))
     return(err)
   }
@@ -618,8 +624,7 @@ check_file_exists <- function(files, access = NULL, ...) {
   path_metadata <- strsplit(path_check$stdout, split = "\n",
                             fixed = TRUE)[[1]]
   path_metadata <- grep("total", path_metadata, invert = TRUE, value = TRUE)
-  path_metadata <- grep("root", path_metadata, invert = TRUE, value = TRUE)
-
+  path_metadata <- grep("root", path_metadata, invert = TRUE, value = TRUE)[1]
   if (is_dir && substr(path_metadata, 1, 1) != "d") {
     return(paste0("Provided path: ", path, " is not a directory!"))
   }
