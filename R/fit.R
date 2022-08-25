@@ -12,6 +12,8 @@ CmdStanFit <- R6::R6Class(
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
+      # Need to update the output directory path to one that can be accessed
+      # from Windows, for the post-processing of results
       self$runset$args$output_dir <- wsl_safe_path(self$runset$args$output_dir,
                                                     revert = TRUE)
       invisible(self)

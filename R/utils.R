@@ -574,6 +574,10 @@ wsl_tempdir <- function() {
   gsub("\n", "", dir, fixed = TRUE)
 }
 
+# The checkmate file and directory assertion functions don't register the WSL
+# network path as legitimate, and will always error. To avoid this we create a
+# new checking functions with WSL handling, and then pass these to
+# checkmate::makeAssertionFunction to replicate the existing assertion functionality
 check_dir_exists <- function(dir, access = NULL) {
   if (os_is_wsl()) {
     if (!checkmate::qtest(dir, "S+")) {

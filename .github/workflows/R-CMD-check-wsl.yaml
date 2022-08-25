@@ -7,7 +7,7 @@ name: Unit tests - WSL Backend
 'on':
   push:
     branches:
-      - wsl-cmdstan-internal
+      - master
   pull_request:
     branches:
       - master

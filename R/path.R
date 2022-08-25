@@ -148,15 +148,16 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
     wsl_installs_path <- cmdstan_default_install_path(old)
     Sys.unsetenv("CMDSTANR_USE_WSL")
   }
-  if (dir.exists(installs_path)) {
-    latest_cmdstan <- .latest_cmdstan_installed(installs_path)
-    if (dir.exists(wsl_installs_path)) {
-      latest_wsl_cmdstan <- .latest_cmdstan_installed(wsl_installs_path)
-      if (latest_wsl_cmdstan >= latest_cmdstan) {
-        return(file.path(wsl_installs_path, latest_wsl_cmdstan))
-      }
+  if (dir.exists(installs_path) || dir.exists(wsl_installs_path)) {
+    latest_cmdstan <- ifelse(dir.exists(installs_path),
+                             .latest_cmdstan_installed(installs_path), "")
+    latest_wsl_cmdstan <- ifelse(dir.exists(wsl_installs_path),
+                                 .latest_cmdstan_installed(wsl_installs_path), "")
+    if (latest_wsl_cmdstan >= latest_cmdstan) {
+      return(file.path(wsl_installs_path, latest_wsl_cmdstan))
+    } else {
+      return(file.path(installs_path, latest_cmdstan))
     }
-    return(file.path(installs_path, latest_cmdstan))
   }
   NULL
 }

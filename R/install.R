@@ -164,8 +164,9 @@ install_cmdstan <- function(dir = NULL,
   }
   message("* Download complete")
   message("* Unpacking archive...")
-  # Significantly faster to use WSL to untar
   if (os_is_wsl()) {
+    # Significantly faster to use WSL to untar the downloaded archive, as there are
+    # similar IO issues accessing the WSL filesystem from windows
     wsl_tar_gz_file <- gsub(paste0("//wsl$/", wsl_distro_name()), "",
                             dest_file, fixed = TRUE)
     wsl_tar_gz_file <- wsl_safe_path(wsl_tar_gz_file)
