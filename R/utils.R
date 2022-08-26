@@ -636,8 +636,10 @@ check_file_exists <- function(files, access = NULL, ...) {
   wsl_user <- gsub("\n", "", wsl_user, fixed = TRUE)
 
   path_metadata <- grep(wsl_user, path_metadata, value = TRUE)
-  if (is_dir && substr(path_metadata, 1, 1) != "d") {
-    return(paste0("Provided path: ", path, " is not a directory!"))
+  if (is_dir) {
+    if (any(substr(path_metadata, 1, 1) != "d")) {
+      return(paste0("Provided path: ", path, " is not a directory!"))
+    }
   }
 
   if (!is.null(access)) {
