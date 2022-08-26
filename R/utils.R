@@ -642,7 +642,7 @@ check_file_exists <- function(files, access = NULL, ...) {
 
   if (!is.null(access)) {
     path_permissions <- strsplit(path_metadata, " ", fixed = TRUE)[[1]][1]
-    if (!grepl(access, path_permissions)) {
+    if (!any(grepl(access, path_permissions))) {
       name <- ifelse(is_dir, "directory", "file")
       return(paste0("Specified ", name, ": ", path,
                     " does not have access permission ", access))
