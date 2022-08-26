@@ -627,8 +627,15 @@ check_file_exists <- function(files, access = NULL, ...) {
 
   path_metadata <- strsplit(path_check$stdout, split = "\n",
                             fixed = TRUE)[[1]]
-  path_metadata <- grep("total", path_metadata, invert = TRUE, value = TRUE)
-  path_metadata <- grep("root", path_metadata, invert = TRUE, value = TRUE)[1]
+
+  wsl_user <- processx::run(
+    command = "wsl",
+    args = c("echo", "$USER"),
+    error_on_status = FALSE
+  )$stdout
+  wsl_user <- gsub("\n", "", wsl_user, fixed = TRUE)
+
+  path_metadata <- grep(wsl_user, path_metadata, invert = TRUE, value = TRUE)
   if (is_dir && substr(path_metadata, 1, 1) != "d") {
     return(paste0("Provided path: ", path, " is not a directory!"))
   }
@@ -636,7 +643,6 @@ check_file_exists <- function(files, access = NULL, ...) {
   if (!is.null(access)) {
     path_permissions <- strsplit(path_metadata, " ", fixed = TRUE)[[1]][1]
     if (!grepl(access, path_permissions)) {
-      message(path_permissions)
       name <- ifelse(is_dir, "directory", "file")
       return(paste0("Specified ", name, ": ", path,
                     " does not have access permission ", access))
