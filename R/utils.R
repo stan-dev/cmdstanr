@@ -535,7 +535,8 @@ wsl_installed <- function() {
     FALSE
   } else {
     wsl_callable <- processx::run(command = "wsl", args = "uname",
-                                    error_on_status = FALSE)
+                                    error_on_status = FALSE,
+                                    timeout = 5)
     wsl_callable$status == 0
   }
 }
