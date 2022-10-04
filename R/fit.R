@@ -63,7 +63,10 @@ CmdStanFit <- R6::R6Class(
     draws_ = NULL,
     metadata_ = NULL,
     init_ = NULL,
-    profiles_ = NULL
+    profiles_ = NULL,
+    model_method_env_ = NULL,
+    model_ptr_ = NULL,
+    model_rng_ = NULL
   )
 )
 
@@ -271,6 +274,37 @@ init <- function() {
   private$init_
 }
 CmdStanFit$set("public", name = "init", value = init)
+
+init_model_methods <- function(seed = 0, verbose = FALSE) {
+  private$model_method_env_ <- expose_model_methods(self$runset$hpp_file(), new.env(), verbose)
+  ptr_and_rng <- model_ptr(self$data_file(), seed)
+  private$model_ptr_ <- ptr_and_rng[[1]]
+  private$model_rng_ <- ptr_and_rng[[2]]
+  invisible(NULL)
+}
+CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods)
+
+log_prob <- function(upars) {
+  private$model_method_env_$log_prob(private$model_ptr_, upars)
+}
+CmdStanFit$set("public", name = "log_prob", value = log_prob)
+
+grad_log_prob <- function(upars) {
+  private$model_method_env_$grad_log_prob(private$model_ptr_, upars)
+}
+CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
+
+unconstrain_pars <- function(pars) {
+  init_file <- tempfile(fileext = ".json")
+  write_stan_json(pars, file = init_file)
+  private$model_method_env_$unconstrain_pars(private$model_ptr_, init_file)
+}
+CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
+
+constrain_pars <- function(upars) {
+  private$model_method_env_$constrain_pars(private$model_ptr_, private$model_rng_, upars)
+}
+CmdStanFit$set("public", name = "constrain_pars", value = constrain_pars)
 
 #' Extract log probability (target)
 #'

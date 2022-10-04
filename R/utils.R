@@ -512,3 +512,47 @@ as_mcmc.list <- function(x) {
   class(mcmc_list) <- 'mcmc.list'
   return(mcmc_list)
 }
+
+get_cmdstan_flags <- function(flag_name) {
+  cmdstan_path <- cmdstanr::cmdstan_path()
+  flags <- processx::run(
+    "make",
+    args = c(paste0("print-", flag_name)),
+    wd = cmdstan_path
+  )$stdout
+  flags <- gsub(
+    pattern = paste0(flag_name, " ="),
+    replacement = "", x = flags, fixed = TRUE
+  )
+  flags <- gsub(
+    pattern = " stan/", replacement = paste0(" ", cmdstan_path, "/stan/"),
+    x = flags, fixed = TRUE
+  )
+  flags <- gsub(
+    pattern = "-I lib/", replacement = paste0("-I ", cmdstan_path, "/lib/"),
+    x = flags, fixed = TRUE
+  )
+  flags <- gsub(
+    pattern = "-I src", replacement = paste0("-I ", cmdstan_path, "/src"),
+    x = flags, fixed = TRUE
+  )
+  gsub("\n", "", flags)
+}
+
+expose_model_methods <- function(hpp_path, env, verbose) {
+  code <- paste(c(readLines(hpp_path),
+                  readLines(system.file("include", "model_methods.cpp",
+                                        package = "cmdstanr", mustWork = TRUE))),
+                collapse = "\n")
+
+  compiled <- withr::with_makevars(
+    c(
+      USE_CXX14 = 1,
+      PKG_CPPFLAGS = "",
+      PKG_CXXFLAGS = cxxflags,
+      PKG_LIBS = libs
+    ),
+    Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+  )
+  return(env)
+}

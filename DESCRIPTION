@@ -46,5 +46,7 @@ Suggests:
     loo (>= 2.0.0),
     rlang (>= 0.4.7),
     rmarkdown,
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    Rcpp,
+    RcppEigen
 VignetteBuilder: knitr
