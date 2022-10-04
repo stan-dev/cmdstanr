@@ -1,13 +1,28 @@
-#include <RcppEigen.h>
-#include <cmdstan/command.hpp>
+#include <Rcpp.h>
+#include <stan/model/log_prob_grad.hpp>
+#include <stan/model/log_prob_propto.hpp>
 #include <boost/random/additive_combine.hpp>
+#ifdef CMDSTAN_JSON
+#include <cmdstan/io/json/json_data.hpp>
+#else
+#include <stan/io/json/json_data.hpp>
+#endif
 
-// [[Rcpp::depends(RcppEigen)]]
+std::shared_ptr<stan::io::var_context> var_context(std::string file_path) {
+  std::fstream stream(file_path.c_str(), std::fstream::in);
+#ifdef CMDSTAN_JSON
+using json_data_t = cmdstan::json::json_data;
+#else
+using json_data_t = stan::json::json_data;
+#endif
+  json_data_t data_context(stream);
+  return std::make_shared<json_data_t>(data_context);
+}
 
 // [[Rcpp::export]]
 Rcpp::List model_ptr(std::string data_path, boost::uint32_t seed) {
   Rcpp::XPtr<stan_model> ptr(
-    new stan_model(*cmdstan::get_var_context(data_path), seed, &Rcpp::Rcout)
+    new stan_model(*var_context(data_path), seed, &Rcpp::Rcout)
   );
   Rcpp::XPtr<boost::ecuyer1988> base_rng(new boost::ecuyer1988(seed));
   return Rcpp::List::create(
@@ -17,31 +32,49 @@ Rcpp::List model_ptr(std::string data_path, boost::uint32_t seed) {
 }
 
 // [[Rcpp::export]]
-double log_prob(SEXP ext_model_ptr, Eigen::VectorXd upars) {
+double log_prob(SEXP ext_model_ptr, std::vector<double> upars,
+                bool jac_adjust) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  return ptr->log_prob<false, true>(upars, &Rcpp::Rcout);
+  std::vector<int> params_i;
+  if (jac_adjust) {
+    return stan::model::log_prob_propto<true>(*ptr.get(), upars, params_i, &Rcpp::Rcout);
+  } else {
+    return stan::model::log_prob_propto<false>(*ptr.get(), upars, params_i, &Rcpp::Rcout);
+  }
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector grad_log_prob(SEXP ext_model_ptr, Eigen::VectorXd upars) {
+Rcpp::NumericVector grad_log_prob(SEXP ext_model_ptr, std::vector<double> upars,
+                                  bool jac_adjust) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  Eigen::VectorXd gradients;
+  std::vector<double> gradients;
+  std::vector<int> params_i;
 
-  double lp = stan::model::log_prob_grad<false, true>(
-    *ptr.get(), upars, gradients);
+  double lp;
+  if (jac_adjust) {
+    lp = stan::model::log_prob_grad<true, true>(
+      *ptr.get(), upars, params_i, gradients);
+  } else {
+  lp = stan::model::log_prob_grad<true, false>(
+      *ptr.get(), upars, params_i, gradients);
+  }
   Rcpp::NumericVector grad_rtn = Rcpp::wrap(gradients);
   grad_rtn.attr("log_prob") = lp;
   return grad_rtn;
 }
 
 // [[Rcpp::export]]
+size_t get_num_upars(SEXP ext_model_ptr) {
+  Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  return ptr->num_params_r();
+}
+
+// [[Rcpp::export]]
 std::vector<double> unconstrain_pars(SEXP ext_model_ptr, std::string init_path) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  std::shared_ptr<stan::io::var_context> init_context
-    = cmdstan::get_var_context(init_path);
   std::vector<int> params_i;
   std::vector<double> vars;
-  ptr->transform_inits(*init_context.get(), params_i, vars, &Rcpp::Rcout);
+  ptr->transform_inits(*var_context(init_path), params_i, vars, &Rcpp::Rcout);
   return vars;
 }
 

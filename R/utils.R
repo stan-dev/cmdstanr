@@ -545,10 +545,14 @@ expose_model_methods <- function(hpp_path, env, verbose) {
                                         package = "cmdstanr", mustWork = TRUE))),
                 collapse = "\n")
 
+  cxxflags <- get_cmdstan_flags("CXXFLAGS")
+  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
+  libs <- paste(sapply(libs, get_cmdstan_flags), collapse = "")
+
   compiled <- withr::with_makevars(
     c(
       USE_CXX14 = 1,
-      PKG_CPPFLAGS = "",
+      PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
       PKG_CXXFLAGS = cxxflags,
       PKG_LIBS = libs
     ),
