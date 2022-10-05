@@ -4,15 +4,16 @@
 \alias{fit-method-init_model_methods}
 \alias{init_model_methods}
 \title{Compile additional methods for accessing the model log-probability function
-and parameter constraining and unconstraining. This requires that the \code{Rcpp}
-and \code{RcppEigen} packages are installed.}
+and parameter constraining and unconstraining. This requires the \code{Rcpp} package.}
 \usage{
-init_model_methods(seed = 0, verbose = FALSE)
+init_model_methods(seed = 0, verbose = FALSE, hessian = FALSE)
 }
 \arguments{
 \item{seed}{(integer) The random seed to use when initializing the model.}
 
 \item{verbose}{(boolean) Whether to show verbose logging during compilation.}
+
+\item{hessian}{(boolean) Whether to expose the (experimental) hessian method.}
 }
 \description{
 The \verb{$init_model_methods()} compiles and initializes the

@@ -528,6 +528,20 @@ get_cmdstan_flags <- function(flag_name) {
     replacement = "", x = flags, fixed = TRUE
   )
 
+  if (flag_name %in% c("LDLIBS", "LDFLAGS_TBB")) {
+    # shQuote -L paths and rpaths
+    # The LDLIBS flags change paths to /c/ instead of C:/, need to revert to
+    # format consistent with path on windows
+    if (.Platform$OS.type == "windows") {
+      flags <- gsub("(-L|-rpath),/([a-zA-Z])/", "\\1,\\2:/", flags, perl = TRUE)
+    }
+    flags <- gsub(cmdstan_path, "", flags, ignore.case = TRUE)
+    flags <- gsub("(-L,|-rpath,)/stan/lib/stan_math/lib/tbb",
+                  paste0("\\1", shQuote(paste0(cmdstan_path, "/stan/lib/stan_math/lib/tbb"))),
+                  flags)
+    return(flags)
+  }
+
   # shQuote include paths
   flags <- gsub("-I ", "-I", flags, fixed = TRUE)
   flags <- strsplit(flags, " ", fixed = TRUE)[[1]]
@@ -544,7 +558,6 @@ get_cmdstan_flags <- function(flag_name) {
 }
 
 expose_model_methods <- function(hpp_code, env, verbose = FALSE, hessian = FALSE) {
-
   code <- c(hpp_code,
             readLines(system.file("include", "model_methods.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
@@ -560,15 +573,21 @@ expose_model_methods <- function(hpp_code, env, verbose = FALSE, hessian = FALSE
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = "")
-
-  compiled <- withr::with_makevars(
-    c(
-      USE_CXX14 = 1,
-      PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
-      PKG_CXXFLAGS = paste(cxxflags, "-ftemplate-backtrace-limit=0"),
-      PKG_LIBS = libs
-    ),
-    Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+  if (.Platform$OS.type == "windows") {
+    libs <- paste(libs, "-fopenmp")
+  }
+  lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
+                 "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
+  withr::with_path(paste0(cmdstan_path(), lib_paths),
+    withr::with_makevars(
+      c(
+        USE_CXX14 = 1,
+        PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
+        PKG_CXXFLAGS = cxxflags,
+        PKG_LIBS = libs
+      ),
+      Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+    )
   )
   return(env)
 }
