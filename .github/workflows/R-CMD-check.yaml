@@ -7,7 +7,7 @@ name: Unit tests
 'on':
   push:
     branches:
-      - master
+      - master, add-model-methods
   pull_request:
     branches:
       - master
