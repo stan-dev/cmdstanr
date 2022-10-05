@@ -539,8 +539,8 @@ get_cmdstan_flags <- function(flag_name) {
   gsub("\n", "", flags)
 }
 
-expose_model_methods <- function(hpp_path, env, verbose) {
-  code <- paste(c(readLines(hpp_path),
+expose_model_methods <- function(hpp_code, env, verbose) {
+  code <- paste(c(hpp_code,
                   readLines(system.file("include", "model_methods.cpp",
                                         package = "cmdstanr", mustWork = TRUE))),
                 collapse = "\n")

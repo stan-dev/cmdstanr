@@ -301,7 +301,7 @@ init_model_methods <- function(seed = 0, verbose = FALSE) {
     )
   }
   message("Compiling additional model methods...")
-  private$model_method_env_ <- expose_model_methods(self$runset$hpp_file(), new.env(), verbose)
+  private$model_method_env_ <- expose_model_methods(self$runset$hpp_code(), new.env(), verbose)
   ptr_and_rng <- private$model_method_env_$model_ptr(self$data_file(), seed)
   private$model_ptr_ <- ptr_and_rng$model_ptr
   private$model_rng_ <- ptr_and_rng$base_rng

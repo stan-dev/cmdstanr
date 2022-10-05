@@ -35,7 +35,7 @@ CmdStanRun <- R6::R6Class(
     proc_ids = function() self$procs$proc_ids(),
     exe_file = function() self$args$exe_file,
     stan_code = function() self$args$stan_code,
-    hpp_file = function() self$args$hpp_file,
+    hpp_code = function() self$args$hpp_code,
     model_name = function() self$args$model_name,
     method = function() self$args$method,
     data_file = function() self$args$data_file,
