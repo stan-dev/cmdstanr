@@ -293,19 +293,21 @@ CmdStanFit$set("public", name = "init", value = init)
 #' fit_mcmc$init_model_methods()
 #' }
 #'
-init_model_methods <- function(seed = 0, verbose = FALSE) {
-  if (!requireNamespace("Rcpp", quietly = TRUE)) {
-    stop(
-      "Package \"Rcpp\" must be installed to use this function.",
-      call. = FALSE
-    )
-  }
+init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
+  require_suggested_package("Rcpp")
+  require_suggested_package("RcppEigen")
   if (length(self$runset$hpp_code()) == 0) {
     stop("Model methods cannot be used with a pre-compiled Stan executable, ",
           "the model must be compiled again", call. = FALSE)
   }
+  if (hessian) {
+    message("The hessian method relies on higher-order autodiff ",
+            "which is still experimental. Please report any compilation ",
+            "errors that you encounter",
+            call. = FALSE)
+  }
   message("Compiling additional model methods...")
-  private$model_method_env_ <- expose_model_methods(self$runset$hpp_code(), new.env(), verbose)
+  private$model_method_env_ <- expose_model_methods(self$runset$hpp_code(), new.env(), verbose, hessian)
   ptr_and_rng <- private$model_method_env_$model_ptr(self$data_file(), seed)
   private$model_ptr_ <- ptr_and_rng$model_ptr
   private$model_rng_ <- ptr_and_rng$base_rng
@@ -374,6 +376,36 @@ grad_log_prob <- function(upars, jacobian_adjustment = TRUE) {
   private$model_method_env_$grad_log_prob(private$model_ptr_, upars, jacobian_adjustment)
 }
 CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
+
+#' Calculate the log-probability , the gradient w.r.t. each input, and the hessian
+#' for a given vector of unconstrained parameters
+#'
+#' @name fit-method-hessian
+#' @aliases hessian
+#' @description The `$hessian()` method provides access to the
+#' Stan model's `log_prob`, its derivative, and its hessian
+#'
+#' @param upars (numeric) A vector of unconstrained parameters to be passed
+#' to `hessian`
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$hessian(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' }
+#'
+hessian <- function(upars) {
+  if (is.null(private$model_method_env_)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
+  }
+  if (length(upars) != private$num_upars_) {
+    stop("Model has ", private$num_upars_, " unconstrained parameter(s), but ",
+          length(upars), " were provided!", call. = FALSE)
+  }
+  private$model_method_env_$hessian(private$model_ptr_, upars)
+}
+CmdStanFit$set("public", name = "hessian", value = hessian)
 
 #' Transform a set of parameter values to the unconstrained scale
 #'

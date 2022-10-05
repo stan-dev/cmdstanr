@@ -520,30 +520,42 @@ get_cmdstan_flags <- function(flag_name) {
     args = c(paste0("print-", flag_name)),
     wd = cmdstan_path
   )$stdout
+
+  flags <- gsub("\n", "", flags, fixed = TRUE)
+
   flags <- gsub(
     pattern = paste0(flag_name, " ="),
     replacement = "", x = flags, fixed = TRUE
   )
-  flags <- gsub(
-    pattern = " stan/", replacement = paste0(" ", cmdstan_path, "/stan/"),
-    x = flags, fixed = TRUE
-  )
-  flags <- gsub(
-    pattern = "-I lib/", replacement = paste0("-I ", cmdstan_path, "/lib/"),
-    x = flags, fixed = TRUE
-  )
-  flags <- gsub(
-    pattern = "-I src", replacement = paste0("-I ", cmdstan_path, "/src"),
-    x = flags, fixed = TRUE
-  )
-  gsub("\n", "", flags)
+
+  # shQuote include paths
+  flags <- gsub("-I ", "-I", flags, fixed = TRUE)
+  flags <- strsplit(flags, " ", fixed = TRUE)[[1]]
+  include_flags <- grep("^-I", flags)
+  flags <- gsub("^-I", paste0(cmdstan_path, "/"), flags)
+  flags[include_flags] <- paste0("-I", shQuote(flags[include_flags]))
+  flags <- paste(flags, collapse = " ")
+
+  # shQuote Remaining " stan/" paths
+  flags <- strsplit(flags, split = " ", fixed = TRUE)[[1]]
+  oth_stan_flags <- grep("^stan/", flags)
+  flags[oth_stan_flags] <- shQuote(paste0(cmdstan_path, "/", flags[oth_stan_flags]))
+  paste(flags, collapse = " ")
 }
 
-expose_model_methods <- function(hpp_code, env, verbose) {
-  code <- paste(c(hpp_code,
-                  readLines(system.file("include", "model_methods.cpp",
-                                        package = "cmdstanr", mustWork = TRUE))),
-                collapse = "\n")
+expose_model_methods <- function(hpp_code, env, verbose = FALSE, hessian = FALSE) {
+
+  code <- c(hpp_code,
+            readLines(system.file("include", "model_methods.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+
+  if (hessian) {
+    code <- c(code,
+            readLines(system.file("include", "hessian.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+  }
+
+  code <- paste(code, collapse = "\n")
 
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
@@ -553,7 +565,7 @@ expose_model_methods <- function(hpp_code, env, verbose) {
     c(
       USE_CXX14 = 1,
       PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
-      PKG_CXXFLAGS = cxxflags,
+      PKG_CXXFLAGS = paste(cxxflags, "-ftemplate-backtrace-limit=0"),
       PKG_LIBS = libs
     ),
     Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
