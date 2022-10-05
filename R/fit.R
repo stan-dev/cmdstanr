@@ -277,8 +277,7 @@ init <- function() {
 CmdStanFit$set("public", name = "init", value = init)
 
 #' Compile additional methods for accessing the model log-probability function
-#' and parameter constraining and unconstraining. This requires that the `Rcpp`
-#' and `RcppEigen` packages are installed.
+#' and parameter constraining and unconstraining. This requires the `Rcpp` package.
 #'
 #' @name fit-method-init_model_methods
 #' @aliases init_model_methods
@@ -304,8 +303,8 @@ init_model_methods <- function(seed = 0, verbose = FALSE) {
   message("Compiling additional model methods...")
   private$model_method_env_ <- expose_model_methods(self$runset$hpp_file(), new.env(), verbose)
   ptr_and_rng <- private$model_method_env_$model_ptr(self$data_file(), seed)
-  private$model_ptr_ <- ptr_and_rng[[1]]
-  private$model_rng_ <- ptr_and_rng[[2]]
+  private$model_ptr_ <- ptr_and_rng$model_ptr
+  private$model_rng_ <- ptr_and_rng$base_rng
   private$num_upars_ <- private$model_method_env_$get_num_upars(private$model_ptr_)
   invisible(NULL)
 }
