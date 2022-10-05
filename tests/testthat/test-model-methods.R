@@ -1,7 +1,7 @@
 context("model-methods")
 
 set_cmdstan_path()
-mod <- testing_model("bernoulli")
+mod <- cmdstan_model(testing_stan_file("bernoulli"), force_recompile = TRUE)
 data_list <- testing_data("bernoulli")
 fit <- mod$sample(data = data_list, chains = 1)
 
@@ -66,7 +66,7 @@ test_that("methods error for incorrect inputs", {
     fixed = TRUE
   )
 
-  logistic_mod <- testing_model("logistic")
+  logistic_mod <- cmdstan_model(testing_stan_file("logistic"), force_recompile = TRUE)
   logistic_data_list <- testing_data("logistic")
   logistic_fit <- logistic_mod$sample(data = logistic_data_list, chains = 1)
   logistic_fit$init_model_methods()
