@@ -517,7 +517,7 @@ compile <- function(quiet = TRUE,
     tmp_exe <- utils::shortPathName(tmp_exe)
   }
   private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
-  private$hpp_code_ <- ifelse(file.exists(private$hpp_file_), readLines(private$hpp_file_), NULL)
+  private$hpp_code_ <- ifelse(file.exists(private$hpp_file_), readLines(private$hpp_file_), "")
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
