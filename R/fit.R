@@ -300,6 +300,10 @@ init_model_methods <- function(seed = 0, verbose = FALSE) {
       call. = FALSE
     )
   }
+  if (length(self$runset$hpp_code()) == 0) {
+    stop("Model methods cannot be used with a pre-compiled Stan executable, ",
+          "the model must be compiled again", call. = FALSE)
+  }
   message("Compiling additional model methods...")
   private$model_method_env_ <- expose_model_methods(self$runset$hpp_code(), new.env(), verbose)
   ptr_and_rng <- private$model_method_env_$model_ptr(self$data_file(), seed)

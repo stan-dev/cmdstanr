@@ -517,7 +517,6 @@ compile <- function(quiet = TRUE,
     tmp_exe <- utils::shortPathName(tmp_exe)
   }
   private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
-  private$hpp_code_ <- ifelse(file.exists(private$hpp_file_), readLines(private$hpp_file_), "")
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
@@ -615,6 +614,7 @@ compile <- function(quiet = TRUE,
   private$precompile_cpp_options_ <- NULL
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
+  private$hpp_code_ <- readLines(private$hpp_file_)
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile)

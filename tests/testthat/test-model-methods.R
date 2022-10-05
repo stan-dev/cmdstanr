@@ -77,3 +77,14 @@ test_that("methods error for incorrect inputs", {
     fixed = TRUE
   )
 })
+
+test_that("Methods error with already-compiled model", {
+  mod <- testing_model("bernoulli")
+  data_list <- testing_data("bernoulli")
+  fit <- mod$sample(data = data_list, chains = 1)
+  expect_error(
+    fit$init_model_methods(),
+    "Model methods cannot be used with a pre-compiled Stan executable, the model must be compiled again",
+    fixed = TRUE
+  )
+})
