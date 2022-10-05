@@ -568,5 +568,5 @@ create_skeleton <- function(model_variables) {
     dims <- ifelse(dims == 0, 1, dims)
     array(0, dim = dims)
   })
-  setNames(skeleton, names(model_pars))
+  stats::setNames(skeleton, names(model_pars))
 }

@@ -438,7 +438,7 @@ constrain_pars <- function(upars) {
   }
   cpars <- private$model_method_env_$constrain_pars(private$model_ptr_, private$model_rng_, upars)
   skeleton <- create_skeleton(self$runset$args$model_variables)
-  relist(cpars, skeleton)
+  utils::relist(cpars, skeleton)
 }
 CmdStanFit$set("public", name = "constrain_pars", value = constrain_pars)
 
