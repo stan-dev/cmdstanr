@@ -301,6 +301,7 @@ init_model_methods <- function(seed = 0, verbose = FALSE) {
       call. = FALSE
     )
   }
+  message("Compiling additional model methods...")
   private$model_method_env_ <- expose_model_methods(self$runset$hpp_file(), new.env(), verbose)
   ptr_and_rng <- private$model_method_env_$model_ptr(self$data_file(), seed)
   private$model_ptr_ <- ptr_and_rng[[1]]
@@ -328,7 +329,7 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'
 log_prob <- function(upars, jacobian_adjustment = TRUE) {
   if (is.null(private$model_method_env_)) {
-    stop("The method has not been compiled, please call `init_model_methods` first",
+    stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
   if (length(upars) != private$num_upars_) {
@@ -360,7 +361,7 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'
 grad_log_prob <- function(upars, jacobian_adjustment = TRUE) {
   if (is.null(private$model_method_env_)) {
-    stop("The method has not been compiled, please call `init_model_methods` first",
+    stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
   if (length(upars) != private$num_upars_) {
@@ -389,7 +390,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'
 unconstrain_pars <- function(pars) {
   if (is.null(private$model_method_env_)) {
-    stop("The method has not been compiled, please call `init_model_methods` first",
+    stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
   model_par_names <- names(self$runset$args$model_variables$parameters)
@@ -397,14 +398,14 @@ unconstrain_pars <- function(pars) {
 
   prov_pars_not_in_model <- which(!(prov_par_names %in% model_par_names))
   if (length(prov_pars_not_in_model) > 0) {
-    stop("Provided parameters: ", paste(prov_par_names[prov_pars_not_in_model], collapse = ","),
+    stop("Provided parameter(s): ", paste(prov_par_names[prov_pars_not_in_model], collapse = ","),
          " not present in model!", call. = FALSE)
   }
 
   model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
   if (length(model_pars_not_prov) > 0) {
-    stop("Model parameters: ", paste(model_par_names[model_pars_not_prov], collapse = ","),
-         " provided!", call. = FALSE)
+    stop("Model parameter(s): ", paste(model_par_names[model_pars_not_prov], collapse = ","),
+         " not provided!", call. = FALSE)
   }
 
   stan_pars <- process_init_list(list(pars), num_procs = 1, self$runset$args$model_variables)
@@ -428,11 +429,17 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #' }
 #'
 constrain_pars <- function(upars) {
+  if (is.null(private$model_method_env_)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
+  }
   if (length(upars) != private$num_upars_) {
     stop("Model has ", private$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
-  private$model_method_env_$constrain_pars(private$model_ptr_, private$model_rng_, upars)
+  cpars <- private$model_method_env_$constrain_pars(private$model_ptr_, private$model_rng_, upars)
+  skeleton <- create_skeleton(self$runset$args$model_variables)
+  relist(cpars, skeleton)
 }
 CmdStanFit$set("public", name = "constrain_pars", value = constrain_pars)
 

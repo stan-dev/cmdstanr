@@ -560,3 +560,13 @@ expose_model_methods <- function(hpp_path, env, verbose) {
   )
   return(env)
 }
+
+create_skeleton <- function(model_variables) {
+  model_pars <- model_variables$parameters
+  skeleton <- lapply(model_pars, function(par) {
+    dims <- par$dimensions
+    dims <- ifelse(dims == 0, 1, dims)
+    array(0, dim = dims)
+  })
+  setNames(skeleton, names(model_pars))
+}
