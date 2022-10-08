@@ -383,6 +383,10 @@ CmdStanModel <- R6::R6Class(
 #' @param force_recompile (logical) Should the model be recompiled even if was
 #'   not modified since last compiled. The default is `FALSE`. Can also be set
 #'   via a global `cmdstanr_force_recompile` option.
+#' @param compile_model_methods (logical) Compile additional model methods
+#'   (`log_prob()`, `grad_log_prob()`, `constrain_pars()`, `unconstrain_pars()`)
+#' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
+#'   be compiled with the model methods?
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
