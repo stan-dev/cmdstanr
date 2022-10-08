@@ -14,7 +14,7 @@ make_all_fail <- function(x) {
   all_fail
 }
 
-make_some_fail <- function(x, seed) {
+make_some_fail <- function(x, seed = 0) {
   num_files <- 0
   attempt <- 1
   set.seed(seed)
