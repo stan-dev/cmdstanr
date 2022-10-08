@@ -1,4 +1,5 @@
 #include <RcppEigen.h>
+#include <stan/model/hessian.hpp>
 
 // [[Rcpp::depends(RcppEigen)]]
 

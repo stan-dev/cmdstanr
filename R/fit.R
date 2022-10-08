@@ -12,6 +12,11 @@ CmdStanFit <- R6::R6Class(
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
+      private$model_methods_env_ <- runset$model_methods_env()
+
+      if (!is.null(private$model_methods_env_$model_ptr)) {
+        initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
+      }
       invisible(self)
     },
     num_procs = function() {
@@ -64,10 +69,7 @@ CmdStanFit <- R6::R6Class(
     metadata_ = NULL,
     init_ = NULL,
     profiles_ = NULL,
-    model_method_env_ = NULL,
-    model_ptr_ = NULL,
-    model_rng_ = NULL,
-    num_upars_ = NULL
+    model_methods_env_ = NULL
   )
 )
 
@@ -297,7 +299,7 @@ CmdStanFit$set("public", name = "init", value = init)
 init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
   require_suggested_package("Rcpp")
   require_suggested_package("RcppEigen")
-  if (length(self$runset$hpp_code()) == 0) {
+  if (length(private$model_methods_env_$hpp_code_) == 0) {
     stop("Model methods cannot be used with a pre-compiled Stan executable, ",
           "the model must be compiled again", call. = FALSE)
   }
@@ -308,11 +310,10 @@ init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
             call. = FALSE)
   }
   message("Compiling additional model methods...")
-  private$model_method_env_ <- expose_model_methods(self$runset$hpp_code(), new.env(), verbose, hessian)
-  ptr_and_rng <- private$model_method_env_$model_ptr(self$data_file(), seed)
-  private$model_ptr_ <- ptr_and_rng$model_ptr
-  private$model_rng_ <- ptr_and_rng$base_rng
-  private$num_upars_ <- private$model_method_env_$get_num_upars(private$model_ptr_)
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    expose_model_methods(private$model_methods_env_, verbose, hessian)
+  }
+  initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
   invisible(NULL)
 }
 CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods)
@@ -334,15 +335,15 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' }
 #'
 log_prob <- function(upars, jacobian_adjustment = TRUE) {
-  if (is.null(private$model_method_env_)) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  if (length(upars) != private$num_upars_) {
-    stop("Model has ", private$num_upars_, " unconstrained parameter(s), but ",
+  if (length(upars) != private$model_methods_env_$num_upars_) {
+    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
-  private$model_method_env_$log_prob(private$model_ptr_, upars, jacobian_adjustment)
+  private$model_methods_env_$log_prob(private$model_methods_env_$model_ptr_, upars, jacobian_adjustment)
 }
 CmdStanFit$set("public", name = "log_prob", value = log_prob)
 
@@ -366,15 +367,15 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #' }
 #'
 grad_log_prob <- function(upars, jacobian_adjustment = TRUE) {
-  if (is.null(private$model_method_env_)) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  if (length(upars) != private$num_upars_) {
-    stop("Model has ", private$num_upars_, " unconstrained parameter(s), but ",
+  if (length(upars) != private$model_methods_env_$num_upars_) {
+    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
-  private$model_method_env_$grad_log_prob(private$model_ptr_, upars, jacobian_adjustment)
+  private$model_methods_env_$grad_log_prob(private$model_methods_env_$model_ptr_, upars, jacobian_adjustment)
 }
 CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 
@@ -396,15 +397,15 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' }
 #'
 hessian <- function(upars) {
-  if (is.null(private$model_method_env_)) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  if (length(upars) != private$num_upars_) {
-    stop("Model has ", private$num_upars_, " unconstrained parameter(s), but ",
+  if (length(upars) != private$model_methods_env_$num_upars_) {
+    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
-  private$model_method_env_$hessian(private$model_ptr_, upars)
+  private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_, upars)
 }
 CmdStanFit$set("public", name = "hessian", value = hessian)
 
@@ -425,7 +426,7 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #' }
 #'
 unconstrain_pars <- function(pars) {
-  if (is.null(private$model_method_env_)) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
@@ -445,7 +446,7 @@ unconstrain_pars <- function(pars) {
   }
 
   stan_pars <- process_init_list(list(pars), num_procs = 1, self$runset$args$model_variables)
-  private$model_method_env_$unconstrain_pars(private$model_ptr_, stan_pars)
+  private$model_methods_env_$unconstrain_pars(private$model_methods_env_$model_ptr_, stan_pars)
 }
 CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 
@@ -465,15 +466,15 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #' }
 #'
 constrain_pars <- function(upars) {
-  if (is.null(private$model_method_env_)) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  if (length(upars) != private$num_upars_) {
-    stop("Model has ", private$num_upars_, " unconstrained parameter(s), but ",
+  if (length(upars) != private$model_methods_env_$num_upars_) {
+    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
-  cpars <- private$model_method_env_$constrain_pars(private$model_ptr_, private$model_rng_, upars)
+  cpars <- private$model_methods_env_$constrain_pars(private$model_methods_env_$model_ptr_, private$model_methods_env_$model_rng_, upars)
   skeleton <- create_skeleton(self$runset$args$model_variables)
   utils::relist(cpars, skeleton)
 }

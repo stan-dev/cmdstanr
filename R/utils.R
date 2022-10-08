@@ -557,8 +557,8 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
-expose_model_methods <- function(hpp_code, env, verbose = FALSE, hessian = FALSE) {
-  code <- c(hpp_code,
+expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+  code <- c(env$hpp_code_,
             readLines(system.file("include", "model_methods.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
 
@@ -589,7 +589,15 @@ expose_model_methods <- function(hpp_code, env, verbose = FALSE, hessian = FALSE
       Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
     )
   )
-  return(env)
+  invisible(NULL)
+}
+
+initialize_model_pointer <- function(env, data, seed = 0) {
+  ptr_and_rng <- env$model_ptr(data, seed)
+  env$model_ptr_ <- ptr_and_rng$model_ptr
+  env$model_rng_ <- ptr_and_rng$base_rng
+  env$num_upars_ <- env$get_num_upars(env$model_ptr_)
+  invisible(NULL)
 }
 
 create_skeleton <- function(model_variables) {

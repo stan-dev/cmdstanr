@@ -1,7 +1,6 @@
 #include <Rcpp.h>
 #include <stan/model/log_prob_grad.hpp>
 #include <stan/model/log_prob_propto.hpp>
-#include <stan/model/hessian.hpp>
 #include <boost/random/additive_combine.hpp>
 #ifdef CMDSTAN_JSON
 #include <cmdstan/io/json/json_data.hpp>

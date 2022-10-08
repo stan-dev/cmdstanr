@@ -114,3 +114,31 @@ test_that("Methods error with already-compiled model", {
     fixed = TRUE
   )
 })
+
+test_that("Methods can be compiled with model", {
+  mod <- cmdstan_model(testing_stan_file("bernoulli"),
+                       force_recompile = TRUE,
+                       compile_model_methods = TRUE,
+                       compile_hessian_method = TRUE)
+  fit <- mod$sample(data = data_list, chains = 1)
+
+  lp <- fit$log_prob(upars=c(0.6))
+  expect_equal(lp, -10.649855405830624733)
+
+  grad_lp <- -4.7478756747095447466
+  attr(grad_lp, "log_prob") <- lp
+  expect_equal(fit$grad_log_prob(upars=c(0.6)), grad_lp)
+
+  hessian <- list(
+    log_prob = lp,
+    grad_log_prob = -4.7478756747095447466,
+    hessian = as.matrix(-2.7454108854798882078, nrow=1, ncol=1)
+  )
+  expect_equal(fit$hessian(upars=c(0.6)), hessian)
+
+  cpars <- fit$constrain_pars(c(0.6))
+  expect_equal(cpars, list(theta = 0.64565630622579539555))
+
+  upars <- fit$unconstrain_pars(cpars)
+  expect_equal(upars, c(0.6))
+})
