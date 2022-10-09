@@ -512,3 +512,100 @@ as_mcmc.list <- function(x) {
   class(mcmc_list) <- 'mcmc.list'
   return(mcmc_list)
 }
+
+get_cmdstan_flags <- function(flag_name) {
+  cmdstan_path <- cmdstanr::cmdstan_path()
+  flags <- processx::run(
+    "make",
+    args = c(paste0("print-", flag_name)),
+    wd = cmdstan_path
+  )$stdout
+
+  flags <- gsub("\n", "", flags, fixed = TRUE)
+
+  flags <- gsub(
+    pattern = paste0(flag_name, " ="),
+    replacement = "", x = flags, fixed = TRUE
+  )
+
+  if (flag_name %in% c("LDLIBS", "LDFLAGS_TBB")) {
+    # shQuote -L paths and rpaths
+    # The LDLIBS flags change paths to /c/ instead of C:/, need to revert to
+    # format consistent with path on windows
+    if (.Platform$OS.type == "windows") {
+      flags <- gsub("(-L|-rpath),/([a-zA-Z])/", "\\1,\\2:/", flags, perl = TRUE)
+    }
+    flags <- gsub(cmdstan_path, "", flags, ignore.case = TRUE)
+    flags <- gsub("(-L,|-rpath,)/stan/lib/stan_math/lib/tbb",
+                  paste0("\\1", shQuote(paste0(cmdstan_path, "/stan/lib/stan_math/lib/tbb"))),
+                  flags)
+    return(flags)
+  }
+
+  # shQuote include paths
+  flags <- gsub("-I ", "-I", flags, fixed = TRUE)
+  flags <- strsplit(flags, " ", fixed = TRUE)[[1]]
+  include_flags <- grep("^-I", flags)
+  flags <- gsub("^-I", paste0(cmdstan_path, "/"), flags)
+  flags[include_flags] <- paste0("-I", shQuote(flags[include_flags]))
+  flags <- paste(flags, collapse = " ")
+
+  # shQuote Remaining " stan/" paths
+  flags <- strsplit(flags, split = " ", fixed = TRUE)[[1]]
+  oth_stan_flags <- grep("^stan/", flags)
+  flags[oth_stan_flags] <- shQuote(paste0(cmdstan_path, "/", flags[oth_stan_flags]))
+  paste(flags, collapse = " ")
+}
+
+expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+  code <- c(env$hpp_code_,
+            readLines(system.file("include", "model_methods.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+
+  if (hessian) {
+    code <- c(code,
+            readLines(system.file("include", "hessian.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+  }
+
+  code <- paste(code, collapse = "\n")
+
+  cxxflags <- get_cmdstan_flags("CXXFLAGS")
+  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
+  libs <- paste(sapply(libs, get_cmdstan_flags), collapse = "")
+  if (.Platform$OS.type == "windows") {
+    libs <- paste(libs, "-fopenmp")
+  }
+  lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
+                 "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
+  withr::with_path(paste0(cmdstan_path(), lib_paths),
+    withr::with_makevars(
+      c(
+        USE_CXX14 = 1,
+        PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
+        PKG_CXXFLAGS = cxxflags,
+        PKG_LIBS = libs
+      ),
+      Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+    )
+  )
+  invisible(NULL)
+}
+
+initialize_model_pointer <- function(env, data, seed = 0) {
+  ptr_and_rng <- env$model_ptr(data, seed)
+  env$model_ptr_ <- ptr_and_rng$model_ptr
+  env$model_rng_ <- ptr_and_rng$base_rng
+  env$num_upars_ <- env$get_num_upars(env$model_ptr_)
+  invisible(NULL)
+}
+
+create_skeleton <- function(model_variables) {
+  model_pars <- model_variables$parameters
+  skeleton <- lapply(model_pars, function(par) {
+    dims <- par$dimensions
+    dims <- ifelse(dims == 0, 1, dims)
+    array(0, dim = dims)
+  })
+  stats::setNames(skeleton, names(model_pars))
+}

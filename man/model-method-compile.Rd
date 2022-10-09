@@ -14,6 +14,8 @@ compile(
   cpp_options = list(),
   stanc_options = list(),
   force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
+  compile_model_methods = FALSE,
+  compile_hessian_method = FALSE,
   threads = FALSE
 )
 }
@@ -55,6 +57,12 @@ https://mc-stan.org/docs/cmdstan-guide/stanc.html.}
 \item{force_recompile}{(logical) Should the model be recompiled even if was
 not modified since last compiled. The default is \code{FALSE}. Can also be set
 via a global \code{cmdstanr_force_recompile} option.}
+
+\item{compile_model_methods}{(logical) Compile additional model methods
+(\code{log_prob()}, \code{grad_log_prob()}, \code{constrain_pars()}, \code{unconstrain_pars()})}
+
+\item{compile_hessian_method}{(logical) Should the (experimental) \code{hessian()} method be
+be compiled with the model methods?}
 
 \item{threads}{Deprecated and will be removed in a future release. Please
 turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
