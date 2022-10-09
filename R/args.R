@@ -27,6 +27,7 @@ CmdStanArgs <- R6::R6Class(
                           stan_file = NULL,
                           stan_code = NULL,
                           model_methods_env = NULL,
+                          standalone_env = NULL,
                           exe_file,
                           proc_ids,
                           method_args,
@@ -45,6 +46,7 @@ CmdStanArgs <- R6::R6Class(
       self$stan_code <- stan_code
       self$exe_file <- exe_file
       self$model_methods_env <- model_methods_env
+      self$standalone_env <- standalone_env
       self$proc_ids <- proc_ids
       self$data_file <- data_file
       self$seed <- seed

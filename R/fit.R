@@ -9,10 +9,12 @@ CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
     runset = NULL,
+    functions = NULL,
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
       private$model_methods_env_ <- runset$model_methods_env()
+      self$functions <- runset$standalone_env()
 
       if (!is.null(private$model_methods_env_$model_ptr)) {
         initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
@@ -69,7 +71,8 @@ CmdStanFit <- R6::R6Class(
     metadata_ = NULL,
     init_ = NULL,
     profiles_ = NULL,
-    model_methods_env_ = NULL
+    model_methods_env_ = NULL,
+    standalone_env_ = NULL
   )
 )
 
@@ -277,6 +280,27 @@ init <- function() {
   private$init_
 }
 CmdStanFit$set("public", name = "init", value = init)
+
+expose_functions <- function(global = FALSE, verbose = FALSE) {
+  require_suggested_package("Rcpp")
+  require_suggested_package("RcppEigen")
+  require_suggested_package("decor")
+  if (self$functions$compiled) {
+    if (!global) {
+      message("Functions already compiled, nothing to do!", call. = FALSE)
+    } else {
+      message("Functions already compiled, copying to global environment", call. = FALSE)
+      lapply(self$functions$fun_names, function(fun_name) {
+        assign(fun_name, get(fun_name, self$functions), .GlobalEnv)
+      })
+    }
+  } else {
+    message("Compiling standalone functions...", call. = FALSE)
+    expose_functions(self$functions, verbose, global)
+  }
+  invisible(NULL)
+}
+CmdStanFit$set("public", name = "expose_functions", value = expose_functions)
 
 #' Compile additional methods for accessing the model log-probability function
 #' and parameter constraining and unconstraining. This requires the `Rcpp` package.

@@ -219,7 +219,8 @@ CmdStanModel <- R6::R6Class(
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
-    variables_ = NULL
+    variables_ = NULL,
+    standalone_env_ = NULL
   ),
   public = list(
     initialize = function(stan_file = NULL, exe_file = NULL, compile, ...) {
@@ -322,7 +323,8 @@ CmdStanModel <- R6::R6Class(
               "- ", new_hpp_loc)
       private$hpp_file_ <- new_hpp_loc
       invisible(private$hpp_file_)
-    }
+    },
+    standalone = function() { private$standalone_env_ }
   )
 )
 
@@ -438,6 +440,7 @@ compile <- function(quiet = TRUE,
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
                     compile_hessian_method = FALSE,
+                    compile_standalone = FALSE,
                     #deprecated
                     threads = FALSE) {
   if (length(self$stan_file()) == 0) {
@@ -556,6 +559,13 @@ compile <- function(quiet = TRUE,
     } else {
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
+  }
+  stancflags_standalone <- c("--standalone-functions", stancflags_val, stanc_built_options)
+  private$standalone_env_ <- new.env()
+  private$standalone_env_$compiled <- FALSE
+  private$standalone_env_$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  if (compile_standalone) {
+    expose_functions(private$standalone_env_, !quiet)
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
   withr::with_path(
@@ -1117,6 +1127,7 @@ sample <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
+    standalone_env = private$standalone_env_,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1275,6 +1286,7 @@ sample_mpi <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
+    standalone_env = private$standalone_env_,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1387,6 +1399,7 @@ optimize <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
+    standalone_env = private$standalone_env_,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1505,6 +1518,7 @@ variational <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
+    standalone_env = private$standalone_env_,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1622,6 +1636,7 @@ generate_quantities <- function(fitted_params,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
+    standalone_env = private$standalone_env_,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = seq_along(fitted_params_files),
@@ -1686,6 +1701,7 @@ diagnose <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
+    standalone_env = private$standalone_env_,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
