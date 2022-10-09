@@ -323,8 +323,7 @@ CmdStanModel <- R6::R6Class(
               "- ", new_hpp_loc)
       private$hpp_file_ <- new_hpp_loc
       invisible(private$hpp_file_)
-    },
-    standalone = function() { private$standalone_env_ }
+    }
   )
 )
 

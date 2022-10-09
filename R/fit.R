@@ -71,8 +71,7 @@ CmdStanFit <- R6::R6Class(
     metadata_ = NULL,
     init_ = NULL,
     profiles_ = NULL,
-    model_methods_env_ = NULL,
-    standalone_env_ = NULL
+    model_methods_env_ = NULL
   )
 )
 
