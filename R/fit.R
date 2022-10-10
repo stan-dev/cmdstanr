@@ -286,9 +286,9 @@ expose_functions <- function(global = FALSE, verbose = FALSE) {
   require_suggested_package("decor")
   if (self$functions$compiled) {
     if (!global) {
-      message("Functions already compiled, nothing to do!", call. = FALSE)
+      message("Functions already compiled, nothing to do!")
     } else {
-      message("Functions already compiled, copying to global environment", call. = FALSE)
+      message("Functions already compiled, copying to global environment")
       # Create reference to global environment, avoids NOTE about assigning to global
       pos <- 1
       envir = as.environment(pos)
@@ -297,7 +297,7 @@ expose_functions <- function(global = FALSE, verbose = FALSE) {
       })
     }
   } else {
-    message("Compiling standalone functions...", call. = FALSE)
+    message("Compiling standalone functions...")
     expose_functions(self$functions, verbose, global)
   }
   invisible(NULL)
