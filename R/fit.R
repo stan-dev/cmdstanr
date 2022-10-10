@@ -289,8 +289,11 @@ expose_functions <- function(global = FALSE, verbose = FALSE) {
       message("Functions already compiled, nothing to do!", call. = FALSE)
     } else {
       message("Functions already compiled, copying to global environment", call. = FALSE)
+      # Create reference to global environment, avoids NOTE about assigning to global
+      pos <- 1
+      envir = as.environment(pos)
       lapply(self$functions$fun_names, function(fun_name) {
-        assign(fun_name, get(fun_name, self$functions), .GlobalEnv)
+        assign(fun_name, get(fun_name, self$functions), envir)
       })
     }
   } else {

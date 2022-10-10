@@ -616,8 +616,7 @@ create_skeleton <- function(model_variables) {
 }
 
 get_standalone_hpp <- function(stan_file, stancflags) {
-  tryCatch(
-    withr::with_path(
+  status <- withr::with_path(
       c(
         toolchain_PATH_env_var(),
         tbb_path()
@@ -626,21 +625,20 @@ get_standalone_hpp <- function(stan_file, stancflags) {
         command = stanc_cmd(),
         args = c(stan_file,
                 stancflags),
-        wd = cmdstan_path()
+        wd = cmdstan_path(),
+        error_on_status = FALSE
       )
-    ),
-    error = function(e) { NULL },
-    finally = function() {
-      name <- strip_ext(basename(stan_file))
-      path <- dirname(stan_file)
-      hpp_path <- file.path(path, paste0(name, ".hpp"))
-      hpp <- readLines(hpp_path)
-      unlink(hpp_path)
-      hpp
-    }
-  )
-
+    )
+  if (status$status == 0) {
+    name <- strip_ext(basename(stan_file))
+    path <- dirname(stan_file)
+    hpp_path <- file.path(path, paste0(name, ".hpp"))
+    hpp <- readLines(hpp_path)
+    unlink(hpp_path)
+    hpp
+  } else {
     invisible(NULL)
+  }
 }
 
 # Construct the plain return type for a standalone function by
@@ -664,10 +662,14 @@ get_plain_rtn <- function(fun_body, model_lines) {
 # - Replace the auto return type with the plain type
 # - Add Rcpp::export attribute
 # - Remove the pstream__ argument and pass Rcpp::Rcout by default
+# - Replace the boost::ecuyer1988& base_rng__ argument with an integer seed argument
+#     that instantiates an RNG
 prep_fun_cpp <- function(fun_body, model_lines) {
   fun_body <- gsub("auto", get_plain_rtn(fun_body, model_lines), fun_body)
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream* pstream__ = nullptr", "", fun_body, fixed = TRUE)
+  fun_body <- gsub("boost::ecuyer1988& base_rng__", "size_t seed = 0", fun_body, fixed = TRUE)
+  fun_body <- gsub("base_rng__,", "*(new boost::ecuyer1988(seed)),", fun_body, fixed = TRUE)
   fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
   fun_body <- paste(fun_body, collapse = "\n")
   gsub(pattern = ",\\s*)", replacement = ")", fun_body)
