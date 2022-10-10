@@ -513,6 +513,7 @@ as_mcmc.list <- function(x) {
   return(mcmc_list)
 }
 
+# Model methods & expose_functions helpers ------------------------------------------------------
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
   flags <- processx::run(
@@ -636,8 +637,11 @@ get_standalone_hpp <- function(stan_file, stancflags) {
   hpp
 }
 
+#' Construct the plain return type for a standalone function by
+#' looking up the return type of the functor declaration and replacing
+#' the template types (i.e., T0__) with double
 get_plain_rtn <- function(fun_body, model_lines) {
-  fun_props <- decor::parse_cpp_function(paste(fun_body[-1], collapse="\n"))
+  fun_props <- decor::parse_cpp_function(paste(fun_body[-1], collapse = "\n"))
   struct_start <- grep(paste0("struct ", fun_props$name, "_functor"), model_lines)
   struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
 
@@ -650,6 +654,10 @@ get_plain_rtn <- function(fun_body, model_lines) {
   gsub("(^\\s|\\s$)", "", repl_dbl)
 }
 
+#' Prepare the c++ code for a standalone function so that it can be exported to R:
+#' - Replace the auto return type with the plain type
+#' - Add Rcpp::export attribute
+#' - Remove the pstream__ argument and pass Rcpp::Rcout by default
 prep_fun_cpp <- function(fun_body, model_lines) {
   fun_body <- gsub("auto", get_plain_rtn(fun_body, model_lines), fun_body)
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]", fun_body, fixed = TRUE)
