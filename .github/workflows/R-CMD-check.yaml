@@ -7,7 +7,7 @@ name: Unit tests
 'on':
   push:
     branches:
-      - expose-stan-functions
+      - master
   pull_request:
     branches:
       - master
