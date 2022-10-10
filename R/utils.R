@@ -616,30 +616,36 @@ create_skeleton <- function(model_variables) {
 }
 
 get_standalone_hpp <- function(stan_file, stancflags) {
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path()
+  tryCatch(
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path()
+      ),
+      wsl_compatible_run(
+        command = stanc_cmd(),
+        args = c(stan_file,
+                stancflags),
+        wd = cmdstan_path()
+      )
     ),
-    wsl_compatible_run(
-      command = stanc_cmd(),
-      args = c(stan_file,
-              stancflags),
-      wd = cmdstan_path()
-    )
+    error = function(e) { NULL },
+    finally = function() {
+      name <- strip_ext(basename(stan_file))
+      path <- dirname(stan_file)
+      hpp_path <- file.path(path, paste0(name, ".hpp"))
+      hpp <- readLines(hpp_path)
+      unlink(hpp_path)
+      hpp
+    }
   )
 
-  name <- strip_ext(basename(stan_file))
-  path <- dirname(stan_file)
-  hpp_path <- file.path(path, paste0(name, ".hpp"))
-  hpp <- readLines(hpp_path)
-  unlink(hpp_path)
-  hpp
+    invisible(NULL)
 }
 
-#' Construct the plain return type for a standalone function by
-#' looking up the return type of the functor declaration and replacing
-#' the template types (i.e., T0__) with double
+# Construct the plain return type for a standalone function by
+# looking up the return type of the functor declaration and replacing
+# the template types (i.e., T0__) with double
 get_plain_rtn <- function(fun_body, model_lines) {
   fun_props <- decor::parse_cpp_function(paste(fun_body[-1], collapse = "\n"))
   struct_start <- grep(paste0("struct ", fun_props$name, "_functor"), model_lines)
@@ -654,10 +660,10 @@ get_plain_rtn <- function(fun_body, model_lines) {
   gsub("(^\\s|\\s$)", "", repl_dbl)
 }
 
-#' Prepare the c++ code for a standalone function so that it can be exported to R:
-#' - Replace the auto return type with the plain type
-#' - Add Rcpp::export attribute
-#' - Remove the pstream__ argument and pass Rcpp::Rcout by default
+# Prepare the c++ code for a standalone function so that it can be exported to R:
+# - Replace the auto return type with the plain type
+# - Add Rcpp::export attribute
+# - Remove the pstream__ argument and pass Rcpp::Rcout by default
 prep_fun_cpp <- function(fun_body, model_lines) {
   fun_body <- gsub("auto", get_plain_rtn(fun_body, model_lines), fun_body)
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]", fun_body, fixed = TRUE)

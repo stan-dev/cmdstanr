@@ -388,6 +388,7 @@ CmdStanModel <- R6::R6Class(
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_pars()`, `unconstrain_pars()`)
 #' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
 #'   be compiled with the model methods?
+#' @param compile_standalone (logical) Should functions in the Stan model be compiled for used in R?
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
