@@ -16,6 +16,7 @@ compile(
   force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   compile_model_methods = FALSE,
   compile_hessian_method = FALSE,
+  compile_standalone = FALSE,
   threads = FALSE
 )
 }
@@ -63,6 +64,8 @@ via a global \code{cmdstanr_force_recompile} option.}
 
 \item{compile_hessian_method}{(logical) Should the (experimental) \code{hessian()} method be
 be compiled with the model methods?}
+
+\item{compile_standalone}{(logical) Should functions in the Stan model be compiled for used in R?}
 
 \item{threads}{Deprecated and will be removed in a future release. Please
 turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}

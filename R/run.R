@@ -36,6 +36,7 @@ CmdStanRun <- R6::R6Class(
     exe_file = function() self$args$exe_file,
     stan_code = function() self$args$stan_code,
     model_methods_env = function() self$args$model_methods_env,
+    standalone_env = function() self$args$standalone_env,
     model_name = function() self$args$model_name,
     method = function() self$args$method,
     data_file = function() self$args$data_file,

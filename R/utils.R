@@ -513,6 +513,7 @@ as_mcmc.list <- function(x) {
   return(mcmc_list)
 }
 
+# Model methods & expose_functions helpers ------------------------------------------------------
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
   flags <- processx::run(
@@ -557,19 +558,7 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
-expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
-  code <- c(env$hpp_code_,
-            readLines(system.file("include", "model_methods.cpp",
-                                  package = "cmdstanr", mustWork = TRUE)))
-
-  if (hessian) {
-    code <- c(code,
-            readLines(system.file("include", "hessian.cpp",
-                                  package = "cmdstanr", mustWork = TRUE)))
-  }
-
-  code <- paste(code, collapse = "\n")
-
+rcpp_source_stan <- function(code, env, verbose = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = "")
@@ -592,6 +581,22 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
   invisible(NULL)
 }
 
+expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+  code <- c(env$hpp_code_,
+            readLines(system.file("include", "model_methods.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+
+  if (hessian) {
+    code <- c(code,
+            readLines(system.file("include", "hessian.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+  }
+
+  code <- paste(code, collapse = "\n")
+  rcpp_source_stan(code, env, verbose)
+  invisible(NULL)
+}
+
 initialize_model_pointer <- function(env, data, seed = 0) {
   ptr_and_rng <- env$model_ptr(data, seed)
   env$model_ptr_ <- ptr_and_rng$model_ptr
@@ -608,4 +613,92 @@ create_skeleton <- function(model_variables) {
     array(0, dim = dims)
   })
   stats::setNames(skeleton, names(model_pars))
+}
+
+get_standalone_hpp <- function(stan_file, stancflags) {
+  status <- withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path()
+      ),
+      wsl_compatible_run(
+        command = stanc_cmd(),
+        args = c(stan_file,
+                stancflags),
+        wd = cmdstan_path(),
+        error_on_status = FALSE
+      )
+    )
+  if (status$status == 0) {
+    name <- strip_ext(basename(stan_file))
+    path <- dirname(stan_file)
+    hpp_path <- file.path(path, paste0(name, ".hpp"))
+    hpp <- readLines(hpp_path)
+    unlink(hpp_path)
+    hpp
+  } else {
+    invisible(NULL)
+  }
+}
+
+# Construct the plain return type for a standalone function by
+# looking up the return type of the functor declaration and replacing
+# the template types (i.e., T0__) with double
+get_plain_rtn <- function(fun_body, model_lines) {
+  fun_props <- decor::parse_cpp_function(paste(fun_body[-1], collapse = "\n"))
+  struct_start <- grep(paste0("struct ", fun_props$name, "_functor"), model_lines)
+  struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
+
+  struct_rtn <- grep("nullptr>", model_lines[struct_start:struct_op_start], fixed = TRUE) + struct_start
+
+  rtn_type <- paste0(model_lines[struct_rtn:struct_op_start], collapse = " ")
+  rm_trailing_nullptr <- gsub(".*nullptr>[^,]", "", rtn_type)
+  rm_operator <- gsub("operator().*", "", rtn_type)
+  repl_dbl <- gsub("T[0-9*]__", "double", rm_operator)
+  gsub("(^\\s|\\s$)", "", repl_dbl)
+}
+
+# Prepare the c++ code for a standalone function so that it can be exported to R:
+# - Replace the auto return type with the plain type
+# - Add Rcpp::export attribute
+# - Remove the pstream__ argument and pass Rcpp::Rcout by default
+# - Replace the boost::ecuyer1988& base_rng__ argument with an integer seed argument
+#     that instantiates an RNG
+prep_fun_cpp <- function(fun_body, model_lines) {
+  fun_body <- gsub("auto", get_plain_rtn(fun_body, model_lines), fun_body)
+  fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]", fun_body, fixed = TRUE)
+  fun_body <- gsub("std::ostream* pstream__ = nullptr", "", fun_body, fixed = TRUE)
+  fun_body <- gsub("boost::ecuyer1988& base_rng__", "size_t seed = 0", fun_body, fixed = TRUE)
+  fun_body <- gsub("base_rng__,", "*(new boost::ecuyer1988(seed)),", fun_body, fixed = TRUE)
+  fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
+  fun_body <- paste(fun_body, collapse = "\n")
+  gsub(pattern = ",\\s*)", replacement = ")", fun_body)
+}
+
+expose_functions <- function(env, verbose = FALSE, global = FALSE) {
+  funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
+  funs <- c(funs, length(env$hpp_code))
+
+  stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
+    fun_body <- env$hpp_code[funs[ind]:(funs[ind + 1] - 1)]
+    prep_fun_cpp(fun_body, env$hpp_code)
+  })
+
+  env$fun_names <- sapply(stan_funs, function(fun) {
+    decor::parse_cpp_function(fun, is_attribute = TRUE)$name
+  })
+
+  mod_stan_funs <- paste(c(
+    env$hpp_code[1:(funs[1] - 1)],
+    "#include <RcppEigen.h>",
+    "// [[Rcpp::depends(RcppEigen)]]",
+    stan_funs),
+  collapse = "\n")
+  if (global) {
+    rcpp_source_stan(mod_stan_funs, globalenv(), verbose)
+  } else {
+    rcpp_source_stan(mod_stan_funs, env, verbose)
+  }
+  env$compiled <- TRUE
+  invisible(NULL)
 }
