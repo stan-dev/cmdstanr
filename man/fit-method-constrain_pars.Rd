@@ -5,10 +5,20 @@
 \alias{constrain_pars}
 \title{Transform a set of unconstrained parameter values to the constrained scale}
 \usage{
-constrain_pars(upars)
+constrain_pars(
+  upars,
+  transformed_parameters = TRUE,
+  generated_quantities = TRUE
+)
 }
 \arguments{
 \item{upars}{(numeric) A vector of unconstrained parameters to constrain}
+
+\item{transformed_parameters}{(boolean) Whether to return transformed parameters
+implied by newly-constrained parameters (defaults to TRUE)}
+
+\item{generated_quantities}{(boolean) Whether to return generated quantities
+implied by newly-constrained parameters (defaults to TRUE)}
 }
 \description{
 The \verb{$constrain_pars()} method transforms input parameters to

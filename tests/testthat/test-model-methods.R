@@ -1,7 +1,7 @@
 context("model-methods")
 
 set_cmdstan_path()
-mod <- cmdstan_model(testing_stan_file("bernoulli"), force_recompile = TRUE)
+mod <- cmdstan_model(testing_stan_file("bernoulli_log_lik"), force_recompile = TRUE)
 data_list <- testing_data("bernoulli")
 fit <- mod$sample(data = data_list, chains = 1)
 
@@ -57,11 +57,19 @@ test_that("Methods return correct values", {
   expect_equal(fit$hessian(upars=c(0.1)), hessian)
 
   cpars <- fit$constrain_pars(c(0.1))
-  expect_equal(cpars, list(theta = 0.52497918747894001257))
+  cpars_true <- list(
+    theta = 0.52497918747894001257,
+    log_lik = rep(-7.2439666007357095268, data_list$N)
+  )
+  expect_equal(cpars, cpars_true)
+
+  expect_equal(fit$constrain_pars(c(0.1), generated_quantities = FALSE),
+               list(theta = 0.52497918747894001257))
 
   upars <- fit$unconstrain_pars(cpars)
   expect_equal(upars, c(0.1))
 })
+
 
 test_that("methods error for incorrect inputs", {
   expect_error(
@@ -77,11 +85,6 @@ test_that("methods error for incorrect inputs", {
   expect_error(
     fit$hessian(c(1,2)),
     "Model has 1 unconstrained parameter(s), but 2 were provided!",
-    fixed = TRUE
-  )
-  expect_error(
-    fit$unconstrain_pars(list(theta = 0.5, dummy = 5)),
-    "Provided parameter(s): dummy not present in model!",
     fixed = TRUE
   )
   expect_error(

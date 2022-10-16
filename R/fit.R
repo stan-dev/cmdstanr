@@ -332,8 +332,7 @@ init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
   if (hessian) {
     message("The hessian method relies on higher-order autodiff ",
             "which is still experimental. Please report any compilation ",
-            "errors that you encounter",
-            call. = FALSE)
+            "errors that you encounter")
   }
   message("Compiling additional model methods...")
   if (is.null(private$model_methods_env_$model_ptr)) {
@@ -459,17 +458,14 @@ unconstrain_pars <- function(pars) {
   model_par_names <- names(self$runset$args$model_variables$parameters)
   prov_par_names <- names(pars)
 
-  prov_pars_not_in_model <- which(!(prov_par_names %in% model_par_names))
-  if (length(prov_pars_not_in_model) > 0) {
-    stop("Provided parameter(s): ", paste(prov_par_names[prov_pars_not_in_model], collapse = ","),
-         " not present in model!", call. = FALSE)
-  }
-
   model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
   if (length(model_pars_not_prov) > 0) {
     stop("Model parameter(s): ", paste(model_par_names[model_pars_not_prov], collapse = ","),
          " not provided!", call. = FALSE)
   }
+
+  # Ignore extraneous parameters
+  model_pars_only <- pars[model_par_names]
 
   stan_pars <- process_init_list(list(pars), num_procs = 1, self$runset$args$model_variables)
   private$model_methods_env_$unconstrain_pars(private$model_methods_env_$model_ptr_, stan_pars)
@@ -484,6 +480,10 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #' the constrained scale
 #'
 #' @param upars (numeric) A vector of unconstrained parameters to constrain
+#' @param transformed_parameters (boolean) Whether to return transformed parameters
+#'  implied by newly-constrained parameters (defaults to TRUE)
+#' @param generated_quantities (boolean) Whether to return generated quantities
+#'  implied by newly-constrained parameters (defaults to TRUE)
 #'
 #' @examples
 #' \dontrun{
@@ -491,7 +491,7 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #' fit_mcmc$constrain_pars(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
 #' }
 #'
-constrain_pars <- function(upars) {
+constrain_pars <- function(upars, transformed_parameters = TRUE, generated_quantities = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
@@ -500,8 +500,15 @@ constrain_pars <- function(upars) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
-  cpars <- private$model_methods_env_$constrain_pars(private$model_methods_env_$model_ptr_, private$model_methods_env_$model_rng_, upars)
-  skeleton <- create_skeleton(self$runset$args$model_variables)
+  cpars <- private$model_methods_env_$constrain_pars(
+    private$model_methods_env_$model_ptr_,
+    private$model_methods_env_$model_rng_,
+    upars, transformed_parameters, generated_quantities)
+
+  skeleton <- create_skeleton(private$model_methods_env_$param_metadata_,
+                              self$runset$args$model_variables,
+                              transformed_parameters,
+                              generated_quantities)
   utils::relist(cpars, skeleton)
 }
 CmdStanFit$set("public", name = "constrain_pars", value = constrain_pars)
