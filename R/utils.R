@@ -602,17 +602,24 @@ initialize_model_pointer <- function(env, data, seed = 0) {
   env$model_ptr_ <- ptr_and_rng$model_ptr
   env$model_rng_ <- ptr_and_rng$base_rng
   env$num_upars_ <- env$get_num_upars(env$model_ptr_)
+  env$param_metadata_ <- env$get_param_metadata(env$model_ptr_)
   invisible(NULL)
 }
 
-create_skeleton <- function(model_variables) {
-  model_pars <- model_variables$parameters
-  skeleton <- lapply(model_pars, function(par) {
-    dims <- par$dimensions
-    dims <- ifelse(dims == 0, 1, dims)
-    array(0, dim = dims)
+create_skeleton <- function(param_metadata, model_variables,
+                            transformed_parameters, generated_quantities) {
+  target_params <- names(model_variables$parameters)
+  if (transformed_parameters) {
+    target_params <- c(target_params,
+                       names(model_variables$transformed_parameters))
+  }
+  if (generated_quantities) {
+    target_params <- c(target_params,
+                       names(model_variables$generated_quantities))
+  }
+  lapply(param_metadata[target_params], function(par_dims) {
+    array(0, dim = ifelse(length(par_dims) == 0, 1, par_dims))
   })
-  stats::setNames(skeleton, names(model_pars))
 }
 
 get_standalone_hpp <- function(stan_file, stancflags) {
