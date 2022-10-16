@@ -64,6 +64,10 @@ CmdStanFit <- R6::R6Class(
             "rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)\n")
       }
       invisible(self)
+    },
+    expose_functions = function(global = FALSE, verbose = FALSE) {
+      expose_functions(self$functions, global, verbose)
+      invisible(NULL)
     }
   ),
   private = list(
@@ -279,30 +283,6 @@ init <- function() {
   private$init_
 }
 CmdStanFit$set("public", name = "init", value = init)
-
-expose_functions <- function(global = FALSE, verbose = FALSE) {
-  require_suggested_package("Rcpp")
-  require_suggested_package("RcppEigen")
-  require_suggested_package("decor")
-  if (self$functions$compiled) {
-    if (!global) {
-      message("Functions already compiled, nothing to do!")
-    } else {
-      message("Functions already compiled, copying to global environment")
-      # Create reference to global environment, avoids NOTE about assigning to global
-      pos <- 1
-      envir = as.environment(pos)
-      lapply(self$functions$fun_names, function(fun_name) {
-        assign(fun_name, get(fun_name, self$functions), envir)
-      })
-    }
-  } else {
-    message("Compiling standalone functions...")
-    expose_functions(self$functions, verbose, global)
-  }
-  invisible(NULL)
-}
-CmdStanFit$set("public", name = "expose_functions", value = expose_functions)
 
 #' Compile additional methods for accessing the model log-probability function
 #' and parameter constraining and unconstraining. This requires the `Rcpp` package.

@@ -682,7 +682,7 @@ prep_fun_cpp <- function(fun_body, model_lines) {
   gsub(pattern = ",\\s*)", replacement = ")", fun_body)
 }
 
-expose_functions <- function(env, verbose = FALSE, global = FALSE) {
+compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
   funs <- c(funs, length(env$hpp_code))
 
@@ -707,5 +707,28 @@ expose_functions <- function(env, verbose = FALSE, global = FALSE) {
     rcpp_source_stan(mod_stan_funs, env, verbose)
   }
   env$compiled <- TRUE
+  invisible(NULL)
+}
+
+expose_functions <- function(function_env, global = FALSE, verbose = FALSE) {
+  require_suggested_package("Rcpp")
+  require_suggested_package("RcppEigen")
+  require_suggested_package("decor")
+  if (function_env$compiled) {
+    if (!global) {
+      message("Functions already compiled, nothing to do!")
+    } else {
+      message("Functions already compiled, copying to global environment")
+      # Create reference to global environment, avoids NOTE about assigning to global
+      pos <- 1
+      envir = as.environment(pos)
+      lapply(function_env$fun_names, function(fun_name) {
+        assign(fun_name, get(fun_name, function_env), envir)
+      })
+    }
+  } else {
+    message("Compiling standalone functions...")
+    compile_functions(function_env, verbose, global)
+  }
   invisible(NULL)
 }
