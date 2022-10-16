@@ -332,8 +332,7 @@ init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
   if (hessian) {
     message("The hessian method relies on higher-order autodiff ",
             "which is still experimental. Please report any compilation ",
-            "errors that you encounter",
-            call. = FALSE)
+            "errors that you encounter")
   }
   message("Compiling additional model methods...")
   if (is.null(private$model_methods_env_$model_ptr)) {
