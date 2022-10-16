@@ -219,13 +219,15 @@ CmdStanModel <- R6::R6Class(
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
-    variables_ = NULL,
-    standalone_env_ = NULL
+    variables_ = NULL
   ),
   public = list(
+    functions = NULL,
     initialize = function(stan_file = NULL, exe_file = NULL, compile, ...) {
       args <- list(...)
       private$dir_ <- args$dir
+      self$functions <- new.env()
+      self$functions$compiled <- FALSE
       if (!is.null(stan_file)) {
         checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
         checkmate::assert_flag(compile)
@@ -323,6 +325,10 @@ CmdStanModel <- R6::R6Class(
               "- ", new_hpp_loc)
       private$hpp_file_ <- new_hpp_loc
       invisible(private$hpp_file_)
+    },
+    expose_functions = function(global = FALSE, verbose = FALSE) {
+      expose_functions(self$functions, global, verbose)
+      invisible(NULL)
     }
   )
 )
@@ -561,11 +567,9 @@ compile <- function(quiet = TRUE,
     }
   }
   stancflags_standalone <- c("--standalone-functions", stancflags_val, stanc_built_options)
-  private$standalone_env_ <- new.env()
-  private$standalone_env_$compiled <- FALSE
-  private$standalone_env_$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   if (compile_standalone) {
-    expose_functions(private$standalone_env_, !quiet)
+    expose_functions(self$functions, !quiet)
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
   withr::with_path(
@@ -1127,7 +1131,7 @@ sample <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1286,7 +1290,7 @@ sample_mpi <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1399,7 +1403,7 @@ optimize <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1518,7 +1522,7 @@ variational <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1636,7 +1640,7 @@ generate_quantities <- function(fitted_params,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = seq_along(fitted_params_files),
@@ -1701,7 +1705,7 @@ diagnose <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,

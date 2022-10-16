@@ -12,6 +12,23 @@ data_list <- testing_data("bernoulli")
 mod <- cmdstan_model(model, force_recompile = TRUE)
 fit <- mod$sample(data = data_list)
 
+
+test_that("Functions can be exposed in model object", {
+  mod$expose_functions(verbose = TRUE)
+
+  expect_equal(
+    fit$functions$retvec(c(1,2,3,4)),
+    c(1,2,3,4)
+  )
+
+  mod$expose_functions(global = TRUE, verbose = TRUE)
+
+  expect_equal(
+    retvec(c(1,2,3,4)),
+    c(1,2,3,4)
+  )
+})
+
 test_that("Functions can be exposed in fit object", {
   fit$expose_functions(verbose = TRUE)
 
