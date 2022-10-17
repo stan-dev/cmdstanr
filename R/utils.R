@@ -619,8 +619,8 @@ add_param_model_sizes <- function(model_variables, param_sizes) {
   })
 }
 
-create_skeleton <- function(model_variables,
-                            transformed_parameters, generated_quantities) {
+create_skeleton <- function(model_variables, transformed_parameters,
+                            generated_quantities) {
   blocks <- "parameters"
   if (transformed_parameters) {
     blocks <- c(blocks, "transformed_parameters")
@@ -632,8 +632,7 @@ create_skeleton <- function(model_variables,
   nested_skeletion <- lapply(model_variables[blocks], function(block) {
     lapply(block, function(item) {
       array(0, dim = ifelse(length(item$size) == 0, 1, item$size))
-      }
-    )
+    })
   })
   skeleton <- unlist(nested_skeletion, recursive = FALSE)
   stats::setNames(skeleton, gsub(paste0(blocks, ".", collapse = "|"), "", names(skeleton)))
