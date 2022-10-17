@@ -6,9 +6,10 @@
 \title{Transform a set of unconstrained parameter values to the constrained scale}
 \usage{
 constrain_pars(
-  upars,
+  upars = NULL,
   transformed_parameters = TRUE,
-  generated_quantities = TRUE
+  generated_quantities = TRUE,
+  skeleton_only = FALSE
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ implied by newly-constrained parameters (defaults to TRUE)}
 
 \item{generated_quantities}{(boolean) Whether to return generated quantities
 implied by newly-constrained parameters (defaults to TRUE)}
+
+\item{skeleton_only}{(boolean) Whether to return only the "skeleton" needed by the
+utils::relist function (defaults to FALSE)}
 }
 \description{
 The \verb{$constrain_pars()} method transforms input parameters to

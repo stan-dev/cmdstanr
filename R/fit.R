@@ -469,6 +469,8 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #'  implied by newly-constrained parameters (defaults to TRUE)
 #' @param generated_quantities (boolean) Whether to return generated quantities
 #'  implied by newly-constrained parameters (defaults to TRUE)
+#' @param skeleton_only (boolean) Whether to return only the "skeleton" needed by the
+#'  utils::relist function (defaults to FALSE)
 #'
 #' @examples
 #' \dontrun{
