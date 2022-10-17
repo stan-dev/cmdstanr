@@ -597,29 +597,46 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
   invisible(NULL)
 }
 
-initialize_model_pointer <- function(env, data, seed = 0) {
+initialize_model_env <- function(env, data, seed = 0) {
   ptr_and_rng <- env$model_ptr(data, seed)
   env$model_ptr_ <- ptr_and_rng$model_ptr
   env$model_rng_ <- ptr_and_rng$base_rng
   env$num_upars_ <- env$get_num_upars(env$model_ptr_)
-  env$param_metadata_ <- env$get_param_metadata(env$model_ptr_)
+  env$param_sizes_ <- env$get_param_sizes(env$model_ptr_)
   invisible(NULL)
 }
 
-create_skeleton <- function(param_metadata, model_variables,
+add_param_model_sizes <- function(model_variables, param_sizes) {
+  lapply(model_variables, function(block) {
+    item_names <- names(block)
+    item_in_metadata <- any(item_names %in% names(param_sizes))
+    if (item_in_metadata) {
+      for (nm in item_names) {
+        block[[nm]]$size <- param_sizes[[nm]]
+      }
+    }
+    block
+  })
+}
+
+create_skeleton <- function(model_variables,
                             transformed_parameters, generated_quantities) {
-  target_params <- names(model_variables$parameters)
+  blocks <- "parameters"
   if (transformed_parameters) {
-    target_params <- c(target_params,
-                       names(model_variables$transformed_parameters))
+    blocks <- c(blocks, "transformed_parameters")
   }
   if (generated_quantities) {
-    target_params <- c(target_params,
-                       names(model_variables$generated_quantities))
+    blocks <- c(blocks, "generated_quantities")
   }
-  lapply(param_metadata[target_params], function(par_dims) {
-    array(0, dim = ifelse(length(par_dims) == 0, 1, par_dims))
+
+  nested_skeletion <- lapply(model_variables[blocks], function(block) {
+    lapply(block, function(item) {
+      array(0, dim = ifelse(length(item$size) == 0, 1, item$size))
+      }
+    )
   })
+  skeleton <- unlist(nested_skeletion, recursive = FALSE)
+  stats::setNames(skeleton, gsub(paste0(blocks, ".", collapse = "|"), "", names(skeleton)))
 }
 
 get_standalone_hpp <- function(stan_file, stancflags) {

@@ -8,21 +8,20 @@
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
-    runset = NULL,
     functions = NULL,
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
-      self$runset <- runset
+      private$runset_ <- runset
       private$model_methods_env_ <- runset$model_methods_env()
       self$functions <- runset$standalone_env()
 
       if (!is.null(private$model_methods_env_$model_ptr)) {
-        initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
+        initialize_model_env(private$model_methods_env_, self$data_file(), 0)
       }
       invisible(self)
     },
     num_procs = function() {
-      self$runset$num_procs()
+      private$runset_$num_procs()
     },
     print = function(variables = NULL, ..., digits = 2, max_rows = getOption("cmdstanr_max_rows", 10)) {
       if (is.null(private$draws_) &&
@@ -68,14 +67,16 @@ CmdStanFit <- R6::R6Class(
     expose_functions = function(global = FALSE, verbose = FALSE) {
       expose_functions(self$functions, global, verbose)
       invisible(NULL)
-    }
+    },
+    variables = function() { private$runset_$args$model_variables }
   ),
   private = list(
     draws_ = NULL,
     metadata_ = NULL,
     init_ = NULL,
     profiles_ = NULL,
-    model_methods_env_ = NULL
+    model_methods_env_ = NULL,
+    runset_ = NULL
   )
 )
 
@@ -318,7 +319,11 @@ init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     expose_model_methods(private$model_methods_env_, verbose, hessian)
   }
-  initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
+  initialize_model_env(private$model_methods_env_, self$data_file(), seed)
+  private$runset_$args$model_variables <-
+    add_param_model_sizes(private$runset_$args$model_variables,
+                          private$model_methods_env_$param_sizes_)
+
   invisible(NULL)
 }
 CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods)
@@ -435,7 +440,7 @@ unconstrain_pars <- function(pars) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  model_par_names <- names(self$runset$args$model_variables$parameters)
+  model_par_names <- names(private$runset_$args$model_variables$parameters)
   prov_par_names <- names(pars)
 
   model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
@@ -447,7 +452,7 @@ unconstrain_pars <- function(pars) {
   # Ignore extraneous parameters
   model_pars_only <- pars[model_par_names]
 
-  stan_pars <- process_init_list(list(pars), num_procs = 1, self$runset$args$model_variables)
+  stan_pars <- process_init_list(list(pars), num_procs = 1, private$runset_$args$model_variables)
   private$model_methods_env_$unconstrain_pars(private$model_methods_env_$model_ptr_, stan_pars)
 }
 CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
@@ -471,24 +476,32 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #' fit_mcmc$constrain_pars(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
 #' }
 #'
-constrain_pars <- function(upars, transformed_parameters = TRUE, generated_quantities = TRUE) {
+constrain_pars <- function(upars = NULL, transformed_parameters = TRUE,
+                            generated_quantities = TRUE,
+                            skeleton_only = FALSE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
+
+  skeleton <- create_skeleton(private$runset_$args$model_variables,
+                              transformed_parameters,
+                              generated_quantities)
+
+  if (skeleton_only) {
+    return(skeleton)
+  }
+
   if (length(upars) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
+
   cpars <- private$model_methods_env_$constrain_pars(
     private$model_methods_env_$model_ptr_,
     private$model_methods_env_$model_rng_,
     upars, transformed_parameters, generated_quantities)
 
-  skeleton <- create_skeleton(private$model_methods_env_$param_metadata_,
-                              self$runset$args$model_variables,
-                              transformed_parameters,
-                              generated_quantities)
   utils::relist(cpars, skeleton)
 }
 CmdStanFit$set("public", name = "constrain_pars", value = constrain_pars)
@@ -652,13 +665,13 @@ CmdStanFit$set("public", name = "summary", value = summary)
 #' }
 #'
 cmdstan_summary <- function(flags = NULL) {
-  self$runset$run_cmdstan_tool("stansummary", flags = flags)
+  private$runset_$run_cmdstan_tool("stansummary", flags = flags)
 }
 CmdStanFit$set("public", name = "cmdstan_summary", value = cmdstan_summary)
 
 #' @rdname fit-method-cmdstan_summary
 cmdstan_diagnose <- function() {
-  self$runset$run_cmdstan_tool("diagnose")
+  private$runset_$run_cmdstan_tool("diagnose")
 }
 CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 
@@ -734,7 +747,7 @@ save_output_files <- function(dir = ".",
                               basename = NULL,
                               timestamp = TRUE,
                               random = TRUE) {
-  self$runset$save_output_files(dir, basename, timestamp, random)
+  private$runset_$save_output_files(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_output_files", value = save_output_files)
 
@@ -743,7 +756,7 @@ save_latent_dynamics_files <- function(dir = ".",
                                        basename = NULL,
                                        timestamp = TRUE,
                                        random = TRUE) {
-  self$runset$save_latent_dynamics_files(dir, basename, timestamp, random)
+  private$runset_$save_latent_dynamics_files(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)
 
@@ -752,7 +765,7 @@ save_profile_files <- function(dir = ".",
                                basename = NULL,
                                timestamp = TRUE,
                                random = TRUE) {
-  self$runset$save_profile_files(dir, basename, timestamp, random)
+  private$runset_$save_profile_files(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_profile_files", value = save_profile_files)
 
@@ -761,7 +774,7 @@ save_data_file <- function(dir = ".",
                            basename = NULL,
                            timestamp = TRUE,
                            random = TRUE) {
-  self$runset$save_data_file(dir, basename, timestamp, random)
+  private$runset_$save_data_file(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
 
@@ -769,25 +782,25 @@ CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
 #' @param include_failed (logical) Should CmdStan runs that failed also be
 #'   included? The default is `FALSE.`
 output_files <- function(include_failed = FALSE) {
-  self$runset$output_files(include_failed)
+  private$runset_$output_files(include_failed)
 }
 CmdStanFit$set("public", name = "output_files", value = output_files)
 
 #' @rdname fit-method-save_output_files
 profile_files <- function(include_failed = FALSE) {
-  self$runset$profile_files(include_failed)
+  private$runset_$profile_files(include_failed)
 }
 CmdStanFit$set("public", name = "profile_files", value = profile_files)
 
 #' @rdname fit-method-save_output_files
 latent_dynamics_files <- function(include_failed = FALSE) {
-  self$runset$latent_dynamics_files(include_failed)
+  private$runset_$latent_dynamics_files(include_failed)
 }
 CmdStanFit$set("public", name = "latent_dynamics_files", value = latent_dynamics_files)
 
 #' @rdname fit-method-save_output_files
 data_file <- function() {
-  self$runset$data_file()
+  private$runset_$data_file()
 }
 CmdStanFit$set("public", name = "data_file", value = data_file)
 
@@ -823,7 +836,7 @@ CmdStanFit$set("public", name = "data_file", value = data_file)
 #' }
 #'
 time <- function() {
-  self$runset$time()
+  private$runset_$time()
 }
 CmdStanFit$set("public", name = "time", value = time)
 
@@ -861,7 +874,7 @@ CmdStanFit$set("public", name = "time", value = time)
 output <- function(id = NULL) {
   # MCMC has separate implementation but doc is shared
   # Non-MCMC fit is obtained with one process only so id is ignored
-  cat(paste(self$runset$procs$proc_output(1), collapse = "\n"))
+  cat(paste(private$runset_$procs$proc_output(1), collapse = "\n"))
 }
 CmdStanFit$set("public", name = "output", value = output)
 
@@ -921,7 +934,7 @@ CmdStanFit$set("public", name = "metadata", value = metadata)
 #' }
 #'
 return_codes <- function() {
-  self$runset$procs$return_codes()
+  private$runset_$procs$return_codes()
 }
 CmdStanFit$set("public", name = "return_codes", value = return_codes)
 
@@ -1004,7 +1017,7 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #' }
 #'
 code <- function() {
-  stan_code <- self$runset$stan_code()
+  stan_code <- private$runset_$stan_code()
   if (is.null(stan_code)) {
     warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
@@ -1082,7 +1095,7 @@ CmdStanMCMC <- R6::R6Class(
         if (runset$args$method_args$fixed_param) {
           private$read_csv_(variables = "", sampler_diagnostics = "")
         } else {
-          diagnostics <- self$runset$args$method_args$diagnostics
+          diagnostics <- private$runset_$args$method_args$diagnostics
           private$read_csv_(
             variables = "",
             sampler_diagnostics = convert_hmc_diagnostic_names(diagnostics)
@@ -1094,9 +1107,9 @@ CmdStanMCMC <- R6::R6Class(
     # override the CmdStanFit output method
     output = function(id = NULL) {
       if (is.null(id)) {
-        self$runset$procs$proc_output()
+        private$runset_$procs$proc_output()
       } else {
-        cat(paste(self$runset$procs$proc_output(id), collapse = "\n"))
+        cat(paste(private$runset_$procs$proc_output(id), collapse = "\n"))
       }
     },
 
@@ -1697,7 +1710,7 @@ CmdStanGQ <- R6::R6Class(
   inherit = CmdStanFit,
   public = list(
     fitted_params_files = function() {
-      self$runset$args$method_args$fitted_params
+      private$runset_$args$method_args$fitted_params
     },
     num_chains = function() {
       super$num_procs()
@@ -1736,9 +1749,9 @@ CmdStanGQ <- R6::R6Class(
     # override CmdStanFit output method
     output = function(id = NULL) {
       if (is.null(id)) {
-        self$runset$procs$proc_output()
+        private$runset_$procs$proc_output()
       } else {
-        cat(paste(self$runset$procs$proc_output(id), collapse = "\n"))
+        cat(paste(private$runset_$procs$proc_output(id), collapse = "\n"))
       }
     }
   ),
@@ -1806,8 +1819,8 @@ CmdStanDiagnose <- R6::R6Class(
     runset = NULL,
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
-      self$runset <- runset
-      csv_data <- read_cmdstan_csv(self$runset$output_files())
+      private$runset_ <- runset
+      csv_data <- read_cmdstan_csv(private$runset_$output_files())
       private$metadata_ <- csv_data$metadata
       private$gradients_ <- csv_data$gradients
       private$lp_ <- csv_data$lp
