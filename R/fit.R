@@ -8,8 +8,8 @@
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
-    functions = NULL,
     runset = NULL,
+    functions = NULL,
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
@@ -17,7 +17,7 @@ CmdStanFit <- R6::R6Class(
       self$functions <- runset$standalone_env()
 
       if (!is.null(private$model_methods_env_$model_ptr)) {
-        initialize_model_env(private$model_methods_env_, self$data_file(), 0)
+        initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
       }
       invisible(self)
     },
@@ -68,8 +68,7 @@ CmdStanFit <- R6::R6Class(
     expose_functions = function(global = FALSE, verbose = FALSE) {
       expose_functions(self$functions, global, verbose)
       invisible(NULL)
-    },
-    variables = function() { self$runset$args$model_variables }
+    }
   ),
   private = list(
     draws_ = NULL,
@@ -319,11 +318,7 @@ init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     expose_model_methods(private$model_methods_env_, verbose, hessian)
   }
-  initialize_model_env(private$model_methods_env_, self$data_file(), seed)
-  self$runset$args$model_variables <-
-    add_param_model_sizes(self$runset$args$model_variables,
-                          private$model_methods_env_$param_sizes_)
-
+  initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
   invisible(NULL)
 }
 CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods)
@@ -478,18 +473,17 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #' fit_mcmc$constrain_pars(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
 #' }
 #'
-constrain_pars <- function(upars = NULL, transformed_parameters = TRUE,
-                            generated_quantities = TRUE,
+constrain_pars <- function(upars, transformed_parameters = TRUE, generated_quantities = TRUE,
                             skeleton_only = FALSE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
 
-  skeleton <- create_skeleton(self$runset$args$model_variables,
+  skeleton <- create_skeleton(private$model_methods_env_$param_metadata_,
+                              self$runset$args$model_variables,
                               transformed_parameters,
                               generated_quantities)
-
   if (skeleton_only) {
     return(skeleton)
   }
@@ -498,12 +492,10 @@ constrain_pars <- function(upars = NULL, transformed_parameters = TRUE,
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
-
   cpars <- private$model_methods_env_$constrain_pars(
     private$model_methods_env_$model_ptr_,
     private$model_methods_env_$model_rng_,
     upars, transformed_parameters, generated_quantities)
-
   utils::relist(cpars, skeleton)
 }
 CmdStanFit$set("public", name = "constrain_pars", value = constrain_pars)

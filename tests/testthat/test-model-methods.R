@@ -116,7 +116,6 @@ test_that("methods error for incorrect inputs", {
 })
 
 test_that("Methods error with already-compiled model", {
-  mod1 <- testing_model("bernoulli")
   mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
   fit <- mod$sample(data = data_list, chains = 1)

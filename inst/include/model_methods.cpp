@@ -70,7 +70,7 @@ size_t get_num_upars(SEXP ext_model_ptr) {
 }
 
 // [[Rcpp::export]]
-Rcpp::List get_param_sizes(SEXP ext_model_ptr) {
+Rcpp::List get_param_metadata(SEXP ext_model_ptr) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
   std::vector<std::string> param_names;
   std::vector<std::vector<size_t> > param_dims;

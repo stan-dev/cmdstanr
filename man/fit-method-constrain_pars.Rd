@@ -6,7 +6,7 @@
 \title{Transform a set of unconstrained parameter values to the constrained scale}
 \usage{
 constrain_pars(
-  upars = NULL,
+  upars,
   transformed_parameters = TRUE,
   generated_quantities = TRUE,
   skeleton_only = FALSE
