@@ -66,6 +66,14 @@ test_that("Methods return correct values", {
   expect_equal(fit$constrain_pars(c(0.1), generated_quantities = FALSE),
                list(theta = 0.52497918747894001257))
 
+  skeleton <- list(
+    theta = array(0, dim = 1),
+    log_lik = array(0, dim = data_list$N)
+  )
+
+  expect_equal(fit$constrain_pars(skeleton_only = TRUE),
+               skeleton)
+
   upars <- fit$unconstrain_pars(cpars)
   expect_equal(upars, c(0.1))
 })

@@ -464,6 +464,8 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #'  implied by newly-constrained parameters (defaults to TRUE)
 #' @param generated_quantities (boolean) Whether to return generated quantities
 #'  implied by newly-constrained parameters (defaults to TRUE)
+#' @param skeleton_only (boolean) Whether to return only the "skeleton" needed by the
+#'  utils::relist function (defaults to FALSE)
 #'
 #' @examples
 #' \dontrun{
@@ -471,11 +473,21 @@ CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
 #' fit_mcmc$constrain_pars(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
 #' }
 #'
-constrain_pars <- function(upars, transformed_parameters = TRUE, generated_quantities = TRUE) {
+constrain_pars <- function(upars, transformed_parameters = TRUE, generated_quantities = TRUE,
+                            skeleton_only = FALSE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
+
+  skeleton <- create_skeleton(private$model_methods_env_$param_metadata_,
+                              self$runset$args$model_variables,
+                              transformed_parameters,
+                              generated_quantities)
+  if (skeleton_only) {
+    return(skeleton)
+  }
+
   if (length(upars) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
@@ -484,11 +496,6 @@ constrain_pars <- function(upars, transformed_parameters = TRUE, generated_quant
     private$model_methods_env_$model_ptr_,
     private$model_methods_env_$model_rng_,
     upars, transformed_parameters, generated_quantities)
-
-  skeleton <- create_skeleton(private$model_methods_env_$param_metadata_,
-                              self$runset$args$model_variables,
-                              transformed_parameters,
-                              generated_quantities)
   utils::relist(cpars, skeleton)
 }
 CmdStanFit$set("public", name = "constrain_pars", value = constrain_pars)
