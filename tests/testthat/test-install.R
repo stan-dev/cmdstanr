@@ -28,11 +28,11 @@ test_that("install_cmdstan() errors if installation already exists", {
   install_dir <- cmdstan_default_install_path()
   dir <- file.path(install_dir, "cmdstan-2.23.0")
   if (!dir.exists(dir)) {
-    dir.create(dir)
+    dir.create(dir, recursive = TRUE)
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    version = "2.23.0", wsl = os_is_wsl()),
+                    version = "2.23.0", wsl = FALSE),
     "An installation already exists",
     fixed = TRUE
   )
