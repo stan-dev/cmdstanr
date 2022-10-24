@@ -14,6 +14,7 @@ fit <- mod$sample(data = data_list)
 
 
 test_that("Functions can be exposed in model object", {
+  skip_if(os_is_wsl())
   mod$expose_functions(verbose = TRUE)
 
   expect_equal(
@@ -30,6 +31,7 @@ test_that("Functions can be exposed in model object", {
 })
 
 test_that("Functions can be exposed in fit object", {
+  skip_if(os_is_wsl())
   fit$expose_functions(verbose = TRUE)
 
   expect_equal(
@@ -39,6 +41,7 @@ test_that("Functions can be exposed in fit object", {
 })
 
 test_that("Compiled functions can be copied to global environment", {
+  skip_if(os_is_wsl())
   expect_message(
     fit$expose_functions(global = TRUE),
     "Functions already compiled, copying to global environment",
@@ -53,6 +56,7 @@ test_that("Compiled functions can be copied to global environment", {
 
 
 test_that("Functions can be compiled with model", {
+  skip_if(os_is_wsl())
   mod <- cmdstan_model(model, force_recompile = TRUE, compile_standalone = TRUE)
   fit <- mod$sample(data = data_list)
 
@@ -80,6 +84,7 @@ test_that("Functions can be compiled with model", {
 })
 
 test_that("rng functions can be exposed", {
+  skip_if(os_is_wsl())
   function_decl <- "functions { real normal_rng(real mu) { return normal_rng(mu, 1); } }"
   stan_prog <- paste(function_decl,
                      paste(readLines(testing_stan_file("bernoulli")),

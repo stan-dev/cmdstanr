@@ -524,6 +524,15 @@ compile <- function(quiet = TRUE,
     }
   }
 
+  if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
+    warning("Additional model methods and standalone functions are not "
+            "currently available with WSL CmdStan and will not be compiled",
+            call. = FALSE)
+    compile_model_methods <- FALSE
+    compile_standalone <- FALSE
+    compile_hessian_method <- FALSE
+  }
+
   temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   temp_file_no_ext <- strip_ext(temp_stan_file)

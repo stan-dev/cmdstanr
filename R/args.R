@@ -63,7 +63,7 @@ CmdStanArgs <- R6::R6Class(
         self$output_dir <- ifelse(is.null(output_dir),
                                   file.path(wsl_dir_prefix(), wsl_tempdir()),
                                   wsl_safe_path(output_dir))
-      } else (getRversion() < "3.5.0") {
+      } else if (getRversion() < "3.5.0") {
         self$output_dir <- output_dir %||% tempdir()
       } else {
         if (getRversion() < "3.5.0") {

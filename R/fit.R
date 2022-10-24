@@ -307,6 +307,11 @@ CmdStanFit$set("public", name = "init", value = init)
 #' }
 #'
 init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
+  if (os_is_wsl()) {
+    stop("Additional model methods are not currently available with ",
+          "WSL CmdStan and will not be compiled",
+          call. = FALSE)
+  }
   require_suggested_package("Rcpp")
   require_suggested_package("RcppEigen")
   if (length(private$model_methods_env_$hpp_code_) == 0) {
