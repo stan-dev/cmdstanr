@@ -452,11 +452,8 @@ test_that("sampling with inits works with include_paths", {
     file.remove(exe)
   }
 
-  expect_interactive_message(
     mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = FALSE,
-                                   include_paths = test_path("resources", "stan")),
-    "Compiling Stan program"
-  )
+                                   include_paths = test_path("resources", "stan"))
 
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 
