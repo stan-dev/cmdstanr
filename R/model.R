@@ -525,7 +525,7 @@ compile <- function(quiet = TRUE,
   }
 
   if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
-    warning("Additional model methods and standalone functions are not "
+    warning("Additional model methods and standalone functions are not ",
             "currently available with WSL CmdStan and will not be compiled",
             call. = FALSE)
     compile_model_methods <- FALSE
