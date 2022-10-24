@@ -453,7 +453,7 @@ test_that("sampling with inits works with include_paths", {
   }
 
   expect_interactive_message(
-    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
+    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = FALSE,
                                    include_paths = test_path("resources", "stan")),
     "Compiling Stan program"
   )
