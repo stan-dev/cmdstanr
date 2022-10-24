@@ -14,9 +14,10 @@ make_all_fail <- function(x) {
   all_fail
 }
 
-make_some_fail <- function(x) {
+make_some_fail <- function(x, seed = 0) {
   num_files <- 0
   attempt <- 1
+  set.seed(seed)
   while (num_files == 0 || num_files == 4) {
     utils::capture.output(
       check_some_fail <- x$sample(
@@ -50,8 +51,9 @@ test_that("correct warnings are thrown when all chains fail", {
 })
 
 test_that("correct warnings are thrown when some chains fail", {
+  fit_tmp <- suppressWarnings(make_some_fail(mod, seed = 2022))
   expect_warning(
-     fit_tmp <- make_some_fail(mod),
+     make_some_fail(mod, seed = 2022),
      paste(4 - length(fit_tmp$output_files(include_failed = FALSE)), "chain(s) finished unexpectedly"),
      fixed = TRUE
   )

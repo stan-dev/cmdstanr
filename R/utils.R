@@ -651,3 +651,223 @@ check_file_exists <- function(files, access = NULL, ...) {
 
 assert_dir_exists <- checkmate::makeAssertionFunction(check_dir_exists)
 assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
+
+# Model methods & expose_functions helpers ------------------------------------------------------
+get_cmdstan_flags <- function(flag_name) {
+  cmdstan_path <- cmdstanr::cmdstan_path()
+  flags <- processx::run(
+    "make",
+    args = c(paste0("print-", flag_name)),
+    wd = cmdstan_path
+  )$stdout
+
+  flags <- gsub("\n", "", flags, fixed = TRUE)
+
+  flags <- gsub(
+    pattern = paste0(flag_name, " ="),
+    replacement = "", x = flags, fixed = TRUE
+  )
+
+  if (flag_name %in% c("LDLIBS", "LDFLAGS_TBB")) {
+    # shQuote -L paths and rpaths
+    # The LDLIBS flags change paths to /c/ instead of C:/, need to revert to
+    # format consistent with path on windows
+    if (.Platform$OS.type == "windows") {
+      flags <- gsub("(-L|-rpath),/([a-zA-Z])/", "\\1,\\2:/", flags, perl = TRUE)
+    }
+    flags <- gsub(cmdstan_path, "", flags, ignore.case = TRUE)
+    flags <- gsub("(-L,|-rpath,)/stan/lib/stan_math/lib/tbb",
+                  paste0("\\1", shQuote(paste0(cmdstan_path, "/stan/lib/stan_math/lib/tbb"))),
+                  flags)
+    return(flags)
+  }
+
+  # shQuote include paths
+  flags <- gsub("-I ", "-I", flags, fixed = TRUE)
+  flags <- strsplit(flags, " ", fixed = TRUE)[[1]]
+  include_flags <- grep("^-I", flags)
+  flags <- gsub("^-I", paste0(cmdstan_path, "/"), flags)
+  flags[include_flags] <- paste0("-I", shQuote(flags[include_flags]))
+  flags <- paste(flags, collapse = " ")
+
+  # shQuote Remaining " stan/" paths
+  flags <- strsplit(flags, split = " ", fixed = TRUE)[[1]]
+  oth_stan_flags <- grep("^stan/", flags)
+  flags[oth_stan_flags] <- shQuote(paste0(cmdstan_path, "/", flags[oth_stan_flags]))
+  paste(flags, collapse = " ")
+}
+
+rcpp_source_stan <- function(code, env, verbose = FALSE) {
+  cxxflags <- get_cmdstan_flags("CXXFLAGS")
+  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
+  libs <- paste(sapply(libs, get_cmdstan_flags), collapse = "")
+  if (.Platform$OS.type == "windows") {
+    libs <- paste(libs, "-fopenmp")
+  }
+  lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
+                 "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
+  withr::with_path(paste0(cmdstan_path(), lib_paths),
+    withr::with_makevars(
+      c(
+        USE_CXX14 = 1,
+        PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
+        PKG_CXXFLAGS = cxxflags,
+        PKG_LIBS = libs
+      ),
+      Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+    )
+  )
+  invisible(NULL)
+}
+
+expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+  code <- c(env$hpp_code_,
+            readLines(system.file("include", "model_methods.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+
+  if (hessian) {
+    code <- c(code,
+            readLines(system.file("include", "hessian.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+  }
+
+  code <- paste(code, collapse = "\n")
+  rcpp_source_stan(code, env, verbose)
+  invisible(NULL)
+}
+
+initialize_model_pointer <- function(env, data, seed = 0) {
+  ptr_and_rng <- env$model_ptr(data, seed)
+  env$model_ptr_ <- ptr_and_rng$model_ptr
+  env$model_rng_ <- ptr_and_rng$base_rng
+  env$num_upars_ <- env$get_num_upars(env$model_ptr_)
+  env$param_metadata_ <- env$get_param_metadata(env$model_ptr_)
+  invisible(NULL)
+}
+
+create_skeleton <- function(param_metadata, model_variables,
+                            transformed_parameters, generated_quantities) {
+  target_params <- names(model_variables$parameters)
+  if (transformed_parameters) {
+    target_params <- c(target_params,
+                       names(model_variables$transformed_parameters))
+  }
+  if (generated_quantities) {
+    target_params <- c(target_params,
+                       names(model_variables$generated_quantities))
+  }
+  lapply(param_metadata[target_params], function(par_dims) {
+    array(0, dim = ifelse(length(par_dims) == 0, 1, par_dims))
+  })
+}
+
+get_standalone_hpp <- function(stan_file, stancflags) {
+  status <- withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path()
+      ),
+      wsl_compatible_run(
+        command = stanc_cmd(),
+        args = c(stan_file,
+                stancflags),
+        wd = cmdstan_path(),
+        error_on_status = FALSE
+      )
+    )
+  if (status$status == 0) {
+    name <- strip_ext(basename(stan_file))
+    path <- dirname(stan_file)
+    hpp_path <- file.path(path, paste0(name, ".hpp"))
+    hpp <- readLines(hpp_path)
+    unlink(hpp_path)
+    hpp
+  } else {
+    invisible(NULL)
+  }
+}
+
+# Construct the plain return type for a standalone function by
+# looking up the return type of the functor declaration and replacing
+# the template types (i.e., T0__) with double
+get_plain_rtn <- function(fun_body, model_lines) {
+  fun_props <- decor::parse_cpp_function(paste(fun_body[-1], collapse = "\n"))
+  struct_start <- grep(paste0("struct ", fun_props$name, "_functor"), model_lines)
+  struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
+
+  struct_rtn <- grep("nullptr>", model_lines[struct_start:struct_op_start], fixed = TRUE) + struct_start
+
+  rtn_type <- paste0(model_lines[struct_rtn:struct_op_start], collapse = " ")
+  rm_trailing_nullptr <- gsub(".*nullptr>[^,]", "", rtn_type)
+  rm_operator <- gsub("operator().*", "", rtn_type)
+  repl_dbl <- gsub("T[0-9*]__", "double", rm_operator)
+  gsub("(^\\s|\\s$)", "", repl_dbl)
+}
+
+# Prepare the c++ code for a standalone function so that it can be exported to R:
+# - Replace the auto return type with the plain type
+# - Add Rcpp::export attribute
+# - Remove the pstream__ argument and pass Rcpp::Rcout by default
+# - Replace the boost::ecuyer1988& base_rng__ argument with an integer seed argument
+#     that instantiates an RNG
+prep_fun_cpp <- function(fun_body, model_lines) {
+  fun_body <- gsub("auto", get_plain_rtn(fun_body, model_lines), fun_body)
+  fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]", fun_body, fixed = TRUE)
+  fun_body <- gsub("std::ostream* pstream__ = nullptr", "", fun_body, fixed = TRUE)
+  fun_body <- gsub("boost::ecuyer1988& base_rng__", "size_t seed = 0", fun_body, fixed = TRUE)
+  fun_body <- gsub("base_rng__,", "*(new boost::ecuyer1988(seed)),", fun_body, fixed = TRUE)
+  fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
+  fun_body <- paste(fun_body, collapse = "\n")
+  gsub(pattern = ",\\s*)", replacement = ")", fun_body)
+}
+
+compile_functions <- function(env, verbose = FALSE, global = FALSE) {
+  funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
+  funs <- c(funs, length(env$hpp_code))
+
+  stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
+    fun_body <- env$hpp_code[funs[ind]:(funs[ind + 1] - 1)]
+    prep_fun_cpp(fun_body, env$hpp_code)
+  })
+
+  env$fun_names <- sapply(stan_funs, function(fun) {
+    decor::parse_cpp_function(fun, is_attribute = TRUE)$name
+  })
+
+  mod_stan_funs <- paste(c(
+    env$hpp_code[1:(funs[1] - 1)],
+    "#include <RcppEigen.h>",
+    "// [[Rcpp::depends(RcppEigen)]]",
+    stan_funs),
+  collapse = "\n")
+  if (global) {
+    rcpp_source_stan(mod_stan_funs, globalenv(), verbose)
+  } else {
+    rcpp_source_stan(mod_stan_funs, env, verbose)
+  }
+  env$compiled <- TRUE
+  invisible(NULL)
+}
+
+expose_functions <- function(function_env, global = FALSE, verbose = FALSE) {
+  require_suggested_package("Rcpp")
+  require_suggested_package("RcppEigen")
+  require_suggested_package("decor")
+  if (function_env$compiled) {
+    if (!global) {
+      message("Functions already compiled, nothing to do!")
+    } else {
+      message("Functions already compiled, copying to global environment")
+      # Create reference to global environment, avoids NOTE about assigning to global
+      pos <- 1
+      envir = as.environment(pos)
+      lapply(function_env$fun_names, function(fun_name) {
+        assign(fun_name, get(fun_name, function_env), envir)
+      })
+    }
+  } else {
+    message("Compiling standalone functions...")
+    compile_functions(function_env, verbose, global)
+  }
+  invisible(NULL)
+}

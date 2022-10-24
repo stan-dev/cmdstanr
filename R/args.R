@@ -26,6 +26,8 @@ CmdStanArgs <- R6::R6Class(
     initialize = function(model_name,
                           stan_file = NULL,
                           stan_code = NULL,
+                          model_methods_env = NULL,
+                          standalone_env = NULL,
                           exe_file,
                           proc_ids,
                           method_args,
@@ -43,6 +45,8 @@ CmdStanArgs <- R6::R6Class(
       self$model_name <- model_name
       self$stan_code <- stan_code
       self$exe_file <- exe_file
+      self$model_methods_env <- model_methods_env
+      self$standalone_env <- standalone_env
       self$proc_ids <- proc_ids
       self$data_file <- data_file
       self$seed <- seed
@@ -52,12 +56,15 @@ CmdStanArgs <- R6::R6Class(
       self$method <- self$method_args$method
       self$save_latent_dynamics <- save_latent_dynamics
       self$using_tempdir <- is.null(output_dir)
+      self$model_variables <- model_variables
       if (os_is_wsl()) {
         # Want to ensure that any files under WSL are written to a tempdir within
         # WSL to avoid IO performance issues
         self$output_dir <- ifelse(is.null(output_dir),
                                   file.path(wsl_dir_prefix(), wsl_tempdir()),
                                   wsl_safe_path(output_dir))
+      } else (getRversion() < "3.5.0") {
+        self$output_dir <- output_dir %||% tempdir()
       } else {
         if (getRversion() < "3.5.0") {
           self$output_dir <- output_dir %||% tempdir()

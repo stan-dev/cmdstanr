@@ -210,6 +210,7 @@ CmdStanModel <- R6::R6Class(
     model_name_ = character(),
     exe_file_ = character(),
     hpp_file_ = character(),
+    model_methods_env_ = NULL,
     dir_ = NULL,
     cpp_options_ = list(),
     stanc_options_ = list(),
@@ -221,9 +222,12 @@ CmdStanModel <- R6::R6Class(
     variables_ = NULL
   ),
   public = list(
+    functions = NULL,
     initialize = function(stan_file = NULL, exe_file = NULL, compile, ...) {
       args <- list(...)
       private$dir_ <- args$dir
+      self$functions <- new.env()
+      self$functions$compiled <- FALSE
       if (!is.null(stan_file)) {
         assert_file_exists(stan_file, access = "r", extension = "stan")
         checkmate::assert_flag(compile)
@@ -321,6 +325,10 @@ CmdStanModel <- R6::R6Class(
               "- ", new_hpp_loc)
       private$hpp_file_ <- new_hpp_loc
       invisible(private$hpp_file_)
+    },
+    expose_functions = function(global = FALSE, verbose = FALSE) {
+      expose_functions(self$functions, global, verbose)
+      invisible(NULL)
     }
   )
 )
@@ -382,6 +390,11 @@ CmdStanModel <- R6::R6Class(
 #' @param force_recompile (logical) Should the model be recompiled even if was
 #'   not modified since last compiled. The default is `FALSE`. Can also be set
 #'   via a global `cmdstanr_force_recompile` option.
+#' @param compile_model_methods (logical) Compile additional model methods
+#'   (`log_prob()`, `grad_log_prob()`, `constrain_pars()`, `unconstrain_pars()`)
+#' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
+#'   be compiled with the model methods?
+#' @param compile_standalone (logical) Should functions in the Stan model be compiled for used in R?
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
@@ -431,6 +444,9 @@ compile <- function(quiet = TRUE,
                     cpp_options = list(),
                     stanc_options = list(),
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
+                    compile_model_methods = FALSE,
+                    compile_hessian_method = FALSE,
+                    compile_standalone = FALSE,
                     #deprecated
                     threads = FALSE) {
   if (length(self$stan_file()) == 0) {
@@ -550,6 +566,11 @@ compile <- function(quiet = TRUE,
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
   }
+  stancflags_standalone <- c("--standalone-functions", stancflags_val, stanc_built_options)
+  self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  if (compile_standalone) {
+    expose_functions(self$functions, !quiet)
+  }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
   withr::with_path(
     c(
@@ -619,6 +640,13 @@ compile <- function(quiet = TRUE,
   private$precompile_cpp_options_ <- NULL
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
+  private$model_methods_env_ <- new.env()
+  private$model_methods_env_$hpp_code_ <- readLines(private$hpp_file_)
+  if (compile_model_methods) {
+    expose_model_methods(env = private$model_methods_env_,
+                          verbose = !quiet,
+                          hessian = compile_hessian_method)
+  }
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile)
@@ -1108,6 +1136,8 @@ sample <- function(data = NULL,
     method_args = sample_args,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
+    model_methods_env = private$model_methods_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1265,6 +1295,8 @@ sample_mpi <- function(data = NULL,
     method_args = sample_args,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
+    model_methods_env = private$model_methods_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
@@ -1376,6 +1408,8 @@ optimize <- function(data = NULL,
     method_args = optimize_args,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
+    model_methods_env = private$model_methods_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1493,6 +1527,8 @@ variational <- function(data = NULL,
     method_args = variational_args,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
+    model_methods_env = private$model_methods_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
@@ -1609,6 +1645,8 @@ generate_quantities <- function(fitted_params,
     method_args = gq_args,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
+    model_methods_env = private$model_methods_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = seq_along(fitted_params_files),
@@ -1672,6 +1710,8 @@ diagnose <- function(data = NULL,
     method_args = diagnose_args,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
+    model_methods_env = private$model_methods_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,
