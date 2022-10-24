@@ -61,7 +61,7 @@ jobs:
       - uses: Vampire/setup-wsl@v1
         with:
             distribution: Ubuntu-22.04
-            use-cache: 'true'
+            use-cache: 'false'
             set-as-default: 'true'
       - name: Install WSL Dependencies
         run: |
