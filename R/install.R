@@ -93,10 +93,10 @@ install_cmdstan <- function(dir = NULL,
               call. = FALSE)
       wsl <- FALSE
     } else {
-      .cmdstanr$WSL <- true
+      .cmdstanr$WSL <- TRUE
     }
   } else {
-    .cmdstanr$WSL <- false
+    .cmdstanr$WSL <- FALSE
   }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
