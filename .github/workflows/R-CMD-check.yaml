@@ -88,10 +88,6 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-        shell: Rscript {0}
-
-      - name: Install cmdstan 2
-        run: |
           cmdstanr::install_cmdstan(cores = 2)
         shell: Rscript {0}
 
