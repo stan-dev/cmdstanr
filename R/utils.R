@@ -613,7 +613,7 @@ check_file_exists <- function(files, access = NULL, ...) {
 }
 
 .wsl_check_exists <- function(path, is_dir = TRUE, access = NULL) {
-  if (!os_is_wsl()) {
+  if (!wsl_installed()) {
     return(FALSE)
   }
   path_check <- processx::run(
