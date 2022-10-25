@@ -608,6 +608,9 @@ check_file_exists <- function(files, access = NULL, ...) {
 }
 
 .wsl_check_exists <- function(path, is_dir = TRUE, access = NULL) {
+  if (!os_is_wsl()) {
+    return(FALSE)
+  }
   path_check <- processx::run(
     command = "wsl",
     args = c("ls", "-la", wsl_safe_path(path)),
