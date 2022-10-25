@@ -549,20 +549,16 @@ wsl_distro_name <- function() {
   gsub("\n", "", name, fixed = TRUE)
 }
 
-home_dir <- function() {
-  if (os_is_wsl()) {
-    dir <- processx::run(
-          command = "wsl",
-          args = c("echo", "$HOME")
-    )$stdout
-    gsub("\n", "", dir, fixed = TRUE)
-  } else {
-    Sys.getenv("HOME")
-  }
+wsl_home_dir <- function() {
+  dir <- processx::run(
+        command = "wsl",
+        args = c("echo", "$HOME")
+  )$stdout
+  gsub("\n", "", dir, fixed = TRUE)
 }
 
-wsl_dir_prefix <- function() {
-  if (os_is_wsl()) {
+wsl_dir_prefix <- function(wsl = FALSE) {
+  if (os_is_wsl() || wsl) {
     paste0("//wsl$/", wsl_distro_name())
   } else {
     ""
