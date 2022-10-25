@@ -93,8 +93,10 @@ install_cmdstan <- function(dir = NULL,
               call. = FALSE)
       wsl <- FALSE
     } else {
-      Sys.setenv("CMDSTANR_USE_WSL" = 1)
+      .cmdstanr$WSL <- true
     }
+  } else {
+    .cmdstanr$WSL <- false
   }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
