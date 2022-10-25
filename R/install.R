@@ -108,7 +108,7 @@ install_cmdstan <- function(dir = NULL,
     }
   }
   if (is.null(dir)) {
-    dir <- cmdstan_default_install_path()
+    dir <- cmdstan_default_install_path(wsl = wsl)
     if (!dir.exists(dir)) {
       dir.create(dir, recursive = TRUE)
     }

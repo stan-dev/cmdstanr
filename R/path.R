@@ -109,11 +109,15 @@ stop_no_path <- function() {
 #'   one (.cmdstan)? Defaults to `FALSE` and may be removed in a future release.
 #' @return The installation path.
 #' @export
-cmdstan_default_install_path <- function(old = FALSE) {
-  if (old) {
-    file.path(Sys.getenv("HOME"), ".cmdstanr")
+cmdstan_default_install_path <- function(old = FALSE, wsl = FALSE) {
+  if (wsl) {
+    file.path(paste0(wsl_dir_prefix(), home_dir()), ".cmdstan")
   } else {
-    file.path(Sys.getenv("HOME"), ".cmdstan")
+    if (old) {
+      file.path(Sys.getenv("HOME"), ".cmdstanr")
+    } else {
+      file.path(Sys.getenv("HOME"), ".cmdstan")
+    }
   }
 }
 
@@ -144,9 +148,7 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
   if (!wsl_installed) {
     wsl_installs_path <- NULL
   } else {
-    Sys.setenv("CMDSTANR_USE_WSL" = 1)
-    wsl_installs_path <- cmdstan_default_install_path(old)
-    Sys.unsetenv("CMDSTANR_USE_WSL")
+    wsl_installs_path <- cmdstan_default_install_path(old, wsl = TRUE)
   }
   if (dir.exists(installs_path) || !is.null(wsl_installs_path)) {
     latest_cmdstan <- ifelse(dir.exists(installs_path),
