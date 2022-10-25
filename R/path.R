@@ -107,6 +107,7 @@ stop_no_path <- function() {
 #' @keywords internal
 #' @param old Should the old default path (.cmdstanr) be used instead of the new
 #'   one (.cmdstan)? Defaults to `FALSE` and may be removed in a future release.
+#' @param wsl Return the directory for WSL installations?
 #' @return The installation path.
 #' @export
 cmdstan_default_install_path <- function(old = FALSE, wsl = FALSE) {

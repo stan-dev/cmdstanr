@@ -4,11 +4,13 @@
 \alias{cmdstan_default_install_path}
 \title{cmdstan_default_install_path}
 \usage{
-cmdstan_default_install_path(old = FALSE)
+cmdstan_default_install_path(old = FALSE, wsl = FALSE)
 }
 \arguments{
 \item{old}{Should the old default path (.cmdstanr) be used instead of the new
 one (.cmdstan)? Defaults to \code{FALSE} and may be removed in a future release.}
+
+\item{wsl}{Return the directory for WSL installations?}
 }
 \value{
 The installation path.
