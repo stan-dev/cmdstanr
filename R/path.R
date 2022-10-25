@@ -111,9 +111,9 @@ stop_no_path <- function() {
 #' @export
 cmdstan_default_install_path <- function(old = FALSE) {
   if (old) {
-    file.path(paste0(wsl_dir_prefix(), home_dir()), ".cmdstanr")
+    file.path(Sys.getenv("HOME"), ".cmdstanr")
   } else {
-    file.path(paste0(wsl_dir_prefix(), home_dir()), ".cmdstan")
+    file.path(Sys.getenv("HOME"), ".cmdstan")
   }
 }
 
