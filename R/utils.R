@@ -534,10 +534,15 @@ wsl_installed <- function() {
   if (!os_is_windows()) {
     FALSE
   } else {
-    wsl_callable <- processx::run(command = "wsl", args = "uname",
-                                    error_on_status = FALSE,
-                                    timeout = 5)
-    wsl_callable$status == 0
+    message("here")
+    p <- processx::process$new("wsl", "uname")
+    Sys.sleep(5)
+    if (p$is_alive()) {
+      p$kill()
+      FALSE
+    } else {
+      p$get_exit_status() == 0
+    }
   }
 }
 
