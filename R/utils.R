@@ -531,9 +531,7 @@ wsl_compatible_process_new <- function(...) {
 }
 
 wsl_installed <- function() {
-  if (!os_is_windows()) {
-    FALSE
-  } else {
+  tryCatch({
     # Call can hang indefinitely on Github actions, so explicitly kill
     p <- processx::process$new("wsl", "uname")
     Sys.sleep(5)
@@ -545,9 +543,9 @@ wsl_installed <- function() {
       if (is.null(status)) {
         FALSE
       }
-      status == 0
+      isTRUE(status == 0)
     }
-  }
+  }, error = function(e) { FALSE }, finally = function(ret) { ret })
 }
 
 wsl_distro_name <- function() {

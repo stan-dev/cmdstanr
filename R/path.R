@@ -140,35 +140,26 @@ cmdstan_default_install_path <- function(old = FALSE, wsl = FALSE) {
 #'   version, or `NULL` if no installation found.
 #'
 cmdstan_default_path <- function(old = FALSE, dir = NULL) {
-  message("a")
   if (!is.null(dir)) {
     installs_path <- dir
   } else {
     installs_path <- cmdstan_default_install_path(old)
   }
-  message("b")
   wsl_installed <- wsl_installed()
-  message("c")
   if (!isTRUE(wsl_installed)) {
-  message("c1")
     wsl_installs_path <- NULL
     wsl_path_exists <- FALSE
   } else {
-  message("c2")
     wsl_installs_path <- cmdstan_default_install_path(old, wsl = TRUE)
     wsl_path_linux <- gsub(wsl_dir_prefix(wsl = TRUE), "", wsl_installs_path,
                           fixed=TRUE)
     wsl_path_exists <- isTRUE(.wsl_check_exists(wsl_path_linux))
   }
-  message("d")
   if (dir.exists(installs_path) || wsl_path_exists) {
-  message("e")
     latest_cmdstan <- ifelse(dir.exists(installs_path),
                              .latest_cmdstan_installed(installs_path), "")
-  message("f")
     latest_wsl_cmdstan <- ifelse(wsl_path_exists,
                                  .latest_cmdstan_installed(wsl_installs_path), "")
-  message("g")
     if (latest_wsl_cmdstan >= latest_cmdstan) {
       return(file.path(wsl_installs_path, latest_wsl_cmdstan))
     } else {
