@@ -146,7 +146,7 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
     installs_path <- cmdstan_default_install_path(old)
   }
   wsl_installed <- wsl_installed()
-  if (!wsl_installed) {
+  if (!isTRUE(wsl_installed)) {
     wsl_installs_path <- NULL
     wsl_path_exists <- FALSE
   } else {

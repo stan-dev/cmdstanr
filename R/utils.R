@@ -541,7 +541,11 @@ wsl_installed <- function() {
       p$kill()
       FALSE
     } else {
-      p$get_exit_status() == 0
+      status <- p$get_exit_status()
+      if (is.null(status)) {
+        FALSE
+      }
+      status == 0
     }
   }
 }
