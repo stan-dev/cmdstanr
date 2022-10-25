@@ -151,10 +151,12 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
   } else {
     wsl_installs_path <- cmdstan_default_install_path(old, wsl = TRUE)
   }
-  if (dir.exists(installs_path) || !is.null(wsl_installs_path)) {
+  wsl_path_linux <- gsub(wsl_dir_prefix(wsl = TRUE), "", wsl_installs_path,
+                         fixed=TRUE)
+  if (dir.exists(installs_path) || isTRUE(.wsl_check_exists(wsl_path_linux))) {
     latest_cmdstan <- ifelse(dir.exists(installs_path),
                              .latest_cmdstan_installed(installs_path), "")
-    latest_wsl_cmdstan <- ifelse(!is.null(wsl_installs_path),
+    latest_wsl_cmdstan <- ifelse(isTRUE(.wsl_check_exists(wsl_path_linux)),
                                  .latest_cmdstan_installed(wsl_installs_path), "")
     if (latest_wsl_cmdstan >= latest_cmdstan) {
       return(file.path(wsl_installs_path, latest_wsl_cmdstan))

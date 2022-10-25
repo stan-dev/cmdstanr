@@ -164,7 +164,7 @@ install_cmdstan <- function(dir = NULL,
   }
   message("* Download complete")
   message("* Unpacking archive...")
-  if (os_is_wsl()) {
+  if (wsl) {
     # Significantly faster to use WSL to untar the downloaded archive, as there are
     # similar IO issues accessing the WSL filesystem from windows
     wsl_tar_gz_file <- gsub(paste0("//wsl$/", wsl_distro_name()), "",
@@ -202,7 +202,7 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
-  if (is_rtools42_toolchain() && !os_is_wsl()) {
+  if (is_rtools42_toolchain() && !wsl) {
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
