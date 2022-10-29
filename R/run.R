@@ -29,6 +29,16 @@ CmdStanRun <- R6::R6Class(
       if (self$args$save_latent_dynamics) {
         private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
       }
+      if (os_is_wsl()) {
+        # While the executable built under WSL will be stored in the Windows
+        # filesystem alongside the model code, we place a copy in a WSL temp
+        # directory prior to execution to avoid IO perfomance impacts
+        wsl_tmpdir <- wsl_tempdir()
+        file.copy(from = args$exe_file,
+                  to = file.path(wsl_dir_prefix(), wsl_tmpdir))
+        args$exe_file <- file.path(wsl_tmpdir, basename(args$exe_file))
+        processx::run("wsl", args = c("chmod", "+x", args$exe_file))
+      }
       invisible(self)
     },
     num_procs = function() self$procs$num_procs(),

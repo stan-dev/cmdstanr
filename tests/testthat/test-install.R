@@ -1,7 +1,5 @@
 context("install")
 
-wsl_prefix <- ifelse(os_is_wsl(), "wsl-", "")
-
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
 if (!nzchar(cmdstan_test_tarball_url)) {
   cmdstan_test_tarball_url <- NULL
@@ -28,13 +26,13 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   install_dir <- cmdstan_default_install_path()
-  dir <- file.path(install_dir, paste0(wsl_prefix, "cmdstan-2.23.0"))
+  dir <- file.path(install_dir, "cmdstan-2.23.0")
   if (!dir.exists(dir)) {
-    dir.create(dir)
+    dir.create(dir, recursive = TRUE)
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    version = "2.23.0", wsl = os_is_wsl()),
+                    version = "2.23.0", wsl = FALSE),
     "An installation already exists",
     fixed = TRUE
   )
@@ -47,7 +45,7 @@ test_that("install_cmdstan() errors if it times out", {
     dir <- tempdir(check = TRUE)
   }
   ver <- latest_released_version()
-  dir_exists <- dir.exists(file.path(dir, paste0(wsl_prefix, "cmdstan-",ver)))
+  dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
   # with quiet=TRUE
   expect_warning(
     expect_message(
@@ -59,7 +57,7 @@ test_that("install_cmdstan() errors if it times out", {
     "increasing the value of the 'timeout' argument and running again with 'quiet=FALSE'",
     fixed = TRUE
   )
-  dir_exists <- dir.exists(file.path(dir, paste0(wsl_prefix,"cmdstan-",ver)))
+  dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
   # with quiet=FALSE
   expect_warning(
     expect_message(
@@ -125,7 +123,7 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, paste0(wsl_prefix, "cmdstan-2.27.0"))))
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.27.0")))
   set_cmdstan_path(cmdstan_default_path())
 })
 
@@ -199,3 +197,4 @@ test_that("github_download_url constructs correct url", {
     "https://github.com/stan-dev/cmdstan/releases/download/vFOO/cmdstan-FOO.tar.gz"
   )
 })
+

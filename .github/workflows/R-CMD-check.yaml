@@ -79,6 +79,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          Sys.setenv("MAKEFLAGS"="-j2")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           remotes::install_local(path = ".")

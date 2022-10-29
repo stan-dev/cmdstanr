@@ -99,7 +99,8 @@ repair_path <- function(path) {
   }
   path <- path.expand(path)
   path <- gsub("\\\\", "/", path)
-  path <- gsub("//", "/", path)
+  # WSL cmdstan path is a network path and needs the leading //
+  path <- gsub("//(?!wsl)", "/", path, perl = TRUE)
   if (endsWith(path, "/")) {
     # remove trailing "/"
     path <- substr(path, 1, nchar(path) - 1)
@@ -142,63 +143,6 @@ strip_ext <- function(file) {
 }
 absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 
-# When providing the model path to WSL, it needs to be in reference to the
-# to Windows mount point (/mnt/drive-letter) within the WSL install:
-# e.g., C:/Users/... -> /mnt/c/Users/...
-wsl_safe_path <- function(path = NULL, revert = FALSE) {
-  if (!is.character(path) || is.null(path) || !os_is_wsl()) {
-    return(path)
-  }
-  if (revert) {
-    if (!grepl("^/mnt/", path)) {
-      return(path)
-    }
-    strip_mnt <- gsub("^/mnt/", "", path)
-    drive_letter <- strtrim(strip_mnt, 1)
-    path <- gsub(paste0("^/mnt/", drive_letter),
-                  paste0(toupper(drive_letter), ":"),
-                  path)
-  } else {
-    path_already_safe <- grepl("^/mnt/", path)
-    if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
-      base_file <- basename(path)
-      path <- dirname(path)
-      abs_path <- repair_path(utils::shortPathName(path))
-      drive_letter <- tolower(strtrim(abs_path, 1))
-      path <- gsub(paste0(drive_letter, ":"),
-                  paste0("/mnt/", drive_letter),
-                  abs_path,
-                  ignore.case = TRUE)
-      path <- paste0(path, "/", base_file)
-    }
-  }
-  path
-}
-
-# Running commands through WSL requires using 'wsl' as the command with the
-# intended command (e.g., stanc) as the first argument. This function acts as
-# a wrapper around processx::run() to apply this change where necessary, and
-# forward all other arguments
-wsl_compatible_run <- function(...) {
-  run_args <- list(...)
-  if (os_is_wsl()) {
-    command <- run_args$command
-    run_args$command <- "wsl"
-    run_args$args <- c(command, run_args$args)
-  }
-  do.call(processx::run, run_args)
-}
-
-wsl_compatible_process_new <- function(...) {
-  run_args <- list(...)
-  if (os_is_wsl()) {
-    command <- run_args$command
-    run_args$command <- "wsl"
-    run_args$args <- c(command, run_args$args)
-  }
-  do.call(processx::process$new, run_args)
-}
-
 # read, write, and copy files --------------------------------------------
 
 #' Copy temporary files (e.g., output, data) to a different location
@@ -224,7 +168,7 @@ copy_temp_files <-
            timestamp = TRUE,
            random = TRUE,
            ext = ".csv") {
-    checkmate::assert_directory_exists(new_dir, access = "w")
+    assert_dir_exists(new_dir, access = "w")
     destinations <- generate_file_names(
       basename = new_basename,
       ext = ext,
@@ -513,6 +457,207 @@ as_mcmc.list <- function(x) {
   return(mcmc_list)
 }
 
+# WSL-related helper functions ------------------------------------------
+
+# When providing the model path to WSL, it needs to be in reference to the
+# to Windows mount point (/mnt/drive-letter) within the WSL install:
+# e.g., C:/Users/... -> /mnt/c/Users/...
+wsl_safe_path <- function(path = NULL, revert = FALSE) {
+  if (!is.character(path) || is.null(path) || !os_is_wsl()) {
+    return(path)
+  }
+  if (revert) {
+    if (!grepl("^/mnt/", path)) {
+      return(path)
+    }
+    strip_mnt <- gsub("^/mnt/", "", path)
+    drive_letter <- strtrim(strip_mnt, 1)
+    path <- gsub(paste0("^/mnt/", drive_letter),
+                  paste0(toupper(drive_letter), ":"),
+                  path)
+  } else if (grepl("^//wsl", path)) {
+    path <- gsub(wsl_dir_prefix(), "", path, fixed = TRUE)
+  } else {
+    path_already_safe <- grepl("^/mnt/", path)
+    if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
+      base_file <- basename(path)
+      path <- dirname(path)
+      abs_path <- repair_path(utils::shortPathName(path))
+      drive_letter <- tolower(strtrim(abs_path, 1))
+      path <- gsub(paste0(drive_letter, ":"),
+                  paste0("/mnt/", drive_letter),
+                  abs_path,
+                  ignore.case = TRUE)
+      path <- paste0(path, "/", base_file)
+    }
+  }
+  path
+}
+
+# Running commands through WSL requires using 'wsl' as the command with the
+# intended command (e.g., stanc) as the first argument. This function acts as
+# a wrapper around processx::run() to apply this change where necessary, and
+# forward all other arguments
+wsl_compatible_run <- function(...) {
+  run_args <- list(...)
+  if (os_is_wsl()) {
+    command <- run_args$command
+    run_args$command <- "wsl"
+    if (!is.null(run_args$wd)) {
+      wd <- wsl_safe_path(run_args$wd)
+      run_args$wd <- NULL
+      run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
+    } else {
+      run_args$args <- c(command, run_args$args)
+    }
+  }
+  do.call(processx::run, run_args)
+}
+
+wsl_compatible_process_new <- function(...) {
+  run_args <- list(...)
+  if (os_is_wsl()) {
+    command <- run_args$command
+    run_args$command <- "wsl"
+    if (!is.null(run_args$wd)) {
+      wd <- wsl_safe_path(run_args$wd)
+      run_args$wd <- NULL
+      run_args$args <- c(c("cd", wd, "&&"), command, run_args$args)
+    } else {
+      run_args$args <- c(command, run_args$args)
+    }
+  }
+  do.call(processx::process$new, run_args)
+}
+
+wsl_installed <- function() {
+  tryCatch({
+    # Call can hang indefinitely on Github actions, so explicitly kill
+    p <- processx::process$new("wsl", "uname")
+    Sys.sleep(5)
+    if (p$is_alive()) {
+      p$kill()
+      FALSE
+    } else {
+      status <- p$get_exit_status()
+      if (is.null(status)) {
+        FALSE
+      }
+      isTRUE(status == 0)
+    }
+  }, error = function(e) { FALSE }, finally = function(ret) { ret })
+}
+
+wsl_distro_name <- function() {
+  name <- processx::run(
+    command = "wsl",
+    args = c("echo", "$WSL_DISTRO_NAME")
+  )$stdout
+  gsub("\n", "", name, fixed = TRUE)
+}
+
+wsl_home_dir <- function() {
+  dir <- processx::run(
+        command = "wsl",
+        args = c("echo", "$HOME")
+  )$stdout
+  gsub("\n", "", dir, fixed = TRUE)
+}
+
+wsl_dir_prefix <- function(wsl = FALSE) {
+  if (os_is_wsl() || wsl) {
+    paste0("//wsl$/", wsl_distro_name())
+  } else {
+    ""
+  }
+}
+
+wsl_tempdir <- function() {
+  dir <- processx::run(command = "wsl",
+                        args = c("mktemp", "-d"))$stdout
+  gsub("\n", "", dir, fixed = TRUE)
+}
+
+# The checkmate file and directory assertion functions don't register the WSL
+# network path as legitimate, and will always error. To avoid this we create a
+# new checking functions with WSL handling, and then pass these to
+# checkmate::makeAssertionFunction to replicate the existing assertion functionality
+check_dir_exists <- function(dir, access = NULL) {
+  if (os_is_wsl()) {
+    if (!checkmate::qtest(dir, "S+")) {
+      return("No directory provided.")
+    }
+    checks <- sapply(dir, .wsl_check_exists, is_dir = TRUE, access = access)
+    if (any(as.character(checks) != "TRUE")) {
+      grep("TRUE", checks, value = TRUE, invert = TRUE)[1]
+    } else {
+      TRUE
+    }
+  } else {
+    checkmate::checkDirectoryExists(dir, access = access)
+  }
+}
+
+check_file_exists <- function(files, access = NULL, ...) {
+  if (os_is_wsl()) {
+    if (!checkmate::qtest(files, "S+")) {
+      return("No file provided.")
+    }
+    checks <- sapply(files, .wsl_check_exists, is_dir = FALSE, access = access)
+    if (any(as.character(checks) != "TRUE")) {
+      grep("TRUE", checks, value = TRUE, invert = TRUE)[1]
+    } else {
+      TRUE
+    }
+  } else {
+    checkmate::checkFileExists(files, access = access, ...)
+  }
+}
+
+.wsl_check_exists <- function(path, is_dir = TRUE, access = NULL) {
+  if (!wsl_installed()) {
+    return(FALSE)
+  }
+  path_check <- processx::run(
+    command = "wsl",
+    args = c("ls", "-la", wsl_safe_path(path)),
+    error_on_status = FALSE
+  )
+
+  if (path_check$status != 0) {
+    path <- gsub("^./", "", path)
+    err <- ifelse(is_dir,
+                  paste0("Directory '", path, "' does not exist"),
+                  paste0("File does not exist: '", path, "'"))
+    return(err)
+  }
+
+  path_metadata <- strsplit(path_check$stdout, split = "\n",
+                            fixed = TRUE)[[1]]
+
+  wsl_user <- processx::run(
+    command = "wsl",
+    args = c("echo", "$USER"),
+    error_on_status = FALSE
+  )$stdout
+  wsl_user <- gsub("\n", "", wsl_user, fixed = TRUE)
+
+  path_metadata <- grep(wsl_user, path_metadata, value = TRUE)
+
+  if (!is.null(access)) {
+    path_permissions <- strsplit(path_metadata, " ", fixed = TRUE)[[1]][1]
+    if (!any(grepl(access, path_permissions))) {
+      name <- ifelse(is_dir, "directory", "file")
+      return(paste0("Specified ", name, ": ", path,
+                    " does not have access permission ", access))
+    }
+  }
+  TRUE
+}
+
+assert_dir_exists <- checkmate::makeAssertionFunction(check_dir_exists)
+assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
+
 # Model methods & expose_functions helpers ------------------------------------------------------
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
@@ -711,6 +856,11 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
 }
 
 expose_functions <- function(function_env, global = FALSE, verbose = FALSE) {
+  if (os_is_wsl()) {
+    stop("Standalone functions are not currently available with ",
+          "WSL CmdStan and will not be compiled",
+          call. = FALSE)
+  }
   require_suggested_package("Rcpp")
   require_suggested_package("RcppEigen")
   require_suggested_package("decor")

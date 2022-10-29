@@ -6,6 +6,7 @@ data_list <- testing_data("bernoulli")
 fit <- mod$sample(data = data_list, chains = 1)
 
 test_that("Methods error if not compiled", {
+  skip_if(os_is_wsl())
   expect_error(
     fit$log_prob(NULL),
     "The method has not been compiled, please call `init_model_methods()` first",
@@ -34,6 +35,7 @@ test_that("Methods error if not compiled", {
 })
 
 test_that("User warned about higher-order autodiff with hessian", {
+  skip_if(os_is_wsl())
   expect_message(
     fit$init_model_methods(hessian = TRUE, verbose = TRUE),
     "The hessian method relies on higher-order autodiff which is still experimental. Please report any compilation errors that you encounter",
@@ -42,6 +44,7 @@ test_that("User warned about higher-order autodiff with hessian", {
 })
 
 test_that("Methods return correct values", {
+  skip_if(os_is_wsl())
   lp <- fit$log_prob(upars=c(0.1))
   expect_equal(lp, -8.6327599208828509347)
 
@@ -80,6 +83,7 @@ test_that("Methods return correct values", {
 
 
 test_that("methods error for incorrect inputs", {
+  skip_if(os_is_wsl())
   expect_error(
     fit$log_prob(c(1,2)),
     "Model has 1 unconstrained parameter(s), but 2 were provided!",
@@ -116,6 +120,7 @@ test_that("methods error for incorrect inputs", {
 })
 
 test_that("Methods error with already-compiled model", {
+  skip_if(os_is_wsl())
   mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
   fit <- mod$sample(data = data_list, chains = 1)
@@ -127,6 +132,7 @@ test_that("Methods error with already-compiled model", {
 })
 
 test_that("Methods can be compiled with model", {
+  skip_if(os_is_wsl())
   mod <- cmdstan_model(testing_stan_file("bernoulli"),
                        force_recompile = TRUE,
                        compile_model_methods = TRUE,

@@ -10,7 +10,8 @@ unset_cmdstan_path()
 test_that("Setting path works and confirms with message", {
   expect_message(
     set_cmdstan_path(PATH),
-    paste("CmdStan path set to:", PATH)
+    paste("CmdStan path set to:", PATH),
+    fixed = TRUE
   )
   expect_equal(.cmdstanr$PATH, PATH)
 })

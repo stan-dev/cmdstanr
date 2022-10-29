@@ -54,14 +54,14 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
-          remotes::install_local(path = ".")
+          remotes::install_local(path = ".", INSTALL_opts = "--no-test-load")
           install.packages("curl")
         shell: Rscript {0}
 
       - uses: Vampire/setup-wsl@v1
         with:
             distribution: Ubuntu-22.04
-            use-cache: 'true'
+            use-cache: 'false'
             set-as-default: 'true'
       - name: Install WSL Dependencies
         run: |
@@ -74,6 +74,7 @@ jobs:
 
       - name: Install cmdstan
         run: |
+          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
           cmdstanr::install_cmdstan(cores = 2, wsl = TRUE, overwrite = TRUE)
         shell: Rscript {0}
 

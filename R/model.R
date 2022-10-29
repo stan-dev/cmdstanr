@@ -229,7 +229,7 @@ CmdStanModel <- R6::R6Class(
       self$functions <- new.env()
       self$functions$compiled <- FALSE
       if (!is.null(stan_file)) {
-        checkmate::assert_file_exists(stan_file, access = "r", extension = "stan")
+        assert_file_exists(stan_file, access = "r", extension = "stan")
         checkmate::assert_flag(compile)
         private$stan_file_ <- absolute_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
@@ -250,7 +250,7 @@ CmdStanModel <- R6::R6Class(
         ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
         private$exe_file_ <- repair_path(absolute_path(exe_file))
         if (is.null(stan_file)) {
-          checkmate::assert_file_exists(private$exe_file_, access = "r", extension = ext)
+          assert_file_exists(private$exe_file_, access = "r", extension = ext)
           private$model_name_ <- sub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
       }
@@ -317,7 +317,7 @@ CmdStanModel <- R6::R6Class(
       if (is.null(dir)) {
         dir <- dirname(private$stan_file_)
       }
-      checkmate::assert_directory_exists(dir, access = "r")
+      assert_dir_exists(dir, access = "r")
       new_hpp_loc <- file.path(dir, paste0(strip_ext(basename(private$stan_file_)), ".hpp"))
       file.copy(self$hpp_file(), new_hpp_loc, overwrite = TRUE)
       file.remove(self$hpp_file())
@@ -471,7 +471,7 @@ compile <- function(quiet = TRUE,
   }
   if (!is.null(dir)) {
     dir <- repair_path(dir)
-    checkmate::assert_directory_exists(dir, access = "rw")
+    assert_dir_exists(dir, access = "rw")
     if (length(self$exe_file()) != 0) {
       private$exe_file_ <- file.path(dir, basename(self$exe_file()))
     }
@@ -522,6 +522,15 @@ compile <- function(quiet = TRUE,
     if (interactive()) {
       message("Compiling Stan program...")
     }
+  }
+
+  if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
+    warning("Additional model methods and standalone functions are not ",
+            "currently available with WSL CmdStan and will not be compiled",
+            call. = FALSE)
+    compile_model_methods <- FALSE
+    compile_standalone <- FALSE
+    compile_hessian_method <- FALSE
   }
 
   temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
@@ -629,6 +638,12 @@ compile <- function(quiet = TRUE,
     file.remove(exe)
   }
   file.copy(tmp_exe, exe, overwrite = TRUE)
+  if (os_is_wsl()) {
+    res <- processx::run(
+      command = "wsl",
+      args = c("chmod", "+x", wsl_safe_path(exe))
+    )
+  }
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
   private$precompile_cpp_options_ <- NULL
@@ -1806,7 +1821,7 @@ cpp_options_to_compile_flags <- function(cpp_options) {
 include_paths_stanc3_args <- function(include_paths = NULL) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
-    checkmate::assert_directory_exists(include_paths, access = "r")
+    assert_dir_exists(include_paths, access = "r")
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
     paths_w_space <- grep(" ", include_paths)
     include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")

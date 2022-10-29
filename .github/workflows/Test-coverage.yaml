@@ -59,7 +59,7 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "curl"), dependencies = TRUE)
-          remotes::install_local(path = ".")
+          remotes::install_local(path = ".", INSTALL_opts = "--no-test-load")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           remotes::install_cran("gridExtra")

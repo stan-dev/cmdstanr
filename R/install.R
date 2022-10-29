@@ -93,8 +93,10 @@ install_cmdstan <- function(dir = NULL,
               call. = FALSE)
       wsl <- FALSE
     } else {
-      Sys.setenv("CMDSTANR_USE_WSL" = 1)
+      .cmdstanr$WSL <- TRUE
     }
+  } else {
+    .cmdstanr$WSL <- FALSE
   }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
@@ -108,13 +110,13 @@ install_cmdstan <- function(dir = NULL,
     }
   }
   if (is.null(dir)) {
-    dir <- cmdstan_default_install_path()
+    dir <- cmdstan_default_install_path(wsl = wsl)
     if (!dir.exists(dir)) {
       dir.create(dir, recursive = TRUE)
     }
   } else {
     dir <- repair_path(dir)
-    checkmate::assert_directory_exists(dir, access = "rwx")
+    assert_dir_exists(dir, access = "rwx")
   }
   if (!is.null(version)) {
     if (!is.null(release_url)) {
@@ -125,7 +127,6 @@ install_cmdstan <- function(dir = NULL,
     release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
                           version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
   }
-  wsl_prefix <- ifelse(isTRUE(wsl), "wsl-", "")
   if (!is.null(release_url)) {
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
@@ -137,14 +138,14 @@ install_cmdstan <- function(dir = NULL,
     tar_name <- utils::tail(split_url[[1]], n = 1)
     cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, paste0(wsl_prefix, cmdstan_ver))
+    dir_cmdstan <- file.path(dir, cmdstan_ver)
     dest_file <- file.path(dir, tar_gz_file)
   } else {
     ver <- latest_released_version()
     message("* Latest CmdStan release is v", ver)
     cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
-    dir_cmdstan <- file.path(dir, paste0(wsl_prefix, cmdstan_ver))
+    dir_cmdstan <- file.path(dir, cmdstan_ver)
     message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
     message("* Downloading ", tar_gz_file, " from GitHub...")
     download_url <- github_download_url(ver)
@@ -164,17 +165,34 @@ install_cmdstan <- function(dir = NULL,
     stop("Download of CmdStan failed. Please try again.", call. = FALSE)
   }
   message("* Download complete")
-
   message("* Unpacking archive...")
-  untar_rc <- utils::untar(
-    dest_file,
-    exdir = dir_cmdstan,
-    extras = "--strip-components 1"
-  )
-  if (untar_rc != 0) {
-    stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+  if (wsl) {
+    # Significantly faster to use WSL to untar the downloaded archive, as there are
+    # similar IO issues accessing the WSL filesystem from windows
+    wsl_tar_gz_file <- gsub(paste0("//wsl$/", wsl_distro_name()), "",
+                            dest_file, fixed = TRUE)
+    wsl_tar_gz_file <- wsl_safe_path(wsl_tar_gz_file)
+    untar_rc <- processx::run(
+      command = "wsl",
+      args = c("tar", "-xf", wsl_tar_gz_file, "-C",
+               gsub(tar_gz_file, "", wsl_tar_gz_file))
+    )
+    remove_rc <- processx::run(
+      command = "wsl",
+      args = c("rm", wsl_tar_gz_file)
+    )
+  } else {
+    untar_rc <- utils::untar(
+      dest_file,
+      exdir = dir_cmdstan,
+      extras = "--strip-components 1"
+    )
+    if (untar_rc != 0) {
+      stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+    }
+    file.remove(dest_file)
   }
-  file.remove(dest_file)
+
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   # Setting up native M1 compilation of CmdStan and its downstream libraries
   if (is_rosetta2()) {
@@ -186,7 +204,7 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
-  if (is_rtools42_toolchain() && !os_is_wsl()) {
+  if (is_rtools42_toolchain() && !wsl) {
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
@@ -521,10 +539,7 @@ install_toolchain <- function(quiet = FALSE) {
 }
 
 check_wsl_toolchain <- function() {
-  wsl_inaccessible <- processx::run(command = "wsl",
-                                     args = "uname",
-                                     error_on_status = FALSE)
-  if (wsl_inaccessible$status) {
+  if (!wsl_installed()) {
     stop("\n", "A WSL distribution is not installed or is not accessible.",
          "\n", "Please see the Microsoft documentation for guidance on installing WSL: ",
          "\n", "https://docs.microsoft.com/en-us/windows/wsl/install",

@@ -19,6 +19,10 @@ CmdStanFit <- R6::R6Class(
       if (!is.null(private$model_methods_env_$model_ptr)) {
         initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
       }
+      # Need to update the output directory path to one that can be accessed
+      # from Windows, for the post-processing of results
+      self$runset$args$output_dir <- wsl_safe_path(self$runset$args$output_dir,
+                                                    revert = TRUE)
       invisible(self)
     },
     num_procs = function() {
@@ -303,6 +307,11 @@ CmdStanFit$set("public", name = "init", value = init)
 #' }
 #'
 init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
+  if (os_is_wsl()) {
+    stop("Additional model methods are not currently available with ",
+          "WSL CmdStan and will not be compiled",
+          call. = FALSE)
+  }
   require_suggested_package("Rcpp")
   require_suggested_package("RcppEigen")
   if (length(private$model_methods_env_$hpp_code_) == 0) {

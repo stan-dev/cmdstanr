@@ -45,7 +45,7 @@ set_cmdstan_path <- function(path = NULL) {
     path <- absolute_path(path)
     .cmdstanr$PATH <- path
     .cmdstanr$VERSION <- read_cmdstan_version(path)
-    .cmdstanr$WSL <- grepl("wsl-cmdstan", path)
+    .cmdstanr$WSL <- grepl("//wsl$", path, fixed = TRUE)
     message("CmdStan path set to: ", path)
   } else {
     warning("Path not set. Can't find directory: ", path, call. = FALSE)
@@ -107,13 +107,18 @@ stop_no_path <- function() {
 #' @keywords internal
 #' @param old Should the old default path (.cmdstanr) be used instead of the new
 #'   one (.cmdstan)? Defaults to `FALSE` and may be removed in a future release.
+#' @param wsl Return the directory for WSL installations?
 #' @return The installation path.
 #' @export
-cmdstan_default_install_path <- function(old = FALSE) {
-  if (old) {
-    file.path(Sys.getenv("HOME"), ".cmdstanr")
+cmdstan_default_install_path <- function(old = FALSE, wsl = FALSE) {
+  if (wsl) {
+    file.path(paste0(wsl_dir_prefix(wsl = TRUE), wsl_home_dir()), ".cmdstan")
   } else {
-    file.path(Sys.getenv("HOME"), ".cmdstan")
+    if (old) {
+      file.path(Sys.getenv("HOME"), ".cmdstanr")
+    } else {
+      file.path(Sys.getenv("HOME"), ".cmdstan")
+    }
   }
 }
 
@@ -140,45 +145,52 @@ cmdstan_default_path <- function(old = FALSE, dir = NULL) {
   } else {
     installs_path <- cmdstan_default_install_path(old)
   }
-  if (dir.exists(installs_path)) {
-    cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-    # if installed in cmdstan folder with no version move to cmdstan-version folder
-    if ("cmdstan" %in% cmdstan_installs) {
-      ver <- read_cmdstan_version(file.path(installs_path, "cmdstan"))
-      old_path <- file.path(installs_path, "cmdstan")
-      new_path <- file.path(installs_path, paste0("cmdstan-", ver))
-      file.rename(old_path, new_path)
-      cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-    }
-    if (length(cmdstan_installs) > 0) {
-      wsl_installs <- grep("^wsl-cmdstan-", cmdstan_installs, value = TRUE)
-      cmdstan_installs <- cmdstan_installs[!grepl("wsl-", cmdstan_installs)]
-      cmdstan_installs <- grep("^cmdstan-", cmdstan_installs, value = TRUE)
-      if (length(wsl_installs) > 0) {
-        wsl_installs_trim <- gsub("wsl-", "", wsl_installs, fixed = TRUE)
-        wsl_latest <- sort(wsl_installs_trim, decreasing = TRUE)[1]
-        if (length(cmdstan_installs) > 0) {
-          non_wsl_latest <- sort(cmdstan_installs, decreasing = TRUE)[1]
-          latest_cmdstan <- ifelse(wsl_latest > non_wsl_latest
-                                    || wsl_latest == non_wsl_latest,
-                                   grep(wsl_latest, wsl_installs, value = TRUE),
-                                   non_wsl_latest)
-        } else {
-          latest_cmdstan <- grep(wsl_latest, wsl_installs, value = TRUE)
-        }
-      } else {
-        latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
-      }
-      if (is_release_candidate(latest_cmdstan)) {
-        non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
-        if (dir.exists(file.path(installs_path, non_rc_path))) {
-          latest_cmdstan <- non_rc_path
-        }
-      }
+  wsl_installed <- wsl_installed()
+  if (!isTRUE(wsl_installed)) {
+    wsl_installs_path <- NULL
+    wsl_path_exists <- FALSE
+  } else {
+    wsl_installs_path <- cmdstan_default_install_path(old, wsl = TRUE)
+    wsl_path_linux <- gsub(wsl_dir_prefix(wsl = TRUE), "", wsl_installs_path,
+                          fixed=TRUE)
+    wsl_path_exists <- isTRUE(.wsl_check_exists(wsl_path_linux))
+  }
+  if (dir.exists(installs_path) || wsl_path_exists) {
+    latest_cmdstan <- ifelse(dir.exists(installs_path),
+                             .latest_cmdstan_installed(installs_path), "")
+    latest_wsl_cmdstan <- ifelse(wsl_path_exists,
+                                 .latest_cmdstan_installed(wsl_installs_path), "")
+    if (latest_wsl_cmdstan >= latest_cmdstan) {
+      return(file.path(wsl_installs_path, latest_wsl_cmdstan))
+    } else {
       return(file.path(installs_path, latest_cmdstan))
     }
   }
   NULL
+}
+
+.latest_cmdstan_installed <- function(installs_path) {
+  cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
+  # if installed in cmdstan folder with no version move to cmdstan-version folder
+  if ("cmdstan" %in% cmdstan_installs) {
+    ver <- read_cmdstan_version(file.path(installs_path, "cmdstan"))
+    old_path <- file.path(installs_path, "cmdstan")
+    new_path <- file.path(installs_path, paste0("cmdstan-", ver))
+    file.rename(old_path, new_path)
+    cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
+  }
+  latest_cmdstan <- ""
+  if (length(cmdstan_installs) > 0) {
+    cmdstan_installs <- grep("^cmdstan-", cmdstan_installs, value = TRUE)
+    latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
+    if (is_release_candidate(latest_cmdstan)) {
+      non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
+      if (dir.exists(file.path(installs_path, non_rc_path))) {
+        latest_cmdstan <- non_rc_path
+      }
+    }
+  }
+  latest_cmdstan
 }
 
 
