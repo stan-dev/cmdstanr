@@ -90,6 +90,16 @@ test_that("Methods return correct values", {
   expect_equal(upars, c(0.1))
 })
 
+test_that("Model methods environments are independent", {
+  data_list_2 <- data_list
+  data_list_2$N <- 20
+  data_list_2$y <- c(data_list$y, data_list$y)
+  fit_2 <- mod$sample(data = data_list_2, chains = 1)
+  fit_2$init_model_methods()
+
+  expect_equal(fit$log_prob(upars=c(0.1)), -8.6327599208828509347)
+  expect_equal(fit_2$log_prob(upars=c(0.1)), -15.87672652161856135)
+})
 
 test_that("methods error for incorrect inputs", {
   skip_if(os_is_wsl())
