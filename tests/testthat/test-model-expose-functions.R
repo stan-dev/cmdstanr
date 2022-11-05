@@ -18,7 +18,7 @@ test_that("Functions can be exposed in model object", {
   mod$expose_functions(verbose = TRUE)
 
   expect_equal(
-    fit$functions$retvec(c(1,2,3,4)),
+    mod$functions$retvec(c(1,2,3,4)),
     c(1,2,3,4)
   )
 

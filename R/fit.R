@@ -13,8 +13,20 @@ CmdStanFit <- R6::R6Class(
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
-      private$model_methods_env_ <- runset$model_methods_env()
-      self$functions <- runset$standalone_env()
+
+      private$model_methods_env_ <- new.env()
+      if (!is.null(runset$model_methods_env())) {
+        for (n in ls(runset$model_methods_env(), all.names = TRUE)) {
+          assign(n, get(n, runset$model_methods_env()), private$model_methods_env_)
+        }
+      }
+
+      self$functions <- new.env()
+      if (!is.null(runset$standalone_env())) {
+        for (n in ls(runset$standalone_env(), all.names = TRUE)) {
+          assign(n, get(n, runset$standalone_env()), self$functions)
+        }
+      }
 
       if (!is.null(private$model_methods_env_$model_ptr)) {
         initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
