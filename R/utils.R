@@ -871,7 +871,7 @@ expose_functions <- function(function_env, global = FALSE, verbose = FALSE) {
       message("Functions already compiled, copying to global environment")
       # Create reference to global environment, avoids NOTE about assigning to global
       pos <- 1
-      envir = as.environment(pos)
+      envir <- as.environment(pos)
       lapply(function_env$fun_names, function(fun_name) {
         assign(fun_name, get(fun_name, function_env), envir)
       })
