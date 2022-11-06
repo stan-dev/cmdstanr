@@ -126,11 +126,12 @@ read_cmdstan_csv <- function(files,
                              format = getOption("cmdstanr_draws_format", NULL)) {
   # If the CSV files are stored in the WSL filesystem then it is significantly
   # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
-  if (os_is_wsl()) {
+  if (os_is_wsl() && any(grepl("^//wsl", files))) {
     wsl_files <- sapply(files, wsl_safe_path)
     temp_storage <- tempdir(check = TRUE)
     csv_copy <- processx::run(
-      "wsl", c("cp", wsl_files, wsl_safe_path(temp_storage))
+      "wsl", c("cp", wsl_files, wsl_safe_path(temp_storage)),
+      error_on_status = FALSE
     )
 
     files <- file.path(temp_storage, basename(files))
