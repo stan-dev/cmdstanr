@@ -6,11 +6,14 @@
 \title{Calculate the log-probability , the gradient w.r.t. each input, and the hessian
 for a given vector of unconstrained parameters}
 \usage{
-hessian(upars)
+hessian(upars, jacobian_adjustment = TRUE)
 }
 \arguments{
 \item{upars}{(numeric) A vector of unconstrained parameters to be passed
 to \code{hessian}}
+
+\item{jacobian_adjustment}{(bool) Whether to include the log-density adjustments from
+un/constraining variables}
 }
 \description{
 The \verb{$hessian()} method provides access to the

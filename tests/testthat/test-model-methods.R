@@ -59,6 +59,15 @@ test_that("Methods return correct values", {
   )
   expect_equal(fit$hessian(upars=c(0.1)), hessian)
 
+  hessian_noadj <- list(
+    log_prob = -7.2439666007357095268,
+    grad_log_prob = -3.2497918747894001257,
+    hessian = as.matrix(-2.4937604019289194568, nrow=1, ncol=1)
+  )
+
+  expect_equal(fit$hessian(upars=c(0.1), jacobian_adjustment = FALSE),
+               hessian_noadj)
+
   cpars <- fit$constrain_pars(c(0.1))
   cpars_true <- list(
     theta = 0.52497918747894001257,
