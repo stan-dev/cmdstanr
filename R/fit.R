@@ -13,8 +13,20 @@ CmdStanFit <- R6::R6Class(
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
-      private$model_methods_env_ <- runset$model_methods_env()
-      self$functions <- runset$standalone_env()
+
+      private$model_methods_env_ <- new.env()
+      if (!is.null(runset$model_methods_env())) {
+        for (n in ls(runset$model_methods_env(), all.names = TRUE)) {
+          assign(n, get(n, runset$model_methods_env()), private$model_methods_env_)
+        }
+      }
+
+      self$functions <- new.env()
+      if (!is.null(runset$standalone_env())) {
+        for (n in ls(runset$standalone_env(), all.names = TRUE)) {
+          assign(n, get(n, runset$standalone_env()), self$functions)
+        }
+      }
 
       if (!is.null(private$model_methods_env_$model_ptr)) {
         initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
@@ -403,6 +415,8 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'
 #' @param upars (numeric) A vector of unconstrained parameters to be passed
 #' to `hessian`
+#' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
+#' un/constraining variables
 #'
 #' @examples
 #' \dontrun{
@@ -410,7 +424,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' fit_mcmc$hessian(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
 #' }
 #'
-hessian <- function(upars) {
+hessian <- function(upars, jacobian_adjustment = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
@@ -419,7 +433,7 @@ hessian <- function(upars) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
           length(upars), " were provided!", call. = FALSE)
   }
-  private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_, upars)
+  private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_, upars, jacobian_adjustment)
 }
 CmdStanFit$set("public", name = "hessian", value = hessian)
 

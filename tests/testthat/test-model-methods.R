@@ -59,6 +59,15 @@ test_that("Methods return correct values", {
   )
   expect_equal(fit$hessian(upars=c(0.1)), hessian)
 
+  hessian_noadj <- list(
+    log_prob = -7.2439666007357095268,
+    grad_log_prob = -3.2497918747894001257,
+    hessian = as.matrix(-2.4937604019289194568, nrow=1, ncol=1)
+  )
+
+  expect_equal(fit$hessian(upars=c(0.1), jacobian_adjustment = FALSE),
+               hessian_noadj)
+
   cpars <- fit$constrain_pars(c(0.1))
   cpars_true <- list(
     theta = 0.52497918747894001257,
@@ -81,6 +90,16 @@ test_that("Methods return correct values", {
   expect_equal(upars, c(0.1))
 })
 
+test_that("Model methods environments are independent", {
+  data_list_2 <- data_list
+  data_list_2$N <- 20
+  data_list_2$y <- c(data_list$y, data_list$y)
+  fit_2 <- mod$sample(data = data_list_2, chains = 1)
+  fit_2$init_model_methods()
+
+  expect_equal(fit$log_prob(upars=c(0.1)), -8.6327599208828509347)
+  expect_equal(fit_2$log_prob(upars=c(0.1)), -15.87672652161856135)
+})
 
 test_that("methods error for incorrect inputs", {
   skip_if(os_is_wsl())
