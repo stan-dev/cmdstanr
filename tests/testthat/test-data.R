@@ -69,27 +69,30 @@ test_that("process_fitted_params() errors with bad args", {
     error_msg
   )
 
-  fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
-  temp_file <- tempfile(fileext = ".rds")
-  saveRDS(fit_tmp, file = temp_file)
-  rm(fit_tmp)
-  gc()
-  fit_tmp_null <- readRDS(temp_file)
-  expect_error(
-    process_fitted_params(fit_tmp_null),
-    "Unable to obtain draws from the fit object."
-  )
+  # WSL Tempdir not cleaned up with R gc
+  if (!os_is_wsl()) {
+    fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
+    temp_file <- tempfile(fileext = ".rds")
+    saveRDS(fit_tmp, file = temp_file)
+    rm(fit_tmp)
+    gc()
+    fit_tmp_null <- readRDS(temp_file)
+    expect_error(
+      process_fitted_params(fit_tmp_null),
+      "Unable to obtain draws from the fit object."
+    )
 
-  fit_tmp <- testing_fit("bernoulli", method = "variational", seed = 123)
-  temp_file <- tempfile(fileext = ".rds")
-  saveRDS(fit_tmp, file = temp_file)
-  rm(fit_tmp)
-  gc()
-  fit_tmp_null <- readRDS(temp_file)
-  expect_error(
-    process_fitted_params(fit_tmp_null),
-    "Unable to obtain draws from the fit object."
-  )
+    fit_tmp <- testing_fit("bernoulli", method = "variational", seed = 123)
+    temp_file <- tempfile(fileext = ".rds")
+    saveRDS(fit_tmp, file = temp_file)
+    rm(fit_tmp)
+    gc()
+    fit_tmp_null <- readRDS(temp_file)
+    expect_error(
+      process_fitted_params(fit_tmp_null),
+      "Unable to obtain draws from the fit object."
+    )
+  }
 })
 
 test_that("process_fitted_params() works if output_files in fit do not exist", {

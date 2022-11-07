@@ -641,7 +641,8 @@ compile <- function(quiet = TRUE,
   if (os_is_wsl()) {
     res <- processx::run(
       command = "wsl",
-      args = c("chmod", "+x", wsl_safe_path(exe))
+      args = c("chmod", "+x", wsl_safe_path(exe)),
+      error_on_status = FALSE
     )
   }
   private$exe_file_ <- exe

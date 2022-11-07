@@ -37,7 +37,8 @@ CmdStanRun <- R6::R6Class(
         file.copy(from = args$exe_file,
                   to = file.path(wsl_dir_prefix(), wsl_tmpdir))
         args$exe_file <- file.path(wsl_tmpdir, basename(args$exe_file))
-        processx::run("wsl", args = c("chmod", "+x", args$exe_file))
+        processx::run("wsl", args = c("chmod", "+x", args$exe_file),
+                      error_on_status = FALSE)
       }
       invisible(self)
     },
