@@ -801,3 +801,16 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
   expect_true(mod_tmp$format())
   expect_s3_class(mod_tmp$compile(), "CmdStanModel")
 })
+
+test_that("STANCFLAGS included from make/local", {
+  make_local_old <- cmdstan_make_local()
+  cmdstan_make_local(cpp_options = "STANCFLAGS += --O1", append = FALSE)
+  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
+  if(os_is_windows() && !os_is_wsl()) {
+    out_w_flags <- "bin/stanc.exe --name='bernoulli_model'  --O1 --o"
+  } else {
+    out_w_flags <- "bin/stanc --name='bernoulli_model'  --O1 --o"
+  }
+  expect_output(print(out), out_w_flags)
+  cmdstan_make_local(cpp_options = make_local_old, append = FALSE)
+})

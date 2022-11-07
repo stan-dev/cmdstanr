@@ -575,12 +575,15 @@ compile <- function(quiet = TRUE,
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
   }
-  stancflags_standalone <- c("--standalone-functions", stancflags_val, stanc_built_options)
+
+  stancflags_local <- get_cmdstan_flags("STANCFLAGS")
+
+  stancflags_standalone <- c("--standalone-functions", stancflags_val, stanc_built_options, stancflags_local)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   if (compile_standalone) {
     expose_functions(self$functions, !quiet)
   }
-  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stanc_built_options, collapse = " "))
+  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", c(stanc_built_options, stancflags_local), collapse = " "))
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
