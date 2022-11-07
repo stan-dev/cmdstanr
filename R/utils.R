@@ -534,7 +534,7 @@ wsl_installed <- function() {
   tryCatch({
     # Call can hang indefinitely on Github actions, so explicitly kill
     p <- processx::process$new("wsl", "uname")
-    Sys.sleep(5)
+    Sys.sleep(1)
     if (p$is_alive()) {
       p$kill()
       FALSE
@@ -615,9 +615,6 @@ check_file_exists <- function(files, access = NULL, ...) {
 }
 
 .wsl_check_exists <- function(path, is_dir = TRUE, access = NULL) {
-  if (!wsl_installed()) {
-    return(FALSE)
-  }
   path_check <- processx::run(
     command = "wsl",
     args = c("ls", "-la", wsl_safe_path(path)),

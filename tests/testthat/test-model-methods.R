@@ -91,6 +91,7 @@ test_that("Methods return correct values", {
 })
 
 test_that("Model methods environments are independent", {
+  skip_if(os_is_wsl())
   data_list_2 <- data_list
   data_list_2$N <- 20
   data_list_2$y <- c(data_list$y, data_list$y)
