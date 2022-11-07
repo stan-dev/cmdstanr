@@ -716,7 +716,7 @@ get_cmdstan_flags <- function(flag_name) {
 rcpp_source_stan <- function(code, env, verbose = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
-  libs <- paste(sapply(libs, get_cmdstan_flags), collapse = "")
+  libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
