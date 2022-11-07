@@ -658,8 +658,8 @@ assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 # Model methods & expose_functions helpers ------------------------------------------------------
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
-  flags <- processx::run(
-    "make",
+  flags <- wsl_compatible_run(
+    command = "make",
     args = c(paste0("print-", flag_name)),
     wd = cmdstan_path
   )$stdout
@@ -667,9 +667,19 @@ get_cmdstan_flags <- function(flag_name) {
   flags <- gsub("\n", "", flags, fixed = TRUE)
 
   flags <- gsub(
-    pattern = paste0(flag_name, " ="),
-    replacement = "", x = flags, fixed = TRUE
+    pattern = paste0(flag_name, "\\s(=|\\+=)(\\s|$)"),
+    replacement = "", x = flags
   )
+
+  if (flags == "") {
+    return(flags)
+  }
+
+  if (flag_name == "STANCFLAGS") {
+    # StanC flags need to be returned as a character vector
+    flags_vec <- strsplit(x = flags, split = " ", fixed = TRUE)[[1]]
+    return(flags_vec)
+  }
 
   if (flag_name %in% c("LDLIBS", "LDFLAGS_TBB")) {
     # shQuote -L paths and rpaths
@@ -703,7 +713,7 @@ get_cmdstan_flags <- function(flag_name) {
 rcpp_source_stan <- function(code, env, verbose = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
-  libs <- paste(sapply(libs, get_cmdstan_flags), collapse = "")
+  libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
