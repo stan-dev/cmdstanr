@@ -7,15 +7,15 @@ Authors@R:
            email = "jsg2201@columbia.edu"),
       person(given = "Rok", family = "Češnovar", role = "aut",
            email = "rok.cesnovar@fri.uni-lj.si"),
+      person(given = "Andrew", family = "Johnson", role = "aut",
+            comment = c(ORCID = "0000-0001-7000-8065")),
       person(given = "Ben", family = "Bales", role = "ctb"),
       person(given = "Mitzi", family = "Morris", role = "ctb"),
       person(given = "Mikhail", family = "Popov", role = "ctb"),
       person(given = "Mike", family = "Lawrence", role = "ctb"),
       person(given = c("William", "Michael"), family = "Landau", role = "ctb",
            email = "will.landau@gmail.com", comment = c(ORCID = "0000-0003-1878-3253")),
-      person(given = "Jacob", family = "Socolar", role = "ctb"),
-      person(given = "Andrew", family = "Johnson", role = "ctb",
-            comment = c(ORCID = "0000-0001-7000-8065")))
+      person(given = "Jacob", family = "Socolar", role = "ctb"))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command
     line interface for compilation and running algorithms instead of interfacing
