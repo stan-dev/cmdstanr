@@ -103,7 +103,7 @@ jobs:
           install.packages(c("remotes", "curl"), dependencies = TRUE)
           remotes::install_local(path = ".")
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
+          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, version = "2.31.0-rc1")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
           remotes::install_cran("gridExtra")
