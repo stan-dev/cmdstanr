@@ -173,48 +173,41 @@ test_that("errors when using draws after variational fais", {
   expect_error(fit$metadata(), "Fitting failed. Unable to retrieve the metadata.")
 })
 
-# test_that("gq chains error on wrong input CSV", {
-#   fit_bernoulli <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2)
-#   fit_logistic <- testing_fit("logistic", method = "sample", seed = 123, chains = 4)
-#   mod <- testing_model("bernoulli_ppc")
-#   data_list <- testing_data("bernoulli_ppc")
-#   suppressWarnings(
-#     expect_message(
-#       mod$generate_quantities(data = data_list, fitted_params = fit_logistic$output_files()),
-#       "Mismatch between model and fitted_parameters csv"
-#     )
-#   )
-#   err_msg <- "Mismatch between model and fitted_parameters csv file"
-#   suppressWarnings(
-#     expect_message(
-#       mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv")),
-#       err_msg
-#     )
-#   )
-#   expect_warning(
-#     utils::capture.output(
-#       fit <- mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv"))
-#     ),
-#     "Chain 1 finished unexpectedly"
-#   )
-#   
-#   expect_error(
-#     fit$draws(),
-#     "Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities."
-#   )
-#   expect_error(
-#     fit$metadata(),
-#     "Fitting failed. Unable to retrieve the metadata."
-#   )
-#   expect_error(
-#     fit$print(),
-#     "Fitting failed. Unable to print."
-#   )
-#   expect_warning(
-#     utils::capture.output(
-#       fit <- mod$generate_quantities(data = data_list, fitted_params = c(fit_bernoulli$output_files(), fit_logistic$output_files()))
-#     ),
-#     "4 chain(s) finished unexpectedly",
-#     fixed = TRUE
-#   )
-# })
+test_that("gq chains error on wrong input CSV", {
+  fit_bernoulli <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2)
+  fit_logistic <- testing_fit("logistic", method = "sample", seed = 123, chains = 4)
+  mod <- testing_model("bernoulli_ppc")
+  data_list <- testing_data("bernoulli_ppc")
+  suppressWarnings(
+    expect_message(
+      mod$generate_quantities(data = data_list, fitted_params = fit_logistic$output_files()),
+      "Mismatch between model and fitted_parameters csv"
+    )
+  )
+  expect_warning(
+    utils::capture.output(
+      fit <- mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv"))
+    ),
+    "Chain 1 finished unexpectedly"
+  )
+
+  expect_error(
+    fit$draws(),
+    "Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities."
+  )
+  expect_error(
+    fit$metadata(),
+    "Fitting failed. Unable to retrieve the metadata."
+  )
+  expect_error(
+    fit$print(),
+    "Fitting failed. Unable to print."
+  )
+  expect_warning(
+    utils::capture.output(
+      fit <- mod$generate_quantities(data = data_list, fitted_params = c(fit_bernoulli$output_files(), fit_logistic$output_files()))
+    ),
+    "4 chain(s) finished unexpectedly",
+    fixed = TRUE
+  )
+})
