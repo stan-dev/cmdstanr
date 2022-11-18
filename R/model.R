@@ -885,7 +885,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' }
 #' model {
 #'   target +=
-#'  poisson_log(y | lambda);
+#'  poisson_lpmf(y | lambda);
 #' }
 #' ")
 #' mod <- cmdstan_model(file, compile = FALSE)
