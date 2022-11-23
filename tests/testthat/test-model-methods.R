@@ -23,12 +23,12 @@ test_that("Methods error if not compiled", {
     fixed = TRUE
   )
   expect_error(
-    fit$unconstrain_pars(NULL),
+    fit$unconstrain_variables(NULL),
     "The method has not been compiled, please call `init_model_methods()` first",
     fixed = TRUE
   )
   expect_error(
-    fit$constrain_pars(NULL),
+    fit$constrain_variables(NULL),
     "The method has not been compiled, please call `init_model_methods()` first",
     fixed = TRUE
   )
@@ -45,19 +45,19 @@ test_that("User warned about higher-order autodiff with hessian", {
 
 test_that("Methods return correct values", {
   skip_if(os_is_wsl())
-  lp <- fit$log_prob(upars=c(0.1))
+  lp <- fit$log_prob(unconstrained_variables=c(0.1))
   expect_equal(lp, -8.6327599208828509347)
 
   grad_lp <- -3.2997502497472801508
   attr(grad_lp, "log_prob") <- lp
-  expect_equal(fit$grad_log_prob(upars=c(0.1)), grad_lp)
+  expect_equal(fit$grad_log_prob(unconstrained_variables=c(0.1)), grad_lp)
 
   hessian <- list(
     log_prob = lp,
     grad_log_prob = -3.2997502497472801508,
     hessian = as.matrix(-2.9925124823147033482, nrow=1, ncol=1)
   )
-  expect_equal(fit$hessian(upars=c(0.1)), hessian)
+  expect_equal(fit$hessian(unconstrained_variables=c(0.1)), hessian)
 
   hessian_noadj <- list(
     log_prob = -7.2439666007357095268,
@@ -65,17 +65,17 @@ test_that("Methods return correct values", {
     hessian = as.matrix(-2.4937604019289194568, nrow=1, ncol=1)
   )
 
-  expect_equal(fit$hessian(upars=c(0.1), jacobian_adjustment = FALSE),
+  expect_equal(fit$hessian(unconstrained_variables=c(0.1), jacobian_adjustment = FALSE),
                hessian_noadj)
 
-  cpars <- fit$constrain_pars(c(0.1))
+  cpars <- fit$constrain_variables(c(0.1))
   cpars_true <- list(
     theta = 0.52497918747894001257,
     log_lik = rep(-7.2439666007357095268, data_list$N)
   )
   expect_equal(cpars, cpars_true)
 
-  expect_equal(fit$constrain_pars(c(0.1), generated_quantities = FALSE),
+  expect_equal(fit$constrain_variables(c(0.1), generated_quantities = FALSE),
                list(theta = 0.52497918747894001257))
 
   skeleton <- list(
@@ -83,11 +83,10 @@ test_that("Methods return correct values", {
     log_lik = array(0, dim = data_list$N)
   )
 
-  expect_equal(fit$constrain_pars(skeleton_only = TRUE),
-               skeleton)
+  expect_equal(fit$variable_skeleton(), skeleton)
 
-  upars <- fit$unconstrain_pars(cpars)
-  expect_equal(upars, c(0.1))
+  unconstrained_variables <- fit$unconstrain_variables(cpars)
+  expect_equal(unconstrained_variables, c(0.1))
 })
 
 test_that("Model methods environments are independent", {
@@ -98,8 +97,8 @@ test_that("Model methods environments are independent", {
   fit_2 <- mod$sample(data = data_list_2, chains = 1)
   fit_2$init_model_methods()
 
-  expect_equal(fit$log_prob(upars=c(0.1)), -8.6327599208828509347)
-  expect_equal(fit_2$log_prob(upars=c(0.1)), -15.87672652161856135)
+  expect_equal(fit$log_prob(unconstrained_variables=c(0.1)), -8.6327599208828509347)
+  expect_equal(fit_2$log_prob(unconstrained_variables=c(0.1)), -15.87672652161856135)
 })
 
 test_that("methods error for incorrect inputs", {
@@ -120,7 +119,7 @@ test_that("methods error for incorrect inputs", {
     fixed = TRUE
   )
   expect_error(
-    fit$constrain_pars(c(1,2)),
+    fit$constrain_variables(c(1,2)),
     "Model has 1 unconstrained parameter(s), but 2 were provided!",
     fixed = TRUE
   )
@@ -133,7 +132,7 @@ test_that("methods error for incorrect inputs", {
   logistic_fit$init_model_methods(verbose = TRUE)
 
   expect_error(
-    logistic_fit$unconstrain_pars(list(alpha = 0.5)),
+    logistic_fit$unconstrain_variables(list(alpha = 0.5)),
     "Model parameter(s): beta not provided!",
     fixed = TRUE
   )
@@ -141,6 +140,7 @@ test_that("methods error for incorrect inputs", {
 
 test_that("Methods error with already-compiled model", {
   skip_if(os_is_wsl())
+  precompile_mod <- testing_model("bernoulli")
   mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
   fit <- mod$sample(data = data_list, chains = 1)
@@ -159,23 +159,23 @@ test_that("Methods can be compiled with model", {
                        compile_hessian_method = TRUE)
   fit <- mod$sample(data = data_list, chains = 1)
 
-  lp <- fit$log_prob(upars=c(0.6))
+  lp <- fit$log_prob(unconstrained_variables=c(0.6))
   expect_equal(lp, -10.649855405830624733)
 
   grad_lp <- -4.7478756747095447466
   attr(grad_lp, "log_prob") <- lp
-  expect_equal(fit$grad_log_prob(upars=c(0.6)), grad_lp)
+  expect_equal(fit$grad_log_prob(unconstrained_variables=c(0.6)), grad_lp)
 
   hessian <- list(
     log_prob = lp,
     grad_log_prob = -4.7478756747095447466,
     hessian = as.matrix(-2.7454108854798882078, nrow=1, ncol=1)
   )
-  expect_equal(fit$hessian(upars=c(0.6)), hessian)
+  expect_equal(fit$hessian(unconstrained_variables=c(0.6)), hessian)
 
-  cpars <- fit$constrain_pars(c(0.6))
+  cpars <- fit$constrain_variables(c(0.6))
   expect_equal(cpars, list(theta = 0.64565630622579539555))
 
-  upars <- fit$unconstrain_pars(cpars)
-  expect_equal(upars, c(0.6))
+  unconstrained_variables <- fit$unconstrain_variables(cpars)
+  expect_equal(unconstrained_variables, c(0.6))
 })

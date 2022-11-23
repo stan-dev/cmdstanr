@@ -5,10 +5,10 @@
 \alias{log_prob}
 \title{Calculate the log-probability given a provided vector of unconstrained parameters.}
 \usage{
-log_prob(upars, jacobian_adjustment = TRUE)
+log_prob(unconstrained_variables, jacobian_adjustment = TRUE)
 }
 \arguments{
-\item{upars}{(numeric) A vector of unconstrained parameters to be passed to \code{log_prob}}
+\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters to be passed to \code{log_prob}}
 
 \item{jacobian_adjustment}{(bool) Whether to include the log-density adjustments from
 un/constraining variables}
@@ -19,7 +19,8 @@ The \verb{$log_prob()} method provides access to the Stan model's \code{log_prob
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-fit_mcmc$log_prob(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
+fit_mcmc$init_model_methods()
+fit_mcmc$log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
 }
 
 }
