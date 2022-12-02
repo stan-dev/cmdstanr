@@ -179,3 +179,25 @@ test_that("Methods can be compiled with model", {
   unconstrained_variables <- fit$unconstrain_variables(cpars)
   expect_equal(unconstrained_variables, c(0.6))
 })
+
+test_that("unconstrain_variables correctly handles zero-length containers", {
+  skip_if(os_is_wsl())
+  model_code <- "
+  data {
+    int N;
+  }
+  parameters {
+    vector[N] y;
+    real x;
+  }
+  model {
+    x ~ std_normal();
+    y ~ std_normal();
+  }
+  "
+  mod <- cmdstan_model(write_stan_file(model_code),
+                       compile_model_methods = TRUE)
+  fit <- mod$sample(data = list(N = 0), chains = 1)
+  unconstrained <- fit$unconstrain_variables(variables = list(x = 5))
+  expect_equal(unconstrained, 5)
+})

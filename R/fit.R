@@ -306,7 +306,7 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @name fit-method-init_model_methods
 #' @aliases init_model_methods
 #' @description The `$init_model_methods()` compiles and initializes the
-#' `log_prob`, `grad_log_prob`, `constrain_pars`, and `unconstrain_pars` functions.
+#' `log_prob`, `grad_log_prob`, `constrain_variables`, and `unconstrain_variables` functions.
 #'
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (boolean) Whether to show verbose logging during compilation.
@@ -465,7 +465,7 @@ unconstrain_variables <- function(variables) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  model_par_names <- names(self$runset$args$model_variables$parameters)
+  model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
   prov_par_names <- names(variables)
 
   model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
@@ -477,7 +477,17 @@ unconstrain_variables <- function(variables) {
   # Ignore extraneous parameters
   model_pars_only <- variables[model_par_names]
 
-  stan_pars <- process_init_list(list(variables), num_procs = 1, self$runset$args$model_variables)
+  model_variables <- self$runset$args$model_variables
+
+  # If zero-length parameters are present, they will be listed in model_variables
+  # but not in metadata()$variables
+  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+
+  # Remove zero-length parameters from model_variables, otherwise process_init_list
+  # warns about missing inputs
+  model_variables$parameters <- model_variables$parameters[nonzero_length_params]
+
+  stan_pars <- process_init_list(list(variables), num_procs = 1, model_variables)
   private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, stan_pars)
 }
 CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
