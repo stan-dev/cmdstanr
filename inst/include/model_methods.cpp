@@ -88,7 +88,7 @@ Rcpp::List get_param_metadata(SEXP ext_model_ptr) {
 }
 
 // [[Rcpp::export]]
-std::vector<double> unconstrain_pars(SEXP ext_model_ptr, std::string init_path) {
+std::vector<double> unconstrain_variables(SEXP ext_model_ptr, std::string init_path) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
   std::vector<int> params_i;
   std::vector<double> vars;
@@ -97,7 +97,7 @@ std::vector<double> unconstrain_pars(SEXP ext_model_ptr, std::string init_path) 
 }
 
 // [[Rcpp::export]]
-std::vector<double> constrain_pars(SEXP ext_model_ptr, SEXP base_rng,
+std::vector<double> constrain_variables(SEXP ext_model_ptr, SEXP base_rng,
                                     std::vector<double> upars,
                                     bool return_trans_pars,
                                     bool return_gen_quants) {

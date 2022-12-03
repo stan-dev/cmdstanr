@@ -306,7 +306,7 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @name fit-method-init_model_methods
 #' @aliases init_model_methods
 #' @description The `$init_model_methods()` compiles and initializes the
-#' `log_prob`, `grad_log_prob`, `constrain_pars`, and `unconstrain_pars` functions.
+#' `log_prob`, `grad_log_prob`, `constrain_variables`, and `unconstrain_variables` functions.
 #'
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (boolean) Whether to show verbose logging during compilation.
@@ -350,26 +350,28 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' @aliases log_prob
 #' @description The `$log_prob()` method provides access to the Stan model's `log_prob` function
 #'
-#' @param upars (numeric) A vector of unconstrained parameters to be passed to `log_prob`
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to be passed to `log_prob`
 #' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
 #' un/constraining variables
 #'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-#' fit_mcmc$log_prob(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
 #' }
 #'
-log_prob <- function(upars, jacobian_adjustment = TRUE) {
+log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  if (length(upars) != private$model_methods_env_$num_upars_) {
+  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(upars), " were provided!", call. = FALSE)
+          length(unconstrained_variables), " were provided!", call. = FALSE)
   }
-  private$model_methods_env_$log_prob(private$model_methods_env_$model_ptr_, upars, jacobian_adjustment)
+  private$model_methods_env_$log_prob(private$model_methods_env_$model_ptr_,
+                                      unconstrained_variables, jacobian_adjustment)
 }
 CmdStanFit$set("public", name = "log_prob", value = log_prob)
 
@@ -381,7 +383,7 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #' @description The `$grad_log_prob()` method provides access to the
 #' Stan model's `log_prob` function and its derivative
 #'
-#' @param upars (numeric) A vector of unconstrained parameters to be passed
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to be passed
 #' to `grad_log_prob`
 #' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
 #' un/constraining variables
@@ -389,19 +391,21 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-#' fit_mcmc$grad_log_prob(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$grad_log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
 #' }
 #'
-grad_log_prob <- function(upars, jacobian_adjustment = TRUE) {
+grad_log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  if (length(upars) != private$model_methods_env_$num_upars_) {
+  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(upars), " were provided!", call. = FALSE)
+          length(unconstrained_variables), " were provided!", call. = FALSE)
   }
-  private$model_methods_env_$grad_log_prob(private$model_methods_env_$model_ptr_, upars, jacobian_adjustment)
+  private$model_methods_env_$grad_log_prob(private$model_methods_env_$model_ptr_,
+                                            unconstrained_variables, jacobian_adjustment)
 }
 CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 
@@ -413,7 +417,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @description The `$hessian()` method provides access to the
 #' Stan model's `log_prob`, its derivative, and its hessian
 #'
-#' @param upars (numeric) A vector of unconstrained parameters to be passed
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to be passed
 #' to `hessian`
 #' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
 #' un/constraining variables
@@ -421,45 +425,48 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-#' fit_mcmc$hessian(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
 #' }
 #'
-hessian <- function(upars, jacobian_adjustment = TRUE) {
+hessian <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  if (length(upars) != private$model_methods_env_$num_upars_) {
+  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(upars), " were provided!", call. = FALSE)
+          length(unconstrained_variables), " were provided!", call. = FALSE)
   }
-  private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_, upars, jacobian_adjustment)
+  private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_,
+                                      unconstrained_variables, jacobian_adjustment)
 }
 CmdStanFit$set("public", name = "hessian", value = hessian)
 
 #' Transform a set of parameter values to the unconstrained scale
 #'
-#' @name fit-method-unconstrain_pars
-#' @aliases unconstrain_pars
-#' @description The `$unconstrain_pars()` method transforms input parameters to
+#' @name fit-method-unconstrain_variables
+#' @aliases unconstrain_variables
+#' @description The `$unconstrain_variables()` method transforms input parameters to
 #' the unconstrained scale
 #'
-#' @param pars (list) A list of parameter values to transform, in the same format as
+#' @param variables (list) A list of parameter values to transform, in the same format as
 #' provided to the `init` argument of the `$sample()` method
 #'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-#' fit_mcmc$unconstrain_pars(list(alpha = 0.5, beta = c(0.7, 1.1, 0.2)))
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$unconstrain_variables(list(alpha = 0.5, beta = c(0.7, 1.1, 0.2)))
 #' }
 #'
-unconstrain_pars <- function(pars) {
+unconstrain_variables <- function(variables) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
-  model_par_names <- names(self$runset$args$model_variables$parameters)
-  prov_par_names <- names(pars)
+  model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
+  prov_par_names <- names(variables)
 
   model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
   if (length(model_pars_not_prov) > 0) {
@@ -468,60 +475,95 @@ unconstrain_pars <- function(pars) {
   }
 
   # Ignore extraneous parameters
-  model_pars_only <- pars[model_par_names]
+  model_pars_only <- variables[model_par_names]
 
-  stan_pars <- process_init_list(list(pars), num_procs = 1, self$runset$args$model_variables)
-  private$model_methods_env_$unconstrain_pars(private$model_methods_env_$model_ptr_, stan_pars)
+  model_variables <- self$runset$args$model_variables
+
+  # If zero-length parameters are present, they will be listed in model_variables
+  # but not in metadata()$variables
+  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+
+  # Remove zero-length parameters from model_variables, otherwise process_init_list
+  # warns about missing inputs
+  model_variables$parameters <- model_variables$parameters[nonzero_length_params]
+
+  stan_pars <- process_init_list(list(variables), num_procs = 1, model_variables)
+  private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, stan_pars)
 }
-CmdStanFit$set("public", name = "unconstrain_pars", value = unconstrain_pars)
+CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
 
-#' Transform a set of unconstrained parameter values to the constrained scale
+#' Return the variable skeleton needed by the utils::relist function to re-structure a
+#' vector of constrained parameter values to a named list
 #'
-#' @name fit-method-constrain_pars
-#' @aliases constrain_pars
-#' @description The `$constrain_pars()` method transforms input parameters to
-#' the constrained scale
+#' @name fit-method-variable_skeleton
+#' @aliases variable_skeleton
+#' @description The `$variable_skeleton()` method returns the variable skeleton
 #'
-#' @param upars (numeric) A vector of unconstrained parameters to constrain
-#' @param transformed_parameters (boolean) Whether to return transformed parameters
-#'  implied by newly-constrained parameters (defaults to TRUE)
-#' @param generated_quantities (boolean) Whether to return generated quantities
-#'  implied by newly-constrained parameters (defaults to TRUE)
-#' @param skeleton_only (boolean) Whether to return only the "skeleton" needed by the
-#'  utils::relist function (defaults to FALSE)
+#' @param transformed_parameters (boolean) Whether to include transformed parameters
+#'  in the skeleton (defaults to TRUE)
+#' @param generated_quantities (boolean) Whether to include generated quantities
+#'  in the skeleton (defaults to TRUE)
 #'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-#' fit_mcmc$constrain_pars(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$variable_skeleton()
 #' }
 #'
-constrain_pars <- function(upars, transformed_parameters = TRUE, generated_quantities = TRUE,
-                            skeleton_only = FALSE) {
+variable_skeleton <- function(transformed_parameters = TRUE, generated_quantities = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
   }
 
-  skeleton <- create_skeleton(private$model_methods_env_$param_metadata_,
-                              self$runset$args$model_variables,
-                              transformed_parameters,
-                              generated_quantities)
-  if (skeleton_only) {
-    return(skeleton)
+  create_skeleton(private$model_methods_env_$param_metadata_,
+                  self$runset$args$model_variables,
+                  transformed_parameters,
+                  generated_quantities)
+}
+CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
+
+#' Transform a set of unconstrained parameter values to the constrained scale
+#'
+#' @name fit-method-constrain_variables
+#' @aliases constrain_variables
+#' @description The `$constrain_variables()` method transforms input parameters to
+#' the constrained scale
+#'
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to constrain
+#' @param transformed_parameters (boolean) Whether to return transformed parameters
+#'  implied by newly-constrained parameters (defaults to TRUE)
+#' @param generated_quantities (boolean) Whether to return generated quantities
+#'  implied by newly-constrained parameters (defaults to TRUE)
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' }
+#'
+constrain_variables <- function(unconstrained_variables, transformed_parameters = TRUE,
+                            generated_quantities = TRUE) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
   }
 
-  if (length(upars) != private$model_methods_env_$num_upars_) {
+  skeleton <- self$variable_skeleton(transformed_parameters, generated_quantities)
+
+  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(upars), " were provided!", call. = FALSE)
+          length(unconstrained_variables), " were provided!", call. = FALSE)
   }
-  cpars <- private$model_methods_env_$constrain_pars(
+  cpars <- private$model_methods_env_$constrain_variables(
     private$model_methods_env_$model_ptr_,
     private$model_methods_env_$model_rng_,
-    upars, transformed_parameters, generated_quantities)
+    unconstrained_variables, transformed_parameters, generated_quantities)
   utils::relist(cpars, skeleton)
 }
-CmdStanFit$set("public", name = "constrain_pars", value = constrain_pars)
+CmdStanFit$set("public", name = "constrain_variables", value = constrain_variables)
 
 #' Extract log probability (target)
 #'

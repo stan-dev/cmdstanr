@@ -6,10 +6,10 @@
 \title{Calculate the log-probability , the gradient w.r.t. each input, and the hessian
 for a given vector of unconstrained parameters}
 \usage{
-hessian(upars, jacobian_adjustment = TRUE)
+hessian(unconstrained_variables, jacobian_adjustment = TRUE)
 }
 \arguments{
-\item{upars}{(numeric) A vector of unconstrained parameters to be passed
+\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters to be passed
 to \code{hessian}}
 
 \item{jacobian_adjustment}{(bool) Whether to include the log-density adjustments from
@@ -22,7 +22,8 @@ Stan model's \code{log_prob}, its derivative, and its hessian
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-fit_mcmc$hessian(upars = c(0.5, 1.2, 1.1, 2.2, 1.1))
+fit_mcmc$init_model_methods()
+fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
 }
 
 }
