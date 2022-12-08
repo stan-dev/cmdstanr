@@ -468,20 +468,20 @@ unconstrain_variables <- function(variables) {
   model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
   prov_par_names <- names(variables)
 
-  model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
-  if (length(model_pars_not_prov) > 0) {
-    stop("Model parameter(s): ", paste(model_par_names[model_pars_not_prov], collapse = ","),
-         " not provided!", call. = FALSE)
-  }
-
   # Ignore extraneous parameters
   model_pars_only <- variables[model_par_names]
-
   model_variables <- self$runset$args$model_variables
 
   # If zero-length parameters are present, they will be listed in model_variables
   # but not in metadata()$variables
   nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+  model_par_names <- names(model_variables$parameters[nonzero_length_params])
+
+  model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
+  if (length(model_pars_not_prov) > 0) {
+    stop("Model parameter(s): ", paste(model_par_names[model_pars_not_prov], collapse = ","),
+         " not provided!", call. = FALSE)
+  }
 
   # Remove zero-length parameters from model_variables, otherwise process_init_list
   # warns about missing inputs
@@ -491,6 +491,54 @@ unconstrain_variables <- function(variables) {
   private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, stan_pars)
 }
 CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
+
+#' Transform all parameter draws to the unconstrained scale
+#'
+#' @name fit-method-unconstrain_draws
+#' @aliases unconstrain_draws
+#' @description The `$unconstrain_draws()` method transforms all parameter draws to the
+#' unconstrained scale. The method returns a list for each chain, containing the parameter
+#' values from each iteration on the unconstrained scale
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#' unconstrained_draws <- fit_mcmc$unconstrain_draws()
+#' }
+#'
+unconstrain_draws <- function() {
+  if (is.null(private$draws_)) {
+    if (!length(self$output_files(include_failed = FALSE))) {
+      stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
+    }
+    private$read_csv_(format = "draws_df")
+  }
+  private$draws_ <- maybe_convert_draws_format(private$draws_, "draws_df")
+
+  model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
+  model_variables <- self$runset$args$model_variables
+
+  # If zero-length parameters are present, they will be listed in model_variables
+  # but not in metadata()$variables
+  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+
+  # Remove zero-length parameters from model_variables, otherwise process_init_list
+  # warns about missing inputs
+  pars <- names(model_variables$parameters[nonzero_length_params])
+
+  draws <- posterior::subset_draws(private$draws_, variable = pars)
+  skeleton <- self$variable_skeleton(transformed_parameters = FALSE,
+                                     generated_quantities = FALSE)
+  par_columns <- !(names(draws) %in% c(".chain", ".iteration", ".draw"))
+  unconstrained <- lapply(split(draws, f = draws$.chain), function(chain) {
+    apply(chain, 1, function(draw) {
+      par_list <- utils::relist(as.numeric(draw[par_columns]), skeleton)
+      self$unconstrain_variables(variables = par_list)
+    }, simplify = FALSE)
+  })
+}
+CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 
 #' Return the variable skeleton needed by the utils::relist function to re-structure a
 #' vector of constrained parameter values to a named list
