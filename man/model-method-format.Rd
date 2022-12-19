@@ -56,7 +56,7 @@ parameters {
 }
 model {
   target +=
- poisson_log_lpmf(y | lambda);
+ poisson_lpmf(y | lambda);
 }
 ")
 mod <- cmdstan_model(file, compile = FALSE)
