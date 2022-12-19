@@ -224,10 +224,18 @@ test_that("unconstrain_draws returns correct values", {
   fit <- mod$sample(data = list(N = 0), chains = 1)
 
   x_draws <- fit$draws(format = "draws_df")$x
-  unconstrained_draws <- fit$unconstrain_draws()[[1]]
 
+  # Unconstrain all internal draws
+  unconstrained_internal_draws <- fit$unconstrain_draws()[[1]]
+  expect_equal(as.numeric(x_draws), as.numeric(unconstrained_internal_draws))
+
+  # Unconstrain external CmdStan CSV files
+  unconstrained_csv <- fit$unconstrain_draws(files = fit$output_files())[[1]]
+  expect_equal(as.numeric(x_draws), as.numeric(unconstrained_csv))
+
+  # Unconstrain existing draws object
+  unconstrained_draws <- fit$unconstrain_draws(draws = fit$draws())[[1]]
   expect_equal(as.numeric(x_draws), as.numeric(unconstrained_draws))
-
 
   # With a lower-bounded constraint, the parameter draws should be the
   # exponentiation of the unconstrained draws
@@ -248,7 +256,15 @@ test_that("unconstrain_draws returns correct values", {
   fit <- mod$sample(data = list(N = 0), chains = 1)
 
   x_draws <- fit$draws(format = "draws_df")$x
-  unconstrained_draws <- fit$unconstrain_draws()[[1]]
 
+  unconstrained_internal_draws <- fit$unconstrain_draws()[[1]]
+  expect_equal(as.numeric(x_draws), exp(as.numeric(unconstrained_internal_draws)))
+
+  # Unconstrain external CmdStan CSV files
+  unconstrained_csv <- fit$unconstrain_draws(files = fit$output_files())[[1]]
+  expect_equal(as.numeric(x_draws), exp(as.numeric(unconstrained_csv)))
+
+  # Unconstrain existing draws object
+  unconstrained_draws <- fit$unconstrain_draws(draws = fit$draws())[[1]]
   expect_equal(as.numeric(x_draws), exp(as.numeric(unconstrained_draws)))
 })
