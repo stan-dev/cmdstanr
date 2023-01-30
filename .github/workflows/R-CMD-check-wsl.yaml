@@ -58,7 +58,7 @@ jobs:
           install.packages("curl")
         shell: Rscript {0}
 
-      - uses: Vampire/setup-wsl@v1
+      - uses: Vampire/setup-wsl@v2
         with:
             distribution: Ubuntu-22.04
             use-cache: 'false'
