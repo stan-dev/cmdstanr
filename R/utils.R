@@ -18,22 +18,23 @@ is_verbose_mode <- function() {
 
 # used in both fit.R and csv.R for variable filtering
 matching_variables <- function(variable_filters, variables) {
-  not_found <- c()
-  selected_variables <- c()
-  for (v in variable_filters) {
-    selected <- variables == v | startsWith(variables, paste0(v, "["))
-    selected_variables <- c(selected_variables, variables[selected])
-    variables <- variables[!selected]
-    if (!any(selected)) {
-      not_found <- c(not_found, v)
-    }
+  # identify exact matches
+  matched <- as.list(match(variable_filters, variables))
+  # loop over filters not exactly matched
+  for (id in which(is.na(matched))) {
+    # assign all variable names that match the filter as an array
+    matched[[id]] <-
+      which(startsWith(variables, paste0(variable_filters[id], "[")))
   }
+  # collect all selected variables
+  selected_variables <- variables[unlist(matched)]
+  # collect all filters not found
+  not_found <- variable_filters[vapply(matched, length, 0L) == 0]
   list(
     matching = selected_variables,
     not_found = not_found
   )
 }
-
 
 # checks for OS and hardware ----------------------------------------------
 
