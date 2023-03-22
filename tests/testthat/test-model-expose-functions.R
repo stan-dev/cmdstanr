@@ -129,3 +129,20 @@ test_that("rng functions can be exposed", {
     3.8269637967017344771
   )
 })
+
+test_that("Overloaded functions give meaningful errors", {
+  funcode <- "
+  functions {
+    real fun1(real x) { return x; }
+    vector fun1(vector x) { return x; }
+    real fun2(real x) { return x; }
+    matrix fun3(matrix x) { return x; }
+    real fun3(real x) { return x; }
+  }
+  "
+
+  funmod <- cmdstan_model(write_stan_file(funcode), force_recompile = TRUE)
+  expect_error(funmod$expose_functions(),
+               "Overloaded functions are currently not able to exposed to R! The following overloaded functions were found: fun1, fun3")
+
+})
