@@ -805,17 +805,17 @@ get_standalone_hpp <- function(stan_file, stancflags) {
 # looking up the return type of the functor declaration and replacing
 # the template types (i.e., T0__) with double
 get_plain_rtn <- function(fun_body, model_lines) {
-  fun_props <- decor::parse_cpp_function(paste(fun_body[-1], collapse = "\n"))
+  fun_string <- paste(fun_body[-1], collapse = "\n")
+  fun_props <- decor::parse_cpp_function(fun_string)
+
   struct_start <- grep(paste0("struct ", fun_props$name, "_functor"), model_lines)
   struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
+  rtn_type <- paste0(model_lines[struct_start:struct_op_start], collapse = " ")
 
-  struct_rtn <- grep("nullptr>", model_lines[struct_start:struct_op_start], fixed = TRUE) + struct_start
-
-  rtn_type <- paste0(model_lines[struct_rtn:struct_op_start], collapse = " ")
-  rm_trailing_nullptr <- gsub(".*nullptr>[^,]", "", rtn_type)
   rm_operator <- gsub("operator().*", "", rtn_type)
-  repl_dbl <- gsub("T[0-9*]__", "double", rm_operator)
-  gsub("(^\\s|\\s$)", "", repl_dbl)
+  rm_prev <- gsub(".*\\{", "", rm_operator)
+  rm_template <- gsub("template <typename(.*?)> ", "", rm_prev)
+  gsub("T([0-9])*__", "double", rm_template)
 }
 
 # Prepare the c++ code for a standalone function so that it can be exported to R:
