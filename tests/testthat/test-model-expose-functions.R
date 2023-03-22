@@ -2,7 +2,20 @@ context("model-expose-functions")
 
 set_cmdstan_path()
 
-function_decl <- "functions { vector retvec(vector x) { return x; } }"
+function_decl <- "
+functions {
+  int rtn_int(int x) { return x; }
+  real rtn_real(real x) { return x; }
+  vector rtn_vec(vector x) { return x; }
+  row_vector rtn_rowvec(row_vector x) { return x; }
+  matrix rtn_matrix(matrix x) { return x; }
+
+  array[] int rtn_int_array(array[] int x) { return x; }
+  array[] real rtn_real_array(array[] real x) { return x; }
+  array[] vector rtn_vec_array(array[] vector x) { return x; }
+  array[] row_vector rtn_rowvec_array(array[] row_vector x) { return x; }
+  array[] matrix rtn_matrix_array(array[] matrix x) { return x; }
+}"
 stan_prog <- paste(function_decl,
                    paste(readLines(testing_stan_file("bernoulli")),
                          collapse = "\n"),
@@ -15,19 +28,33 @@ fit <- mod$sample(data = data_list)
 
 test_that("Functions can be exposed in model object", {
   skip_if(os_is_wsl())
-  mod$expose_functions(verbose = TRUE)
+  expect_no_error(mod$expose_functions(verbose = TRUE))
+})
 
-  expect_equal(
-    mod$functions$retvec(c(1,2,3,4)),
-    c(1,2,3,4)
-  )
 
-  mod$expose_functions(global = TRUE, verbose = TRUE)
+test_that("Functions handle types correctly", {
+  skip_if(os_is_wsl())
 
-  expect_equal(
-    retvec(c(1,2,3,4)),
-    c(1,2,3,4)
-  )
+  expect_equal(mod$functions$rtn_int(10), 10)
+  expect_equal(mod$functions$rtn_real(1.67), 1.67)
+
+  vec <- c(1.2,234,0.3,-0.4)
+  rowvec <- t(vec)
+  matrix <- matrix(c(2.11, -6.35, 4.87, -0.9871), nrow = 2, ncol = 2)
+
+  expect_equal(mod$functions$rtn_vec(vec), vec)
+  expect_equal(mod$functions$rtn_rowvec(vec), t(vec))
+  expect_equal(mod$functions$rtn_matrix(matrix), matrix)
+  expect_equal(mod$functions$rtn_int_array(1:5), 1:5)
+  expect_equal(mod$functions$rtn_real_array(vec), vec)
+
+  vec_array <- list(vec, vec * 2, vec + 0.1)
+  rowvec_array <- list(rowvec, rowvec * 2, rowvec + 0.1)
+  matrix_array <- list(matrix, matrix * 2, matrix + 0.1)
+
+  expect_equal(mod$functions$rtn_vec_array(vec_array), vec_array)
+  expect_equal(mod$functions$rtn_rowvec_array(rowvec_array), rowvec_array)
+  expect_equal(mod$functions$rtn_matrix_array(matrix_array), matrix_array)
 })
 
 test_that("Functions can be exposed in fit object", {
@@ -35,7 +62,7 @@ test_that("Functions can be exposed in fit object", {
   fit$expose_functions(verbose = TRUE)
 
   expect_equal(
-    fit$functions$retvec(c(1,2,3,4)),
+    fit$functions$rtn_vec(c(1,2,3,4)),
     c(1,2,3,4)
   )
 })
@@ -49,7 +76,7 @@ test_that("Compiled functions can be copied to global environment", {
   )
 
   expect_equal(
-    retvec(c(1,2,3,4)),
+    rtn_vec(c(1,2,3,4)),
     c(1,2,3,4)
   )
 })
@@ -67,7 +94,7 @@ test_that("Functions can be compiled with model", {
   )
 
   expect_equal(
-    fit$functions$retvec(c(1,2,3,4)),
+    fit$functions$rtn_vec(c(1,2,3,4)),
     c(1,2,3,4)
   )
 
@@ -78,7 +105,7 @@ test_that("Functions can be compiled with model", {
   )
 
   expect_equal(
-    retvec(c(1,2,3,4)),
+    rtn_vec(c(1,2,3,4)),
     c(1,2,3,4)
   )
 })
