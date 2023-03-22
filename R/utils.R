@@ -851,7 +851,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   dups <- env$fun_names[duplicated(env$fun_names)]
 
   if (length(dups) > 0) {
-    stop("Overloaded functions are currently not able to exposed to R!",
+    stop("Overloaded functions are currently not able to be exposed to R!",
           " The following overloaded functions were found: ",
           paste(dups, collapse=", "),
           call. = FALSE)
