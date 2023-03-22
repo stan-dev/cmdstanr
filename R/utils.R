@@ -848,6 +848,15 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     decor::parse_cpp_function(fun, is_attribute = TRUE)$name
   })
 
+  dups <- env$fun_names[duplicated(env$fun_names)]
+
+  if (length(dups) > 0) {
+    stop("Overloaded functions are currently not able to be exposed to R!",
+          " The following overloaded functions were found: ",
+          paste(dups, collapse=", "),
+          call. = FALSE)
+  }
+
   mod_stan_funs <- paste(c(
     env$hpp_code[1:(funs[1] - 1)],
     "#include <RcppEigen.h>",
