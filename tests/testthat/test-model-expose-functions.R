@@ -157,7 +157,6 @@ test_that("Exposing external functions errors before v2.32", {
   install_cmdstan(dir = dir, cores = 2, quiet = FALSE,
                   overwrite = TRUE, version = "2.31.0",
                   wsl = os_is_wsl())
-  set_cmdstan_path(dir)
 
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
