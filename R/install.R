@@ -155,14 +155,15 @@ install_cmdstan <- function(dir = NULL,
     return(invisible(NULL))
   }
   tar_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
-  if (!tar_downloaded) {
+  if (inherits(tar_downloaded, "try-error")) {
+    error_msg <- paste("Download of CmdStan failed with error:",
+                        attr(tar_downloaded, "condition")$message)
     if (!is.null(version)) {
-      stop("Download of CmdStan failed. Please check if the supplied version number is valid.", call. = FALSE)
+      error_msg <- paste0(error_msg, "\nPlease check if the supplied version number is valid.")
+    } else if (!is.null(release_url)) {
+      error_msg <- paste0(error_msg, "\nPlease check if the supplied release URL is valid.")
     }
-    if (!is.null(release_url)) {
-      stop("Download of CmdStan failed. Please check if the supplied release URL is valid.", call. = FALSE)
-    }
-    stop("Download of CmdStan failed. Please try again.", call. = FALSE)
+    stop(error_msg, call. = FALSE)
   }
   message("* Download complete")
   message("* Unpacking archive...")
@@ -364,13 +365,17 @@ latest_released_version <- function(quiet=TRUE) {
   dest_file <- tempfile(pattern = "releases-", fileext = ".json")
   download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
   release_list_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
+  if (inherits(release_list_downloaded, "try-error")) {
+    stop("GitHub download of release list failed with error: ",
+        attr(release_list_downloaded, "condition")$message,
+        call. = FALSE)
+  }
   release <- jsonlite::read_json(dest_file)
   sub("v", "", release$tag_name)
 }
 
 try_download <- function(download_url, destination_file,
-                          quiet = TRUE,
-                          stop_on_error = TRUE) {
+                          quiet = TRUE) {
   download_status <- try(
     suppressWarnings(
       utils::download.file(url = download_url,
@@ -380,11 +385,6 @@ try_download <- function(download_url, destination_file,
     ),
     silent = TRUE
   )
-  if (inherits(download_status, "try-error") && isTRUE(stop_on_error)) {
-    stop("Download failed with error message: ",
-         attr(download_status, "condition")$message,
-         call. = FALSE)
-  }
   download_status
 }
 
@@ -395,16 +395,14 @@ download_with_retries <- function(download_url,
                                   pause_sec = 5,
                                   quiet = TRUE) {
     download_rc <- try_download(download_url, destination_file,
-                                quiet = quiet, stop_on_error = FALSE)
+                                quiet = quiet)
     num_retries <- 0
     while (num_retries < retries && inherits(download_rc, "try-error")) {
       Sys.sleep(pause_sec)
       num_retries <- num_retries + 1
-      download_rc <- try_download(download_url, destination_file,
-                                  quiet = quiet,
-                                  stop_on_error = (num_retries == (retries)))
+      download_rc <- try_download(download_url, destination_file, quiet = quiet)
     }
-    TRUE
+    download_rc
 }
 
 build_cmdstan <- function(dir,

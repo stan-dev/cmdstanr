@@ -75,12 +75,12 @@ test_that("install_cmdstan() errors if it times out", {
 test_that("install_cmdstan() errors if invalid version or URL", {
   expect_error(
     install_cmdstan(version = "2.23.2", wsl = os_is_wsl()),
-    "Download of CmdStan failed. Please check if the supplied version number is valid."
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied version number is valid."
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz",
                     wsl = os_is_wsl()),
-    "Download of CmdStan failed. Please check if the supplied release URL is valid."
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied release URL is valid."
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
@@ -241,6 +241,6 @@ test_that("Download failures return error message", {
       c("http_proxy"="invalid","https_proxy"="invalid"),
       install_cmdstan(dir = dir, overwrite = TRUE)
     )},
-    "Download failed with error message: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
+    "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
 })
 
