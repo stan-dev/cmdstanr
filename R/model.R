@@ -1054,6 +1054,7 @@ sample <- function(data = NULL,
                    window = NULL,
                    fixed_param = FALSE,
                    show_messages = TRUE,
+                   show_errors = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    # deprecated
                    cores = NULL,
@@ -1123,7 +1124,8 @@ sample <- function(data = NULL,
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
-    show_stderr_messages = show_messages
+    show_stderr_messages = show_errors,
+    show_stdout_messages = show_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1260,6 +1262,7 @@ sample_mpi <- function(data = NULL,
                        fixed_param = FALSE,
                        sig_figs = NULL,
                        show_messages = TRUE,
+                       show_errors = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
                        # deprecated
                        validate_csv = TRUE) {
@@ -1282,7 +1285,8 @@ sample_mpi <- function(data = NULL,
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
     parallel_procs = 1,
-    show_stderr_messages = show_messages
+    show_stderr_messages = show_errors,
+    show_stdout_messages = show_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
