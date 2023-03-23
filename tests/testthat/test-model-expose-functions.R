@@ -147,3 +147,25 @@ test_that("Overloaded functions give meaningful errors", {
   expect_error(funmod$expose_functions(),
                "Overloaded functions are currently not able to be exposed to R! The following overloaded functions were found: fun1, fun3")
 })
+
+test_that("Exposing external functions errors before v2.32", {
+  tmpfile <- tempfile(fileext = ".hpp")
+  hpp <-
+  "
+  #include <ostream>
+  namespace standalone_external_model_namespace {
+    int rtn_int(int x, std::ostream *pstream__) { return x; }
+  }"
+  cat(hpp, file = tmpfile, sep = "\n")
+  stanfile <- file.path(tempdir(), "standalone_external.stan")
+  cat("functions { int rtn_int(int x); }\n", file = stanfile)
+  expect_error({
+    cmdstan_model(
+      stan_file = stanfile,
+      user_header = tmpfile,
+      compile_standalone = TRUE
+    )
+  },
+  "Exporting standalone functions with external C++ is not available before CmdStan 2.32",
+  fixed = TRUE)
+})
