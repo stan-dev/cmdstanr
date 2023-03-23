@@ -361,16 +361,18 @@ check_target_exe <- function(exe) {
       start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_procs(), " in parallel")
     }
   }
-  if (procs$show_stdout_messages()) {
-    if (is.null(procs$threads_per_proc())) {
+  if (is.null(procs$threads_per_proc())) {
+    if (procs$show_stdout_messages()) {
       cat(paste0(start_msg, "...\n\n"))
-    } else {
+    }
+  } else {
+    if (procs$show_stdout_messages()) {
       cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
-      Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-      # Windows environment variables have to be explicitly exported to WSL
-      if (os_is_wsl()) {
-        Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-      }
+    }
+    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
     }
   }
   start_time <- Sys.time()
@@ -426,16 +428,18 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
       start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, ", procs$parallel_procs(), " chains at a time ")
     }
   }
-  if (procs$show_stdout_messages()) {
-    if (is.null(procs$threads_per_proc())) {
+  if (is.null(procs$threads_per_proc())) {
+    if (procs$show_stdout_messages()) {
       cat(paste0(start_msg, "...\n\n"))
-    } else {
+    }
+  } else {
+    if (procs$show_stdout_messages()) {
       cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
-      Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-      # Windows environment variables have to be explicitly exported to WSL
-      if (os_is_wsl()) {
-        Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-      }
+    }
+    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
     }
   }
   start_time <- Sys.time()

@@ -35,6 +35,7 @@ sample(
   window = NULL,
   fixed_param = FALSE,
   show_messages = TRUE,
+  show_errors = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   cores = NULL,
   num_cores = NULL,
