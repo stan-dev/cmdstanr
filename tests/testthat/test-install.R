@@ -75,12 +75,12 @@ test_that("install_cmdstan() errors if it times out", {
 test_that("install_cmdstan() errors if invalid version or URL", {
   expect_error(
     install_cmdstan(version = "2.23.2", wsl = os_is_wsl()),
-    "Download of CmdStan failed. Please check if the supplied version number is valid."
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied version number is valid."
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz",
                     wsl = os_is_wsl()),
-    "Download of CmdStan failed. Please check if the supplied release URL is valid."
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied release URL is valid."
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
@@ -196,5 +196,54 @@ test_that("github_download_url constructs correct url", {
     github_download_url("FOO"),
     "https://github.com/stan-dev/cmdstan/releases/download/vFOO/cmdstan-FOO.tar.gz"
   )
+})
+
+test_that("Downloads respect quiet argument", {
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
+  version <- latest_released_version()
+
+  ver_msg <- "trying URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'"
+  download_msg <- paste0("trying URL 'https://github.com/stan-dev/cmdstan/releases/download/v",
+                         version, "/cmdstan-", version, ".tar.gz'")
+
+  # expect_message has trouble capturing the messages from download.file
+  # so handle manually
+  install_normal <- suppressWarnings(
+    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = FALSE),
+                   type = "message")
+  )
+  install_quiet <- suppressWarnings(
+    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = TRUE),
+                   type = "message")
+  )
+
+  expect_true(any(grepl(ver_msg, install_normal, fixed = TRUE)))
+  expect_true(any(grepl(download_msg, install_normal, fixed = TRUE)))
+
+  expect_false(any(grepl(ver_msg, install_quiet, fixed = TRUE)))
+  expect_false(any(grepl(download_msg, install_quiet, fixed = TRUE)))
+})
+
+test_that("Download failures return error message", {
+  # GHA fails on Windows old-rel here, but cannot replicate locally
+  skip_if(os_is_windows() && getRversion() < '4.2')
+
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
+
+  expect_error({
+    # Use an invalid proxy address to force a download failure
+    withr::with_envvar(
+      c("http_proxy"="invalid","https_proxy"="invalid"),
+      install_cmdstan(dir = dir, overwrite = TRUE)
+    )},
+    "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
 })
 
