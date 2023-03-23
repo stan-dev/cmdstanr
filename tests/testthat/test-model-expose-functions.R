@@ -149,6 +149,8 @@ test_that("Overloaded functions give meaningful errors", {
 })
 
 test_that("Exposing external functions errors before v2.32", {
+  skip_if(os_is_wsl())
+
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
