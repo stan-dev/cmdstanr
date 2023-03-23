@@ -396,7 +396,7 @@ download_with_retries <- function(download_url,
                                   quiet = TRUE) {
     download_rc <- try_download(download_url, destination_file,
                                 quiet = quiet, stop_on_error = FALSE)
-    num_retries <- 1
+    num_retries <- 0
     while (num_retries < retries && inherits(download_rc, "try-error")) {
       Sys.sleep(pause_sec)
       num_retries <- num_retries + 1
