@@ -141,7 +141,7 @@ install_cmdstan <- function(dir = NULL,
     dir_cmdstan <- file.path(dir, cmdstan_ver)
     dest_file <- file.path(dir, tar_gz_file)
   } else {
-    ver <- latest_released_version()
+    ver <- latest_released_version(quiet = quiet)
     message("* Latest CmdStan release is v", ver)
     cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
@@ -154,7 +154,7 @@ install_cmdstan <- function(dir = NULL,
   if (!check_install_dir(dir_cmdstan, overwrite)) {
     return(invisible(NULL))
   }
-  tar_downloaded <- download_with_retries(download_url, dest_file)
+  tar_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
   if (!tar_downloaded) {
     if (!is.null(version)) {
       stop("Download of CmdStan failed. Please check if the supplied version number is valid.", call. = FALSE)
@@ -360,15 +360,32 @@ github_download_url <- function(version_number) {
 }
 
 # get version number of latest release
-latest_released_version <- function() {
+latest_released_version <- function(quiet=TRUE) {
   dest_file <- tempfile(pattern = "releases-", fileext = ".json")
   download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
-  release_list_downloaded <- download_with_retries(download_url, dest_file)
-  if (!release_list_downloaded) {
-    stop("GitHub download of release list failed.", call. = FALSE)
-  }
+  release_list_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
   release <- jsonlite::read_json(dest_file)
   sub("v", "", release$tag_name)
+}
+
+try_download <- function(download_url, destination_file,
+                          quiet = TRUE,
+                          stop_on_error = TRUE) {
+  download_status <- try(
+    suppressWarnings(
+      utils::download.file(url = download_url,
+                           destfile = destination_file,
+                           quiet = quiet,
+                           headers = github_auth_token())
+    ),
+    silent = TRUE
+  )
+  if (inherits(download_status, "try-error") && isTRUE(stop_on_error)) {
+    stop("Download failed with error message: ",
+         attr(download_status, "condition")$message,
+         call. = FALSE)
+  }
+  download_status
 }
 
 # download with retries and pauses
@@ -377,28 +394,17 @@ download_with_retries <- function(download_url,
                                   retries = 5,
                                   pause_sec = 5,
                                   quiet = TRUE) {
-
-    download_rc <- 1
-    while (retries > 0 && download_rc != 0) {
-      try(
-        suppressWarnings(
-          download_rc <- utils::download.file(url = download_url,
-                                            destfile = destination_file,
-                                            quiet = quiet,
-                                            headers = github_auth_token())
-        ),
-        silent = TRUE
-      )
-      if (download_rc != 0) {
-        Sys.sleep(pause_sec)
-      }
-      retries <- retries - 1
+    download_rc <- try_download(download_url, destination_file,
+                                quiet = quiet, stop_on_error = FALSE)
+    num_retries <- 1
+    while (num_retries < retries && inherits(download_rc, "try-error")) {
+      Sys.sleep(pause_sec)
+      num_retries <- num_retries + 1
+      download_rc <- try_download(download_url, destination_file,
+                                  quiet = quiet,
+                                  stop_on_error = (num_retries == (retries)))
     }
-    if (download_rc == 0) {
-      TRUE
-    } else {
-      FALSE
-    }
+    TRUE
 }
 
 build_cmdstan <- function(dir,

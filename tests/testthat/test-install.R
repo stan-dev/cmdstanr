@@ -198,3 +198,49 @@ test_that("github_download_url constructs correct url", {
   )
 })
 
+test_that("Downloads respect quiet argument", {
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
+  version <- latest_released_version()
+
+  ver_msg <- "trying URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'"
+  download_msg <- paste0("trying URL 'https://github.com/stan-dev/cmdstan/releases/download/v",
+                         version, "/cmdstan-", version, ".tar.gz'")
+
+  # expect_message has trouble capturing the messages from download.file
+  # so handle manually
+  install_normal <- suppressWarnings(
+    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = FALSE),
+                   type = "message")
+  )
+  install_quiet <- suppressWarnings(
+    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = TRUE),
+                   type = "message")
+  )
+
+  expect_true(any(grepl(ver_msg, install_normal, fixed = TRUE)))
+  expect_true(any(grepl(download_msg, install_normal, fixed = TRUE)))
+
+  expect_false(any(grepl(ver_msg, install_quiet, fixed = TRUE)))
+  expect_false(any(grepl(download_msg, install_quiet, fixed = TRUE)))
+})
+
+test_that("Download failures return error message", {
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
+
+  expect_error({
+    # Use an invalid proxy address to force a download failure
+    withr::with_envvar(
+      c("http_proxy"="invalid","https_proxy"="invalid"),
+      install_cmdstan(dir = dir, overwrite = TRUE)
+    )},
+    "Download failed with error message: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
+})
+
