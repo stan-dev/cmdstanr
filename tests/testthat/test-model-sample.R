@@ -118,7 +118,7 @@ test_that("sample() method runs when the stan file is removed", {
   )
 })
 
-test_that("sample() prints informational messages depening on show_messages", {
+test_that("sample() prints informational messages depening on show_exceptions", {
   mod_info_msg <- testing_model("info_message")
   expect_sample_output(
     expect_message(
@@ -127,7 +127,7 @@ test_that("sample() prints informational messages depening on show_messages", {
     )
   )
   expect_sample_output(
-    expect_message(mod_info_msg$sample(show_messages = FALSE), regexp = NA)
+    expect_message(mod_info_msg$sample(show_exceptions = FALSE), regexp = NA)
   )
 })
 
@@ -322,7 +322,7 @@ test_that("sig_figs warning if version less than 2.25", {
   reset_cmdstan_version()
 })
 
-test_that("Errors are suppressed with show_errors", {
+test_that("Errors are suppressed with show_exceptions", {
   errmodcode <- "
   data {
     real y_mean;
@@ -347,7 +347,7 @@ test_that("Errors are suppressed with show_errors", {
   )
 
   expect_no_message(
-    suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1, show_errors = FALSE))
+    suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1, show_exceptions = FALSE))
   )
 })
 

@@ -34,7 +34,7 @@ sample_mpi(
   fixed_param = FALSE,
   sig_figs = NULL,
   show_messages = TRUE,
-  show_errors = TRUE,
+  show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   validate_csv = TRUE
 )
