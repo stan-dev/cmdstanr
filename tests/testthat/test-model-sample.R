@@ -355,6 +355,7 @@ test_that("All output can be suppressed by show_messages", {
   stan_program <- testing_stan_file("bernoulli")
   data_list <- testing_data("bernoulli")
   mod <- cmdstan_model(stan_program, force_recompile = TRUE)
+  options("cmdstanr_verbose" = FALSE)
   output <- capture.output(
     fit <- mod$sample(data = data_list, show_messages = FALSE)
   )
