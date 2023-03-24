@@ -732,7 +732,7 @@ quiet_sourceCpp <- function(code, env, verbose) {
   res
 }
 
-rcpp_source_stan <- function(code, env, makevars = NULL, verbose = FALSE) {
+rcpp_source_stan <- function(code, env, add_makevars = NULL, verbose = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
@@ -746,9 +746,9 @@ rcpp_source_stan <- function(code, env, makevars = NULL, verbose = FALSE) {
       c(
         USE_CXX14 = 1,
         PKG_CPPFLAGS = paste(ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
-                              makevars[["CPPFLAGS"]]),
-        PKG_CXXFLAGS = paste(cxxflags, makevars[["CXXFLAGS"]]),
-        PKG_LIBS = paste(libs, makevars[["LIBS"]])
+                              add_makevars[["CPPFLAGS"]]),
+        PKG_CXXFLAGS = paste(cxxflags, add_makevars[["CXXFLAGS"]]),
+        PKG_LIBS = paste(libs, add_makevars[["LIBS"]])
       ),
       quiet_sourceCpp(code = code, env = env, verbose = verbose)
     )
@@ -768,8 +768,9 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE,
   }
 
   code <- paste(code, collapse = "\n")
+  hess_finite_flag <- ifelse(finite_diff_hessian, "-DFINITE_DIFF_HESS", "")
   compile_status <- rcpp_source_stan(code = code, env = env, verbose = verbose,
-                                      makevars = list(CXXFLAGS = ifelse(finite_diff_hessian, "-DFINITE_DIFF_HESS", "")))
+                                      add_makevars = list(CXXFLAGS = hess_finite_flag))
 
   # Don't fallback to finite-diff if already tried
   if (inherits(compile_status, "try-error") && hessian && !finite_diff_hessian) {
@@ -778,7 +779,7 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE,
     }
     compile_status <-
       rcpp_source_stan(code = code, env = env, verbose = verbose,
-                       makevars = list(CXXFLAGS = "-DFINITE_DIFF_HESS"))
+                       add_makevars = list(CXXFLAGS = "-DFINITE_DIFF_HESS"))
   }
 
   if (inherits(compile_status, "try-error")) {

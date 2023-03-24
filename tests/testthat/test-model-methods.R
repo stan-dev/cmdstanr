@@ -270,7 +270,7 @@ test_that("unconstrain_draws returns correct values", {
 })
 
 test_that("Hessian method falls back to finite-diffs on compile error", {
-  # Attempt to compile a model with an ode_rk45, which is not fvar<T> compatible
+  # Attempt to compile a model with ode_rk45, which is not fvar<T> compatible
   test_model <- testing_stan_file("hessian_test")
   msg <- "Compilation failed with autodiff-based Hessian, retrying with finite-differences..."
 
