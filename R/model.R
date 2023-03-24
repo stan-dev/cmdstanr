@@ -394,6 +394,8 @@ CmdStanModel <- R6::R6Class(
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_pars()`, `unconstrain_pars()`)
 #' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
 #'   be compiled with the model methods?
+#' @param finite_diff_hessian (logical) Should the (experimental) `hessian()` method use
+#'   finite-differences for calculation?
 #' @param compile_standalone (logical) Should functions in the Stan model be compiled for used in R?
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
@@ -446,6 +448,7 @@ compile <- function(quiet = TRUE,
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
                     compile_hessian_method = FALSE,
+                    finite_diff_hessian = FALSE,
                     compile_standalone = FALSE,
                     #deprecated
                     threads = FALSE) {
@@ -659,9 +662,13 @@ compile <- function(quiet = TRUE,
   private$model_methods_env_ <- new.env()
   private$model_methods_env_$hpp_code_ <- readLines(private$hpp_file_)
   if (compile_model_methods) {
+    if (interactive()) {
+      message("Compiling model methods...")
+    }
     expose_model_methods(env = private$model_methods_env_,
                           verbose = !quiet,
-                          hessian = compile_hessian_method)
+                          hessian = compile_hessian_method,
+                          finite_diff_hessian = finite_diff_hessian)
   }
   invisible(self)
 }

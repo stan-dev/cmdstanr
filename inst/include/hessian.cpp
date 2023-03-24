@@ -1,5 +1,6 @@
 #include <RcppEigen.h>
-#include <stan/model/hessian.hpp>
+#include <stan/math/mix/functor/hessian.hpp>
+#include <stan/math/rev/functor/finite_diff_hessian_auto.hpp>
 
 // [[Rcpp::depends(RcppEigen)]]
 
@@ -33,8 +34,13 @@ Rcpp::List hessian(SEXP ext_model_ptr, Eigen::VectorXd& upars, bool jac_adjust) 
   Eigen::VectorXd grad;
   Eigen::MatrixXd hessian;
 
+#ifdef FINITE_DIFF_HESS
+  stan::math::internal::finite_diff_hessian_auto(hessian_wrapper<decltype(*ptr.get())>(*ptr.get(), jac_adjust, 0),
+                      upars, log_prob, grad, hessian);
+#else
   stan::math::hessian(hessian_wrapper<decltype(*ptr.get())>(*ptr.get(), jac_adjust, 0),
                       upars, log_prob, grad, hessian);
+#endif
 
   return Rcpp::List::create(
     Rcpp::Named("log_prob") = log_prob,

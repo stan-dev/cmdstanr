@@ -16,6 +16,7 @@ compile(
   force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   compile_model_methods = FALSE,
   compile_hessian_method = FALSE,
+  finite_diff_hessian = FALSE,
   compile_standalone = FALSE,
   threads = FALSE
 )
@@ -64,6 +65,9 @@ via a global \code{cmdstanr_force_recompile} option.}
 
 \item{compile_hessian_method}{(logical) Should the (experimental) \code{hessian()} method be
 be compiled with the model methods?}
+
+\item{finite_diff_hessian}{(logical) Should the (experimental) \code{hessian()} method use
+finite-differences for calculation?}
 
 \item{compile_standalone}{(logical) Should functions in the Stan model be compiled for used in R?}
 

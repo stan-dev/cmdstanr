@@ -711,7 +711,28 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
-rcpp_source_stan <- function(code, env, verbose = FALSE) {
+# Temporary workaround to suppress error messages from sourceCpp on compilation
+# error, can be removed once https://github.com/RcppCore/Rcpp/issues/1257 is
+# resolved
+#
+# The compilation is performed in a separate R session with a specified cache dir
+# for the shared object files, such that any errors are printed to the console
+# of that session. If the compilation succeeds, then the shared objects
+# (and associated functions) are loaded in the original R session
+quiet_sourceCpp <- function(code, env, verbose) {
+  cachedir <- tempdir()
+  res <- try(callr::r(func = Rcpp::sourceCpp,
+                      args=list(code = code, cacheDir = cachedir, verbose = verbose),
+                      package = "Rcpp"),
+            silent = TRUE)
+  if (!inherits(res, "try-error")) {
+    Rcpp::sourceCpp(code = code, cacheDir = cachedir, env = env)
+    return(invisible(NULL))
+  }
+  res
+}
+
+rcpp_source_stan <- function(code, env, makevars = NULL, verbose = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
@@ -724,29 +745,47 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
     withr::with_makevars(
       c(
         USE_CXX14 = 1,
-        PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
-        PKG_CXXFLAGS = cxxflags,
-        PKG_LIBS = libs
+        PKG_CPPFLAGS = paste(ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
+                              makevars[["CPPFLAGS"]]),
+        PKG_CXXFLAGS = paste(cxxflags, makevars[["CXXFLAGS"]]),
+        PKG_LIBS = paste(libs, makevars[["LIBS"]])
       ),
-      Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+      quiet_sourceCpp(code = code, env = env, verbose = verbose)
     )
   )
-  invisible(NULL)
 }
 
-expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE,
+                                finite_diff_hessian = FALSE) {
   code <- c(env$hpp_code_,
             readLines(system.file("include", "model_methods.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
 
-  if (hessian) {
+  if (hessian || finite_diff_hessian) {
     code <- c(code,
             readLines(system.file("include", "hessian.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
   }
 
   code <- paste(code, collapse = "\n")
-  rcpp_source_stan(code, env, verbose)
+  compile_status <- rcpp_source_stan(code = code, env = env, verbose = verbose,
+                                      makevars = list(CXXFLAGS = ifelse(finite_diff_hessian, "-DFINITE_DIFF_HESS", "")))
+
+  # Don't fallback to finite-diff if already tried
+  if (inherits(compile_status, "try-error") && hessian && !finite_diff_hessian) {
+    if (interactive()) {
+      message("Compilation failed with autodiff-based Hessian, retrying with finite-differences...")
+    }
+    compile_status <-
+      rcpp_source_stan(code = code, env = env, verbose = verbose,
+                       makevars = list(CXXFLAGS = "-DFINITE_DIFF_HESS"))
+  }
+
+  if (inherits(compile_status, "try-error")) {
+    stop("Model method compilation failed! ",
+          "Please open an issue at https://github.com/stan-dev/cmdstanr with your model",
+          call. = FALSE)
+  }
   invisible(NULL)
 }
 
@@ -864,9 +903,9 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     stan_funs),
   collapse = "\n")
   if (global) {
-    rcpp_source_stan(mod_stan_funs, globalenv(), verbose)
+    rcpp_source_stan(code = mod_stan_funs, env = globalenv(), verbose = verbose)
   } else {
-    rcpp_source_stan(mod_stan_funs, env, verbose)
+    rcpp_source_stan(code = mod_stan_funs, env = env, verbose = verbose)
   }
   env$compiled <- TRUE
   invisible(NULL)

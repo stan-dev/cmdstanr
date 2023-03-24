@@ -268,3 +268,48 @@ test_that("unconstrain_draws returns correct values", {
   unconstrained_draws <- fit$unconstrain_draws(draws = fit$draws())[[1]]
   expect_equal(as.numeric(x_draws), exp(as.numeric(unconstrained_draws)))
 })
+
+test_that("Hessian method falls back to finite-diffs on compile error", {
+  # Attempt to compile a model with an ode_rk45, which is not fvar<T> compatible
+  test_model <- testing_stan_file("hessian_test")
+  msg <- "Compilation failed with autodiff-based Hessian, retrying with finite-differences..."
+
+  expect_message({
+    hessian_mod <- cmdstan_model(test_model,
+                                  force_recompile = TRUE,
+                                  compile_model_methods = TRUE,
+                                  compile_hessian_method = TRUE)
+  }, message = msg, fixed = TRUE)
+
+  # Fallback message shouldn't be printed if finite-diff hessian requested
+  messages <- capture_output_lines({
+    hessian_mod <- cmdstan_model(test_model,
+                                 force_recompile = TRUE,
+                                 compile_model_methods = TRUE,
+                                 compile_hessian_method = TRUE,
+                                 finite_diff_hessian = TRUE)
+  })
+
+  expect_no_match(object = messages, regexp = msg, fixed = TRUE, all = FALSE)
+})
+
+test_that("Finite-diff hessian consistent with autodiff hessian", {
+  mod <- cmdstan_model(testing_stan_file("bernoulli_log_lik"),
+                       force_recompile = TRUE,
+                       compile_model_methods = TRUE,
+                       compile_hessian_method = TRUE)
+
+  mod_fd <- cmdstan_model(testing_stan_file("bernoulli_log_lik"),
+                       force_recompile = TRUE,
+                       compile_model_methods = TRUE,
+                       finite_diff_hessian = TRUE)
+
+  data_list <- testing_data("bernoulli")
+  fit <- mod$sample(data = data_list, chains = 1)
+  fit_fd <- mod_fd$sample(data = data_list, chains = 1)
+
+  ad_hessian <- fit$hessian(unconstrained_variables=c(0.6))
+  fd_hessian <- fit_fd$hessian(unconstrained_variables=c(0.6))
+
+  expect_equal(ad_hessian, fd_hessian)
+})
