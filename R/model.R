@@ -582,6 +582,7 @@ compile <- function(quiet = TRUE,
   }
   stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  self$functions$external <- !is.null(user_header)
   if (compile_standalone) {
     expose_functions(self$functions, !quiet)
   }
