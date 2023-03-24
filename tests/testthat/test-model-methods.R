@@ -270,6 +270,8 @@ test_that("unconstrain_draws returns correct values", {
 })
 
 test_that("Hessian method falls back to finite-diffs on compile error", {
+  skip_if(os_is_wsl())
+
   # Attempt to compile a model with ode_rk45, which is not fvar<T> compatible
   test_model <- testing_stan_file("hessian_test")
   msg <- "Compilation failed with autodiff-based Hessian, retrying with finite-differences..."
@@ -294,6 +296,8 @@ test_that("Hessian method falls back to finite-diffs on compile error", {
 })
 
 test_that("Finite-diff hessian consistent with autodiff hessian", {
+  skip_if(os_is_wsl())
+
   mod <- cmdstan_model(testing_stan_file("bernoulli_log_lik"),
                        force_recompile = TRUE,
                        compile_model_methods = TRUE,
