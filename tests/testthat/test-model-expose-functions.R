@@ -151,14 +151,7 @@ test_that("Overloaded functions give meaningful errors", {
 test_that("Exposing external functions errors before v2.32", {
   skip_if(os_is_wsl())
 
-  if (getRversion() < '3.5.0') {
-    dir <- tempdir()
-  } else {
-    dir <- tempdir(check = TRUE)
-  }
-  install_cmdstan(dir = dir, cores = 2, quiet = FALSE,
-                  overwrite = TRUE, version = "2.31.0",
-                  wsl = os_is_wsl())
+  fake_cmdstan_version("2.26.0")
 
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
@@ -179,4 +172,6 @@ test_that("Exposing external functions errors before v2.32", {
   },
   "Exporting standalone functions with external C++ is not available before CmdStan 2.32",
   fixed = TRUE)
+
+  reset_cmdstan_version()
 })
