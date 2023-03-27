@@ -729,7 +729,7 @@ rcpp_source_stan <- function(code, env, add_makevars = NULL, verbose = FALSE) {
         PKG_CXXFLAGS = paste(cxxflags, add_makevars[["CXXFLAGS"]]),
         PKG_LIBS = paste(libs, add_makevars[["LIBS"]])
       ),
-      try(Rcpp::sourceCpp(code = code, cacheDir = cachedir, env = env),
+      try(Rcpp::sourceCpp(code = code, env = env, verbose = verbose),
           silent = TRUE)
     )
   )
