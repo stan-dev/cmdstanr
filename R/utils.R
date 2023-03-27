@@ -711,27 +711,6 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
-# Temporary workaround to suppress error messages from sourceCpp on compilation
-# error, can be removed once https://github.com/RcppCore/Rcpp/issues/1257 is
-# resolved
-#
-# The compilation is performed in a separate R session with a specified cache dir
-# for the shared object files, such that any errors are printed to the console
-# of that session. If the compilation succeeds, then the shared objects
-# (and associated functions) are loaded in the original R session
-quiet_sourceCpp <- function(code, env, verbose) {
-  cachedir <- tempdir()
-  res <- try(callr::r(func = Rcpp::sourceCpp,
-                      args=list(code = code, cacheDir = cachedir, verbose = verbose),
-                      package = "Rcpp"),
-            silent = TRUE)
-  if (!inherits(res, "try-error")) {
-    Rcpp::sourceCpp(code = code, cacheDir = cachedir, env = env)
-    return(invisible(NULL))
-  }
-  res
-}
-
 rcpp_source_stan <- function(code, env, add_makevars = NULL, verbose = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
@@ -750,7 +729,8 @@ rcpp_source_stan <- function(code, env, add_makevars = NULL, verbose = FALSE) {
         PKG_CXXFLAGS = paste(cxxflags, add_makevars[["CXXFLAGS"]]),
         PKG_LIBS = paste(libs, add_makevars[["LIBS"]])
       ),
-      quiet_sourceCpp(code = code, env = env, verbose = verbose)
+      try(Rcpp::sourceCpp(code = code, cacheDir = cachedir, env = env),
+          silent = TRUE)
     )
   )
 }
