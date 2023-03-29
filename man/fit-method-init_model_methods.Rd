@@ -17,7 +17,7 @@ init_model_methods(seed = 0, verbose = FALSE, hessian = FALSE)
 }
 \description{
 The \verb{$init_model_methods()} compiles and initializes the
-\code{log_prob}, \code{grad_log_prob}, \code{constrain_pars}, and \code{unconstrain_pars} functions.
+\code{log_prob}, \code{grad_log_prob}, \code{constrain_variables}, and \code{unconstrain_variables} functions.
 }
 \examples{
 \dontrun{

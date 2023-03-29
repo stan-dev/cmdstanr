@@ -184,13 +184,6 @@ test_that("gq chains error on wrong input CSV", {
       "Mismatch between model and fitted_parameters csv"
     )
   )
-  err_msg <- "Mismatch between model and fitted_parameters csv file"
-  suppressWarnings(
-    expect_message(
-      mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv")),
-      err_msg
-    )
-  )
   expect_warning(
     utils::capture.output(
       fit <- mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv"))

@@ -852,16 +852,15 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     unread <- requested[!(requested %in% currently_read)]
   } else {
     all_remaining <- all[!(all %in% currently_read)]
-    unread <- c()
-    for (p in requested) {
-      if (any(all_remaining == p)) {
-        unread <- c(unread, p)
-      }
-      is_unread_element <- startsWith(all_remaining, paste0(p, "["))
-      if (any(is_unread_element)) {
-        unread <- c(unread, all_remaining[is_unread_element])
-      }
+    # identify exact matches
+    matched <- as.list(match(requested, all_remaining))
+    # loop over requests not exactly matched
+    for (id in which(is.na(matched))) {
+      matched[[id]] <-
+        which(startsWith(all_remaining, paste0(requested[id], "[")))
     }
+    # collect all unread variables
+    unread <- all_remaining[unlist(matched)]
   }
   if (length(unread)) {
     unique(unread)

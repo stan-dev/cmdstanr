@@ -362,9 +362,13 @@ check_target_exe <- function(exe) {
     }
   }
   if (is.null(procs$threads_per_proc())) {
-    cat(paste0(start_msg, "...\n\n"))
+    if (procs$show_stdout_messages()) {
+      cat(paste0(start_msg, "...\n\n"))
+    }
   } else {
-    cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    if (procs$show_stdout_messages()) {
+      cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    }
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
     # Windows environment variables have to be explicitly exported to WSL
     if (os_is_wsl()) {
@@ -425,9 +429,13 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     }
   }
   if (is.null(procs$threads_per_proc())) {
-    cat(paste0(start_msg, "...\n\n"))
+    if (procs$show_stdout_messages()) {
+      cat(paste0(start_msg, "...\n\n"))
+    }
   } else {
-    cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    if (procs$show_stdout_messages()) {
+      cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    }
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
     # Windows environment variables have to be explicitly exported to WSL
     if (os_is_wsl()) {
@@ -611,6 +619,12 @@ CmdStanProcs <- R6::R6Class(
       private$show_stderr_messages_ <- show_stderr_messages
       private$show_stdout_messages_ <- show_stdout_messages
       invisible(self)
+    },
+    show_stdout_messages = function () {
+      private$show_stdout_messages_
+    },
+    show_stderr_messages = function () {
+      private$show_stderr_messages_
     },
     num_procs = function() {
       private$num_procs_
@@ -927,7 +941,7 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          if ((state > 1.5 && state < 5 && !ignore_line) || is_verbose_mode()) {
+          if ((state > 1.5 && state < 5 && !ignore_line && private$show_stdout_messages_) || is_verbose_mode()) {
             if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
@@ -939,7 +953,9 @@ CmdStanMCMCProcs <- R6::R6Class(
             if (state == 1) {
               state <- 2;
             }
-            message("Chain ", id, " ", line)
+            if (private$show_stderr_messages_) {
+              message("Chain ", id, " ", line)
+            }
           }
           private$proc_state_[[id]] <- next_state
         } else {
@@ -951,6 +967,9 @@ CmdStanMCMCProcs <- R6::R6Class(
       invisible(self)
     },
     report_time = function(id = NULL) {
+      if (!private$show_stdout_messages_) {
+        return(invisible(NULL))
+      }
       if (!is.null(id)) {
         if (self$proc_state(id) == 7) {
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
@@ -1030,7 +1049,7 @@ CmdStanGQProcs <- R6::R6Class(
         if (nzchar(line)) {
           if (self$proc_state(id) == 1 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 1.5)
-          } else if (self$proc_state(id) >= 2) {
+          } else if (self$proc_state(id) >= 2 && private$show_stdout_messages_) {
             cat("Chain", id, line, "\n")
           }
         } else {
@@ -1044,6 +1063,9 @@ CmdStanGQProcs <- R6::R6Class(
       invisible(self)
     },
     report_time = function(id = NULL) {
+      if (!private$show_stdout_messages_) {
+        return(invisible(NULL))
+      }
       if (!is.null(id)) {
         if (self$proc_state(id) == 7) {
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)

@@ -18,22 +18,23 @@ is_verbose_mode <- function() {
 
 # used in both fit.R and csv.R for variable filtering
 matching_variables <- function(variable_filters, variables) {
-  not_found <- c()
-  selected_variables <- c()
-  for (v in variable_filters) {
-    selected <- variables == v | startsWith(variables, paste0(v, "["))
-    selected_variables <- c(selected_variables, variables[selected])
-    variables <- variables[!selected]
-    if (!any(selected)) {
-      not_found <- c(not_found, v)
-    }
+  # identify exact matches
+  matched <- as.list(match(variable_filters, variables))
+  # loop over filters not exactly matched
+  for (id in which(is.na(matched))) {
+    # assign all variable names that match the filter as an array
+    matched[[id]] <-
+      which(startsWith(variables, paste0(variable_filters[id], "[")))
   }
+  # collect all selected variables
+  selected_variables <- variables[unlist(matched)]
+  # collect all filters not found
+  not_found <- variable_filters[vapply(matched, length, 0L) == 0]
   list(
     matching = selected_variables,
     not_found = not_found
   )
 }
-
 
 # checks for OS and hardware ----------------------------------------------
 
@@ -804,17 +805,17 @@ get_standalone_hpp <- function(stan_file, stancflags) {
 # looking up the return type of the functor declaration and replacing
 # the template types (i.e., T0__) with double
 get_plain_rtn <- function(fun_body, model_lines) {
-  fun_props <- decor::parse_cpp_function(paste(fun_body[-1], collapse = "\n"))
+  fun_string <- paste(fun_body[-1], collapse = "\n")
+  fun_props <- decor::parse_cpp_function(fun_string)
+
   struct_start <- grep(paste0("struct ", fun_props$name, "_functor"), model_lines)
   struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
+  rtn_type <- paste0(model_lines[struct_start:struct_op_start], collapse = " ")
 
-  struct_rtn <- grep("nullptr>", model_lines[struct_start:struct_op_start], fixed = TRUE) + struct_start
-
-  rtn_type <- paste0(model_lines[struct_rtn:struct_op_start], collapse = " ")
-  rm_trailing_nullptr <- gsub(".*nullptr>[^,]", "", rtn_type)
   rm_operator <- gsub("operator().*", "", rtn_type)
-  repl_dbl <- gsub("T[0-9*]__", "double", rm_operator)
-  gsub("(^\\s|\\s$)", "", repl_dbl)
+  rm_prev <- gsub(".*\\{", "", rm_operator)
+  rm_template <- gsub("template <typename(.*?)> ", "", rm_prev)
+  gsub("T([0-9])*__", "double", rm_template)
 }
 
 # Prepare the c++ code for a standalone function so that it can be exported to R:
@@ -847,6 +848,15 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     decor::parse_cpp_function(fun, is_attribute = TRUE)$name
   })
 
+  dups <- env$fun_names[duplicated(env$fun_names)]
+
+  if (length(dups) > 0) {
+    stop("Overloaded functions are currently not able to be exposed to R!",
+          " The following overloaded functions were found: ",
+          paste(dups, collapse=", "),
+          call. = FALSE)
+  }
+
   mod_stan_funs <- paste(c(
     env$hpp_code[1:(funs[1] - 1)],
     "#include <RcppEigen.h>",
@@ -867,6 +877,10 @@ expose_functions <- function(function_env, global = FALSE, verbose = FALSE) {
     stop("Standalone functions are not currently available with ",
           "WSL CmdStan and will not be compiled",
           call. = FALSE)
+  }
+  if (function_env$external && cmdstan_version() < "2.32") {
+    stop("Exporting standalone functions with external C++ is not available before CmdStan 2.32",
+         call. = FALSE)
   }
   require_suggested_package("Rcpp")
   require_suggested_package("RcppEigen")
