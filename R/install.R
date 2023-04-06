@@ -209,7 +209,7 @@ install_cmdstan <- function(dir = NULL,
   # Building fails on Apple silicon with < v2.31 due to a makefiles setting
   # for stanc3, so manually implement the patch if needed from:
   # https://github.com/stan-dev/cmdstan/pull/1127
-  if (os_is_macos() && R.version$arch == "aarch64") {
+  if (isTRUE(ver < "2.31") || isTRUE(version < "2.31")) {
     stanc_makefile <- readLines(file.path(dir_cmdstan, "make", "stanc"))
     stanc_makefile <- gsub("\\bxattr -d com.apple.quarantine bin/stanc",
                             "-xattr -d com.apple.quarantine bin/stanc",
