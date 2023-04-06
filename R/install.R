@@ -205,6 +205,16 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
+
+  # Building fails on Apple silicon with < v2.31 due to a makefiles setting
+  # for stanc3, so manually implement the patch if needed from:
+  # https://github.com/stan-dev/cmdstan/pull/1127
+  stanc_makefile <- readLines(file.path(dir_cmdstan, "make", "stanc"))
+  stanc_makefile <- gsub("\\bxattr -d com.apple.quarantine bin/stanc",
+                          "-xattr -d com.apple.quarantine bin/stanc",
+                          stanc_makefile)
+  writeLines(stanc_makefile, con = file.path(dir_cmdstan, "make", "stanc"))
+
   if ((is_rtools42_toolchain() || is_rtools43_toolchain()) && !wsl) {
     cmdstan_make_local(
       dir = dir_cmdstan,
@@ -215,6 +225,15 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
+
+  # Suppress noisy warnings from Boost
+  cmdstan_make_local(
+    dir = dir_cmdstan,
+    cpp_options = list(
+      "CXXFLAGS += -Wno-deprecated-declarations"
+    ),
+    append = TRUE
+  )
 
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
