@@ -194,6 +194,13 @@ fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
 # use a formula to summarize arbitrary functions, e.g. Pr(theta <= 0.5)
 fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
+
+# summarise all variables with default and additional summary measures
+fit$summary(
+  variables = NULL,
+  posterior::default_summary_measures(),
+  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+)
 ```
 
 #### CmdStan's stansummary utility

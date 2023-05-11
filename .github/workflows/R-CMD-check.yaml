@@ -25,7 +25,7 @@ jobs:
         config:
           - {os: macOS-latest, r: 'devel', rtools: ''}
           - {os: macOS-latest, r: 'release', rtools: ''}
-          - {os: windows-latest, r: 'devel', rtools: '42'}
+          - {os: windows-latest, r: 'devel', rtools: '43'}
           - {os: windows-latest, r: 'release', rtools: '42'}
           - {os: windows-latest, r: 'oldrel', rtools: '40'}
           - {os: ubuntu-20.04, r: 'devel', rtools: ''}
