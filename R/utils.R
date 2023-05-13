@@ -797,7 +797,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
     name <- strip_ext(basename(stan_file))
     path <- dirname(stan_file)
     hpp_path <- file.path(path, paste0(name, ".hpp"))
-    hpp <- readLines(hpp_path)
+    hpp <- readLines(hpp_path, warn = FALSE)
     unlink(hpp_path)
     hpp
   } else {
