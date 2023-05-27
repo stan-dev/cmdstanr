@@ -2,42 +2,38 @@ context("model-expose-functions")
 
 set_cmdstan_path()
 
-if (cmdstan_version() < "2.32.0") {
-  function_decl <- "
-  functions {
-    int rtn_int(int x) { return x; }
-    real rtn_real(real x) { return x; }
-    vector rtn_vec(vector x) { return x; }
-    row_vector rtn_rowvec(row_vector x) { return x; }
-    matrix rtn_matrix(matrix x) { return x; }
+function_decl <- "
+functions {
+  int rtn_int(int x) { return x; }
+  real rtn_real(real x) { return x; }
+  vector rtn_vec(vector x) { return x; }
+  row_vector rtn_rowvec(row_vector x) { return x; }
+  matrix rtn_matrix(matrix x) { return x; }
 
-    array[] int rtn_int_array(array[] int x) { return x; }
-    array[] real rtn_real_array(array[] real x) { return x; }
-    array[] vector rtn_vec_array(array[] vector x) { return x; }
-    array[] row_vector rtn_rowvec_array(array[] row_vector x) { return x; }
-    array[] matrix rtn_matrix_array(array[] matrix x) { return x; }
-  }"
-  stan_prog <- paste(function_decl,
-                    paste(readLines(testing_stan_file("bernoulli")),
-                          collapse = "\n"),
-                    collapse = "\n")
-  model <- write_stan_file(stan_prog)
-  data_list <- testing_data("bernoulli")
-  mod <- cmdstan_model(model, force_recompile = TRUE)
-  fit <- mod$sample(data = data_list)
-}
+  array[] int rtn_int_array(array[] int x) { return x; }
+  array[] real rtn_real_array(array[] real x) { return x; }
+  array[] vector rtn_vec_array(array[] vector x) { return x; }
+  array[] row_vector rtn_rowvec_array(array[] row_vector x) { return x; }
+  array[] matrix rtn_matrix_array(array[] matrix x) { return x; }
+}"
+stan_prog <- paste(function_decl,
+                  paste(readLines(testing_stan_file("bernoulli")),
+                        collapse = "\n"),
+                  collapse = "\n")
+model <- write_stan_file(stan_prog)
+data_list <- testing_data("bernoulli")
+mod <- cmdstan_model(model, force_recompile = TRUE)
+fit <- mod$sample(data = data_list)
 
 
 test_that("Functions can be exposed in model object", {
   skip_if(os_is_wsl())
-  skip_if(cmdstan_version() >= "2.32.0")
   expect_no_error(mod$expose_functions(verbose = TRUE))
 })
 
 
 test_that("Functions handle types correctly", {
   skip_if(os_is_wsl())
-  skip_if(cmdstan_version() >= "2.32.0")
 
   expect_equal(mod$functions$rtn_int(10), 10)
   expect_equal(mod$functions$rtn_real(1.67), 1.67)
@@ -63,7 +59,6 @@ test_that("Functions handle types correctly", {
 
 test_that("Functions can be exposed in fit object", {
   skip_if(os_is_wsl())
-  skip_if(cmdstan_version() >= "2.32.0")
   fit$expose_functions(verbose = TRUE)
 
   expect_equal(
@@ -74,7 +69,6 @@ test_that("Functions can be exposed in fit object", {
 
 test_that("Compiled functions can be copied to global environment", {
   skip_if(os_is_wsl())
-  skip_if(cmdstan_version() >= "2.32.0")
   expect_message(
     fit$expose_functions(global = TRUE),
     "Functions already compiled, copying to global environment",
@@ -90,7 +84,6 @@ test_that("Compiled functions can be copied to global environment", {
 
 test_that("Functions can be compiled with model", {
   skip_if(os_is_wsl())
-  skip_if(cmdstan_version() >= "2.32.0")
   mod <- cmdstan_model(model, force_recompile = TRUE, compile_standalone = TRUE)
   fit <- mod$sample(data = data_list)
 
@@ -119,7 +112,6 @@ test_that("Functions can be compiled with model", {
 
 test_that("rng functions can be exposed", {
   skip_if(os_is_wsl())
-  skip_if(cmdstan_version() >= "2.32.0")
   function_decl <- "functions { real normal_rng(real mu) { return normal_rng(mu, 1); } }"
   stan_prog <- paste(function_decl,
                      paste(readLines(testing_stan_file("bernoulli")),
@@ -140,7 +132,6 @@ test_that("rng functions can be exposed", {
 
 test_that("Overloaded functions give meaningful errors", {
   skip_if(os_is_wsl())
-  skip_if(cmdstan_version() >= "2.32.0")
 
   funcode <- "
   functions {
@@ -159,16 +150,8 @@ test_that("Overloaded functions give meaningful errors", {
 
 test_that("Exposing external functions errors before v2.32", {
   skip_if(os_is_wsl())
-  skip_if(cmdstan_version() >= "2.32.0")
 
-  if (getRversion() < '3.5.0') {
-    dir <- tempdir()
-  } else {
-    dir <- tempdir(check = TRUE)
-  }
-  install_cmdstan(dir = dir, cores = 2, quiet = FALSE,
-                  overwrite = TRUE, version = "2.31.0",
-                  wsl = os_is_wsl())
+  fake_cmdstan_version("2.26.0")
 
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
@@ -189,4 +172,6 @@ test_that("Exposing external functions errors before v2.32", {
   },
   "Exporting standalone functions with external C++ is not available before CmdStan 2.32",
   fixed = TRUE)
+
+  reset_cmdstan_version()
 })
