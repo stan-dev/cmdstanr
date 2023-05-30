@@ -48,6 +48,5 @@ Suggests:
     rmarkdown,
     testthat (>= 2.1.0),
     Rcpp,
-    RcppEigen,
-    decor
+    RcppEigen
 VignetteBuilder: knitr

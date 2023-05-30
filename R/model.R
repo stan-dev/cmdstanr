@@ -657,7 +657,7 @@ compile <- function(quiet = TRUE,
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
   private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- readLines(private$hpp_file_, warn = FALSE)
+  suppressWarnings(private$model_methods_env_$hpp_code_ <- readLines(private$hpp_file_, warn = FALSE))
   if (compile_model_methods) {
     expose_model_methods(env = private$model_methods_env_,
                           verbose = !quiet,
