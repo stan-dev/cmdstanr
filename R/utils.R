@@ -823,7 +823,7 @@ get_plain_rtn <- function(fun_start, fun_end, model_lines) {
   struct_name <- paste0("struct ", fun_name, "_functor")
 
   if (any(grepl(struct_name, model_lines))) {
-    struct_start <- grep(paste0("struct ", fun_props$name, "_functor"), model_lines)
+    struct_start <- grep(struct_name, model_lines)
     struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
     rtn_type <- paste0(model_lines[struct_start:struct_op_start], collapse = " ")
     rm_operator <- gsub("operator().*", "", rtn_type)
