@@ -800,12 +800,10 @@ rtools4x_version <- function() {
 }
 
 rtools4x_home_path <- function() {
-  path <- NULL
   rtools_ver <- rtools4x_version()
+  path <- paste0("RTOOLS", rtools_ver, "_HOME")
 
-  rtools_home <- paste0("RTOOLS", rtools_ver, "_HOME")
-
-  if (!nzchar(rtools_home)) {
+  if (!nzchar(path)) {
     default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
     if (dir.exists(default_path)) {
       path <- default_path
