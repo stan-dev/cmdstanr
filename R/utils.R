@@ -55,7 +55,7 @@ is_rtools43_toolchain <- function() {
 }
 
 is_rtools42_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0"
+  os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0" && R.version$minor < "3.0"
 }
 
 is_rtools40_toolchain <- function() {
@@ -801,7 +801,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
     name <- strip_ext(basename(stan_file))
     path <- dirname(stan_file)
     hpp_path <- file.path(path, paste0(name, ".hpp"))
-    hpp <- readLines(hpp_path)
+    hpp <- suppressWarnings(readLines(hpp_path, warn = FALSE))
     unlink(hpp_path)
     hpp
   } else {
@@ -809,22 +809,47 @@ get_standalone_hpp <- function(stan_file, stancflags) {
   }
 }
 
+get_function_name <- function(fun_start, fun_end, model_lines) {
+  fun_string <- paste(model_lines[(fun_start+1):fun_end], collapse = " ")
+  fun_name <- gsub("auto ", "", fun_string, fixed = TRUE)
+  sub("\\(.*", "", fun_name, perl = TRUE)
+}
+
 # Construct the plain return type for a standalone function by
 # looking up the return type of the functor declaration and replacing
 # the template types (i.e., T0__) with double
-get_plain_rtn <- function(fun_body, model_lines) {
-  fun_props <- decor::parse_cpp_function(paste(fun_body[-1], collapse = "\n"))
-  struct_start <- grep(paste0("struct ", fun_props$name, "_functor"), model_lines)
-  struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
+get_plain_rtn <- function(fun_start, fun_end, model_lines) {
+  fun_name <- get_function_name(fun_start, fun_end, model_lines)
 
-  struct_rtn <- grep("nullptr>", model_lines[struct_start:struct_op_start], fixed = TRUE) + struct_start
+  # Depending on the version of stanc3, the standalone functions
+  # with a plain return type can either be wrapped in a struct as a functor,
+  # or as a separate forward declaration
+  struct_name <- paste0("struct ", fun_name, "_functor")
 
-  rtn_type <- paste0(model_lines[struct_rtn:struct_op_start], collapse = " ")
-  rm_trailing_nullptr <- gsub(".*nullptr>[^,]", "", rtn_type)
-  rm_operator <- gsub("operator().*", "", rtn_type)
-  repl_dbl <- gsub("T[0-9*]__", "double", rm_operator)
-  gsub("(^\\s|\\s$)", "", repl_dbl)
+  if (any(grepl(struct_name, model_lines))) {
+    struct_start <- grep(struct_name, model_lines)
+    struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
+    rtn_type <- paste0(model_lines[struct_start:struct_op_start], collapse = " ")
+    rm_operator <- gsub("operator().*", "", rtn_type)
+    rm_prev <- gsub(".*\\{", "", rm_operator)
+  } else {
+    # Find first declaration of function (will be the forward declaration)
+    first_decl <- grep(paste0(fun_name,"\\("), model_lines)[1]
+
+    # The return type will be between the function name and the semicolon terminating
+    # the previous line
+    last_scolon <- grep(";", model_lines[1:first_decl])
+    last_scolon <- ifelse(last_scolon[length(last_scolon)] == first_decl,
+                          last_scolon[length(last_scolon) - 1],
+                          last_scolon[length(last_scolon)])
+    rtn_type_full <- paste0(model_lines[last_scolon:first_decl], collapse = " ")
+    rm_fun_name <- gsub(paste0(fun_name, ".*"), "", rtn_type_full)
+    rm_prev <- gsub(".*;", "", rm_fun_name)
+  }
+  rm_template <- gsub("template <typename(.*?)> ", "", rm_prev)
+  gsub("T([0-9])*__", "double", rm_template)
 }
+
 
 # Prepare the c++ code for a standalone function so that it can be exported to R:
 # - Replace the auto return type with the plain type
@@ -832,10 +857,11 @@ get_plain_rtn <- function(fun_body, model_lines) {
 # - Remove the pstream__ argument and pass Rcpp::Rcout by default
 # - Replace the boost::ecuyer1988& base_rng__ argument with an integer seed argument
 #     that instantiates an RNG
-prep_fun_cpp <- function(fun_body, model_lines) {
-  fun_body <- gsub("auto", get_plain_rtn(fun_body, model_lines), fun_body)
-  fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]", fun_body, fixed = TRUE)
-  fun_body <- gsub("std::ostream* pstream__ = nullptr", "", fun_body, fixed = TRUE)
+prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
+  fun_body <- paste(model_lines[fun_start:fun_end], collapse = " ")
+  fun_body <- gsub("auto", get_plain_rtn(fun_start, fun_end, model_lines), fun_body)
+  fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
+  fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
   fun_body <- gsub("boost::ecuyer1988& base_rng__", "size_t seed = 0", fun_body, fixed = TRUE)
   fun_body <- gsub("base_rng__,", "*(new boost::ecuyer1988(seed)),", fun_body, fixed = TRUE)
   fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
@@ -848,13 +874,23 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   funs <- c(funs, length(env$hpp_code))
 
   stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
-    fun_body <- env$hpp_code[funs[ind]:(funs[ind + 1] - 1)]
-    prep_fun_cpp(fun_body, env$hpp_code)
+    fun_end <- funs[ind + 1]
+    fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
+    prep_fun_cpp(funs[ind], fun_end, env$hpp_code)
   })
 
-  env$fun_names <- sapply(stan_funs, function(fun) {
-    decor::parse_cpp_function(fun, is_attribute = TRUE)$name
+  env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
+    get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
   })
+
+  dups <- env$fun_names[duplicated(env$fun_names)]
+
+  if (length(dups) > 0) {
+    stop("Overloaded functions are currently not able to be exposed to R!",
+          " The following overloaded functions were found: ",
+          paste(dups, collapse=", "),
+          call. = FALSE)
+  }
 
   mod_stan_funs <- paste(c(
     env$hpp_code[1:(funs[1] - 1)],
@@ -877,9 +913,12 @@ expose_functions <- function(function_env, global = FALSE, verbose = FALSE) {
           "WSL CmdStan and will not be compiled",
           call. = FALSE)
   }
+  if (function_env$external && cmdstan_version() < "2.32") {
+    stop("Exporting standalone functions with external C++ is not available before CmdStan 2.32",
+         call. = FALSE)
+  }
   require_suggested_package("Rcpp")
   require_suggested_package("RcppEigen")
-  require_suggested_package("decor")
   if (function_env$compiled) {
     if (!global) {
       message("Functions already compiled, nothing to do!")

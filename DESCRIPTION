@@ -36,7 +36,7 @@ Imports:
     checkmate,
     data.table,
     jsonlite (>= 1.2.0),
-    posterior (>= 1.1.0),
+    posterior (>= 1.4.1),
     processx (>= 3.5.0),
     R6 (>= 2.4.0),
     withr (>= 2.5.0)
@@ -48,6 +48,5 @@ Suggests:
     rmarkdown,
     testthat (>= 2.1.0),
     Rcpp,
-    RcppEigen,
-    decor
+    RcppEigen
 VignetteBuilder: knitr
