@@ -796,12 +796,12 @@ rtools4x_version <- function() {
   } else {
     rtools_ver <- "43"
   }
-  rtools_ver <- rtools4x_version()
+  rtools_ver
 }
 
 rtools4x_home_path <- function() {
   path <- NULL
-  rtools_ver
+  rtools_ver <- rtools4x_version()
 
   rtools_home <- paste0("RTOOLS", rtools_ver, "_HOME")
 
