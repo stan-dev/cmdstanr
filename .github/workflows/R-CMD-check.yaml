@@ -7,7 +7,7 @@ name: Unit tests
 'on':
   push:
     branches:
-      - master
+      - interactive-testing
   pull_request:
     branches:
       - master
