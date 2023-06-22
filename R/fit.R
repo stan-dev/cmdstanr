@@ -1416,7 +1416,7 @@ CmdStanMCMC <- R6::R6Class(
 #' print(loo_result)
 #' }
 #'
-loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
+loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) {
   require_suggested_package("loo")
   LLarray <- self$draws(variables, format = "draws_array")
   if (is.logical(r_eff)) {
@@ -1427,7 +1427,21 @@ loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
       r_eff <- NULL
     }
   }
-  loo::loo.array(LLarray, r_eff = r_eff, ...)
+  loo_result <- loo::loo.array(LLarray, r_eff = r_eff, ...)
+  if (moment_match == TRUE) {
+    self$init_model_methods()
+    loo_result <- loo::loo_moment_match.default(
+      x = self,
+      loo = loo_result,
+      post_draws = post_draws,
+      log_lik_i = log_lik_i,
+      unconstrain_pars = unconstrain_pars,
+      log_prob_upars = log_prob_upars,
+      log_lik_i_upars = log_lik_i_upars,
+      ...
+    )
+  }
+  loo_result
 }
 CmdStanMCMC$set("public", name = "loo", value = loo)
 

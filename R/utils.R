@@ -933,3 +933,31 @@ expose_functions <- function(function_env, global = FALSE, verbose = FALSE) {
   }
   invisible(NULL)
 }
+
+# Function definitions for fit$loo(moment_match = TRUE) ---------------------------------------
+post_draws <- function(x, ...) {
+  x$draws(format = "draws_matrix")
+}
+
+log_lik_i <- function(x, i, parameter_name = "log_lik", ...) {
+  ll_array <- x$draws(variables = "log_lik", format = "draws_array")[,,i]
+  # draws_array types don't drop the last dimension when it's 1, so we do this manually
+  attr(ll_array, "dim") <- attributes(ll_array)$dim[1:2]
+  ll_array
+}
+
+unconstrain_pars <- function(x, ...) {
+  do.call(rbind, lapply(x$unconstrain_draws(), function(unc_draws) { do.call(rbind, unc_draws) }))
+}
+
+log_prob_upars <- function(x, upars, ...) {
+  apply(upars, 1, x$log_prob)
+}
+
+log_lik_i_upars <- function(x, upars, i, parameter_name = "log_lik",
+                                    ...) {
+  for (s in seq_len(nrow(upars))) {
+    out[s] <- x$constrain_variables(unconstrained_variables = upars[s, ])[[parameter_name]][i]
+  }
+  out
+}
