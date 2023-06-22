@@ -406,6 +406,15 @@ test_that("check_syntax() works with include_paths", {
 
 })
 
+test_that("check_syntax() works with include_paths on compiled model", {
+  stan_program_w_include <- testing_stan_file("bernoulli_include")
+
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
+                                 include_paths = test_path("resources", "stan"))
+  expect_true(mod_w_include$check_syntax())
+
+})
+
 test_that("check_syntax() works with pedantic=TRUE", {
   model_code <- "
   transformed data {
@@ -735,6 +744,28 @@ test_that("format() works with include_paths", {
     fixed = TRUE
   )
     expect_output(
+    mod_w_include$format(canonicalize = list('includes')),
+    "real divide_real_by_two",
+    fixed = TRUE
+  )
+})
+
+test_that("format() works with include_paths on compiled model", {
+  stan_program_w_include <- testing_stan_file("bernoulli_include")
+
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
+                                 include_paths = test_path("resources", "stan"))
+  expect_output(
+    mod_w_include$format(),
+    "#include ",
+    fixed = TRUE
+  )
+  expect_output(
+    mod_w_include$format(canonicalize = list('deprecations', 'parentheses', 'braces')),
+    "#include ",
+    fixed = TRUE
+  )
+  expect_output(
     mod_w_include$format(canonicalize = list('includes')),
     "real divide_real_by_two",
     fixed = TRUE
