@@ -784,8 +784,8 @@ check_syntax <- function(pedantic = FALSE,
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
-  if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
-    include_paths <- private$precompile_include_paths_
+  if (is.null(include_paths) && !is.null(self$include_paths())) {
+    include_paths <- self$include_paths()
   }
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
@@ -922,7 +922,7 @@ format <- function(overwrite_file = FALSE,
     lower = 1, len = 1, null.ok = TRUE
   )
   stanc_options <- private$precompile_stanc_options_
-  stancflags_val <- include_paths_stanc3_args(private$precompile_include_paths_)
+  stancflags_val <- include_paths_stanc3_args(self$include_paths())
   stanc_options["auto-format"] <- TRUE
   if (!is.null(max_line_length)) {
     stanc_options["max-line-length"] <- max_line_length
