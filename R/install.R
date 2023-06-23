@@ -535,13 +535,12 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 install_toolchain <- function(quiet = FALSE) {
   rtools_usr_bin <- file.path(rtools4x_home_path(), "usr", "bin")
   rtools_version <- paste0("Rtools", rtools4x_version())
-  if (!is_ucrt_toolchain()) {
-    install_pkgs <- "mingw-w64-x86_64-make"
-    if (!quiet) message(paste0("Installing mingw32-make with ", rtools_version))
-  } else {
-    ver <- ifelse(is_rtools43_toolchain(), "Rtools43", "Rtools42")
+  if (is_ucrt_toolchain()) {
     install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
     if (!quiet) message(paste0("Installing mingw32-make and g++ with ", rtools_version))
+  } else {
+    install_pkgs <- "mingw-w64-x86_64-make"
+    if (!quiet) message(paste0("Installing mingw32-make with ", rtools_version))
   }
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
     warning("No write permissions in the RTools folder. This might prevent installing the toolchain.",
