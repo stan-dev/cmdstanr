@@ -274,6 +274,7 @@ test_that("loo method works if log_lik is available", {
 
 test_that("loo method works with moment-matching", {
   skip_if_not_installed("loo")
+  skip_if(os_is_wsl())
 
   # Moment-matching needs model-methods, so make sure hpp is available
   mod <- cmdstan_model(testing_stan_file("loo_moment_match"), force_recompile = TRUE)
