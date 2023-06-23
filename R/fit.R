@@ -1398,8 +1398,11 @@ CmdStanMCMC <- R6::R6Class(
 #'   but will result in a warning from the \pkg{loo} package.
 #'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
 #'   argument to [loo::loo.array()].
+#' @param moment_match (boolean) Whether to use a moment-matching correction for
+#'  for problematic observations.
 #' @param ... Other arguments (e.g., `cores`, `save_psis`, etc.) passed to
-#'   [loo::loo.array()].
+#'   [loo::loo.array()] or [loo::loo_moment_match.default()]
+#'   (if `moment_match` = `TRUE` is set).
 #'
 #' @return The object returned by [loo::loo.array()].
 #'
@@ -1427,21 +1430,39 @@ loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) 
       r_eff <- NULL
     }
   }
-  loo_result <- loo::loo.array(LLarray, r_eff = r_eff, ...)
+
   if (moment_match == TRUE) {
-    self$init_model_methods()
-    loo_result <- loo::loo_moment_match.default(
+    # Moment-matching requires log-prob, constrain, and unconstrain methods
+    if (is.null(private$model_methods_env_$model_ptr)) {
+      self$init_model_methods()
+    }
+
+    suppressWarnings(loo_result <- loo::loo.array(LLarray, r_eff = r_eff, ...))
+
+    log_lik_i <- function(x, i, parameter_name = "log_lik", ...) {
+      ll_array <- x$draws(variables = parameter_name, format = "draws_array")[,,i]
+      # draws_array types don't drop the last dimension when it's 1, so we do this manually
+      attr(ll_array, "dim") <- attributes(ll_array)$dim[1:2]
+      ll_array
+    }
+
+    log_lik_i_upars <- function(x, upars, i, parameter_name = "log_lik", ...) {
+      apply(upars, 1, \(up_i) { x$constrain_variables(up_i)[[parameter_name]][i] })
+    }
+
+    loo::loo_moment_match.default(
       x = self,
       loo = loo_result,
-      post_draws = post_draws,
+      post_draws = \(x, ...) { x$draws(format = "draws_matrix") },
       log_lik_i = log_lik_i,
-      unconstrain_pars = unconstrain_pars,
-      log_prob_upars = log_prob_upars,
+      unconstrain_pars = \(x, pars, ...) { do.call(rbind, lapply(x$unconstrain_draws(), \(chain) { do.call(rbind, chain) })) },
+      log_prob_upars = \(x, upars, ...) { apply(upars, 1, x$log_prob) },
       log_lik_i_upars = log_lik_i_upars,
       ...
     )
+  } else {
+    loo::loo.array(LLarray, r_eff = r_eff, ...)
   }
-  loo_result
 }
 CmdStanMCMC$set("public", name = "loo", value = loo)
 
