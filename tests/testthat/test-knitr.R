@@ -22,7 +22,9 @@ test_that("eng_cmdstan works", {
     cache = TRUE,
     cache.path = tempdir()
   ))
-  expect_interactive_message(eng_cmdstan(opts), "Compiling Stan program")
+  if (!os_is_windows()) {
+    expect_interactive_message(eng_cmdstan(opts), "Compiling Stan program")
+  }
   opts$eval <- FALSE
   expect_silent(eng_cmdstan(opts))
 })
