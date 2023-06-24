@@ -290,6 +290,9 @@ test_that("loo method works with moment-matching", {
   expect_warning(fit$loo(moment_match = TRUE),
                   "Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.",
                   fixed=TRUE)
+
+  # After moment-matching with lower target threshold there should be no warning
+  expect_no_warning(fit$loo(moment_match = TRUE, k_threshold=0.4))
 })
 
 test_that("loo errors if it can't find log lik variables", {
