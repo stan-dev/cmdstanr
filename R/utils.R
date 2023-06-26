@@ -62,6 +62,10 @@ is_rtools40_toolchain <- function() {
   os_is_windows() && R.version$major == "4" && R.version$minor < "2.0"
 }
 
+is_ucrt_toolchain <- function() {
+  os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0"
+}
+
 # Check if running R in Rosetta 2 translation environment, which is an
 # Intel-to-ARM translation layer.
 is_rosetta2 <- function() {

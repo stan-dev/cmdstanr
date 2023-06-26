@@ -215,12 +215,12 @@ install_cmdstan <- function(dir = NULL,
                           stanc_makefile)
   writeLines(stanc_makefile, con = file.path(dir_cmdstan, "make", "stanc"))
 
-  if ((is_rtools42_toolchain() || is_rtools43_toolchain()) && !wsl) {
+  if (is_ucrt_toolchain() && !wsl) {
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
-        "CXXFLAGS += -Wno-nonnull",
-        "TBB_CXXFLAGS= -U__MSVCRT_VERSION__ -D__MSVCRT_VERSION__=0x0E00"
+        "CXXFLAGS += -Wno-nonnull -D_UCRT",
+        "TBB_CXXFLAGS= -D_UCRT"
       ),
       append = TRUE
     )
@@ -534,13 +534,13 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 
 install_toolchain <- function(quiet = FALSE) {
   rtools_usr_bin <- file.path(rtools4x_home_path(), "usr", "bin")
-  if (R.version$minor < "2.0") {
-    install_pkgs <- "mingw-w64-x86_64-make"
-    if (!quiet) message("Installing mingw32-make with Rtools40.")
-  } else {
-    ver <- ifelse(is_rtools43_toolchain(), "Rtools43", "Rtools42")
+  rtools_version <- paste0("Rtools", rtools4x_version())
+  if (is_ucrt_toolchain()) {
     install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
-    if (!quiet) message("Installing mingw32-make and g++ with ", ver, ".")
+    if (!quiet) message(paste0("Installing mingw32-make and g++ with ", rtools_version))
+  } else {
+    install_pkgs <- "mingw-w64-x86_64-make"
+    if (!quiet) message(paste0("Installing mingw32-make with ", rtools_version))
   }
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
     warning("No write permissions in the RTools folder. This might prevent installing the toolchain.",
@@ -595,8 +595,8 @@ check_wsl_toolchain <- function() {
 }
 
 check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
-  rtools_path <- rtools4x_home_path()
-  rtools_version <- if (is_rtools43_toolchain()) "Rtools43" else if (is_rtools42_toolchain()) "Rtools42" else "Rtools40"
+  rtools_path <- rtools_home_path()
+  rtools_version <- paste0("Rtools", rtools4x_version())
   toolchain_path <- rtools4x_toolchain_path()
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
@@ -794,7 +794,7 @@ is_toolchain_installed <- function(app, path) {
 
 toolchain_PATH_env_var <- function() {
   path <- NULL
-  if (is_rtools43_toolchain() || is_rtools42_toolchain() || is_rtools40_toolchain()) {
+  if (R.version$major == "4") {
     rtools_home <- rtools4x_home_path()
     path <- paste0(
       repair_path(file.path(rtools_home, "usr", "bin")), ";",
@@ -805,34 +805,44 @@ toolchain_PATH_env_var <- function() {
 }
 
 rtools4x_toolchain_path <- function() {
-  if (is_rtools43_toolchain() || is_rtools42_toolchain()) {
-    path <- repair_path(file.path(rtools4x_home_path(), "ucrt64", "bin"))
+  c_runtime <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
+  repair_path(file.path(rtools4x_home_path(), c_runtime, "bin"))
+}
+
+rtools4x_version <- function() {
+  rtools_ver <- NULL
+
+  if (R.version$minor < "2.0") {
+    rtools_ver <- "40"
+  } else if (R.version$minor < "3.0") {
+    rtools_ver <- "42"
   } else {
-    path <- repair_path(file.path(rtools4x_home_path(), "mingw64", "bin"))
+    rtools_ver <- "43"
   }
-  path
+  rtools_ver
 }
 
 rtools4x_home_path <- function() {
+  rtools_ver <- rtools4x_version()
+  path <- Sys.getenv(paste0("RTOOLS", rtools_ver, "_HOME"))
+
+  if (!nzchar(path)) {
+    default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
+    if (dir.exists(default_path)) {
+      path <- default_path
+    }
+  }
+
+  path
+}
+
+rtools_home_path <- function() {
   path <- NULL
-  if (is_rtools43_toolchain()) {
-    path <- Sys.getenv("RTOOLS43_HOME")
-    if (!nzchar(path)) {
-      default_path <- repair_path(file.path("C:/rtools43"))
-      if (dir.exists(default_path)) {
-        path <- default_path
-      }
-    }
-  } else if (is_rtools42_toolchain()) {
-    path <- Sys.getenv("RTOOLS42_HOME")
-    if (!nzchar(path)) {
-      default_path <- repair_path(file.path("C:/rtools42"))
-      if (dir.exists(default_path)) {
-        path <- default_path
-      }
-    }
-  } else {
-    path <- Sys.getenv("RTOOLS40_HOME")
+  if (R.version$major == "3") {
+    path <- Sys.getenv("RTOOLS_HOME")
+  }
+  if (R.version$major == "4") {
+    path <- rtools4x_home_path()
   }
   path
 }
