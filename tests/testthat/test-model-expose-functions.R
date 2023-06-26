@@ -17,9 +17,9 @@ functions {
   array[] matrix rtn_matrix_array(array[] matrix x) { return x; }
 }"
 stan_prog <- paste(function_decl,
-                   paste(readLines(testing_stan_file("bernoulli")),
-                         collapse = "\n"),
-                   collapse = "\n")
+                  paste(readLines(testing_stan_file("bernoulli")),
+                        collapse = "\n"),
+                  collapse = "\n")
 model <- write_stan_file(stan_prog)
 data_list <- testing_data("bernoulli")
 mod <- cmdstan_model(model, force_recompile = TRUE)
