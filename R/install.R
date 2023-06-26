@@ -205,7 +205,17 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
-  if (is_rtools42_toolchain() && !wsl) {
+
+  # Building fails on Apple silicon with < v2.31 due to a makefiles setting
+  # for stanc3, so manually implement the patch if needed from:
+  # https://github.com/stan-dev/cmdstan/pull/1127
+  stanc_makefile <- readLines(file.path(dir_cmdstan, "make", "stanc"))
+  stanc_makefile <- gsub("\\bxattr -d com.apple.quarantine bin/stanc",
+                          "-xattr -d com.apple.quarantine bin/stanc",
+                          stanc_makefile)
+  writeLines(stanc_makefile, con = file.path(dir_cmdstan, "make", "stanc"))
+
+  if ((is_rtools42_toolchain() || is_rtools43_toolchain()) && !wsl) {
     cmdstan_make_local(
       dir = dir_cmdstan,
       cpp_options = list(
@@ -215,6 +225,15 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
+
+  # Suppress noisy warnings from Boost
+  cmdstan_make_local(
+    dir = dir_cmdstan,
+    cpp_options = list(
+      "CXXFLAGS += -Wno-deprecated-declarations"
+    ),
+    append = TRUE
+  )
 
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
@@ -519,8 +538,9 @@ install_toolchain <- function(quiet = FALSE) {
     install_pkgs <- "mingw-w64-x86_64-make"
     if (!quiet) message("Installing mingw32-make with Rtools40.")
   } else {
+    ver <- ifelse(is_rtools43_toolchain(), "Rtools43", "Rtools42")
     install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
-    if (!quiet) message("Installing mingw32-make and g++ with Rtools42.")
+    if (!quiet) message("Installing mingw32-make and g++ with ", ver, ".")
   }
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
     warning("No write permissions in the RTools folder. This might prevent installing the toolchain.",
@@ -576,7 +596,7 @@ check_wsl_toolchain <- function() {
 
 check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   rtools_path <- rtools4x_home_path()
-  rtools_version <- if (is_rtools42_toolchain()) "Rtools42" else "Rtools40"
+  rtools_version <- if (is_rtools43_toolchain()) "Rtools43" else if (is_rtools42_toolchain()) "Rtools42" else "Rtools40"
   toolchain_path <- rtools4x_toolchain_path()
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
@@ -774,7 +794,7 @@ is_toolchain_installed <- function(app, path) {
 
 toolchain_PATH_env_var <- function() {
   path <- NULL
-  if (is_rtools42_toolchain() || is_rtools40_toolchain()) {
+  if (is_rtools43_toolchain() || is_rtools42_toolchain() || is_rtools40_toolchain()) {
     rtools_home <- rtools4x_home_path()
     path <- paste0(
       repair_path(file.path(rtools_home, "usr", "bin")), ";",
@@ -785,7 +805,7 @@ toolchain_PATH_env_var <- function() {
 }
 
 rtools4x_toolchain_path <- function() {
-  if (is_rtools42_toolchain()) {
+  if (is_rtools43_toolchain() || is_rtools42_toolchain()) {
     path <- repair_path(file.path(rtools4x_home_path(), "ucrt64", "bin"))
   } else {
     path <- repair_path(file.path(rtools4x_home_path(), "mingw64", "bin"))
@@ -795,7 +815,15 @@ rtools4x_toolchain_path <- function() {
 
 rtools4x_home_path <- function() {
   path <- NULL
-  if (is_rtools42_toolchain()) {
+  if (is_rtools43_toolchain()) {
+    path <- Sys.getenv("RTOOLS43_HOME")
+    if (!nzchar(path)) {
+      default_path <- repair_path(file.path("C:/rtools43"))
+      if (dir.exists(default_path)) {
+        path <- default_path
+      }
+    }
+  } else if (is_rtools42_toolchain()) {
     path <- Sys.getenv("RTOOLS42_HOME")
     if (!nzchar(path)) {
       default_path <- repair_path(file.path("C:/rtools42"))

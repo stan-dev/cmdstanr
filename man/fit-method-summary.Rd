@@ -54,6 +54,23 @@ fit$summary(NULL, c("mean", "sd"))
 # can use functions created from formulas
 # for example, calculate Pr(beta > 0)
 fit$summary("beta", prob_gt_0 = ~ mean(. > 0))
+
+# can combine user-specified functions with
+# the default summary functions
+fit$summary(variables = c("alpha", "beta"),
+  posterior::default_summary_measures()[1:4],
+  quantiles = ~ quantile2(., probs = c(0.025, 0.975)),
+  posterior::default_convergence_measures()
+  )
+
+# the functions need to calculate the appropriate
+# value for a matrix input
+fit$summary(variables = "alpha", dim)
+
+# the usual [stats::var()] is therefore not directly suitable as it
+# will produce a covariance matrix unless the data is converted to a vector
+fit$print(c("alpha", "beta"), var2 = ~var(as.vector(.x)))
+
 }
 
 }
