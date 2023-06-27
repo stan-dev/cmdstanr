@@ -5,7 +5,7 @@
 \alias{loo}
 \title{Leave-one-out cross-validation (LOO-CV)}
 \usage{
-loo(variables = "log_lik", r_eff = TRUE, ...)
+loo(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...)
 }
 \arguments{
 \item{variables}{(character vector) The name(s) of the variable(s) in the
@@ -23,8 +23,12 @@ but will result in a warning from the \pkg{loo} package.
 argument to \code{\link[loo:loo]{loo::loo.array()}}.
 }}
 
+\item{moment_match}{(boolean) Whether to use a moment-matching correction for
+for problematic observations.}
+
 \item{...}{Other arguments (e.g., \code{cores}, \code{save_psis}, etc.) passed to
-\code{\link[loo:loo]{loo::loo.array()}}.}
+\code{\link[loo:loo]{loo::loo.array()}} or \code{\link[loo:loo_moment_match]{loo::loo_moment_match.default()}}
+(if \code{moment_match} = \code{TRUE} is set).}
 }
 \value{
 The object returned by \code{\link[loo:loo]{loo::loo.array()}}.

@@ -272,6 +272,29 @@ test_that("loo method works if log_lik is available", {
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = FALSE)), "loo")
 })
 
+test_that("loo method works with moment-matching", {
+  skip_if_not_installed("loo")
+  skip_if(os_is_wsl())
+
+  # Moment-matching needs model-methods, so make sure hpp is available
+  mod <- cmdstan_model(testing_stan_file("loo_moment_match"), force_recompile = TRUE)
+  data_list <- testing_data("loo_moment_match")
+  fit <- mod$sample(data = data_list, chains = 1)
+
+  # Regular LOO should warn that some pareto-k are "too high"
+  expect_warning(fit$loo(),
+                  "Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.",
+                  fixed=TRUE)
+
+  # After moment-matching the warning should be downgraded to "slightly high"
+  expect_warning(fit$loo(moment_match = TRUE),
+                  "Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.",
+                  fixed=TRUE)
+
+  # After moment-matching with lower target threshold there should be no warning
+  expect_no_warning(fit$loo(moment_match = TRUE, k_threshold=0.4))
+})
+
 test_that("loo errors if it can't find log lik variables", {
   skip_if_not_installed("loo")
   fit_schools <- testing_fit("schools")
