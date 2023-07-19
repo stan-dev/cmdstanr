@@ -560,10 +560,10 @@ unconstrain_draws <- function(files = NULL, draws = NULL) {
                                      generated_quantities = FALSE)
   par_columns <- !(names(draws) %in% c(".chain", ".iteration", ".draw"))
   unconstrained <- lapply(split(draws, f = draws$.chain), function(chain) {
-    apply(chain, 1, function(draw) {
+    lapply(asplit(chain, 1), function(draw) {
       par_list <- utils::relist(as.numeric(draw[par_columns]), skeleton)
       self$unconstrain_variables(variables = par_list)
-    }, simplify = FALSE)
+    })
   })
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
