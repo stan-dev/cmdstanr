@@ -1447,16 +1447,16 @@ loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) 
     }
 
     log_lik_i_upars <- function(x, upars, i, parameter_name = "log_lik", ...) {
-      apply(upars, 1, \(up_i) { x$constrain_variables(up_i)[[parameter_name]][i] })
+      apply(upars, 1, function(up_i) { x$constrain_variables(up_i)[[parameter_name]][i] })
     }
 
     loo::loo_moment_match.default(
       x = self,
       loo = loo_result,
-      post_draws = \(x, ...) { x$draws(format = "draws_matrix") },
+      post_draws = function(x, ...) { x$draws(format = "draws_matrix") },
       log_lik_i = log_lik_i,
-      unconstrain_pars = \(x, pars, ...) { do.call(rbind, lapply(x$unconstrain_draws(), \(chain) { do.call(rbind, chain) })) },
-      log_prob_upars = \(x, upars, ...) { apply(upars, 1, x$log_prob) },
+      unconstrain_pars = function(x, pars, ...) { do.call(rbind, lapply(x$unconstrain_draws(), function(chain) { do.call(rbind, chain) })) },
+      log_prob_upars = function(x, upars, ...) { apply(upars, 1, x$log_prob) },
       log_lik_i_upars = log_lik_i_upars,
       ...
     )
