@@ -54,7 +54,7 @@ fit$summary(
   "median",
   my_sd,
   ~quantile(.x, probs = c(0.1, 0.9)),
-  Minimum = \(x) min(x)
+  Minimum = function(x) min(x)
 )        
 ```
 
