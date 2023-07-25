@@ -388,12 +388,15 @@ CmdStanModel <- R6::R6Class(
 #'   not modified since last compiled. The default is `FALSE`. Can also be set
 #'   via a global `cmdstanr_force_recompile` option.
 #' @param compile_model_methods (logical) Compile additional model methods
-#'   (`log_prob()`, `grad_log_prob()`, `constrain_pars()`, `unconstrain_pars()`)
+#'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
+#'   `unconstrain_variables()`).
 #' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
 #'   be compiled with the model methods?
 #' @param compile_standalone (logical) Should functions in the Stan model be
 #'   compiled for use in R? If `TRUE` the functions will be available via the
-#'   `functions` field in the compiled model object.
+#'   `functions` field in the compiled model object. This can also be done after
+#'   compilation using the
+#'   [`$expose_functions()`][model-method-expose_functions] method.
 #'
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
@@ -1752,7 +1755,7 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #' Expose Stan functions to R
 #'
 #' @name model-method-expose_functions
-#' @aliases expose_functions
+#' @aliases expose_functions fit-method-expose_functions
 #' @family CmdStanModel methods
 #'
 #' @description The `$expose_functions()` method of a [`CmdStanModel`] object
@@ -1760,9 +1763,16 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   expose them for use in \R. This can also be specified via the
 #'   `compile_standalone` argument to the [`$compile()`][model-method-compile]
 #'   method.
+#'
+#'   This method is also available for fitted model objects ([`CmdStanMCMC`], [`CmdStanVB`], etc.).
+#'   See **Examples**.
+#'
+#'   Note: there may be many compiler warnings emitted during compilation but
+#'   these can be ignored so long as they are warnings and not errors.
+#'
 #' @param global (logical) Should the functions be added to the Global
 #'   Environment? The default is `FALSE`, in which case the functions are
-#'   available via the `functions` field of the [CmdStanModel] object.
+#'   available via the `functions` field of the R6 object.
 #' @param verbose (logical) Should detailed information about generated code be
 #'   printed to the console? Defaults to `FALSE`.
 #' @template seealso-docs
@@ -1775,11 +1785,21 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'      return a + b;
 #'    }
 #'  }
+#'  parameters {
+#'    real x;
+#'  }
+#'  model {
+#'    x ~ std_normal();
+#'  }
 #'  "
 #' )
 #' mod <- cmdstan_model(stan_file)
 #' mod$expose_functions()
 #' mod$functions$a_plus_b(1, 2)
+#'
+#' fit <- mod$sample(refresh = 0)
+#' fit$expose_functions() # already compiled because of above but this would compile them otherwise
+#' fit$functions$a_plus_b(1, 2)
 #' }
 #'
 #'
