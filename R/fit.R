@@ -396,10 +396,10 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #' @description The `$grad_log_prob()` method provides access to the
 #' Stan model's `log_prob` function and its derivative
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to be passed
-#' to `grad_log_prob`
-#' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
-#' un/constraining variables
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to be passed to `grad_log_prob`.
+#' @param jacobian_adjustment (bool) Whether to include the log-density
+#'   adjustments from un/constraining variables.
 #'
 #' @examples
 #' \dontrun{
@@ -434,16 +434,16 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @description The `$hessian()` method provides access to the
 #' Stan model's `log_prob`, its derivative, and its hessian
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to be passed
-#' to `hessian`
-#' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
-#' un/constraining variables
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to be passed to `hessian`.
+#' @param jacobian_adjustment (bool) Whether to include the log-density
+#'   adjustments from un/constraining variables.
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-#' fit_mcmc$init_model_methods(hessian = TRUE)
-#' fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
+#' # fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' # fit_mcmc$init_model_methods(hessian = TRUE)
+#' # fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
@@ -471,8 +471,8 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #' @description The `$unconstrain_variables()` method transforms input parameters to
 #' the unconstrained scale
 #'
-#' @param variables (list) A list of parameter values to transform, in the same format as
-#' provided to the `init` argument of the `$sample()` method
+#' @param variables (list) A list of parameter values to transform, in the same
+#'   format as provided to the `init` argument of the `$sample()` method.
 #'
 #' @examples
 #' \dontrun{
@@ -641,11 +641,12 @@ CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 #' @description The `$constrain_variables()` method transforms input parameters to
 #' the constrained scale
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to constrain
-#' @param transformed_parameters (boolean) Whether to return transformed parameters
-#'  implied by newly-constrained parameters (defaults to TRUE)
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to constrain.
+#' @param transformed_parameters (boolean) Whether to return transformed
+#'   parameters implied by newly-constrained parameters (defaults to TRUE).
 #' @param generated_quantities (boolean) Whether to return generated quantities
-#'  implied by newly-constrained parameters (defaults to TRUE)
+#'   implied by newly-constrained parameters (defaults to TRUE).
 #'
 #' @examples
 #' \dontrun{

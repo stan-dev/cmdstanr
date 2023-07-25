@@ -9,11 +9,11 @@ for a given vector of unconstrained parameters}
 hessian(unconstrained_variables, jacobian_adjustment = TRUE)
 }
 \arguments{
-\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters to be passed
-to \code{hessian}}
+\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters
+to be passed to \code{hessian}.}
 
-\item{jacobian_adjustment}{(bool) Whether to include the log-density adjustments from
-un/constraining variables}
+\item{jacobian_adjustment}{(bool) Whether to include the log-density
+adjustments from un/constraining variables.}
 }
 \description{
 The \verb{$hessian()} method provides access to the
@@ -21,9 +21,9 @@ Stan model's \code{log_prob}, its derivative, and its hessian
 }
 \examples{
 \dontrun{
-fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-fit_mcmc$init_model_methods(hessian = TRUE)
-fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
+# fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+# fit_mcmc$init_model_methods(hessian = TRUE)
+# fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 }
 
 }

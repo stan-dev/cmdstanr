@@ -12,13 +12,14 @@ constrain_variables(
 )
 }
 \arguments{
-\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters to constrain}
+\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters
+to constrain.}
 
-\item{transformed_parameters}{(boolean) Whether to return transformed parameters
-implied by newly-constrained parameters (defaults to TRUE)}
+\item{transformed_parameters}{(boolean) Whether to return transformed
+parameters implied by newly-constrained parameters (defaults to TRUE).}
 
 \item{generated_quantities}{(boolean) Whether to return generated quantities
-implied by newly-constrained parameters (defaults to TRUE)}
+implied by newly-constrained parameters (defaults to TRUE).}
 }
 \description{
 The \verb{$constrain_variables()} method transforms input parameters to

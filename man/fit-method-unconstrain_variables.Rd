@@ -8,8 +8,8 @@
 unconstrain_variables(variables)
 }
 \arguments{
-\item{variables}{(list) A list of parameter values to transform, in the same format as
-provided to the \code{init} argument of the \verb{$sample()} method}
+\item{variables}{(list) A list of parameter values to transform, in the same
+format as provided to the \code{init} argument of the \verb{$sample()} method.}
 }
 \description{
 The \verb{$unconstrain_variables()} method transforms input parameters to
