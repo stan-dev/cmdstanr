@@ -9,14 +9,10 @@ results to output files.
 
 ### Advantages of RStan
 
-* Advanced features. We are working on making these available outside of RStan
-but currently they are only available to R users via RStan:
-  - `rstan::log_prob()`
-  - `rstan::grad_log_prob()`
-  - `rstan::expose_stan_functions()`
-
 * Allows other developers to distribute R packages with
 _pre-compiled_ Stan programs (like **rstanarm**) on CRAN.
+
+* Avoids use of R6 classes, which may result in more familiar syntax for many R users. 
 
 ### Advantages of CmdStanR
 

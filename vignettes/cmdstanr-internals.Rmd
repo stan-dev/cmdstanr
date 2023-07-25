@@ -13,7 +13,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r child="children/settings-knitr.Rmd"}
+```{r child="children/_settings-knitr.Rmd"}
 ```
 
 ## Introduction
@@ -127,7 +127,7 @@ is missing a lower bound and a prior for a parameter.
 stan_file_pedantic <- write_stan_file("
 data {
   int N;
-  int y[N];
+  array[N] int y;
 }
 parameters {
   // should have <lower=0> but omitting to demonstrate pedantic mode
@@ -461,7 +461,7 @@ the save file.
 rm(fit); gc()
 
 fit <- readRDS(temp_rds_file)
-fit$summary()
+fit$print()
 ```
 
 ## Developing using CmdStanR
