@@ -4,7 +4,7 @@
 \alias{fit-method-init_model_methods}
 \alias{init_model_methods}
 \title{Compile additional methods for accessing the model log-probability function
-and parameter constraining and unconstraining. This requires the \code{Rcpp} package.}
+and parameter constraining and unconstraining.}
 \usage{
 init_model_methods(seed = 0, verbose = FALSE, hessian = FALSE)
 }
@@ -16,13 +16,22 @@ init_model_methods(seed = 0, verbose = FALSE, hessian = FALSE)
 \item{hessian}{(boolean) Whether to expose the (experimental) hessian method.}
 }
 \description{
-The \verb{$init_model_methods()} compiles and initializes the
-\code{log_prob}, \code{grad_log_prob}, \code{constrain_variables}, and \code{unconstrain_variables} functions.
+The \verb{$init_model_methods()} method compiles and initializes the
+\code{log_prob}, \code{grad_log_prob}, \code{constrain_variables}, \code{unconstrain_variables}
+and \code{unconstrain_draws} functions. These are then available as methods of
+the fitted model object. This requires the \code{Rcpp} package.
+
+Note: there may be many compiler warnings emitted during compilation but
+these can be ignored so long as they are warnings and not errors.
 }
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 fit_mcmc$init_model_methods()
 }
-
+}
+\seealso{
+\code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
+\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}},
+\code{\link[=hessian]{hessian()}}
 }

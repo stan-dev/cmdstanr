@@ -60,12 +60,17 @@ not modified since last compiled. The default is \code{FALSE}. Can also be set
 via a global \code{cmdstanr_force_recompile} option.}
 
 \item{compile_model_methods}{(logical) Compile additional model methods
-(\code{log_prob()}, \code{grad_log_prob()}, \code{constrain_pars()}, \code{unconstrain_pars()})}
+(\code{log_prob()}, \code{grad_log_prob()}, \code{constrain_variables()},
+\code{unconstrain_variables()}).}
 
 \item{compile_hessian_method}{(logical) Should the (experimental) \code{hessian()} method be
 be compiled with the model methods?}
 
-\item{compile_standalone}{(logical) Should functions in the Stan model be compiled for used in R?}
+\item{compile_standalone}{(logical) Should functions in the Stan model be
+compiled for use in R? If \code{TRUE} the functions will be available via the
+\code{functions} field in the compiled model object. This can also be done after
+compilation using the
+\code{\link[=model-method-expose_functions]{$expose_functions()}} method.}
 
 \item{threads}{Deprecated and will be removed in a future release. Please
 turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
@@ -142,6 +147,7 @@ The Stan and CmdStan documentation:
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-diagnose}},
+\code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-optimize}},

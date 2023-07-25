@@ -79,6 +79,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
+\code{\link{model-method-expose_functions}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-sample_mpi}},
