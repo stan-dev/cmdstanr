@@ -907,7 +907,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   invisible(NULL)
 }
 
-expose_functions <- function(function_env, global = FALSE, verbose = FALSE) {
+expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE) {
   if (os_is_wsl()) {
     stop("Standalone functions are not currently available with ",
           "WSL CmdStan and will not be compiled",

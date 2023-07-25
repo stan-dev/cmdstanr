@@ -188,6 +188,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$exe_file()`][model-method-compile] |  Return the file path to the compiled executable. |
 #'  [`$hpp_file()`][model-method-compile] |  Return the file path to the `.hpp` file containing the generated C++ code. |
 #'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
+#'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'
 #'  ## Model fitting
 #'
@@ -325,10 +326,6 @@ CmdStanModel <- R6::R6Class(
               "- ", new_hpp_loc)
       private$hpp_file_ <- new_hpp_loc
       invisible(private$hpp_file_)
-    },
-    expose_functions = function(global = FALSE, verbose = FALSE) {
-      expose_functions(self$functions, global, verbose)
-      invisible(NULL)
     }
   )
 )
@@ -394,7 +391,10 @@ CmdStanModel <- R6::R6Class(
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_pars()`, `unconstrain_pars()`)
 #' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
 #'   be compiled with the model methods?
-#' @param compile_standalone (logical) Should functions in the Stan model be compiled for used in R?
+#' @param compile_standalone (logical) Should functions in the Stan model be
+#'   compiled for use in R? If `TRUE` the functions will be available via the
+#'   `functions` field in the compiled model object.
+#'
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
@@ -584,7 +584,7 @@ compile <- function(quiet = TRUE,
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   self$functions$external <- !is.null(user_header)
   if (compile_standalone) {
-    expose_functions(self$functions, !quiet)
+    expose_stan_functions(self$functions, !quiet)
   }
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
   withr::with_path(
@@ -1748,6 +1748,46 @@ diagnose <- function(data = NULL,
   CmdStanDiagnose$new(runset)
 }
 CmdStanModel$set("public", name = "diagnose", value = diagnose)
+
+#' Expose Stan functions to R
+#'
+#' @name model-method-expose_functions
+#' @aliases expose_functions
+#' @family CmdStanModel methods
+#'
+#' @description The `$expose_functions()` method of a [`CmdStanModel`] object
+#'   will compile the functions in the Stan program's `functions` block and
+#'   expose them for use in \R. This can also be specified via the
+#'   `compile_standalone` argument to the [`$compile()`][model-method-compile]
+#'   method.
+#' @param global (logical) Should the functions be added to the Global
+#'   Environment? The default is `FALSE`, in which case the functions are
+#'   available via the `functions` field of the [CmdStanModel] object.
+#' @param verbose (logical) Should detailed information about generated code be
+#'   printed to the console? Defaults to `FALSE`.
+#' @template seealso-docs
+#' @examples
+#' \dontrun{
+#' stan_file <- write_stan_file(
+#'  "
+#'  functions {
+#'    real a_plus_b(real a, real b) {
+#'      return a + b;
+#'    }
+#'  }
+#'  "
+#' )
+#' mod <- cmdstan_model(stan_file)
+#' mod$expose_functions()
+#' mod$functions$a_plus_b(1, 2)
+#' }
+#'
+#'
+expose_functions = function(global = FALSE, verbose = FALSE) {
+  expose_stan_functions(self$functions, global, verbose)
+  invisible(NULL)
+}
+CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 
 
 
