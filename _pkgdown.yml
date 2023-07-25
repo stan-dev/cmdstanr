@@ -70,6 +70,7 @@ articles:
       and using CmdStanR in R Markdown documents.
     contents:
       - cmdstanr-internals
+      - posterior
       - r-markdown
       - deprecations
       - profiling

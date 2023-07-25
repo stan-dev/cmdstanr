@@ -81,4 +81,4 @@ fit$summary(variables = NULL, "Strictly Positive" = strict_pos)
 # fit$print(variables = NULL, "Strictly Positive" = strict_pos)
 ```
 
-For more information, see [posterior::summarise_draws()], which is is called by `$summary()`.
+For more information, see [posterior::summarise_draws()], which is called by `$summary()`.
