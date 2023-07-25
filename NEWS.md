@@ -1,3 +1,37 @@
+# cmdstanr 0.6.0
+
+### Major new features
+
+* New `expose_functions()` method to expose Stan functions to R by @andrjohns in #702. See `?expose_functions`.
+* New methods for accessing log_prob, grad_log_prob, hessian, un/constrain variables by @andrjohns in #701. See `?init_model_methods`. 
+
+## Other changes
+
+* mod$variables works w includes in precompile state (fix #680) by @MKyhos in #682
+* Update broken link for Stan OpenCL support page by @erictleung in #686
+* Add newline to check syntax output by @rok-cesnovar in #689
+* Allow exposing functions without sampling by @andrjohns in #705
+* Expose skeleton by @andrjohns in #706
+* WSL - Run cmdstan and models under WSL filesystem by @andrjohns in #696
+* Bugfix - Deep copy method/function environments by @andrjohns in #709
+* Add option for including jacobian adjustments in hessian method by @andrjohns in #710
+* WSL Optimisations and Bugfixes for CI by @andrjohns in #711
+* add stancflags from make/local by @rok-cesnovar in #690
+* Update co-authors by @andrjohns in #715
+* Update model methods parameter naming and extract skeleton function by @andrjohns in #724
+* Add method for unconstraining all parameter draws by @andrjohns in #729
+* Improve efficiency of variable matching by @sbfnk in #736
+* Add verbosity to download output and errors by @andrjohns in #745
+* Update handling of show_messages, add show_exceptions by @andrjohns in #746
+* Rtools43 support by @andrjohns in #755
+* Add stanc M1 make patch, suppress boost warnings by @andrjohns in #756
+* more examples of summary method by @gravesti in #751
+* Fix model$format and model$check_syntax for compiled models with include-paths by @adrian-lison in #775
+* Generalise RTools config/support by @andrjohns in #777
+* New posterior vignette by @gravesti in #719
+* Add moment-matching support to $loo() method by @andrjohns in #778
+* replace \ with function by @jsocolar in #789
+
 # cmdstanr 0.5.3
 
 ### New features
