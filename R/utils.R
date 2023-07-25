@@ -235,7 +235,7 @@ generate_file_names <-
 #' Set or get the number of threads used to execute Stan models
 #'
 #' DEPRECATED. Please use the `threads_per_chain` argument when fitting the model.
-#'
+#' @keywords internal
 #' @name stan_threads
 NULL
 

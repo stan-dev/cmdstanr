@@ -13,3 +13,4 @@ read_sample_csv(files, variables = NULL, sampler_diagnostics = NULL)
 \description{
 Deprecated. Use \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}} instead.
 }
+\keyword{internal}

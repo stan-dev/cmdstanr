@@ -20,3 +20,4 @@ is used.}
 \description{
 This function is deprecated. Please use \code{\link[=write_stan_file]{write_stan_file()}} instead.
 }
+\keyword{internal}
