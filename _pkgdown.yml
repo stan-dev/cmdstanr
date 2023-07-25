@@ -111,7 +111,7 @@ reference:
       - write_stan_json
       - write_stan_file
       - draws_to_csv
-      - as.mcmc.list
+      - as_mcmc.list
       - as_draws.CmdStanMCMC
   - title: "Using CmdStanR with knitr and R Markdown"
     contents:
