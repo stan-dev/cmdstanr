@@ -5,7 +5,7 @@
 * New `expose_functions()` method to expose Stan functions to R by @andrjohns in #702. See `?expose_functions`.
 * New methods for accessing log_prob, grad_log_prob, hessian, un/constrain variables by @andrjohns in #701. See `?init_model_methods`. 
 
-## Other changes
+### Other changes
 
 * mod$variables works w includes in precompile state (fix #680) by @MKyhos in #682
 * Update broken link for Stan OpenCL support page by @erictleung in #686
