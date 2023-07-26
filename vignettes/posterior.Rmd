@@ -19,7 +19,7 @@ vignette: >
 NOTE: the hack below of using print.data.frame in chunks with echo=FALSE 
 is used because the pillar formatting of posterior draws_summary objects
 isn't playing nicely with pkgdown::build_articles(). When that is fixed
-using options(digits=2) won't be necessary anymore.
+using options(digits=2) also won't be necessary anymore.
 -->
 ```{r, include=FALSE}
 options(digits=2)
