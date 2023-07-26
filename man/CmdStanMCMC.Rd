@@ -56,6 +56,21 @@ methods, all of which have their own (linked) documentation pages.
 }
 
 }
+
+\subsection{Expose Stan functions and additional methods to R}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-expose_functions]{$expose_functions()}} \tab Expose Stan functions for use in R. \cr
+   \code{\link[=fit-method-init_model_methods]{$init_model_methods()}} \tab Expose methods for log-probability, gradients, parameter constraining and unconstraining. \cr
+   \code{\link[=fit-method-log_prob]{$log_prob()}} \tab Calculate log-prob. \cr
+   \code{\link[=fit-method-grad_log_prob]{$grad_log_prob()}} \tab Calculate log-prob and gradient. \cr
+   \code{\link[=fit-method-hessian]{$hessian()}} \tab Calculate log-prob, gradient, and hessian. \cr
+   \code{\link[=fit-method-constrain_variables]{$constrain_variables()}} \tab Transform a set of unconstrained parameter values to the constrained scale. \cr
+   \code{\link[=fit-method-unconstrain_variables]{$unconstrain_variables()}} \tab Transform a set of parameter values to the unconstrained scale. \cr
+   \code{\link[=fit-method-unconstrain_draws]{$unconstrain_draws()}} \tab Transform all parameter draws to the unconstrained scale. \cr
+   \code{\link[=fit-method-variable_skeleton]{$variable_skeleton()}} \tab Helper function to re-structure a vector of constrained parameter values. \cr
+}
+
+}
 }
 
 \seealso{

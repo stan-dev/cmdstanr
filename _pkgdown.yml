@@ -70,6 +70,7 @@ articles:
       and using CmdStanR in R Markdown documents.
     contents:
       - cmdstanr-internals
+      - posterior
       - r-markdown
       - deprecations
       - profiling
@@ -110,6 +111,8 @@ reference:
       - write_stan_json
       - write_stan_file
       - draws_to_csv
+      - as_mcmc.list
+      - as_draws.CmdStanMCMC
   - title: "Using CmdStanR with knitr and R Markdown"
     contents:
       - register_knitr_engine

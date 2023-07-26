@@ -36,3 +36,8 @@ unconstrained_draws <- fit_mcmc$unconstrain_draws(draws = fit_mcmc$draws())
 }
 
 }
+\seealso{
+\code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
+\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}},
+\code{\link[=hessian]{hessian()}}
+}

@@ -13,16 +13,16 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r child="children/settings-knitr.Rmd"}
+```{r child="children/_settings-knitr.Rmd"}
 ```
 
 ## Introduction
 
-CmdStanR is a lightweight interface to [Stan](https://mc-stan.org/) for R users
-(see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python) that
-provides an alternative to the traditional [RStan](https://mc-stan.org/rstan/)
-interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
-later in this vignette for more details on how the two interfaces differ.
+CmdStanR (Command Stan R) is a lightweight interface to
+[Stan](https://mc-stan.org/) for R users that provides an alternative to the
+traditional [RStan](https://mc-stan.org/rstan/) interface. See the [*Comparison
+with RStan*](#comparison-with-rstan) section later in this vignette for more
+details on how the two interfaces differ.
 
 **CmdStanR is not on CRAN yet**, but the beta release can be installed by
 running the following command in R.
@@ -38,7 +38,6 @@ later in examples.
 
 ```{r library, message=FALSE}
 library(cmdstanr)
-check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 library(posterior)
 library(bayesplot)
 color_scheme_set("brightblue")
@@ -188,7 +187,7 @@ first argument specifies the variables to summarize and any arguments
 after that are passed on to `posterior::summarise_draws()` to specify
 which summaries to compute, whether to use multiple cores, etc.
 
-```{r summary}
+```{r summary, eval=FALSE}
 fit$summary()
 fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
@@ -201,6 +200,24 @@ fit$summary(
   posterior::default_summary_measures(),
   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
 )
+```
+
+```{r, echo=FALSE}
+# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
+# is used because the pillar formatting of posterior draws_summary objects
+# isn't playing nicely with pkgdown::build_articles(). 
+options(digits = 2)
+print.data.frame(fit$summary())
+
+print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
+
+print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
+
+print.data.frame(fit$summary(
+  variables = NULL,
+  posterior::default_summary_measures(),
+  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+))
 ```
 
 #### CmdStan's stansummary utility
@@ -334,9 +351,18 @@ the `$sample()` method demonstrated above.
 
 We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
-```{r optimize}
+```{r optimize, eval=FALSE}
 fit_mle <- mod$optimize(data = data_list, seed = 123)
 fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
+fit_mle$mle("theta")
+```
+```{r, echo=FALSE}
+# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
+# is used because the pillar formatting of posterior draws_summary objects
+# isn't playing nicely with pkgdown::build_articles(). 
+options(digits = 2)
+fit_mle <- mod$optimize(data = data_list, seed = 123)
+print.data.frame(fit_mle$summary()) # includes lp__ (log prob calculated by Stan program)
 fit_mle$mle("theta")
 ```
 
@@ -354,9 +380,17 @@ We can run Stan's experimental variational Bayes algorithm (ADVI) using the
 [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
 method.
 
-```{r variational}
+```{r variational, eval=FALSE}
 fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
 fit_vb$summary("theta")
+```
+```{r, echo=FALSE}
+# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
+# is used because the pillar formatting of posterior draws_summary objects
+# isn't playing nicely with pkgdown::build_articles(). 
+options(digits = 2)
+fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
+print.data.frame(fit_vb$summary("theta"))
 ```
 
 The `$draws()` method can be used to access the approximate posterior draws.

@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
       </span>
     </div>
 
@@ -60,7 +60,7 @@
   <a href="../../news/index.html">News</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Other Packages
      
     <span class="caret"></span>
@@ -125,11 +125,12 @@
 
       
 
-      </header><div class="row">
+      </header><script src="opencl_files/header-attrs-2.13/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Running Stan on the GPU with OpenCL</h1>
-                        <h4 class="author">Rok Češnovar and Jonah Gabry</h4>
+                        <h4 class="author">Rok Češnovar and Jonah
+Gabry</h4>
             
       
       <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/vignettes/articles-online-only/opencl.Rmd"><code>vignettes/articles-online-only/opencl.Rmd</code></a></small>
@@ -142,16 +143,37 @@
 <div id="introduction" class="section level2">
 <h2 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h2>
-<p>This vignette demonstrates how to use the OpenCL capabilities of CmdStan with CmdStanR. The functionality described in this vignette requires CmdStan 2.26.1 or newer.</p>
-<p>As of version 2.26.1, users can expect speedups with OpenCL when using vectorized probability distribution functions (functions with the <code>_lpdf</code> or <code>_lpmf</code> suffix) and when the input variables contain at least 20,000 elements.</p>
-<p>The actual speedup for a model will depend on the particular <code>lpdf/lpmf</code> functions used and whether the <code>lpdf/lpmf</code> functions are the bottlenecks of the model. The more computationally complex the function is, the larger the expected speedup. The biggest speedups are expected when using the specialized GLM functions.</p>
-<p>In order to establish the bottlenecks in your model we recommend using <a href="https://mc-stan.org/cmdstanr/articles/profiling.html">profiling</a>, which was introduced in Stan version 2.26.0.</p>
+<p>This vignette demonstrates how to use the OpenCL capabilities of
+CmdStan with CmdStanR. The functionality described in this vignette
+requires CmdStan 2.26.1 or newer.</p>
+<p>As of version 2.26.1, users can expect speedups with OpenCL when
+using vectorized probability distribution functions (functions with the
+<code>_lpdf</code> or <code>_lpmf</code> suffix) and when the input
+variables contain at least 20,000 elements.</p>
+<p>The actual speedup for a model will depend on the particular
+<code>lpdf/lpmf</code> functions used and whether the
+<code>lpdf/lpmf</code> functions are the bottlenecks of the model. The
+more computationally complex the function is, the larger the expected
+speedup. The biggest speedups are expected when using the specialized
+GLM functions.</p>
+<p>In order to establish the bottlenecks in your model we recommend
+using <a href="https://mc-stan.org/cmdstanr/articles/profiling.html">profiling</a>,
+which was introduced in Stan version 2.26.0.</p>
 </div>
 <div id="opencl-runtime" class="section level2">
 <h2 class="hasAnchor">
 <a href="#opencl-runtime" class="anchor"></a>OpenCL runtime</h2>
-<p>OpenCL is supported on most modern CPUs and GPUs. In order to use OpenCL in CmdStanR, an OpenCL runtime for the target device must be installed. A guide for the most common devices is available in the CmdStan manual’s <a href="https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl">chapter on parallelization</a>.</p>
-<p>In case of using Windows, CmdStan requires the <code>OpenCL.lib</code> to compile the model. If you experience issue compiling the model with OpenCL, run the below script and set <code>path_to_opencl_lib</code> to the path to the <code>OpenCL.lib</code> file on your system. If you are using CUDA, the path should be similar to the one listed here.</p>
+<p>OpenCL is supported on most modern CPUs and GPUs. In order to use
+OpenCL in CmdStanR, an OpenCL runtime for the target device must be
+installed. A guide for the most common devices is available in the
+CmdStan manual’s <a href="https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl">chapter
+on parallelization</a>.</p>
+<p>In case of using Windows, CmdStan requires the
+<code>OpenCL.lib</code> to compile the model. If you experience issue
+compiling the model with OpenCL, run the below script and set
+<code>path_to_opencl_lib</code> to the path to the
+<code>OpenCL.lib</code> file on your system. If you are using CUDA, the
+path should be similar to the one listed here.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">path_to_opencl_lib</span> <span class="op">&lt;-</span> <span class="st">"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64"</span>
 <span class="va">cpp_options</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
@@ -164,8 +186,16 @@
 <div id="compiling-a-model-with-opencl" class="section level2">
 <h2 class="hasAnchor">
 <a href="#compiling-a-model-with-opencl" class="anchor"></a>Compiling a model with OpenCL</h2>
-<p>By default, models in CmdStanR are compiled <em>without</em> OpenCL support. Once OpenCL support is enabled, a CmdStan model will make use of OpenCL if the functions in the model support it. Technically no changes to a model are required to support OpenCL since the choice of using OpenCL is handled by the compiler, but it can still be useful to rewrite a model to be more OpenCL-friendly by using vectorization as much as possible when using probability distributions.</p>
-<p>Consider a simple logistic regression with parameters <code>alpha</code> and <code>beta</code>, covariates <code>X</code>, and outcome <code>y</code>.</p>
+<p>By default, models in CmdStanR are compiled <em>without</em> OpenCL
+support. Once OpenCL support is enabled, a CmdStan model will make use
+of OpenCL if the functions in the model support it. Technically no
+changes to a model are required to support OpenCL since the choice of
+using OpenCL is handled by the compiler, but it can still be useful to
+rewrite a model to be more OpenCL-friendly by using vectorization as
+much as possible when using probability distributions.</p>
+<p>Consider a simple logistic regression with parameters
+<code>alpha</code> and <code>beta</code>, covariates <code>X</code>, and
+outcome <code>y</code>.</p>
 <pre><code>data {
   int&lt;lower=1&gt; k;
   int&lt;lower=0&gt; n;
@@ -191,8 +221,14 @@ model {
 <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">k</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="va">k</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span><span class="op">(</span><span class="va">n</span>, size <span class="op">=</span> <span class="fl">1</span>, prob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html">plogis</a></span><span class="op">(</span><span class="fl">3</span> <span class="op">*</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>
 <span class="va">mdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="va">k</span>, n <span class="op">=</span> <span class="va">n</span>, y <span class="op">=</span> <span class="va">y</span>, X <span class="op">=</span> <span class="va">X</span><span class="op">)</span></code></pre></div>
-<p>In this model, most of the computation will be handled by the <code>bernoulli_logit_glm_lpmf</code> function. Because this is a supported GPU function, it should be possible to accelerate it with OpenCL. Check <a href="http://mc-stan.org/math/opencl_support.html">here</a> for a list of functions with OpenCL support.</p>
-<p>To build the model with OpenCL support, add <code>cpp_options = list(stan_opencl = TRUE)</code> at the compilation step.</p>
+<p>In this model, most of the computation will be handled by the
+<code>bernoulli_logit_glm_lpmf</code> function. Because this is a
+supported GPU function, it should be possible to accelerate it with
+OpenCL. Check <a href="http://mc-stan.org/math/d0/d8f/opencl_support.html">here</a> for a
+list of functions with OpenCL support.</p>
+<p>To build the model with OpenCL support, add
+<code>cpp_options = list(stan_opencl = TRUE)</code> at the compilation
+step.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Compile the model with STAN_OPENCL=TRUE</span>
 <span class="va">mod_cl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="st">"opencl-files/bernoulli_logit_glm.stan"</span>,
@@ -201,46 +237,60 @@ model {
 <div id="running-models-with-opencl" class="section level2">
 <h2 class="hasAnchor">
 <a href="#running-models-with-opencl" class="anchor"></a>Running models with OpenCL</h2>
-<p>Running models with OpenCL requires specifying the OpenCL platform and device on which to run the model (there can be multiple). If the system has one GPU and no OpenCL CPU runtime, the platform and device IDs of the GPU are typically both <code>0</code>, but the <code>clinfo</code> tool can be used to figure out for sure which devices are available.</p>
-<p>On an Ubuntu system with both CPU and GPU OpenCL support, <code>clinfo -l</code> outputs:</p>
+<p>Running models with OpenCL requires specifying the OpenCL platform
+and device on which to run the model (there can be multiple). If the
+system has one GPU and no OpenCL CPU runtime, the platform and device
+IDs of the GPU are typically both <code>0</code>, but the
+<code>clinfo</code> tool can be used to figure out for sure which
+devices are available.</p>
+<p>On an Ubuntu system with both CPU and GPU OpenCL support,
+<code>clinfo -l</code> outputs:</p>
 <pre><code>Platform #0: AMD Accelerated Parallel Processing
  `-- Device #0: gfx906+sram-ecc
 Platform #1: Intel(R) CPU Runtime for OpenCL(TM) Applications
  `-- Device #0: Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz</code></pre>
-<p>On this system the GPU is platform ID 0 and device ID 0, while the CPU is platform ID 1, device ID 0. These can be specified with the <code>opencl_ids</code> argument when running a model. The <code>opencl_ids</code> is supplied as a vector of length 2, where the first element is the platform ID and the second argument is the device ID.</p>
+<p>On this system the GPU is platform ID 0 and device ID 0, while the
+CPU is platform ID 1, device ID 0. These can be specified with the
+<code>opencl_ids</code> argument when running a model. The
+<code>opencl_ids</code> is supplied as a vector of length 2, where the
+first element is the platform ID and the second argument is the device
+ID.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit_cl</span> <span class="op">&lt;-</span> <span class="va">mod_cl</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">mdata</span>, chains <span class="op">=</span> <span class="fl">4</span>, parallel_chains <span class="op">=</span> <span class="fl">4</span>,
                         opencl_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></code></pre></div>
 <pre><code>Running MCMC with 4 parallel chains...
 
-Chain 4 finished in 88.3 seconds.
-Chain 2 finished in 88.6 seconds.
-Chain 1 finished in 88.1 seconds.
-Chain 3 finished in 88.9 seconds.
+Chain 4 finished in 96.7 seconds.
+Chain 1 finished in 97.9 seconds.
+Chain 2 finished in 98.6 seconds.
+Chain 3 finished in 98.8 seconds.
 
 All 4 chains finished successfully.
-Mean chain execution time: 88.5 seconds.
-Total execution time: 91.7 seconds.</code></pre>
-<p>We’ll also run a version without OpenCL and compare the run times.</p>
+Mean chain execution time: 98.0 seconds.
+Total execution time: 103.0 seconds.</code></pre>
+<p>We’ll also run a version without OpenCL and compare the run
+times.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># no OpenCL version</span>
 <span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="st">"opencl-files/bernoulli_logit_glm.stan"</span>, force_recompile <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">fit_cpu</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">mdata</span>, chains <span class="op">=</span> <span class="fl">4</span>, parallel_chains <span class="op">=</span> <span class="fl">4</span>, refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></code></pre></div>
 <pre><code>Running MCMC with 4 parallel chains...
 
-Chain 3 finished in 548.4 seconds.
-Chain 2 finished in 552.2 seconds.
-Chain 1 finished in 551.6 seconds.
-Chain 4 finished in 553.7 seconds.
+Chain 3 finished in 487.9 seconds.
+Chain 2 finished in 491.8 seconds.
+Chain 1 finished in 514.9 seconds.
+Chain 4 finished in 518.4 seconds.
 
 All 4 chains finished successfully.
-Mean chain execution time: 551.5 seconds.
-Total execution time: 556.7 seconds.</code></pre>
+Mean chain execution time: 503.2 seconds.
+Total execution time: 521.9 seconds.</code></pre>
 <p>The speedup of the OpenCL model is:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit_cpu</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span> <span class="op">/</span> <span class="va">fit_cl</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span></code></pre></div>
-<pre><code>[1] 6.070158</code></pre>
-<p>This speedup will be determined by the particular GPU/CPU used, the input problem sizes (data as well as parameters) and if the model uses functions that can be run on the GPU or other OpenCL devices.</p>
+<pre><code>[1] 5.065968</code></pre>
+<p>This speedup will be determined by the particular GPU/CPU used, the
+input problem sizes (data as well as parameters) and if the model uses
+functions that can be run on the GPU or other OpenCL devices.</p>
 </div>
   </div>
 
@@ -255,7 +305,7 @@ Total execution time: 556.7 seconds.</code></pre>
 
 
       <footer><div class="copyright">
-  <p>Developed by Jonah Gabry, Rok Češnovar.</p>
+  <p>Developed by Jonah Gabry, Rok Češnovar, Andrew Johnson.</p>
 </div>
 
 <div class="pkgdown">

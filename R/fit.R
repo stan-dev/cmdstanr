@@ -82,7 +82,7 @@ CmdStanFit <- R6::R6Class(
       invisible(self)
     },
     expose_functions = function(global = FALSE, verbose = FALSE) {
-      expose_functions(self$functions, global, verbose)
+      expose_stan_functions(self$functions, global, verbose)
       invisible(NULL)
     }
   ),
@@ -301,12 +301,18 @@ init <- function() {
 CmdStanFit$set("public", name = "init", value = init)
 
 #' Compile additional methods for accessing the model log-probability function
-#' and parameter constraining and unconstraining. This requires the `Rcpp` package.
+#' and parameter constraining and unconstraining.
 #'
 #' @name fit-method-init_model_methods
 #' @aliases init_model_methods
-#' @description The `$init_model_methods()` compiles and initializes the
-#' `log_prob`, `grad_log_prob`, `constrain_variables`, and `unconstrain_variables` functions.
+#'
+#' @description The `$init_model_methods()` method compiles and initializes the
+#'   `log_prob`, `grad_log_prob`, `constrain_variables`, `unconstrain_variables`
+#'   and `unconstrain_draws` functions. These are then available as methods of
+#'   the fitted model object. This requires the `Rcpp` package.
+#'
+#'   Note: there may be many compiler warnings emitted during compilation but
+#'   these can be ignored so long as they are warnings and not errors.
 #'
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (boolean) Whether to show verbose logging during compilation.
@@ -317,6 +323,9 @@ CmdStanFit$set("public", name = "init", value = init)
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 #' fit_mcmc$init_model_methods()
 #' }
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
 #'
 init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
   if (os_is_wsl()) {
@@ -358,8 +367,12 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 #' fit_mcmc$init_model_methods()
-#' fit_mcmc$log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' fit_mcmc$log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
 #'
 log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
@@ -383,17 +396,21 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #' @description The `$grad_log_prob()` method provides access to the
 #' Stan model's `log_prob` function and its derivative
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to be passed
-#' to `grad_log_prob`
-#' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
-#' un/constraining variables
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to be passed to `grad_log_prob`.
+#' @param jacobian_adjustment (bool) Whether to include the log-density
+#'   adjustments from un/constraining variables.
 #'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 #' fit_mcmc$init_model_methods()
-#' fit_mcmc$grad_log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' fit_mcmc$grad_log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
 #'
 grad_log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
@@ -417,17 +434,21 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @description The `$hessian()` method provides access to the
 #' Stan model's `log_prob`, its derivative, and its hessian
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to be passed
-#' to `hessian`
-#' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
-#' un/constraining variables
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to be passed to `hessian`.
+#' @param jacobian_adjustment (bool) Whether to include the log-density
+#'   adjustments from un/constraining variables.
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
-#' fit_mcmc$init_model_methods()
-#' fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' # fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' # fit_mcmc$init_model_methods(hessian = TRUE)
+#' # fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
 #'
 hessian <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
@@ -450,8 +471,8 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #' @description The `$unconstrain_variables()` method transforms input parameters to
 #' the unconstrained scale
 #'
-#' @param variables (list) A list of parameter values to transform, in the same format as
-#' provided to the `init` argument of the `$sample()` method
+#' @param variables (list) A list of parameter values to transform, in the same
+#'   format as provided to the `init` argument of the `$sample()` method.
 #'
 #' @examples
 #' \dontrun{
@@ -459,6 +480,10 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #' fit_mcmc$init_model_methods()
 #' fit_mcmc$unconstrain_variables(list(alpha = 0.5, beta = c(0.7, 1.1, 0.2)))
 #' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
 #'
 unconstrain_variables <- function(variables) {
   if (is.null(private$model_methods_env_$model_ptr)) {
@@ -521,6 +546,10 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #' unconstrained_draws <- fit_mcmc$unconstrain_draws(draws = fit_mcmc$draws())
 #' }
 #'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
 unconstrain_draws <- function(files = NULL, draws = NULL) {
   if (!is.null(files) || !is.null(draws)) {
     if (!is.null(files) && !is.null(draws)) {
@@ -565,6 +594,7 @@ unconstrain_draws <- function(files = NULL, draws = NULL) {
       self$unconstrain_variables(variables = par_list)
     })
   })
+  unconstrained
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 
@@ -587,6 +617,10 @@ CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 #' fit_mcmc$variable_skeleton()
 #' }
 #'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
 variable_skeleton <- function(transformed_parameters = TRUE, generated_quantities = TRUE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
@@ -607,18 +641,23 @@ CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 #' @description The `$constrain_variables()` method transforms input parameters to
 #' the constrained scale
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to constrain
-#' @param transformed_parameters (boolean) Whether to return transformed parameters
-#'  implied by newly-constrained parameters (defaults to TRUE)
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to constrain.
+#' @param transformed_parameters (boolean) Whether to return transformed
+#'   parameters implied by newly-constrained parameters (defaults to TRUE).
 #' @param generated_quantities (boolean) Whether to return generated quantities
-#'  implied by newly-constrained parameters (defaults to TRUE)
+#'   implied by newly-constrained parameters (defaults to TRUE).
 #'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 #' fit_mcmc$init_model_methods()
-#' fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2, 1.1))
+#' fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
 #'
 constrain_variables <- function(unconstrained_variables, transformed_parameters = TRUE,
                             generated_quantities = TRUE) {
@@ -1233,6 +1272,20 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
+#'
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
@@ -1718,6 +1771,20 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
+#'
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
   inherit = CmdStanFit,
@@ -1820,6 +1887,20 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",

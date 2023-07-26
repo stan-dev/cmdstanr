@@ -422,7 +422,7 @@ read_cmdstan_csv <- function(files,
 #' Read CmdStan CSV files from sampling into \R
 #'
 #' Deprecated. Use [read_cmdstan_csv()] instead.
-#'
+#' @keywords internal
 #' @export
 #' @param files,variables,sampler_diagnostics Deprecated. Use
 #'   [read_cmdstan_csv()] instead.
