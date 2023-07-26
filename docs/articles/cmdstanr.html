@@ -26,6 +26,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -38,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
       </span>
     </div>
 
@@ -60,57 +62,57 @@
   <a href="../news/index.html">News</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Other Packages
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="https://mc-stan.org/rstan">rstan</a>
+      <a href="https://mc-stan.org/rstan" class="external-link">rstan</a>
     </li>
     <li>
-      <a href="https://mc-stan.org/rstanarm">rstanarm</a>
+      <a href="https://mc-stan.org/rstanarm" class="external-link">rstanarm</a>
     </li>
     <li>
-      <a href="https://mc-stan.org/bayesplot">bayesplot</a>
+      <a href="https://mc-stan.org/bayesplot" class="external-link">bayesplot</a>
     </li>
     <li>
-      <a href="https://mc-stan.org/shinystan">shinystan</a>
+      <a href="https://mc-stan.org/shinystan" class="external-link">shinystan</a>
     </li>
     <li>
-      <a href="https://mc-stan.org/loo">loo</a>
+      <a href="https://mc-stan.org/loo" class="external-link">loo</a>
     </li>
     <li>
-      <a href="https://mc-stan.org/projpred">projpred</a>
+      <a href="https://mc-stan.org/projpred" class="external-link">projpred</a>
     </li>
     <li>
-      <a href="https://mc-stan.org/rstantools">rstantools</a>
+      <a href="https://mc-stan.org/rstantools" class="external-link">rstantools</a>
     </li>
     <li>
-      <a href="https://mc-stan.org/posterior">posterior</a>
+      <a href="https://mc-stan.org/posterior" class="external-link">posterior</a>
     </li>
   </ul>
 </li>
 <li>
-  <a href="https://mc-stan.org">Stan</a>
+  <a href="https://mc-stan.org" class="external-link">Stan</a>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://twitter.com/mcmc_stan">
+  <a href="https://twitter.com/mcmc_stan" class="external-link">
     <span class="fa fa-twitter"></span>
      
   </a>
 </li>
 <li>
-  <a href="https://github.com/stan-dev/cmdstanr">
+  <a href="https://github.com/stan-dev/cmdstanr" class="external-link">
     <span class="fa fa-github"></span>
      
   </a>
 </li>
 <li>
-  <a href="https://discourse.mc-stan.org/">
+  <a href="https://discourse.mc-stan.org/" class="external-link">
     <span class="fa fa-users"></span>
      
   </a>
@@ -125,80 +127,120 @@
 
       
 
-      </header><script src="cmdstanr_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Getting started with CmdStanR</h1>
-                        <h4 class="author">Jonah Gabry and Rok Češnovar</h4>
+                        <h4 data-toc-skip class="author">Jonah Gabry and
+Rok Češnovar</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/vignettes/cmdstanr.Rmd"><code>vignettes/cmdstanr.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/HEAD/vignettes/cmdstanr.Rmd" class="external-link"><code>vignettes/cmdstanr.Rmd</code></a></small>
       <div class="hidden name"><code>cmdstanr.Rmd</code></div>
 
     </div>
 
     
     
-<div id="introduction" class="section level2">
-<h2 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h2>
-<p>CmdStanR is a lightweight interface to <a href="https://mc-stan.org/">Stan</a> for R users (see <a href="https://github.com/stan-dev/cmdstanpy">CmdStanPy</a> for Python) that provides an alternative to the traditional <a href="https://mc-stan.org/rstan/">RStan</a> interface. See the <a href="#comparison-with-rstan"><em>Comparison with RStan</em></a> section later in this vignette for more details on how the two interfaces differ.</p>
-<p><strong>CmdStanR is not on CRAN yet</strong>, but the beta release can be installed by running the following command in R.</p>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>CmdStanR (Command Stan R) is a lightweight interface to <a href="https://mc-stan.org/" class="external-link">Stan</a> for R users that provides an
+alternative to the traditional <a href="https://mc-stan.org/rstan/" class="external-link">RStan</a> interface. See the <a href="#comparison-with-rstan"><em>Comparison with RStan</em></a> section
+later in this vignette for more details on how the two interfaces
+differ.</p>
+<p><strong>CmdStanR is not on CRAN yet</strong>, but the beta release
+can be installed by running the following command in R.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># we recommend running this is a fresh R session or restarting your current session</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p>CmdStanR (the <strong>cmdstanr</strong> R package) can now be loaded like any other R package. We’ll also load the <strong>bayesplot</strong> and <strong>posterior</strong> packages to use later in examples.</p>
+<code class="sourceCode R"><span><span class="co"># we recommend running this is a fresh R session or restarting your current session</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>CmdStanR (the <strong>cmdstanr</strong> R package) can now be loaded
+like any other R package. We’ll also load the <strong>bayesplot</strong>
+and <strong>posterior</strong> packages to use later in examples.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/">cmdstanr</a></span><span class="op">)</span>
-<span class="fu"><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain</a></span><span class="op">(</span>fix <span class="op">=</span> <span class="cn">TRUE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/posterior/">posterior</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/bayesplot/">bayesplot</a></span><span class="op">)</span>
-<span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-colors.html">color_scheme_set</a></span><span class="op">(</span><span class="st">"brightblue"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/">cmdstanr</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/posterior/" class="external-link">posterior</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/bayesplot/" class="external-link">bayesplot</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-colors.html" class="external-link">color_scheme_set</a></span><span class="op">(</span><span class="st">"brightblue"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="installing-cmdstan" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installing-cmdstan" class="anchor"></a>Installing CmdStan</h2>
-<p>CmdStanR requires a working installation of <a href="https://mc-stan.org/users/interfaces/cmdstan.html">CmdStan</a>, the shell interface to Stan. If you don’t have CmdStan installed then CmdStanR can install it for you, assuming you have a suitable C++ toolchain. The requirements are described in the CmdStan Guide:</p>
+<div class="section level2">
+<h2 id="installing-cmdstan">Installing CmdStan<a class="anchor" aria-label="anchor" href="#installing-cmdstan"></a>
+</h2>
+<p>CmdStanR requires a working installation of <a href="https://mc-stan.org/users/interfaces/cmdstan.html" class="external-link">CmdStan</a>,
+the shell interface to Stan. If you don’t have CmdStan installed then
+CmdStanR can install it for you, assuming you have a suitable C++
+toolchain. The requirements are described in the CmdStan Guide:</p>
 <ul>
-<li><a href="https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html" class="uri">https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html</a></li>
+<li><a href="https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html" class="external-link uri">https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html</a></li>
 </ul>
-<p>To double check that your toolchain is set up properly you can call the <code><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain()</a></code> function:</p>
+<p>To double check that your toolchain is set up properly you can call
+the <code><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain()</a></code> function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>The C++ toolchain required for CmdStan is setup properly!</code></pre>
-<p>If your toolchain is configured correctly then CmdStan can be installed by calling the <a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html"><code>install_cmdstan()</code></a> function:</p>
+<p>If your toolchain is configured correctly then CmdStan can be
+installed by calling the <a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html"><code>install_cmdstan()</code></a>
+function:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/install_cmdstan.html">install_cmdstan</a></span><span class="op">(</span>cores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
-<p>Before CmdStanR can be used it needs to know where the CmdStan installation is located. When the package is loaded it tries to help automate this to avoid having to manually set the path every session:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/install_cmdstan.html">install_cmdstan</a></span><span class="op">(</span>cores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<p>Before CmdStanR can be used it needs to know where the CmdStan
+installation is located. When the package is loaded it tries to help
+automate this to avoid having to manually set the path every
+session:</p>
 <ol style="list-style-type: decimal">
-<li><p>If the environment variable <code>"CMDSTAN"</code> exists at load time then its value will be automatically set as the default path to CmdStan for the R session. This is useful if your CmdStan installation is not located in the default directory that would have been used by <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> (see #2).</p></li>
-<li><p>If no environment variable is found when loaded but any directory in the form <code>".cmdstan/cmdstan-[version]"</code>, for example <code>".cmdstan/cmdstan-2.23.0"</code>, exists in the user’s home directory (<code><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv("HOME")</a></code>, <em>not</em> the current working directory) then the path to the CmdStan with the largest version number will be set as the path to CmdStan for the R session. This is the same as the default directory that <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> uses to install the latest version of CmdStan, so if that’s how you installed CmdStan you shouldn’t need to manually set the path to CmdStan when loading CmdStanR.</p></li>
+<li><p>If the environment variable <code>"CMDSTAN"</code> exists at load
+time then its value will be automatically set as the default path to
+CmdStan for the R session. This is useful if your CmdStan installation
+is not located in the default directory that would have been used by
+<code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> (see #2).</p></li>
+<li><p>If no environment variable is found when loaded but any directory
+in the form <code>".cmdstan/cmdstan-[version]"</code>, for example
+<code>".cmdstan/cmdstan-2.23.0"</code>, exists in the user’s home
+directory (<code>Sys.getenv("HOME")</code>, <em>not</em> the current
+working directory) then the path to the CmdStan with the largest version
+number will be set as the path to CmdStan for the R session. This is the
+same as the default directory that <code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> uses
+to install the latest version of CmdStan, so if that’s how you installed
+CmdStan you shouldn’t need to manually set the path to CmdStan when
+loading CmdStanR.</p></li>
 </ol>
-<p>If neither of these applies (or you want to subsequently change the path) you can use the <code><a href="../reference/set_cmdstan_path.html">set_cmdstan_path()</a></code> function:</p>
+<p>If neither of these applies (or you want to subsequently change the
+path) you can use the <code><a href="../reference/set_cmdstan_path.html">set_cmdstan_path()</a></code> function:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/set_cmdstan_path.html">set_cmdstan_path</a></span><span class="op">(</span><span class="va">PATH_TO_CMDSTAN</span><span class="op">)</span></code></pre></div>
-<p>To check the path to the CmdStan installation and the CmdStan version number you can use <code><a href="../reference/set_cmdstan_path.html">cmdstan_path()</a></code> and <code><a href="../reference/set_cmdstan_path.html">cmdstan_version()</a></code>:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/set_cmdstan_path.html">set_cmdstan_path</a></span><span class="op">(</span><span class="va">PATH_TO_CMDSTAN</span><span class="op">)</span></span></code></pre></div>
+<p>To check the path to the CmdStan installation and the CmdStan version
+number you can use <code><a href="../reference/set_cmdstan_path.html">cmdstan_path()</a></code> and
+<code><a href="../reference/set_cmdstan_path.html">cmdstan_version()</a></code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.29.1"</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.32.2"</code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_version</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>[1] "2.29.1"</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_version</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code>[1] "2.32.2"</code></pre>
 </div>
-<div id="compiling-a-model" class="section level2">
-<h2 class="hasAnchor">
-<a href="#compiling-a-model" class="anchor"></a>Compiling a model</h2>
-<p>The <code><a href="../reference/cmdstan_model.html">cmdstan_model()</a></code> function creates a new <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a> object from a file containing a Stan program. Under the hood, CmdStan is called to translate a Stan program to C++ and create a compiled executable. Here we’ll use the example Stan program that comes with the CmdStan installation:</p>
+<div class="section level2">
+<h2 id="compiling-a-model">Compiling a model<a class="anchor" aria-label="anchor" href="#compiling-a-model"></a>
+</h2>
+<p>The <code><a href="../reference/cmdstan_model.html">cmdstan_model()</a></code> function creates a new <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a>
+object from a file containing a Stan program. Under the hood, CmdStan is
+called to translate a Stan program to C++ and create a compiled
+executable. Here we’ll use the example Stan program that comes with the
+CmdStan installation:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"examples"</span>, <span class="st">"bernoulli"</span>, <span class="st">"bernoulli.stan"</span><span class="op">)</span>
-<span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span><span class="op">)</span></code></pre></div>
-<p>The object <code>mod</code> is an <a href="https://r6.r-lib.org/">R6</a> reference object of class <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a> and behaves similarly to R’s reference class objects and those in object oriented programming languages. Methods are accessed using the <code><a href="https://rdrr.io/r/base/Extract.html">$</a></code> operator. This design choice allows for CmdStanR and <a href="https://github.com/stan-dev/cmdstanpy">CmdStanPy</a> to provide a similar user experience and share many implementation details.</p>
-<p>The Stan program can be printed using the <code>$print()</code> method:</p>
+<code class="sourceCode R"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"examples"</span>, <span class="st">"bernoulli"</span>, <span class="st">"bernoulli.stan"</span><span class="op">)</span></span>
+<span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span><span class="op">)</span></span></code></pre></div>
+<p>The object <code>mod</code> is an <a href="https://r6.r-lib.org/" class="external-link">R6</a> reference object of class <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a>
+and behaves similarly to R’s reference class objects and those in object
+oriented programming languages. Methods are accessed using the
+<code>$</code> operator. This design choice allows for CmdStanR and <a href="https://github.com/stan-dev/cmdstanpy" class="external-link">CmdStanPy</a> to provide a
+similar user experience and share many implementation details.</p>
+<p>The Stan program can be printed using the <code>$print()</code>
+method:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mod</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">mod</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>data {
   int&lt;lower=0&gt; N;
-  array[N] int&lt;lower=0,upper=1&gt; y; // or int&lt;lower=0,upper=1&gt; y[N];
+  array[N] int&lt;lower=0,upper=1&gt; y;
 }
 parameters {
   real&lt;lower=0,upper=1&gt; theta;
@@ -207,26 +249,31 @@ model {
   theta ~ beta(1,1);  // uniform prior on interval 0,1
   y ~ bernoulli(theta);
 }</code></pre>
-<p>The path to the compiled executable is returned by the <code>$exe_file()</code> method:</p>
+<p>The path to the compiled executable is returned by the
+<code>$exe_file()</code> method:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.29.1/examples/bernoulli/bernoulli"</code></pre>
+<code class="sourceCode R"><span><span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.32.2/examples/bernoulli/bernoulli"</code></pre>
 </div>
-<div id="running-mcmc" class="section level2">
-<h2 class="hasAnchor">
-<a href="#running-mcmc" class="anchor"></a>Running MCMC</h2>
-<p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a> method for <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a> objects runs Stan’s default MCMC algorithm. The <code>data</code> argument accepts a named list of R objects (like for RStan) or a path to a data file compatible with CmdStan (JSON or R dump).</p>
+<div class="section level2">
+<h2 id="running-mcmc">Running MCMC<a class="anchor" aria-label="anchor" href="#running-mcmc"></a>
+</h2>
+<p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a>
+method for <a href="https://mc-stan.org/cmdstanr/reference/CmdStanModel.html"><code>CmdStanModel</code></a>
+objects runs Stan’s default MCMC algorithm. The <code>data</code>
+argument accepts a named list of R objects (like for RStan) or a path to
+a data file compatible with CmdStan (JSON or R dump).</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># names correspond to the data block in the Stan program</span>
-<span class="va">data_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>N <span class="op">=</span> <span class="fl">10</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span><span class="op">)</span><span class="op">)</span>
-
-<span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>
-  data <span class="op">=</span> <span class="va">data_list</span>, 
-  seed <span class="op">=</span> <span class="fl">123</span>, 
-  chains <span class="op">=</span> <span class="fl">4</span>, 
-  parallel_chains <span class="op">=</span> <span class="fl">4</span>,
-  refresh <span class="op">=</span> <span class="fl">500</span> <span class="co"># print update every 500 iters</span>
-<span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># names correspond to the data block in the Stan program</span></span>
+<span><span class="va">data_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>N <span class="op">=</span> <span class="fl">10</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">data_list</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">123</span>,</span>
+<span>  chains <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  parallel_chains <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  refresh <span class="op">=</span> <span class="fl">500</span> <span class="co"># print update every 500 iters</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <pre><code>Running MCMC with 4 parallel chains...
 
 Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
@@ -260,79 +307,99 @@ Chain 4 finished in 0.0 seconds.
 
 All 4 chains finished successfully.
 Mean chain execution time: 0.0 seconds.
-Total execution time: 0.3 seconds.</code></pre>
-<p>There are many more arguments that can be passed to the <code>$sample()</code> method. For details follow this link to its separate documentation page:</p>
+Total execution time: 0.4 seconds.</code></pre>
+<p>There are many more arguments that can be passed to the
+<code>$sample()</code> method. For details follow this link to its
+separate documentation page:</p>
 <ul>
 <li><a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html"><code>$sample()</code></a></li>
 </ul>
-<p>The <code>$sample()</code> method creates <a href="https://r6.r-lib.org/">R6</a> <code>CmdStanMCMC</code> objects, which have many associated methods. Below we will demonstrate some of the most important methods. For a full list, follow this link to the <code>CmdStanMCMC</code> documentation:</p>
+<p>The <code>$sample()</code> method creates <a href="https://r6.r-lib.org/" class="external-link">R6</a> <code>CmdStanMCMC</code> objects,
+which have many associated methods. Below we will demonstrate some of
+the most important methods. For a full list, follow this link to the
+<code>CmdStanMCMC</code> documentation:</p>
 <ul>
 <li><a href="https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html"><code>CmdStanMCMC</code></a></li>
 </ul>
-<div id="posterior-summary-statistics" class="section level3">
-<h3 class="hasAnchor">
-<a href="#posterior-summary-statistics" class="anchor"></a>Posterior summary statistics</h3>
-<div id="summaries-from-the-posterior-package" class="section level4">
-<h4 class="hasAnchor">
-<a href="#summaries-from-the-posterior-package" class="anchor"></a>Summaries from the posterior package</h4>
-<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-summary.html"><code>$summary()</code></a> method calls <code><a href="https://mc-stan.org/posterior/reference/draws_summary.html">summarise_draws()</a></code> from the <strong>posterior</strong> package. The first argument specifies the variables to summarize and any arguments after that are passed on to <code><a href="https://mc-stan.org/posterior/reference/draws_summary.html">posterior::summarise_draws()</a></code> to specify which summaries to compute, whether to use multiple cores, etc.</p>
+<div class="section level3">
+<h3 id="posterior-summary-statistics">Posterior summary statistics<a class="anchor" aria-label="anchor" href="#posterior-summary-statistics"></a>
+</h3>
+<div class="section level4">
+<h4 id="summaries-from-the-posterior-package">Summaries from the posterior package<a class="anchor" aria-label="anchor" href="#summaries-from-the-posterior-package"></a>
+</h4>
+<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-summary.html"><code>$summary()</code></a>
+method calls <code><a href="https://mc-stan.org/posterior/reference/draws_summary.html" class="external-link">summarise_draws()</a></code> from the
+<strong>posterior</strong> package. The first argument specifies the
+variables to summarize and any arguments after that are passed on to
+<code><a href="https://mc-stan.org/posterior/reference/draws_summary.html" class="external-link">posterior::summarise_draws()</a></code> to specify which summaries to
+compute, whether to use multiple cores, etc.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code># A tibble: 2 × 10
-  variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
-  &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
-1 lp__     -7.27  -7.00  0.709 0.344 -8.70   -6.75   1.00    1852.    2114.
-2 theta     0.247  0.232 0.119 0.123  0.0804  0.466  1.00    1611.    1678.</code></pre>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"theta"</span>, <span class="st">"lp__"</span><span class="op">)</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span></code></pre></div>
-<pre><code># A tibble: 2 × 3
-  variable   mean    sd
-  &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt;
-1 theta     0.247 0.119
-2 lp__     -7.27  0.709</code></pre>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># use a formula to summarize arbitrary functions, e.g. Pr(theta &lt;= 0.5)</span>
-<span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"theta"</span>, pr_lt_half <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">.</span> <span class="op">&lt;=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code># A tibble: 1 × 2
-  variable pr_lt_half
-  &lt;chr&gt;         &lt;dbl&gt;
-1 theta         0.969</code></pre>
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"theta"</span>, <span class="st">"lp__"</span><span class="op">)</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># use a formula to summarize arbitrary functions, e.g. Pr(theta &lt;= 0.5)</span></span>
+<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"theta"</span>, pr_lt_half <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.</span> <span class="op">&lt;=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># summarise all variables with default and additional summary measures</span></span>
+<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span></span>
+<span>  variables <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_summary.html" class="external-link">default_summary_measures</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  extra_quantiles <span class="op">=</span> <span class="op">~</span><span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/quantile2.html" class="external-link">quantile2</a></span><span class="op">(</span><span class="va">.</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">.0275</span>, <span class="fl">.975</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code>  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail
+1     lp__ -7.27  -7.00 0.71 0.34 -8.70 -6.75    1     1852     2114
+2    theta  0.25   0.23 0.12 0.12  0.08  0.47    1     1611     1678</code></pre>
+<pre><code>  variable  mean   sd
+1    theta  0.25 0.12
+2     lp__ -7.27 0.71</code></pre>
+<pre><code>  variable pr_lt_half
+1    theta       0.97</code></pre>
+<pre><code>  variable  mean median   sd  mad    q5   q95  q2.75 q97.5
+1     lp__ -7.27  -7.00 0.71 0.34 -8.70 -6.75 -9.165 -6.75
+2    theta  0.25   0.23 0.12 0.12  0.08  0.47  0.065  0.52</code></pre>
 </div>
-<div id="cmdstans-stansummary-utility" class="section level4">
-<h4 class="hasAnchor">
-<a href="#cmdstans-stansummary-utility" class="anchor"></a>CmdStan’s stansummary utility</h4>
-<p>CmdStan itself provides a <code>stansummary</code> utility that can be called using the <code>$cmdstan_summary()</code> method. This method will print summaries but won’t return anything.</p>
+<div class="section level4">
+<h4 id="cmdstans-stansummary-utility">CmdStan’s stansummary utility<a class="anchor" aria-label="anchor" href="#cmdstans-stansummary-utility"></a>
+</h4>
+<p>CmdStan itself provides a <code>stansummary</code> utility that can
+be called using the <code>$cmdstan_summary()</code> method. This method
+will print summaries but won’t return anything.</p>
 </div>
 </div>
-<div id="posterior-draws" class="section level3">
-<h3 class="hasAnchor">
-<a href="#posterior-draws" class="anchor"></a>Posterior draws</h3>
-<div id="extracting-draws" class="section level4">
-<h4 class="hasAnchor">
-<a href="#extracting-draws" class="anchor"></a>Extracting draws</h4>
-<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-draws.html"><code>$draws()</code></a> method can be used to extract the posterior draws in formats provided by the <a href="https://mc-stan.org/posterior/"><strong>posterior</strong></a> package. Here we demonstrate only the <code>draws_array</code> and <code>draws_df</code> formats, but the <strong>posterior</strong> package supports other useful formats as well.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># default is a 3-D draws_array object from the posterior package</span>
-<span class="co"># iterations x chains x variables</span>
-<span class="va">draws_arr</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span> <span class="co"># or format="array"</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">draws_arr</span><span class="op">)</span></code></pre></div>
+<div class="section level3">
+<h3 id="posterior-draws">Posterior draws<a class="anchor" aria-label="anchor" href="#posterior-draws"></a>
+</h3>
+<div class="section level4">
+<h4 id="extracting-draws">Extracting draws<a class="anchor" aria-label="anchor" href="#extracting-draws"></a>
+</h4>
+<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-draws.html"><code>$draws()</code></a>
+method can be used to extract the posterior draws in formats provided by
+the <a href="https://mc-stan.org/posterior/" class="external-link"><strong>posterior</strong></a>
+package. Here we demonstrate only the <code>draws_array</code> and
+<code>draws_df</code> formats, but the <strong>posterior</strong>
+package supports other useful formats as well.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># default is a 3-D draws_array object from the posterior package</span></span>
+<span><span class="co"># iterations x chains x variables</span></span>
+<span><span class="va">draws_arr</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span> <span class="co"># or format="array"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">draws_arr</span><span class="op">)</span></span></code></pre></div>
 <pre><code> 'draws_array' num [1:1000, 1:4, 1:2] -6.78 -6.9 -7.05 -6.85 -6.75 ...
  - attr(*, "dimnames")=List of 3
   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   ..$ chain    : chr [1:4] "1" "2" "3" "4"
   ..$ variable : chr [1:2] "lp__" "theta"</code></pre>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># draws x variables data frame</span>
-<span class="va">draws_df</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span>format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">draws_df</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># draws x variables data frame</span></span>
+<span><span class="va">draws_df</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span>format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">draws_df</span><span class="op">)</span></span></code></pre></div>
 <pre><code>draws_df [4,000 × 5] (S3: draws_df/draws/tbl_df/tbl/data.frame)
  $ lp__      : num [1:4000] -6.78 -6.9 -7.05 -6.85 -6.75 ...
  $ theta     : num [1:4000] 0.284 0.186 0.162 0.196 0.252 ...
  $ .chain    : int [1:4000] 1 1 1 1 1 1 1 1 1 1 ...
  $ .iteration: int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...
  $ .draw     : int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...</code></pre>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">draws_df</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">draws_df</span><span class="op">)</span></span></code></pre></div>
 <pre><code># A draws_df: 1000 iterations, 4 chains, and 2 variables
    lp__ theta
 1  -6.8  0.28
@@ -347,41 +414,52 @@ Total execution time: 0.3 seconds.</code></pre>
 10 -7.5  0.42
 # ... with 3990 more draws
 # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</code></pre>
-<p>To convert an existing draws object to a different format use the <code>posterior::as_draws_*()</code> functions.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># this should be identical to draws_df created via draws(format = "df")</span>
-<span class="va">draws_df_2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html">as_draws_df</a></span><span class="op">(</span><span class="va">draws_arr</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">draws_df</span>, <span class="va">draws_df_2</span><span class="op">)</span></code></pre></div>
+<p>To convert an existing draws object to a different format use the
+<code>posterior::as_draws_*()</code> functions.</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># this should be identical to draws_df created via draws(format = "df")</span></span>
+<span><span class="va">draws_df_2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df</a></span><span class="op">(</span><span class="va">draws_arr</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">draws_df</span>, <span class="va">draws_df_2</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[1] TRUE</code></pre>
-<p>In general, converting to a different draws format in this way will be slower than just setting the appropriate format initially in the call to the <code>$draws()</code> method, but in most cases the speed difference will be minor.</p>
+<p>In general, converting to a different draws format in this way will
+be slower than just setting the appropriate format initially in the call
+to the <code>$draws()</code> method, but in most cases the speed
+difference will be minor.</p>
 </div>
-<div id="plotting-draws" class="section level4">
-<h4 class="hasAnchor">
-<a href="#plotting-draws" class="anchor"></a>Plotting draws</h4>
-<p>Plotting posterior distributions is as easy as passing the object returned by the <code>$draws()</code> method directly to plotting functions in our <a href="https://mc-stan.org/bayesplot/"><strong>bayesplot</strong></a> package.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<div class="section level4">
+<h4 id="plotting-draws">Plotting draws<a class="anchor" aria-label="anchor" href="#plotting-draws"></a>
+</h4>
+<p>Plotting posterior distributions is as easy as passing the object
+returned by the <code>$draws()</code> method directly to plotting
+functions in our <a href="https://mc-stan.org/bayesplot/" class="external-link"><strong>bayesplot</strong></a>
+package.</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cmdstanr_files/figure-html/plots-1.png" width="60%" style="display: block; margin: auto;"></p>
 </div>
 </div>
-<div id="sampler-diagnostics" class="section level3">
-<h3 class="hasAnchor">
-<a href="#sampler-diagnostics" class="anchor"></a>Sampler diagnostics</h3>
-<div id="extracting-diagnostic-values-for-each-iteration-and-chain" class="section level4">
-<h4 class="hasAnchor">
-<a href="#extracting-diagnostic-values-for-each-iteration-and-chain" class="anchor"></a>Extracting diagnostic values for each iteration and chain</h4>
-<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html"><code>$sampler_diagnostics()</code></a> method extracts the values of the sampler parameters (<code>treedepth__</code>, <code>divergent__</code>, etc.) in formats supported by the <strong>posterior</strong> package. The default is as a 3-D array (iteration x chain x variable).</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># this is a draws_array object from the posterior package</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">sampler_diagnostics</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<div class="section level3">
+<h3 id="sampler-diagnostics">Sampler diagnostics<a class="anchor" aria-label="anchor" href="#sampler-diagnostics"></a>
+</h3>
+<div class="section level4">
+<h4 id="extracting-diagnostic-values-for-each-iteration-and-chain">Extracting diagnostic values for each iteration and chain<a class="anchor" aria-label="anchor" href="#extracting-diagnostic-values-for-each-iteration-and-chain"></a>
+</h4>
+<p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html"><code>$sampler_diagnostics()</code></a>
+method extracts the values of the sampler parameters
+(<code>treedepth__</code>, <code>divergent__</code>, etc.) in formats
+supported by the <strong>posterior</strong> package. The default is as a
+3-D array (iteration x chain x variable).</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># this is a draws_array object from the posterior package</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">sampler_diagnostics</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code> 'draws_array' num [1:1000, 1:4, 1:6] 1 2 2 2 2 1 1 1 1 2 ...
  - attr(*, "dimnames")=List of 3
   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   ..$ chain    : chr [1:4] "1" "2" "3" "4"
   ..$ variable : chr [1:6] "treedepth__" "divergent__" "energy__" "accept_stat__" ...</code></pre>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># this is a draws_df object from the posterior package</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">sampler_diagnostics</span><span class="op">(</span>format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># this is a draws_df object from the posterior package</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">sampler_diagnostics</span><span class="op">(</span>format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code>draws_df [4,000 × 9] (S3: draws_df/draws/tbl_df/tbl/data.frame)
  $ treedepth__  : num [1:4000] 1 2 2 2 2 1 1 1 1 2 ...
  $ divergent__  : num [1:4000] 0 0 0 0 0 0 0 0 0 0 ...
@@ -393,12 +471,14 @@ Total execution time: 0.3 seconds.</code></pre>
  $ .iteration   : int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...
  $ .draw        : int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...</code></pre>
 </div>
-<div id="sampler-diagnostic-warnings-and-summaries" class="section level4">
-<h4 class="hasAnchor">
-<a href="#sampler-diagnostic-warnings-and-summaries" class="anchor"></a>Sampler diagnostic warnings and summaries</h4>
-<p>The <code>$diagnostic_summary()</code> method will display any sampler diagnostic warnings and return a summary of diagnostics for each chain.</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit</span><span class="op">$</span><span class="fu">diagnostic_summary</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<div class="section level4">
+<h4 id="sampler-diagnostic-warnings-and-summaries">Sampler diagnostic warnings and summaries<a class="anchor" aria-label="anchor" href="#sampler-diagnostic-warnings-and-summaries"></a>
+</h4>
+<p>The <code>$diagnostic_summary()</code> method will display any
+sampler diagnostic warnings and return a summary of diagnostics for each
+chain.</p>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">diagnostic_summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>$num_divergent
 [1] 0 0 0 0
 
@@ -406,93 +486,113 @@ $num_max_treedepth
 [1] 0 0 0 0
 
 $ebfmi
-[1] 1.017555 1.250490 1.078559 1.237357</code></pre>
-<p>We see the number of divergences for each of the four chains, the number of times the maximum treedepth was hit for each chain, and the E-BFMI for each chain.</p>
-<p>In this case there were no warnings, so in order to demonstrate the warning messages we’ll use one of the CmdStanR example models that suffers from divergences.</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit_with_warning</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"schools"</span><span class="op">)</span></code></pre></div>
-<pre><code>Warning: 76 of 4000 (2.0%) transitions ended with a divergence.
+[1] 1.0 1.3 1.1 1.2</code></pre>
+<p>We see the number of divergences for each of the four chains, the
+number of times the maximum treedepth was hit for each chain, and the
+E-BFMI for each chain.</p>
+<p>In this case there were no warnings, so in order to demonstrate the
+warning messages we’ll use one of the CmdStanR example models that
+suffers from divergences.</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_with_warning</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"schools"</span><span class="op">)</span></span></code></pre></div>
+<pre><code>Warning: 185 of 4000 (5.0%) transitions ended with a divergence.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
-<p>After fitting there is a warning about divergences. We can also regenerate this warning message later using <code>fit$diagnostic_summary()</code>.</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">diagnostics</span> <span class="op">&lt;-</span> <span class="va">fit_with_warning</span><span class="op">$</span><span class="fu">diagnostic_summary</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>Warning: 76 of 4000 (2.0%) transitions ended with a divergence.
+<p>After fitting there is a warning about divergences. We can also
+regenerate this warning message later using
+<code>fit$diagnostic_summary()</code>.</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">diagnostics</span> <span class="op">&lt;-</span> <span class="va">fit_with_warning</span><span class="op">$</span><span class="fu">diagnostic_summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code>Warning: 185 of 4000 (5.0%) transitions ended with a divergence.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">diagnostics</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diagnostics</span><span class="op">)</span></span></code></pre></div>
 <pre><code>$num_divergent
-[1] 22 19 33  2
+[1]   8 120  17  40
 
 $num_max_treedepth
 [1] 0 0 0 0
 
 $ebfmi
-[1] 0.3826859 0.3953390 0.2349030 0.2268031</code></pre>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># number of divergences reported in warning is the sum of the per chain values</span>
-<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">diagnostics</span><span class="op">$</span><span class="va">num_divergent</span><span class="op">)</span> </code></pre></div>
-<pre><code>[1] 76</code></pre>
+[1] 0.29 0.24 0.26 0.30</code></pre>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># number of divergences reported in warning is the sum of the per chain values</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">diagnostics</span><span class="op">$</span><span class="va">num_divergent</span><span class="op">)</span></span></code></pre></div>
+<pre><code>[1] 185</code></pre>
 </div>
-<div id="cmdstans-diagnose-utility" class="section level4">
-<h4 class="hasAnchor">
-<a href="#cmdstans-diagnose-utility" class="anchor"></a>CmdStan’s diagnose utility</h4>
-<p>CmdStan itself provides a <code>diagnose</code> utility that can be called using the <code>$cmdstan_diagnose()</code> method. This method will print warnings but won’t return anything.</p>
+<div class="section level4">
+<h4 id="cmdstans-diagnose-utility">CmdStan’s diagnose utility<a class="anchor" aria-label="anchor" href="#cmdstans-diagnose-utility"></a>
+</h4>
+<p>CmdStan itself provides a <code>diagnose</code> utility that can be
+called using the <code>$cmdstan_diagnose()</code> method. This method
+will print warnings but won’t return anything.</p>
 </div>
 </div>
-<div id="create-a-stanfit-object" class="section level3">
-<h3 class="hasAnchor">
-<a href="#create-a-stanfit-object" class="anchor"></a>Create a <code>stanfit</code> object</h3>
-<p>If you have RStan installed then it is also possible to create a <code>stanfit</code> object from the csv output files written by CmdStan. This can be done by using <code><a href="https://mc-stan.org/rstan/reference/stan_csv.html">rstan::read_stan_csv()</a></code> in combination with the <code>$output_files()</code> method of the <code>CmdStanMCMC</code> object. This is only needed if you want to fit a model with CmdStanR but already have a lot of post-processing code that assumes a <code>stanfit</code> object. Otherwise we recommend using the post-processing functionality provided by CmdStanR itself.</p>
+<div class="section level3">
+<h3 id="create-a-stanfit-object">Create a <code>stanfit</code> object<a class="anchor" aria-label="anchor" href="#create-a-stanfit-object"></a>
+</h3>
+<p>If you have RStan installed then it is also possible to create a
+<code>stanfit</code> object from the csv output files written by
+CmdStan. This can be done by using <code><a href="https://mc-stan.org/rstan/reference/stan_csv.html" class="external-link">rstan::read_stan_csv()</a></code>
+in combination with the <code>$output_files()</code> method of the
+<code>CmdStanMCMC</code> object. This is only needed if you want to fit
+a model with CmdStanR but already have a lot of post-processing code
+that assumes a <code>stanfit</code> object. Otherwise we recommend using
+the post-processing functionality provided by CmdStanR itself.</p>
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">stanfit</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_csv.html" class="external-link">read_stan_csv</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="running-optimization-and-variational-inference">Running optimization and variational inference<a class="anchor" aria-label="anchor" href="#running-optimization-and-variational-inference"></a>
+</h2>
+<p>CmdStanR also supports running Stan’s optimization algorithms and its
+algorithms for variational approximation of full Bayesian inference.
+These are run via the <code>$optimize()</code> and
+<code>$variational()</code> methods, which are called in a similar way
+to the <code>$sample()</code> method demonstrated above.</p>
+<div class="section level3">
+<h3 id="optimization">Optimization<a class="anchor" aria-label="anchor" href="#optimization"></a>
+</h3>
+<p>We can find the (penalized) maximum likelihood estimate (MLE) using
+<a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a>.</p>
 <div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">stanfit</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_csv.html">read_stan_csv</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-</div>
-</div>
-<div id="running-optimization-and-variational-inference" class="section level2">
-<h2 class="hasAnchor">
-<a href="#running-optimization-and-variational-inference" class="anchor"></a>Running optimization and variational inference</h2>
-<p>CmdStanR also supports running Stan’s optimization algorithms and its algorithms for variational approximation of full Bayesian inference. These are run via the <code>$optimize()</code> and <code>$variational()</code> methods, which are called in a similar way to the <code>$sample()</code> method demonstrated above.</p>
-<div id="optimization" class="section level3">
-<h3 class="hasAnchor">
-<a href="#optimization" class="anchor"></a>Optimization</h3>
-<p>We can find the (penalized) maximum likelihood estimate (MLE) using <a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a>.</p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit_mle</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span> </code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit_mle</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span>
+<span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span> <span class="co"># includes lp__ (log prob calculated by Stan program)</span></span>
+<span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
 <pre><code>Initial log joint probability = -9.51104 
     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
        6      -5.00402   0.000103557   2.55661e-07           1           1        9    
 Optimization terminated normally:  
   Convergence detected: relative gradient magnitude is below tolerance 
-Finished in  0.1 seconds.</code></pre>
-<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit_mle</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span> <span class="co"># includes lp__ (log prob calculated by Stan program)</span></code></pre></div>
-<pre><code># A tibble: 2 × 2
-  variable estimate
-  &lt;chr&gt;       &lt;dbl&gt;
-1 lp__        -5.00
-2 theta        0.2 </code></pre>
-<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit_mle</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span> </code></pre></div>
-<pre><code>theta 
-  0.2 </code></pre>
-<p>Here’s a plot comparing the penalized MLE to the posterior distribution of <code>theta</code>.</p>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
-  <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html">vline_at</a></span><span class="op">(</span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></code></pre></div>
+Finished in  0.2 seconds.</code></pre>
+<pre><code>  variable estimate
+1     lp__     -5.0
+2    theta      0.2</code></pre>
+<pre><code><span><span class="va">theta</span> </span>
+<span>  <span class="fl">0.2</span> </span></code></pre>
+<p>Here’s a plot comparing the penalized MLE to the posterior
+distribution of <code>theta</code>.</p>
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">vline_at</a></span><span class="op">(</span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cmdstanr_files/figure-html/plot-mle-1.png" width="60%" style="display: block; margin: auto;"></p>
 </div>
-<div id="variational-bayes" class="section level3">
-<h3 class="hasAnchor">
-<a href="#variational-bayes" class="anchor"></a>Variational Bayes</h3>
-<p>We can run Stan’s experimental variational Bayes algorithm (ADVI) using the <a href="https://mc-stan.org/cmdstanr/reference/model-method-variational.html"><code>$variational()</code></a> method.</p>
-<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">variational</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span>, output_samples <span class="op">=</span> <span class="fl">4000</span><span class="op">)</span> </code></pre></div>
+<div class="section level3">
+<h3 id="variational-bayes">Variational Bayes<a class="anchor" aria-label="anchor" href="#variational-bayes"></a>
+</h3>
+<p>We can run Stan’s experimental variational Bayes algorithm (ADVI)
+using the <a href="https://mc-stan.org/cmdstanr/reference/model-method-variational.html"><code>$variational()</code></a>
+method.</p>
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">variational</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span>, output_samples <span class="op">=</span> <span class="fl">4000</span><span class="op">)</span></span>
+<span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
 <pre><code>------------------------------------------------------------ 
 EXPERIMENTAL ALGORITHM: 
   This procedure has not been thoroughly tested and may be unstable 
   or buggy. The interface is subject to change. 
 ------------------------------------------------------------ 
-Gradient evaluation took 4e-06 seconds 
-1000 transitions using 10 leapfrog steps per transition would take 0.04 seconds. 
+Gradient evaluation took 6e-06 seconds 
+1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds. 
 Adjust your expectations accordingly! 
 Begin eta adaptation. 
 Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -509,92 +609,115 @@ Begin stochastic gradient ascent.
 Drawing a sample of size 4000 from the approximate posterior...  
 COMPLETED. 
 Finished in  0.1 seconds.</code></pre>
-<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit_vb</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></code></pre></div>
-<pre><code># A tibble: 1 × 7
-  variable  mean median    sd   mad    q5   q95
-  &lt;chr&gt;    &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-1 theta    0.267  0.250 0.117 0.117 0.105 0.487</code></pre>
-<p>The <code>$draws()</code> method can be used to access the approximate posterior draws. Let’s extract the draws, make the same plot we made after MCMC, and compare the two. In this trivial example the distributions look quite similar, although the variational approximation slightly underestimates the posterior standard deviation.</p>
-<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></code></pre></div>
+<pre><code>  variable mean median   sd  mad  q5  q95
+1    theta 0.27   0.25 0.12 0.12 0.1 0.49</code></pre>
+<p>The <code>$draws()</code> method can be used to access the
+approximate posterior draws. Let’s extract the draws, make the same plot
+we made after MCMC, and compare the two. In this trivial example the
+distributions look quite similar, although the variational approximation
+slightly underestimates the posterior standard deviation.</p>
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
 <img src="cmdstanr_files/figure-html/plot-variational-1-1.png" alt="Posterior from MCMC" width="60%"><p class="caption">
 Posterior from MCMC
 </p>
 </div>
-<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
 <img src="cmdstanr_files/figure-html/plot-variational-2-1.png" alt="Posterior from variational" width="60%"><p class="caption">
 Posterior from variational
 </p>
 </div>
-<p>For more details on the <code>$optimize()</code> and <code>$variational()</code> methods, follow these links to their documentation pages.</p>
+<p>For more details on the <code>$optimize()</code> and
+<code>$variational()</code> methods, follow these links to their
+documentation pages.</p>
 <ul>
 <li><a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a></li>
 <li><a href="https://mc-stan.org/cmdstanr/reference/model-method-variational.html"><code>$variational()</code></a></li>
 </ul>
 </div>
 </div>
-<div id="saving-fitted-model-objects" class="section level2">
-<h2 class="hasAnchor">
-<a href="#saving-fitted-model-objects" class="anchor"></a>Saving fitted model objects</h2>
-<p>In order to save a fitted model object to disk and ensure that all of the contents are available when reading the object back into R, we recommend using the <a href="http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html"><code>$save_object()</code></a> method provided by CmdStanR. The reason for this is discussed in detail in the vignette <a href="http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html"><em>How does CmdStanR work?</em></a>, so here we just demonstrate how to use the method.</p>
-<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit</span><span class="op">$</span><span class="fu">save_object</span><span class="op">(</span>file <span class="op">=</span> <span class="st">"fit.RDS"</span><span class="op">)</span>
-
-<span class="co"># can be read back in using readRDS</span>
-<span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="st">"fit.RDS"</span><span class="op">)</span></code></pre></div>
+<div class="section level2">
+<h2 id="saving-fitted-model-objects">Saving fitted model objects<a class="anchor" aria-label="anchor" href="#saving-fitted-model-objects"></a>
+</h2>
+<p>In order to save a fitted model object to disk and ensure that all of
+the contents are available when reading the object back into R, we
+recommend using the <a href="http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html" class="external-link"><code>$save_object()</code></a>
+method provided by CmdStanR. The reason for this is discussed in detail
+in the vignette <a href="http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html" class="external-link"><em>How
+does CmdStanR work?</em></a>, so here we just demonstrate how to use the
+method.</p>
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_object</span><span class="op">(</span>file <span class="op">=</span> <span class="st">"fit.RDS"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># can be read back in using readRDS</span></span>
+<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"fit.RDS"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="comparison-with-rstan" class="section level2">
-<h2 class="hasAnchor">
-<a href="#comparison-with-rstan" class="anchor"></a>Comparison with RStan</h2>
-<div id="different-ways-of-interfacing-with-stans-c" class="section level3">
-<h3 class="hasAnchor">
-<a href="#different-ways-of-interfacing-with-stans-c" class="anchor"></a>Different ways of interfacing with Stan’s C++</h3>
-<p>The RStan interface (<a href="https://mc-stan.org/rstan/"><strong>rstan</strong></a> package) is an in-memory interface to Stan and relies on R packages like <strong>Rcpp</strong> and <strong>inline</strong> to call C++ code from R. On the other hand, the CmdStanR interface does not directly call any C++ code from R, instead relying on the CmdStan interface behind the scenes for compilation, running algorithms, and writing results to output files.</p>
+<div class="section level2">
+<h2 id="comparison-with-rstan">Comparison with RStan<a class="anchor" aria-label="anchor" href="#comparison-with-rstan"></a>
+</h2>
+<div class="section level3">
+<h3 id="different-ways-of-interfacing-with-stans-c">Different ways of interfacing with Stan’s C++<a class="anchor" aria-label="anchor" href="#different-ways-of-interfacing-with-stans-c"></a>
+</h3>
+<p>The RStan interface (<a href="https://mc-stan.org/rstan/" class="external-link"><strong>rstan</strong></a> package) is
+an in-memory interface to Stan and relies on R packages like
+<strong>Rcpp</strong> and <strong>inline</strong> to call C++ code from
+R. On the other hand, the CmdStanR interface does not directly call any
+C++ code from R, instead relying on the CmdStan interface behind the
+scenes for compilation, running algorithms, and writing results to
+output files.</p>
 </div>
-<div id="advantages-of-rstan" class="section level3">
-<h3 class="hasAnchor">
-<a href="#advantages-of-rstan" class="anchor"></a>Advantages of RStan</h3>
+<div class="section level3">
+<h3 id="advantages-of-rstan">Advantages of RStan<a class="anchor" aria-label="anchor" href="#advantages-of-rstan"></a>
+</h3>
 <ul>
-<li>Advanced features. We are working on making these available outside of RStan but currently they are only available to R users via RStan:
-<ul>
-<li><code><a href="https://mc-stan.org/rstan/reference/stanfit-method-logprob.html">rstan::log_prob()</a></code></li>
-<li><code><a href="https://mc-stan.org/rstan/reference/stanfit-method-logprob.html">rstan::grad_log_prob()</a></code></li>
-<li><code><a href="https://mc-stan.org/rstan/reference/expose_stan_functions.html">rstan::expose_stan_functions()</a></code></li>
+<li><p>Allows other developers to distribute R packages with
+<em>pre-compiled</em> Stan programs (like <strong>rstanarm</strong>) on
+CRAN.</p></li>
+<li><p>Avoids use of R6 classes, which may result in more familiar
+syntax for many R users.</p></li>
 </ul>
-</li>
-<li>Allows other developers to distribute R packages with <em>pre-compiled</em> Stan programs (like <strong>rstanarm</strong>) on CRAN.</li>
-</ul>
 </div>
-<div id="advantages-of-cmdstanr" class="section level3">
-<h3 class="hasAnchor">
-<a href="#advantages-of-cmdstanr" class="anchor"></a>Advantages of CmdStanR</h3>
+<div class="section level3">
+<h3 id="advantages-of-cmdstanr">Advantages of CmdStanR<a class="anchor" aria-label="anchor" href="#advantages-of-cmdstanr"></a>
+</h3>
 <ul>
-<li><p>Compatible with latest versions of Stan. Keeping up with Stan releases is complicated for RStan, often requiring non-trivial changes to the <strong>rstan</strong> package and new CRAN releases of both <strong>rstan</strong> and <strong>StanHeaders</strong>. With CmdStanR the latest improvements in Stan will be available from R immediately after updating CmdStan using <code><a href="../reference/install_cmdstan.html">cmdstanr::install_cmdstan()</a></code>.</p></li>
-<li><p>Fewer installation issues (e.g., no need to mess with Makevars files).</p></li>
-<li><p>Running Stan via external processes results in fewer unexpected crashes, especially in RStudio.</p></li>
+<li><p>Compatible with latest versions of Stan. Keeping up with Stan
+releases is complicated for RStan, often requiring non-trivial changes
+to the <strong>rstan</strong> package and new CRAN releases of both
+<strong>rstan</strong> and <strong>StanHeaders</strong>. With CmdStanR
+the latest improvements in Stan will be available from R immediately
+after updating CmdStan using
+<code><a href="../reference/install_cmdstan.html">cmdstanr::install_cmdstan()</a></code>.</p></li>
+<li><p>Running Stan via external processes results in fewer unexpected
+crashes, especially in RStudio.</p></li>
 <li><p>Less memory overhead.</p></li>
-<li><p>More permissive license. RStan uses the GPL-3 license while the license for CmdStanR is BSD-3, which is a bit more permissive and is the same license used for CmdStan and the Stan C++ source code.</p></li>
+<li><p>More permissive license. RStan uses the GPL-3 license while the
+license for CmdStanR is BSD-3, which is a bit more permissive and is the
+same license used for CmdStan and the Stan C++ source code.</p></li>
 </ul>
 </div>
 </div>
-<div id="additional-resources" class="section level2">
-<h2 class="hasAnchor">
-<a href="#additional-resources" class="anchor"></a>Additional resources</h2>
-<p>There are additional vignettes available that discuss other aspects of using CmdStanR. These can be found online at the CmdStanR website:</p>
+<div class="section level2">
+<h2 id="additional-resources">Additional resources<a class="anchor" aria-label="anchor" href="#additional-resources"></a>
+</h2>
+<p>There are additional vignettes available that discuss other aspects
+of using CmdStanR. These can be found online at the CmdStanR
+website:</p>
 <ul>
 <li><a href="https://mc-stan.org/cmdstanr/articles/index.html" class="uri">https://mc-stan.org/cmdstanr/articles/index.html</a></li>
 </ul>
 <p>To ask a question please post on the Stan forums:</p>
 <ul>
-<li><a href="https://discourse.mc-stan.org/" class="uri">https://discourse.mc-stan.org/</a></li>
+<li><a href="https://discourse.mc-stan.org/" class="external-link uri">https://discourse.mc-stan.org/</a></li>
 </ul>
-<p>To report a bug, suggest a feature (including additions to these vignettes), or to start contributing to CmdStanR development (new contributors welcome!) please open an issue on GitHub:</p>
+<p>To report a bug, suggest a feature (including additions to these
+vignettes), or to start contributing to CmdStanR development (new
+contributors welcome!) please open an issue on GitHub:</p>
 <ul>
-<li><a href="https://github.com/stan-dev/cmdstanr/issues" class="uri">https://github.com/stan-dev/cmdstanr/issues</a></li>
+<li><a href="https://github.com/stan-dev/cmdstanr/issues" class="external-link uri">https://github.com/stan-dev/cmdstanr/issues</a></li>
 </ul>
 </div>
   </div>
@@ -610,11 +733,13 @@ Posterior from variational
 
 
       <footer><div class="copyright">
-  <p>Developed by Jonah Gabry, Rok Češnovar.</p>
+  <p></p>
+<p>Developed by Jonah Gabry, Rok Češnovar, Andrew Johnson.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
@@ -622,6 +747,8 @@ Posterior from variational
 
   
 
+
+  
 
   </body>
 </html>
