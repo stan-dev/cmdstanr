@@ -22,8 +22,6 @@ package and new CRAN releases of both **rstan** and **StanHeaders**. With
 CmdStanR the latest improvements in Stan will be available from R immediately
 after updating CmdStan using `cmdstanr::install_cmdstan()`.
 
-* Fewer installation issues (e.g., no need to mess with Makevars files).
-
 * Running Stan via external processes results in fewer unexpected crashes,
 especially in RStudio.
 
