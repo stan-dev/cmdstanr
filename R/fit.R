@@ -14,6 +14,8 @@ CmdStanFit <- R6::R6Class(
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
 
+      private$return_codes_ <- self$runset$procs$return_codes()
+
       private$model_methods_env_ <- new.env()
       if (!is.null(runset$model_methods_env())) {
         for (n in ls(runset$model_methods_env(), all.names = TRUE)) {
@@ -33,8 +35,7 @@ CmdStanFit <- R6::R6Class(
       }
       # Need to update the output directory path to one that can be accessed
       # from Windows, for the post-processing of results
-      self$runset$args$output_dir <- wsl_safe_path(self$runset$args$output_dir,
-                                                    revert = TRUE)
+      self$runset$args$output_dir <- wsl_safe_path(self$runset$args$output_dir, revert = TRUE)
       invisible(self)
     },
     num_procs = function() {
@@ -91,7 +92,8 @@ CmdStanFit <- R6::R6Class(
     metadata_ = NULL,
     init_ = NULL,
     profiles_ = NULL,
-    model_methods_env_ = NULL
+    model_methods_env_ = NULL,
+    return_codes_ = NULL
   )
 )
 
@@ -1129,7 +1131,7 @@ CmdStanFit$set("public", name = "metadata", value = metadata)
 #' }
 #'
 return_codes <- function() {
-  self$runset$procs$return_codes()
+  private$return_codes_
 }
 CmdStanFit$set("public", name = "return_codes", value = return_codes)
 

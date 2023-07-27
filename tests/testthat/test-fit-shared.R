@@ -164,6 +164,7 @@ test_that("save_object() method works", {
     fit$save_object(temp_rds_file)
     fit2 <- readRDS(temp_rds_file)
     expect_identical(fit2$summary(), fit$summary())
+    expect_identical(fit2$return_codes(), fit$return_codes())
   }
 
   # check after garbage collection too
