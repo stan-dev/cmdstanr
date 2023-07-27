@@ -8,10 +8,11 @@
 log_prob(unconstrained_variables, jacobian_adjustment = TRUE)
 }
 \arguments{
-\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters to be passed to \code{log_prob}}
+\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters
+to be passed to \code{log_prob}.}
 
-\item{jacobian_adjustment}{(bool) Whether to include the log-density adjustments from
-un/constraining variables}
+\item{jacobian_adjustment}{(logical) Whether to include the log-density
+adjustments from un/constraining variables.}
 }
 \description{
 The \verb{$log_prob()} method provides access to the Stan model's \code{log_prob} function

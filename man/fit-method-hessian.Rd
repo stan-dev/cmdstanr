@@ -12,12 +12,12 @@ hessian(unconstrained_variables, jacobian_adjustment = TRUE)
 \item{unconstrained_variables}{(numeric) A vector of unconstrained parameters
 to be passed to \code{hessian}.}
 
-\item{jacobian_adjustment}{(bool) Whether to include the log-density
+\item{jacobian_adjustment}{(logical) Whether to include the log-density
 adjustments from un/constraining variables.}
 }
 \description{
-The \verb{$hessian()} method provides access to the
-Stan model's \code{log_prob}, its derivative, and its hessian
+The \verb{$hessian()} method provides access to the Stan model's
+\code{log_prob}, its derivative, and its hessian.
 }
 \examples{
 \dontrun{

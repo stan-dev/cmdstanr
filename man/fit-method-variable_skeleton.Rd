@@ -3,20 +3,21 @@
 \name{fit-method-variable_skeleton}
 \alias{fit-method-variable_skeleton}
 \alias{variable_skeleton}
-\title{Return the variable skeleton needed by the utils::relist function to re-structure a
-vector of constrained parameter values to a named list}
+\title{Return the variable skeleton for \code{relist}}
 \usage{
 variable_skeleton(transformed_parameters = TRUE, generated_quantities = TRUE)
 }
 \arguments{
-\item{transformed_parameters}{(boolean) Whether to include transformed parameters
-in the skeleton (defaults to TRUE)}
+\item{transformed_parameters}{(logical) Whether to include transformed
+parameters in the skeleton (defaults to \code{TRUE}).}
 
-\item{generated_quantities}{(boolean) Whether to include generated quantities
-in the skeleton (defaults to TRUE)}
+\item{generated_quantities}{(logical) Whether to include generated quantities
+in the skeleton (defaults to \code{TRUE}).}
 }
 \description{
 The \verb{$variable_skeleton()} method returns the variable skeleton
+needed by \code{utils::relist()} to re-structure a vector of constrained
+parameter values to a named list.
 }
 \examples{
 \dontrun{

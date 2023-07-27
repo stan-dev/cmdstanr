@@ -12,8 +12,8 @@ unconstrain_variables(variables)
 format as provided to the \code{init} argument of the \verb{$sample()} method.}
 }
 \description{
-The \verb{$unconstrain_variables()} method transforms input parameters to
-the unconstrained scale
+The \verb{$unconstrain_variables()} method transforms input
+parameters to the unconstrained scale.
 }
 \examples{
 \dontrun{

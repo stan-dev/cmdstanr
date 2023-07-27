@@ -11,15 +11,17 @@ init_model_methods(seed = 0, verbose = FALSE, hessian = FALSE)
 \arguments{
 \item{seed}{(integer) The random seed to use when initializing the model.}
 
-\item{verbose}{(boolean) Whether to show verbose logging during compilation.}
+\item{verbose}{(logical) Whether to show verbose logging during compilation.}
 
-\item{hessian}{(boolean) Whether to expose the (experimental) hessian method.}
+\item{hessian}{(logical) Whether to expose the (experimental) hessian method.}
 }
 \description{
 The \verb{$init_model_methods()} method compiles and initializes the
 \code{log_prob}, \code{grad_log_prob}, \code{constrain_variables}, \code{unconstrain_variables}
 and \code{unconstrain_draws} functions. These are then available as methods of
-the fitted model object. This requires the \code{Rcpp} package.
+the fitted model object. This requires the additional \code{Rcpp} and
+\code{RcppEigen} packages, which are not required for fitting models using
+CmdStanR.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.

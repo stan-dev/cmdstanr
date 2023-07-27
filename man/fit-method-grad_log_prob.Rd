@@ -12,12 +12,12 @@ grad_log_prob(unconstrained_variables, jacobian_adjustment = TRUE)
 \item{unconstrained_variables}{(numeric) A vector of unconstrained parameters
 to be passed to \code{grad_log_prob}.}
 
-\item{jacobian_adjustment}{(bool) Whether to include the log-density
+\item{jacobian_adjustment}{(logical) Whether to include the log-density
 adjustments from un/constraining variables.}
 }
 \description{
-The \verb{$grad_log_prob()} method provides access to the
-Stan model's \code{log_prob} function and its derivative
+The \verb{$grad_log_prob()} method provides access to the Stan
+model's \code{log_prob} function and its derivative.
 }
 \examples{
 \dontrun{

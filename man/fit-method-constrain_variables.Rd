@@ -15,15 +15,15 @@ constrain_variables(
 \item{unconstrained_variables}{(numeric) A vector of unconstrained parameters
 to constrain.}
 
-\item{transformed_parameters}{(boolean) Whether to return transformed
+\item{transformed_parameters}{(logical) Whether to return transformed
 parameters implied by newly-constrained parameters (defaults to TRUE).}
 
-\item{generated_quantities}{(boolean) Whether to return generated quantities
+\item{generated_quantities}{(logical) Whether to return generated quantities
 implied by newly-constrained parameters (defaults to TRUE).}
 }
 \description{
-The \verb{$constrain_variables()} method transforms input parameters to
-the constrained scale
+The \verb{$constrain_variables()} method transforms input parameters
+to the constrained scale.
 }
 \examples{
 \dontrun{
