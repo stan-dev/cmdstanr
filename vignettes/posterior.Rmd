@@ -25,7 +25,7 @@ using options(digits=2) also won't be necessary anymore.
 options(digits=2)
 ```
 
-## Summary
+## Summary statistics
 
 We can easily customise the summary statistics reported by `$summary()` and `$print()`.
 
@@ -135,3 +135,32 @@ print.data.frame(fit$summary(variables = NULL, "Strictly Positive" = strict_pos)
 ```
 
 For more information, see `posterior::summarise_draws()`, which is called by `$summary()`.
+
+
+## Extracting posterior draws/samples
+
+The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
+method can be used to extract the posterior draws in formats provided by the
+[**posterior**](https://mc-stan.org/posterior/) package. Here we demonstrate
+only the `draws_array` and `draws_df` formats, but the **posterior** package
+supports other useful formats as well.
+
+```{r draws, message=FALSE}
+# default is a 3-D draws_array object from the posterior package
+# iterations x chains x variables
+draws_arr <- fit$draws() # or format="array"
+str(draws_arr)
+
+# draws x variables data frame
+draws_df <- fit$draws(format = "df")
+str(draws_df)
+print(draws_df)
+```
+
+To convert an existing draws object to a different format use the
+`posterior::as_draws_*()` functions.
+
+To manipulate the `draws` objects use the various methods described in the
+posterior package [vignettes](https://mc-stan.org/posterior/articles/index.html)
+and [documentation](https://mc-stan.org/posterior/reference/index.html).
+
