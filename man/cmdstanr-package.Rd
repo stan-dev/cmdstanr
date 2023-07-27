@@ -33,15 +33,10 @@ algorithms, and writing results to output files.
 
 \subsection{Advantages of RStan}{
 \itemize{
-\item Advanced features. We are working on making these available outside of
-RStan but currently they are only available to R users via RStan:
-\itemize{
-\item \code{rstan::log_prob()}
-\item \code{rstan::grad_log_prob()}
-\item \code{rstan::expose_stan_functions()}
-}
 \item Allows other developers to distribute R packages with \emph{pre-compiled}
 Stan programs (like \strong{rstanarm}) on CRAN.
+\item Avoids use of R6 classes, which may result in more familiar syntax for
+many R users.
 }
 }
 
@@ -53,7 +48,6 @@ is complicated for RStan, often requiring non-trivial changes to the
 \strong{StanHeaders}. With CmdStanR the latest improvements in Stan will be
 available from R immediately after updating CmdStan using
 \code{cmdstanr::install_cmdstan()}.
-\item Fewer installation issues (e.g., no need to mess with Makevars files).
 \item Running Stan via external processes results in fewer unexpected
 crashes, especially in RStudio.
 \item Less memory overhead.

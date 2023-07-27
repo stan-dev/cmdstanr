@@ -309,14 +309,16 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @description The `$init_model_methods()` method compiles and initializes the
 #'   `log_prob`, `grad_log_prob`, `constrain_variables`, `unconstrain_variables`
 #'   and `unconstrain_draws` functions. These are then available as methods of
-#'   the fitted model object. This requires the `Rcpp` package.
+#'   the fitted model object. This requires the additional `Rcpp` and
+#'   `RcppEigen` packages, which are not required for fitting models using
+#'   CmdStanR.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
 #'
 #' @param seed (integer) The random seed to use when initializing the model.
-#' @param verbose (boolean) Whether to show verbose logging during compilation.
-#' @param hessian (boolean) Whether to expose the (experimental) hessian method.
+#' @param verbose (logical) Whether to show verbose logging during compilation.
+#' @param hessian (logical) Whether to expose the (experimental) hessian method.
 #'
 #' @examples
 #' \dontrun{
@@ -359,9 +361,10 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' @aliases log_prob
 #' @description The `$log_prob()` method provides access to the Stan model's `log_prob` function
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters to be passed to `log_prob`
-#' @param jacobian_adjustment (bool) Whether to include the log-density adjustments from
-#' un/constraining variables
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to be passed to `log_prob`.
+#' @param jacobian_adjustment (logical) Whether to include the log-density
+#'   adjustments from un/constraining variables.
 #'
 #' @examples
 #' \dontrun{
@@ -393,12 +396,12 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'
 #' @name fit-method-grad_log_prob
 #' @aliases grad_log_prob
-#' @description The `$grad_log_prob()` method provides access to the
-#' Stan model's `log_prob` function and its derivative
+#' @description The `$grad_log_prob()` method provides access to the Stan
+#'   model's `log_prob` function and its derivative.
 #'
 #' @param unconstrained_variables (numeric) A vector of unconstrained parameters
 #'   to be passed to `grad_log_prob`.
-#' @param jacobian_adjustment (bool) Whether to include the log-density
+#' @param jacobian_adjustment (logical) Whether to include the log-density
 #'   adjustments from un/constraining variables.
 #'
 #' @examples
@@ -431,12 +434,12 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'
 #' @name fit-method-hessian
 #' @aliases hessian
-#' @description The `$hessian()` method provides access to the
-#' Stan model's `log_prob`, its derivative, and its hessian
+#' @description The `$hessian()` method provides access to the Stan model's
+#'   `log_prob`, its derivative, and its hessian.
 #'
 #' @param unconstrained_variables (numeric) A vector of unconstrained parameters
 #'   to be passed to `hessian`.
-#' @param jacobian_adjustment (bool) Whether to include the log-density
+#' @param jacobian_adjustment (logical) Whether to include the log-density
 #'   adjustments from un/constraining variables.
 #'
 #' @examples
@@ -468,8 +471,8 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #'
 #' @name fit-method-unconstrain_variables
 #' @aliases unconstrain_variables
-#' @description The `$unconstrain_variables()` method transforms input parameters to
-#' the unconstrained scale
+#' @description The `$unconstrain_variables()` method transforms input
+#'   parameters to the unconstrained scale.
 #'
 #' @param variables (list) A list of parameter values to transform, in the same
 #'   format as provided to the `init` argument of the `$sample()` method.
@@ -521,11 +524,12 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #'
 #' @name fit-method-unconstrain_draws
 #' @aliases unconstrain_draws
-#' @description The `$unconstrain_draws()` method transforms all parameter draws to the
-#' unconstrained scale. The method returns a list for each chain, containing the parameter
-#' values from each iteration on the unconstrained scale. If called with no arguments, then
-#' the draws within the fit object are unconstrained. Alternatively, either an existing
-#' draws object or a character vector of paths to CSV files can be passed.
+#' @description The `$unconstrain_draws()` method transforms all parameter draws
+#'   to the unconstrained scale. The method returns a list for each chain,
+#'   containing the parameter values from each iteration on the unconstrained
+#'   scale. If called with no arguments, then the draws within the fit object
+#'   are unconstrained. Alternatively, either an existing draws object or a
+#'   character vector of paths to CSV files can be passed.
 #'
 #' @param files (character vector) The paths to the CmdStan CSV files. These can
 #'   be files generated by running CmdStanR or running CmdStan directly.
@@ -598,17 +602,17 @@ unconstrain_draws <- function(files = NULL, draws = NULL) {
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 
-#' Return the variable skeleton needed by the utils::relist function to re-structure a
-#' vector of constrained parameter values to a named list
+#' Return the variable skeleton for `relist`
 #'
 #' @name fit-method-variable_skeleton
 #' @aliases variable_skeleton
 #' @description The `$variable_skeleton()` method returns the variable skeleton
-#'
-#' @param transformed_parameters (boolean) Whether to include transformed parameters
-#'  in the skeleton (defaults to TRUE)
-#' @param generated_quantities (boolean) Whether to include generated quantities
-#'  in the skeleton (defaults to TRUE)
+#'   needed by `utils::relist()` to re-structure a vector of constrained
+#'   parameter values to a named list.
+#' @param transformed_parameters (logical) Whether to include transformed
+#'   parameters in the skeleton (defaults to `TRUE`).
+#' @param generated_quantities (logical) Whether to include generated quantities
+#'   in the skeleton (defaults to `TRUE`).
 #'
 #' @examples
 #' \dontrun{
@@ -638,14 +642,14 @@ CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 #'
 #' @name fit-method-constrain_variables
 #' @aliases constrain_variables
-#' @description The `$constrain_variables()` method transforms input parameters to
-#' the constrained scale
+#' @description The `$constrain_variables()` method transforms input parameters
+#'   to the constrained scale.
 #'
 #' @param unconstrained_variables (numeric) A vector of unconstrained parameters
 #'   to constrain.
-#' @param transformed_parameters (boolean) Whether to return transformed
+#' @param transformed_parameters (logical) Whether to return transformed
 #'   parameters implied by newly-constrained parameters (defaults to TRUE).
-#' @param generated_quantities (boolean) Whether to return generated quantities
+#' @param generated_quantities (logical) Whether to return generated quantities
 #'   implied by newly-constrained parameters (defaults to TRUE).
 #'
 #' @examples
@@ -1435,10 +1439,10 @@ CmdStanMCMC <- R6::R6Class(
 #' @name fit-method-loo
 #' @aliases loo
 #' @description The `$loo()` method computes approximate LOO-CV using the
-#'   \pkg{loo} package. This is a simple wrapper around [loo::loo.array()]
-#'   provided for convenience and requires computing the pointwise
-#'   log-likelihood in your Stan program. See the \pkg{loo} package
-#'   [vignettes](https://mc-stan.org/loo/articles/) for details.
+#'   \pkg{loo} package. In order to use this method you must compute and save
+#'   the pointwise log-likelihood in your Stan program. See [loo::loo.array()]
+#'   and the \pkg{loo} package [vignettes](https://mc-stan.org/loo/articles/)
+#'   for details.
 #'
 #' @param variables (character vector) The name(s) of the variable(s) in the
 #'   Stan program containing the pointwise log-likelihood. The default is to
@@ -1451,13 +1455,20 @@ CmdStanMCMC <- R6::R6Class(
 #'   but will result in a warning from the \pkg{loo} package.
 #'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
 #'   argument to [loo::loo.array()].
-#' @param moment_match (boolean) Whether to use a moment-matching correction for
-#'  for problematic observations.
+#' @param moment_match (logical) Whether to use a
+#'   [moment-matching][loo::loo_moment_match()] correction for problematic
+#'   observations. The default is `FALSE`. Using `moment_match=TRUE` will result
+#'   in compiling the additional methods described in
+#'   [fit-method-init_model_methods]. This allows CmdStanR to automatically
+#'   supply the functions for the `log_lik_i`, `unconstrain_pars`,
+#'   `log_prob_upars`, and `log_lik_i_upars` arguments to
+#'   [loo::loo_moment_match()].
 #' @param ... Other arguments (e.g., `cores`, `save_psis`, etc.) passed to
 #'   [loo::loo.array()] or [loo::loo_moment_match.default()]
 #'   (if `moment_match` = `TRUE` is set).
 #'
-#' @return The object returned by [loo::loo.array()].
+#' @return The object returned by [loo::loo.array()] or
+#'   [loo::loo_moment_match.default()].
 #'
 #' @seealso The \pkg{loo} package website with
 #'   [documentation](https://mc-stan.org/loo/reference/index.html) and
