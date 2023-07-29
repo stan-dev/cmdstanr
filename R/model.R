@@ -1346,23 +1346,17 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer to obtain a posterior mode (penalized maximum likelihood)
-#'   estimate.
+#'   Stan's optimizer to obtain a (penalized) maximum likelihood estimate or a
+#'   maximum a posteriori estimate (if `jacobian=TRUE`). See the
+#'   [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
+#'   section of the CmdStan User's Guide for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
-#'   for more details.
-#'
-#' @details CmdStan can find the posterior mode (assuming there is one). If the
-#'   posterior is not convex, there is no guarantee Stan will be able to find
-#'   the global mode as opposed to a local optimum of log probability. For
-#'   optimization, the mode is calculated without the Jacobian adjustment for
-#'   constrained variables, which shifts the mode due to the change of
-#'   variables. Thus modes correspond to modes of the model as written.
-#'
-#'   -- [*CmdStan User's Guide*](https://mc-stan.org/docs/cmdstan-guide/)
-#'
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. The default values can also be obtained by checking the
+#'   metadata of an example model, e.g.,
+#'   `cmdstanr_example(method="optimize")$metadata()`.
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
@@ -1374,14 +1368,12 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   for `"lbfgs"` and `"bfgs`. For their default values and more details see
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
-#' @param jacobian (logical) Whether or not the  model’s log probability
-#'   function should include the log absolute Jacobian determinant of inverse
-#'   parameter transforms. If `jacobian=FALSE` (historically this has always
-#'   been the default) optimization returns the regularized maximum likelihood
-#'   estimate (MLE). If `jacobian=TRUE` optimization produces the maximum a
-#'   posteriori estimate (MAP). See the
+#' @param jacobian (logical) Whether or not to use the Jacobian adjustment for
+#'   constrained variables. By default this is `FALSE`, meaning optimization
+#'   yields the (regularized) maximum likelihood estimate. Setting it to `TRUE`
+#'   yields the maximum a posteriori estimate. See the
 #'   [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
-#'   section of the CmdStan User's Guide for more details on the Jacobian adjustments.
+#'   section of the CmdStan User's Guide for more details.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1407,7 +1399,7 @@ optimize <- function(data = NULL,
                      threads = NULL,
                      opencl_ids = NULL,
                      algorithm = NULL,
-                     jacobian = NULL,
+                     jacobian = FALSE,
                      init_alpha = NULL,
                      iter = NULL,
                      tol_obj = NULL,
