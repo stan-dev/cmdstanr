@@ -150,5 +150,5 @@ test_that("optimize() recognizes new jacobian argument", {
   expect_equal(fit$metadata()$jacobian, 0)
 
   fit2 <- mod$optimize(data = data_list, jacobian = TRUE)
-  expect_equal(fit$metadata()$jacobian, 1)
+  expect_equal(fit2$metadata()$jacobian, 1)
 })
