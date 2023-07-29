@@ -17,6 +17,7 @@ optimize(
   threads = NULL,
   opencl_ids = NULL,
   algorithm = NULL,
+  jacobian = NULL,
   init_alpha = NULL,
   iter = NULL,
   tol_obj = NULL,
@@ -131,6 +132,13 @@ argument to have an effect.}
 for \code{"lbfgs"} and \verb{"bfgs}. For their default values and more details see
 the CmdStan User's Guide. The default values can also be obtained by
 running \code{cmdstanr_example(method="optimize")$metadata()}.}
+
+\item{jacobian}{(logical) Whether or not the Jacobian adjustment should be
+included in the gradient. The default is whatever is the default in the
+installed version of CmdStan (historically this has been \code{FALSE}). If the
+goal of running optimization is to later produce a sample from a normal
+approximation centered at the mode in the unconstrained space then
+\code{jacobian} must be set to \code{TRUE}.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 

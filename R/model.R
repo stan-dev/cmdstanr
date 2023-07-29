@@ -1374,6 +1374,12 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   for `"lbfgs"` and `"bfgs`. For their default values and more details see
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
+#' @param jacobian (logical) Whether or not the Jacobian adjustment should be
+#'   included in the gradient. The default is whatever is the default in the
+#'   installed version of CmdStan (historically this has been `FALSE`). If the
+#'   goal of running optimization is to later produce a sample from a normal
+#'   approximation centered at the mode in the unconstrained space then
+#'   `jacobian` must be set to `TRUE`.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1399,6 +1405,7 @@ optimize <- function(data = NULL,
                      threads = NULL,
                      opencl_ids = NULL,
                      algorithm = NULL,
+                     jacobian = NULL,
                      init_alpha = NULL,
                      iter = NULL,
                      tol_obj = NULL,
@@ -1418,6 +1425,7 @@ optimize <- function(data = NULL,
   }
   optimize_args <- OptimizeArgs$new(
     algorithm = algorithm,
+    jacobian = jacobian,
     init_alpha = init_alpha,
     iter = iter,
     tol_obj = tol_obj,

@@ -374,6 +374,7 @@ OptimizeArgs <- R6::R6Class(
   public = list(
     method = "optimize",
     initialize = function(iter = NULL,
+                          jacobian = NULL,
                           algorithm = NULL,
                           init_alpha = NULL,
                           tol_obj = NULL,
@@ -382,8 +383,9 @@ OptimizeArgs <- R6::R6Class(
                           tol_rel_grad = NULL,
                           tol_param = NULL,
                           history_size = NULL) {
-      self$algorithm <- algorithm
       self$iter <- iter
+      self$jacobian <- jacobian
+      self$algorithm <- algorithm
       self$init_alpha <- init_alpha
       self$tol_obj <- tol_obj
       self$tol_rel_obj <- tol_rel_obj
@@ -407,6 +409,7 @@ OptimizeArgs <- R6::R6Class(
       }
       new_args <- list(
         "method=optimize",
+        .make_arg("jacobian"),
         .make_arg("iter"),
         .make_arg("algorithm"),
         .make_arg("init_alpha"),
@@ -669,6 +672,11 @@ validate_sample_args <- function(self, num_procs) {
 validate_optimize_args <- function(self) {
   checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
                            choices = c("bfgs", "lbfgs", "newton"))
+  checkmate::assert_flag(self$jacobian, null.ok = TRUE)
+  if (!is.null(self$jacobian)) {
+    self$jacobian <- as.integer(self$jacobian)
+  }
+
   checkmate::assert_integerish(self$iter, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$iter)) {
     self$iter <- as.integer(self$iter)
