@@ -133,12 +133,14 @@ for \code{"lbfgs"} and \verb{"bfgs}. For their default values and more details s
 the CmdStan User's Guide. The default values can also be obtained by
 running \code{cmdstanr_example(method="optimize")$metadata()}.}
 
-\item{jacobian}{(logical) Whether or not the Jacobian adjustment should be
-included in the gradient. The default is whatever is the default in the
-installed version of CmdStan (historically this has been \code{FALSE}). If the
-goal of running optimization is to later produce a sample from a normal
-approximation centered at the mode in the unconstrained space then
-\code{jacobian} must be set to \code{TRUE}.}
+\item{jacobian}{(logical) Whether or not the  model’s log probability
+function should include the log absolute Jacobian determinant of inverse
+parameter transforms. If \code{jacobian=FALSE} (historically this has always
+been the default) optimization returns the regularized maximum likelihood
+estimate (MLE). If \code{jacobian=TRUE} optimization produces the maximum a
+posteriori estimate (MAP). See the
+\href{https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html}{Maximum Likelihood Estimation}
+section of the CmdStan User's Guide for more details on the Jacobian adjustments.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 

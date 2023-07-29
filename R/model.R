@@ -1374,12 +1374,14 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   for `"lbfgs"` and `"bfgs`. For their default values and more details see
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
-#' @param jacobian (logical) Whether or not the Jacobian adjustment should be
-#'   included in the gradient. The default is whatever is the default in the
-#'   installed version of CmdStan (historically this has been `FALSE`). If the
-#'   goal of running optimization is to later produce a sample from a normal
-#'   approximation centered at the mode in the unconstrained space then
-#'   `jacobian` must be set to `TRUE`.
+#' @param jacobian (logical) Whether or not the  model’s log probability
+#'   function should include the log absolute Jacobian determinant of inverse
+#'   parameter transforms. If `jacobian=FALSE` (historically this has always
+#'   been the default) optimization returns the regularized maximum likelihood
+#'   estimate (MLE). If `jacobian=TRUE` optimization produces the maximum a
+#'   posteriori estimate (MAP). See the
+#'   [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
+#'   section of the CmdStan User's Guide for more details on the Jacobian adjustments.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
