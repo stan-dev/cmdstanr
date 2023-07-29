@@ -551,7 +551,7 @@ validate_cmdstan_args <- function(self) {
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
   checkmate::assert_integerish(self$sig_figs, lower = 1, upper = 18, null.ok = TRUE)
   if (!is.null(self$sig_figs) && cmdstan_version() < "2.25") {
-    warning("The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!")
+    warning("The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!", call. = FALSE)
   }
   if (!is.null(self$refresh)) {
     self$refresh <- as.integer(self$refresh)
@@ -674,6 +674,9 @@ validate_optimize_args <- function(self) {
                            choices = c("bfgs", "lbfgs", "newton"))
   checkmate::assert_flag(self$jacobian, null.ok = TRUE)
   if (!is.null(self$jacobian)) {
+    if (cmdstan_version() < "2.32") {
+      warning("The 'jacobian' argument is only supported with cmdstan 2.32+ and will be ignored!", call. = FALSE)
+    }
     self$jacobian <- as.integer(self$jacobian)
   }
 
