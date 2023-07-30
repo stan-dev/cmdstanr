@@ -92,7 +92,8 @@ following components:
 \item \code{point_estimates}: Point estimates for the model parameters.
 }
 
-For \link[=model-method-variational]{variational inference} the returned list also
+For \link[=model-method-laplace]{laplace} and
+\link[=model-method-variational]{variational inference} the returned list also
 includes the following components:
 \itemize{
 \item \code{draws}: A \code{\link[posterior:draws_matrix]{draws_matrix}} (or different format

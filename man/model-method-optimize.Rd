@@ -138,7 +138,9 @@ constrained variables. By default this is \code{FALSE}, meaning optimization
 yields the (regularized) maximum likelihood estimate. Setting it to \code{TRUE}
 yields the maximum a posteriori estimate. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html}{Maximum Likelihood Estimation}
-section of the CmdStan User's Guide for more details.}
+section of the CmdStan User's Guide for more details.
+For use later with \code{\link[=model-method-laplace]{$laplace()}} the \code{jacobian}
+argument should typically be set to \code{TRUE}.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 
@@ -207,6 +209,9 @@ fit_mcmc <- mod$sample(
 # Use 'posterior' package for summaries
 fit_mcmc$summary()
 
+# Check sampling diagnostics
+fit_mcmc$diagnostic_summary()
+
 # Get posterior draws
 draws <- fit_mcmc$draws()
 print(draws)
@@ -217,13 +222,8 @@ as_draws_df(draws)
 # Plot posterior using bayesplot (ggplot2)
 mcmc_hist(fit_mcmc$draws("theta"))
 
-# Call CmdStan's diagnose and stansummary utilities
-fit_mcmc$cmdstan_diagnose()
-fit_mcmc$cmdstan_summary()
-
 # For models fit using MCMC, if you like working with RStan's stanfit objects
 # then you can create one with rstan::read_stan_csv()
-
 # stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
 
 
@@ -231,13 +231,16 @@ fit_mcmc$cmdstan_summary()
 # and also demonstrate specifying data as a path to a file instead of a list
 my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
 fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-
 fit_optim$summary()
 
+# Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation
+# to the posterior
+fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
+fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
+fit_laplace$summary()
 
 # Run 'variational' method to approximate the posterior (default is meanfield ADVI)
 fit_vb <- mod$variational(data = stan_data, seed = 123)
-
 fit_vb$summary()
 
 # Plot approximate posterior using bayesplot
@@ -304,6 +307,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-laplace}},
 \code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
 \code{\link{model-method-variables}},

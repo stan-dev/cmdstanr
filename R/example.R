@@ -49,7 +49,7 @@
 #'
 cmdstanr_example <-
   function(example = c("logistic", "schools", "schools_ncp"),
-           method = c("sample", "optimize", "variational", "diagnose"),
+           method = c("sample", "optimize", "laplace", "variational", "diagnose"),
            ...,
            quiet = TRUE) {
 

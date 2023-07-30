@@ -12,16 +12,17 @@ lp_approx()
 }
 \value{
 A numeric vector with length equal to the number of (post-warmup)
-draws for MCMC and variational inference, and length equal to \code{1} for
-optimization.
+draws or length equal to \code{1} for optimization.
 }
 \description{
 The \verb{$lp()} method extracts \code{lp__}, the total log probability
 (\code{target}) accumulated in the model block of the Stan program. For
 variational inference the log density of the variational approximation to
-the posterior is also available via the \verb{$lp_approx()} method.
+the posterior is available via the \verb{$lp_approx()} method. For
+Laplace approximation the unnormalized density of the approximation to
+the posterior is available via the \verb{$lp_approx()} method.
 
-See the \href{https://mc-stan.org/docs/2_23/reference-manual/sampling-statements-section.html}{Log Probability Increment vs. Sampling Statement}
+See the \href{https://mc-stan.org/docs/reference-manual/sampling-statements.html}{Log Probability Increment vs. Sampling Statement}
 section of the Stan Reference Manual for details on when normalizing
 constants are dropped from log probability calculations.
 }
@@ -32,10 +33,13 @@ This will in general be different than the unnormalized model log density
 evaluated at a posterior draw (which is on the constrained space). \code{lp__} is
 intended to diagnose sampling efficiency and evaluate approximations.
 
-\code{lp_approx__} is the log density of the variational approximation to \code{lp__}
-(also on the unconstrained space). It is exposed in the variational method
-for performing the checks described in Yao et al. (2018) and implemented in
-the \pkg{loo} package.
+For variational inference \code{lp_approx__} is the log density of the variational
+approximation to \code{lp__} (also on the unconstrained space). It is exposed in
+the variational method for performing the checks described in Yao et al.
+(2018) and implemented in the \pkg{loo} package.
+
+For Laplace approximation \code{lp_approx__} is the the unnormalized density of
+the Laplace approximation.
 }
 
 \examples{
@@ -57,5 +61,5 @@ work?: Evaluating variational inference. \emph{Proceedings of the 35th
 International Conference on Machine Learning}, PMLR 80:5581–5590.
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}}
 }

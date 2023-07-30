@@ -69,6 +69,9 @@
 #' # Use 'posterior' package for summaries
 #' fit_mcmc$summary()
 #'
+#' # Check sampling diagnostics
+#' fit_mcmc$diagnostic_summary()
+#'
 #' # Get posterior draws
 #' draws <- fit_mcmc$draws()
 #' print(draws)
@@ -79,13 +82,8 @@
 #' # Plot posterior using bayesplot (ggplot2)
 #' mcmc_hist(fit_mcmc$draws("theta"))
 #'
-#' # Call CmdStan's diagnose and stansummary utilities
-#' fit_mcmc$cmdstan_diagnose()
-#' fit_mcmc$cmdstan_summary()
-#'
 #' # For models fit using MCMC, if you like working with RStan's stanfit objects
 #' # then you can create one with rstan::read_stan_csv()
-#'
 #' # stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
 #'
 #'
@@ -93,13 +91,16 @@
 #' # and also demonstrate specifying data as a path to a file instead of a list
 #' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
 #' fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-#'
 #' fit_optim$summary()
 #'
+#' # Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation
+#' # to the posterior
+#' fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
+#' fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
+#' fit_laplace$summary()
 #'
 #' # Run 'variational' method to approximate the posterior (default is meanfield ADVI)
 #' fit_vb <- mod$variational(data = stan_data, seed = 123)
-#'
 #' fit_vb$summary()
 #'
 #' # Plot approximate posterior using bayesplot
@@ -1374,6 +1375,8 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   yields the maximum a posteriori estimate. See the
 #'   [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
 #'   section of the CmdStan User's Guide for more details.
+#'   For use later with [`$laplace()`][model-method-laplace] the `jacobian`
+#'   argument should typically be set to `TRUE`.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1454,6 +1457,169 @@ optimize <- function(data = NULL,
   CmdStanMLE$new(runset)
 }
 CmdStanModel$set("public", name = "optimize", value = optimize)
+
+
+#' Run Stan's laplace algorithm
+#'
+#' @name model-method-laplace
+#' @aliases laplace
+#' @family CmdStanModel methods
+#'
+#' @description The `$laplace()` method of a [`CmdStanModel`] object produces a
+#'   sample from a normal approximation centered at the mode of a distribution
+#'   in the unconstrained space. If the mode is a maximum a posteriori (MAP)
+#'   estimate, the samples provide an estimate of the mean and standard
+#'   deviation of the posterior distribution. If the mode is a maximum
+#'   likelihood estimate (MLE), the sample provides an estimate of the standard
+#'   error of the likelihood. Whether the mode is the MAP or MLE depends on
+#'   the value of the `jacobian` argument when running optimization. See the
+#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+#'   section of the CmdStan User's Guide for more details.
+#'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the
+#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   for more details on the default arguments.
+#'
+#' @template model-common-args
+#' @inheritParams model-method-optimize
+#' @param mode (multiple options) The mode to center the approximation at. One
+#'   of the following:
+#'   * A [`CmdStanMLE`] object from a previous run of [`$optimize()`][model-method-optimize].
+#'   * The path to a CmdStan CSV file from running optimization.
+#'   * `NULL`, in which case [$optimize()][fit-method-optimize] will be run
+#'   with `jacobian=jacobian` (see the `jacobian` argument below).
+#'
+#'   In all cases the total time reported by [`$time()`][fit-method-time] will be
+#'   the time of the Laplace sampling step only and does not include the time
+#'   taken to run the `$optimize()` method.
+#' @param opt_args (named list) A named list of optional arguments to pass to
+#'   [$optimize()][fit-method-optimize] if `mode=NULL`.
+#' @param draws (positive integer) The number of draws to take.
+#' @param jacobian (logical) Whether or not to enable the Jacobian adjustment
+#'   for constrained parameters. The default is `TRUE`. See the
+#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+#'   section of the CmdStan User's Guide for more details. If `mode` is not
+#'   `NULL` then the value of `jacobian` must match the value used when
+#'   optimization was originally run. If `mode` is `NULL` then the value of
+#'   `jacobian` specified here is used when running optimization.
+#'
+#' @return A [`CmdStanLaplace`] object.
+#'
+#' @template seealso-docs
+#' @examples
+#' \dontrun{
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(file)
+#' mod$print()
+#'
+#' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+#' fit_mode <- mod$optimize(data = stan_data, jacobian = TRUE)
+#' fit_laplace <- mod$laplace(data = stan_data, mode = fit_mode)
+#' fit_laplace$summary()
+#'
+#' # if mode isn't specified optimize is run internally first
+#' fit_laplace <- mod$laplace(data = stan_data)
+#' fit_laplace$summary()
+#'
+#' # plot approximate posterior
+#' bayesplot::mcmc_hist(fit_laplace$draws("theta"))
+#' }
+#'
+#'
+laplace <- function(data = NULL,
+                    seed = NULL,
+                    refresh = NULL,
+                    init = NULL,
+                    output_dir = NULL,
+                    output_basename = NULL,
+                    sig_figs = NULL,
+                    threads = NULL,
+                    opencl_ids = NULL,
+                    mode = NULL,
+                    jacobian = TRUE, # different than for optimize!
+                    draws = NULL,
+                    opt_args = NULL) {
+  if (cmdstan_version() < "2.32") {
+    stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
+  }
+  if (!is.null(mode) && !is.null(opt_args)) {
+    stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
+  }
+  procs <- CmdStanProcs$new(
+    num_procs = 1,
+    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+  )
+  model_variables <- NULL
+  if (is_variables_method_supported(self)) {
+    model_variables <- self$variables()
+  }
+
+  if (!is.null(mode)) {
+    if (inherits(mode, "CmdStanMLE")) {
+      cmdstan_mode <- mode
+    } else {
+      if (!is.character(mode) && length(mode) == 1) {
+        stop("If not NULL or a CmdStanMLE object then 'mode' must be a path to a CSV file.", call. = FALSE)
+      }
+      cmdstan_mode <- as_cmdstan_fit(mode)
+    }
+  } else { # mode = NULL, run optimize()
+    checkmate::assert_list(opt_args, any.missing = FALSE, names = "unique", null.ok = TRUE)
+    cmdstan_mode <- self$optimize(
+      data = data,
+      seed = seed,
+      refresh = refresh,
+      init = init,
+      save_latent_dynamics = FALSE,
+      output_dir = output_dir,
+      output_basename = output_basename,
+      sig_figs = sig_figs,
+      threads = threads,
+      opencl_ids = opencl_ids,
+      jacobian = jacobian,
+      algorithm = opt_args$algorithm,
+      init_alpha = opt_args$init_alpha,
+      iter = opt_args$iter,
+      tol_obj = opt_args$tol_obj,
+      tol_rel_obj = opt_args$tol_rel_obj,
+      tol_grad = opt_args$tol_grad,
+      tol_rel_grad = opt_args$tol_rel_grad,
+      tol_param = opt_args$tol_param,
+      history_size = opt_args$history_size
+    )
+  }
+  laplace_args <- LaplaceArgs$new(
+    mode = cmdstan_mode,
+    draws = draws,
+    jacobian = jacobian
+  )
+  args <- CmdStanArgs$new(
+    method_args = laplace_args,
+    stan_file = self$stan_file(),
+    stan_code = suppressWarnings(self$code()),
+    model_methods_env = private$model_methods_env_,
+    standalone_env = self$functions,
+    model_name = self$model_name(),
+    exe_file = self$exe_file(),
+    proc_ids = 1,
+    data_file = process_data(data, model_variables),
+    save_latent_dynamics = FALSE,
+    seed = seed,
+    init = init,
+    refresh = refresh,
+    output_dir = output_dir,
+    output_basename = output_basename,
+    sig_figs = sig_figs,
+    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    model_variables = model_variables
+  )
+  runset <- CmdStanRun$new(args, procs)
+  runset$run_cmdstan()
+  CmdStanLaplace$new(runset)
+}
+CmdStanModel$set("public", name = "laplace", value = laplace)
 
 
 #' Run Stan's variational approximation algorithms
