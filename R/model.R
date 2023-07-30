@@ -1483,6 +1483,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @template model-common-args
 #' @inheritParams model-method-optimize
+#' @param save_latent_dynamics Ignored for this method.
 #' @param mode (multiple options) The mode to center the approximation at. One
 #'   of the following:
 #'   * A [`CmdStanMLE`] object from a previous run of [`$optimize()`][model-method-optimize].
@@ -1531,15 +1532,16 @@ laplace <- function(data = NULL,
                     seed = NULL,
                     refresh = NULL,
                     init = NULL,
+                    save_latent_dynamics = FALSE,
                     output_dir = NULL,
                     output_basename = NULL,
                     sig_figs = NULL,
                     threads = NULL,
                     opencl_ids = NULL,
                     mode = NULL,
+                    opt_args = NULL,
                     jacobian = TRUE, # different than for optimize!
-                    draws = NULL,
-                    opt_args = NULL) {
+                    draws = NULL) {
   if (cmdstan_version() < "2.32") {
     stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
   }
