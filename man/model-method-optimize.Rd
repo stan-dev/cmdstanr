@@ -17,6 +17,7 @@ optimize(
   threads = NULL,
   opencl_ids = NULL,
   algorithm = NULL,
+  jacobian = FALSE,
   init_alpha = NULL,
   iter = NULL,
   tol_obj = NULL,
@@ -132,6 +133,13 @@ for \code{"lbfgs"} and \verb{"bfgs}. For their default values and more details s
 the CmdStan User's Guide. The default values can also be obtained by
 running \code{cmdstanr_example(method="optimize")$metadata()}.}
 
+\item{jacobian}{(logical) Whether or not to use the Jacobian adjustment for
+constrained variables. By default this is \code{FALSE}, meaning optimization
+yields the (regularized) maximum likelihood estimate. Setting it to \code{TRUE}
+yields the maximum a posteriori estimate. See the
+\href{https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html}{Maximum Likelihood Estimation}
+section of the CmdStan User's Guide for more details.}
+
 \item{init_alpha}{(positive real) The initial step size parameter.}
 
 \item{iter}{(positive integer) The maximum number of iterations.}
@@ -154,23 +162,16 @@ A \code{\link{CmdStanMLE}} object.
 }
 \description{
 The \verb{$optimize()} method of a \code{\link{CmdStanModel}} object runs
-Stan's optimizer to obtain a posterior mode (penalized maximum likelihood)
-estimate.
+Stan's optimizer to obtain a (penalized) maximum likelihood estimate or a
+maximum a posteriori estimate (if \code{jacobian=TRUE}). See the
+\href{https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html}{Maximum Likelihood Estimation}
+section of the CmdStan User's Guide for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
-for more details.
-}
-\details{
-CmdStan can find the posterior mode (assuming there is one). If the
-posterior is not convex, there is no guarantee Stan will be able to find
-the global mode as opposed to a local optimum of log probability. For
-optimization, the mode is calculated without the Jacobian adjustment for
-constrained variables, which shifts the mode due to the change of
-variables. Thus modes correspond to modes of the model as written.
-
--- \href{https://mc-stan.org/docs/cmdstan-guide/}{\emph{CmdStan User's Guide}}
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+default arguments. The default values can also be obtained by checking the
+metadata of an example model, e.g.,
+\code{cmdstanr_example(method="optimize")$metadata()}.
 }
 \examples{
 \dontrun{

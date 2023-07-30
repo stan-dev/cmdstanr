@@ -1,3 +1,7 @@
+# cmdstanr 0.6.0.9000
+
+Items for next release
+
 # cmdstanr 0.6.0
 
 ### Major new features
