@@ -759,7 +759,8 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
 }
 
 initialize_model_pointer <- function(env, data, seed = 0) {
-  ptr_and_rng <- env$model_ptr(data, seed)
+  datafile_path <- ifelse(is.null(data), "", data)
+  ptr_and_rng <- env$model_ptr(datafile_path, seed)
   env$model_ptr_ <- ptr_and_rng$model_ptr
   env$model_rng_ <- ptr_and_rng$base_rng
   env$num_upars_ <- env$get_num_upars(env$model_ptr_)
