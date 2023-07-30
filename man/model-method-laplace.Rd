@@ -118,7 +118,7 @@ of the following:
 \itemize{
 \item A \code{\link{CmdStanMLE}} object from a previous run of \code{\link[=model-method-optimize]{$optimize()}}.
 \item The path to a CmdStan CSV file from running optimization.
-\item \code{NULL}, in which case \link[=fit-method-optimize]{$optimize()} will be run
+\item \code{NULL}, in which case \link[=model-method-optimize]{$optimize()} will be run
 with \code{jacobian=jacobian} (see the \code{jacobian} argument below).
 }
 
@@ -127,7 +127,7 @@ the time of the Laplace sampling step only and does not include the time
 taken to run the \verb{$optimize()} method.}
 
 \item{opt_args}{(named list) A named list of optional arguments to pass to
-\link[=fit-method-optimize]{$optimize()} if \code{mode=NULL}.}
+\link[=model-method-optimize]{$optimize()} if \code{mode=NULL}.}
 
 \item{jacobian}{(logical) Whether or not to enable the Jacobian adjustment
 for constrained parameters. The default is \code{TRUE}. See the

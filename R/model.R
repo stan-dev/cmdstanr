@@ -1488,14 +1488,14 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'   of the following:
 #'   * A [`CmdStanMLE`] object from a previous run of [`$optimize()`][model-method-optimize].
 #'   * The path to a CmdStan CSV file from running optimization.
-#'   * `NULL`, in which case [$optimize()][fit-method-optimize] will be run
+#'   * `NULL`, in which case [$optimize()][model-method-optimize] will be run
 #'   with `jacobian=jacobian` (see the `jacobian` argument below).
 #'
 #'   In all cases the total time reported by [`$time()`][fit-method-time] will be
 #'   the time of the Laplace sampling step only and does not include the time
 #'   taken to run the `$optimize()` method.
 #' @param opt_args (named list) A named list of optional arguments to pass to
-#'   [$optimize()][fit-method-optimize] if `mode=NULL`.
+#'   [$optimize()][model-method-optimize] if `mode=NULL`.
 #' @param draws (positive integer) The number of draws to take.
 #' @param jacobian (logical) Whether or not to enable the Jacobian adjustment
 #'   for constrained parameters. The default is `TRUE`. See the
