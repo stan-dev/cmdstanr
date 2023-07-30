@@ -1591,6 +1591,13 @@ laplace <- function(data = NULL,
       tol_param = opt_args$tol_param,
       history_size = opt_args$history_size
     )
+    if (cmdstan_mode$return_codes() != 0) {
+      stop(
+        "Optimization failed.\n",
+        "Consider supplying the 'mode' argument or additional optimizer args.",
+        call. = FALSE
+      )
+    }
   }
   laplace_args <- LaplaceArgs$new(
     mode = cmdstan_mode,
