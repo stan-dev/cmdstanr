@@ -1370,7 +1370,7 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
 #' @param jacobian (logical) Whether or not to use the Jacobian adjustment for
-#'   constrained variables. By default this is `FALSE`, meaning optimization
+#'   constrained variables. For historical reasons, the default is `FALSE`, meaning optimization
 #'   yields the (regularized) maximum likelihood estimate. Setting it to `TRUE`
 #'   yields the maximum a posteriori estimate. See the
 #'   [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
@@ -1540,7 +1540,7 @@ laplace <- function(data = NULL,
                     opencl_ids = NULL,
                     mode = NULL,
                     opt_args = NULL,
-                    jacobian = TRUE, # different than for optimize!
+                    jacobian = TRUE, # different default than for optimize!
                     draws = NULL) {
   if (cmdstan_version() < "2.32") {
     stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
@@ -1562,14 +1562,14 @@ laplace <- function(data = NULL,
     if (inherits(mode, "CmdStanMLE")) {
       cmdstan_mode <- mode
     } else {
-      if (!is.character(mode) && length(mode) == 1) {
+      if (!(is.character(mode) && length(mode) == 1)) {
         stop("If not NULL or a CmdStanMLE object then 'mode' must be a path to a CSV file.", call. = FALSE)
       }
       cmdstan_mode <- as_cmdstan_fit(mode)
     }
   } else { # mode = NULL, run optimize()
     checkmate::assert_list(opt_args, any.missing = FALSE, names = "unique", null.ok = TRUE)
-    cmdstan_mode <- self$optimize(
+    args <- list(
       data = data,
       seed = seed,
       refresh = refresh,
@@ -1580,17 +1580,9 @@ laplace <- function(data = NULL,
       sig_figs = sig_figs,
       threads = threads,
       opencl_ids = opencl_ids,
-      jacobian = jacobian,
-      algorithm = opt_args$algorithm,
-      init_alpha = opt_args$init_alpha,
-      iter = opt_args$iter,
-      tol_obj = opt_args$tol_obj,
-      tol_rel_obj = opt_args$tol_rel_obj,
-      tol_grad = opt_args$tol_grad,
-      tol_rel_grad = opt_args$tol_rel_grad,
-      tol_param = opt_args$tol_param,
-      history_size = opt_args$history_size
+      jacobian = jacobian
     )
+    cmdstan_mode <- do.call(self$optimize, append(args, opt_args))
     if (cmdstan_mode$return_codes() != 0) {
       stop(
         "Optimization failed.\n",

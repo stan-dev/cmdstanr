@@ -18,6 +18,13 @@ expect_optim_output <- function(object) {
   )
 }
 
+expect_laplace_output <- function(object) {
+  expect_output(
+    object,
+    regexp = "Generating draws"
+  )
+}
+
 expect_vb_output <- function(object) {
   expect_output(
     object,
