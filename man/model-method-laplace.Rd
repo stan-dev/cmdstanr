@@ -10,15 +10,16 @@ laplace(
   seed = NULL,
   refresh = NULL,
   init = NULL,
+  save_latent_dynamics = FALSE,
   output_dir = NULL,
   output_basename = NULL,
   sig_figs = NULL,
   threads = NULL,
   opencl_ids = NULL,
   mode = NULL,
+  opt_args = NULL,
   jacobian = TRUE,
-  draws = NULL,
-  opt_args = NULL
+  draws = NULL
 )
 }
 \arguments{
@@ -73,6 +74,8 @@ number of chains) when called to generate the initial values. See
 \strong{Examples}.
 }}
 
+\item{save_latent_dynamics}{Ignored for this method.}
+
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For interactive use this can typically be left at
 \code{NULL} (temporary directory) since CmdStanR makes the CmdStan output
@@ -123,6 +126,9 @@ In all cases the total time reported by \code{\link[=fit-method-time]{$time()}} 
 the time of the Laplace sampling step only and does not include the time
 taken to run the \verb{$optimize()} method.}
 
+\item{opt_args}{(named list) A named list of optional arguments to pass to
+\link[=fit-method-optimize]{$optimize()} if \code{mode=NULL}.}
+
 \item{jacobian}{(logical) Whether or not to enable the Jacobian adjustment
 for constrained parameters. The default is \code{TRUE}. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html}{Laplace Sampling}
@@ -132,19 +138,6 @@ optimization was originally run. If \code{mode} is \code{NULL} then the value of
 \code{jacobian} specified here is used when running optimization.}
 
 \item{draws}{(positive integer) The number of draws to take.}
-
-\item{opt_args}{(named list) A named list of optional arguments to pass to
-\link[=fit-method-optimize]{$optimize()} if \code{mode=NULL}.}
-
-\item{save_latent_dynamics}{(logical) Should auxiliary diagnostic information
-about the latent dynamics be written to temporary diagnostic CSV files?
-This argument replaces CmdStan's \code{diagnostic_file} argument and the content
-written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (for some algorithms no content may be written). The default
-is \code{FALSE}, which is appropriate for almost every use case. To save the
-temporary files created when \code{save_latent_dynamics=TRUE} see the
-\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
-method.}
 }
 \value{
 A \code{\link{CmdStanLaplace}} object.
