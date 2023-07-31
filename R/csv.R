@@ -476,7 +476,8 @@ as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("
     csv_contents$metadata$method,
     "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
     "optimize" = CmdStanMLE_CSV$new(csv_contents, files),
-    "variational" = CmdStanVB_CSV$new(csv_contents, files)
+    "variational" = CmdStanVB_CSV$new(csv_contents, files),
+    "laplace" = CmdStanLaplace_CSV$new(csv_contents, files)
   )
 }
 
@@ -542,6 +543,22 @@ CmdStanMLE_CSV <- R6::R6Class(
   ),
   private = list(output_files_ = NULL)
 )
+CmdStanLaplace_CSV <- R6::R6Class(
+  classname = "CmdStanLaplace_CSV",
+  inherit = CmdStanLaplace,
+  public = list(
+    initialize = function(csv_contents, files) {
+      private$output_files_ <- files
+      private$draws_ <- csv_contents$draws
+      private$metadata_ <- csv_contents$metadata
+      invisible(self)
+    },
+    output_files = function(...) {
+      private$output_files_
+    }
+  ),
+  private = list(output_files_ = NULL)
+)
 CmdStanVB_CSV <- R6::R6Class(
   classname = "CmdStanVB_CSV",
   inherit = CmdStanVB,
@@ -583,6 +600,7 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
   }
   CmdStanMLE_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
   CmdStanVB_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
+  CmdStanLaplace_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
 }
 
 

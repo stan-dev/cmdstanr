@@ -22,6 +22,9 @@ test_that("all fitting methods work with provided init files", {
   expect_vb_output(
     mod$variational(data = data_list, init = init_json_1, seed = 123)
   )
+  expect_laplace_output(
+    mod$laplace(data = data_list, init = init_json_1, seed = 123)
+  )
 
   # broadcasting
   expect_sample_output(
@@ -88,6 +91,11 @@ test_that("init can be a list of lists", {
   )
   expect_optim_output(
     fit <- mod_logistic$optimize(data = data_list_logistic, init = init_list[1], seed = 123)
+  )
+  expect_length(fit$metadata()$init, 1)
+
+  expect_laplace_output(
+    fit <- mod_logistic$laplace(data = data_list_logistic, init = init_list[1], seed = 123)
   )
   expect_length(fit$metadata()$init, 1)
 

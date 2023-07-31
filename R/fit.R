@@ -2272,6 +2272,12 @@ as_draws.CmdStanMLE <- function(x, ...) {
   x$draws(...)
 }
 
+#' @rdname as_draws.CmdStanLaplace
+#' @export
+as_draws.CmdStanLaplace <- function(x, ...) {
+  x$draws(...)
+}
+
 #' @rdname as_draws.CmdStanMCMC
 #' @export
 as_draws.CmdStanVB <- function(x, ...) {
