@@ -134,7 +134,7 @@ the CmdStan User's Guide. The default values can also be obtained by
 running \code{cmdstanr_example(method="optimize")$metadata()}.}
 
 \item{jacobian}{(logical) Whether or not to use the Jacobian adjustment for
-constrained variables. By default this is \code{FALSE}, meaning optimization
+constrained variables. For historical reasons, the default is \code{FALSE}, meaning optimization
 yields the (regularized) maximum likelihood estimate. Setting it to \code{TRUE}
 yields the maximum a posteriori estimate. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html}{Maximum Likelihood Estimation}

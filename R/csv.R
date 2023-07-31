@@ -27,7 +27,7 @@
 #'   and memory for models with many parameters.
 #'
 #' @return
-#' `as_cmdstan_fit()` returns a [CmdStanMCMC], [CmdStanMLE], or
+#' `as_cmdstan_fit()` returns a [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace ]or
 #' [CmdStanVB] object. Some methods typically defined for those objects will not
 #' work (e.g. `save_data_file()`) but the important methods like `$summary()`,
 #' `$draws()`, `$sampler_diagnostics()` and others will work fine.
