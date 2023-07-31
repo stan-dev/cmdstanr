@@ -719,7 +719,7 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
-rcpp_source_stan <- function(code, env, verbose = FALSE) {
+rcpp_source_stan <- function(code, env, verbose = FALSE, model_methods = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
@@ -728,6 +728,8 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
   }
   lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
                  "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
+  cacheDir <- ifelse(model_methods, file.path(cmdstan_path(), "ModelMethodsCache"),
+                                    getOption("rcpp.cache.dir", tempdir()))
   withr::with_path(paste0(cmdstan_path(), lib_paths),
     withr::with_makevars(
       c(
@@ -736,15 +738,18 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
         PKG_CXXFLAGS = cxxflags,
         PKG_LIBS = libs
       ),
-      Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+      Rcpp::sourceCpp(code = code, env = env, verbose = verbose, cacheDir = cacheDir)
     )
   )
   invisible(NULL)
 }
 
 expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
-  code <- c(env$hpp_code_,
-            readLines(system.file("include", "model_methods.cpp",
+  mmcpp <- readLines(system.file("include", "model_methods.cpp",
+                                  package = "cmdstanr", mustWork = TRUE))
+  rcpp_source_stan(paste(mmcpp, collapse = "\n"), env, verbose, TRUE)
+
+  code <- c(env$hpp_code_, readLines(system.file("include", "model_ptr.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
 
   if (hessian) {

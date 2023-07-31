@@ -473,6 +473,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
       stderr_callback = function(x, p) { if (quiet) message(x) }
     )
   )
+  unlink(file.path(dir, "ModelMethodsCache"), recursive = TRUE)
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
