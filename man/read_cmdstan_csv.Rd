@@ -49,7 +49,7 @@ diagnostic checks be performed after reading in the files? The default is
 and treedepth.}
 }
 \value{
-\code{as_cmdstan_fit()} returns a \link{CmdStanMCMC}, \link{CmdStanMLE}, \link{CmdStanLaplace }or
+\code{as_cmdstan_fit()} returns a \link{CmdStanMCMC}, \link{CmdStanMLE}, \link{CmdStanLaplace} or
 \link{CmdStanVB} object. Some methods typically defined for those objects will not
 work (e.g. \code{save_data_file()}) but the important methods like \verb{$summary()},
 \verb{$draws()}, \verb{$sampler_diagnostics()} and others will work fine.
