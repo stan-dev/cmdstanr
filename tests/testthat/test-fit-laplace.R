@@ -5,7 +5,7 @@ fit_laplace <- testing_fit("logistic", method = "laplace", seed = 100)
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
 
-test_that("summary() and print() methods works after vb", {
+test_that("summary() and print() methods works after laplace", {
   x <- fit_laplace$summary()
   expect_s3_class(x, "draws_summary")
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
