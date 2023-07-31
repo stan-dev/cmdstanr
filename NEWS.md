@@ -1,4 +1,84 @@
-# cmdstanr 0.4.0.9000
+# cmdstanr 0.6.0.9000
+
+Items for next release
+
+# cmdstanr 0.6.0
+
+### Major new features
+
+* New `expose_functions()` method to expose Stan functions to R by @andrjohns in #702. See `?expose_functions`.
+* New methods for accessing log_prob, grad_log_prob, hessian, un/constrain variables by @andrjohns in #701. See `?init_model_methods`. 
+
+### Other changes
+
+* mod$variables works w includes in precompile state (fix #680) by @MKyhos in #682
+* Update broken link for Stan OpenCL support page by @erictleung in #686
+* Add newline to check syntax output by @rok-cesnovar in #689
+* Allow exposing functions without sampling by @andrjohns in #705
+* Expose skeleton by @andrjohns in #706
+* WSL - Run cmdstan and models under WSL filesystem by @andrjohns in #696
+* Bugfix - Deep copy method/function environments by @andrjohns in #709
+* Add option for including jacobian adjustments in hessian method by @andrjohns in #710
+* WSL Optimisations and Bugfixes for CI by @andrjohns in #711
+* add stancflags from make/local by @rok-cesnovar in #690
+* Update co-authors by @andrjohns in #715
+* Update model methods parameter naming and extract skeleton function by @andrjohns in #724
+* Add method for unconstraining all parameter draws by @andrjohns in #729
+* Improve efficiency of variable matching by @sbfnk in #736
+* Add verbosity to download output and errors by @andrjohns in #745
+* Update handling of show_messages, add show_exceptions by @andrjohns in #746
+* Rtools43 support by @andrjohns in #755
+* Add stanc M1 make patch, suppress boost warnings by @andrjohns in #756
+* more examples of summary method by @gravesti in #751
+* Fix model$format and model$check_syntax for compiled models with include-paths by @adrian-lison in #775
+* Generalise RTools config/support by @andrjohns in #777
+* New posterior vignette by @gravesti in #719
+* Add moment-matching support to $loo() method by @andrjohns in #778
+* replace \ with function by @jsocolar in #789
+
+# cmdstanr 0.5.3
+
+### New features
+
+* On Windows, users can now install and use CmdStan with WSL (Windows
+Subsystem for Linux). Set `wsl=TRUE` in `install_cmdstan()` to install CmdStan
+for use with WSL. This can offer significant speedups compared to native
+Windows execution. (#677, @andrjohns)
+
+### Bug fixes
+
+* In `cmdstan_default_path()` we now ignore directories inside `.cmdstan` that don't start
+with `"cmdstan-"`. (#651)
+
+* Fixed Windows issue related to not locating `grep.exe` or when it is located in a path
+with spaces. (@weshinsley, #661, #663)
+
+* Fixed a bug with diagnostic checks when ebfmi is NaN.
+
+* Fixed a bug that caused issues when using `~` or `.` in paths supplied to the
+`cmdstanr_write_stan_file_dir` global option.
+
+* Fixed a bug that caused the `time()` method fail when some of the chains failed to finish
+succesfully.
+
+# cmdstanr 0.5.2
+
+* Refactored toolchain installation and checks for R 4.x on Windows and added support
+for Rtools42. (#645)
+
+* Expanded the use of `CMDSTAN` environment variable to point to CmdStan installation
+_or_ directory containing CmdStan installations. (#643)
+
+* New vignette on how to handle deprecations using the `$format()` method. (#644)
+
+
+# cmdstanr 0.5.1
+
+* Temporarily disable `format="draws_rvars"` in the `$draws()` method due to a
+bug. Until this is fixed users can make use of `posterior::as_draws_rvars()` to
+convert draws from CmdStanR to the `draws_rvars` format. (#640)
+
+# cmdstanr 0.5.0
 
 ### Bug fixes
 
@@ -19,31 +99,15 @@ will continue to be supported until version 1.0 but `install_cmdstan()` will now
 default to `.cmdstan` and CmdStanR will first look for `.cmdstan` before falling
 back on `.cmdstanr`. (#454)
 
-* Expose CmdStan's `diagnose` method that compares Stan's gradient computations
-to gradients computed via finite differences. (#485)
-
-* `write_stan_file()` now choose file names deterministically based on the code
-so that models do not get unnecessarily recompiled when calling the function
-multiple times with the same code. (#495, @martinmodrak)
+* New method `diagnose()` for CmdstanModel objects exposes CmdStan's `diagnose`
+method for comparing Stan's gradient computations to gradients computed via
+finite differences. (#485)
 
 * New method `$variables()` for CmdstanModel objects that returns a list of
 variables in the Stan model, their types and number of dimensions. Does
 not require the model to be compiled. (#519)
 
-* `write_stan_json()` now handles data of class `"table"`. Tables are converted
-to vector, matrix, or array depending on the dimensions of the table. (#528)
-
-* `install_cmdstan()` now automatically installs the Linux ARM CmdStan when
-Linux distributions running on ARM CPUs are detected. (#531)
-
-* The `dir` argument for `write_stan_file()` can now be set with a global
-option. (#537)
-
-* Improved processing of named lists supplied to the `data` argument to JSON
-data files: checking whether the list includes all required elements/Stan
-variables; improved differentiating arrays/vectors of length 1 and scalars
-when generating JSON data files; generating floating point numbers with
-decimal points to fix issue with parsing large numbers. (#538)
+* New method `$format()` for auto-formatting and canonicalizing the Stan models. (#625)
 
 * Added the option to create `CmdStanModel` from the executable only with the
 `exe_file` argument. (#564)
@@ -51,17 +115,46 @@ decimal points to fix issue with parsing large numbers. (#538)
 * Added a convenience argument `user_header` to `$compile()` and `cmdstan_model()`
 that simplifies the use of an external .hpp file to compile with the model.
 
+* Added the `cmdstanr_force_recompile` global option that is used for forcing
+recompilation of Stan models. (#580)
+
 * New method `$code()` for all fitted model objects that returns the Stan code
 associated with the fitted model. (#575)
 
-* Added the `cmdstanr_force_recompile` global option that is used for forcing
-recompilation of Stan models. (#580)
+* New method `$diagnostic_summary()` for CmdStanMCMC objects that summarizes the
+sampler diagnostics (divergences, treedepth, ebfmi) and can regenerate the
+related warning messages. (#205)
+
+* New `diagnostics` argument for the `$sample()` method to specify which
+diagnostics are checked after sampling. Replaces `validate_csv` argument. (#205)
+
+* Added E-BFMI checks that run automatically post sampling. (#500, @jsocolar)
 
 * New methods for `posterior::as_draws()` for CmdStanR fitted model objects.
 These are just wrappers around the `$draws()` method provided for convenience. (#532)
 
+* `write_stan_file()` now choose file names deterministically based on the code
+so that models do not get unnecessarily recompiled when calling the function
+multiple times with the same code. (#495, @martinmodrak)
+
+* The `dir` argument for `write_stan_file()` can now be set with a global
+option. (#537)
+
+* `write_stan_json()` now handles data of class `"table"`. Tables are converted
+to vector, matrix, or array depending on the dimensions of the table. (#528)
+
+* Improved processing of named lists supplied to the `data` argument to JSON
+data files: checking whether the list includes all required elements/Stan
+variables; improved differentiating arrays/vectors of length 1 and scalars
+when generating JSON data files; generating floating point numbers with
+decimal points to fix issue with parsing large numbers. (#538)
+
+* `install_cmdstan()` now automatically installs the Linux ARM CmdStan when
+Linux distributions running on ARM CPUs are detected. (#531)
+
 * New function `as_mcmc.list()` for converting CmdStanMCMC objects to mcmc.list
 objects from the coda package. (#584, @MatsuuraKentaro)
+
 
 # cmdstanr 0.4.0
 
@@ -89,7 +182,7 @@ Stan programs requires CmdStan >= 2.26. (#434)
 
 * New vignette on profiling Stan programs. (#435)
 
-* New vignette on running Stan on the GPU with OpenCL. OpenCL device ids can 
+* New vignette on running Stan on the GPU with OpenCL. OpenCL device ids can
 now also be specified at runtime. (#439)
 
 * New check for invalid parameter names when supplying init values. (#452, @mike-lawrence)
@@ -99,7 +192,7 @@ now also be specified at runtime. (#439)
 * New `error_on_NA` argument for `cmdstan_version()` to optionally return `NULL`
 (instead of erroring) if the CmdStan path is not found (#467, @wlandau).
 
-* Global option `cmdstanr_max_rows` can be set as an alternative to specifying 
+* Global option `cmdstanr_max_rows` can be set as an alternative to specifying
 `max_rows` argument to the `$print()` method. (#470)
 
 * New `output_basename` argument for the model fitting methods. Can be used in

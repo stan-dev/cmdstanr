@@ -14,7 +14,8 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
-                      release_url = cmdstan_test_tarball_url),
+                      release_url = cmdstan_test_tarball_url,
+                      wsl = os_is_wsl()),
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
@@ -27,11 +28,11 @@ test_that("install_cmdstan() errors if installation already exists", {
   install_dir <- cmdstan_default_install_path()
   dir <- file.path(install_dir, "cmdstan-2.23.0")
   if (!dir.exists(dir)) {
-    dir.create(dir)
+    dir.create(dir, recursive = TRUE)
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    version = "2.23.0"),
+                    version = "2.23.0", wsl = FALSE),
     "An installation already exists",
     fixed = TRUE
   )
@@ -49,7 +50,7 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
-                      release_url = cmdstan_test_tarball_url),
+                      release_url = cmdstan_test_tarball_url, wsl = os_is_wsl()),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
@@ -61,7 +62,8 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
-                      release_url = cmdstan_test_tarball_url),
+                      release_url = cmdstan_test_tarball_url,
+                      wsl = os_is_wsl()),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
@@ -72,15 +74,16 @@ test_that("install_cmdstan() errors if it times out", {
 
 test_that("install_cmdstan() errors if invalid version or URL", {
   expect_error(
-    install_cmdstan(version = "2.23.2"),
-    "Download of CmdStan failed. Please check if the supplied version number is valid."
+    install_cmdstan(version = "2.23.2", wsl = os_is_wsl()),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied version number is valid."
   )
   expect_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz"),
-    "Download of CmdStan failed. Please check if the supplied release URL is valid."
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz",
+                    wsl = os_is_wsl()),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied release URL is valid."
   )
   expect_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0"),
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
     "cmdstanr supports installing from .tar.gz archives only"
   )
 })
@@ -95,7 +98,8 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz"),
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz",
+                      wsl = os_is_wsl()),
       "Compiling, linking C++ code",
       fixed = TRUE
     ),
@@ -108,7 +112,8 @@ test_that("install_cmdstan() works with version and release_url", {
         install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
                         version = "2.27.0",
                         # the URL is intentionally invalid to test that the version has higher priority
-                        release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz"),
+                        release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
+                        wsl = os_is_wsl()),
         "Compiling, linking C++ code",
         fixed = TRUE
       ),
@@ -127,11 +132,11 @@ test_that("toolchain checks on Unix work", {
   path_backup <- Sys.getenv("PATH")
   Sys.setenv("PATH" = "")
   if (os_is_macos()) {
-    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain()."
-    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run check_cmdstan_toolchain()."
+    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
   } else {
-    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run check_cmdstan_toolchain()."
-    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run check_cmdstan_toolchain()."
+    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain()."
   }
   expect_error(
     check_unix_cpp_compiler(),
@@ -148,6 +153,7 @@ test_that("toolchain checks on Unix work", {
 
 test_that("toolchain checks on Windows with RTools 3.5 work", {
   skip_if_not(os_is_windows())
+  skip_if(os_is_wsl())
   skip_if(R.Version()$major > "3")
 
   path_backup <- Sys.getenv("PATH")
@@ -177,46 +183,6 @@ test_that("toolchain checks on Windows with RTools 3.5 work", {
   Sys.setenv("PATH" = path_backup)
 })
 
-test_that("toolchain checks without fixes on Windows with RTools 4.0 work", {
-  skip_if_not(os_is_windows())
-  skip_if(R.Version()$major < "4")
-
-  rtools40_home_backup <- Sys.getenv("RTOOLS40_HOME")
-  Sys.setenv("RTOOLS40_HOME" = "")
-  expect_error(
-    check_rtools40_windows_toolchain(),
-    "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
-    fixed = TRUE
-  )
-
-  Sys.setenv("RTOOLS40_HOME" = "C:/with spaces/")
-  expect_error(
-    check_rtools40_windows_toolchain(),
-    "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
-    fixed = TRUE
-  )
-
-  Sys.setenv("RTOOLS40_HOME" = rtools40_home_backup)
-  path_backup <- Sys.getenv("PATH")
-  Sys.setenv("PATH" = "")
-  expect_error(
-    check_rtools40_windows_toolchain(),
-    "\nRTools installation found but PATH was not properly set.\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-    fixed = TRUE
-  )
-
-  tmpdir <- tempdir()
-  gpp_location <- file.path(rtools40_home_backup, "mingw64", "bin", "g++.exe")
-  file.copy(gpp_location, file.path(tmpdir, "g++.exe"))
-  Sys.setenv("PATH" = paste0(tmpdir, ";", path_backup))
-  expect_error(
-    check_rtools40_windows_toolchain(),
-    "\nOther C++ toolchains installed on your system conflict with RTools.\nPlease run check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-    fixed = TRUE
-  )
-  Sys.setenv("PATH" = path_backup)
-})
-
 test_that("clean and rebuild works", {
   expect_output(
     rebuild_cmdstan(),
@@ -231,3 +197,53 @@ test_that("github_download_url constructs correct url", {
     "https://github.com/stan-dev/cmdstan/releases/download/vFOO/cmdstan-FOO.tar.gz"
   )
 })
+
+test_that("Downloads respect quiet argument", {
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
+  version <- latest_released_version()
+
+  ver_msg <- "trying URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'"
+  download_msg <- paste0("trying URL 'https://github.com/stan-dev/cmdstan/releases/download/v",
+                         version, "/cmdstan-", version, ".tar.gz'")
+
+  # expect_message has trouble capturing the messages from download.file
+  # so handle manually
+  install_normal <- suppressWarnings(
+    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = FALSE),
+                   type = "message")
+  )
+  install_quiet <- suppressWarnings(
+    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = TRUE),
+                   type = "message")
+  )
+
+  expect_true(any(grepl(ver_msg, install_normal, fixed = TRUE)))
+  expect_true(any(grepl(download_msg, install_normal, fixed = TRUE)))
+
+  expect_false(any(grepl(ver_msg, install_quiet, fixed = TRUE)))
+  expect_false(any(grepl(download_msg, install_quiet, fixed = TRUE)))
+})
+
+test_that("Download failures return error message", {
+  # GHA fails on Windows old-rel here, but cannot replicate locally
+  skip_if(os_is_windows() && getRversion() < '4.2')
+
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
+
+  expect_error({
+    # Use an invalid proxy address to force a download failure
+    withr::with_envvar(
+      c("http_proxy"="invalid","https_proxy"="invalid"),
+      install_cmdstan(dir = dir, overwrite = TRUE)
+    )},
+    "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
+})
+

@@ -124,8 +124,20 @@ read_cmdstan_csv <- function(files,
                              variables = NULL,
                              sampler_diagnostics = NULL,
                              format = getOption("cmdstanr_draws_format", NULL)) {
+  # If the CSV files are stored in the WSL filesystem then it is significantly
+  # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
+  if (os_is_wsl() && any(grepl("^//wsl", files))) {
+    wsl_files <- sapply(files, wsl_safe_path)
+    temp_storage <- tempdir(check = TRUE)
+    csv_copy <- processx::run(
+      "wsl", c("cp", wsl_files, wsl_safe_path(temp_storage)),
+      error_on_status = FALSE
+    )
+
+    files <- file.path(temp_storage, basename(files))
+  }
   format <- assert_valid_draws_format(format)
-  checkmate::assert_file_exists(files, access = "r", extension = "csv")
+  assert_file_exists(files, access = "r", extension = "csv")
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -179,6 +191,7 @@ read_cmdstan_csv <- function(files,
   if (length(uniq_seed) == 1) {
     metadata$seed <- uniq_seed
   }
+  metadata$time <- time
   if (metadata$method == "diagnose") {
     gradients <- metadata$gradients
     metadata$gradients <- NULL
@@ -226,8 +239,19 @@ read_cmdstan_csv <- function(files,
   num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
   for (output_file in files) {
     if (os_is_windows()) {
-      grep_path <- repair_path(Sys.which("grep.exe"))
-      fread_cmd <- paste0(grep_path, " -v '^#' --color=never '", output_file, "'")
+      grep_path_repaired <- withr::with_path(
+        c(
+          toolchain_PATH_env_var()
+        ),
+        repair_path(Sys.which("grep.exe"))
+      )
+      grep_path_quotes <- paste0('"', grep_path_repaired, '"')
+      fread_cmd <- paste0(
+        grep_path_quotes,
+        " -v \"^#\" --color=never \"",
+        wsl_safe_path(output_file, revert = TRUE),
+        "\""
+      )
     } else {
       fread_cmd <- paste0("grep -v '^#' --color=never '", path.expand(output_file), "'")
     }
@@ -413,7 +437,7 @@ read_cmdstan_csv <- function(files,
 #' Read CmdStan CSV files from sampling into \R
 #'
 #' Deprecated. Use [read_cmdstan_csv()] instead.
-#'
+#' @keywords internal
 #' @export
 #' @param files,variables,sampler_diagnostics Deprecated. Use
 #'   [read_cmdstan_csv()] instead.
@@ -460,10 +484,6 @@ CmdStanMCMC_CSV <- R6::R6Class(
   inherit = CmdStanMCMC,
   public = list(
     initialize = function(csv_contents, files, check_diagnostics = TRUE) {
-      if (check_diagnostics) {
-        check_divergences(csv_contents$post_warmup_sampler_diagnostics)
-        check_sampler_transitions_treedepth(csv_contents$post_warmup_sampler_diagnostics, csv_contents$metadata)
-      }
       private$output_files_ <- files
       private$metadata_ <- csv_contents$metadata
       private$time_ <- csv_contents$time
@@ -472,6 +492,10 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
       private$warmup_draws_ <- csv_contents$warmup_draws
       private$draws_ <- csv_contents$post_warmup_draws
+      if (check_diagnostics) {
+        invisible(self$diagnostic_summary())
+      }
+      invisible(self)
     },
     # override some methods so they work without a CmdStanRun object
     output_files = function(...) {
@@ -497,6 +521,7 @@ CmdStanMLE_CSV <- R6::R6Class(
       private$output_files_ <- files
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
+      invisible(self)
     },
     output_files = function(...) {
       private$output_files_
@@ -512,6 +537,7 @@ CmdStanVB_CSV <- R6::R6Class(
       private$output_files_ <- files
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
+      invisible(self)
     },
     output_files = function(...) {
       private$output_files_
@@ -575,7 +601,7 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
 #'   mass matrix (or its diagonal depending on the metric).
 #'
 read_csv_metadata <- function(csv_file) {
-  checkmate::assert_file_exists(csv_file, access = "r", extension = "csv")
+  assert_file_exists(csv_file, access = "r", extension = "csv")
   inv_metric_next <- FALSE
   csv_file_info <- list()
   csv_file_info$inv_metric <- NULL
@@ -589,8 +615,19 @@ read_csv_metadata <- function(csv_file) {
   total_time <- 0
   #browser()
   if (os_is_windows()) {
-    grep_path <- repair_path(Sys.which("grep.exe"))
-    fread_cmd <- paste0(grep_path, " '^[#a-zA-Z]' --color=never '", csv_file, "'")
+    grep_path_repaired <- withr::with_path(
+      c(
+        toolchain_PATH_env_var()
+      ),
+      repair_path(Sys.which("grep.exe"))
+    )
+    grep_path_quotes <- paste0('"', grep_path_repaired, '"')
+    fread_cmd <- paste0(
+      grep_path_quotes,
+      " \"^[#a-zA-Z]\" --color=never \"",
+      wsl_safe_path(csv_file, revert = TRUE),
+      "\""
+    )
   } else {
     fread_cmd <- paste0("grep '^[#a-zA-Z]' --color=never '", path.expand(csv_file), "'")
   }
@@ -743,6 +780,15 @@ read_csv_metadata <- function(csv_file) {
   if (length(gradients) > 0) {
     csv_file_info$gradients <- gradients
   }
+
+  # Revert any WSL-updated paths before returning the metadata
+  if (os_is_wsl()) {
+    csv_file_info$init <- wsl_safe_path(csv_file_info$init, revert = TRUE)
+    csv_file_info$profile_file <- wsl_safe_path(csv_file_info$profile_file,
+                                                revert = TRUE)
+    csv_file_info$fitted_params <- wsl_safe_path(csv_file_info$fitted_params,
+                                                  revert = TRUE)
+  }
   csv_file_info
 }
 
@@ -840,16 +886,15 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     unread <- requested[!(requested %in% currently_read)]
   } else {
     all_remaining <- all[!(all %in% currently_read)]
-    unread <- c()
-    for (p in requested) {
-      if (any(all_remaining == p)) {
-        unread <- c(unread, p)
-      }
-      is_unread_element <- startsWith(all_remaining, paste0(p, "["))
-      if (any(is_unread_element)) {
-        unread <- c(unread, all_remaining[is_unread_element])
-      }
+    # identify exact matches
+    matched <- as.list(match(requested, all_remaining))
+    # loop over requests not exactly matched
+    for (id in which(is.na(matched))) {
+      matched[[id]] <-
+        which(startsWith(all_remaining, paste0(requested[id], "[")))
     }
+    # collect all unread variables
+    unread <- all_remaining[unlist(matched)]
   }
   if (length(unread)) {
     unique(unread)

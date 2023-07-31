@@ -29,12 +29,25 @@ CmdStanRun <- R6::R6Class(
       if (self$args$save_latent_dynamics) {
         private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
       }
+      if (os_is_wsl()) {
+        # While the executable built under WSL will be stored in the Windows
+        # filesystem alongside the model code, we place a copy in a WSL temp
+        # directory prior to execution to avoid IO perfomance impacts
+        wsl_tmpdir <- wsl_tempdir()
+        file.copy(from = args$exe_file,
+                  to = file.path(wsl_dir_prefix(), wsl_tmpdir))
+        args$exe_file <- file.path(wsl_tmpdir, basename(args$exe_file))
+        processx::run("wsl", args = c("chmod", "+x", args$exe_file),
+                      error_on_status = FALSE)
+      }
       invisible(self)
     },
     num_procs = function() self$procs$num_procs(),
     proc_ids = function() self$procs$proc_ids(),
     exe_file = function() self$args$exe_file,
     stan_code = function() self$args$stan_code,
+    model_methods_env = function() self$args$model_methods_env,
+    standalone_env = function() self$args$standalone_env,
     model_name = function() self$args$model_name,
     method = function() self$args$method,
     data_file = function() self$args$data_file,
@@ -226,13 +239,22 @@ CmdStanRun <- R6::R6Class(
       }
       target_exe <- file.path("bin", cmdstan_ext(tool))
       check_target_exe(target_exe)
-      run_log <- processx::run(
-        command = target_exe,
-        args = c(self$output_files(include_failed = FALSE), flags),
-        wd = cmdstan_path(),
-        echo = TRUE,
-        echo_cmd = is_verbose_mode(),
-        error_on_status = TRUE
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        run_log <- wsl_compatible_run(
+          command = target_exe,
+          args = c(
+            sapply(self$output_files(include_failed = FALSE),
+                   wsl_safe_path),
+            flags),
+          wd = cmdstan_path(),
+          echo = TRUE,
+          echo_cmd = is_verbose_mode(),
+          error_on_status = TRUE
+        )
       )
     },
 
@@ -247,11 +269,12 @@ CmdStanRun <- R6::R6Class(
 
         time <- list(total = self$procs$total_time(), chains = chain_time)
       } else {
+        chain_ids <- names(self$procs$is_finished())
         chain_time <- data.frame(
-          chain_id = self$procs$proc_ids()[self$procs$is_finished()],
-          warmup = self$procs$proc_section_time("warmup")[self$procs$is_finished()],
-          sampling = self$procs$proc_section_time("sampling")[self$procs$is_finished()],
-          total = self$procs$proc_total_time()[self$procs$is_finished()]
+          chain_id = as.vector(self$procs$proc_ids()),
+          warmup = as.vector(self$procs$proc_section_time("warmup")),
+          sampling = as.vector(self$procs$proc_section_time("sampling")),
+          total = as.vector(self$procs$proc_total_time()[chain_ids])
         )
         time <- list(total = self$procs$total_time(), chains = chain_time)
       }
@@ -288,13 +311,19 @@ CmdStanRun <- R6::R6Class(
 check_target_exe <- function(exe) {
   exe_path <- file.path(cmdstan_path(), exe)
   if (!file.exists(exe_path)) {
-    run_log <- processx::run(
-      command = make_cmd(),
-      args = exe,
-      wd = cmdstan_path(),
-      echo_cmd = TRUE,
-      echo = TRUE,
-      error_on_status = TRUE
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path()
+      ),
+      run_log <- wsl_compatible_run(
+        command = make_cmd(),
+        args = exe,
+        wd = cmdstan_path(),
+        echo_cmd = TRUE,
+        echo = TRUE,
+        error_on_status = TRUE
+      )
     )
   }
 }
@@ -306,9 +335,8 @@ check_target_exe <- function(exe) {
     if (is.null(mpi_args)) {
       mpi_args <- list()
     }
-    mpi_args[["exe"]] <- self$exe_file()
+    mpi_args[["exe"]] <- wsl_safe_path(self$exe_file())
   }
-  check_tbb_path()
   if (procs$num_procs() == 1) {
     start_msg <- "Running MCMC with 1 chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
@@ -334,10 +362,18 @@ check_target_exe <- function(exe) {
     }
   }
   if (is.null(procs$threads_per_proc())) {
-    cat(paste0(start_msg, "...\n\n"))
+    if (procs$show_stdout_messages()) {
+      cat(paste0(start_msg, "...\n\n"))
+    }
   } else {
-    cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    if (procs$show_stdout_messages()) {
+      cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    }
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -381,7 +417,6 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 .run_generate_quantities <- function() {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-  check_tbb_path()
   if (procs$num_procs() == 1) {
     start_msg <- "Running standalone generated quantities after 1 MCMC chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
@@ -394,10 +429,18 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     }
   }
   if (is.null(procs$threads_per_proc())) {
-    cat(paste0(start_msg, "...\n\n"))
+    if (procs$show_stdout_messages()) {
+      cat(paste0(start_msg, "...\n\n"))
+    }
   } else {
-    cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    if (procs$show_stdout_messages()) {
+      cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
+    }
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -438,9 +481,12 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 
 .run_other <- function() {
   procs <- self$procs
-  check_tbb_path()
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   start_time <- Sys.time()
   id <- 1
@@ -491,19 +537,29 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs
-  check_tbb_path()
   if (!is.null(procs$threads_per_proc())) {
     Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
+    # Windows environment variables have to be explicitly exported to WSL
+    if (os_is_wsl()) {
+      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
+    }
   }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
-  ret <- processx::run(
-    command = self$command(),
-    args = self$command_args()[[1]],
-    wd = dirname(self$exe_file()),
-    stderr = stderr_file,
-    stdout = stdout_file,
-    error_on_status = FALSE
+
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    ret <- wsl_compatible_run(
+      command = self$command(),
+      args = self$command_args()[[1]],
+      wd = dirname(self$exe_file()),
+      stderr = stderr_file,
+      stdout = stdout_file,
+      error_on_status = FALSE
+    )
   )
   if (is.na(ret$status) || ret$status != 0) {
     if (file.exists(stdout_file)) {
@@ -569,6 +625,12 @@ CmdStanProcs <- R6::R6Class(
       private$show_stdout_messages_ <- show_stdout_messages
       invisible(self)
     },
+    show_stdout_messages = function () {
+      private$show_stdout_messages_
+    },
+    show_stderr_messages = function () {
+      private$show_stderr_messages_
+    },
     num_procs = function() {
       private$num_procs_
     },
@@ -607,13 +669,19 @@ CmdStanProcs <- R6::R6Class(
         args <- c(mpi_args_vector, exe_name, args)
         command <- mpi_cmd
       }
-      private$processes_[[id]] <- processx::process$new(
-        command = command,
-        args = args,
-        wd = wd,
-        stdout = "|",
-        stderr = "|",
-        echo_cmd = is_verbose_mode()
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        private$processes_[[id]] <- wsl_compatible_process_new(
+          command = command,
+          args = args,
+          wd = wd,
+          stdout = "|",
+          stderr = "|",
+          echo_cmd = is_verbose_mode()
+        )
       )
       invisible(self)
     },
@@ -774,7 +842,7 @@ CmdStanProcs <- R6::R6Class(
         warning("Fitting finished unexpectedly! Use the $output() method for more information.\n", immediate. = TRUE, call. = FALSE)
       } else {
         cat("Finished in ",
-            format(round(self$total_time(), 1), nsmall = 1),
+            base::format(round(self$total_time(), 1), nsmall = 1),
             "seconds.\n")
       }
     },
@@ -878,7 +946,7 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          if ((state > 1.5 && state < 5 && !ignore_line) || is_verbose_mode()) {
+          if ((state > 1.5 && state < 5 && !ignore_line && private$show_stdout_messages_) || is_verbose_mode()) {
             if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
@@ -890,7 +958,9 @@ CmdStanMCMCProcs <- R6::R6Class(
             if (state == 1) {
               state <- 2;
             }
-            message("Chain ", id, " ", line)
+            if (private$show_stderr_messages_) {
+              message("Chain ", id, " ", line)
+            }
           }
           private$proc_state_[[id]] <- next_state
         } else {
@@ -902,11 +972,14 @@ CmdStanMCMCProcs <- R6::R6Class(
       invisible(self)
     },
     report_time = function(id = NULL) {
+      if (!private$show_stdout_messages_) {
+        return(invisible(NULL))
+      }
       if (!is.null(id)) {
         if (self$proc_state(id) == 7) {
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
         } else {
-          cat("Chain", id, "finished in", format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+          cat("Chain", id, "finished in", base::format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
         }
         return(invisible(NULL))
       } else {
@@ -920,11 +993,11 @@ CmdStanMCMCProcs <- R6::R6Class(
               cat("\nAll", num_chains, "chains finished successfully.\n")
             }
             cat("Mean chain execution time:",
-                format(round(mean(self$proc_total_time()), 1), nsmall = 1),
+                base::format(round(mean(self$proc_total_time()), 1), nsmall = 1),
                 "seconds.\n")
             cat("Total execution time:",
-                format(round(self$total_time(), 1), nsmall = 1),
-                "seconds.\n")
+                base::format(round(self$total_time(), 1), nsmall = 1),
+                "seconds.\n\n")
           } else if (num_failed == num_chains) {
             warning("All chains finished unexpectedly! Use the $output(chain_id) method for more information.\n", call. = FALSE)
             warning("Use read_cmdstan_csv() to read the results of the failed chains.",
@@ -935,7 +1008,7 @@ CmdStanMCMCProcs <- R6::R6Class(
                     immediate. = TRUE,
                     call. = FALSE)
             cat("The remaining chains had a mean execution time of",
-                format(round(mean(self$total_time()), 1), nsmall = 1),
+                base::format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
             warning("The returned fit object will only read in results of successful chains. ",
               "Please use read_cmdstan_csv() to read the results of the failed chains separately.",
@@ -981,7 +1054,7 @@ CmdStanGQProcs <- R6::R6Class(
         if (nzchar(line)) {
           if (self$proc_state(id) == 1 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 1.5)
-          } else if (self$proc_state(id) >= 2) {
+          } else if (self$proc_state(id) >= 2 && private$show_stdout_messages_) {
             cat("Chain", id, line, "\n")
           }
         } else {
@@ -995,11 +1068,14 @@ CmdStanGQProcs <- R6::R6Class(
       invisible(self)
     },
     report_time = function(id = NULL) {
+      if (!private$show_stdout_messages_) {
+        return(invisible(NULL))
+      }
       if (!is.null(id)) {
         if (self$proc_state(id) == 7) {
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
         } else {
-          cat("Chain", id, "finished in", format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+          cat("Chain", id, "finished in", base::format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
         }
         return(invisible(NULL))
       } else {
@@ -1013,10 +1089,10 @@ CmdStanGQProcs <- R6::R6Class(
               cat("\nAll", num_chains, "chains finished successfully.\n")
             }
             cat("Mean chain execution time:",
-                format(round(mean(self$proc_total_time()), 1), nsmall = 1),
+                base::format(round(mean(self$proc_total_time()), 1), nsmall = 1),
                 "seconds.\n")
             cat("Total execution time:",
-                format(round(self$total_time(), 1), nsmall = 1),
+                base::format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n")
           } else if (num_failed == num_chains) {
             warning("All chains finished unexpectedly!\n", call. = FALSE)
@@ -1029,7 +1105,7 @@ CmdStanGQProcs <- R6::R6Class(
                     immediate. = TRUE,
                     call. = FALSE)
             cat("The remaining chains had a mean execution time of",
-                format(round(mean(self$total_time()), 1), nsmall = 1),
+                base::format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
             warning("The returned fit object will only read in results of successful chains. ",
                     "Please use read_cmdstan_csv() to read the results of the failed chains separately.",
@@ -1044,13 +1120,13 @@ CmdStanGQProcs <- R6::R6Class(
   )
 )
 
-# add path to the TBB library to the PATH variable
-check_tbb_path <- function() {
-  if (cmdstan_version() >= "2.21" && os_is_windows()) {
-    path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-    current_path <- Sys.getenv("PATH")
-    if (!grepl(path_to_TBB, current_path, perl = TRUE)) {
-      Sys.setenv(PATH = paste0(path_to_TBB, ";", Sys.getenv("PATH")))
+tbb_path <- function(dir = NULL) {
+  path_to_TBB <- NULL
+  if (os_is_windows()) {
+    if (is.null(dir)) {
+      dir <- cmdstan_path()
     }
+    path_to_TBB <- file.path(dir, "stan", "lib", "stan_math", "lib", "tbb")
   }
+  path_to_TBB
 }

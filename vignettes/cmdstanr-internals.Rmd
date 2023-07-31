@@ -1,7 +1,7 @@
 ---
 title: "How does CmdStanR work?"
 author: "Jonah Gabry and Rok Češnovar"
-output: 
+output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
@@ -13,12 +13,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r child="children/settings-knitr.Rmd"}
+```{r child="children/_settings-knitr.Rmd"}
 ```
 
 ## Introduction
 
-This vignette is intended to be read after the [_Getting started with CmdStanR_](http://mc-stan.org/cmdstanr/articles/cmdstanr.html) 
+This vignette is intended to be read after the [_Getting started with CmdStanR_](http://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 vignette. Please read that first for important background. In this document we
 provide additional details about compiling models, passing in data, and how
 CmdStan output is saved and read back into R.
@@ -28,6 +28,7 @@ methods work in a similar way under the hood.
 
 ```{r setup, message=FALSE}
 library(cmdstanr)
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 ```
 
 ## Compilation
@@ -35,7 +36,7 @@ library(cmdstanr)
 ### Immediate compilation
 
 The `cmdstan_model()` function creates a new `CmdStanModel` object. The
-`CmdStanModel` object stores the path to a Stan program as well as the 
+`CmdStanModel` object stores the path to a Stan program as well as the
 path to a compiled executable.
 
 ```{r start-clean, include=FALSE}
@@ -57,16 +58,16 @@ then compilation will be skipped (assuming the file hasn't changed).
 ```{r already-compiled}
 mod <- cmdstan_model(stan_file)
 ```
- 
+
 Internally, `cmdstan_model()` first creates the `CmdStanModel` object from
-just the Stan file and then calls its [`$compile()`](http://mc-stan.org/cmdstanr/reference/model-method-compile.html) 
+just the Stan file and then calls its [`$compile()`](http://mc-stan.org/cmdstanr/reference/model-method-compile.html)
 method. Optional arguments to the `$compile()` method can be passed via `...`.
 
 ```{r compile-options, eval=FALSE}
 mod <- cmdstan_model(
-  stan_file, 
-  force_recompile = TRUE, 
-  include_paths = "paths/to/directories/with/included/files", 
+  stan_file,
+  force_recompile = TRUE,
+  include_paths = "paths/to/directories/with/included/files",
   cpp_options = list(stan_threads = TRUE, STANC2 = TRUE)
 )
 ```
@@ -126,7 +127,7 @@ is missing a lower bound and a prior for a parameter.
 stan_file_pedantic <- write_stan_file("
 data {
   int N;
-  int y[N];
+  array[N] int y;
 }
 parameters {
   // should have <lower=0> but omitting to demonstrate pedantic mode
@@ -138,7 +139,7 @@ model {
 ")
 ```
 
-To turn on pedantic mode at compile time you can set `pedantic=TRUE` in 
+To turn on pedantic mode at compile time you can set `pedantic=TRUE` in
 the call to `cmdstan_model()` (or when calling the `$compile()` method directly
 if using the delayed compilation approach described above).
 
@@ -150,7 +151,7 @@ To turn on pedantic mode separately from compilation use the `pedantic` argument
 to the `$check_syntax()` method.
 
 ```{r pedantic-check_syntax, collapse=TRUE}
-mod_pedantic$check_syntax(pedantic = TRUE) 
+mod_pedantic$check_syntax(pedantic = TRUE)
 ```
 
 Using `pedantic=TRUE` via the `$check_syntax()` method also has the advantage
@@ -201,7 +202,7 @@ variables <- mod_v$variables()
 
 The `$variables()` method returns a list with `data`, `parameters`,
 `transformed_parameters` and `generated_quantities` elements, each
-corresponding to variables in their respective block of the program. Transformed 
+corresponding to variables in their respective block of the program. Transformed
 data variables are not listed as they are not used in the model's input
 or output.
 
@@ -237,16 +238,16 @@ mod <- cmdstan_model(stan_file, dir = "path/to/directory/for/executable")
 
 There are three data formats that CmdStanR allows when fitting a model:
 
-* named list of R objects 
+* named list of R objects
 * JSON file
 * R dump file
 
 ### Named list of R objects
 
 Like the RStan interface, CmdStanR accepts a named list of R objects where the
-names correspond to variables declared in the data block of the Stan program. 
+names correspond to variables declared in the data block of the Stan program.
 In the Bernoulli model the data is `N`, the number of data points, and `y`
-an integer array of observations. 
+an integer array of observations.
 
 ```{r print-program-again}
 mod$print()
@@ -303,15 +304,15 @@ data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit <- mod$sample(data = data_list)
 ```
 
-When fitting a model, the default behavior is to write the output from CmdStan 
+When fitting a model, the default behavior is to write the output from CmdStan
 to CSV files in a temporary directory.
 
 ```{r output_files}
 fit$output_files()
 ```
 
-These files will be lost if you end your R session or if you remove the 
-`fit` object and force (or wait for) garbage collection. 
+These files will be lost if you end your R session or if you remove the
+`fit` object and force (or wait for) garbage collection.
 
 
 ```{r gc}
@@ -326,8 +327,8 @@ file.exists(files)
 
 ### Non-temporary files
 
-To save these files to a non-temporary location there are two options. You 
-can either specify the `output_dir` argument to `mod$sample()` or use 
+To save these files to a non-temporary location there are two options. You
+can either specify the `output_dir` argument to `mod$sample()` or use
 `fit$save_output_files()` after fitting the model.
 
 ```{r save_output_files, eval=FALSE}
@@ -337,7 +338,7 @@ fit$save_output_files(dir = "path/to/directory")
 
 ```{r output_dir, eval = FALSE}
 fit <- mod$sample(
-  data = data_list, 
+  data = data_list,
   output_dir = "path/to/directory"
 )
 ```
@@ -345,7 +346,7 @@ fit <- mod$sample(
 
 ## Reading CmdStan output into R
 
-### Lazy CSV reading 
+### Lazy CSV reading
 
 With the exception of some diagnostic information, the CSV files are not read
 into R until their contents are requested by calling a method that requires them
@@ -360,8 +361,8 @@ fit <- mod$sample(data = data_list)
 str(fit)
 ```
 
-After we call a method that requires the draws then if we reexamine the 
-structure of the object we will see that the `draws_` slot in `Private` 
+After we call a method that requires the draws then if we reexamine the
+structure of the object we will see that the `draws_` slot in `Private`
 is no longer empty.
 
 ```{r for-csv-reading}
@@ -381,7 +382,7 @@ files into R. This function is exposed to users, so you can also call it
 directly.
 
 ```{r read_cmdstan_csv}
-# see ?read_cmdstan_csv for info on optional arguments controlling 
+# see ?read_cmdstan_csv for info on optional arguments controlling
 # what information is read in
 csv_contents <- read_cmdstan_csv(fit$output_files())
 str(csv_contents)
@@ -424,7 +425,7 @@ head(x)
 
 The column `lp__` is also provided via `fit$draws()`, and the columns
 `accept_stat__`, `stepsize__`, `treedepth__`, `n_leapfrog__`, `divergent__`, and
-`energy__` are also provided by `fit$sampler_diagnostics()`, but there are 
+`energy__` are also provided by `fit$sampler_diagnostics()`, but there are
 several columns unique to the latent dynamics file.
 
 ```{r explore-latent-dynamics}
@@ -460,7 +461,7 @@ the save file.
 rm(fit); gc()
 
 fit <- readRDS(temp_rds_file)
-fit$summary()
+fit$print()
 ```
 
 ## Developing using CmdStanR

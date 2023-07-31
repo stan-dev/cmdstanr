@@ -25,7 +25,14 @@ the following:
 \item A \link[posterior:draws_array]{posterior::draws_array} (for MCMC) or \link[posterior:draws_matrix]{posterior::draws_matrix} (for
 VB) object returned by CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
 \item A character vector of paths to CmdStan CSV output files.
-}}
+}
+
+NOTE: if you plan on making many calls to \verb{$generate_quantities()} then the
+most efficient option is to pass the paths of the CmdStan CSV output files
+(this avoids CmdStanR having to rewrite the draws contained in the fitted
+model object to CSV each time). If you no longer have the CSV files you can
+use \code{\link[=draws_to_csv]{draws_to_csv()}} once to write them and then pass the resulting file
+paths to \verb{$generate_quantities()} as many times as needed.}
 
 \item{data}{(multiple options) The data to use for the variables specified in
 the data block of the Stan program. One of the following:
@@ -165,6 +172,8 @@ Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
+\code{\link{model-method-expose_functions}},
+\code{\link{model-method-format}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},

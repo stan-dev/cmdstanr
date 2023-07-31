@@ -1,10 +1,10 @@
 ---
 title: "Getting started with CmdStanR"
 author: "Jonah Gabry and Rok Češnovar"
-output: 
+output:
   rmarkdown::html_vignette:
     toc: true
-    toc_depth: 4
+    toc_depth: 3
 params:
   EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
 vignette: >
@@ -13,16 +13,16 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r child="children/settings-knitr.Rmd"}
+```{r child="children/_settings-knitr.Rmd"}
 ```
 
 ## Introduction
 
-CmdStanR is a lightweight interface to [Stan](https://mc-stan.org/) for R users
-(see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python) that
-provides an alternative to the traditional [RStan](https://mc-stan.org/rstan/)
-interface. See the [*Comparison with RStan*](#comparison-with-rstan) section
-later in this vignette for more details on how the two interfaces differ.
+CmdStanR (Command Stan R) is a lightweight interface to
+[Stan](https://mc-stan.org/) for R users that provides an alternative to the
+traditional [RStan](https://mc-stan.org/rstan/) interface. See the [*Comparison
+with RStan*](#comparison-with-rstan) section later in this vignette for more
+details on how the two interfaces differ.
 
 **CmdStanR is not on CRAN yet**, but the beta release can be installed by
 running the following command in R.
@@ -54,7 +54,7 @@ described in the CmdStan Guide:
 * https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html
 
 To double check that your toolchain is set up properly you can call
-the `check_cmdstan_toolchain()` function: 
+the `check_cmdstan_toolchain()` function:
 
 ```{r check-toolchain}
 check_cmdstan_toolchain()
@@ -128,7 +128,7 @@ choice allows for CmdStanR and
 [CmdStanPy](https://github.com/stan-dev/cmdstanpy) to provide a similar user
 experience and share many implementation details.
 
-The Stan program can be printed using the `$print()` method: 
+The Stan program can be printed using the `$print()` method:
 
 ```{r compile}
 mod$print()
@@ -156,16 +156,16 @@ CmdStan (JSON or R dump).
 data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 
 fit <- mod$sample(
-  data = data_list, 
-  seed = 123, 
-  chains = 4, 
+  data = data_list,
+  seed = 123,
+  chains = 4,
   parallel_chains = 4,
-  refresh = 500
+  refresh = 500 # print update every 500 iters
 )
 ```
 
-There are many more arguments that can be passed to the `$sample()` method. 
-For details follow this link to its separate documentation page: 
+There are many more arguments that can be passed to the `$sample()` method.
+For details follow this link to its separate documentation page:
 
 * [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
 
@@ -178,18 +178,53 @@ the most important methods. For a full list, follow this link to the
 
 ### Posterior summary statistics
 
+#### Summaries from the posterior package
+
 The
 [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
-method calls `summarise_draws()` from the **posterior** package:
+method calls `summarise_draws()` from the **posterior** package. The
+first argument specifies the variables to summarize and any arguments
+after that are passed on to `posterior::summarise_draws()` to specify
+which summaries to compute, whether to use multiple cores, etc.
 
-```{r summary}
+```{r summary, eval=FALSE}
 fit$summary()
-fit$summary("theta", "mean", "sd")
+fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
 # use a formula to summarize arbitrary functions, e.g. Pr(theta <= 0.5)
 fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
+
+# summarise all variables with default and additional summary measures
+fit$summary(
+  variables = NULL,
+  posterior::default_summary_measures(),
+  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+)
 ```
 
+```{r, echo=FALSE}
+# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
+# is used because the pillar formatting of posterior draws_summary objects
+# isn't playing nicely with pkgdown::build_articles(). 
+options(digits = 2)
+print.data.frame(fit$summary())
+
+print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
+
+print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
+
+print.data.frame(fit$summary(
+  variables = NULL,
+  posterior::default_summary_measures(),
+  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+))
+```
+
+#### CmdStan's stansummary utility
+
+CmdStan itself provides a `stansummary` utility that can be called using the
+`$cmdstan_summary()` method. This method will print summaries but won't return
+anything.
 
 ### Posterior draws
 
@@ -226,7 +261,7 @@ In general, converting to a different draws format in this way will be slower
 than just setting the appropriate format initially in the call to the `$draws()`
 method, but in most cases the speed difference will be minor.
 
-#### Plotting draws 
+#### Plotting draws
 
 Plotting posterior distributions is as easy as passing the object returned by
 the `$draws()` method directly to plotting functions in our
@@ -238,38 +273,66 @@ mcmc_hist(fit$draws("theta"))
 
 ### Sampler diagnostics
 
+#### Extracting diagnostic values for each iteration and chain
+
 The
 [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html)
 method extracts the values of the sampler parameters (`treedepth__`,
-`divergent__`, etc.) as a 3-D array (iteration x chain x variable).
+`divergent__`, etc.) in formats supported by the **posterior** package. The
+default is as a 3-D array (iteration x chain x variable).
 
 ```{r sampler_diagnostics}
 # this is a draws_array object from the posterior package
 str(fit$sampler_diagnostics())
 
-# convert to matrix or data frame using posterior package
-diagnostics_df <- as_draws_df(fit$sampler_diagnostics())
-print(diagnostics_df)
+# this is a draws_df object from the posterior package
+str(fit$sampler_diagnostics(format = "df"))
 ```
 
-### CmdStan utilities
+#### Sampler diagnostic warnings and summaries
 
-The [`$cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-and [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.html)
-methods call CmdStan's `diagnose` and `stansummary` utilities.
+The `$diagnostic_summary()` method will display any sampler diagnostic warnings and return a summary of diagnostics for each chain.
 
-```{r summary-and-diagnose}
-fit$cmdstan_diagnose()
-fit$cmdstan_summary()
+```{r diagnostic_summary}
+fit$diagnostic_summary()
 ```
+
+We see the number of divergences for each of the four chains, the number
+of times the maximum treedepth was hit for each chain, and the E-BFMI
+for each chain.
+
+In this case there were no warnings, so in order to demonstrate the warning
+messages we'll use one of the CmdStanR example models that suffers from
+divergences.
+
+```{r fit-with-warnings, results='hold'}
+fit_with_warning <- cmdstanr_example("schools")
+```
+After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit$diagnostic_summary()`.
+
+```{r diagnostic_summary-with-warnings}
+diagnostics <- fit_with_warning$diagnostic_summary()
+print(diagnostics)
+
+# number of divergences reported in warning is the sum of the per chain values
+sum(diagnostics$num_divergent)
+```
+
+#### CmdStan's diagnose utility
+
+CmdStan itself provides a `diagnose` utility that can be called using
+the `$cmdstan_diagnose()` method. This method will print warnings but won't return anything.
 
 
 ### Create a `stanfit` object
 
-If you have RStan installed then it is also possible to create a `stanfit` 
+If you have RStan installed then it is also possible to create a `stanfit`
 object from the csv output files written by CmdStan. This can be done by using
 `rstan::read_stan_csv()` in combination with the `$output_files()` method of the
-`CmdStanMCMC` object.
+`CmdStanMCMC` object. This is only needed if you want to fit a model with
+CmdStanR but already have a lot of post-processing code that assumes a `stanfit`
+object. Otherwise we recommend using the post-processing functionality provided
+by CmdStanR itself.
 
 ```{r stanfit, eval=FALSE}
 stanfit <- rstan::read_stan_csv(fit$output_files())
@@ -288,35 +351,52 @@ the `$sample()` method demonstrated above.
 
 We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
-```{r optimize}
-fit_mle <- mod$optimize(data = data_list, seed = 123) 
+```{r optimize, eval=FALSE}
+fit_mle <- mod$optimize(data = data_list, seed = 123)
 fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
-fit_mle$mle("theta") 
+fit_mle$mle("theta")
+```
+```{r, echo=FALSE}
+# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
+# is used because the pillar formatting of posterior draws_summary objects
+# isn't playing nicely with pkgdown::build_articles(). 
+options(digits = 2)
+fit_mle <- mod$optimize(data = data_list, seed = 123)
+print.data.frame(fit_mle$summary()) # includes lp__ (log prob calculated by Stan program)
+fit_mle$mle("theta")
 ```
 
 Here's a plot comparing the penalized MLE to the posterior distribution of
 `theta`.
 
 ```{r plot-mle, message = FALSE}
-mcmc_hist(fit$draws("theta")) + 
+mcmc_hist(fit$draws("theta")) +
   vline_at(fit_mle$mle("theta"), size = 1.5)
 ```
 
 ### Variational Bayes
 
-We can run Stan's experimental variational Bayes algorithm (ADVI) using the 
-[`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html) 
+We can run Stan's experimental variational Bayes algorithm (ADVI) using the
+[`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
 method.
 
-```{r variational}
-fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000) 
+```{r variational, eval=FALSE}
+fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
 fit_vb$summary("theta")
+```
+```{r, echo=FALSE}
+# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
+# is used because the pillar formatting of posterior draws_summary objects
+# isn't playing nicely with pkgdown::build_articles(). 
+options(digits = 2)
+fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
+print.data.frame(fit_vb$summary("theta"))
 ```
 
 The `$draws()` method can be used to access the approximate posterior draws.
 Let's extract the draws, make the same plot we made after MCMC, and compare the
 two. In this trivial example the distributions look quite similar, although
-the variational approximation slightly underestimates the posterior 
+the variational approximation slightly underestimates the posterior
 standard deviation.
 
 ```{r plot-variational-1, message = FALSE, fig.cap="Posterior from MCMC"}
@@ -339,7 +419,7 @@ In order to save a fitted model object to disk and ensure that all of the
 contents are available when reading the object back into R, we recommend using the
 [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
 method provided by CmdStanR. The reason for this is discussed in detail in the vignette
-[_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html), 
+[_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html),
 so here we just demonstrate how to use the method.
 
 ```{r save_object, eval=FALSE}
@@ -361,7 +441,7 @@ CmdStanR. These can be found online at the CmdStanR website:
 
 * https://mc-stan.org/cmdstanr/articles/index.html
 
-To ask a question please post on the Stan forums: 
+To ask a question please post on the Stan forums:
 
 * https://discourse.mc-stan.org/
 
@@ -369,4 +449,3 @@ To report a bug, suggest a feature (including additions to these vignettes), or 
 development (new contributors welcome!) please open an issue on GitHub:
 
 * https://github.com/stan-dev/cmdstanr/issues
-

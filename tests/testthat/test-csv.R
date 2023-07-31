@@ -528,6 +528,23 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
   }
 })
 
+test_that("as_cmdstan_fit can check MCMC diagnostics", {
+  fit_schools <- suppressMessages(
+    testing_fit("schools", chains = 2,
+                adapt_delta = 0.5, max_treedepth = 4,
+                show_messages = FALSE)
+  )
+  expect_message(
+    as_cmdstan_fit(fit_schools$output_files()),
+    "transitions ended with a divergence"
+  )
+  expect_message(
+    as_cmdstan_fit(fit_schools$output_files()),
+    "transitions hit the maximum treedepth"
+  )
+  expect_silent(as_cmdstan_fit(fit_schools$output_files(), check_diagnostics = FALSE))
+})
+
 test_that("read_cmdstan_csv reads seed correctly", {
   opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())

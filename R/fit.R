@@ -9,9 +9,33 @@ CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
   public = list(
     runset = NULL,
+    functions = NULL,
     initialize = function(runset) {
       checkmate::assert_r6(runset, classes = "CmdStanRun")
       self$runset <- runset
+
+      private$return_codes_ <- self$runset$procs$return_codes()
+
+      private$model_methods_env_ <- new.env()
+      if (!is.null(runset$model_methods_env())) {
+        for (n in ls(runset$model_methods_env(), all.names = TRUE)) {
+          assign(n, get(n, runset$model_methods_env()), private$model_methods_env_)
+        }
+      }
+
+      self$functions <- new.env()
+      if (!is.null(runset$standalone_env())) {
+        for (n in ls(runset$standalone_env(), all.names = TRUE)) {
+          assign(n, get(n, runset$standalone_env()), self$functions)
+        }
+      }
+
+      if (!is.null(private$model_methods_env_$model_ptr)) {
+        initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
+      }
+      # Need to update the output directory path to one that can be accessed
+      # from Windows, for the post-processing of results
+      self$runset$args$output_dir <- wsl_safe_path(self$runset$args$output_dir, revert = TRUE)
       invisible(self)
     },
     num_procs = function() {
@@ -43,8 +67,8 @@ CmdStanFit <- R6::R6Class(
 
       out <- self$summary(variables_to_print, ...)
       out <- as.data.frame(out)
-      out[,  1] <- format(out[, 1], justify = "left")
-      out[, -1] <- format(round(out[, -1], digits = digits), nsmall = digits)
+      out[,  1] <- base::format(out[, 1], justify = "left")
+      out[, -1] <- base::format(round(out[, -1], digits = digits), nsmall = digits)
       for (col in grep("ess_", colnames(out), value = TRUE)) {
         out[[col]] <- as.integer(out[[col]])
       }
@@ -57,13 +81,19 @@ CmdStanFit <- R6::R6Class(
             "rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)\n")
       }
       invisible(self)
+    },
+    expose_functions = function(global = FALSE, verbose = FALSE) {
+      expose_stan_functions(self$functions, global, verbose)
+      invisible(NULL)
     }
   ),
   private = list(
     draws_ = NULL,
     metadata_ = NULL,
     init_ = NULL,
-    profiles_ = NULL
+    profiles_ = NULL,
+    model_methods_env_ = NULL,
+    return_codes_ = NULL
   )
 )
 
@@ -272,6 +302,390 @@ init <- function() {
 }
 CmdStanFit$set("public", name = "init", value = init)
 
+#' Compile additional methods for accessing the model log-probability function
+#' and parameter constraining and unconstraining.
+#'
+#' @name fit-method-init_model_methods
+#' @aliases init_model_methods
+#'
+#' @description The `$init_model_methods()` method compiles and initializes the
+#'   `log_prob`, `grad_log_prob`, `constrain_variables`, `unconstrain_variables`
+#'   and `unconstrain_draws` functions. These are then available as methods of
+#'   the fitted model object. This requires the additional `Rcpp` and
+#'   `RcppEigen` packages, which are not required for fitting models using
+#'   CmdStanR.
+#'
+#'   Note: there may be many compiler warnings emitted during compilation but
+#'   these can be ignored so long as they are warnings and not errors.
+#'
+#' @param seed (integer) The random seed to use when initializing the model.
+#' @param verbose (logical) Whether to show verbose logging during compilation.
+#' @param hessian (logical) Whether to expose the (experimental) hessian method.
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#' }
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
+init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
+  if (os_is_wsl()) {
+    stop("Additional model methods are not currently available with ",
+          "WSL CmdStan and will not be compiled",
+          call. = FALSE)
+  }
+  require_suggested_package("Rcpp")
+  require_suggested_package("RcppEigen")
+  if (length(private$model_methods_env_$hpp_code_) == 0) {
+    stop("Model methods cannot be used with a pre-compiled Stan executable, ",
+          "the model must be compiled again", call. = FALSE)
+  }
+  if (hessian) {
+    message("The hessian method relies on higher-order autodiff ",
+            "which is still experimental. Please report any compilation ",
+            "errors that you encounter")
+  }
+  message("Compiling additional model methods...")
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    expose_model_methods(private$model_methods_env_, verbose, hessian)
+  }
+  initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
+  invisible(NULL)
+}
+CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods)
+
+#' Calculate the log-probability given a provided vector of unconstrained parameters.
+#'
+#' @name fit-method-log_prob
+#' @aliases log_prob
+#' @description The `$log_prob()` method provides access to the Stan model's `log_prob` function
+#'
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to be passed to `log_prob`.
+#' @param jacobian_adjustment (logical) Whether to include the log-density
+#'   adjustments from un/constraining variables.
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
+#' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
+log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
+  }
+  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
+    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
+          length(unconstrained_variables), " were provided!", call. = FALSE)
+  }
+  private$model_methods_env_$log_prob(private$model_methods_env_$model_ptr_,
+                                      unconstrained_variables, jacobian_adjustment)
+}
+CmdStanFit$set("public", name = "log_prob", value = log_prob)
+
+#' Calculate the log-probability and the gradient w.r.t. each input for a
+#' given vector of unconstrained parameters
+#'
+#' @name fit-method-grad_log_prob
+#' @aliases grad_log_prob
+#' @description The `$grad_log_prob()` method provides access to the Stan
+#'   model's `log_prob` function and its derivative.
+#'
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to be passed to `grad_log_prob`.
+#' @param jacobian_adjustment (logical) Whether to include the log-density
+#'   adjustments from un/constraining variables.
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$grad_log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
+#' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
+grad_log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
+  }
+  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
+    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
+          length(unconstrained_variables), " were provided!", call. = FALSE)
+  }
+  private$model_methods_env_$grad_log_prob(private$model_methods_env_$model_ptr_,
+                                            unconstrained_variables, jacobian_adjustment)
+}
+CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
+
+#' Calculate the log-probability , the gradient w.r.t. each input, and the hessian
+#' for a given vector of unconstrained parameters
+#'
+#' @name fit-method-hessian
+#' @aliases hessian
+#' @description The `$hessian()` method provides access to the Stan model's
+#'   `log_prob`, its derivative, and its hessian.
+#'
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to be passed to `hessian`.
+#' @param jacobian_adjustment (logical) Whether to include the log-density
+#'   adjustments from un/constraining variables.
+#'
+#' @examples
+#' \dontrun{
+#' # fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' # fit_mcmc$init_model_methods(hessian = TRUE)
+#' # fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
+#' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
+hessian <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
+  }
+  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
+    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
+          length(unconstrained_variables), " were provided!", call. = FALSE)
+  }
+  private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_,
+                                      unconstrained_variables, jacobian_adjustment)
+}
+CmdStanFit$set("public", name = "hessian", value = hessian)
+
+#' Transform a set of parameter values to the unconstrained scale
+#'
+#' @name fit-method-unconstrain_variables
+#' @aliases unconstrain_variables
+#' @description The `$unconstrain_variables()` method transforms input
+#'   parameters to the unconstrained scale.
+#'
+#' @param variables (list) A list of parameter values to transform, in the same
+#'   format as provided to the `init` argument of the `$sample()` method.
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$unconstrain_variables(list(alpha = 0.5, beta = c(0.7, 1.1, 0.2)))
+#' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
+unconstrain_variables <- function(variables) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
+  }
+  model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
+  prov_par_names <- names(variables)
+
+  # Ignore extraneous parameters
+  model_pars_only <- variables[model_par_names]
+  model_variables <- self$runset$args$model_variables
+
+  # If zero-length parameters are present, they will be listed in model_variables
+  # but not in metadata()$variables
+  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+  model_par_names <- names(model_variables$parameters[nonzero_length_params])
+
+  model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
+  if (length(model_pars_not_prov) > 0) {
+    stop("Model parameter(s): ", paste(model_par_names[model_pars_not_prov], collapse = ","),
+         " not provided!", call. = FALSE)
+  }
+
+  # Remove zero-length parameters from model_variables, otherwise process_init_list
+  # warns about missing inputs
+  model_variables$parameters <- model_variables$parameters[nonzero_length_params]
+
+  stan_pars <- process_init_list(list(variables), num_procs = 1, model_variables)
+  private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, stan_pars)
+}
+CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
+
+#' Transform all parameter draws to the unconstrained scale
+#'
+#' @name fit-method-unconstrain_draws
+#' @aliases unconstrain_draws
+#' @description The `$unconstrain_draws()` method transforms all parameter draws
+#'   to the unconstrained scale. The method returns a list for each chain,
+#'   containing the parameter values from each iteration on the unconstrained
+#'   scale. If called with no arguments, then the draws within the fit object
+#'   are unconstrained. Alternatively, either an existing draws object or a
+#'   character vector of paths to CSV files can be passed.
+#'
+#' @param files (character vector) The paths to the CmdStan CSV files. These can
+#'   be files generated by running CmdStanR or running CmdStan directly.
+#' @param draws A `posterior::draws_*` object.
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#'
+#' # Unconstrain all internal draws
+#' unconstrained_internal_draws <- fit_mcmc$unconstrain_draws()
+#'
+#' # Unconstrain external CmdStan CSV files
+#' unconstrained_csv <- fit_mcmc$unconstrain_draws(files = fit_mcmc$output_files())
+#'
+#' # Unconstrain existing draws object
+#' unconstrained_draws <- fit_mcmc$unconstrain_draws(draws = fit_mcmc$draws())
+#' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
+unconstrain_draws <- function(files = NULL, draws = NULL) {
+  if (!is.null(files) || !is.null(draws)) {
+    if (!is.null(files) && !is.null(draws)) {
+      stop("Either a list of CSV files or a draws object can be passed, not both",
+          call. = FALSE)
+    }
+    if (!is.null(files)) {
+      read_csv <- read_cmdstan_csv(files = files, format = "draws_df")
+      draws <- read_csv$post_warmup_draws
+    }
+    if (!is.null(draws)) {
+      draws <- maybe_convert_draws_format(draws, "draws_df")
+    }
+  } else {
+    if (is.null(private$draws_)) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
+      }
+      private$read_csv_(format = "draws_df")
+    }
+    draws <- maybe_convert_draws_format(private$draws_, "draws_df")
+  }
+
+  model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
+  model_variables <- self$runset$args$model_variables
+
+  # If zero-length parameters are present, they will be listed in model_variables
+  # but not in metadata()$variables
+  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+
+  # Remove zero-length parameters from model_variables, otherwise process_init_list
+  # warns about missing inputs
+  pars <- names(model_variables$parameters[nonzero_length_params])
+
+  draws <- posterior::subset_draws(draws, variable = pars)
+  skeleton <- self$variable_skeleton(transformed_parameters = FALSE,
+                                     generated_quantities = FALSE)
+  par_columns <- !(names(draws) %in% c(".chain", ".iteration", ".draw"))
+  unconstrained <- lapply(split(draws, f = draws$.chain), function(chain) {
+    lapply(asplit(chain, 1), function(draw) {
+      par_list <- utils::relist(as.numeric(draw[par_columns]), skeleton)
+      self$unconstrain_variables(variables = par_list)
+    })
+  })
+  unconstrained
+}
+CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
+
+#' Return the variable skeleton for `relist`
+#'
+#' @name fit-method-variable_skeleton
+#' @aliases variable_skeleton
+#' @description The `$variable_skeleton()` method returns the variable skeleton
+#'   needed by `utils::relist()` to re-structure a vector of constrained
+#'   parameter values to a named list.
+#' @param transformed_parameters (logical) Whether to include transformed
+#'   parameters in the skeleton (defaults to `TRUE`).
+#' @param generated_quantities (logical) Whether to include generated quantities
+#'   in the skeleton (defaults to `TRUE`).
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$variable_skeleton()
+#' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
+variable_skeleton <- function(transformed_parameters = TRUE, generated_quantities = TRUE) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
+  }
+
+  create_skeleton(private$model_methods_env_$param_metadata_,
+                  self$runset$args$model_variables,
+                  transformed_parameters,
+                  generated_quantities)
+}
+CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
+
+#' Transform a set of unconstrained parameter values to the constrained scale
+#'
+#' @name fit-method-constrain_variables
+#' @aliases constrain_variables
+#' @description The `$constrain_variables()` method transforms input parameters
+#'   to the constrained scale.
+#'
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
+#'   to constrain.
+#' @param transformed_parameters (logical) Whether to return transformed
+#'   parameters implied by newly-constrained parameters (defaults to TRUE).
+#' @param generated_quantities (logical) Whether to return generated quantities
+#'   implied by newly-constrained parameters (defaults to TRUE).
+#'
+#' @examples
+#' \dontrun{
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc$init_model_methods()
+#' fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
+#' }
+#'
+#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
+#'   [hessian()]
+#'
+constrain_variables <- function(unconstrained_variables, transformed_parameters = TRUE,
+                            generated_quantities = TRUE) {
+  if (is.null(private$model_methods_env_$model_ptr)) {
+    stop("The method has not been compiled, please call `init_model_methods()` first",
+        call. = FALSE)
+  }
+
+  skeleton <- self$variable_skeleton(transformed_parameters, generated_quantities)
+
+  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
+    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
+          length(unconstrained_variables), " were provided!", call. = FALSE)
+  }
+  cpars <- private$model_methods_env_$constrain_variables(
+    private$model_methods_env_$model_ptr_,
+    private$model_methods_env_$model_rng_,
+    unconstrained_variables, transformed_parameters, generated_quantities)
+  utils::relist(cpars, skeleton)
+}
+CmdStanFit$set("public", name = "constrain_variables", value = constrain_variables)
+
 #' Extract log probability (target)
 #'
 #' @name fit-method-lp
@@ -374,6 +788,23 @@ CmdStanFit$set("public", name = "lp", value = lp)
 #' # can use functions created from formulas
 #' # for example, calculate Pr(beta > 0)
 #' fit$summary("beta", prob_gt_0 = ~ mean(. > 0))
+#'
+#' # can combine user-specified functions with
+#' # the default summary functions
+#' fit$summary(variables = c("alpha", "beta"),
+#'   posterior::default_summary_measures()[1:4],
+#'   quantiles = ~ quantile2(., probs = c(0.025, 0.975)),
+#'   posterior::default_convergence_measures()
+#'   )
+#'
+#' # the functions need to calculate the appropriate
+#' # value for a matrix input
+#' fit$summary(variables = "alpha", dim)
+#'
+#' # the usual [stats::var()] is therefore not directly suitable as it
+#' # will produce a covariance matrix unless the data is converted to a vector
+#' fit$print(c("alpha", "beta"), var2 = ~var(as.vector(.x)))
+#'
 #' }
 #'
 summary <- function(variables = NULL, ...) {
@@ -700,7 +1131,7 @@ CmdStanFit$set("public", name = "metadata", value = metadata)
 #' }
 #'
 return_codes <- function() {
-  self$runset$procs$return_codes()
+  private$return_codes_
 }
 CmdStanFit$set("public", name = "return_codes", value = return_codes)
 
@@ -823,7 +1254,9 @@ CmdStanFit$set("public", name = "code", value = code)
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$print()`][fit-method-print] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'  [`$summary()`][fit-method-summary] |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
+#'  [`$diagnostic_summary()`][fit-method-diagnostic_summary] |  Get summaries of sampler diagnostics and warning messages. |
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
 #'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
 #'  [`$loo()`][fit-method-loo]  |  Run [loo::loo.array()] for approximate LOO-CV |
@@ -845,6 +1278,20 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
+#'
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
   inherit = CmdStanFit,
@@ -856,14 +1303,15 @@ CmdStanMCMC <- R6::R6Class(
         warning("No chains finished successfully. Unable to retrieve the fit.",
                 call. = FALSE)
       } else {
-        if (self$runset$args$validate_csv) {
-          fixed_param <- runset$args$method_args$fixed_param
-          private$read_csv_(variables = "",
-                           sampler_diagnostics = if (!fixed_param) c("treedepth__", "divergent__") else "")
-          if (!fixed_param) {
-            check_divergences(private$sampler_diagnostics_)
-            check_sampler_transitions_treedepth(private$sampler_diagnostics_, private$metadata_)
-          }
+        if (runset$args$method_args$fixed_param) {
+          private$read_csv_(variables = "", sampler_diagnostics = "")
+        } else {
+          diagnostics <- self$runset$args$method_args$diagnostics
+          private$read_csv_(
+            variables = "",
+            sampler_diagnostics = convert_hmc_diagnostic_names(diagnostics)
+          )
+          invisible(self$diagnostic_summary(diagnostics, quiet = FALSE))
         }
       }
     },
@@ -993,10 +1441,10 @@ CmdStanMCMC <- R6::R6Class(
 #' @name fit-method-loo
 #' @aliases loo
 #' @description The `$loo()` method computes approximate LOO-CV using the
-#'   \pkg{loo} package. This is a simple wrapper around [loo::loo.array()]
-#'   provided for convenience and requires computing the pointwise
-#'   log-likelihood in your Stan program. See the \pkg{loo} package
-#'   [vignettes](https://mc-stan.org/loo/articles/) for details.
+#'   \pkg{loo} package. In order to use this method you must compute and save
+#'   the pointwise log-likelihood in your Stan program. See [loo::loo.array()]
+#'   and the \pkg{loo} package [vignettes](https://mc-stan.org/loo/articles/)
+#'   for details.
 #'
 #' @param variables (character vector) The name(s) of the variable(s) in the
 #'   Stan program containing the pointwise log-likelihood. The default is to
@@ -1009,10 +1457,20 @@ CmdStanMCMC <- R6::R6Class(
 #'   but will result in a warning from the \pkg{loo} package.
 #'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
 #'   argument to [loo::loo.array()].
+#' @param moment_match (logical) Whether to use a
+#'   [moment-matching][loo::loo_moment_match()] correction for problematic
+#'   observations. The default is `FALSE`. Using `moment_match=TRUE` will result
+#'   in compiling the additional methods described in
+#'   [fit-method-init_model_methods]. This allows CmdStanR to automatically
+#'   supply the functions for the `log_lik_i`, `unconstrain_pars`,
+#'   `log_prob_upars`, and `log_lik_i_upars` arguments to
+#'   [loo::loo_moment_match()].
 #' @param ... Other arguments (e.g., `cores`, `save_psis`, etc.) passed to
-#'   [loo::loo.array()].
+#'   [loo::loo.array()] or [loo::loo_moment_match.default()]
+#'   (if `moment_match` = `TRUE` is set).
 #'
-#' @return The object returned by [loo::loo.array()].
+#' @return The object returned by [loo::loo.array()] or
+#'   [loo::loo_moment_match.default()].
 #'
 #' @seealso The \pkg{loo} package website with
 #'   [documentation](https://mc-stan.org/loo/reference/index.html) and
@@ -1027,7 +1485,7 @@ CmdStanMCMC <- R6::R6Class(
 #' print(loo_result)
 #' }
 #'
-loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
+loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) {
   require_suggested_package("loo")
   LLarray <- self$draws(variables, format = "draws_array")
   if (is.logical(r_eff)) {
@@ -1038,7 +1496,39 @@ loo <- function(variables = "log_lik", r_eff = TRUE, ...) {
       r_eff <- NULL
     }
   }
-  loo::loo.array(LLarray, r_eff = r_eff, ...)
+
+  if (moment_match == TRUE) {
+    # Moment-matching requires log-prob, constrain, and unconstrain methods
+    if (is.null(private$model_methods_env_$model_ptr)) {
+      self$init_model_methods()
+    }
+
+    suppressWarnings(loo_result <- loo::loo.array(LLarray, r_eff = r_eff, ...))
+
+    log_lik_i <- function(x, i, parameter_name = "log_lik", ...) {
+      ll_array <- x$draws(variables = parameter_name, format = "draws_array")[,,i]
+      # draws_array types don't drop the last dimension when it's 1, so we do this manually
+      attr(ll_array, "dim") <- attributes(ll_array)$dim[1:2]
+      ll_array
+    }
+
+    log_lik_i_upars <- function(x, upars, i, parameter_name = "log_lik", ...) {
+      apply(upars, 1, function(up_i) { x$constrain_variables(up_i)[[parameter_name]][i] })
+    }
+
+    loo::loo_moment_match.default(
+      x = self,
+      loo = loo_result,
+      post_draws = function(x, ...) { x$draws(format = "draws_matrix") },
+      log_lik_i = log_lik_i,
+      unconstrain_pars = function(x, pars, ...) { do.call(rbind, lapply(x$unconstrain_draws(), function(chain) { do.call(rbind, chain) })) },
+      log_prob_upars = function(x, upars, ...) { apply(upars, 1, x$log_prob) },
+      log_lik_i_upars = log_lik_i_upars,
+      ...
+    )
+  } else {
+    loo::loo.array(LLarray, r_eff = r_eff, ...)
+  }
 }
 CmdStanMCMC$set("public", name = "loo", value = loo)
 
@@ -1047,7 +1537,9 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #' @name fit-method-sampler_diagnostics
 #' @aliases sampler_diagnostics
 #' @description Extract the values of sampler diagnostics for each iteration and
-#'   chain of MCMC.
+#'   chain of MCMC. To instead get summaries of these diagnostics and associated
+#'   warning messages use the
+#'   [`$diagnostic_summary()`][fit-method-diagnostic_summary] method.
 #'
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to `FALSE`.
 #' @param format (string) The draws format to return. See
@@ -1105,6 +1597,83 @@ sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr
   }
 }
 CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnostics)
+
+#' Sampler diagnostic summaries and warnings
+#'
+#' @name fit-method-diagnostic_summary
+#' @aliases diagnostic_summary
+#' @description Warnings and summaries of sampler diagnostics. To instead get
+#'   the underlying values of the sampler diagnostics for each iteration and
+#'   chain use the [`$sampler_diagnostics()`][fit-method-sampler_diagnostics]
+#'   method.
+#'
+#'   Currently parameter-specific diagnostics like R-hat and effective sample
+#'   size are _not_ handled by this method. Those diagnostics are provided via
+#'   the [`$summary()`][fit-method-summary] method (using
+#'   [posterior::summarize_draws()]).
+#'
+#' @param diagnostics (character vector) One or more diagnostics to check. The
+#'   currently supported diagnostics are `"divergences`, `"treedepth"`, and
+#'   `"ebfmi`. The default is to check all of them.
+#' @param quiet (logical) Should warning messages about the diagnostics be
+#'   suppressed? The default is `FALSE`, in which case warning messages are
+#'   printed in addition to returning the values of the diagnostics.
+#'
+#' @return A list with as many named elements as `diagnostics` selected. The
+#'   possible elements and their values are:
+#'   * `"num_divergent"`: A vector of the number of divergences per chain.
+#'   * `"num_max_treedepth"`: A vector of the number of times `max_treedepth` was hit per chain.
+#'   * `"ebfmi"`: A vector of E-BFMI values per chain.
+#'
+#' @seealso [`CmdStanMCMC`] and the
+#'   [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] method
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("schools")
+#' fit$diagnostic_summary()
+#' fit$diagnostic_summary(quiet = TRUE)
+#' }
+#'
+diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfmi"), quiet = FALSE) {
+  out <- list()
+  if (is.null(diagnostics) || identical(diagnostics, "")) {
+    return(out)
+  }
+  diagnostics <- match.arg(
+    diagnostics,
+    choices = available_hmc_diagnostics(),
+    several.ok = TRUE
+  )
+  post_warmup_sampler_diagnostics <- self$sampler_diagnostics(inc_warmup = FALSE)
+  if ("divergences" %in% diagnostics) {
+    if (quiet) {
+      divergences <- suppressMessages(check_divergences(post_warmup_sampler_diagnostics))
+    } else {
+      divergences <- check_divergences(post_warmup_sampler_diagnostics)
+    }
+    out[["num_divergent"]] <- divergences
+  }
+  if ("treedepth" %in% diagnostics) {
+    if (quiet) {
+      max_treedepth_hit <- suppressMessages(check_max_treedepth(post_warmup_sampler_diagnostics, self$metadata()))
+    } else {
+      max_treedepth_hit <- check_max_treedepth(post_warmup_sampler_diagnostics, self$metadata())
+    }
+    out[["num_max_treedepth"]] <- max_treedepth_hit
+  }
+  if ("ebfmi" %in% diagnostics) {
+    if (quiet) {
+      ebfmi <- suppressMessages(check_ebfmi(post_warmup_sampler_diagnostics))
+    } else {
+      ebfmi <- check_ebfmi(post_warmup_sampler_diagnostics)
+    }
+    out[["ebfmi"]] <- ebfmi %||% NA
+  }
+  out
+}
+CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summary)
+
 
 #' Extract inverse metric (mass matrix) after MCMC
 #'
@@ -1215,6 +1784,20 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
+#'
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
   inherit = CmdStanFit,
@@ -1317,6 +1900,20 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",

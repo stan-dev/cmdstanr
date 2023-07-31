@@ -108,3 +108,36 @@ test_that("$variables() errors on no stan_file", {
     fixed = TRUE
   )
 })
+
+test_that("$variables() works with #includes, both pre and post compilation.", {
+  
+  data_code <- "
+    data {
+      int N;
+    }
+  "
+  model_code <- "
+    #include data.stan
+    parameters {
+      vector[N] y;
+    }
+    model {
+      y ~ std_normal();
+    }
+  "
+
+  model_file <- write_stan_file(code = model_code)
+  data_file <- write_stan_file(code = data_code, basename = "data.stan")
+
+  mod <- cmdstan_model(
+    stan_file = model_file,
+    include_paths = dirname(data_file),
+    compile = FALSE
+  )
+
+  vars_pre <- mod$variables()
+  mod$compile()
+  vars_post <- mod$variables()
+
+  expect_equal(vars_pre, vars_post)
+})

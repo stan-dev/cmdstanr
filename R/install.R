@@ -57,6 +57,8 @@
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
 #'   that the required toolchain is installed and properly configured. The
 #'   default is `TRUE`.
+#' @param wsl (logical) Should CmdStan be installed and run through the Windows
+#'  Subsystem for Linux (WSL). The default is `FALSE`.
 #'
 #' @examples
 #' \dontrun{
@@ -66,7 +68,7 @@
 #'
 #' cpp_options <- list(
 #'   "CXX" = "clang++",
-#'   "CXXFLAGS+= -march-native",
+#'   "CXXFLAGS+= -march=native",
 #'   PRECOMPILED_HEADERS = TRUE
 #' )
 #' # cmdstan_make_local(cpp_options = cpp_options)
@@ -81,7 +83,21 @@ install_cmdstan <- function(dir = NULL,
                             version = NULL,
                             release_url = NULL,
                             cpp_options = list(),
-                            check_toolchain = TRUE) {
+                            check_toolchain = TRUE,
+                            wsl = FALSE) {
+  # Use environment variable to record WSL usage throughout install,
+  # post-installation will simply check for 'wsl-' prefix in cmdstan path
+  if (isTRUE(wsl)) {
+    if (!os_is_windows()) {
+      warning("wsl=TRUE is only available on Windows, and will be ignored!",
+              call. = FALSE)
+      wsl <- FALSE
+    } else {
+      .cmdstanr$WSL <- TRUE
+    }
+  } else {
+    .cmdstanr$WSL <- FALSE
+  }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   }
@@ -94,13 +110,13 @@ install_cmdstan <- function(dir = NULL,
     }
   }
   if (is.null(dir)) {
-    dir <- cmdstan_default_install_path()
+    dir <- cmdstan_default_install_path(wsl = wsl)
     if (!dir.exists(dir)) {
       dir.create(dir, recursive = TRUE)
     }
   } else {
     dir <- repair_path(dir)
-    checkmate::assert_directory_exists(dir, access = "rwx")
+    assert_dir_exists(dir, access = "rwx")
   }
   if (!is.null(version)) {
     if (!is.null(release_url)) {
@@ -125,7 +141,7 @@ install_cmdstan <- function(dir = NULL,
     dir_cmdstan <- file.path(dir, cmdstan_ver)
     dest_file <- file.path(dir, tar_gz_file)
   } else {
-    ver <- latest_released_version()
+    ver <- latest_released_version(quiet = quiet)
     message("* Latest CmdStan release is v", ver)
     cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
@@ -138,28 +154,46 @@ install_cmdstan <- function(dir = NULL,
   if (!check_install_dir(dir_cmdstan, overwrite)) {
     return(invisible(NULL))
   }
-  tar_downloaded <- download_with_retries(download_url, dest_file)
-  if (!tar_downloaded) {
+  tar_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
+  if (inherits(tar_downloaded, "try-error")) {
+    error_msg <- paste("Download of CmdStan failed with error:",
+                        attr(tar_downloaded, "condition")$message)
     if (!is.null(version)) {
-      stop("Download of CmdStan failed. Please check if the supplied version number is valid.", call. = FALSE)
+      error_msg <- paste0(error_msg, "\nPlease check if the supplied version number is valid.")
+    } else if (!is.null(release_url)) {
+      error_msg <- paste0(error_msg, "\nPlease check if the supplied release URL is valid.")
     }
-    if (!is.null(release_url)) {
-      stop("Download of CmdStan failed. Please check if the supplied release URL is valid.", call. = FALSE)
-    }
-    stop("Download of CmdStan failed. Please try again.", call. = FALSE)
+    stop(error_msg, call. = FALSE)
   }
   message("* Download complete")
-
   message("* Unpacking archive...")
-  untar_rc <- utils::untar(
-    dest_file,
-    exdir = dir_cmdstan,
-    extras = "--strip-components 1"
-  )
-  if (untar_rc != 0) {
-    stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+  if (wsl) {
+    # Significantly faster to use WSL to untar the downloaded archive, as there are
+    # similar IO issues accessing the WSL filesystem from windows
+    wsl_tar_gz_file <- gsub(paste0("//wsl$/", wsl_distro_name()), "",
+                            dest_file, fixed = TRUE)
+    wsl_tar_gz_file <- wsl_safe_path(wsl_tar_gz_file)
+    untar_rc <- processx::run(
+      command = "wsl",
+      args = c("tar", "-xf", wsl_tar_gz_file, "-C",
+               gsub(tar_gz_file, "", wsl_tar_gz_file))
+    )
+    remove_rc <- processx::run(
+      command = "wsl",
+      args = c("rm", wsl_tar_gz_file)
+    )
+  } else {
+    untar_rc <- utils::untar(
+      dest_file,
+      exdir = dir_cmdstan,
+      extras = "--strip-components 1"
+    )
+    if (untar_rc != 0) {
+      stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+    }
+    file.remove(dest_file)
   }
-  file.remove(dest_file)
+
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   # Setting up native M1 compilation of CmdStan and its downstream libraries
   if (is_rosetta2()) {
@@ -171,6 +205,35 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
+
+  # Building fails on Apple silicon with < v2.31 due to a makefiles setting
+  # for stanc3, so manually implement the patch if needed from:
+  # https://github.com/stan-dev/cmdstan/pull/1127
+  stanc_makefile <- readLines(file.path(dir_cmdstan, "make", "stanc"))
+  stanc_makefile <- gsub("\\bxattr -d com.apple.quarantine bin/stanc",
+                          "-xattr -d com.apple.quarantine bin/stanc",
+                          stanc_makefile)
+  writeLines(stanc_makefile, con = file.path(dir_cmdstan, "make", "stanc"))
+
+  if (is_ucrt_toolchain() && !wsl) {
+    cmdstan_make_local(
+      dir = dir_cmdstan,
+      cpp_options = list(
+        "CXXFLAGS += -Wno-nonnull -D_UCRT",
+        "TBB_CXXFLAGS= -D_UCRT"
+      ),
+      append = TRUE
+    )
+  }
+
+  # Suppress noisy warnings from Boost
+  cmdstan_make_local(
+    dir = dir_cmdstan,
+    cpp_options = list(
+      "CXXFLAGS += -Wno-deprecated-declarations"
+    ),
+    append = TRUE
+  )
 
   message("* Building CmdStan binaries...")
   build_log <- build_cmdstan(dir_cmdstan, cores, quiet, timeout)
@@ -193,6 +256,9 @@ install_cmdstan <- function(dir = NULL,
       make_local_msg,
       "\nrebuild_cmdstan(cores = ...)"
     )
+  }
+  if (isTRUE(wsl)) {
+    Sys.unsetenv("CMDSTANR_USE_WSL")
   }
 }
 
@@ -255,8 +321,10 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (os_is_windows()) {
-    if (R.version$major >= "4") {
-      check_rtools40_windows_toolchain(fix = fix, quiet = quiet)
+    if (os_is_wsl()) {
+      check_wsl_toolchain()
+    } else if (R.version$major >= "4") {
+      check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     } else {
       check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
     }
@@ -312,15 +380,31 @@ github_download_url <- function(version_number) {
 }
 
 # get version number of latest release
-latest_released_version <- function() {
+latest_released_version <- function(quiet=TRUE) {
   dest_file <- tempfile(pattern = "releases-", fileext = ".json")
   download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
-  release_list_downloaded <- download_with_retries(download_url, dest_file)
-  if (!release_list_downloaded) {
-    stop("GitHub download of release list failed.", call. = FALSE)
+  release_list_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
+  if (inherits(release_list_downloaded, "try-error")) {
+    stop("GitHub download of release list failed with error: ",
+        attr(release_list_downloaded, "condition")$message,
+        call. = FALSE)
   }
   release <- jsonlite::read_json(dest_file)
   sub("v", "", release$tag_name)
+}
+
+try_download <- function(download_url, destination_file,
+                          quiet = TRUE) {
+  download_status <- try(
+    suppressWarnings(
+      utils::download.file(url = download_url,
+                           destfile = destination_file,
+                           quiet = quiet,
+                           headers = github_auth_token())
+    ),
+    silent = TRUE
+  )
+  download_status
 }
 
 # download with retries and pauses
@@ -329,28 +413,15 @@ download_with_retries <- function(download_url,
                                   retries = 5,
                                   pause_sec = 5,
                                   quiet = TRUE) {
-
-    download_rc <- 1
-    while (retries > 0 && download_rc != 0) {
-      try(
-        suppressWarnings(
-          download_rc <- utils::download.file(url = download_url,
-                                            destfile = destination_file,
-                                            quiet = quiet,
-                                            headers = github_auth_token())
-        ),
-        silent = TRUE
-      )
-      if (download_rc != 0) {
-        Sys.sleep(pause_sec)
-      }
-      retries <- retries - 1
+    download_rc <- try_download(download_url, destination_file,
+                                quiet = quiet)
+    num_retries <- 0
+    while (num_retries < retries && inherits(download_rc, "try-error")) {
+      Sys.sleep(pause_sec)
+      num_retries <- num_retries + 1
+      download_rc <- try_download(download_url, destination_file, quiet = quiet)
     }
-    if (download_rc == 0) {
-      TRUE
-    } else {
-      FALSE
-    }
+    download_rc
 }
 
 build_cmdstan <- function(dir,
@@ -364,45 +435,64 @@ build_cmdstan <- function(dir,
   } else {
     run_cmd <- make_cmd()
   }
-  processx::run(
-    run_cmd,
-    args = c(translation_args, paste0("-j", cores), "build"),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) },
-    timeout = timeout
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path(dir = dir)
+    ),
+    wsl_compatible_run(
+      command = run_cmd,
+      args = c(translation_args, paste0("-j", cores), "build"),
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) },
+      timeout = timeout
+    )
   )
 }
 
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
-  processx::run(
-    make_cmd(),
-    args = c("clean-all"),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) }
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path(dir = dir)
+    ),
+    wsl_compatible_run(
+      command = make_cmd(),
+      args = "clean-all",
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) }
+    )
   )
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
-  processx::run(
-    make_cmd(),
-    args = c(paste0("-j", cores), cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
-    wd = dir,
-    echo_cmd = is_verbose_mode(),
-    echo = !quiet || is_verbose_mode(),
-    spinner = quiet,
-    error_on_status = FALSE,
-    stderr_callback = function(x, p) { if (quiet) message(x) },
-    timeout = timeout
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path(dir = dir)
+    ),
+    wsl_compatible_run(
+      command = make_cmd(),
+      args = c(paste0("-j", cores),
+                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+      wd = dir,
+      echo_cmd = is_verbose_mode(),
+      echo = !quiet || is_verbose_mode(),
+      spinner = quiet,
+      error_on_status = FALSE,
+      stderr_callback = function(x, p) { if (quiet) message(x) },
+      timeout = timeout
+    )
   )
 }
 
@@ -442,34 +532,79 @@ build_status_ok <- function(process_log, quiet = FALSE) {
   TRUE
 }
 
-install_mingw32_make <- function(quiet = FALSE) {
-  rtools_usr_bin <- file.path(Sys.getenv("RTOOLS40_HOME"), "usr", "bin")
+install_toolchain <- function(quiet = FALSE) {
+  rtools_usr_bin <- file.path(rtools4x_home_path(), "usr", "bin")
+  rtools_version <- paste0("Rtools", rtools4x_version())
+  if (is_ucrt_toolchain()) {
+    install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
+    if (!quiet) message(paste0("Installing mingw32-make and g++ with ", rtools_version))
+  } else {
+    install_pkgs <- "mingw-w64-x86_64-make"
+    if (!quiet) message(paste0("Installing mingw32-make with ", rtools_version))
+  }
   if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
-    warning("No write permissions in the RTools folder. This might prevent installing mingw32-make.",
+    warning("No write permissions in the RTools folder. This might prevent installing the toolchain.",
             " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
   }
-  if (!quiet) message("Installing mingw32-make and writing RTools path to ~/.Renviron ...")
-  processx::run(
-    "pacman",
-    args = c("-Syu", "mingw-w64-x86_64-make", "--noconfirm"),
-    wd = rtools_usr_bin,
-    error_on_status = TRUE,
-    echo_cmd = is_verbose_mode(),
-    echo = is_verbose_mode()
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var()
+    ),
+    processx::run(
+      "pacman",
+      args = c("-Sy", install_pkgs, "--noconfirm"),
+      wd = rtools_usr_bin,
+      error_on_status = TRUE,
+      echo_cmd = is_verbose_mode(),
+      echo = is_verbose_mode()
+    )
   )
-  write('PATH="${RTOOLS40_HOME}\\usr\\bin;${RTOOLS40_HOME}\\mingw64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-  Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS40_HOME"), "\\usr\\bin;", Sys.getenv("RTOOLS40_HOME"), "\\mingw64\\bin;", Sys.getenv("PATH")))
   invisible(NULL)
 }
 
-check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
-  rtools_path <- Sys.getenv("RTOOLS40_HOME")
-  # If RTOOLS40_HOME is not set (the env. variable gets set on install)
+check_wsl_toolchain <- function() {
+  if (!wsl_installed()) {
+    stop("\n", "A WSL distribution is not installed or is not accessible.",
+         "\n", "Please see the Microsoft documentation for guidance on installing WSL: ",
+         "\n", "https://docs.microsoft.com/en-us/windows/wsl/install",
+         call. = FALSE)
+  }
+
+  make_not_present <- processx::run(command = "wsl",
+                                    args = c("which", "make"),
+                                    error_on_status = FALSE)
+
+  gpp_not_present <- processx::run(command = "wsl",
+                                    args = c("which", "g++"),
+                                    error_on_status = FALSE)
+
+  clangpp_not_present <- processx::run(command = "wsl",
+                                   args = c("which", "clang++"),
+                                   windows_verbatim_args = TRUE,
+                                   error_on_status = FALSE)
+
+  if (make_not_present$status || (gpp_not_present$status
+        && clangpp_not_present$status)) {
+    stop("\n", "Your distribution is missing the needed utilities for compiling C++.",
+         "\n", "Please launch your WSL and install them using the appropriate command:",
+         "\n", "Debian/Ubuntu: sudo apt-get install build-essential",
+         "\n", "Fedora: sudo dnf group install \"C Development Tools and Libraries\"",
+         "\n", "Arch: pacman -Sy base-devel",
+         call. = FALSE)
+  }
+}
+
+check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
+  rtools_path <- rtools_home_path()
+  rtools_version <- paste0("Rtools", rtools4x_version())
+  toolchain_path <- rtools4x_toolchain_path()
+  # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
     stop(
-      "\nRTools 4.0 was not found but is required to run CmdStan with R version 4.x.",
-      "\nPlease install RTools 4.0 and run check_cmdstan_toolchain().",
+      "\n", rtools_version, " was not found but is required to run CmdStan with R version ",
+      R.version$major, ".", R.version$minor, ".",
+      "\nPlease install ", rtools_version, " and run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
@@ -477,38 +612,29 @@ check_rtools40_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   # we error as this path is not valid
   if (grepl("\\(|)| ", rtools_path)) {
     stop(
-      "\nRTools 4.0 is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall RTools 4.0 to a valid path, restart R, and then run check_cmdstan_toolchain().",
+      "\n", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
+      "\nPlease reinstall ", rtools_version, " to a valid path, restart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
-  toolchain_path <- repair_path(file.path(rtools_path, "mingw64", "bin"))
-  mingw32_make_path <- dirname(Sys.which("mingw32-make"))
-  gpp_path <- dirname(Sys.which("g++"))
-  if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
+  if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
+      !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
     if (!fix) {
       stop(
-        "\nRTools installation found but PATH was not properly set.",
-        "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
+        "\n", rtools_version, " installation found but the toolchain was not installed.",
+        "\nRun cmdstanr::check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
         call. = FALSE
       )
     } else {
-      install_mingw32_make(quiet = quiet)
-      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
-      return(invisible(NULL))
-    }
-  }
-  # Check if the mingw32-make and g++ get picked up by default are the RTools-supplied ones
-  if (toolchain_path != mingw32_make_path || gpp_path != toolchain_path) {
-    if (!fix) {
-      stop(
-        "\nOther C++ toolchains installed on your system conflict with RTools.",
-        "\nPlease run check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-        call. = FALSE
-      )
-    } else {
-      install_mingw32_make(quiet = quiet)
-      check_rtools40_windows_toolchain(fix = FALSE, quiet = quiet)
+      install_toolchain(quiet = quiet)
+      if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
+          !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
+        stop(
+          "\nInstallation of the toolchain failed. Try reinstalling RTools and trying again.",
+          "\nIf the issue persists, open a bug report at https://github.com/stan-dev/cmdstanr.",
+          call. = FALSE
+        )
+      }
       return(invisible(NULL))
     }
   }
@@ -584,13 +710,13 @@ check_unix_make <- function() {
         "The 'make' tool was not found. ",
         "Please install the command line tools for Mac with 'xcode-select --install' ",
         "or install Xcode from the app store. ",
-        "Then restart R and run check_cmdstan_toolchain().",
+        "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     } else {
       stop(
         "The 'make' tool was not found. ",
-        "Please install 'make', restart R, and then run check_cmdstan_toolchain().",
+        "Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     }
@@ -607,14 +733,14 @@ check_unix_cpp_compiler <- function() {
         "A suitable C++ compiler was not found. ",
         "Please install the command line tools for Mac with 'xcode-select --install' ",
         "or install Xcode from the app store. ",
-        "Then restart R and run check_cmdstan_toolchain().",
+        "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     } else {
       stop(
         "A C++ compiler was not found. ",
         "Please install the 'clang++' or 'g++' compiler, restart R, ",
-        "and run check_cmdstan_toolchain().",
+        "and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     }
@@ -627,8 +753,96 @@ cmdstan_arch_suffix <- function(version = NULL) {
     arch <- "-linux-arm64"
   }
   if (!is.null(version) && version < "2.26") {
-    # pre-CmdStan 2.26, only the x85 tarball was provided
+    # pre-CmdStan 2.26, only the x86 tarball was provided
     arch <- NULL
   }
   arch
+}
+
+is_toolchain_installed <- function(app, path) {
+  res <- tryCatch({
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var()
+        ),
+        processx::run(
+          app,
+          args = c("--version"),
+          wd = path,
+          error_on_status = FALSE,
+          echo_cmd = is_verbose_mode(),
+          echo = is_verbose_mode()
+        )
+      )
+      app_path <- withr::with_path(
+        c(
+          toolchain_PATH_env_var()
+        ),
+        repair_path(dirname(Sys.which(app)))
+      )
+      if (normalizePath(app_path) != normalizePath(rtools4x_toolchain_path())) {
+        return(FALSE)
+      }
+      return(TRUE)
+    },
+    error = function(cond) {
+      return(FALSE)
+    }
+  )
+  res
+}
+
+toolchain_PATH_env_var <- function() {
+  path <- NULL
+  if (R.version$major == "4") {
+    rtools_home <- rtools4x_home_path()
+    path <- paste0(
+      repair_path(file.path(rtools_home, "usr", "bin")), ";",
+      rtools4x_toolchain_path()
+    )
+  }
+  path
+}
+
+rtools4x_toolchain_path <- function() {
+  c_runtime <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
+  repair_path(file.path(rtools4x_home_path(), c_runtime, "bin"))
+}
+
+rtools4x_version <- function() {
+  rtools_ver <- NULL
+
+  if (R.version$minor < "2.0") {
+    rtools_ver <- "40"
+  } else if (R.version$minor < "3.0") {
+    rtools_ver <- "42"
+  } else {
+    rtools_ver <- "43"
+  }
+  rtools_ver
+}
+
+rtools4x_home_path <- function() {
+  rtools_ver <- rtools4x_version()
+  path <- Sys.getenv(paste0("RTOOLS", rtools_ver, "_HOME"))
+
+  if (!nzchar(path)) {
+    default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
+    if (dir.exists(default_path)) {
+      path <- default_path
+    }
+  }
+
+  path
+}
+
+rtools_home_path <- function() {
+  path <- NULL
+  if (R.version$major == "3") {
+    path <- Sys.getenv("RTOOLS_HOME")
+  }
+  if (R.version$major == "4") {
+    path <- rtools4x_home_path()
+  }
+  path
 }

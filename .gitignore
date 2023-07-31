@@ -4,6 +4,6 @@
 .Ruserdata
 .vscode/*
 
-design-questions/*
 inst/doc
 dev-helpers.R
+release-prep.R

@@ -21,7 +21,6 @@ fit_mcmc_3 <- testing_fit("logistic", method = "sample",
                           refresh = 0, metric = "dense_e")
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
-
 test_that("draws() stops for unkown variables", {
   expect_error(
     draws_betas <- fit_mcmc$draws(variables = "ABCD"),
@@ -38,7 +37,7 @@ test_that("draws() stops for unkown variables", {
 
 test_that("draws() works when gradually adding variables", {
   fit <- testing_fit("logistic", method = "sample", refresh = 0,
-                     validate_csv = TRUE, save_warmup = TRUE)
+                     save_warmup = TRUE)
 
   draws_lp__ <- fit$draws(variables = c("lp__"), inc_warmup = TRUE)
   sampler_diagnostics <- fit$sampler_diagnostics(inc_warmup = TRUE)
@@ -47,7 +46,7 @@ test_that("draws() works when gradually adding variables", {
   expect_equal(posterior::variables(draws_lp__), c("lp__"))
   expect_type(sampler_diagnostics, "double")
   expect_s3_class(sampler_diagnostics, "draws_array")
-  expect_equal(posterior::variables(sampler_diagnostics), c(c("treedepth__", "divergent__", "accept_stat__", "stepsize__", "n_leapfrog__", "energy__")))
+  expect_equal(posterior::variables(sampler_diagnostics), c(c("treedepth__", "divergent__", "energy__", "accept_stat__", "stepsize__", "n_leapfrog__")))
   draws_alpha <- fit$draws(variables = c("alpha"), inc_warmup = TRUE)
   expect_type(draws_alpha, "double")
   expect_s3_class(draws_alpha, "draws_array")
@@ -273,6 +272,29 @@ test_that("loo method works if log_lik is available", {
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = FALSE)), "loo")
 })
 
+test_that("loo method works with moment-matching", {
+  skip_if_not_installed("loo")
+  skip_if(os_is_wsl())
+
+  # Moment-matching needs model-methods, so make sure hpp is available
+  mod <- cmdstan_model(testing_stan_file("loo_moment_match"), force_recompile = TRUE)
+  data_list <- testing_data("loo_moment_match")
+  fit <- mod$sample(data = data_list, chains = 1)
+
+  # Regular LOO should warn that some pareto-k are "too high"
+  expect_warning(fit$loo(),
+                  "Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.",
+                  fixed=TRUE)
+
+  # After moment-matching the warning should be downgraded to "slightly high"
+  expect_warning(fit$loo(moment_match = TRUE),
+                  "Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.",
+                  fixed=TRUE)
+
+  # After moment-matching with lower target threshold there should be no warning
+  expect_no_warning(fit$loo(moment_match = TRUE, k_threshold=0.4))
+})
+
 test_that("loo errors if it can't find log lik variables", {
   skip_if_not_installed("loo")
   fit_schools <- testing_fit("schools")
@@ -322,4 +344,49 @@ test_that("draws() errors if invalid format", {
     fit_mcmc$draws(format = "bad_format"),
     "The supplied draws format is not valid"
   )
+})
+
+test_that("diagnostic_summary() works", {
+  # will have divergences and treedepth problems
+  fit <- suppressMessages(testing_fit("schools", max_treedepth = 3, seed = 123))
+
+  expect_message(
+    diagnostics <- fit$diagnostic_summary(),
+    "transitions ended with a divergence"
+  )
+  expect_equal(
+    diagnostics$num_divergent,
+    suppressMessages(check_divergences(fit$sampler_diagnostics()))
+  )
+  expect_message(
+    diagnostics <- fit$diagnostic_summary(),
+    "transitions hit the maximum treedepth limit of 3"
+  )
+  expect_equal(
+    diagnostics$num_max_treedepth,
+    suppressMessages(check_max_treedepth(fit$sampler_diagnostics(), fit$metadata()))
+  )
+  expect_equal(
+    diagnostics$ebfmi,
+    suppressMessages(check_ebfmi(fit$sampler_diagnostics()))
+  )
+
+  # ebfmi not defined if iter < 3
+  fit <- suppressWarnings(suppressMessages(testing_fit("schools", iter_sampling = 2)))
+  expect_warning(
+    diagnostics <- fit$diagnostic_summary(),
+    "E-BFMI not computed"
+  )
+  expect_equal(diagnostics$ebfmi, NA)
+
+  expect_equal(fit$diagnostic_summary(""), list())
+  expect_equal(fit$diagnostic_summary(NULL), list())
+})
+
+test_that("metadata()$time has chains rowss", {
+  expect_equal(nrow(fit_mcmc$metadata()$time), fit_mcmc$num_chains())
+  expect_equal(nrow(fit_mcmc_0$metadata()$time), fit_mcmc_0$num_chains())
+  expect_equal(nrow(fit_mcmc_1$metadata()$time), fit_mcmc_1$num_chains())
+  expect_equal(nrow(fit_mcmc_2$metadata()$time), fit_mcmc_2$num_chains())
+  expect_equal(nrow(fit_mcmc_3$metadata()$time), fit_mcmc_3$num_chains())
 })

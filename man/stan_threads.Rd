@@ -19,3 +19,4 @@ The value of the environment variable \code{STAN_NUM_THREADS}.
 \description{
 DEPRECATED. Please use the \code{threads_per_chain} argument when fitting the model.
 }
+\keyword{internal}

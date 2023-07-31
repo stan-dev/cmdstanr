@@ -13,7 +13,8 @@ ok_arg_values <- list(
   algorithm = "lbfgs",
   iter = 100,
   init_alpha = 0.002,
-  save_latent_dynamics = FALSE
+  save_latent_dynamics = FALSE,
+  jacobian = TRUE
 )
 
 # using any of these should cause optimize() to error
@@ -25,7 +26,8 @@ bad_arg_values <- list(
   algorithm = "NOT_AN_ALGORITHM",
   iter = -20,
   init_alpha = -20,
-  save_latent_dynamics = "NOT_LOGICAL"
+  save_latent_dynamics = "NOT_LOGICAL",
+  jacobian = 30
 )
 
 ok_arg_sci_nota_values <- list(
@@ -141,4 +143,12 @@ test_that("optimize() method runs when the stan file is removed", {
   expect_optim_output(
     mod_tmp$optimize(data = data_list)
   )
+})
+
+test_that("optimize() recognizes new jacobian argument", {
+  fit <- mod$optimize(data = data_list, jacobian = FALSE)
+  expect_equal(fit$metadata()$jacobian, 0)
+
+  fit2 <- mod$optimize(data = data_list, jacobian = TRUE)
+  expect_equal(fit2$metadata()$jacobian, 1)
 })

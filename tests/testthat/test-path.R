@@ -10,7 +10,8 @@ unset_cmdstan_path()
 test_that("Setting path works and confirms with message", {
   expect_message(
     set_cmdstan_path(PATH),
-    paste("CmdStan path set to:", PATH)
+    paste("CmdStan path set to:", PATH),
+    fixed = TRUE
   )
   expect_equal(.cmdstanr$PATH, PATH)
 })
@@ -90,7 +91,7 @@ test_that("Warning message is thrown if can't detect version number", {
 })
 
 test_that("cmdstan_ext() works", {
-  if (os_is_windows()) {
+  if (os_is_windows() && !os_is_wsl()) {
     expect_identical(cmdstan_ext(), ".exe")
     expect_identical(cmdstan_ext("path"), "path.exe")
   } else {

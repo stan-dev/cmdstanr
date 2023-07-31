@@ -1,0 +1,131 @@
+---
+title: "Handling deprecated Stan features with the canonicalizer in CmdStanR"
+author: "Rok Češnovar and Jonah Gabry"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+vignette: >
+  %\VignetteIndexEntry{Handling deprecated Stan features with the canonicalizer in CmdStanR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r child="children/_settings-knitr.Rmd"}
+```
+
+## Introduction
+
+This vignette demonstrates how to handle cases where your Stan program contains
+deprecated features resulting in deprecation warnings. In most cases, the
+Stan-to-C++ compiler can be used to automatically update your code to a
+non-deprecated feature that replaces the deprecated one. This vignette showcases
+how that automatic conversion can be done using CmdStanR.
+
+The automatic conversion of deprecated features to non-deprecated features is
+done using the so-called "canonicalizer", which is part of the Stan-to-C++
+compiler. We recommend using CmdStan 2.29.2 or later when using the
+canonicalizer and this vignette. The minimum CmdStanR version to run the
+code in the vignette is 0.5.0.
+
+```{r library, message=FALSE}
+library(cmdstanr)
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+```
+
+## Deprecation warnings
+
+The following logistic regression model uses several deprecated language
+features, resulting in several warnings during compilation.
+
+```{r logistic}
+stan_file <- write_stan_file("
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  int y[n];
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  # priors
+  target += std_normal_log(beta);
+  alpha ~ std_normal();
+
+  y ~ bernoulli_logit(X * beta + alpha);
+}
+")
+mod <- cmdstan_model(stan_file)
+```
+
+
+The first warning is about using the deprecated array syntax
+
+```
+int y[n];
+```
+
+which should be replaced with the new syntax using the `array` keyword:
+
+```
+array[n] int y;
+```
+
+The second warning is about using the deprecated commenting symbol `#`,
+which should be replaced by `//`.
+
+The last warning is about the use of the deprecated `_log` suffix for
+probability density and mass functions. In this case the `_log` suffix should be
+replaced with `_lpdf`. For probability mass functions the suffix `_lpmf` is
+used.
+
+We can go and fix these issues manually or use the canonicalizer as outlined
+in the next section.
+
+## Using the canonicalizer
+
+The canonicalizer is available through the `canonicalize` argument of the
+`$format()` method of the `CmdStanModel` class. The arguments accepts
+`TRUE` and `FALSE` values, in which case all or none of the features of the
+canonicalizer are used. It can also accept a list of character vectors that
+determine which features of the canonicalizer to use.
+
+The canonincalizer in CmdStan 2.29.2 supports four features: `parentheses`,
+`braces`, `includes` and `deprecations`. The `parentheses` and `braces` features
+clean up the use of parentheses and braces, while `includes` will replace
+`#include` statements with the code from the included files. See the
+[canonicalizer section of the Stan User's Guide](https://mc-stan.org/docs/2_29/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
+for more details.
+
+In this vignette we will be using the `deprecations` feature that replaces
+deprecated Stan model features with non-deprecated ones if possible.
+
+```{r canonicalize, message=FALSE}
+mod$format(canonicalize = list("deprecations"))
+```
+
+By default, the format function will print the resulting model code. We
+can see that all three issues were resolved. `y` is now defined using the
+new array keyword, the comment uses `//` and the `std_normal_log()` is replaced
+with `std_normal_lpdf()`.
+
+You can also use the `$format()` method to write the updated version of the
+model directly to the Stan model file. That can be enabled by setting
+`overwrite_file = TRUE`. The previous version of the file will automatically
+be backed up to a file with the `.stan.bak` suffix. If that is not desired or
+you are using a version system and making a backup is redundant,
+you can disable it by setting `backup = FALSE`.
+
+```{r overwrite_file}
+mod$format(
+    canonicalize = list("deprecations"),
+    overwrite_file = TRUE,
+    backup = FALSE
+)
+mod$print()
+```

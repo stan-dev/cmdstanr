@@ -28,7 +28,9 @@ methods, all of which have their own (linked) documentation pages.
 
 \subsection{Summarize inferences and diagnostics}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-print]{$print()}} \tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
    \code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
+   \code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} \tab Get summaries of sampler diagnostics and warning messages. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}} \tab Run and print CmdStan's \code{bin/stansummary}. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}} \tab Run and print CmdStan's \code{bin/diagnose}. \cr
    \code{\link[=fit-method-loo]{$loo()}} \tab Run \code{\link[loo:loo]{loo::loo.array()}} for approximate LOO-CV \cr
@@ -51,6 +53,21 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-output]{$output()}} \tab Return the stdout and stderr of all chains or pretty print the output for a single chain. \cr
    \code{\link[=fit-method-time]{$time()}} \tab Report total and chain-specific run times. \cr
    \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
+}
+
+}
+
+\subsection{Expose Stan functions and additional methods to R}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-expose_functions]{$expose_functions()}} \tab Expose Stan functions for use in R. \cr
+   \code{\link[=fit-method-init_model_methods]{$init_model_methods()}} \tab Expose methods for log-probability, gradients, parameter constraining and unconstraining. \cr
+   \code{\link[=fit-method-log_prob]{$log_prob()}} \tab Calculate log-prob. \cr
+   \code{\link[=fit-method-grad_log_prob]{$grad_log_prob()}} \tab Calculate log-prob and gradient. \cr
+   \code{\link[=fit-method-hessian]{$hessian()}} \tab Calculate log-prob, gradient, and hessian. \cr
+   \code{\link[=fit-method-constrain_variables]{$constrain_variables()}} \tab Transform a set of unconstrained parameter values to the constrained scale. \cr
+   \code{\link[=fit-method-unconstrain_variables]{$unconstrain_variables()}} \tab Transform a set of parameter values to the unconstrained scale. \cr
+   \code{\link[=fit-method-unconstrain_draws]{$unconstrain_draws()}} \tab Transform all parameter draws to the unconstrained scale. \cr
+   \code{\link[=fit-method-variable_skeleton]{$variable_skeleton()}} \tab Helper function to re-structure a vector of constrained parameter values. \cr
 }
 
 }

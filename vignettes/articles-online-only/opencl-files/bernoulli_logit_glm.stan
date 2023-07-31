@@ -2,7 +2,7 @@ data {
   int<lower=1> k;
   int<lower=0> n;
   matrix[n, k] X;
-  int y[n];
+  array[n] int y;
 }
 parameters {
   vector[k] beta;

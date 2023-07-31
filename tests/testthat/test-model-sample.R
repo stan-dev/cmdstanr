@@ -118,7 +118,7 @@ test_that("sample() method runs when the stan file is removed", {
   )
 })
 
-test_that("sample() prints informational messages depening on show_messages", {
+test_that("sample() prints informational messages depening on show_exceptions", {
   mod_info_msg <- testing_model("info_message")
   expect_sample_output(
     expect_message(
@@ -127,7 +127,7 @@ test_that("sample() prints informational messages depening on show_messages", {
     )
   )
   expect_sample_output(
-    expect_message(mod_info_msg$sample(show_messages = FALSE), regexp = NA)
+    expect_message(mod_info_msg$sample(show_exceptions = FALSE), regexp = NA)
   )
 })
 
@@ -320,4 +320,45 @@ test_that("sig_figs warning if version less than 2.25", {
     fixed = TRUE
   )
   reset_cmdstan_version()
+})
+
+test_that("Errors are suppressed with show_exceptions", {
+  errmodcode <- "
+  data {
+    real y_mean;
+  }
+  transformed data {
+    vector[1] small;
+    small[2] = 1.0;
+  }
+  parameters {
+    real y;
+  }
+  model {
+    y ~ normal(y_mean, 1);
+  }
+  "
+  errmod <- cmdstan_model(write_stan_file(errmodcode), force_recompile = TRUE)
+
+  expect_message(
+    suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1)),
+    "Chain 1 Exception: vector[uni] assign: accessing element out of range",
+    fixed = TRUE
+  )
+
+  expect_no_message(
+    suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1, show_exceptions = FALSE))
+  )
+})
+
+test_that("All output can be suppressed by show_messages", {
+  stan_program <- testing_stan_file("bernoulli")
+  data_list <- testing_data("bernoulli")
+  mod <- cmdstan_model(stan_program, force_recompile = TRUE)
+  options("cmdstanr_verbose" = FALSE)
+  output <- capture.output(
+    fit <- mod$sample(data = data_list, show_messages = FALSE)
+  )
+
+  expect_length(output, 0)
 })

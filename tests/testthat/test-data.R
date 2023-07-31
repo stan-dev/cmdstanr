@@ -69,27 +69,30 @@ test_that("process_fitted_params() errors with bad args", {
     error_msg
   )
 
-  fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
-  temp_file <- tempfile(fileext = ".rds")
-  saveRDS(fit_tmp, file = temp_file)
-  rm(fit_tmp)
-  gc()
-  fit_tmp_null <- readRDS(temp_file)
-  expect_error(
-    process_fitted_params(fit_tmp_null),
-    "Unable to obtain draws from the fit object."
-  )
+  # WSL Tempdir not cleaned up with R gc
+  if (!os_is_wsl()) {
+    fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
+    temp_file <- tempfile(fileext = ".rds")
+    saveRDS(fit_tmp, file = temp_file)
+    rm(fit_tmp)
+    gc()
+    fit_tmp_null <- readRDS(temp_file)
+    expect_error(
+      process_fitted_params(fit_tmp_null),
+      "Unable to obtain draws from the fit object."
+    )
 
-  fit_tmp <- testing_fit("bernoulli", method = "variational", seed = 123)
-  temp_file <- tempfile(fileext = ".rds")
-  saveRDS(fit_tmp, file = temp_file)
-  rm(fit_tmp)
-  gc()
-  fit_tmp_null <- readRDS(temp_file)
-  expect_error(
-    process_fitted_params(fit_tmp_null),
-    "Unable to obtain draws from the fit object."
-  )
+    fit_tmp <- testing_fit("bernoulli", method = "variational", seed = 123)
+    temp_file <- tempfile(fileext = ".rds")
+    saveRDS(fit_tmp, file = temp_file)
+    rm(fit_tmp)
+    gc()
+    fit_tmp_null <- readRDS(temp_file)
+    expect_error(
+      process_fitted_params(fit_tmp_null),
+      "Unable to obtain draws from the fit object."
+    )
+  }
 })
 
 test_that("process_fitted_params() works if output_files in fit do not exist", {
@@ -341,7 +344,6 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
   ")
   mod <- cmdstan_model(stan_file, compile = FALSE)
   test_file <- process_data(list(k = matrix(c(18, 18, 16, 13, 9, 6, 4, 4, 4), nrow=3, ncol=3, byrow=T)), model_variables = mod$variables())
-  print(readLines(test_file)[2:3])
   expect_match(
     "  \"k\": [",
     readLines(test_file)[2],

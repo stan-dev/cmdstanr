@@ -27,6 +27,8 @@ CmdStanArgs <- R6::R6Class(
     initialize = function(model_name,
                           stan_file = NULL,
                           stan_code = NULL,
+                          model_methods_env = NULL,
+                          standalone_env = NULL,
                           exe_file,
                           proc_ids,
                           method_args,
@@ -37,7 +39,6 @@ CmdStanArgs <- R6::R6Class(
                           refresh = NULL,
                           output_dir = NULL,
                           output_basename = NULL,
-                          validate_csv = TRUE,
                           sig_figs = NULL,
                           opencl_ids = NULL,
                           model_variables = NULL,
@@ -46,6 +47,8 @@ CmdStanArgs <- R6::R6Class(
       self$model_name <- model_name
       self$stan_code <- stan_code
       self$exe_file <- exe_file
+      self$model_methods_env <- model_methods_env
+      self$standalone_env <- standalone_env
       self$proc_ids <- proc_ids
       self$data_file <- data_file
       self$seed <- seed
@@ -54,12 +57,22 @@ CmdStanArgs <- R6::R6Class(
       self$method_args <- method_args
       self$method <- self$method_args$method
       self$save_latent_dynamics <- save_latent_dynamics
-      self$validate_csv <- validate_csv
       self$using_tempdir <- is.null(output_dir)
-      if (getRversion() < "3.5.0") {
+      self$model_variables <- model_variables
+      if (os_is_wsl()) {
+        # Want to ensure that any files under WSL are written to a tempdir within
+        # WSL to avoid IO performance issues
+        self$output_dir <- ifelse(is.null(output_dir),
+                                  file.path(wsl_dir_prefix(), wsl_tempdir()),
+                                  wsl_safe_path(output_dir))
+      } else if (getRversion() < "3.5.0") {
         self$output_dir <- output_dir %||% tempdir()
       } else {
-        self$output_dir <- output_dir %||% tempdir(check = TRUE)
+        if (getRversion() < "3.5.0") {
+          self$output_dir <- output_dir %||% tempdir()
+        } else {
+          self$output_dir <- output_dir %||% tempdir(check = TRUE)
+        }
       }
       self$output_dir <- repair_path(self$output_dir)
       self$output_basename <- output_basename
@@ -143,16 +156,16 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(self$init)) {
-        args$init <- paste0("init=", self$init[idx])
+        args$init <- paste0("init=", wsl_safe_path(self$init[idx]))
       }
 
       if (!is.null(self$data_file)) {
-        args$data <- c("data", paste0("file=", self$data_file))
+        args$data <- c("data", paste0("file=", wsl_safe_path(self$data_file)))
       }
 
-      args$output <- c("output", paste0("file=", output_file))
+      args$output <- c("output", paste0("file=", wsl_safe_path(output_file)))
       if (!is.null(latent_dynamics_file)) {
-        args$output <- c(args$output, paste0("diagnostic_file=", latent_dynamics_file))
+        args$output <- c(args$output, paste0("diagnostic_file=", wsl_safe_path(latent_dynamics_file)))
       }
       if (!is.null(self$refresh)) {
         args$output <- c(args$output, paste0("refresh=", self$refresh))
@@ -163,7 +176,7 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(profile_file)) {
-        args$output <- c(args$output, paste0("profile_file=", profile_file))
+        args$output <- c(args$output, paste0("profile_file=", wsl_safe_path(profile_file)))
       }
       if (!is.null(self$opencl_ids)) {
         args$opencl <- c("opencl", paste0("platform=", self$opencl_ids[1]), paste0("device=", self$opencl_ids[2]))
@@ -175,7 +188,7 @@ CmdStanArgs <- R6::R6Class(
       self$method_args$compose(idx, args)
     },
     command = function() {
-      paste0(if (!os_is_windows()) "./", basename(self$exe_file))
+      paste0(if (!os_is_windows() || os_is_wsl()) "./", basename(self$exe_file))
     }
   )
 )
@@ -202,7 +215,8 @@ SampleArgs <- R6::R6Class(
                           init_buffer = NULL,
                           term_buffer = NULL,
                           window = NULL,
-                          fixed_param = FALSE) {
+                          fixed_param = FALSE,
+                          diagnostics = NULL) {
 
       self$iter_warmup <- iter_warmup
       self$iter_sampling <- iter_sampling
@@ -215,6 +229,11 @@ SampleArgs <- R6::R6Class(
       self$metric <- metric
       self$inv_metric <- inv_metric
       self$fixed_param <- fixed_param
+      self$diagnostics <- diagnostics
+      if (identical(self$diagnostics, "")) {
+        self$diagnostics <- NULL
+      }
+
       if (!is.null(inv_metric)) {
         if (!is.null(metric_file)) {
           stop("Only one of inv_metric and metric_file can be specified.",
@@ -361,6 +380,7 @@ OptimizeArgs <- R6::R6Class(
   public = list(
     method = "optimize",
     initialize = function(iter = NULL,
+                          jacobian = NULL,
                           algorithm = NULL,
                           init_alpha = NULL,
                           tol_obj = NULL,
@@ -369,8 +389,9 @@ OptimizeArgs <- R6::R6Class(
                           tol_rel_grad = NULL,
                           tol_param = NULL,
                           history_size = NULL) {
-      self$algorithm <- algorithm
       self$iter <- iter
+      self$jacobian <- jacobian
+      self$algorithm <- algorithm
       self$init_alpha <- init_alpha
       self$tol_obj <- tol_obj
       self$tol_rel_obj <- tol_rel_obj
@@ -394,6 +415,7 @@ OptimizeArgs <- R6::R6Class(
       }
       new_args <- list(
         "method=optimize",
+        .make_arg("jacobian"),
         .make_arg("iter"),
         .make_arg("algorithm"),
         .make_arg("init_alpha"),
@@ -615,8 +637,7 @@ DiagnoseArgs <- R6::R6Class(
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_cmdstan_args <- function(self) {
   validate_exe_file(self$exe_file)
-
-  checkmate::assert_directory_exists(self$output_dir, access = "rw")
+  assert_dir_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
   checkmate::assert_integerish(self$proc_ids,
@@ -629,13 +650,13 @@ validate_cmdstan_args <- function(self) {
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
   checkmate::assert_integerish(self$sig_figs, lower = 1, upper = 18, null.ok = TRUE)
   if (!is.null(self$sig_figs) && cmdstan_version() < "2.25") {
-    warning("The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!")
+    warning("The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!", call. = FALSE)
   }
   if (!is.null(self$refresh)) {
     self$refresh <- as.integer(self$refresh)
   }
   if (!is.null(self$data_file)) {
-    checkmate::assert_file_exists(self$data_file, access = "r")
+    assert_file_exists(self$data_file, access = "r")
   }
   num_procs <- length(self$proc_ids)
   validate_init(self$init, num_procs)
@@ -735,6 +756,11 @@ validate_sample_args <- function(self, num_procs) {
   validate_metric(self$metric)
   validate_metric_file(self$metric_file, num_procs)
 
+  checkmate::assert_character(self$diagnostics, null.ok = TRUE, any.missing = FALSE)
+  if (!is.null(self$diagnostics)) {
+    checkmate::assert_subset(self$diagnostics, empty.ok = FALSE, choices = available_hmc_diagnostics())
+  }
+
   invisible(TRUE)
 }
 
@@ -745,6 +771,14 @@ validate_sample_args <- function(self, num_procs) {
 validate_optimize_args <- function(self) {
   checkmate::assert_subset(self$algorithm, empty.ok = TRUE,
                            choices = c("bfgs", "lbfgs", "newton"))
+  checkmate::assert_flag(self$jacobian, null.ok = TRUE)
+  if (!is.null(self$jacobian)) {
+    if (cmdstan_version() < "2.32") {
+      warning("The 'jacobian' argument is only supported with cmdstan 2.32+ and will be ignored!", call. = FALSE)
+    }
+    self$jacobian <- as.integer(self$jacobian)
+  }
+
   checkmate::assert_integerish(self$iter, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$iter)) {
     self$iter <- as.integer(self$iter)
@@ -783,7 +817,7 @@ validate_optimize_args <- function(self) {
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_generate_quantities_args <- function(self) {
   if (!is.null(self$fitted_params)) {
-    checkmate::assert_file_exists(self$fitted_params, access = "r")
+    assert_file_exists(self$fitted_params, access = "r")
   }
 
   invisible(TRUE)
@@ -988,7 +1022,7 @@ validate_init <- function(init, num_procs) {
            "length 1 or number of chains.",
            call. = FALSE)
     }
-    checkmate::assert_file_exists(init, access = "r")
+    assert_file_exists(init, access = "r")
   }
 
   invisible(TRUE)
@@ -1076,7 +1110,7 @@ validate_metric_file <- function(metric_file, num_procs) {
     return(invisible(TRUE))
   }
 
-  checkmate::assert_file_exists(metric_file, access = "r")
+  assert_file_exists(metric_file, access = "r")
 
   if (length(metric_file) != 1 && length(metric_file) != num_procs) {
     stop(length(metric_file), " metric(s) provided. Must provide ",
@@ -1121,6 +1155,10 @@ compose_arg <- function(self, arg_name, cmdstan_arg_name = NULL, idx = NULL) {
 
   if (is.null(val)) {
     return(NULL)
+  }
+
+  if (os_is_wsl() && (arg_name %in% c("metric_file", "fitted_params"))) {
+    val <- sapply(val, wsl_safe_path)
   }
   if (!is.null(idx) && length(val) >= idx) {
     val <- val[idx]

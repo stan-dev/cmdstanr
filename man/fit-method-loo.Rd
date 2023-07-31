@@ -5,7 +5,7 @@
 \alias{loo}
 \title{Leave-one-out cross-validation (LOO-CV)}
 \usage{
-loo(variables = "log_lik", r_eff = TRUE, ...)
+loo(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...)
 }
 \arguments{
 \item{variables}{(character vector) The name(s) of the variable(s) in the
@@ -23,18 +23,29 @@ but will result in a warning from the \pkg{loo} package.
 argument to \code{\link[loo:loo]{loo::loo.array()}}.
 }}
 
+\item{moment_match}{(logical) Whether to use a
+\link[loo:loo_moment_match]{moment-matching} correction for problematic
+observations. The default is \code{FALSE}. Using \code{moment_match=TRUE} will result
+in compiling the additional methods described in
+\link{fit-method-init_model_methods}. This allows CmdStanR to automatically
+supply the functions for the \code{log_lik_i}, \code{unconstrain_pars},
+\code{log_prob_upars}, and \code{log_lik_i_upars} arguments to
+\code{\link[loo:loo_moment_match]{loo::loo_moment_match()}}.}
+
 \item{...}{Other arguments (e.g., \code{cores}, \code{save_psis}, etc.) passed to
-\code{\link[loo:loo]{loo::loo.array()}}.}
+\code{\link[loo:loo]{loo::loo.array()}} or \code{\link[loo:loo_moment_match]{loo::loo_moment_match.default()}}
+(if \code{moment_match} = \code{TRUE} is set).}
 }
 \value{
-The object returned by \code{\link[loo:loo]{loo::loo.array()}}.
+The object returned by \code{\link[loo:loo]{loo::loo.array()}} or
+\code{\link[loo:loo_moment_match]{loo::loo_moment_match.default()}}.
 }
 \description{
 The \verb{$loo()} method computes approximate LOO-CV using the
-\pkg{loo} package. This is a simple wrapper around \code{\link[loo:loo]{loo::loo.array()}}
-provided for convenience and requires computing the pointwise
-log-likelihood in your Stan program. See the \pkg{loo} package
-\href{https://mc-stan.org/loo/articles/}{vignettes} for details.
+\pkg{loo} package. In order to use this method you must compute and save
+the pointwise log-likelihood in your Stan program. See \code{\link[loo:loo]{loo::loo.array()}}
+and the \pkg{loo} package \href{https://mc-stan.org/loo/articles/}{vignettes}
+for details.
 }
 \examples{
 

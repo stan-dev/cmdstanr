@@ -7,8 +7,8 @@
 ^docs$
 ^pkgdown$
 ^man-roxygen$
-^dev-helpers\.R$
 ^LICENSE\.md$
 ^\.appveyor\.yml$
 ^\.github$
 ^vignettes/articles-online-only$
+^release-prep\.R$
