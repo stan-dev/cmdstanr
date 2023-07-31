@@ -101,6 +101,7 @@ reference:
     contents:
       - CmdStanMCMC
       - CmdStanMLE
+      - CmdStanLaplace
       - CmdStanVB
       - CmdStanGQ
       - CmdStanDiagnose
