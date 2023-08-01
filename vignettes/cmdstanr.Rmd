@@ -187,7 +187,7 @@ first argument specifies the variables to summarize and any arguments
 after that are passed on to `posterior::summarise_draws()` to specify
 which summaries to compute, whether to use multiple cores, etc.
 
-```{r summary, eval=FALSE}
+```{r summary}
 fit$summary()
 fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
@@ -200,24 +200,6 @@ fit$summary(
   posterior::default_summary_measures(),
   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
 )
-```
-
-```{r, echo=FALSE}
-# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
-# is used because the pillar formatting of posterior draws_summary objects
-# isn't playing nicely with pkgdown::build_articles(). 
-options(digits = 2)
-print.data.frame(fit$summary())
-
-print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
-
-print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
-
-print.data.frame(fit$summary(
-  variables = NULL,
-  posterior::default_summary_measures(),
-  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
-))
 ```
 
 #### CmdStan's stansummary utility
@@ -351,18 +333,9 @@ the `$sample()` method demonstrated above.
 
 We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
-```{r optimize, eval=FALSE}
+```{r optimize}
 fit_mle <- mod$optimize(data = data_list, seed = 123)
 fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
-fit_mle$mle("theta")
-```
-```{r, echo=FALSE}
-# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
-# is used because the pillar formatting of posterior draws_summary objects
-# isn't playing nicely with pkgdown::build_articles(). 
-options(digits = 2)
-fit_mle <- mod$optimize(data = data_list, seed = 123)
-print.data.frame(fit_mle$summary()) # includes lp__ (log prob calculated by Stan program)
 fit_mle$mle("theta")
 ```
 
@@ -380,17 +353,9 @@ We can run Stan's experimental variational Bayes algorithm (ADVI) using the
 [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
 method.
 
-```{r variational, eval=FALSE}
+```{r variational}
 fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
 fit_vb$summary("theta")
-```
-```{r, echo=FALSE}
-# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
-# is used because the pillar formatting of posterior draws_summary objects
-# isn't playing nicely with pkgdown::build_articles(). 
-options(digits = 2)
-fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
-print.data.frame(fit_vb$summary("theta"))
 ```
 
 The `$draws()` method can be used to access the approximate posterior draws.
