@@ -15,27 +15,13 @@ vignette: >
 ```{r child="children/_settings-knitr.Rmd"}
 ```
 
-<!-- 
-NOTE: the hack below of using print.data.frame in chunks with echo=FALSE 
-is used because the pillar formatting of posterior draws_summary objects
-isn't playing nicely with pkgdown::build_articles(). When that is fixed
-using options(digits=2) also won't be necessary anymore.
--->
-```{r, include=FALSE}
-options(digits=2)
-```
-
 ## Summary statistics
 
-We can easily customise the summary statistics reported by `$summary()` and `$print()`.
+We can easily customize the summary statistics reported by `$summary()` and `$print()`.
 
-```{r eval=FALSE}
+```{r}
 fit <- cmdstanr::cmdstanr_example("schools", method = "sample")
 fit$summary()
-```
-```{r echo=FALSE}
-fit <- cmdstanr::cmdstanr_example("schools", method = "sample")
-print.data.frame(fit$summary())
 ```
 
 By default all variables are summaries with the follow functions:
@@ -43,34 +29,24 @@ By default all variables are summaries with the follow functions:
 posterior::default_summary_measures()
 ```
 
-To change the variables summarised, we use the variables argument
-```{r eval=FALSE}
+To change the variables summarized, we use the variables argument
+```{r}
 fit$summary(variables = c("mu", "tau"))
-```
-```{r echo=FALSE}
-print.data.frame(fit$summary(variables = c("mu", "tau")))
 ```
 
 We can additionally change which functions are used
-```{r eval=FALSE}
+```{r}
 fit$summary(variables = c("mu", "tau"), mean, sd)
 ```
-```{r echo=FALSE}
-print.data.frame(fit$summary(variables = c("mu", "tau"), mean, sd))
-```
 
-To summarise all variables with non-default functions, it is necessary to set explicitly set the variables argument, either to `NULL` or the full vector of variable names.
-```{r eval=FALSE}
+To summarize all variables with non-default functions, it is necessary to set explicitly set the variables argument, either to `NULL` or the full vector of variable names.
+```{r}
 fit$metadata()$model_params
 fit$summary(variables = NULL, "mean", "median")
 ```
-```{r echo=FALSE}
-fit$metadata()$model_params
-print.data.frame(fit$summary(variables = NULL, "mean", "median"))
-```
 
 Summary functions can be specified by character string, function, or using a formula (or anything else supported by [rlang::as_function]). If these arguments are named, those names will be used in the tibble output. If the summary results are named they will take precedence.
-```{r eval=FALSE}
+```{r}
 my_sd <- function(x) c(My_SD = sd(x))
 fit$summary(
   c("mu", "tau"), 
@@ -81,56 +57,29 @@ fit$summary(
   Minimum = function(x) min(x)
 )        
 ```
-```{r echo=FALSE}
-my_sd <- function(x) c(My_SD = sd(x))
-print.data.frame(fit$summary(
-  c("mu", "tau"), 
-  MEAN = mean, 
-  "median",
-  my_sd,
-  ~quantile(.x, probs = c(0.1, 0.9)),
-  Minimum = function(x) min(x)
-))
-```
-
 
 Arguments to all summary functions can also be specified with `.args`. 
-```{r eval=FALSE}
+```{r}
 fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, .05, .95, .975)))
-```
-```{r echo=FALSE}
-print.data.frame(fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, .05, .95, .975))))
 ```
 
 The summary functions are applied to the array of sample values, with dimension `iter_sampling`x`chains`.
-```{r eval=FALSE}
+```{r}
 fit$summary(variables = NULL, dim, colMeans)
-```
-```{r echo=FALSE}
-print.data.frame(fit$summary(variables = NULL, dim, colMeans))
 ```
 
 
 For this reason users may have unexpected results if they use `stats::var()` directly, as it will return a covariance matrix. An alternative is the `distributional::variance()` function, 
 which can also be accessed via `posterior::variance()`.
-```{r eval=FALSE}
+```{r}
 fit$summary(c("mu", "tau"), posterior::variance, ~var(as.vector(.x)))
 ```
-```{r echo=FALSE}
-print.data.frame(fit$summary(c("mu", "tau"), posterior::variance, ~var(as.vector(.x))))
-```
-
 
 Summary functions need not be numeric, but these won't work with `$print()`.
 
-```{r eval=FALSE}
+```{r}
 strict_pos <- function(x) if (all(x > 0)) "yes" else "no"
 fit$summary(variables = NULL, "Strictly Positive" = strict_pos)
-# fit$print(variables = NULL, "Strictly Positive" = strict_pos)
-```
-```{r echo=FALSE}
-strict_pos <- function(x) if (all(x > 0)) "yes" else "no"
-print.data.frame(fit$summary(variables = NULL, "Strictly Positive" = strict_pos))
 # fit$print(variables = NULL, "Strictly Positive" = strict_pos)
 ```
 
