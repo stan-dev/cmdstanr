@@ -1666,7 +1666,9 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #' @param tol_rel_obj (positive real) Convergence tolerance on the relative norm
 #'   of the objective.
 #' @param eval_elbo (positive integer) Evaluate ELBO every Nth iteration.
-#' @param output_samples (positive integer) Number of approximate posterior
+#' @param output_samples (positive integer) Use `draws` argument instead.
+#'   `output_samples` will be deprecated in the future.
+#' @param draws (positive integer) Number of approximate posterior
 #'   samples to draw and save.
 #'
 #' @return A [`CmdStanVB`] object.
@@ -1693,7 +1695,8 @@ variational <- function(data = NULL,
                         adapt_iter = NULL,
                         tol_rel_obj = NULL,
                         eval_elbo = NULL,
-                        output_samples = NULL) {
+                        output_samples = NULL,
+                        draws = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
@@ -1713,7 +1716,7 @@ variational <- function(data = NULL,
     adapt_iter = adapt_iter,
     tol_rel_obj = tol_rel_obj,
     eval_elbo = eval_elbo,
-    output_samples = output_samples
+    output_samples = draws %||% output_samples
   )
   args <- CmdStanArgs$new(
     method_args = variational_args,

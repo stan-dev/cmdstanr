@@ -831,7 +831,7 @@ validate_variational_args <- function(self) {
     self$eval_elbo <- as.integer(self$eval_elbo)
   }
   checkmate::assert_integerish(self$output_samples, null.ok = TRUE,
-                               lower = 1, len = 1)
+                               lower = 1, len = 1, .var.name = "draws")
   if (!is.null(self$output_samples)) {
     self$output_samples <- as.integer(self$output_samples)
   }
