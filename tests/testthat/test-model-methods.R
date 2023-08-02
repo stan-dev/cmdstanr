@@ -268,3 +268,12 @@ test_that("unconstrain_draws returns correct values", {
   unconstrained_draws <- fit$unconstrain_draws(draws = fit$draws())[[1]]
   expect_equal(as.numeric(x_draws), exp(as.numeric(unconstrained_draws)))
 })
+
+test_that("Model methods can be initialised for models with no data", {
+  skip_if(os_is_wsl())
+
+  stan_file <- write_stan_file("parameters { real x; } model { x ~ std_normal(); }")
+  mod <- cmdstan_model(stan_file, compile_model_methods = TRUE, force_recompile = TRUE)
+  expect_no_error(fit <- mod$sample())
+  expect_equal(fit$log_prob(5), -12.5)
+})

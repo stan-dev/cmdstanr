@@ -6,9 +6,15 @@
 #include <cmdstan/io/json/json_data.hpp>
 #else
 #include <stan/io/json/json_data.hpp>
+#include <stan/io/empty_var_context.hpp>
 #endif
 
 std::shared_ptr<stan::io::var_context> var_context(std::string file_path) {
+  if (file_path == "") {
+    stan::io::empty_var_context empty_context;
+    return std::make_shared<stan::io::empty_var_context>(empty_context);
+  }
+
   std::fstream stream(file_path.c_str(), std::fstream::in);
 #ifdef CMDSTAN_JSON
 using json_data_t = cmdstan::json::json_data;
