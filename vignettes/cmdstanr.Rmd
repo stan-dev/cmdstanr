@@ -355,7 +355,11 @@ variables. To include the Jacobian adjustment and obtain a maximum a posteriori
 section of the CmdStan User's Guide for more details. 
 
 ```{r optimize-map}
-fit_map <- mod$optimize(data = data_list, jacobian = TRUE, seed = 123)
+fit_map <- mod$optimize(
+  data = data_list, 
+  jacobian = TRUE, 
+  seed = 123
+)
 ```
 
 ### Laplace Approximation
@@ -375,7 +379,13 @@ Here we pass in the `fit_map` object from above as the `mode` argument. If
 from the normal approximation.
 
 ```{r laplace}
-fit_laplace <- mod$laplace(mode = fit_map, draws = 4000, data = data_list, seed = 123)
+fit_laplace <- mod$laplace(
+    mode = fit_map,
+    draws = 4000,
+    data = data_list,
+    seed = 123,
+    refresh = 1000
+  )
 fit_laplace$summary("theta")
 mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025)
 ```
@@ -387,7 +397,11 @@ We can run Stan's experimental variational Bayes algorithm (ADVI) using the
 method.
 
 ```{r variational}
-fit_vb <- mod$variational(data = data_list, draws = 4000, seed = 123)
+fit_vb <- mod$variational(
+  data = data_list, 
+  draws = 4000, 
+  seed = 123
+)
 fit_vb$summary("theta")
 ```
 
@@ -395,14 +409,20 @@ Let's extract the draws, make the same plot we made after MCMC and Laplace
 approximation, and compare them all. In this simple example the distributions
 are quite similar, but this will not always be the case.
 
-```{r plot-compare, message = FALSE, fig.width = 8, fig.cap="Comparing draws from the different algorithms"}
-bayesplot_grid(
-  mcmc_hist(fit$draws("theta"), binwidth = 0.025),
-  mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025),
-  mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025), 
-  xlim = c(0, 1), 
-  subtitles = c("MCMC", "Laplace", "Variational")
-)
+```{r plot-compare-vb, message = FALSE}
+mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025) + 
+  ggplot2::labs(subtitle = "Approximate posterior from variational") + 
+  ggplot2::xlim(0, 1)
+```
+```{r plot-compare-laplace, message = FALSE}
+mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025) + 
+  ggplot2::labs(subtitle = "Approximate posterior from Laplace") + 
+  ggplot2::xlim(0, 1)
+```
+```{r plot-compare-mcmc, message = FALSE}
+mcmc_hist(fit$draws("theta"), binwidth = 0.025) + 
+  ggplot2::labs(subtitle = "Posterior from MCMC") + 
+  ggplot2::xlim(0, 1)
 ```
 
 For more details on the `$optimize()`, `$laplace()`  and `$variational()`
