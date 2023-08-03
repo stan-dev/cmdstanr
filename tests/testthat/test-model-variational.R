@@ -19,7 +19,7 @@ ok_arg_values <- list(
   adapt_iter = 51,
   tol_rel_obj = 0.011,
   eval_elbo = 101,
-  output_samples = 10,
+  draws = 10,
   save_latent_dynamics = FALSE
 )
 
@@ -38,7 +38,7 @@ bad_arg_values <- list(
   adapt_iter = -10,
   tol_rel_obj = -0.5,
   eval_elbo = -10,
-  output_samples = -10,
+  draws = -10,
   save_latent_dynamics = "NOT_LOGICAL"
 )
 
