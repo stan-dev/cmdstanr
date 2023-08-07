@@ -474,16 +474,18 @@ through CmdStan.
 
 You may compile a Stan model at runtime (e.g. just before sampling),
 or you may compile all the models inside the package file system in advance at installation time.
-The latter avoids repeated compilations at runtime.
+The latter avoids compilations at runtime, which matters in centrally managed R installations
+where users should not compile their own software.
+
 To pre-compile all the models in a package,
 you may create top-level scripts `configure` and `configure.win`
 which run `cmdstan_model()` with `compile = TRUE` and save the compiled executables
 somewhere inside the `inst/` folder of the package source.
-The [`instantiate`](https://wlandau.github.io/instantiate/) package helps follow
-this configuration pattern and documents other topics like CRAN submission and
-administering CmdStan in centralized R enviroinments.
-Kevin Ushey's [`configure`](https://github.com/kevinushey/configure) package helps write
-configuration files more generally.
+The [`instantiate`](https://wlandau.github.io/instantiate/) package helps developers
+configure packages this way,
+and it documents other topics such as submitting to CRAN and administering CmdStan.
+Kevin Ushey's [`configure`](https://github.com/kevinushey/configure) package helps
+create and manage package configuration files in general.
 
 
 ### Troubleshooting and debugging
