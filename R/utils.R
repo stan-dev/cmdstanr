@@ -872,14 +872,14 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
   funs <- c(funs, length(env$hpp_code))
 
-  env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
-    get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
-  })
-
   stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
     fun_end <- funs[ind + 1]
     fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
     prep_fun_cpp(funs[ind], fun_end, env$hpp_code)
+  })
+
+  env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
+    get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
   })
 
   dups <- env$fun_names[duplicated(env$fun_names)]
@@ -897,7 +897,6 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     "// [[Rcpp::depends(RcppEigen)]]",
     stan_funs),
   collapse = "\n")
-
   if (global) {
     rcpp_source_stan(mod_stan_funs, globalenv(), verbose)
   } else {
