@@ -1,3 +1,4 @@
+#include <Rcpp.h>
 #include <stan/model/log_prob_grad.hpp>
 #include <stan/model/log_prob_propto.hpp>
 #ifdef CMDSTAN_JSON
