@@ -25,9 +25,9 @@ using json_data_t = stan::json::json_data;
 }
 
 // [[Rcpp::export]]
-SEXP model_ptr(std::string data_path) {
+SEXP model_ptr(std::string data_path, boost::uint32_t seed) {
   Rcpp::XPtr<stan_model> ptr(
-    new stan_model(*var_context(data_path), 0, &Rcpp::Rcout),
+    new stan_model(*var_context(data_path), seed, &Rcpp::Rcout),
     true
   );
   return ptr;
