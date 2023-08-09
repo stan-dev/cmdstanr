@@ -1,7 +1,5 @@
-#include <Rcpp.h>
 #include <stan/model/log_prob_grad.hpp>
 #include <stan/model/log_prob_propto.hpp>
-#include <boost/random/additive_combine.hpp>
 #ifdef CMDSTAN_JSON
 #include <cmdstan/io/json/json_data.hpp>
 #else
@@ -26,15 +24,12 @@ using json_data_t = stan::json::json_data;
 }
 
 // [[Rcpp::export]]
-Rcpp::List model_ptr(std::string data_path, boost::uint32_t seed) {
+SEXP model_ptr(std::string data_path) {
   Rcpp::XPtr<stan_model> ptr(
-    new stan_model(*var_context(data_path), seed, &Rcpp::Rcout)
+    new stan_model(*var_context(data_path), seed, &Rcpp::Rcout),
+    true
   );
-  Rcpp::XPtr<boost::ecuyer1988> base_rng(new boost::ecuyer1988(seed));
-  return Rcpp::List::create(
-    Rcpp::Named("model_ptr") = ptr,
-    Rcpp::Named("base_rng") = base_rng
-  );
+  return ptr;
 }
 
 // [[Rcpp::export]]

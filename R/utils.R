@@ -748,7 +748,8 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
                                   package = "cmdstanr", mustWork = TRUE)))
 
   if (hessian) {
-    code <- c(code,
+    code <- c("#include <stan/math/mix.hpp>",
+            code,
             readLines(system.file("include", "hessian.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
   }
@@ -758,11 +759,8 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
   invisible(NULL)
 }
 
-initialize_model_pointer <- function(env, data, seed = 0) {
-  datafile_path <- ifelse(is.null(data), "", data)
-  ptr_and_rng <- env$model_ptr(datafile_path, seed)
-  env$model_ptr_ <- ptr_and_rng$model_ptr
-  env$model_rng_ <- ptr_and_rng$base_rng
+initialize_model_pointer <- function(env, datafile_path) {
+  env$model_ptr_ <- env$model_ptr(ifelse(is.null(datafile_path), "", datafile_path))
   env$num_upars_ <- env$get_num_upars(env$model_ptr_)
   env$param_metadata_ <- env$get_param_metadata(env$model_ptr_)
   invisible(NULL)
@@ -863,8 +861,8 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   fun_body <- gsub("auto", get_plain_rtn(fun_start, fun_end, model_lines), fun_body)
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
-  fun_body <- gsub("boost::ecuyer1988& base_rng__", "size_t seed = 0", fun_body, fixed = TRUE)
-  fun_body <- gsub("base_rng__,", "*(new boost::ecuyer1988(seed)),", fun_body, fixed = TRUE)
+  fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
+  fun_body <- gsub("base_rng__,", "*(Rcpp::XPtr<boost::ecuyer1988>(base_rng_ptr).get()),", fun_body, fixed = TRUE)
   fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
   fun_body <- paste(fun_body, collapse = "\n")
   gsub(pattern = ",\\s*)", replacement = ")", fun_body)
@@ -874,14 +872,14 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
   funs <- c(funs, length(env$hpp_code))
 
+  env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
+    get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
+  })
+
   stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
     fun_end <- funs[ind + 1]
     fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
     prep_fun_cpp(funs[ind], fun_end, env$hpp_code)
-  })
-
-  env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
-    get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
   })
 
   dups <- env$fun_names[duplicated(env$fun_names)]
@@ -899,11 +897,36 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     "// [[Rcpp::depends(RcppEigen)]]",
     stan_funs),
   collapse = "\n")
+
   if (global) {
     rcpp_source_stan(mod_stan_funs, globalenv(), verbose)
   } else {
     rcpp_source_stan(mod_stan_funs, env, verbose)
   }
+
+  # If an RNG function is exposed, initialise a Boost RNG object stored in the
+  # environment
+  rng_funs <- grep("rng\\b", env$fun_names, value = TRUE)
+  if (length(rng_funs) > 0) {
+    rng_cpp <- system.file("include", "base_rng.cpp", package = "cmdstanr", mustWork = TRUE)
+    rcpp_source_stan(paste0(readLines(rng_cpp), collapse="\n"), env, verbose)
+    env$rng_ptr <- env$base_rng(seed=0)
+  }
+
+  # For all RNG functions, pass the initialised Boost RNG by default
+  for (fun in rng_funs) {
+    if (global) {
+      fun_env <- globalenv()
+    } else {
+      fun_env <- env
+    }
+    fundef <- get(fun, envir = fun_env)
+    funargs <- formals(fundef)
+    funargs$base_rng_ptr <- env$rng_ptr
+    formals(fundef) <- funargs
+    assign(fun, fundef, envir = fun_env)
+  }
+
   env$compiled <- TRUE
   invisible(NULL)
 }
