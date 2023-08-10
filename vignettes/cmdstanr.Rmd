@@ -401,12 +401,12 @@ and saves the object with `saveRDS()`. To speed up the process, you can emulate
 and replace `saveRDS` with the much faster `qsave()` function from the
 [`qs`](https://github.com/traversc/qs) package.
 
-```{r save_object_qs, eval = FALSE}
-# Load CmdStan files into the fitted model object.
-fit$draws()
-try(fit$sampler_diagnostics(), silent = TRUE)
-try(fit$init(), silent = TRUE)
-try(fit$profiles(), silent = TRUE)
+```{r save_object_qs_full, eval = FALSE}
+# Load CmdStan output files into the fitted model object.
+fit$draws() # Load posterior draws into the object.
+try(fit$sampler_diagnostics(), silent = TRUE) # Load sampler diagnostics.
+try(fit$init(), silent = TRUE) # Load user-defined initial values.
+try(fit$profiles(), silent = TRUE) # Load profiling samples.
 
 # Save the object to a file.
 qs::qsave(x = fit, file = "fit.qs")
@@ -419,9 +419,8 @@ Storage is even faster if you discard results you do not need to save.
 The following example saves only posterior draws and discards
 sampler diagnostics, user-specified initial values, and profiling data.
 
-
-```{r save_object_qs, eval = FALSE}
-# Load posterior draws into the fitted model object.
+```{r save_object_qs_small, eval = FALSE}
+# Load posterior draws into the fitted model object and omit other output.
 fit$draws()
 
 # Save the object to a file.
