@@ -500,14 +500,52 @@ compile <- function(quiet = TRUE,
     exe <- self$exe_file()
   }
 
+  # Resolve stanc and cpp options
+  if (pedantic) {
+    stanc_options[["warn-pedantic"]] <- TRUE
+  }
+
+  if (isTRUE(cpp_options$stan_opencl)) {
+    stanc_options[["use-opencl"]] <- TRUE
+  }
+  if (!is.null(user_header)) {
+    cpp_options[["USER_HEADER"]] <- wsl_safe_path(user_header)
+    stanc_options[["allow-undefined"]] <- TRUE
+    private$using_user_header_ <- TRUE
+  }
+  if (!is.null(cpp_options[["USER_HEADER"]])) {
+    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
+    private$using_user_header_ <- TRUE
+    user_header <- cpp_options[["USER_HEADER"]]
+  }
+  if (!is.null(cpp_options[["user_header"]])) {
+    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
+    private$using_user_header_ <- TRUE
+    user_header <- cpp_options[["user_header"]]
+  }
+  if (is.null(stanc_options[["name"]])) {
+    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
+  }
+
+  if(!is.null(user_header)) {
+    if(!file.exists(user_header)) {
+      stop(paste0("User header file '", user_header, "' does not exist"))
+    }
+  }
+
   # compile if:
   # - the user forced compilation,
   # - the executable does not exist
   # - the stan model was changed since last compilation
+  # - a user header is used and the user header changed since last compilation (#813)
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
              && file.mtime(exe) < file.mtime(self$stan_file())) {
+    force_recompile <- TRUE
+  } else if (!is.null(user_header)
+             && file.exists(user_header)
+             && file.mtime(exe) < file.mtime(user_header)) {
     force_recompile <- TRUE
   }
 
@@ -547,26 +585,6 @@ compile <- function(quiet = TRUE,
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
-  if (pedantic) {
-    stanc_options[["warn-pedantic"]] <- TRUE
-  }
-
-  if (isTRUE(cpp_options$stan_opencl)) {
-    stanc_options[["use-opencl"]] <- TRUE
-  }
-  if (!is.null(user_header)) {
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(user_header)
-    stanc_options[["allow-undefined"]] <- TRUE
-  }
-  if (!is.null(cpp_options[["USER_HEADER"]])) {
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
-  }
-  if (!is.null(cpp_options[["user_header"]])) {
-    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
-  }
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  }
   stanc_built_options <- c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
