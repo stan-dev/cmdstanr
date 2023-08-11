@@ -595,7 +595,7 @@ test_that("cmdstan_model errors with no args ", {
 })
 
 test_that("cmdstan_model works with user_header", {
-  skip_if(os_is_macos() | (os_is_windows() && !os_is_wsl()))
+  skip_if(os_is_macos())
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
   "

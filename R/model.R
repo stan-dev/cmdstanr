@@ -509,7 +509,8 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
   if (!is.null(user_header)) {
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(user_header)
+    user_header <- wsl_safe_path(user_header)
+    cpp_options[["USER_HEADER"]] <- user_header
     stanc_options[["allow-undefined"]] <- TRUE
     private$using_user_header_ <- TRUE
   }
