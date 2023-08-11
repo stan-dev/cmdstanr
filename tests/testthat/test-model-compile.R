@@ -627,6 +627,12 @@ test_that("cmdstan_model works with user_header", {
     stanc_options = list("allow-undefined")
   )
   expect_true(file.exists(mod_2$exe_file()))
+
+  # Check recompilation upon changing header
+  expect_interactive_message(mod$compile(quiet = TRUE, user_header = tmpfile), "Model executable is up to date!")
+
+  Sys.setFileTime(tmpfile, Sys.time() + 1) #touch file to trigger recompile
+  expect_interactive_message(mod$compile(quiet = TRUE, user_header = tmpfile), "Compiling Stan program...")
 })
 
 test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
