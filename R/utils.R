@@ -491,7 +491,7 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
     if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
       base_file <- basename(path)
       path <- dirname(path)
-      abs_path <- repair_path(utils::shortPathName(path))
+      abs_path <- repair_path(path)
       drive_letter <- tolower(strtrim(abs_path, 1))
       path <- gsub(paste0(drive_letter, ":"),
                   paste0("/mnt/", drive_letter),
