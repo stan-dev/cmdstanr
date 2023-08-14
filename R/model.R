@@ -509,7 +509,8 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
   if (!is.null(user_header)) {
-    user_header <- wsl_safe_path(absolute_path(user_header))
+    #user_header <- wsl_safe_path(absolute_path(user_header))
+    user_header <- user_header
     cpp_options[["USER_HEADER"]] <- user_header
     stanc_options[["allow-undefined"]] <- TRUE
     private$using_user_header_ <- TRUE
@@ -517,12 +518,12 @@ compile <- function(quiet = TRUE,
   if (!is.null(cpp_options[["USER_HEADER"]])) {
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
     private$using_user_header_ <- TRUE
-    user_header <- cpp_options[["USER_HEADER"]]
+    #user_header <- cpp_options[["USER_HEADER"]]
   }
   if (!is.null(cpp_options[["user_header"]])) {
     cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
     private$using_user_header_ <- TRUE
-    user_header <- cpp_options[["user_header"]]
+    #user_header <- cpp_options[["user_header"]]
   }
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
