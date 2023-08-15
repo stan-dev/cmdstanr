@@ -452,6 +452,9 @@ compile <- function(quiet = TRUE,
                     compile_standalone = FALSE,
                     #deprecated
                     threads = FALSE) {
+
+  warning(paste0("user_header test 1: ", user_header))
+
   if (length(self$stan_file()) == 0) {
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
@@ -526,8 +529,11 @@ compile <- function(quiet = TRUE,
     private$using_user_header_ <- TRUE
   }
 
+  warning(paste0("user_header test 2: ", user_header))
+
   if(!is.null(user_header)) {
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
+    warning(paste0("user_header test 3: ", user_header))
     if(!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist"))
     }

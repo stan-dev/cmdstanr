@@ -615,6 +615,7 @@ test_that("cmdstan_model works with user_header", {
       }
   }"
   cat(hpp, file = tmpfile, sep = "\n")
+  warning(paste0("tmpfile test: ", tmpfile))
   mod <- cmdstan_model(
     stan_file = testing_stan_file("bernoulli_external"),
     user_header = tmpfile
