@@ -511,19 +511,28 @@ compile <- function(quiet = TRUE,
   if (isTRUE(cpp_options$stan_opencl)) {
     stanc_options[["use-opencl"]] <- TRUE
   }
+
   # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
   # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
   if (!is.null(user_header)) {
+    if(!is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])) {
+      warning("User header specified both via user_header argument and via cpp_options arguments")
+    }
+
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
     stanc_options[["allow-undefined"]] <- TRUE
     private$using_user_header_ <- TRUE
   }
-  if (!is.null(cpp_options[["USER_HEADER"]])) {
+  else if (!is.null(cpp_options[["USER_HEADER"]])) {
+    if(!is.null(cpp_options[["user_header"]])) {
+      warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]]')
+    }
+
     user_header <- cpp_options[["USER_HEADER"]]
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
     private$using_user_header_ <- TRUE
   }
-  if (!is.null(cpp_options[["user_header"]])) {
+  else if (!is.null(cpp_options[["user_header"]])) {
     user_header <- cpp_options[["user_header"]]
     cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
     private$using_user_header_ <- TRUE
