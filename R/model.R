@@ -526,8 +526,8 @@ compile <- function(quiet = TRUE,
     private$using_user_header_ <- TRUE
   }
 
-  user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
   if(!is.null(user_header)) {
+    user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
     if(!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist"))
     }
