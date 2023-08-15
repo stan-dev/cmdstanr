@@ -533,10 +533,6 @@ compile <- function(quiet = TRUE,
     }
   }
 
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  }
-
   # compile if:
   # - the user forced compilation,
   # - the executable does not exist
@@ -571,7 +567,7 @@ compile <- function(quiet = TRUE,
 
   if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
     warning("Additional model methods and standalone functions are not ",
-            "currently available with WSL CmdStan and will not be compiled",
+            "currently available with WSLv1 CmdStan and will not be compiled",
             call. = FALSE)
     compile_model_methods <- FALSE
     compile_standalone <- FALSE
@@ -589,6 +585,9 @@ compile <- function(quiet = TRUE,
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
+  if (is.null(stanc_options[["name"]])) {
+    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
+  }
   stanc_built_options <- c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
