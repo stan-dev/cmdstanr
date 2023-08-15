@@ -9,7 +9,8 @@ cmdstanr_example(
   example = c("logistic", "schools", "schools_ncp"),
   method = c("sample", "optimize", "variational", "diagnose"),
   ...,
-  quiet = TRUE
+  quiet = TRUE,
+  force_recompile = getOption("cmdstanr_force_recompile", default = FALSE)
 )
 
 print_example_program(example = c("logistic", "schools", "schools_ncp"))
@@ -37,6 +38,9 @@ the individual methods for details.}
 
 \item{quiet}{(logical) If \code{TRUE} (the default) then fitting the model is
 wrapped in \code{\link[utils:capture.output]{utils::capture.output()}}.}
+
+\item{force_recompile}{Passed to the \link[=$compile]{model-method-compile}
+method.}
 }
 \value{
 The fitted model object returned by the selected \code{method}.
