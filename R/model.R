@@ -508,30 +508,33 @@ compile <- function(quiet = TRUE,
   if (isTRUE(cpp_options$stan_opencl)) {
     stanc_options[["use-opencl"]] <- TRUE
   }
+  # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
+  # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
   if (!is.null(user_header)) {
-    user_header <- wsl_safe_path(absolute_path(user_header))
-    cpp_options[["USER_HEADER"]] <- user_header
+    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
     stanc_options[["allow-undefined"]] <- TRUE
     private$using_user_header_ <- TRUE
   }
   if (!is.null(cpp_options[["USER_HEADER"]])) {
+    user_header <- cpp_options[["USER_HEADER"]]
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
     private$using_user_header_ <- TRUE
-    user_header <- cpp_options[["USER_HEADER"]]
   }
   if (!is.null(cpp_options[["user_header"]])) {
+    user_header <- cpp_options[["user_header"]]
     cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
     private$using_user_header_ <- TRUE
-    user_header <- cpp_options[["user_header"]]
-  }
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
 
+  user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
   if(!is.null(user_header)) {
     if(!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist"))
     }
+  }
+
+  if (is.null(stanc_options[["name"]])) {
+    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
 
   # compile if:
