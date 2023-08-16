@@ -397,6 +397,8 @@ CmdStanModel <- R6::R6Class(
 #'   `functions` field in the compiled model object. This can also be done after
 #'   compilation using the
 #'   [`$expose_functions()`][model-method-expose_functions] method.
+#' @param dry_run (logical) If TRUE, the code will do all checks before compilation,
+#'   but skip the actual C++ compilation. Used to speedup tests.
 #'
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
@@ -450,6 +452,7 @@ compile <- function(quiet = TRUE,
                     compile_model_methods = FALSE,
                     compile_hessian_method = FALSE,
                     compile_standalone = FALSE,
+                    dry_run = FALSE,
                     #deprecated
                     threads = FALSE) {
 
@@ -618,10 +621,16 @@ compile <- function(quiet = TRUE,
   stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   self$functions$external <- !is.null(user_header)
+  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
+
+  if (dry_run) {
+    return(invisible(self))
+  }
+
   if (compile_standalone) {
     expose_stan_functions(self$functions, !quiet)
   }
-  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
+
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
