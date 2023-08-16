@@ -28,7 +28,7 @@ these can be ignored so long as they are warnings and not errors.
 }
 \examples{
 \dontrun{
-fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 fit_mcmc$init_model_methods()
 }
 }

@@ -21,7 +21,7 @@ The \verb{$hessian()} method provides access to the Stan model's
 }
 \examples{
 \dontrun{
-# fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 # fit_mcmc$init_model_methods(hessian = TRUE)
 # fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 }
