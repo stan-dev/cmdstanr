@@ -40,7 +40,7 @@ test_that("compile() method works", {
 
 test_that("compile() method forces recompilation force_recompile = TRUE", {
   mod$compile(quiet = TRUE)
-  expect_recompilation(mod, quiet = TRUE, force_recompile = TRUE)
+  expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
 })
 
 test_that("compile() method forces recompilation if model modified", {
@@ -50,7 +50,7 @@ test_that("compile() method forces recompilation if model modified", {
     mod$compile(quiet = TRUE)
   }
   Sys.setFileTime(mod$stan_file(), Sys.time() + 1) #touch file to trigger recompile
-  expect_recompilation(mod, quiet = TRUE)
+  expect_compilation(mod, quiet = TRUE)
 })
 
 test_that("compile() method works with spaces in path", {
