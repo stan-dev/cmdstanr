@@ -603,7 +603,7 @@ compile <- function(quiet = TRUE,
       wd = cmdstan_path(),
       echo = !quiet || is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
-      spinner = quiet && interactive(),
+      spinner = quiet && interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
       stderr_callback = function(x, p) {
         if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
           message(x)

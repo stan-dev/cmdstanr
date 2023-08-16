@@ -19,6 +19,7 @@
 #'   the individual methods for details.
 #' @param quiet (logical) If `TRUE` (the default) then fitting the model is
 #'   wrapped in [utils::capture.output()].
+#' @param force_recompile Passed to the [$compile()][model-method-compile] method.
 #'
 #' @return
 #' The fitted model object returned by the selected `method`.
@@ -51,7 +52,8 @@ cmdstanr_example <-
   function(example = c("logistic", "schools", "schools_ncp"),
            method = c("sample", "optimize", "variational", "diagnose"),
            ...,
-           quiet = TRUE) {
+           quiet = TRUE,
+           force_recompile = getOption("cmdstanr_force_recompile", default = FALSE)) {
 
     example <- match.arg(example)
     method <- match.arg(method)
@@ -63,7 +65,7 @@ cmdstanr_example <-
     if (!file.exists(tmp)) {
       file.copy(system.file(example_program, package = "cmdstanr"), tmp)
     }
-    mod <- cmdstan_model(tmp)
+    mod <- cmdstan_model(tmp, force_recompile = force_recompile)
     data_file <- system.file(example_data, package = "cmdstanr")
 
     if (quiet) {

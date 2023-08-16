@@ -23,7 +23,7 @@ character vector of paths to CSV files can be passed.
 }
 \examples{
 \dontrun{
-fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 fit_mcmc$init_model_methods()
 
 # Unconstrain all internal draws
