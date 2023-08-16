@@ -17,6 +17,7 @@ compile(
   compile_model_methods = FALSE,
   compile_hessian_method = FALSE,
   compile_standalone = FALSE,
+  dry_run = FALSE,
   threads = FALSE
 )
 }
@@ -71,6 +72,9 @@ compiled for use in R? If \code{TRUE} the functions will be available via the
 \code{functions} field in the compiled model object. This can also be done after
 compilation using the
 \code{\link[=model-method-expose_functions]{$expose_functions()}} method.}
+
+\item{dry_run}{(logical) If TRUE, the code will do all checks before compilation,
+but skip the actual C++ compilation. Used to speedup tests.}
 
 \item{threads}{Deprecated and will be removed in a future release. Please
 turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
@@ -144,7 +148,7 @@ The Stan and CmdStan documentation:
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
-Other CmdStanModel methods: 
+Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
