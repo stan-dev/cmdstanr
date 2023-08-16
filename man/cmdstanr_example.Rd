@@ -39,8 +39,7 @@ the individual methods for details.}
 \item{quiet}{(logical) If \code{TRUE} (the default) then fitting the model is
 wrapped in \code{\link[utils:capture.output]{utils::capture.output()}}.}
 
-\item{force_recompile}{Passed to the \link[=$compile]{model-method-compile}
-method.}
+\item{force_recompile}{Passed to the \link[=model-method-compile]{$compile()} method.}
 }
 \value{
 The fitted model object returned by the selected \code{method}.

@@ -19,8 +19,7 @@
 #'   the individual methods for details.
 #' @param quiet (logical) If `TRUE` (the default) then fitting the model is
 #'   wrapped in [utils::capture.output()].
-#' @param force_recompile Passed to the [model-method-compile][$compile()]
-#'   method.
+#' @param force_recompile Passed to the [$compile()][model-method-compile] method.
 #'
 #' @return
 #' The fitted model object returned by the selected `method`.
