@@ -397,7 +397,7 @@ CmdStanModel <- R6::R6Class(
 #'   `functions` field in the compiled model object. This can also be done after
 #'   compilation using the
 #'   [`$expose_functions()`][model-method-expose_functions] method.
-#' @param dry_run (logical) If TRUE, the code will do all checks before compilation,
+#' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
 #'   but skip the actual C++ compilation. Used to speedup tests.
 #'
 #' @param threads Deprecated and will be removed in a future release. Please
@@ -516,7 +516,7 @@ compile <- function(quiet = TRUE,
   # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
   # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
   if (!is.null(user_header)) {
-    if(!is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])) {
+    if (!is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])) {
       warning("User header specified both via user_header argument and via cpp_options arguments")
     }
 
@@ -526,7 +526,7 @@ compile <- function(quiet = TRUE,
   }
   else if (!is.null(cpp_options[["USER_HEADER"]])) {
     if(!is.null(cpp_options[["user_header"]])) {
-      warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]]')
+      warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
     }
 
     user_header <- cpp_options[["USER_HEADER"]]
@@ -543,7 +543,7 @@ compile <- function(quiet = TRUE,
   if(!is.null(user_header)) {
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
     if(!file.exists(user_header)) {
-      stop(paste0("User header file '", user_header, "' does not exist"))
+      stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
     }
   }
 
@@ -581,7 +581,7 @@ compile <- function(quiet = TRUE,
 
   if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
     warning("Additional model methods and standalone functions are not ",
-            "currently available with WSLv1 CmdStan and will not be compiled",
+            "currently available with WSLv1 CmdStan and will not be compiled.",
             call. = FALSE)
     compile_model_methods <- FALSE
     compile_standalone <- FALSE
