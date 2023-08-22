@@ -38,8 +38,9 @@ approximation to \code{lp__} (also on the unconstrained space). It is exposed in
 the variational method for performing the checks described in Yao et al.
 (2018) and implemented in the \pkg{loo} package.
 
-For Laplace approximation \code{lp_approx__} is the the unnormalized density of
-the Laplace approximation.
+For Laplace approximation \code{lp_approx__} is the unnormalized density of the
+Laplace approximation. It can be used to perform the same checks as in the
+case of the variational method described in Yao et al. (2018).
 }
 
 \examples{
