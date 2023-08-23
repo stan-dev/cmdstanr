@@ -914,6 +914,10 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
           "WSL CmdStan and will not be compiled",
           call. = FALSE)
   }
+  if (function_env$existing_exe) {
+    stop("Exporting standalone functions is not possible with a pre-compiled Stan model!",
+          call. = FALSE)
+  }
   if (function_env$external && cmdstan_version() < "2.32") {
     stop("Exporting standalone functions with external C++ is not available before CmdStan 2.32",
          call. = FALSE)
