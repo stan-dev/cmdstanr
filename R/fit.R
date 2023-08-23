@@ -31,7 +31,7 @@ CmdStanFit <- R6::R6Class(
       }
 
       if (!is.null(private$model_methods_env_$model_ptr)) {
-        initialize_model_pointer(private$model_methods_env_, self$data_file())
+        initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
       }
       # Need to update the output directory path to one that can be accessed
       # from Windows, for the post-processing of results
@@ -352,7 +352,7 @@ init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE) {
   if (is.null(private$model_methods_env_$model_ptr)) {
     expose_model_methods(private$model_methods_env_, verbose, hessian)
   }
-  initialize_model_pointer(private$model_methods_env_, self$data_file())
+  initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
   invisible(NULL)
 }
 CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods)
