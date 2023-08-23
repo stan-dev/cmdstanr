@@ -230,7 +230,7 @@ CmdStanModel <- R6::R6Class(
       self$functions <- new.env()
       self$functions$compiled <- FALSE
       if (!is.null(stan_file)) {
-        assert_file_exists(stan_file, access = "r", extension = "stan")
+        assert_file_exists(stan_file, access = "r", extension = c("stan", "stanfunctions"))
         checkmate::assert_flag(compile)
         private$stan_file_ <- absolute_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
@@ -537,7 +537,7 @@ compile <- function(quiet = TRUE,
     compile_hessian_method <- FALSE
   }
 
-  temp_stan_file <- tempfile(pattern = "model-", fileext = ".stan")
+  temp_stan_file <- tempfile(pattern = "model-", fileext = paste0(".", tools::file_ext(self$stan_file())))
   file.copy(self$stan_file(), temp_stan_file, overwrite = TRUE)
   temp_file_no_ext <- strip_ext(temp_stan_file)
   tmp_exe <- cmdstan_ext(temp_file_no_ext) # adds .exe on Windows

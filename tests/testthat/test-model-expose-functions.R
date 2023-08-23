@@ -112,7 +112,7 @@ test_that("Functions can be compiled with model", {
 
 test_that("rng functions can be exposed", {
   skip_if(os_is_wsl())
-  function_decl <- "functions { real normal_rng(real mu) { return normal_rng(mu, 1); } }"
+  function_decl <- "functions { real wrap_normal_rng(real mu, real sigma) { return normal_rng(mu, sigma); } }"
   stan_prog <- paste(function_decl,
                      paste(readLines(testing_stan_file("bernoulli")),
                            collapse = "\n"),
@@ -122,11 +122,17 @@ test_that("rng functions can be exposed", {
   mod <- cmdstan_model(model, force_recompile = TRUE)
   fit <- mod$sample(data = data_list)
 
+  set.seed(10)
   fit$expose_functions(verbose = TRUE)
 
   expect_equal(
-    fit$functions$normal_rng(5, seed = 10),
-    3.8269637967017344771
+    fit$functions$wrap_normal_rng(5,10),
+    -4.5298764235381225873
+  )
+
+  expect_equal(
+    fit$functions$wrap_normal_rng(5,10),
+    8.1295902610102039887
   )
 })
 
