@@ -73,7 +73,7 @@ compiled for use in R? If \code{TRUE} the functions will be available via the
 compilation using the
 \code{\link[=model-method-expose_functions]{$expose_functions()}} method.}
 
-\item{dry_run}{(logical) If TRUE, the code will do all checks before compilation,
+\item{dry_run}{(logical) If \code{TRUE}, the code will do all checks before compilation,
 but skip the actual C++ compilation. Used to speedup tests.}
 
 \item{threads}{Deprecated and will be removed in a future release. Please
@@ -148,7 +148,7 @@ The Stan and CmdStan documentation:
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
-Other CmdStanModel methods:
+Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
