@@ -114,12 +114,13 @@
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>unconstrained_variables</dt>
-<dd><p>(numeric) A vector of unconstrained parameters to be passed to <code>log_prob</code></p></dd>
+<dd><p>(numeric) A vector of unconstrained parameters
+to be passed to <code>log_prob</code>.</p></dd>
 
 
 <dt>jacobian_adjustment</dt>
-<dd><p>(bool) Whether to include the log-density adjustments from
-un/constraining variables</p></dd>
+<dd><p>(logical) Whether to include the log-density
+adjustments from un/constraining variables.</p></dd>
 
 </dl></div>
     <div id="see-also">
@@ -132,11 +133,12 @@ un/constraining variables</p></dd>
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span>, force_recompile <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Compiling Stan program...</span>
 <span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">init_model_methods</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> Model methods cannot be used with a pre-compiled Stan executable, the model must be compiled again</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Compiling additional model methods...</span>
 <span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">log_prob</span><span class="op">(</span>unconstrained_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1.2</span>, <span class="fl">1.1</span>, <span class="fl">2.2</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> The method has not been compiled, please call `init_model_methods()` first</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -130.2141</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

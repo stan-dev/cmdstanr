@@ -175,3 +175,24 @@ test_that("Exposing external functions errors before v2.32", {
 
   reset_cmdstan_version()
 })
+
+test_that("Exposing functions with precompiled model gives meaningful error", {
+  skip_if(os_is_wsl())
+
+  stan_file <- write_stan_file("
+    functions {
+      real a_plus_b(real a, real b) { return a + b; }
+    }
+    parameters { real x; }
+    model { x ~ std_normal(); }
+  ")
+  mod1 <- cmdstan_model(stan_file, compile_standalone = TRUE)
+  expect_equal(7.5, mod1$functions$a_plus_b(5, 2.5))
+
+  mod2 <- cmdstan_model(stan_file)
+  expect_error(
+    mod2$expose_functions(),
+    "Exporting standalone functions is not possible with a pre-compiled Stan model!",
+    fixed = TRUE
+  )
+})

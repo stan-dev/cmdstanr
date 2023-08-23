@@ -17,7 +17,7 @@ parameters to the unconstrained scale.
 }
 \examples{
 \dontrun{
-fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 fit_mcmc$init_model_methods()
 fit_mcmc$unconstrain_variables(list(alpha = 0.5, beta = c(0.7, 1.1, 0.2)))
 }

@@ -571,6 +571,7 @@ compile <- function(quiet = TRUE,
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
+    self$functions$existing_exe <- TRUE
     self$exe_file(exe)
     return(invisible(self))
   } else {
@@ -621,6 +622,8 @@ compile <- function(quiet = TRUE,
   stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   self$functions$external <- !is.null(user_header)
+  self$functions$existing_exe <- FALSE
+
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
   if (dry_run) {
@@ -644,7 +647,7 @@ compile <- function(quiet = TRUE,
       wd = cmdstan_path(),
       echo = !quiet || is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
-      spinner = quiet && interactive(),
+      spinner = quiet && interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
       stderr_callback = function(x, p) {
         if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
           message(x)
