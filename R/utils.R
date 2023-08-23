@@ -780,7 +780,11 @@ create_skeleton <- function(param_metadata, model_variables,
                        names(model_variables$generated_quantities))
   }
   lapply(param_metadata[target_params], function(par_dims) {
-    array(0, dim = ifelse(length(par_dims) == 0, 1, par_dims))
+    if ((length(par_dims) == 0)) {
+      array(0, dim = 1)
+    } else {
+      array(0, dim = par_dims)
+    }
   })
 }
 
