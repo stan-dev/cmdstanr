@@ -297,14 +297,16 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
   }")
   mod <- cmdstan_model(stan_file, compile_model_methods = TRUE,
                       force_recompile = TRUE)
-  fit <- mod$sample(data = list(N = 4, K = 3), chains = 1,
+  N <- 4
+  K <- 3
+  fit <- mod$sample(data = list(N = N, K = K), chains = 1,
                     iter_warmup = 1, iter_sampling = 1)
 
   target_skeleton <- list(
     x_real = array(0, dim = 1),
-    x_mat = array(0, dim = c(4, 3)),
-    x_vec = array(0, dim = c(3)),
-    x_rowvec = array(0, dim = c(3))
+    x_mat = array(0, dim = c(N, K)),
+    x_vec = array(0, dim = K),
+    x_rowvec = array(0, dim = K)
   )
 
   expect_equal(fit$variable_skeleton(),
