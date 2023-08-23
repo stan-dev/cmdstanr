@@ -519,6 +519,7 @@ compile <- function(quiet = TRUE,
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
+    self$functions$existing_exe <- TRUE
     self$exe_file(exe)
     return(invisible(self))
   } else {
@@ -586,6 +587,7 @@ compile <- function(quiet = TRUE,
   stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   self$functions$external <- !is.null(user_header)
+  self$functions$existing_exe <- FALSE
   if (compile_standalone) {
     expose_stan_functions(self$functions, !quiet)
   }
