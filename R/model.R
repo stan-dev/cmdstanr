@@ -397,6 +397,8 @@ CmdStanModel <- R6::R6Class(
 #'   `functions` field in the compiled model object. This can also be done after
 #'   compilation using the
 #'   [`$expose_functions()`][model-method-expose_functions] method.
+#' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
+#'   but skip the actual C++ compilation. Used to speedup tests.
 #'
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
@@ -450,8 +452,10 @@ compile <- function(quiet = TRUE,
                     compile_model_methods = FALSE,
                     compile_hessian_method = FALSE,
                     compile_standalone = FALSE,
+                    dry_run = FALSE,
                     #deprecated
                     threads = FALSE) {
+
   if (length(self$stan_file()) == 0) {
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
@@ -500,14 +504,62 @@ compile <- function(quiet = TRUE,
     exe <- self$exe_file()
   }
 
+  # Resolve stanc and cpp options
+  if (pedantic) {
+    stanc_options[["warn-pedantic"]] <- TRUE
+  }
+
+  if (isTRUE(cpp_options$stan_opencl)) {
+    stanc_options[["use-opencl"]] <- TRUE
+  }
+
+  # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
+  # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
+  if (!is.null(user_header)) {
+    if (!is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])) {
+      warning("User header specified both via user_header argument and via cpp_options arguments")
+    }
+
+    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
+    stanc_options[["allow-undefined"]] <- TRUE
+    private$using_user_header_ <- TRUE
+  }
+  else if (!is.null(cpp_options[["USER_HEADER"]])) {
+    if(!is.null(cpp_options[["user_header"]])) {
+      warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
+    }
+
+    user_header <- cpp_options[["USER_HEADER"]]
+    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
+    private$using_user_header_ <- TRUE
+  }
+  else if (!is.null(cpp_options[["user_header"]])) {
+    user_header <- cpp_options[["user_header"]]
+    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
+    private$using_user_header_ <- TRUE
+  }
+
+
+  if(!is.null(user_header)) {
+    user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
+    if(!file.exists(user_header)) {
+      stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
+    }
+  }
+
   # compile if:
   # - the user forced compilation,
   # - the executable does not exist
   # - the stan model was changed since last compilation
+  # - a user header is used and the user header changed since last compilation (#813)
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
              && file.mtime(exe) < file.mtime(self$stan_file())) {
+    force_recompile <- TRUE
+  } else if (!is.null(user_header)
+             && file.exists(user_header)
+             && file.mtime(exe) < file.mtime(user_header)) {
     force_recompile <- TRUE
   }
 
@@ -530,7 +582,7 @@ compile <- function(quiet = TRUE,
 
   if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
     warning("Additional model methods and standalone functions are not ",
-            "currently available with WSL CmdStan and will not be compiled",
+            "currently available with WSLv1 CmdStan and will not be compiled.",
             call. = FALSE)
     compile_model_methods <- FALSE
     compile_standalone <- FALSE
@@ -548,23 +600,6 @@ compile <- function(quiet = TRUE,
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
-  if (pedantic) {
-    stanc_options[["warn-pedantic"]] <- TRUE
-  }
-
-  if (isTRUE(cpp_options$stan_opencl)) {
-    stanc_options[["use-opencl"]] <- TRUE
-  }
-  if (!is.null(user_header)) {
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(user_header)
-    stanc_options[["allow-undefined"]] <- TRUE
-  }
-  if (!is.null(cpp_options[["USER_HEADER"]])) {
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
-  }
-  if (!is.null(cpp_options[["user_header"]])) {
-    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
-  }
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
@@ -588,10 +623,17 @@ compile <- function(quiet = TRUE,
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
+
+  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
+
+  if (dry_run) {
+    return(invisible(self))
+  }
+
   if (compile_standalone) {
     expose_stan_functions(self$functions, !quiet)
   }
-  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
+
   withr::with_path(
     c(
       toolchain_PATH_env_var(),

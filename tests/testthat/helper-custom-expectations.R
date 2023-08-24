@@ -1,3 +1,34 @@
+#' @param ... arguments passed to mod$compile()
+expect_compilation <- function(mod, ...) {
+  if(length(mod$exe_file()) > 0 && file.exists(mod$exe_file())) {
+    before_mtime <- file.mtime(mod$exe_file())
+  } else {
+    before_mtime <- NULL
+  }
+  expect_interactive_message(mod$compile(...), "Compiling Stan program...")
+  if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
+    fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
+  }
+  if(!is.null(before_mtime)) {
+    after_mtime <- file.mtime(mod$exe_file())
+    expect(before_mtime != after_mtime, sprintf("Exe file '%s' has NOT changed, despite expecting (re)compilation", mod$exe_file()))
+  }
+  invisible(mod)
+}
+
+#' @param ... arguments passed to mod$compile()
+expect_no_recompilation <- function(mod, ...) {
+  if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
+    fail(sprint("Model executable '%s' does not exist, cannot test if recompilation is triggerred.", mod$exe_file()))
+  }
+
+  before_mtime <- file.mtime(mod$exe_file())
+  expect_interactive_message(mod$compile(...), "Model executable is up to date!")
+  after_mtime <- file.mtime(mod$exe_file())
+  expect(before_mtime == after_mtime, sprintf("Model executable '%s' has changed, despite expecting no recompilation", mod$exe_file()))
+  invisible(mod)
+}
+
 expect_sample_output <- function(object, num_chains = NULL) {
 
   output <- "Running MCMC with"
