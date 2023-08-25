@@ -6,7 +6,7 @@ output:
     toc: true
     toc_depth: 3
 params:
-  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+  EVAL: !r FALSE
 vignette: >
   %\VignetteIndexEntry{Getting started with CmdStanR}
   %\VignetteEngine{knitr::rmarkdown}
