@@ -4,6 +4,7 @@ set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 
+
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
@@ -28,8 +29,8 @@ test_that("compile() method works", {
   if (file.exists(exe)) {
     file.remove(exe)
   }
-  expect_interactive_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
-  expect_interactive_message(mod$compile(quiet = TRUE), "Model executable is up to date!")
+  expect_compilation(mod, quiet = TRUE)
+  expect_no_recompilation(mod, quiet = TRUE)
   checkmate::expect_file_exists(mod$hpp_file())
   checkmate::expect_file_exists(exe)
   file.remove(exe)
@@ -39,10 +40,7 @@ test_that("compile() method works", {
 
 test_that("compile() method forces recompilation force_recompile = TRUE", {
   mod$compile(quiet = TRUE)
-  expect_interactive_message(
-    mod$compile(quiet = TRUE, force_recompile = TRUE),
-    "Compiling Stan program..."
-  )
+  expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
 })
 
 test_that("compile() method forces recompilation if model modified", {
@@ -52,7 +50,7 @@ test_that("compile() method forces recompilation if model modified", {
     mod$compile(quiet = TRUE)
   }
   Sys.setFileTime(mod$stan_file(), Sys.time() + 1) #touch file to trigger recompile
-  expect_interactive_message(mod$compile(quiet = TRUE), "Compiling Stan program...")
+  expect_compilation(mod, quiet = TRUE)
 })
 
 test_that("compile() method works with spaces in path", {
@@ -70,7 +68,7 @@ test_that("compile() method works with spaces in path", {
   if (file.exists(exe)) {
     file.remove(exe)
   }
-  expect_interactive_message(mod_spaces$compile(), "Compiling Stan program...")
+  expect_compilation(mod_spaces)
   file.remove(stan_model_with_spaces)
   file.remove(exe)
   unlink(dir_with_spaces, recursive = TRUE)
@@ -156,6 +154,8 @@ test_that("switching threads on and off works without rebuild", {
   mod$compile(force_recompile = TRUE)
   after_mtime <- file.mtime(main_path_o)
   expect_equal(before_mtime, after_mtime)
+
+  expect_warning(mod$compile(threads = TRUE, dry_run = TRUE), "deprecated")
 })
 
 test_that("multiple cpp_options work", {
@@ -595,7 +595,7 @@ test_that("cmdstan_model errors with no args ", {
 })
 
 test_that("cmdstan_model works with user_header", {
-  skip_if(os_is_macos() | (os_is_windows() && !os_is_wsl()))
+  skip_if(os_is_macos())
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
   "
@@ -627,6 +627,43 @@ test_that("cmdstan_model works with user_header", {
     stanc_options = list("allow-undefined")
   )
   expect_true(file.exists(mod_2$exe_file()))
+
+  # Check recompilation upon changing header
+  expect_no_recompilation(mod, quiet = TRUE, user_header = tmpfile)
+
+  Sys.setFileTime(tmpfile, Sys.time() + 1) #touch file to trigger recompile
+  expect_compilation(mod, quiet = TRUE, user_header = tmpfile)
+
+  # Alternative spec of user header
+  expect_no_recompilation(mod,
+    quiet = TRUE,
+    cpp_options = list(user_header = tmpfile),
+    dry_run = TRUE
+  )
+
+  # Error/warning messages
+  expect_error(
+    cmdstan_model(
+      stan_file = testing_stan_file("bernoulli_external"),
+      cpp_options = list(USER_HEADER = "non_existent.hpp"),
+      stanc_options = list("allow-undefined")
+    ),
+    "header file '[^']*' does not exist"
+  )
+
+  expect_warning(cmdstan_model(
+    stan_file = testing_stan_file("bernoulli_external"),
+    cpp_options = list(USER_HEADER = tmpfile, user_header = tmpfile),
+    dry_run = TRUE),
+    "User header specified both"
+  )
+  expect_warning(cmdstan_model(
+    stan_file = testing_stan_file("bernoulli_external"),
+    user_header = tmpfile,
+    cpp_options = list(USER_HEADER = tmpfile),
+    dry_run = TRUE),
+    "User header specified both"
+  )
 })
 
 test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
