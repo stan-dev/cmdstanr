@@ -1,3 +1,5 @@
+# cmdstanr 0.6.1.9000
+
 # cmdstanr 0.6.1
 
 * Store return codes instead of always querying exit status by @jgabry in #798
