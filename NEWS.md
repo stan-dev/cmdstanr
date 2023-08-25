@@ -1,6 +1,17 @@
-# cmdstanr 0.6.0.9000
+# cmdstanr 0.6.1
 
-Items for next release
+* Store return codes instead of always querying exit status by @jgabry in #798
+* enable jacobian argument for optimization by @jgabry in #799
+* Fix init_model_methods for models with no data by @andrjohns in #801
+* Document a CmdStan-focused way to pre-compile Stan models in R packages by @wlandau in #809
+* Describe how to efficiently save model fit objects by @wlandau in #816
+* fix errors in doc for new methods by @jgabry in #823
+* Give informative error when exposing stan functions with precompiled model by @andrjohns in #831
+* Bugfixes in .stanfunctions, hessian model method, and exposing RNG functions by @andrjohns in #811
+* Fix variable_skeleton() with containers by @andrjohns in #832
+* Improve handling of user header by @martinmodrak in #818
+* change duplicate stdout_file to stderr_file by @jgabry in #834
+
 
 # cmdstanr 0.6.0
 
