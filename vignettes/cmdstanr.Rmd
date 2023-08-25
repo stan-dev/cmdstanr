@@ -187,7 +187,7 @@ first argument specifies the variables to summarize and any arguments
 after that are passed on to `posterior::summarise_draws()` to specify
 which summaries to compute, whether to use multiple cores, etc.
 
-```{r summary}
+```{r summary, eval=FALSE}
 fit$summary()
 fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
@@ -200,6 +200,21 @@ fit$summary(
   posterior::default_summary_measures(),
   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
 )
+```
+
+```{r, echo=FALSE}
+ # NOTE: the hack of using print.data.frame in chunks with echo=FALSE
+ # is used because the pillar formatting of posterior draws_summary objects
+ # isn't playing nicely with pkgdown::build_articles().
+ options(digits = 2)
+ print.data.frame(fit$summary())
+ print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
+ print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
+ print.data.frame(fit$summary(
+   variables = NULL,
+   posterior::default_summary_measures(),
+   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+ ))
 ```
 
 #### CmdStan's stansummary utility
@@ -335,7 +350,7 @@ We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize(
 
 ```{r optimize}
 fit_mle <- mod$optimize(data = data_list, seed = 123)
-fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
+fit_mle$print() # includes lp__ (log prob calculated by Stan program)
 fit_mle$mle("theta")
 ```
 
@@ -350,14 +365,14 @@ mcmc_hist(fit$draws("theta")) +
 For optimization, by default the mode is calculated without the Jacobian
 adjustment for constrained variables, which shifts the mode due to the change of
 variables. To include the Jacobian adjustment and obtain a maximum a posteriori
-(MAP) estimate set `jacobian=TRUE`. See the 
+(MAP) estimate set `jacobian=TRUE`. See the
 [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
-section of the CmdStan User's Guide for more details. 
+section of the CmdStan User's Guide for more details.
 
 ```{r optimize-map}
 fit_map <- mod$optimize(
-  data = data_list, 
-  jacobian = TRUE, 
+  data = data_list,
+  jacobian = TRUE,
   seed = 123
 )
 ```
@@ -371,7 +386,7 @@ samples provide an estimate of the mean and standard deviation of the posterior
 distribution. If the mode is the MLE, the sample provides an estimate of the
 standard error of the likelihood. Whether the mode is the MAP or MLE depends on
 the value of the `jacobian` argument when running optimization. See the
-[Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html) 
+[Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
 chapter of the CmdStan User's Guide for more details.
 
 Here we pass in the `fit_map` object from above as the `mode` argument. If
@@ -398,11 +413,11 @@ method.
 
 ```{r variational}
 fit_vb <- mod$variational(
-  data = data_list, 
-  draws = 4000, 
-  seed = 123
+  data = data_list,
+  seed = 123,
+  draws = 4000
 )
-fit_vb$summary("theta")
+fit_vb$print("theta")
 ```
 
 Let's extract the draws, make the same plot we made after MCMC and Laplace
@@ -410,18 +425,18 @@ approximation, and compare them all. In this simple example the distributions
 are quite similar, but this will not always be the case.
 
 ```{r plot-compare-vb, message = FALSE}
-mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025) + 
-  ggplot2::labs(subtitle = "Approximate posterior from variational") + 
+mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025) +
+  ggplot2::labs(subtitle = "Approximate posterior from variational") +
   ggplot2::xlim(0, 1)
 ```
 ```{r plot-compare-laplace, message = FALSE}
-mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025) + 
-  ggplot2::labs(subtitle = "Approximate posterior from Laplace") + 
+mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025) +
+  ggplot2::labs(subtitle = "Approximate posterior from Laplace") +
   ggplot2::xlim(0, 1)
 ```
 ```{r plot-compare-mcmc, message = FALSE}
-mcmc_hist(fit$draws("theta"), binwidth = 0.025) + 
-  ggplot2::labs(subtitle = "Posterior from MCMC") + 
+mcmc_hist(fit$draws("theta"), binwidth = 0.025) +
+  ggplot2::labs(subtitle = "Posterior from MCMC") +
   ggplot2::xlim(0, 1)
 ```
 
@@ -448,7 +463,7 @@ fit2 <- readRDS("fit.RDS")
 
 But if your model object is large, then
 [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
-could take a long time. 
+could take a long time.
 [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
 reads the CmdStan results files into memory, stores them in the model object,
 and saves the object with `saveRDS()`. To speed up the process, you can emulate
