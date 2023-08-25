@@ -190,6 +190,12 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
 #'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'
+#'  ## Diagnostics
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$diagnose()`][model-method-diagnose] |  Run CmdStan's `"diagnose"` method to test gradients, return [`CmdStanDiagnose`] object. |
+#'
 #'  ## Model fitting
 #'
 #'  |**Method**|**Description**|
