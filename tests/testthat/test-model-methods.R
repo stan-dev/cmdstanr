@@ -277,3 +277,38 @@ test_that("Model methods can be initialised for models with no data", {
   expect_no_error(fit <- mod$sample())
   expect_equal(fit$log_prob(5), -12.5)
 })
+
+test_that("Variable skeleton returns correct dimensions for matrices", {
+  skip_if(os_is_wsl())
+
+  stan_file <- write_stan_file("
+  data {
+    int N;
+    int K;
+  }
+  parameters {
+    real x_real;
+    matrix[N,K] x_mat;
+    vector[K] x_vec;
+    row_vector[K] x_rowvec;
+  }
+  model {
+    x_real ~ std_normal();
+  }")
+  mod <- cmdstan_model(stan_file, compile_model_methods = TRUE,
+                      force_recompile = TRUE)
+  N <- 4
+  K <- 3
+  fit <- mod$sample(data = list(N = N, K = K), chains = 1,
+                    iter_warmup = 1, iter_sampling = 1)
+
+  target_skeleton <- list(
+    x_real = array(0, dim = 1),
+    x_mat = array(0, dim = c(N, K)),
+    x_vec = array(0, dim = K),
+    x_rowvec = array(0, dim = K)
+  )
+
+  expect_equal(fit$variable_skeleton(),
+                target_skeleton)
+})

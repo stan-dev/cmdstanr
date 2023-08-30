@@ -24,17 +24,17 @@ traditional [RStan](https://mc-stan.org/rstan/) interface. See the [*Comparison
 with RStan*](#comparison-with-rstan) section later in this vignette for more
 details on how the two interfaces differ.
 
-**CmdStanR is not on CRAN yet**, but the beta release can be installed by
-running the following command in R.
+Using CmdStanR requires installing the **cmdstanr** R package and also
+CmdStan, the command line interface to Stan. First we install the R package 
+by running the following command in R.
 
 ```{r install, eval=FALSE}
 # we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
-CmdStanR (the **cmdstanr** R package) can now be loaded like any other R
-package. We'll also load the **bayesplot** and **posterior** packages to use
-later in examples.
+We can now load the package like any other R package. We'll also load the
+**bayesplot** and **posterior** packages to use later in examples.
 
 ```{r library, message=FALSE}
 library(cmdstanr)
@@ -203,21 +203,18 @@ fit$summary(
 ```
 
 ```{r, echo=FALSE}
-# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
-# is used because the pillar formatting of posterior draws_summary objects
-# isn't playing nicely with pkgdown::build_articles(). 
-options(digits = 2)
-print.data.frame(fit$summary())
-
-print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
-
-print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
-
-print.data.frame(fit$summary(
-  variables = NULL,
-  posterior::default_summary_measures(),
-  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
-))
+ # NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
+ # is used because the pillar formatting of posterior draws_summary objects
+ # isn't playing nicely with pkgdown::build_articles(). 
+ options(digits = 2)
+ print.data.frame(fit$summary())
+ print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
+ print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
+ print.data.frame(fit$summary(
+   variables = NULL,
+   posterior::default_summary_measures(),
+   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+ ))
 ```
 
 #### CmdStan's stansummary utility
@@ -351,18 +348,9 @@ the `$sample()` method demonstrated above.
 
 We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
-```{r optimize, eval=FALSE}
+```{r optimize}
 fit_mle <- mod$optimize(data = data_list, seed = 123)
-fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
-fit_mle$mle("theta")
-```
-```{r, echo=FALSE}
-# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
-# is used because the pillar formatting of posterior draws_summary objects
-# isn't playing nicely with pkgdown::build_articles(). 
-options(digits = 2)
-fit_mle <- mod$optimize(data = data_list, seed = 123)
-print.data.frame(fit_mle$summary()) # includes lp__ (log prob calculated by Stan program)
+fit_mle$print() # includes lp__ (log prob calculated by Stan program)
 fit_mle$mle("theta")
 ```
 
@@ -380,17 +368,9 @@ We can run Stan's experimental variational Bayes algorithm (ADVI) using the
 [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
 method.
 
-```{r variational, eval=FALSE}
+```{r variational}
 fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
-fit_vb$summary("theta")
-```
-```{r, echo=FALSE}
-# NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
-# is used because the pillar formatting of posterior draws_summary objects
-# isn't playing nicely with pkgdown::build_articles(). 
-options(digits = 2)
-fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
-print.data.frame(fit_vb$summary("theta"))
+fit_vb$print("theta")
 ```
 
 The `$draws()` method can be used to access the approximate posterior draws.
@@ -415,12 +395,9 @@ these links to their documentation pages.
 
 ## Saving fitted model objects
 
-In order to save a fitted model object to disk and ensure that all of the
-contents are available when reading the object back into R, we recommend using the
-[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
-method provided by CmdStanR. The reason for this is discussed in detail in the vignette
-[_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html),
-so here we just demonstrate how to use the method.
+The [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+method provided by CmdStanR is the most convenient way to save a fitted model object
+to disk and ensure that all of the contents are available when reading the object back into R.
 
 ```{r save_object, eval=FALSE}
 fit$save_object(file = "fit.RDS")
@@ -428,6 +405,48 @@ fit$save_object(file = "fit.RDS")
 # can be read back in using readRDS
 fit2 <- readRDS("fit.RDS")
 ```
+
+But if your model object is large, then
+[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+could take a long time. 
+[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+reads the CmdStan results files into memory, stores them in the model object,
+and saves the object with `saveRDS()`. To speed up the process, you can emulate
+[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+and replace `saveRDS` with the much faster `qsave()` function from the
+[`qs`](https://github.com/traversc/qs) package.
+
+```{r save_object_qs_full, eval = FALSE}
+# Load CmdStan output files into the fitted model object.
+fit$draws() # Load posterior draws into the object.
+try(fit$sampler_diagnostics(), silent = TRUE) # Load sampler diagnostics.
+try(fit$init(), silent = TRUE) # Load user-defined initial values.
+try(fit$profiles(), silent = TRUE) # Load profiling samples.
+
+# Save the object to a file.
+qs::qsave(x = fit, file = "fit.qs")
+
+# Read the object.
+fit2 <- qs::qread("fit.qs")
+```
+
+Storage is even faster if you discard results you do not need to save.
+The following example saves only posterior draws and discards
+sampler diagnostics, user-specified initial values, and profiling data.
+
+```{r save_object_qs_small, eval = FALSE}
+# Load posterior draws into the fitted model object and omit other output.
+fit$draws()
+
+# Save the object to a file.
+qs::qsave(x = fit, file = "fit.qs")
+
+# Read the object.
+fit2 <- qs::qread("fit.qs")
+```
+
+See the vignette [_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html)
+for more information about the composition of CmdStanR objects.
 
 ## Comparison with RStan
 

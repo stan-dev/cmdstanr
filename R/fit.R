@@ -324,7 +324,7 @@ CmdStanFit$set("public", name = "init", value = init)
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$init_model_methods()
 #' }
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
@@ -370,7 +370,7 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$init_model_methods()
 #' fit_mcmc$log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
@@ -408,7 +408,7 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$init_model_methods()
 #' fit_mcmc$grad_log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
@@ -446,7 +446,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'
 #' @examples
 #' \dontrun{
-#' # fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' # fit_mcmc$init_model_methods(hessian = TRUE)
 #' # fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
@@ -481,7 +481,7 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$init_model_methods()
 #' fit_mcmc$unconstrain_variables(list(alpha = 0.5, beta = c(0.7, 1.1, 0.2)))
 #' }
@@ -539,7 +539,7 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$init_model_methods()
 #'
 #' # Unconstrain all internal draws
@@ -618,7 +618,7 @@ CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$init_model_methods()
 #' fit_mcmc$variable_skeleton()
 #' }
@@ -656,7 +656,7 @@ CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 #'
 #' @examples
 #' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
+#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$init_model_methods()
 #' fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }

@@ -439,36 +439,29 @@ accessed via `fit$draws()`), the auxiliary momentum `p_theta`, and the gradient
 parameter in the model.
 
 
-## Saving fitted model objects
-
-As described above, the contents of the CSV files are only read into R when they
-are needed. This means that in order to save a fitted model object containing
-_all_ of the posterior draws and sampler diagnostics you should either make sure
-to call `fit$draws()` and `fit$sampler_diagnostics()` before saving the object
-`fit`, or use the special `$save_object()` method provided by CmdStanR, which
-will ensure that everything has been read into R before saving the object using
-`saveRDS()`.
-
-```{r save-fit}
-temp_rds_file <- tempfile(fileext = ".RDS") # temporary file just for demonstration
-fit$save_object(file = temp_rds_file)
-```
-
-We can check that this worked by removing `fit` and loading it back in from
-the save file.
-
-```{r load-fit}
-rm(fit); gc()
-
-fit <- readRDS(temp_rds_file)
-fit$print()
-```
-
 ## Developing using CmdStanR
 
 CmdStanR can of course be used for developing other packages that require compiling
 and running Stan models as well as using new or custom Stan features available
 through CmdStan.
+
+### Pre-compiled Stan models in R packages
+
+You may compile a Stan model at runtime (e.g. just before sampling),
+or you may compile all the models inside the package file system in advance at installation time.
+The latter avoids compilations at runtime, which matters in centrally managed R installations
+where users should not compile their own software.
+
+To pre-compile all the models in a package,
+you may create top-level scripts `configure` and `configure.win`
+which run `cmdstan_model()` with `compile = TRUE` and save the compiled executables
+somewhere inside the `inst/` folder of the package source.
+The [`instantiate`](https://wlandau.github.io/instantiate/) package helps developers
+configure packages this way,
+and it documents other topics such as submitting to CRAN and administering CmdStan.
+Kevin Ushey's [`configure`](https://github.com/kevinushey/configure) package helps
+create and manage package configuration files in general.
+
 
 ### Troubleshooting and debugging
 

@@ -565,8 +565,8 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
     if (file.exists(stdout_file)) {
       cat(readLines(stdout_file), sep = "\n")
     }
-    if (file.exists(stdout_file)) {
-      cat(readLines(stdout_file), sep = "\n")
+    if (file.exists(stderr_file)) {
+      cat(readLines(stderr_file), sep = "\n")
     }
     stop(
       "Diagnose failed with the status code ", ret$status, "!\n",

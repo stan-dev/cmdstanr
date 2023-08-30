@@ -748,7 +748,8 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
                                   package = "cmdstanr", mustWork = TRUE)))
 
   if (hessian) {
-    code <- c(code,
+    code <- c("#include <stan/math/mix.hpp>",
+            code,
             readLines(system.file("include", "hessian.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
   }
@@ -758,9 +759,8 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
   invisible(NULL)
 }
 
-initialize_model_pointer <- function(env, data, seed = 0) {
-  datafile_path <- ifelse(is.null(data), "", data)
-  ptr_and_rng <- env$model_ptr(datafile_path, seed)
+initialize_model_pointer <- function(env, datafile_path, seed = 0) {
+  ptr_and_rng <- env$model_ptr(ifelse(is.null(datafile_path), "", datafile_path), seed)
   env$model_ptr_ <- ptr_and_rng$model_ptr
   env$model_rng_ <- ptr_and_rng$base_rng
   env$num_upars_ <- env$get_num_upars(env$model_ptr_)
@@ -780,7 +780,11 @@ create_skeleton <- function(param_metadata, model_variables,
                        names(model_variables$generated_quantities))
   }
   lapply(param_metadata[target_params], function(par_dims) {
-    array(0, dim = ifelse(length(par_dims) == 0, 1, par_dims))
+    if ((length(par_dims) == 0)) {
+      array(0, dim = 1)
+    } else {
+      array(0, dim = par_dims)
+    }
   })
 }
 
@@ -863,8 +867,8 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   fun_body <- gsub("auto", get_plain_rtn(fun_start, fun_end, model_lines), fun_body)
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
-  fun_body <- gsub("boost::ecuyer1988& base_rng__", "size_t seed = 0", fun_body, fixed = TRUE)
-  fun_body <- gsub("base_rng__,", "*(new boost::ecuyer1988(seed)),", fun_body, fixed = TRUE)
+  fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
+  fun_body <- gsub("base_rng__,", "*(Rcpp::XPtr<boost::ecuyer1988>(base_rng_ptr).get()),", fun_body, fixed = TRUE)
   fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
   fun_body <- paste(fun_body, collapse = "\n")
   gsub(pattern = ",\\s*)", replacement = ")", fun_body)
@@ -904,6 +908,30 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   } else {
     rcpp_source_stan(mod_stan_funs, env, verbose)
   }
+
+  # If an RNG function is exposed, initialise a Boost RNG object stored in the
+  # environment
+  rng_funs <- grep("rng\\b", env$fun_names, value = TRUE)
+  if (length(rng_funs) > 0) {
+    rng_cpp <- system.file("include", "base_rng.cpp", package = "cmdstanr", mustWork = TRUE)
+    rcpp_source_stan(paste0(readLines(rng_cpp), collapse="\n"), env, verbose)
+    env$rng_ptr <- env$base_rng(seed=0)
+  }
+
+  # For all RNG functions, pass the initialised Boost RNG by default
+  for (fun in rng_funs) {
+    if (global) {
+      fun_env <- globalenv()
+    } else {
+      fun_env <- env
+    }
+    fundef <- get(fun, envir = fun_env)
+    funargs <- formals(fundef)
+    funargs$base_rng_ptr <- env$rng_ptr
+    formals(fundef) <- funargs
+    assign(fun, fundef, envir = fun_env)
+  }
+
   env$compiled <- TRUE
   invisible(NULL)
 }
@@ -912,6 +940,10 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
   if (os_is_wsl()) {
     stop("Standalone functions are not currently available with ",
           "WSL CmdStan and will not be compiled",
+          call. = FALSE)
+  }
+  if (function_env$existing_exe) {
+    stop("Exporting standalone functions is not possible with a pre-compiled Stan model!",
           call. = FALSE)
   }
   if (function_env$external && cmdstan_version() < "2.32") {
