@@ -1625,7 +1625,7 @@ variational <- function(data = NULL,
 CmdStanModel$set("public", name = "variational", value = variational)
 
 
-#' Run Stan's variational approximation algorithms
+#' Run Stan's Pathfinder Variational Inference Algorithm
 #'
 #' @name model-method-pathfinder
 #' @aliases pathfinder
@@ -1687,21 +1687,18 @@ pathfinder <- function(data = NULL,
                         threads = NULL,
                         opencl_ids = NULL,
                         num_threads = NULL,
-                        init_alpha = NULL,
-                        tol_obj = NULL,
-                        tol_rel_obj = NULL,
-                        tol_grad = NULL,
-                        tol_rel_grad = NULL,
-                        tol_param = NULL,
-                        history_size = NULL,
-                        algorithm = NULL,
-                        iter = NULL,
-                        save_iterations = NULL,
-                        num_elbo_draws = NULL,
-                        num_draws = NULL,
-                        num_eval_attempts = NULL,
-                        psis_draws = NULL,
-                        num_paths = NULL) {
+                       init_alpha = NULL,
+                       tol_obj = NULL,
+                       tol_rel_obj = NULL,
+                       tol_grad = NULL,
+                       tol_rel_grad = NULL,
+                       tol_param = NULL,
+                       history_size = NULL,
+                       num_psis_draws = NULL,
+                       num_paths = NULL,
+                       save_single_paths = NULL,
+                       max_lbfgs_iters = NULL,
+                       num_draws = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
@@ -1712,21 +1709,18 @@ pathfinder <- function(data = NULL,
     model_variables <- self$variables()
   }
   pathfinder_args <- PathfinderArgs$new(
-    init_alpha = init_alpha,
-    tol_obj = tol_obj,
-    tol_rel_obj = tol_rel_obj,
-    tol_grad = tol_grad,
-    tol_rel_grad = tol_rel_grad,
-    tol_param = tol_param,
-    history_size = history_size,
-    algorithm = algorithm,
-    iter = iter,
-    save_iterations = save_iterations,
-    num_elbo_draws = num_elbo_draws,
-    num_draws = num_draws,
-    num_eval_attempts = num_eval_attempts,
-    psis_draws = psis_draws,
-    num_paths = num_paths)
+   init_alpha =   init_alpha,
+   tol_obj =    tol_obj,
+   tol_rel_obj =    tol_rel_obj,
+   tol_grad =    tol_grad,
+   tol_rel_grad =    tol_rel_grad,
+   tol_param =    tol_param,
+   history_size =    history_size,
+   num_psis_draws =    num_psis_draws,
+   num_paths =    num_paths,
+   save_single_paths =    save_single_paths,
+   max_lbfgs_iters =    max_lbfgs_iters,
+    num_draws = num_draws)
   args <- CmdStanArgs$new(
     method_args = pathfinder_args,
     stan_file = self$stan_file(),

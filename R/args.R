@@ -514,13 +514,11 @@ PathfinderArgs <- R6::R6Class(
                             tol_rel_grad = NULL,
                             tol_param = NULL,
                             history_size = NULL,
-                            algorithm = NULL,
-                            iter = NULL,
-                            save_iterations = NULL,
-                            num_elbo_draws = NULL,
-                            num_draws = NULL,
-                            num_eval_attempts = NULL,
-                            psis_draws = NULL, num_paths = NULL) {
+                            num_psis_draws = NULL,
+                            num_paths = NULL,
+                            save_single_paths = NULL,
+                            max_lbfgs_iters = NULL,
+                            num_draws = NULL) {
         self$init_alpha <- init_alpha
         self$tol_obj <- tol_obj
         self$tol_rel_obj <- tol_rel_obj
@@ -528,14 +526,11 @@ PathfinderArgs <- R6::R6Class(
         self$tol_rel_grad <- tol_rel_grad
         self$tol_param <- tol_param
         self$history_size <- history_size
-        self$algorithm <- algorithm
-        self$iter <- iter
-        self$save_iterations <- save_iterations
-        self$num_elbo_draws <- num_elbo_draws
-        self$num_eval_attempts <- num_eval_attempts
-        self$num_draws <- num_draws
-        self$psis_draws <- psis_draws
+        self$num_psis_draws <- num_psis_draws
         self$num_paths <- num_paths
+        self$save_single_paths <- save_single_paths
+        self$max_lbfgs_iters <- max_lbfgs_iters
+        self$num_draws <- num_draws
       invisible(self)
     },
 
@@ -550,10 +545,8 @@ PathfinderArgs <- R6::R6Class(
       .make_arg <- function(arg_name) {
         compose_arg(self, arg_name, idx = NULL)
       }
-      if (self$algorithm == "single") {
         new_args <- list(
           "method=pathfinder",
-          .make_arg("num_eval_attempts"),
           .make_arg("init_alpha"),
           .make_arg("tol_obj"),
           .make_arg("tol_rel_obj"),
@@ -561,32 +554,12 @@ PathfinderArgs <- R6::R6Class(
           .make_arg("tol_rel_grad"),
           .make_arg("tol_param"),
           .make_arg("history_size"),
-          .make_arg("iter"),
-          .make_arg("save_iterations"),
-          .make_arg("num_elbo_draws"),
-          .make_arg("num_draws")
-        )
-      # default of multi
-      } else {#if (self$algorithm == "multi") {
-        new_args <- list(
-          "method=pathfinder",
-          .make_arg("num_eval_attempts"),
-          "algorithm=multi",
-          .make_arg("psis_draws"),
+          .make_arg("num_psis_draws"),
           .make_arg("num_paths"),
-          .make_arg("init_alpha"),
-          .make_arg("tol_obj"),
-          .make_arg("tol_rel_obj"),
-          .make_arg("tol_grad"),
-          .make_arg("tol_rel_grad"),
-          .make_arg("tol_param"),
-          .make_arg("history_size"),
-          .make_arg("iter"),
-          .make_arg("save_iterations"),
-          .make_arg("num_elbo_draws"),
+          .make_arg("save_single_paths"),
+          .make_arg("max_lbfgs_iters"),
           .make_arg("num_draws")
         )
-      }
       new_args <- do.call(c, new_args)
       c(args, new_args)
     }

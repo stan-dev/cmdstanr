@@ -279,6 +279,9 @@ read_cmdstan_csv <- function(files,
     if (length(variables) > 0) {
       draws_list_id <- length(draws) + 1
       warmup_draws_list_id <- length(warmup_draws) + 1
+      if (metadata$method == "pathfinder") {
+        variables = union(metadata$sampler_diagnostics, metadata$variables)
+      }
       suppressWarnings(
         draws[[draws_list_id]] <- data.table::fread(
           cmd = fread_cmd,
@@ -613,7 +616,6 @@ read_csv_metadata <- function(csv_file) {
   warmup_time <- 0
   sampling_time <- 0
   total_time <- 0
-  #browser()
   if (os_is_windows()) {
     grep_path_repaired <- withr::with_path(
       c(
