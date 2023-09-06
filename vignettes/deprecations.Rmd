@@ -46,7 +46,7 @@ data {
   int<lower=1> k;
   int<lower=0> n;
   matrix[n, k] X;
-  int y[n];
+  array[n] int y;
 }
 parameters {
   vector[k] beta;
@@ -64,22 +64,10 @@ mod <- cmdstan_model(stan_file)
 ```
 
 
-The first warning is about using the deprecated array syntax
-
-```
-int y[n];
-```
-
-which should be replaced with the new syntax using the `array` keyword:
-
-```
-array[n] int y;
-```
-
-The second warning is about using the deprecated commenting symbol `#`,
+The first warning is about using the deprecated commenting symbol `#`,
 which should be replaced by `//`.
 
-The last warning is about the use of the deprecated `_log` suffix for
+The second warning is about the use of the deprecated `_log` suffix for
 probability density and mass functions. In this case the `_log` suffix should be
 replaced with `_lpdf`. For probability mass functions the suffix `_lpmf` is
 used.
