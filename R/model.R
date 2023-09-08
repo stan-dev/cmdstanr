@@ -204,6 +204,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$sample_mpi()`][model-method-sample_mpi] |  Run CmdStan's `"sample"` method with [MPI](https://mc-stan.org/math/mpi.html), return [`CmdStanMCMC`] object. |
 #'  [`$optimize()`][model-method-optimize] |  Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. |
 #'  [`$variational()`][model-method-variational] |  Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. |
+#'  [`$pathfinder()`][model-method-pathfinder] |  Run CmdStan's `"pathfinder"` method, return [`CmdStanPathfinder`] object. |
 #'  [`$generate_quantities()`][model-method-generate-quantities] |  Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`] object. |
 #'
 #' @template seealso-docs
@@ -1696,7 +1697,6 @@ pathfinder <- function(data = NULL,
                        history_size = NULL,
                        num_psis_draws = NULL,
                        num_paths = NULL,
-                       save_single_paths = NULL,
                        max_lbfgs_iters = NULL,
                        num_draws = NULL) {
   procs <- CmdStanProcs$new(
@@ -1718,7 +1718,6 @@ pathfinder <- function(data = NULL,
    history_size =    history_size,
    num_psis_draws =    num_psis_draws,
    num_paths =    num_paths,
-   save_single_paths =    save_single_paths,
    max_lbfgs_iters =    max_lbfgs_iters,
     num_draws = num_draws)
   args <- CmdStanArgs$new(

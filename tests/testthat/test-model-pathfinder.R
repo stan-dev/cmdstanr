@@ -1,4 +1,4 @@
-context("model-sample")
+context("model-pathfinder")
 
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
@@ -11,9 +11,158 @@ data_list <- testing_data("bernoulli")
 data_file_r <- test_path("resources", "data", "bernoulli.data.R")
 data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 
+# these are all valid for sample()
+ok_arg_values <- list(
+  data = data_list,
+  output_dir = tempdir(),
+  refresh = 5,
+  init = 1.5,
+  seed = 12345,
+  init_alpha = 1,
+  tol_obj = 1e-12,
+  tol_rel_obj = 1e-12,
+  tol_grad = 1e-12,
+  tol_rel_grad = 1e-12,
+  tol_param = 1e-12,
+  history_size = 5,
+  num_psis_draws = 100,
+  num_paths = 4,
+  max_lbfgs_iters = 100,
+  num_draws = 100)
+
+# using any one of these should cause sample() to error
+bad_arg_values <- list(
+  data = "NOT_A_FILE",
+  output_dir = "NOT_A_DIRECTORY",
+  refresh = -1,
+  init = "maybe :P",
+  seed = -80,
+  init_alpha = "cat.jpeg",
+  tol_obj = -1,
+  tol_rel_obj = -1,
+  tol_grad = -1,
+  tol_rel_grad = -1,
+  tol_param = -1,
+  history_size = -2,
+  num_psis_draws = "no thanks",
+  num_paths = -1,
+  max_lbfgs_iters = "idk :/",
+  num_draws = -1
+)
+
+bad_arg_values_2 <- list(
+  data = "NOT_A_FILE",
+  output_dir = "NOT_A_DIRECTORY",
+  refresh = -1,
+  init = "maybe :P",
+  seed = -80,
+  init_alpha = -1,
+  tol_obj = -1,
+  tol_rel_obj = -1,
+  tol_grad = -1,
+  tol_rel_grad = -1,
+  tol_param = -1,
+  history_size = -2,
+  num_psis_draws = "no thanks",
+  num_paths = -1,
+  max_lbfgs_iters = "idk :/",
+  num_draws = -1
+)
+
+bad_arg_values_3 <- list(
+  data = matrix(1:10),
+  output_dir = 8,
+  init = "maybe :P",
+  seed = -80,
+  init_alpha = -1,
+  tol_obj = -1,
+  tol_rel_obj = -1,
+  tol_grad = -1,
+  tol_rel_grad = -1,
+  tol_param = -1,
+  history_size = -2,
+  num_psis_draws = "no thanks",
+  num_paths = "NO!",
+  max_lbfgs_iters = "idk :/",
+  num_draws = -1
+)
+expect_pathfinder_output <- function(object, num_chains = NULL) {
+  expect_output(object, regexp = "Finished in (.*) seconds.")
+}
+
+
 test_that("Pathfinder Runs", {
-  fit <- mod$pathfinder(data=data_list, seed=1234, refresh = 1, sig_figs = 15, tol_obj = 0, tol_rel_grad = 0)
-  fit$summary()
-  fit_samp = mod$sample(data = data_list)
-  fit_samp$summary()
+  expect_pathfinder_output(fit <- mod$pathfinder(data=data_list, seed=1234, refresh = 0))
+  expect_is(fit, "CmdStanPathfinder")
 })
+
+test_that("pathfinder() method works with data files", {
+  expect_pathfinder_output(fit_r <- mod$pathfinder(data = data_file_r))
+  expect_is(fit_r, "CmdStanPathfinder")
+
+  expect_pathfinder_output(fit_json <- mod$pathfinder(data = data_file_json))
+  expect_is(fit_json, "CmdStanPathfinder")
+})
+
+test_that("pathfinder() method works with init file", {
+  init_list <- list(theta = 0.5)
+  init_file <- tempfile(
+    tmpdir = cmdstanr:::cmdstan_tempdir(),
+    pattern = "testing-inits-",
+    fileext = ".json"
+  )
+  write_stan_json(init_list, file = init_file)
+  expect_pathfinder_output(mod$pathfinder(data = data_file_r, init = init_file))
+})
+
+test_that("pathfinder() method runs when all arguments specified", {
+  expect_pathfinder_output(fit <- do.call(mod$pathfinder, ok_arg_values))
+  expect_is(fit, "CmdStanPathfinder")
+})
+
+test_that("pathfinder() method runs when the stan file is removed", {
+  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
+  file.copy(stan_program, stan_file_tmp)
+  mod_tmp <- cmdstan_model(stan_file_tmp)
+  file.remove(stan_file_tmp)
+  expect_pathfinder_output(
+    mod_tmp$pathfinder(data = data_list)
+  )
+})
+
+#test_that("pathfinder() prints informational messages depening on show_exceptions", {
+#  mod_info_msg <- testing_model("info_message")
+#TODO Pareto K?
+#  expect_pathfinder_output(
+#    expect_message(
+#      mod_info_msg$pathfinder(),
+#      "Informational Message: The current Metropolis proposal is about to be rejected"
+#    )
+#  )
+#  expect_pathfinder_output(
+#    expect_message(mod_info_msg$pathfinder(show_exceptions = FALSE), regexp = NA)
+#  )
+#})
+
+test_that("pathfinder() method errors for any invalid arguments before calling cmdstan", {
+  utils::capture.output(mod$compile())
+  for (nm in names(bad_arg_values)) {
+    args <- ok_arg_values
+    args[[nm]] <- bad_arg_values[[nm]]
+    expect_error(do.call(mod$pathfinder, args), regexp = nm)
+  }
+
+  for (nm in names(bad_arg_values_2)) {
+    args <- ok_arg_values
+    args[[nm]] <- bad_arg_values_2[[nm]]
+    expect_error(do.call(mod$pathfinder, args), regexp = nm)
+  }
+
+  for (nm in names(bad_arg_values_3)) {
+    args <- ok_arg_values
+    args[[nm]] <- bad_arg_values_3[[nm]]
+    expect_error(do.call(mod$pathfinder, args), regexp = nm)
+  }
+})
+
+

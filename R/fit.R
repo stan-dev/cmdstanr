@@ -2006,6 +2006,13 @@ CmdStanPathfinder <- R6::R6Class(
   )
 )
 
+#' @rdname fit-method-lp
+lp_approx <- function() {
+  as.numeric(self$draws()[, "lp_approx__"])
+}
+CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
+
+
 
 # CmdStanGQ ---------------------------------------------------------------
 #' CmdStanGQ objects
@@ -2264,5 +2271,11 @@ as_draws.CmdStanVB <- function(x, ...) {
 #' @rdname as_draws.CmdStanMCMC
 #' @export
 as_draws.CmdStanGQ <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanPathfinder <- function(x, ...) {
   x$draws(...)
 }

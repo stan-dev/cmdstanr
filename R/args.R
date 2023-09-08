@@ -516,7 +516,6 @@ PathfinderArgs <- R6::R6Class(
                             history_size = NULL,
                             num_psis_draws = NULL,
                             num_paths = NULL,
-                            save_single_paths = NULL,
                             max_lbfgs_iters = NULL,
                             num_draws = NULL) {
         self$init_alpha <- init_alpha
@@ -528,7 +527,6 @@ PathfinderArgs <- R6::R6Class(
         self$history_size <- history_size
         self$num_psis_draws <- num_psis_draws
         self$num_paths <- num_paths
-        self$save_single_paths <- save_single_paths
         self$max_lbfgs_iters <- max_lbfgs_iters
         self$num_draws <- num_draws
       invisible(self)
@@ -556,7 +554,6 @@ PathfinderArgs <- R6::R6Class(
           .make_arg("history_size"),
           .make_arg("num_psis_draws"),
           .make_arg("num_paths"),
-          .make_arg("save_single_paths"),
           .make_arg("max_lbfgs_iters"),
           .make_arg("num_draws")
         )
@@ -861,6 +858,36 @@ validate_variational_args <- function(self) {
 #' @param self A `PathfinderArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_pathfinder_args <- function(self) {
+
+  checkmate::assert_integerish(self$max_lbfgs_iter, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$max_lbfgs_iter)) {
+    self$iter <- as.integer(self$max_lbfgs_iter)
+  }
+  checkmate::assert_integerish(self$num_paths, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$num_paths)) {
+    self$num_paths <- as.integer(self$num_paths)
+  }
+  checkmate::assert_integerish(self$num_psis_draws, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$num_psis_draws)) {
+    self$num_psis_draws <- as.integer(self$num_psis_draws)
+  }
+  checkmate::assert_integerish(self$num_draws, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$num_draws)) {
+    self$num_draws <- as.integer(self$num_draws)
+  }
+
+
+  # check args only available for lbfgs and bfgs
+  bfgs_args <- c("init_alpha", "tol_obj", "tol_rel_obj", "tol_grad", "tol_rel_grad", "tol_param")
+  for (arg in bfgs_args) {
+    checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
+  }
+
+  if (!is.null(self$history_size)) {
+      checkmate::assert_integerish(self$history_size, lower = 1, len = 1, null.ok = FALSE)
+      self$history_size <- as.integer(self$history_size)
+  }
+
   invisible(TRUE)
 }
 

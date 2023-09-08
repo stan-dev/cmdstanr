@@ -69,6 +69,8 @@ expect_gq_output <- function(object, num_chains = NULL) {
   expect_output(object, output)
 }
 
+
+
 expect_interactive_message <- function(object, regexp = NULL) {
   # Non-interactive message suppression failing under Windows CI,
   # temporarily skip message check only on Windows
