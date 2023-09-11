@@ -932,7 +932,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' file <- write_stan_file("
 #' data {
 #'   int N;
-#'   int y[N];
+#'   array[N] int y;
 #' }
 #' parameters {
 #'   real                     lambda;

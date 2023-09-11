@@ -339,7 +339,7 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
 
   stan_file <- write_stan_file("
   data {
-    int<lower=0> k[3,3];
+    array[3,3] int<lower=0> k;
   }
   ")
   mod <- cmdstan_model(stan_file, compile = FALSE)
