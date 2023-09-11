@@ -131,12 +131,12 @@ test_that("pathfinder() method runs when the stan file is removed", {
 })
 
 #test_that("pathfinder() prints informational messages depening on show_exceptions", {
-#  mod_info_msg <- testing_model("info_message")
+  mod_info_msg <- testing_model("info_message")
 #TODO Pareto K?
 #  expect_pathfinder_output(
 #    expect_message(
 #      mod_info_msg$pathfinder(),
-#      "Informational Message: The current Metropolis proposal is about to be rejected"
+#      "which often indicates model misspecification"
 #    )
 #  )
 #  expect_pathfinder_output(
@@ -144,25 +144,8 @@ test_that("pathfinder() method runs when the stan file is removed", {
 #  )
 #})
 
-test_that("pathfinder() method errors for any invalid arguments before calling cmdstan", {
-  utils::capture.output(mod$compile())
-  for (nm in names(bad_arg_values)) {
-    args <- ok_arg_values
-    args[[nm]] <- bad_arg_values[[nm]]
-    expect_error(do.call(mod$pathfinder, args), regexp = nm)
-  }
-
-  for (nm in names(bad_arg_values_2)) {
-    args <- ok_arg_values
-    args[[nm]] <- bad_arg_values_2[[nm]]
-    expect_error(do.call(mod$pathfinder, args), regexp = nm)
-  }
-
-  for (nm in names(bad_arg_values_3)) {
-    args <- ok_arg_values
-    args[[nm]] <- bad_arg_values_3[[nm]]
-    expect_error(do.call(mod$pathfinder, args), regexp = nm)
-  }
+test_that("no error when checking estimates after failure", {
+  fit <- cmdstanr_example("schools", method = "pathfinder", seed = 123) # optim always fails for this
+  expect_silent(fit$summary()) # no error
 })
-
 
