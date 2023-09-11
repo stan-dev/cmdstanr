@@ -192,7 +192,8 @@ test_that("Exposing functions with precompiled model gives meaningful error", {
     parameters { real x; }
     model { x ~ std_normal(); }
   ")
-  mod1 <- cmdstan_model(stan_file, compile_standalone = TRUE)
+  mod1 <- cmdstan_model(stan_file, compile_standalone = TRUE,
+                        force_recompile = TRUE)
   expect_equal(7.5, mod1$functions$a_plus_b(5, 2.5))
 
   mod2 <- cmdstan_model(stan_file)
