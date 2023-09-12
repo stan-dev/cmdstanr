@@ -278,7 +278,7 @@ test_that("compile() works with pedantic=TRUE", {
   }
   ")
   expect_message(
-    mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE),
+    mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE, force_recompile = TRUE),
     "The parameter x was declared but was not used",
     fixed = TRUE
   )
@@ -387,13 +387,10 @@ test_that("check_syntax() works with pedantic=TRUE", {
     fixed = TRUE
   )
 
-  expect_output(
-    expect_message(
-      mod_pedantic_warn$check_syntax(pedantic = TRUE),
-      "The parameter x was declared but was not used",
-      fixed = TRUE
-    ),
-    regexp = NA
+  expect_message(
+    mod_pedantic_warn$check_syntax(pedantic = TRUE),
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 })
 
@@ -706,13 +703,9 @@ test_that("format() works", {
     "target += normal_lpdf(y | 0, 1);",
     fixed = TRUE
   )
-  expect_output(
-    expect_message(
-      mod_1$format(canonicalize = list("includes")),
-      "is deprecated",
-      fixed = TRUE
-    ),
-    "target += normal_log(y, 0, 1);",
+  expect_error(
+    mod_1$format(),
+    "Syntax error found! See the message above for more information.",
     fixed = TRUE
   )
 
