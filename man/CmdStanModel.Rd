@@ -34,6 +34,13 @@ methods, many of which have their own (linked) documentation pages:
 
 }
 
+\subsection{Diagnostics}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=model-method-diagnose]{$diagnose()}} \tab Run CmdStan's \code{"diagnose"} method to test gradients, return \code{\link{CmdStanDiagnose}} object. \cr
+}
+
+}
+
 \subsection{Model fitting}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=model-method-sample]{$sample()}} \tab Run CmdStan's \code{"sample"} method, return \code{\link{CmdStanMCMC}} object. \cr

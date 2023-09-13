@@ -4,15 +4,15 @@ test_that("sample_mpi() works", {
   skip_if(!mpi_toolchain_present())
   mpi_file <- write_stan_file("
   functions {
-    vector test(vector beta, vector theta, real[] x, int[] y) {
+    vector test(vector beta, vector theta, array[] real x, array[] int y) {
       return theta;
     }
   }
   transformed data {
     vector[4] a;
-    vector[5] b[4] = {[1,1,1,1,1]', [2,2,2,2,2]', [3,3,3,3,3]', [4,4,4,4,4]'};
-    real x[4,4];
-    int y[4,4];
+    array[4] vector[5] b = {[1,1,1,1,1]', [2,2,2,2,2]', [3,3,3,3,3]', [4,4,4,4,4]'};
+    array[4,4] real x;
+    array[4,4] int y;
   }
   parameters {
     real beta;

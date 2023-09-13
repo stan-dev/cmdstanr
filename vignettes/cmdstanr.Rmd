@@ -24,17 +24,17 @@ traditional [RStan](https://mc-stan.org/rstan/) interface. See the [*Comparison
 with RStan*](#comparison-with-rstan) section later in this vignette for more
 details on how the two interfaces differ.
 
-**CmdStanR is not on CRAN yet**, but the beta release can be installed by
-running the following command in R.
+Using CmdStanR requires installing the **cmdstanr** R package and also
+CmdStan, the command line interface to Stan. First we install the R package 
+by running the following command in R.
 
 ```{r install, eval=FALSE}
 # we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
-CmdStanR (the **cmdstanr** R package) can now be loaded like any other R
-package. We'll also load the **bayesplot** and **posterior** packages to use
-later in examples.
+We can now load the package like any other R package. We'll also load the
+**bayesplot** and **posterior** packages to use later in examples.
 
 ```{r library, message=FALSE}
 library(cmdstanr)
@@ -187,7 +187,7 @@ first argument specifies the variables to summarize and any arguments
 after that are passed on to `posterior::summarise_draws()` to specify
 which summaries to compute, whether to use multiple cores, etc.
 
-```{r summary}
+```{r summary, eval=FALSE}
 fit$summary()
 fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
@@ -200,6 +200,21 @@ fit$summary(
   posterior::default_summary_measures(),
   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
 )
+```
+
+```{r, echo=FALSE}
+ # NOTE: the hack of using print.data.frame in chunks with echo=FALSE 
+ # is used because the pillar formatting of posterior draws_summary objects
+ # isn't playing nicely with pkgdown::build_articles(). 
+ options(digits = 2)
+ print.data.frame(fit$summary())
+ print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
+ print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
+ print.data.frame(fit$summary(
+   variables = NULL,
+   posterior::default_summary_measures(),
+   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+ ))
 ```
 
 #### CmdStan's stansummary utility
@@ -335,7 +350,7 @@ We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize(
 
 ```{r optimize}
 fit_mle <- mod$optimize(data = data_list, seed = 123)
-fit_mle$summary() # includes lp__ (log prob calculated by Stan program)
+fit_mle$print() # includes lp__ (log prob calculated by Stan program)
 fit_mle$mle("theta")
 ```
 
@@ -355,7 +370,7 @@ method.
 
 ```{r variational}
 fit_vb <- mod$variational(data = data_list, seed = 123, output_samples = 4000)
-fit_vb$summary("theta")
+fit_vb$print("theta")
 ```
 
 The `$draws()` method can be used to access the approximate posterior draws.

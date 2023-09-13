@@ -49,7 +49,7 @@ model directly back to the file or prints it for inspection.
 file <- write_stan_file("
 data {
   int N;
-  int y[N];
+  array[N] int y;
 }
 parameters {
   real                     lambda;
