@@ -52,7 +52,7 @@ all of which have their own (linked) documentation pages.
 mcmc_program <- write_stan_file(
   "data {
     int<lower=0> N;
-    int<lower=0,upper=1> y[N];
+    array[N] int<lower=0,upper=1> y;
   }
   parameters {
     real<lower=0,upper=1> theta;
@@ -71,13 +71,13 @@ fit_mcmc <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
 gq_program <- write_stan_file(
   "data {
     int<lower=0> N;
-    int<lower=0,upper=1> y[N];
+    array[N] int<lower=0,upper=1> y;
   }
   parameters {
     real<lower=0,upper=1> theta;
   }
   generated quantities {
-    int y_rep[N] = bernoulli_rng(rep_vector(theta, N));
+    array[N] int y_rep = bernoulli_rng(rep_vector(theta, N));
   }"
 )
 

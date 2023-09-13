@@ -816,7 +816,20 @@ get_standalone_hpp <- function(stan_file, stancflags) {
 
 get_function_name <- function(fun_start, fun_end, model_lines) {
   fun_string <- paste(model_lines[(fun_start+1):fun_end], collapse = " ")
-  fun_name <- gsub("auto ", "", fun_string, fixed = TRUE)
+  types <- c(
+    "auto",
+    "int",
+    "double",
+    "Eigen::Matrix<(.*)>",
+    "std::vector<(.*)>"
+  )
+  pattern <- paste0(
+    # Only match if the type occurs at start of string
+    "^(\\s*)?(",
+    paste0(types, collapse="|"),
+    # Only match if type followed by a function name and opening bracket
+    ")\\s*(?=\\w*\\()")
+  fun_name <- gsub(pattern, "", fun_string, perl = TRUE)
   sub("\\(.*", "", fun_name, perl = TRUE)
 }
 
@@ -864,7 +877,9 @@ get_plain_rtn <- function(fun_start, fun_end, model_lines) {
 #     that instantiates an RNG
 prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   fun_body <- paste(model_lines[fun_start:fun_end], collapse = " ")
-  fun_body <- gsub("auto", get_plain_rtn(fun_start, fun_end, model_lines), fun_body)
+  if (cmdstan_version() < "2.33") {
+    fun_body <- gsub("auto", get_plain_rtn(fun_start, fun_end, model_lines), fun_body)
+  }
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
   fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
