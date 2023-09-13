@@ -190,6 +190,12 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
 #'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'
+#'  ## Diagnostics
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$diagnose()`][model-method-diagnose] |  Run CmdStan's `"diagnose"` method to test gradients, return [`CmdStanDiagnose`] object. |
+#'
 #'  ## Model fitting
 #'
 #'  |**Method**|**Description**|
@@ -800,7 +806,7 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #' file <- write_stan_file("
 #' data {
 #'   int N;
-#'   int y[N];
+#'   array[N] int y;
 #' }
 #' parameters {
 #'   // should have <lower=0> but omitting to demonstrate pedantic mode
@@ -926,7 +932,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' file <- write_stan_file("
 #' data {
 #'   int N;
-#'   int y[N];
+#'   array[N] int y;
 #' }
 #' parameters {
 #'   real                     lambda;
@@ -1653,7 +1659,7 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' mcmc_program <- write_stan_file(
 #'   "data {
 #'     int<lower=0> N;
-#'     int<lower=0,upper=1> y[N];
+#'     array[N] int<lower=0,upper=1> y;
 #'   }
 #'   parameters {
 #'     real<lower=0,upper=1> theta;
@@ -1672,13 +1678,13 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' gq_program <- write_stan_file(
 #'   "data {
 #'     int<lower=0> N;
-#'     int<lower=0,upper=1> y[N];
+#'     array[N] int<lower=0,upper=1> y;
 #'   }
 #'   parameters {
 #'     real<lower=0,upper=1> theta;
 #'   }
 #'   generated quantities {
-#'     int y_rep[N] = bernoulli_rng(rep_vector(theta, N));
+#'     array[N] int y_rep = bernoulli_rng(rep_vector(theta, N));
 #'   }"
 #' )
 #'

@@ -278,7 +278,7 @@ test_that("compile() works with pedantic=TRUE", {
   }
   ")
   expect_message(
-    mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE),
+    mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE, force_recompile = TRUE),
     "The parameter x was declared but was not used",
     fixed = TRUE
   )
@@ -387,13 +387,10 @@ test_that("check_syntax() works with pedantic=TRUE", {
     fixed = TRUE
   )
 
-  expect_output(
-    expect_message(
-      mod_pedantic_warn$check_syntax(pedantic = TRUE),
-      "The parameter x was declared but was not used",
-      fixed = TRUE
-    ),
-    regexp = NA
+  expect_message(
+    mod_pedantic_warn$check_syntax(pedantic = TRUE),
+    "The parameter x was declared but was not used",
+    fixed = TRUE
   )
 })
 
@@ -424,14 +421,14 @@ test_that("check_syntax() works with pedantic=TRUE", {
   "
   stan_file <- write_stan_file(model_code)
   mod_dep_warning <- cmdstan_model(stan_file, compile = FALSE)
-  expect_message(
+  expect_error(
     mod_dep_warning$compile(),
-    "deprecated in the Stan language",
+    "An error occured during compilation! See the message above for more information.",
     fixed = TRUE
   )
-  expect_message(
+  expect_error(
     mod_dep_warning$check_syntax(),
-    "deprecated in the Stan language",
+    "Syntax error found! See the message above for more information.",
     fixed = TRUE
   )
 })
@@ -690,13 +687,9 @@ test_that("format() works", {
   stan_file_tmp <- write_stan_file(code)
   mod_1 <- cmdstan_model(stan_file_tmp, compile = FALSE)
 
-  expect_output(
-    expect_message(
-      mod_1$format(),
-      "is deprecated",
-      fixed = TRUE
-    ),
-    "target += normal_log(y, 0, 1);",
+  expect_error(
+    mod_1$format(),
+    "Syntax error found! See the message above for more information.",
     fixed = TRUE
   )
 
@@ -710,13 +703,9 @@ test_that("format() works", {
     "target += normal_lpdf(y | 0, 1);",
     fixed = TRUE
   )
-  expect_output(
-    expect_message(
-      mod_1$format(canonicalize = list("includes")),
-      "is deprecated",
-      fixed = TRUE
-    ),
-    "target += normal_log(y, 0, 1);",
+  expect_error(
+    mod_1$format(),
+    "Syntax error found! See the message above for more information.",
     fixed = TRUE
   )
 
