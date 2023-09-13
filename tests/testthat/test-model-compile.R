@@ -174,6 +174,15 @@ test_that("compile errors are shown", {
   )
 })
 
+test_that("compile suggests using format to fix old syntax", {
+  stan_file <- testing_stan_file("old_array_syntax")
+  expect_error(
+    cmdstan_model(stan_file),
+    "To fix deprecated or removed syntax please see ?cmdstanr::format for an example.",
+    fixed = TRUE
+  )
+})
+
 test_that("dir arg works for cmdstan_model and $compile()", {
   tmp_dir <- tempdir()
   tmp_dir_2 <- tempdir()
