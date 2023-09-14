@@ -40,12 +40,12 @@ Imports:
     posterior (>= 1.4.1),
     processx (>= 3.5.0),
     R6 (>= 2.4.0),
-    withr (>= 2.5.0)
+    withr (>= 2.5.0),
+    rlang (>= 0.4.7)
 Suggests:
     bayesplot,
     knitr (>= 1.37),
     loo (>= 2.0.0),
-    rlang (>= 0.4.7),
     rmarkdown,
     testthat (>= 2.1.0),
     Rcpp,
