@@ -15,7 +15,8 @@ Authors@R:
       person(given = "Mike", family = "Lawrence", role = "ctb"),
       person(given = c("William", "Michael"), family = "Landau", role = "ctb",
            email = "will.landau@gmail.com", comment = c(ORCID = "0000-0003-1878-3253")),
-      person(given = "Jacob", family = "Socolar", role = "ctb"))
+      person(given = "Jacob", family = "Socolar", role = "ctb"), 
+      person(given = "Martin", family = "Modrák", role = "ctb"))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command
     line interface for compilation and running algorithms instead of interfacing
@@ -39,12 +40,12 @@ Imports:
     posterior (>= 1.4.1),
     processx (>= 3.5.0),
     R6 (>= 2.4.0),
-    withr (>= 2.5.0)
+    withr (>= 2.5.0),
+    rlang (>= 0.4.7)
 Suggests:
     bayesplot,
     knitr (>= 1.37),
     loo (>= 2.0.0),
-    rlang (>= 0.4.7),
     rmarkdown,
     testthat (>= 2.1.0),
     Rcpp,

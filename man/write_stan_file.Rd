@@ -51,7 +51,7 @@ should ensure thread-safety in the rare cases when it is needed.
 stan_program <- "
 data {
   int<lower=0> N;
-  int<lower=0,upper=1> y[N];
+  array[N] int<lower=0,upper=1> y;
 }
 parameters {
   real<lower=0,upper=1> theta;

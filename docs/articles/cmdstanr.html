@@ -26,7 +26,7 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -49,7 +49,7 @@
 <li>
   <a href="../index.html">
     <span class="fa fa-home fa-lg"></span>
-     
+
   </a>
 </li>
 <li>
@@ -64,7 +64,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Other Packages
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -102,19 +102,19 @@
 <li>
   <a href="https://twitter.com/mcmc_stan" class="external-link">
     <span class="fa fa-twitter"></span>
-     
+
   </a>
 </li>
 <li>
   <a href="https://github.com/stan-dev/cmdstanr" class="external-link">
     <span class="fa fa-github"></span>
-     
+
   </a>
 </li>
 <li>
   <a href="https://discourse.mc-stan.org/" class="external-link">
     <span class="fa fa-users"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -125,7 +125,7 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
@@ -133,15 +133,15 @@
       <h1 data-toc-skip>Getting started with CmdStanR</h1>
                         <h4 data-toc-skip class="author">Jonah Gabry and
 Rok Češnovar</h4>
-            
-      
+
+
       <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/HEAD/vignettes/cmdstanr.Rmd" class="external-link"><code>vignettes/cmdstanr.Rmd</code></a></small>
       <div class="hidden name"><code>cmdstanr.Rmd</code></div>
 
     </div>
 
-    
-    
+
+
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -149,14 +149,15 @@ Rok Češnovar</h4>
 alternative to the traditional <a href="https://mc-stan.org/rstan/" class="external-link">RStan</a> interface. See the <a href="#comparison-with-rstan"><em>Comparison with RStan</em></a> section
 later in this vignette for more details on how the two interfaces
 differ.</p>
-<p><strong>CmdStanR is not on CRAN yet</strong>, but the beta release
-can be installed by running the following command in R.</p>
+<p>Using CmdStanR requires installing the <strong>cmdstanr</strong> R
+package and also CmdStan, the command line interface to Stan. First we
+install the R package by running the following command in R.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># we recommend running this is a fresh R session or restarting your current session</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>CmdStanR (the <strong>cmdstanr</strong> R package) can now be loaded
-like any other R package. We’ll also load the <strong>bayesplot</strong>
-and <strong>posterior</strong> packages to use later in examples.</p>
+<p>We can now load the package like any other R package. We’ll also load
+the <strong>bayesplot</strong> and <strong>posterior</strong> packages
+to use later in examples.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/">cmdstanr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/posterior/" class="external-link">posterior</a></span><span class="op">)</span></span>
@@ -276,30 +277,30 @@ a data file compatible with CmdStan (JSON or R dump).</p>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code>Running MCMC with 4 parallel chains...
 
-Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
-Chain 1 Iteration:  500 / 2000 [ 25%]  (Warmup) 
-Chain 1 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
-Chain 1 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
-Chain 1 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
-Chain 1 Iteration: 2000 / 2000 [100%]  (Sampling) 
-Chain 2 Iteration:    1 / 2000 [  0%]  (Warmup) 
-Chain 2 Iteration:  500 / 2000 [ 25%]  (Warmup) 
-Chain 2 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
-Chain 2 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
-Chain 2 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
-Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
-Chain 3 Iteration:    1 / 2000 [  0%]  (Warmup) 
-Chain 3 Iteration:  500 / 2000 [ 25%]  (Warmup) 
-Chain 3 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
-Chain 3 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
-Chain 3 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
-Chain 3 Iteration: 2000 / 2000 [100%]  (Sampling) 
-Chain 4 Iteration:    1 / 2000 [  0%]  (Warmup) 
-Chain 4 Iteration:  500 / 2000 [ 25%]  (Warmup) 
-Chain 4 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
-Chain 4 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
-Chain 4 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
-Chain 4 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1 Iteration:  500 / 2000 [ 25%]  (Warmup)
+Chain 1 Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1 Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1 Iteration: 1500 / 2000 [ 75%]  (Sampling)
+Chain 1 Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2 Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2 Iteration:  500 / 2000 [ 25%]  (Warmup)
+Chain 2 Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2 Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2 Iteration: 1500 / 2000 [ 75%]  (Sampling)
+Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3 Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3 Iteration:  500 / 2000 [ 25%]  (Warmup)
+Chain 3 Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3 Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3 Iteration: 1500 / 2000 [ 75%]  (Sampling)
+Chain 3 Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4 Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 4 Iteration:  500 / 2000 [ 25%]  (Warmup)
+Chain 4 Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4 Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4 Iteration: 1500 / 2000 [ 75%]  (Sampling)
+Chain 4 Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 1 finished in 0.0 seconds.
 Chain 2 finished in 0.0 seconds.
 Chain 3 finished in 0.0 seconds.
@@ -495,29 +496,29 @@ warning messages we’ll use one of the CmdStanR example models that
 suffers from divergences.</p>
 <div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_with_warning</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"schools"</span><span class="op">)</span></span></code></pre></div>
-<pre><code>Warning: 52 of 4000 (1.0%) transitions ended with a divergence.
+<pre><code>Warning: 67 of 4000 (2.0%) transitions ended with a divergence.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
 <p>After fitting there is a warning about divergences. We can also
 regenerate this warning message later using
 <code>fit$diagnostic_summary()</code>.</p>
 <div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">diagnostics</span> <span class="op">&lt;-</span> <span class="va">fit_with_warning</span><span class="op">$</span><span class="fu">diagnostic_summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>Warning: 52 of 4000 (1.0%) transitions ended with a divergence.
+<pre><code>Warning: 67 of 4000 (2.0%) transitions ended with a divergence.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diagnostics</span><span class="op">)</span></span></code></pre></div>
 <pre><code>$num_divergent
-[1]  3 40  2  7
+[1]  6 35 24  2
 
 $num_max_treedepth
 [1] 0 0 0 0
 
 $ebfmi
-[1] 0.34 0.28 0.32 0.33</code></pre>
+[1] 0.30 0.33 0.24 0.35</code></pre>
 <div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># number of divergences reported in warning is the sum of the per chain values</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">diagnostics</span><span class="op">$</span><span class="va">num_divergent</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] 52</code></pre>
+<pre><code>[1] 67</code></pre>
 </div>
 <div class="section level4">
 <h4 id="cmdstans-diagnose-utility">CmdStan’s diagnose utility<a class="anchor" aria-label="anchor" href="#cmdstans-diagnose-utility"></a>
@@ -557,12 +558,12 @@ to the <code>$sample()</code> method demonstrated above.</p>
 <a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a>.</p>
 <div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_mle</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></code></pre></div>
-<pre><code>Initial log joint probability = -9.51104 
-    Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-       6      -5.00402   0.000103557   2.55661e-07           1           1        9    
-Optimization terminated normally:  
-  Convergence detected: relative gradient magnitude is below tolerance 
-Finished in  0.1 seconds.</code></pre>
+<pre><code>Initial log joint probability = -9.51104
+    Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes
+       6      -5.00402   0.000103557   2.55661e-07           1           1        9
+Optimization terminated normally:
+  Convergence detected: relative gradient magnitude is below tolerance
+Finished in  0.2 seconds.</code></pre>
 <div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span> <span class="co"># includes lp__ (log prob calculated by Stan program)</span></span></code></pre></div>
 <pre><code> variable estimate
@@ -587,28 +588,28 @@ using the <a href="https://mc-stan.org/cmdstanr/reference/model-method-variation
 method.</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">variational</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span>, output_samples <span class="op">=</span> <span class="fl">4000</span><span class="op">)</span></span></code></pre></div>
-<pre><code>------------------------------------------------------------ 
-EXPERIMENTAL ALGORITHM: 
-  This procedure has not been thoroughly tested and may be unstable 
-  or buggy. The interface is subject to change. 
------------------------------------------------------------- 
-Gradient evaluation took 5e-06 seconds 
-1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds. 
-Adjust your expectations accordingly! 
-Begin eta adaptation. 
-Iteration:   1 / 250 [  0%]  (Adaptation) 
-Iteration:  50 / 250 [ 20%]  (Adaptation) 
-Iteration: 100 / 250 [ 40%]  (Adaptation) 
-Iteration: 150 / 250 [ 60%]  (Adaptation) 
-Iteration: 200 / 250 [ 80%]  (Adaptation) 
-Success! Found best value [eta = 1] earlier than expected. 
-Begin stochastic gradient ascent. 
-  iter             ELBO   delta_ELBO_mean   delta_ELBO_med   notes  
-   100           -6.262             1.000            1.000 
-   200           -6.263             0.500            1.000 
-   300           -6.307             0.336            0.007   MEDIAN ELBO CONVERGED 
-Drawing a sample of size 4000 from the approximate posterior...  
-COMPLETED. 
+<pre><code>------------------------------------------------------------
+EXPERIMENTAL ALGORITHM:
+  This procedure has not been thoroughly tested and may be unstable
+  or buggy. The interface is subject to change.
+------------------------------------------------------------
+Gradient evaluation took 6e-06 seconds
+1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds.
+Adjust your expectations accordingly!
+Begin eta adaptation.
+Iteration:   1 / 250 [  0%]  (Adaptation)
+Iteration:  50 / 250 [ 20%]  (Adaptation)
+Iteration: 100 / 250 [ 40%]  (Adaptation)
+Iteration: 150 / 250 [ 60%]  (Adaptation)
+Iteration: 200 / 250 [ 80%]  (Adaptation)
+Success! Found best value [eta = 1] earlier than expected.
+Begin stochastic gradient ascent.
+  iter             ELBO   delta_ELBO_mean   delta_ELBO_med   notes
+   100           -6.262             1.000            1.000
+   200           -6.263             0.500            1.000
+   300           -6.307             0.336            0.007   MEDIAN ELBO CONVERGED
+Drawing a sample of size 4000 from the approximate posterior...
+COMPLETED.
 Finished in  0.1 seconds.</code></pre>
 <div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
@@ -780,10 +781,10 @@ contributors welcome!) please open an issue on GitHub:</p>
       </footer>
 </div>
 
-  
 
 
-  
+
+
 
   </body>
 </html>

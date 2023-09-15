@@ -1178,7 +1178,7 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #' mcmc_program <- write_stan_file(
 #'   'data {
 #'     int<lower=0> N;
-#'     int<lower=0,upper=1> y[N];
+#'     array[N] int<lower=0,upper=1> y;
 #'   }
 #'   parameters {
 #'     real<lower=0,upper=1> theta;
@@ -1189,7 +1189,7 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'     }
 #'   }
 #'   generated quantities {
-#'     int y_rep[N];
+#'     array[N] int y_rep;
 #'     profile("gq") {
 #'       y_rep = bernoulli_rng(rep_vector(theta, N));
 #'     }

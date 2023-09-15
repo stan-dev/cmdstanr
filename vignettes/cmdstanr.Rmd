@@ -24,17 +24,17 @@ traditional [RStan](https://mc-stan.org/rstan/) interface. See the [*Comparison
 with RStan*](#comparison-with-rstan) section later in this vignette for more
 details on how the two interfaces differ.
 
-**CmdStanR is not on CRAN yet**, but the beta release can be installed by
-running the following command in R.
+Using CmdStanR requires installing the **cmdstanr** R package and also
+CmdStan, the command line interface to Stan. First we install the R package 
+by running the following command in R.
 
 ```{r install, eval=FALSE}
 # we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
-CmdStanR (the **cmdstanr** R package) can now be loaded like any other R
-package. We'll also load the **bayesplot** and **posterior** packages to use
-later in examples.
+We can now load the package like any other R package. We'll also load the
+**bayesplot** and **posterior** packages to use later in examples.
 
 ```{r library, message=FALSE}
 library(cmdstanr)

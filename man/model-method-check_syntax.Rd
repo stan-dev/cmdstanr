@@ -45,7 +45,7 @@ parsing succeeds. If invalid syntax in found an error is thrown.
 file <- write_stan_file("
 data {
   int N;
-  int y[N];
+  array[N] int y;
 }
 parameters {
   // should have <lower=0> but omitting to demonstrate pedantic mode

@@ -16,6 +16,21 @@ expect_compilation <- function(mod, ...) {
   invisible(mod)
 }
 
+#' Check compilation from a call (expecting a constructor call, but not necessarily).
+#' @param constructor_call a call returning a CmdStanModel object that should have been compiled
+#' @return the newly created model
+expect_call_compilation <- function(constructor_call) {
+  before_time <- Sys.time()
+  mod <- expect_interactive_message(constructor_call, "Compiling Stan program...")
+  if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
+    fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
+  }
+  after_mtime <- file.mtime(mod$exe_file())
+  expect(before_time <= after_mtime, sprintf("Exe file '%s' has old timestamp, despite expecting (re)compilation", mod$exe_file()))
+  invisible(mod)
+}
+
+
 #' @param ... arguments passed to mod$compile()
 expect_no_recompilation <- function(mod, ...) {
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
@@ -77,14 +92,11 @@ expect_gq_output <- function(object, num_chains = NULL) {
 }
 
 expect_interactive_message <- function(object, regexp = NULL) {
-  # Non-interactive message suppression failing under Windows CI,
-  # temporarily skip message check only on Windows
-  if (os_is_windows() && !os_is_wsl()) {
-    return(object)
-  }
-  if (interactive()) {
-    expect_message(object = object, regexp = regexp)
-  } else {
-    expect_silent(object = object)
-  }
+  rlang::with_interactive(value = TRUE,
+    expect_message(object = object, regexp = regexp))
+}
+
+expect_noninteractive_silent <- function(object) {
+  rlang::with_interactive(value = FALSE,
+    expect_silent(object))
 }
