@@ -57,8 +57,15 @@ model {
   x ~ std_normal();
 }
 ")
+
+# set compile=FALSE then call format to fix old syntax
 mod <- cmdstan_model(file, compile = FALSE)
-mod$format(canonicalize = TRUE)
+mod$format(canonicalize = list("deprecations"))
+
+# overwrite the original file instead of just printing it
+mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
+mod$compile()
+
 
 # Example of removing unnecessary whitespace
 file <- write_stan_file("
