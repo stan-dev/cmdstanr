@@ -21,13 +21,17 @@ knitr::opts_chunk$set(
 ```
 
 R Markdown supports a variety of languages through the use of knitr language
-engines. One such engine is the `stan` engine, which allows users to write Stan
-programs directly in their R Markdown documents by setting the language of the
-chunk to `stan`.
+engines. Where users wish to write Stan programs as chunks directly in R Markdown documents there are three options: 
+1. the user wishes all the Stan chunks in the R Markdown document to be processed using RStan;  
+2. all Stan chunks are to be processed using CmdStanR; and
+3. some chunks are to be processed by RStan and some by CmdStanR. 
 
-Behind the scenes, the engine relies on RStan to compile the model code into an
-in-memory `stanmodel`, which is assigned to a variable with the name given by
-the `output.var` chunk option. For example:
+Behind the scenes in each option, the engine compiles the model code in each chunk into an
+in-memory model: a `stanmodel` if Rstan is being used, or a `CmdStanModel` in the CmdStanR case. The in-memory model is assigned to a variable with the name given by the `output.var` chunk option.
+
+## Option 1: Using RStan for all chunks
+
+This is the default option. In that case we can write, for example:
 
 ````{verbatim}
 ```{stan, output.var="model"}
@@ -38,20 +42,20 @@ the `output.var` chunk option. For example:
 rstan::sampling(model)
 ```
 ````
-
-CmdStanR provides a replacement engine, which can be registered as follows:
+## Option 2: Using  CmdStanR for all chunks
+If CmdStanR is being used a replacement engine needs to be registered along the following lines:
 
 ```{r register-engine, message=FALSE}
 library(cmdstanr)
 check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 
-register_knitr_engine()
+register_knitr_engine(override = FALSE)
 ```
 
-By default, this overrides knitr's built-in `stan` engine so that all `stan`
+This overrides knitr's built-in `stan` engine so that all `stan`
 chunks are processed with CmdStanR, not RStan. Of course, this also means that
 the variable specified by `output.var` will no longer be a `stanmodel` object,
-but instead a `CmdStanModel` object, so the code above would look like this:
+but instead a `CmdStanModel` object, so the example code above would look like this:
 
 ````{verbatim}
 ```{stan, output.var="model"}
@@ -88,16 +92,7 @@ fit <- ex1$sample(
 
 print(fit)
 ```
-
-## Caching chunks
-
-Use `cache=TRUE` chunk option to avoid re-compiling the Stan model code every
-time the R Markdown is knit/rendered.
-
-You can find the Stan model file and the compiled executable in the document's
-cache directory.
-
-## Using RStan and CmdStanR engines side-by-side
+## Option 3: Using both RStan and CmdStanR in the same R Markdown document
 
 While the default behavior is to override the built-in `stan` engine because the
 assumption is that the user is probably not using both RStan and CmdStanR in the
@@ -129,6 +124,17 @@ rstan::sampling(model_obj1)
 model_obj2$sample()
 ```
 ````
+
+
+## Caching chunks
+
+Use `cache=TRUE` chunk option to avoid re-compiling the Stan model code every
+time the R Markdown is knit/rendered.
+
+You can find the Stan model file and the compiled executable in the document's
+cache directory.
+ 
+
 
 ## Running interactively
 
