@@ -42,14 +42,16 @@ This is the default option. In that case we can write, for example:
 rstan::sampling(model)
 ```
 ````
-## Option 2: Using  CmdStanR for all chunks
+
+## Option 2: Using CmdStanR for all chunks
+
 If CmdStanR is being used a replacement engine needs to be registered along the following lines:
 
 ```{r register-engine, message=FALSE}
 library(cmdstanr)
 check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 
-register_knitr_engine(override = FALSE)
+register_knitr_engine(override = TRUE)
 ```
 
 This overrides knitr's built-in `stan` engine so that all `stan`
@@ -92,6 +94,8 @@ fit <- ex1$sample(
 
 print(fit)
 ```
+
+
 ## Option 3: Using both RStan and CmdStanR in the same R Markdown document
 
 While the default behavior is to override the built-in `stan` engine because the
