@@ -530,26 +530,24 @@ compile <- function(quiet = TRUE,
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
     stanc_options[["allow-undefined"]] <- TRUE
     private$using_user_header_ <- TRUE
-  }
-  else if (!is.null(cpp_options[["USER_HEADER"]])) {
-    if(!is.null(cpp_options[["user_header"]])) {
+  } else if (!is.null(cpp_options[["USER_HEADER"]])) {
+    if (!is.null(cpp_options[["user_header"]])) {
       warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
     }
 
     user_header <- cpp_options[["USER_HEADER"]]
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
     private$using_user_header_ <- TRUE
-  }
-  else if (!is.null(cpp_options[["user_header"]])) {
+  } else if (!is.null(cpp_options[["user_header"]])) {
     user_header <- cpp_options[["user_header"]]
     cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
     private$using_user_header_ <- TRUE
   }
 
 
-  if(!is.null(user_header)) {
+  if (!is.null(user_header)) {
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
-    if(!file.exists(user_header)) {
+    if (!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
     }
   }
@@ -689,8 +687,12 @@ compile <- function(quiet = TRUE,
       )
     )
     if (is.na(run_log$status) || run_log$status != 0) {
-      stop("An error occured during compilation! See the message above for more information.",
-           call. = FALSE)
+      err_msg <- "An error occured during compilation! See the message above for more information."
+      if (grepl("auto-format flag to stanc", run_log$stderr)) {
+        format_msg <- "\nTo fix deprecated or removed syntax please see ?cmdstanr::format for an example."
+        err_msg <- paste(err_msg, format_msg)
+      }
+      stop(err_msg, call. = FALSE)
     }
     if (file.exists(exe)) {
       file.remove(exe)
@@ -933,6 +935,28 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'
 #' @examples
 #' \dontrun{
+#'
+#' # Example of fixing old syntax
+#' # real x[2] --> array[2] real x;
+#' file <- write_stan_file("
+#' parameters {
+#'   real x[2];
+#' }
+#' model {
+#'   x ~ std_normal();
+#' }
+#' ")
+#'
+#' # set compile=FALSE then call format to fix old syntax
+#' mod <- cmdstan_model(file, compile = FALSE)
+#' mod$format(canonicalize = list("deprecations"))
+#'
+#' # overwrite the original file instead of just printing it
+#' mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
+#' mod$compile()
+#'
+#'
+#' # Example of removing unnecessary whitespace
 #' file <- write_stan_file("
 #' data {
 #'   int N;
