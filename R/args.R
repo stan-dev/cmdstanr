@@ -826,6 +826,13 @@ process_init_list <- function(init, num_procs, model_variables = NULL) {
       if (!all(is_parameter_value_supplied)) {
         missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
       }
+      for (par_name in parameter_names[is_parameter_value_supplied]) {
+        # Make sure that initial values for single-element containers don't get
+        # unboxed when writing to JSON
+        if (model_variables$parameters[[par_name]]$dimensions == 1 && is.null(attr(init[[i]][[par_name]], "dim"))) {
+          init[[i]][[par_name]] <- array(init[[i]][[par_name]], dim = 1)
+        }
+      }
     }
     if (length(missing_parameter_values) > 0) {
       warning_message <- c(
