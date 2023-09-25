@@ -596,7 +596,7 @@ wsl_tempdir <- function() {
 # network path as legitimate, and will always error. To avoid this we create a
 # new checking functions with WSL handling, and then pass these to
 # checkmate::makeAssertionFunction to replicate the existing assertion functionality
-check_dir_exists <- function(dir, access = NULL) {
+check_dir_exists <- function(dir, access = "") {
   if (os_is_wsl()) {
     if (!checkmate::qtest(dir, "S+")) {
       return("No directory provided.")
@@ -612,7 +612,7 @@ check_dir_exists <- function(dir, access = NULL) {
   }
 }
 
-check_file_exists <- function(files, access = NULL, ...) {
+check_file_exists <- function(files, access = "", ...) {
   if (os_is_wsl()) {
     if (!checkmate::qtest(files, "S+")) {
       return("No file provided.")
@@ -628,7 +628,7 @@ check_file_exists <- function(files, access = NULL, ...) {
   }
 }
 
-.wsl_check_exists <- function(path, is_dir = TRUE, access = NULL) {
+.wsl_check_exists <- function(path, is_dir = TRUE, access = "") {
   path_check <- processx::run(
     command = "wsl",
     args = c("ls", "-la", wsl_safe_path(path)),
