@@ -1959,7 +1959,7 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
 #'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
-#'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the variational approximation to the posterior. |
+#'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |

@@ -514,10 +514,11 @@ PathfinderArgs <- R6::R6Class(
                             tol_rel_grad = NULL,
                             tol_param = NULL,
                             history_size = NULL,
-                            num_psis_draws = NULL,
+                            num_draws = NULL,
                             num_paths = NULL,
                             max_lbfgs_iters = NULL,
-                            num_draws = NULL) {
+                            num_elbo_draws = NULL,
+                            save_single_paths = NULL) {
         self$init_alpha <- init_alpha
         self$tol_obj <- tol_obj
         self$tol_rel_obj <- tol_rel_obj
@@ -525,10 +526,11 @@ PathfinderArgs <- R6::R6Class(
         self$tol_rel_grad <- tol_rel_grad
         self$tol_param <- tol_param
         self$history_size <- history_size
-        self$num_psis_draws <- num_psis_draws
+        self$num_draws <- num_draws
         self$num_paths <- num_paths
         self$max_lbfgs_iters <- max_lbfgs_iters
-        self$num_draws <- num_draws
+        self$num_elbo_draws <- num_elbo_draws
+        self$save_single_paths <- save_single_paths
       invisible(self)
     },
 
@@ -536,9 +538,9 @@ PathfinderArgs <- R6::R6Class(
       validate_pathfinder_args(self)
     },
 
-    # Compose arguments to CmdStan command for variational-specific
+    # Compose arguments to CmdStan command for pathfinder-specific
     # non-default arguments. Works the same way as compose for sampler args,
-    # but `idx` is ignored (no multiple chains for optimize or variational)
+    # but `idx` (multiple pathfinders are handled in cmdstan)
     compose = function(idx = NULL, args = NULL) {
       .make_arg <- function(arg_name) {
         compose_arg(self, arg_name, idx = NULL)
@@ -552,10 +554,11 @@ PathfinderArgs <- R6::R6Class(
           .make_arg("tol_rel_grad"),
           .make_arg("tol_param"),
           .make_arg("history_size"),
-          .make_arg("num_psis_draws"),
+          .make_arg("num_draws"),
           .make_arg("num_paths"),
           .make_arg("max_lbfgs_iters"),
-          .make_arg("num_draws")
+          .make_arg("num_elbo_draws"),
+          .make_arg("save_single_paths")
         )
       new_args <- do.call(c, new_args)
       c(args, new_args)
@@ -867,13 +870,21 @@ validate_pathfinder_args <- function(self) {
   if (!is.null(self$num_paths)) {
     self$num_paths <- as.integer(self$num_paths)
   }
-  checkmate::assert_integerish(self$num_psis_draws, lower = 1, null.ok = TRUE, len = 1)
-  if (!is.null(self$num_psis_draws)) {
-    self$num_psis_draws <- as.integer(self$num_psis_draws)
-  }
   checkmate::assert_integerish(self$num_draws, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$num_draws)) {
     self$num_draws <- as.integer(self$num_draws)
+  }
+  checkmate::assert_integerish(self$num_elbo_draws, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$num_elbo_draws)) {
+    self$num_elbo_draws <- as.integer(self$num_elbo_draws)
+  }
+  if (!is.null(self$save_single_paths) && is.logical(self$save_single_paths)) {
+    self$save_single_paths = as.integer(self$save_single_paths)
+  }
+  checkmate::assert_integerish(self$save_single_paths, null.ok = TRUE,
+                               lower = 0, upper = 1, len = 1)
+  if (!is.null(self$save_single_paths)) {
+    self$save_single_paths <- 0
   }
 
 

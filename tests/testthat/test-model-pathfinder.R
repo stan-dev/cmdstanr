@@ -25,10 +25,11 @@ ok_arg_values <- list(
   tol_rel_grad = 1e-12,
   tol_param = 1e-12,
   history_size = 5,
-  num_psis_draws = 100,
+  num_elbo_draws = 10,
+  num_draws = 100,
   num_paths = 4,
   max_lbfgs_iters = 100,
-  num_draws = 100)
+  save_single_paths = FALSE)
 
 # using any one of these should cause sample() to error
 bad_arg_values <- list(
@@ -38,16 +39,17 @@ bad_arg_values <- list(
   init = "maybe :P",
   seed = -80,
   init_alpha = "cat.jpeg",
+  init_alpha = -3,
   tol_obj = -1,
-  tol_rel_obj = -1,
-  tol_grad = -1,
-  tol_rel_grad = -1,
-  tol_param = -1,
-  history_size = -2,
-  num_psis_draws = "no thanks",
+  tol_rel_obj = -4,
+  tol_grad = -5,
+  tol_rel_grad = -9,
+  tol_param = -2,
+  history_size = -6,
+  num_elbo_draws = -8,
+  num_draws = "no thanks",
   num_paths = -1,
-  max_lbfgs_iters = "idk :/",
-  num_draws = -1
+  max_lbfgs_iters = "idk :/"
 )
 
 bad_arg_values_2 <- list(
@@ -56,17 +58,18 @@ bad_arg_values_2 <- list(
   refresh = -1,
   init = "maybe :P",
   seed = -80,
-  init_alpha = -1,
+  init_alpha = -3,
   tol_obj = -1,
-  tol_rel_obj = -1,
-  tol_grad = -1,
-  tol_rel_grad = -1,
-  tol_param = -1,
-  history_size = -2,
-  num_psis_draws = "no thanks",
+  tol_rel_obj = -4,
+  tol_grad = -5,
+  tol_rel_grad = -9,
+  tol_param = -2,
+  history_size = -6,
+  num_elbo_draws = -8,
+  num_draws = "no thanks",
   num_paths = -1,
   max_lbfgs_iters = "idk :/",
-  num_draws = -1
+  save_single_paths = "Mby"
 )
 
 bad_arg_values_3 <- list(
@@ -74,17 +77,17 @@ bad_arg_values_3 <- list(
   output_dir = 8,
   init = "maybe :P",
   seed = -80,
-  init_alpha = -1,
+  init_alpha = -3,
   tol_obj = -1,
-  tol_rel_obj = -1,
-  tol_grad = -1,
-  tol_rel_grad = -1,
-  tol_param = -1,
-  history_size = -2,
-  num_psis_draws = "no thanks",
+  tol_rel_obj = -4,
+  tol_grad = -5,
+  tol_rel_grad = -9,
+  tol_param = -2,
+  history_size = -6,
+  num_elbo_draws = -8,
+  num_draws = "no thanks",
   num_paths = "NO!",
-  max_lbfgs_iters = "idk :/",
-  num_draws = -1
+  max_lbfgs_iters = "idk :/"
 )
 expect_pathfinder_output <- function(object, num_chains = NULL) {
   expect_output(object, regexp = "Finished in (.*) seconds.")

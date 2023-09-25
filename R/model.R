@@ -1677,29 +1677,25 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
 #'
 #' @template model-common-args
-#' @param threads (positive integer) If the model was
+#' @param num_threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections (e.g., when using the Stan
-#'   functions `reduce_sum()` or `map_rect()`).
-#' @param algorithm (string) The algorithm. Either `"meanfield"` or
-#'   `"fullrank"`.
-#' @param iter (positive integer) The _maximum_ number of iterations.
-#' @param grad_samples (positive integer) The number of samples for Monte Carlo
-#'   estimate of gradients.
-#' @param elbo_samples (positive integer) The number of samples for Monte Carlo
-#'   estimate of ELBO (objective function).
-#' @param eta (positive real) The step size weighting parameter for adaptive
-#'   step size sequence.
-#' @param adapt_engaged (logical) Do warmup adaptation?
-#' @param adapt_iter (positive integer) The _maximum_ number of adaptation
-#'   iterations.
-#' @param tol_rel_obj (positive real) Convergence tolerance on the relative norm
-#'   of the objective.
-#' @param eval_elbo (positive integer) Evaluate ELBO every Nth iteration.
-#' @param output_samples (positive integer) Number of approximate posterior
-#'   samples to draw and save.
-#'
-#' @return A [`CmdStanVB`] object.
+#'   threads to use in parallelized sections (e.g., for multi-path pathfinder
+#'   as well as `reduce_sum`)
+#' @param init_alpha (positive real) The initial step size parameter.
+#' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
+#' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
+#' @param tol_grad (positive real) Convergence tolerance on the norm of the gradient.
+#' @param tol_rel_grad (positive real) Convergence tolerance on the relative norm of the gradient.
+#' @param tol_param (positive real) Convergence tolerance on changes in parameter value.
+#' @param history_size (positive integer) The size of the history used when
+#'   approximating the Hessian.
+#' @param num_draws (positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS)
+#' @param num_paths (positive integer) Number of single pathfinders to run
+#' @param max_lbfgs_iters (positive integer) The maximum number of iterations for LBFGS
+#' @param num_elbo_draws (positive integer) Number of draws to make when calculating the ELBO of
+#'   the approximation at each iteration of LBFGS
+#' @param save_single_paths (logical) Whether to save the results of single pathfinder runs in multi-pathfinder
+#' @return A [`CmdStanPathfinder`] object.
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
@@ -1712,7 +1708,6 @@ pathfinder <- function(data = NULL,
                         output_dir = NULL,
                         output_basename = NULL,
                         sig_figs = NULL,
-                        threads = NULL,
                         opencl_ids = NULL,
                         num_threads = NULL,
                        init_alpha = NULL,
@@ -1722,14 +1717,15 @@ pathfinder <- function(data = NULL,
                        tol_rel_grad = NULL,
                        tol_param = NULL,
                        history_size = NULL,
-                       num_psis_draws = NULL,
+                       num_draws = NULL,
                        num_paths = NULL,
                        max_lbfgs_iters = NULL,
-                       num_draws = NULL) {
+                       num_elbo_draws = NULL,
+                       save_single_paths = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = (is.null(refresh) || refresh != 0),
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(num_threads, self$cpp_options())
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1743,10 +1739,11 @@ pathfinder <- function(data = NULL,
    tol_rel_grad =    tol_rel_grad,
    tol_param =    tol_param,
    history_size =    history_size,
-   num_psis_draws =    num_psis_draws,
+   num_draws =    num_draws,
    num_paths =    num_paths,
    max_lbfgs_iters =    max_lbfgs_iters,
-    num_draws = num_draws)
+    num_elbo_draws = num_elbo_draws,
+   save_single_paths = save_single_paths)
   args <- CmdStanArgs$new(
     method_args = pathfinder_args,
     stan_file = self$stan_file(),
