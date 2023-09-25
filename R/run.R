@@ -229,6 +229,9 @@ CmdStanRun <- R6::R6Class(
       if (self$method() == "optimize") {
         stop("Not available for optimize method.", call. = FALSE)
       }
+      if (self$method() == "laplace") {
+        stop("Not available for laplace method.", call. = FALSE)
+      }
       if (self$method() == "generate_quantities") {
         stop("Not available for generate_quantities method.", call. = FALSE)
       }
@@ -259,7 +262,7 @@ CmdStanRun <- R6::R6Class(
     },
 
     time = function() {
-      if (self$method() %in% c("optimize", "variational", "pathfinder")) {
+      if (self$method() %in% c("laplace", "optimize", "variational", "pathfinder")) {
         time <- list(total = self$procs$total_time())
       } else if (self$method() == "generate_quantities") {
         chain_time <- data.frame(
@@ -511,7 +514,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
   procs$process_output(id)
   procs$process_error_output(id)
   successful_fit <- FALSE
-  if (self$method() == "optimize") {
+  if (self$method() %in% "optimize") { # QUESTION: should this include laplace?
     if (procs$proc_state(id = id) > 3) {
       successful_fit <- TRUE
     }
@@ -532,6 +535,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
   procs$report_time()
 }
 CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
+CmdStanRun$set("private", name = "run_laplace_", value = .run_other)
 CmdStanRun$set("private", name = "run_variational_", value = .run_other)
 CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
 

@@ -27,7 +27,7 @@
 #'   and memory for models with many parameters.
 #'
 #' @return
-#' `as_cmdstan_fit()` returns a [CmdStanMCMC], [CmdStanMLE], or
+#' `as_cmdstan_fit()` returns a [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace] or
 #' [CmdStanVB] object. Some methods typically defined for those objects will not
 #' work (e.g. `save_data_file()`) but the important methods like `$summary()`,
 #' `$draws()`, `$sampler_diagnostics()` and others will work fine.
@@ -67,7 +67,8 @@
 #'
 #' * `point_estimates`: Point estimates for the model parameters.
 #'
-#' For [variational inference][model-method-variational] the returned list also
+#' For [laplace][model-method-laplace] and
+#' [variational inference][model-method-variational] the returned list also
 #' includes the following components:
 #'
 #' * `draws`: A [`draws_matrix`][posterior::draws_matrix] (or different format
@@ -310,6 +311,11 @@ read_cmdstan_csv <- function(files,
     repaired_variables <- repaired_variables[repaired_variables != "lp__"]
     repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
     repaired_variables <- gsub("log_g__", "lp_approx__", repaired_variables)
+  } else if (metadata$method == "laplace") {
+    metadata$variables <- gsub("log_p__", "lp__", metadata$variables)
+    metadata$variables <- gsub("log_q__", "lp_approx__", metadata$variables)
+    repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
+    repaired_variables <- gsub("log_q__", "lp_approx__", repaired_variables)
   }
   model_param_dims <- variable_dims(metadata$variables)
   metadata$stan_variable_sizes <- model_param_dims
@@ -387,6 +393,29 @@ read_cmdstan_csv <- function(files,
     list(
       metadata = metadata,
       draws = variational_draws
+    )
+  } else if (metadata$method == "laplace") {
+    if (is.null(format)) {
+      format <- "draws_matrix"
+    }
+    as_draws_format <- as_draws_format_fun(format)
+    if (length(draws) == 0) {
+      laplace_draws <- NULL
+    } else {
+      laplace_draws <- do.call(as_draws_format, list(draws[[1]]))
+    }
+    if (!is.null(laplace_draws)) {
+      if ("log_p__" %in% posterior::variables(laplace_draws)) {
+        laplace_draws <- posterior::rename_variables(laplace_draws, lp__ = "log_p__")
+      }
+      if ("log_q__" %in% posterior::variables(laplace_draws)) {
+        laplace_draws <- posterior::rename_variables(laplace_draws, lp_approx__ = "log_q__")
+      }
+      posterior::variables(laplace_draws) <- repaired_variables
+    }
+    list(
+      metadata = metadata,
+      draws = laplace_draws
     )
   } else if (metadata$method == "optimize") {
     if (is.null(format)) {
@@ -466,7 +495,8 @@ as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("
     "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
     "optimize" = CmdStanMLE_CSV$new(csv_contents, files),
     "variational" = CmdStanVB_CSV$new(csv_contents, files),
-    "pathfinder" = CmdStanPathfinder_CSV$new(csv_contents, files)
+    "pathfinder" = CmdStanPathfinder_CSV$new(csv_contents, files),
+    "laplace" = CmdStanLaplace_CSV$new(csv_contents, files)
   )
 }
 
@@ -523,6 +553,22 @@ CmdStanMLE_CSV <- R6::R6Class(
     initialize = function(csv_contents, files) {
       private$output_files_ <- files
       private$draws_ <- csv_contents$point_estimates
+      private$metadata_ <- csv_contents$metadata
+      invisible(self)
+    },
+    output_files = function(...) {
+      private$output_files_
+    }
+  ),
+  private = list(output_files_ = NULL)
+)
+CmdStanLaplace_CSV <- R6::R6Class(
+  classname = "CmdStanLaplace_CSV",
+  inherit = CmdStanLaplace,
+  public = list(
+    initialize = function(csv_contents, files) {
+      private$output_files_ <- files
+      private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
     },
@@ -590,6 +636,7 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
   }
   CmdStanMLE_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
   CmdStanVB_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
+  CmdStanLaplace_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
 }
 
 
@@ -652,7 +699,7 @@ read_csv_metadata <- function(csv_file) {
       all_names <- strsplit(line, ",")[[1]]
       if (all(csv_file_info$algorithm != "fixed_param")) {
         csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
-        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__"))]
+        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__", "log_q__"))]
         csv_file_info[["variables"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
       } else {
         csv_file_info[["variables"]] <- all_names[!endsWith(all_names, "__")]
@@ -755,7 +802,7 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$step_size <- csv_file_info$stepsize
   csv_file_info$iter_warmup <- csv_file_info$num_warmup
   csv_file_info$iter_sampling <- csv_file_info$num_samples
-  if (csv_file_info$method == "variational" || csv_file_info$method == "optimize") {
+  if (csv_file_info$method %in% c("variational", "optimize", "laplace")) {
     csv_file_info$threads <- csv_file_info$num_threads
   } else {
     csv_file_info$threads_per_chain <- csv_file_info$num_threads
