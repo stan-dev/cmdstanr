@@ -136,6 +136,7 @@ install_cmdstan <- function(dir = NULL,
     download_url <- release_url
     split_url <- strsplit(release_url, "/")
     tar_name <- utils::tail(split_url[[1]], n = 1)
+    tar_name <- gsub("-linux-(.*).tar.gz", ".tar.gz", tar_name)
     cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
     dir_cmdstan <- file.path(dir, cmdstan_ver)
@@ -143,8 +144,8 @@ install_cmdstan <- function(dir = NULL,
   } else {
     ver <- latest_released_version(quiet = quiet)
     message("* Latest CmdStan release is v", ver)
-    cmdstan_ver <- paste0("cmdstan-", ver, cmdstan_arch_suffix(ver))
-    tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
+    cmdstan_ver <- paste0("cmdstan-", ver)
+    tar_gz_file <- paste0(cmdstan_ver, cmdstan_arch_suffix(ver), ".tar.gz")
     dir_cmdstan <- file.path(dir, cmdstan_ver)
     message("* Installing CmdStan v", ver, " in ", dir_cmdstan)
     message("* Downloading ", tar_gz_file, " from GitHub...")
@@ -748,15 +749,36 @@ check_unix_cpp_compiler <- function() {
 }
 
 cmdstan_arch_suffix <- function(version = NULL) {
-  arch <- NULL
-  if (grepl("linux", R.version$os) && grepl("aarch64", R.version$arch)) {
-    arch <- "-linux-arm64"
-  }
-  if (!is.null(version) && version < "2.26") {
+  os_needs_arch <- os_is_linux() || os_is_wsl()
+  if ((!is.null(version) && version < "2.26") || !os_needs_arch) {
     # pre-CmdStan 2.26, only the x86 tarball was provided
-    arch <- NULL
+    return(NULL)
   }
-  arch
+
+  arch <- NULL
+  if (os_is_wsl()) {
+    arch <- wsl_compatible_run(command = "uname", args = "-m")$stdout
+    arch <- gsub("\n", "", arch, fixed = TRUE)
+  } else {
+    arch <- R.version$arch
+  }
+  
+  if (any(grepl(arch, c("x86_64", "i686")))) {
+    return(NULL)
+  }
+
+  arch <- gsub("aarch64", "arm64", arch)
+  arch <- gsub("armv7l", "armel", arch)
+  available_archs <- c("arm64", "armel", "armhf", "mips64el", "ppc64el", "s390x")
+  selected_arch <- grep(arch, available_archs, value = TRUE)
+
+  if (length(selected_arch) == 0) {
+    stop("Your CPU architecture: ", arch, " is not compatible!", "\n",
+          "Supported architectures are: ", paste0(available_archs, collapse = ", "),
+          call. = FALSE)
+  }
+
+  paste0("-linux-", selected_arch)
 }
 
 is_toolchain_installed <- function(app, path) {

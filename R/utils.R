@@ -50,6 +50,10 @@ os_is_macos <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Darwin")
 }
 
+os_is_linux <- function() {
+  isTRUE(Sys.info()[["sysname"]] == "Linux")
+}
+
 is_rtools43_toolchain <- function() {
   os_is_windows() && R.version$major == "4" && R.version$minor >= "3.0"
 }
