@@ -829,7 +829,7 @@ process_init_list <- function(init, num_procs, model_variables = NULL) {
       for (par_name in parameter_names[is_parameter_value_supplied]) {
         # Make sure that initial values for single-element containers don't get
         # unboxed when writing to JSON
-        if (model_variables$parameters[[par_name]]$dimensions == 1 && is.null(attr(init[[i]][[par_name]], "dim"))) {
+        if (model_variables$parameters[[par_name]]$dimensions == 1 && length(init[[i]][[par_name]]) == 1) {
           init[[i]][[par_name]] <- array(init[[i]][[par_name]], dim = 1)
         }
       }
