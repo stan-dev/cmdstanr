@@ -133,20 +133,6 @@ test_that("pathfinder() method runs when the stan file is removed", {
   )
 })
 
-#test_that("pathfinder() prints informational messages depening on show_exceptions", {
-  mod_info_msg <- testing_model("info_message")
-#TODO Pareto K?
-#  expect_pathfinder_output(
-#    expect_message(
-#      mod_info_msg$pathfinder(),
-#      "which often indicates model misspecification"
-#    )
-#  )
-#  expect_pathfinder_output(
-#    expect_message(mod_info_msg$pathfinder(show_exceptions = FALSE), regexp = NA)
-#  )
-#})
-
 test_that("no error when checking estimates after failure", {
   fit <- cmdstanr_example("schools", method = "pathfinder", seed = 123) # optim always fails for this
   expect_silent(fit$summary()) # no error
