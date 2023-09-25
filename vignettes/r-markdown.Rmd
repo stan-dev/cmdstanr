@@ -22,8 +22,9 @@ knitr::opts_chunk$set(
 
 R Markdown supports a variety of languages through the use of knitr language
 engines. Where users wish to write Stan programs as chunks directly in R Markdown documents there are three options: 
-1. the user wishes all the Stan chunks in the R Markdown document to be processed using RStan;  
-2. all Stan chunks are to be processed using CmdStanR; and
+
+1. the user wishes all the Stan chunks in the R Markdown document to be processed using RStan;    
+2. all Stan chunks are to be processed using CmdStanR; and.   
 3. some chunks are to be processed by RStan and some by CmdStanR. 
 
 Behind the scenes in each option, the engine compiles the model code in each
