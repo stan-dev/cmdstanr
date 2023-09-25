@@ -859,9 +859,9 @@ validate_variational_args <- function(self) {
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_pathfinder_args <- function(self) {
 
-  checkmate::assert_integerish(self$max_lbfgs_iter, lower = 1, null.ok = TRUE, len = 1)
-  if (!is.null(self$max_lbfgs_iter)) {
-    self$iter <- as.integer(self$max_lbfgs_iter)
+  checkmate::assert_integerish(self$max_lbfgs_iters, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$max_lbfgs_iters)) {
+    self$iter <- as.integer(self$max_lbfgs_iters)
   }
   checkmate::assert_integerish(self$num_paths, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$num_paths)) {
