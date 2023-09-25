@@ -440,7 +440,10 @@ LaplaceArgs <- R6::R6Class(
                           jacobian = TRUE) {
       checkmate::assert_r6(mode, classes = "CmdStanMLE")
       self$mode_object <- mode  # keep the CmdStanMLE for later use (can be returned by CmdStanLaplace$mode())
-      self$mode <- self$mode_object$output_files() # mode <- file path to pass to CmdStan
+      # mode <- file path to pass to CmdStan
+      # This needs to be a path that can be accessed within WSL
+      # since the files are used by CmdStan, not R
+      self$mode <- wsl_safe_path(self$mode_object$output_files())
       self$jacobian <- jacobian
       self$draws <- draws
       invisible(self)
@@ -761,7 +764,7 @@ validate_optimize_args <- function(self) {
 #' @param self A `LaplaceArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_laplace_args <- function(self) {
-  checkmate::assert_file_exists(self$mode, extension = "csv")
+  assert_file_exists(self$mode, extension = "csv")
   checkmate::assert_integerish(self$draws, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$draws)) {
     self$draws <- as.integer(self$draws)
