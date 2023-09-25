@@ -14,6 +14,7 @@
 #'
 #' * `SampleArgs`: stores arguments specific to `method=sample`.
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
+#' * `LaplaceArgs`: stores arguments specific to `method=laplace`.
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
 #' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`
 #' * `DiagnoseArgs`: stores arguments specific to `method=diagnose`
@@ -427,6 +428,52 @@ OptimizeArgs <- R6::R6Class(
 )
 
 
+# LaplaceArgs -------------------------------------------------------------
+
+LaplaceArgs <- R6::R6Class(
+  "LaplaceArgs",
+  lock_objects = FALSE,
+  public = list(
+    method = "laplace",
+    initialize = function(mode = NULL,
+                          draws = NULL,
+                          jacobian = TRUE) {
+      checkmate::assert_r6(mode, classes = "CmdStanMLE")
+      self$mode_object <- mode  # keep the CmdStanMLE for later use (can be returned by CmdStanLaplace$mode())
+      # mode <- file path to pass to CmdStan
+      # This needs to be a path that can be accessed within WSL
+      # since the files are used by CmdStan, not R
+      self$mode <- wsl_safe_path(self$mode_object$output_files())
+      self$jacobian <- jacobian
+      self$draws <- draws
+      invisible(self)
+    },
+    validate = function(num_procs) {
+      validate_laplace_args(self)
+      invisible(self)
+    },
+
+    # Compose arguments to CmdStan command for laplace-specific
+    # non-default arguments. Works the same way as compose for sampler args,
+    # but `idx` is ignored (no multiple chains for optimize or variational)
+    compose = function(idx = NULL, args = NULL) {
+      .make_arg <- function(arg_name) {
+        compose_arg(self, arg_name, idx = NULL)
+      }
+      new_args <- list(
+        "method=laplace",
+        .make_arg("mode"),
+        .make_arg("draws"),
+        .make_arg("jacobian")
+      )
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
+    }
+  )
+)
+
+
+
 # VariationalArgs ---------------------------------------------------------
 
 VariationalArgs <- R6::R6Class(
@@ -712,6 +759,29 @@ validate_optimize_args <- function(self) {
   invisible(TRUE)
 }
 
+#' Validate arguments for laplace
+#' @noRd
+#' @param self A `LaplaceArgs` object.
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_laplace_args <- function(self) {
+  assert_file_exists(self$mode, extension = "csv")
+  checkmate::assert_integerish(self$draws, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$draws)) {
+    self$draws <- as.integer(self$draws)
+  }
+  checkmate::assert_flag(self$jacobian, null.ok = FALSE)
+  if (self$mode_object$metadata()$jacobian != self$jacobian) {
+    stop(
+      "'jacobian' argument to optimize and laplace must match!\n",
+      "laplace was called with jacobian=", self$jacobian, "\n",
+      "optimize was run with jacobian=", as.logical(self$mode_object$metadata()$jacobian),
+      call. = FALSE
+    )
+  }
+  self$jacobian <- as.integer(self$jacobian)
+  invisible(TRUE)
+}
+
 #' Validate arguments for standalone generated quantities
 #' @noRd
 #' @param self A `GenerateQuantitiesArgs` object.
@@ -764,7 +834,7 @@ validate_variational_args <- function(self) {
     self$eval_elbo <- as.integer(self$eval_elbo)
   }
   checkmate::assert_integerish(self$output_samples, null.ok = TRUE,
-                               lower = 1, len = 1)
+                               lower = 1, len = 1, .var.name = "draws")
   if (!is.null(self$output_samples)) {
     self$output_samples <- as.integer(self$output_samples)
   }

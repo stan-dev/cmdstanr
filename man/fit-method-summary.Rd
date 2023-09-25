@@ -75,5 +75,5 @@ fit$print(c("alpha", "beta"), var2 = ~var(as.vector(.x)))
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }

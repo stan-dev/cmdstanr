@@ -20,18 +20,25 @@ and \code{"total"}.
 \description{
 Report the run time in seconds. For MCMC additional information
 is provided about the run times of individual chains and the warmup and
-sampling phases.
+sampling phases. For Laplace approximation the time only include the time
+for drawing the approximate sample and does not include the time
+taken to run the \verb{$optimize()} method.
 }
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 fit_mcmc$time()
 
-fit_mle <- cmdstanr_example("logistic", method = "optimize")
-fit_mle$time()
-
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 fit_vb$time()
+
+fit_mle <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
+fit_mle$time()
+
+# use fit_mle to draw samples from laplace approximation
+fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_mle)
+fit_laplace$time() # just time for drawing sample not for running optimize
+fit_laplace$time()$total + fit_mle$time()$total # total time
 }
 
 }

@@ -2,8 +2,9 @@
 #' CmdStanFit superclass
 #'
 #' @noRd
-#' @description CmdStanMCMC, CmdStanMLE, CmdStanVB, CmdStanGQ all share the
-#'   methods of the superclass CmdStanFit and also have their own unique methods.
+#' @description CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, CmdStanGQ
+#'   all share the methods of the superclass CmdStanFit and also have their own
+#'   unique methods.
 #'
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
@@ -693,10 +694,12 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #' @description The `$lp()` method extracts `lp__`, the total log probability
 #'   (`target`) accumulated in the model block of the Stan program. For
 #'   variational inference the log density of the variational approximation to
-#'   the posterior is also available via the `$lp_approx()` method.
+#'   the posterior is available via the `$lp_approx()` method. For
+#'   Laplace approximation the unnormalized density of the approximation to
+#'   the posterior is available via the `$lp_approx()` method.
 #'
 #'   See the [Log Probability Increment vs. Sampling
-#'   Statement](https://mc-stan.org/docs/2_23/reference-manual/sampling-statements-section.html)
+#'   Statement](https://mc-stan.org/docs/reference-manual/sampling-statements.html)
 #'   section of the Stan Reference Manual for details on when normalizing
 #'   constants are dropped from log probability calculations.
 #'
@@ -707,21 +710,24 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #' evaluated at a posterior draw (which is on the constrained space). `lp__` is
 #' intended to diagnose sampling efficiency and evaluate approximations.
 #'
-#' `lp_approx__` is the log density of the variational approximation to `lp__`
-#' (also on the unconstrained space). It is exposed in the variational method
-#' for performing the checks described in Yao et al. (2018) and implemented in
-#' the \pkg{loo} package.
+#' For variational inference `lp_approx__` is the log density of the variational
+#' approximation to `lp__` (also on the unconstrained space). It is exposed in
+#' the variational method for performing the checks described in Yao et al.
+#' (2018) and implemented in the \pkg{loo} package.
+#'
+#' For Laplace approximation `lp_approx__` is the unnormalized density of the
+#' Laplace approximation. It can be used to perform the same checks as in the
+#' case of the variational method described in Yao et al. (2018).
 #'
 #' @return A numeric vector with length equal to the number of (post-warmup)
-#'   draws for MCMC and variational inference, and length equal to `1` for
-#'   optimization.
+#'   draws or length equal to `1` for optimization.
 #'
 #' @references
 #' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
 #' work?: Evaluating variational inference. *Proceedings of the 35th
 #' International Conference on Machine Learning*, PMLR 80:5581–5590.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`]
 #'
 #' @examples
 #' \dontrun{
@@ -741,6 +747,13 @@ lp <- function() {
   as.numeric(lp__)
 }
 CmdStanFit$set("public", name = "lp", value = lp)
+
+# will be used by a subset of fit objects below
+#' @rdname fit-method-lp
+lp_approx <- function() {
+  as.numeric(self$draws()[, "lp_approx__"])
+}
+
 
 #' Compute a summary table of estimates and diagnostics
 #'
@@ -769,7 +782,7 @@ CmdStanFit$set("public", name = "lp", value = lp)
 #' The `$print()` method returns the fitted model object itself (invisibly),
 #' which is the standard behavior for print methods in \R.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1008,7 +1021,9 @@ CmdStanFit$set("public", name = "data_file", value = data_file)
 #' @aliases time
 #' @description Report the run time in seconds. For MCMC additional information
 #'   is provided about the run times of individual chains and the warmup and
-#'   sampling phases.
+#'   sampling phases. For Laplace approximation the time only include the time
+#'   for drawing the approximate sample and does not include the time
+#'   taken to run the `$optimize()` method.
 #'
 #' @return
 #' A list with elements
@@ -1025,11 +1040,16 @@ CmdStanFit$set("public", name = "data_file", value = data_file)
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 #' fit_mcmc$time()
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
-#' fit_mle$time()
-#'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' fit_vb$time()
+#'
+#' fit_mle <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
+#' fit_mle$time()
+#'
+#' # use fit_mle to draw samples from laplace approximation
+#' fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_mle)
+#' fit_laplace$time() # just time for drawing sample not for running optimize
+#' fit_laplace$time()$total + fit_mle$time()$total # total time
 #' }
 #'
 time <- function() {
@@ -1851,6 +1871,76 @@ mle <- function(variables = NULL) {
 }
 CmdStanMLE$set("public", name = "mle", value = mle)
 
+# CmdStanLaplace ---------------------------------------------------------------
+#' CmdStanLaplace objects
+#'
+#' @name CmdStanLaplace
+#' @family fitted model objects
+#' @template seealso-docs
+#'
+#' @description A `CmdStanLaplace` object is the fitted model object returned by the
+#'   [`$laplace()`][model-method-laplace] method of a
+#'   [`CmdStanModel`] object.
+#'
+#' @section Methods: `CmdStanLaplace` objects have the following associated methods,
+#'   all of which have their own (linked) documentation pages.
+#'
+#'  ## Extract contents of fitted model object
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
+#'  `$mode()` | Return the mode as a [`CmdStanMLE`] object. |
+#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the approximation to the posterior. |
+#'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
+#'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
+#'
+#'  ## Summarize inferences
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$summary()`][fit-method-summary]  | Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
+#'
+#'  ## Save fitted model object and temporary files
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
+#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
+#'
+#'  ## Report run times, console output, return codes
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$time()`][fit-method-time]  |  Report the run time of the Laplace sampling step. |
+#'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
+#'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'
+CmdStanLaplace <- R6::R6Class(
+  classname = "CmdStanLaplace",
+  inherit = CmdStanFit,
+  public = list(
+    mode = function() self$runset$args$method_args$mode_object
+  ),
+  private = list(
+    # inherits draws_ and metadata_ slots from CmdStanFit
+    read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("Laplace inference failed. Unable to retrieve the draws.", call. = FALSE)
+      }
+      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      private$draws_ <- csv_contents$draws
+      private$metadata_ <- csv_contents$metadata
+      invisible(self)
+    }
+  )
+)
+CmdStanLaplace$set("public", name = "lp_approx", value = lp_approx)
+
 
 # CmdStanVB ---------------------------------------------------------------
 #' CmdStanVB objects
@@ -1932,11 +2022,6 @@ CmdStanVB <- R6::R6Class(
     }
   )
 )
-
-#' @rdname fit-method-lp
-lp_approx <- function() {
-  as.numeric(self$draws()[, "lp_approx__"])
-}
 CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 
 
@@ -2185,6 +2270,12 @@ as_draws.CmdStanMCMC <- function(x, ...) {
 #' @rdname as_draws.CmdStanMCMC
 #' @export
 as_draws.CmdStanMLE <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanLaplace <- function(x, ...) {
   x$draws(...)
 }
 

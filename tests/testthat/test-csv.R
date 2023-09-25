@@ -3,9 +3,11 @@ context("read_cmdstan_csv")
 set_cmdstan_path()
 fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 1234)
 fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", seed = 123)
+fit_bernoulli_laplace <- testing_fit("bernoulli", method = "laplace", seed = 123)
 fit_logistic_optimize <- testing_fit("logistic", method = "optimize", seed = 123)
 fit_logistic_variational <- testing_fit("logistic", method = "variational", seed = 123)
 fit_logistic_variational_short <- testing_fit("logistic", method = "variational", output_samples = 100, seed = 123)
+fit_logistic_laplace <- testing_fit("logistic", method = "laplace", seed = 123)
 
 fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
                                                seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
@@ -368,6 +370,26 @@ test_that("read_cmdstan_csv() works for variational", {
   )
 })
 
+test_that("read_cmdstan_csv() works for laplace", {
+  csv_output_1 <- read_cmdstan_csv(fit_bernoulli_laplace$output_files())
+  csv_output_2 <- read_cmdstan_csv(fit_logistic_laplace$output_files())
+  expect_equal(dim(csv_output_1$draws), c(1000, 3))
+  expect_equal(dim(csv_output_2$draws), c(1000, 6))
+
+  csv_file <- test_path("resources", "csv", "bernoulli-1-laplace.csv")
+  csv_output_3 <- read_cmdstan_csv(csv_file)
+  expect_equal(as.numeric(csv_output_3$draws[1,"theta"]), 0.374086)
+  expect_equal(dim(csv_output_3$draws), c(1000, 3))
+  expect_equal(csv_output_3$metadata$variables, c("lp__", "lp_approx__", "theta"))
+
+  # variable filtering
+  csv_output_4 <- read_cmdstan_csv(fit_logistic_laplace$output_files(), variables = "beta")
+  expect_equal(posterior::variables(csv_output_4$draws), c("beta[1]", "beta[2]", "beta[3]"))
+  csv_output_5 <- read_cmdstan_csv(fit_logistic_laplace$output_files(), variables = c("alpha", "beta[2]"))
+  expect_equal(posterior::variables(csv_output_5$draws), c("alpha", "beta[2]"))
+})
+
+
 test_that("read_cmdstan_csv() works for generate_quantities", {
   csv_output_1 <- read_cmdstan_csv(fit_gq$output_files())
   expect_equal(dim(csv_output_1$generated_quantities), c(1000, 2, 11))
@@ -417,28 +439,34 @@ test_that("read_cmdstan_csv() errors for files from different methods", {
 test_that("stan_variables and stan_variable_sizes works in read_cdmstan_csv()", {
   bern_opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   bern_vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
+  bern_lap <- read_cmdstan_csv(fit_bernoulli_laplace$output_files())
   log_opt <- read_cmdstan_csv(fit_logistic_optimize$output_files())
   log_vi <- read_cmdstan_csv(fit_logistic_variational$output_files())
+  log_lap <- read_cmdstan_csv(fit_logistic_laplace$output_files())
   bern_samp <- read_cmdstan_csv(fit_bernoulli_thin_1$output_files())
   log_samp <- read_cmdstan_csv(fit_logistic_thin_1$output_files())
   gq <- read_cmdstan_csv(fit_gq$output_files())
 
   expect_equal(bern_opt$metadata$stan_variables, c("lp__", "theta"))
   expect_equal(bern_vi$metadata$stan_variables, c("lp__", "lp_approx__", "theta"))
+  expect_equal(bern_lap$metadata$stan_variables, c("lp__", "lp_approx__", "theta"))
   expect_equal(bern_samp$metadata$stan_variables, c("lp__", "theta"))
 
   expect_equal(log_opt$metadata$stan_variables, c("lp__", "alpha", "beta"))
   expect_equal(log_vi$metadata$stan_variables, c("lp__", "lp_approx__", "alpha", "beta"))
+  expect_equal(log_lap$metadata$stan_variables, c("lp__", "lp_approx__", "alpha", "beta"))
   expect_equal(log_samp$metadata$stan_variables, c("lp__", "alpha", "beta"))
 
   expect_equal(gq$metadata$stan_variables, c("y_rep","sum_y"))
 
   expect_equal(bern_opt$metadata$stan_variable_sizes, list(lp__ = 1, theta = 1))
   expect_equal(bern_vi$metadata$stan_variable_sizes, list(lp__ = 1, lp_approx__ = 1, theta = 1))
+  expect_equal(bern_lap$metadata$stan_variable_sizes, list(lp__ = 1, lp_approx__ = 1, theta = 1))
   expect_equal(bern_samp$metadata$stan_variable_sizes, list(lp__ = 1, theta = 1))
 
   expect_equal(log_opt$metadata$stan_variable_sizes, list(lp__ = 1, alpha = 1, beta = 3))
   expect_equal(log_vi$metadata$stan_variable_sizes, list(lp__ = 1, lp_approx__ = 1, alpha = 1, beta = 3))
+  expect_equal(log_lap$metadata$stan_variable_sizes, list(lp__ = 1, lp_approx__ = 1, alpha = 1, beta = 3))
   expect_equal(log_samp$metadata$stan_variable_sizes, list(lp__ = 1, alpha = 1, beta = 3))
 
   expect_equal(gq$metadata$stan_variable_sizes, list(y_rep = 10, sum_y = 1))
@@ -496,11 +524,13 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
   fits <- list(
     mle = as_cmdstan_fit(fit_logistic_optimize$output_files()),
     vb = as_cmdstan_fit(fit_logistic_variational$output_files()),
+    laplace = as_cmdstan_fit(fit_logistic_laplace$output_files()),
     mcmc = as_cmdstan_fit(fit_logistic_thin_1$output_files())
   )
   for (class in names(fits)) {
     fit <- fits[[class]]
-    checkmate::expect_r6(fit, classes = paste0("CmdStan", toupper(class), "_CSV"))
+    class_name <- if (class == "laplace") "Laplace" else toupper(class)
+    checkmate::expect_r6(fit, classes = paste0("CmdStan", class_name, "_CSV"))
     expect_s3_class(fit$draws(), "draws")
     checkmate::expect_numeric(fit$lp())
     expect_output(fit$print(), "variable")
@@ -517,6 +547,9 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
       checkmate::expect_numeric(fit$mle())
     }
     if (class == "vb") {
+      checkmate::expect_numeric(fit$lp_approx())
+    }
+    if (class == "laplace") {
       checkmate::expect_numeric(fit$lp_approx())
     }
 
@@ -548,9 +581,11 @@ test_that("as_cmdstan_fit can check MCMC diagnostics", {
 test_that("read_cmdstan_csv reads seed correctly", {
   opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
+  lap <- read_cmdstan_csv(fit_bernoulli_laplace$output_files())
   smp <- read_cmdstan_csv(fit_bernoulli_diag_e_no_samples$output_files())
   expect_equal(opt$metadata$seed, 1234)
   expect_equal(vi$metadata$seed, 123)
+  expect_equal(lap$metadata$seed, 123)
   expect_equal(smp$metadata$seed, 123)
 })
 
@@ -649,6 +684,56 @@ test_that("read_cmdstan_csv works with optimization and draws_list format", {
 
 })
 
+test_that("read_cmdstan_csv works with laplace and draws_array format", {
+  bern_laplace <- read_cmdstan_csv(fit_bernoulli_laplace$output_files())
+  bern_laplace_array <- read_cmdstan_csv(fit_bernoulli_laplace$output_files(), format = "array")
+
+  expect_equal(posterior::niterations(bern_laplace$draws),
+               posterior::niterations(bern_laplace_array$draws))
+  expect_equal(posterior::nvariables(bern_laplace$draws),
+               posterior::nvariables(bern_laplace_array$draws))
+  expect_equal(posterior::variables(bern_laplace$draws),
+               posterior::variables(bern_laplace_array$draws))
+
+  expect_equal(as.numeric(posterior::subset_draws(bern_laplace$draws, variable = "theta")),
+               as.numeric(posterior::subset_draws(bern_laplace_array$draws, variable = "theta")))
+})
+
+test_that("read_cmdstan_csv works with laplace and draws_df format", {
+  bern_laplace <- read_cmdstan_csv(fit_bernoulli_laplace$output_files())
+  bern_laplace_df <- read_cmdstan_csv(fit_bernoulli_laplace$output_files(), format = "df")
+
+  expect_equal(posterior::niterations(bern_laplace$draws),
+               posterior::niterations(bern_laplace_df$draws))
+  expect_equal(posterior::nchains(bern_laplace$draws),
+               posterior::nchains(bern_laplace_df$draws))
+  expect_equal(posterior::nvariables(bern_laplace$draws),
+               posterior::nvariables(bern_laplace_df$draws))
+  expect_equal(posterior::variables(bern_laplace$draws),
+               posterior::variables(bern_laplace_df$draws))
+
+  expect_equal(as.numeric(posterior::subset_draws(bern_laplace$draws, variable = "theta")),
+               as.numeric(posterior::subset_draws(bern_laplace_df$draws, variable = "theta")$theta))
+})
+
+test_that("read_cmdstan_csv works with laplace and draws_list format", {
+  bern_laplace <- read_cmdstan_csv(fit_bernoulli_laplace$output_files())
+  bern_laplace_list <- read_cmdstan_csv(fit_bernoulli_laplace$output_files(), format = "list")
+
+  expect_equal(posterior::niterations(bern_laplace$draws),
+               posterior::niterations(bern_laplace_list$draws))
+  expect_equal(posterior::nchains(bern_laplace$draws),
+               posterior::nchains(bern_laplace_list$draws))
+  expect_equal(posterior::nvariables(bern_laplace$draws),
+               posterior::nvariables(bern_laplace_list$draws))
+  expect_equal(posterior::variables(bern_laplace$draws),
+               posterior::variables(bern_laplace_list$draws))
+
+  expect_equal(as.numeric(posterior::subset_draws(bern_laplace$draws, variable = "theta")),
+               as.numeric(posterior::subset_draws(bern_laplace_list$draws, variable = "theta")[[1]]$theta))
+
+})
+
 test_that("read_cmdstan_csv works with VI and draws_array format", {
     bern_vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
     bern_vi_array <- read_cmdstan_csv(fit_bernoulli_variational$output_files(), format = "array")
@@ -662,7 +747,7 @@ test_that("read_cmdstan_csv works with VI and draws_array format", {
 
     expect_equal(as.numeric(posterior::subset_draws(bern_vi$draws, variable = "theta")),
                  as.numeric(posterior::subset_draws(bern_vi_array$draws, variable = "theta")))
-  })
+})
 
 test_that("read_cmdstan_csv works with VI and draws_df format", {
   bern_vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
@@ -795,6 +880,9 @@ test_that("read_cmdstan_csv works if no variables are specified", {
   )
   expect_silent(
     read_cmdstan_csv(fit_bernoulli_variational$output_files(), variables = "", sampler_diagnostics = "")
+  )
+  expect_silent(
+    read_cmdstan_csv(fit_bernoulli_laplace$output_files(), variables = "", sampler_diagnostics = "")
   )
   expect_silent(
     read_cmdstan_csv(fit_bernoulli_thin_1$output_files(), variables = "", sampler_diagnostics = "")

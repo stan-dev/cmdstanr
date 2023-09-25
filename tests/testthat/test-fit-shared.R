@@ -7,9 +7,10 @@ fits[["sample"]] <- testing_fit("logistic", method = "sample",
 fits[["variational"]] <- testing_fit("logistic", method = "variational",
                                      seed = 123, save_latent_dynamics = TRUE)
 fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
+fits[["laplace"]] <- testing_fit("logistic", method = "laplace", seed = 123)
 fit_bern <- testing_fit("bernoulli", method = "sample", seed = 123)
 fits[["generate_quantities"]] <- testing_fit("bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern, seed = 123)
-all_methods <- c("sample", "optimize", "variational", "generate_quantities")
+all_methods <- c("sample", "optimize", "laplace", "variational", "generate_quantities")
 
 
 test_that("*_files() methods return the right number of paths", {
@@ -110,9 +111,9 @@ test_that("saving data file works", {
 test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
   for (method in all_methods) {
     fit <- fits[[method]]
-    if (method == "optimize") {
-      expect_error(fit$cmdstan_summary(), "Not available for optimize method")
-      expect_error(fit$cmdstan_diagnose(), "Not available for optimize method")
+    if (method %in% c("optimize", "laplace")) {
+      expect_error(fit$cmdstan_summary(), "Not available")
+      expect_error(fit$cmdstan_diagnose(), "Not available")
     } else if (method == "generate_quantities") {
       expect_error(fit$cmdstan_summary(), "Not available for generate_quantities method")
       expect_error(fit$cmdstan_diagnose(), "Not available for generate_quantities method")
@@ -210,6 +211,7 @@ test_that("init() errors if no inits specified", {
 test_that("return_codes method works properly", {
   expect_equal(fits[["variational"]]$return_codes(), 0)
   expect_equal(fits[["optimize"]]$return_codes(), 0)
+  expect_equal(fits[["laplace"]]$return_codes(), 0)
   expect_equal(fits[["sample"]]$return_codes(), c(0,0,0,0))
   expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
 
@@ -484,6 +486,14 @@ test_that("CmdStanModel created with exe_file works", {
   expect_equal(fit_optimize$mle(), fit_optimize_exe$mle())
 
   utils::capture.output(
+    fit_laplace <- mod$laplace(data = data_list, seed = 123)
+  )
+  utils::capture.output(
+    fit_laplace_exe <- mod_exe$laplace(data = data_list, seed = 123)
+  )
+  expect_equal(fit_laplace$draws(), fit_laplace_exe$draws())
+
+  utils::capture.output(
     fit_variational <- mod$variational(data = data_list, seed = 123)
   )
   utils::capture.output(
@@ -524,7 +534,7 @@ test_that("CmdStanModel created with exe_file works", {
 
 test_that("code() works with all fitted model objects", {
   code_ans <- readLines(testing_stan_file("logistic"))
-  for (method in c("sample", "optimize", "variational")) {
+  for (method in c("sample", "optimize", "laplace", "variational")) {
     expect_identical(fits[[method]]$code(), code_ans)
   }
   code_ans_gq <- readLines(testing_stan_file("bernoulli_ppc"))

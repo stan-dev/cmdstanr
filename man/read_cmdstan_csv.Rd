@@ -49,7 +49,7 @@ diagnostic checks be performed after reading in the files? The default is
 and treedepth.}
 }
 \value{
-\code{as_cmdstan_fit()} returns a \link{CmdStanMCMC}, \link{CmdStanMLE}, or
+\code{as_cmdstan_fit()} returns a \link{CmdStanMCMC}, \link{CmdStanMLE}, \link{CmdStanLaplace} or
 \link{CmdStanVB} object. Some methods typically defined for those objects will not
 work (e.g. \code{save_data_file()}) but the important methods like \verb{$summary()},
 \verb{$draws()}, \verb{$sampler_diagnostics()} and others will work fine.
@@ -92,7 +92,8 @@ following components:
 \item \code{point_estimates}: Point estimates for the model parameters.
 }
 
-For \link[=model-method-variational]{variational inference} the returned list also
+For \link[=model-method-laplace]{laplace} and
+\link[=model-method-variational]{variational inference} the returned list also
 includes the following components:
 \itemize{
 \item \code{draws}: A \code{\link[posterior:draws_matrix]{draws_matrix}} (or different format

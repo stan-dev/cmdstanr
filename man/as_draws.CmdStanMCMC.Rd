@@ -4,6 +4,7 @@
 \alias{as_draws.CmdStanMCMC}
 \alias{as_draws}
 \alias{as_draws.CmdStanMLE}
+\alias{as_draws.CmdStanLaplace}
 \alias{as_draws.CmdStanVB}
 \alias{as_draws.CmdStanGQ}
 \title{Create a \code{draws} object from a CmdStanR fitted model object}
@@ -11,6 +12,8 @@
 \method{as_draws}{CmdStanMCMC}(x, ...)
 
 \method{as_draws}{CmdStanMLE}(x, ...)
+
+\method{as_draws}{CmdStanLaplace}(x, ...)
 
 \method{as_draws}{CmdStanVB}(x, ...)
 
