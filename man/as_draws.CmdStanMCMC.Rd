@@ -7,6 +7,7 @@
 \alias{as_draws.CmdStanLaplace}
 \alias{as_draws.CmdStanVB}
 \alias{as_draws.CmdStanGQ}
+\alias{as_draws.CmdStanPathfinder}
 \title{Create a \code{draws} object from a CmdStanR fitted model object}
 \usage{
 \method{as_draws}{CmdStanMCMC}(x, ...)
@@ -18,6 +19,8 @@
 \method{as_draws}{CmdStanVB}(x, ...)
 
 \method{as_draws}{CmdStanGQ}(x, ...)
+
+\method{as_draws}{CmdStanPathfinder}(x, ...)
 }
 \arguments{
 \item{x}{A CmdStanR fitted model object.}

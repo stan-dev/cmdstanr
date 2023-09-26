@@ -47,6 +47,7 @@ methods, many of which have their own (linked) documentation pages:
    \code{\link[=model-method-sample_mpi]{$sample_mpi()}} \tab Run CmdStan's \code{"sample"} method with \href{https://mc-stan.org/math/mpi.html}{MPI}, return \code{\link{CmdStanMCMC}} object. \cr
    \code{\link[=model-method-optimize]{$optimize()}} \tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object. \cr
    \code{\link[=model-method-variational]{$variational()}} \tab Run CmdStan's \code{"variational"} method, return \code{\link{CmdStanVB}} object. \cr
+   \code{\link[=model-method-pathfinder]{$pathfinder()}} \tab Run CmdStan's \code{"pathfinder"} method, return \code{\link{CmdStanPathfinder}} object. \cr
    \code{\link[=model-method-generate-quantities]{$generate_quantities()}} \tab Run CmdStan's \code{"generate quantities"} method, return \code{\link{CmdStanGQ}} object. \cr
 }
 
