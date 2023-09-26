@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.1</span>
       </span>
     </div>
 
@@ -143,13 +143,27 @@ Popov</h4>
     
     
 <p>R Markdown supports a variety of languages through the use of knitr
-language engines. One such engine is the <code>stan</code> engine, which
-allows users to write Stan programs directly in their R Markdown
-documents by setting the language of the chunk to <code>stan</code>.</p>
-<p>Behind the scenes, the engine relies on RStan to compile the model
-code into an in-memory <code>stanmodel</code>, which is assigned to a
-variable with the name given by the <code>output.var</code> chunk
-option. For example:</p>
+language engines. Where users wish to write Stan programs as chunks
+directly in R Markdown documents there are three options:</p>
+<ol style="list-style-type: decimal">
+<li>the user wishes all the Stan chunks in the R Markdown document to be
+processed using RStan;<br>
+</li>
+<li>all Stan chunks are to be processed using CmdStanR; and.<br>
+</li>
+<li>some chunks are to be processed by RStan and some by CmdStanR.</li>
+</ol>
+<p>Behind the scenes in each option, the engine compiles the model code
+in each chunk and creates an object that provides methods to run the
+model: a <code>stanmodel</code> if Rstan is being used, or a
+<code>CmdStanModel</code> in the CmdStanR case. This model object is
+assigned to a variable with the name given by the
+<code>output.var</code> chunk option.</p>
+<div class="section level2">
+<h2 id="option-1-using-rstan-for-all-chunks">Option 1: Using RStan for all chunks<a class="anchor" aria-label="anchor" href="#option-1-using-rstan-for-all-chunks"></a>
+</h2>
+<p>This is the default option. In that case we can write, for
+example:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>```{stan, output.var="model"}</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>// Stan model code</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>```</span>
@@ -157,19 +171,21 @@ option. For example:</p>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>```{r}</span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>rstan::sampling(model)</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>```</span></code></pre></div>
-<p>CmdStanR provides a replacement engine, which can be registered as
-follows:</p>
+</div>
+<div class="section level2">
+<h2 id="option-2-using-cmdstanr-for-all-chunks">Option 2: Using CmdStanR for all chunks<a class="anchor" aria-label="anchor" href="#option-2-using-cmdstanr-for-all-chunks"></a>
+</h2>
+<p>If CmdStanR is being used a replacement engine needs to be registered
+along the following lines:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/">cmdstanr</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain</a></span><span class="op">(</span>fix <span class="op">=</span> <span class="cn">TRUE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="../reference/register_knitr_engine.html">register_knitr_engine</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>By default, this overrides knitr’s built-in <code>stan</code> engine
-so that all <code>stan</code> chunks are processed with CmdStanR, not
-RStan. Of course, this also means that the variable specified by
+<span><span class="fu"><a href="../reference/register_knitr_engine.html">register_knitr_engine</a></span><span class="op">(</span>override <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>This overrides knitr’s built-in <code>stan</code> engine so that all
+<code>stan</code> chunks are processed with CmdStanR, not RStan. Of
+course, this also means that the variable specified by
 <code>output.var</code> will no longer be a <code>stanmodel</code>
-object, but instead a <code>CmdStanModel</code> object, so the code
-above would look like this:</p>
+object, but instead a <code>CmdStanModel</code> object, so the example
+code above would look like this:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>```{stan, output.var="model"}</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>// Stan model code</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>```</span>
@@ -177,6 +193,7 @@ above would look like this:</p>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>```{r}</span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>model$sample()</span>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>```</span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
@@ -212,7 +229,7 @@ above would look like this:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All 4 chains finished successfully.</span></span>
 <span><span class="co">#&gt; Mean chain execution time: 0.0 seconds.</span></span>
-<span><span class="co">#&gt; Total execution time: 0.7 seconds.</span></span>
+<span><span class="co">#&gt; Total execution time: 0.6 seconds.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail</span></span>
@@ -221,15 +238,8 @@ above would look like this:</p>
 <span><span class="co">#&gt;      y[2] -0.07  -0.04 2.90 2.05 -4.79  4.54 1.00     2050     1420</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="caching-chunks">Caching chunks<a class="anchor" aria-label="anchor" href="#caching-chunks"></a>
-</h2>
-<p>Use <code>cache=TRUE</code> chunk option to avoid re-compiling the
-Stan model code every time the R Markdown is knit/rendered.</p>
-<p>You can find the Stan model file and the compiled executable in the
-document’s cache directory.</p>
-</div>
-<div class="section level2">
-<h2 id="using-rstan-and-cmdstanr-engines-side-by-side">Using RStan and CmdStanR engines side-by-side<a class="anchor" aria-label="anchor" href="#using-rstan-and-cmdstanr-engines-side-by-side"></a>
+<h2 id="option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document">Option 3: Using both RStan and CmdStanR in the same R Markdown
+document<a class="anchor" aria-label="anchor" href="#option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document"></a>
 </h2>
 <p>While the default behavior is to override the built-in
 <code>stan</code> engine because the assumption is that the user is
@@ -257,6 +267,14 @@ built-in, RStan-based engine and only use CmdStanR’s knitr engine for
 <span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>```{r}</span>
 <span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>model_obj2$sample()</span>
 <span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>```</span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="caching-chunks">Caching chunks<a class="anchor" aria-label="anchor" href="#caching-chunks"></a>
+</h2>
+<p>Use <code>cache=TRUE</code> chunk option to avoid re-compiling the
+Stan model code every time the R Markdown is knit/rendered.</p>
+<p>You can find the Stan model file and the compiled executable in the
+document’s cache directory.</p>
 </div>
 <div class="section level2">
 <h2 id="running-interactively">Running interactively<a class="anchor" aria-label="anchor" href="#running-interactively"></a>
