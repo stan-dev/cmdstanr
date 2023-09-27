@@ -270,3 +270,25 @@ test_that("print message if not all parameters are initialized", {
     fixed = TRUE
   )
 })
+
+test_that("Initial values for single-element containers treated correctly", {
+  modcode <- "
+  data {
+    real y_mean;
+  }
+  parameters {
+    vector[1] y;
+  }
+  model {
+    y_mean ~ normal(y[1], 1);
+  }
+  "
+  mod <- cmdstan_model(write_stan_file(modcode), force_recompile = TRUE)
+  expect_no_error(
+    fit <- mod$sample(
+      data = list(y_mean = 0),
+      init = list(list(y = c(0))),
+      chains = 1
+    )
+  )
+})
