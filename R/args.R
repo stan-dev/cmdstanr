@@ -561,7 +561,8 @@ PathfinderArgs <- R6::R6Class(
                             tol_rel_grad = NULL,
                             tol_param = NULL,
                             history_size = NULL,
-                            num_draws = NULL,
+                            single_path_draws = NULL,
+                            draws = NULL,
                             num_paths = NULL,
                             max_lbfgs_iters = NULL,
                             num_elbo_draws = NULL,
@@ -573,7 +574,8 @@ PathfinderArgs <- R6::R6Class(
         self$tol_rel_grad <- tol_rel_grad
         self$tol_param <- tol_param
         self$history_size <- history_size
-        self$num_draws <- num_draws
+        self$num_psis_draws <- draws
+        self$num_draws <- single_path_draws
         self$num_paths <- num_paths
         self$max_lbfgs_iters <- max_lbfgs_iters
         self$num_elbo_draws <- num_elbo_draws
@@ -601,6 +603,7 @@ PathfinderArgs <- R6::R6Class(
           .make_arg("tol_rel_grad"),
           .make_arg("tol_param"),
           .make_arg("history_size"),
+          .make_arg("num_psis_draws"),
           .make_arg("num_draws"),
           .make_arg("num_paths"),
           .make_arg("max_lbfgs_iters"),
@@ -943,6 +946,10 @@ validate_pathfinder_args <- function(self) {
   checkmate::assert_integerish(self$num_draws, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$num_draws)) {
     self$num_draws <- as.integer(self$num_draws)
+  }
+  checkmate::assert_integerish(self$num_psis_draws, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$num_psis_draws)) {
+    self$num_psis_draws <- as.integer(self$num_psis_draws)
   }
   checkmate::assert_integerish(self$num_elbo_draws, lower = 1, null.ok = TRUE, len = 1)
   if (!is.null(self$num_elbo_draws)) {

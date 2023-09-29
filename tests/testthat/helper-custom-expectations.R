@@ -91,8 +91,6 @@ expect_gq_output <- function(object, num_chains = NULL) {
   expect_output(object, output)
 }
 
-
-
 expect_interactive_message <- function(object, regexp = NULL) {
   rlang::with_interactive(value = TRUE,
     expect_message(object = object, regexp = regexp))

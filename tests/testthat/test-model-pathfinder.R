@@ -26,7 +26,8 @@ ok_arg_values <- list(
   tol_param = 1e-12,
   history_size = 5,
   num_elbo_draws = 10,
-  num_draws = 100,
+  single_path_draws = 10,
+  draws = 100,
   num_paths = 4,
   max_lbfgs_iters = 100,
   save_single_paths = FALSE)
@@ -47,7 +48,8 @@ bad_arg_values <- list(
   tol_param = -2,
   history_size = -6,
   num_elbo_draws = -8,
-  num_draws = "no thanks",
+  draws = "no thanks",
+  single_path_draws = "Just one plz",
   num_paths = -1,
   max_lbfgs_iters = "idk :/"
 )
@@ -66,7 +68,8 @@ bad_arg_values_2 <- list(
   tol_param = -2,
   history_size = -6,
   num_elbo_draws = -8,
-  num_draws = "no thanks",
+  draws = "no thanks",
+  single_path_draws = "nope",
   num_paths = -1,
   max_lbfgs_iters = "idk :/",
   save_single_paths = "Mby"
@@ -85,7 +88,8 @@ bad_arg_values_3 <- list(
   tol_param = -2,
   history_size = -6,
   num_elbo_draws = -8,
-  num_draws = "no thanks",
+  draws = "no thanks",
+  single_path_draws = " ",
   num_paths = "NO!",
   max_lbfgs_iters = "idk :/"
 )

@@ -1859,7 +1859,9 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' @param tol_param (positive real) Convergence tolerance on changes in parameter value.
 #' @param history_size (positive integer) The size of the history used when
 #'   approximating the Hessian.
-#' @param num_draws (positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS)
+#' @param single_path_draws (positive integer) Number of draws a single pathfinder should return. The number of draws
+#'   PSIS sampling samples from will be equal to `single_path_draws * num_paths`
+#' @param draws (positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS)
 #' @param num_paths (positive integer) Number of single pathfinders to run
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations for LBFGS
 #' @param num_elbo_draws (positive integer) Number of draws to make when calculating the ELBO of
@@ -1887,7 +1889,8 @@ pathfinder <- function(data = NULL,
                        tol_rel_grad = NULL,
                        tol_param = NULL,
                        history_size = NULL,
-                       num_draws = NULL,
+                       single_path_draws = NULL,
+                       draws = NULL,
                        num_paths = NULL,
                        max_lbfgs_iters = NULL,
                        num_elbo_draws = NULL,
@@ -1902,17 +1905,18 @@ pathfinder <- function(data = NULL,
     model_variables <- self$variables()
   }
   pathfinder_args <- PathfinderArgs$new(
-   init_alpha =   init_alpha,
-   tol_obj =    tol_obj,
-   tol_rel_obj =    tol_rel_obj,
-   tol_grad =    tol_grad,
-   tol_rel_grad =    tol_rel_grad,
-   tol_param =    tol_param,
-   history_size =    history_size,
-   num_draws =    num_draws,
-   num_paths =    num_paths,
-   max_lbfgs_iters =    max_lbfgs_iters,
-    num_elbo_draws = num_elbo_draws,
+   init_alpha = init_alpha,
+   tol_obj = tol_obj,
+   tol_rel_obj = tol_rel_obj,
+   tol_grad = tol_grad,
+   tol_rel_grad = tol_rel_grad,
+   tol_param = tol_param,
+   history_size = history_size,
+   draws = draws,
+   single_path_draws = single_path_draws,
+   num_paths = num_paths,
+   max_lbfgs_iters = max_lbfgs_iters,
+   num_elbo_draws = num_elbo_draws,
    save_single_paths = save_single_paths)
   args <- CmdStanArgs$new(
     method_args = pathfinder_args,

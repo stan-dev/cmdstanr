@@ -254,7 +254,7 @@ read_cmdstan_csv <- function(files,
         "\""
       )
     } else {
-      fread_cmd <- paste0("grep -v '^#' --color=never '", path.expand(output_file), "'")
+      fread_cmd <- paste0("grep -v '^#' --color=never '", output_file, "'")
     }
     if (length(sampler_diagnostics) > 0) {
       post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
