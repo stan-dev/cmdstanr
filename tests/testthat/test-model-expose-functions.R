@@ -15,6 +15,30 @@ functions {
   array[] vector rtn_vec_array(array[] vector x) { return x; }
   array[] row_vector rtn_rowvec_array(array[] row_vector x) { return x; }
   array[] matrix rtn_matrix_array(array[] matrix x) { return x; }
+
+  tuple(int, int)  rtn_tuple_int(tuple(int, int) x) { return x; }
+  tuple(real, real)  rtn_tuple_real(tuple(real, real) x) { return x; }
+  tuple(vector, vector)  rtn_tuple_vec(tuple(vector, vector) x) { return x; }
+  tuple(row_vector, row_vector)  rtn_tuple_rowvec(tuple(row_vector, row_vector) x) { return x; }
+  tuple(matrix, matrix)  rtn_tuple_matrix(tuple(matrix, matrix) x) { return x; }
+
+  tuple(array[] int, array[] int)  rtn_tuple_int_array(tuple(array[] int, array[] int) x) { return x; }
+  tuple(array[] real, array[] real)  rtn_tuple_real_array(tuple(array[] real, array[] real) x) { return x; }
+  tuple(array[] vector, array[] vector)  rtn_tuple_vec_array(tuple(array[] vector, array[] vector) x) { return x; }
+  tuple(array[] row_vector, array[] row_vector)  rtn_tuple_rowvec_array(tuple(array[] row_vector, array[] row_vector) x) { return x; }
+  tuple(array[] matrix, array[] matrix)  rtn_tuple_matrix_array(tuple(array[] matrix, array[] matrix) x) { return x; }
+
+  tuple(int, tuple(int, int))  rtn_nest_tuple_int(tuple(int, tuple(int, int)) x) { return x; }
+  tuple(int, tuple(real, real))  rtn_nest_tuple_real(tuple(int, tuple(real, real)) x) { return x; }
+  tuple(int, tuple(vector, vector))  rtn_nest_tuple_vec(tuple(int, tuple(vector, vector)) x) { return x; }
+  tuple(int, tuple(row_vector, row_vector))  rtn_nest_tuple_rowvec(tuple(int, tuple(row_vector, row_vector)) x) { return x; }
+  tuple(int, tuple(matrix, matrix))  rtn_nest_tuple_matrix(tuple(int, tuple(matrix, matrix)) x) { return x; }
+
+  tuple(int, tuple(array[] int, array[] int))  rtn_nest_tuple_int_array(tuple(int, tuple(array[] int, array[] int)) x) { return x; }
+  tuple(int, tuple(array[] real, array[] real))  rtn_nest_tuple_real_array(tuple(int, tuple(array[] real, array[] real)) x) { return x; }
+  tuple(int, tuple(array[] vector, array[] vector))  rtn_nest_tuple_vec_array(tuple(int, tuple(array[] vector, array[] vector)) x) { return x; }
+  tuple(int, tuple(array[] row_vector, array[] row_vector))  rtn_nest_tuple_rowvec_array(tuple(int, tuple(array[] row_vector, array[] row_vector)) x) { return x; }
+  tuple(int, tuple(array[] matrix, array[] matrix))  rtn_nest_tuple_matrix_array(tuple(int, tuple(array[] matrix, array[] matrix)) x) { return x; }
 }"
 stan_prog <- paste(function_decl,
                   paste(readLines(testing_stan_file("bernoulli")),
@@ -35,8 +59,12 @@ test_that("Functions can be exposed in model object", {
 test_that("Functions handle types correctly", {
   skip_if(os_is_wsl())
 
+  ### Scalar
+
   expect_equal(mod$functions$rtn_int(10), 10)
   expect_equal(mod$functions$rtn_real(1.67), 1.67)
+
+  ### Container
 
   vec <- c(1.2,234,0.3,-0.4)
   rowvec <- t(vec)
@@ -48,6 +76,8 @@ test_that("Functions handle types correctly", {
   expect_equal(mod$functions$rtn_int_array(1:5), 1:5)
   expect_equal(mod$functions$rtn_real_array(vec), vec)
 
+  ### Array of Container
+
   vec_array <- list(vec, vec * 2, vec + 0.1)
   rowvec_array <- list(rowvec, rowvec * 2, rowvec + 0.1)
   matrix_array <- list(matrix, matrix * 2, matrix + 0.1)
@@ -55,6 +85,66 @@ test_that("Functions handle types correctly", {
   expect_equal(mod$functions$rtn_vec_array(vec_array), vec_array)
   expect_equal(mod$functions$rtn_rowvec_array(rowvec_array), rowvec_array)
   expect_equal(mod$functions$rtn_matrix_array(matrix_array), matrix_array)
+
+  ### Tuple of Scalar
+
+  tuple_int <- list(10, 35)
+  tuple_dbl <- list(31.87, -19.09)
+  expect_equal(mod$functions$rtn_tuple_int(tuple_int), tuple_int)
+  expect_equal(mod$functions$rtn_tuple_real(tuple_dbl), tuple_dbl)
+
+  ### Tuple of Container
+
+  tuple_vec <- list(vec, vec * 12)
+  tuple_rowvec <- list(rowvec, rowvec * 0.5)
+  tuple_matrix <- list(matrix, matrix * 0.23)
+  tuple_int_array <- list(1:10, -3:2)
+
+  expect_equal(mod$functions$rtn_tuple_vec(tuple_vec), tuple_vec)
+  expect_equal(mod$functions$rtn_tuple_rowvec(tuple_rowvec), tuple_rowvec)
+  expect_equal(mod$functions$rtn_tuple_matrix(tuple_matrix), tuple_matrix)
+  expect_equal(mod$functions$rtn_tuple_int_array(tuple_int_array), tuple_int_array)
+  expect_equal(mod$functions$rtn_tuple_real_array(tuple_vec), tuple_vec)
+
+  ### Tuple of Container Arrays
+
+  tuple_vec_array <- list(vec_array, vec_array)
+  tuple_rowvec_array <- list(rowvec_array, rowvec_array)
+  tuple_matrix_array <- list(matrix_array, matrix_array)
+
+  expect_equal(mod$functions$rtn_tuple_vec_array(tuple_vec_array), tuple_vec_array)
+  expect_equal(mod$functions$rtn_tuple_rowvec_array(tuple_rowvec_array), tuple_rowvec_array)
+  expect_equal(mod$functions$rtn_tuple_matrix_array(tuple_matrix_array), tuple_matrix_array)
+
+  ### Nested Tuple of Scalar
+
+  nest_tuple_int <- list(10, tuple_int)
+  nest_tuple_dbl <- list(31, tuple_dbl)
+  expect_equal(mod$functions$rtn_nest_tuple_int(nest_tuple_int), nest_tuple_int)
+  expect_equal(mod$functions$rtn_nest_tuple_real(nest_tuple_dbl), nest_tuple_dbl)
+
+  ### Nested Tuple of Container
+
+  nest_tuple_vec <- list(12, tuple_vec)
+  nest_tuple_rowvec <- list(2, tuple_rowvec)
+  nest_tuple_matrix <- list(-23, tuple_matrix)
+  nest_tuple_int_array <- list(21, tuple_int_array)
+
+  expect_equal(mod$functions$rtn_nest_tuple_vec(nest_tuple_vec), nest_tuple_vec)
+  expect_equal(mod$functions$rtn_nest_tuple_rowvec(nest_tuple_rowvec), nest_tuple_rowvec)
+  expect_equal(mod$functions$rtn_nest_tuple_matrix(nest_tuple_matrix), nest_tuple_matrix)
+  expect_equal(mod$functions$rtn_nest_tuple_int_array(nest_tuple_int_array), nest_tuple_int_array)
+  expect_equal(mod$functions$rtn_nest_tuple_real_array(nest_tuple_vec), nest_tuple_vec)
+
+  ### Nested Tuple of Container Arrays
+
+  nest_tuple_vec_array <- list(-21, tuple_vec_array)
+  nest_tuple_rowvec_array <- list(1000, tuple_rowvec_array)
+  nest_tuple_matrix_array <- list(0, tuple_matrix_array)
+
+  expect_equal(mod$functions$rtn_nest_tuple_vec_array(nest_tuple_vec_array), nest_tuple_vec_array)
+  expect_equal(mod$functions$rtn_nest_tuple_rowvec_array(nest_tuple_rowvec_array), nest_tuple_rowvec_array)
+  expect_equal(mod$functions$rtn_nest_tuple_matrix_array(nest_tuple_matrix_array), nest_tuple_matrix_array)
 })
 
 test_that("Functions can be exposed in fit object", {
