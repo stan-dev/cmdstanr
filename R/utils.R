@@ -730,6 +730,8 @@ get_cmdstan_flags <- function(flag_name) {
 
 rcpp_source_stan <- function(code, env, verbose = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
+  cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
+  cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (.Platform$OS.type == "windows") {
@@ -742,7 +744,7 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
       c(
         USE_CXX14 = 1,
         PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
-        PKG_CXXFLAGS = cxxflags,
+        PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, collapse = " "),
         PKG_LIBS = libs
       ),
       Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
@@ -830,7 +832,8 @@ get_function_name <- function(fun_start, fun_end, model_lines) {
     "int",
     "double",
     "Eigen::Matrix<(.*)>",
-    "std::vector<(.*)>"
+    "std::vector<(.*)>",
+    "std::tuple<(.*)>"
   )
   pattern <- paste0(
     # Only match if the type occurs at start of string
@@ -923,6 +926,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
 
   mod_stan_funs <- paste(c(
     env$hpp_code[1:(funs[1] - 1)],
+    "#include <rcpp_tuple_interop.hpp>",
     "#include <RcppEigen.h>",
     "// [[Rcpp::depends(RcppEigen)]]",
     stan_funs),
