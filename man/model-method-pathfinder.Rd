@@ -23,7 +23,8 @@ pathfinder(
   tol_rel_grad = NULL,
   tol_param = NULL,
   history_size = NULL,
-  num_draws = NULL,
+  single_path_draws = NULL,
+  draws = NULL,
   num_paths = NULL,
   max_lbfgs_iters = NULL,
   num_elbo_draws = NULL,
@@ -144,7 +145,10 @@ as well as \code{reduce_sum})}
 \item{history_size}{(positive integer) The size of the history used when
 approximating the Hessian.}
 
-\item{num_draws}{(positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS)}
+\item{single_path_draws}{(positive integer) Number of draws a single pathfinder should return. The number of draws
+PSIS sampling samples from will be equal to \code{single_path_draws * num_paths}}
+
+\item{draws}{(positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS)}
 
 \item{num_paths}{(positive integer) Number of single pathfinders to run}
 
