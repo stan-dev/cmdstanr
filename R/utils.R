@@ -833,7 +833,8 @@ get_function_name <- function(fun_start, fun_end, model_lines) {
     "double",
     "Eigen::Matrix<(.*)>",
     "std::vector<(.*)>",
-    "std::tuple<(.*)>"
+    "std::tuple<(.*)>",
+    "std::complex<(.*)>"
   )
   pattern <- paste0(
     # Only match if the type occurs at start of string
