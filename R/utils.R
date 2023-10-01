@@ -800,6 +800,10 @@ create_skeleton <- function(param_metadata, model_variables,
 }
 
 get_standalone_hpp <- function(stan_file, stancflags) {
+  name <- strip_ext(basename(stan_file))
+  path <- dirname(stan_file)
+  hpp_path <- file.path(path, paste0(name, ".hpp"))
+
   status <- withr::with_path(
       c(
         toolchain_PATH_env_var(),
@@ -807,16 +811,12 @@ get_standalone_hpp <- function(stan_file, stancflags) {
       ),
       wsl_compatible_run(
         command = stanc_cmd(),
-        args = c(stan_file,
-                stancflags),
+        args = c(paste0("--o=", hpp_path), stancflags, stan_file),
         wd = cmdstan_path(),
         error_on_status = FALSE
       )
     )
   if (status$status == 0) {
-    name <- strip_ext(basename(stan_file))
-    path <- dirname(stan_file)
-    hpp_path <- file.path(path, paste0(name, ".hpp"))
     hpp <- suppressWarnings(readLines(hpp_path, warn = FALSE))
     unlink(hpp_path)
     hpp

@@ -626,10 +626,13 @@ compile <- function(quiet = TRUE,
   }
   stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  private$model_methods_env_ <- new.env()
+  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stancflags_val, stancflags_combined))
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 
-  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
+  all_stancflags <- paste0(stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
+  stancflags_val <- paste0("STANCFLAGS += ", all_stancflags)
 
   if (!dry_run) {
 
@@ -712,10 +715,8 @@ compile <- function(quiet = TRUE,
   private$precompile_cpp_options_ <- NULL
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
-  private$model_methods_env_ <- new.env()
 
   if(!dry_run) {
-    suppressWarnings(private$model_methods_env_$hpp_code_ <- readLines(private$hpp_file_, warn = FALSE))
     if (compile_model_methods) {
       expose_model_methods(env = private$model_methods_env_,
                             verbose = !quiet,
