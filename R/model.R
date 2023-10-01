@@ -631,8 +631,7 @@ compile <- function(quiet = TRUE,
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 
-  all_stancflags <- paste0(stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
-  stancflags_val <- paste0("STANCFLAGS += ", all_stancflags)
+  stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
   if (!dry_run) {
 
