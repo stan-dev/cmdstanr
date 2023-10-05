@@ -939,15 +939,18 @@ validate_pathfinder_args <- function(self) {
   if (!is.null(self$max_lbfgs_iters)) {
     self$iter <- as.integer(self$max_lbfgs_iters)
   }
-  checkmate::assert_integerish(self$num_paths, lower = 1, null.ok = TRUE, len = 1)
+  checkmate::assert_integerish(self$num_paths, lower = 1, null.ok = TRUE,
+                               len = 1)
   if (!is.null(self$num_paths)) {
     self$num_paths <- as.integer(self$num_paths)
   }
-  checkmate::assert_integerish(self$num_draws, lower = 1, null.ok = TRUE, len = 1)
+  checkmate::assert_integerish(self$num_draws, lower = 1, null.ok = TRUE,
+                               len = 1, .var.name = "single_path_draws")
   if (!is.null(self$num_draws)) {
     self$num_draws <- as.integer(self$num_draws)
   }
-  checkmate::assert_integerish(self$num_psis_draws, lower = 1, null.ok = TRUE, len = 1)
+  checkmate::assert_integerish(self$num_psis_draws, lower = 1, null.ok = TRUE,
+                               len = 1, .var.name = "draws")
   if (!is.null(self$num_psis_draws)) {
     self$num_psis_draws <- as.integer(self$num_psis_draws)
   }

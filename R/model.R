@@ -1861,7 +1861,8 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   approximating the Hessian.
 #' @param single_path_draws (positive integer) Number of draws a single pathfinder should return. The number of draws
 #'   PSIS sampling samples from will be equal to `single_path_draws * num_paths`
-#' @param draws (positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS)
+#' @param draws (positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS).
+#'   This must be smaller than `single_path_draws * num_paths`
 #' @param num_paths (positive integer) Number of single pathfinders to run
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations for LBFGS
 #' @param num_elbo_draws (positive integer) Number of draws to make when calculating the ELBO of
