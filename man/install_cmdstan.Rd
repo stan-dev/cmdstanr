@@ -15,6 +15,7 @@ install_cmdstan(
   timeout = 1200,
   version = NULL,
   release_url = NULL,
+  release_file = NULL,
   cpp_options = list(),
   check_toolchain = TRUE,
   wsl = FALSE
@@ -65,6 +66,11 @@ release candidate to install. See \url{https://github.com/stan-dev/cmdstan/relea
 The URL should point to the tarball (\code{.tar.gz.} file) itself, e.g.,
 \code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"}.
 If both \code{version} and \code{release_url} are specified then \code{version} will be used.}
+
+\item{release_file}{(string) A file path to a CmdStan release tar.gz file
+downloaded from the releases page: \url{https://github.com/stan-dev/cmdstan/releases}.
+For example: \verb{release_file=""./cmdstan-2.33.1.tar.gz"}. If \code{release_file} is
+specified then both \code{release_url} and \code{version} will be ignored.}
 
 \item{cpp_options}{(list) Any makefile flags/variables to be written to
 the \code{make/local} file. For example, \code{list("CXX" = "clang++")} will force

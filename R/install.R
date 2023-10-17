@@ -51,6 +51,10 @@
 #'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
 #'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
+#' @param release_file (string) A file path to a CmdStan release tar.gz file
+#'   downloaded from the releases page: <https://github.com/stan-dev/cmdstan/releases>.
+#'   For example: `release_file=""./cmdstan-2.33.1.tar.gz"`. If `release_file` is
+#'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
 #'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
 #'   the use of clang for compilation.
@@ -82,6 +86,7 @@ install_cmdstan <- function(dir = NULL,
                             timeout = 1200,
                             version = NULL,
                             release_url = NULL,
+                            release_file = NULL,
                             cpp_options = list(),
                             check_toolchain = TRUE,
                             wsl = FALSE) {
@@ -118,7 +123,15 @@ install_cmdstan <- function(dir = NULL,
     dir <- repair_path(dir)
     assert_dir_exists(dir, access = "rwx")
   }
-  if (!is.null(version)) {
+  if (!is.null(release_file)) {
+    if (!is.null(release_url) || !is.null(version)) {
+      warning("release_file and release_url/version shouldn't both be specified!",
+              "\nrelease_url/version will be ignored.", call. = FALSE)
+    }
+
+    release_url <- release_file
+  }
+  if (!is.null(version) && is.null(release_file)) {
     if (!is.null(release_url)) {
       warning("version and release_url shouldn't both be specified!",
               "\nrelease_url will be ignored.", call. = FALSE)
@@ -155,18 +168,22 @@ install_cmdstan <- function(dir = NULL,
   if (!check_install_dir(dir_cmdstan, overwrite)) {
     return(invisible(NULL))
   }
-  tar_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
-  if (inherits(tar_downloaded, "try-error")) {
-    error_msg <- paste("Download of CmdStan failed with error:",
-                        attr(tar_downloaded, "condition")$message)
-    if (!is.null(version)) {
-      error_msg <- paste0(error_msg, "\nPlease check if the supplied version number is valid.")
-    } else if (!is.null(release_url)) {
-      error_msg <- paste0(error_msg, "\nPlease check if the supplied release URL is valid.")
+  if (is.null(release_file)) {
+    tar_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
+    if (inherits(tar_downloaded, "try-error")) {
+      error_msg <- paste("Download of CmdStan failed with error:",
+                          attr(tar_downloaded, "condition")$message)
+      if (!is.null(version)) {
+        error_msg <- paste0(error_msg, "\nPlease check if the supplied version number is valid.")
+      } else if (!is.null(release_url)) {
+        error_msg <- paste0(error_msg, "\nPlease check if the supplied release URL is valid.")
+      }
+      stop(error_msg, call. = FALSE)
     }
-    stop(error_msg, call. = FALSE)
+    message("* Download complete")
+  } else {
+    file.copy(release_file, dest_file)
   }
-  message("* Download complete")
   message("* Unpacking archive...")
   if (wsl) {
     # Significantly faster to use WSL to untar the downloaded archive, as there are
@@ -762,7 +779,7 @@ cmdstan_arch_suffix <- function(version = NULL) {
   } else {
     arch <- R.version$arch
   }
-  
+
   if (any(grepl(arch, c("x86_64", "i686")))) {
     return(NULL)
   }
