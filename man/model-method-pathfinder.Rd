@@ -128,7 +128,7 @@ argument to have an effect.}
 \item{num_threads}{(positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of
 threads to use in parallelized sections (e.g., for multi-path pathfinder
-as well as \code{reduce_sum})}
+as well as \code{reduce_sum}).}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 
@@ -145,42 +145,43 @@ as well as \code{reduce_sum})}
 \item{history_size}{(positive integer) The size of the history used when
 approximating the Hessian.}
 
-\item{single_path_draws}{(positive integer) Number of draws a single pathfinder should return. The number of draws
-PSIS sampling samples from will be equal to \code{single_path_draws * num_paths}}
+\item{single_path_draws}{(positive integer) Number of draws a single
+pathfinder should return. The number of draws PSIS sampling samples from
+will be equal to \code{single_path_draws * num_paths}.}
 
-\item{draws}{(positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS).
-This must be smaller than \code{single_path_draws * num_paths}}
+\item{draws}{(positive integer) Number of draws to return after performing
+pareto smooted importance sampling (PSIS). This must be smaller than
+\code{single_path_draws * num_paths}.}
 
-\item{num_paths}{(positive integer) Number of single pathfinders to run}
+\item{num_paths}{(positive integer) Number of single pathfinders to run.}
 
-\item{max_lbfgs_iters}{(positive integer) The maximum number of iterations for LBFGS}
+\item{max_lbfgs_iters}{(positive integer) The maximum number of iterations
+for LBFGS.}
 
-\item{num_elbo_draws}{(positive integer) Number of draws to make when calculating the ELBO of
-the approximation at each iteration of LBFGS}
+\item{num_elbo_draws}{(positive integer) Number of draws to make when
+calculating the ELBO of the approximation at each iteration of LBFGS.}
 
-\item{save_single_paths}{(logical) Whether to save the results of single pathfinder runs in multi-pathfinder}
+\item{save_single_paths}{(logical) Whether to save the results of single
+pathfinder runs in multi-pathfinder.}
 }
 \value{
 A \code{\link{CmdStanPathfinder}} object.
 }
 \description{
 The \verb{$pathfinder()} method of a \code{\link{CmdStanModel}} object runs
-Stan's Pathfinder algorithms.
-
-Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the
+Stan's Pathfinder algorithms. Pathfinder is a variational method for
+approximately sampling from differentiable log densities. Starting from a
+random initialization, Pathfinder locates normal approximations to the
+target density along a quasi-Newton optimization path, with local
+covariance estimated using the negative inverse Hessian estimates produced
+by the L-BFGS optimizer. Pathfinder returns draws from the Gaussian
+approximation with the lowest estimated Kullback-Leibler (KL) divergence to
+the true posterior. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
-}
-\details{
-CmdStan can fit a variational approximation to the posterior. The
-approximation is a Gaussian in the unconstrained variable space. Stan
-implements two variational algorithms. The \code{algorithm="meanfield"} option
-uses a fully factorized Gaussian for the approximation. The
-\code{algorithm="fullrank"} option uses a Gaussian with a full-rank covariance
-matrix for the approximation.
 
--- \href{https://github.com/stan-dev/cmdstan/releases/latest}{\emph{CmdStan Interface User's Guide}}
+Any argument left as \code{NULL} will default to the default value used by the
+installed version of CmdStan
 }
 \examples{
 \dontrun{
@@ -246,13 +247,15 @@ fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
 fit_laplace$summary()
 
-# Run 'variational' method to approximate the posterior (default is meanfield ADVI)
+# Run 'variational' method to use ADVI to approximate posterior
 fit_vb <- mod$variational(data = stan_data, seed = 123)
 fit_vb$summary()
-
-# Plot approximate posterior using bayesplot
 mcmc_hist(fit_vb$draws("theta"))
 
+# Run 'pathfinder' method, a new alternative to the variational method
+fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
+fit_pf$summary()
+mcmc_hist(fit_pf$draws("theta"))
 
 # Specifying initial values as a function
 fit_mcmc_w_init_fun <- mod$sample(

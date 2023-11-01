@@ -99,13 +99,15 @@
 #' fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
 #' fit_laplace$summary()
 #'
-#' # Run 'variational' method to approximate the posterior (default is meanfield ADVI)
+#' # Run 'variational' method to use ADVI to approximate posterior
 #' fit_vb <- mod$variational(data = stan_data, seed = 123)
 #' fit_vb$summary()
-#'
-#' # Plot approximate posterior using bayesplot
 #' mcmc_hist(fit_vb$draws("theta"))
 #'
+#' # Run 'pathfinder' method, a new alternative to the variational method
+#' fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
+#' fit_pf$summary()
+#' mcmc_hist(fit_pf$draws("theta"))
 #'
 #' # Specifying initial values as a function
 #' fit_mcmc_w_init_fun <- mod$sample(
@@ -1427,8 +1429,8 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
 #'   Stan's optimizer to obtain a (penalized) maximum likelihood estimate or a
 #'   maximum a posteriori estimate (if `jacobian=TRUE`). See the
-#'   [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
-#'   section of the CmdStan User's Guide for more details.
+#'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/index.html)
+#'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the [CmdStan User’s
@@ -1551,13 +1553,11 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'   likelihood estimate (MLE), the sample provides an estimate of the standard
 #'   error of the likelihood. Whether the mode is the MAP or MLE depends on
 #'   the value of the `jacobian` argument when running optimization. See the
-#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
-#'   section of the CmdStan User's Guide for more details.
+#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
-#'   for more details on the default arguments.
+#'   installed version of CmdStan.
 #'
 #' @template model-common-args
 #' @inheritParams model-method-optimize
@@ -1708,21 +1708,17 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #' @family CmdStanModel methods
 #'
 #' @description The `$variational()` method of a [`CmdStanModel`] object runs
-#'   Stan's variational Bayes (ADVI) algorithms.
-#'
-#'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the
+#'   Stan's Automatic Differentiation Variational Inference (ADVI) algorithms.
+#'   The approximation is a Gaussian in the unconstrained variable space. Stan
+#'   implements two ADVI algorithms: the `algorithm="meanfield"` option uses a
+#'   fully factorized Gaussian for the approximation; the `algorithm="fullrank"`
+#'   option uses a Gaussian with a full-rank covariance matrix for the
+#'   approximation. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
-#' @details CmdStan can fit a variational approximation to the posterior. The
-#'   approximation is a Gaussian in the unconstrained variable space. Stan
-#'   implements two variational algorithms. The `algorithm="meanfield"` option
-#'   uses a fully factorized Gaussian for the approximation. The
-#'   `algorithm="fullrank"` option uses a Gaussian with a full-rank covariance
-#'   matrix for the approximation.
-#'
-#'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan.
 #'
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
@@ -1830,27 +1826,25 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' @family CmdStanModel methods
 #'
 #' @description The `$pathfinder()` method of a [`CmdStanModel`] object runs
-#'   Stan's Pathfinder algorithms.
-#'
-#'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the
+#'   Stan's Pathfinder algorithms. Pathfinder is a variational method for
+#'   approximately sampling from differentiable log densities. Starting from a
+#'   random initialization, Pathfinder locates normal approximations to the
+#'   target density along a quasi-Newton optimization path, with local
+#'   covariance estimated using the negative inverse Hessian estimates produced
+#'   by the L-BFGS optimizer. Pathfinder returns draws from the Gaussian
+#'   approximation with the lowest estimated Kullback-Leibler (KL) divergence to
+#'   the true posterior. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
-#' @details CmdStan can fit a variational approximation to the posterior. The
-#'   approximation is a Gaussian in the unconstrained variable space. Stan
-#'   implements two variational algorithms. The `algorithm="meanfield"` option
-#'   uses a fully factorized Gaussian for the approximation. The
-#'   `algorithm="fullrank"` option uses a Gaussian with a full-rank covariance
-#'   matrix for the approximation.
-#'
-#'   -- [*CmdStan Interface User's Guide*](https://github.com/stan-dev/cmdstan/releases/latest)
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan
 #'
 #' @template model-common-args
 #' @param num_threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., for multi-path pathfinder
-#'   as well as `reduce_sum`)
+#'   as well as `reduce_sum`).
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1859,15 +1853,19 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' @param tol_param (positive real) Convergence tolerance on changes in parameter value.
 #' @param history_size (positive integer) The size of the history used when
 #'   approximating the Hessian.
-#' @param single_path_draws (positive integer) Number of draws a single pathfinder should return. The number of draws
-#'   PSIS sampling samples from will be equal to `single_path_draws * num_paths`
-#' @param draws (positive integer) Number of draws to return after performing pareto smooted importance sampling (PSIS).
-#'   This must be smaller than `single_path_draws * num_paths`
-#' @param num_paths (positive integer) Number of single pathfinders to run
-#' @param max_lbfgs_iters (positive integer) The maximum number of iterations for LBFGS
-#' @param num_elbo_draws (positive integer) Number of draws to make when calculating the ELBO of
-#'   the approximation at each iteration of LBFGS
-#' @param save_single_paths (logical) Whether to save the results of single pathfinder runs in multi-pathfinder
+#' @param single_path_draws (positive integer) Number of draws a single
+#'   pathfinder should return. The number of draws PSIS sampling samples from
+#'   will be equal to `single_path_draws * num_paths`.
+#' @param draws (positive integer) Number of draws to return after performing
+#'   pareto smooted importance sampling (PSIS). This must be smaller than
+#'   `single_path_draws * num_paths`.
+#' @param num_paths (positive integer) Number of single pathfinders to run.
+#' @param max_lbfgs_iters (positive integer) The maximum number of iterations
+#'   for LBFGS.
+#' @param num_elbo_draws (positive integer) Number of draws to make when
+#'   calculating the ELBO of the approximation at each iteration of LBFGS.
+#' @param save_single_paths (logical) Whether to save the results of single
+#'   pathfinder runs in multi-pathfinder.
 #' @return A [`CmdStanPathfinder`] object.
 #'
 #' @template seealso-docs
