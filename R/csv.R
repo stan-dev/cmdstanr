@@ -287,7 +287,7 @@ read_cmdstan_csv <- function(files,
       suppressWarnings(
         draws[[draws_list_id]] <- data.table::fread(
           cmd = fread_cmd,
-          select = metadata$variables,
+          select = variables,
           data.table = FALSE
         )
       )
