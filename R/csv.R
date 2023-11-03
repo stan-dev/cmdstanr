@@ -281,12 +281,13 @@ read_cmdstan_csv <- function(files,
       draws_list_id <- length(draws) + 1
       warmup_draws_list_id <- length(warmup_draws) + 1
       if (metadata$method == "pathfinder") {
-        variables = union(metadata$sampler_diagnostics, metadata$variables)
+        metadata$variables = union(metadata$sampler_diagnostics, metadata$variables)
+        variables = union(metadata$sampler_diagnostics, variables)
       }
       suppressWarnings(
         draws[[draws_list_id]] <- data.table::fread(
           cmd = fread_cmd,
-          select = variables,
+          select = metadata$variables,
           data.table = FALSE
         )
       )
@@ -456,7 +457,7 @@ read_cmdstan_csv <- function(files,
     if (length(draws) == 0) {
       pathfinder_draws <- NULL
     } else {
-      pathfinder_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]), drop = FALSE]))
+      pathfinder_draws <- do.call(as_draws_format, list(draws[[1]][, colnames(draws[[1]]), drop = FALSE]))
       posterior::variables(pathfinder_draws) <- repaired_variables
     }
     list(
