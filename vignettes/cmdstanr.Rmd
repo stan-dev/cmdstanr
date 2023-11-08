@@ -341,7 +341,7 @@ stanfit <- rstan::read_stan_csv(fit$output_files())
 
 CmdStanR also supports running Stan's optimization algorithms and its algorithms
 for variational approximation of full Bayesian inference. These are run via the
-`$optimize()`, `$laplace()`, `$variational()`, and `pathfinder()` methods, which
+`$optimize()`, `$laplace()`, `$variational()`, and `$pathfinder()` methods, which
 are called in a similar way to the `$sample()` method demonstrated above.
 
 ### Optimization
@@ -380,7 +380,7 @@ fit_map <- mod$optimize(
 ### Laplace Approximation
 
 The [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
-produces a sample from a normal approximation centered at the mode of a
+method produces a sample from a normal approximation centered at the mode of a
 distribution in the unconstrained space. If the mode is a MAP estimate, the
 samples provide an estimate of the mean and standard deviation of the posterior
 distribution. If the mode is the MLE, the sample provides an estimate of the
@@ -429,6 +429,8 @@ Stan version 2.33 introduced a new variational method called Pathfinder,
 which is intended to be faster and more stable than ADVI. For details on how 
 Pathfinder works see the section in the 
 [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro).
+Pathfinder is run using the [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
+method.
 
 ```{r pathfinder}
 fit_pf <- mod$pathfinder(

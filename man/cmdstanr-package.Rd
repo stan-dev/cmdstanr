@@ -34,9 +34,11 @@ algorithms, and writing results to output files.
 \subsection{Advantages of RStan}{
 \itemize{
 \item Allows other developers to distribute R packages with \emph{pre-compiled}
-Stan programs (like \strong{rstanarm}) on CRAN.
+Stan programs (like \strong{rstanarm}) on CRAN. (Note: As of 2023, this can
+mostly be achieved with CmdStanR as well. See \href{https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr}{Developing using CmdStanR}.)
 \item Avoids use of R6 classes, which may result in more familiar syntax for
 many R users.
+\item CRAN binaries available for Mac and Windows.
 }
 }
 
