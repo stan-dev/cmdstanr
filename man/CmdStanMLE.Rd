@@ -79,6 +79,7 @@ Other fitted model objects:
 \code{\link{CmdStanGQ}},
 \code{\link{CmdStanLaplace}},
 \code{\link{CmdStanMCMC}},
+\code{\link{CmdStanPathfinder}},
 \code{\link{CmdStanVB}}
 }
 \concept{fitted model objects}

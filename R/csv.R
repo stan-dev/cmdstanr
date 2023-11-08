@@ -280,6 +280,10 @@ read_cmdstan_csv <- function(files,
     if (length(variables) > 0) {
       draws_list_id <- length(draws) + 1
       warmup_draws_list_id <- length(warmup_draws) + 1
+      if (metadata$method == "pathfinder") {
+        metadata$variables = union(metadata$sampler_diagnostics, metadata$variables)
+        variables = union(metadata$sampler_diagnostics, variables)
+      }
       suppressWarnings(
         draws[[draws_list_id]] <- data.table::fread(
           cmd = fread_cmd,
@@ -445,6 +449,21 @@ read_cmdstan_csv <- function(files,
       metadata = metadata,
       generated_quantities = draws
     )
+  } else if (metadata$method == "pathfinder") {
+    if (is.null(format)) {
+      format <- "draws_matrix"
+    }
+    as_draws_format <- as_draws_format_fun(format)
+    if (length(draws) == 0) {
+      pathfinder_draws <- NULL
+    } else {
+      pathfinder_draws <- do.call(as_draws_format, list(draws[[1]][, colnames(draws[[1]]), drop = FALSE]))
+      posterior::variables(pathfinder_draws) <- repaired_variables
+    }
+    list(
+      metadata = metadata,
+      draws = pathfinder_draws
+    )
   }
 }
 
@@ -477,6 +496,7 @@ as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("
     "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
     "optimize" = CmdStanMLE_CSV$new(csv_contents, files),
     "variational" = CmdStanVB_CSV$new(csv_contents, files),
+    "pathfinder" = CmdStanPathfinder_CSV$new(csv_contents, files),
     "laplace" = CmdStanLaplace_CSV$new(csv_contents, files)
   )
 }
@@ -576,6 +596,23 @@ CmdStanVB_CSV <- R6::R6Class(
   private = list(output_files_ = NULL)
 )
 
+CmdStanPathfinder_CSV <- R6::R6Class(
+  classname = "CmdStanPathfinder_CSV",
+  inherit = CmdStanPathfinder,
+  public = list(
+    initialize = function(csv_contents, files) {
+      private$output_files_ <- files
+      private$draws_ <- csv_contents$draws
+      private$metadata_ <- csv_contents$metadata
+    },
+    output_files = function(...) {
+      private$output_files_
+    }
+  ),
+  private = list(output_files_ = NULL)
+)
+
+
 # these methods are unavailable because there's no CmdStanRun object
 unavailable_methods_CmdStanFit_CSV <- c(
     "cmdstan_diagnose", "cmdstan_summary",
@@ -642,7 +679,7 @@ read_csv_metadata <- function(csv_file) {
       "\""
     )
   } else {
-    fread_cmd <- paste0("grep '^[#a-zA-Z]' --color=never '", csv_file, "'")
+    fread_cmd <- paste0("grep '^[#a-zA-Z]' --color=never '", path.expand(csv_file), "'")
   }
   suppressWarnings(
     metadata <- data.table::fread(

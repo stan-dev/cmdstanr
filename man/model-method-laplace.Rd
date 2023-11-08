@@ -151,13 +151,11 @@ deviation of the posterior distribution. If the mode is a maximum
 likelihood estimate (MLE), the sample provides an estimate of the standard
 error of the likelihood. Whether the mode is the MAP or MLE depends on
 the value of the \code{jacobian} argument when running optimization. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html}{Laplace Sampling}
-section of the CmdStan User's Guide for more details.
+\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
+for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
-for more details on the default arguments.
+installed version of CmdStan.
 }
 \examples{
 \dontrun{
@@ -199,6 +197,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-optimize}},
+\code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
 \code{\link{model-method-variables}},

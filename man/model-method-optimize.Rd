@@ -166,8 +166,8 @@ A \code{\link{CmdStanMLE}} object.
 The \verb{$optimize()} method of a \code{\link{CmdStanModel}} object runs
 Stan's optimizer to obtain a (penalized) maximum likelihood estimate or a
 maximum a posteriori estimate (if \code{jacobian=TRUE}). See the
-\href{https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html}{Maximum Likelihood Estimation}
-section of the CmdStan User's Guide for more details.
+\href{https://mc-stan.org/docs/cmdstan-guide/index.html}{CmdStan User's Guide}
+for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
 installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
@@ -239,13 +239,15 @@ fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
 fit_laplace$summary()
 
-# Run 'variational' method to approximate the posterior (default is meanfield ADVI)
+# Run 'variational' method to use ADVI to approximate posterior
 fit_vb <- mod$variational(data = stan_data, seed = 123)
 fit_vb$summary()
-
-# Plot approximate posterior using bayesplot
 mcmc_hist(fit_vb$draws("theta"))
 
+# Run 'pathfinder' method, a new alternative to the variational method
+fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
+fit_pf$summary()
+mcmc_hist(fit_pf$draws("theta"))
 
 # Specifying initial values as a function
 fit_mcmc_w_init_fun <- mod$sample(
@@ -308,6 +310,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
 \code{\link{model-method-variables}},

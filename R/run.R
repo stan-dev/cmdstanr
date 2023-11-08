@@ -262,7 +262,7 @@ CmdStanRun <- R6::R6Class(
     },
 
     time = function() {
-      if (self$method() %in% c("laplace", "optimize", "variational")) {
+      if (self$method() %in% c("laplace", "optimize", "variational", "pathfinder")) {
         time <- list(total = self$procs$total_time())
       } else if (self$method() == "generate_quantities") {
         chain_time <- data.frame(
@@ -518,6 +518,10 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     if (procs$proc_state(id = id) > 3) {
       successful_fit <- TRUE
     }
+  } else if (self$method() == "pathfinder") {
+    if (procs$proc_state(id = id) > 3 | procs$get_proc(id)$get_exit_status() == 0) {
+      successful_fit <- TRUE
+    }
   } else if (procs$get_proc(id)$get_exit_status() == 0) {
     successful_fit <- TRUE
   }
@@ -533,6 +537,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
 CmdStanRun$set("private", name = "run_laplace_", value = .run_other)
 CmdStanRun$set("private", name = "run_variational_", value = .run_other)
+CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs

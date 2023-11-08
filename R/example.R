@@ -50,7 +50,7 @@
 #'
 cmdstanr_example <-
   function(example = c("logistic", "schools", "schools_ncp"),
-           method = c("sample", "optimize", "laplace", "variational", "diagnose"),
+           method = c("sample", "optimize", "laplace", "variational", "pathfinder", "diagnose"),
            ...,
            quiet = TRUE,
            force_recompile = getOption("cmdstanr_force_recompile", default = FALSE)) {

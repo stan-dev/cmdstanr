@@ -16,6 +16,7 @@
 #' * `OptimizeArgs`: stores arguments specific to `method=optimize`.
 #' * `LaplaceArgs`: stores arguments specific to `method=laplace`.
 #' * `VariationalArgs`: stores arguments specific to `method=variational`
+#' * `PathfinderArgs`: stores arguments specific to `method=pathfinder`
 #' * `GenerateQuantitiesArgs`: stores arguments specific to `method=generate_quantities`
 #' * `DiagnoseArgs`: stores arguments specific to `method=diagnose`
 #'
@@ -41,7 +42,8 @@ CmdStanArgs <- R6::R6Class(
                           output_basename = NULL,
                           sig_figs = NULL,
                           opencl_ids = NULL,
-                          model_variables = NULL) {
+                          model_variables = NULL,
+                          num_threads = NULL) {
 
       self$model_name <- model_name
       self$stan_code <- stan_code
@@ -82,6 +84,7 @@ CmdStanArgs <- R6::R6Class(
       }
       self$init <- init
       self$opencl_ids <- opencl_ids
+      self$num_threads = NULL
       self$method_args$validate(num_procs = length(self$proc_ids))
       self$validate()
     },
@@ -178,6 +181,9 @@ CmdStanArgs <- R6::R6Class(
       }
       if (!is.null(self$opencl_ids)) {
         args$opencl <- c("opencl", paste0("platform=", self$opencl_ids[1]), paste0("device=", self$opencl_ids[2]))
+      }
+      if (!is.null(self$num_threads)) {
+        num_threads <- c(args$output, paste0("num_threads=", self$num_threads))
       }
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
@@ -541,6 +547,75 @@ VariationalArgs <- R6::R6Class(
   )
 )
 
+# PathfinderArgs ---------------------------------------------------------
+
+PathfinderArgs <- R6::R6Class(
+  "PathfinderArgs",
+  lock_objects = FALSE,
+  public = list(
+    method = "pathfinder",
+      initialize = function(init_alpha = NULL,
+                            tol_obj = NULL,
+                            tol_rel_obj = NULL,
+                            tol_grad = NULL,
+                            tol_rel_grad = NULL,
+                            tol_param = NULL,
+                            history_size = NULL,
+                            single_path_draws = NULL,
+                            draws = NULL,
+                            num_paths = NULL,
+                            max_lbfgs_iters = NULL,
+                            num_elbo_draws = NULL,
+                            save_single_paths = NULL) {
+        self$init_alpha <- init_alpha
+        self$tol_obj <- tol_obj
+        self$tol_rel_obj <- tol_rel_obj
+        self$tol_grad <- tol_grad
+        self$tol_rel_grad <- tol_rel_grad
+        self$tol_param <- tol_param
+        self$history_size <- history_size
+        self$num_psis_draws <- draws
+        self$num_draws <- single_path_draws
+        self$num_paths <- num_paths
+        self$max_lbfgs_iters <- max_lbfgs_iters
+        self$num_elbo_draws <- num_elbo_draws
+        self$save_single_paths <- save_single_paths
+      invisible(self)
+    },
+
+    validate = function(num_procs) {
+      validate_pathfinder_args(self)
+    },
+
+    # Compose arguments to CmdStan command for pathfinder-specific
+    # non-default arguments. Works the same way as compose for sampler args,
+    # but `idx` (multiple pathfinders are handled in cmdstan)
+    compose = function(idx = NULL, args = NULL) {
+      .make_arg <- function(arg_name) {
+        compose_arg(self, arg_name, idx = NULL)
+      }
+        new_args <- list(
+          "method=pathfinder",
+          .make_arg("init_alpha"),
+          .make_arg("tol_obj"),
+          .make_arg("tol_rel_obj"),
+          .make_arg("tol_grad"),
+          .make_arg("tol_rel_grad"),
+          .make_arg("tol_param"),
+          .make_arg("history_size"),
+          .make_arg("num_psis_draws"),
+          .make_arg("num_draws"),
+          .make_arg("num_paths"),
+          .make_arg("max_lbfgs_iters"),
+          .make_arg("num_elbo_draws"),
+          .make_arg("save_single_paths")
+        )
+      new_args <- do.call(c, new_args)
+      c(args, new_args)
+    }
+  )
+)
+
 # DiagnoseArgs -------------------------------------------------------------
 
 DiagnoseArgs <- R6::R6Class(
@@ -850,6 +925,59 @@ validate_variational_args <- function(self) {
                            lower = .Machine$double.eps)
   checkmate::assert_number(self$tol_rel_obj, null.ok = TRUE,
                            lower = .Machine$double.eps)
+
+  invisible(TRUE)
+}
+
+#' Validate arguments for pathfinder inference
+#' @noRd
+#' @param self A `PathfinderArgs` object.
+#' @return `TRUE` invisibly unless an error is thrown.
+validate_pathfinder_args <- function(self) {
+
+  checkmate::assert_integerish(self$max_lbfgs_iters, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$max_lbfgs_iters)) {
+    self$iter <- as.integer(self$max_lbfgs_iters)
+  }
+  checkmate::assert_integerish(self$num_paths, lower = 1, null.ok = TRUE,
+                               len = 1)
+  if (!is.null(self$num_paths)) {
+    self$num_paths <- as.integer(self$num_paths)
+  }
+  checkmate::assert_integerish(self$num_draws, lower = 1, null.ok = TRUE,
+                               len = 1, .var.name = "single_path_draws")
+  if (!is.null(self$num_draws)) {
+    self$num_draws <- as.integer(self$num_draws)
+  }
+  checkmate::assert_integerish(self$num_psis_draws, lower = 1, null.ok = TRUE,
+                               len = 1, .var.name = "draws")
+  if (!is.null(self$num_psis_draws)) {
+    self$num_psis_draws <- as.integer(self$num_psis_draws)
+  }
+  checkmate::assert_integerish(self$num_elbo_draws, lower = 1, null.ok = TRUE, len = 1)
+  if (!is.null(self$num_elbo_draws)) {
+    self$num_elbo_draws <- as.integer(self$num_elbo_draws)
+  }
+  if (!is.null(self$save_single_paths) && is.logical(self$save_single_paths)) {
+    self$save_single_paths = as.integer(self$save_single_paths)
+  }
+  checkmate::assert_integerish(self$save_single_paths, null.ok = TRUE,
+                               lower = 0, upper = 1, len = 1)
+  if (!is.null(self$save_single_paths)) {
+    self$save_single_paths <- 0
+  }
+
+
+  # check args only available for lbfgs and bfgs
+  bfgs_args <- c("init_alpha", "tol_obj", "tol_rel_obj", "tol_grad", "tol_rel_grad", "tol_param")
+  for (arg in bfgs_args) {
+    checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
+  }
+
+  if (!is.null(self$history_size)) {
+      checkmate::assert_integerish(self$history_size, lower = 1, len = 1, null.ok = FALSE)
+      self$history_size <- as.integer(self$history_size)
+  }
 
   invisible(TRUE)
 }

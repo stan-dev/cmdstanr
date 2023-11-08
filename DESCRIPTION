@@ -16,7 +16,8 @@ Authors@R:
       person(given = c("William", "Michael"), family = "Landau", role = "ctb",
            email = "will.landau@gmail.com", comment = c(ORCID = "0000-0003-1878-3253")),
       person(given = "Jacob", family = "Socolar", role = "ctb"), 
-      person(given = "Martin", family = "Modrák", role = "ctb"))
+      person(given = "Martin", family = "Modrák", role = "ctb"),
+      person(given = "Steve", family = "Bronder", role = "ctb"))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command
     line interface for compilation and running algorithms instead of interfacing

@@ -45,6 +45,7 @@ Other fitted model objects:
 \code{\link{CmdStanLaplace}},
 \code{\link{CmdStanMCMC}},
 \code{\link{CmdStanMLE}},
+\code{\link{CmdStanPathfinder}},
 \code{\link{CmdStanVB}}
 }
 \concept{fitted model objects}
