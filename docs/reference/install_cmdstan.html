@@ -34,7 +34,7 @@ be called directly by the user."><meta property="og:image" content="https://mc-s
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -150,6 +150,7 @@ be called directly by the user.</p>
 <span>  timeout <span class="op">=</span> <span class="fl">1200</span>,</span>
 <span>  version <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  release_url <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  release_file <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  check_toolchain <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  wsl <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -215,6 +216,13 @@ release candidate to install. See <a href="https://github.com/stan-dev/cmdstan/r
 The URL should point to the tarball (<code>.tar.gz.</code> file) itself, e.g.,
 <code>release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"</code>.
 If both <code>version</code> and <code>release_url</code> are specified then <code>version</code> will be used.</p></dd>
+
+
+<dt>release_file</dt>
+<dd><p>(string) A file path to a CmdStan release tar.gz file
+downloaded from the releases page: <a href="https://github.com/stan-dev/cmdstan/releases" class="external-link">https://github.com/stan-dev/cmdstan/releases</a>.
+For example: <code>release_file=""./cmdstan-2.33.1.tar.gz"</code>. If <code>release_file</code> is
+specified then both <code>release_url</code> and <code>version</code> will be ignored.</p></dd>
 
 
 <dt>cpp_options</dt>

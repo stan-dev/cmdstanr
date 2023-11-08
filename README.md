@@ -61,9 +61,9 @@ CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette.
 
 ### Contributing
 
-There is a lot of work still to be done and contributions are very welcome!
-If you are interested in contributing please comment on an open issue
-or open a new one if none are applicable.
+There is a lot of work still to be done and we welcome contributions from
+anyone! If you are interested in contributing please comment on an open issue or
+open a new one if none are applicable.
 
 ### License
 
