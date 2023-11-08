@@ -1,6 +1,6 @@
 ---
 title: "Getting started with CmdStanR"
-author: "Jonah Gabry and Rok Češnovar"
+author: "Jonah Gabry, Rok Češnovar, and Andrew Johnson"
 output:
   rmarkdown::html_vignette:
     toc: true
