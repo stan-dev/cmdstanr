@@ -401,7 +401,7 @@ fit_laplace <- mod$laplace(
     seed = 123,
     refresh = 1000
   )
-fit_laplace$summary("theta")
+fit_laplace$print("theta")
 mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025)
 ```
 
