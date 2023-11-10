@@ -109,8 +109,8 @@
 #' fit_pf$summary()
 #' mcmc_hist(fit_pf$draws("theta"))
 #'
-#' # Run 'pathfinder' again with more paths, less draws, better covariance approximation,
-#' # and less LBFGSs iterations
+#' # Run 'pathfinder' again with more paths, fewer draws per path,
+#' # better covariance approximation, and fewer LBFGSs iterations
 #' fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
 #'                          history_size=50, max_lbfgs_iters=100)
 #'
