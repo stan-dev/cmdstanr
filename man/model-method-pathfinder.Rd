@@ -71,10 +71,10 @@ containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 \item A list of lists containing initial values for all or some parameters. For
-MCMC the list should contain a sublist for each chain. For optimization and
-variational inference there should be just one sublist. The sublists should
-have named elements corresponding to the parameters for which you are
-specifying initial values. See \strong{Examples}.
+MCMC the list should contain a sublist for each chain. For other model
+fitting methods there should be just one sublist. The sublists should have
+named elements corresponding to the parameters for which you are specifying
+initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC, if the function
