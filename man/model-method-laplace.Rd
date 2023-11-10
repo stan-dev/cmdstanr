@@ -3,7 +3,7 @@
 \name{model-method-laplace}
 \alias{model-method-laplace}
 \alias{laplace}
-\title{Run Stan's laplace algorithm}
+\title{Run Stan's Laplace algorithm}
 \usage{
 laplace(
   data = NULL,

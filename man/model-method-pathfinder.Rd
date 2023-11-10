@@ -171,12 +171,15 @@ A \code{\link{CmdStanPathfinder}} object.
 The \verb{$pathfinder()} method of a \code{\link{CmdStanModel}} object runs
 Stan's Pathfinder algorithms. Pathfinder is a variational method for
 approximately sampling from differentiable log densities. Starting from a
-random initialization, Pathfinder locates normal approximations to the
-target density along a quasi-Newton optimization path, with local
-covariance estimated using the negative inverse Hessian estimates produced
-by the L-BFGS optimizer. Pathfinder returns draws from the Gaussian
-approximation with the lowest estimated Kullback-Leibler (KL) divergence to
-the true posterior. See the
+random initialization, Pathfinder locates normal approximations
+to the target density along a quasi-Newton optimization path in
+the unconstrained space, with local covariance estimated using
+the negative inverse Hessian estimates produced by the LBFGS
+optimizer. Pathfinder selects the normal approximation with the
+lowest estimated Kullback-Leibler (KL) divergence to the true
+posterior. Finally Pathfinder draws from that normal
+approximation and returns the draws transformed to the
+constrained scale. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
 
@@ -241,7 +244,7 @@ my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.jso
 fit_optim <- mod$optimize(data = my_data_file, seed = 123)
 fit_optim$summary()
 
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation
+# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
 # to the posterior
 fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
@@ -256,6 +259,11 @@ mcmc_hist(fit_vb$draws("theta"))
 fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 fit_pf$summary()
 mcmc_hist(fit_pf$draws("theta"))
+
+# Run 'pathfinder' again with more paths, fewer draws per path,
+# better covariance approximation, and fewer LBFGSs iterations
+fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
+                         history_size=50, max_lbfgs_iters=100)
 
 # Specifying initial values as a function
 fit_mcmc_w_init_fun <- mod$sample(
