@@ -678,7 +678,7 @@ get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
   flags <- wsl_compatible_run(
     command = "make",
-    args = c("--no-print-directory", paste0("print-", flag_name)),
+    args = c("-s", paste0("print-", flag_name)),
     wd = cmdstan_path
   )$stdout
 
