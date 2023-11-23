@@ -257,7 +257,7 @@ test_that("get_cmdstan_flags() can be used recursively in `make`", {
   )
   nonrecursive_flags <- get_cmdstan_flags("STANCFLAGS")
   recursive_flags <- readLines(textConnection(wsl_compatible_run(
-    command = "make", args = c("-f", tmp)
+    command = "make", args = c("-f", tmp), wd = cmdstan_path()
   )$stdout))
   expect_equal(nonrecursive_flags, recursive_flags)
 })
