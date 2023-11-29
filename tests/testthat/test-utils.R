@@ -252,8 +252,8 @@ test_that("as_mcmc.list() works", {
 test_that("get_cmdstan_flags() can be used recursively in `make`", {
   mkfile <- normalizePath(test_path("testdata", "Makefile"))
   nonrecursive_flags <- get_cmdstan_flags("STANCFLAGS")
-  stdo <- wsl_compatible_run(
-    command = "make", args = sprintf("--file=%s", mkfile), wd = cmdstan_path()
+  stdo <- processx::run(
+    command = "make", args = sprintf("--file=%s", mkfile)
   )$stdout
   recursive_flags <- readLines(textConnection(stdo))
   expect_equal(nonrecursive_flags, recursive_flags)
