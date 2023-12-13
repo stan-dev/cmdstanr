@@ -27,7 +27,7 @@ releases.
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
 
-* Flexible [BSD-3 license](https://opensource.org/licenses/BSD-3-Clause).
+* Flexible [BSD-3 license](https://opensource.org/license/bsd-3-clause/).
 
 
 ### Installation
