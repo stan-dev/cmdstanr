@@ -123,6 +123,9 @@
 <li>Add support/tests for exposing functions with tuples by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/860" class="external-link">#860</a></li>
 <li>Add support/tests for exporting functions with complex types by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/861" class="external-link">#861</a></li>
 <li>Add option for installing from release archive by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/866" class="external-link">#866</a></li>
+<li>Improve Pathfinder doc by <a href="https://github.com/avehtari" class="external-link">@avehtari</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/875" class="external-link">#875</a></li>
+<li>Rename <code>jacobian_adjustment</code> argument to <code>jacobian</code> by <a href="https://github.com/jgabry" class="external-link">@jgabry</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/879" class="external-link">#879</a></li>
+<li>Fix get_cmdstan_flags(‘STANCFLAGS’) in recursive make by <a href="https://github.com/pearsonca" class="external-link">@pearsonca</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/881" class="external-link">#881</a></li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -312,7 +315,7 @@
 </ul></div>
 <div class="section level4">
 <h4 id="new-features-0-2-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h4>
-<ul><li><p>CSV reading is now faster by using <code><a href="https://Rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">data.table::fread()</a></code>. (<a href="https://github.com/stan-dev/cmdstanr/issues/318" class="external-link">#318</a>)</p></li>
+<ul><li><p>CSV reading is now faster by using <code><a href="https://rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">data.table::fread()</a></code>. (<a href="https://github.com/stan-dev/cmdstanr/issues/318" class="external-link">#318</a>)</p></li>
 <li><p><code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> gains argument <code>version</code> for specifying which version of CmdStan to install. (<a href="https://github.com/stan-dev/cmdstanr/issues/300" class="external-link">#300</a>, <a href="https://github.com/stan-dev/cmdstanr/issues/308" class="external-link">#308</a>)</p></li>
 <li><p>New function <code><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain()</a></code> that checks if the appropriate toolchains are available. (<a href="https://github.com/stan-dev/cmdstanr/issues/289" class="external-link">#289</a>)</p></li>
 <li><p><code>$sample()</code> method for CmdStanModel objects gains argument <code>chain_ids</code> for specifying custom chain IDs. (<a href="https://github.com/stan-dev/cmdstanr/issues/319" class="external-link">#319</a>)</p></li>

@@ -113,19 +113,22 @@ for a given vector of unconstrained parameters</h1>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hessian</span><span class="op">(</span><span class="va">unconstrained_variables</span>, jacobian_adjustment <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hessian</span><span class="op">(</span><span class="va">unconstrained_variables</span>, jacobian <span class="op">=</span> <span class="cn">TRUE</span>, jacobian_adjustment <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>unconstrained_variables</dt>
-<dd><p>(numeric) A vector of unconstrained parameters
-to be passed to <code>hessian</code>.</p></dd>
+<dd><p>(numeric) A vector of unconstrained parameters.</p></dd>
+
+
+<dt>jacobian</dt>
+<dd><p>(logical) Whether to include the log-density adjustments from
+un/constraining variables.</p></dd>
 
 
 <dt>jacobian_adjustment</dt>
-<dd><p>(logical) Whether to include the log-density
-adjustments from un/constraining variables.</p></dd>
+<dd><p>Deprecated. Please use <code>jacobian</code> instead.</p></dd>
 
 </dl></div>
     <div id="see-also">
