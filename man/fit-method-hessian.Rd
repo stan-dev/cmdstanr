@@ -6,7 +6,7 @@
 \title{Calculate the log-probability , the gradient w.r.t. each input, and the hessian
 for a given vector of unconstrained parameters}
 \usage{
-hessian(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = TRUE)
+hessian(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL)
 }
 \arguments{
 \item{unconstrained_variables}{(numeric) A vector of unconstrained parameters.}

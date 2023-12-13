@@ -457,7 +457,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-hessian <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = TRUE) {
+hessian <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
   if (!is.null(jacobian_adjustment)) {
     warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
     jacobian <- jacobian_adjustment
