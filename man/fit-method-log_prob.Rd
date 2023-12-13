@@ -5,17 +5,19 @@
 \alias{log_prob}
 \title{Calculate the log-probability given a provided vector of unconstrained parameters.}
 \usage{
-log_prob(unconstrained_variables, jacobian_adjustment = TRUE)
+log_prob(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL)
 }
 \arguments{
-\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters
-to be passed to \code{log_prob}.}
+\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters.}
 
-\item{jacobian_adjustment}{(logical) Whether to include the log-density
-adjustments from un/constraining variables.}
+\item{jacobian}{(logical) Whether to include the log-density adjustments from
+un/constraining variables.}
+
+\item{jacobian_adjustment}{Deprecated. Please use \code{jacobian} instead.}
 }
 \description{
-The \verb{$log_prob()} method provides access to the Stan model's \code{log_prob} function
+The \verb{$log_prob()} method provides access to the Stan model's
+\code{log_prob} function.
 }
 \examples{
 \dontrun{

@@ -1,4 +1,24 @@
-# cmdstanr 0.6.1.9000
+# cmdstanr 0.7.0
+
+## Major new features 
+
+* New `laplace` method by @jgabry in #800
+* New `pathfinder` method by @SteveBronder in #848
+
+## Other improvements and bug fixes
+
+* Add missing link to diagnose method in CmdStanModel doc by @jgabry in #833
+* Improvements to compile tests by @martinmodrak in #836
+* Changed the delay behavior in wsl_installed by @martinmodrak in #839
+* Update array syntax in website vignette by @andrjohns in #841
+* Compatibility fixes for cmdstan 2.33+ by @jgabry in #843
+* Suggest format method after error due to old syntax  by @jgabry in #852
+* Clarifications in R-markdown vignette by @jgcolman in #854
+* Update linux/wsl detection for install arch by @andrjohns in #856
+* Fix handling of single-length inits for containers by @andrjohns in #857
+* Add support/tests for exposing functions with tuples by @andrjohns in #860
+* Add support/tests for exporting functions with complex types by @andrjohns in #861
+* Add option for installing from release archive by @andrjohns in #866
 
 # cmdstanr 0.6.1
 

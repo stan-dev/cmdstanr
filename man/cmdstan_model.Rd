@@ -31,7 +31,7 @@ more. See \code{\link[=model-method-compile]{$compile()}} for details.}
 A \code{\link{CmdStanModel}} object.
 }
 \description{
-\if{html}{\figure{logo.png}{options: width="25px"}}
+\if{html}{\figure{logo.png}{options: width=25}}
 Create a new \code{\link{CmdStanModel}} object from a file containing a Stan program
 or from an existing Stan executable. The \code{\link{CmdStanModel}} object stores the
 path to a Stan program and compiled executable (once created), and provides
@@ -98,7 +98,7 @@ my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.jso
 fit_optim <- mod$optimize(data = my_data_file, seed = 123)
 fit_optim$summary()
 
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation
+# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
 # to the posterior
 fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
@@ -113,6 +113,11 @@ mcmc_hist(fit_vb$draws("theta"))
 fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 fit_pf$summary()
 mcmc_hist(fit_pf$draws("theta"))
+
+# Run 'pathfinder' again with more paths, fewer draws per path,
+# better covariance approximation, and fewer LBFGSs iterations
+fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
+                         history_size=50, max_lbfgs_iters=100)
 
 # Specifying initial values as a function
 fit_mcmc_w_init_fun <- mod$sample(

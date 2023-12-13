@@ -102,6 +102,7 @@ reference:
       - CmdStanMLE
       - CmdStanLaplace
       - CmdStanVB
+      - CmdStanPathfinder
       - CmdStanGQ
       - CmdStanDiagnose
       - starts_with("fit-method")

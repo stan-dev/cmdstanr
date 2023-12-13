@@ -20,7 +20,7 @@ $diagnostic_summary() method."><meta property="og:image" content="https://mc-sta
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -152,7 +152,7 @@ variable). The variables for Stan's default MCMC algorithm are
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sampler_diagnostics</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">sampler_diagnostics</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">sampler_diagnostics</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  'draws_array' num [1:1000, 1:4, 1:6] 1 3 2 2 2 3 2 2 3 2 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  'draws_array' num [1:1000, 1:4, 1:6] 2 2 2 2 2 3 2 2 2 3 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  - attr(*, "dimnames")=List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ chain    : chr [1:4] "1" "2" "3" "4"</span>
@@ -162,16 +162,16 @@ variable). The variables for Stan's default MCMC algorithm are
 <span class="r-in"><span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df</a></span><span class="op">(</span><span class="va">sampler_diagnostics</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_df: 1000 iterations, 4 chains, and 6 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    treedepth__ divergent__ energy__ accept_stat__ stepsize__ n_leapfrog__</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1            1           0       66          0.91       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2            3           0       66          0.87       0.67            7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3            2           0       72          0.65       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4            2           0       70          1.00       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5            2           0       66          1.00       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6            3           0       65          0.93       0.67            7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7            2           0       69          0.70       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8            2           0       70          0.99       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9            3           0       66          0.98       0.67            7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10           2           0       67          0.90       0.67            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1            2           0       70          0.76       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2            2           0       69          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3            2           0       69          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4            2           0       66          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5            2           0       66          0.97       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6            3           0       67          0.88       0.73            7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7            2           0       72          0.74       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8            2           0       73          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9            2           0       69          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10           3           0       66          0.95       0.73            7</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 3990 more draws</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span>
 <span class="r-in"><span></span></span>
@@ -179,16 +179,16 @@ variable). The variables for Stan's default MCMC algorithm are
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">sampler_diagnostics</span><span class="op">(</span>format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_df: 1000 iterations, 4 chains, and 6 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    treedepth__ divergent__ energy__ accept_stat__ stepsize__ n_leapfrog__</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1            1           0       66          0.91       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2            3           0       66          0.87       0.67            7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3            2           0       72          0.65       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4            2           0       70          1.00       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5            2           0       66          1.00       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6            3           0       65          0.93       0.67            7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7            2           0       69          0.70       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8            2           0       70          0.99       0.67            3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9            3           0       66          0.98       0.67            7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10           2           0       67          0.90       0.67            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1            2           0       70          0.76       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2            2           0       69          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3            2           0       69          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4            2           0       66          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5            2           0       66          0.97       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6            3           0       67          0.88       0.73            7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7            2           0       72          0.74       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8            2           0       73          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9            2           0       69          1.00       0.73            3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10           3           0       66          0.95       0.73            7</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 3990 more draws</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

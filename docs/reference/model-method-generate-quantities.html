@@ -19,7 +19,7 @@ based on previously fitted parameters."><meta property="og:image" content="https
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -243,7 +243,9 @@ documentation and tutorials.</p>
 <code><a href="model-method-diagnose.html">model-method-diagnose</a></code>,
 <code><a href="model-method-expose_functions.html">model-method-expose_functions</a></code>,
 <code><a href="model-method-format.html">model-method-format</a></code>,
+<code><a href="model-method-laplace.html">model-method-laplace</a></code>,
 <code><a href="model-method-optimize.html">model-method-optimize</a></code>,
+<code><a href="model-method-pathfinder.html">model-method-pathfinder</a></code>,
 <code><a href="model-method-sample_mpi.html">model-method-sample_mpi</a></code>,
 <code><a href="model-method-sample.html">model-method-sample</a></code>,
 <code><a href="model-method-variables.html">model-method-variables</a></code>,
@@ -257,7 +259,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="va">mcmc_program</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"data {</span></span></span>
 <span class="r-in"><span><span class="st">    int&lt;lower=0&gt; N;</span></span></span>
-<span class="r-in"><span><span class="st">    int&lt;lower=0,upper=1&gt; y[N];</span></span></span>
+<span class="r-in"><span><span class="st">    array[N] int&lt;lower=0,upper=1&gt; y;</span></span></span>
 <span class="r-in"><span><span class="st">  }</span></span></span>
 <span class="r-in"><span><span class="st">  parameters {</span></span></span>
 <span class="r-in"><span><span class="st">    real&lt;lower=0,upper=1&gt; theta;</span></span></span>
@@ -287,13 +289,13 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="va">gq_program</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"data {</span></span></span>
 <span class="r-in"><span><span class="st">    int&lt;lower=0&gt; N;</span></span></span>
-<span class="r-in"><span><span class="st">    int&lt;lower=0,upper=1&gt; y[N];</span></span></span>
+<span class="r-in"><span><span class="st">    array[N] int&lt;lower=0,upper=1&gt; y;</span></span></span>
 <span class="r-in"><span><span class="st">  }</span></span></span>
 <span class="r-in"><span><span class="st">  parameters {</span></span></span>
 <span class="r-in"><span><span class="st">    real&lt;lower=0,upper=1&gt; theta;</span></span></span>
 <span class="r-in"><span><span class="st">  }</span></span></span>
 <span class="r-in"><span><span class="st">  generated quantities {</span></span></span>
-<span class="r-in"><span><span class="st">    int y_rep[N] = bernoulli_rng(rep_vector(theta, N));</span></span></span>
+<span class="r-in"><span><span class="st">    array[N] int y_rep = bernoulli_rng(rep_vector(theta, N));</span></span></span>
 <span class="r-in"><span><span class="st">  }"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>

@@ -19,7 +19,7 @@ CmdStanModel object."><meta property="og:image" content="https://mc-stan.org/cmd
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -141,8 +141,10 @@ documentation and tutorials.</p>
 <li><p>CmdStan User’s Guide: <a href="https://mc-stan.org/docs/cmdstan-guide/" class="external-link">mc-stan.org/docs/cmdstan-guide</a></p></li>
 </ul><p>Other fitted model objects: 
 <code><a href="CmdStanDiagnose.html">CmdStanDiagnose</a></code>,
+<code><a href="CmdStanLaplace.html">CmdStanLaplace</a></code>,
 <code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code>,
 <code><a href="CmdStanMLE.html">CmdStanMLE</a></code>,
+<code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code>,
 <code><a href="CmdStanVB.html">CmdStanVB</a></code></p></div>
     </div>
 
@@ -153,7 +155,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="va">mcmc_program</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"data {</span></span></span>
 <span class="r-in"><span><span class="st">    int&lt;lower=0&gt; N;</span></span></span>
-<span class="r-in"><span><span class="st">    int&lt;lower=0,upper=1&gt; y[N];</span></span></span>
+<span class="r-in"><span><span class="st">    array[N] int&lt;lower=0,upper=1&gt; y;</span></span></span>
 <span class="r-in"><span><span class="st">  }</span></span></span>
 <span class="r-in"><span><span class="st">  parameters {</span></span></span>
 <span class="r-in"><span><span class="st">    real&lt;lower=0,upper=1&gt; theta;</span></span></span>
@@ -163,11 +165,6 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="st">  }"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">mcmc_program</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpFBtN6X/model-16218796affe.stan', line 3, column 4: Declaration</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     of arrays by placing brackets after a variable name is deprecated and</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     will be removed in Stan 2.33.0. Instead use the array keyword before the</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     type. This can be changed automatically using the auto-format flag to</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     stanc</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>N <span class="op">=</span> <span class="fl">10</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="va">mod_mcmc</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, seed <span class="op">=</span> <span class="fl">123</span>, refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
@@ -188,27 +185,17 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="va">gq_program</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"data {</span></span></span>
 <span class="r-in"><span><span class="st">    int&lt;lower=0&gt; N;</span></span></span>
-<span class="r-in"><span><span class="st">    int&lt;lower=0,upper=1&gt; y[N];</span></span></span>
+<span class="r-in"><span><span class="st">    array[N] int&lt;lower=0,upper=1&gt; y;</span></span></span>
 <span class="r-in"><span><span class="st">  }</span></span></span>
 <span class="r-in"><span><span class="st">  parameters {</span></span></span>
 <span class="r-in"><span><span class="st">    real&lt;lower=0,upper=1&gt; theta;</span></span></span>
 <span class="r-in"><span><span class="st">  }</span></span></span>
 <span class="r-in"><span><span class="st">  generated quantities {</span></span></span>
-<span class="r-in"><span><span class="st">    int y_rep[N] = bernoulli_rng(rep_vector(theta, N));</span></span></span>
+<span class="r-in"><span><span class="st">    array[N] int y_rep = bernoulli_rng(rep_vector(theta, N));</span></span></span>
 <span class="r-in"><span><span class="st">  }"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">mod_gq</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">gq_program</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpFBtN6X/model-162182f764088.stan', line 3, column 4: Declaration</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     of arrays by placing brackets after a variable name is deprecated and</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     will be removed in Stan 2.33.0. Instead use the array keyword before the</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     type. This can be changed automatically using the auto-format flag to</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     stanc</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpFBtN6X/model-162182f764088.stan', line 9, column 4: Declaration</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     of arrays by placing brackets after a variable name is deprecated and</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     will be removed in Stan 2.33.0. Instead use the array keyword before the</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     type. This can be changed automatically using the auto-format flag to</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     stanc</span>
 <span class="r-in"><span><span class="va">fit_gq</span> <span class="op">&lt;-</span> <span class="va">mod_gq</span><span class="op">$</span><span class="fu">generate_quantities</span><span class="op">(</span><span class="va">fit_mcmc</span>, data <span class="op">=</span> <span class="va">data</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -228,7 +215,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ variable : chr [1:10] "y_rep[1]" "y_rep[2]" "y_rep[3]" "y_rep[4]" ...</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/posterior/" class="external-link">posterior</a></span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> This is posterior version 1.4.1</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> This is posterior version 1.5.0</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Attaching package: ‘posterior’</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> The following objects are masked from ‘package:stats’:</span>

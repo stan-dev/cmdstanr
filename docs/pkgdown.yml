@@ -3,14 +3,12 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   opencl: articles-online-only/opencl.html
-  settings-knitr: children/settings-knitr.html
   cmdstanr-internals: cmdstanr-internals.html
   cmdstanr: cmdstanr.html
-  deprecations: deprecations.html
   posterior: posterior.html
   profiling: profiling.html
   r-markdown: r-markdown.html
-last_built: 2023-07-25T20:34Z
+last_built: 2023-11-08T17:25Z
 urls:
   reference: https://mc-stan.org/cmdstanr/reference
   article: https://mc-stan.org/cmdstanr/articles

@@ -362,12 +362,13 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'
 #' @name fit-method-log_prob
 #' @aliases log_prob
-#' @description The `$log_prob()` method provides access to the Stan model's `log_prob` function
+#' @description The `$log_prob()` method provides access to the Stan model's
+#'   `log_prob` function.
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
-#'   to be passed to `log_prob`.
-#' @param jacobian_adjustment (logical) Whether to include the log-density
-#'   adjustments from un/constraining variables.
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters.
+#' @param jacobian (logical) Whether to include the log-density adjustments from
+#'   un/constraining variables.
+#' @param jacobian_adjustment Deprecated. Please use `jacobian` instead.
 #'
 #' @examples
 #' \dontrun{
@@ -380,7 +381,11 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
+  if (!is.null(jacobian_adjustment)) {
+    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
+    jacobian <- jacobian_adjustment
+  }
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
@@ -390,7 +395,7 @@ log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
           length(unconstrained_variables), " were provided!", call. = FALSE)
   }
   private$model_methods_env_$log_prob(private$model_methods_env_$model_ptr_,
-                                      unconstrained_variables, jacobian_adjustment)
+                                      unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "log_prob", value = log_prob)
 
@@ -401,11 +406,7 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #' @aliases grad_log_prob
 #' @description The `$grad_log_prob()` method provides access to the Stan
 #'   model's `log_prob` function and its derivative.
-#'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
-#'   to be passed to `grad_log_prob`.
-#' @param jacobian_adjustment (logical) Whether to include the log-density
-#'   adjustments from un/constraining variables.
+#' @inheritParams fit-method-log_prob
 #'
 #' @examples
 #' \dontrun{
@@ -418,7 +419,11 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-grad_log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+grad_log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
+  if (!is.null(jacobian_adjustment)) {
+    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
+    jacobian <- jacobian_adjustment
+  }
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
@@ -428,7 +433,7 @@ grad_log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
           length(unconstrained_variables), " were provided!", call. = FALSE)
   }
   private$model_methods_env_$grad_log_prob(private$model_methods_env_$model_ptr_,
-                                            unconstrained_variables, jacobian_adjustment)
+                                            unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 
@@ -439,11 +444,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @aliases hessian
 #' @description The `$hessian()` method provides access to the Stan model's
 #'   `log_prob`, its derivative, and its hessian.
-#'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
-#'   to be passed to `hessian`.
-#' @param jacobian_adjustment (logical) Whether to include the log-density
-#'   adjustments from un/constraining variables.
+#' @inheritParams fit-method-log_prob
 #'
 #' @examples
 #' \dontrun{
@@ -456,7 +457,11 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-hessian <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+hessian <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
+  if (!is.null(jacobian_adjustment)) {
+    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
+    jacobian <- jacobian_adjustment
+  }
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
@@ -466,7 +471,7 @@ hessian <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
           length(unconstrained_variables), " were provided!", call. = FALSE)
   }
   private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_,
-                                      unconstrained_variables, jacobian_adjustment)
+                                      unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "hessian", value = hessian)
 

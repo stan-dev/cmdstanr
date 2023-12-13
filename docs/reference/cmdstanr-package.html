@@ -19,7 +19,7 @@ CmdStanR: the R interface to CmdStan."><meta property="og:image" content="https:
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -134,9 +134,11 @@ algorithms, and writing results to output files.</p>
 <h3 id="advantages-of-rstan">Advantages of RStan<a class="anchor" aria-label="anchor" href="#advantages-of-rstan"></a></h3>
 
 <ul><li><p>Allows other developers to distribute R packages with <em>pre-compiled</em>
-Stan programs (like <strong>rstanarm</strong>) on CRAN.</p></li>
+Stan programs (like <strong>rstanarm</strong>) on CRAN. (Note: As of 2023, this can
+mostly be achieved with CmdStanR as well. See <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr">Developing using CmdStanR</a>.)</p></li>
 <li><p>Avoids use of R6 classes, which may result in more familiar syntax for
 many R users.</p></li>
+<li><p>CRAN binaries available for Mac and Windows.</p></li>
 </ul></div>
 
 <div class="section">
@@ -189,13 +191,12 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="co"># Otherwise use the `path` argument to specify the location of your</span></span></span>
 <span class="r-in"><span><span class="co"># CmdStan installation.)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="set_cmdstan_path.html">set_cmdstan_path</a></span><span class="op">(</span>path <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> CmdStan path set to: /Users/jgabry/.cmdstan/cmdstan-2.32.2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> CmdStan path set to: /Users/jgabry/.cmdstan/cmdstan-2.33.1</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a CmdStanModel object from a Stan program,</span></span></span>
 <span class="r-in"><span><span class="co"># here using the example model that comes with CmdStan</span></span></span>
 <span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"examples/bernoulli/bernoulli.stan"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Model executable is up to date!</span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> data {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; N;</span>
@@ -277,9 +278,21 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 10</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;num&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;num&gt;</span> <span style="color: #949494; font-style: italic;">&lt;num&gt;</span> <span style="color: #949494; font-style: italic;">&lt;num&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;num&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;num&gt;</span> <span style="color: #949494; font-style: italic;">&lt;num&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;num&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;num&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__     -<span style="color: #BB0000;">7.30</span>  -<span style="color: #BB0000;">7.03</span>  0.721 0.380 -<span style="color: #BB0000;">8.82</span>   -<span style="color: #BB0000;">6.75</span>   1.00     902.    <span style="text-decoration: underline;">1</span>006.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> theta     0.247  0.233 0.122 0.129  0.078<span style="text-decoration: underline;">6</span>  0.470  1.00     762.     712.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Check sampling diagnostics</span></span></span>
+<span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">diagnostic_summary</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $num_divergent</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $num_max_treedepth</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ebfmi</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.0 1.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get posterior draws</span></span></span>
 <span class="r-in"><span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span></span></span>
@@ -329,51 +342,8 @@ documentation and tutorials.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="cmdstanr-package-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Call CmdStan's diagnose and stansummary utilities</span></span></span>
-<span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">cmdstan_diagnose</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Processing csv files: /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/Rtmp9Z3PNu/bernoulli-202307271729-1-67e85d.csv, /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/Rtmp9Z3PNu/bernoulli-202307271729-2-67e85d.csv</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Checking sampler transitions treedepth.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Treedepth satisfactory for all transitions.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Checking sampler transitions for divergences.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> No divergent transitions found.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Checking E-BFMI - sampler transitions HMC potential energy.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> E-BFMI satisfactory.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Effective sample size satisfactory.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Split R-hat values satisfactory all parameters.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Processing complete, no problems detected.</span>
-<span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">cmdstan_summary</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Inference for Stan model: bernoulli_model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 chains: each with iter=(1000,1000); warmup=(0,0); thin=(1,1); 2000 iterations saved.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Warmup took (0.0040, 0.0030) seconds, 0.0070 seconds total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling took (0.011, 0.011) seconds, 0.022 seconds total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 Mean     MCSE  StdDev     5%   50%   95%  N_Eff  N_Eff/s    R_hat</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lp__            -7.3  2.6e-02    0.72   -8.8  -7.0  -6.8    781    35502      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> accept_stat__   0.92  8.3e-03    0.13   0.64  0.97   1.0    235    10662  1.0e+00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> stepsize__      0.95  7.9e-02   0.079   0.87   1.0   1.0    1.0       46  2.0e+13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> treedepth__      1.4  1.1e-02    0.48    1.0   1.0   2.0   1874    85179  1.0e+00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> n_leapfrog__     2.5  1.4e-01     1.3    1.0   3.0   3.0     89     4050  1.0e+00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> divergent__     0.00      nan    0.00   0.00  0.00  0.00    nan      nan      nan</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> energy__         7.8  3.6e-02    1.00    6.8   7.5   9.6    775    35215  1.0e+00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> theta           0.25  4.3e-03    0.12  0.079  0.23  0.47    796    36197      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using hmc with nuts.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, N_Eff is a crude measure of effective sample size,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> and R_hat is the potential scale reduction factor on split chains (at </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> convergence, R_hat=1).</span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># For models fit using MCMC, if you like working with RStan's stanfit objects</span></span></span>
 <span class="r-in"><span><span class="co"># then you can create one with rstan::read_stan_csv()</span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># stanfit &lt;- rstan::read_stan_csv(fit_mcmc$output_files())</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
@@ -387,24 +357,64 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Optimization terminated normally:  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Convergence detected: relative gradient magnitude is below tolerance </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 2</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable estimate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;num&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">5.00</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> theta        0.2 </span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation</span></span></span>
+<span class="r-in"><span><span class="co"># to the posterior</span></span></span>
+<span class="r-in"><span><span class="va">fit_optim</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">my_data_file</span>, jacobian <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Initial log joint probability = -7.20447 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        4      -6.74802    0.00428356   0.000109727           1           1        7    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Optimization terminated normally:  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Convergence detected: relative gradient magnitude is below tolerance </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
+<span class="r-in"><span><span class="va">fit_laplace</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">laplace</span><span class="op">(</span>data <span class="op">=</span> <span class="va">my_data_file</span>, mode <span class="op">=</span> <span class="va">fit_optim</span>, draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Calculating Hessian </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Calculating inverse of Cholesky factor </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Generating draws </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 0 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 100 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 200 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 300 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 400 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 500 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 600 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 700 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 800 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 900 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1100 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1200 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1300 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1400 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1500 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1600 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1700 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1800 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 1900 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.2 seconds.</span>
+<span class="r-in"><span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   variable      mean median    sd   mad      q5      q95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">7.23</span>  -<span style="color: #BB0000;">6.96</span>  0.694 0.287 -<span style="color: #BB0000;">8.53</span>   -<span style="color: #BB0000;">6.75</span>   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp_approx__ -<span style="color: #BB0000;">0.493</span> -<span style="color: #BB0000;">0.211</span> 0.714 0.286 -<span style="color: #BB0000;">1.87</span>   -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">22</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.264  0.248 0.120 0.120  0.095<span style="text-decoration: underline;">4</span>  0.491  </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Run 'variational' method to approximate the posterior (default is meanfield ADVI)</span></span></span>
+<span class="r-in"><span><span class="co"># Run 'variational' method to use ADVI to approximate posterior</span></span></span>
 <span class="r-in"><span><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">variational</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------ </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> EXPERIMENTAL ALGORITHM: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   This procedure has not been thoroughly tested and may be unstable </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   or buggy. The interface is subject to change. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 5e-06 seconds </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds. </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 6e-06 seconds </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Adjust your expectations accordingly! </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Begin eta adaptation. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration:   1 / 250 [  0%]  (Adaptation) </span>
@@ -421,20 +431,47 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Drawing a sample of size 1000 from the approximate posterior...  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> COMPLETED. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable      mean median    sd   mad     q5      q95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;num&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;num&gt;</span> <span style="color: #949494; font-style: italic;">&lt;num&gt;</span> <span style="color: #949494; font-style: italic;">&lt;num&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;num&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;num&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">7.18</span>  -<span style="color: #BB0000;">6.94</span>  0.588 0.259 -<span style="color: #BB0000;">8.36</span>  -<span style="color: #BB0000;">6.75</span>   </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp_approx__ -<span style="color: #BB0000;">0.515</span> -<span style="color: #BB0000;">0.221</span> 0.692 0.303 -<span style="color: #BB0000;">2.06</span>  -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">57</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.263  0.246 0.115 0.113  0.106  0.481  </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Plot approximate posterior using bayesplot</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="cmdstanr-package-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Run 'pathfinder' method, a new alternative to the variational method</span></span></span>
+<span class="r-in"><span><span class="va">fit_pf</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">pathfinder</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] :Initial log joint density = -11.008832 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      9.383e-04   1.391e-05    1.000e+00  1.000e+00       126 -6.264e+00 -6.264e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] :Best Iter: [3] ELBO (-6.195408) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [2] :Initial log joint density = -7.318450 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [2] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               4      -6.748e+00      5.414e-03   1.618e-04    1.000e+00  1.000e+00       101 -6.251e+00 -6.251e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [2] :Best Iter: [3] ELBO (-6.229174) evaluations: (101) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [3] :Initial log joint density = -12.374612 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [3] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.419e-03   2.837e-05    1.000e+00  1.000e+00       126 -6.199e+00 -6.199e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [3] :Best Iter: [5] ELBO (-6.199185) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [4] :Initial log joint density = -13.009824 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [4] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.677e-03   3.885e-05    1.000e+00  1.000e+00       126 -6.173e+00 -6.173e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [4] :Best Iter: [5] ELBO (-6.172860) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total log probability function evaluations:4379 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
+<span class="r-in"><span><span class="va">fit_pf</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   variable      mean median    sd   mad      q5    q95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp_approx__ -<span style="color: #BB0000;">1.08</span>  -<span style="color: #BB0000;">0.728</span> 0.886 0.304 -<span style="color: #BB0000;">2.71</span>   -<span style="color: #BB0000;">0.511</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp__        -<span style="color: #BB0000;">7.26</span>  -<span style="color: #BB0000;">6.96</span>  0.738 0.297 -<span style="color: #BB0000;">8.72</span>   -<span style="color: #BB0000;">6.75</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.249  0.230 0.120 0.121  0.085<span style="text-decoration: underline;">4</span>  0.471</span>
+<span class="r-in"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_pf</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span>
+<span class="r-plt img"><img src="cmdstanr-package-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specifying initial values as a function</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span></span>
@@ -451,7 +488,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.7 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>
@@ -480,7 +517,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]$theta</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.3333333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.33</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
@@ -502,7 +539,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.5 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_optim_w_init_list</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>

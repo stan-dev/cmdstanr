@@ -21,7 +21,7 @@ requires adding profiling statements to the Stan program."><meta property="og:im
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -139,7 +139,7 @@ were created.</p>
 <span class="r-in"><span><span class="va">mcmc_program</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">'data {</span></span></span>
 <span class="r-in"><span><span class="st">    int&lt;lower=0&gt; N;</span></span></span>
-<span class="r-in"><span><span class="st">    int&lt;lower=0,upper=1&gt; y[N];</span></span></span>
+<span class="r-in"><span><span class="st">    array[N] int&lt;lower=0,upper=1&gt; y;</span></span></span>
 <span class="r-in"><span><span class="st">  }</span></span></span>
 <span class="r-in"><span><span class="st">  parameters {</span></span></span>
 <span class="r-in"><span><span class="st">    real&lt;lower=0,upper=1&gt; theta;</span></span></span>
@@ -150,7 +150,7 @@ were created.</p>
 <span class="r-in"><span><span class="st">    }</span></span></span>
 <span class="r-in"><span><span class="st">  }</span></span></span>
 <span class="r-in"><span><span class="st">  generated quantities {</span></span></span>
-<span class="r-in"><span><span class="st">    int y_rep[N];</span></span></span>
+<span class="r-in"><span><span class="st">    array[N] int y_rep;</span></span></span>
 <span class="r-in"><span><span class="st">    profile("gq") {</span></span></span>
 <span class="r-in"><span><span class="st">      y_rep = bernoulli_rng(rep_vector(theta, N));</span></span></span>
 <span class="r-in"><span><span class="st">    }</span></span></span>
@@ -158,16 +158,6 @@ were created.</p>
 <span class="r-in"><span><span class="st">'</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">mcmc_program</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpFBtN6X/model-16218658ea62a.stan', line 3, column 4: Declaration</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     of arrays by placing brackets after a variable name is deprecated and</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     will be removed in Stan 2.33.0. Instead use the array keyword before the</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     type. This can be changed automatically using the auto-format flag to</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     stanc</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpFBtN6X/model-16218658ea62a.stan', line 14, column 4: Declaration</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     of arrays by placing brackets after a variable name is deprecated and</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     will be removed in Stan 2.33.0. Instead use the array keyword before the</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     type. This can be changed automatically using the auto-format flag to</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     stanc</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>N <span class="op">=</span> <span class="fl">10</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">mod_mcmc</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, seed <span class="op">=</span> <span class="fl">123</span>, refresh <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
@@ -180,41 +170,41 @@ were created.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> All 4 chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.5 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.6 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name   thread_id total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 0x10afd5e00 0.00037530  0.000375300  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 0x10afd5e00 0.00114227  0.000802925  0.000339345        7169</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name   thread_id  total_time forward_time reverse_time chain_stack</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 0x1061d4e00 0.000364609  0.000364609  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 0x1061d4e00 0.001171810  0.000840557  0.000331257        7169</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2              0           7169                 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           7169           7169                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name   thread_id total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 0x11a045e00 0.00043389  0.000433890  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 0x11a045e00 0.00111438  0.000786092  0.000328286        7155</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name   thread_id  total_time forward_time reverse_time chain_stack</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 0x10e36de00 0.000346564  0.000346564  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 0x10e36de00 0.001186840  0.000842553  0.000344283        7155</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2              0           7155                 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           7155           7155                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name   thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 0x10c67be00 0.000330582  0.000330582  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 0x10c67be00 0.001059290  0.000746087  0.000313204        6879</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 0x111ab6e00 0.000351792  0.000351792  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 0x111ab6e00 0.001143140  0.000829663  0.000313482        6879</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2              0           6879                 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           6879           6879                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[4]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name   thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 0x108f13e00 0.000365107  0.000365107  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 0x108f13e00 0.001159310  0.000815756  0.000343553        6892</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 0x10c867e00 0.000408638  0.000408638  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 0x10c867e00 0.001279700  0.000924260  0.000355437        6892</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2              0           6892                 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           6892           6892                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
