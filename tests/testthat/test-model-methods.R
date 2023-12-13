@@ -65,7 +65,7 @@ test_that("Methods return correct values", {
     hessian = as.matrix(-2.4937604019289194568, nrow=1, ncol=1)
   )
 
-  expect_equal(fit$hessian(unconstrained_variables=c(0.1), jacobian_adjustment = FALSE),
+  expect_equal(fit$hessian(unconstrained_variables=c(0.1), jacobian = FALSE),
                hessian_noadj)
 
   cpars <- fit$constrain_variables(c(0.1))

@@ -6,14 +6,15 @@
 \title{Calculate the log-probability , the gradient w.r.t. each input, and the hessian
 for a given vector of unconstrained parameters}
 \usage{
-hessian(unconstrained_variables, jacobian_adjustment = TRUE)
+hessian(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = TRUE)
 }
 \arguments{
-\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters
-to be passed to \code{hessian}.}
+\item{unconstrained_variables}{(numeric) A vector of unconstrained parameters.}
 
-\item{jacobian_adjustment}{(logical) Whether to include the log-density
-adjustments from un/constraining variables.}
+\item{jacobian}{(logical) Whether to include the log-density adjustments from
+un/constraining variables.}
+
+\item{jacobian_adjustment}{Deprecated. Please use \code{jacobian} instead.}
 }
 \description{
 The \verb{$hessian()} method provides access to the Stan model's
