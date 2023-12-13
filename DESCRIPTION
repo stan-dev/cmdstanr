@@ -1,7 +1,7 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
 Version: 0.7.0
-Date: 2023-11-08
+Date: 2023-12-13
 Authors@R:
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
