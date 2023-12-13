@@ -19,6 +19,9 @@
 * Add support/tests for exposing functions with tuples by @andrjohns in #860
 * Add support/tests for exporting functions with complex types by @andrjohns in #861
 * Add option for installing from release archive by @andrjohns in #866
+* Improve Pathfinder doc by @avehtari in #875
+* Rename `jacobian_adjustment` argument to `jacobian` by @jgabry in #879
+* Fix get_cmdstan_flags('STANCFLAGS') in recursive make by @pearsonca in #881
 
 # cmdstanr 0.6.1
 
