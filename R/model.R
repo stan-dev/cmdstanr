@@ -1865,8 +1865,9 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   pathfinder should return. The number of draws PSIS sampling samples from
 #'   will be equal to `single_path_draws * num_paths`.
 #' @param draws (positive integer) Number of draws to return after performing
-#'   pareto smooted importance sampling (PSIS). This must be smaller than
-#'   `single_path_draws * num_paths`.
+#'   pareto smooted importance sampling (PSIS). This should be smaller than
+#'   `single_path_draws * num_paths` (future versions of CmdStan will throw a
+#'   warning).
 #' @param num_paths (positive integer) Number of single pathfinders to run.
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations
 #'   for LBFGS.
