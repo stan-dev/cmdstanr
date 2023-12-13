@@ -15,7 +15,7 @@ check_syntax(
 \arguments{
 \item{pedantic}{(logical) Should pedantic mode be turned on? The default is
 \code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
-Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/reference-manual/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
+Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
 the Stan Reference Manual.}
 
 \item{include_paths}{(character vector) Paths to directories where Stan

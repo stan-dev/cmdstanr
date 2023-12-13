@@ -253,7 +253,7 @@ A \code{\link{CmdStanMCMC}} object.
 \description{
 The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object is
 identical to the \verb{$sample()} method but with support for
-\href{https://mc-stan.org/math/mpi.html}{MPI}. The target audience for MPI are
+MPI (message passing interface). The target audience for MPI are
 those with large computer clusters. For other users, the
 \code{\link[=model-method-sample]{$sample()}} method provides both parallelization of
 chains and threading support for within-chain parallelization.
@@ -303,8 +303,8 @@ The Stan and CmdStan documentation:
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
-The Stan Math Library's MPI documentation
-(\href{https://mc-stan.org/math/mpi.html}{mc-stan.org/math/mpi}) for more
+The Stan Math Library's documentation
+(\href{https://mc-stan.org/math/}{mc-stan.org/math}) for more
 details on MPI support in Stan.
 
 Other CmdStanModel methods: 

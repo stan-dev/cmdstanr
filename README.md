@@ -70,5 +70,5 @@ open a new one if none are applicable.
 CmdStanR, like CmdStan and the core Stan C++ code, is licensed under the
 following licenses:
 
-- Code: BSD 3-clause (https://opensource.org/licenses/BSD-3-Clause)
+- Code: BSD 3-clause (https://opensource.org/license/bsd-3-clause/)
 - Documentation: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)

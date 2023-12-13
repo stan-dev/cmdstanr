@@ -114,7 +114,7 @@ value.
 bounds.
 
 For the latest information on the checks performed in pedantic mode see the
-[Pedantic mode chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html)
+[Pedantic mode chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html)
 in the Stan Reference Manual.
 
 Pedantic mode is available when compiling the model or when using the separate

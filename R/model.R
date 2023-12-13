@@ -381,7 +381,7 @@ CmdStanModel <- R6::R6Class(
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
-#'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
+#'   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
 #'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
 #'   without compiling it or for a model that is already compiled the
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
@@ -797,7 +797,7 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
-#'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
+#'   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
 #'   the Stan Reference Manual.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
@@ -1273,7 +1273,7 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'
 #' @description The `$sample_mpi()` method of a [`CmdStanModel`] object is
 #'   identical to the `$sample()` method but with support for
-#'   [MPI](https://mc-stan.org/math/mpi.html). The target audience for MPI are
+#'   MPI (message passing interface). The target audience for MPI are
 #'   those with large computer clusters. For other users, the
 #'   [`$sample()`][model-method-sample] method provides both parallelization of
 #'   chains and threading support for within-chain parallelization.
@@ -1313,8 +1313,8 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #' @return A [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
-#' @seealso The Stan Math Library's MPI documentation
-#'   ([mc-stan.org/math/mpi](https://mc-stan.org/math/mpi.html)) for more
+#' @seealso The Stan Math Library's documentation
+#'   ([mc-stan.org/math](https://mc-stan.org/math/)) for more
 #'   details on MPI support in Stan.
 #'
 #' @examples
