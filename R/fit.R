@@ -557,7 +557,7 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-unconstrain_draws <- function(files = NULL, draws = NULL) {
+unconstrain_draws <- function(files = NULL, draws = NULL, format = "draws_df") {
   if (!is.null(files) || !is.null(draws)) {
     if (!is.null(files) && !is.null(draws)) {
       stop("Either a list of CSV files or a draws object can be passed, not both",
@@ -595,13 +595,15 @@ unconstrain_draws <- function(files = NULL, draws = NULL) {
   skeleton <- self$variable_skeleton(transformed_parameters = FALSE,
                                      generated_quantities = FALSE)
   par_columns <- !(names(draws) %in% c(".chain", ".iteration", ".draw"))
-  unconstrained <- lapply(split(draws, f = draws$.chain), function(chain) {
-    lapply(asplit(chain, 1), function(draw) {
-      par_list <- utils::relist(as.numeric(draw[par_columns]), skeleton)
-      self$unconstrain_variables(variables = par_list)
-    })
-  })
-  unconstrained
+  unconstrained <- apply(draws, 1, function(draw) {
+    par_list <- utils::relist(as.numeric(draw[par_columns]), skeleton)
+    self$unconstrain_variables(variables = par_list)
+  }, simplify = FALSE)
+
+  unconstrained <- do.call(rbind.data.frame, unconstrained)
+  uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
+  names(unconstrained) <- repair_variable_names(uncon_names)
+  maybe_convert_draws_format(unconstrained, format)
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 
