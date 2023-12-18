@@ -597,10 +597,10 @@ unconstrain_draws <- function(files = NULL, draws = NULL, format = "draws_df") {
   skeleton <- self$variable_skeleton(transformed_parameters = FALSE,
                                      generated_quantities = FALSE)
   par_columns <- !(names(draws) %in% c(".chain", ".iteration", ".draw"))
-  unconstrained <- apply(draws, 1, function(draw) {
+  unconstrained <- lapply(asplit(draws, 1), function(draw) {
     par_list <- utils::relist(as.numeric(draw[par_columns]), skeleton)
     self$unconstrain_variables(variables = par_list)
-  }, simplify = FALSE)
+  })
 
   unconstrained <- do.call(rbind.data.frame, unconstrained)
   uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
