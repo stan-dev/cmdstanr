@@ -1545,7 +1545,7 @@ loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) 
       loo = loo_result,
       post_draws = function(x, ...) { x$draws(format = "draws_matrix") },
       log_lik_i = log_lik_i,
-      unconstrain_pars = function(x, pars, ...) { do.call(rbind, lapply(x$unconstrain_draws(), function(chain) { do.call(rbind, chain) })) },
+      unconstrain_pars = function(x, pars, ...) { x$unconstrain_draws(format = "draws_matrix") },
       log_prob_upars = function(x, upars, ...) { apply(upars, 1, x$log_prob) },
       log_lik_i_upars = log_lik_i_upars,
       ...
