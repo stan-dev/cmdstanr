@@ -14,7 +14,7 @@ startup_messages <- function() {
     default = identical(tolower(Sys.getenv("CMDSTANR_NO_VER_CHECK")), "true")
   ))
   if (!skip_version_check) {
-    latest_version <- try(suppressWarnings(latest_released_version()), silent = TRUE)
+    latest_version <- try(suppressWarnings(latest_released_version(retries = 0)), silent = TRUE)
     current_version <- try(cmdstan_version(), silent = TRUE)
     if (!inherits(latest_version, "try-error")
         && !inherits(current_version, "try-error")
