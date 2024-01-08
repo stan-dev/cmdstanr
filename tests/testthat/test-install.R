@@ -247,3 +247,28 @@ test_that("Download failures return error message", {
     "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
 })
 
+test_that("Install from release file works", {
+  if (getRversion() < '3.5.0') {
+    dir <- tempdir()
+  } else {
+    dir <- tempdir(check = TRUE)
+  }
+
+  destfile = file.path(dir, "cmdstan-2.33.1.tar.gz")
+
+  download_with_retries(
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.33.1/cmdstan-2.33.1.tar.gz",
+    destfile)
+
+  expect_message(
+    expect_output(
+      install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
+                      release_file = destfile,
+                      wsl = os_is_wsl()),
+      "Compiling, linking C++ code",
+      fixed = TRUE
+    ),
+    "CmdStan path set",
+    fixed = TRUE
+  )
+})

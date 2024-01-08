@@ -87,10 +87,10 @@ containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 \item A list of lists containing initial values for all or some parameters. For
-MCMC the list should contain a sublist for each chain. For optimization and
-variational inference there should be just one sublist. The sublists should
-have named elements corresponding to the parameters for which you are
-specifying initial values. See \strong{Examples}.
+MCMC the list should contain a sublist for each chain. For other model
+fitting methods there should be just one sublist. The sublists should have
+named elements corresponding to the parameters for which you are specifying
+initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC, if the function
@@ -253,7 +253,7 @@ A \code{\link{CmdStanMCMC}} object.
 \description{
 The \verb{$sample_mpi()} method of a \code{\link{CmdStanModel}} object is
 identical to the \verb{$sample()} method but with support for
-\href{https://mc-stan.org/math/mpi.html}{MPI}. The target audience for MPI are
+MPI (message passing interface). The target audience for MPI are
 those with large computer clusters. For other users, the
 \code{\link[=model-method-sample]{$sample()}} method provides both parallelization of
 chains and threading support for within-chain parallelization.
@@ -303,8 +303,8 @@ The Stan and CmdStan documentation:
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
-The Stan Math Library's MPI documentation
-(\href{https://mc-stan.org/math/mpi.html}{mc-stan.org/math/mpi}) for more
+The Stan Math Library's documentation
+(\href{https://mc-stan.org/math/}{mc-stan.org/math}) for more
 details on MPI support in Stan.
 
 Other CmdStanModel methods: 
@@ -316,6 +316,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-optimize}},
+\code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},
 \code{\link{model-method-variables}},
 \code{\link{model-method-variational}}

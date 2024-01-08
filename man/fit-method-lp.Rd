@@ -9,6 +9,8 @@
 lp()
 
 lp_approx()
+
+lp_approx()
 }
 \value{
 A numeric vector with length equal to the number of (post-warmup)

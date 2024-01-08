@@ -362,12 +362,13 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'
 #' @name fit-method-log_prob
 #' @aliases log_prob
-#' @description The `$log_prob()` method provides access to the Stan model's `log_prob` function
+#' @description The `$log_prob()` method provides access to the Stan model's
+#'   `log_prob` function.
 #'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
-#'   to be passed to `log_prob`.
-#' @param jacobian_adjustment (logical) Whether to include the log-density
-#'   adjustments from un/constraining variables.
+#' @param unconstrained_variables (numeric) A vector of unconstrained parameters.
+#' @param jacobian (logical) Whether to include the log-density adjustments from
+#'   un/constraining variables.
+#' @param jacobian_adjustment Deprecated. Please use `jacobian` instead.
 #'
 #' @examples
 #' \dontrun{
@@ -380,7 +381,11 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
+  if (!is.null(jacobian_adjustment)) {
+    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
+    jacobian <- jacobian_adjustment
+  }
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
@@ -390,7 +395,7 @@ log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
           length(unconstrained_variables), " were provided!", call. = FALSE)
   }
   private$model_methods_env_$log_prob(private$model_methods_env_$model_ptr_,
-                                      unconstrained_variables, jacobian_adjustment)
+                                      unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "log_prob", value = log_prob)
 
@@ -401,11 +406,7 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #' @aliases grad_log_prob
 #' @description The `$grad_log_prob()` method provides access to the Stan
 #'   model's `log_prob` function and its derivative.
-#'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
-#'   to be passed to `grad_log_prob`.
-#' @param jacobian_adjustment (logical) Whether to include the log-density
-#'   adjustments from un/constraining variables.
+#' @inheritParams fit-method-log_prob
 #'
 #' @examples
 #' \dontrun{
@@ -418,7 +419,11 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-grad_log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+grad_log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
+  if (!is.null(jacobian_adjustment)) {
+    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
+    jacobian <- jacobian_adjustment
+  }
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
@@ -428,7 +433,7 @@ grad_log_prob <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
           length(unconstrained_variables), " were provided!", call. = FALSE)
   }
   private$model_methods_env_$grad_log_prob(private$model_methods_env_$model_ptr_,
-                                            unconstrained_variables, jacobian_adjustment)
+                                            unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 
@@ -439,11 +444,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @aliases hessian
 #' @description The `$hessian()` method provides access to the Stan model's
 #'   `log_prob`, its derivative, and its hessian.
-#'
-#' @param unconstrained_variables (numeric) A vector of unconstrained parameters
-#'   to be passed to `hessian`.
-#' @param jacobian_adjustment (logical) Whether to include the log-density
-#'   adjustments from un/constraining variables.
+#' @inheritParams fit-method-log_prob
 #'
 #' @examples
 #' \dontrun{
@@ -456,7 +457,11 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-hessian <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
+hessian <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
+  if (!is.null(jacobian_adjustment)) {
+    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
+    jacobian <- jacobian_adjustment
+  }
   if (is.null(private$model_methods_env_$model_ptr)) {
     stop("The method has not been compiled, please call `init_model_methods()` first",
         call. = FALSE)
@@ -466,7 +471,7 @@ hessian <- function(unconstrained_variables, jacobian_adjustment = TRUE) {
           length(unconstrained_variables), " were provided!", call. = FALSE)
   }
   private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_,
-                                      unconstrained_variables, jacobian_adjustment)
+                                      unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "hessian", value = hessian)
 
@@ -2024,6 +2029,80 @@ CmdStanVB <- R6::R6Class(
 )
 CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 
+# CmdStanPathfinder ---------------------------------------------------------------
+#' CmdStanPathfinder objects
+#'
+#' @name CmdStanPathfinder
+#' @family fitted model objects
+#' @template seealso-docs
+#'
+#' @description A `CmdStanPathfinder` object is the fitted model object returned by the
+#'   [`$pathfinder()`][model-method-pathfinder] method of a
+#'   [`CmdStanModel`] object.
+#'
+#' @section Methods: `CmdStanPathfinder` objects have the following associated methods,
+#'   all of which have their own (linked) documentation pages.
+#'
+#'  ## Extract contents of fitted model object
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
+#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the approximation to the posterior. |
+#'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
+#'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
+#'
+#'  ## Summarize inferences
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$summary()`][fit-method-summary]  | Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
+#'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
+#'
+#'  ## Save fitted model object and temporary files
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
+#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
+#'
+#'  ## Report run times, console output, return codes
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$time()`][fit-method-time]  |  Report the total run time. |
+#'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
+#'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'
+CmdStanPathfinder <- R6::R6Class(
+  classname = "CmdStanPathfinder",
+  inherit = CmdStanFit,
+  public = list(),
+  private = list(
+    # inherits draws_ and metadata_ slots from CmdStanFit
+    read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
+      if (!length(self$output_files(include_failed = FALSE))) {
+        stop("Pathfinder failed. Unable to retrieve the draws.", call. = FALSE)
+      }
+      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      private$draws_ <- csv_contents$draws
+      private$metadata_ <- csv_contents$metadata
+      invisible(self)
+    }
+  )
+)
+
+#' @rdname fit-method-lp
+lp_approx <- function() {
+  as.numeric(self$draws()[, "lp_approx__"])
+}
+CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
+
+
 
 # CmdStanGQ ---------------------------------------------------------------
 #' CmdStanGQ objects
@@ -2288,5 +2367,11 @@ as_draws.CmdStanVB <- function(x, ...) {
 #' @rdname as_draws.CmdStanMCMC
 #' @export
 as_draws.CmdStanGQ <- function(x, ...) {
+  x$draws(...)
+}
+
+#' @rdname as_draws.CmdStanMCMC
+#' @export
+as_draws.CmdStanPathfinder <- function(x, ...) {
   x$draws(...)
 }

@@ -18,7 +18,7 @@ $diagnose() method of a CmdStanModel object."><meta property="og:image" content=
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -123,8 +123,10 @@ documentation and tutorials.</p>
 <li><p>CmdStan User’s Guide: <a href="https://mc-stan.org/docs/cmdstan-guide/" class="external-link">mc-stan.org/docs/cmdstan-guide</a></p></li>
 </ul><p>Other fitted model objects: 
 <code><a href="CmdStanGQ.html">CmdStanGQ</a></code>,
+<code><a href="CmdStanLaplace.html">CmdStanLaplace</a></code>,
 <code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code>,
 <code><a href="CmdStanMLE.html">CmdStanMLE</a></code>,
+<code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code>,
 <code><a href="CmdStanVB.html">CmdStanVB</a></code></p></div>
     </div>
 
@@ -135,11 +137,11 @@ documentation and tutorials.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># retrieve the gradients</span></span></span>
 <span class="r-in"><span><span class="va">test</span><span class="op">$</span><span class="fu">gradients</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   param_idx     value    model finite_diff        error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         0 -0.185026 11.68660    11.68660 -2.89634e-09</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2         1 -1.579220 12.33760    12.33760  2.86842e-08</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3         2 -0.391481  4.28029     4.28029 -2.55717e-08</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4         3 -0.580364 18.08200    18.08200 -1.15854e-08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   param_idx     value     model finite_diff        error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         0 -1.501560  34.56550    34.56550  4.58586e-08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         1 -1.199130   1.69981     1.69981 -1.08299e-09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3         2  1.255420 -23.66640   -23.66640 -2.23140e-08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4         3 -0.452023  12.80740    12.80740 -8.57077e-09</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

@@ -20,7 +20,7 @@ log_prob, its derivative, and its hessian."><meta property="og:image" content="h
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -113,19 +113,22 @@ for a given vector of unconstrained parameters</h1>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hessian</span><span class="op">(</span><span class="va">unconstrained_variables</span>, jacobian_adjustment <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hessian</span><span class="op">(</span><span class="va">unconstrained_variables</span>, jacobian <span class="op">=</span> <span class="cn">TRUE</span>, jacobian_adjustment <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>unconstrained_variables</dt>
-<dd><p>(numeric) A vector of unconstrained parameters
-to be passed to <code>hessian</code>.</p></dd>
+<dd><p>(numeric) A vector of unconstrained parameters.</p></dd>
+
+
+<dt>jacobian</dt>
+<dd><p>(logical) Whether to include the log-density adjustments from
+un/constraining variables.</p></dd>
 
 
 <dt>jacobian_adjustment</dt>
-<dd><p>(logical) Whether to include the log-density
-adjustments from un/constraining variables.</p></dd>
+<dd><p>Deprecated. Please use <code>jacobian</code> instead.</p></dd>
 
 </dl></div>
     <div id="see-also">
@@ -139,7 +142,6 @@ adjustments from un/constraining variables.</p></dd>
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span>, force_recompile <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Compiling Stan program...</span>
 <span class="r-in"><span><span class="co"># fit_mcmc$init_model_methods(hessian = TRUE)</span></span></span>
 <span class="r-in"><span><span class="co"># fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

@@ -19,7 +19,7 @@ model directly back to the file or prints it for inspection."><meta property="og
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -174,7 +174,9 @@ documentation and tutorials.</p>
 <code><a href="model-method-diagnose.html">model-method-diagnose</a></code>,
 <code><a href="model-method-expose_functions.html">model-method-expose_functions</a></code>,
 <code><a href="model-method-generate-quantities.html">model-method-generate-quantities</a></code>,
+<code><a href="model-method-laplace.html">model-method-laplace</a></code>,
 <code><a href="model-method-optimize.html">model-method-optimize</a></code>,
+<code><a href="model-method-pathfinder.html">model-method-pathfinder</a></code>,
 <code><a href="model-method-sample_mpi.html">model-method-sample_mpi</a></code>,
 <code><a href="model-method-sample.html">model-method-sample</a></code>,
 <code><a href="model-method-variables.html">model-method-variables</a></code>,
@@ -184,10 +186,41 @@ documentation and tutorials.</p>
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example of fixing old syntax</span></span></span>
+<span class="r-in"><span><span class="co"># real x[2] --&gt; array[2] real x;</span></span></span>
+<span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">"</span></span></span>
+<span class="r-in"><span><span class="st">parameters {</span></span></span>
+<span class="r-in"><span><span class="st">  real x[2];</span></span></span>
+<span class="r-in"><span><span class="st">}</span></span></span>
+<span class="r-in"><span><span class="st">model {</span></span></span>
+<span class="r-in"><span><span class="st">  x ~ std_normal();</span></span></span>
+<span class="r-in"><span><span class="st">}</span></span></span>
+<span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># set compile=FALSE then call format to fix old syntax</span></span></span>
+<span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">format</span><span class="op">(</span>canonicalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"deprecations"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> parameters {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[2] real x;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> model {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   x ~ std_normal();</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># overwrite the original file instead of just printing it</span></span></span>
+<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">format</span><span class="op">(</span>canonicalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"deprecations"</span><span class="op">)</span>, overwrite_file <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Old version of the model stored to /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpAMFHpW/model_1fc88c86300d78667dd3e476a636c279.stan.bak-20231213100754.</span>
+<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example of removing unnecessary whitespace</span></span></span>
 <span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">"</span></span></span>
 <span class="r-in"><span><span class="st">data {</span></span></span>
 <span class="r-in"><span><span class="st">  int N;</span></span></span>
-<span class="r-in"><span><span class="st">  int y[N];</span></span></span>
+<span class="r-in"><span><span class="st">  array[N] int y;</span></span></span>
 <span class="r-in"><span><span class="st">}</span></span></span>
 <span class="r-in"><span><span class="st">parameters {</span></span></span>
 <span class="r-in"><span><span class="st">  real                     lambda;</span></span></span>

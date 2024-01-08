@@ -3,7 +3,7 @@
 \name{model-method-laplace}
 \alias{model-method-laplace}
 \alias{laplace}
-\title{Run Stan's laplace algorithm}
+\title{Run Stan's Laplace algorithm}
 \usage{
 laplace(
   data = NULL,
@@ -62,10 +62,10 @@ containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 \item A list of lists containing initial values for all or some parameters. For
-MCMC the list should contain a sublist for each chain. For optimization and
-variational inference there should be just one sublist. The sublists should
-have named elements corresponding to the parameters for which you are
-specifying initial values. See \strong{Examples}.
+MCMC the list should contain a sublist for each chain. For other model
+fitting methods there should be just one sublist. The sublists should have
+named elements corresponding to the parameters for which you are specifying
+initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC, if the function
@@ -151,13 +151,11 @@ deviation of the posterior distribution. If the mode is a maximum
 likelihood estimate (MLE), the sample provides an estimate of the standard
 error of the likelihood. Whether the mode is the MAP or MLE depends on
 the value of the \code{jacobian} argument when running optimization. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html}{Laplace Sampling}
-section of the CmdStan User's Guide for more details.
+\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
+for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
-for more details on the default arguments.
+installed version of CmdStan.
 }
 \examples{
 \dontrun{
@@ -199,6 +197,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-optimize}},
+\code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
 \code{\link{model-method-variables}},

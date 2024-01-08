@@ -47,6 +47,7 @@ methods, many of which have their own (linked) documentation pages:
    \code{\link[=model-method-sample_mpi]{$sample_mpi()}} \tab Run CmdStan's \code{"sample"} method with \href{https://mc-stan.org/math/mpi.html}{MPI}, return \code{\link{CmdStanMCMC}} object. \cr
    \code{\link[=model-method-optimize]{$optimize()}} \tab Run CmdStan's \code{"optimize"} method, return \code{\link{CmdStanMLE}} object. \cr
    \code{\link[=model-method-variational]{$variational()}} \tab Run CmdStan's \code{"variational"} method, return \code{\link{CmdStanVB}} object. \cr
+   \code{\link[=model-method-pathfinder]{$pathfinder()}} \tab Run CmdStan's \code{"pathfinder"} method, return \code{\link{CmdStanPathfinder}} object. \cr
    \code{\link[=model-method-generate-quantities]{$generate_quantities()}} \tab Run CmdStan's \code{"generate quantities"} method, return \code{\link{CmdStanGQ}} object. \cr
 }
 
@@ -111,19 +112,26 @@ my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.jso
 fit_optim <- mod$optimize(data = my_data_file, seed = 123)
 fit_optim$summary()
 
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation
+# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
 # to the posterior
 fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
 fit_laplace$summary()
 
-# Run 'variational' method to approximate the posterior (default is meanfield ADVI)
+# Run 'variational' method to use ADVI to approximate posterior
 fit_vb <- mod$variational(data = stan_data, seed = 123)
 fit_vb$summary()
-
-# Plot approximate posterior using bayesplot
 mcmc_hist(fit_vb$draws("theta"))
 
+# Run 'pathfinder' method, a new alternative to the variational method
+fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
+fit_pf$summary()
+mcmc_hist(fit_pf$draws("theta"))
+
+# Run 'pathfinder' again with more paths, fewer draws per path,
+# better covariance approximation, and fewer LBFGSs iterations
+fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
+                         history_size=50, max_lbfgs_iters=100)
 
 # Specifying initial values as a function
 fit_mcmc_w_init_fun <- mod$sample(
