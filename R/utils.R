@@ -321,7 +321,7 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
   efbmi_per_chain
 }
 
-check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
+check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.3) {
   efbmi_per_chain <- ebfmi(post_warmup_sampler_diagnostics)
   nan_efbmi_count <- sum(is.nan(efbmi_per_chain))
   efbmi_below_threshold <- sum(efbmi_per_chain < threshold)
