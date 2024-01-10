@@ -753,6 +753,12 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
   invisible(NULL)
 }
 
+compile_model_methods <- function(verbose = FALSE) {
+  source_file <- system.file("include", "model_methods.cpp",
+                             package = "cmdstanr", mustWork = TRUE)
+
+}
+
 expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
   code <- c(env$hpp_code_,
             readLines(system.file("include", "model_methods.cpp",
