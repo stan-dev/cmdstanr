@@ -1,6 +1,6 @@
 #' Create a new CmdStanModel object
 #'
-#' @description \if{html}{\figure{logo.png}{options: width="25px"}}
+#' @description \if{html}{\figure{logo.png}{options: width=25}}
 #'   Create a new [`CmdStanModel`] object from a file containing a Stan program
 #'   or from an existing Stan executable. The [`CmdStanModel`] object stores the
 #'   path to a Stan program and compiled executable (once created), and provides
@@ -93,7 +93,7 @@
 #' fit_optim <- mod$optimize(data = my_data_file, seed = 123)
 #' fit_optim$summary()
 #'
-#' # Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation
+#' # Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
 #' # to the posterior
 #' fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 #' fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
@@ -108,6 +108,11 @@
 #' fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 #' fit_pf$summary()
 #' mcmc_hist(fit_pf$draws("theta"))
+#'
+#' # Run 'pathfinder' again with more paths, fewer draws per path,
+#' # better covariance approximation, and fewer LBFGSs iterations
+#' fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
+#'                          history_size=50, max_lbfgs_iters=100)
 #'
 #' # Specifying initial values as a function
 #' fit_mcmc_w_init_fun <- mod$sample(
@@ -376,7 +381,7 @@ CmdStanModel <- R6::R6Class(
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
-#'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
+#'   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
 #'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
 #'   without compiling it or for a model that is already compiled the
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
@@ -629,6 +634,8 @@ compile <- function(quiet = TRUE,
   }
   stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  private$model_methods_env_ <- new.env()
+  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stancflags_val, stancflags_combined))
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 
@@ -715,10 +722,8 @@ compile <- function(quiet = TRUE,
   private$precompile_cpp_options_ <- NULL
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
-  private$model_methods_env_ <- new.env()
 
   if(!dry_run) {
-    suppressWarnings(private$model_methods_env_$hpp_code_ <- readLines(private$hpp_file_, warn = FALSE))
     if (compile_model_methods) {
       expose_model_methods(env = private$model_methods_env_,
                             verbose = !quiet,
@@ -792,7 +797,7 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
-#'   chapter](https://mc-stan.org/docs/reference-manual/pedantic-mode.html) in
+#'   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
 #'   the Stan Reference Manual.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
@@ -1268,7 +1273,7 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'
 #' @description The `$sample_mpi()` method of a [`CmdStanModel`] object is
 #'   identical to the `$sample()` method but with support for
-#'   [MPI](https://mc-stan.org/math/mpi.html). The target audience for MPI are
+#'   MPI (message passing interface). The target audience for MPI are
 #'   those with large computer clusters. For other users, the
 #'   [`$sample()`][model-method-sample] method provides both parallelization of
 #'   chains and threading support for within-chain parallelization.
@@ -1308,8 +1313,8 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #' @return A [`CmdStanMCMC`] object.
 #'
 #' @template seealso-docs
-#' @seealso The Stan Math Library's MPI documentation
-#'   ([mc-stan.org/math/mpi](https://mc-stan.org/math/mpi.html)) for more
+#' @seealso The Stan Math Library's documentation
+#'   ([mc-stan.org/math](https://mc-stan.org/math/)) for more
 #'   details on MPI support in Stan.
 #'
 #' @examples
@@ -1539,7 +1544,7 @@ optimize <- function(data = NULL,
 CmdStanModel$set("public", name = "optimize", value = optimize)
 
 
-#' Run Stan's laplace algorithm
+#' Run Stan's Laplace algorithm
 #'
 #' @name model-method-laplace
 #' @aliases laplace
@@ -1828,12 +1833,15 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' @description The `$pathfinder()` method of a [`CmdStanModel`] object runs
 #'   Stan's Pathfinder algorithms. Pathfinder is a variational method for
 #'   approximately sampling from differentiable log densities. Starting from a
-#'   random initialization, Pathfinder locates normal approximations to the
-#'   target density along a quasi-Newton optimization path, with local
-#'   covariance estimated using the negative inverse Hessian estimates produced
-#'   by the L-BFGS optimizer. Pathfinder returns draws from the Gaussian
-#'   approximation with the lowest estimated Kullback-Leibler (KL) divergence to
-#'   the true posterior. See the
+#'   random initialization, Pathfinder locates normal approximations
+#'   to the target density along a quasi-Newton optimization path in
+#'   the unconstrained space, with local covariance estimated using
+#'   the negative inverse Hessian estimates produced by the LBFGS
+#'   optimizer. Pathfinder selects the normal approximation with the
+#'   lowest estimated Kullback-Leibler (KL) divergence to the true
+#'   posterior. Finally Pathfinder draws from that normal
+#'   approximation and returns the draws transformed to the
+#'   constrained scale. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
@@ -1857,8 +1865,9 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   pathfinder should return. The number of draws PSIS sampling samples from
 #'   will be equal to `single_path_draws * num_paths`.
 #' @param draws (positive integer) Number of draws to return after performing
-#'   pareto smooted importance sampling (PSIS). This must be smaller than
-#'   `single_path_draws * num_paths`.
+#'   pareto smooted importance sampling (PSIS). This should be smaller than
+#'   `single_path_draws * num_paths` (future versions of CmdStan will throw a
+#'   warning).
 #' @param num_paths (positive integer) Number of single pathfinders to run.
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations
 #'   for LBFGS.
@@ -1904,23 +1913,26 @@ pathfinder <- function(data = NULL,
     model_variables <- self$variables()
   }
   pathfinder_args <- PathfinderArgs$new(
-   init_alpha = init_alpha,
-   tol_obj = tol_obj,
-   tol_rel_obj = tol_rel_obj,
-   tol_grad = tol_grad,
-   tol_rel_grad = tol_rel_grad,
-   tol_param = tol_param,
-   history_size = history_size,
-   draws = draws,
-   single_path_draws = single_path_draws,
-   num_paths = num_paths,
-   max_lbfgs_iters = max_lbfgs_iters,
-   num_elbo_draws = num_elbo_draws,
-   save_single_paths = save_single_paths)
+    init_alpha = init_alpha,
+    tol_obj = tol_obj,
+    tol_rel_obj = tol_rel_obj,
+    tol_grad = tol_grad,
+    tol_rel_grad = tol_rel_grad,
+    tol_param = tol_param,
+    history_size = history_size,
+    draws = draws,
+    single_path_draws = single_path_draws,
+    num_paths = num_paths,
+    max_lbfgs_iters = max_lbfgs_iters,
+    num_elbo_draws = num_elbo_draws,
+    save_single_paths = save_single_paths
+  )
   args <- CmdStanArgs$new(
     method_args = pathfinder_args,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
+    model_methods_env = private$model_methods_env_,
+    standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     proc_ids = 1,

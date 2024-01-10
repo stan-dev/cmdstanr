@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -250,11 +250,11 @@ documentation</a>.</p>
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name   thread_id total_time forward_time reverse_time chain_stack
-1 likelihood 0x102122e00 0.71089600   0.58314100    0.1277560       51969
-2     priors 0x102122e00 0.00482875   0.00293865    0.0018901       34646
+1 likelihood 0x118759e00 0.69970800   0.57529800   0.12441000       51468
+2     priors 0x118759e00 0.00446571   0.00270154   0.00176417       34312
   no_chain_stack autodiff_calls no_autodiff_calls
-1       34646000          17323                 1
-2              0          17323                 1</code></pre>
+1       34329156          17156                 1
+2          34312          17156                 1</code></pre>
 <p>The <code>total_time</code> column is the total time spent inside a
 given profile statement. It is clear that the vast majority of time is
 spent in the likelihood function.</p>
@@ -297,11 +297,11 @@ like for the previous one.</p>
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name   thread_id total_time forward_time reverse_time chain_stack
-1 likelihood 0x1066bde00 0.45516500   0.45357200   0.00159287       17695
-2     priors 0x1066bde00 0.00399743   0.00242302   0.00157441       35390
+1 likelihood 0x106ce4e00 0.38400000   0.38264800   0.00135175       52203
+2     priors 0x106ce4e00 0.00356564   0.00237053   0.00119511       34802
   no_chain_stack autodiff_calls no_autodiff_calls
-1              0          17695                 1
-2              0          17695                 1</code></pre>
+1          17401          17401                 1
+2          34802          17401                 1</code></pre>
 <p>We can see from the <code>total_time</code> column that this is much
 faster than the previous model.</p>
 </div>
@@ -324,7 +324,7 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span><span class="op">/</span><span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 4.103770e-05 2.787479e-07</code></pre>
+<pre><code>[1] 4.078503e-05 2.603002e-07</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
@@ -335,7 +335,7 @@ The paths of the profiling CSV files can be retrieved using
 <code>$profile_files()</code>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmppMVUoY/model_6580008f67848265f3dfd0e7ae3b0600-profile-202307251456-1-5100ca.csv"</code></pre>
+<pre><code>[1] "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpJRtaoq/model_6580008f67848265f3dfd0e7ae3b0600-profile-202312131010-1-95e407.csv"</code></pre>
 <p>These can be saved to a more permanent location with the
 <code>$save_profile_files()</code> method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">

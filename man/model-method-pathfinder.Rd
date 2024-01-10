@@ -71,10 +71,10 @@ containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 \item A list of lists containing initial values for all or some parameters. For
-MCMC the list should contain a sublist for each chain. For optimization and
-variational inference there should be just one sublist. The sublists should
-have named elements corresponding to the parameters for which you are
-specifying initial values. See \strong{Examples}.
+MCMC the list should contain a sublist for each chain. For other model
+fitting methods there should be just one sublist. The sublists should have
+named elements corresponding to the parameters for which you are specifying
+initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC, if the function
@@ -150,8 +150,9 @@ pathfinder should return. The number of draws PSIS sampling samples from
 will be equal to \code{single_path_draws * num_paths}.}
 
 \item{draws}{(positive integer) Number of draws to return after performing
-pareto smooted importance sampling (PSIS). This must be smaller than
-\code{single_path_draws * num_paths}.}
+pareto smooted importance sampling (PSIS). This should be smaller than
+\code{single_path_draws * num_paths} (future versions of CmdStan will throw a
+warning).}
 
 \item{num_paths}{(positive integer) Number of single pathfinders to run.}
 
@@ -171,12 +172,15 @@ A \code{\link{CmdStanPathfinder}} object.
 The \verb{$pathfinder()} method of a \code{\link{CmdStanModel}} object runs
 Stan's Pathfinder algorithms. Pathfinder is a variational method for
 approximately sampling from differentiable log densities. Starting from a
-random initialization, Pathfinder locates normal approximations to the
-target density along a quasi-Newton optimization path, with local
-covariance estimated using the negative inverse Hessian estimates produced
-by the L-BFGS optimizer. Pathfinder returns draws from the Gaussian
-approximation with the lowest estimated Kullback-Leibler (KL) divergence to
-the true posterior. See the
+random initialization, Pathfinder locates normal approximations
+to the target density along a quasi-Newton optimization path in
+the unconstrained space, with local covariance estimated using
+the negative inverse Hessian estimates produced by the LBFGS
+optimizer. Pathfinder selects the normal approximation with the
+lowest estimated Kullback-Leibler (KL) divergence to the true
+posterior. Finally Pathfinder draws from that normal
+approximation and returns the draws transformed to the
+constrained scale. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
 
@@ -241,7 +245,7 @@ my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.jso
 fit_optim <- mod$optimize(data = my_data_file, seed = 123)
 fit_optim$summary()
 
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation
+# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
 # to the posterior
 fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
@@ -256,6 +260,11 @@ mcmc_hist(fit_vb$draws("theta"))
 fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 fit_pf$summary()
 mcmc_hist(fit_pf$draws("theta"))
+
+# Run 'pathfinder' again with more paths, fewer draws per path,
+# better covariance approximation, and fewer LBFGSs iterations
+fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
+                         history_size=50, max_lbfgs_iters=100)
 
 # Specifying initial values as a function
 fit_mcmc_w_init_fun <- mod$sample(

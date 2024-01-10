@@ -1,6 +1,6 @@
 ---
 title: "Getting started with CmdStanR"
-author: "Jonah Gabry and Rok Češnovar"
+author: "Jonah Gabry, Rok Češnovar, and Andrew Johnson"
 output:
   rmarkdown::html_vignette:
     toc: true
@@ -341,8 +341,8 @@ stanfit <- rstan::read_stan_csv(fit$output_files())
 
 CmdStanR also supports running Stan's optimization algorithms and its algorithms
 for variational approximation of full Bayesian inference. These are run via the
-`$optimize()`, `$laplace()`, and `$variational()` methods, which are called in a
-similar way to the `$sample()` method demonstrated above.
+`$optimize()`, `$laplace()`, `$variational()`, and `$pathfinder()` methods, which
+are called in a similar way to the `$sample()` method demonstrated above.
 
 ### Optimization
 
@@ -380,7 +380,7 @@ fit_map <- mod$optimize(
 ### Laplace Approximation
 
 The [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
-produces a sample from a normal approximation centered at the mode of a
+method produces a sample from a normal approximation centered at the mode of a
 distribution in the unconstrained space. If the mode is a MAP estimate, the
 samples provide an estimate of the mean and standard deviation of the posterior
 distribution. If the mode is the MLE, the sample provides an estimate of the
@@ -401,15 +401,17 @@ fit_laplace <- mod$laplace(
     seed = 123,
     refresh = 1000
   )
-fit_laplace$summary("theta")
+fit_laplace$print("theta")
 mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025)
 ```
 
-### Variational Bayes
+### Variational (ADVI)
 
-We can run Stan's experimental variational Bayes algorithm (ADVI) using the
-[`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
-method.
+We can run Stan's experimental Automatic Differentiation Variational Inference
+(ADVI) using the [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
+method. For details on the ADVI algorithm see the 
+[CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/variational-inference-algorithm-advi.html).
+
 
 ```{r variational}
 fit_vb <- mod$variational(
@@ -418,12 +420,38 @@ fit_vb <- mod$variational(
   draws = 4000
 )
 fit_vb$print("theta")
+mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
 ```
 
-Let's extract the draws, make the same plot we made after MCMC and Laplace
-approximation, and compare them all. In this simple example the distributions
-are quite similar, but this will not always be the case.
+### Variational (Pathfinder)
 
+Stan version 2.33 introduced a new variational method called Pathfinder, 
+which is intended to be faster and more stable than ADVI. For details on how 
+Pathfinder works see the section in the 
+[CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro).
+Pathfinder is run using the [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
+method.
+
+```{r pathfinder}
+fit_pf <- mod$pathfinder(
+  data = data_list,
+  seed = 123,
+  draws = 4000
+)
+fit_pf$print("theta")
+```
+
+
+Let's extract the draws, make the same plot we made after running the other
+algorithms, and compare them all. approximation, and compare them all. In this
+simple example the distributions are quite similar, but this will not always be
+the case for more challenging problems.
+
+```{r plot-compare-pf, message = FALSE}
+mcmc_hist(fit_pf$draws("theta"), binwidth = 0.025) +
+  ggplot2::labs(subtitle = "Approximate posterior from pathfinder") +
+  ggplot2::xlim(0, 1)
+```
 ```{r plot-compare-vb, message = FALSE}
 mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025) +
   ggplot2::labs(subtitle = "Approximate posterior from variational") +
@@ -440,12 +468,13 @@ mcmc_hist(fit$draws("theta"), binwidth = 0.025) +
   ggplot2::xlim(0, 1)
 ```
 
-For more details on the `$optimize()`, `$laplace()`  and `$variational()`
-methods, follow these links to their documentation pages.
+For more details on the `$optimize()`, `$laplace()`, `$variational()`, and 
+`pathfinder()` methods, follow these links to their documentation pages.
 
 * [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
 * [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 * [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
+* [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
 
 
 ## Saving fitted model objects

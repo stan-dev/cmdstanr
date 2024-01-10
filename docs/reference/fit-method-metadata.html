@@ -19,7 +19,7 @@ fitting the model. See Examples and read_cmdstan_csv()."><meta property="og:imag
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -127,9 +127,9 @@ fitting the model. See <strong>Examples</strong> and <code><a href="read_cmdstan
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">metadata</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 40</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_major  : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_minor  : num 32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_patch  : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ start_datetime      : chr "2023-07-25 20:36:00 UTC"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_minor  : num 33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_patch  : num 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ start_datetime      : chr "2023-12-13 17:04:42 UTC"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ method              : chr "sample"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ save_warmup         : num 0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ thin                : num 1</span>
@@ -146,14 +146,14 @@ fitting the model. See <strong>Examples</strong> and <code><a href="read_cmdstan
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ num_chains          : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ id                  : num [1:4] 1 2 3 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ init                : num [1:4] 2 2 2 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ seed                : num 49669263</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ seed                : num 1.08e+09</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ refresh             : num 100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ sig_figs            : num -1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ profile_file        : chr "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpFBtN6X/logistic-profile-202307251436-1-352ddc.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stanc_version       : chr "stanc3 v2.32.2"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ profile_file        : chr "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpAMFHpW/logistic-profile-202312131004-1-79f552.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stanc_version       : chr "stanc3 v2.33.1"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ variables           : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ step_size_adaptation: num [1:4] 0.702 0.797 0.751 0.804</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ step_size_adaptation: num [1:4] 0.723 0.882 0.802 0.749</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ model_name          : chr "logistic_model"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ adapt_engaged       : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ adapt_delta         : num 0.8</span>
@@ -164,9 +164,9 @@ fitting the model. See <strong>Examples</strong> and <code><a href="read_cmdstan
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ threads_per_chain   : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ time                :'data.frame':	4 obs. of  4 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ chain_id: num [1:4] 1 2 3 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ warmup  : num [1:4] 0.022 0.022 0.021 0.022</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ sampling: num [1:4] 0.068 0.065 0.073 0.067</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ total   : num [1:4] 0.09 0.087 0.094 0.089</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ warmup  : num [1:4] 0.022 0.022 0.022 0.022</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ sampling: num [1:4] 0.069 0.065 0.07 0.068</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ total   : num [1:4] 0.091 0.087 0.092 0.09</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_variable_sizes :List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ lp__   : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ alpha  : num 1</span>
@@ -179,9 +179,9 @@ fitting the model. See <strong>Examples</strong> and <code><a href="read_cmdstan
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">metadata</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 31</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_major : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_minor : num 32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_patch : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ start_datetime     : chr "2023-07-25 20:36:01 UTC"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_minor : num 33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_patch : num 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ start_datetime     : chr "2023-12-13 17:04:44 UTC"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ method             : chr "optimize"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ algorithm          : chr "lbfgs"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ init_alpha         : num 0.001</span>
@@ -196,11 +196,11 @@ fitting the model. See <strong>Examples</strong> and <code><a href="read_cmdstan
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ save_iterations    : num 0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ id                 : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ init               : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ seed               : num 1.74e+09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ seed               : num 9.12e+08</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ refresh            : num 100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ sig_figs           : num -1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ profile_file       : chr "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpFBtN6X/logistic-profile-202307251436-1-4f11df.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stanc_version      : chr "stanc3 v2.32.2"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ profile_file       : chr "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpAMFHpW/logistic-profile-202312131004-1-7b3d9a.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stanc_version      : chr "stanc3 v2.33.1"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ sampler_diagnostics: chr(0) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ variables          : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ model_name         : chr "logistic_model"</span>
@@ -218,9 +218,9 @@ fitting the model. See <strong>Examples</strong> and <code><a href="read_cmdstan
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">metadata</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 29</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_major : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_minor : num 32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_patch : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ start_datetime     : chr "2023-07-25 20:36:01 UTC"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_minor : num 33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stan_version_patch : num 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ start_datetime     : chr "2023-12-13 17:04:44 UTC"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ method             : chr "variational"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ algorithm          : chr "meanfield"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ iter               : num 50</span>
@@ -232,11 +232,11 @@ fitting the model. See <strong>Examples</strong> and <code><a href="read_cmdstan
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ output_samples     : num 1000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ id                 : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ init               : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ seed               : num 2.97e+08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ seed               : num 3.89e+08</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ refresh            : num 100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ sig_figs           : num -1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ profile_file       : chr "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpFBtN6X/logistic-profile-202307251436-1-5bbf54.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stanc_version      : chr "stanc3 v2.32.2"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ profile_file       : chr "/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpAMFHpW/logistic-profile-202312131004-1-645608.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ stanc_version      : chr "stanc3 v2.33.1"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ sampler_diagnostics: chr(0) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ variables          : chr [1:106] "lp__" "lp_approx__" "alpha" "beta[1]" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ model_name         : chr "logistic_model"</span>

@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -102,6 +102,32 @@
       <small>Source: <a href="https://github.com/stan-dev/cmdstanr/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.7.0" id="cmdstanr-070">cmdstanr 0.7.0<a class="anchor" aria-label="anchor" href="#cmdstanr-070"></a></h2>
+<div class="section level3">
+<h3 id="major-new-features-0-7-0">Major new features<a class="anchor" aria-label="anchor" href="#major-new-features-0-7-0"></a></h3>
+<ul><li>New <code>laplace</code> method by <a href="https://github.com/jgabry" class="external-link">@jgabry</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/800" class="external-link">#800</a></li>
+<li>New <code>pathfinder</code> method by <a href="https://github.com/SteveBronder" class="external-link">@SteveBronder</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/848" class="external-link">#848</a></li>
+</ul></div>
+<div class="section level3">
+<h3 id="other-improvements-and-bug-fixes-0-7-0">Other improvements and bug fixes<a class="anchor" aria-label="anchor" href="#other-improvements-and-bug-fixes-0-7-0"></a></h3>
+<ul><li>Add missing link to diagnose method in CmdStanModel doc by <a href="https://github.com/jgabry" class="external-link">@jgabry</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/833" class="external-link">#833</a></li>
+<li>Improvements to compile tests by <a href="https://github.com/martinmodrak" class="external-link">@martinmodrak</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/836" class="external-link">#836</a></li>
+<li>Changed the delay behavior in wsl_installed by <a href="https://github.com/martinmodrak" class="external-link">@martinmodrak</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/839" class="external-link">#839</a></li>
+<li>Update array syntax in website vignette by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/841" class="external-link">#841</a></li>
+<li>Compatibility fixes for cmdstan 2.33+ by <a href="https://github.com/jgabry" class="external-link">@jgabry</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/843" class="external-link">#843</a></li>
+<li>Suggest format method after error due to old syntax by <a href="https://github.com/jgabry" class="external-link">@jgabry</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/852" class="external-link">#852</a></li>
+<li>Clarifications in R-markdown vignette by <a href="https://github.com/jgcolman" class="external-link">@jgcolman</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/854" class="external-link">#854</a></li>
+<li>Update linux/wsl detection for install arch by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/856" class="external-link">#856</a></li>
+<li>Fix handling of single-length inits for containers by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/857" class="external-link">#857</a></li>
+<li>Add support/tests for exposing functions with tuples by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/860" class="external-link">#860</a></li>
+<li>Add support/tests for exporting functions with complex types by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/861" class="external-link">#861</a></li>
+<li>Add option for installing from release archive by <a href="https://github.com/andrjohns" class="external-link">@andrjohns</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/866" class="external-link">#866</a></li>
+<li>Improve Pathfinder doc by <a href="https://github.com/avehtari" class="external-link">@avehtari</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/875" class="external-link">#875</a></li>
+<li>Rename <code>jacobian_adjustment</code> argument to <code>jacobian</code> by <a href="https://github.com/jgabry" class="external-link">@jgabry</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/879" class="external-link">#879</a></li>
+<li>Fix get_cmdstan_flags(‘STANCFLAGS’) in recursive make by <a href="https://github.com/pearsonca" class="external-link">@pearsonca</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/881" class="external-link">#881</a></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.6.1" id="cmdstanr-061">cmdstanr 0.6.1<a class="anchor" aria-label="anchor" href="#cmdstanr-061"></a></h2>
 <ul><li>Store return codes instead of always querying exit status by <a href="https://github.com/jgabry" class="external-link">@jgabry</a> in <a href="https://github.com/stan-dev/cmdstanr/issues/798" class="external-link">#798</a></li>
@@ -289,7 +315,7 @@
 </ul></div>
 <div class="section level4">
 <h4 id="new-features-0-2-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h4>
-<ul><li><p>CSV reading is now faster by using <code><a href="https://Rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">data.table::fread()</a></code>. (<a href="https://github.com/stan-dev/cmdstanr/issues/318" class="external-link">#318</a>)</p></li>
+<ul><li><p>CSV reading is now faster by using <code><a href="https://rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">data.table::fread()</a></code>. (<a href="https://github.com/stan-dev/cmdstanr/issues/318" class="external-link">#318</a>)</p></li>
 <li><p><code><a href="../reference/install_cmdstan.html">install_cmdstan()</a></code> gains argument <code>version</code> for specifying which version of CmdStan to install. (<a href="https://github.com/stan-dev/cmdstanr/issues/300" class="external-link">#300</a>, <a href="https://github.com/stan-dev/cmdstanr/issues/308" class="external-link">#308</a>)</p></li>
 <li><p>New function <code><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain()</a></code> that checks if the appropriate toolchains are available. (<a href="https://github.com/stan-dev/cmdstanr/issues/289" class="external-link">#289</a>)</p></li>
 <li><p><code>$sample()</code> method for CmdStanModel objects gains argument <code>chain_ids</code> for specifying custom chain IDs. (<a href="https://github.com/stan-dev/cmdstanr/issues/319" class="external-link">#319</a>)</p></li>

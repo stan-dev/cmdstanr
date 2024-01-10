@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -140,78 +140,90 @@
 
     
     
-<!-- 
-NOTE: the hack below of using print.data.frame in chunks with echo=FALSE 
-is used because the pillar formatting of posterior draws_summary objects
-isn't playing nicely with pkgdown::build_articles(). When that is fixed
-using options(digits=2) also won't be necessary anymore.
--->
 <div class="section level2">
 <h2 id="summary-statistics">Summary statistics<a class="anchor" aria-label="anchor" href="#summary-statistics"></a>
 </h2>
-<p>We can easily customise the summary statistics reported by
+<p>We can easily customize the summary statistics reported by
 <code>$summary()</code> and <code>$print()</code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu"><a href="../reference/cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"schools"</span>, method <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>Warning: 302 of 4000 (8.0%) transitions ended with a divergence.
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu"><a href="../reference/cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"schools"</span>, method <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
+<pre><code>Warning: 411 of 4000 (10.0%) transitions ended with a divergence.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
 <pre><code>Warning: 1 of 4 chains had an E-BFMI less than 0.2.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
-<pre><code>   variable  mean median  sd mad      q5 q95 rhat ess_bulk ess_tail
-1      lp__ -56.7  -57.1 6.1 6.4 -66.008 -46  1.1       33       19
-2        mu   6.6    6.7 4.2 4.5   0.025  13  1.0      124      879
-3       tau   4.7    3.9 3.6 3.4   0.790  12  1.1       33       22
-4  theta[1]   9.1    8.5 6.8 6.0  -0.082  21  1.0      163      405
-5  theta[2]   7.0    6.9 5.5 5.8  -1.456  16  1.0      236     1810
-6  theta[3]   5.7    6.1 6.4 6.2  -4.835  16  1.0      313     1466
-7  theta[4]   6.8    6.9 5.9 5.8  -2.355  16  1.0      246     1356
-8  theta[5]   4.9    5.2 5.8 5.5  -5.038  13  1.0      219      932
-9  theta[6]   5.7    5.9 5.8 5.8  -4.073  15  1.0      278     1208
-10 theta[7]   8.9    8.6 6.0 5.7   0.094  19  1.0      176      352
-11 theta[8]   7.0    7.1 6.5 5.9  -3.088  18  1.0      317     1709</code></pre>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code>   variable       mean     median       sd      mad         q5       q95
+1      lp__ -55.581147 -56.536200 7.135791 7.809299 -66.108490 -44.17410
+2        mu   6.053657   5.516030 3.777403 3.597633  -0.119312  12.18247
+3       tau   4.456447   3.456865 3.641807 3.645828   0.778481  11.91315
+4  theta[1]   8.436941   7.287125 6.350694 4.628344   0.249281  20.38983
+5  theta[2]   6.522999   5.993620 5.308671 4.494072  -1.760367  15.64359
+6  theta[3]   5.147676   4.349235 6.014958 5.082679  -5.803791  14.17618
+7  theta[4]   6.189408   5.541310 5.578086 4.501730  -2.557880  15.63053
+8  theta[5]   4.669689   4.952550 5.338198 4.271882  -5.029484  12.96141
+9  theta[6]   5.123046   4.853110 5.623562 4.579796  -4.797084  13.70336
+10 theta[7]   8.283195   7.324155 5.703079 4.912514   1.112880  18.94623
+11 theta[8]   6.499894   5.594240 6.114406 4.839688  -2.747390  16.75831
+       rhat   ess_bulk    ess_tail
+1  1.348190   9.585696          NA
+2  1.094243 190.870204  910.104440
+3  1.305410  10.562073    4.833756
+4  1.037209 205.819798 1097.512010
+5  1.234963 615.265251 1158.714996
+6  1.270209 429.358164 1118.125260
+7  1.060915 288.566093 1331.398737
+8  1.265317 356.169676 1352.544578
+9  1.281493 482.412281 1311.140711
+10 1.041368  75.113061  938.699910
+11 1.069623 436.937773 1068.232198</code></pre>
 <p>By default all variables are summaries with the follow functions:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_summary.html" class="external-link">default_summary_measures</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[1] "mean"      "median"    "sd"        "mad"       "quantile2"</code></pre>
-<p>To change the variables summarised, we use the variables argument</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<p>To change the variables summarized, we use the variables argument</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code>  variable mean median  sd mad    q5 q95 rhat ess_bulk ess_tail
-1       mu  6.6    6.7 4.2 4.5 0.025  13  1.0      124      879
-2      tau  4.7    3.9 3.6 3.4 0.790  12  1.1       33       22</code></pre>
+<pre><code>  variable     mean   median       sd      mad        q5      q95     rhat
+1       mu 6.053657 5.516030 3.777403 3.597633 -0.119312 12.18247 1.094243
+2      tau 4.456447 3.456865 3.641807 3.645828  0.778481 11.91315 1.305410
+   ess_bulk   ess_tail
+1 190.87020 910.104440
+2  10.56207   4.833756</code></pre>
 <p>We can additionally change which functions are used</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span>, <span class="va">mean</span>, <span class="va">sd</span><span class="op">)</span></span></code></pre></div>
-<pre><code>  variable mean  sd
-1       mu  6.6 4.2
-2      tau  4.7 3.6</code></pre>
-<p>To summarise all variables with non-default functions, it is
+<pre><code>  variable     mean       sd
+1       mu 6.053657 3.777403
+2      tau 4.456447 3.641807</code></pre>
+<p>To summarize all variables with non-default functions, it is
 necessary to set explicitly set the variables argument, either to
 <code>NULL</code> or the full vector of variable names.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">metadata</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">model_params</span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, <span class="st">"mean"</span>, <span class="st">"median"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">metadata</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">model_params</span></span></code></pre></div>
 <pre><code> [1] "lp__"     "mu"       "tau"      "theta[1]" "theta[2]" "theta[3]"
  [7] "theta[4]" "theta[5]" "theta[6]" "theta[7]" "theta[8]"</code></pre>
-<pre><code>   variable  mean median
-1      lp__ -56.7  -57.1
-2        mu   6.6    6.7
-3       tau   4.7    3.9
-4  theta[1]   9.1    8.5
-5  theta[2]   7.0    6.9
-6  theta[3]   5.7    6.1
-7  theta[4]   6.8    6.9
-8  theta[5]   4.9    5.2
-9  theta[6]   5.7    5.9
-10 theta[7]   8.9    8.6
-11 theta[8]   7.0    7.1</code></pre>
-<p>Summary functions can be specified by character string, function, or
-using a formula (or anything else supported by [rlang::as_function]). If
-these arguments are named, those names will be used in the tibble
-output. If the summary results are named they will take precedence.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_sd</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>My_SD <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, <span class="st">"mean"</span>, <span class="st">"median"</span><span class="op">)</span></span></code></pre></div>
+<pre><code>   variable       mean     median
+1      lp__ -55.581147 -56.536200
+2        mu   6.053657   5.516030
+3       tau   4.456447   3.456865
+4  theta[1]   8.436941   7.287125
+5  theta[2]   6.522999   5.993620
+6  theta[3]   5.147676   4.349235
+7  theta[4]   6.189408   5.541310
+8  theta[5]   4.669689   4.952550
+9  theta[6]   5.123046   4.853110
+10 theta[7]   8.283195   7.324155
+11 theta[8]   6.499894   5.594240</code></pre>
+<p>Summary functions can be specified by character string, function, or
+using a formula (or anything else supported by
+<code><a href="https://rlang.r-lib.org/reference/as_function.html" class="external-link">rlang::as_function()</a></code>). If these arguments are named, those
+names will be used in the tibble output. If the summary results are
+named they will take precedence.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">my_sd</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>My_SD <span class="op">=</span> <span class="fu">sd</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span>, </span>
 <span>  MEAN <span class="op">=</span> <span class="va">mean</span>, </span>
@@ -220,48 +232,47 @@ output. If the summary results are named they will take precedence.</p>
 <span>  <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">.x</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  Minimum <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="op">)</span>        </span></code></pre></div>
-<pre><code>  variable MEAN median My_SD 10%  90% Minimum
-1       mu  6.6    6.7   4.2 1.3 11.7  -11.23
-2      tau  4.7    3.9   3.6 1.1  9.6    0.53</code></pre>
+<pre><code>  variable     MEAN   median    My_SD      10%       90%   Minimum
+1       mu 6.053657 5.516030 3.777403 1.565533 10.863700 -8.554010
+2      tau 4.456447 3.456865 3.641807 0.778481  9.666494  0.774844</code></pre>
 <p>Arguments to all summary functions can also be specified with
 <code>.args</code>.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span>, <span class="va">quantile</span>, .args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">.05</span>, <span class="fl">.95</span>, <span class="fl">.975</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code>  variable  2.5%    5% 95% 97.5%
-1       mu -1.17 0.025  13    15
-2      tau  0.59 0.790  12    13</code></pre>
+<pre><code>  variable      2.5%        5%      95%    97.5%
+1       mu -1.614829 -0.119312 12.18247 13.54298
+2      tau  0.778481  0.778481 11.91315 13.43694</code></pre>
 <p>The summary functions are applied to the array of sample values, with
 dimension <code>iter_sampling</code>x<code>chains</code>.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">dim</span>, <span class="va">colMeans</span><span class="op">)</span></span></code></pre></div>
-<pre><code>   variable dim.1 dim.2     1     2     3     4
-1      lp__  1000     4 -58.0 -55.7 -55.7 -57.3
-2        mu  1000     4   6.9   7.5   5.4   6.8
-3       tau  1000     4   5.2   4.3   4.4   4.9
-4  theta[1]  1000     4  10.0   9.7   7.6   9.1
-5  theta[2]  1000     4   7.1   8.0   5.8   7.2
-6  theta[3]  1000     4   5.7   6.6   4.5   5.9
-7  theta[4]  1000     4   7.2   7.7   5.6   6.7
-8  theta[5]  1000     4   4.9   6.0   4.0   4.9
-9  theta[6]  1000     4   5.7   6.7   4.8   5.7
-10 theta[7]  1000     4   9.3   9.5   7.5   9.2
-11 theta[8]  1000     4   7.0   8.0   5.9   7.0</code></pre>
+<pre><code>   variable dim.1 dim.2          1          2          3          4
+1      lp__  1000     4 -56.698590 -58.592226 -56.911658 -50.122112
+2        mu  1000     4   6.836467   6.338743   6.214918   4.824501
+3       tau  1000     4   4.751132   5.540196   4.617587   2.916872
+4  theta[1]  1000     4   9.139180   9.470688   8.631066   6.506831
+5  theta[2]  1000     4   7.088238   6.756565   6.691301   5.555891
+6  theta[3]  1000     4   6.087235   5.430155   5.208329   3.864985
+7  theta[4]  1000     4   6.963234   6.883517   6.322756   4.588127
+8  theta[5]  1000     4   5.312623   4.530775   4.623091   4.212267
+9  theta[6]  1000     4   5.778286   4.999767   5.497782   4.216348
+10 theta[7]  1000     4   9.354323   9.367796   8.483796   5.926863
+11 theta[8]  1000     4   7.269928   7.165762   6.670007   4.893880</code></pre>
 <p>For this reason users may have unexpected results if they use
 <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">stats::var()</a></code> directly, as it will return a covariance
 matrix. An alternative is the <code><a href="https://pkg.mitchelloharawild.com/distributional/reference/variance.html" class="external-link">distributional::variance()</a></code>
 function, which can also be accessed via
 <code><a href="https://pkg.mitchelloharawild.com/distributional/reference/variance.html" class="external-link">posterior::variance()</a></code>.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span>, <span class="fu">posterior</span><span class="fu">::</span><span class="va"><a href="https://pkg.mitchelloharawild.com/distributional/reference/variance.html" class="external-link">variance</a></span>, <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="va">.x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span>, <span class="fu">posterior</span><span class="fu">::</span><span class="va"><a href="https://pkg.mitchelloharawild.com/distributional/reference/variance.html" class="external-link">variance</a></span>, <span class="op">~</span><span class="fu">var</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="va">.x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code>  variable posterior::variance ~var(as.vector(.x))
-1       mu                  18                  18
-2      tau                  13                  13</code></pre>
+1       mu            14.26877            14.26877
+2      tau            13.26276            13.26276</code></pre>
 <p>Summary functions need not be numeric, but these won’t work with
 <code>$print()</code>.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">strict_pos</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="st">"yes"</span> <span class="kw">else</span> <span class="st">"no"</span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, <span class="st">"Strictly Positive"</span> <span class="op">=</span> <span class="va">strict_pos</span><span class="op">)</span></span>
-<span><span class="co"># fit$print(variables = NULL, "Strictly Positive" = strict_pos)</span></span></code></pre></div>
+<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, <span class="st">"Strictly Positive"</span> <span class="op">=</span> <span class="va">strict_pos</span><span class="op">)</span></span></code></pre></div>
 <pre><code>   variable Strictly Positive
 1      lp__                no
 2        mu                no
@@ -274,6 +285,8 @@ function, which can also be accessed via
 9  theta[6]                no
 10 theta[7]                no
 11 theta[8]                no</code></pre>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># fit$print(variables = NULL, "Strictly Positive" = strict_pos)</span></span></code></pre></div>
 <p>For more information, see <code><a href="https://mc-stan.org/posterior/reference/draws_summary.html" class="external-link">posterior::summarise_draws()</a></code>,
 which is called by <code>$summary()</code>.</p>
 </div>
@@ -286,49 +299,49 @@ the <a href="https://mc-stan.org/posterior/" class="external-link"><strong>poste
 package. Here we demonstrate only the <code>draws_array</code> and
 <code>draws_df</code> formats, but the <strong>posterior</strong>
 package supports other useful formats as well.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># default is a 3-D draws_array object from the posterior package</span></span>
 <span><span class="co"># iterations x chains x variables</span></span>
 <span><span class="va">draws_arr</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span> <span class="co"># or format="array"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">draws_arr</span><span class="op">)</span></span></code></pre></div>
-<pre><code> 'draws_array' num [1:1000, 1:4, 1:11] -66.1 -68.2 -67.1 -62.4 -65.6 ...
+<pre><code> 'draws_array' num [1:1000, 1:4, 1:11] -61.7 -60.5 -61.8 -60.5 -66.8 ...
  - attr(*, "dimnames")=List of 3
   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   ..$ chain    : chr [1:4] "1" "2" "3" "4"
   ..$ variable : chr [1:11] "lp__" "mu" "tau" "theta[1]" ...</code></pre>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># draws x variables data frame</span></span>
 <span><span class="va">draws_df</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span>format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">draws_df</span><span class="op">)</span></span></code></pre></div>
 <pre><code>draws_df [4,000 × 14] (S3: draws_df/draws/tbl_df/tbl/data.frame)
- $ lp__      : num [1:4000] -66.1 -68.2 -67.1 -62.4 -65.6 ...
- $ mu        : num [1:4000] -2.42 9.44 2.99 2.91 6.73 ...
- $ tau       : num [1:4000] 12.21 6.46 17.66 8.04 8.8 ...
- $ theta[1]  : num [1:4000] 5.57 11.03 -2.77 1.5 8.91 ...
- $ theta[2]  : num [1:4000] 6.97 3.31 6.77 12.84 5.79 ...
- $ theta[3]  : num [1:4000] 8.21 15.21 -8.08 -5.34 -19.54 ...
- $ theta[4]  : num [1:4000] 19.75 19.47 -7.42 -5.76 7.54 ...
- $ theta[5]  : num [1:4000] -4.12 -5.77 6.01 5.63 -3.23 ...
- $ theta[6]  : num [1:4000] -4.03 2.55 2.99 2.86 15.21 ...
- $ theta[7]  : num [1:4000] -0.186 -2.004 10.11 7.803 14.427 ...
- $ theta[8]  : num [1:4000] 0.0702 -3.005 11.0116 14.5279 14.1928 ...
+ $ lp__      : num [1:4000] -61.7 -60.5 -61.8 -60.5 -66.8 ...
+ $ mu        : num [1:4000] 8.86 6.18 9.7 4.97 5.16 ...
+ $ tau       : num [1:4000] 5.6 8.77 7.58 7.37 11.97 ...
+ $ theta[1]  : num [1:4000] 16.716 14.062 6.67 6.25 -0.404 ...
+ $ theta[2]  : num [1:4000] 4.377 6.173 15.608 0.638 10.449 ...
+ $ theta[3]  : num [1:4000] 11.59 9.27 11.11 3.74 13.42 ...
+ $ theta[4]  : num [1:4000] 13.68 12.51 7.77 6.48 10.16 ...
+ $ theta[5]  : num [1:4000] -0.877 1.959 7.197 2.097 3.229 ...
+ $ theta[6]  : num [1:4000] -5.02 -4.95 5.66 5.24 14.26 ...
+ $ theta[7]  : num [1:4000] 13.38 17.44 13.69 6.65 13.77 ...
+ $ theta[8]  : num [1:4000] 10.46 5.48 -6.15 20.92 31.79 ...
  $ .chain    : int [1:4000] 1 1 1 1 1 1 1 1 1 1 ...
  $ .iteration: int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...
  $ .draw     : int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...</code></pre>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">draws_df</span><span class="op">)</span></span></code></pre></div>
 <pre><code># A draws_df: 1000 iterations, 4 chains, and 11 variables
    lp__   mu  tau theta[1] theta[2] theta[3] theta[4] theta[5]
-1   -66 -2.4 12.2      5.6     6.97      8.2    19.75    -4.12
-2   -68  9.4  6.5     11.0     3.31     15.2    19.47    -5.77
-3   -67  3.0 17.7     -2.8     6.77     -8.1    -7.42     6.01
-4   -62  2.9  8.0      1.5    12.84     -5.3    -5.76     5.63
-5   -66  6.7  8.8      8.9     5.79    -19.5     7.54    -3.23
-6   -64  5.3 11.4     18.5    13.37     -1.4    15.97    -0.61
-7   -60  7.3  9.1      8.6     7.82      3.5     0.34    -2.00
-8   -60  6.3  8.5      7.7     0.51      7.5    -0.99     1.51
-9   -59  1.9  6.9      3.0     8.63      1.4     3.70     4.72
-10  -63  9.1  9.3     16.0     5.77      3.9     4.14   -10.34
+1   -62  8.9  5.6     16.7     4.38     11.6   13.676    -0.88
+2   -61  6.2  8.8     14.1     6.17      9.3   12.515     1.96
+3   -62  9.7  7.6      6.7    15.61     11.1    7.770     7.20
+4   -60  5.0  7.4      6.3     0.64      3.7    6.477     2.10
+5   -67  5.2 12.0     -0.4    10.45     13.4   10.162     3.23
+6   -63 11.1  7.9     24.6    11.68     18.8   -1.606     3.79
+7   -61 14.7  6.1     28.9    11.15     15.3    6.780     9.95
+8   -63 13.4  5.7     13.7    21.03      7.2   20.051    12.99
+9   -64 16.0  8.3     20.2     2.65     11.3   19.000     3.51
+10  -59  2.9  4.5      4.2    11.37      2.5   -0.057     6.30
 # ... with 3990 more draws, and 3 more variables
 # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</code></pre>
 <p>To convert an existing draws object to a different format use the

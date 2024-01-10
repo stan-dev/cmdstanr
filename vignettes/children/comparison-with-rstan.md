@@ -10,9 +10,13 @@ results to output files.
 ### Advantages of RStan
 
 * Allows other developers to distribute R packages with
-_pre-compiled_ Stan programs (like **rstanarm**) on CRAN.
+_pre-compiled_ Stan programs (like **rstanarm**) on CRAN. (Note: As of 2023,
+this can mostly be achieved with CmdStanR as well. See
+[Developing using CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr).)
 
 * Avoids use of R6 classes, which may result in more familiar syntax for many R users. 
+
+* CRAN binaries available for Mac and Windows.
 
 ### Advantages of CmdStanR
 

@@ -398,10 +398,10 @@ github_download_url <- function(version_number) {
 }
 
 # get version number of latest release
-latest_released_version <- function(quiet=TRUE) {
+latest_released_version <- function(quiet=TRUE, ...) {
   dest_file <- tempfile(pattern = "releases-", fileext = ".json")
   download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
-  release_list_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
+  release_list_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet, ...)
   if (inherits(release_list_downloaded, "try-error")) {
     stop("GitHub download of release list failed with error: ",
         attr(release_list_downloaded, "condition")$message,

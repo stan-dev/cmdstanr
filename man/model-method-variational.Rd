@@ -69,10 +69,10 @@ containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 \item A list of lists containing initial values for all or some parameters. For
-MCMC the list should contain a sublist for each chain. For optimization and
-variational inference there should be just one sublist. The sublists should
-have named elements corresponding to the parameters for which you are
-specifying initial values. See \strong{Examples}.
+MCMC the list should contain a sublist for each chain. For other model
+fitting methods there should be just one sublist. The sublists should have
+named elements corresponding to the parameters for which you are specifying
+initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC, if the function
@@ -233,7 +233,7 @@ my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.jso
 fit_optim <- mod$optimize(data = my_data_file, seed = 123)
 fit_optim$summary()
 
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from laplace approximation
+# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
 # to the posterior
 fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
@@ -248,6 +248,11 @@ mcmc_hist(fit_vb$draws("theta"))
 fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 fit_pf$summary()
 mcmc_hist(fit_pf$draws("theta"))
+
+# Run 'pathfinder' again with more paths, fewer draws per path,
+# better covariance approximation, and fewer LBFGSs iterations
+fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
+                         history_size=50, max_lbfgs_iters=100)
 
 # Specifying initial values as a function
 fit_mcmc_w_init_fun <- mod$sample(

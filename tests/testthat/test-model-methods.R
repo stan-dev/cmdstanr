@@ -3,7 +3,7 @@ context("model-methods")
 set_cmdstan_path()
 mod <- cmdstan_model(testing_stan_file("bernoulli_log_lik"), force_recompile = TRUE)
 data_list <- testing_data("bernoulli")
-fit <- mod$sample(data = data_list, chains = 1)
+fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
 
 test_that("Methods error if not compiled", {
   skip_if(os_is_wsl())
@@ -65,7 +65,7 @@ test_that("Methods return correct values", {
     hessian = as.matrix(-2.4937604019289194568, nrow=1, ncol=1)
   )
 
-  expect_equal(fit$hessian(unconstrained_variables=c(0.1), jacobian_adjustment = FALSE),
+  expect_equal(fit$hessian(unconstrained_variables=c(0.1), jacobian = FALSE),
                hessian_noadj)
 
   cpars <- fit$constrain_variables(c(0.1))

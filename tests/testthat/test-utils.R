@@ -248,3 +248,13 @@ test_that("as_mcmc.list() works", {
     "Currently only CmdStanMCMC objects can be converted to mcmc.list"
   )
 })
+
+test_that("get_cmdstan_flags() can be used recursively in `make`", {
+  mkfile <- normalizePath(test_path("testdata", "Makefile"))
+  nonrecursive_flags <- get_cmdstan_flags("STANCFLAGS")
+  stdo <- processx::run(
+    command = "make", args = sprintf("--file=%s", mkfile)
+  )$stdout
+  recursive_flags <- readLines(textConnection(stdo))
+  expect_equal(nonrecursive_flags, recursive_flags)
+})

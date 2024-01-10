@@ -15,6 +15,14 @@ vignette: >
 ```{r child="children/_settings-knitr.Rmd"}
 ```
 
+```{r include=FALSE}
+# Needed temporarily to avoiding weird rendering of posterior's tibbles
+# in pkgdown sites
+print.tbl_df <- function(x, ...) {
+  print.data.frame(x)
+}
+```
+
 ## Summary statistics
 
 We can easily customize the summary statistics reported by `$summary()` and `$print()`.
@@ -45,7 +53,10 @@ fit$metadata()$model_params
 fit$summary(variables = NULL, "mean", "median")
 ```
 
-Summary functions can be specified by character string, function, or using a formula (or anything else supported by [rlang::as_function]). If these arguments are named, those names will be used in the tibble output. If the summary results are named they will take precedence.
+Summary functions can be specified by character string, function, or using a
+formula (or anything else supported by `rlang::as_function()`). If these
+arguments are named, those names will be used in the tibble output. If the
+summary results are named they will take precedence.
 ```{r}
 my_sd <- function(x) c(My_SD = sd(x))
 fit$summary(

@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
       </span>
     </div>
 
@@ -158,9 +158,17 @@
         </td>
         <td><p>Run Stan's standalone generated quantities method</p></td>
       </tr><tr><td>
+          <p><code><a href="model-method-laplace.html">laplace()</a></code> </p>
+        </td>
+        <td><p>Run Stan's Laplace algorithm</p></td>
+      </tr><tr><td>
           <p><code><a href="model-method-optimize.html">optimize()</a></code> </p>
         </td>
         <td><p>Run Stan's optimization algorithms</p></td>
+      </tr><tr><td>
+          <p><code><a href="model-method-pathfinder.html">pathfinder()</a></code> </p>
+        </td>
+        <td><p>Run Stan's Pathfinder Variational Inference Algorithm</p></td>
       </tr><tr><td>
           <p><code><a href="model-method-sample.html">sample()</a></code> </p>
         </td>
@@ -194,9 +202,17 @@
         </td>
         <td><p>CmdStanMLE objects</p></td>
       </tr><tr><td>
+          <p><code><a href="CmdStanLaplace.html">CmdStanLaplace</a></code> </p>
+        </td>
+        <td><p>CmdStanLaplace objects</p></td>
+      </tr><tr><td>
           <p><code><a href="CmdStanVB.html">CmdStanVB</a></code> </p>
         </td>
         <td><p>CmdStanVB objects</p></td>
+      </tr><tr><td>
+          <p><code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code> </p>
+        </td>
+        <td><p>CmdStanPathfinder objects</p></td>
       </tr><tr><td>
           <p><code><a href="CmdStanGQ.html">CmdStanGQ</a></code> </p>
         </td>
@@ -261,7 +277,7 @@ and parameter constraining and unconstraining.</p></td>
         </td>
         <td><p>Leave-one-out cross-validation (LOO-CV)</p></td>
       </tr><tr><td>
-          <p><code><a href="fit-method-lp.html">lp()</a></code> <code><a href="fit-method-lp.html">lp_approx()</a></code> </p>
+          <p><code><a href="fit-method-lp.html">lp()</a></code> <code><a href="fit-method-lp.html">lp_approx()</a></code> <code><a href="fit-method-lp.html">lp_approx()</a></code> </p>
         </td>
         <td><p>Extract log probability (target)</p></td>
       </tr><tr><td>
@@ -350,7 +366,7 @@ quantities with CmdStan.</p></td>
         </td>
         <td><p>Convert <code>CmdStanMCMC</code> to <code>mcmc.list</code></p></td>
       </tr><tr><td>
-          <p><code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanMCMC&gt;</i>)</a></code> <code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanMLE&gt;</i>)</a></code> <code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanVB&gt;</i>)</a></code> <code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanGQ&gt;</i>)</a></code> </p>
+          <p><code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanMCMC&gt;</i>)</a></code> <code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanMLE&gt;</i>)</a></code> <code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanLaplace&gt;</i>)</a></code> <code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanVB&gt;</i>)</a></code> <code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanGQ&gt;</i>)</a></code> <code><a href="as_draws.CmdStanMCMC.html">as_draws(<i>&lt;CmdStanPathfinder&gt;</i>)</a></code> </p>
         </td>
         <td><p>Create a <code>draws</code> object from a CmdStanR fitted model object</p></td>
       </tr></tbody><tbody><tr><th colspan="2">
