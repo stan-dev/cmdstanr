@@ -34,13 +34,13 @@ test_that("Methods error if not compiled", {
   )
 })
 
-test_that("User warned about higher-order autodiff with hessian", {
+test_that("User warned hessian argument deprecated", {
   skip_if(os_is_wsl())
-  expect_message(
+  expect_warning(
     fit$init_model_methods(hessian = TRUE, verbose = TRUE),
-    "The hessian method relies on higher-order autodiff which is still experimental. Please report any compilation errors that you encounter",
+    "The hessian argument is deprecated and will be removed in a future release.",
     fixed = TRUE
-    )
+  )
 })
 
 test_that("Methods return correct values", {
@@ -151,12 +151,23 @@ test_that("Methods error with already-compiled model", {
   )
 })
 
+test_that("User warned compilation arguments deprecated", {
+  skip_if(os_is_wsl())
+  expect_warning(
+    cmdstan_model(testing_stan_file("bernoulli"),
+                  force_recompile = TRUE,
+                  compile_model_methods = TRUE,
+                  compile_hessian_method = TRUE),
+    "'compile_hessian_method' is deprecated. The hessian method is now compiled by default.",
+    fixed = TRUE
+  )
+})
+
 test_that("Methods can be compiled with model", {
   skip_if(os_is_wsl())
   mod <- cmdstan_model(testing_stan_file("bernoulli"),
                        force_recompile = TRUE,
-                       compile_model_methods = TRUE,
-                       compile_hessian_method = TRUE)
+                       compile_model_methods = TRUE)
   fit <- mod$sample(data = data_list, chains = 1)
 
   lp <- fit$log_prob(unconstrained_variables=c(0.6))
@@ -196,7 +207,8 @@ test_that("unconstrain_variables correctly handles zero-length containers", {
   }
   "
   mod <- cmdstan_model(write_stan_file(model_code),
-                       compile_model_methods = TRUE)
+                       compile_model_methods = TRUE,
+                       force_recompile = TRUE)
   fit <- mod$sample(data = list(N = 0), chains = 1)
   unconstrained <- fit$unconstrain_variables(variables = list(x = 5))
   expect_equal(unconstrained, 5)
@@ -219,8 +231,8 @@ test_that("unconstrain_draws returns correct values", {
     }
   "
   mod <- cmdstan_model(write_stan_file(model_code),
-                       compile_model_methods = TRUE,
-                       force_recompile = TRUE)
+                       force_recompile = TRUE,
+                        compile_model_methods = TRUE)
   fit <- mod$sample(data = list(N = 0), chains = 1)
 
   x_draws <- fit$draws(format = "draws_df")$x
@@ -251,8 +263,8 @@ test_that("unconstrain_draws returns correct values", {
     }
   "
   mod <- cmdstan_model(write_stan_file(model_code),
-                       compile_model_methods = TRUE,
-                       force_recompile = TRUE)
+                       force_recompile = TRUE,
+                        compile_model_methods = TRUE)
   fit <- mod$sample(data = list(N = 0), chains = 1)
 
   x_draws <- fit$draws(format = "draws_df")$x
@@ -273,7 +285,8 @@ test_that("Model methods can be initialised for models with no data", {
   skip_if(os_is_wsl())
 
   stan_file <- write_stan_file("parameters { real x; } model { x ~ std_normal(); }")
-  mod <- cmdstan_model(stan_file, compile_model_methods = TRUE, force_recompile = TRUE)
+  mod <- cmdstan_model(stan_file, force_recompile = TRUE,
+                        compile_model_methods = TRUE)
   expect_no_error(fit <- mod$sample())
   expect_equal(fit$log_prob(5), -12.5)
 })
@@ -295,12 +308,12 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
   model {
     x_real ~ std_normal();
   }")
-  mod <- cmdstan_model(stan_file, compile_model_methods = TRUE,
-                      force_recompile = TRUE)
+  mod <- cmdstan_model(stan_file, force_recompile = TRUE,
+                        compile_model_methods = TRUE)
   N <- 4
   K <- 3
   fit <- mod$sample(data = list(N = N, K = K), chains = 1,
-                    iter_warmup = 1, iter_sampling = 1)
+                    iter_warmup = 5, iter_sampling = 5)
 
   target_skeleton <- list(
     x_real = array(0, dim = 1),
@@ -311,4 +324,15 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
 
   expect_equal(fit$variable_skeleton(),
                 target_skeleton)
+})
+
+test_that("Model object file can be recompiled if not found", {
+  mod <- cmdstan_model(testing_stan_file("bernoulli_log_lik"),
+                       force_recompile = TRUE)
+  model_obj_file <- mod$.__enclos_env__$private$model_methods_env_$obj_file_
+  unlink(model_obj_file)
+  expect_false(file.exists(model_obj_file))
+  data_list <- testing_data("bernoulli")
+  fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
+  expect_no_error(fit$init_model_methods())
 })

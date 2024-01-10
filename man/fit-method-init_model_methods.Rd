@@ -6,7 +6,12 @@
 \title{Compile additional methods for accessing the model log-probability function
 and parameter constraining and unconstraining.}
 \usage{
-init_model_methods(seed = 0, verbose = FALSE, hessian = FALSE)
+init_model_methods(
+  seed = 0,
+  verbose = FALSE,
+  hessian = FALSE,
+  force_recompile = FALSE
+)
 }
 \arguments{
 \item{seed}{(integer) The random seed to use when initializing the model.}

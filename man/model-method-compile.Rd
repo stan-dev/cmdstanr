@@ -15,10 +15,10 @@ compile(
   stanc_options = list(),
   force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   compile_model_methods = FALSE,
-  compile_hessian_method = FALSE,
   compile_standalone = FALSE,
   dry_run = FALSE,
-  threads = FALSE
+  threads = FALSE,
+  compile_hessian_method = FALSE
 )
 }
 \arguments{
@@ -64,9 +64,6 @@ via a global \code{cmdstanr_force_recompile} option.}
 (\code{log_prob()}, \code{grad_log_prob()}, \code{constrain_variables()},
 \code{unconstrain_variables()}).}
 
-\item{compile_hessian_method}{(logical) Should the (experimental) \code{hessian()} method be
-be compiled with the model methods?}
-
 \item{compile_standalone}{(logical) Should functions in the Stan model be
 compiled for use in R? If \code{TRUE} the functions will be available via the
 \code{functions} field in the compiled model object. This can also be done after
@@ -78,6 +75,9 @@ but skip the actual C++ compilation. Used to speedup tests.}
 
 \item{threads}{Deprecated and will be removed in a future release. Please
 turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
+
+\item{compile_hessian_method}{(logical) Deprecated and will be removed in a future release.
+The hessian method is now compiled by default.}
 }
 \value{
 The \verb{$compile()} method is called for its side effect of creating the

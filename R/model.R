@@ -405,8 +405,6 @@ CmdStanModel <- R6::R6Class(
 #' @param compile_model_methods (logical) Compile additional model methods
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
 #'   `unconstrain_variables()`).
-#' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
-#'   be compiled with the model methods?
 #' @param compile_standalone (logical) Should functions in the Stan model be
 #'   compiled for use in R? If `TRUE` the functions will be available via the
 #'   `functions` field in the compiled model object. This can also be done after
@@ -417,6 +415,8 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
+#' @param compile_hessian_method (logical) Deprecated and will be removed in a future release.
+#'   The hessian method is now compiled by default.
 #'
 #' @return The `$compile()` method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
@@ -465,11 +465,11 @@ compile <- function(quiet = TRUE,
                     stanc_options = list(),
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
-                    compile_hessian_method = FALSE,
                     compile_standalone = FALSE,
                     dry_run = FALSE,
                     #deprecated
-                    threads = FALSE) {
+                    threads = FALSE,
+                    compile_hessian_method = FALSE) {
 
   if (length(self$stan_file()) == 0) {
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
@@ -503,6 +503,10 @@ compile <- function(quiet = TRUE,
   if (isTRUE(threads)) {
     warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
     cpp_options[["stan_threads"]] <- TRUE
+  }
+  if (isTRUE(compile_hessian_method)) {
+    warning("'compile_hessian_method' is deprecated. The hessian method is now compiled by default.")
+    compile_hessian_method <- FALSE
   }
 
   if (length(self$exe_file()) == 0) {
@@ -710,8 +714,7 @@ compile <- function(quiet = TRUE,
     file.copy(tmp_exe, exe, overwrite = TRUE)
     model_obj_file <- paste0(temp_file_no_ext, ".o")
     if (file.exists(model_obj_file)) {
-      private$model_methods_env_$obj_file_location_ <- model_obj_file
-      private$model_methods_env_$obj_file_ <- readBin(model_obj_file, "raw")
+      private$model_methods_env_$obj_file_ <- model_obj_file
     }
     if (os_is_wsl()) {
       res <- processx::run(
@@ -728,13 +731,10 @@ compile <- function(quiet = TRUE,
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
 
-  if(!dry_run) {
     if (compile_model_methods) {
-      expose_model_methods(env = private$model_methods_env_,
-                            verbose = !quiet,
-                            hessian = compile_hessian_method)
+      expose_model_methods(private$model_methods_env_, verbose = !quiet)
     }
-  }
+
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile)

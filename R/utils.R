@@ -728,10 +728,17 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
-rcpp_source_stan <- function(code, env, verbose = FALSE) {
+with_cmdstan_flags <- function(expr) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
+
+  r_includes <- paste(
+    paste0("-I", shQuote(system.file("include", package = "Rcpp", mustWork = TRUE))),
+    paste0("-I", shQuote(system.file("include", package = "RcppEigen", mustWork = TRUE))),
+    paste0("-I", shQuote(R.home(component = "include")))
+  )
+
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (.Platform$OS.type == "windows") {
@@ -739,40 +746,79 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
   }
   lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
                  "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
-  withr::with_path(paste0(cmdstan_path(), lib_paths),
+  withr::with_path(
+    c(
+      paste0(cmdstan_path(), lib_paths),
+      toolchain_PATH_env_var()
+    ),
     withr::with_makevars(
-      c(
-        USE_CXX14 = 1,
-        PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
-        PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, collapse = " "),
-        PKG_LIBS = libs
-      ),
-      Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+     c(
+       USE_CXX14 = 1,
+       PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
+       PKG_CXXFLAGS = paste(cxxflags, cmdstanr_includes, r_includes, "-DRCPP_USE_FINALIZE_ON_EXIT", collapse = " "),
+       PKG_LIBS = libs
+     ),
+     expr
     )
   )
+}
+
+rcpp_source_stan <- function(code, env, verbose = FALSE) {
+  with_cmdstan_flags(Rcpp::sourceCpp(code = code, env = env, verbose = verbose))
   invisible(NULL)
 }
 
-compile_model_methods <- function(verbose = FALSE) {
-  source_file <- system.file("include", "model_methods.cpp",
-                             package = "cmdstanr", mustWork = TRUE)
-
+initialize_method_functions <- function(env, PACKAGE) {
+  env$model_ptr <- function(...) { .Call("model_ptr_", ..., PACKAGE = PACKAGE) }
+  env$log_prob <- function(...) { .Call("log_prob_", ..., PACKAGE = PACKAGE) }
+  env$grad_log_prob <- function(...) { .Call("grad_log_prob_", ..., PACKAGE = PACKAGE) }
+  env$hessian <- function(...) { .Call("hessian_", ..., PACKAGE = PACKAGE) }
+  env$get_num_upars <- function(...) { .Call("get_num_upars_", ..., PACKAGE = PACKAGE) }
+  env$get_param_metadata <- function(...) { .Call("get_param_metadata_", ..., PACKAGE = PACKAGE) }
+  env$unconstrain_variables <- function(...) { .Call("unconstrain_variables_", ..., PACKAGE = PACKAGE) }
+  env$constrain_variables <- function(...) { .Call("constrain_variables_", ..., PACKAGE = PACKAGE) }
 }
 
-expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
-  code <- c(env$hpp_code_,
-            readLines(system.file("include", "model_methods.cpp",
-                                  package = "cmdstanr", mustWork = TRUE)))
-
-  if (hessian) {
-    code <- c("#include <stan/math/mix.hpp>",
-            code,
-            readLines(system.file("include", "hessian.cpp",
-                                  package = "cmdstanr", mustWork = TRUE)))
+expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) {
+  precomp_methods_file <- file.path(cmdstan_path(), "model_methods.o")
+  if (file.exists(precomp_methods_file) && force_recompile) {
+    unlink(precomp_methods_file)
+    model_methods_cpp <- system.file("include", "model_methods.cpp",
+                                      package = "cmdstanr", mustWork = TRUE)
+    source_file <- paste0(strip_ext(precomp_methods_file), ".cpp")
+    file.copy(model_methods_cpp, source_file, overwrite = TRUE)
   }
 
-  code <- paste(code, collapse = "\n")
-  rcpp_source_stan(code, env, verbose)
+  model_obj_file <- env$obj_file_
+  if (!file.exists(model_obj_file)) {
+    if (rlang::is_interactive()) {
+      message("Model object file not found, recompiling model...")
+    }
+    temp_hpp_file <- tempfile()
+    writeLines(env$hpp_code_, con = paste0(temp_hpp_file, ".cpp"))
+    model_obj_file <- paste0(temp_hpp_file, ".o")
+  }
+
+  if (!file.exists(precomp_methods_file) && rlang::is_interactive()) {
+    message("Compiling and caching additional model methods...")
+  }
+  if (rlang::is_interactive()) {
+    message("Linking precompiled model methods to model object file...")
+  }
+
+  methods_dll <- tempfile(fileext = .Platform$dynlib.ext)
+  with_cmdstan_flags(
+    processx::run(
+      command = file.path(R.home(component = "bin"), "R"),
+      args = c("CMD", "SHLIB", model_obj_file, precomp_methods_file, "-o", methods_dll),
+      echo = verbose || is_verbose_mode(),
+      echo_cmd = is_verbose_mode(),
+      error_on_status = FALSE
+    )
+  )
+
+  env$methods_dll_info <- dyn.load(methods_dll, local = TRUE, now = TRUE)
+  initialize_method_functions(env, strip_ext(basename(methods_dll)))
   invisible(NULL)
 }
 
