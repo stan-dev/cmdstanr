@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <stan/model/model_base.hpp>
 #include <stan/model/log_prob_grad.hpp>
 #include <stan/model/log_prob_propto.hpp>
 #include <boost/random/additive_combine.hpp>
@@ -114,4 +115,22 @@ std::vector<double> constrain_variables(SEXP ext_model_ptr, SEXP base_rng,
 
   ptr->write_array(*rng.get(), upars, params_i, vars, return_trans_pars, return_gen_quants);
   return vars;
+}
+
+// [[Rcpp::export]]
+std::vector<std::string> unconstrained_param_names(SEXP ext_model_ptr, bool return_trans_pars, bool return_gen_quants) {
+  Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  std::vector<std::string> rtn_names;
+  ptr->unconstrained_param_names(rtn_names, return_trans_pars, return_gen_quants);
+  return rtn_names;
+}
+
+// [[Rcpp::export]]
+std::vector<std::string> constrained_param_names(SEXP ext_model_ptr,
+                                    bool return_trans_pars,
+                                    bool return_gen_quants) {
+  Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  std::vector<std::string> rtn_names;
+  ptr->constrained_param_names(rtn_names, return_trans_pars, return_gen_quants);
+  return rtn_names;
 }
