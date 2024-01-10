@@ -161,3 +161,21 @@ RcppExport SEXP constrain_variables_(SEXP ext_model_ptr, SEXP base_rng,
   return Rcpp::wrap(vars);
   END_RCPP
 }
+
+// [[Rcpp::export]]
+std::vector<std::string> unconstrained_param_names(SEXP ext_model_ptr, bool return_trans_pars, bool return_gen_quants) {
+  Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  std::vector<std::string> rtn_names;
+  ptr->unconstrained_param_names(rtn_names, return_trans_pars, return_gen_quants);
+  return rtn_names;
+}
+
+// [[Rcpp::export]]
+std::vector<std::string> constrained_param_names(SEXP ext_model_ptr,
+                                    bool return_trans_pars,
+                                    bool return_gen_quants) {
+  Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  std::vector<std::string> rtn_names;
+  ptr->constrained_param_names(rtn_names, return_trans_pars, return_gen_quants);
+  return rtn_names;
+}
