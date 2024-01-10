@@ -755,7 +755,7 @@ with_cmdstan_flags <- function(expr) {
      c(
        USE_CXX14 = 1,
        PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
-       PKG_CXXFLAGS = paste(cxxflags, cmdstanr_includes, r_includes, "-DRCPP_USE_FINALIZE_ON_EXIT", collapse = " "),
+       PKG_CXXFLAGS = paste(cxxflags, cmdstanr_includes, r_includes, collapse = " "),
        PKG_LIBS = libs
      ),
      expr
@@ -768,15 +768,15 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
   invisible(NULL)
 }
 
-initialize_method_functions <- function(env, PACKAGE) {
-  env$model_ptr <- function(...) { .Call("model_ptr_", ..., PACKAGE = PACKAGE) }
-  env$log_prob <- function(...) { .Call("log_prob_", ..., PACKAGE = PACKAGE) }
-  env$grad_log_prob <- function(...) { .Call("grad_log_prob_", ..., PACKAGE = PACKAGE) }
-  env$hessian <- function(...) { .Call("hessian_", ..., PACKAGE = PACKAGE) }
-  env$get_num_upars <- function(...) { .Call("get_num_upars_", ..., PACKAGE = PACKAGE) }
-  env$get_param_metadata <- function(...) { .Call("get_param_metadata_", ..., PACKAGE = PACKAGE) }
-  env$unconstrain_variables <- function(...) { .Call("unconstrain_variables_", ..., PACKAGE = PACKAGE) }
-  env$constrain_variables <- function(...) { .Call("constrain_variables_", ..., PACKAGE = PACKAGE) }
+initialize_method_functions <- function(env, so_name) {
+  env$model_ptr <- function(...) { .Call("model_ptr_", ..., so_name) }
+  env$log_prob <- function(...) { .Call("log_prob_", ..., so_name) }
+  env$grad_log_prob <- function(...) { .Call("grad_log_prob_", ..., so_name) }
+  env$hessian <- function(...) { .Call("hessian_", ..., so_name) }
+  env$get_num_upars <- function(...) { .Call("get_num_upars_", ..., so_name) }
+  env$get_param_metadata <- function(...) { .Call("get_param_metadata_", ..., so_name) }
+  env$unconstrain_variables <- function(...) { .Call("unconstrain_variables_", ..., so_name) }
+  env$constrain_variables <- function(...) { .Call("constrain_variables_", ..., so_name) }
 }
 
 expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) {
@@ -810,7 +810,8 @@ expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) 
   with_cmdstan_flags(
     processx::run(
       command = file.path(R.home(component = "bin"), "R"),
-      args = c("CMD", "SHLIB", model_obj_file, precomp_methods_file, "-o", methods_dll),
+      args = c("CMD", "SHLIB", model_obj_file, precomp_methods_file,
+                "-o", methods_dll),
       echo = verbose || is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
       error_on_status = FALSE

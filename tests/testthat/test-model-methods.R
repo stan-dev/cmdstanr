@@ -231,8 +231,8 @@ test_that("unconstrain_draws returns correct values", {
     }
   "
   mod <- cmdstan_model(write_stan_file(model_code),
-                       force_recompile = TRUE,
-                        compile_model_methods = TRUE)
+                       compile_model_methods = TRUE,
+                       force_recompile = TRUE)
   fit <- mod$sample(data = list(N = 0), chains = 1)
 
   x_draws <- fit$draws(format = "draws_df")$x
@@ -263,8 +263,8 @@ test_that("unconstrain_draws returns correct values", {
     }
   "
   mod <- cmdstan_model(write_stan_file(model_code),
-                       force_recompile = TRUE,
-                        compile_model_methods = TRUE)
+                       compile_model_methods = TRUE,
+                       force_recompile = TRUE)
   fit <- mod$sample(data = list(N = 0), chains = 1)
 
   x_draws <- fit$draws(format = "draws_df")$x
@@ -285,8 +285,7 @@ test_that("Model methods can be initialised for models with no data", {
   skip_if(os_is_wsl())
 
   stan_file <- write_stan_file("parameters { real x; } model { x ~ std_normal(); }")
-  mod <- cmdstan_model(stan_file, force_recompile = TRUE,
-                        compile_model_methods = TRUE)
+  mod <- cmdstan_model(stan_file, compile_model_methods = TRUE, force_recompile = TRUE)
   expect_no_error(fit <- mod$sample())
   expect_equal(fit$log_prob(5), -12.5)
 })
@@ -308,12 +307,12 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
   model {
     x_real ~ std_normal();
   }")
-  mod <- cmdstan_model(stan_file, force_recompile = TRUE,
-                        compile_model_methods = TRUE)
+  mod <- cmdstan_model(stan_file, compile_model_methods = TRUE,
+                       force_recompile = TRUE)
   N <- 4
   K <- 3
   fit <- mod$sample(data = list(N = N, K = K), chains = 1,
-                    iter_warmup = 5, iter_sampling = 5)
+                    iter_warmup = 1, iter_sampling = 1)
 
   target_skeleton <- list(
     x_real = array(0, dim = 1),

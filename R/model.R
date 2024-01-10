@@ -731,10 +731,11 @@ compile <- function(quiet = TRUE,
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
 
+  if (!dry_run) {
     if (compile_model_methods) {
       expose_model_methods(private$model_methods_env_, verbose = !quiet)
     }
-
+  }
   invisible(self)
 }
 CmdStanModel$set("public", name = "compile", value = compile)
