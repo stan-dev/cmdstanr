@@ -5,7 +5,11 @@
 \alias{unconstrain_draws}
 \title{Transform all parameter draws to the unconstrained scale}
 \usage{
-unconstrain_draws(files = NULL, draws = NULL, format = "draws_df")
+unconstrain_draws(
+  files = NULL,
+  draws = NULL,
+  format = getOption("cmdstanr_draws_format", "draws_array")
+)
 }
 \arguments{
 \item{files}{(character vector) The paths to the CmdStan CSV files. These can
