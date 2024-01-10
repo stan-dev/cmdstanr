@@ -783,11 +783,11 @@ expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) 
   precomp_methods_file <- file.path(cmdstan_path(), "model_methods.o")
   if (file.exists(precomp_methods_file) && force_recompile) {
     unlink(precomp_methods_file)
-    model_methods_cpp <- system.file("include", "model_methods.cpp",
-                                      package = "cmdstanr", mustWork = TRUE)
-    source_file <- paste0(strip_ext(precomp_methods_file), ".cpp")
-    file.copy(model_methods_cpp, source_file, overwrite = TRUE)
   }
+  model_methods_cpp <- system.file("include", "model_methods.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)
+  source_file <- paste0(strip_ext(precomp_methods_file), ".cpp")
+  file.copy(model_methods_cpp, source_file, overwrite = FALSE)
 
   model_obj_file <- env$obj_file_
   if (!file.exists(model_obj_file)) {
