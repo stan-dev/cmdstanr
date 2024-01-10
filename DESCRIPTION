@@ -1,7 +1,7 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.7.0.9000
-Date: 2023-12-13
+Version: 0.7.1
+Date: 2024-01-09
 Authors@R:
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
            email = "jsg2201@columbia.edu"),
@@ -15,7 +15,7 @@ Authors@R:
       person(given = "Mike", family = "Lawrence", role = "ctb"),
       person(given = c("William", "Michael"), family = "Landau", role = "ctb",
            email = "will.landau@gmail.com", comment = c(ORCID = "0000-0003-1878-3253")),
-      person(given = "Jacob", family = "Socolar", role = "ctb"), 
+      person(given = "Jacob", family = "Socolar", role = "ctb"),
       person(given = "Martin", family = "Modrák", role = "ctb"),
       person(given = "Steve", family = "Bronder", role = "ctb"))
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
