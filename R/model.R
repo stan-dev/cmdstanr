@@ -465,11 +465,11 @@ compile <- function(quiet = TRUE,
                     stanc_options = list(),
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
+                    compile_hessian_method = FALSE,
                     compile_standalone = FALSE,
                     dry_run = FALSE,
                     #deprecated
-                    threads = FALSE,
-                    compile_hessian_method = FALSE) {
+                    threads = FALSE) {
 
   if (length(self$stan_file()) == 0) {
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
