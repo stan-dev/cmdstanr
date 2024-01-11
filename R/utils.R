@@ -785,6 +785,10 @@ initialize_method_functions <- function(env, so_name) {
     function(...) { .Call("unconstrain_variables_", ..., PACKAGE = so_name) }
   env$constrain_variables <-
     function(...) { .Call("constrain_variables_", ..., PACKAGE = so_name) }
+  env$unconstrained_param_names <-
+    function(...) { .Call("unconstrained_param_names_", ..., PACKAGE = so_name) }
+  env$constrained_param_names <-
+    function(...) { .Call("constrained_param_names_", ..., PACKAGE = so_name) }
 }
 
 expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) {

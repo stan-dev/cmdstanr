@@ -162,20 +162,28 @@ RcppExport SEXP constrain_variables_(SEXP ext_model_ptr, SEXP base_rng,
   END_RCPP
 }
 
-// [[Rcpp::export]]
-std::vector<std::string> unconstrained_param_names(SEXP ext_model_ptr, bool return_trans_pars, bool return_gen_quants) {
+RcppExport SEXP unconstrained_param_names_(SEXP ext_model_ptr,
+                                            SEXP return_trans_pars_,
+                                            SEXP return_gen_quants_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  bool return_trans_pars = Rcpp::as<bool>(return_trans_pars_);
+  bool return_gen_quants = Rcpp::as<bool>(return_gen_quants_);
   std::vector<std::string> rtn_names;
   ptr->unconstrained_param_names(rtn_names, return_trans_pars, return_gen_quants);
-  return rtn_names;
+  return Rcpp::wrap(rtn_names);
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-std::vector<std::string> constrained_param_names(SEXP ext_model_ptr,
-                                    bool return_trans_pars,
-                                    bool return_gen_quants) {
+RcppExport SEXP constrained_param_names_(SEXP ext_model_ptr,
+                                          SEXP return_trans_pars_,
+                                          SEXP return_gen_quants_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  bool return_trans_pars = Rcpp::as<bool>(return_trans_pars_);
+  bool return_gen_quants = Rcpp::as<bool>(return_gen_quants_);
   std::vector<std::string> rtn_names;
   ptr->constrained_param_names(rtn_names, return_trans_pars, return_gen_quants);
-  return rtn_names;
+  return Rcpp::wrap(rtn_names);
+  END_RCPP
 }
