@@ -712,10 +712,7 @@ compile <- function(quiet = TRUE,
       file.remove(exe)
     }
     file.copy(tmp_exe, exe, overwrite = TRUE)
-    model_obj_file <- paste0(temp_file_no_ext, ".o")
-    if (file.exists(model_obj_file)) {
-      private$model_methods_env_$obj_file_ <- model_obj_file
-    }
+    private$model_methods_env_$obj_file_ <- paste0(temp_file_no_ext, ".o")
     if (os_is_wsl()) {
       res <- processx::run(
         command = "wsl",

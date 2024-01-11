@@ -802,7 +802,7 @@ expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) 
   file.copy(model_methods_cpp, source_file, overwrite = FALSE)
 
   model_obj_file <- env$obj_file_
-  if (is.null(model_obj_file) || !file.exists(model_obj_file)) {
+  if (!file.exists(model_obj_file)) {
     if (rlang::is_interactive()) {
       message("Model object file not found, recompiling model...")
     }
