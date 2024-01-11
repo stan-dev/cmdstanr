@@ -341,8 +341,9 @@ init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE, force
   }
   require_suggested_package("Rcpp")
   require_suggested_package("RcppEigen")
-  if (length(private$model_methods_env_$hpp_code_) == 0 &&
-        !file.exists(private$model_methods_env_$obj_file_)) {
+  if (length(private$model_methods_env_$hpp_code_) == 0 && (
+        is.null(private$model_methods_env_$obj_file_) ||
+        !file.exists(private$model_methods_env_$obj_file_))) {
     stop("Model methods cannot be used with a pre-compiled Stan executable, ",
           "the model must be compiled again", call. = FALSE)
   }
