@@ -822,8 +822,8 @@ expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) 
   with_cmdstan_flags(
     processx::run(
       command = file.path(R.home(component = "bin"), "R"),
-      args = c("CMD", "SHLIB", model_obj_file, precomp_methods_file,
-                "-o", methods_dll),
+      args = c("CMD", "SHLIB", repair_path(model_obj_file), repair_path(precomp_methods_file),
+                "-o", repair_path(methods_dll)),
       echo = verbose || is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
       error_on_status = FALSE
