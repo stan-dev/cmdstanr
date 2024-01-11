@@ -769,14 +769,22 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
 }
 
 initialize_method_functions <- function(env, so_name) {
-  env$model_ptr <- function(...) { .Call("model_ptr_", ..., so_name) }
-  env$log_prob <- function(...) { .Call("log_prob_", ..., so_name) }
-  env$grad_log_prob <- function(...) { .Call("grad_log_prob_", ..., so_name) }
-  env$hessian <- function(...) { .Call("hessian_", ..., so_name) }
-  env$get_num_upars <- function(...) { .Call("get_num_upars_", ..., so_name) }
-  env$get_param_metadata <- function(...) { .Call("get_param_metadata_", ..., so_name) }
-  env$unconstrain_variables <- function(...) { .Call("unconstrain_variables_", ..., so_name) }
-  env$constrain_variables <- function(...) { .Call("constrain_variables_", ..., so_name) }
+  env$model_ptr <-
+    function(...) { .Call("model_ptr_", ..., PACKAGE = so_name) }
+  env$log_prob <-
+    function(...) { .Call("log_prob_", ..., PACKAGE = so_name) }
+  env$grad_log_prob <-
+    function(...) { .Call("grad_log_prob_", ..., PACKAGE = so_name) }
+  env$hessian <-
+    function(...) { .Call("hessian_", ..., PACKAGE = so_name) }
+  env$get_num_upars <-
+    function(...) { .Call("get_num_upars_", ..., PACKAGE = so_name) }
+  env$get_param_metadata <-
+    function(...) { .Call("get_param_metadata_", ..., PACKAGE = so_name) }
+  env$unconstrain_variables <-
+    function(...) { .Call("unconstrain_variables_", ..., PACKAGE = so_name) }
+  env$constrain_variables <-
+    function(...) { .Call("constrain_variables_", ..., PACKAGE = so_name) }
 }
 
 expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) {

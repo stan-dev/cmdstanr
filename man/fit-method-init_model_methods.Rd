@@ -19,6 +19,8 @@ init_model_methods(
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
 
 \item{hessian}{(logical) Whether to expose the (experimental) hessian method.}
+
+\item{force_recompile}{(logical) Whether to recompile cached model methods.}
 }
 \description{
 The \verb{$init_model_methods()} method compiles and initializes the
