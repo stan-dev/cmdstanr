@@ -844,7 +844,8 @@ CmdStanProcs <- R6::R6Class(
     report_time = function(id = NULL) {
       if (self$proc_state(id) == 7) {
         warning("Fitting finished unexpectedly! Use the $output() method for more information.\n", immediate. = TRUE, call. = FALSE)
-      } else {
+      }
+      if (private$show_stdout_messages_) {
         cat("Finished in ",
             base::format(round(self$total_time(), 1), nsmall = 1),
             "seconds.\n")
