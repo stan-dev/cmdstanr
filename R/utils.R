@@ -742,7 +742,7 @@ with_cmdstan_flags <- function(expr) {
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (.Platform$OS.type == "windows") {
-    libs <- paste(libs, "-fopenmp")
+    libs <- paste(libs, "-fopenmp -lstdc++")
   }
   lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
                  "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
@@ -830,7 +830,7 @@ expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) 
     )
   )
 
-  env$methods_dll_info <- dyn.load(methods_dll, local = TRUE, now = TRUE)
+  env$methods_dll_info <- with_cmdstan_flags(dyn.load(methods_dll, local = TRUE, now = TRUE))
   initialize_method_functions(env, strip_ext(basename(methods_dll)))
   invisible(NULL)
 }
