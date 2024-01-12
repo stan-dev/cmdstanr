@@ -28,7 +28,9 @@ pathfinder(
   num_paths = NULL,
   max_lbfgs_iters = NULL,
   num_elbo_draws = NULL,
-  save_single_paths = NULL
+  save_single_paths = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE
 )
 }
 \arguments{
@@ -164,6 +166,19 @@ calculating the ELBO of the approximation at each iteration of LBFGS.}
 
 \item{save_single_paths}{(logical) Whether to save the results of single
 pathfinder runs in multi-pathfinder.}
+
+\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
+output during the execution process, such as iteration numbers and elapsed times.
+If the output is silenced then the \code{\link[=fit-method-output]{$output()}} method of
+the resulting fit object can be used to display the silenced messages.}
+
+\item{show_exceptions}{(logical) When \code{TRUE} (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish to silence these messages, but this is not usually
+recommended unless you are very confident that the model is correct up to
+numerical error. If the messages are silenced then the
+\code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
+used to display the silenced messages.}
 }
 \value{
 A \code{\link{CmdStanPathfinder}} object.

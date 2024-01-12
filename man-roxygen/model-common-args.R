@@ -85,3 +85,16 @@
 #'   be compiled with `cpp_options = list(stan_opencl = TRUE)` for this
 #'   argument to have an effect.
 #'
+#' @param show_messages (logical) When `TRUE` (the default), prints all
+#'   output during the execution process, such as iteration numbers and elapsed times.
+#'   If the output is silenced then the [`$output()`][fit-method-output] method of
+#'   the resulting fit object can be used to display the silenced messages.
+#'
+#' @param show_exceptions (logical) When `TRUE` (the default), prints all
+#'   informational messages, for example rejection of the current proposal.
+#'   Disable if you wish to silence these messages, but this is not usually
+#'   recommended unless you are very confident that the model is correct up to
+#'   numerical error. If the messages are silenced then the
+#'   [`$output()`][fit-method-output] method of the resulting fit object can be
+#'   used to display the silenced messages.
+#'

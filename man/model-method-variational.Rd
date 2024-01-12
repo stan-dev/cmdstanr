@@ -26,7 +26,9 @@ variational(
   tol_rel_obj = NULL,
   eval_elbo = NULL,
   output_samples = NULL,
-  draws = NULL
+  draws = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE
 )
 }
 \arguments{
@@ -157,6 +159,19 @@ of the objective.}
 
 \item{draws}{(positive integer) Number of approximate posterior
 samples to draw and save.}
+
+\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
+output during the execution process, such as iteration numbers and elapsed times.
+If the output is silenced then the \code{\link[=fit-method-output]{$output()}} method of
+the resulting fit object can be used to display the silenced messages.}
+
+\item{show_exceptions}{(logical) When \code{TRUE} (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish to silence these messages, but this is not usually
+recommended unless you are very confident that the model is correct up to
+numerical error. If the messages are silenced then the
+\code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
+used to display the silenced messages.}
 }
 \value{
 A \code{\link{CmdStanVB}} object.

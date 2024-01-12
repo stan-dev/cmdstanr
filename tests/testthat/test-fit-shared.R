@@ -288,7 +288,7 @@ test_that("CmdStanArgs erorrs if idx is out of proc_ids range", {
   )
 })
 
-test_that("no output with refresh = 0", {
+test_that("no output with show_messages = FALSE", {
   mod <- testing_model("logistic")
   data_list <- testing_data("logistic")
   output <- utils::capture.output(tmp <- mod$variational(data = data_list, seed = 123))
@@ -298,12 +298,12 @@ test_that("no output with refresh = 0", {
   output <- utils::capture.output(tmp <- mod$sample(data = data_list, chains = 1, seed = 123))
   expect_gt(length(output), 1)
 
-  output <- utils::capture.output(tmp <- mod$variational(data = data_list, refresh = 0, seed = 123))
-  expect_equal(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, refresh = 0, seed = 123))
-  expect_equal(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$sample(data = data_list, refresh = 0, chains = 1, seed = 123))
-  expect_equal(length(output), 3)
+  output <- utils::capture.output(tmp <- mod$variational(data = data_list, show_messages = FALSE, seed = 123))
+  expect_equal(length(output), 0)
+  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, show_messages = FALSE, seed = 123))
+  expect_equal(length(output), 0)
+  output <- utils::capture.output(tmp <- mod$sample(data = data_list, show_messages = FALSE, chains = 1, seed = 123))
+  expect_equal(length(output), 0)
 })
 
 test_that("sig_figs works with all methods", {

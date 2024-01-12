@@ -215,7 +215,7 @@ Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all
-output during the sampling process, such as iteration numbers and elapsed times.
+output during the execution process, such as iteration numbers and elapsed times.
 If the output is silenced then the \code{\link[=fit-method-output]{$output()}} method of
 the resulting fit object can be used to display the silenced messages.}
 
