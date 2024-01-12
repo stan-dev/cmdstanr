@@ -326,6 +326,7 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
 })
 
 test_that("Model object file can be recompiled if not found", {
+  skip_if(os_is_wsl())
   mod <- cmdstan_model(testing_stan_file("bernoulli_log_lik"),
                        force_recompile = TRUE)
   model_obj_file <- mod$.__enclos_env__$private$model_methods_env_$obj_file_
