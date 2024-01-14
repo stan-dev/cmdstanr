@@ -46,7 +46,7 @@ namespace Rcpp {
     SEXP eigen_wrap(const T& x) {
       const static int RTYPE = Rcpp::traits::r_sexptype_traits<stan::scalar_type_t<T>>::rtype;
       Rcpp::Vector<RTYPE> vec_rtn(Rcpp::wrap(stan::math::to_array_1d(x)));
-      if (x.cols() > 1) {
+      if (!stan::is_eigen_col_vector<T>::value) {
         vec_rtn.attr("dim") = Rcpp::Dimension(x.rows(), x.cols());
       }
       return vec_rtn;
