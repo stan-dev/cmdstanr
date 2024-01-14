@@ -1,7 +1,5 @@
-#include <RcppEigen.h>
+#include <rcpp_eigen_interop.hpp>
 #include <stan/model/hessian.hpp>
-
-// [[Rcpp::depends(RcppEigen)]]
 
 template <class M>
 struct hessian_wrapper {
