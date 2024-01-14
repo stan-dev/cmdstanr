@@ -25,12 +25,12 @@ namespace Rcpp {
           Rcpp::internal::export_indexing<Eigen::Matrix<T, R, 1>, T>(object, result);
           return result;
         } else {
-          Shield<SEXP> dims( ::Rf_getAttrib( object, R_DimSymbol ) );
-          if( Rf_isNull(dims) || Rf_length(dims) != 2 ){
-              throw ::Rcpp::not_a_matrix();
+          Shield<SEXP> dims(Rf_getAttrib(object, R_DimSymbol));
+          if (Rf_isNull(dims) || Rf_length(dims) != 2) {
+            throw Rcpp::not_a_matrix();
           }
           int* dims_ = INTEGER(dims);
-          Eigen::Matrix<T, R, C> result(dims_[0],dims_[1]);
+          Eigen::Matrix<T, R, C> result(dims_[0], dims_[1]);
           T* result_data = result.data();
           Rcpp::internal::export_indexing<T*, T>(object, result_data);
           return result;
@@ -44,7 +44,7 @@ namespace Rcpp {
   namespace RcppEigen {
     template <typename T>
     SEXP eigen_wrap(const T& x) {
-      const static int RTYPE = ::Rcpp::traits::r_sexptype_traits<stan::scalar_type_t<T>>::rtype;
+      const static int RTYPE = Rcpp::traits::r_sexptype_traits<stan::scalar_type_t<T>>::rtype;
       Rcpp::Vector<RTYPE> vec_rtn(Rcpp::wrap(stan::math::to_array_1d(x)));
       if (x.cols() > 1) {
         vec_rtn.attr("dim") = Rcpp::Dimension(x.rows(), x.cols());
