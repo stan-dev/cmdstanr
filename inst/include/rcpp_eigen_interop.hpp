@@ -14,25 +14,26 @@ namespace Rcpp {
       Exporter(SEXP x) : object(x){}
       ~Exporter(){}
 
+      // Adapted from Rcpp/internal/Exporter.h
       Eigen::Matrix<T, R, C> get() {
         if (R == 1) {
-          Eigen::Matrix<T, 1, C> result(::Rf_length(object));
-          ::Rcpp::internal::export_indexing<Eigen::Matrix<T, 1, C>, T>(object, result);
-          return result ;
+          Eigen::Matrix<T, 1, C> result(Rf_length(object));
+          Rcpp::internal::export_indexing<Eigen::Matrix<T, 1, C>, T>(object, result);
+          return result;
         } else if (C == 1) {
-          Eigen::Matrix<T, R, 1> result(::Rf_length(object));
-          ::Rcpp::internal::export_indexing<Eigen::Matrix<T, R, 1>, T>(object, result);
-          return result ;
+          Eigen::Matrix<T, R, 1> result(Rf_length(object));
+          Rcpp::internal::export_indexing<Eigen::Matrix<T, R, 1>, T>(object, result);
+          return result;
         } else {
           Shield<SEXP> dims( ::Rf_getAttrib( object, R_DimSymbol ) );
-          if( Rf_isNull(dims) || ::Rf_length(dims) != 2 ){
+          if( Rf_isNull(dims) || Rf_length(dims) != 2 ){
               throw ::Rcpp::not_a_matrix();
           }
           int* dims_ = INTEGER(dims);
           Eigen::Matrix<T, R, C> result(dims_[0],dims_[1]);
           T* result_data = result.data();
-          ::Rcpp::internal::export_indexing<T*, T>( object, result_data);
-          return result ;
+          Rcpp::internal::export_indexing<T*, T>(object, result_data);
+          return result;
         }
       }
     };
