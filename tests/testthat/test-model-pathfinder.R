@@ -30,7 +30,9 @@ ok_arg_values <- list(
   draws = 100,
   num_paths = 4,
   max_lbfgs_iters = 100,
-  save_single_paths = FALSE)
+  save_single_paths = FALSE,
+  calculate_lp = TRUE,
+  psis_resample=TRUE)
 
 # using any one of these should cause sample() to error
 bad_arg_values <- list(
