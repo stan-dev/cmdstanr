@@ -914,7 +914,7 @@ validate_variational_args <- function(self) {
   if (!is.null(self$eval_elbo)) {
     self$eval_elbo <- as.integer(self$eval_elbo)
   }
-  checkmate::assert_inset_cmdstan_pathtegerish(self$output_samples, null.ok = TRUE,
+  checkmate::assert_integerish(self$output_samples, null.ok = TRUE,
                                lower = 1, len = 1, .var.name = "draws")
   if (!is.null(self$output_samples)) {
     self$output_samples <- as.integer(self$output_samples)
