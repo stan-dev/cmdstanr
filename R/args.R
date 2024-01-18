@@ -914,7 +914,7 @@ validate_variational_args <- function(self) {
   if (!is.null(self$eval_elbo)) {
     self$eval_elbo <- as.integer(self$eval_elbo)
   }
-  checkmate::assert_integerish(self$output_samples, null.ok = TRUE,
+  checkmate::assert_inset_cmdstan_pathtegerish(self$output_samples, null.ok = TRUE,
                                lower = 1, len = 1, .var.name = "draws")
   if (!is.null(self$output_samples)) {
     self$output_samples <- as.integer(self$output_samples)
@@ -972,8 +972,14 @@ validate_pathfinder_args <- function(self) {
   if (!is.null(self$save_single_paths)) {
     self$save_single_paths <- 0
   }
+  if (!is.null(self$psis_resample) && is.logical(self$psis_resample)) {
+    self$psis_resample = as.integer(self$psis_resample)
+  }
   checkmate::assert_integerish(self$psis_resample, null.ok = TRUE,
                                lower = 0, upper = 1, len = 1)
+  if (!is.null(self$calculate_lp) && is.logical(self$calculate_lp)) {
+    self$calculate_lp = as.integer(self$calculate_lp)
+  }
   checkmate::assert_integerish(self$calculate_lp, null.ok = TRUE,
                                lower = 0, upper = 1, len = 1)
 

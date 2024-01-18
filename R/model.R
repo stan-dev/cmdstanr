@@ -1884,6 +1884,17 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   calculating the ELBO of the approximation at each iteration of LBFGS.
 #' @param save_single_paths (logical) Whether to save the results of single
 #'   pathfinder runs in multi-pathfinder.
+#' @param psis_sample (logical) Whether to perform pareto smoothed importance sampling.
+#'  If `TRUE`, the number of draws returned will be equal to `draws`.
+#'  If `FALSE`, the number of draws returned will be equal to `single_path_draws * num_paths`.
+#' @param calculate_lp (logical) Whether to calculate the log probability of the draws.
+#' If `TRUE`, the log probability will be calculated and given in the output.
+#' If `FALSE`, the log probability will only be returned for draws used to determine the
+#'  ELBO in the pathfinder steps. All other draws will have a log probability of `NA`.
+#'  A value of `FALSE` will also turn off pareto smoothed importance sampling as the
+#'  lp calculation is needed for PSIS.
+#' @param save_single_paths (logical) Whether to save the results of single
+#'   pathfinder runs in multi-pathfinder.
 #' @return A [`CmdStanPathfinder`] object.
 #'
 #' @template seealso-docs
@@ -1912,6 +1923,8 @@ pathfinder <- function(data = NULL,
                        max_lbfgs_iters = NULL,
                        num_elbo_draws = NULL,
                        save_single_paths = NULL,
+                       psis_resample = NULL,
+                       calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE) {
   procs <- CmdStanProcs$new(
@@ -1937,7 +1950,9 @@ pathfinder <- function(data = NULL,
     num_paths = num_paths,
     max_lbfgs_iters = max_lbfgs_iters,
     num_elbo_draws = num_elbo_draws,
-    save_single_paths = save_single_paths
+    save_single_paths = save_single_paths,
+    psis_resample = psis_resample,
+    calculate_lp = calculate_lp
   )
   args <- CmdStanArgs$new(
     method_args = pathfinder_args,
