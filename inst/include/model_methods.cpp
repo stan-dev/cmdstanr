@@ -10,7 +10,6 @@
 #endif
 
 #include <Rcpp.h>
-#include <RcppEigen.h>
 
 stan::model::model_base&
 new_model(stan::io::var_context& data_context, unsigned int seed,

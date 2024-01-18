@@ -19,7 +19,9 @@ laplace(
   mode = NULL,
   opt_args = NULL,
   jacobian = TRUE,
-  draws = NULL
+  draws = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE
 )
 }
 \arguments{
@@ -138,6 +140,19 @@ optimization was originally run. If \code{mode} is \code{NULL} then the value of
 \code{jacobian} specified here is used when running optimization.}
 
 \item{draws}{(positive integer) The number of draws to take.}
+
+\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
+output during the execution process, such as iteration numbers and elapsed times.
+If the output is silenced then the \code{\link[=fit-method-output]{$output()}} method of
+the resulting fit object can be used to display the silenced messages.}
+
+\item{show_exceptions}{(logical) When \code{TRUE} (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish to silence these messages, but this is not usually
+recommended unless you are very confident that the model is correct up to
+numerical error. If the messages are silenced then the
+\code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
+used to display the silenced messages.}
 }
 \value{
 A \code{\link{CmdStanLaplace}} object.

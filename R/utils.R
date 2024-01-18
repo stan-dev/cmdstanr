@@ -321,7 +321,7 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
   efbmi_per_chain
 }
 
-check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.2) {
+check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.3) {
   efbmi_per_chain <- ebfmi(post_warmup_sampler_diagnostics)
   nan_efbmi_count <- sum(is.nan(efbmi_per_chain))
   efbmi_below_threshold <- sum(efbmi_per_chain < threshold)
@@ -993,8 +993,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   mod_stan_funs <- paste(c(
     env$hpp_code[1:(funs[1] - 1)],
     "#include <rcpp_tuple_interop.hpp>",
-    "#include <RcppEigen.h>",
-    "// [[Rcpp::depends(RcppEigen)]]",
+    "#include <rcpp_eigen_interop.hpp>",
     stan_funs),
   collapse = "\n")
   if (global) {
@@ -1045,7 +1044,6 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
          call. = FALSE)
   }
   require_suggested_package("Rcpp")
-  require_suggested_package("RcppEigen")
   if (function_env$compiled) {
     if (!global) {
       message("Functions already compiled, nothing to do!")

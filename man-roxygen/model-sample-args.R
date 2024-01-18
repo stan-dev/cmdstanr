@@ -74,17 +74,6 @@
 #'   quantities block. If the parameters block is empty then using
 #'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
 #'   `parallel_chains` arguments will be set to `1`.
-#' @param show_messages (logical) When `TRUE` (the default), prints all
-#'   output during the sampling process, such as iteration numbers and elapsed times.
-#'   If the output is silenced then the [`$output()`][fit-method-output] method of
-#'   the resulting fit object can be used to display the silenced messages.
-#' @param show_exceptions (logical) When `TRUE` (the default), prints all
-#'   informational messages, for example rejection of the current proposal.
-#'   Disable if you wish to silence these messages, but this is not usually
-#'   recommended unless you are very confident that the model is correct up to
-#'   numerical error. If the messages are silenced then the
-#'   [`$output()`][fit-method-output] method of the resulting fit object can be
-#'   used to display the silenced messages.
 #' @param diagnostics (character vector) The diagnostics to automatically check
 #'   and warn about after sampling. Setting this to an empty string `""` or
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the

@@ -312,8 +312,8 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @description The `$init_model_methods()` method compiles and initializes the
 #'   `log_prob`, `grad_log_prob`, `constrain_variables`, `unconstrain_variables`
 #'   and `unconstrain_draws` functions. These are then available as methods of
-#'   the fitted model object. This requires the additional `Rcpp` and
-#'   `RcppEigen` packages, which are not required for fitting models using
+#'   the fitted model object. This requires the additional `Rcpp` package, 
+#'   which are not required for fitting models using
 #'   CmdStanR.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
@@ -340,7 +340,6 @@ init_model_methods <- function(seed = 0, verbose = FALSE, hessian = FALSE, force
           call. = FALSE)
   }
   require_suggested_package("Rcpp")
-  require_suggested_package("RcppEigen")
   if (length(private$model_methods_env_$hpp_code_) == 0 && (
         is.null(private$model_methods_env_$obj_file_) ||
         !file.exists(private$model_methods_env_$obj_file_))) {

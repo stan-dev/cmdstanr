@@ -26,8 +26,8 @@ init_model_methods(
 The \verb{$init_model_methods()} method compiles and initializes the
 \code{log_prob}, \code{grad_log_prob}, \code{constrain_variables}, \code{unconstrain_variables}
 and \code{unconstrain_draws} functions. These are then available as methods of
-the fitted model object. This requires the additional \code{Rcpp} and
-\code{RcppEigen} packages, which are not required for fitting models using
+the fitted model object. This requires the additional \code{Rcpp} package,
+which are not required for fitting models using
 CmdStanR.
 
 Note: there may be many compiler warnings emitted during compilation but

@@ -1498,10 +1498,13 @@ optimize <- function(data = NULL,
                      tol_grad = NULL,
                      tol_rel_grad = NULL,
                      tol_param = NULL,
-                     history_size = NULL) {
+                     history_size = NULL,
+                     show_messages = TRUE,
+                     show_exceptions = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
-    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
@@ -1627,7 +1630,9 @@ laplace <- function(data = NULL,
                     mode = NULL,
                     opt_args = NULL,
                     jacobian = TRUE, # different default than for optimize!
-                    draws = NULL) {
+                    draws = NULL,
+                    show_messages = TRUE,
+                    show_exceptions = TRUE) {
   if (cmdstan_version() < "2.32") {
     stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
   }
@@ -1636,7 +1641,8 @@ laplace <- function(data = NULL,
   }
   procs <- CmdStanProcs$new(
     num_procs = 1,
-    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
@@ -1778,10 +1784,13 @@ variational <- function(data = NULL,
                         tol_rel_obj = NULL,
                         eval_elbo = NULL,
                         output_samples = NULL,
-                        draws = NULL) {
+                        draws = NULL,
+                        show_messages = TRUE,
+                        show_exceptions = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
-    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages,
     threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
@@ -1905,10 +1914,13 @@ pathfinder <- function(data = NULL,
                        num_paths = NULL,
                        max_lbfgs_iters = NULL,
                        num_elbo_draws = NULL,
-                       save_single_paths = NULL) {
+                       save_single_paths = NULL,
+                       show_messages = TRUE,
+                       show_exceptions = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
-    show_stdout_messages = (is.null(refresh) || refresh != 0),
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages,
     threads_per_proc = assert_valid_threads(num_threads, self$cpp_options())
   )
   model_variables <- NULL
