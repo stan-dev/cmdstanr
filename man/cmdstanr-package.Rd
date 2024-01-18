@@ -198,4 +198,34 @@ The Stan and CmdStan documentation:
 \item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
+
+Useful links:
+\itemize{
+  \item \url{https://mc-stan.org/cmdstanr/}
+  \item \url{https://discourse.mc-stan.org}
+  \item Report bugs at \url{https://github.com/stan-dev/cmdstanr/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Jonah Gabry \email{jsg2201@columbia.edu}
+
+Authors:
+\itemize{
+  \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
+  \item Andrew Johnson (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item Ben Bales [contributor]
+  \item Mitzi Morris [contributor]
+  \item Mikhail Popov [contributor]
+  \item Mike Lawrence [contributor]
+  \item William Michael Landau \email{will.landau@gmail.com} (\href{https://orcid.org/0000-0003-1878-3253}{ORCID}) [contributor]
+  \item Jacob Socolar [contributor]
+  \item Martin Modrák [contributor]
+  \item Steve Bronder [contributor]
+}
+
 }
