@@ -716,7 +716,8 @@ compile <- function(quiet = TRUE,
       )
     }
 
-    writeLines(private$model_methods_env_$hpp_code_, private$hpp_file_)
+    writeLines(private$model_methods_env_$hpp_code_,
+               con = wsl_safe_path(private$hpp_file_, revert = TRUE))
   } # End - if(!dry_run)
 
   private$exe_file_ <- exe
