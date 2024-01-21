@@ -8,7 +8,7 @@
 #include <stan/io/json/json_data.hpp>
 #include <stan/io/empty_var_context.hpp>
 #endif
-
+#include <rcpp_eigen_interop.hpp>
 #include <Rcpp.h>
 
 stan::model::model_base&
@@ -50,7 +50,7 @@ RcppExport SEXP log_prob_(SEXP ext_model_ptr, SEXP upars_, SEXP jacobian_) {
   BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
   double rtn;
-  Eigen::VectorXd upars = Rcpp::as<Eigen::Map<Eigen::VectorXd>>(upars_);
+  Eigen::VectorXd upars = Rcpp::as<Eigen::VectorXd>(upars_);
   if (Rcpp::as<bool>(jacobian_)) {
     rtn = stan::model::log_prob_propto<true>(*ptr.get(), upars, &Rcpp::Rcout);
   } else {
@@ -83,7 +83,7 @@ RcppExport SEXP grad_log_prob_(SEXP ext_model_ptr, SEXP upars_, SEXP jacobian_) 
 RcppExport SEXP hessian_(SEXP ext_model_ptr, SEXP upars_, SEXP jacobian_) {
   BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  Eigen::Map<Eigen::VectorXd> upars = Rcpp::as<Eigen::Map<Eigen::VectorXd>>(upars_);
+  Eigen::VectorXd upars = Rcpp::as<Eigen::VectorXd>(upars_);
 
   auto hessian_functor = [&](auto&& x) {
     if (Rcpp::as<bool>(jacobian_)) {

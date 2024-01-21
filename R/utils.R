@@ -735,7 +735,6 @@ with_cmdstan_flags <- function(expr) {
 
   r_includes <- paste(
     paste0("-I", shQuote(system.file("include", package = "Rcpp", mustWork = TRUE))),
-    paste0("-I", shQuote(system.file("include", package = "RcppEigen", mustWork = TRUE))),
     paste0("-I", shQuote(R.home(component = "include")))
   )
 
