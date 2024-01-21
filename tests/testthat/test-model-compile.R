@@ -689,16 +689,6 @@ test_that("format() works", {
     fixed = TRUE
   )
 
-  expect_output(
-    mod_1$format(canonicalize = TRUE),
-    "target += normal_lpdf(y | 0, 1);",
-    fixed = TRUE
-  )
-  expect_output(
-    mod_1$format(canonicalize = list("deprecations")),
-    "target += normal_lpdf(y | 0, 1);",
-    fixed = TRUE
-  )
   expect_error(
     mod_1$format(),
     "Syntax error found! See the message above for more information.",

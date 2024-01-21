@@ -715,6 +715,8 @@ compile <- function(quiet = TRUE,
         error_on_status = FALSE
       )
     }
+
+    writeLines(private$model_methods_env_$hpp_code_, private$hpp_file_)
   } # End - if(!dry_run)
 
   private$exe_file_ <- exe
