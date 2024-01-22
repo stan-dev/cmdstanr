@@ -875,7 +875,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
       ),
       wsl_compatible_run(
         command = stanc_cmd(),
-        args = c(paste0("--o=", hpp_path), stancflags, stan_file),
+        args = c(paste0("--o=", wsl_safe_path(hpp_path)), stancflags, wsl_safe_path(stan_file)),
         wd = cmdstan_path(),
         error_on_status = FALSE
       )
