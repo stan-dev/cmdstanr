@@ -54,7 +54,9 @@ test_that("laplace() runs when all arguments specified validly", {
   expect_equal(fit1$metadata()$draws, as.integer(ok_arg_values$draws))
   expect_equal(fit1$mode()$metadata()$jacobian, as.integer(ok_arg_values$jacobian))
   expect_equal(fit1$mode()$metadata()$init_alpha, ok_arg_values$opt_args$init_alpha)
-  expect_equal(fit1$mode()$metadata()$tol_obj, ok_arg_values$opt_args$tol_obj, tolerance = 0)
+  
+  # https://github.com/stan-dev/cmdstan/issues/1242
+  #expect_equal(fit1$mode()$metadata()$tol_obj, ok_arg_values$opt_args$tol_obj, tolerance = 0)
 
   # leaving all at default (except 'data')
   expect_laplace_output(fit2 <- mod$laplace(data = data_list, seed = 123))

@@ -129,9 +129,11 @@ test_that("optimize() works with (L-)BFGS tolerances specified", {
   expect_equal(metadata$init_alpha, 0.002)
   expect_equal(metadata$tol_obj, 2e-11)
   expect_equal(metadata$tol_rel_obj, 10001)
-  expect_equal(metadata$tol_grad, 5e-07)
+  # https://github.com/stan-dev/cmdstan/issues/1242
+  # expect_equal(metadata$tol_grad, 5e-07)
   expect_equal(metadata$tol_rel_grad, 10000001)
-  expect_equal(metadata$tol_param, 5e-07)
+  # https://github.com/stan-dev/cmdstan/issues/1242
+  # expect_equal(metadata$tol_param, 5e-07)
   expect_equal(metadata$history_size, 6)
 })
 

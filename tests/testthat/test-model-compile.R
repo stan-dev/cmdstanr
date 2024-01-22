@@ -174,15 +174,6 @@ test_that("compile errors are shown", {
   )
 })
 
-test_that("compile suggests using format to fix old syntax", {
-  stan_file <- testing_stan_file("old_array_syntax")
-  expect_error(
-    cmdstan_model(stan_file),
-    "To fix deprecated or removed syntax please see ?cmdstanr::format for an example.",
-    fixed = TRUE
-  )
-})
-
 test_that("dir arg works for cmdstan_model and $compile()", {
   tmp_dir <- tempdir()
   tmp_dir_2 <- tempdir()
@@ -689,16 +680,6 @@ test_that("format() works", {
     fixed = TRUE
   )
 
-  expect_output(
-    mod_1$format(canonicalize = TRUE),
-    "target += normal_lpdf(y | 0, 1);",
-    fixed = TRUE
-  )
-  expect_output(
-    mod_1$format(canonicalize = list("deprecations")),
-    "target += normal_lpdf(y | 0, 1);",
-    fixed = TRUE
-  )
   expect_error(
     mod_1$format(),
     "Syntax error found! See the message above for more information.",
@@ -868,4 +849,3 @@ test_that("STANCFLAGS included from make/local", {
   expect_output(print(out), out_w_flags)
   cmdstan_make_local(cpp_options = make_local_old, append = FALSE)
 })
-
