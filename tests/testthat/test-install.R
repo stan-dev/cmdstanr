@@ -16,7 +16,7 @@ test_that("install_cmdstan() successfully installs cmdstan", {
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
                       release_url = cmdstan_test_tarball_url,
                       wsl = os_is_wsl()),
-      "Compiling, linking C++ code",
+      "Compiling C++ code",
       fixed = TRUE
     ),
     "CmdStan path set",
