@@ -169,6 +169,10 @@ calculating the ELBO of the approximation at each iteration of LBFGS.}
 \item{save_single_paths}{(logical) Whether to save the results of single
 pathfinder runs in multi-pathfinder.}
 
+\item{psis_resample}{(logical) Whether to perform pareto smoothed importance sampling.
+If \code{TRUE}, the number of draws returned will be equal to \code{draws}.
+If \code{FALSE}, the number of draws returned will be equal to \code{single_path_draws * num_paths}.}
+
 \item{calculate_lp}{(logical) Whether to calculate the log probability of the draws.
 If \code{TRUE}, the log probability will be calculated and given in the output.
 If \code{FALSE}, the log probability will only be returned for draws used to determine the
@@ -188,10 +192,6 @@ recommended unless you are very confident that the model is correct up to
 numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
-
-\item{psis_sample}{(logical) Whether to perform pareto smoothed importance sampling.
-If \code{TRUE}, the number of draws returned will be equal to \code{draws}.
-If \code{FALSE}, the number of draws returned will be equal to \code{single_path_draws * num_paths}.}
 }
 \value{
 A \code{\link{CmdStanPathfinder}} object.

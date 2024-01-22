@@ -1887,7 +1887,7 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   calculating the ELBO of the approximation at each iteration of LBFGS.
 #' @param save_single_paths (logical) Whether to save the results of single
 #'   pathfinder runs in multi-pathfinder.
-#' @param psis_sample (logical) Whether to perform pareto smoothed importance sampling.
+#' @param psis_resample (logical) Whether to perform pareto smoothed importance sampling.
 #'  If `TRUE`, the number of draws returned will be equal to `draws`.
 #'  If `FALSE`, the number of draws returned will be equal to `single_path_draws * num_paths`.
 #' @param calculate_lp (logical) Whether to calculate the log probability of the draws.

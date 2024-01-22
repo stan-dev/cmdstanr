@@ -34,22 +34,22 @@ algorithms, and writing results to output files.
 \subsection{Advantages of RStan}{
 \itemize{
 \item Allows other developers to distribute R packages with \emph{pre-compiled}
-Stan programs (like \strong{rstanarm}) on CRAN. (Note: As of 2023, this
-can mostly be achieved with CmdStanR as well. See \href{https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr}{Developing using CmdStanR}.)
-\item Avoids use of R6 classes, which may result in more familiar syntax
-for many R users.
+Stan programs (like \strong{rstanarm}) on CRAN. (Note: As of 2023, this can
+mostly be achieved with CmdStanR as well. See \href{https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr}{Developing using CmdStanR}.)
+\item Avoids use of R6 classes, which may result in more familiar syntax for
+many R users.
 \item CRAN binaries available for Mac and Windows.
 }
 }
 
 \subsection{Advantages of CmdStanR}{
 \itemize{
-\item Compatible with latest versions of Stan. Keeping up with Stan
-releases is complicated for RStan, often requiring non-trivial
-changes to the \strong{rstan} package and new CRAN releases of both
-\strong{rstan} and \strong{StanHeaders}. With CmdStanR the latest improvements
-in Stan will be available from R immediately after updating CmdStan
-using \code{cmdstanr::install_cmdstan()}.
+\item Compatible with latest versions of Stan. Keeping up with Stan releases
+is complicated for RStan, often requiring non-trivial changes to the
+\strong{rstan} package and new CRAN releases of both \strong{rstan} and
+\strong{StanHeaders}. With CmdStanR the latest improvements in Stan will be
+available from R immediately after updating CmdStan using
+\code{cmdstanr::install_cmdstan()}.
 \item Running Stan via external processes results in fewer unexpected
 crashes, especially in RStudio.
 \item Less memory overhead.
