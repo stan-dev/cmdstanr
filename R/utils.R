@@ -823,7 +823,7 @@ expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) 
   }
 
   methods_dll <- tempfile(fileext = .Platform$dynlib.ext)
-  envvar <- c("current")
+  envvar <- c("current", "CXXFLAGS"="-fPIC")
   if (os_is_windows()) {
     envvar <- c(envvar, "BINPREF" = paste0(rtools4x_toolchain_path(), "/"))
   }
