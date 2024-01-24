@@ -117,9 +117,9 @@ test_that("optimize() works with (L-)BFGS tolerances specified", {
       # using values that aren't the defaults
       init_alpha = 0.002,
       tol_obj = 2e-11,
-      tol_rel_obj = 10001,
+      tol_rel_obj = 1000,
       tol_grad = 5e-07,
-      tol_rel_grad = 10000001,
+      tol_rel_grad = 1000000,
       tol_param = 5e-07,
       history_size = 6,
       seed = 123
@@ -128,12 +128,10 @@ test_that("optimize() works with (L-)BFGS tolerances specified", {
   metadata <- fit$metadata()
   expect_equal(metadata$init_alpha, 0.002)
   expect_equal(metadata$tol_obj, 2e-11)
-  expect_equal(metadata$tol_rel_obj, 10001)
-  # https://github.com/stan-dev/cmdstan/issues/1242
-  # expect_equal(metadata$tol_grad, 5e-07)
-  expect_equal(metadata$tol_rel_grad, 10000001)
-  # https://github.com/stan-dev/cmdstan/issues/1242
-  # expect_equal(metadata$tol_param, 5e-07)
+  expect_equal(metadata$tol_rel_obj, 1000)
+  expect_equal(metadata$tol_grad, 5e-07)
+  expect_equal(metadata$tol_rel_grad, 1000000)
+  expect_equal(metadata$tol_param, 5e-07)
   expect_equal(metadata$history_size, 6)
 })
 
