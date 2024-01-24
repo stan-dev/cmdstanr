@@ -728,10 +728,10 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
-with_cmdstan_flags <- function(expr) {
+with_cmdstan_flags <- function(expr, model_methods = FALSE) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
-  cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
+  cmdstanr_includes <- paste0("-I", shQuote(cmdstanr_includes))
 
   r_includes <- paste(
     paste0("-I", shQuote(system.file("include", package = "Rcpp", mustWork = TRUE))),
@@ -741,7 +741,7 @@ with_cmdstan_flags <- function(expr) {
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (os_is_windows()) {
-    libs <- paste(libs, "-fopenmp -lstdc++")
+    libs <- paste(libs, "-fopenmp")
   }
   lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
                  "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
@@ -750,12 +750,13 @@ with_cmdstan_flags <- function(expr) {
     PKG_CXXFLAGS = paste(cxxflags, cmdstanr_includes, r_includes, collapse = " "),
     PKG_LIBS = libs
   )
-  if (os_is_windows()) {
+  if (os_is_windows() && model_methods) {
     new_makevars <- c(
       new_makevars,
       SHLIB_LD = paste0(rtools4x_toolchain_path(),"/gcc"),
       LOCAL_CPPFLAGS = paste0("-I'",rtools4x_toolchain_path(),"/../include'"),
-      LOCAL_LIBS = paste0("-L'",rtools4x_toolchain_path(),"/../lib'")
+      LOCAL_LIBS = paste0("-L'",rtools4x_toolchain_path(),"/../lib' -lstdc++"),
+      BINPREF = paste0(rtools4x_toolchain_path(), "/")
     )
   }
   withr::with_path(
@@ -823,20 +824,16 @@ expose_model_methods <- function(env, force_recompile = FALSE, verbose = FALSE) 
   }
 
   methods_dll <- tempfile(fileext = .Platform$dynlib.ext)
-  envvar <- c("current", "CXXFLAGS"="-fPIC")
-  if (os_is_windows()) {
-    envvar <- c(envvar, "BINPREF" = paste0(rtools4x_toolchain_path(), "/"))
-  }
   with_cmdstan_flags(
     processx::run(
       command = file.path(R.home(component = "bin"), "R"),
       args = c("CMD", "SHLIB", repair_path(model_obj_file), repair_path(precomp_methods_file),
                 "-o", repair_path(methods_dll)),
-      env = envvar,
       echo = verbose || is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
       error_on_status = FALSE
-    )
+    ),
+    model_methods = TRUE
   )
 
   env$methods_dll_info <- with_cmdstan_flags(dyn.load(methods_dll, local = TRUE, now = TRUE))
