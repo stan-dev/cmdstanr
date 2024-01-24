@@ -754,7 +754,7 @@ with_cmdstan_flags <- function(expr) {
     new_makevars <- c(
       new_makevars,
       SHLIB_LD = paste0(rtools4x_toolchain_path(),"/gcc"),
-      LOCAL_CPPFLAGS = paste0("-L'",rtools4x_toolchain_path(),"/../include'"),
+      LOCAL_CPPFLAGS = paste0("-I'",rtools4x_toolchain_path(),"/../include'"),
       LOCAL_LIBS = paste0("-L'",rtools4x_toolchain_path(),"/../lib'")
     )
   }
