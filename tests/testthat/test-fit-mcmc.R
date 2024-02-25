@@ -279,19 +279,28 @@ test_that("loo method works with moment-matching", {
   # Moment-matching needs model-methods, so make sure hpp is available
   mod <- cmdstan_model(testing_stan_file("loo_moment_match"), force_recompile = TRUE)
   data_list <- testing_data("loo_moment_match")
-  fit <- mod$sample(data = data_list, chains = 1)
+  fit <- mod$sample(data = data_list, chains = 1, seed = 1000)
 
-  # Regular LOO should warn that some pareto-k are "too high"
-  expect_warning(fit$loo(),
-                  "Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.",
-                  fixed=TRUE)
+  # Regular loo should warn that some pareto-k are "too high"
+  expect_warning(
+    fit$loo(),
+    "Some Pareto k diagnostic values are too high.",
+    fixed = TRUE
+  )
 
-  # After moment-matching the warning should be downgraded to "slightly high"
-  expect_warning(fit$loo(moment_match = TRUE),
-                  "Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.",
-                  fixed=TRUE)
+  # In loo < 2.7.0 after moment-matching the warning should be downgraded to "slightly high"
+  if (utils::packageVersion("loo") < "2.7.0") {
+    expect_warning(
+      fit$loo(moment_match = TRUE),
+      "Some Pareto k diagnostic values are slightly high.",
+      fixed = TRUE
+    )
+  } else {
+    # But in loo >= 2.7.0 there is no "slightly high" so no warning here
+    expect_no_warning(fit$loo(moment_match = TRUE))
+  }
 
-  # After moment-matching with lower target threshold there should be no warning
+  # After moment-matching with lower target threshold there definitely shouldn't be a warning
   expect_no_warning(fit$loo(moment_match = TRUE, k_threshold=0.4))
 })
 
