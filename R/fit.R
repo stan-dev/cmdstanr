@@ -312,7 +312,7 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @description The `$init_model_methods()` method compiles and initializes the
 #'   `log_prob`, `grad_log_prob`, `constrain_variables`, `unconstrain_variables`
 #'   and `unconstrain_draws` functions. These are then available as methods of
-#'   the fitted model object. This requires the additional `Rcpp` package, 
+#'   the fitted model object. This requires the additional `Rcpp` package,
 #'   which are not required for fitting models using
 #'   CmdStanR.
 #'
@@ -1483,8 +1483,9 @@ CmdStanMCMC <- R6::R6Class(
 #' @param r_eff (multiple options) How to handle the `r_eff` argument for `loo()`:
 #'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
 #'   to compute the `r_eff` argument to pass to [loo::loo.array()].
-#'   * `FALSE` or `NULL` will avoid computing `r_eff` (which can sometimes be slow)
-#'   but will result in a warning from the \pkg{loo} package.
+#'   * `FALSE` or `NULL` will avoid computing `r_eff` (which can sometimes be slow),
+#'   but the reported ESS and MCSE estimates can be over-optimistic if the
+#'   posterior draws are not (near) independent.
 #'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
 #'   argument to [loo::loo.array()].
 #' @param moment_match (logical) Whether to use a
