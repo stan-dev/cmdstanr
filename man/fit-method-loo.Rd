@@ -17,8 +17,9 @@ look for \code{"log_lik"}. This argument is passed to the
 \itemize{
 \item \code{TRUE} (the default) will automatically call \code{\link[loo:relative_eff]{loo::relative_eff.array()}}
 to compute the \code{r_eff} argument to pass to \code{\link[loo:loo]{loo::loo.array()}}.
-\item \code{FALSE} or \code{NULL} will avoid computing \code{r_eff} (which can sometimes be slow)
-but will result in a warning from the \pkg{loo} package.
+\item \code{FALSE} or \code{NULL} will avoid computing \code{r_eff} (which can sometimes be slow),
+but the reported ESS and MCSE estimates can be over-optimistic if the
+posterior draws are not (near) independent.
 \item If \code{r_eff} is anything else, that object will be passed as the \code{r_eff}
 argument to \code{\link[loo:loo]{loo::loo.array()}}.
 }}
