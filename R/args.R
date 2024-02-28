@@ -1021,8 +1021,12 @@ validate_exe_file <- function(exe_file) {
 #' @param num_procs Number of CmdStan processes.
 #' @param model_variables  A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
-process_init_list <- function(init, num_procs, model_variables = NULL) {
+process_init_list <- function(init, num_procs, model_variables = NULL,
+                              warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
     stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
   }
@@ -1048,7 +1052,7 @@ process_init_list <- function(init, num_procs, model_variables = NULL) {
         }
       }
     }
-    if (length(missing_parameter_values) > 0) {
+    if (length(missing_parameter_values) > 0 && isTRUE(warn_partial)) {
       warning_message <- c(
         "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
       )
@@ -1062,6 +1066,7 @@ process_init_list <- function(init, num_procs, model_variables = NULL) {
           warning_message <- c(warning_message, paste0(line_text, paste0(missing_parameter_values[[i]], collapse = ", "), "\n"))
         }
       }
+      warning_message <- c(warning_message, "\nTo disable this message use options(cmdstanr_warn_inits = FALSE).\n")
       message(warning_message)
     }
   }
