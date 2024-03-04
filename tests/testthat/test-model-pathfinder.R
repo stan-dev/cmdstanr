@@ -105,6 +105,7 @@ test_that("Pathfinder Runs", {
   expect_is(fit, "CmdStanPathfinder")
 })
 
+
 test_that("pathfinder() method works with data files", {
   expect_pathfinder_output(fit_r <- mod$pathfinder(data = data_file_r))
   expect_is(fit_r, "CmdStanPathfinder")

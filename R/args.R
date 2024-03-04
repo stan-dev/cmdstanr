@@ -81,6 +81,8 @@ CmdStanArgs <- R6::R6Class(
         init <- process_init_function(init, length(self$proc_ids), model_variables)
       } else if (is.list(init) && !is.data.frame(init)) {
         init <- process_init_list(init, length(self$proc_ids), model_variables)
+      } else if (is.pathfinder(init)) {
+        init <- process_pathfinder(init, length(self$proc_ids))
       }
       self$init <- init
       self$opencl_ids <- opencl_ids
@@ -1115,6 +1117,50 @@ process_init_function <- function(init, num_procs, model_variables = NULL) {
   }
   process_init_list(init_list, num_procs, model_variables)
 }
+
+as_inits <- function(init_draws, model_variables=NULL, num_procs = 10) {
+  ndraws <- min(ndraws(init_draws), num_procs)
+  if (is.null(model_variables)) {model_variables = variables(init_draws)}
+  draws_rvar = as_draws_rvars(init_draws)
+  inits <- lapply(1:ndraws,
+    function(drawid) {
+      x = lapply(model_variables,
+        function(var) {
+          drop(subset_draws(init_draws, variable=var, draw=drawid)[[1]])
+        })
+      names(x) = model_variables
+      return(x)
+    })
+  return(inits)
+}
+
+process_init_pathfinder <- function(init, num_procs, model_variables = NULL) {
+  path_draws_df = init$draws(format = "df")
+  path_draws_dt = as.data.table(path_draws_df)
+  if (is.null(model_variables)) {
+    model_variables = colnames(path_draws_dt)[3:(length(colnames(path_draws)) - 4)]
+  }
+  path_draws_dt[, lw := lp__ - lp_approx__]
+  path_draws_df[["lw"]] = with(path_draws_df, lp__ - lp_approx__)
+  unique_draws = path_draws_dt[, .N, lw]
+  if (num_procs > nrow(unique_draws)) {
+    stop(paste0("Not enough distinct draws (", num_procs, ") to create inits."))
+  }
+  if (unique_draws < (0.95 * posterior::ndraws(path_draws_df))) {
+    # Resampling has been done in Stan, compute weights for distinct draws
+    # (these are now non Pareto smoothed as we have lost the original information)
+    path_draws_dt = merge(path_draws_dt[,.draw := min(.draw),lw][, .(.draw)],
+      path_draws_dt, by = ".draw")[, pareto_weight := exp(lw-max(lw))]
+  } else {
+    # Resampling was not done in Stan, compute Pareto smoothed weights
+    path_draws_dt[, pareto_weight := posterior::pareto_smooth(exp(lw - max(lw)), tail = "right")[["x"]]]
+  }
+  weight_init_draws_df = path_draws_dt[, weight_draws(as_draws_df(path_draws_dt), weights = pareto_weight, log = FALSE)]
+  init_draws_df = resample_draws(weight_init_draws_df, ndraws=num_procs, method = "simple_no_replace")
+  return(process_init_list(as_inits(init_draws_df, model_variables = model_variables), num_procs = 10))
+}
+
+
 
 #' Validate initial values
 #'
