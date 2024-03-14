@@ -1127,9 +1127,8 @@ sample <- function(data = NULL,
                    output_basename = NULL,
                    sig_figs = NULL,
                    chains = 4,
-                   parallel_chains = getOption("mc.cores", 1),
                    chain_ids = seq_len(chains),
-                   threads_per_chain = NULL,
+                   threads = getOption("mc.cores", 1),
                    opencl_ids = NULL,
                    iter_warmup = NULL,
                    iter_sampling = NULL,
@@ -1155,18 +1154,24 @@ sample <- function(data = NULL,
                    num_chains = NULL,
                    num_warmup = NULL,
                    num_samples = NULL,
+                   threads_per_chain = NULL,
+                   parallel_chains = NULL,
                    validate_csv = NULL,
                    save_extra_diagnostics = NULL,
                    max_depth = NULL,
                    stepsize = NULL) {
   # temporary deprecation warnings
   if (!is.null(cores)) {
-    warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
-    parallel_chains <- cores
+    warning("'cores' is deprecated. Please use 'threads' instead.")
+    threads <- cores
   }
   if (!is.null(num_cores)) {
-    warning("'num_cores' is deprecated. Please use 'parallel_chains' instead.")
-    parallel_chains <- num_cores
+    warning("'num_cores' is deprecated. Please use 'threads' instead.")
+    threads <- num_cores
+  }
+  if (!is.null(parallel_chains)) {
+    warning("'parallel_chains' is deprecated. Please use 'threads' instead.")
+    threads <- parallel_chains
   }
   if (!is.null(num_chains)) {
     warning("'num_chains' is deprecated. Please use 'chains' instead.")
@@ -1214,9 +1219,8 @@ sample <- function(data = NULL,
     save_warmup <- FALSE
   }
   procs <- CmdStanMCMCProcs$new(
-    num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
-    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
+    num_procs = 1,
+    parallel_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -1240,7 +1244,8 @@ sample <- function(data = NULL,
     term_buffer = term_buffer,
     window = window,
     fixed_param = fixed_param,
-    diagnostics = diagnostics
+    diagnostics = diagnostics,
+    chains = chains
   )
   args <- CmdStanArgs$new(
     method_args = sample_args,
@@ -1260,7 +1265,8 @@ sample <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    model_variables = model_variables
+    model_variables = model_variables,
+    threads = threads
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1342,6 +1348,7 @@ sample_mpi <- function(data = NULL,
                        iter_sampling = NULL,
                        save_warmup = FALSE,
                        thin = NULL,
+                       threads = NULL,
                        max_treedepth = NULL,
                        adapt_engaged = TRUE,
                        adapt_delta = NULL,
@@ -1376,7 +1383,7 @@ sample_mpi <- function(data = NULL,
     save_warmup <- FALSE
   }
   procs <- CmdStanMCMCProcs$new(
-    num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
+    num_procs = 1,
     parallel_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
@@ -1420,7 +1427,8 @@ sample_mpi <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    model_variables = model_variables
+    model_variables = model_variables,
+    threads = threads
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
@@ -1504,8 +1512,7 @@ optimize <- function(data = NULL,
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    show_stdout_messages = show_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1541,7 +1548,8 @@ optimize <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    model_variables = model_variables
+    model_variables = model_variables,
+    threads = threads
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1642,8 +1650,7 @@ laplace <- function(data = NULL,
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    show_stdout_messages = show_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1706,7 +1713,8 @@ laplace <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    model_variables = model_variables
+    model_variables = model_variables,
+    threads = threads
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1790,8 +1798,7 @@ variational <- function(data = NULL,
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    show_stdout_messages = show_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1827,7 +1834,8 @@ variational <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    model_variables = model_variables
+    model_variables = model_variables,
+    threads = threads
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1912,7 +1920,7 @@ pathfinder <- function(data = NULL,
                        output_basename = NULL,
                        sig_figs = NULL,
                        opencl_ids = NULL,
-                       num_threads = NULL,
+                       threads = NULL,
                        init_alpha = NULL,
                        tol_obj = NULL,
                        tol_rel_obj = NULL,
@@ -1933,8 +1941,7 @@ pathfinder <- function(data = NULL,
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(num_threads, self$cpp_options())
+    show_stdout_messages = show_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1976,7 +1983,7 @@ pathfinder <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    num_threads = num_threads
+    threads = threads
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -2064,13 +2071,12 @@ generate_quantities <- function(fitted_params,
                                 output_basename = NULL,
                                 sig_figs = NULL,
                                 parallel_chains = getOption("mc.cores", 1),
-                                threads_per_chain = NULL,
+                                threads = NULL,
                                 opencl_ids = NULL) {
   fitted_params_files <- process_fitted_params(fitted_params)
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
-    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
+    parallel_procs = parallel_chains
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2092,7 +2098,8 @@ generate_quantities <- function(fitted_params,
     output_basename = output_basename,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
-    model_variables = model_variables
+    model_variables = model_variables,
+    threads = threads
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()

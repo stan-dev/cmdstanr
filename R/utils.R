@@ -217,15 +217,14 @@ generate_file_names <-
       stamp <- base::format(Sys.time(), "%Y%m%d%H%M")
       new_names <- paste0(new_names, "-", stamp)
     }
-    if (!is.null(ids)) {
-      new_names <- paste0(new_names, "-", ids)
-    }
     if (random) {
       rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
       rand <- base::format(as.hexmode(rand_num_pid), width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
-
+    if (!is.null(ids)) {
+      new_names <- paste0(new_names, "_", ids)
+    }
     if (length(ext)) {
       ext <- if (startsWith(ext, ".")) ext else paste0(".", ext)
       new_names <- paste0(new_names, ext)

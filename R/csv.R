@@ -166,10 +166,13 @@ read_cmdstan_csv <- function(files,
   if (!is.null(csv_metadata[[1]]$time)) {
     time <- rbind(time, csv_metadata[[1]]$time)
   }
+  # Cmdstan Bug #1257, id is wrong so we need to assume it's id..N
+  # Since cmdstan and cmdstanr assume file ids are sequential this should be fine
   if (length(csv_metadata) > 1) {
+    id_vals = id + 2:length(csv_metadata)
     for (file_id in 2:length(csv_metadata)) {
       file_metadata <- csv_metadata[[file_id]]
-      id <- file_metadata$id
+      id <- id_vals[file_id - 1]
       csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id)
       csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
       csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init)
@@ -362,6 +365,8 @@ read_cmdstan_csv <- function(files,
     } else {
       post_warmup_sampler_diagnostics <- NULL
     }
+    # Fix: Cmdstan Bug #1257 delete once fixed
+    time$chain_id = seq_len(nrow(time))
     list(
       metadata = metadata,
       time = list(total = NA_integer_, chains = time),

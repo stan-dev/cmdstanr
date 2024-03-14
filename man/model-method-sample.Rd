@@ -15,9 +15,8 @@ sample(
   output_basename = NULL,
   sig_figs = NULL,
   chains = 4,
-  parallel_chains = getOption("mc.cores", 1),
   chain_ids = seq_len(chains),
-  threads_per_chain = NULL,
+  threads = getOption("mc.cores", 1),
   opencl_ids = NULL,
   iter_warmup = NULL,
   iter_sampling = NULL,
@@ -42,6 +41,8 @@ sample(
   num_chains = NULL,
   num_warmup = NULL,
   num_samples = NULL,
+  threads_per_chain = NULL,
+  parallel_chains = NULL,
   validate_csv = NULL,
   save_extra_diagnostics = NULL,
   max_depth = NULL,
@@ -140,25 +141,9 @@ increased usage of disk space.}
 \item{chains}{(positive integer) The number of Markov chains to run. The
 default is 4.}
 
-\item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
-to run in parallel. If \code{parallel_chains} is not specified then the default
-is to look for the option \code{"mc.cores"}, which can be set for an entire \R
-session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
-been set then the default is \code{1}.}
-
 \item{chain_ids}{(integer vector) A vector of chain IDs. Must contain as many
 unique positive integers as the number of chains. If not set, the default
 chain IDs are used (integers starting from \code{1}).}
-
-\item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
-contrast with \code{parallel_chains}, which specifies the number of chains to
-run in parallel. The actual number of CPU cores used is
-\code{parallel_chains*threads_per_chain}. For an example of using threading see
-the Stan case study
-\href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and
 device IDs of the OpenCL device to use for fitting. The model must
@@ -268,6 +253,22 @@ available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
 \item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
+
+\item{threads_per_chain}{(positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
+using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
+contrast with \code{parallel_chains}, which specifies the number of chains to
+run in parallel. The actual number of CPU cores used is
+\code{parallel_chains*threads_per_chain}. For an example of using threading see
+the Stan case study
+\href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
+
+\item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
+to run in parallel. If \code{parallel_chains} is not specified then the default
+is to look for the option \code{"mc.cores"}, which can be set for an entire \R
+session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
+been set then the default is \code{1}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

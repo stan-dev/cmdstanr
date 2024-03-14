@@ -21,6 +21,7 @@ sample_mpi(
   iter_sampling = NULL,
   save_warmup = FALSE,
   thin = NULL,
+  threads = NULL,
   max_treedepth = NULL,
   adapt_engaged = TRUE,
   adapt_delta = NULL,

@@ -13,7 +13,7 @@ generate_quantities(
   output_basename = NULL,
   sig_figs = NULL,
   parallel_chains = getOption("mc.cores", 1),
-  threads_per_chain = NULL,
+  threads = NULL,
   opencl_ids = NULL
 )
 }
@@ -89,16 +89,6 @@ to run in parallel. If \code{parallel_chains} is not specified then the default
 is to look for the option \code{"mc.cores"}, which can be set for an entire \R
 session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
 been set then the default is \code{1}.}
-
-\item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
-contrast with \code{parallel_chains}, which specifies the number of chains to
-run in parallel. The actual number of CPU cores used is
-\code{parallel_chains*threads_per_chain}. For an example of using threading see
-the Stan case study
-\href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and
 device IDs of the OpenCL device to use for fitting. The model must

@@ -1,5 +1,35 @@
 # CmdStanRun --------------------------------------------------------------
 
+.sample_file_time = function(file) {
+  bufferSize <- 256
+  size <- file.info(file)$size
+
+  if (size < bufferSize) {
+    bufferSize <- size
+  }
+
+  pos <- size - bufferSize
+  text <- character()
+  k <- 0L
+
+  f <- file(file, "rb")
+  on.exit(close(f))
+  while(pos != 0L) {
+    seek(f, where=pos)
+    chars <- readChar(f, nchars=bufferSize)
+    text <- c(chars, text)
+    if(grep("Elapsed Time:", chars)) {
+      # Cut the buffer to get everything after Elapsed Time: and pull out the times
+      times <- strsplit(chars, "Elapsed Time: ")[[1]][2]
+      raw_times = as.numeric(stringr::str_extract_all(times, "[0-9\\.]+")[[1]])
+      return(list(warmup = raw_times[1], sampling = raw_times[2], total = raw_times[3]))
+    }
+    k <- k + length(gregexpr(pattern="\\n", text=chars)[[1L]])
+    pos <- max(pos-bufferSize, 0L)
+  }
+  stop(paste0("File: ", file, " did not contain the elapsed time for the model!"))
+}
+
 #' Run CmdStan using a specified configuration
 #'
 #' The internal `CmdStanRun` R6 class handles preparing the call to CmdStan
@@ -22,12 +52,19 @@ CmdStanRun <- R6::R6Class(
       checkmate::assert_r6(procs, classes = "CmdStanProcs")
       self$args <- args
       self$procs <- procs
-      private$output_files_ <- self$new_output_files()
+      output_files = self$new_output_files()
+      private$output_file_base_ = output_files[[1]]
+      if ((args$method_args$method == "sample" && args$method_args$chains > 1) || args$method_args$method == "generate_quantities") {
+          private$output_files_ <- output_files[[2]]
+      } else {
+        private$output_files_ <- output_files[[1]]
+      }
       if (cmdstan_version() >= "2.26.0") {
-        private$profile_files_ <- self$new_profile_files()
+        private$profile_files_ <- self$new_profile_files()[[1]]
       }
       if (self$args$save_latent_dynamics) {
-        private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
+        browser()
+        private$latent_dynamics_files_ <- self$new_latent_dynamics_files()[[1]]
       }
       if (os_is_wsl()) {
         # While the executable built under WSL will be stored in the Windows
@@ -197,18 +234,20 @@ CmdStanRun <- R6::R6Class(
     },
 
     command = function() self$args$command(),
-    command_args = function() {
-      if (!length(private$command_args_)) {
+    command_args = function(id = 0) {
         # create a list of character vectors (one per run/chain) of cmdstan arguments
-        private$command_args_ <- lapply(self$procs$proc_ids(), function(j) {
-          self$args$compose_all_args(
-            idx = j,
-            output_file = private$output_files_[j],
-            profile_file = private$profile_files_[j],
-            latent_dynamics_file = private$latent_dynamics_files_[j] # maybe NULL
+        if (id == 0) {
+          output_file = private$output_file_base_
+        } else {
+          output_file = private$output_files_[id]
+        }
+      id = 1
+      private$command_args_ <- self$args$compose_all_args(
+            idx = id,
+            output_file = output_file,
+            profile_file = private$profile_files_,
+            latent_dynamics_file = private$latent_dynamics_files_ # maybe NULL
           )
-        })
-      }
       private$command_args_
     },
 
@@ -269,22 +308,35 @@ CmdStanRun <- R6::R6Class(
           chain_id = self$procs$proc_ids()[self$procs$is_finished()],
           total = self$procs$proc_total_time()[self$procs$is_finished()]
         )
-
         time <- list(total = self$procs$total_time(), chains = chain_time)
       } else {
-        chain_ids <- names(self$procs$is_finished())
-        chain_time <- data.frame(
-          chain_id = as.vector(self$procs$proc_ids()),
-          warmup = as.vector(self$procs$proc_section_time("warmup")),
-          sampling = as.vector(self$procs$proc_section_time("sampling")),
-          total = as.vector(self$procs$proc_total_time()[chain_ids])
-        )
-        time <- list(total = self$procs$total_time(), chains = chain_time)
+        if (self$procs$is_finished() == 1) {
+          chain_ids <- seq_len(get_num_inner_processes(self$args$method_args))
+          output_files = self$output_files(include_failed = TRUE)
+          output_times = lapply(output_files, .sample_file_time)
+          chain_time <- data.frame(
+            chain_id = chain_ids,
+            warmup = unlist(lapply(output_times, function(x) x$warmup)),
+            sampling = unlist(lapply(output_times, function(x) x$sampling)),
+            total = unlist(lapply(output_times, function(x) x$total))
+          )
+          time <- list(total = self$procs$total_time(), chains = chain_time)
+        } else {
+          chain_ids <- names(self$procs$is_finished())
+          chain_time <- data.frame(
+            chain_id = as.vector(self$procs$proc_ids()),
+            warmup = as.vector(self$procs$proc_section_time("warmup")),
+            sampling = as.vector(self$procs$proc_section_time("sampling")),
+            total = as.vector(self$procs$proc_total_time()[chain_ids])
+          )
+          time <- list(total = self$procs$total_time(), chains = chain_time)
+        }
       }
       time
     }
   ),
   private = list(
+    output_file_base_ = character(),
     output_files_ = character(),
     profile_files_ = NULL,
     output_files_saved_ = FALSE,
@@ -340,73 +392,62 @@ check_target_exe <- function(exe) {
     }
     mpi_args[["exe"]] <- wsl_safe_path(self$exe_file())
   }
-  if (procs$num_procs() == 1) {
-    start_msg <- "Running MCMC with 1 chain"
-  } else if (procs$num_procs() == procs$parallel_procs()) {
-    start_msg <- paste0("Running MCMC with ", procs$num_procs(), " parallel chains")
+  start_msg <- paste0("Running MCMC with ", self$args$method_args$chains)
+  if (self$args$method_args$chains > 1) {
+    start_msg <- paste0(start_msg, " chains")
   } else {
-    if (procs$parallel_procs() == 1) {
-      if (!is.null(mpi_cmd)) {
-        if (!is.null(mpi_args[["n"]])) {
-          mpi_n_process <- mpi_args[["n"]]
-        } else if (!is.null(mpi_args[["np"]])) {
-          mpi_n_process <- mpi_args[["np"]]
-        }
-        if (is.null(mpi_n_process)) {
-          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI")
-        } else {
-          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI with ", mpi_n_process, " processes")
-        }
-      } else {
-        start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
-      }
+    start_msg <- paste0(start_msg, " chain")
+  }
+  start_msg <- paste0(start_msg, " and ", self$args$num_threads)
+  if (self$args$num_threads > 1) {
+    start_msg <- paste0(start_msg, " threads")
+  } else {
+    start_msg <- paste0(start_msg, " thread")
+  }
+  if (!is.null(mpi_cmd)) {
+    if (!is.null(mpi_args[["n"]])) {
+      mpi_n_process <- mpi_args[["n"]]
+    } else if (!is.null(mpi_args[["np"]])) {
+      mpi_n_process <- mpi_args[["np"]]
+    }
+    if (is.null(mpi_n_process)) {
+      start_msg <- paste0(start_msg, " using MPI")
     } else {
-      start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_procs(), " in parallel")
+      start_msg <- paste0(start_msg, " using MPI with ", mpi_n_process, " processes")
     }
   }
-  if (is.null(procs$threads_per_proc())) {
-    if (procs$show_stdout_messages()) {
-      cat(paste0(start_msg, "...\n\n"))
-    }
-  } else {
-    if (procs$show_stdout_messages()) {
-      cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
-    }
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
+  if (procs$show_stdout_messages()) {
+    cat(paste0(start_msg, "...\n\n"))
+  }
+  # We can always set these as non threaded programs will ignore them
+  Sys.setenv("STAN_NUM_THREADS" = as.integer(self$args$num_threads))
+  # Windows environment variables have to be explicitly exported to WSL
+  if (os_is_wsl()) {
+    Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
   }
   start_time <- Sys.time()
-  chains <- procs$proc_ids()
+  chains <- self$args$method_args$chains
   chain_ind <- 1
+  chain_id <- 1
   while (!all(procs$is_finished() | procs$is_failed())) {
-    while (procs$active_procs() != procs$parallel_procs() && procs$any_queued()) {
-      chain_id <- chains[chain_ind]
-      procs$new_proc(
-        id = chain_id,
-        command = self$command(),
-        args = self$command_args()[[chain_id]],
-        wd = dirname(self$exe_file()),
-        mpi_cmd = mpi_cmd,
-        mpi_args = mpi_args
-      )
-      procs$mark_proc_start(chain_id)
-      procs$set_active_procs(procs$active_procs() + 1)
-      chain_ind <- chain_ind + 1
-    }
+    procs$new_proc(
+      id = chain_id,
+      command = self$command(),
+      args = self$command_args(),
+      wd = dirname(self$exe_file()),
+      mpi_cmd = mpi_cmd,
+      mpi_args = mpi_args
+    )
+    procs$mark_proc_start(chain_id)
+    procs$set_active_procs(procs$active_procs() + 1)
     start_active_procs <- procs$active_procs()
-
     while (procs$active_procs() == start_active_procs &&
            procs$active_procs() > 0) {
       procs$wait(0.1)
       procs$poll(0)
-      for (chain_id in chains) {
-        if (!procs$is_queued(chain_id)) {
-          procs$process_output(chain_id)
-          procs$process_error_output(chain_id)
-        }
+      if (!procs$is_queued(chain_id)) {
+        procs$process_output(chain_id)
+        procs$process_error_output(chain_id)
       }
       procs$set_active_procs(procs$num_alive())
     }
@@ -420,30 +461,20 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 .run_generate_quantities <- function() {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-  if (procs$num_procs() == 1) {
-    start_msg <- "Running standalone generated quantities after 1 MCMC chain"
-  } else if (procs$num_procs() == procs$parallel_procs()) {
-    start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, all chains in parallel ")
+  start_msg <- "Running standalone generated quantities with "
+  start_msg <- paste0(start_msg, self$args$num_threads)
+  if (self$args$num_threads > 1) {
+    start_msg <- paste0(start_msg, " threads")
   } else {
-    if (procs$parallel_procs() == 1) {
-      start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, 1 chain at a time ")
-    } else {
-      start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, ", procs$parallel_procs(), " chains at a time ")
-    }
+    start_msg <- paste0(start_msg, " thread")
   }
-  if (is.null(procs$threads_per_proc())) {
-    if (procs$show_stdout_messages()) {
-      cat(paste0(start_msg, "...\n\n"))
-    }
-  } else {
-    if (procs$show_stdout_messages()) {
-      cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
-    }
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
+  if (procs$show_stdout_messages()) {
+    cat(paste0(start_msg, "...\n\n"))
+  }
+  Sys.setenv("STAN_NUM_THREADS" = as.integer(self$args$num_threads))
+  # Windows environment variables have to be explicitly exported to WSL
+  if (os_is_wsl()) {
+    Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -454,7 +485,7 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
       procs$new_proc(
         id = chain_id,
         command = self$command(),
-        args = self$command_args()[[chain_id]],
+        args = self$command_args(chain_id),
         wd = dirname(self$exe_file())
       )
       procs$mark_proc_start(chain_id)
@@ -484,19 +515,18 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 
 .run_other <- function() {
   procs <- self$procs
-  if (!is.null(procs$threads_per_proc())) {
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
+  # We can always set these as non threaded programs will ignore them
+  Sys.setenv("STAN_NUM_THREADS" = as.integer(self$args$num_threads))
+  # Windows environment variables have to be explicitly exported to WSL
+  if (os_is_wsl()) {
+    Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
   }
   start_time <- Sys.time()
   id <- 1
   procs$new_proc(
     id = id,
     command = self$command(),
-    args = self$command_args()[[id]],
+    args = self$command_args(),
     wd = dirname(self$exe_file())
   )
   procs$set_active_procs(1)
@@ -532,7 +562,7 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
   }
   procs$mark_proc_stop(id)
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
-  procs$report_time()
+  procs$report_time(id)
 }
 CmdStanRun$set("private", name = "run_optimize_", value = .run_other)
 CmdStanRun$set("private", name = "run_laplace_", value = .run_other)
@@ -541,12 +571,11 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs
-  if (!is.null(procs$threads_per_proc())) {
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
+  # We can always set these as non threaded programs will ignore them
+  Sys.setenv("STAN_NUM_THREADS" = as.integer(self$args$num_threads))
+  # Windows environment variables have to be explicitly exported to WSL
+  if (os_is_wsl()) {
+    Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
   }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
@@ -596,28 +625,22 @@ CmdStanRun$set("private", name = "run_diagnose_", value = .run_diagnose)
 #'   to 1.
 #' @param parallel_procs The maximum number of processes to run in parallel.
 #'   Currently for non-sampling this must be set to 1.
-#' @param threads_per_proc The number of threads to use per process to run
-#'   parallel sections of model.
 #'
 CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
     initialize = function(num_procs,
                           parallel_procs = NULL,
-                          threads_per_proc = NULL,
                           show_stderr_messages = TRUE,
                           show_stdout_messages = TRUE) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
-      checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
       } else {
         private$parallel_procs_ <- as.integer(parallel_procs)
       }
-      private$threads_per_proc_ <- as.integer(threads_per_proc)
-      private$threads_per_proc_ <- threads_per_proc
       private$active_procs_ <- 0
       private$proc_ids_ <- seq_len(num_procs)
       zeros <- rep(0, num_procs)
@@ -640,9 +663,6 @@ CmdStanProcs <- R6::R6Class(
     },
     parallel_procs = function() {
       private$parallel_procs_
-    },
-    threads_per_proc = function() {
-      private$threads_per_proc_
     },
     proc_ids = function() {
       private$proc_ids_
@@ -865,7 +885,6 @@ CmdStanProcs <- R6::R6Class(
     num_procs_ = integer(),
     parallel_procs_ = integer(),
     active_procs_ = integer(),
-    threads_per_proc_ = integer(),
     proc_state_ = NULL,
     proc_start_time_ = NULL,
     proc_total_time_ = NULL,

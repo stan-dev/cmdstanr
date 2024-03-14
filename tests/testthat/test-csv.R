@@ -477,7 +477,8 @@ test_that("returning time works for read_cmdstan_csv", {
   csv_data <- read_cmdstan_csv(csv_files)
   expect_equal(csv_data$time$total, NA_integer_)
   expect_equal(csv_data$time$chains, data.frame(
-    chain_id = 2,
+    # Cmdstan Bug #1257, replace with 2 when fixed
+    chain_id = 1,
     warmup = 0.017041,
     sampling = 0.022068,
     total = 0.039109
@@ -511,13 +512,13 @@ test_that("returning time works for read_cmdstan_csv", {
   csv_data <- read_cmdstan_csv(csv_files)
   expect_null(csv_data$time$chains)
 })
-
+fit_bernoulli_thin_1 <- testing_fit("bernoulli", method = "sample",
+                                    seed = 123, chains = 2, iter_sampling = 1000, iter_warmup = 1000, thin = 1)
 test_that("time from read_cmdstan_csv matches time from fit$time()", {
   fit <- fit_bernoulli_thin_1
-  expect_equivalent(
-    read_cmdstan_csv(fit$output_files())$time$chains,
-    fit$time()$chains
-  )
+  csv_times = read_cmdstan_csv(fit$output_files())$time$chains
+  fit_times = fit$time()$chains
+  expect_equivalent(csv_times, fit_times)
 })
 
 test_that("as_cmdstan_fit creates fitted model objects from csv", {

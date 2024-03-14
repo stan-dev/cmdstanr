@@ -171,7 +171,7 @@ test_that("time() method works after mcmc", {
     run_times$chains,
     any.missing = FALSE,
     types = c("integer", "numeric"),
-    nrows = fit_mcmc$runset$num_procs(),
+    nrows = fit_mcmc$chains,
     ncols = 4
   )
 
@@ -180,7 +180,7 @@ test_that("time() method works after mcmc", {
   checkmate::expect_data_frame(run_times_0$chains,
                                any.missing = TRUE,
                                types = c("integer", "numeric"),
-                               nrows = fit_mcmc_0$runset$num_procs(),
+                               nrows = fit_mcmc_0$num_chains(),
                                ncols = 4)
   for (j in 1:nrow(run_times_0$chains)) {
     checkmate::expect_number(run_times_0$chains$warmup[j])
@@ -392,7 +392,7 @@ test_that("diagnostic_summary() works", {
   expect_equal(fit$diagnostic_summary(NULL), list())
 })
 
-test_that("metadata()$time has chains rowss", {
+test_that("metadata()$time has chains rows", {
   expect_equal(nrow(fit_mcmc$metadata()$time), fit_mcmc$num_chains())
   expect_equal(nrow(fit_mcmc_0$metadata()$time), fit_mcmc_0$num_chains())
   expect_equal(nrow(fit_mcmc_1$metadata()$time), fit_mcmc_1$num_chains())

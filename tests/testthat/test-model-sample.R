@@ -1,6 +1,6 @@
 context("model-sample")
 
-set_cmdstan_path()
+set_cmdstan_path("/home/sbronder/open_source/stan/origin/cmdstan")
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
 stan_program_fp <- testing_stan_file("bernoulli_fp")
@@ -10,7 +10,6 @@ mod_fp <- testing_model("bernoulli_fp")
 data_list <- testing_data("bernoulli")
 data_file_r <- test_path("resources", "data", "bernoulli.data.R")
 data_file_json <- test_path("resources", "data", "bernoulli.data.json")
-
 # these are all valid for sample()
 ok_arg_values <- list(
   data = data_list,

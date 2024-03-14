@@ -6,7 +6,7 @@ test_that("cmdstanr_example works", {
   expect_equal(fit_mcmc$num_chains(), 2)
 
   expect_output(cmdstanr_example("logistic", chains = 2, quiet = FALSE),
-                "Running MCMC with 2 sequential chains")
+                "Running MCMC with 2 chains and 1 thread...")
 
   fit_mle <- cmdstanr_example("logistic", method = "optimize")
   checkmate::expect_r6(fit_mle, "CmdStanMLE")
