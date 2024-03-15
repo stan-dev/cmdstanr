@@ -150,6 +150,10 @@ test_that("repair_path works with zero length path or non-string path", {
   expect_equal(repair_path(5), 5)
 })
 
+test_that("repair_path works with multiple paths", {
+  expect_equal(repair_path(c("a//b\\c/", "d\\e//f")), c("a/b/c", "d/e/f"))
+})
+
 test_that("list_to_array works with empty list", {
   expect_equal(list_to_array(list()), NULL)
 })

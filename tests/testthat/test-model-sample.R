@@ -32,7 +32,9 @@ ok_arg_values <- list(
   save_latent_dynamics = FALSE,
   init_buffer = 20,
   term_buffer = 0,
-  window = 15
+  window = 15,
+  save_metric = TRUE,
+  save_cmdstan_config = TRUE
 )
 
 # using any one of these should cause sample() to error
@@ -56,7 +58,9 @@ bad_arg_values <- list(
   save_latent_dynamics = "NOT_LOGICAL",
   init_buffer = "NOT_INTEGER",
   term_buffer = "NOT_INTEGER",
-  window = "NOT_INTEGER"
+  window = "NOT_INTEGER",
+  save_metric = "NOT_LOGICAL",
+  save_cmdstan_config = "NOT_LOGICAL"
 )
 
 bad_arg_values_2 <- list(

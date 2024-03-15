@@ -103,7 +103,7 @@ stanc_cmd <- function() {
 
 # paths and extensions ----------------------------------------------------
 
-# Replace `\\` with `/` in a path
+# Replace `\\` with `/` in a vector of paths
 # Needed for windows if CmdStan version is < 2.21:
 # https://github.com/stan-dev/cmdstanr/issues/1#issuecomment-539118598
 repair_path <- function(path) {
@@ -114,10 +114,8 @@ repair_path <- function(path) {
   path <- gsub("\\\\", "/", path)
   # WSL cmdstan path is a network path and needs the leading //
   path <- gsub("//(?!wsl)", "/", path, perl = TRUE)
-  if (endsWith(path, "/")) {
-    # remove trailing "/"
-    path <- substr(path, 1, nchar(path) - 1)
-  }
+  # remove trailing "/"
+  path <- gsub("/$","", path)
   path
 }
 
