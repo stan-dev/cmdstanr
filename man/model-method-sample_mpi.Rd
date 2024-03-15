@@ -44,8 +44,8 @@ sample_mpi(
 the data block of the Stan program. One of the following:
 \itemize{
 \item A named list of \R objects with the names corresponding to variables
-declared in the data block of the Stan program. Internally this list is then
-written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}. See
+declared in the data block of the Stan program. Internally this list is
+then written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}. See
 \code{\link[=write_stan_json]{write_stan_json()}} for details on the conversions performed on \R objects
 before they are passed to Stan.
 \item A path to a data file compatible with CmdStan (JSON or \R dump). See the
@@ -64,20 +64,19 @@ model executable.}
 \item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
 In the case of multi-chain sampling the single \code{seed} will automatically be
 augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to
-using same seed for all chains so that the same data is generated for all
-chains if RNG functions are used. The only time \code{seed} should be specified
-as a vector (one element per chain) is if RNG functions are used in
-transformed data and the goal is to generate \emph{different} data for each
-chain.}
+seed. The exception is the transformed data block, which defaults to using
+same seed for all chains so that the same data is generated for all chains
+if RNG functions are used. The only time \code{seed} should be specified as a
+vector (one element per chain) is if RNG functions are used in transformed
+data and the goal is to generate \emph{different} data for each chain.}
 
 \item{refresh}{(non-negative integer) The number of iterations between
 printed screen updates. If \code{refresh = 0}, only error messages will be
 printed.}
 
 \item{init}{(multiple options) The initialization method to use for the
-variables declared in the parameters block of the Stan program. One of
-the following:
+variables declared in the parameters block of the Stan program. One of the
+following:
 \itemize{
 \item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
 \verb{[-x,x]} on the \emph{unconstrained} parameter space.;
@@ -93,9 +92,10 @@ named elements corresponding to the parameters for which you are specifying
 initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
-take no arguments or a single argument \code{chain_id}. For MCMC, if the function
-has argument \code{chain_id} it will be supplied with the chain id (from 1 to
-number of chains) when called to generate the initial values. See
+take no arguments or a single argument \code{chain_id}. For MCMC, if the
+function has argument \code{chain_id} it will be supplied with the chain id
+(from 1 to number of chains) when called to generate the initial values.
+See
 \strong{Examples}.
 }}
 
@@ -103,8 +103,8 @@ number of chains) when called to generate the initial values. See
 about the latent dynamics be written to temporary diagnostic CSV files?
 This argument replaces CmdStan's \code{diagnostic_file} argument and the content
 written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (for some algorithms no content may be written). The default
-is \code{FALSE}, which is appropriate for almost every use case. To save the
+CmdStanR (for some algorithms no content may be written). The default is
+\code{FALSE}, which is appropriate for almost every use case. To save the
 temporary files created when \code{save_latent_dynamics=TRUE} see the
 \code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
 method.}
@@ -119,8 +119,7 @@ model objects. The behavior of \code{output_dir} is as follows:
 directory and only saved permanently if the user calls one of the \verb{$save_*}
 methods of the fitted model object (e.g.,
 \code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
-files are removed when the fitted model object is
-\link[base:gc]{garbage collected} (manually or automatically).
+files are removed when the fitted model object is \link[base:gc]{garbage collected} (manually or automatically).
 \item If a path, then the files are created in \code{output_dir} with names
 corresponding to the defaults used by \verb{$save_output_files()}.
 }}
@@ -174,13 +173,13 @@ specifying the geometry of the base manifold. See the \emph{Euclidean Metric}
 section of the CmdStan User's Guide for more details. To specify a
 precomputed (inverse) metric, see the \code{inv_metric} argument below.}
 
-\item{metric_file}{(character vector) The paths to JSON or
-Rdump files (one per chain) compatible with CmdStan that contain
-precomputed inverse metrics. The \code{metric_file} argument is inherited from
-CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
-named \code{inv_metric}, referring to the \emph{inverse} metric. We recommend instead
-using CmdStanR's \code{inv_metric} argument (see below) to specify an inverse
-metric directly using a vector or matrix from your \R session.}
+\item{metric_file}{(character vector) The paths to JSON or Rdump files (one
+per chain) compatible with CmdStan that contain precomputed inverse
+metrics. The \code{metric_file} argument is inherited from CmdStan but is
+confusing in that the entry in JSON or Rdump file(s) must be named
+\code{inv_metric}, referring to the \emph{inverse} metric. We recommend instead using
+CmdStanR's \code{inv_metric} argument (see below) to specify an inverse metric
+directly using a vector or matrix from your \R session.}
 
 \item{inv_metric}{(vector, matrix) A vector (if \code{metric='diag_e'}) or a
 matrix (if \code{metric='dense_e'}) for initializing the inverse metric. This
@@ -214,10 +213,10 @@ values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
 Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
 
-\item{show_messages}{(logical) When \code{TRUE} (the default), prints all
-output during the execution process, such as iteration numbers and elapsed times.
-If the output is silenced then the \code{\link[=fit-method-output]{$output()}} method of
-the resulting fit object can be used to display the silenced messages.}
+\item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
+during the execution process, such as iteration numbers and elapsed times.
+If the output is silenced then the \code{\link[=fit-method-output]{$output()}} method
+of the resulting fit object can be used to display the silenced messages.}
 
 \item{show_exceptions}{(logical) When \code{TRUE} (the default), prints all
 informational messages, for example rejection of the current proposal.
@@ -232,8 +231,8 @@ and warn about after sampling. Setting this to an empty string \code{""} or
 \code{NULL} can be used to prevent CmdStanR from automatically reading in the
 sampler diagnostics from CSV if you wish to manually read in the results
 and validate them yourself, for example using \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}. The
-currently available diagnostics are \code{"divergences"}, \code{"treedepth"},
-and \code{"ebfmi"} (the default is to check all of them).
+currently available diagnostics are \code{"divergences"}, \code{"treedepth"}, and
+\code{"ebfmi"} (the default is to check all of them).
 
 These diagnostics are also available after fitting. The
 \code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}} method provides

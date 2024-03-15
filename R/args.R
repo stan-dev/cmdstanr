@@ -43,7 +43,8 @@ CmdStanArgs <- R6::R6Class(
                           sig_figs = NULL,
                           opencl_ids = NULL,
                           model_variables = NULL,
-                          num_threads = NULL) {
+                          num_threads = NULL,
+                          save_cmdstan_config = NULL) {
 
       self$model_name <- model_name
       self$stan_code <- stan_code
@@ -60,6 +61,7 @@ CmdStanArgs <- R6::R6Class(
       self$save_latent_dynamics <- save_latent_dynamics
       self$using_tempdir <- is.null(output_dir)
       self$model_variables <- model_variables
+      self$save_cmdstan_config <- save_cmdstan_config
       if (os_is_wsl()) {
         # Want to ensure that any files under WSL are written to a tempdir within
         # WSL to avoid IO performance issues
@@ -86,6 +88,9 @@ CmdStanArgs <- R6::R6Class(
       self$opencl_ids <- opencl_ids
       self$num_threads = NULL
       self$method_args$validate(num_procs = length(self$proc_ids))
+      if (is.logical(self$save_cmdstan_config)) {
+        self$save_cmdstan_config <- as.integer(self$save_cmdstan_config)
+      }
       self$validate()
     },
     validate = function() {
@@ -110,9 +115,10 @@ CmdStanArgs <- R6::R6Class(
       } else if (type == "profile") {
         basename <- paste0(basename, "-profile")
       }
-      if (type ==  "output" && !is.null(self$output_basename)) {
+      if (type == "output" && !is.null(self$output_basename)) {
         basename <- self$output_basename
       }
+
       generate_file_names(
         basename = basename,
         ext = ".csv",
@@ -179,12 +185,16 @@ CmdStanArgs <- R6::R6Class(
       if (!is.null(profile_file)) {
         args$output <- c(args$output, paste0("profile_file=", wsl_safe_path(profile_file)))
       }
+      if (!is.null(self$save_cmdstan_config)) {
+        args$output <- c(args$output, paste0("save_cmdstan_config=", self$save_cmdstan_config))
+      }
       if (!is.null(self$opencl_ids)) {
         args$opencl <- c("opencl", paste0("platform=", self$opencl_ids[1]), paste0("device=", self$opencl_ids[2]))
       }
       if (!is.null(self$num_threads)) {
         num_threads <- c(args$output, paste0("num_threads=", self$num_threads))
       }
+
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
     },
@@ -217,7 +227,8 @@ SampleArgs <- R6::R6Class(
                           term_buffer = NULL,
                           window = NULL,
                           fixed_param = FALSE,
-                          diagnostics = NULL) {
+                          diagnostics = NULL,
+                          save_metric = NULL) {
 
       self$iter_warmup <- iter_warmup
       self$iter_sampling <- iter_sampling
@@ -231,6 +242,7 @@ SampleArgs <- R6::R6Class(
       self$inv_metric <- inv_metric
       self$fixed_param <- fixed_param
       self$diagnostics <- diagnostics
+      self$save_metric <- save_metric
       if (identical(self$diagnostics, "")) {
         self$diagnostics <- NULL
       }
@@ -271,6 +283,9 @@ SampleArgs <- R6::R6Class(
       if (is.logical(self$save_warmup)) {
         self$save_warmup <- as.integer(self$save_warmup)
       }
+      if (is.logical(self$save_metric)) {
+        self$save_metric <- as.integer(self$save_metric)
+      }
       invisible(self)
     },
     validate = function(num_procs) {
@@ -310,7 +325,8 @@ SampleArgs <- R6::R6Class(
           .make_arg("adapt_engaged"),
           .make_arg("init_buffer"),
           .make_arg("term_buffer"),
-          .make_arg("window")
+          .make_arg("window"),
+          .make_arg("save_metric")
         )
       } else {
         new_args <- list(
@@ -331,7 +347,8 @@ SampleArgs <- R6::R6Class(
           .make_arg("adapt_engaged"),
           .make_arg("init_buffer"),
           .make_arg("term_buffer"),
-          .make_arg("window")
+          .make_arg("window"),
+          .make_arg("save_metric")
         )
       }
       new_args <- do.call(c, new_args)
@@ -678,6 +695,7 @@ validate_cmdstan_args <- function(self) {
   checkmate::assert_flag(self$save_latent_dynamics)
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
   checkmate::assert_integerish(self$sig_figs, lower = 1, upper = 18, null.ok = TRUE)
+  checkmate::assert_integerish(self$save_cmdstan_config, lower = 0, upper = 1, len = 1, null.ok = TRUE)
   if (!is.null(self$sig_figs) && cmdstan_version() < "2.25") {
     warning("The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!", call. = FALSE)
   }
@@ -687,6 +705,7 @@ validate_cmdstan_args <- function(self) {
   if (!is.null(self$data_file)) {
     assert_file_exists(self$data_file, access = "r")
   }
+
   num_procs <- length(self$proc_ids)
   validate_init(self$init, num_procs)
   validate_seed(self$seed, num_procs)
@@ -789,6 +808,11 @@ validate_sample_args <- function(self, num_procs) {
   if (!is.null(self$diagnostics)) {
     checkmate::assert_subset(self$diagnostics, empty.ok = FALSE, choices = available_hmc_diagnostics())
   }
+
+  checkmate::assert_integerish(self$save_metric,
+                               lower = 0, upper = 1,
+                               len = 1,
+                               null.ok = TRUE)
 
   invisible(TRUE)
 }
