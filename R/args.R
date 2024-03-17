@@ -286,6 +286,9 @@ SampleArgs <- R6::R6Class(
       if (is.logical(self$save_metric)) {
         self$save_metric <- as.integer(self$save_metric)
       }
+      if (!self$adapt_engaged & !is.null(self$save_metric)) {
+        self$save_metric <- 0
+      }
       invisible(self)
     },
     validate = function(num_procs) {
