@@ -212,6 +212,12 @@ test_that("sample() method runs when fixed_param = TRUE", {
   expect_equal(fit_500_w$metadata()$algorithm, "fixed_param")
 })
 
+test_that("sample() method runs when adapt_engaged = FALSE", {
+  expect_sample_output(fit <- mod$sample(data = data_list, chains = 1, adapt_engaged = FALSE), 1)
+  draws <- try(fit$draws(), silent = TRUE)
+  expect_false(inherits(draws, "try-error"))
+})
+
 test_that("chain_ids work with sample()", {
   mod$compile()
   expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
