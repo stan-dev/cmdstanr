@@ -1,6 +1,6 @@
 context("model-sample")
 
-set_cmdstan_path("/home/sbronder/open_source/stan/origin/cmdstan")
+set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
 stan_program_fp <- testing_stan_file("bernoulli_fp")

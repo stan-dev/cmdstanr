@@ -279,7 +279,7 @@ test_that("loo method works with moment-matching", {
   # Moment-matching needs model-methods, so make sure hpp is available
   mod <- cmdstan_model(testing_stan_file("loo_moment_match"), force_recompile = TRUE)
   data_list <- testing_data("loo_moment_match")
-  fit <- mod$sample(data = data_list, chains = 1, seed = 1000)
+  utils::capture.output(fit <- mod$sample(data = data_list, chains = 1, seed = 1000))
 
   # Regular loo should warn that some pareto-k are "too high"
   expect_warning(

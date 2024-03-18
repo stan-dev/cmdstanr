@@ -63,8 +63,14 @@ CmdStanRun <- R6::R6Class(
         private$profile_files_ <- self$new_profile_files()[[1]]
       }
       if (self$args$save_latent_dynamics) {
-        browser()
-        private$latent_dynamics_files_ <- self$new_latent_dynamics_files()[[1]]
+        latent_dynamics_files = self$new_latent_dynamics_files()
+        private$latent_dynamics_file_base_ <- latent_dynamics_files[[1]]
+        if ((args$method_args$method == "sample" && args$method_args$chains > 1) || args$method_args$method == "generate_quantities" ||
+            args$method == "pathfinder" && args$method_args$num_paths > 1) {
+          private$latent_dynamics_files_ <- latent_dynamics_files[[2]]
+        } else {
+          private$latent_dynamics_files_ <- latent_dynamics_files[[1]]
+        }
       }
       if (os_is_wsl()) {
         # While the executable built under WSL will be stored in the Windows
@@ -108,8 +114,9 @@ CmdStanRun <- R6::R6Class(
       if (include_failed) {
         private$latent_dynamics_files_
       } else {
-        ok <- self$procs$is_finished() | self$procs$is_queued()
-        private$latent_dynamics_files_[ok]
+        # FIXME: I'm not sure what to do when chains fail since they are all in one chain?
+#        ok <- self$procs$is_finished() | self$procs$is_queued()
+        private$latent_dynamics_files_
       }
     },
     output_files = function(include_failed = FALSE) {
@@ -145,7 +152,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
-        ids = self$procs$proc_ids(),
+        ids = seq_len(get_num_inner_processes(self$args$method_args)),
         ext = ".csv",
         timestamp = timestamp,
         random = random
@@ -170,7 +177,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
-        ids = self$proc_ids(),
+        ids = seq_len(get_num_inner_processes(self$args$method_args)),
         ext = ".csv",
         timestamp = timestamp,
         random = random
@@ -195,7 +202,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-profile"),
-        ids = self$proc_ids(),
+        ids = NULL,
         ext = ".csv",
         timestamp = timestamp,
         random = random
@@ -238,15 +245,18 @@ CmdStanRun <- R6::R6Class(
         # create a list of character vectors (one per run/chain) of cmdstan arguments
         if (id == 0) {
           output_file = private$output_file_base_
+          latent_dynamic_file = private$latent_dynamics_file_base_
         } else {
           output_file = private$output_files_[id]
+          latent_dynamic_file = private$latent_dynamics_files_[id]
         }
+      # Cmdstan Bug, once idx is respected for multiple chains make this the actual id
       id = 1
       private$command_args_ <- self$args$compose_all_args(
             idx = id,
             output_file = output_file,
             profile_file = private$profile_files_,
-            latent_dynamics_file = private$latent_dynamics_files_ # maybe NULL
+            latent_dynamics_file = latent_dynamic_file # maybe NULL
           )
       private$command_args_
     },
@@ -340,6 +350,7 @@ CmdStanRun <- R6::R6Class(
     output_files_ = character(),
     profile_files_ = NULL,
     output_files_saved_ = FALSE,
+    latent_dynamics_file_base_ = NULL,
     latent_dynamics_files_ = NULL,
     latent_dynamics_files_saved_ = FALSE,
     profile_files_saved_ = FALSE,
@@ -579,7 +590,6 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
   }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
-
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -587,7 +597,7 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
     ),
     ret <- wsl_compatible_run(
       command = self$command(),
-      args = self$command_args()[[1]],
+      args = self$command_args(),
       wd = dirname(self$exe_file()),
       stderr = stderr_file,
       stdout = stdout_file,

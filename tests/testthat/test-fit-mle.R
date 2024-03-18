@@ -52,7 +52,7 @@ test_that("time is reported after optimization", {
 })
 
 test_that("no error when checking estimates after failure", {
-  fit <- cmdstanr_example("schools", method = "optimize", seed = 123) # optim ålways fails for this
+  suppressWarnings(fit <- cmdstanr_example("schools", method = "optimize", seed = 123)) # optim ålways fails for this
   expect_error(fit$summary(), "Fitting failed. Unable to retrieve the draws.")
 })
 

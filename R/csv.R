@@ -169,7 +169,7 @@ read_cmdstan_csv <- function(files,
   # Cmdstan Bug #1257, id is wrong so we need to assume it's id..N
   # Since cmdstan and cmdstanr assume file ids are sequential this should be fine
   if (length(csv_metadata) > 1) {
-    id_vals = id + 2:length(csv_metadata)
+    id_vals = id + 1:length(csv_metadata)
     for (file_id in 2:length(csv_metadata)) {
       file_metadata <- csv_metadata[[file_id]]
       id <- id_vals[file_id - 1]

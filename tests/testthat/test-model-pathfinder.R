@@ -1,6 +1,6 @@
 context("model-pathfinder")
 
-set_cmdstan_path("/home/sbronder/open_source/stan/origin/cmdstan")
+set_cmdstan_path()
 
 stan_program <- testing_stan_file("bernoulli")
 

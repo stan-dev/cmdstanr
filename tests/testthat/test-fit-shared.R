@@ -37,8 +37,8 @@ test_that("saving csv output files works", {
     expect_true(all(file.size(paths) > 0))
 
     should_match <- paste0("testing-output-",
-                           base::format(Sys.time(), "%Y%m%d%H%M"),
-                           "-",
+                           base::format(Sys.time(), "%Y%m%d%H%M"), "-",
+                           gsub("_[0-9].csv", "", gsub(".*-", replacement = "", paths)), "_",
                            seq_len(fit$num_procs()))
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
@@ -72,8 +72,8 @@ test_that("saving diagnostic csv output works", {
     expect_true(all(file.size(paths) > 0))
 
     should_match <- paste0("testing-output-diagnostic-",
-                           base::format(Sys.time(), "%Y%m%d%H%M"),
-                           "-",
+                           base::format(Sys.time(), "%Y%m%d%H%M"), "-",
+                           gsub("_[0-9].csv", "", gsub(".*-", replacement = "", paths)), "_",
                            seq_len(fit$num_procs()))
 
     for (j in seq_along(paths)) {
@@ -212,11 +212,11 @@ test_that("return_codes method works properly", {
   expect_equal(fits[["variational"]]$return_codes(), 0)
   expect_equal(fits[["optimize"]]$return_codes(), 0)
   expect_equal(fits[["laplace"]]$return_codes(), 0)
-  expect_equal(fits[["sample"]]$return_codes(), c(0,0,0,0))
+  expect_equal(fits[["sample"]]$return_codes(), 0)
   expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
 
   # non-zero
-  non_zero <- testing_fit("schools", method = "optimize", seed = 123)
+  utils::capture.output(non_zero <- testing_fit("schools", method = "optimize", seed = 123))
   expect_gt(non_zero$return_codes(), 0)
 })
 
@@ -455,7 +455,7 @@ test_that("sampling with inits works with include_paths", {
     file.remove(exe)
   }
 
-    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = FALSE,
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = FALSE,
                                    include_paths = test_path("resources", "stan"))
 
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
@@ -464,10 +464,12 @@ test_that("sampling with inits works with include_paths", {
     data = data_list,
     seed = 123,
     chains = 4,
-    parallel_chains = 4,
+    threads = 4,
     refresh = 500,
     init = list(list(theta = 0.25), list(theta = 0.25), list(theta = 0.25), list(theta = 0.25))
   )
+  # This is to check if the above throws so if no error give success
+  expect_true(TRUE)
 })
 
 test_that("CmdStanModel created with exe_file works", {
@@ -553,3 +555,4 @@ test_that("code() warns if model not created with Stan file", {
     fixed = TRUE
   )
 })
+

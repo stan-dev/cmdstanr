@@ -249,6 +249,9 @@ SampleArgs <- R6::R6Class(
                           fixed_param = FALSE,
                           diagnostics = NULL,
                           chains = NULL) {
+      if (is.null(chains)) {
+        chains <- 1
+      }
       self$chains <- chains
       self$iter_warmup <- iter_warmup
       self$iter_sampling <- iter_sampling

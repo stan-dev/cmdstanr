@@ -44,15 +44,20 @@ expect_no_recompilation <- function(mod, ...) {
   invisible(mod)
 }
 
-expect_sample_output <- function(object, num_chains = NULL) {
+expect_sample_output <- function(object, num_chains = NULL, threads = 1) {
 
   output <- "Running MCMC with"
   if (!is.null(num_chains)) {
     if (num_chains == 1) {
       output <- paste(output, num_chains, "chain")
     } else {
-      output <- paste(output, num_chains, "sequential chain")
+      output <- paste(output, num_chains, "chains")
     }
+  }
+  if (threads == 1) {
+    output <- paste(output, "and", threads, "thread")
+  } else {
+    output <- paste(output, "and", threads, "threads")
   }
   expect_output(object, output)
 }
