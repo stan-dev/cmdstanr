@@ -1743,6 +1743,9 @@ inv_metric <- function(matrix = TRUE) {
   if (matrix && !is.matrix(out[[1]])) {
     # convert each vector to a diagonal matrix
     out <- lapply(out, diag)
+  } else if (length(out[[1]]) == 1) {
+    # convert each scalar to a 1x1 matrix
+    out <- lapply(out, array, dim = c(1))
   }
   out
 }
