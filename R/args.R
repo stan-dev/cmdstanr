@@ -1,12 +1,16 @@
 # CmdStanArgs -------------------------------------------------------------
 
 get_num_inner_processes <- function(args) {
+  x <- NULL
   if (inherits(args, "SampleArgs")) {
-    return(args$chains)
+    x <- args$chains
   } else if (inherits(args, "PathfinderArgs")) {
-    return(args$num_paths)
+    x <- args$num_paths
   } else if (inherits(args, "GenerateQuantitiesArgs")) {
-    return(length(args$fitted_params))
+    x <- length(args$fitted_params)
+  }
+  if (!is.null(x)) {
+    return(x)
   } else {
     return(1)
   }
@@ -1056,10 +1060,43 @@ process_init <- function(...) {
   UseMethod("process_init")
 }
 
-process_init.default <- function(init, num_procs, model_variables = NULL,
-                                   warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
-  return(init)
+process_init.default <- function(x, ...) {
+  return(x)
 }
+
+#' Write initial values to files if provided as list of lists
+#' @noRd
+#' @param init List of init lists.
+#' @param num_procs Number of CmdStan processes.
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
+process_init.draws <- function(init, num_procs, model_variables = NULL,
+                        warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+  if (!is.null(model_variables)) {
+    variable_names = names(model_variables$parameters)
+  } else {
+    variable_names = colnames(draws)[!grepl("__", colnames(draws))]
+  }
+  draws <- posterior::subset_draws(init, variable = variable_names)
+  draws <- posterior::resample_draws(draws, ndraws = num_procs,
+    method ="simple_no_replace")
+  draws_rvar = posterior::as_draws_rvars(draws)
+  inits = lapply(1:num_procs, \(draw_iter) {
+    init_i = lapply(variable_names, \(var_name) {
+      x = drop(posterior::draws_of(drop(
+        posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
+      return(x)
+    })
+    names(init_i) = variable_names
+    return(init_i)
+  })
+  return(process_init(inits, num_procs, model_variables, warn_partial))
+}
+
 #' Write initial values to files if provided as list of lists
 #' @noRd
 #' @param init List of init lists.
@@ -1164,13 +1201,13 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
   process_init(init_list, num_procs, model_variables)
 }
 
-as_inits <- function(init_draws, model_variables, num_procs) {
+draws_to_list_of_lists <- function(init_draws, model_variables, num_procs) {
   num_draws <- min(posterior::ndraws(init_draws), num_procs)
   variable_names = names(model_variables$parameters)
   draws_rvar = posterior::as_draws_rvars(init_draws)
-  inits = lapply(1:num_draws, \(drawid) {
+  inits = lapply(1:num_draws, \(draw_iter) {
     init_i = lapply(variable_names, \(var_name) {
-      x = drop(posterior::draws_of(drop(posterior::subset_draws(draws_rvar[[var_name]], draw=drawid))))
+      x = drop(posterior::draws_of(drop(posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
       return(x)
     })
     names(init_i) = variable_names
@@ -1191,8 +1228,10 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
   if (is.null(model_variables)) {
     model_variables = colnames(draws_df)[3:(length(colnames(draws_df)) - 4)]
   }
-  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs, method = "simple_no_replace")
-  init_draws_lst = process_init(as_inits(init_draws_df, model_variables = model_variables, num_procs = num_procs), num_procs = num_procs, model_variables = model_variables)
+  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
+    method = "simple_no_replace")
+  init_draws_lst = process_init(init_draws_df,
+    num_procs = num_procs, model_variables = model_variables)
   return(init_draws_lst)
 }
 
@@ -1225,14 +1264,19 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
     draws_df$pareto_weight = exp(draws_df$lw - max(draws_df$lw))
   } else {
     # Compute Pareto smoothed weights
-    pareto_weights = posterior::pareto_smooth(exp(draws_df$lw - max(draws_df$lw)), tail = "right")[["x"]]
+    pareto_weights = posterior::pareto_smooth(exp(draws_df$lw - max(draws_df$lw)),
+      tail = "right")[["x"]]
     draws_df$pareto_weight = pareto_weights
   }
 
   # Use the 'posterior' package functions with a data.frame
-  weight_init_draws_df = posterior::weight_draws(posterior::as_draws_df(draws_df), weights = draws_df$pareto_weight, log = FALSE)
-  init_draws_df = posterior::resample_draws(weight_init_draws_df, ndraws = num_procs, method = "simple_no_replace")
-  init_draws_lst = process_init(as_inits(init_draws_df, model_variables = model_variables, num_procs = num_procs), num_procs = num_procs, model_variables = model_variables, warn_partial)
+  weight_init_draws_df = posterior::weight_draws(
+    posterior::as_draws_df(draws_df),
+    weights = draws_df$pareto_weight, log = FALSE)
+  init_draws_df = posterior::resample_draws(weight_init_draws_df,
+    ndraws = num_procs, method = "simple_no_replace")
+  init_draws_lst = process_init(init_draws_df,
+    num_procs = num_procs, model_variables = model_variables, warn_partial)
   return(init_draws_lst)
 }
 
@@ -1264,9 +1308,11 @@ process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
   if (is.null(model_variables)) {
     model_variables = colnames(draws_df)[3:(length(colnames(draws_df)) - 4)]
   }
-  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs, method = "simple")
-  init_draws_lst = process_init(as_inits(init_draws_df, model_variables = model_variables, num_procs = num_procs), num_procs = num_procs, model_variables = model_variables, warn_partial)
-  return(init_draws_lst)
+  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
+    method = "simple")
+  init_draws_lst_lst = process_init(init_draws_df,
+    num_procs = num_procs, model_variables = model_variables, warn_partial)
+  return(init_draws_lst_lst)
 }
 
 
