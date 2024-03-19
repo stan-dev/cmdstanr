@@ -216,7 +216,7 @@ test_that("return_codes method works properly", {
   expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
 
   # non-zero
-  utils::capture.output(non_zero <- testing_fit("schools", method = "optimize", seed = 123))
+  utils::capture.output(suppressWarnings(non_zero <- testing_fit("schools", method = "optimize", seed = 123)))
   expect_gt(non_zero$return_codes(), 0)
 })
 

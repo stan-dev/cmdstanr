@@ -88,7 +88,7 @@ test_that("generate_quantities works with VB and draws_matrix", {
 
 test_that("generate_quantities() warns if threads specified but not enabled", {
   expect_warning(
-    expect_gq_output(fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit, threads_per_chain = 4)),
+    expect_gq_output(fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit, threads = 4)),
     "'threads_per_chain' will have no effect"
   )
 })

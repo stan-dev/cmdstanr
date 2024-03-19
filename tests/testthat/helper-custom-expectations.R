@@ -83,14 +83,21 @@ expect_vb_output <- function(object) {
   )
 }
 
-expect_gq_output <- function(object, num_chains = NULL) {
+expect_gq_output <- function(object, num_chains = NULL, num_threads = NULL) {
 
-  output <- "Running standalone generated quantities after "
+  output <- "Running standalone generated quantities with "
   if (!is.null(num_chains)) {
     if (num_chains == 1) {
       output <- paste(output, num_chains, "chain")
     } else {
-      output <- paste(output, num_chains, "sequential chain")
+      output <- paste(output, num_chains, "4 chains")
+    }
+  }
+  if (!is.null(num_threads)) {
+    if (num_threads == 1) {
+      output <- paste(output, num_threads, "thread")
+    } else {
+      output <- paste(output, num_threads, "threads")
     }
   }
   expect_output(object, output)
