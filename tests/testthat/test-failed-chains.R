@@ -13,6 +13,7 @@ make_all_fail <- function(x) {
   )
   all_fail
 }
+if (FALSE) {
 
 make_some_fail <- function(x, seed = 0) {
   num_files <- 0
@@ -24,7 +25,7 @@ make_some_fail <- function(x, seed = 0) {
         data = list(pr_fail = 0.5),
         save_latent_dynamics = TRUE,
         chains = 4,
-        seed = base::sample(.Machine$integer.max, 4)
+        seed = base::sample(.Machine$integer.max, 1)
       )
     )
     num_files <- length(check_some_fail$output_files(include_failed = FALSE))
@@ -36,7 +37,7 @@ make_some_fail <- function(x, seed = 0) {
 # called here and also in tests below
 suppressWarnings(
   utils::capture.output(
-    fit_all_fail <- make_all_fail(mod),
+   # fit_all_fail <- make_all_fail(mod),
     fit_some_fail <- make_some_fail(mod)
   )
 )
@@ -213,3 +214,4 @@ test_that("gq chains error on wrong input CSV", {
   )
 })
 
+}

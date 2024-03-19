@@ -1429,7 +1429,7 @@ validate_seed <- function(seed, num_procs) {
   }
   checkmate::assert_integerish(seed, lower = lower_seed)
   if (length(seed) > 1 && length(seed) != num_procs) {
-    stop("If 'seed' is specified it must be a single integer or one per chain.",
+    stop("If 'seed' is specified it must be a single integer or one per generated quantities chain.",
       call. = FALSE)
   }
   invisible(TRUE)
