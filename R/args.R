@@ -1,5 +1,7 @@
 # CmdStanArgs -------------------------------------------------------------
 
+#' Returns the number of inner processes for a given method
+#' @param args An args object
 get_num_inner_processes <- function(args) {
   x <- NULL
   if (inherits(args, "SampleArgs")) {
@@ -91,7 +93,7 @@ CmdStanArgs <- R6::R6Class(
           self$output_dir <- output_dir %||% tempdir(check = TRUE)
         }
       }
-      num_inner_processes <- get_num_inner_processes(method_args)
+      num_inner_processes <- self$num_inner_processes()
       self$output_dir <- repair_path(self$output_dir)
       self$output_basename <- output_basename
       init <- process_init(init, num_inner_processes, model_variables)
@@ -115,8 +117,11 @@ CmdStanArgs <- R6::R6Class(
         self$init <- absolute_path(self$init)
       }
       self$init <- maybe_recycle_init(self$init, length(self$proc_ids))
-      self$seed <- maybe_generate_seed(self$seed, get_num_inner_processes(self$method_args))
+      self$seed <- maybe_generate_seed(self$seed, self$num_inner_processes())
       invisible(self)
+    },
+    num_inner_processes = function() {
+      return(get_num_inner_processes(self$method_args))
     },
 
     new_file_names = function(type = c("output", "diagnostic", "profile")) {
@@ -131,7 +136,7 @@ CmdStanArgs <- R6::R6Class(
         basename <- self$output_basename
       }
       if (type %in% c("output", "diagnostic")) {
-        id_vals = seq_len(get_num_inner_processes(self$method_args))
+        id_vals = seq_len(self$num_inner_processes())
       } else {
         id_vals = NULL
       }
@@ -142,7 +147,7 @@ CmdStanArgs <- R6::R6Class(
         timestamp = is.null(self$output_basename),
         random = is.null(self$output_basename)
       )
-      # TODO: This is lazy, make a `generate_base_file_name` function
+      # Strip off "." at end of file name
       new_base_name = strtrim(new_base_name, nchar(new_base_name) - 1)
       if (is.null(id_vals)) {
         sep = ""
@@ -285,7 +290,6 @@ SampleArgs <- R6::R6Class(
         }
 
         # write all inv_metrics to disk
-        # FIXME: Update for all standard metrics
         inv_metric_paths <-
           tempfile(
             pattern = paste0("inv_metric-", seq_along(inv_metric), "-"),
@@ -728,9 +732,15 @@ validate_cmdstan_args <- function(self) {
     assert_file_exists(self$data_file, access = "r")
   }
 
-  num_procs <- get_num_inner_processes(self$method_args)
-  validate_init(self$init, num_procs)
-  validate_seed(self$seed)
+  num_inner_procs <- self$num_inner_processes()
+  # GQ is the only method that still dispatches multiple processes
+  if (inherits(self$method_args, "GenerateQuantitiesArgs")) {
+    num_procs <- length(self$method_args$fixed_params)
+  } else {
+    num_procs <- 1
+  }
+  validate_init(self$init, num_inner_procs)
+  validate_seed(self$seed, num_procs)
   if (!is.null(self$opencl_ids)) {
     if (cmdstan_version() < "2.26") {
       stop("Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer.", call. = FALSE)
@@ -1056,18 +1066,22 @@ validate_exe_file <- function(exe_file) {
   invisible(TRUE)
 }
 
+#' Generic for processing inits
+#' @noRd
 process_init <- function(...) {
   UseMethod("process_init")
 }
 
+#' Default method
+#' @noRd
 process_init.default <- function(x, ...) {
   return(x)
 }
 
-#' Write initial values to files if provided as list of lists
+#' Write initial values to files if provided as posterior `draws` object
 #' @noRd
-#' @param init List of init lists.
-#' @param num_procs Number of CmdStan processes.
+#' @param init A type that inherits the `posterior::draws` class.
+#' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
 #' @param warn_partial Should a warning be thrown if inits are only specified
@@ -1100,7 +1114,7 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
 #' Write initial values to files if provided as list of lists
 #' @noRd
 #' @param init List of init lists.
-#' @param num_procs Number of CmdStan processes.
+#' @param num_procs Number of inits needed.
 #' @param model_variables  A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
 #' @param warn_partial Should a warning be thrown if inits are only specified
@@ -1160,7 +1174,6 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
       "and specify initial values for the entire parameter container.",
       call. = FALSE)
   }
-  # TODO: Modify fileext for _
   init_paths <-
     tempfile(
       pattern = "init-",
@@ -1177,7 +1190,7 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
 #' Write initial values to files if provided as function
 #' @noRd
 #' @param init Function generating a single list of initial values.
-#' @param num_procs Number of CmdStan processes.
+#' @param num_procs Number of inits needed.
 #' @param model_variables A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
 #' @return A character vector of file paths.
@@ -1201,21 +1214,16 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
   process_init(init_list, num_procs, model_variables)
 }
 
-draws_to_list_of_lists <- function(init_draws, model_variables, num_procs) {
-  num_draws <- min(posterior::ndraws(init_draws), num_procs)
-  variable_names = names(model_variables$parameters)
-  draws_rvar = posterior::as_draws_rvars(init_draws)
-  inits = lapply(1:num_draws, \(draw_iter) {
-    init_i = lapply(variable_names, \(var_name) {
-      x = drop(posterior::draws_of(drop(posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
-      return(x)
-    })
-    names(init_i) = variable_names
-    return(init_i)
-  })
-  return(inits)
-}
-
+#' Write initial values to files if provided as a `CmdStanMCMC` class
+#' @noRd
+#' @param init A `CmdStanMCMC` class
+#' @param num_procs Number of inits requested
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
 process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
                                            warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   # Convert from data.table to data.frame
@@ -1226,7 +1234,7 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
   }
   draws_df = init$draws(format = "df")
   if (is.null(model_variables)) {
-    model_variables = colnames(draws_df)[3:(length(colnames(draws_df)) - 4)]
+    model_variables = list(parameters = colnames(draws_df)[2:(length(colnames(draws_df)) - 3)])
   }
   init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
     method = "simple_no_replace")
@@ -1235,6 +1243,16 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
   return(init_draws_lst)
 }
 
+#' Performs PSIS resampling on the draws from an approxmation method for inits.
+#' @noRd
+#' @param init A set of draws with `lp__` and `lp_approx__` columns.
+#' @param num_procs Number of inits requested
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
 process_init_approx <- function(init, num_procs, model_variables = NULL,
                                            warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   # Convert from data.table to data.frame
@@ -1243,59 +1261,88 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   } else if (!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
     stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
   }
-
-  draws_df = as.data.frame(init$draws(format = "df"))
+  draws_df = init$draws(format = "df")
   if (is.null(model_variables)) {
-    model_variables = colnames(draws_df)[3:(length(colnames(draws_df)) - 4)]
+    model_variables = list(parameters = colnames(draws_df)[3:(length(colnames(draws_df)) - 3)])
   }
-  # Add a new column 'lw' to the data.frame
   draws_df$lw = draws_df$lp__ - draws_df$lp_approx__
-
   # Calculate unique draws based on 'lw' using base R functions
   unique_draws = length(unique(draws_df$lw))
   if (num_procs > unique_draws) {
     stop(paste0("Not enough distinct draws (", num_procs, ") to create inits."))
   }
-
   if (unique_draws < (0.95 * nrow(draws_df))) {
-    # Compute weights for distinct draws
     temp_df = aggregate(.draw ~ lw, data = draws_df, FUN = min)
-    draws_df = merge(temp_df, draws_df, by = 'lw')
+    draws_df = posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
     draws_df$pareto_weight = exp(draws_df$lw - max(draws_df$lw))
   } else {
-    # Compute Pareto smoothed weights
-    pareto_weights = posterior::pareto_smooth(exp(draws_df$lw - max(draws_df$lw)),
-      tail = "right")[["x"]]
-    draws_df$pareto_weight = pareto_weights
+    draws_df$pareto_weight = posterior::pareto_smooth(
+      exp(draws_df$lw - max(draws_df$lw)), tail = "right")[["x"]]
   }
-
-  # Use the 'posterior' package functions with a data.frame
-  weight_init_draws_df = posterior::weight_draws(
-    posterior::as_draws_df(draws_df),
-    weights = draws_df$pareto_weight, log = FALSE)
-  init_draws_df = posterior::resample_draws(weight_init_draws_df,
-    ndraws = num_procs, method = "simple_no_replace")
+  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
+    weights = draws_df$pareto_weight, method = "simple_no_replace")
   init_draws_lst = process_init(init_draws_df,
     num_procs = num_procs, model_variables = model_variables, warn_partial)
   return(init_draws_lst)
 }
 
+
+#' Write initial values to files if provided as a `CmdStanPathfinder` class
+#' @noRd
+#' @param init A `CmdStanPathfinder` class
+#' @param num_procs Number of inits requested
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
 process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NULL,
                                            warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
 }
 
+#' Write initial values to files if provided as a `CmdStanVB` class
+#' @noRd
+#' @param init A `CmdStanVB` class
+#' @param num_procs Number of inits requested
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
 process_init.CmdStanVB <- function(init, num_procs, model_variables = NULL,
                                            warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
 }
 
+#' Write initial values to files if provided as a `CmdStanLaplace` class
+#' @noRd
+#' @param init A `CmdStanLaplace` class
+#' @param num_procs Number of inits requested
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
 process_init.CmdStanLaplace <- function(init, num_procs, model_variables = NULL,
                                         warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
 }
 
 
+#' Write initial values to files if provided as a `CmdStanMLE` class
+#' @noRd
+#' @param init A `CmdStanMLE` class
+#' @param num_procs Number of inits requested
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of model$variables().
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
 process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
                                         warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   # Convert from data.table to data.frame
@@ -1306,7 +1353,7 @@ process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
   }
   draws_df = init$draws(format = "df")
   if (is.null(model_variables)) {
-    model_variables = colnames(draws_df)[3:(length(colnames(draws_df)) - 4)]
+    model_variables = list(parameters = colnames(draws_df)[2:(length(colnames(draws_df)) - 3)])
   }
   init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
     method = "simple")
@@ -1371,7 +1418,7 @@ maybe_recycle_init <- function(init, num_procs) {
 #' @param seed User's `seed` argument.
 #' @param num_procs Number of CmdStan processes (number of chains if MCMC)
 #' @return Either throws an error or returns `invisible(TRUE)`.
-validate_seed <- function(seed) {
+validate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
     return(invisible(TRUE))
   }
@@ -1381,6 +1428,10 @@ validate_seed <- function(seed) {
     lower_seed <- 0
   }
   checkmate::assert_integerish(seed, lower = lower_seed)
+  if (length(seed) > 1 && length(seed) != num_procs) {
+    stop("If 'seed' is specified it must be a single integer or one per chain.",
+      call. = FALSE)
+  }
   invisible(TRUE)
 }
 

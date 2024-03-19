@@ -23,18 +23,16 @@ make_some_fail <- function(x, seed = 0) {
       check_some_fail <- mod$sample(
         data = list(pr_fail = 0.5),
         save_latent_dynamics = TRUE,
+        chains = 4,
         seed = base::sample(.Machine$integer.max, 4)
       )
     )
-    print(paste0("num_files: ", num_files))
     num_files <- length(check_some_fail$output_files(include_failed = FALSE))
-    print(paste0("Attempt: ", attempt))
     attempt <- attempt + 1
   }
   check_some_fail
 }
-# Turn these off for now
-if (FALSE) {
+
 # called here and also in tests below
 suppressWarnings(
   utils::capture.output(
@@ -215,5 +213,3 @@ test_that("gq chains error on wrong input CSV", {
   )
 })
 
-
-}

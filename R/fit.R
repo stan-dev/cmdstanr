@@ -40,7 +40,7 @@ CmdStanFit <- R6::R6Class(
       invisible(self)
     },
     num_procs = function() {
-      get_num_inner_processes(self$runset$args$method_args)
+      self$runset$args$num_inner_processes()
     },
     print = function(variables = NULL, ..., digits = 2, max_rows = getOption("cmdstanr_max_rows", 10)) {
       if (is.null(private$draws_) &&

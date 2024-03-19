@@ -2076,7 +2076,8 @@ generate_quantities <- function(fitted_params,
   fitted_params_files <- process_fitted_params(fitted_params)
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
-    parallel_procs = parallel_chains
+    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1,
+      null.ok = TRUE)
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {

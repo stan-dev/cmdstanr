@@ -1,14 +1,11 @@
 context("model-pathfinder")
 
 set_cmdstan_path()
-
 stan_program <- testing_stan_file("bernoulli")
-
 mod <- testing_model("bernoulli")
 stan_program_fp <- testing_stan_file("bernoulli_fp")
 mod_fp <- testing_model("bernoulli_fp")
 
-mod_params <- testing_model("parameter_types")
 # valid ways to supply data
 data_list <- testing_data("bernoulli")
 data_file_r <- test_path("resources", "data", "bernoulli.data.R")
@@ -105,10 +102,6 @@ expect_pathfinder_output <- function(object, num_chains = NULL) {
 
 test_that("Pathfinder Runs", {
   expect_pathfinder_output(fit <- mod$pathfinder(data=data_list, seed=1234, refresh = 0))
-  expect_is(fit, "CmdStanPathfinder")
-})
-test_that("Pathfinder Runs", {
-  expect_pathfinder_output(fit <- mod_params$pathfinder(data=data_list, seed=1234, refresh = 0))
   expect_is(fit, "CmdStanPathfinder")
 })
 

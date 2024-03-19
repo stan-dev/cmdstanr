@@ -1,5 +1,8 @@
 # CmdStanRun --------------------------------------------------------------
 
+#' Parse a file from end to beginning looking for the elapsed time.
+#' @param file A file path.
+#' @return A list of numeric warmup, sampling, and total times.
 .sample_file_time = function(file) {
   bufferSize <- 256
   size <- file.info(file)$size
@@ -54,7 +57,9 @@ CmdStanRun <- R6::R6Class(
       self$procs <- procs
       output_files = self$new_output_files()
       private$output_file_base_ = output_files[[1]]
-      if ((args$method_args$method == "sample" && args$method_args$chains > 1) || args$method_args$method == "generate_quantities") {
+      # For these the output file names end in _1
+      if (inherits(args$method_args, c("SampleArgs", "GenerateQuantitiesArgs")) &&
+          args$num_inner_processes() > 1) {
           private$output_files_ <- output_files[[2]]
       } else {
         private$output_files_ <- output_files[[1]]
@@ -65,8 +70,9 @@ CmdStanRun <- R6::R6Class(
       if (self$args$save_latent_dynamics) {
         latent_dynamics_files = self$new_latent_dynamics_files()
         private$latent_dynamics_file_base_ <- latent_dynamics_files[[1]]
-        if ((args$method_args$method == "sample" && args$method_args$chains > 1) || args$method_args$method == "generate_quantities" ||
-            args$method == "pathfinder" && args$method_args$num_paths > 1) {
+        if (inherits(args$method_args,
+          c("SampleArgs", "GenerateQuantitiesArgs")) &&
+            args$num_inner_processes() > 1) {
           private$latent_dynamics_files_ <- latent_dynamics_files[[2]]
         } else {
           private$latent_dynamics_files_ <- latent_dynamics_files[[1]]
@@ -114,7 +120,7 @@ CmdStanRun <- R6::R6Class(
       if (include_failed) {
         private$latent_dynamics_files_
       } else {
-        # FIXME: I'm not sure what to do when chains fail since they are all in one chain?
+        # FIXME: I'm not sure what to do when chains fail since they are all in one file?
 #        ok <- self$procs$is_finished() | self$procs$is_queued()
         private$latent_dynamics_files_
       }
@@ -152,7 +158,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
-        ids = seq_len(get_num_inner_processes(self$args$method_args)),
+        ids = seq_len(self$args$num_inner_processes()),
         ext = ".csv",
         timestamp = timestamp,
         random = random
@@ -177,7 +183,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
-        ids = seq_len(get_num_inner_processes(self$args$method_args)),
+        ids = seq_len(self$args$num_inner_processes()),
         ext = ".csv",
         timestamp = timestamp,
         random = random
@@ -241,17 +247,16 @@ CmdStanRun <- R6::R6Class(
     },
 
     command = function() self$args$command(),
-    command_args = function(id = 0) {
-        # create a list of character vectors (one per run/chain) of cmdstan arguments
-        if (id == 0) {
-          output_file = private$output_file_base_
-          latent_dynamic_file = private$latent_dynamics_file_base_
-        } else {
-          output_file = private$output_files_[id]
-          latent_dynamic_file = private$latent_dynamics_files_[id]
-        }
+    command_args = function(id = 1) {
+      # create a list of character vectors (one per run/chain) of cmdstan arguments
+      if (inherits(self$args$method_args, "GenerateQuantitiesArgs")) {
+        output_file = private$output_files_[id]
+        latent_dynamic_file = private$latent_dynamics_files_[id]
+      } else {
+        output_file = private$output_file_base_
+        latent_dynamic_file = private$latent_dynamics_file_base_
+      }
       # Cmdstan Bug, once idx is respected for multiple chains make this the actual id
-      id = 1
       private$command_args_ <- self$args$compose_all_args(
             idx = id,
             output_file = output_file,
@@ -321,7 +326,7 @@ CmdStanRun <- R6::R6Class(
         time <- list(total = self$procs$total_time(), chains = chain_time)
       } else {
         if (self$procs$is_finished() == 1) {
-          chain_ids <- seq_len(get_num_inner_processes(self$args$method_args))
+          chain_ids <- seq_len(self$args$num_inner_processes())
           output_files = self$output_files(include_failed = TRUE)
           output_times = lapply(output_files, .sample_file_time)
           chain_time <- data.frame(
@@ -437,8 +442,6 @@ check_target_exe <- function(exe) {
     Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
   }
   start_time <- Sys.time()
-  chains <- self$args$method_args$chains
-  chain_ind <- 1
   chain_id <- 1
   while (!all(procs$is_finished() | procs$is_failed())) {
     procs$new_proc(
