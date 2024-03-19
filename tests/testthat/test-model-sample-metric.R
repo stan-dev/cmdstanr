@@ -54,6 +54,42 @@ test_that("sample() method works with provided inv_metrics", {
 })
 
 
+test_that("sample() method works with inv_metrics extracted from previous fit", {
+  expect_sample_output(fit_r <- mod$sample(data = data_list,
+                                           chains = 2,
+                                           seed = 123))
+  inv_metric_vector <- fit_r$inv_metric(matrix = FALSE)
+  inv_metric_matrix <- fit_r$inv_metric()
+
+  expect_equal(dim(inv_metric_vector[[1]]), 1)
+  expect_equal(dim(inv_metric_matrix[[1]]), c(1, 1))
+
+  expect_silent(expect_sample_output(fit_r <- mod$sample(data = data_list,
+                                           chains = 1,
+                                           metric = "diag_e",
+                                           inv_metric = inv_metric_vector[[1]],
+                                           seed = 123)))
+
+  expect_silent(expect_sample_output(fit_r <- mod$sample(data = data_list,
+                                           chains = 1,
+                                           metric = "dense_e",
+                                           inv_metric = inv_metric_matrix[[1]],
+                                           seed = 123)))
+
+  expect_silent(expect_sample_output(fit_r <- mod$sample(data = data_list,
+                                           chains = 2,
+                                           metric = "diag_e",
+                                           inv_metric = inv_metric_vector,
+                                           seed = 123)))
+
+  expect_silent(expect_sample_output(fit_r <- mod$sample(data = data_list,
+                                           chains = 2,
+                                           metric = "dense_e",
+                                           inv_metric = inv_metric_matrix,
+                                           seed = 123)))
+})
+
+
 test_that("sample() method works with lists of inv_metrics", {
   inv_metric_vector <- array(1, dim = c(1))
   inv_metric_vector_json <- test_path("resources", "metric", "bernoulli.inv_metric.diag_e.json")
