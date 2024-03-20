@@ -85,11 +85,14 @@ values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
 Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
 
-\item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
-to run in parallel. If \code{parallel_chains} is not specified then the default
-is to look for the option \code{"mc.cores"}, which can be set for an entire \R
-session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
-been set then the default is \code{1}.}
+\item{parallel_chains}{(positive integer) Deprecated. Please use the \code{chains}
+argument instead.}
+
+\item{threads}{(positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when for multiple chains
+running in parallel and for using the Stan functions
+\code{reduce_sum()} or \code{map_rect()}).}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and
 device IDs of the OpenCL device to use for fitting. The model must

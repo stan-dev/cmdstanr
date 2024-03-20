@@ -7,3 +7,5 @@
 inst/doc
 dev-helpers.R
 release-prep.R
+/doc/
+/Meta/

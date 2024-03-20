@@ -11,7 +11,7 @@ compile(
   pedantic = FALSE,
   include_paths = NULL,
   user_header = NULL,
-  cpp_options = list(),
+  cpp_options = list(stan_threads = os_use_single_process()),
   stanc_options = list(),
   force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   compile_model_methods = FALSE,

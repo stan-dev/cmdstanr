@@ -927,6 +927,7 @@ unrepair_variable_names <- function(names) {
   names
 }
 
+#' @export
 remaining_columns_to_read <- function(requested, currently_read, all) {
   if (is.null(requested)) {
     if (is.null(all)) {

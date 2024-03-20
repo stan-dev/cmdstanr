@@ -159,7 +159,7 @@ fit <- mod$sample(
   data = data_list,
   seed = 123,
   chains = 4,
-  parallel_chains = 4,
+  threads = 4,
   refresh = 500 # print update every 500 iters
 )
 ```

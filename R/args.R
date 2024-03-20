@@ -1446,7 +1446,7 @@ validate_seed <- function(seed, num_procs) {
 #' @return An integer vector of length `num_procs`.
 maybe_generate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
-    seed <- base::sample(.Machine$integer.max, 1)
+    seed <- base::sample(.Machine$integer.max, num_procs)
   } else if (length(seed) == 1 && num_procs > 1) {
     seed <- rep(as.integer(seed), num_procs)
   } else if (length(seed) != num_procs) {

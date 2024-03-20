@@ -63,7 +63,7 @@
 #'   data = stan_data,
 #'   seed = 123,
 #'   chains = 2,
-#'   parallel_chains = 2
+#'   threads = 2
 #' )
 #'
 #' # Use 'posterior' package for summaries
@@ -341,6 +341,9 @@ CmdStanModel <- R6::R6Class(
               "- ", new_hpp_loc)
       private$hpp_file_ <- new_hpp_loc
       invisible(private$hpp_file_)
+    },
+    threads_enabled = function() {
+      return(as.logical(private$cpp_options_[["STAN_THREADS"]]))
     }
   )
 )
@@ -414,7 +417,6 @@ CmdStanModel <- R6::R6Class(
 #'   [`$expose_functions()`][model-method-expose_functions] method.
 #' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
 #'   but skip the actual C++ compilation. Used to speedup tests.
-#'
 #' @param threads Deprecated and will be removed in a future release. Please
 #'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
@@ -461,7 +463,7 @@ compile <- function(quiet = TRUE,
                     pedantic = FALSE,
                     include_paths = NULL,
                     user_header = NULL,
-                    cpp_options = list(),
+                    cpp_options = list(stan_threads = os_use_single_process()),
                     stanc_options = list(),
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
@@ -1218,9 +1220,19 @@ sample <- function(data = NULL,
   if (fixed_param) {
     save_warmup <- FALSE
   }
+  if (self$threads_enabled()) {
+    num_procs = 1
+    parallel_procs = 1
+    threads_per_proc = threads
+  } else {
+    num_procs = chains
+    parallel_procs = chains
+    threads_per_proc = as.integer(threads / chains)
+  }
   procs <- CmdStanMCMCProcs$new(
-    num_procs = 1,
-    parallel_procs = 1,
+    num_procs = num_procs,
+    parallel_procs = parallel_procs,
+    threads_per_proc = assert_valid_threads(threads_per_proc, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -1266,7 +1278,7 @@ sample <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    threads = threads
+    threads = threads_per_proc
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1382,9 +1394,19 @@ sample_mpi <- function(data = NULL,
     chains <- 1
     save_warmup <- FALSE
   }
+  if (self$threads_enabled()) {
+    num_procs = 1
+    parallel_procs = 1
+    threads_per_proc = threads
+  } else {
+    num_procs = chains
+    parallel_procs = chains
+    threads_per_proc = as.integer(threads / num_chains)
+  }
   procs <- CmdStanMCMCProcs$new(
-    num_procs = 1,
-    parallel_procs = 1,
+    num_procs = num_procs,
+    parallel_procs = parallel_procs,
+    threads_per_proc = assert_valid_threads(threads_per_proc, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -1455,10 +1477,6 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   metadata of an example model, e.g.,
 #'   `cmdstanr_example(method="optimize")$metadata()`.
 #' @template model-common-args
-#' @param threads (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`).
 #' @param iter (positive integer) The maximum number of iterations.
 #' @param algorithm (string) The optimization algorithm. One of `"lbfgs"`,
 #'   `"bfgs"`, or `"newton"`. The control parameters below are only available
@@ -1509,8 +1527,12 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE) {
+  if (self$threads_enabled() && is.null(threads)) {
+    threads <- 1
+  }
   procs <- CmdStanProcs$new(
     num_procs = 1,
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -1579,7 +1601,6 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'   installed version of CmdStan.
 #'
 #' @template model-common-args
-#' @inheritParams model-method-optimize
 #' @param save_latent_dynamics Ignored for this method.
 #' @param mode (multiple options) The mode to center the approximation at. One
 #'   of the following:
@@ -1647,8 +1668,12 @@ laplace <- function(data = NULL,
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
   }
+  if (self$threads_enabled() && is.null(threads)) {
+    threads <- 1
+  }
   procs <- CmdStanProcs$new(
     num_procs = 1,
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -1743,10 +1768,6 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #'   installed version of CmdStan.
 #'
 #' @template model-common-args
-#' @param threads (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections (e.g., when using the Stan
-#'   functions `reduce_sum()` or `map_rect()`).
 #' @param algorithm (string) The algorithm. Either `"meanfield"` or
 #'   `"fullrank"`.
 #' @param iter (positive integer) The _maximum_ number of iterations.
@@ -1869,10 +1890,6 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   installed version of CmdStan
 #'
 #' @template model-common-args
-#' @param num_threads (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections (e.g., for multi-path pathfinder
-#'   as well as `reduce_sum`).
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1938,8 +1955,12 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE) {
+  if (self$threads_enabled() && is.null(threads)) {
+    threads <- 1
+  }
   procs <- CmdStanProcs$new(
     num_procs = 1,
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -2074,10 +2095,14 @@ generate_quantities <- function(fitted_params,
                                 threads = NULL,
                                 opencl_ids = NULL) {
   fitted_params_files <- process_fitted_params(fitted_params)
+  if (self$threads_enabled() && is.null(threads)) {
+    threads <- 1
+  }
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1,
-      null.ok = TRUE)
+      null.ok = TRUE),
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options(), multiple_chains = TRUE),
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {

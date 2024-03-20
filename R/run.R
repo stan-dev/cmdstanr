@@ -118,10 +118,20 @@ CmdStanRun <- R6::R6Class(
           call. = FALSE
         )
       }
-      private$latent_dynamics_files_
+      if (include_failed) {
+        private$latent_dynamics_files_
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        private$latent_dynamics_files_[ok]
+      }
     },
     output_files = function(include_failed = FALSE) {
+      if (include_failed) {
         private$output_files_
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        private$output_files_[ok]
+      }
     },
     profile_files = function(include_failed = FALSE) {
       files <- private$profile_files_
@@ -132,7 +142,12 @@ CmdStanRun <- R6::R6Class(
           call. = FALSE
         )
       }
-      files
+      if (include_failed) {
+        files
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        files[ok]
+      }
     },
     save_output_files = function(dir = ".",
                                  basename = NULL,
@@ -234,7 +249,7 @@ CmdStanRun <- R6::R6Class(
     command = function() self$args$command(),
     command_args = function(id = 1) {
       # create a list of character vectors (one per run/chain) of cmdstan arguments
-      if (inherits(self$args$method_args, "GenerateQuantitiesArgs")) {
+      if (self$procs$num_procs() > 1) {
         output_file = private$output_files_[id]
         latent_dynamic_file = private$latent_dynamics_files_[id]
       } else {
@@ -429,24 +444,29 @@ check_target_exe <- function(exe) {
   start_time <- Sys.time()
   chain_id <- 1
   while (!all(procs$is_finished() | procs$is_failed())) {
-    procs$new_proc(
-      id = chain_id,
-      command = self$command(),
-      args = self$command_args(),
-      wd = dirname(self$exe_file()),
-      mpi_cmd = mpi_cmd,
-      mpi_args = mpi_args
-    )
-    procs$mark_proc_start(chain_id)
-    procs$set_active_procs(procs$active_procs() + 1)
+    while (procs$active_procs() != procs$parallel_procs() && procs$any_queued()) {
+      procs$new_proc(
+        id = chain_id,
+        command = self$command(),
+        args = self$command_args(chain_id),
+        wd = dirname(self$exe_file()),
+        mpi_cmd = mpi_cmd,
+        mpi_args = mpi_args
+      )
+      procs$mark_proc_start(chain_id)
+      procs$set_active_procs(procs$active_procs() + 1)
+      chain_id <- chain_id + 1
+    }
     start_active_procs <- procs$active_procs()
     while (procs$active_procs() == start_active_procs &&
            procs$active_procs() > 0) {
       procs$wait(0.1)
       procs$poll(0)
-      if (!procs$is_queued(chain_id)) {
-        procs$process_output(chain_id)
-        procs$process_error_output(chain_id)
+      for (chain_iter in seq_len(chain_id)) {
+        if (!procs$is_queued(chain_iter)) {
+          procs$process_output(chain_iter)
+          procs$process_error_output(chain_iter)
+        }
       }
       procs$set_active_procs(procs$num_alive())
     }
@@ -629,10 +649,12 @@ CmdStanProcs <- R6::R6Class(
   public = list(
     initialize = function(num_procs,
                           parallel_procs = NULL,
+                          threads_per_proc = NULL,
                           show_stderr_messages = TRUE,
                           show_stdout_messages = TRUE) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
+      checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
@@ -640,6 +662,7 @@ CmdStanProcs <- R6::R6Class(
         private$parallel_procs_ <- as.integer(parallel_procs)
       }
       private$active_procs_ <- 0
+      private$threads_per_proc_ <- as.integer(threads_per_proc)
       private$proc_ids_ <- seq_len(num_procs)
       zeros <- rep(0, num_procs)
       names(zeros) <- private$proc_ids_
@@ -661,6 +684,9 @@ CmdStanProcs <- R6::R6Class(
     },
     parallel_procs = function() {
       private$parallel_procs_
+    },
+    threads_per_proc = function() {
+      private$threads_per_proc_
     },
     proc_ids = function() {
       private$proc_ids_
@@ -883,6 +909,7 @@ CmdStanProcs <- R6::R6Class(
     num_procs_ = integer(),
     parallel_procs_ = integer(),
     active_procs_ = integer(),
+    threads_per_proc_ = integer(),
     proc_state_ = NULL,
     proc_start_time_ = NULL,
     proc_total_time_ = NULL,

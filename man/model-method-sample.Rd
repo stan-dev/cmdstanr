@@ -146,6 +146,12 @@ default is 4.}
 unique positive integers as the number of chains. If not set, the default
 chain IDs are used (integers starting from \code{1}).}
 
+\item{threads}{(positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when for multiple chains
+running in parallel and for using the Stan functions
+\code{reduce_sum()} or \code{map_rect()}).}
+
 \item{opencl_ids}{(integer vector of length 2) The platform and
 device IDs of the OpenCL device to use for fitting. The model must
 be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
@@ -255,21 +261,11 @@ using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
 \item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
 
-\item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
-contrast with \code{parallel_chains}, which specifies the number of chains to
-run in parallel. The actual number of CPU cores used is
-\code{parallel_chains*threads_per_chain}. For an example of using threading see
-the Stan case study
-\href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
+\item{threads_per_chain}{(positive integer) Deprecated. Please use the
+threads argument instead.}
 
-\item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
-to run in parallel. If \code{parallel_chains} is not specified then the default
-is to look for the option \code{"mc.cores"}, which can be set for an entire \R
-session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
-been set then the default is \code{1}.}
+\item{parallel_chains}{(positive integer) Deprecated. Please use the \code{chains}
+argument instead.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
@@ -314,7 +310,7 @@ fit_mcmc <- mod$sample(
   data = stan_data,
   seed = 123,
   chains = 2,
-  parallel_chains = 2
+  threads = 2
 )
 
 # Use 'posterior' package for summaries

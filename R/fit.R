@@ -1347,11 +1347,7 @@ CmdStanMCMC <- R6::R6Class(
     },
     # override the CmdStanFit output method
     output = function(id = NULL) {
-      if (is.null(id)) {
         self$runset$procs$proc_output()
-      } else {
-        cat(paste(self$runset$procs$proc_output(id), collapse = "\n"))
-      }
     },
 
     # override the CmdStanFit draws method

@@ -12,3 +12,5 @@
 ^\.github$
 ^vignettes/articles-online-only$
 ^release-prep\.R$
+^doc$
+^Meta$

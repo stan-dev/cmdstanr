@@ -153,6 +153,12 @@ is \code{FALSE}.}
 \item{thin}{(positive integer) The period between saved samples. This should
 typically be left at its default (no thinning) unless memory is a problem.}
 
+\item{threads}{(positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when for multiple chains
+running in parallel and for using the Stan functions
+\code{reduce_sum()} or \code{map_rect()}).}
+
 \item{max_treedepth}{(positive integer) The maximum allowed tree depth for
 the NUTS engine. See the \emph{Tree Depth} section of the CmdStan User's Guide
 for more details.}

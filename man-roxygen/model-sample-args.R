@@ -1,22 +1,12 @@
 #' @param chains (positive integer) The number of Markov chains to run. The
 #'   default is 4.
-#' @param parallel_chains (positive integer) The _maximum_ number of MCMC chains
-#'   to run in parallel. If `parallel_chains` is not specified then the default
-#'   is to look for the option `"mc.cores"`, which can be set for an entire \R
-#'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
-#'   been set then the default is `1`.
+#' @param parallel_chains (positive integer) Deprecated. Please use the `chains`
+#'  argument instead.
 #' @param chain_ids (integer vector) A vector of chain IDs. Must contain as many
 #'   unique positive integers as the number of chains. If not set, the default
 #'   chain IDs are used (integers starting from `1`).
-#' @param threads_per_chain (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
-#'   contrast with `parallel_chains`, which specifies the number of chains to
-#'   run in parallel. The actual number of CPU cores used is
-#'   `parallel_chains*threads_per_chain`. For an example of using threading see
-#'   the Stan case study
-#'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#' @param threads_per_chain (positive integer) Deprecated. Please use the
+#'   threads argument instead.
 #'
 #' @param iter_sampling (positive integer) The number of post-warmup iterations
 #'   to run per chain. Note: in the CmdStan User's Guide this is referred to as

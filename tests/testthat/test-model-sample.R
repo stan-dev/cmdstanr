@@ -15,7 +15,7 @@ ok_arg_values <- list(
   data = data_list,
   output_dir = tempdir(),
   chains = 2,
-  parallel_chains = 1,
+  threads = 1,
   iter_warmup = 50,
   iter_sampling = 100,
   save_warmup = FALSE,
@@ -39,7 +39,7 @@ bad_arg_values <- list(
   data = "NOT_A_FILE",
   output_dir = "NOT_A_DIRECTORY",
   chains = -1,
-  parallel_chains = -1,
+  threads = -1,
   iter_warmup = -1,
   iter_sampling = -1,
   save_warmup = "NO",
@@ -62,7 +62,7 @@ bad_arg_values_2 <- list(
   data = matrix(1:10),
   output_dir = 1,
   chains = "NOT_A_NUMBER",
-  parallel_chains = "NOT_A_NUMBER",
+  threads = "NOT_A_NUMBER",
   init = "NOT_A_FILE",
   seed = 1:10,
   step_size = 1:10,
@@ -161,13 +161,13 @@ test_that("sample works for warmup-only run", {
 
 test_that("sampling in parallel works", {
   expect_output(
-    mod$sample(data = data_list, chains = 2, parallel_chains = 2),
+    mod$sample(data = data_list, chains = 2, threads = 2),
     "Running MCMC with 2 parallel chains",
     fixed = TRUE
   )
 
   expect_output(
-    mod$sample(data = data_list, chains = 2, parallel_chains = 2),
+    mod$sample(data = data_list, chains = 2, threads = 2),
     "Both chains finished successfully",
     fixed = TRUE
   )

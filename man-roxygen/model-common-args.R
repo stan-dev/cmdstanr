@@ -99,3 +99,8 @@
 #'   [`$output()`][fit-method-output] method of the resulting fit object can be
 #'   used to display the silenced messages.
 #'
+#' @param threads (positive integer) If the model was
+#'   [compiled][model-method-compile] with threading support, the number of
+#'   threads to use in parallelized sections (e.g., when for multiple chains
+#'   running in parallel and for using the Stan functions
+#'   `reduce_sum()` or `map_rect()`).

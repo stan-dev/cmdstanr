@@ -130,6 +130,12 @@ device IDs of the OpenCL device to use for fitting. The model must
 be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
 argument to have an effect.}
 
+\item{threads}{(positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., when for multiple chains
+running in parallel and for using the Stan functions
+\code{reduce_sum()} or \code{map_rect()}).}
+
 \item{init_alpha}{(positive real) The initial step size parameter.}
 
 \item{tol_obj}{(positive real) Convergence tolerance on changes in objective function value.}
@@ -188,11 +194,6 @@ recommended unless you are very confident that the model is correct up to
 numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
-
-\item{num_threads}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections (e.g., for multi-path pathfinder
-as well as \code{reduce_sum}).}
 }
 \value{
 A \code{\link{CmdStanPathfinder}} object.
@@ -244,7 +245,7 @@ fit_mcmc <- mod$sample(
   data = stan_data,
   seed = 123,
   chains = 2,
-  parallel_chains = 2
+  threads = 2
 )
 
 # Use 'posterior' package for summaries

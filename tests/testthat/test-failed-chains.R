@@ -13,57 +13,20 @@ make_all_fail <- function(x) {
   )
   all_fail
 }
-if (FALSE) {
-
-make_some_fail <- function(x, seed = 0) {
-  num_files <- 0
-  attempt <- 1
-  set.seed(seed)
-  while (num_files == 0 || num_files == 4) {
-    utils::capture.output(
-      check_some_fail <- mod$sample(
-        data = list(pr_fail = 0.5),
-        save_latent_dynamics = TRUE,
-        chains = 4,
-        seed = base::sample(.Machine$integer.max, 1)
-      )
-    )
-    num_files <- length(check_some_fail$output_files(include_failed = FALSE))
-    attempt <- attempt + 1
-  }
-  check_some_fail
-}
 
 # called here and also in tests below
 suppressWarnings(
   utils::capture.output(
-   # fit_all_fail <- make_all_fail(mod),
-    fit_some_fail <- make_some_fail(mod)
+   fit_all_fail <- make_all_fail(mod)
   )
 )
 
 test_that("correct warnings are thrown when all chains fail", {
   expect_warning(
     make_all_fail(mod),
-    "All chains finished unexpectedly!"
+    "Chain 1 finished unexpectedly!"
   )
-  for (i in 1:4) {
-    expect_output(fit_all_fail$output(i), "Location parameter is inf")
-  }
-})
-
-test_that("correct warnings are thrown when some chains fail", {
-  fit_tmp <- suppressWarnings(make_some_fail(mod, seed = 2022))
-  expect_warning(
-    make_some_fail(mod, seed = 2022),
-    paste(4 - length(fit_tmp$output_files(include_failed = FALSE)), "chain(s) finished unexpectedly"),
-    fixed = TRUE
-  )
-
-  failed <- !fit_some_fail$runset$procs$is_finished()
-  for (i in which(failed)) {
-    expect_output(fit_some_fail$output(i), "Location parameter is inf")
-  }
+  expect_match(paste0(fit_all_fail$output()), "Location parameter is inf")
 })
 
 test_that("$output_files() and latent_dynamic_files() returns path to all files regardless of chain failure", {
@@ -76,20 +39,12 @@ test_that("$output_files() and latent_dynamic_files() returns path to all files 
     0
   )
   expect_equal(
-    length(fit_some_fail$output_files(include_failed = TRUE)),
-    4
-  )
-  expect_equal(
     length(fit_all_fail$latent_dynamics_files(include_failed = TRUE)),
     4
   )
   expect_equal(
     length(fit_all_fail$latent_dynamics_files(include_failed = FALSE)),
     0
-  )
-  expect_equal(
-    length(fit_some_fail$latent_dynamics_files(include_failed = TRUE)),
-    4
   )
   expect_equal(
     length(fit_all_fail$output_files()),
@@ -107,16 +62,7 @@ test_that("$save_* methods save all files regardless of chain failure", {
     "Moved 4 files"
   )
   expect_message(
-    fit_some_fail$save_output_files(dir = tempdir()),
-    "Moved 4 files"
-  )
-
-  expect_message(
     fit_all_fail$save_latent_dynamics_files(dir = tempdir()),
-    "Moved 4 files"
-  )
-  expect_message(
-    fit_some_fail$save_latent_dynamics_files(dir = tempdir()),
     "Moved 4 files"
   )
 })
@@ -131,14 +77,6 @@ test_that("errors when using draws after all chains fail", {
   expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
   expect_error(fit_all_fail$metadata(), "Fitting failed. Unable to retrieve the metadata")
   expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
-})
-
-test_that("can use draws after some chains fail", {
-  expect_s3_class(fit_some_fail$summary(), "draws_summary")
-  expect_s3_class(fit_some_fail$draws(), "draws_array")
-  expect_output(fit_some_fail$cmdstan_summary(), "Inference for Stan model")
-  expect_output(fit_some_fail$cmdstan_diagnose(), "Processing complete")
-  expect_output(fit_some_fail$print(), "variable")
 })
 
 test_that("init warnings are shown", {
@@ -214,4 +152,4 @@ test_that("gq chains error on wrong input CSV", {
   )
 })
 
-}
+

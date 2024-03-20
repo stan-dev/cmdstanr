@@ -108,8 +108,9 @@ increased usage of disk space.}
 
 \item{threads}{(positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}).}
+threads to use in parallelized sections (e.g., when for multiple chains
+running in parallel and for using the Stan functions
+\code{reduce_sum()} or \code{map_rect()}).}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and
 device IDs of the OpenCL device to use for fitting. The model must
