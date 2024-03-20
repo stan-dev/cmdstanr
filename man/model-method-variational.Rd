@@ -333,8 +333,8 @@ Other CmdStanModel methods:
 \code{\link{model-method-laplace}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
-\code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
+\code{\link{model-method-sample_mpi}},
 \code{\link{model-method-variables}}
 }
 \concept{CmdStanModel methods}

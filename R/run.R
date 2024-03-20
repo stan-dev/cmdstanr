@@ -3,6 +3,7 @@
 #' Parse a file from end to beginning looking for the elapsed time.
 #' @param file A file path.
 #' @return A list of numeric warmup, sampling, and total times.
+#' @noRd
 .sample_file_time = function(file) {
   bufferSize <- 256
   size <- file.info(file)$size
@@ -117,21 +118,10 @@ CmdStanRun <- R6::R6Class(
           call. = FALSE
         )
       }
-      if (include_failed) {
-        private$latent_dynamics_files_
-      } else {
-        # FIXME: I'm not sure what to do when chains fail since they are all in one file?
-#        ok <- self$procs$is_finished() | self$procs$is_queued()
-        private$latent_dynamics_files_
-      }
+      private$latent_dynamics_files_
     },
     output_files = function(include_failed = FALSE) {
-      if (include_failed) {
         private$output_files_
-      } else {
-        ok <- self$procs$is_finished() | self$procs$is_queued()
-        private$output_files_[ok]
-      }
     },
     profile_files = function(include_failed = FALSE) {
       files <- private$profile_files_
@@ -142,12 +132,7 @@ CmdStanRun <- R6::R6Class(
           call. = FALSE
         )
       }
-      if (include_failed) {
-        files
-      } else {
-        ok <- self$procs$is_finished() | self$procs$is_queued()
-        files[ok]
-      }
+      files
     },
     save_output_files = function(dir = ".",
                                  basename = NULL,

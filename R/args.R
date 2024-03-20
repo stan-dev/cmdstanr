@@ -2,6 +2,7 @@
 
 #' Returns the number of inner processes for a given method
 #' @param args An args object
+#' @noRd
 get_num_inner_processes <- function(args) {
   x <- NULL
   if (inherits(args, "SampleArgs")) {
