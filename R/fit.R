@@ -1742,7 +1742,10 @@ inv_metric <- function(matrix = TRUE) {
   out <- private$inv_metric_
   if (matrix && !is.matrix(out[[1]])) {
     # convert each vector to a diagonal matrix
-    out <- lapply(out, diag)
+    out <- lapply(out, function(x) diag(x, nrow = length(x)))
+  } else if (length(out[[1]]) == 1) {
+    # convert each scalar to an array with dimension 1
+    out <- lapply(out, array, dim = c(1))
   }
   out
 }
