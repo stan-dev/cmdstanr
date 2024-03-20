@@ -36,6 +36,7 @@ sample_mpi(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
+  save_cmdstan_config = TRUE,
   validate_csv = TRUE
 )
 }
@@ -244,6 +245,11 @@ summaries of the diagnostics and can regenerate the warning messages.
 Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
+
+\item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
+with argument \code{"output save_config=1"} to save a json file which contains
+the argument tree and extra information (equivalent to the output CSV file
+header). This option is only available in CmdStan 2.34.0 and later.}
 
 \item{validate_csv}{Deprecated. Use \code{diagnostics} instead.}
 }

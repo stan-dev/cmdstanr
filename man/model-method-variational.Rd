@@ -28,7 +28,8 @@ variational(
   output_samples = NULL,
   draws = NULL,
   show_messages = TRUE,
-  show_exceptions = TRUE
+  show_exceptions = TRUE,
+  save_cmdstan_config = TRUE
 )
 }
 \arguments{

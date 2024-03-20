@@ -32,7 +32,8 @@ pathfinder(
   psis_resample = NULL,
   calculate_lp = NULL,
   show_messages = TRUE,
-  show_exceptions = TRUE
+  show_exceptions = TRUE,
+  save_cmdstan_config = TRUE
 )
 }
 \arguments{
