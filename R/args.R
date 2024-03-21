@@ -1212,6 +1212,7 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
+#' @importFrom stats aggregate
 process_init_approx <- function(init, num_procs, model_variables = NULL,
                                 warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   # Convert from data.table to data.frame
@@ -1235,7 +1236,7 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
     }
   }
   if (unique_draws < (0.95 * nrow(draws_df))) {
-    temp_df = aggregate(.draw ~ lw, data = draws_df, FUN = min)
+    temp_df = stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
     draws_df = posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
     draws_df$pareto_weight = exp(draws_df$lw - max(draws_df$lw))
   } else {
