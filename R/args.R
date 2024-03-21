@@ -1058,8 +1058,8 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
   draws <- posterior::resample_draws(draws, ndraws = num_procs,
                                      method ="simple_no_replace")
   draws_rvar = posterior::as_draws_rvars(draws)
-  inits = lapply(1:num_procs, \(draw_iter) {
-    init_i = lapply(variable_names, \(var_name) {
+  inits = lapply(1:num_procs, function(draw_iter) {
+    init_i = lapply(variable_names, function(var_name) {
       x = drop(posterior::draws_of(drop(
         posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
       return(x)
