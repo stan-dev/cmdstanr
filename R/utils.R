@@ -54,6 +54,10 @@ os_is_linux <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Linux")
 }
 
+os_is_freebsd <- function() {
+  isTRUE(Sys.info()[["sysname"]] == "FreeBSD")
+}
+
 is_rtools43_toolchain <- function() {
   os_is_windows() && R.version$major == "4" && R.version$minor >= "3.0"
 }
@@ -87,6 +91,8 @@ is_rosetta2 <- function() {
 make_cmd <- function() {
   if (os_is_windows() && !os_is_wsl()) {
     "mingw32-make.exe"
+  } else if (os_is_freebsd()) {
+    "gmake"
   } else {
     "make"
   }
@@ -677,7 +683,7 @@ assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
   flags <- wsl_compatible_run(
-    command = "make",
+    command = make_cmd(),
     args = c("-s", paste0("print-", flag_name)),
     wd = cmdstan_path
   )$stdout
