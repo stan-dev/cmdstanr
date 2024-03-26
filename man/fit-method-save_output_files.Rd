@@ -10,13 +10,19 @@
 \alias{fit-method-data_file}
 \alias{fit-method-latent_dynamics_files}
 \alias{fit-method-profile_files}
+\alias{fit-method-save_config_files}
+\alias{fit-method-save_metric_files}
 \alias{save_data_file}
 \alias{save_latent_dynamics_files}
 \alias{save_profile_files}
+\alias{save_config_files}
+\alias{save_metric_files}
 \alias{output_files}
 \alias{data_file}
 \alias{latent_dynamics_files}
 \alias{profile_files}
+\alias{config_files}
+\alias{metric_files}
 \title{Save output and data files}
 \usage{
 save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
@@ -32,6 +38,10 @@ save_profile_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 
 save_data_file(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
 
+save_config_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+
+save_metric_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+
 output_files(include_failed = FALSE)
 
 profile_files(include_failed = FALSE)
@@ -39,6 +49,10 @@ profile_files(include_failed = FALSE)
 latent_dynamics_files(include_failed = FALSE)
 
 data_file()
+
+config_files(include_failed = FALSE)
+
+metric_files(include_failed = FALSE)
 }
 \arguments{
 \item{dir}{(string) Path to directory where the files should be saved.}
@@ -91,6 +105,14 @@ file name after \code{basename}.
 
 For \verb{$save_profile_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-profile-"} is included in the new
+file name after \code{basename}.
+
+For \verb{$save_metric_files()} everything is the same as for
+\verb{$save_output_files()} except \code{"-metric-"} is included in the new
+file name after \code{basename}.
+
+For \verb{$save_config_files()} everything is the same as for
+\verb{$save_output_files()} except \code{"-config-"} is included in the new
 file name after \code{basename}.
 
 For \verb{$save_data_file()} no \code{id} is included in the file name because even

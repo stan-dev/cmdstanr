@@ -898,10 +898,13 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' Save output and data files
 #'
 #' @name fit-method-save_output_files
-#' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files fit-method-save_profile_files
-#'   fit-method-output_files fit-method-data_file fit-method-latent_dynamics_files fit-method-profile_files
-#'   save_output_files save_data_file save_latent_dynamics_files save_profile_files
-#'   output_files data_file latent_dynamics_files profile_files
+#' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
+#'   fit-method-save_profile_files fit-method-output_files fit-method-data_file
+#'   fit-method-latent_dynamics_files fit-method-profile_files
+#'   fit-method-save_config_files fit-method-save_metric_files save_output_files
+#'   save_data_file save_latent_dynamics_files save_profile_files
+#'   save_config_files save_metric_files output_files data_file
+#'   latent_dynamics_files profile_files config_files metric_files
 #'
 #' @description All fitted model objects have methods for saving (moving to a
 #'   specified location) the files created by CmdStanR to hold CmdStan output
@@ -934,6 +937,14 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' For `$save_profile_files()` everything is the same as for
 #' `$save_output_files()` except `"-profile-"` is included in the new
+#' file name after `basename`.
+#'
+#' For `$save_metric_files()` everything is the same as for
+#' `$save_output_files()` except `"-metric-"` is included in the new
+#' file name after `basename`.
+#'
+#' For `$save_config_files()` everything is the same as for
+#' `$save_output_files()` except `"-config-"` is included in the new
 #' file name after `basename`.
 #'
 #' For `$save_data_file()` no `id` is included in the file name because even
@@ -999,6 +1010,26 @@ save_data_file <- function(dir = ".",
 CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
 
 #' @rdname fit-method-save_output_files
+save_config_files <- function(dir = ".",
+                              basename = NULL,
+                              timestamp = TRUE,
+                              random = TRUE) {
+  self$runset$save_config_files(dir, basename, timestamp, random)
+}
+CmdStanFit$set("public", name = "save_config_files", value = save_config_files)
+
+#' @rdname fit-method-save_output_files
+save_metric_files <- function(dir = ".",
+                              basename = NULL,
+                              timestamp = TRUE,
+                              random = TRUE) {
+  self$runset$save_metric_files(dir, basename, timestamp, random)
+}
+CmdStanFit$set("public", name = "save_metric_files", value = save_metric_files)
+
+
+
+#' @rdname fit-method-save_output_files
 #' @param include_failed (logical) Should CmdStan runs that failed also be
 #'   included? The default is `FALSE.`
 output_files <- function(include_failed = FALSE) {
@@ -1024,6 +1055,17 @@ data_file <- function() {
 }
 CmdStanFit$set("public", name = "data_file", value = data_file)
 
+#' @rdname fit-method-save_output_files
+config_files <- function(include_failed = FALSE) {
+  self$runset$config_files(include_failed)
+}
+CmdStanFit$set("public", name = "config_files", value = config_files)
+
+#' @rdname fit-method-save_output_files
+metric_files <- function(include_failed = FALSE) {
+  self$runset$metric_files(include_failed)
+}
+CmdStanFit$set("public", name = "metric_files", value = metric_files)
 
 #' Report timing of CmdStan runs
 #'
