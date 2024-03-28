@@ -1241,7 +1241,7 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
     draws_df$pareto_weight = exp(draws_df$lw - max(draws_df$lw))
   } else {
     draws_df$pareto_weight = posterior::pareto_smooth(
-      exp(draws_df$lw - max(draws_df$lw)), tail = "right")[["x"]]
+      exp(draws_df$lw - max(draws_df$lw)), tail = "right", return_k=FALSE)
   }
   init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
                                             weights = draws_df$pareto_weight, method = "simple_no_replace")
