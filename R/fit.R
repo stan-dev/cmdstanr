@@ -518,11 +518,11 @@ unconstrain_variables <- function(variables) {
          " not provided!", call. = FALSE)
   }
 
-  # Remove zero-length parameters from model_variables, otherwise process_init_list
+  # Remove zero-length parameters from model_variables, otherwise process_init
   # warns about missing inputs
   model_variables$parameters <- model_variables$parameters[nonzero_length_params]
 
-  stan_pars <- process_init_list(list(variables), num_procs = 1, model_variables)
+  stan_pars <- process_init(list(variables), num_procs = 1, model_variables)
   private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, stan_pars)
 }
 CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
@@ -594,7 +594,7 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
   # but not in metadata()$variables
   nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
 
-  # Remove zero-length parameters from model_variables, otherwise process_init_list
+  # Remove zero-length parameters from model_variables, otherwise process_init
   # warns about missing inputs
   pars <- names(model_variables$parameters[nonzero_length_params])
 

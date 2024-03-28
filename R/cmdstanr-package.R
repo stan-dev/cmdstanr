@@ -30,6 +30,6 @@
 #' @inherit cmdstan_model examples
 #' @import R6
 #'
-NULL
+"_PACKAGE"
 
 if (getRversion() >= "2.15.1")  utils::globalVariables(c("self", "private", "super"))
