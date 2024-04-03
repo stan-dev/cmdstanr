@@ -1,0 +1,554 @@
+---
+title: "Getting started with CmdStanR"
+author: "Jonah Gabry, Rok Češnovar, and Andrew Johnson"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+params:
+  EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+vignette: >
+  %\VignetteIndexEntry{Getting started with CmdStanR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r child="children/_settings-knitr.Rmd"}
+```
+
+## Introduction
+
+CmdStanR (Command Stan R) is a lightweight interface to
+[Stan](https://mc-stan.org/) for R users that provides an alternative to the
+traditional [RStan](https://mc-stan.org/rstan/) interface. See the [*Comparison
+with RStan*](#comparison-with-rstan) section later in this vignette for more
+details on how the two interfaces differ.
+
+Using CmdStanR requires installing the **cmdstanr** R package and also
+CmdStan, the command line interface to Stan. First we install the R package 
+by running the following command in R.
+
+```{r install, eval=FALSE}
+# we recommend running this is a fresh R session or restarting your current session
+install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+```
+
+We can now load the package like any other R package. We'll also load the
+**bayesplot** and **posterior** packages to use later in examples.
+
+```{r library, message=FALSE}
+library(cmdstanr)
+library(posterior)
+library(bayesplot)
+color_scheme_set("brightblue")
+```
+
+## Installing CmdStan
+
+CmdStanR requires a working installation of
+[CmdStan](https://mc-stan.org/users/interfaces/cmdstan.html), the shell
+interface to Stan. If you don't have CmdStan installed then CmdStanR can install
+it for you, assuming you have a suitable C++ toolchain. The requirements are
+described in the CmdStan Guide:
+
+* https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html
+
+To double check that your toolchain is set up properly you can call
+the `check_cmdstan_toolchain()` function:
+
+```{r check-toolchain}
+check_cmdstan_toolchain()
+```
+
+If your toolchain is configured correctly then CmdStan can be installed by
+calling the
+[`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.html)
+function:
+
+```{r install_cmdstan-1, include = FALSE}
+if (!dir.exists(cmdstan_default_path())) {
+  install_cmdstan()
+}
+```
+```{r install_cmdstan-2, eval=FALSE}
+install_cmdstan(cores = 2)
+```
+
+Before CmdStanR can be used it needs to know where the CmdStan installation is
+located. When the package is loaded it tries to help automate this to avoid
+having to manually set the path every session:
+
+1. If the environment variable `"CMDSTAN"` exists at load time then its value
+will be automatically set as the default path to CmdStan for the R session. This
+is useful if your CmdStan installation is not located in the default directory
+that would have been used by `install_cmdstan()` (see #2).
+
+2. If no environment variable is found when loaded but any directory in the form
+`".cmdstan/cmdstan-[version]"`, for example `".cmdstan/cmdstan-2.23.0"`,
+exists in the user's home directory (`Sys.getenv("HOME")`,
+*not* the current working directory) then the path to the CmdStan with the
+largest version number will be set as the path to CmdStan for the R session.
+This is the same as the default directory that `install_cmdstan()` uses to
+install the latest version of CmdStan, so if that's how you installed CmdStan
+you shouldn't need to manually set the path to CmdStan when loading CmdStanR.
+
+If neither of these applies (or you want to subsequently change the path) you
+can use the `set_cmdstan_path()` function:
+
+```{r set_cmdstan_path, eval=FALSE}
+set_cmdstan_path(PATH_TO_CMDSTAN)
+```
+
+To check the path to the CmdStan installation and the CmdStan version number
+you can use `cmdstan_path()` and `cmdstan_version()`:
+
+```{r cmdstan_path}
+cmdstan_path()
+cmdstan_version()
+```
+
+## Compiling a model
+
+The `cmdstan_model()` function creates a new
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
+object from a file containing a Stan program. Under the hood, CmdStan is called
+to translate a Stan program to C++ and create a compiled executable. Here we'll
+use the example Stan program that comes with the CmdStan installation:
+
+```{r cmdstan_model}
+file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+mod <- cmdstan_model(file)
+```
+
+The object `mod` is an [R6](https://r6.r-lib.org/) reference object of class
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html) and
+behaves similarly to R's reference class objects and those in object oriented
+programming languages. Methods are accessed using the `$` operator. This design
+choice allows for CmdStanR and
+[CmdStanPy](https://github.com/stan-dev/cmdstanpy) to provide a similar user
+experience and share many implementation details.
+
+The Stan program can be printed using the `$print()` method:
+
+```{r compile}
+mod$print()
+```
+
+The path to the compiled executable is returned by the `$exe_file()`
+method:
+
+```{r exe_file}
+mod$exe_file()
+```
+
+## Running MCMC
+
+The
+[`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
+method for
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
+objects runs Stan's default MCMC algorithm. The `data` argument accepts a named
+list of R objects (like for RStan) or a path to a data file compatible with
+CmdStan (JSON or R dump).
+
+```{r sample}
+# names correspond to the data block in the Stan program
+data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+
+fit <- mod$sample(
+  data = data_list,
+  seed = 123,
+  chains = 4,
+  parallel_chains = 4,
+  refresh = 500 # print update every 500 iters
+)
+```
+
+There are many more arguments that can be passed to the `$sample()` method.
+For details follow this link to its separate documentation page:
+
+* [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
+
+The `$sample()` method creates [R6](https://r6.r-lib.org/) `CmdStanMCMC`
+objects, which have many associated methods. Below we will demonstrate some of
+the most important methods. For a full list, follow this link to the
+`CmdStanMCMC` documentation:
+
+* [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html)
+
+### Posterior summary statistics
+
+#### Summaries from the posterior package
+
+The
+[`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.html)
+method calls `summarise_draws()` from the **posterior** package. The
+first argument specifies the variables to summarize and any arguments
+after that are passed on to `posterior::summarise_draws()` to specify
+which summaries to compute, whether to use multiple cores, etc.
+
+```{r summary, eval=FALSE}
+fit$summary()
+fit$summary(variables = c("theta", "lp__"), "mean", "sd")
+
+# use a formula to summarize arbitrary functions, e.g. Pr(theta <= 0.5)
+fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
+
+# summarise all variables with default and additional summary measures
+fit$summary(
+  variables = NULL,
+  posterior::default_summary_measures(),
+  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+)
+```
+
+```{r, echo=FALSE}
+ # NOTE: the hack of using print.data.frame in chunks with echo=FALSE
+ # is used because the pillar formatting of posterior draws_summary objects
+ # isn't playing nicely with pkgdown::build_articles().
+ options(digits = 2)
+ print.data.frame(fit$summary())
+ print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
+ print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
+ print.data.frame(fit$summary(
+   variables = NULL,
+   posterior::default_summary_measures(),
+   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+ ))
+```
+
+#### CmdStan's stansummary utility
+
+CmdStan itself provides a `stansummary` utility that can be called using the
+`$cmdstan_summary()` method. This method will print summaries but won't return
+anything.
+
+### Posterior draws
+
+#### Extracting draws
+
+The [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
+method can be used to extract the posterior draws in formats provided by the
+[**posterior**](https://mc-stan.org/posterior/) package. Here we demonstrate
+only the `draws_array` and `draws_df` formats, but the **posterior** package
+supports other useful formats as well.
+
+```{r draws, message=FALSE}
+# default is a 3-D draws_array object from the posterior package
+# iterations x chains x variables
+draws_arr <- fit$draws() # or format="array"
+str(draws_arr)
+
+# draws x variables data frame
+draws_df <- fit$draws(format = "df")
+str(draws_df)
+print(draws_df)
+```
+
+To convert an existing draws object to a different format use the
+`posterior::as_draws_*()` functions.
+
+```{r as_draws}
+# this should be identical to draws_df created via draws(format = "df")
+draws_df_2 <- as_draws_df(draws_arr)
+identical(draws_df, draws_df_2)
+```
+
+In general, converting to a different draws format in this way will be slower
+than just setting the appropriate format initially in the call to the `$draws()`
+method, but in most cases the speed difference will be minor.
+
+#### Plotting draws
+
+Plotting posterior distributions is as easy as passing the object returned by
+the `$draws()` method directly to plotting functions in our
+[**bayesplot**](https://mc-stan.org/bayesplot/) package.
+
+```{r plots, message=FALSE}
+mcmc_hist(fit$draws("theta"))
+```
+
+### Sampler diagnostics
+
+#### Extracting diagnostic values for each iteration and chain
+
+The
+[`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.html)
+method extracts the values of the sampler parameters (`treedepth__`,
+`divergent__`, etc.) in formats supported by the **posterior** package. The
+default is as a 3-D array (iteration x chain x variable).
+
+```{r sampler_diagnostics}
+# this is a draws_array object from the posterior package
+str(fit$sampler_diagnostics())
+
+# this is a draws_df object from the posterior package
+str(fit$sampler_diagnostics(format = "df"))
+```
+
+#### Sampler diagnostic warnings and summaries
+
+The `$diagnostic_summary()` method will display any sampler diagnostic warnings and return a summary of diagnostics for each chain.
+
+```{r diagnostic_summary}
+fit$diagnostic_summary()
+```
+
+We see the number of divergences for each of the four chains, the number
+of times the maximum treedepth was hit for each chain, and the E-BFMI
+for each chain.
+
+In this case there were no warnings, so in order to demonstrate the warning
+messages we'll use one of the CmdStanR example models that suffers from
+divergences.
+
+```{r fit-with-warnings, results='hold'}
+fit_with_warning <- cmdstanr_example("schools")
+```
+After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit$diagnostic_summary()`.
+
+```{r diagnostic_summary-with-warnings}
+diagnostics <- fit_with_warning$diagnostic_summary()
+print(diagnostics)
+
+# number of divergences reported in warning is the sum of the per chain values
+sum(diagnostics$num_divergent)
+```
+
+#### CmdStan's diagnose utility
+
+CmdStan itself provides a `diagnose` utility that can be called using
+the `$cmdstan_diagnose()` method. This method will print warnings but won't return anything.
+
+
+### Create a `stanfit` object
+
+If you have RStan installed then it is also possible to create a `stanfit`
+object from the csv output files written by CmdStan. This can be done by using
+`rstan::read_stan_csv()` in combination with the `$output_files()` method of the
+`CmdStanMCMC` object. This is only needed if you want to fit a model with
+CmdStanR but already have a lot of post-processing code that assumes a `stanfit`
+object. Otherwise we recommend using the post-processing functionality provided
+by CmdStanR itself.
+
+```{r stanfit, eval=FALSE}
+stanfit <- rstan::read_stan_csv(fit$output_files())
+```
+
+
+
+## Running optimization and variational inference
+
+CmdStanR also supports running Stan's optimization algorithms and its algorithms
+for variational approximation of full Bayesian inference. These are run via the
+`$optimize()`, `$laplace()`, `$variational()`, and `$pathfinder()` methods, which
+are called in a similar way to the `$sample()` method demonstrated above.
+
+### Optimization
+
+We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
+
+```{r optimize}
+fit_mle <- mod$optimize(data = data_list, seed = 123)
+fit_mle$print() # includes lp__ (log prob calculated by Stan program)
+fit_mle$mle("theta")
+```
+
+Here's a plot comparing the penalized MLE to the posterior distribution of
+`theta`.
+
+```{r plot-mle, message = FALSE}
+mcmc_hist(fit$draws("theta")) +
+  vline_at(fit_mle$mle("theta"), size = 1.5)
+```
+
+For optimization, by default the mode is calculated without the Jacobian
+adjustment for constrained variables, which shifts the mode due to the change of
+variables. To include the Jacobian adjustment and obtain a maximum a posteriori
+(MAP) estimate set `jacobian=TRUE`. See the
+[Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
+section of the CmdStan User's Guide for more details.
+
+```{r optimize-map}
+fit_map <- mod$optimize(
+  data = data_list,
+  jacobian = TRUE,
+  seed = 123
+)
+```
+
+### Laplace Approximation
+
+The [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
+method produces a sample from a normal approximation centered at the mode of a
+distribution in the unconstrained space. If the mode is a MAP estimate, the
+samples provide an estimate of the mean and standard deviation of the posterior
+distribution. If the mode is the MLE, the sample provides an estimate of the
+standard error of the likelihood. Whether the mode is the MAP or MLE depends on
+the value of the `jacobian` argument when running optimization. See the
+[Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+chapter of the CmdStan User's Guide for more details.
+
+Here we pass in the `fit_map` object from above as the `mode` argument. If
+`mode` is omitted then optimization will be run internally before taking draws
+from the normal approximation.
+
+```{r laplace}
+fit_laplace <- mod$laplace(
+    mode = fit_map,
+    draws = 4000,
+    data = data_list,
+    seed = 123,
+    refresh = 1000
+  )
+fit_laplace$print("theta")
+mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025)
+```
+
+### Variational (ADVI)
+
+We can run Stan's experimental Automatic Differentiation Variational Inference
+(ADVI) using the [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
+method. For details on the ADVI algorithm see the 
+[CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/variational-inference-algorithm-advi.html).
+
+
+```{r variational}
+fit_vb <- mod$variational(
+  data = data_list,
+  seed = 123,
+  draws = 4000
+)
+fit_vb$print("theta")
+mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
+```
+
+### Variational (Pathfinder)
+
+Stan version 2.33 introduced a new variational method called Pathfinder, 
+which is intended to be faster and more stable than ADVI. For details on how 
+Pathfinder works see the section in the 
+[CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro).
+Pathfinder is run using the [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
+method.
+
+```{r pathfinder}
+fit_pf <- mod$pathfinder(
+  data = data_list,
+  seed = 123,
+  draws = 4000
+)
+fit_pf$print("theta")
+```
+
+
+Let's extract the draws, make the same plot we made after running the other
+algorithms, and compare them all. approximation, and compare them all. In this
+simple example the distributions are quite similar, but this will not always be
+the case for more challenging problems.
+
+```{r plot-compare-pf, message = FALSE}
+mcmc_hist(fit_pf$draws("theta"), binwidth = 0.025) +
+  ggplot2::labs(subtitle = "Approximate posterior from pathfinder") +
+  ggplot2::xlim(0, 1)
+```
+```{r plot-compare-vb, message = FALSE}
+mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025) +
+  ggplot2::labs(subtitle = "Approximate posterior from variational") +
+  ggplot2::xlim(0, 1)
+```
+```{r plot-compare-laplace, message = FALSE}
+mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025) +
+  ggplot2::labs(subtitle = "Approximate posterior from Laplace") +
+  ggplot2::xlim(0, 1)
+```
+```{r plot-compare-mcmc, message = FALSE}
+mcmc_hist(fit$draws("theta"), binwidth = 0.025) +
+  ggplot2::labs(subtitle = "Posterior from MCMC") +
+  ggplot2::xlim(0, 1)
+```
+
+For more details on the `$optimize()`, `$laplace()`, `$variational()`, and 
+`pathfinder()` methods, follow these links to their documentation pages.
+
+* [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
+* [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
+* [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
+* [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
+
+
+## Saving fitted model objects
+
+The [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+method provided by CmdStanR is the most convenient way to save a fitted model object
+to disk and ensure that all of the contents are available when reading the object back into R.
+
+```{r save_object, eval=FALSE}
+fit$save_object(file = "fit.RDS")
+
+# can be read back in using readRDS
+fit2 <- readRDS("fit.RDS")
+```
+
+But if your model object is large, then
+[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+could take a long time.
+[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+reads the CmdStan results files into memory, stores them in the model object,
+and saves the object with `saveRDS()`. To speed up the process, you can emulate
+[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+and replace `saveRDS` with the much faster `qsave()` function from the
+[`qs`](https://github.com/traversc/qs) package.
+
+```{r save_object_qs_full, eval = FALSE}
+# Load CmdStan output files into the fitted model object.
+fit$draws() # Load posterior draws into the object.
+try(fit$sampler_diagnostics(), silent = TRUE) # Load sampler diagnostics.
+try(fit$init(), silent = TRUE) # Load user-defined initial values.
+try(fit$profiles(), silent = TRUE) # Load profiling samples.
+
+# Save the object to a file.
+qs::qsave(x = fit, file = "fit.qs")
+
+# Read the object.
+fit2 <- qs::qread("fit.qs")
+```
+
+Storage is even faster if you discard results you do not need to save.
+The following example saves only posterior draws and discards
+sampler diagnostics, user-specified initial values, and profiling data.
+
+```{r save_object_qs_small, eval = FALSE}
+# Load posterior draws into the fitted model object and omit other output.
+fit$draws()
+
+# Save the object to a file.
+qs::qsave(x = fit, file = "fit.qs")
+
+# Read the object.
+fit2 <- qs::qread("fit.qs")
+```
+
+See the vignette [_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html)
+for more information about the composition of CmdStanR objects.
+
+## Comparison with RStan
+
+```{r child="children/comparison-with-rstan.md"}
+```
+
+## Additional resources
+
+There are additional vignettes available that discuss other aspects of using
+CmdStanR. These can be found online at the CmdStanR website:
+
+* https://mc-stan.org/cmdstanr/articles/index.html
+
+To ask a question please post on the Stan forums:
+
+* https://discourse.mc-stan.org/
+
+To report a bug, suggest a feature (including additions to these vignettes), or to start contributing to CmdStanR
+development (new contributors welcome!) please open an issue on GitHub:
+
+* https://github.com/stan-dev/cmdstanr/issues

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Mikhail Popov" />
+
+
+<title>R Markdown CmdStan Engine</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">R Markdown CmdStan Engine</h1>
+<h4 class="author">Mikhail Popov</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#option-1-using-rstan-for-all-chunks" id="toc-option-1-using-rstan-for-all-chunks">Option 1: Using RStan for
+all chunks</a></li>
+<li><a href="#option-2-using-cmdstanr-for-all-chunks" id="toc-option-2-using-cmdstanr-for-all-chunks">Option 2: Using CmdStanR
+for all chunks</a></li>
+<li><a href="#example" id="toc-example">Example</a></li>
+<li><a href="#option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document" id="toc-option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document">Option
+3: Using both RStan and CmdStanR in the same R Markdown
+document</a></li>
+<li><a href="#caching-chunks" id="toc-caching-chunks">Caching
+chunks</a></li>
+<li><a href="#running-interactively" id="toc-running-interactively">Running interactively</a></li>
+</ul>
+</div>
+
+<p>R Markdown supports a variety of languages through the use of knitr
+language engines. Where users wish to write Stan programs as chunks
+directly in R Markdown documents there are three options:</p>
+<ol style="list-style-type: decimal">
+<li>the user wishes all the Stan chunks in the R Markdown document to be
+processed using RStan;<br />
+</li>
+<li>all Stan chunks are to be processed using CmdStanR; and.<br />
+</li>
+<li>some chunks are to be processed by RStan and some by CmdStanR.</li>
+</ol>
+<p>Behind the scenes in each option, the engine compiles the model code
+in each chunk and creates an object that provides methods to run the
+model: a <code>stanmodel</code> if Rstan is being used, or a
+<code>CmdStanModel</code> in the CmdStanR case. This model object is
+assigned to a variable with the name given by the
+<code>output.var</code> chunk option.</p>
+<div id="option-1-using-rstan-for-all-chunks" class="section level2">
+<h2>Option 1: Using RStan for all chunks</h2>
+<p>This is the default option. In that case we can write, for
+example:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>```{stan, output.var=&quot;model&quot;}</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>// Stan model code</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>```</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>```{r}</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>rstan::sampling(model)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>```</span></code></pre></div>
+</div>
+<div id="option-2-using-cmdstanr-for-all-chunks" class="section level2">
+<h2>Option 2: Using CmdStanR for all chunks</h2>
+<p>If CmdStanR is being used a replacement engine needs to be registered
+along the following lines:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(cmdstanr)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">register_knitr_engine</span>(<span class="at">override =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>This overrides knitr’s built-in <code>stan</code> engine so that all
+<code>stan</code> chunks are processed with CmdStanR, not RStan. Of
+course, this also means that the variable specified by
+<code>output.var</code> will no longer be a <code>stanmodel</code>
+object, but instead a <code>CmdStanModel</code> object, so the example
+code above would look like this:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>```{stan, output.var=&quot;model&quot;}</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>// Stan model code</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>```</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>```{r}</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>model$sample()</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>```</span></code></pre></div>
+</div>
+<div id="example" class="section level2">
+<h2>Example</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode stan"><code class="sourceCode stan"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co">// This stan chunk results in a CmdStanModel object called &quot;ex1&quot;</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="kw">parameters</span> {</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="dt">array</span>[<span class="dv">2</span>] <span class="dt">real</span> y;</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>}</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="kw">model</span> {</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  y[<span class="dv">1</span>] ~ normal(<span class="dv">0</span>, <span class="dv">1</span>);</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  y[<span class="dv">2</span>] ~ double_exponential(<span class="dv">0</span>, <span class="dv">2</span>);</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>ex1<span class="sc">$</span><span class="fu">print</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> ex1<span class="sc">$</span><span class="fu">sample</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">refresh =</span> <span class="dv">0</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">seed =</span> 42L</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">print</span>(fit)</span></code></pre></div>
+</div>
+<div id="option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document" class="section level2">
+<h2>Option 3: Using both RStan and CmdStanR in the same R Markdown
+document</h2>
+<p>While the default behavior is to override the built-in
+<code>stan</code> engine because the assumption is that the user is
+probably not using both RStan and CmdStanR in the same document or
+project, the option to use both exists. When registering CmdStanR’s
+knitr engine, set <code>override = FALSE</code> to register the engine
+as a <code>cmdstan</code> engine:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">register_knitr_engine</span>(<span class="at">override =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>This will cause <code>stan</code> chunks to be processed by knitr’s
+built-in, RStan-based engine and only use CmdStanR’s knitr engine for
+<code>cmdstan</code> chunks:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>```{stan, output.var=&quot;model_obj1&quot;}</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>// Results in a stanmodel object from RStan</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>```</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>```{r}</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>rstan::sampling(model_obj1)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>```</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>```{cmdstan, output.var=&quot;model_obj2&quot;}</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>// Results in a CmdStanModel object from CmdStanR</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>```</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>```{r}</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>model_obj2$sample()</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>```</span></code></pre></div>
+</div>
+<div id="caching-chunks" class="section level2">
+<h2>Caching chunks</h2>
+<p>Use <code>cache=TRUE</code> chunk option to avoid re-compiling the
+Stan model code every time the R Markdown is knit/rendered.</p>
+<p>You can find the Stan model file and the compiled executable in the
+document’s cache directory.</p>
+</div>
+<div id="running-interactively" class="section level2">
+<h2>Running interactively</h2>
+<p>When running chunks interactively in RStudio (e.g. when using <a href="https://bookdown.org/yihui/rmarkdown/notebook.html">R
+Notebooks</a>), it has been observed that the built-in, RStan-based
+engine is used for <code>stan</code> chunks even when CmdStanR’s engine
+has been registered in the session as the engine for <code>stan</code>.
+As a workaround, when running chunks <em>interactively</em>, it is
+recommended to use the <code>override = FALSE</code> option and change
+<code>stan</code> chunks to be <code>cmdstan</code> chunks.</p>
+<p>Do not worry: if the template you use supports syntax highlighting
+for the Stan language, that syntax highlighting will be applied to
+<code>cmdstan</code> chunks when the document is knit/rendered.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
