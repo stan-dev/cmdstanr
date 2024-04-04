@@ -51,12 +51,14 @@ test_that("Subsets of parameters are allowed", {
 
 
 test_that("Pathfinder method works as init", {
-  utils::capture.output(fit_path_init <- mod_params$pathfinder(seed=1234,
+  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(seed=1234, data = data_list_logistic,
                                                                refresh = 0, num_paths = 4))
-  expect_no_error(test_inits(mod_params, fit_path_init))
-  utils::capture.output(fit_path_init <- mod_params$pathfinder(seed=1234,
+  expect_no_error(test_inits(mod_logistic, fit_path_init,
+    data_list_logistic))
+  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(seed=1234, data = data_list_logistic,
                                                                refresh = 0, num_paths = 1))
-  expect_no_error(test_inits(mod_params, fit_path_init))
+  expect_no_error(test_inits(mod_logistic, fit_path_init,
+    data_list_logistic))
 })
 
 test_that("Laplace method works as init", {
