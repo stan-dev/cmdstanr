@@ -1042,7 +1042,7 @@ process_init.default <- function(x, ...) {
 #' @param init A type that inherits the `posterior::draws` class.
 #' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @param warn_partial Should a warning be thrown if inits are only specified
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
@@ -1054,16 +1054,43 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
   } else {
     variable_names = colnames(draws)[!grepl("__", colnames(draws))]
   }
-  draws <- posterior::subset_draws(init, variable = variable_names)
-  draws <- posterior::resample_draws(draws, ndraws = num_procs,
-                                     method ="simple_no_replace")
+  draws <- posterior::as_draws_df(init)
+  # Since all other process_init functions return `num_proc` inits
+  # This will only happen if a raw draws object is passed
+  if (nrow(draws) < num_procs) {
+    idx <- rep(1:nrow(draws), ceiling(num_procs / nrow(draws)))[1:num_procs]
+    draws <- draws[idx,]
+  } else if (nrow(draws) > num_procs) {
+    draws <- posterior::resample_draws(draws, ndraws = num_procs,
+                                       method ="simple_no_replace")
+  }
   draws_rvar = posterior::as_draws_rvars(draws)
+  variable_names <- variable_names[variable_names %in% names(draws_rvar)]
+  draws_rvar <- posterior::subset_draws(draws_rvar, variable = variable_names)
   inits = lapply(1:num_procs, function(draw_iter) {
     init_i = lapply(variable_names, function(var_name) {
       x = drop(posterior::draws_of(drop(
         posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
       return(x)
     })
+    bad_names = unlist(lapply(variable_names, function(var_name) {
+      x = drop(posterior::draws_of(drop(
+        posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
+      if (any(is.infinite(x)) || any(is.na(x))) {
+        return(var_name)
+      }
+      return("")
+    }))
+    any_na_or_inf = bad_names != ""
+    if (any(any_na_or_inf)) {
+      err_msg = paste0(paste(bad_names[any_na_or_inf], collapse = ", "), " contains NA or Inf values!")
+      if (length(any_na_or_inf) > 1) {
+        err_msg = paste0("Variables: ", err_msg)
+      } else {
+        err_msg = paste0("Variable: ", err_msg)
+      }
+      stop(err_msg)
+    }
     names(init_i) = variable_names
     return(init_i)
   })
@@ -1075,7 +1102,7 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
 #' @param init List of init lists.
 #' @param num_procs Number of inits needed.
 #' @param model_variables  A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @param warn_partial Should a warning be thrown if inits are only specified
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
@@ -1151,7 +1178,7 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
 #' @param init Function generating a single list of initial values.
 #' @param num_procs Number of inits needed.
 #' @param model_variables A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @return A character vector of file paths.
 process_init.function <- function(init, num_procs, model_variables = NULL,
                                   warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
@@ -1173,24 +1200,30 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
   process_init(init_list, num_procs, model_variables)
 }
 
+#' Validate a fit is a valid init
+#' @noRd
+validate_fit_init = function(init, model_variables) {
+  # Convert from data.table to data.frame
+  if (all(init$return_codes() == 1)) {
+    stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
+  } else if (!is.null(model_variables) &&!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
+    stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
+  }
+}
+
 #' Write initial values to files if provided as a `CmdStanMCMC` class
 #' @noRd
 #' @param init A `CmdStanMCMC` class
 #' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @param warn_partial Should a warning be thrown if inits are only specified
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
 process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
                                      warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
-  # Convert from data.table to data.frame
-  if (all(init$return_codes() == 1)) {
-    stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
-  } else if (!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
-    stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
-  }
+  validate_fit_init(init, model_variables)
   draws_df = init$draws(format = "df")
   if (is.null(model_variables)) {
     model_variables = list(parameters = colnames(draws_df)[2:(length(colnames(draws_df)) - 3)])
@@ -1207,7 +1240,7 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
 #' @param init A set of draws with `lp__` and `lp_approx__` columns.
 #' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @param warn_partial Should a warning be thrown if inits are only specified
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
@@ -1215,12 +1248,8 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
 #' @importFrom stats aggregate
 process_init_approx <- function(init, num_procs, model_variables = NULL,
                                 warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+  validate_fit_init(init, model_variables)
   # Convert from data.table to data.frame
-  if (init$return_codes() == 1) {
-    stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
-  } else if (!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
-    stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
-  }
   draws_df = init$draws(format = "df")
   if (is.null(model_variables)) {
     model_variables = list(parameters = colnames(draws_df)[3:(length(colnames(draws_df)) - 3)])
@@ -1238,13 +1267,17 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   if (unique_draws < (0.95 * nrow(draws_df))) {
     temp_df = stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
     draws_df = posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
-    draws_df$pareto_weight = exp(draws_df$lw - max(draws_df$lw))
+    draws_df$weight = exp(draws_df$lw - max(draws_df$lw))
   } else {
-    draws_df$pareto_weight = posterior::pareto_smooth(
-      exp(draws_df$lw - max(draws_df$lw)), tail = "right", return_k=FALSE)
+    if (inherits(init, "CmdStanPathfinder") && init$metadata()$psis_resample) {
+        draws_df$weight = rep(1.0, nrow(draws_df))
+    } else {
+      draws_df$weight = posterior::pareto_smooth(
+        exp(draws_df$lw - max(draws_df$lw)), tail = "right", return_k=FALSE)
+    }
   }
   init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
-                                            weights = draws_df$pareto_weight, method = "simple_no_replace")
+                                            weights = draws_df$weight, method = "simple_no_replace")
   init_draws_lst = process_init(init_draws_df,
                                 num_procs = num_procs, model_variables = model_variables, warn_partial)
   return(init_draws_lst)
@@ -1256,7 +1289,7 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
 #' @param init A `CmdStanPathfinder` class
 #' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @param warn_partial Should a warning be thrown if inits are only specified
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
@@ -1271,7 +1304,7 @@ process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NU
 #' @param init A `CmdStanVB` class
 #' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @param warn_partial Should a warning be thrown if inits are only specified
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
@@ -1286,7 +1319,7 @@ process_init.CmdStanVB <- function(init, num_procs, model_variables = NULL,
 #' @param init A `CmdStanLaplace` class
 #' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @param warn_partial Should a warning be thrown if inits are only specified
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
@@ -1302,7 +1335,7 @@ process_init.CmdStanLaplace <- function(init, num_procs, model_variables = NULL,
 #' @param init A `CmdStanMLE` class
 #' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
-#'   number of dimensions. Typically the output of model$variables().
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @param warn_partial Should a warning be thrown if inits are only specified
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
@@ -1310,17 +1343,12 @@ process_init.CmdStanLaplace <- function(init, num_procs, model_variables = NULL,
 process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
                                     warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   # Convert from data.table to data.frame
-  if (init$return_codes() == 1) {
-    stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
-  } else if (!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
-    stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
-  }
+  validate_fit_init(init, model_variables)
   draws_df = init$draws(format = "df")
   if (is.null(model_variables)) {
     model_variables = list(parameters = colnames(draws_df)[2:(length(colnames(draws_df)) - 3)])
   }
-  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
-                                            method = "simple")
+  init_draws_df = draws_df[rep(1, num_procs),]
   init_draws_lst_lst = process_init(init_draws_df,
                                     num_procs = num_procs, model_variables = model_variables, warn_partial)
   return(init_draws_lst_lst)

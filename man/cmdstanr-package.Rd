@@ -214,6 +214,7 @@ Authors:
 \itemize{
   \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
   \item Andrew Johnson (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
+  \item Steve Bronder
 }
 
 Other contributors:
@@ -225,7 +226,6 @@ Other contributors:
   \item William Michael Landau \email{will.landau@gmail.com} (\href{https://orcid.org/0000-0003-1878-3253}{ORCID}) [contributor]
   \item Jacob Socolar [contributor]
   \item Martin Modrák [contributor]
-  \item Steve Bronder [contributor]
 }
 
 }
