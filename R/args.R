@@ -1027,15 +1027,15 @@ validate_exe_file <- function(exe_file) {
 
 #' Generic for processing inits
 #' @noRd
-process_init <- function(...) {
+process_init <- function(init, ...) {
   UseMethod("process_init")
 }
 
 #' Default method
 #' @noRd
 #' @export
-process_init.default <- function(x, ...) {
-  return(x)
+process_init.default <- function(init, ...) {
+  return(init)
 }
 
 #' Write initial values to files if provided as posterior `draws` object
@@ -1050,7 +1050,8 @@ process_init.default <- function(x, ...) {
 #' @return A character vector of file paths.
 #' @export
 process_init.draws <- function(init, num_procs, model_variables = NULL,
-                               warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                               warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                               ...) {
   if (!is.null(model_variables)) {
     variable_names = names(model_variables$parameters)
   } else {
@@ -1111,7 +1112,8 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
 #' @return A character vector of file paths.
 #' @export
 process_init.list <- function(init, num_procs, model_variables = NULL,
-                              warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                              warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                              ...) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
     stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
   }
@@ -1185,7 +1187,8 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
 #' @return A character vector of file paths.
 #' @export
 process_init.function <- function(init, num_procs, model_variables = NULL,
-                                  warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                                  warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                                  ...) {
   args <- formals(init)
   if (is.null(args)) {
     fn_test <- init()
@@ -1227,7 +1230,8 @@ validate_fit_init = function(init, model_variables) {
 #' @return A character vector of file paths.
 #' @export
 process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
-                                     warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                                     warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                                     ...) {
   validate_fit_init(init, model_variables)
   draws_df = init$draws(format = "df")
   if (is.null(model_variables)) {
@@ -1252,7 +1256,8 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
 #' @return A character vector of file paths.
 #' @importFrom stats aggregate
 process_init_approx <- function(init, num_procs, model_variables = NULL,
-                                warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                                warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                                ...) {
   validate_fit_init(init, model_variables)
   # Convert from data.table to data.frame
   draws_df = init$draws(format = "df")
@@ -1301,7 +1306,8 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
 #' @return A character vector of file paths.
 #' @export
 process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NULL,
-                                           warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                                           warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                                           ...) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
 }
 
@@ -1317,7 +1323,8 @@ process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NU
 #' @return A character vector of file paths.
 #' @export
 process_init.CmdStanVB <- function(init, num_procs, model_variables = NULL,
-                                   warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                                   warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                                   ...) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
 }
 
@@ -1333,7 +1340,8 @@ process_init.CmdStanVB <- function(init, num_procs, model_variables = NULL,
 #' @return A character vector of file paths.
 #' @export
 process_init.CmdStanLaplace <- function(init, num_procs, model_variables = NULL,
-                                        warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                                        warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                                        ...) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
 }
 
@@ -1350,7 +1358,8 @@ process_init.CmdStanLaplace <- function(init, num_procs, model_variables = NULL,
 #' @return A character vector of file paths.
 #' @export
 process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
-                                    warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
+                                    warn_partial = getOption("cmdstanr_warn_inits", TRUE),
+                                    ...) {
   # Convert from data.table to data.frame
   validate_fit_init(init, model_variables)
   draws_df = init$draws(format = "df")
