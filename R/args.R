@@ -1033,6 +1033,7 @@ process_init <- function(...) {
 
 #' Default method
 #' @noRd
+#' @export
 process_init.default <- function(x, ...) {
   return(x)
 }
@@ -1047,6 +1048,7 @@ process_init.default <- function(x, ...) {
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
+#' @export
 process_init.draws <- function(init, num_procs, model_variables = NULL,
                                warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   if (!is.null(model_variables)) {
@@ -1107,6 +1109,7 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
+#' @export
 process_init.list <- function(init, num_procs, model_variables = NULL,
                               warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
@@ -1180,6 +1183,7 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
 #' @param model_variables A list of all parameters with their types and
 #'   number of dimensions. Typically the output of `model$variables()$parameters`.
 #' @return A character vector of file paths.
+#' @export
 process_init.function <- function(init, num_procs, model_variables = NULL,
                                   warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   args <- formals(init)
@@ -1221,6 +1225,7 @@ validate_fit_init = function(init, model_variables) {
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
+#' @export
 process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
                                      warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   validate_fit_init(init, model_variables)
@@ -1294,6 +1299,7 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
+#' @export
 process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NULL,
                                            warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
@@ -1309,6 +1315,7 @@ process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NU
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
+#' @export
 process_init.CmdStanVB <- function(init, num_procs, model_variables = NULL,
                                    warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
@@ -1324,6 +1331,7 @@ process_init.CmdStanVB <- function(init, num_procs, model_variables = NULL,
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
+#' @export
 process_init.CmdStanLaplace <- function(init, num_procs, model_variables = NULL,
                                         warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   process_init_approx(init, num_procs, model_variables, warn_partial)
@@ -1340,6 +1348,7 @@ process_init.CmdStanLaplace <- function(init, num_procs, model_variables = NULL,
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
+#' @export
 process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
                                     warn_partial = getOption("cmdstanr_warn_inits", TRUE)) {
   # Convert from data.table to data.frame
