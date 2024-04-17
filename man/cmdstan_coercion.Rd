@@ -31,7 +31,7 @@ as.CmdStanDiagnose(object, ...)
 \item{...}{additional arguments}
 }
 \description{
-These methods are used to coerce objects into \code{cmdstanr} objects.
-Primarily intended for other packages to use when interfacing
-with \code{cmdstanr}.
+These are generic functions intended to primarily be used by developers of
+packages that interface with on CmdStanR. Developers can define methods on
+top of these generics to coerce objects into CmdStanR's fitted model objects.
 }
