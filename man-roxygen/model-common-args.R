@@ -44,6 +44,28 @@
 #'  has argument `chain_id` it will be supplied with the chain id (from 1 to
 #'  number of chains) when called to generate the initial values. See
 #'  **Examples**.
+#'  * A [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], or [`CmdStanPathfinder`]
+#'  fit object. If the fit object's parameters are only a subset of the model
+#'  parameters then the other parameters will be drawn by Stan's default
+#'  initialization. The fit object must have at least some parameters that are the
+#'  same name and dimensions as the current Stan model. For the `sampling` and
+#'  `pathfinder` method, if the fit object has less samples than the requested
+#'  number of chains/paths then the inits will be drawn using sampling with
+#'  replacement. Otherwise sampling without replacement will be used.
+#'  When a [`CmdStanPathfinder`] fit object is used as the init, if
+#'  `psis_resample` was set to `FALSE` and `calculate_lp` was
+#'  set to `TRUE` (default), then PSIS resampling will be used as weights.
+#'  if `calculate_lp` is `FALSE` then sampling without replacement will be used
+#'  to select the draws.
+#'  PSIS resampling is used to select the draws for  [`CmdStanVB`] fit objects.
+#'
+#'  * A type inheriting from `posterior::draws`. If the draws object has less
+#'  samples than the number of requested chains/paths then the inits will be
+#'  drawn using sampling with replacement. Otherwise sampling without
+#'  replacement will be used. If the draws object's parameters are only a subset
+#'  of the model parameters then the other parameters will be drawn by Stan's
+#'  default initialization. The fit object must have at least some parameters
+#'  that are the same name and dimensions as the current Stan model.
 #'
 #' @param save_latent_dynamics (logical) Should auxiliary diagnostic information
 #'   about the latent dynamics be written to temporary diagnostic CSV files?

@@ -774,6 +774,7 @@ read_csv_metadata <- function(csv_file) {
           sampling_time <- as.numeric(tmp)
         } else if (grepl("(Total)", tmp, fixed = TRUE)) {
           tmp <- gsub("seconds (Total)", "", tmp, fixed = TRUE)
+          tmp <- trimws(gsub(" Elapsed Time: ", "", tmp, fixed = TRUE))
           total_time <- as.numeric(tmp)
         }
         if (!is.null(csv_file_info$method) &&

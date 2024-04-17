@@ -1279,7 +1279,7 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
     draws_df = posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
     draws_df$weight = exp(draws_df$lw - max(draws_df$lw))
   } else {
-    if (inherits(init, "CmdStanPathfinder") && init$metadata()$psis_resample) {
+    if (inherits(init, "CmdStanPathfinder") && (init$metadata()$psis_resample || !init$metadata()$calculate_lp)) {
         draws_df$weight = rep(1.0, nrow(draws_df))
     } else {
       draws_df$weight = posterior::pareto_smooth(
