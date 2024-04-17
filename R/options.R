@@ -21,6 +21,9 @@
 #' * `cmdstanr_no_ver_check`: Should the check for a more recent version of
 #' CmdStan be disabled? The default is `FALSE`.
 #'
+#' * `cmdstanr_output_dir`: The directory where CmdStan should write its output
+#' CSV files when fitting models. The default is a temporary directory.
+#'
 #' * `cmdstanr_verbose`: Should more information be printed
 #' when compiling or running models, including showing how CmdStan was called
 #' internally? The default is `FALSE`.
@@ -29,7 +32,7 @@
 #' only provided for a subset of parameters? The default is `TRUE`.
 #'
 #' * `cmdstanr_write_stan_file_dir`: The directory where [write_stan_file()]
-#' should write Stan files. The default is [tempdir()].
+#' should write Stan files. The default is a temporary directory.
 #'
 #' * `mc.cores`: The number of cores to use for various parallelization tasks
 #' (e.g. running MCMC chains, installing CmdStan). The default depends on the
