@@ -14,7 +14,7 @@ draws? The default depends on the model fitting method. See
 \link[=fit-method-draws]{draws} for more details.
 \item \code{cmdstanr_force_recompile}: Should the default be to recompile models
 even if there were no Stan code changes since last compiled?  See
-\link[=fit-method-compile]{compile} for more details. The default is \code{FALSE}.
+\link[=model-method-compile]{compile} for more details. The default is \code{FALSE}.
 \item \code{cmdstanr_max_rows}: The maximum number of rows of output to print when
 using the \code{\link[=fit-method-summary]{$print()}} method. The default is 10.
 \item \code{cmdstanr_no_ver_check}: Should the check for a more recent version of

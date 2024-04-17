@@ -13,7 +13,7 @@
 #'
 #' * `cmdstanr_force_recompile`: Should the default be to recompile models
 #' even if there were no Stan code changes since last compiled?  See
-#' [compile][fit-method-compile] for more details. The default is `FALSE`.
+#' [compile][model-method-compile] for more details. The default is `FALSE`.
 #'
 #' * `cmdstanr_max_rows`: The maximum number of rows of output to print when
 #' using the [`$print()`][fit-method-summary] method. The default is 10.
