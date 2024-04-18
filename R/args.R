@@ -1268,23 +1268,29 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   # Calculate unique draws based on 'lw' using base R functions
   unique_draws = length(unique(draws_df$lw))
   if (num_procs > unique_draws) {
-    if (inherits(init, "CmdStanPathfinder")) {
-      stop(paste0("Not enough distinct draws (", num_procs, ") in pathfinder fit to create inits. Try running Pathfinder with psis_resample=FALSE"))
+    if (inherits(init, " CmdStanPathfinder ")) {
+      algo_name = " Pathfinder "
+      extra_msg = " Try running Pathfinder with psis_resample=FALSE."
+    } else if (inherits(init, "CmdStanVB")) {
+      algo_name = " CmdStanVB "
+      extra_msg = ""
+    } else if (inherits(init, " CmdStanLaplace ")) {
+      algo_name = " CmdStanLaplace "
+      extra_msg = ""
     } else {
-      stop(paste0("Not enough distinct draws (", num_procs, ") to create inits."))
+      algo_name = ""
+      extra_msg = ""
     }
+    stop(paste0("Not enough distinct draws (", num_procs, ") in", algo_name ,
+      "fit to create inits.", extra_msg))
   }
   if (unique_draws < (0.95 * nrow(draws_df))) {
     temp_df = stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
     draws_df = posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
     draws_df$weight = exp(draws_df$lw - max(draws_df$lw))
   } else {
-    if (inherits(init, "CmdStanPathfinder") && (init$metadata()$psis_resample || !init$metadata()$calculate_lp)) {
-        draws_df$weight = rep(1.0, nrow(draws_df))
-    } else {
       draws_df$weight = posterior::pareto_smooth(
         exp(draws_df$lw - max(draws_df$lw)), tail = "right", return_k=FALSE)
-    }
   }
   init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
                                             weights = draws_df$weight, method = "simple_no_replace")
@@ -1308,7 +1314,22 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
 process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NULL,
                                            warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                            ...) {
-  process_init_approx(init, num_procs, model_variables, warn_partial)
+  if (!init$metadata()$calculate_lp) {
+    validate_fit_init(init, model_variables)
+    # Convert from data.table to data.frame
+    draws_df = init$draws(format = "df")
+    if (is.null(model_variables)) {
+      model_variables = list(parameters = colnames(draws_df)[3:(length(colnames(draws_df)) - 3)])
+    }
+    draws_df$weight = rep(1.0, nrow(draws_df))
+    init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
+      weights = draws_df$weight, method = "simple_no_replace")
+    init_draws_lst = process_init(init_draws_df,
+      num_procs = num_procs, model_variables = model_variables, warn_partial)
+    return(init_draws_lst)
+  } else {
+    process_init_approx(init, num_procs, model_variables, warn_partial)
+  }
 }
 
 #' Write initial values to files if provided as a `CmdStanVB` class

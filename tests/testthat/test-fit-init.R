@@ -80,9 +80,6 @@ test_that("Pathfinder method with calculate_lp as false works as init", {
   set.seed(1234)
   utils::capture.output(fit_path_init <- mod_logistic$pathfinder(seed=1234, data = data_list_logistic,
     refresh = 0, num_paths = 4, psis_resample = TRUE, calculate_lp = FALSE))
-  utils::capture.output(fit_sample_init_simple <- mod_logistic$sample(chains = 1,
-    data = data_list_logistic, iter_warmup = 100, iter_sampling = 100,
-    refresh = 0, seed = 1234, init = fit_path_init))
   expect_no_error(test_inits(mod_logistic, fit_path_init,
     data_list_logistic))
   utils::capture.output(fit_path_init <- mod_logistic$pathfinder(seed=1234, data = data_list_logistic,
