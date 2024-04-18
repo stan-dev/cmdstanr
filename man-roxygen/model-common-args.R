@@ -59,7 +59,8 @@
 #'  smoothed weights will be used. If `psis_resample` was set to `TRUE` or
 #'  `calculate_lp` was set to `FALSE` then sampling without replacement with
 #'  uniform weights will be used to select the draws.
-#'  PSIS resampling is used to select the draws for  [`CmdStanVB`] fit objects.
+#'  PSIS resampling is used to select the draws for  [`CmdStanVB`],
+#'  and [`CmdStanLaplace`] fit objects.
 #'
 #'  * A type inheriting from `posterior::draws`. If the draws object has less
 #'  samples than the number of requested chains/paths then the inits will be

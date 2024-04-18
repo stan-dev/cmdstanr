@@ -76,7 +76,8 @@ set to \code{TRUE} (default), then resampling without replacement with Pareto
 smoothed weights will be used. If \code{psis_resample} was set to \code{TRUE} or
 \code{calculate_lp} was set to \code{FALSE} then sampling without replacement with
 uniform weights will be used to select the draws.
-PSIS resampling is used to select the draws for  \code{\link{CmdStanVB}} fit objects.
+PSIS resampling is used to select the draws for  \code{\link{CmdStanVB}},
+and \code{\link{CmdStanLaplace}} fit objects.
 \item A type inheriting from \code{posterior::draws}. If the draws object has less
 samples than the number of requested chains/paths then the inits will be
 drawn using sampling with replacement. Otherwise sampling without
