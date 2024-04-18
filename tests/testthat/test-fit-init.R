@@ -1,4 +1,4 @@
-library(cmdstanr)
+context("fitted-inits")
 set_cmdstan_path()
 
 mod_params <- testing_model("parameter_types")
