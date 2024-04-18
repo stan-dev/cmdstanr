@@ -20,14 +20,18 @@ using the \code{\link[=fit-method-summary]{$print()}} method. The default is 10.
 \item \code{cmdstanr_no_ver_check}: Should the check for a more recent version of
 CmdStan be disabled? The default is \code{FALSE}.
 \item \code{cmdstanr_output_dir}: The directory where CmdStan should write its output
-CSV files when fitting models. The default is a temporary directory.
+CSV files when fitting models. The default is a temporary directory. Files in
+a temporary directory are removed as part of \R garbage collection, while
+files in an explicitly defined directory are not automatically deleted.
 \item \code{cmdstanr_verbose}: Should more information be printed
 when compiling or running models, including showing how CmdStan was called
 internally? The default is \code{FALSE}.
 \item \code{cmdstanr_warn_inits}: Should a warning be thrown if initial values are
 only provided for a subset of parameters? The default is \code{TRUE}.
 \item \code{cmdstanr_write_stan_file_dir}: The directory where \code{\link[=write_stan_file]{write_stan_file()}}
-should write Stan files. The default is a temporary directory.
+should write Stan files. The default is a temporary directory. Files in
+a temporary directory are removed as part of \R garbage collection, while
+files in an explicitly defined directory are not automatically deleted.
 \item \code{mc.cores}: The number of cores to use for various parallelization tasks
 (e.g. running MCMC chains, installing CmdStan). The default depends on the
 use case and is documented with the methods that make use of \code{mc.cores}.
