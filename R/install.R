@@ -855,8 +855,10 @@ rtools4x_version <- function() {
     rtools_ver <- "40"
   } else if (R.version$minor < "3.0") {
     rtools_ver <- "42"
-  } else {
+  } else if (R.version$minor < "5.0") {
     rtools_ver <- "43"
+  } else {
+    rtools_ver <- "44"
   }
   rtools_ver
 }
