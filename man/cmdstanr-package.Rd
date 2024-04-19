@@ -65,6 +65,9 @@ you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model
 otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} to install CmdStan. The vignette
 \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
 demonstrates the basic functionality of the package.
+
+For a list of global \link[base:options]{options} see
+\link{cmdstanr_global_options}.
 }
 
 \examples{

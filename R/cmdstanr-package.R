@@ -26,6 +26,9 @@
 #'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 #'   demonstrates the basic functionality of the package.
 #'
+#'   For a list of global [options][base::options()] see
+#'   [cmdstanr_global_options].
+#'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #' @import R6

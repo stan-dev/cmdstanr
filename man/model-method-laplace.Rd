@@ -11,7 +11,7 @@ laplace(
   refresh = NULL,
   init = NULL,
   save_latent_dynamics = FALSE,
-  output_dir = NULL,
+  output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
   threads = NULL,
@@ -83,7 +83,8 @@ its output CSV files. For MCMC there will be one file per chain; for other
 methods there will be a single file. For interactive use this can typically
 be left at \code{NULL} (temporary directory) since CmdStanR makes the CmdStan
 output (posterior draws and diagnostics) available in \R via methods of the
-fitted model objects. The behavior of \code{output_dir} is as follows:
+fitted model objects. This can be set for an entire \R session using
+\code{options(cmdstanr_output_dir)}. The behavior of \code{output_dir} is as follows:
 \itemize{
 \item If \code{NULL} (the default), then the CSV files are written to a temporary
 directory and only saved permanently if the user calls one of the \verb{$save_*}
@@ -214,8 +215,8 @@ Other CmdStanModel methods:
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
-\code{\link{model-method-sample_mpi}},
 \code{\link{model-method-sample}},
+\code{\link{model-method-sample_mpi}},
 \code{\link{model-method-variables}},
 \code{\link{model-method-variational}}
 }
