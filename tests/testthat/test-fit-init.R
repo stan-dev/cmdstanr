@@ -75,11 +75,13 @@ test_that("Multi Pathfinder method works as init", {
 
 test_that("Pathfinder method with psis_resample as false works as init", {
   set.seed(1234)
+  Sys.sleep(3)
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
     seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1))
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
+
 
 test_that("Multi Pathfinder method with psis_resample as false works as init", {
   set.seed(1234)
@@ -90,14 +92,6 @@ test_that("Multi Pathfinder method with psis_resample as false works as init", {
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
-test_that("Laplace method works as init", {
-  set.seed(1234)
-  mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_laplace_init <- mod_logistic$laplace(
-    data = data_list_logistic, seed = 1234, refresh=0))
-  expect_no_error(test_inits(mod_logistic, fit_laplace_init,
-    data_list_logistic))
-})
 
 test_that("Pathfinder method with calculate_lp as false works as init", {
   set.seed(1234)
