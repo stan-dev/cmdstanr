@@ -33,18 +33,24 @@ test_that("all fitting methods work with output_dir", {
     # from the original tempdir(), so need to normalise both for comparison
     expect_equal(normalizePath(fit$runset$args$output_dir),
                  normalizePath(method_dir))
-    files <- list.files(method_dir, full.names = TRUE)
+    files <- normalizePath(list.files(method_dir, full.names = TRUE))
     # in 2.34.0 we also save the config files for all methods and the metric
     # for sample
     if (cmdstan_version() < "2.34.0") {
       mult <- 1
     } else if (method == "sample") {
       mult <- 3
-      expect_equal(repair_path(files[grepl("metric", files)]), fit$metric_files())
-      expect_equal(repair_path(files[grepl("config", files)]), fit$config_files())
+      expect_equal(files[grepl("metric", files)],
+                   normalizePath(sapply(fit$metric_files(), wsl_safe_path, revert = TRUE,
+                                        USE.NAMES = FALSE)))
+      expect_equal(files[grepl("config", files)],
+                   normalizePath(sapply(fit$config_files(), wsl_safe_path, revert = TRUE,
+                                        USE.NAMES = FALSE)))
     } else {
       mult <- 2
-      expect_equal(repair_path(files[grepl("config", files)]), fit$config_files())
+      expect_equal(files[grepl("config", files)],
+                   normalizePath(sapply(fit$config_files(), wsl_safe_path, revert = TRUE,
+                                        USE.NAMES = FALSE)))
     }
     expect_equal(length(list.files(method_dir)), mult * fit$num_procs())
 
