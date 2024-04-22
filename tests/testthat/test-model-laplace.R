@@ -121,11 +121,13 @@ test_that("laplace() errors with bad combinations of arguments", {
 test_that("laplace() errors if optimize() fails", {
   mod_schools <- testing_model("schools")
   expect_error(
-    expect_message(
-      mod_schools$laplace(data = testing_data("schools"), refresh = 0),
-      "Line search failed to achieve a sufficient decrease"
+    expect_warning(
+      expect_message(
+        mod_schools$laplace(data = testing_data("schools"), refresh = 0),
+        "Line search failed to achieve a sufficient decrease"
+      ),
+      "Fitting finished unexpectedly"
     ),
     "Optimization failed"
   )
-
 })
