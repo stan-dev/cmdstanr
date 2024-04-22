@@ -300,7 +300,7 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
   N <- 4
   K <- 3
   fit <- mod$sample(data = list(N = N, K = K), chains = 1,
-                    iter_warmup = 1, iter_sampling = 1)
+                    iter_warmup = 1, iter_sampling = 5)
 
   target_skeleton <- list(
     x_real = array(0, dim = 1),

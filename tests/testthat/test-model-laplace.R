@@ -54,7 +54,7 @@ test_that("laplace() runs when all arguments specified validly", {
   expect_equal(fit1$metadata()$draws, as.integer(ok_arg_values$draws))
   expect_equal(fit1$mode()$metadata()$jacobian, as.integer(ok_arg_values$jacobian))
   expect_equal(fit1$mode()$metadata()$init_alpha, ok_arg_values$opt_args$init_alpha)
-  
+
   expect_equal(fit1$mode()$metadata()$tol_obj, ok_arg_values$opt_args$tol_obj, tolerance = 0)
 
   # leaving all at default (except 'data')
@@ -121,11 +121,13 @@ test_that("laplace() errors with bad combinations of arguments", {
 test_that("laplace() errors if optimize() fails", {
   mod_schools <- testing_model("schools")
   expect_error(
-    expect_message(
-      mod_schools$laplace(data = testing_data("schools"), refresh = 0),
-      "Line search failed to achieve a sufficient decrease"
+    expect_warning(
+      expect_message(
+        mod_schools$laplace(data = testing_data("schools"), refresh = 0),
+        "Line search failed to achieve a sufficient decrease"
+      ),
+      "Fitting finished unexpectedly"
     ),
     "Optimization failed"
   )
-
 })
