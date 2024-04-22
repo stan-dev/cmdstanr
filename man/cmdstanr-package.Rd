@@ -211,12 +211,12 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Jonah Gabry \email{jsg2201@columbia.edu}
+\strong{Maintainer}: Andrew Johnson \email{andrew.johnson@arjohnsonau.com} (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
 
 Authors:
 \itemize{
+  \item Jonah Gabry \email{jsg2201@columbia.edu}
   \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
-  \item Andrew Johnson (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
 }
 
 Other contributors:
