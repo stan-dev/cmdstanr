@@ -27,7 +27,8 @@ optimize(
   tol_param = NULL,
   history_size = NULL,
   show_messages = TRUE,
-  show_exceptions = TRUE
+  show_exceptions = TRUE,
+  save_cmdstan_config = TRUE
 )
 }
 \arguments{

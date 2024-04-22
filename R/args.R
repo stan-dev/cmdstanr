@@ -289,9 +289,6 @@ SampleArgs <- R6::R6Class(
       if (is.logical(self$save_metric)) {
         self$save_metric <- as.integer(self$save_metric)
       }
-      if (!self$adapt_engaged & !is.null(self$save_metric)) {
-        self$save_metric <- 0
-      }
       invisible(self)
     },
     validate = function(num_procs) {
@@ -819,6 +816,10 @@ validate_sample_args <- function(self, num_procs) {
                                lower = 0, upper = 1,
                                len = 1,
                                null.ok = TRUE)
+
+  if (is.null(self$adapt_engaged) || (!self$adapt_engaged && !is.null(self$save_metric))) {
+    self$save_metric <- 0
+  }
 
   invisible(TRUE)
 }

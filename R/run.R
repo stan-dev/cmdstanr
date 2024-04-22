@@ -76,7 +76,8 @@ CmdStanRun <- R6::R6Class(
     },
     config_files = function(include_failed = FALSE) {
       files <- private$config_files_
-      if (!length(files) || !any(file.exists(files))) {
+      files_win_path <- sapply(private$config_files_, wsl_safe_path, revert = TRUE)
+      if (!length(files) || !any(file.exists(files_win_path))) {
         stop(
           "No CmdStan config files found. ",
           "Set 'save_cmdstan_config=TRUE' when fitting the model.",
@@ -92,7 +93,8 @@ CmdStanRun <- R6::R6Class(
     },
     metric_files = function(include_failed = FALSE) {
       files <- private$metric_files_
-      if (!length(files) || !any(file.exists(files))) {
+      files_win_path <- sapply(private$metric_files_, wsl_safe_path, revert = TRUE)
+      if (!length(files) || !any(file.exists(files_win_path))) {
         stop(
           "No metric files found. ",
           "Set 'save_metric=TRUE' when fitting the model.",
