@@ -314,6 +314,32 @@ test_that("Functions can be compiled with model", {
   )
 })
 
+test_that("compile_standalone warns but doesn't error if no functions", {
+  stan_no_funs_block <- write_stan_file("
+    parameters {
+      real x;
+    }
+    model {
+      x ~ std_normal();
+    }
+  ")
+  expect_warning(
+    mod1 <- cmdstan_model(stan_no_funs_block, compile = TRUE, compile_standalone = TRUE, force_recompile = TRUE),
+    "No standalone functions found to compile and expose to R"
+  )
+  checkmate::expect_r6(mod1, "CmdStanModel")
+
+  stan_empty_funs_block <- write_stan_file("
+   functions {
+   }
+  ")
+  expect_warning(
+    mod2 <- cmdstan_model(stan_empty_funs_block, compile = TRUE, compile_standalone = TRUE, force_recompile = TRUE),
+    "No standalone functions found to compile and expose to R"
+  )
+  checkmate::expect_r6(mod2, "CmdStanModel")
+})
+
 test_that("rng functions can be exposed", {
   skip_if(os_is_wsl())
   function_decl <- "functions { real wrap_normal_rng(real mu, real sigma) { return normal_rng(mu, sigma); } }"
