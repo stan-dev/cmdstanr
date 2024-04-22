@@ -10,9 +10,16 @@ startup_messages <- function() {
   }
 
   skip_version_check <- isTRUE(getOption(
-    "CMDSTANR_NO_VER_CHECK",
-    default = identical(tolower(Sys.getenv("CMDSTANR_NO_VER_CHECK")), "true")
+    "cmdstanr_no_ver_check",
+    default = identical(tolower(Sys.getenv("cmdstanr_no_ver_check")), "true")
   ))
+  if (!skip_version_check) {
+    # check if they used the old all caps version
+    skip_version_check <- isTRUE(getOption(
+      "CMDSTANR_NO_VER_CHECK",
+      default = identical(tolower(Sys.getenv("CMDSTANR_NO_VER_CHECK")), "true")
+    ))
+  }
   if (!skip_version_check) {
     latest_version <- try(suppressWarnings(latest_released_version(retries = 0)), silent = TRUE)
     current_version <- try(cmdstan_version(), silent = TRUE)
@@ -21,7 +28,7 @@ startup_messages <- function() {
         && latest_version > current_version) {
       packageStartupMessage(
         "\nA newer version of CmdStan is available. See ?install_cmdstan() to install it.",
-        "\nTo disable this check set option or environment variable CMDSTANR_NO_VER_CHECK=TRUE."
+        "\nTo disable this check set option or environment variable cmdstanr_no_ver_check=TRUE."
       )
     }
   }

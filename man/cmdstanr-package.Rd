@@ -65,6 +65,9 @@ you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model
 otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} to install CmdStan. The vignette
 \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
 demonstrates the basic functionality of the package.
+
+For a list of global \link[base:options]{options} see
+\link{cmdstanr_global_options}.
 }
 
 \examples{
@@ -208,12 +211,12 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Jonah Gabry \email{jsg2201@columbia.edu}
+\strong{Maintainer}: Andrew Johnson \email{andrew.johnson@arjohnsonau.com} (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
 
 Authors:
 \itemize{
+  \item Jonah Gabry \email{jsg2201@columbia.edu}
   \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
-  \item Andrew Johnson (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
 }
 
 Other contributors:

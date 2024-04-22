@@ -13,7 +13,7 @@ sample_mpi(
   refresh = NULL,
   init = NULL,
   save_latent_dynamics = FALSE,
-  output_dir = NULL,
+  output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   chains = 1,
   chain_ids = seq_len(chains),
@@ -110,10 +110,12 @@ temporary files created when \code{save_latent_dynamics=TRUE} see the
 method.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
-its output CSV files. For interactive use this can typically be left at
-\code{NULL} (temporary directory) since CmdStanR makes the CmdStan output
-(posterior draws and diagnostics) available in \R via methods of the fitted
-model objects. The behavior of \code{output_dir} is as follows:
+its output CSV files. For MCMC there will be one file per chain; for other
+methods there will be a single file. For interactive use this can typically
+be left at \code{NULL} (temporary directory) since CmdStanR makes the CmdStan
+output (posterior draws and diagnostics) available in \R via methods of the
+fitted model objects. This can be set for an entire \R session using
+\code{options(cmdstanr_output_dir)}. The behavior of \code{output_dir} is as follows:
 \itemize{
 \item If \code{NULL} (the default), then the CSV files are written to a temporary
 directory and only saved permanently if the user calls one of the \verb{$save_*}

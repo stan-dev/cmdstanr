@@ -266,6 +266,9 @@ SampleArgs <- R6::R6Class(
             fileext = ".json"
           )
         for (i in seq_along(inv_metric_paths)) {
+          if (length(inv_metric[[i]]) == 1 && metric == "diag_e") {
+            inv_metric[[i]] <- array(inv_metric[[i]], dim = c(1))
+          }
           write_stan_json(list(inv_metric = inv_metric[[i]]), inv_metric_paths[i])
         }
 

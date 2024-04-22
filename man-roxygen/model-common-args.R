@@ -56,10 +56,12 @@
 #'   method.
 #'
 #' @param output_dir (string) A path to a directory where CmdStan should write
-#'   its output CSV files. For interactive use this can typically be left at
-#'   `NULL` (temporary directory) since CmdStanR makes the CmdStan output
-#'   (posterior draws and diagnostics) available in \R via methods of the fitted
-#'   model objects. The behavior of `output_dir` is as follows:
+#'   its output CSV files. For MCMC there will be one file per chain; for other
+#'   methods there will be a single file. For interactive use this can typically
+#'   be left at `NULL` (temporary directory) since CmdStanR makes the CmdStan
+#'   output (posterior draws and diagnostics) available in \R via methods of the
+#'   fitted model objects. This can be set for an entire \R session using
+#'   `options(cmdstanr_output_dir)`. The behavior of `output_dir` is as follows:
 #'   * If `NULL` (the default), then the CSV files are written to a temporary
 #'   directory and only saved permanently if the user calls one of the `$save_*`
 #'   methods of the fitted model object (e.g.,
