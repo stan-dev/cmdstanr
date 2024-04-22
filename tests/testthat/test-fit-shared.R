@@ -216,7 +216,10 @@ test_that("return_codes method works properly", {
   expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
 
   # non-zero
-  non_zero <- testing_fit("schools", method = "optimize", seed = 123)
+  expect_warning(
+    non_zero <- testing_fit("schools", method = "optimize", seed = 123),
+    "Fitting finished unexpectedly"
+  )
   expect_gt(non_zero$return_codes(), 0)
 })
 
