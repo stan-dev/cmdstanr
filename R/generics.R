@@ -1,9 +1,8 @@
-
 #' Coercion methods for CmdStan objects
 #'
-#' These methods are used to coerce objects into `cmdstanr` objects.
-#' Primarily intended for other packages to use when interfacing
-#' with `cmdstanr`.
+#' These are generic functions intended to primarily be used by developers of
+#' packages that interface with on CmdStanR. Developers can define methods on
+#' top of these generics to coerce objects into CmdStanR's fitted model objects.
 #'
 #' @param object to be coerced
 #' @param ... additional arguments

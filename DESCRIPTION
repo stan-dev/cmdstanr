@@ -3,12 +3,14 @@ Title: R Interface to 'CmdStan'
 Version: 0.7.1
 Date: 2024-01-09
 Authors@R:
-    c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
-           email = "jsg2201@columbia.edu"),
+    c(person(given = "Jonah", family = "Gabry", role = "aut",
+             email = "jsg2201@columbia.edu"),
       person(given = "Rok", family = "Češnovar", role = "aut",
-           email = "rok.cesnovar@fri.uni-lj.si"),
-      person(given = "Andrew", family = "Johnson", role = "aut",
-            comment = c(ORCID = "0000-0001-7000-8065")),
+             email = "rok.cesnovar@fri.uni-lj.si"),
+      person(given = "Andrew", family = "Johnson", role = c("aut", "cre"),
+             email = "andrew.johnson@arjohnsonau.com",
+             comment = c(ORCID = "0000-0001-7000-8065")),
+      person(given = "Steve", family = "Bronder", role = "aut"),
       person(given = "Ben", family = "Bales", role = "ctb"),
       person(given = "Mitzi", family = "Morris", role = "ctb"),
       person(given = "Mikhail", family = "Popov", role = "ctb"),
@@ -17,7 +19,8 @@ Authors@R:
            email = "will.landau@gmail.com", comment = c(ORCID = "0000-0003-1878-3253")),
       person(given = "Jacob", family = "Socolar", role = "ctb"),
       person(given = "Martin", family = "Modrák", role = "ctb"),
-      person(given = "Steve", family = "Bronder", role = "aut"))
+      person(given = "Ven", family = "Popov", role = "ctb")
+      )
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command
     line interface for compilation and running algorithms instead of interfacing
@@ -33,7 +36,7 @@ RoxygenNote: 7.3.1
 Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: CmdStan (https://mc-stan.org/users/interfaces/cmdstan)
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.0.0)
 Imports:
     checkmate,
     data.table,
