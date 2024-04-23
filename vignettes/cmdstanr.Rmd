@@ -258,6 +258,11 @@ In general, converting to a different draws format in this way will be slower
 than just setting the appropriate format initially in the call to the `$draws()`
 method, but in most cases the speed difference will be minor.
 
+The vignette 
+[Working with Posteriors](https://mc-stan.org/cmdstanr/articles/posterior.html) 
+has more details on posterior draws, including how to reproduce the structured
+output RStan users are accustomed to getting from `rstan::extract()`.
+
 #### Plotting draws
 
 Plotting posterior distributions is as easy as passing the object returned by
