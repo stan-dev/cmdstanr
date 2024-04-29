@@ -13,10 +13,18 @@ name: Test coverage
       - master
 
 jobs:
-  test-coverage-ubuntu:
-    name: "Linux"
+  test-coverage:
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: windows-latest }
+          - { os: ubuntu-latest }
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
@@ -37,33 +45,9 @@ jobs:
       - uses: r-lib/actions/setup-r@v2.8.7
       - uses: r-lib/actions/setup-pandoc@v2.8.7
 
-      - name: Install Ubuntu dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev
-          sudo apt-get install -y openmpi-bin openmpi-common openmpi-doc libopenmpi-dev
-
-      - name: Query dependencies
-        run: |
-          install.packages('remotes')
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-        shell: Rscript {0}
-
-      - name: Cache R packages
-        uses: actions/cache@v4
+      - uses: r-lib/actions/setup-r-dependencies@v2.8.7
         with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ubuntu-r-4.0-1-${{ hashFiles('.github/depends.Rds') }}
-          restore-keys: ubuntu-r-4.0-1-
-
-      - name: Install dependencies
-        run: |
-          install.packages(c("remotes", "curl"), dependencies = TRUE)
-          remotes::install_local(path = ".", INSTALL_opts = "--no-test-load")
-          remotes::install_deps(dependencies = TRUE)
-          remotes::install_cran("covr")
-          remotes::install_cran("gridExtra")
-        shell: Rscript {0}
+          extra-packages: any::rcmdcheck, local::., any::covr, any::gridExtra
 
       - name: Install cmdstan
         run: |
@@ -71,42 +55,13 @@ jobs:
           cmdstanr::install_cmdstan(cores = 2)
         shell: Rscript {0}
 
-      - name: Test coverage
+      - name: Test coverage (Linux)
+        if: runner.os == 'Linux'
         run: covr::codecov(type = "tests")
         shell: Rscript {0}
 
-  test-coverage-windows:
-    name: "Windows"
-    if: "! contains(github.event.head_commit.message, '[ci skip]')"
-    runs-on: windows-latest
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      NOT_CRAN: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: r-lib/actions/setup-r@v2.8.7
-
-      - uses: r-lib/actions/setup-pandoc@v2.8.7
-
-      - name: Query dependencies
-        run: |
-          install.packages('remotes')
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-        shell: Rscript {0}
-
-      - name: Install dependencies
-        run: |
-          install.packages(c("remotes", "curl"), dependencies = TRUE)
-          remotes::install_local(path = ".")
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
-          remotes::install_deps(dependencies = TRUE)
-          remotes::install_cran("covr")
-          remotes::install_cran("gridExtra")
-        shell: Rscript {0}
-
-      - name: Test coverage
+      - name: Test coverage (Windows)
+        if: runner.os == 'Windows'
         run: |
           options(covr.gcov = 'C:/rtools40/mingw64/bin/gcov.exe');
           covr::codecov(type = "tests", function_exclusions = "sample_mpi")
