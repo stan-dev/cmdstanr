@@ -53,9 +53,10 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
           rtools-version: ${{ matrix.config.rtools }}
+
       - uses: r-lib/actions/setup-pandoc@v2.8.7
 
-      - uses: r-lib/actions/setup-r-dependencies@2.8.7
+      - uses: r-lib/actions/setup-r-dependencies@v2.8.7
 
       - name: Install cmdstan
         run: |
@@ -70,7 +71,7 @@ jobs:
           sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
-      - uses: r-lib/actions/check-r-package@2.8.7
+      - uses: r-lib/actions/check-r-package@v2.8.7
         env:
           _R_CHECK_CRAN_INCOMING_: false
 
