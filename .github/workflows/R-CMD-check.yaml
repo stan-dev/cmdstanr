@@ -60,7 +60,7 @@ jobs:
         with:
           cache-version: 2
           extra-packages: any::rcmdcheck, local::.
-          upgrade: TRUE
+          upgrade: "TRUE"
 
       - name: Install cmdstan
         run: |
