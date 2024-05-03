@@ -59,6 +59,12 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2.8.7
         with:
           extra-packages: any::rcmdcheck, local::.
+      # Workaround for windows stringi fail to install bug
+      # See https://github.com/r-lib/actions/issues/516
+      - name: stringi workaround on Linux
+        if: runner.os == 'Windows'
+        run: install.packages("stringi", repos = "https://cran.rstudio.com")
+        shell: Rscript {0}
 
       - name: Install cmdstan
         run: |
