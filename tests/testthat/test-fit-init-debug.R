@@ -3,106 +3,21 @@ set_cmdstan_path()
 
 
 
-data_list_logistic <- testing_data("logistic")
 
-test_inits <- function(mod, fit_init, data_list = NULL) {
-
-  # override fit_init so that all the code below runs
+test_inits <- function() {
   fit_init <- function() {
     list(alpha = rnorm(1), beta = rnorm(3))
   }
-
-  Sys.sleep(1)
-  fit_sample <- mod$sample(data = data_list, chains = 1, init = fit_init,
-                           iter_sampling = 100, iter_warmup = 100, refresh = 0, seed = 1234)
-  Sys.sleep(1)
-  fit_sample_multi <- mod$sample(data = data_list, chains = 5, init = fit_init,
-                                 iter_sampling = 100, iter_warmup = 100, refresh = 0, seed = 1234)
-  Sys.sleep(1)
-  fit_vb <- mod$variational(data = data_list, refresh = 0, seed = 1234,
-                            init = fit_init, algorithm = "fullrank")
-  Sys.sleep(1)
-  fit_path <- mod$pathfinder(data = data_list, seed=1234, refresh = 0,
-                             num_paths = 4, init = fit_init)
-  Sys.sleep(1)
-  fit_laplace <- mod$laplace(data = data_list, seed = 1234, refresh=0,
-                             init=fit_init)
-  Sys.sleep(1)
-  fit_ml <- mod$optimize(data = data_list, seed = 1234, refresh = 0,
-                         init = fit_init, history_size = 400, algorithm = "lbfgs")
-  # Sys.sleep(1)
-  # draws = posterior::as_draws_rvars(fit_init$draws())
-  # fit_sample_draws <- mod$sample(data = data_list, chains = 1, init = draws,
-  #                                iter_sampling = 100, iter_warmup = 100, refresh = 0, seed = 1234)
-  # Sys.sleep(1)
+  mod <- testing_model("logistic")
+  data_list <- testing_data("logistic")
+  fit_sample_multi <- mod$sample(data = data_list, chains = 2, init = fit_init,
+                                 iter_sampling = 200, iter_warmup = 200, refresh = 1, seed = 1234)
   return(0)
 }
-
-test_that("Pathfinder works as init", {
-  mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1))
-  expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
-})
-
-test_that("Multi Pathfinder method works as init", {
-  set.seed(1234)
-  mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(seed=1234,
-                                                                 data = data_list_logistic, refresh = 0, num_paths = 4))
-  expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
-})
-
-test_that("Pathfinder method with psis_resample as false works as init", {
-  set.seed(1234)
-  Sys.sleep(3)
-  mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1))
-  expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
-})
-
-
-test_that("Multi Pathfinder method with psis_resample as false works as init", {
-  set.seed(1234)
-  mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 4,
-    psis_resample = FALSE))
-  expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
-})
-
-
-test_that("Pathfinder method with calculate_lp as false works as init", {
-  set.seed(1234)
-  mod_logistic <- testing_model("logistic")
-  fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1,
-    psis_resample = FALSE, calculate_lp = FALSE)
-  expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
-})
-
-test_that("Multi Pathfinder method with calculate_lp as false works as init", {
-  set.seed(1234)
-  mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 4,
-    psis_resample = TRUE, calculate_lp = FALSE))
-  expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
-})
-
-test_that("Variational method works as init", {
-  set.seed(1235)
-  mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_vb_init <- mod_logistic$variational(
-    data = data_list_logistic, seed=1234, refresh = 0))
-  expect_no_error(test_inits(mod_logistic, fit_vb_init, data_list_logistic))
-})
-
-test_that("Optimization method works as init", {
-  set.seed(1234)
-  mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_ml_init <- mod_logistic$optimize(
-    data = data_list_logistic, seed=1234, refresh = 0))
-  expect_no_error(test_inits(mod_logistic, fit_ml_init, data_list_logistic))
-})
+while (1) {
+  test_that("Fails when calling sample many times", {
+    set.seed(1234)
+    test_inits()
+    expect_true(TRUE)
+  })
+}
