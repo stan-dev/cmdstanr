@@ -14,10 +14,10 @@ test_inits <- function() {
                                  iter_sampling = 200, iter_warmup = 200, refresh = 1, seed = 1234)
   return(0)
 }
-while (1) {
+#while (1) {
   test_that("Fails when calling sample many times", {
     set.seed(1234)
     test_inits()
     expect_true(TRUE)
   })
-}
+#}
