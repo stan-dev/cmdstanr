@@ -64,8 +64,8 @@ via a global \code{cmdstanr_force_recompile} option.}
 (\code{log_prob()}, \code{grad_log_prob()}, \code{constrain_variables()},
 \code{unconstrain_variables()}).}
 
-\item{compile_hessian_method}{(logical) Should the (experimental) \code{hessian()} method be
-be compiled with the model methods?}
+\item{compile_hessian_method}{(logical) Deprecated and will be removed in a future release.
+The hessian method is now compiled by default.}
 
 \item{compile_standalone}{(logical) Should functions in the Stan model be
 compiled for use in R? If \code{TRUE} the functions will be available via the
