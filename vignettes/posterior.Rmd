@@ -121,6 +121,30 @@ To convert an existing draws object to a different format use the
 `posterior::as_draws_*()` functions.
 
 To manipulate the `draws` objects use the various methods described in the
-posterior package [vignettes](https://mc-stan.org/posterior/articles/index.html)
+**posterior** package [vignettes](https://mc-stan.org/posterior/articles/index.html)
 and [documentation](https://mc-stan.org/posterior/reference/index.html).
 
+### Structured draws similar to `rstan::extract()`
+
+The **posterior** package's `rvar` format provides a multidimensional,
+sample-based representation of random variables. See
+https://mc-stan.org/posterior/articles/rvar.html for details. 
+In addition to being useful in its own right, this format also allows CmdStanR
+users to obtain draws in a similar format to `rstan::extract()`.
+
+Suppose we have a parameter `matrix[2,3] x`. The `rvar` format lets you 
+interact with `x` as if it's a `2 x 3` matrix and automatically applies operations
+over the many posterior draws of `x`. To instead directly access the draws of `x`
+while maintaining the structure of the matrix use `posterior::draws_of()`. 
+For example: 
+
+```{r structured-draws, eval = FALSE}
+draws <- posterior::as_draws_rvars(fit$draws())
+x_rvar <- draws$x
+x_array <- posterior::draws_of(draws$x)
+```
+
+The object `x_rvar` will be an `rvar` that can be used like a `2 x 3` matrix,
+with the draws handled behind the scenes. The object `x_array` will be a 
+`4000 x 2 x 3` array (assuming `4000` posterior draws), which is the same as it
+would be after being extracted from the list returned by `rstan::extract()`.

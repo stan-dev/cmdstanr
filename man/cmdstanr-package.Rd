@@ -217,6 +217,7 @@ Authors:
 \itemize{
   \item Jonah Gabry \email{jsg2201@columbia.edu}
   \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
+  \item Steve Bronder
 }
 
 Other contributors:
@@ -228,7 +229,7 @@ Other contributors:
   \item William Michael Landau \email{will.landau@gmail.com} (\href{https://orcid.org/0000-0003-1878-3253}{ORCID}) [contributor]
   \item Jacob Socolar [contributor]
   \item Martin Modrák [contributor]
-  \item Steve Bronder [contributor]
+  \item Ven Popov [contributor]
 }
 
 }

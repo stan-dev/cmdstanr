@@ -977,6 +977,11 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
     stop("Exporting standalone functions with external C++ is not available before CmdStan 2.32",
          call. = FALSE)
   }
+  if (!is.null(function_env$hpp_code) &&
+      !any(grepl("[[stan::function]]", function_env$hpp_code, fixed = TRUE))) {
+    warning("No standalone functions found to compile and expose to R!", call. = FALSE)
+    return(invisible(NULL))
+  }
   require_suggested_package("Rcpp")
   if (function_env$compiled) {
     if (!global) {

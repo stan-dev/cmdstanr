@@ -1,5 +1,8 @@
 context("model-expose-functions")
 
+# Standalone functions not expected to work on WSL yet
+skip_if(os_is_wsl())
+
 set_cmdstan_path()
 
 function_decl <- "
@@ -81,14 +84,11 @@ fit <- mod$sample(data = data_list)
 
 
 test_that("Functions can be exposed in model object", {
-  skip_if(os_is_wsl())
   expect_no_error(mod$expose_functions(verbose = TRUE))
 })
 
 
 test_that("Functions handle types correctly", {
-  skip_if(os_is_wsl())
-
   ### Scalar
 
   expect_equal(mod$functions$rtn_int(10), 10)
@@ -178,8 +178,6 @@ test_that("Functions handle types correctly", {
 })
 
 test_that("Functions handle complex types correctly", {
-  skip_if(os_is_wsl())
-
   ### Scalar
 
   complex_scalar <- complex(real = 2.1, imaginary = 21.3)
@@ -262,7 +260,6 @@ test_that("Functions handle complex types correctly", {
 })
 
 test_that("Functions can be exposed in fit object", {
-  skip_if(os_is_wsl())
   fit$expose_functions(verbose = TRUE)
 
   expect_equal(
@@ -272,7 +269,6 @@ test_that("Functions can be exposed in fit object", {
 })
 
 test_that("Compiled functions can be copied to global environment", {
-  skip_if(os_is_wsl())
   expect_message(
     fit$expose_functions(global = TRUE),
     "Functions already compiled, copying to global environment",
@@ -287,7 +283,6 @@ test_that("Compiled functions can be copied to global environment", {
 
 
 test_that("Functions can be compiled with model", {
-  skip_if(os_is_wsl())
   mod <- cmdstan_model(model, force_recompile = TRUE, compile_standalone = TRUE)
   fit <- mod$sample(data = data_list)
 
@@ -314,8 +309,33 @@ test_that("Functions can be compiled with model", {
   )
 })
 
+test_that("compile_standalone warns but doesn't error if no functions", {
+  stan_no_funs_block <- write_stan_file("
+    parameters {
+      real x;
+    }
+    model {
+      x ~ std_normal();
+    }
+  ")
+  expect_warning(
+    mod1 <- cmdstan_model(stan_no_funs_block, compile = TRUE, compile_standalone = TRUE, force_recompile = TRUE),
+    "No standalone functions found to compile and expose to R"
+  )
+  checkmate::expect_r6(mod1, "CmdStanModel")
+
+  stan_empty_funs_block <- write_stan_file("
+   functions {
+   }
+  ")
+  expect_warning(
+    mod2 <- cmdstan_model(stan_empty_funs_block, compile = TRUE, compile_standalone = TRUE, force_recompile = TRUE),
+    "No standalone functions found to compile and expose to R"
+  )
+  checkmate::expect_r6(mod2, "CmdStanModel")
+})
+
 test_that("rng functions can be exposed", {
-  skip_if(os_is_wsl())
   function_decl <- "functions { real wrap_normal_rng(real mu, real sigma) { return normal_rng(mu, sigma); } }"
   stan_prog <- paste(function_decl,
                      paste(readLines(testing_stan_file("bernoulli")),
@@ -341,8 +361,6 @@ test_that("rng functions can be exposed", {
 })
 
 test_that("Overloaded functions give meaningful errors", {
-  skip_if(os_is_wsl())
-
   funcode <- "
   functions {
     real fun1(real x) { return x; }
@@ -359,8 +377,6 @@ test_that("Overloaded functions give meaningful errors", {
 })
 
 test_that("Exposing external functions errors before v2.32", {
-  skip_if(os_is_wsl())
-
   fake_cmdstan_version("2.26.0")
 
   tmpfile <- tempfile(fileext = ".hpp")
@@ -387,8 +403,6 @@ test_that("Exposing external functions errors before v2.32", {
 })
 
 test_that("Exposing functions with precompiled model gives meaningful error", {
-  skip_if(os_is_wsl())
-
   stan_file <- write_stan_file("
     functions {
       real a_plus_b(real a, real b) { return a + b; }
