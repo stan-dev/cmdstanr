@@ -1149,8 +1149,8 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = TRUE,
-                   save_cmdstan_config = TRUE,
+                   save_metric = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL),
+                   save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL),
                    # deprecated
                    cores = NULL,
                    num_cores = NULL,
@@ -1243,7 +1243,7 @@ sample <- function(data = NULL,
     window = window,
     fixed_param = fixed_param,
     diagnostics = diagnostics,
-    save_metric = if (cmdstan_version() > "2.34.0") save_metric else NULL
+    save_metric = save_metric
   )
   args <- CmdStanArgs$new(
     method_args = sample_args,
@@ -1264,7 +1264,7 @@ sample <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    save_cmdstan_config = if (cmdstan_version() > "2.34.0") save_cmdstan_config
+    save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1361,7 +1361,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = TRUE,
+                       save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL),
                        # deprecated
                        validate_csv = TRUE) {
 
@@ -1426,7 +1426,7 @@ sample_mpi <- function(data = NULL,
     output_basename = output_basename,
     sig_figs = sig_figs,
     model_variables = model_variables,
-    save_cmdstan_config = if (cmdstan_version() > "2.34.0") save_cmdstan_config
+    save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
@@ -1507,7 +1507,7 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = TRUE) {
+                     save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1549,7 +1549,7 @@ optimize <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    save_cmdstan_config = if (cmdstan_version() > "2.34.0") save_cmdstan_config
+    save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1641,7 +1641,7 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = TRUE) {
+                    save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL)) {
   if (cmdstan_version() < "2.32") {
     stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
   }
@@ -1716,7 +1716,7 @@ laplace <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    save_cmdstan_config = if (cmdstan_version() > "2.34.0") save_cmdstan_config
+    save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1797,7 +1797,7 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = TRUE) {
+                        save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1839,7 +1839,7 @@ variational <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    save_cmdstan_config = if (cmdstan_version() > "2.34.0") save_cmdstan_config
+    save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()
@@ -1942,7 +1942,7 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = TRUE) {
+                       save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1990,7 +1990,7 @@ pathfinder <- function(data = NULL,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
     num_threads = num_threads,
-    save_cmdstan_config = if (cmdstan_version() > "2.34.0") save_cmdstan_config
+    save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)
   runset$run_cmdstan()

@@ -22,7 +22,7 @@ laplace(
   draws = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
-  save_cmdstan_config = TRUE
+  save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL)
 )
 }
 \arguments{

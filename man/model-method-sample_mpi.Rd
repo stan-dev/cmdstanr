@@ -36,7 +36,7 @@ sample_mpi(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_cmdstan_config = TRUE,
+  save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL),
   validate_csv = TRUE
 )
 }

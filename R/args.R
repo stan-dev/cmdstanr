@@ -119,7 +119,6 @@ CmdStanArgs <- R6::R6Class(
       if (type == "output" && !is.null(self$output_basename)) {
         basename <- self$output_basename
       }
-
       generate_file_names(
         basename = basename,
         ext = ".csv",
@@ -195,7 +194,6 @@ CmdStanArgs <- R6::R6Class(
       if (!is.null(self$num_threads)) {
         num_threads <- c(args$output, paste0("num_threads=", self$num_threads))
       }
-
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
     },
@@ -709,7 +707,6 @@ validate_cmdstan_args <- function(self) {
   if (!is.null(self$data_file)) {
     assert_file_exists(self$data_file, access = "r")
   }
-
   num_procs <- length(self$proc_ids)
   if (inherits(self$method_args, "PathfinderArgs")) {
     num_inits <- self$method_args$num_paths
