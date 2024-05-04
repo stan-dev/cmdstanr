@@ -63,6 +63,6 @@ jobs:
       - name: Test coverage (Windows)
         if: runner.os == 'Windows'
         run: |
-          options(covr.gcov = 'C:/rtools40/mingw64/bin/gcov.exe');
+          options(covr.gcov = 'C:/rtools44/mingw64/bin/gcov.exe');
           covr::codecov(type = "tests", function_exclusions = "sample_mpi")
         shell: Rscript {0}

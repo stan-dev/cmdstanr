@@ -74,6 +74,30 @@ take no arguments or a single argument \code{chain_id}. For MCMC, if the functio
 has argument \code{chain_id} it will be supplied with the chain id (from 1 to
 number of chains) when called to generate the initial values. See
 \strong{Examples}.
+\item A \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanPathfinder}},
+or \code{\link{CmdStanLaplace}} fit object.
+If the fit object's parameters are only a subset of the model
+parameters then the other parameters will be drawn by Stan's default
+initialization. The fit object must have at least some parameters that are the
+same name and dimensions as the current Stan model. For the \code{sample} and
+\code{pathfinder} method, if the fit object has fewer draws than the requested
+number of chains/paths then the inits will be drawn using sampling with
+replacement. Otherwise sampling without replacement will be used.
+When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
+. \code{psis_resample} was set to \code{FALSE} and \code{calculate_lp} was
+set to \code{TRUE} (default), then resampling without replacement with Pareto
+smoothed weights will be used. If \code{psis_resample} was set to \code{TRUE} or
+\code{calculate_lp} was set to \code{FALSE} then sampling without replacement with
+uniform weights will be used to select the draws.
+PSIS resampling is used to select the draws for  \code{\link{CmdStanVB}},
+and \code{\link{CmdStanLaplace}} fit objects.
+\item A type inheriting from \code{posterior::draws}. If the draws object has less
+samples than the number of requested chains/paths then the inits will be
+drawn using sampling with replacement. Otherwise sampling without
+replacement will be used. If the draws object's parameters are only a subset
+of the model parameters then the other parameters will be drawn by Stan's
+default initialization. The fit object must have at least some parameters
+that are the same name and dimensions as the current Stan model.
 }}
 
 \item{save_latent_dynamics}{Ignored for this method.}
