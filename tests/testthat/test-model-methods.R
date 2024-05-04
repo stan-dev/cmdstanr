@@ -34,17 +34,10 @@ test_that("Methods error if not compiled", {
   )
 })
 
-test_that("User warned about higher-order autodiff with hessian", {
-  skip_if(os_is_wsl())
-  expect_message(
-    fit$init_model_methods(hessian = TRUE, verbose = TRUE),
-    "The hessian method relies on higher-order autodiff which is still experimental. Please report any compilation errors that you encounter",
-    fixed = TRUE
-    )
-})
 
 test_that("Methods return correct values", {
   skip_if(os_is_wsl())
+  fit$init_model_methods(verbose = TRUE)
   lp <- fit$log_prob(unconstrained_variables=c(0.1))
   expect_equal(lp, -8.6327599208828509347)
 

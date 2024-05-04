@@ -757,13 +757,6 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
             readLines(system.file("include", "model_methods.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
 
-  if (hessian) {
-    code <- c("#include <stan/math/mix.hpp>",
-            code,
-            readLines(system.file("include", "hessian.cpp",
-                                  package = "cmdstanr", mustWork = TRUE)))
-  }
-
   code <- paste(code, collapse = "\n")
   rcpp_source_stan(code, env, verbose)
   invisible(NULL)

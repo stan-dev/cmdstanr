@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <rcpp_eigen_interop.hpp>
 #include <stan/model/model_base.hpp>
 #include <stan/model/log_prob_grad.hpp>
 #include <stan/model/log_prob_propto.hpp>
@@ -26,10 +27,14 @@ using json_data_t = stan::json::json_data;
   return std::make_shared<json_data_t>(data_context);
 }
 
+stan::model::model_base&
+new_model(stan::io::var_context& data_context, unsigned int seed,
+          std::ostream* msg_stream);
+
 // [[Rcpp::export]]
 Rcpp::List model_ptr(std::string data_path, boost::uint32_t seed) {
-  Rcpp::XPtr<stan_model> ptr(
-    new stan_model(*var_context(data_path), seed, &Rcpp::Rcout)
+  Rcpp::XPtr<stan::model::model_base> ptr(
+    &new_model(*var_context(data_path), seed, &Rcpp::Rcout)
   );
   Rcpp::XPtr<boost::ecuyer1988> base_rng(new boost::ecuyer1988(seed));
   return Rcpp::List::create(
@@ -39,35 +44,54 @@ Rcpp::List model_ptr(std::string data_path, boost::uint32_t seed) {
 }
 
 // [[Rcpp::export]]
-double log_prob(SEXP ext_model_ptr, std::vector<double> upars,
-                bool jac_adjust) {
+double log_prob(SEXP ext_model_ptr, Eigen::VectorXd upars, bool jac_adjust) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  std::vector<int> params_i;
   if (jac_adjust) {
-    return stan::model::log_prob_propto<true>(*ptr.get(), upars, params_i, &Rcpp::Rcout);
+    return stan::model::log_prob_propto<true>(*ptr.get(), upars, &Rcpp::Rcout);
   } else {
-    return stan::model::log_prob_propto<false>(*ptr.get(), upars, params_i, &Rcpp::Rcout);
+    return stan::model::log_prob_propto<false>(*ptr.get(), upars, &Rcpp::Rcout);
   }
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector grad_log_prob(SEXP ext_model_ptr, std::vector<double> upars,
+Rcpp::NumericVector grad_log_prob(SEXP ext_model_ptr, Eigen::VectorXd upars,
                                   bool jac_adjust) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  std::vector<double> gradients;
-  std::vector<int> params_i;
+  Eigen::VectorXd gradients;
 
   double lp;
   if (jac_adjust) {
-    lp = stan::model::log_prob_grad<true, true>(
-      *ptr.get(), upars, params_i, gradients);
+    lp = stan::model::log_prob_grad<true, true>(*ptr.get(), upars, gradients);
   } else {
-  lp = stan::model::log_prob_grad<true, false>(
-      *ptr.get(), upars, params_i, gradients);
+    lp = stan::model::log_prob_grad<true, false>(*ptr.get(), upars, gradients);
   }
-  Rcpp::NumericVector grad_rtn = Rcpp::wrap(gradients);
+  Rcpp::NumericVector grad_rtn(Rcpp::wrap(std::move(gradients)));
   grad_rtn.attr("log_prob") = lp;
   return grad_rtn;
+}
+
+// [[Rcpp::export]]
+Rcpp::List hessian(SEXP ext_model_ptr, Eigen::VectorXd upars, bool jacobian) {
+  Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+
+  auto hessian_functor = [&](auto&& x) {
+    if (jacobian) {
+      return ptr->log_prob<true, true>(x, 0);
+    } else {
+      return ptr->log_prob<true, false>(x, 0);
+    }
+  };
+
+  double log_prob;
+  Eigen::VectorXd grad;
+  Eigen::MatrixXd hessian;
+
+  stan::math::internal::finite_diff_hessian_auto(hessian_functor, upars, log_prob, grad, hessian);
+
+  return Rcpp::List::create(
+    Rcpp::Named("log_prob") = log_prob,
+    Rcpp::Named("grad_log_prob") = grad,
+    Rcpp::Named("hessian") = hessian);
 }
 
 // [[Rcpp::export]]
@@ -95,12 +119,23 @@ Rcpp::List get_param_metadata(SEXP ext_model_ptr) {
 }
 
 // [[Rcpp::export]]
-std::vector<double> unconstrain_variables(SEXP ext_model_ptr, std::string init_path) {
+Eigen::VectorXd unconstrain_variables(SEXP ext_model_ptr, Eigen::VectorXd variables) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  std::vector<int> params_i;
-  std::vector<double> vars;
-  ptr->transform_inits(*var_context(init_path), params_i, vars, &Rcpp::Rcout);
-  return vars;
+  Eigen::VectorXd unconstrained_variables;
+  ptr->unconstrain_array(variables, unconstrained_variables, &Rcpp::Rcout);
+  return unconstrained_variables;
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd unconstrain_draws(SEXP ext_model_ptr, Eigen::MatrixXd variables) {
+  Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  Eigen::MatrixXd unconstrained_draws(variables.cols(), variables.rows());
+  for (int i = 0; i < variables.rows(); i++) {
+    Eigen::VectorXd unconstrained_variables;
+    ptr->unconstrain_array(variables.transpose().col(i), unconstrained_variables, &Rcpp::Rcout);
+    unconstrained_draws.col(i) = unconstrained_variables;
+  }
+  return unconstrained_draws.transpose();
 }
 
 // [[Rcpp::export]]
