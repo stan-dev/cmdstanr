@@ -29,7 +29,12 @@ variational(
   draws = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
-  save_cmdstan_config = ifelse(cmdstan_version() > "2.34.0", TRUE, NULL)
+  save_cmdstan_config = if (cmdstan_version() > "2.34.0") {
+     TRUE
+ } else {
+    
+    NULL
+ }
 )
 }
 \arguments{
