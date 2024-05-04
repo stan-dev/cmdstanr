@@ -15,8 +15,8 @@
 #'   contrast with `parallel_chains`, which specifies the number of chains to
 #'   run in parallel. The actual number of CPU cores used is
 #'   `parallel_chains*threads_per_chain`. For an example of using threading see
-#'   the Stan case study
-#'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'   the Stan case study [Reduce Sum: A Minimal
+#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #'
 #' @param iter_sampling (positive integer) The number of post-warmup iterations
 #'   to run per chain. Note: in the CmdStan User's Guide this is referred to as
@@ -46,13 +46,13 @@
 #'   specifying the geometry of the base manifold. See the _Euclidean Metric_
 #'   section of the CmdStan User's Guide for more details. To specify a
 #'   precomputed (inverse) metric, see the `inv_metric` argument below.
-#' @param metric_file (character vector) The paths to JSON or
-#'   Rdump files (one per chain) compatible with CmdStan that contain
-#'   precomputed inverse metrics. The `metric_file` argument is inherited from
-#'   CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
-#'   named `inv_metric`, referring to the _inverse_ metric. We recommend instead
-#'   using CmdStanR's `inv_metric` argument (see below) to specify an inverse
-#'   metric directly using a vector or matrix from your \R session.
+#' @param metric_file (character vector) The paths to JSON or Rdump files (one
+#'   per chain) compatible with CmdStan that contain precomputed inverse
+#'   metrics. The `metric_file` argument is inherited from CmdStan but is
+#'   confusing in that the entry in JSON or Rdump file(s) must be named
+#'   `inv_metric`, referring to the _inverse_ metric. We recommend instead using
+#'   CmdStanR's `inv_metric` argument (see below) to specify an inverse metric
+#'   directly using a vector or matrix from your \R session.
 #' @param inv_metric (vector, matrix) A vector (if `metric='diag_e'`) or a
 #'   matrix (if `metric='dense_e'`) for initializing the inverse metric. This
 #'   can be used as an alternative to the `metric_file` argument. A vector is
@@ -79,8 +79,8 @@
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the
 #'   sampler diagnostics from CSV if you wish to manually read in the results
 #'   and validate them yourself, for example using [read_cmdstan_csv()]. The
-#'   currently available diagnostics are `"divergences"`, `"treedepth"`,
-#'   and `"ebfmi"` (the default is to check all of them).
+#'   currently available diagnostics are `"divergences"`, `"treedepth"`, and
+#'   `"ebfmi"` (the default is to check all of them).
 #'
 #'   These diagnostics are also available after fitting. The
 #'   [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] method provides
@@ -91,4 +91,8 @@
 #'   Diagnostics like R-hat and effective sample size are _not_ currently
 #'   available via the `diagnostics` argument but can be checked after fitting
 #'   using the [`$summary()`][fit-method-summary] method.
+#' @param save_metric (logical) When `TRUE`, call CmdStan with argument
+#'   `"adaptation save_metric=1"` to save the adapted metric in separate JSON
+#'   file with elements "stepsize", "metric_type" and "inv_metric". The default
+#'   is `TRUE`. This option is only available in CmdStan 2.34.0 and later.
 #'

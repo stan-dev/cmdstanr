@@ -8,6 +8,7 @@ if (getRversion() < '3.5.0') {
 }
 if (!dir.exists(sandbox)) {
   dir.create(sandbox)
+  on.exit(unlink(sandbox, recursive = TRUE))
 }
 
 test_that("all fitting methods work with output_dir", {
@@ -15,6 +16,7 @@ test_that("all fitting methods work with output_dir", {
     method_dir <- file.path(sandbox, method)
     if (!dir.exists(method_dir)) {
       dir.create(method_dir)
+      on.exit(unlink(method_dir, recursive = TRUE))
     }
 
     # WSL models use internal WSL tempdir
@@ -22,6 +24,7 @@ test_that("all fitting methods work with output_dir", {
       # no output_dir means should use tempdir
       fit <- testing_fit("bernoulli", method = method, seed = 123)
       expect_equal(fit$runset$args$output_dir, absolute_path(tempdir()))
+      files <- list.files(method_dir)
     }
     # specifying output_dir
     fit <- testing_fit("bernoulli", method = method, seed = 123,
@@ -30,7 +33,26 @@ test_that("all fitting methods work with output_dir", {
     # from the original tempdir(), so need to normalise both for comparison
     expect_equal(normalizePath(fit$runset$args$output_dir),
                  normalizePath(method_dir))
-    expect_equal(length(list.files(method_dir)), fit$num_procs())
+    files <- normalizePath(list.files(method_dir, full.names = TRUE))
+    # in 2.34.0 we also save the config files for all methods and the metric
+    # for sample
+    if (cmdstan_version() < "2.34.0") {
+      mult <- 1
+    } else if (method == "sample") {
+      mult <- 3
+      expect_equal(files[grepl("metric", files)],
+                   normalizePath(sapply(fit$metric_files(), wsl_safe_path, revert = TRUE,
+                                        USE.NAMES = FALSE)))
+      expect_equal(files[grepl("config", files)],
+                   normalizePath(sapply(fit$config_files(), wsl_safe_path, revert = TRUE,
+                                        USE.NAMES = FALSE)))
+    } else {
+      mult <- 2
+      expect_equal(files[grepl("config", files)],
+                   normalizePath(sapply(fit$config_files(), wsl_safe_path, revert = TRUE,
+                                        USE.NAMES = FALSE)))
+    }
+    expect_equal(length(list.files(method_dir)), mult * fit$num_procs())
 
 
     # specifying output_dir
@@ -87,5 +109,7 @@ test_that("output_dir works with trailing /", {
   )
   expect_equal(normalizePath(fit$runset$args$output_dir),
                normalizePath(test_dir))
-  expect_equal(length(list.files(test_dir)), fit$num_procs())
+  # in 2.34.0 we also save the metric and config files
+  mult <- if (cmdstan_version() >= "2.34.0") 3 else 1
+  expect_equal(length(list.files(test_dir)), mult * fit$num_procs())
 })

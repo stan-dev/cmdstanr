@@ -26,6 +26,12 @@ CmdStanRun <- R6::R6Class(
       if (cmdstan_version() >= "2.26.0") {
         private$profile_files_ <- self$new_profile_files()
       }
+      if (cmdstan_version() >= "2.34.0" && !is.null(self$args$save_cmdstan_config) && self$args$save_cmdstan_config) {
+        private$config_files_ <- self$new_config_files()
+      }
+      if (cmdstan_version() >= "2.34.0" && !is.null(self$args$method_args$save_metric) && self$args$method_args$save_metric) {
+        private$metric_files_ <- self$new_metric_files()
+      }
       if (self$args$save_latent_dynamics) {
         private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
       }
@@ -59,6 +65,48 @@ CmdStanRun <- R6::R6Class(
     },
     new_profile_files = function() {
       self$args$new_files(type = "profile")
+    },
+    new_config_files = function() {
+      # because CmdStan 2.34 uses the output_file name as the base for the config file
+      paste0(tools::file_path_sans_ext(private$output_files_), "_config.json")
+    },
+    new_metric_files = function() {
+      # because CmdStan 2.34 uses the output_file name as the base for the metric file
+      paste0(tools::file_path_sans_ext(private$output_files_), "_metric.json")
+    },
+    config_files = function(include_failed = FALSE) {
+      files <- private$config_files_
+      files_win_path <- sapply(private$config_files_, wsl_safe_path, revert = TRUE)
+      if (!length(files) || !any(file.exists(files_win_path))) {
+        stop(
+          "No CmdStan config files found. ",
+          "Set 'save_cmdstan_config=TRUE' when fitting the model.",
+          call. = FALSE
+        )
+      }
+      if (include_failed) {
+        files
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        files[ok]
+      }
+    },
+    metric_files = function(include_failed = FALSE) {
+      files <- private$metric_files_
+      files_win_path <- sapply(private$metric_files_, wsl_safe_path, revert = TRUE)
+      if (!length(files) || !any(file.exists(files_win_path))) {
+        stop(
+          "No metric files found. ",
+          "Set 'save_metric=TRUE' when fitting the model.",
+          call. = FALSE
+        )
+      }
+      if (include_failed) {
+        files
+      } else {
+        ok <- self$procs$is_finished() | self$procs$is_queued()
+        files[ok]
+      }
     },
     latent_dynamics_files = function(include_failed = FALSE) {
       if (!length(private$latent_dynamics_files_)) {
@@ -195,6 +243,54 @@ CmdStanRun <- R6::R6Class(
               "- ", new_path)
       invisible(new_path)
     },
+    save_config_files = function(dir = ".",
+                                    basename = NULL,
+                                    timestamp = TRUE,
+                                    random = TRUE) {
+      current_files <- self$config_files(include_failed = TRUE) # used so we get error if 0 files
+      new_paths <- copy_temp_files(
+        current_paths = current_files,
+        new_dir = dir,
+        new_basename = paste0(basename %||% self$model_name(), "-config"),
+        ids = self$proc_ids(),
+        ext = ".json",
+        timestamp = timestamp,
+        random = random
+      )
+      file.remove(current_files[!current_files %in% new_paths])
+      private$config_files_ <- new_paths
+      message(
+        "Moved ",
+        length(current_files),
+        " files and set internal paths to new locations:\n",
+        paste("-", new_paths, collapse = "\n")
+      )
+      invisible(new_paths)
+    },
+    save_metric_files = function(dir = ".",
+                                 basename = NULL,
+                                 timestamp = TRUE,
+                                 random = TRUE) {
+      current_files <- self$metric_files(include_failed = TRUE) # used so we get error if 0 files
+      new_paths <- copy_temp_files(
+        current_paths = current_files,
+        new_dir = dir,
+        new_basename = paste0(basename %||% self$model_name(), "-metric"),
+        ids = self$proc_ids(),
+        ext = ".json",
+        timestamp = timestamp,
+        random = random
+      )
+      file.remove(current_files[!current_files %in% new_paths])
+      private$metric_files_ <- new_paths
+      message(
+        "Moved ",
+        length(current_files),
+        " files and set internal paths to new locations:\n",
+        paste("-", new_paths, collapse = "\n")
+      )
+      invisible(new_paths)
+    },
 
     command = function() self$args$command(),
     command_args = function() {
@@ -291,6 +387,10 @@ CmdStanRun <- R6::R6Class(
     latent_dynamics_files_ = NULL,
     latent_dynamics_files_saved_ = FALSE,
     profile_files_saved_ = FALSE,
+    config_files_ = NULL,
+    metric_files_ = NULL,
+    config_files_saved_ = FALSE,
+    metric_files_saved_ = FALSE,
     command_args_ = list(),
 
     finalize = function() {
@@ -301,7 +401,17 @@ CmdStanRun <- R6::R6Class(
           if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
             self$latent_dynamics_files(include_failed = TRUE),
           if (cmdstan_version() > "2.25.0" && !private$profile_files_saved_)
-            private$profile_files_
+            private$profile_files_,
+          if (cmdstan_version() > "2.34.0" &&
+              !is.null(self$args$save_cmdstan_config) &&
+              self$args$save_cmdstan_config &&
+              !private$config_files_saved_)
+            self$config_files(include_failed = TRUE),
+          if (cmdstan_version() > "2.34.0" &&
+              !(is.null(self$args$method_args$save_metric)) &&
+              self$args$method_args$save_metric &&
+              !private$metric_files_saved_)
+            self$metric_files(include_failed = TRUE)
         )
         unlink(temp_files)
       }

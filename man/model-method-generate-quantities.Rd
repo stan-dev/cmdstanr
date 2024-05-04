@@ -38,8 +38,8 @@ paths to \verb{$generate_quantities()} as many times as needed.}
 the data block of the Stan program. One of the following:
 \itemize{
 \item A named list of \R objects with the names corresponding to variables
-declared in the data block of the Stan program. Internally this list is then
-written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}. See
+declared in the data block of the Stan program. Internally this list is
+then written to JSON for CmdStan using \code{\link[=write_stan_json]{write_stan_json()}}. See
 \code{\link[=write_stan_json]{write_stan_json()}} for details on the conversions performed on \R objects
 before they are passed to Stan.
 \item A path to a data file compatible with CmdStan (JSON or \R dump). See the
@@ -50,12 +50,11 @@ appendices in the CmdStan guide for details on using these formats.
 \item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
 In the case of multi-chain sampling the single \code{seed} will automatically be
 augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to
-using same seed for all chains so that the same data is generated for all
-chains if RNG functions are used. The only time \code{seed} should be specified
-as a vector (one element per chain) is if RNG functions are used in
-transformed data and the goal is to generate \emph{different} data for each
-chain.}
+seed. The exception is the transformed data block, which defaults to using
+same seed for all chains so that the same data is generated for all chains
+if RNG functions are used. The only time \code{seed} should be specified as a
+vector (one element per chain) is if RNG functions are used in transformed
+data and the goal is to generate \emph{different} data for each chain.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC there will be one file per chain; for other
@@ -69,8 +68,7 @@ fitted model objects. This can be set for an entire \R session using
 directory and only saved permanently if the user calls one of the \verb{$save_*}
 methods of the fitted model object (e.g.,
 \code{\link[=fit-method-save_output_files]{$save_output_files()}}). These temporary
-files are removed when the fitted model object is
-\link[base:gc]{garbage collected} (manually or automatically).
+files are removed when the fitted model object is \link[base:gc]{garbage collected} (manually or automatically).
 \item If a path, then the files are created in \code{output_dir} with names
 corresponding to the defaults used by \verb{$save_output_files()}.
 }}
@@ -99,13 +97,12 @@ using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
 contrast with \code{parallel_chains}, which specifies the number of chains to
 run in parallel. The actual number of CPU cores used is
 \code{parallel_chains*threads_per_chain}. For an example of using threading see
-the Stan case study
-\href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
+the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
-\item{opencl_ids}{(integer vector of length 2) The platform and
-device IDs of the OpenCL device to use for fitting. The model must
-be compiled with \code{cpp_options = list(stan_opencl = TRUE)} for this
-argument to have an effect.}
+\item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
+the OpenCL device to use for fitting. The model must be compiled with
+\code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
+effect.}
 }
 \value{
 A \code{\link{CmdStanGQ}} object.
