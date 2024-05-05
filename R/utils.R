@@ -409,19 +409,19 @@ valid_draws_formats <- function() {
     "draws_rvars", "rvars")
 }
 
-maybe_convert_draws_format <- function(draws, format) {
+maybe_convert_draws_format <- function(draws, format, ...) {
   if (is.null(draws)) {
     return(draws)
   }
   format <- sub("^draws_", "", format)
   switch(
     format,
-    "array" = posterior::as_draws_array(draws),
-    "df" = posterior::as_draws_df(draws),
-    "data.frame" = posterior::as_draws_df(draws),
-    "list" = posterior::as_draws_list(draws),
-    "matrix" = posterior::as_draws_matrix(draws),
-    "rvars" = posterior::as_draws_rvars(draws),
+    "array" = posterior::as_draws_array(draws, ...),
+    "df" = posterior::as_draws_df(draws, ...),
+    "data.frame" = posterior::as_draws_df(draws, ...),
+    "list" = posterior::as_draws_list(draws, ...),
+    "matrix" = posterior::as_draws_matrix(draws, ...),
+    "rvars" = posterior::as_draws_rvars(draws, ...),
     stop("Invalid draws format.", call. = FALSE)
   )
 }
@@ -756,13 +756,6 @@ expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
   code <- c(env$hpp_code_,
             readLines(system.file("include", "model_methods.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
-
-  if (hessian) {
-    code <- c("#include <stan/math/mix.hpp>",
-            code,
-            readLines(system.file("include", "hessian.cpp",
-                                  package = "cmdstanr", mustWork = TRUE)))
-  }
 
   code <- paste(code, collapse = "\n")
   rcpp_source_stan(code, env, verbose)

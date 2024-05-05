@@ -518,12 +518,8 @@ unconstrain_variables <- function(variables) {
          " not provided!", call. = FALSE)
   }
 
-  # Remove zero-length parameters from model_variables, otherwise process_init
-  # warns about missing inputs
-  model_variables$parameters <- model_variables$parameters[nonzero_length_params]
-
-  stan_pars <- process_init(list(variables), num_procs = 1, model_variables)
-  private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, stan_pars)
+  variables_vector <- unlist(variables[model_par_names], recursive = TRUE)
+  private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, variables_vector)
 }
 CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
 
@@ -571,11 +567,11 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
           call. = FALSE)
     }
     if (!is.null(files)) {
-      read_csv <- read_cmdstan_csv(files = files, format = "draws_df")
+      read_csv <- read_cmdstan_csv(files = files, format = "draws_matrix")
       draws <- read_csv$post_warmup_draws
     }
     if (!is.null(draws)) {
-      draws <- maybe_convert_draws_format(draws, "draws_df")
+      draws <- maybe_convert_draws_format(draws, "draws_matrix")
     }
   } else {
     if (is.null(private$draws_)) {
@@ -584,7 +580,7 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
       }
       private$read_csv_(format = "draws_df")
     }
-    draws <- maybe_convert_draws_format(private$draws_, "draws_df")
+    draws <- maybe_convert_draws_format(private$draws_, "draws_matrix")
   }
 
   model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
@@ -599,19 +595,10 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
   pars <- names(model_variables$parameters[nonzero_length_params])
 
   draws <- posterior::subset_draws(draws, variable = pars)
-  skeleton <- self$variable_skeleton(transformed_parameters = FALSE,
-                                     generated_quantities = FALSE)
-  par_columns <- !(names(draws) %in% c(".chain", ".iteration", ".draw"))
-  meta_columns <- !par_columns
-  unconstrained <- lapply(asplit(draws, 1), function(draw) {
-    par_list <- utils::relist(as.numeric(draw[par_columns]), skeleton)
-    self$unconstrain_variables(variables = par_list)
-  })
-
-  unconstrained <- do.call(rbind.data.frame, unconstrained)
+  unconstrained <- private$model_methods_env_$unconstrain_draws(private$model_methods_env_$model_ptr_, draws)
   uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
   names(unconstrained) <- repair_variable_names(uncon_names)
-  maybe_convert_draws_format(cbind.data.frame(unconstrained, draws[,meta_columns]), format)
+  maybe_convert_draws_format(unconstrained, format, .nchains = posterior::nchains(draws))
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 
