@@ -465,10 +465,10 @@ compile <- function(quiet = TRUE,
                     stanc_options = list(),
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
-                    compile_hessian_method = FALSE,
                     compile_standalone = FALSE,
                     dry_run = FALSE,
                     #deprecated
+                    compile_hessian_method = FALSE,
                     threads = FALSE) {
 
   if (length(self$stan_file()) == 0) {
@@ -503,6 +503,11 @@ compile <- function(quiet = TRUE,
   if (isTRUE(threads)) {
     warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
     cpp_options[["stan_threads"]] <- TRUE
+  }
+
+  # temporary deprecation warnings
+  if (isTRUE(compile_hessian_method)) {
+    warning("'compile_hessian_method' is deprecated. The hessian method is compiled with all models.")
   }
 
   if (length(self$exe_file()) == 0) {

@@ -409,19 +409,19 @@ valid_draws_formats <- function() {
     "draws_rvars", "rvars")
 }
 
-maybe_convert_draws_format <- function(draws, format) {
+maybe_convert_draws_format <- function(draws, format, ...) {
   if (is.null(draws)) {
     return(draws)
   }
   format <- sub("^draws_", "", format)
   switch(
     format,
-    "array" = posterior::as_draws_array(draws),
-    "df" = posterior::as_draws_df(draws),
-    "data.frame" = posterior::as_draws_df(draws),
-    "list" = posterior::as_draws_list(draws),
-    "matrix" = posterior::as_draws_matrix(draws),
-    "rvars" = posterior::as_draws_rvars(draws),
+    "array" = posterior::as_draws_array(draws, ...),
+    "df" = posterior::as_draws_df(draws, ...),
+    "data.frame" = posterior::as_draws_df(draws, ...),
+    "list" = posterior::as_draws_list(draws, ...),
+    "matrix" = posterior::as_draws_matrix(draws, ...),
+    "rvars" = posterior::as_draws_rvars(draws, ...),
     stop("Invalid draws format.", call. = FALSE)
   )
 }

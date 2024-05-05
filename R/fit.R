@@ -518,7 +518,7 @@ unconstrain_variables <- function(variables) {
          " not provided!", call. = FALSE)
   }
 
-  variables_vector <- unlist(variables, recursive = TRUE, use.names = FALSE)
+  variables_vector <- unlist(variables[model_par_names], recursive = TRUE)
   private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, variables_vector)
 }
 CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
@@ -598,7 +598,7 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
   unconstrained <- private$model_methods_env_$unconstrain_draws(private$model_methods_env_$model_ptr_, draws)
   uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
   names(unconstrained) <- repair_variable_names(uncon_names)
-  maybe_convert_draws_format(unconstrained, format)
+  maybe_convert_draws_format(unconstrained, format, .nchains = posterior::nchains(draws))
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 
