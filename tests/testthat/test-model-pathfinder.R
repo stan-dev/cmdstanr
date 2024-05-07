@@ -124,6 +124,11 @@ test_that("pathfinder() method works with init file", {
   expect_pathfinder_output(mod$pathfinder(data = data_file_r, init = init_file))
 })
 
+test_that("pathfinder() method works with init function and default paths", {
+  init_function <- function() { list(theta = 0.5) }
+  expect_pathfinder_output(mod$pathfinder(data = data_file_r, init = init_function))
+})
+
 test_that("pathfinder() method runs when all arguments specified", {
   expect_pathfinder_output(fit <- do.call(mod$pathfinder, ok_arg_values))
   expect_is(fit, "CmdStanPathfinder")

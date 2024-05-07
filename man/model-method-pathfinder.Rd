@@ -25,7 +25,7 @@ pathfinder(
   history_size = NULL,
   single_path_draws = NULL,
   draws = NULL,
-  num_paths = NULL,
+  num_paths = 4,
   max_lbfgs_iters = NULL,
   num_elbo_draws = NULL,
   save_single_paths = NULL,
