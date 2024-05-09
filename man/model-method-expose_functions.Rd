@@ -6,7 +6,7 @@
 \alias{fit-method-expose_functions}
 \title{Expose Stan functions to R}
 \usage{
-expose_functions(global = FALSE, verbose = FALSE)
+expose_functions(global = FALSE, verbose = FALSE, gradients = FALSE)
 }
 \arguments{
 \item{global}{(logical) Should the functions be added to the Global
@@ -15,6 +15,12 @@ available via the \code{functions} field of the R6 object.}
 
 \item{verbose}{(logical) Should detailed information about generated code be
 printed to the console? Defaults to \code{FALSE}.}
+
+\item{gradients}{(logical) Should we compile corresponding
+gradient functions for function in the Stan model? If \code{TRUE} the functions
+will be available via the \code{functions} field in the compiled model object.
+with a \verb{_grad} suffix. The gradient functions return a list with the function
+return value and the Jacobian of the function with respect to the inputs.}
 }
 \description{
 The \verb{$expose_functions()} method of a \code{\link{CmdStanModel}} object
@@ -47,12 +53,13 @@ stan_file <- write_stan_file(
  "
 )
 mod <- cmdstan_model(stan_file)
-mod$expose_functions()
+mod$expose_functions(gradients = TRUE)
 mod$functions$a_plus_b(1, 2)
 
 fit <- mod$sample(refresh = 0)
 fit$expose_functions() # already compiled because of above but this would compile them otherwise
 fit$functions$a_plus_b(1, 2)
+fit$functions$a_plus_b_grad(1, 2)
 }
 
 

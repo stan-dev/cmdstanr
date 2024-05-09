@@ -16,6 +16,7 @@ compile(
   force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   compile_model_methods = FALSE,
   compile_standalone = FALSE,
+  compile_standalone_gradients = FALSE,
   dry_run = FALSE,
   compile_hessian_method = FALSE,
   threads = FALSE
@@ -68,6 +69,14 @@ via a global \code{cmdstanr_force_recompile} option.}
 compiled for use in R? If \code{TRUE} the functions will be available via the
 \code{functions} field in the compiled model object. This can also be done after
 compilation using the
+\code{\link[=model-method-expose_functions]{$expose_functions()}} method.}
+
+\item{compile_standalone_gradients}{(logical) Should we compile corresponding
+gradient functions for function in the Stan model? If \code{TRUE} the functions
+will be available via the \code{functions} field in the compiled model object.
+with a \verb{_grad} suffix. The gradient functions return a list with the function
+return value and the Jacobian of the function with respect to the inputs
+This can also be done after compilation using the
 \code{\link[=model-method-expose_functions]{$expose_functions()}} method.}
 
 \item{dry_run}{(logical) If \code{TRUE}, the code will do all checks before compilation,

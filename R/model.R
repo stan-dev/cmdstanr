@@ -412,6 +412,13 @@ CmdStanModel <- R6::R6Class(
 #'   `functions` field in the compiled model object. This can also be done after
 #'   compilation using the
 #'   [`$expose_functions()`][model-method-expose_functions] method.
+#' @param compile_standalone_gradients (logical) Should we compile corresponding
+#'   gradient functions for function in the Stan model? If `TRUE` the functions
+#'   will be available via the `functions` field in the compiled model object.
+#'   with a `_grad` suffix. The gradient functions return a list with the function
+#'   return value and the Jacobian of the function with respect to the inputs
+#'   This can also be done after compilation using the
+#'   [`$expose_functions()`][model-method-expose_functions] method.
 #' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
 #'   but skip the actual C++ compilation. Used to speedup tests.
 #'
@@ -466,6 +473,7 @@ compile <- function(quiet = TRUE,
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
                     compile_standalone = FALSE,
+                    compile_standalone_gradients = FALSE,
                     dry_run = FALSE,
                     #deprecated
                     compile_hessian_method = FALSE,
@@ -639,6 +647,7 @@ compile <- function(quiet = TRUE,
   }
   stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  self$functions$gradients <- compile_standalone_gradients
   private$model_methods_env_ <- new.env()
   private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stancflags_val, stancflags_combined))
   self$functions$external <- !is.null(user_header)
@@ -2207,6 +2216,11 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   available via the `functions` field of the R6 object.
 #' @param verbose (logical) Should detailed information about generated code be
 #'   printed to the console? Defaults to `FALSE`.
+#' @param gradients (logical) Should we compile corresponding
+#'   gradient functions for function in the Stan model? If `TRUE` the functions
+#'   will be available via the `functions` field in the compiled model object.
+#'   with a `_grad` suffix. The gradient functions return a list with the function
+#'   return value and the Jacobian of the function with respect to the inputs.
 #' @template seealso-docs
 #' @examples
 #' \dontrun{
@@ -2226,16 +2240,18 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'  "
 #' )
 #' mod <- cmdstan_model(stan_file)
-#' mod$expose_functions()
+#' mod$expose_functions(gradients = TRUE)
 #' mod$functions$a_plus_b(1, 2)
 #'
 #' fit <- mod$sample(refresh = 0)
 #' fit$expose_functions() # already compiled because of above but this would compile them otherwise
 #' fit$functions$a_plus_b(1, 2)
+#' fit$functions$a_plus_b_grad(1, 2)
 #' }
 #'
 #'
-expose_functions = function(global = FALSE, verbose = FALSE) {
+expose_functions = function(global = FALSE, verbose = FALSE, gradients = FALSE) {
+  self$functions$gradients <- gradients
   expose_stan_functions(self$functions, global, verbose)
   invisible(NULL)
 }
