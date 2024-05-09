@@ -14,8 +14,15 @@ inline Rcpp::List function_gradients(const F& func, const TArgs&... args) {
   Eigen::MatrixXd grad;
   stan::math::jacobian(serial_functor, serialised_args, rtn_value, grad);
 
-  return Rcpp::List::create(
-    Rcpp::Named("function_value") = func(args...),
-    Rcpp::Named("jacobian") = grad
-  );
+  if (stan::is_stan_scalar<decltype(func(args...))>::value) {
+    return Rcpp::List::create(
+      Rcpp::Named("function_value") = func(args...),
+      Rcpp::Named("gradients") = stan::math::to_vector(grad)
+    );
+  } else {
+    return Rcpp::List::create(
+      Rcpp::Named("function_value") = func(args...),
+      Rcpp::Named("jacobian") = grad
+    );
+  }
 }
