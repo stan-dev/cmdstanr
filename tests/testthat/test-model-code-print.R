@@ -50,16 +50,16 @@ test_that("code() doesn't change when file changes (unless model is recreated)",
 
   mod <- cmdstan_model(stan_file_1, compile = FALSE)
   expect_identical(mod$code(), code_1_answer)
-  expect_identical(utils::capture.output(mod$print()), code_1_answer)
+  code_1_print <- utils::capture.output(mod$print())
 
   # overwrite with new code, but mod$code() shouldn't change
   file.copy(stan_file_2, stan_file_1, overwrite = TRUE)
   expect_identical(mod$code(), code_1_answer)
+  expect_identical(utils::capture.output(mod$print()), code_1_print)
 
   # recreate CmdStanModel object, now mod$code() should change
   mod <- cmdstan_model(stan_file_1, compile = FALSE)
   expect_identical(mod$code(), code_2_answer)
-  expect_identical(utils::capture.output(mod$print()), code_2_answer)
 })
 
 test_that("code() warns and print() errors if only exe and no Stan file", {
