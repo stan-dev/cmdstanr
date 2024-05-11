@@ -896,14 +896,14 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
 
 make_grad_fun <- function(stan_fun_cppcode, stan_fun_name) {
   model_body <- gsub(paste0("^(.*?)",stan_fun_name),"",stan_fun_cppcode)
-  
+
   functor_body <- paste0("[]", gsub("const(\\s*)?(.*?)&", "const auto&", model_body), ";")
   functor_decl <- paste0("const auto f = ", functor_body)
-  
+
   gradients_call <- gsub("(\\{(.*)\\}|\\[\\])", "", functor_body)
   gradients_call <- paste("return function_gradients", gsub("const(\\s*)auto(\\s*)?&", "", gradients_call))
   gradients_call <- gsub("function_gradients(\\s*)?\\(", "function_gradients(f,", gradients_call)
-  
+
   new_model_body <- gsub("\\{(.*)\\}", paste0(c("{", functor_decl, gradients_call, "}"), collapse="\n"), model_body)
   paste0("// [[Rcpp::export]]\n Rcpp::List ", stan_fun_name, "_grad", new_model_body)
 }
@@ -930,7 +930,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
           paste(dups, collapse=", "),
           call. = FALSE)
   }
-  
+
   grad_funs <- ""
   if (isTRUE(env$gradients)) {
     grad_funs <- sapply(seq_len(length(stan_funs)), function(ind) {
@@ -940,12 +940,13 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
 
   mod_stan_funs <- paste(c(
     env$hpp_code[1:(funs[1] - 1)],
-    "#include <function_gradients.hpp>",
     "#include <rcpp_tuple_interop.hpp>",
     "#include <rcpp_eigen_interop.hpp>",
+    "#include <function_gradients.hpp>",
     stan_funs,
     grad_funs),
   collapse = "\n")
+  env$processed_hpp_code <- mod_stan_funs
   if (global) {
     rcpp_source_stan(mod_stan_funs, globalenv(), verbose)
   } else {
