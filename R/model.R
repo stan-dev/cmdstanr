@@ -54,6 +54,9 @@
 #' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #' mod <- cmdstan_model(file)
 #' mod$print()
+#' # Print with line numbers. This can be set globally using the
+#' # `cmdstanr_print_line_numbers` option.
+#' mod$print(line_numbers = TRUE)
 #'
 #' # Data as a named list (like RStan)
 #' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
@@ -298,11 +301,21 @@ CmdStanModel <- R6::R6Class(
       }
       private$stan_code_
     },
-    print = function() {
+    print = function(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE)) {
       if (length(private$stan_code_) == 0) {
         stop("'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
       }
-      cat(self$code(), sep = "\n")
+      lines <- self$code()
+      if (line_numbers) {
+        line_num_indent <- nchar(as.character(length(lines)))
+        line_nums <- vapply(seq_along(lines), function(y) {
+          paste0(
+            rep(" ", line_num_indent - nchar(as.character(y))), y, collapse = ""
+          )
+        }, character(1))
+        lines <- paste(paste(line_nums, lines, sep = ": "), collapse = "\n")
+      }
+      cat(lines, sep = "\n")
       invisible(self)
     },
     stan_file = function() {
