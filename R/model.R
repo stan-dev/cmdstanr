@@ -54,6 +54,9 @@
 #' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #' mod <- cmdstan_model(file)
 #' mod$print()
+#' # Print with line numbers. This can be set globally using the
+#' # `cmdstanr_print_line_numbers` option.
+#' mod$print(line_numbers = TRUE)
 #'
 #' # Data as a named list (like RStan)
 #' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
