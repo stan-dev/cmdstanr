@@ -298,20 +298,21 @@ CmdStanModel <- R6::R6Class(
       }
       private$stan_code_
     },
-    print = function() {
+    print = function(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE)) {
       if (length(private$stan_code_) == 0) {
         stop("'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
       }
       lines <- self$code()
-      line_num_indent <- nchar(as.character(length(lines)))
-      line_nums <- vapply(seq_along(lines), function(y) {
-        paste0(
-          rep(" ", line_num_indent - nchar(as.character(y))), y, collapse = ""
-        )
-      }, character(1))
-      cat(
-        paste(paste(line_nums, lines, sep = ": "), collapse = "\n"), sep = "\n"
-      )
+      if (line_numbers) {
+        line_num_indent <- nchar(as.character(length(lines)))
+        line_nums <- vapply(seq_along(lines), function(y) {
+          paste0(
+            rep(" ", line_num_indent - nchar(as.character(y))), y, collapse = ""
+          )
+        }, character(1))
+        lines <- paste(paste(line_nums, lines, sep = ": "), collapse = "\n")
+      }
+      cat(lines, sep = "\n")
       invisible(self)
     },
     stan_file = function() {
