@@ -840,6 +840,14 @@ read_csv_metadata <- function(csv_file) {
     csv_file_info$fitted_params <- wsl_safe_path(csv_file_info$fitted_params,
                                                   revert = TRUE)
   }
+  csv_file_info <- lapply(csv_file_info, function(item) {
+    if (is.character(item) && length(item) == 1) {
+      if (item %in% c("true", "false")) {
+        item <- as.integer(as.logical(item))
+      }
+    }
+    item
+  })
   csv_file_info
 }
 
