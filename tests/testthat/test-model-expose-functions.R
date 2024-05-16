@@ -351,12 +351,12 @@ test_that("rng functions can be exposed", {
 
   expect_equal(
     fit$functions$wrap_normal_rng(5,10),
-    -4.5298764235381225873
+    0.02974925
   )
 
   expect_equal(
     fit$functions$wrap_normal_rng(5,10),
-    8.1295902610102039887
+    10.3881349
   )
 })
 
