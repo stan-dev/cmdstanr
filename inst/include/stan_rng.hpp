@@ -15,13 +15,4 @@ namespace stan {
 }
 #endif
 
-// To ensure that exported RNG functions respect changes to R's RNG state,
-// we need to deterministically set the seed of the RNG used by the exported
-// functions.
-int get_seed() {
-  Rcpp::Environment pkg = Rcpp::Environment::namespace_env("cmdstanr");
-  Rcpp::Function f = pkg["get_seed"];
-  return Rcpp::as<int>(f());
-}
-
 #endif
