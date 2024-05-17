@@ -351,12 +351,13 @@ test_that("rng functions can be exposed", {
 
   expect_equal(
     fit$functions$wrap_normal_rng(5,10),
-    0.02974925
+    # Stan RNG changed in 2.35
+    ifelse(cmdstan_version() < "2.35.0",-4.529876423, 0.02974925)
   )
 
   expect_equal(
     fit$functions$wrap_normal_rng(5,10),
-    10.3881349
+    ifelse(cmdstan_version() < "2.35.0", 8.12959026, 10.3881349)
   )
 })
 

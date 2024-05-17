@@ -925,6 +925,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     env$hpp_code[1:(funs[1] - 1)],
     "#include <rcpp_tuple_interop.hpp>",
     "#include <rcpp_eigen_interop.hpp>",
+    "#include <stan_rng.hpp>",
     stan_funs),
   collapse = "\n")
   if (global) {
