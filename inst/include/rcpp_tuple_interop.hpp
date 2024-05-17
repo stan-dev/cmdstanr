@@ -1,3 +1,6 @@
+#ifndef CMDSTANR_RCPP_TUPLE_INTEROP_HPP
+#define CMDSTANR_RCPP_TUPLE_INTEROP_HPP
+
 #include <stan/math/prim/functor/apply.hpp>
 #include <Rcpp.h>
 
@@ -38,3 +41,5 @@ namespace Rcpp {
     }, x);
   }
 }
+
+#endif

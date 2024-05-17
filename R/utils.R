@@ -727,7 +727,7 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
-rcpp_source_stan <- function(code, env, verbose = FALSE) {
+rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
@@ -746,7 +746,7 @@ rcpp_source_stan <- function(code, env, verbose = FALSE) {
         PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, collapse = " "),
         PKG_LIBS = libs
       ),
-      Rcpp::sourceCpp(code = code, env = env, verbose = verbose)
+      Rcpp::sourceCpp(code = code, env = env, verbose = verbose, ...)
     )
   )
   invisible(NULL)
@@ -887,8 +887,12 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   }
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
-  fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
-  fun_body <- gsub("base_rng__,", "*(Rcpp::XPtr<boost::ecuyer1988>(base_rng_ptr).get()),", fun_body, fixed = TRUE)
+  if (cmdstan_version() < "2.35.0") {
+    fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
+  } else {
+    fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
+  }
+  fun_body <- gsub("base_rng__,", "*(Rcpp::XPtr<stan::rng_t>(base_rng_ptr).get()),", fun_body, fixed = TRUE)
   fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
   fun_body <- paste(fun_body, collapse = "\n")
   gsub(pattern = ",\\s*)", replacement = ")", fun_body)
@@ -921,6 +925,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     env$hpp_code[1:(funs[1] - 1)],
     "#include <rcpp_tuple_interop.hpp>",
     "#include <rcpp_eigen_interop.hpp>",
+    "#include <stan_rng.hpp>",
     stan_funs),
   collapse = "\n")
   if (global) {
@@ -935,7 +940,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   if (length(rng_funs) > 0) {
     rng_cpp <- system.file("include", "base_rng.cpp", package = "cmdstanr", mustWork = TRUE)
     rcpp_source_stan(paste0(readLines(rng_cpp), collapse="\n"), env, verbose)
-    env$rng_ptr <- env$base_rng(seed=0)
+    env$rng_ptr <- env$base_rng(seed=1)
   }
 
   # For all RNG functions, pass the initialised Boost RNG by default
