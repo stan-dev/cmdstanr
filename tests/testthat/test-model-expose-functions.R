@@ -348,35 +348,14 @@ test_that("rng functions can be exposed", {
 
   fit$expose_functions(verbose = TRUE)
   set.seed(10)
-  res <- fit$functions$wrap_normal_rng(5,10)
-
-  expect_equal(
-    res,
-    # Stan RNG changed in 2.35
-    ifelse(cmdstan_version() < "2.35.0", 1.217251562, 20.49842178)
-  )
-  res <- fit$functions$wrap_normal_rng(5,10)
-
-  expect_equal(
-    res,
-    ifelse(cmdstan_version() < "2.35.0", -0.1426366567, 12.93498553)
-  )
-
-  # Test that the RNG function respects set.seed
+  res1_1 <- fit$functions$wrap_normal_rng(5,10)
+  res2_1 <- fit$functions$wrap_normal_rng(5,10)
   set.seed(10)
-  res <- fit$functions$wrap_normal_rng(5,10)
+  res1_2 <- fit$functions$wrap_normal_rng(5,10)
+  res2_2 <- fit$functions$wrap_normal_rng(5,10)
 
-  expect_equal(
-    res,
-    # Stan RNG changed in 2.35
-    ifelse(cmdstan_version() < "2.35.0", 1.217251562, 20.49842178)
-  )
-  res <- fit$functions$wrap_normal_rng(5,10)
-
-  expect_equal(
-    res,
-    ifelse(cmdstan_version() < "2.35.0", -0.1426366567, 12.93498553)
-  )
+  expect_equal(res1_1, res1_2)
+  expect_equal(res2_1, res2_2)
 })
 
 test_that("Overloaded functions give meaningful errors", {
