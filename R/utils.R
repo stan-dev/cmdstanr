@@ -54,20 +54,8 @@ os_is_linux <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Linux")
 }
 
-is_rtools43_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "3.0"
-}
-
-is_rtools42_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0" && R.version$minor < "3.0"
-}
-
-is_rtools40_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor < "2.0"
-}
-
-is_ucrt_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0"
+arch_is_aarch64 <- function() {
+  isTRUE(R.version$arch == "aarch64")
 }
 
 # Check if running R in Rosetta 2 translation environment, which is an
@@ -86,7 +74,7 @@ is_rosetta2 <- function() {
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
   if (os_is_windows() && !os_is_wsl()) {
-    "mingw32-make.exe"
+    "make.exe"
   } else {
     "make"
   }

@@ -672,7 +672,7 @@ compile <- function(quiet = TRUE,
       ),
       run_log <- wsl_compatible_run(
         command = make_cmd(),
-        args = c(wsl_safe_path(tmp_exe),
+        args = c(wsl_safe_path(repair_path(tmp_exe)),
                 cpp_options_to_compile_flags(cpp_options),
                 stancflags_val),
         wd = cmdstan_path(),

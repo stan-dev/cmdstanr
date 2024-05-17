@@ -1,5 +1,8 @@
 context("install")
 
+# Windows ARM64 not supported before 2.35
+skip_if(os_is_windows() && arch_is_aarch64())
+
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
 if (!nzchar(cmdstan_test_tarball_url)) {
   cmdstan_test_tarball_url <- NULL

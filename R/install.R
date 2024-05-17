@@ -233,17 +233,6 @@ install_cmdstan <- function(dir = NULL,
                           stanc_makefile)
   writeLines(stanc_makefile, con = file.path(dir_cmdstan, "make", "stanc"))
 
-  if (is_ucrt_toolchain() && !wsl) {
-    cmdstan_make_local(
-      dir = dir_cmdstan,
-      cpp_options = list(
-        "CXXFLAGS += -Wno-nonnull -D_UCRT",
-        "TBB_CXXFLAGS= -D_UCRT"
-      ),
-      append = TRUE
-    )
-  }
-
   # Suppress noisy warnings from Boost
   cmdstan_make_local(
     dir = dir_cmdstan,
@@ -344,7 +333,8 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
     } else if (R.version$major >= "4") {
       check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     } else {
-      check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
+      stop("CmdStanR requires R version 4.0.0 or later on Windows.",
+           "Please update R and try again.", call. = FALSE)
     }
   } else {
     check_unix_make()
@@ -550,36 +540,6 @@ build_status_ok <- function(process_log, quiet = FALSE) {
   TRUE
 }
 
-install_toolchain <- function(quiet = FALSE) {
-  rtools_usr_bin <- file.path(rtools4x_home_path(), "usr", "bin")
-  rtools_version <- paste0("Rtools", rtools4x_version())
-  if (is_ucrt_toolchain()) {
-    install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
-    if (!quiet) message(paste0("Installing mingw32-make and g++ with ", rtools_version))
-  } else {
-    install_pkgs <- "mingw-w64-x86_64-make"
-    if (!quiet) message(paste0("Installing mingw32-make with ", rtools_version))
-  }
-  if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
-    warning("No write permissions in the RTools folder. This might prevent installing the toolchain.",
-            " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
-  }
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var()
-    ),
-    processx::run(
-      "pacman",
-      args = c("-Sy", install_pkgs, "--noconfirm"),
-      wd = rtools_usr_bin,
-      error_on_status = TRUE,
-      echo_cmd = is_verbose_mode(),
-      echo = is_verbose_mode()
-    )
-  )
-  invisible(NULL)
-}
-
 check_wsl_toolchain <- function() {
   if (!wsl_installed()) {
     stop("\n", "A WSL distribution is not installed or is not accessible.",
@@ -615,7 +575,6 @@ check_wsl_toolchain <- function() {
 check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   rtools_path <- rtools_home_path()
   rtools_version <- paste0("Rtools", rtools4x_version())
-  toolchain_path <- rtools4x_toolchain_path()
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
@@ -635,88 +594,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       call. = FALSE
     )
   }
-  if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
-      !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
-    if (!fix) {
-      stop(
-        "\n", rtools_version, " installation found but the toolchain was not installed.",
-        "\nRun cmdstanr::check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-        call. = FALSE
-      )
-    } else {
-      install_toolchain(quiet = quiet)
-      if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
-          !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
-        stop(
-          "\nInstallation of the toolchain failed. Try reinstalling RTools and trying again.",
-          "\nIf the issue persists, open a bug report at https://github.com/stan-dev/cmdstanr.",
-          call. = FALSE
-        )
-      }
-      return(invisible(NULL))
-    }
-  }
-}
-
-check_rtools35_windows_toolchain <- function(fix = FALSE,
-                                             quiet = FALSE,
-                                             paths = NULL) {
-  if (is.null(paths)) {
-    paths <- c(file.path("C:/", "Rtools"), file.path("C:/", "Rtools35"))
-  }
-  mingw32_make_path <- dirname(Sys.which("mingw32-make"))
-  gpp_path <- dirname(Sys.which("g++"))
-  # If mingw32-make and g++ are not found, we check typical RTools 3.5 folders.
-  # If found, we fix PATH, otherwise we recommend the user to install RTools 3.5.
-  if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
-    rtools_path <- Sys.getenv("RTOOLS35_HOME")
-    if (!nzchar(rtools_path)) {
-      found_rtools <- FALSE
-      for (p in paths) {
-        if (dir.exists(p)) {
-          if (found_rtools) {
-            stop(
-              "\nMultiple RTools 3.5 installations found. Please select the installation to use by running",
-              "\n\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
-              "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(fix = TRUE)'.",
-              call. = FALSE
-            )
-          } else {
-            rtools_path <- p
-            found_rtools <- TRUE
-          }
-        }
-      }
-    }
-    if (nzchar(rtools_path)) {
-      if (!fix) {
-        stop(
-          "\nRTools installation found but PATH was not properly set.",
-          "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-          call. = FALSE
-        )
-      }
-      if (!quiet) {
-        message("Writing RTools path to ~/.Renviron ...")
-      }
-      if (!nzchar(Sys.getenv("RTOOLS35_HOME"))) {
-        write(paste0("RTOOLS35_HOME=", rtools_path), file = "~/.Renviron", append = TRUE)
-        Sys.setenv(RTOOLS35_HOME = rtools_path)
-      }
-      write('PATH="${RTOOLS35_HOME}\\bin;${RTOOLS35_HOME}\\mingw_64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-      Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS35_HOME"), "\\mingw_64\\bin;", Sys.getenv("PATH")))
-      check_rtools35_windows_toolchain(fix = FALSE, quiet = quiet)
-      return(invisible(NULL))
-    } else {
-      stop(
-        "\nA toolchain was not found. Please install RTools 3.5 and run",
-        "\n\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
-        "\nreplacing 'rtools35/install/path/' with the actual install path of RTools 3.5.",
-        "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(fix = TRUE)'.",
-        call. = FALSE
-      )
-    }
-  }
+  return(invisible(NULL))
 }
 
 check_unix_make <- function() {
@@ -798,54 +676,8 @@ cmdstan_arch_suffix <- function(version = NULL) {
   paste0("-linux-", selected_arch)
 }
 
-is_toolchain_installed <- function(app, path) {
-  res <- tryCatch({
-      withr::with_path(
-        c(
-          toolchain_PATH_env_var()
-        ),
-        processx::run(
-          app,
-          args = c("--version"),
-          wd = path,
-          error_on_status = FALSE,
-          echo_cmd = is_verbose_mode(),
-          echo = is_verbose_mode()
-        )
-      )
-      app_path <- withr::with_path(
-        c(
-          toolchain_PATH_env_var()
-        ),
-        repair_path(dirname(Sys.which(app)))
-      )
-      if (normalizePath(app_path) != normalizePath(rtools4x_toolchain_path())) {
-        return(FALSE)
-      }
-      return(TRUE)
-    },
-    error = function(cond) {
-      return(FALSE)
-    }
-  )
-  res
-}
-
 toolchain_PATH_env_var <- function() {
-  path <- NULL
-  if (R.version$major == "4") {
-    rtools_home <- rtools4x_home_path()
-    path <- paste0(
-      repair_path(file.path(rtools_home, "usr", "bin")), ";",
-      rtools4x_toolchain_path()
-    )
-  }
-  path
-}
-
-rtools4x_toolchain_path <- function() {
-  c_runtime <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
-  repair_path(file.path(rtools4x_home_path(), c_runtime, "bin"))
+  path <- Sys.getenv(paste0("RTOOLS", rtools4x_version(), "_PATH"))
 }
 
 rtools4x_version <- function() {
@@ -865,10 +697,18 @@ rtools4x_version <- function() {
 
 rtools4x_home_path <- function() {
   rtools_ver <- rtools4x_version()
-  path <- Sys.getenv(paste0("RTOOLS", rtools_ver, "_HOME"))
+  var_name <- paste0("RTOOLS", rtools_ver)
+  if (arch_is_aarch64()) {
+    var_name <- paste0(var_name, "_AARCH64")
+  }
+  path <- Sys.getenv(paste0(var_name, "_HOME"))
 
   if (!nzchar(path)) {
-    default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
+    default_path <- paste0("C:/rtools", rtools_ver)
+    if (arch_is_aarch64()) {
+      default_path <- paste0(default_path, "-aarch64")
+    }
+    default_path <- repair_path(file.path(default_path))
     if (dir.exists(default_path)) {
       path <- default_path
     }
