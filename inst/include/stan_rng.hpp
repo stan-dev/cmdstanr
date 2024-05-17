@@ -3,7 +3,6 @@
 
 #include <boost/random/additive_combine.hpp>
 #include <stan/version.hpp>
-#include <Rcpp.h>
 
 // A consistent rng_t is defined from 2.35 onwards
 // so add a fallback for older versions

@@ -346,17 +346,35 @@ test_that("rng functions can be exposed", {
   mod <- cmdstan_model(model, force_recompile = TRUE)
   fit <- mod$sample(data = data_list)
 
-  set.seed(10)
   fit$expose_functions(verbose = TRUE)
+  set.seed(10)
+  res <- fit$functions$wrap_normal_rng(5,10)
 
   expect_equal(
-    fit$functions$wrap_normal_rng(5,10),
+    res,
     # Stan RNG changed in 2.35
     ifelse(cmdstan_version() < "2.35.0", 1.217251562, 20.49842178)
   )
+  res <- fit$functions$wrap_normal_rng(5,10)
 
   expect_equal(
-    fit$functions$wrap_normal_rng(5,10),
+    res,
+    ifelse(cmdstan_version() < "2.35.0", -0.1426366567, 12.93498553)
+  )
+
+  # Test that the RNG function respects set.seed
+  set.seed(10)
+  res <- fit$functions$wrap_normal_rng(5,10)
+
+  expect_equal(
+    res,
+    # Stan RNG changed in 2.35
+    ifelse(cmdstan_version() < "2.35.0", 1.217251562, 20.49842178)
+  )
+  res <- fit$functions$wrap_normal_rng(5,10)
+
+  expect_equal(
+    res,
     ifelse(cmdstan_version() < "2.35.0", -0.1426366567, 12.93498553)
   )
 })
