@@ -30,7 +30,7 @@ rebuild_cmdstan(
 
 cmdstan_make_local(dir = cmdstan_path(), cpp_options = NULL, append = TRUE)
 
-check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
+check_cmdstan_toolchain(quiet = FALSE)
 }
 \arguments{
 \item{dir}{(string) The path to the directory in which to install CmdStan.
@@ -86,11 +86,6 @@ Subsystem for Linux (WSL). The default is \code{FALSE}.}
 \item{append}{(logical) For \code{cmdstan_make_local()}, should the listed
 makefile flags be appended to the end of the existing \code{make/local} file?
 The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
-
-\item{fix}{For \code{check_cmdstan_toolchain()}, should CmdStanR attempt to fix
-any detected toolchain problems? Currently this option is only available on
-Windows. The default is \code{FALSE}, in which case problems are only reported
-along with suggested fixes.}
 }
 \value{
 For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing

@@ -148,8 +148,7 @@ test_that("Methods can be compiled with model", {
   skip_if(os_is_wsl())
   mod <- cmdstan_model(testing_stan_file("bernoulli"),
                        force_recompile = TRUE,
-                       compile_model_methods = TRUE,
-                       compile_hessian_method = TRUE)
+                       compile_model_methods = TRUE)
   fit <- mod$sample(data = data_list, chains = 1)
 
   lp <- fit$log_prob(unconstrained_variables=c(0.6))
@@ -189,6 +188,7 @@ test_that("unconstrain_variables correctly handles zero-length containers", {
   }
   "
   mod <- cmdstan_model(write_stan_file(model_code),
+                       force_recompile = TRUE,
                        compile_model_methods = TRUE)
   fit <- mod$sample(data = list(N = 0), chains = 1)
   unconstrained <- fit$unconstrain_variables(variables = list(x = 5))

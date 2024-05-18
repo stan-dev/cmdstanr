@@ -100,10 +100,6 @@ test_that("write_stan_file by default creates the same file for the same Stan mo
   try(file.remove(f1, f2, f4), silent = TRUE)
 })
 
-test_that("write_stan_tempfile is deprecated", {
-  expect_warning(write_stan_tempfile(stan_program), "deprecated")
-})
-
 test_that("cmdstanr_write_stan_file_dir option works", {
   base_dir <- tempdir()
   test_dir <- file.path(base_dir, "option_test")

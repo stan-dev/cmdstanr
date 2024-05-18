@@ -374,9 +374,11 @@ test_that("Overloaded functions give meaningful errors", {
                "Overloaded functions are currently not able to be exposed to R! The following overloaded functions were found: fun1, fun3")
 })
 
-test_that("Exposing external functions errors before v2.32", {
-  fake_cmdstan_version("2.26.0")
-
+test_that("External c++ functions can be exposed", {
+  # Bug in exposing external, skip for now
+  # https://github.com/stan-dev/stanc3/issues/1424
+  skip()
+  
   tmpfile <- tempfile(fileext = ".hpp")
   hpp <-
   "
@@ -387,17 +389,12 @@ test_that("Exposing external functions errors before v2.32", {
   cat(hpp, file = tmpfile, sep = "\n")
   stanfile <- file.path(tempdir(), "standalone_external.stan")
   cat("functions { int rtn_int(int x); }\n", file = stanfile)
-  expect_error({
-    cmdstan_model(
-      stan_file = stanfile,
-      user_header = tmpfile,
-      compile_standalone = TRUE
-    )
-  },
-  "Exporting standalone functions with external C++ is not available before CmdStan 2.32",
-  fixed = TRUE)
 
-  reset_cmdstan_version()
+  ext_mod <- cmdstan_model(stan_file = stanfile,
+                            user_header = tmpfile,
+                            force_recompile = TRUE)
+  ext_mod$expose_functions()
+  expect_equal(ext_mod$functions$rtn_int(10), 10)
 })
 
 test_that("Exposing functions with precompiled model gives meaningful error", {

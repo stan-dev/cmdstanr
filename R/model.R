@@ -1128,8 +1128,8 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = TRUE,
-                   save_cmdstan_config = TRUE) {
+                   save_metric = NULL,
+                   save_cmdstan_config = NULL) {
   if (!fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {

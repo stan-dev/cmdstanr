@@ -157,7 +157,6 @@ test_that("switching threads on and off works without rebuild", {
   after_mtime <- file.mtime(main_path_o)
   expect_equal(before_mtime, after_mtime)
 
-  expect_warning(mod$compile(threads = TRUE, dry_run = TRUE), "deprecated")
   cmdstan_make_local(cpp_options = backup, append = FALSE)
 })
 
@@ -540,15 +539,6 @@ test_that("cmdstan_model works with exe_file", {
     mod$exe_file(),
     repair_path(tmp_exe_file)
   )
-})
-
-test_that("cmdstan_model errors if exe_file specified and version less than 2.27", {
-  fake_cmdstan_version("2.26.0")
-  expect_error(
-    cmdstan_model(exe_file = "foo"),
-    "'exe_file' argument is only supported with CmdStan 2.27 and newer"
-  )
-  reset_cmdstan_version()
 })
 
 test_that("cmdstan_model created only with exe_file errors for check_syntax, code, ... ", {

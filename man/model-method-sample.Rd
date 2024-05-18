@@ -37,26 +37,8 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_metric = if (cmdstan_version() > "2.34.0") {
-     TRUE
- } else {
-     NULL
- },
-  save_cmdstan_config = if (cmdstan_version() > "2.34.0") {
-     TRUE
- } else {
-    
-    NULL
- },
-  cores = NULL,
-  num_cores = NULL,
-  num_chains = NULL,
-  num_warmup = NULL,
-  num_samples = NULL,
-  validate_csv = NULL,
-  save_extra_diagnostics = NULL,
-  max_depth = NULL,
-  stepsize = NULL
+  save_metric = TRUE,
+  save_cmdstan_config = TRUE
 )
 }
 \arguments{

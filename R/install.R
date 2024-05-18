@@ -104,7 +104,7 @@ install_cmdstan <- function(dir = NULL,
     .cmdstanr$WSL <- FALSE
   }
   if (check_toolchain) {
-    check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
+    check_cmdstan_toolchain(quiet = quiet)
   }
   make_local_msg <- NULL
   if (!is.null(cmdstan_version(error_on_NA = FALSE))) {
@@ -321,7 +321,7 @@ check_cmdstan_toolchain <- function(quiet = FALSE) {
     if (os_is_wsl()) {
       check_wsl_toolchain()
     } else if (R.version$major >= "4") {
-      check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
+      check_rtools4x_windows_toolchain(quiet = quiet)
     } else {
       stop("CmdStanR requires R version 4.0.0 or later on Windows.",
            "Please update R and try again.", call. = FALSE)
@@ -562,7 +562,7 @@ check_wsl_toolchain <- function() {
   }
 }
 
-check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
+check_rtools4x_windows_toolchain <- function(quiet = FALSE) {
   rtools_path <- rtools_home_path()
   rtools_version <- paste0("Rtools", rtools4x_version())
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
@@ -636,6 +636,9 @@ check_unix_cpp_compiler <- function() {
 cmdstan_arch_suffix <- function(version = NULL) {
   os_needs_arch <- os_is_linux() || os_is_wsl()
   arch <- NULL
+  if (!os_needs_arch) {
+    return(arch)
+  }
   if (os_is_wsl()) {
     arch <- wsl_compatible_run(command = "uname", args = "-m")$stdout
     arch <- gsub("\n", "", arch, fixed = TRUE)

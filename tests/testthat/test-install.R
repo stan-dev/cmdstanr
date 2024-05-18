@@ -9,11 +9,7 @@ if (!nzchar(cmdstan_test_tarball_url)) {
 }
 
 test_that("install_cmdstan() successfully installs cmdstan", {
-  if (getRversion() < '3.5.0') {
-    dir <- tempdir()
-  } else {
-    dir <- tempdir(check = TRUE)
-  }
+  dir <- tempdir(check = TRUE)
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
@@ -29,24 +25,20 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   install_dir <- cmdstan_default_install_path()
-  dir <- file.path(install_dir, "cmdstan-2.23.0")
+  dir <- file.path(install_dir, "cmdstan-2.35.0")
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    version = "2.23.0", wsl = FALSE),
+                    version = "2.35.0", wsl = FALSE),
     "An installation already exists",
     fixed = TRUE
   )
 })
 
 test_that("install_cmdstan() errors if it times out", {
-  if (getRversion() < '3.5.0') {
-    dir <- tempdir()
-  } else {
-    dir <- tempdir(check = TRUE)
-  }
+  dir <- tempdir(check = TRUE)
   ver <- latest_released_version()
   dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
   # with quiet=TRUE
@@ -77,7 +69,7 @@ test_that("install_cmdstan() errors if it times out", {
 
 test_that("install_cmdstan() errors if invalid version or URL", {
   expect_error(
-    install_cmdstan(version = "2.23.2", wsl = os_is_wsl()),
+    install_cmdstan(version = "2.350.2", wsl = os_is_wsl()),
     "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied version number is valid."
   )
   expect_error(
@@ -92,11 +84,7 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 })
 
 test_that("install_cmdstan() works with version and release_url", {
-  if (getRversion() < '3.5.0') {
-    dir <- tempdir()
-  } else {
-    dir <- tempdir(check = TRUE)
-  }
+  dir <- tempdir(check = TRUE)
 
   expect_message(
     expect_output(
@@ -154,38 +142,6 @@ test_that("toolchain checks on Unix work", {
   Sys.setenv("PATH" = path_backup)
 })
 
-test_that("toolchain checks on Windows with RTools 3.5 work", {
-  skip_if_not(os_is_windows())
-  skip_if(os_is_wsl())
-  skip_if(R.Version()$major > "3")
-
-  path_backup <- Sys.getenv("PATH")
-  Sys.setenv("PATH" = "")
-  tmpdir <- tempdir()
-  tmp_dir1 <- file.path(tmpdir, "dir1")
-  tmp_dir2 <- file.path(tmpdir, "dir2")
-  if (dir.exists(tmp_dir1)) unlink(tmp_dir1)
-  if (dir.exists(tmp_dir2)) unlink(tmp_dir2)
-  expect_error(
-    check_rtools35_windows_toolchain(paths= c(tmp_dir1, tmp_dir2)),
-    "\nA toolchain was not found. Please install RTools 3.5 and run",
-    fixed = TRUE
-  )
-  if (!dir.exists(tmp_dir1)) dir.create(tmp_dir1)
-  expect_error(
-    check_rtools35_windows_toolchain(paths= c(tmp_dir1, tmp_dir2)),
-    "\nRTools installation found but PATH was not properly set.",
-    fixed = TRUE
-  )
-  if (!dir.exists(tmp_dir2)) dir.create(tmp_dir2)
-  expect_error(
-    check_rtools35_windows_toolchain(paths= c(tmp_dir1, tmp_dir2)),
-    "\nMultiple RTools 3.5 installations found. Please select the installation to use",
-    fixed = TRUE
-  )
-  Sys.setenv("PATH" = path_backup)
-})
-
 test_that("clean and rebuild works", {
   expect_output(
     rebuild_cmdstan(),
@@ -202,11 +158,7 @@ test_that("github_download_url constructs correct url", {
 })
 
 test_that("Downloads respect quiet argument", {
-  if (getRversion() < '3.5.0') {
-    dir <- tempdir()
-  } else {
-    dir <- tempdir(check = TRUE)
-  }
+  dir <- tempdir(check = TRUE)
   version <- latest_released_version()
 
   ver_msg <- "trying URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'"
@@ -232,15 +184,7 @@ test_that("Downloads respect quiet argument", {
 })
 
 test_that("Download failures return error message", {
-  # GHA fails on Windows old-rel here, but cannot replicate locally
-  skip_if(os_is_windows() && getRversion() < '4.2')
-
-  if (getRversion() < '3.5.0') {
-    dir <- tempdir()
-  } else {
-    dir <- tempdir(check = TRUE)
-  }
-
+  dir <- tempdir(check = TRUE)
   expect_error({
     # Use an invalid proxy address to force a download failure
     withr::with_envvar(
@@ -251,11 +195,7 @@ test_that("Download failures return error message", {
 })
 
 test_that("Install from release file works", {
-  if (getRversion() < '3.5.0') {
-    dir <- tempdir()
-  } else {
-    dir <- tempdir(check = TRUE)
-  }
+  dir <- tempdir(check = TRUE)
 
   destfile = file.path(dir, "cmdstan-2.33.1.tar.gz")
 

@@ -24,10 +24,10 @@ CmdStanRun <- R6::R6Class(
       self$procs <- procs
       private$output_files_ <- self$new_output_files()
       private$profile_files_ <- self$new_profile_files()
-      if (isTRUE(self$args$save_cmdstan_config)) {
+      if (!is.null(self$args$save_cmdstan_config) && as.logical(self$args$save_cmdstan_config)) {
         private$config_files_ <- self$new_config_files()
       }
-      if (isTRUE(self$args$method_args$save_metric)) {
+      if (!is.null(self$args$method_args$save_metric) && as.logical(self$args$method_args$save_metric)) {
         private$metric_files_ <- self$new_metric_files()
       }
       if (self$args$save_latent_dynamics) {
@@ -73,6 +73,9 @@ CmdStanRun <- R6::R6Class(
       paste0(tools::file_path_sans_ext(private$output_files_), "_metric.json")
     },
     config_files = function(include_failed = FALSE) {
+      if (!isTRUE(self$args$save_cmdstan_config)) {
+        return(invisible(NULL))
+      }
       files <- private$config_files_
       files_win_path <- sapply(private$config_files_, wsl_safe_path, revert = TRUE)
       if (!length(files) || !any(file.exists(files_win_path))) {
@@ -90,6 +93,13 @@ CmdStanRun <- R6::R6Class(
       }
     },
     metric_files = function(include_failed = FALSE) {
+      if (!isTRUE(self$args$method_args$save_metric)) {
+        stop(
+          "No metric files found. ",
+          "Set 'save_metric=TRUE' when fitting the model.",
+          call. = FALSE
+        )
+      }
       files <- private$metric_files_
       files_win_path <- sapply(private$metric_files_, wsl_safe_path, revert = TRUE)
       if (!length(files) || !any(file.exists(files_win_path))) {
@@ -400,7 +410,7 @@ CmdStanRun <- R6::R6Class(
             self$latent_dynamics_files(include_failed = TRUE),
           if (!private$profile_files_saved_)
             private$profile_files_,
-          if (isTRUE(self$args$save_cmdstan_config)
+          if (isTRUE(self$args$save_cmdstan_config) &&
               !private$config_files_saved_)
             self$config_files(include_failed = TRUE),
           if (isTRUE(self$args$method_args$save_metric) &&

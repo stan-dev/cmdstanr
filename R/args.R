@@ -68,8 +68,14 @@ CmdStanArgs <- R6::R6Class(
         self$output_dir <- ifelse(is.null(output_dir),
                                   file.path(wsl_dir_prefix(), wsl_tempdir()),
                                   wsl_safe_path(output_dir))
+      } else if (getRversion() < "3.5.0") {
+        self$output_dir <- output_dir %||% tempdir()
       } else {
-        self$output_dir <- output_dir %||% tempdir(check = TRUE)
+        if (getRversion() < "3.5.0") {
+          self$output_dir <- output_dir %||% tempdir()
+        } else {
+          self$output_dir <- output_dir %||% tempdir(check = TRUE)
+        }
       }
       self$output_dir <- repair_path(self$output_dir)
       self$output_basename <- output_basename
@@ -692,6 +698,9 @@ validate_cmdstan_args <- function(self) {
   checkmate::assert_integerish(self$refresh, lower = 0, null.ok = TRUE)
   checkmate::assert_integerish(self$sig_figs, lower = 1, upper = 18, null.ok = TRUE)
   checkmate::assert_integerish(self$save_cmdstan_config, lower = 0, upper = 1, len = 1, null.ok = TRUE)
+  if (!is.null(self$sig_figs) && cmdstan_version() < "2.25") {
+    warning("The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!", call. = FALSE)
+  }
   if (!is.null(self$refresh)) {
     self$refresh <- as.integer(self$refresh)
   }
@@ -707,6 +716,9 @@ validate_cmdstan_args <- function(self) {
   validate_init(self$init, num_inits)
   validate_seed(self$seed, num_procs)
   if (!is.null(self$opencl_ids)) {
+    if (cmdstan_version() < "2.26") {
+      stop("Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer.", call. = FALSE)
+    }
     checkmate::assert_vector(self$opencl_ids, len = 2)
   }
   invisible(TRUE)
@@ -824,6 +836,9 @@ validate_optimize_args <- function(self) {
                            choices = c("bfgs", "lbfgs", "newton"))
   checkmate::assert_flag(self$jacobian, null.ok = TRUE)
   if (!is.null(self$jacobian)) {
+    if (cmdstan_version() < "2.32") {
+      warning("The 'jacobian' argument is only supported with cmdstan 2.32+ and will be ignored!", call. = FALSE)
+    }
     self$jacobian <- as.integer(self$jacobian)
   }
 
@@ -1461,7 +1476,11 @@ validate_seed <- function(seed, num_procs) {
   if (is.null(seed)) {
     return(invisible(TRUE))
   }
-  lower_seed <- 1
+  if (cmdstan_version() < "2.26") {
+    lower_seed <- 1
+  } else {
+    lower_seed <- 0
+  }
   checkmate::assert_integerish(seed, lower = lower_seed)
   if (length(seed) > 1 && length(seed) != num_procs) {
     stop("If 'seed' is specified it must be a single integer or one per chain.",
