@@ -33,7 +33,7 @@ perspective, see Gelman (2020).
 
 ```{r library, message=FALSE}
 library(cmdstanr)
-check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+check_cmdstan_toolchain(quiet = TRUE)
 ```
 
 ## Adding profiling statements to a Stan program

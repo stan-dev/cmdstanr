@@ -57,7 +57,7 @@ jobs:
 
       - name: Install cmdstan
         run: |
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          cmdstanr::check_cmdstan_toolchain()
           cmdstanr::install_cmdstan(cores = 2, wsl = TRUE, overwrite = TRUE, version = "2.35.0-rc2")
         shell: Rscript {0}
 
