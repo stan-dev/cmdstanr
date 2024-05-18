@@ -1,7 +1,7 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.7.1
-Date: 2024-01-09
+Version: 0.8.0
+Date: 2024-05-18
 Authors@R:
     c(person(given = "Jonah", family = "Gabry", role = "aut",
              email = "jsg2201@columbia.edu"),
@@ -36,7 +36,7 @@ RoxygenNote: 7.3.1
 Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: CmdStan (https://mc-stan.org/users/interfaces/cmdstan)
 Depends:
-    R (>= 4.0.0)
+    R (>= 3.5.0)
 Imports:
     checkmate,
     data.table,

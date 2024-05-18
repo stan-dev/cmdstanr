@@ -115,9 +115,9 @@ cmdstan_default_install_path <- function(old = FALSE, wsl = FALSE) {
     file.path(paste0(wsl_dir_prefix(wsl = TRUE), wsl_home_dir()), ".cmdstan")
   } else {
     if (old) {
-      file.path(Sys.getenv("HOME"), ".cmdstanr")
+      file.path(.home_path(), ".cmdstanr")
     } else {
-      file.path(Sys.getenv("HOME"), ".cmdstan")
+      file.path(.home_path(), ".cmdstan")
     }
   }
 }
@@ -239,4 +239,17 @@ fake_cmdstan_version <- function(version) {
 }
 reset_cmdstan_version <- function() {
   .cmdstanr$VERSION <- read_cmdstan_version(cmdstan_path())
+}
+
+.home_path <- function() {
+  home <- Sys.getenv("HOME")
+  if (os_is_windows()) {
+    userprofile <- Sys.getenv("USERPROFILE")
+    h_drivepath <- file.path(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"))
+    win_home <- ifelse(userprofile == "", h_drivepath, userprofile)
+    if (win_home != "") {
+      home <- win_home
+    }
+  }
+  home
 }
