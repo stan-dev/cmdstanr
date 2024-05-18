@@ -35,4 +35,4 @@
 #'
 "_PACKAGE"
 
-if (getRversion() >= "2.15.1")  utils::globalVariables(c("self", "private", "super"))
+utils::globalVariables(c("self", "private", "super"))

@@ -185,16 +185,3 @@ write_stan_file <- function(code,
   }
   file
 }
-
-
-#' Write Stan code to a temporary file
-#'
-#' This function is deprecated. Please use [write_stan_file()] instead.
-#' @keywords internal
-#' @export
-#' @inheritParams write_stan_file
-write_stan_tempfile <- function(code, dir = tempdir()) {
-  warning("write_stan_tempfile() is deprecated. Please use write_stan_file() instead.",
-          call. = FALSE)
-  write_stan_file(code, dir)
-}

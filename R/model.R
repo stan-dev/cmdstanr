@@ -159,9 +159,7 @@
 #' }
 #'
 cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...) {
-  if (cmdstan_version() < "2.27.0" && !is.null(exe_file)) {
-    stop("'exe_file' argument is only supported with CmdStan 2.27 and newer.", call. = FALSE)
-  }
+
   if (is.null(exe_file) && is.null(stan_file)) {
     stop("Unable to create a `CmdStanModel` object. Both 'stan_file' and 'exe_file' are undefined.", call. = FALSE)
   }
@@ -418,8 +416,6 @@ CmdStanModel <- R6::R6Class(
 #' @param compile_model_methods (logical) Compile additional model methods
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
 #'   `unconstrain_variables()`).
-#' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
-#'   be compiled with the model methods?
 #' @param compile_standalone (logical) Should functions in the Stan model be
 #'   compiled for use in R? If `TRUE` the functions will be available via the
 #'   `functions` field in the compiled model object. This can also be done after
@@ -427,9 +423,6 @@ CmdStanModel <- R6::R6Class(
 #'   [`$expose_functions()`][model-method-expose_functions] method.
 #' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
 #'   but skip the actual C++ compilation. Used to speedup tests.
-#'
-#' @param threads Deprecated and will be removed in a future release. Please
-#'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
 #'
 #' @return The `$compile()` method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
@@ -479,10 +472,7 @@ compile <- function(quiet = TRUE,
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
                     compile_standalone = FALSE,
-                    dry_run = FALSE,
-                    #deprecated
-                    compile_hessian_method = FALSE,
-                    threads = FALSE) {
+                    dry_run = FALSE) {
 
   if (length(self$stan_file()) == 0) {
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
@@ -510,17 +500,6 @@ compile <- function(quiet = TRUE,
     if (length(self$exe_file()) != 0) {
       private$exe_file_ <- file.path(dir, basename(self$exe_file()))
     }
-  }
-
-  # temporary deprecation warnings
-  if (isTRUE(threads)) {
-    warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
-    cpp_options[["stan_threads"]] <- TRUE
-  }
-
-  # temporary deprecation warnings
-  if (isTRUE(compile_hessian_method)) {
-    warning("'compile_hessian_method' is deprecated. The hessian method is compiled with all models.")
   }
 
   if (length(self$exe_file()) == 0) {
@@ -787,9 +766,6 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' }
 #'
 variables <- function() {
-  if (cmdstan_version() < "2.27.0") {
-    stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
-  }
   if (length(self$stan_file()) == 0) {
     stop("'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
@@ -1008,18 +984,6 @@ format <- function(overwrite_file = FALSE,
                    backup = TRUE,
                    max_line_length = NULL,
                    quiet = FALSE) {
-  if (cmdstan_version() < "2.29.0" && !is.null(max_line_length)) {
-    stop(
-      "'max_line_length' is only supported with CmdStan 2.29.0 or newer.",
-      call. = FALSE
-    )
-  }
-  if (cmdstan_version() < "2.29.0" && !is.logical(canonicalize)) {
-    stop(
-      "A list can be supplied to the 'canonicalize' argument with CmdStan 2.29.0 or newer.",
-      call. = FALSE
-    )
-  }
   if (length(self$stan_file()) == 0) {
     stop(
       "'$format()' cannot be used because the 'CmdStanModel'",
@@ -1039,9 +1003,6 @@ format <- function(overwrite_file = FALSE,
   }
   if (isTRUE(canonicalize)) {
     stanc_options["print-canonical"] <- TRUE
-    if (cmdstan_version() < "2.29.0") {
-      stanc_options["auto-format"] <- NULL
-    }
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
     stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
   }
@@ -1167,63 +1128,9 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
-                   save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
-                   # deprecated
-                   cores = NULL,
-                   num_cores = NULL,
-                   num_chains = NULL,
-                   num_warmup = NULL,
-                   num_samples = NULL,
-                   validate_csv = NULL,
-                   save_extra_diagnostics = NULL,
-                   max_depth = NULL,
-                   stepsize = NULL) {
-  # temporary deprecation warnings
-  if (!is.null(cores)) {
-    warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
-    parallel_chains <- cores
-  }
-  if (!is.null(num_cores)) {
-    warning("'num_cores' is deprecated. Please use 'parallel_chains' instead.")
-    parallel_chains <- num_cores
-  }
-  if (!is.null(num_chains)) {
-    warning("'num_chains' is deprecated. Please use 'chains' instead.")
-    chains <- num_chains
-  }
-  if (!is.null(num_warmup)) {
-    warning("'num_warmup' is deprecated. Please use 'iter_warmup' instead.")
-    iter_warmup <- num_warmup
-  }
-  if (!is.null(num_samples)) {
-    warning("'num_samples' is deprecated. Please use 'iter_sampling' instead.")
-    iter_sampling <- num_samples
-  }
-  if (!is.null(max_depth)) {
-    warning("'max_depth' is deprecated. Please use 'max_treedepth' instead.")
-    max_treedepth <- max_depth
-  }
-  if (!is.null(stepsize)) {
-    warning("'stepsize' is deprecated. Please use 'step_size' instead.")
-    step_size <- stepsize
-  }
-  if (!is.null(save_extra_diagnostics)) {
-    warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
-    save_latent_dynamics <- save_extra_diagnostics
-  }
-  if (!is.null(validate_csv)) {
-    warning("'validate_csv' is deprecated. Please use 'diagnostics' instead.")
-    if (is.logical(validate_csv)) {
-      if (validate_csv) {
-        diagnostics <- c("divergences", "treedepth", "ebfmi")
-      } else {
-        diagnostics <- NULL
-      }
-    }
-  }
-
-  if (cmdstan_version() >= "2.27.0" && !fixed_param) {
+                   save_metric = TRUE,
+                   save_cmdstan_config = TRUE) {
+  if (!fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
@@ -1379,21 +1286,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
-                       # deprecated
-                       validate_csv = TRUE) {
-
-  if (!is.null(validate_csv)) {
-    warning("'validate_csv' is deprecated. Please use 'diagnostics' instead.")
-    if (is.logical(validate_csv)) {
-      if (validate_csv) {
-        diagnostics <- c("divergences", "treedepth", "ebfmi")
-      } else {
-        diagnostics <- NULL
-      }
-    }
-  }
-
+                       save_cmdstan_config = TRUE) {
   if (fixed_param) {
     chains <- 1
     save_warmup <- FALSE
@@ -1525,7 +1418,7 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                     save_cmdstan_config = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1659,10 +1552,7 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
-  if (cmdstan_version() < "2.32") {
-    stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
-  }
+                    save_cmdstan_config = TRUE) {
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
   }
@@ -1815,7 +1705,7 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                        save_cmdstan_config = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1960,7 +1850,7 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                       save_cmdstan_config = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -2385,40 +2275,38 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
 
 model_compile_info <- function(exe_file) {
   info <- NULL
-  if (cmdstan_version() > "2.26.1") {
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      ret <- wsl_compatible_run(
-        command = wsl_safe_path(exe_file),
-        args = "info",
-        error_on_status = FALSE
-      )
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    ret <- wsl_compatible_run(
+      command = wsl_safe_path(exe_file),
+      args = "info",
+      error_on_status = FALSE
     )
-    if (ret$status == 0) {
-      info <- list()
-      info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
-      for (key_val in info_raw) {
-        if (length(key_val) > 1) {
-          key_val <- trimws(key_val)
-          val <- key_val[2]
-          if (!is.na(as.logical(val))) {
-            val <- as.logical(val)
-          }
-          info[[toupper(key_val[1])]] <- val
+  )
+  if (ret$status == 0) {
+    info <- list()
+    info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
+    for (key_val in info_raw) {
+      if (length(key_val) > 1) {
+        key_val <- trimws(key_val)
+        val <- key_val[2]
+        if (!is.na(as.logical(val))) {
+          val <- as.logical(val)
         }
+        info[[toupper(key_val[1])]] <- val
       }
-      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
-      info[["STAN_VERSION_MAJOR"]] <- NULL
-      info[["STAN_VERSION_MINOR"]] <- NULL
-      info[["STAN_VERSION_PATCH"]] <- NULL
     }
+    info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
+    info[["STAN_VERSION_MAJOR"]] <- NULL
+    info[["STAN_VERSION_MINOR"]] <- NULL
+    info[["STAN_VERSION_PATCH"]] <- NULL
   }
   info
 }
 
 is_variables_method_supported <- function(mod) {
-  cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
+  mod$has_stan_file() && file.exists(mod$stan_file())
 }

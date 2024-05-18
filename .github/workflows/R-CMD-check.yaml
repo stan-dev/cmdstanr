@@ -2,15 +2,12 @@
 # Github Actions workflow to check CmdStanR
 # yamllint disable rule:line-length
 
-name: Unit tests
+name: v1.0 Branch Unit tests
 
 'on':
   push:
     branches:
-      - master
-  pull_request:
-    branches:
-      - master
+      - v1.0
 
 jobs:
   R-CMD-check:
@@ -63,7 +60,7 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2)
+          cmdstanr::install_cmdstan(cores = 2, version = "2.35.0-rc2")
         shell: Rscript {0}
 
       - name: Session info

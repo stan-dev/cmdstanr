@@ -156,14 +156,6 @@ process_data <- function(data, model_variables = NULL) {
   } else if (is.character(data)) {
     path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {
-    if (cmdstan_version() < "2.22" && any_zero_dims(data)) {
-      stop(
-        "Data includes 0-dimensional data structures. To use this data please ",
-        "either update your CmdStan installation with install_cmdstan() ",
-        "or specify data as a file created by rstan::stan_rdump().",
-        call. = FALSE
-      )
-    }
     if (!is.null(model_variables)) {
       data_variables <- model_variables$data
       is_data_supplied <- names(data_variables) %in%  names(data)

@@ -23,13 +23,11 @@ CmdStanRun <- R6::R6Class(
       self$args <- args
       self$procs <- procs
       private$output_files_ <- self$new_output_files()
-      if (cmdstan_version() >= "2.26.0") {
-        private$profile_files_ <- self$new_profile_files()
-      }
-      if (cmdstan_version() >= "2.34.0" && !is.null(self$args$save_cmdstan_config) && self$args$save_cmdstan_config) {
+      private$profile_files_ <- self$new_profile_files()
+      if (isTRUE(self$args$save_cmdstan_config)) {
         private$config_files_ <- self$new_config_files()
       }
-      if (cmdstan_version() >= "2.34.0" && !is.null(self$args$method_args$save_metric) && self$args$method_args$save_metric) {
+      if (isTRUE(self$args$method_args$save_metric)) {
         private$metric_files_ <- self$new_metric_files()
       }
       if (self$args$save_latent_dynamics) {
@@ -400,16 +398,12 @@ CmdStanRun <- R6::R6Class(
             self$output_files(include_failed = TRUE),
           if (self$args$save_latent_dynamics && !private$latent_dynamics_files_saved_)
             self$latent_dynamics_files(include_failed = TRUE),
-          if (cmdstan_version() > "2.25.0" && !private$profile_files_saved_)
+          if (!private$profile_files_saved_)
             private$profile_files_,
-          if (cmdstan_version() > "2.34.0" &&
-              !is.null(self$args$save_cmdstan_config) &&
-              self$args$save_cmdstan_config &&
+          if (isTRUE(self$args$save_cmdstan_config)
               !private$config_files_saved_)
             self$config_files(include_failed = TRUE),
-          if (cmdstan_version() > "2.34.0" &&
-              !(is.null(self$args$method_args$save_metric)) &&
-              self$args$method_args$save_metric &&
+          if (isTRUE(self$args$method_args$save_metric) &&
               !private$metric_files_saved_)
             self$metric_files(include_failed = TRUE)
         )

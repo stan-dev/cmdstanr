@@ -71,11 +71,7 @@ cmdstanr_initialize <- function() {
     }
   }
 
-  if (getRversion() < "3.5.0") {
-    .cmdstanr$TEMP_DIR <- tempdir()
-  } else {
-    .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
-  }
+  .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
   invisible(TRUE)
 }
 

@@ -136,7 +136,6 @@ install_cmdstan <- function(dir = NULL,
       warning("version and release_url shouldn't both be specified!",
               "\nrelease_url will be ignored.", call. = FALSE)
     }
-
     release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
                           version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
   }
@@ -151,6 +150,10 @@ install_cmdstan <- function(dir = NULL,
     tar_name <- utils::tail(split_url[[1]], n = 1)
     tar_name <- gsub("-linux-(.*).tar.gz", ".tar.gz", tar_name)
     cmdstan_ver <- substr(tar_name, 0, nchar(tar_name) - 7)
+    if (cmdstan_ver < "2.35.0") {
+      warning("CmdStanR 1.0 and later only officially support CmdStan >= 2.35",
+              call. = FALSE)
+    }
     tar_gz_file <- paste0(cmdstan_ver, ".tar.gz")
     dir_cmdstan <- file.path(dir, cmdstan_ver)
     dest_file <- file.path(dir, tar_gz_file)
@@ -223,15 +226,6 @@ install_cmdstan <- function(dir = NULL,
       append = TRUE
     )
   }
-
-  # Building fails on Apple silicon with < v2.31 due to a makefiles setting
-  # for stanc3, so manually implement the patch if needed from:
-  # https://github.com/stan-dev/cmdstan/pull/1127
-  stanc_makefile <- readLines(file.path(dir_cmdstan, "make", "stanc"))
-  stanc_makefile <- gsub("\\bxattr -d com.apple.quarantine bin/stanc",
-                          "-xattr -d com.apple.quarantine bin/stanc",
-                          stanc_makefile)
-  writeLines(stanc_makefile, con = file.path(dir_cmdstan, "make", "stanc"))
 
   # Suppress noisy warnings from Boost
   cmdstan_make_local(
@@ -321,12 +315,8 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 
 #' @rdname install_cmdstan
 #' @export
-#' @param fix For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix
-#'   any detected toolchain problems? Currently this option is only available on
-#'   Windows. The default is `FALSE`, in which case problems are only reported
-#'   along with suggested fixes.
 #'
-check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
+check_cmdstan_toolchain <- function(quiet = FALSE) {
   if (os_is_windows()) {
     if (os_is_wsl()) {
       check_wsl_toolchain()
@@ -645,11 +635,6 @@ check_unix_cpp_compiler <- function() {
 
 cmdstan_arch_suffix <- function(version = NULL) {
   os_needs_arch <- os_is_linux() || os_is_wsl()
-  if ((!is.null(version) && version < "2.26") || !os_needs_arch) {
-    # pre-CmdStan 2.26, only the x86 tarball was provided
-    return(NULL)
-  }
-
   arch <- NULL
   if (os_is_wsl()) {
     arch <- wsl_compatible_run(command = "uname", args = "-m")$stdout
@@ -719,9 +704,6 @@ rtools4x_home_path <- function() {
 
 rtools_home_path <- function() {
   path <- NULL
-  if (R.version$major == "3") {
-    path <- Sys.getenv("RTOOLS_HOME")
-  }
   if (R.version$major == "4") {
     path <- rtools4x_home_path()
   }
