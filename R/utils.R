@@ -887,12 +887,16 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   }
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
-  if (cmdstan_version() < "2.35.0") {
-    fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
-  } else {
-    fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
+  if (grepl("(stan::rng_t|boost::ecuyer1988)", fun_body)) {
+    if (cmdstan_version() < "2.35.0") {
+      fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
+    } else {
+      fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
+    }
+    rng_seed <- "Rcpp::XPtr<stan::rng_t> base_rng(base_rng_ptr);base_rng->seed(Rcpp::as<int>(seed));"
+    fun_body <- gsub("return", paste(rng_seed, "return"), fun_body)
+    fun_body <- gsub("base_rng__,", "*(base_rng.get()),", fun_body, fixed = TRUE)
   }
-  fun_body <- gsub("base_rng__,", "*(Rcpp::XPtr<stan::rng_t>(base_rng_ptr).get()),", fun_body, fixed = TRUE)
   fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
   fun_body <- paste(fun_body, collapse = "\n")
   gsub(pattern = ",\\s*)", replacement = ")", fun_body)
@@ -953,6 +957,9 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     fundef <- get(fun, envir = fun_env)
     funargs <- formals(fundef)
     funargs$base_rng_ptr <- env$rng_ptr
+    # To allow for exported RNG functions to respect the R 'set.seed()' call,
+    # we need to derive a seed deterministically from the current RNG state
+    funargs$seed <- quote(sample.int(.Machine$integer.max, 1))
     formals(fundef) <- funargs
     assign(fun, fundef, envir = fun_env)
   }
