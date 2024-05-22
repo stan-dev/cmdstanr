@@ -727,7 +727,29 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
+check_sundials_fpic <- function(verbose) {
+  if (!os_is_linux()){
+    return(invisible(NULL))
+  }
+  sundials_flags <- get_cmdstan_flags("CPPFLAGS_SUNDIALS")
+  local_flags <- cmdstan_make_local()
+  if (any(grepl("-fPIC", c(sundials_flags, local_flags), fixed = TRUE))) {
+    return(invisible(NULL))
+  }
+  if (interactive()) {
+    message("SUNDIALS needs to be compiled with -fPIC when exposing functions or ",
+            "model methods on Linux.\n",
+            "Updating your make/local file to include -fPIC and rebuilding CmdStan now...")
+  }
+  cmdstan_make_local(cpp_options = list("CPPFLAGS_SUNDIALS += -fPIC"), append = TRUE)
+  rebuild_cmdstan(quiet = !verbose)
+  if (interactive()) {
+    message("CmdStan has been rebuilt, continuing with model compilation...")
+  }
+}
+
 rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
+  check_sundials_fpic(verbose)
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
