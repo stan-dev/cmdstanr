@@ -635,6 +635,9 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       call. = FALSE
     )
   }
+  if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
+    return(invisible(NULL))
+  }
   if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
       !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
     if (!fix) {
@@ -844,8 +847,11 @@ toolchain_PATH_env_var <- function() {
 }
 
 rtools4x_toolchain_path <- function() {
-  c_runtime <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
-  repair_path(file.path(rtools4x_home_path(), c_runtime, "bin"))
+  toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
+  if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
+    toolchain <- "x86_64-w64-mingw32.static.posix"
+  }
+  repair_path(file.path(rtools4x_home_path(), toolchain, "bin"))
 }
 
 rtools4x_version <- function() {

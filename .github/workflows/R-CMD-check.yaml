@@ -42,6 +42,12 @@ jobs:
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
 
+      - name: Use stock RTools for Windows R-Devel
+        if: ${{ matrix.config.os == 'windows-latest' && matrix.config.r == 'devel' }}
+        run: |
+          echo "CMDSTANR_USE_RTOOLS=TRUE" >> $GITHUB_ENV
+        shell: bash
+
       - uses: n1hility/cancel-previous-runs@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
