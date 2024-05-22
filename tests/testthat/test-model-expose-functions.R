@@ -419,3 +419,17 @@ test_that("Exposing functions with precompiled model gives meaningful error", {
     fixed = TRUE
   )
 })
+
+test_that("Functions with SUNDIALS/KINSOL methods link correctly", {
+  modcode <- "
+    functions {
+      vector dummy_functor(vector guess, vector theta, data array[] real tails, data array[] int x_i) {
+        return [1, 1]';
+      }
+      vector call_solver(vector guess, vector theta, data array[] real tails, data array[] int x_i) {
+        return algebra_solver_newton(dummy_functor, guess, theta, tails, x_i);
+      }
+    }"
+  mod <- cmdstan_model(write_stan_file(modcode), force_recompile=TRUE)
+  expect_no_error(mod$expose_functions())
+})
