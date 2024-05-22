@@ -274,8 +274,6 @@ using the \code{\link[=fit-method-summary]{$summary()}} method.}
 with argument \code{"output save_config=1"} to save a json file which contains
 the argument tree and extra information (equivalent to the output CSV file
 header). This option is only available in CmdStan 2.34.0 and later.}
-
-\item{validate_csv}{Deprecated. Use \code{diagnostics} instead.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

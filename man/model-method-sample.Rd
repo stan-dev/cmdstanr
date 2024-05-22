@@ -37,8 +37,8 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_metric = TRUE,
-  save_cmdstan_config = TRUE
+  save_metric = NULL,
+  save_cmdstan_config = NULL
 )
 }
 \arguments{
@@ -293,8 +293,6 @@ is \code{TRUE}. This option is only available in CmdStan 2.34.0 and later.}
 with argument \code{"output save_config=1"} to save a json file which contains
 the argument tree and extra information (equivalent to the output CSV file
 header). This option is only available in CmdStan 2.34.0 and later.}
-
-\item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

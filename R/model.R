@@ -1089,8 +1089,6 @@ CmdStanModel$set("public", name = "format", value = format)
 #'
 #' @template model-common-args
 #' @template model-sample-args
-#' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize,validate_csv
-#'   Deprecated and will be removed in a future release.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
@@ -1240,7 +1238,6 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   processes. For example, `mpi_args = list("n" = 4)` launches the executable
 #'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
 #'   model executable.
-#' @param validate_csv Deprecated. Use `diagnostics` instead.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'

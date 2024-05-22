@@ -73,7 +73,7 @@ CmdStanRun <- R6::R6Class(
       paste0(tools::file_path_sans_ext(private$output_files_), "_metric.json")
     },
     config_files = function(include_failed = FALSE) {
-      if (!isTRUE(self$args$save_cmdstan_config)) {
+      if (!as.logical(self$args$save_cmdstan_config)) {
         return(invisible(NULL))
       }
       files <- private$config_files_
@@ -93,7 +93,7 @@ CmdStanRun <- R6::R6Class(
       }
     },
     metric_files = function(include_failed = FALSE) {
-      if (!isTRUE(self$args$method_args$save_metric)) {
+      if (!as.logical(self$args$method_args$save_metric)) {
         stop(
           "No metric files found. ",
           "Set 'save_metric=TRUE' when fitting the model.",
