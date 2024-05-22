@@ -843,8 +843,9 @@ toolchain_PATH_env_var <- function() {
   path
 }
 
-rtools4x_toolchain_path <- function() {
-  c_runtime <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
+rtools4x_toolchain_path <- function(version) {
+  c_runtime <- ifelse(is_ucrt_toolchain(),
+                      "x86_64-w64-mingw32.static.posix", "mingw64")
   repair_path(file.path(rtools4x_home_path(), c_runtime, "bin"))
 }
 
