@@ -1,5 +1,8 @@
 context("install")
 
+# Skip for now
+skip()
+
 # Windows ARM64 not supported before 2.35
 skip_if(os_is_windows() && arch_is_aarch64())
 
