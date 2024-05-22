@@ -69,6 +69,11 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          if (Sys.getenv("CMDSTANR_USE_RTOOLS") == "TRUE") {
+            cmdstanr::install_cmdstan(cores = 2, version = "2.35.0-rc2")
+          } else {
+            cmdstanr::install_cmdstan(cores = 2)
+          }
           cmdstanr::install_cmdstan(cores = 2)
         shell: Rscript {0}
 
