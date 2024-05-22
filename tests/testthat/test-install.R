@@ -1,4 +1,6 @@
 context("install")
+# Current tests need CmdStan 2.35 for stock rtools, but is not yet released
+skip_if(Sys.getenv("CMDSTANR_USE_RTOOLS") != "")
 
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
 if (!nzchar(cmdstan_test_tarball_url)) {
