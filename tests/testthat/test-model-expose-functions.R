@@ -431,11 +431,5 @@ test_that("Functions with SUNDIALS/KINSOL methods link correctly", {
       }
     }"
   mod <- cmdstan_model(write_stan_file(modcode), force_recompile=TRUE)
-  # Currently need to manually rebuild SUNDIALS with -fPIC only on Linux
-  if (os_is_linux()) {
-    expect_no_error(expect_message(mod$expose_functions(),
-                   "SUNDIALS needs to be compiled with -fPIC when exposing functions or model methods on Linux."))
-  } else {
-    expect_no_error(mod$expose_functions())
-  }
+  expect_no_error(mod$expose_functions())
 })
