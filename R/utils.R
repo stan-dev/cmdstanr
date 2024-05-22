@@ -731,14 +731,12 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
-  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
+  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
-  lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
-                 "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
-  withr::with_path(paste0(cmdstan_path(), lib_paths),
+  withr::with_path(repair_path(file.path(cmdstan_path(),"stan/lib/stan_math/lib/tbb")),
     withr::with_makevars(
       c(
         USE_CXX14 = 1,
