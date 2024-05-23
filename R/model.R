@@ -1167,8 +1167,8 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
-                   save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
+                   save_metric = NULL,
+                   save_cmdstan_config = NULL,
                    # deprecated
                    cores = NULL,
                    num_cores = NULL,
@@ -1379,7 +1379,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
+                       save_cmdstan_config = NULL,
                        # deprecated
                        validate_csv = TRUE) {
 
@@ -1525,7 +1525,7 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                     save_cmdstan_config = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1659,7 +1659,7 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                    save_cmdstan_config = NULL) {
   if (cmdstan_version() < "2.32") {
     stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
   }
@@ -1815,7 +1815,7 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                        save_cmdstan_config = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1960,7 +1960,7 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                       save_cmdstan_config = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
