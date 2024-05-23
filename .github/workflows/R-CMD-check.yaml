@@ -65,17 +65,8 @@ jobs:
 
       - name: Install cmdstan
         run: |
-<<<<<<< HEAD
           cmdstanr::check_cmdstan_toolchain()
           cmdstanr::install_cmdstan(cores = 2, version = "2.35.0-rc2")
-=======
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          if (Sys.getenv("CMDSTANR_USE_RTOOLS") == "TRUE") {
-            cmdstanr::install_cmdstan(cores = 2, version = "2.35.0-rc2")
-          } else {
-            cmdstanr::install_cmdstan(cores = 2)
-          }
->>>>>>> master
         shell: Rscript {0}
 
       - name: Session info

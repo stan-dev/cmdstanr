@@ -73,13 +73,8 @@ is_rosetta2 <- function() {
 
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
-<<<<<<< HEAD
   if (os_is_windows() && !os_is_wsl()) {
     "make.exe"
-=======
-  if (os_is_windows() && !os_is_wsl() && (Sys.getenv("CMDSTANR_USE_RTOOLS") == "")) {
-    "mingw32-make.exe"
->>>>>>> master
   } else {
     "make"
   }
