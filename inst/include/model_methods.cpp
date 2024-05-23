@@ -127,15 +127,24 @@ Eigen::VectorXd unconstrain_variables(SEXP ext_model_ptr, Eigen::VectorXd variab
 }
 
 // [[Rcpp::export]]
-Eigen::MatrixXd unconstrain_draws(SEXP ext_model_ptr, Eigen::MatrixXd variables) {
+Rcpp::List unconstrain_draws(SEXP ext_model_ptr, Eigen::MatrixXd variables) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  Eigen::MatrixXd unconstrained_draws(variables.cols(), variables.rows());
+  // Need to do this for the first row to get the correct size of the unconstrained draws
+  Eigen::VectorXd unconstrained_draw1;
+  ptr->unconstrain_array(variables.row(0).transpose(), unconstrained_draw1, &Rcpp::Rcout);
+  std::vector<Eigen::VectorXd> unconstrained_draws(unconstrained_draw1.size());
+  for (auto&& unconstrained_par : unconstrained_draws) {
+    unconstrained_par.resize(variables.rows());
+  }
+  
   for (int i = 0; i < variables.rows(); i++) {
     Eigen::VectorXd unconstrained_variables;
     ptr->unconstrain_array(variables.transpose().col(i), unconstrained_variables, &Rcpp::Rcout);
-    unconstrained_draws.col(i) = unconstrained_variables;
+    for (int j = 0; j < unconstrained_variables.size(); j++) {
+      unconstrained_draws[j](i) = unconstrained_variables(j);
+    }
   }
-  return unconstrained_draws.transpose();
+  return Rcpp::wrap(unconstrained_draws);
 }
 
 // [[Rcpp::export]]

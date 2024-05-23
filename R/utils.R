@@ -426,6 +426,19 @@ maybe_convert_draws_format <- function(draws, format, ...) {
   )
 }
 
+create_draws_format <- function(format, ...) {
+  format <- sub("^draws_", "", format)
+  switch(
+    format,
+    "array" = posterior::draws_array(...),
+    "df" = posterior::draws_df(...),
+    "data.frame" = posterior::draws_df(...),
+    "list" = posterior::draws_list(...),
+    "matrix" = posterior::draws_matrix(...),
+    "rvars" = posterior::draws_rvars(...),
+    stop("Invalid draws format.", call. = FALSE)
+  )
+}
 
 # convert draws for external packages ------------------------------------------
 
