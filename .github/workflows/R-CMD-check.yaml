@@ -39,6 +39,12 @@ jobs:
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
 
+      - name: Use stock RTools for Windows R-Devel
+        if: ${{ matrix.config.os == 'windows-latest' && matrix.config.r == 'devel' }}
+        run: |
+          echo "CMDSTANR_USE_RTOOLS=TRUE" >> $GITHUB_ENV
+        shell: bash
+
       - uses: n1hility/cancel-previous-runs@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -59,8 +65,17 @@ jobs:
 
       - name: Install cmdstan
         run: |
+<<<<<<< HEAD
           cmdstanr::check_cmdstan_toolchain()
           cmdstanr::install_cmdstan(cores = 2, version = "2.35.0-rc2")
+=======
+          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          if (Sys.getenv("CMDSTANR_USE_RTOOLS") == "TRUE") {
+            cmdstanr::install_cmdstan(cores = 2, version = "2.35.0-rc2")
+          } else {
+            cmdstanr::install_cmdstan(cores = 2)
+          }
+>>>>>>> master
         shell: Rscript {0}
 
       - name: Session info
