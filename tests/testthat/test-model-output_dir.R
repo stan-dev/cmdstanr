@@ -27,18 +27,23 @@ test_that("all fitting methods work with output_dir", {
       files <- list.files(method_dir)
     }
     # specifying output_dir
-    fit <- testing_fit("bernoulli", method = method, seed = 123,
-                        output_dir = method_dir)
+    call_args  <- list(
+      "bernoulli",
+      method = method,
+      seed = 123,
+      output_dir = method_dir,
+      save_cmdstan_config = TRUE
+    )
+    if (method == "sample") {
+      call_args$save_metric <- TRUE
+    }
+    fit <- do.call(testing_fit, call_args)
     # WSL path manipulations result in a short path which slightly differs
     # from the original tempdir(), so need to normalise both for comparison
     expect_equal(normalizePath(fit$runset$args$output_dir),
                  normalizePath(method_dir))
     files <- normalizePath(list.files(method_dir, full.names = TRUE))
-    # in 2.34.0 we also save the config files for all methods and the metric
-    # for sample
-    if (cmdstan_version() < "2.34.0") {
-      mult <- 1
-    } else if (method == "sample") {
+    if (method == "sample") {
       mult <- 3
       expect_equal(files[grepl("metric", files)],
                    normalizePath(sapply(fit$metric_files(), wsl_safe_path, revert = TRUE,
@@ -99,7 +104,10 @@ test_that("error if output_dir is invalid", {
 })
 
 test_that("output_dir works with trailing /", {
-  test_dir <- file.path(sandbox, "trailing")
+  test_dir <- file.path(tempdir(check = TRUE), "output_dir")
+  if (dir.exists(test_dir)) {
+    unlink(test_dir, recursive = TRUE)
+  }
   dir.create(test_dir)
   fit <- testing_fit(
     "bernoulli",
@@ -109,7 +117,5 @@ test_that("output_dir works with trailing /", {
   )
   expect_equal(normalizePath(fit$runset$args$output_dir),
                normalizePath(test_dir))
-  # in 2.34.0 we also save the metric and config files
-  mult <- if (cmdstan_version() >= "2.34.0") 3 else 1
-  expect_equal(length(list.files(test_dir)), mult * fit$num_procs())
+  expect_equal(length(list.files(test_dir)), fit$num_procs())
 })

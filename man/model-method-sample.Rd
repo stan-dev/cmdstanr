@@ -37,17 +37,8 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_metric = if (cmdstan_version() > "2.34.0") {
-     TRUE
- } else {
-     NULL
- },
-  save_cmdstan_config = if (cmdstan_version() > "2.34.0") {
-     TRUE
- } else {
-    
-    NULL
- },
+  save_metric = NULL,
+  save_cmdstan_config = NULL,
   cores = NULL,
   num_cores = NULL,
   num_chains = NULL,
