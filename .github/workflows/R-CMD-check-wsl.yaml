@@ -8,6 +8,7 @@ name: Unit tests - WSL Backend
   push:
     branches:
       - master
+      - v2.35-rc3-check
   pull_request:
     branches:
       - master
@@ -61,7 +62,7 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2, wsl = TRUE, overwrite = TRUE)
+          cmdstanr::install_cmdstan(cores = 2, wsl = TRUE, overwrite = TRUE, version = "2.35.0-rc3")
         shell: Rscript {0}
 
       - name: Session info

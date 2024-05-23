@@ -8,6 +8,7 @@ name: Unit tests
   push:
     branches:
       - master
+      - v2.35-rc3-check
   pull_request:
     branches:
       - master
@@ -69,11 +70,7 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          if (Sys.getenv("CMDSTANR_USE_RTOOLS") == "TRUE") {
-            cmdstanr::install_cmdstan(cores = 2, version = "2.35.0-rc2")
-          } else {
-            cmdstanr::install_cmdstan(cores = 2)
-          }
+          cmdstanr::install_cmdstan(cores = 2, version = "2.35.0-rc3")
         shell: Rscript {0}
 
       - name: Session info
