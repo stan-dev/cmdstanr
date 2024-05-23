@@ -14,16 +14,16 @@ init_json_2 <- test_path("resources", "init", "bernoulli.init-2.json")
 
 test_that("all fitting methods work with provided init files", {
   expect_sample_output(
-    mod$sample(data = data_list, chains = 1, init = init_json_1, seed = 123)
+    mod$sample(data = data_list, chains = 1, init = init_json_1, seed = 12345)
   )
   expect_optim_output(
-    mod$optimize(data = data_list, init = init_json_1, seed = 123)
+    mod$optimize(data = data_list, init = init_json_1, seed = 12345)
   )
   expect_vb_output(
-    mod$variational(data = data_list, init = init_json_1, seed = 123)
+    mod$variational(data = data_list, init = init_json_1, seed = 12345)
   )
   expect_laplace_output(
-    mod$laplace(data = data_list, init = init_json_1, seed = 123)
+    mod$laplace(data = data_list, init = init_json_1, seed = 12345)
   )
 
   # broadcasting
