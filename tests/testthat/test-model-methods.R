@@ -179,21 +179,34 @@ test_that("unconstrain_draws returns correct values", {
   mod <- cmdstan_model(write_stan_file(model_code),
                        compile_model_methods = TRUE,
                        force_recompile = TRUE)
-  fit <- mod$sample(data = list(N = 0), chains = 2)
+  fit <- mod$sample(data = list(N = 0), chains = 2, save_warmup = TRUE)
+  fit_no_warmup <- mod$sample(data = list(N = 0), chains = 2)
 
   x_draws <- fit$draws(format = "draws_df")$x
-
+  x_draws_warmup <- fit$draws(format = "draws_df", inc_warmup = TRUE)$x
+  
   # Unconstrain all internal draws
   unconstrained_internal_draws <- fit$unconstrain_draws()
+  unconstrained_internal_draws_warmup <- fit$unconstrain_draws(inc_warmup = TRUE)
   expect_equal(as.numeric(x_draws), as.numeric(unconstrained_internal_draws))
-
+  expect_equal(as.numeric(x_draws_warmup), as.numeric(unconstrained_internal_draws_warmup))
+  
+  expect_error({unconstrained_internal_draws <- fit_no_warmup$unconstrain_draws(inc_warmup = TRUE)},
+               "Warmup draws were requested from a fit object without them! Please rerun the model with save_warmup = TRUE.")
+  
   # Unconstrain external CmdStan CSV files
   unconstrained_csv <- fit$unconstrain_draws(files = fit$output_files())
+  unconstrained_csv_warmup <- fit$unconstrain_draws(files = fit$output_files(),
+                                                    inc_warmup = TRUE)
   expect_equal(as.numeric(x_draws), as.numeric(unconstrained_csv))
+  expect_equal(as.numeric(x_draws_warmup), as.numeric(unconstrained_csv_warmup))
 
   # Unconstrain existing draws object
   unconstrained_draws <- fit$unconstrain_draws(draws = fit$draws())
   expect_equal(as.numeric(x_draws), as.numeric(unconstrained_draws))
+  
+  expect_message(fit$unconstrain_draws(draws = fit$draws(), inc_warmup = TRUE),
+                 "'inc_warmup' cannot be used with a draws object. Ignoring.")
 
   # With a lower-bounded constraint, the parameter draws should be the
   # exponentiation of the unconstrained draws

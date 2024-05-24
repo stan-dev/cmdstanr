@@ -786,6 +786,9 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
 }
 
 expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+  if (rlang::is_interactive()) {
+    message("Compiling additional model methods...")
+  }
   code <- c(env$hpp_code_,
             readLines(system.file("include", "model_methods.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
@@ -1034,7 +1037,9 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
       })
     }
   } else {
-    message("Compiling standalone functions...")
+    if (rlang::is_interactive()) {
+      message("Compiling standalone functions...")
+    }
     compile_functions(function_env, verbose, global)
   }
   invisible(NULL)

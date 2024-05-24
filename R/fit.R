@@ -348,9 +348,6 @@ init_model_methods <- function(seed = 1, verbose = FALSE, hessian = FALSE) {
             "errors that you encounter")
   }
   if (is.null(private$model_methods_env_$model_ptr)) {
-    if (verbose) {
-      message("Compiling additional model methods...")
-    }
     expose_model_methods(private$model_methods_env_, verbose, hessian)
   }
   if (!("model_ptr_" %in% ls(private$model_methods_env_))) {
@@ -527,6 +524,8 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #' @param draws A `posterior::draws_*` object.
 #' @param format (string) The format of the returned draws. Must be a valid
 #'   format from the \pkg{posterior} package.
+#' @param inc_warmup (logical) Should warmup draws be included? Defaults to
+#'  `FALSE`.
 #'
 #' @examples
 #' \dontrun{
@@ -559,21 +558,24 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
           call. = FALSE)
     }
     if (!is.null(files)) {
-      read_csv <- read_cmdstan_csv(files = files, format = "draws_matrix")
-      draws <- read_csv$post_warmup_draws
-    }
-    if (!is.null(draws)) {
-      draws <- maybe_convert_draws_format(draws, "draws_matrix")
+      read_csv <- read_cmdstan_csv(files = files)
+      if (inc_warmup) {
+        draws <- posterior::bind_draws(read_csv$warmup_draws,
+                                        read_csv$post_warmup_draws,
+                                        along = "iteration")
+      } else {
+        draws <- read_csv$post_warmup_draws
+      }
+    } else if (!is.null(draws)) {
+      if (inc_warmup) {
+        message("'inc_warmup' cannot be used with a draws object. Ignoring.")
+      }
     }
   } else {
-    if (is.null(private$draws_)) {
-      if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
-      }
-      private$read_csv_(format = "draws_df")
-    }
-    draws <- maybe_convert_draws_format(private$draws_, "draws_matrix")
+    draws <- self$draws(inc_warmup = inc_warmup)
   }
+  
+  draws <- maybe_convert_draws_format(draws, "draws_matrix")
   
   chains <- posterior::nchains(draws)
 
