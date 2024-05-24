@@ -561,6 +561,9 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #'
 unconstrain_draws <- function(files = NULL, draws = NULL,
                               format = getOption("cmdstanr_draws_format", "draws_array")) {
+  if (!(format %in% valid_draws_formats())) {
+    stop("Invalid draws format requested!", call. = FALSE)
+  }
   if (!is.null(files) || !is.null(draws)) {
     if (!is.null(files) && !is.null(draws)) {
       stop("Either a list of CSV files or a draws object can be passed, not both",
@@ -582,6 +585,8 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
     }
     draws <- maybe_convert_draws_format(private$draws_, "draws_matrix")
   }
+  
+  chains <- posterior::nchains(draws)
 
   model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
   model_variables <- self$runset$args$model_variables
@@ -598,7 +603,9 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
   unconstrained <- private$model_methods_env_$unconstrain_draws(private$model_methods_env_$model_ptr_, draws)
   uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
   names(unconstrained) <- repair_variable_names(uncon_names)
-  maybe_convert_draws_format(unconstrained, format, .nchains = posterior::nchains(draws))
+  unconstrained$.nchains <- chains
+  
+  do.call(function(...) { create_draws_format(format, ...) }, unconstrained)
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 
