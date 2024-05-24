@@ -5,11 +5,39 @@
 \alias{bridge_sampler}
 \title{Marginal Log-Likelihood Approximation via Bridge Sampling}
 \usage{
-bridge_sampler(...)
+bridge_sampler(
+  method = "normal",
+  repetitions = 1,
+  cores = 1,
+  use_neff = TRUE,
+  maxiter = 1000,
+  silent = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
-\item{...}{Arguments (e.g., \code{repetitions}, \code{cores}, \code{maxiter}, etc.)
-passed to \code{\link[bridgesampling:bridge_sampler]{bridgesampling::bridge_sampler()}}.}
+\item{method}{(character) The method to use for bridge sampling. Options are
+\code{"normal"} (default) or \code{"warp3"}.}
+
+\item{repetitions}{(integer) The number of repetitions for bridge sampling.}
+
+\item{cores}{(integer) The number of cores to be used by the \pkg{bridgesampling}
+package. Defaults to \code{1}. See the \pkg{bridgesampling} package documentation
+for more details.}
+
+\item{use_neff}{(logical) Whether to use the effective sample size (ESS) in
+the optimal bridge function. Default is TRUE. If FALSE, the number of samples
+is used instead.}
+
+\item{maxiter}{(integer) The maximum number of iterations for bridge sampling.}
+
+\item{silent}{(logical) Whether to suppress output from the bridge sampling
+algorithm. Defaults to \code{FALSE}.}
+
+\item{verbose}{(logical) Whether to print verbose output. Defaults to \code{FALSE}.}
+
+\item{...}{Other arguments passed to the bridge sampling function.}
 }
 \value{
 The object returned by the bridge sampling function.
