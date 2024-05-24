@@ -8,7 +8,8 @@
 unconstrain_draws(
   files = NULL,
   draws = NULL,
-  format = getOption("cmdstanr_draws_format", "draws_array")
+  format = getOption("cmdstanr_draws_format", "draws_array"),
+  inc_warmup = FALSE
 )
 }
 \arguments{
@@ -31,7 +32,6 @@ character vector of paths to CSV files can be passed.
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
-fit_mcmc$init_model_methods()
 
 # Unconstrain all internal draws
 unconstrained_internal_draws <- fit_mcmc$unconstrain_draws()
