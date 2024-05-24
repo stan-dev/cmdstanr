@@ -6,7 +6,7 @@
 \title{Compile additional methods for accessing the model log-probability function
 and parameter constraining and unconstraining.}
 \usage{
-init_model_methods(seed = 0, verbose = FALSE, hessian = FALSE)
+init_model_methods(seed = 1, verbose = FALSE, hessian = FALSE)
 }
 \arguments{
 \item{seed}{(integer) The random seed to use when initializing the model.}
@@ -29,7 +29,6 @@ these can be ignored so long as they are warnings and not errors.
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
-fit_mcmc$init_model_methods()
 }
 }
 \seealso{

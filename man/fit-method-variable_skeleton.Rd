@@ -22,7 +22,6 @@ parameter values to a named list.
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
-fit_mcmc$init_model_methods()
 fit_mcmc$variable_skeleton()
 }
 

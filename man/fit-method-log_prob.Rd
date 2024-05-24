@@ -22,7 +22,6 @@ The \verb{$log_prob()} method provides access to the Stan model's
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
-fit_mcmc$init_model_methods()
 fit_mcmc$log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 }
 
