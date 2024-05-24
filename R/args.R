@@ -1290,6 +1290,8 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
     model_variables = list(parameters = colnames(draws_df)[3:(length(colnames(draws_df)) - 3)])
   }
   draws_df$lw = draws_df$lp__ - draws_df$lp_approx__
+  # Replace NaN and Inf with -Inf
+  draws_df$lw[!is.finite(draws_df$lw)] <- -Inf
   # Calculate unique draws based on 'lw' using base R functions
   unique_draws = length(unique(draws_df$lw))
   if (num_procs > unique_draws) {
@@ -1315,7 +1317,7 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
     draws_df$weight = exp(draws_df$lw - max(draws_df$lw))
   } else {
       draws_df$weight = posterior::pareto_smooth(
-        exp(draws_df$lw - max(draws_df$lw)), tail = "right", return_k=FALSE)
+        exp(draws_df$lw - max(draws_df$lw)), tail = "right", r_eff=1, return_k=FALSE)
   }
   init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
                                             weights = draws_df$weight, method = "simple_no_replace")
