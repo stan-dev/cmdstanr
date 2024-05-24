@@ -574,9 +574,9 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
   } else {
     draws <- self$draws(inc_warmup = inc_warmup)
   }
-  
+
   draws <- maybe_convert_draws_format(draws, "draws_matrix")
-  
+
   chains <- posterior::nchains(draws)
 
   model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
@@ -595,7 +595,7 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
   uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
   names(unconstrained) <- repair_variable_names(uncon_names)
   unconstrained$.nchains <- chains
-  
+
   do.call(function(...) { create_draws_format(format, ...) }, unconstrained)
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
@@ -1579,6 +1579,72 @@ loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) 
   }
 }
 CmdStanMCMC$set("public", name = "loo", value = loo)
+
+#' Marginal Log-Likelihood Approximation via Bridge Sampling
+#'
+#' @name fit-method-bridge_sampler
+#' @aliases bridge_sampler
+#' @description The `$bridge_sampler()` method computes the marginal likelihood
+#'  approximation using bridge sampling. This method requires the
+#' \pkg{bridgesampling} package.
+#'
+#' @param ... Arguments (e.g., `repetitions`, `cores`, `maxiter`, etc.)
+#' passed to [bridgesampling::bridge_sampler()].
+#'
+#' @return The object returned by the bridge sampling function.
+#'
+#' @seealso The \pkg{bridgesampling} package website with
+#'  [documentation](https://cran.r-project.org/package=bridgesampling).
+#'
+#' @examples
+#'
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic")
+#' bridge_result <- fit$bridge_sampler()
+#' print(bridge_result)
+#' }
+#'
+bridge_sampler <- function(...) {
+  require_suggested_package("bridgesampling")
+  self$init_model_methods()
+
+  upars_cr <- self$unconstrain_draws(format = "draws_array")
+  nr_cr <- posterior::niterations(upars_cr)
+  half_iter <- nr_cr %/% 2
+
+  samples_4_iter_cr <- posterior::subset_draws(upars_cr, iteration = seq.int(from=half_iter + 1, nr_cr))
+  neff_cr <- median(posterior::summarise_draws(samples_4_iter_cr,"ess_median")$ess_median)
+
+  parameters_cr <- attributes(upars_cr)$dimnames$variable
+  transTypes_cr <- rep("unbounded", length(parameters_cr))
+  names(transTypes_cr) <- parameters_cr
+  lb_cr <- rep(-Inf, length(parameters_cr))
+  ub_cr <- rep(Inf, length(parameters_cr))
+  names(lb_cr) <- names(ub_cr) <- parameters_cr
+
+  samples_4_fit_cr <- posterior::subset_draws(upars_cr, iteration = seq_len(half_iter))
+  samples_4_fit_cr <- posterior::as_draws_matrix(samples_4_fit_cr)
+  samples_4_iter_cr <- posterior::as_draws_matrix(samples_4_iter_cr)
+
+  colnames(samples_4_fit_cr) <- paste0("trans_", parameters_cr)
+  colnames(samples_4_iter_cr) <- paste0("trans_", parameters_cr)
+
+
+  do.call(rlang::ns_env("bridgesampling")[[paste0(".bridge.sampler.", method)]],
+          args = list(samples_4_fit = samples_4_fit_cr,
+                      samples_4_iter = samples_4_iter_cr,
+                      neff = neff_cr,
+                      log_posterior = function(s.row, data) { data$fitobj$log_prob(s.row) },
+                      data = list(fitobj = self),
+                      lb = lb_cr, ub = ub_cr,
+                      param_types = rep("real", ncol(samples_4_fit_cr)),
+                      transTypes = transTypes_cr,
+                      repetitions = repetitions, cores = cores,
+                      maxiter = maxiter, silent = silent,
+                      verbose = verbose,
+                      r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
+}
+CmdStanMCMC$set("public", name = "bridge_sampler", value = bridge_sampler)
 
 #' Extract sampler diagnostics after MCMC
 #'
