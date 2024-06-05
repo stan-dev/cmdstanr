@@ -2,7 +2,7 @@
 
 Items for next release go here
 
-# cmdstanr 0.8.0
+# cmdstanr 0.8.1
 
 ## Minor changes
 
