@@ -665,53 +665,56 @@ compile <- function(quiet = TRUE,
       expose_stan_functions(self$functions, !quiet)
     }
 
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      run_log <- wsl_compatible_run(
-        command = make_cmd(),
-        args = c(wsl_safe_path(repair_path(tmp_exe)),
-                cpp_options_to_compile_flags(cpp_options),
-                stancflags_val),
-        wd = cmdstan_path(),
-        echo = !quiet || is_verbose_mode(),
-        echo_cmd = is_verbose_mode(),
-        spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
-        stderr_callback = function(x, p) {
-          if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
-            message(x)
-          }
-          if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
-            warning(
-              "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
-              "If your model failed to compile please run rebuild_cmdstan().\n",
-              "If the issue persists please open a bug report.",
-              call. = FALSE
-            )
-          }
-          if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
-            warning(
-              "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
-              "See the above error for more details.",
-              call. = FALSE
-            )
-          }
-          if (os_is_macos()) {
-            if (R.version$arch == "aarch64"
-                && grepl("but the current translation unit is being compiled for target", x)) {
+    withr::with_envvar(
+      c("HOME" = short_path(Sys.getenv("HOME"))),
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        run_log <- wsl_compatible_run(
+          command = make_cmd(),
+          args = c(wsl_safe_path(repair_path(tmp_exe)),
+                  cpp_options_to_compile_flags(cpp_options),
+                  stancflags_val),
+          wd = cmdstan_path(),
+          echo = !quiet || is_verbose_mode(),
+          echo_cmd = is_verbose_mode(),
+          spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
+          stderr_callback = function(x, p) {
+            if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
+              message(x)
+            }
+            if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
               warning(
-                "The C++ compiler has errored due to incompatibility between the x86 and ",
-                "Apple Silicon architectures.\n",
-                "If you are running R inside an IDE (RStudio, VSCode, ...), ",
-                "make sure the IDE is a native Apple Silicon app.\n",
+                "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
+                "If your model failed to compile please run rebuild_cmdstan().\n",
+                "If the issue persists please open a bug report.",
                 call. = FALSE
               )
             }
-          }
-        },
-        error_on_status = FALSE
+            if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
+              warning(
+                "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
+                "See the above error for more details.",
+                call. = FALSE
+              )
+            }
+            if (os_is_macos()) {
+              if (R.version$arch == "aarch64"
+                  && grepl("but the current translation unit is being compiled for target", x)) {
+                warning(
+                  "The C++ compiler has errored due to incompatibility between the x86 and ",
+                  "Apple Silicon architectures.\n",
+                  "If you are running R inside an IDE (RStudio, VSCode, ...), ",
+                  "make sure the IDE is a native Apple Silicon app.\n",
+                  call. = FALSE
+                )
+              }
+            }
+          },
+          error_on_status = FALSE
+        )
       )
     )
     if (is.na(run_log$status) || run_log$status != 0) {

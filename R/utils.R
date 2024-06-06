@@ -83,6 +83,10 @@ is_rosetta2 <- function() {
   rosetta2
 }
 
+arch_is_aarch64 <- function() {
+  isTRUE(R.version$arch == "aarch64")
+}
+
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
   if (os_is_windows() && !os_is_wsl() && (Sys.getenv("CMDSTANR_USE_RTOOLS") == "")) {
@@ -102,6 +106,14 @@ stanc_cmd <- function() {
 }
 
 # paths and extensions ----------------------------------------------------
+
+short_path <- function(path) {
+  if (os_is_windows()) {
+    utils::shortPathName(path)
+  } else {
+    path
+  }
+}
 
 # Replace `\\` with `/` in a vector of paths
 # Needed for windows if CmdStan version is < 2.21:
@@ -688,11 +700,14 @@ assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 # Model methods & expose_functions helpers ------------------------------------------------------
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
-  flags <- wsl_compatible_run(
-    command = "make",
-    args = c("-s", paste0("print-", flag_name)),
-    wd = cmdstan_path
-  )$stdout
+  withr::with_envvar(
+    c("HOME" = short_path(Sys.getenv("HOME"))),
+    flags <- wsl_compatible_run(
+      command = "make",
+      args = c("-s", paste0("print-", flag_name)),
+      wd = cmdstan_path
+    )$stdout
+  )
 
   flags <- gsub("\n", "", flags, fixed = TRUE)
 
