@@ -453,21 +453,24 @@ build_cmdstan <- function(dir,
   } else {
     run_cmd <- make_cmd()
   }
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path(dir = dir)
-    ),
-    wsl_compatible_run(
-      command = run_cmd,
-      args = c(translation_args, paste0("-j", cores), "build"),
-      wd = dir,
-      echo_cmd = is_verbose_mode(),
-      echo = !quiet || is_verbose_mode(),
-      spinner = quiet,
-      error_on_status = FALSE,
-      stderr_callback = function(x, p) { if (quiet) message(x) },
-      timeout = timeout
+  withr::with_envvar(
+    c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path(dir = dir)
+      ),
+      wsl_compatible_run(
+        command = run_cmd,
+        args = c(translation_args, paste0("-j", cores), "build"),
+        wd = dir,
+        echo_cmd = is_verbose_mode(),
+        echo = !quiet || is_verbose_mode(),
+        spinner = quiet,
+        error_on_status = FALSE,
+        stderr_callback = function(x, p) { if (quiet) message(x) },
+        timeout = timeout
+      )
     )
   )
 }
@@ -475,41 +478,47 @@ build_cmdstan <- function(dir,
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path(dir = dir)
-    ),
-    wsl_compatible_run(
-      command = make_cmd(),
-      args = "clean-all",
-      wd = dir,
-      echo_cmd = is_verbose_mode(),
-      echo = !quiet || is_verbose_mode(),
-      spinner = quiet,
-      error_on_status = FALSE,
-      stderr_callback = function(x, p) { if (quiet) message(x) }
+  withr::with_envvar(
+    c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path(dir = dir)
+      ),
+      wsl_compatible_run(
+        command = make_cmd(),
+        args = "clean-all",
+        wd = dir,
+        echo_cmd = is_verbose_mode(),
+        echo = !quiet || is_verbose_mode(),
+        spinner = quiet,
+        error_on_status = FALSE,
+        stderr_callback = function(x, p) { if (quiet) message(x) }
+      )
     )
   )
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path(dir = dir)
-    ),
-    wsl_compatible_run(
-      command = make_cmd(),
-      args = c(paste0("-j", cores),
-                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
-      wd = dir,
-      echo_cmd = is_verbose_mode(),
-      echo = !quiet || is_verbose_mode(),
-      spinner = quiet,
-      error_on_status = FALSE,
-      stderr_callback = function(x, p) { if (quiet) message(x) },
-      timeout = timeout
+  withr::with_envvar(
+    c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path(dir = dir)
+      ),
+      wsl_compatible_run(
+        command = make_cmd(),
+        args = c(paste0("-j", cores),
+                  cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+        wd = dir,
+        echo_cmd = is_verbose_mode(),
+        echo = !quiet || is_verbose_mode(),
+        spinner = quiet,
+        error_on_status = FALSE,
+        stderr_callback = function(x, p) { if (quiet) message(x) },
+        timeout = timeout
+      )
     )
   )
 }

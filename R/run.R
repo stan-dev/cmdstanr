@@ -410,18 +410,21 @@ CmdStanRun <- R6::R6Class(
 check_target_exe <- function(exe) {
   exe_path <- file.path(cmdstan_path(), exe)
   if (!file.exists(exe_path)) {
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      run_log <- wsl_compatible_run(
-        command = make_cmd(),
-        args = exe,
-        wd = cmdstan_path(),
-        echo_cmd = TRUE,
-        echo = TRUE,
-        error_on_status = TRUE
+    withr::with_envvar(
+      c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        run_log <- wsl_compatible_run(
+          command = make_cmd(),
+          args = exe,
+          wd = cmdstan_path(),
+          echo_cmd = TRUE,
+          echo = TRUE,
+          error_on_status = TRUE
+        )
       )
     )
   }

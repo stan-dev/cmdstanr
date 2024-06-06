@@ -250,7 +250,6 @@ reset_cmdstan_version <- function() {
     if (win_home != "") {
       home <- win_home
     }
-    home <- file.path(home, "Documents")
   }
   home
 }

@@ -692,11 +692,14 @@ assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 # Model methods & expose_functions helpers ------------------------------------------------------
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
-  flags <- wsl_compatible_run(
-    command = "make",
-    args = c("-s", paste0("print-", flag_name)),
-    wd = cmdstan_path
-  )$stdout
+  withr::with_envvar(
+    c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+    flags <- wsl_compatible_run(
+      command = "make",
+      args = c("-s", paste0("print-", flag_name)),
+      wd = cmdstan_path
+    )$stdout
+  )
 
   flags <- gsub("\n", "", flags, fixed = TRUE)
 
