@@ -849,7 +849,11 @@ toolchain_PATH_env_var <- function() {
 rtools4x_toolchain_path <- function() {
   toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
   if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
-    toolchain <- "x86_64-w64-mingw32.static.posix"
+    if (arch_is_aarch64()) {
+      toolchain <- "aarch64-w64-mingw32.static.posix"
+    } else {
+      toolchain <- "x86_64-w64-mingw32.static.posix"
+    }
   }
   repair_path(file.path(rtools4x_home_path(), toolchain, "bin"))
 }
@@ -871,10 +875,16 @@ rtools4x_version <- function() {
 
 rtools4x_home_path <- function() {
   rtools_ver <- rtools4x_version()
+  if (arch_is_aarch64()) {
+    rtools_ver <- paste0(rtools_ver, "_AARCH64")
+  }
   path <- Sys.getenv(paste0("RTOOLS", rtools_ver, "_HOME"))
 
   if (!nzchar(path)) {
     default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
+    if (arch_is_aarch64()) {
+      default_path <- paste0(default_path, "-aarch64")
+    }
     if (dir.exists(default_path)) {
       path <- default_path
     }

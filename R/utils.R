@@ -83,6 +83,10 @@ is_rosetta2 <- function() {
   rosetta2
 }
 
+arch_is_aarch64 <- function() {
+  isTRUE(R.version$arch == "aarch64")
+}
+
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
   if (os_is_windows() && !os_is_wsl() && (Sys.getenv("CMDSTANR_USE_RTOOLS") == "")) {

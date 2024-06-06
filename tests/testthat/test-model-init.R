@@ -20,7 +20,7 @@ test_that("all fitting methods work with provided init files", {
     mod$optimize(data = data_list, init = init_json_1, seed = 123)
   )
   expect_vb_output(
-    mod$variational(data = data_list, init = init_json_1, seed = 123)
+    mod$variational(data = data_list, init = init_json_1, seed = 1234)
   )
   expect_laplace_output(
     mod$laplace(data = data_list, init = init_json_1, seed = 123)
