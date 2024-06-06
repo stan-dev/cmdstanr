@@ -7,6 +7,7 @@ Items for next release go here
 ## Minor changes
 
 * Added `CMDSTANR_USE_RTOOLS` environment variable to force stock RTools on Windows by @andrjohns in #980
+* Added support for Windows ARM64 by @andrjohns in #990
 * Automatically initialise model methods when called, add `inc_warmup` argument to `$unconstrain_draws()` by @andrjohns in #985
 
 ## Bugfixes
@@ -15,6 +16,7 @@ Items for next release go here
 * Fix error with `$unconstrain_draws()` returning incorrect assumptions in some cases by @andrjohns in #983
 * Fix spurious errors about missing CmdStan config files by @andrjohns in #981
 * Fix linking error when exposing SUNDIALS/KINSOL functions or model methods by @andrjohns in #977
+* Fix long-standing error with OneDrive paths on Windows by @andrjohns in #990
 
 # cmdstanr 0.8.0
 
