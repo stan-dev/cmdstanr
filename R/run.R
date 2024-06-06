@@ -411,7 +411,7 @@ check_target_exe <- function(exe) {
   exe_path <- file.path(cmdstan_path(), exe)
   if (!file.exists(exe_path)) {
     withr::with_envvar(
-      c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+      c("HOME" = short_path(Sys.getenv("HOME"))),
       withr::with_path(
         c(
           toolchain_PATH_env_var(),

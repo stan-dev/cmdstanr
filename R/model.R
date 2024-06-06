@@ -664,9 +664,9 @@ compile <- function(quiet = TRUE,
     if (compile_standalone) {
       expose_stan_functions(self$functions, !quiet)
     }
-  
+
     withr::with_envvar(
-      c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+      c("HOME" = short_path(Sys.getenv("HOME"))),
       withr::with_path(
         c(
           toolchain_PATH_env_var(),

@@ -454,7 +454,7 @@ build_cmdstan <- function(dir,
     run_cmd <- make_cmd()
   }
   withr::with_envvar(
-    c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+    c("HOME" = short_path(Sys.getenv("HOME"))),
     withr::with_path(
       c(
         toolchain_PATH_env_var(),
@@ -479,7 +479,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
   withr::with_envvar(
-    c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+    c("HOME" = short_path(Sys.getenv("HOME"))),
     withr::with_path(
       c(
         toolchain_PATH_env_var(),
@@ -501,7 +501,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
 
 build_example <- function(dir, cores, quiet, timeout) {
   withr::with_envvar(
-    c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+    c("HOME" = short_path(Sys.getenv("HOME"))),
     withr::with_path(
       c(
         toolchain_PATH_env_var(),

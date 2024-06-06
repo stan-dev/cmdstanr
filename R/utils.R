@@ -107,6 +107,14 @@ stanc_cmd <- function() {
 
 # paths and extensions ----------------------------------------------------
 
+short_path <- function(path) {
+  if (os_is_windows()) {
+    utils::shortPathName(path)
+  } else {
+    path
+  }
+}
+
 # Replace `\\` with `/` in a vector of paths
 # Needed for windows if CmdStan version is < 2.21:
 # https://github.com/stan-dev/cmdstanr/issues/1#issuecomment-539118598
@@ -693,7 +701,7 @@ assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
   withr::with_envvar(
-    c("HOME" = utils::shortPathName(Sys.getenv("HOME"))),
+    c("HOME" = short_path(Sys.getenv("HOME"))),
     flags <- wsl_compatible_run(
       command = "make",
       args = c("-s", paste0("print-", flag_name)),
