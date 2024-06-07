@@ -189,8 +189,12 @@ process_data <- function(data, model_variables = NULL) {
           if (!all(is_wholenumber(data[[var_name]]))) {
             warning("A non-integer value was supplied for '", var_name, "'!",
                     " It will be truncated to an integer.", call. = FALSE)
+            mode(data[[var_name]]) <- "integer"
+          } else {
+            # Round before setting mode to integer to avoid floating point errors
+            data[[var_name]] <- round(data[[var_name]])
+            mode(data[[var_name]]) <- "integer"
           }
-          mode(data[[var_name]]) <- "integer"
         }
       }
     }
