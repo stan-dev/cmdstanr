@@ -54,6 +54,9 @@
 #' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #' mod <- cmdstan_model(file)
 #' mod$print()
+#' # Print with line numbers. This can be set globally using the
+#' # `cmdstanr_print_line_numbers` option.
+#' mod$print(line_numbers = TRUE)
 #'
 #' # Data as a named list (like RStan)
 #' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
@@ -209,7 +212,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$sample()`][model-method-sample] |  Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. |
-#'  [`$sample_mpi()`][model-method-sample_mpi] |  Run CmdStan's `"sample"` method with [MPI](https://mc-stan.org/math/mpi.html), return [`CmdStanMCMC`] object. |
+#'  [`$sample_mpi()`][model-method-sample_mpi] |  Run CmdStan's `"sample"` method with [MPI](https://mc-stan.org/math/md_doxygen_2parallelism__support_2mpi__parallelism.html), return [`CmdStanMCMC`] object. |
 #'  [`$optimize()`][model-method-optimize] |  Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. |
 #'  [`$variational()`][model-method-variational] |  Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. |
 #'  [`$pathfinder()`][model-method-pathfinder] |  Run CmdStan's `"pathfinder"` method, return [`CmdStanPathfinder`] object. |
@@ -298,11 +301,21 @@ CmdStanModel <- R6::R6Class(
       }
       private$stan_code_
     },
-    print = function() {
+    print = function(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE)) {
       if (length(private$stan_code_) == 0) {
         stop("'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
       }
-      cat(self$code(), sep = "\n")
+      lines <- self$code()
+      if (line_numbers) {
+        line_num_indent <- nchar(as.character(length(lines)))
+        line_nums <- vapply(seq_along(lines), function(y) {
+          paste0(
+            rep(" ", line_num_indent - nchar(as.character(y))), y, collapse = ""
+          )
+        }, character(1))
+        lines <- paste(paste(line_nums, lines, sep = ": "), collapse = "\n")
+      }
+      cat(lines, sep = "\n")
       invisible(self)
     },
     stan_file = function() {
@@ -661,53 +674,56 @@ compile <- function(quiet = TRUE,
       expose_stan_functions(self$functions, !quiet)
     }
 
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      run_log <- wsl_compatible_run(
-        command = make_cmd(),
-        args = c(wsl_safe_path(tmp_exe),
-                cpp_options_to_compile_flags(cpp_options),
-                stancflags_val),
-        wd = cmdstan_path(),
-        echo = !quiet || is_verbose_mode(),
-        echo_cmd = is_verbose_mode(),
-        spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
-        stderr_callback = function(x, p) {
-          if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
-            message(x)
-          }
-          if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
-            warning(
-              "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
-              "If your model failed to compile please run rebuild_cmdstan().\n",
-              "If the issue persists please open a bug report.",
-              call. = FALSE
-            )
-          }
-          if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
-            warning(
-              "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
-              "See the above error for more details.",
-              call. = FALSE
-            )
-          }
-          if (os_is_macos()) {
-            if (R.version$arch == "aarch64"
-                && grepl("but the current translation unit is being compiled for target", x)) {
+    withr::with_envvar(
+      c("HOME" = short_path(Sys.getenv("HOME"))),
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        run_log <- wsl_compatible_run(
+          command = make_cmd(),
+          args = c(wsl_safe_path(repair_path(tmp_exe)),
+                  cpp_options_to_compile_flags(cpp_options),
+                  stancflags_val),
+          wd = cmdstan_path(),
+          echo = !quiet || is_verbose_mode(),
+          echo_cmd = is_verbose_mode(),
+          spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
+          stderr_callback = function(x, p) {
+            if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
+              message(x)
+            }
+            if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
               warning(
-                "The C++ compiler has errored due to incompatibility between the x86 and ",
-                "Apple Silicon architectures.\n",
-                "If you are running R inside an IDE (RStudio, VSCode, ...), ",
-                "make sure the IDE is a native Apple Silicon app.\n",
+                "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
+                "If your model failed to compile please run rebuild_cmdstan().\n",
+                "If the issue persists please open a bug report.",
                 call. = FALSE
               )
             }
-          }
-        },
-        error_on_status = FALSE
+            if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
+              warning(
+                "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
+                "See the above error for more details.",
+                call. = FALSE
+              )
+            }
+            if (os_is_macos()) {
+              if (R.version$arch == "aarch64"
+                  && grepl("but the current translation unit is being compiled for target", x)) {
+                warning(
+                  "The C++ compiler has errored due to incompatibility between the x86 and ",
+                  "Apple Silicon architectures.\n",
+                  "If you are running R inside an IDE (RStudio, VSCode, ...), ",
+                  "make sure the IDE is a native Apple Silicon app.\n",
+                  call. = FALSE
+                )
+              }
+            }
+          },
+          error_on_status = FALSE
+        )
       )
     )
     if (is.na(run_log$status) || run_log$status != 0) {
@@ -1163,8 +1179,8 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
-                   save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
+                   save_metric = NULL,
+                   save_cmdstan_config = NULL,
                    # deprecated
                    cores = NULL,
                    num_cores = NULL,
@@ -1375,7 +1391,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL },
+                       save_cmdstan_config = NULL,
                        # deprecated
                        validate_csv = TRUE) {
 
@@ -1521,7 +1537,7 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                     save_cmdstan_config = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1655,7 +1671,7 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                    save_cmdstan_config = NULL) {
   if (cmdstan_version() < "2.32") {
     stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
   }
@@ -1811,7 +1827,7 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                        save_cmdstan_config = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1956,7 +1972,7 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = if (cmdstan_version() > "2.34.0") { TRUE } else { NULL }) {
+                       save_cmdstan_config = NULL) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,

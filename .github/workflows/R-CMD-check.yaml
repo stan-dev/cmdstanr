@@ -25,7 +25,7 @@ jobs:
         config:
           - {os: macOS-latest, r: 'devel', rtools: ''}
           - {os: macOS-latest, r: 'release', rtools: ''}
-          #- {os: windows-latest, r: 'devel', rtools: '44'}
+          - {os: windows-latest, r: 'devel', rtools: '44'}
           - {os: windows-latest, r: 'release', rtools: '44'}
           - {os: windows-latest, r: 'oldrel', rtools: '43'}
           - {os: ubuntu-latest, r: 'devel', rtools: ''}
@@ -42,6 +42,12 @@ jobs:
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
 
+      - name: Use stock RTools for Windows R-Devel
+        if: ${{ matrix.config.os == 'windows-latest' && matrix.config.r == 'devel' }}
+        run: |
+          echo "CMDSTANR_USE_RTOOLS=TRUE" >> $GITHUB_ENV
+        shell: bash
+
       - uses: n1hility/cancel-previous-runs@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -49,14 +55,14 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-r@v2.8.7
+      - uses: r-lib/actions/setup-r@v2.9.0
         with:
           r-version: ${{ matrix.config.r }}
           rtools-version: ${{ matrix.config.rtools }}
 
-      - uses: r-lib/actions/setup-pandoc@v2.8.7
+      - uses: r-lib/actions/setup-pandoc@v2.9.0
 
-      - uses: r-lib/actions/setup-r-dependencies@v2.8.7
+      - uses: r-lib/actions/setup-r-dependencies@v2.9.0
         with:
           extra-packages: any::rcmdcheck, local::.
 
@@ -73,7 +79,7 @@ jobs:
           sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
-      - uses: r-lib/actions/check-r-package@v2.8.7
+      - uses: r-lib/actions/check-r-package@v2.9.0
         env:
           _R_CHECK_CRAN_INCOMING_: false
 

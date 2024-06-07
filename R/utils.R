@@ -83,9 +83,13 @@ is_rosetta2 <- function() {
   rosetta2
 }
 
+arch_is_aarch64 <- function() {
+  isTRUE(R.version$arch == "aarch64")
+}
+
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
-  if (os_is_windows() && !os_is_wsl()) {
+  if (os_is_windows() && !os_is_wsl() && (Sys.getenv("CMDSTANR_USE_RTOOLS") == "")) {
     "mingw32-make.exe"
   } else {
     "make"
@@ -102,6 +106,14 @@ stanc_cmd <- function() {
 }
 
 # paths and extensions ----------------------------------------------------
+
+short_path <- function(path) {
+  if (os_is_windows()) {
+    utils::shortPathName(path)
+  } else {
+    path
+  }
+}
 
 # Replace `\\` with `/` in a vector of paths
 # Needed for windows if CmdStan version is < 2.21:
@@ -426,6 +438,19 @@ maybe_convert_draws_format <- function(draws, format, ...) {
   )
 }
 
+create_draws_format <- function(format, ...) {
+  format <- sub("^draws_", "", format)
+  switch(
+    format,
+    "array" = posterior::draws_array(...),
+    "df" = posterior::draws_df(...),
+    "data.frame" = posterior::draws_df(...),
+    "list" = posterior::draws_list(...),
+    "matrix" = posterior::draws_matrix(...),
+    "rvars" = posterior::draws_rvars(...),
+    stop("Invalid draws format.", call. = FALSE)
+  )
+}
 
 # convert draws for external packages ------------------------------------------
 
@@ -675,11 +700,14 @@ assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 # Model methods & expose_functions helpers ------------------------------------------------------
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
-  flags <- wsl_compatible_run(
-    command = "make",
-    args = c("-s", paste0("print-", flag_name)),
-    wd = cmdstan_path
-  )$stdout
+  withr::with_envvar(
+    c("HOME" = short_path(Sys.getenv("HOME"))),
+    flags <- wsl_compatible_run(
+      command = "make",
+      args = c("-s", paste0("print-", flag_name)),
+      wd = cmdstan_path
+    )$stdout
+  )
 
   flags <- gsub("\n", "", flags, fixed = TRUE)
 
@@ -727,18 +755,38 @@ get_cmdstan_flags <- function(flag_name) {
   paste(flags, collapse = " ")
 }
 
+check_sundials_fpic <- function(verbose) {
+  if (!os_is_linux()){
+    return(invisible(NULL))
+  }
+  sundials_flags <- get_cmdstan_flags("CPPFLAGS_SUNDIALS")
+  local_flags <- cmdstan_make_local()
+  if (any(grepl("-fPIC", c(sundials_flags, local_flags), fixed = TRUE))) {
+    return(invisible(NULL))
+  }
+  if (interactive()) {
+    message("SUNDIALS needs to be compiled with -fPIC when exposing functions or ",
+            "model methods on Linux.\n",
+            "Updating your make/local file to include -fPIC and rebuilding CmdStan now...")
+  }
+  cmdstan_make_local(cpp_options = list("CPPFLAGS_SUNDIALS += -fPIC"), append = TRUE)
+  rebuild_cmdstan(quiet = !verbose)
+  if (interactive()) {
+    message("CmdStan has been rebuilt, continuing with model compilation...")
+  }
+}
+
 rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
+  check_sundials_fpic(verbose)
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
-  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB")
+  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
-  lib_paths <- c("/stan/lib/stan_math/lib/tbb/",
-                 "/stan/lib/stan_math/lib/sundials_6.1.1/lib/")
-  withr::with_path(paste0(cmdstan_path(), lib_paths),
+  withr::with_path(repair_path(file.path(cmdstan_path(),"stan/lib/stan_math/lib/tbb")),
     withr::with_makevars(
       c(
         USE_CXX14 = 1,
@@ -753,6 +801,9 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
 }
 
 expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+  if (rlang::is_interactive()) {
+    message("Compiling additional model methods...")
+  }
   code <- c(env$hpp_code_,
             readLines(system.file("include", "model_methods.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
@@ -887,8 +938,16 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   }
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
-  fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr", fun_body)
-  fun_body <- gsub("base_rng__,", "*(Rcpp::XPtr<boost::ecuyer1988>(base_rng_ptr).get()),", fun_body, fixed = TRUE)
+  if (grepl("(stan::rng_t|boost::ecuyer1988)", fun_body)) {
+    if (cmdstan_version() < "2.35.0") {
+      fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
+    } else {
+      fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
+    }
+    rng_seed <- "Rcpp::XPtr<stan::rng_t> base_rng(base_rng_ptr);base_rng->seed(Rcpp::as<int>(seed));"
+    fun_body <- gsub("return", paste(rng_seed, "return"), fun_body)
+    fun_body <- gsub("base_rng__,", "*(base_rng.get()),", fun_body, fixed = TRUE)
+  }
   fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
   fun_body <- paste(fun_body, collapse = "\n")
   gsub(pattern = ",\\s*)", replacement = ")", fun_body)
@@ -942,6 +1001,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     env$hpp_code[1:(funs[1] - 1)],
     "#include <rcpp_tuple_interop.hpp>",
     "#include <rcpp_eigen_interop.hpp>",
+    "#include <stan_rng.hpp>",
     "#include <function_gradients.hpp>",
     stan_funs,
     grad_funs),
@@ -959,7 +1019,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   if (length(rng_funs) > 0) {
     rng_cpp <- system.file("include", "base_rng.cpp", package = "cmdstanr", mustWork = TRUE)
     rcpp_source_stan(paste0(readLines(rng_cpp), collapse="\n"), env, verbose)
-    env$rng_ptr <- env$base_rng(seed=0)
+    env$rng_ptr <- env$base_rng(seed=1)
   }
 
   # For all RNG functions, pass the initialised Boost RNG by default
@@ -972,6 +1032,9 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     fundef <- get(fun, envir = fun_env)
     funargs <- formals(fundef)
     funargs$base_rng_ptr <- env$rng_ptr
+    # To allow for exported RNG functions to respect the R 'set.seed()' call,
+    # we need to derive a seed deterministically from the current RNG state
+    funargs$seed <- quote(sample.int(.Machine$integer.max, 1))
     formals(fundef) <- funargs
     assign(fun, fundef, envir = fun_env)
   }
@@ -1013,7 +1076,9 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
       })
     }
   } else {
-    message("Compiling standalone functions...")
+    if (rlang::is_interactive()) {
+      message("Compiling standalone functions...")
+    }
     compile_functions(function_env, verbose, global)
   }
   invisible(NULL)

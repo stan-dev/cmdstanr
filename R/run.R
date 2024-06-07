@@ -26,10 +26,10 @@ CmdStanRun <- R6::R6Class(
       if (cmdstan_version() >= "2.26.0") {
         private$profile_files_ <- self$new_profile_files()
       }
-      if (cmdstan_version() >= "2.34.0" && !is.null(self$args$save_cmdstan_config) && self$args$save_cmdstan_config) {
+      if (cmdstan_version() >= "2.34.0" && !is.null(self$args$save_cmdstan_config) && as.logical(self$args$save_cmdstan_config)) {
         private$config_files_ <- self$new_config_files()
       }
-      if (cmdstan_version() >= "2.34.0" && !is.null(self$args$method_args$save_metric) && self$args$method_args$save_metric) {
+      if (cmdstan_version() >= "2.34.0" && !is.null(self$args$method_args$save_metric) && as.logical(self$args$method_args$save_metric)) {
         private$metric_files_ <- self$new_metric_files()
       }
       if (self$args$save_latent_dynamics) {
@@ -77,13 +77,6 @@ CmdStanRun <- R6::R6Class(
     config_files = function(include_failed = FALSE) {
       files <- private$config_files_
       files_win_path <- sapply(private$config_files_, wsl_safe_path, revert = TRUE)
-      if (!length(files) || !any(file.exists(files_win_path))) {
-        stop(
-          "No CmdStan config files found. ",
-          "Set 'save_cmdstan_config=TRUE' when fitting the model.",
-          call. = FALSE
-        )
-      }
       if (include_failed) {
         files
       } else {
@@ -94,13 +87,6 @@ CmdStanRun <- R6::R6Class(
     metric_files = function(include_failed = FALSE) {
       files <- private$metric_files_
       files_win_path <- sapply(private$metric_files_, wsl_safe_path, revert = TRUE)
-      if (!length(files) || !any(file.exists(files_win_path))) {
-        stop(
-          "No metric files found. ",
-          "Set 'save_metric=TRUE' when fitting the model.",
-          call. = FALSE
-        )
-      }
       if (include_failed) {
         files
       } else {
@@ -404,12 +390,12 @@ CmdStanRun <- R6::R6Class(
             private$profile_files_,
           if (cmdstan_version() > "2.34.0" &&
               !is.null(self$args$save_cmdstan_config) &&
-              self$args$save_cmdstan_config &&
+              as.logical(self$args$save_cmdstan_config) &&
               !private$config_files_saved_)
             self$config_files(include_failed = TRUE),
           if (cmdstan_version() > "2.34.0" &&
               !(is.null(self$args$method_args$save_metric)) &&
-              self$args$method_args$save_metric &&
+              as.logical(self$args$method_args$save_metric) &&
               !private$metric_files_saved_)
             self$metric_files(include_failed = TRUE)
         )
@@ -424,18 +410,21 @@ CmdStanRun <- R6::R6Class(
 check_target_exe <- function(exe) {
   exe_path <- file.path(cmdstan_path(), exe)
   if (!file.exists(exe_path)) {
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      run_log <- wsl_compatible_run(
-        command = make_cmd(),
-        args = exe,
-        wd = cmdstan_path(),
-        echo_cmd = TRUE,
-        echo = TRUE,
-        error_on_status = TRUE
+    withr::with_envvar(
+      c("HOME" = short_path(Sys.getenv("HOME"))),
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        run_log <- wsl_compatible_run(
+          command = make_cmd(),
+          args = exe,
+          wd = cmdstan_path(),
+          echo_cmd = TRUE,
+          echo = TRUE,
+          error_on_status = TRUE
+        )
       )
     )
   }

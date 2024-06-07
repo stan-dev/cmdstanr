@@ -453,21 +453,24 @@ build_cmdstan <- function(dir,
   } else {
     run_cmd <- make_cmd()
   }
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path(dir = dir)
-    ),
-    wsl_compatible_run(
-      command = run_cmd,
-      args = c(translation_args, paste0("-j", cores), "build"),
-      wd = dir,
-      echo_cmd = is_verbose_mode(),
-      echo = !quiet || is_verbose_mode(),
-      spinner = quiet,
-      error_on_status = FALSE,
-      stderr_callback = function(x, p) { if (quiet) message(x) },
-      timeout = timeout
+  withr::with_envvar(
+    c("HOME" = short_path(Sys.getenv("HOME"))),
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path(dir = dir)
+      ),
+      wsl_compatible_run(
+        command = run_cmd,
+        args = c(translation_args, paste0("-j", cores), "build"),
+        wd = dir,
+        echo_cmd = is_verbose_mode(),
+        echo = !quiet || is_verbose_mode(),
+        spinner = quiet,
+        error_on_status = FALSE,
+        stderr_callback = function(x, p) { if (quiet) message(x) },
+        timeout = timeout
+      )
     )
   )
 }
@@ -475,41 +478,47 @@ build_cmdstan <- function(dir,
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path(dir = dir)
-    ),
-    wsl_compatible_run(
-      command = make_cmd(),
-      args = "clean-all",
-      wd = dir,
-      echo_cmd = is_verbose_mode(),
-      echo = !quiet || is_verbose_mode(),
-      spinner = quiet,
-      error_on_status = FALSE,
-      stderr_callback = function(x, p) { if (quiet) message(x) }
+  withr::with_envvar(
+    c("HOME" = short_path(Sys.getenv("HOME"))),
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path(dir = dir)
+      ),
+      wsl_compatible_run(
+        command = make_cmd(),
+        args = "clean-all",
+        wd = dir,
+        echo_cmd = is_verbose_mode(),
+        echo = !quiet || is_verbose_mode(),
+        spinner = quiet,
+        error_on_status = FALSE,
+        stderr_callback = function(x, p) { if (quiet) message(x) }
+      )
     )
   )
 }
 
 build_example <- function(dir, cores, quiet, timeout) {
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path(dir = dir)
-    ),
-    wsl_compatible_run(
-      command = make_cmd(),
-      args = c(paste0("-j", cores),
-                cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
-      wd = dir,
-      echo_cmd = is_verbose_mode(),
-      echo = !quiet || is_verbose_mode(),
-      spinner = quiet,
-      error_on_status = FALSE,
-      stderr_callback = function(x, p) { if (quiet) message(x) },
-      timeout = timeout
+  withr::with_envvar(
+    c("HOME" = short_path(Sys.getenv("HOME"))),
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path(dir = dir)
+      ),
+      wsl_compatible_run(
+        command = make_cmd(),
+        args = c(paste0("-j", cores),
+                  cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+        wd = dir,
+        echo_cmd = is_verbose_mode(),
+        echo = !quiet || is_verbose_mode(),
+        spinner = quiet,
+        error_on_status = FALSE,
+        stderr_callback = function(x, p) { if (quiet) message(x) },
+        timeout = timeout
+      )
     )
   )
 }
@@ -634,6 +643,9 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       "\nPlease reinstall ", rtools_version, " to a valid path, restart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
+  }
+  if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
+    return(invisible(NULL))
   }
   if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
       !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
@@ -844,8 +856,15 @@ toolchain_PATH_env_var <- function() {
 }
 
 rtools4x_toolchain_path <- function() {
-  c_runtime <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
-  repair_path(file.path(rtools4x_home_path(), c_runtime, "bin"))
+  toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
+  if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
+    if (arch_is_aarch64()) {
+      toolchain <- "aarch64-w64-mingw32.static.posix"
+    } else {
+      toolchain <- "x86_64-w64-mingw32.static.posix"
+    }
+  }
+  repair_path(file.path(rtools4x_home_path(), toolchain, "bin"))
 }
 
 rtools4x_version <- function() {
@@ -865,10 +884,16 @@ rtools4x_version <- function() {
 
 rtools4x_home_path <- function() {
   rtools_ver <- rtools4x_version()
+  if (arch_is_aarch64()) {
+    rtools_ver <- paste0(rtools_ver, "_AARCH64")
+  }
   path <- Sys.getenv(paste0("RTOOLS", rtools_ver, "_HOME"))
 
   if (!nzchar(path)) {
     default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
+    if (arch_is_aarch64()) {
+      default_path <- paste0(default_path, "-aarch64")
+    }
     if (dir.exists(default_path)) {
       path <- default_path
     }

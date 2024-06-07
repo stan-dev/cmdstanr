@@ -37,17 +37,8 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_metric = if (cmdstan_version() > "2.34.0") {
-     TRUE
- } else {
-     NULL
- },
-  save_cmdstan_config = if (cmdstan_version() > "2.34.0") {
-     TRUE
- } else {
-    
-    NULL
- },
+  save_metric = NULL,
+  save_cmdstan_config = NULL,
   cores = NULL,
   num_cores = NULL,
   num_chains = NULL,
@@ -348,6 +339,9 @@ set_cmdstan_path(path = NULL)
 file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(file)
 mod$print()
+# Print with line numbers. This can be set globally using the
+# `cmdstanr_print_line_numbers` option.
+mod$print(line_numbers = TRUE)
 
 # Data as a named list (like RStan)
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))

@@ -1,10 +1,62 @@
-# cmdstanr 0.7.0.9000
+# cmdstanr 0.8.1.9000
 
 Items for next release go here
 
+# cmdstanr 0.8.1
+
+## Minor changes
+
+* Added `CMDSTANR_USE_RTOOLS` environment variable to force stock RTools on Windows by @andrjohns in #980
+* Added support for Windows ARM64 by @andrjohns in #990
+* Automatically initialise model methods when called, add `inc_warmup` argument to `$unconstrain_draws()` by @andrjohns in #985
+
+## Bugfixes
+
+* Fix errors when using pathfinder object as initial values by @avehtari in #984
+* Fix error with `$unconstrain_draws()` returning incorrect assumptions in some cases by @andrjohns in #983
+* Fix spurious errors about missing CmdStan config files by @andrjohns in #981
+* Fix linking error when exposing SUNDIALS/KINSOL functions or model methods by @andrjohns in #977
+* Fix long-standing error with OneDrive paths on Windows by @andrjohns in #990
+
+# cmdstanr 0.8.0
+
+## Major new features
+
+* Add functionality for passing `CmdStanFit` objects as initial values by @SteveBronder in #937
+
+## Other improvements
+
+* Add compatibility with CmdStan 2.35 by @andrjohns in #972
+* Add `show_messages` and `show_exceptions` arguments to all methods for controlling output by @andrjohns in #897
+* Drop RcppEigen dependency, implement basic Eigen -> C++ interop by @andrjohns in #899
+* Add compatibility with CmdStan 2.34 by @andrjohns in #905 #910
+* Add a format argument to the `unconstrain_draws()` method to specify draws format of return by @andrjohns in #886
+* Align `cmdstanr` EBFMI diagnostic threshold with CmdStan by @andrjohns in #892
+* Add global option `cmdstanr_print_line_numbers` to add line number to model printing by @sbfnk in #967
+* Add new CmdStan arguments `save_metric` and `save_cmdstan_config` by @venpopov in #932
+* Add documentation for CmdStanR global options by @jgabry in #951
+* Add documentation for how to obtain structured output similar to `rstan::extract()` using a combination of `cmdstanr` and `posterior` by @jgabry in #955
+* Added coercion generics for CmdStanFit objects by @gowerc in #943
+* `psis_resample` and `calculate_lp` arguments added to Pathfinder method by @SteveBronder in #903
+* Documentation and tests for LOO method updated by @jgabry in #923
+* Global option `cmdstanr_warn_inits` added to disable warnings about partially specified initial values by @jgabry in #913
+* Updates to MCMC `output_dir` documentation by @jgabry in #929
+
+## Bugfixes
+
+* Fix broken link in OpenCL documentation by @eipi10 in #908
+* Fix a minor typo in the README by @jgabry in #911
+* Make exported RNG functions respect changes to R's seed by @andrjohns in #973
+* Optimisations for model methods functions by @andrjohns in #960
+* Bugfix for passing function for initial values with Pathfinder method and default `num_paths` by @andrjohns in #964
+* Continue with compilation if `compile_stanalone=TRUE` but no functions are found by @jgabry in #956
+* Update tests and CI for compatibility with MacOS ARM64 by @andrjohns in #958
+* Fix handling of `inv_metric` argument with only 1 parameter by @venpopov in #935
+* Fixes for compatibility with RTools44 by @andrjohns in #952 #959
+
 # cmdstanr 0.7.0
 
-## Major new features 
+## Major new features
 
 * New `laplace` method by @jgabry in #800
 * New `pathfinder` method by @SteveBronder in #848
@@ -47,7 +99,7 @@ Items for next release go here
 ### Major new features
 
 * New `expose_functions()` method to expose Stan functions to R by @andrjohns in #702. See `?expose_functions`.
-* New methods for accessing log_prob, grad_log_prob, hessian, un/constrain variables by @andrjohns in #701. See `?init_model_methods`. 
+* New methods for accessing log_prob, grad_log_prob, hessian, un/constrain variables by @andrjohns in #701. See `?init_model_methods`.
 
 ### Other changes
 

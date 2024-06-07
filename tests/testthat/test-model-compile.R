@@ -3,7 +3,7 @@ context("model-compile")
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
-
+cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
@@ -130,6 +130,9 @@ test_that("name in STANCFLAGS is set correctly", {
 test_that("switching threads on and off works without rebuild", {
   main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
   main_path_threads_o <- file.path(cmdstan_path(), "src", "cmdstan", "main_threads.o")
+  backup <- cmdstan_make_local()
+  no_threads <- grep("STAN_THREADS", backup, invert = TRUE, value = TRUE)
+  cmdstan_make_local(cpp_options = list(no_threads), append = FALSE)
   if (file.exists(main_path_threads_o)) {
     file.remove(main_path_threads_o)
   }
@@ -155,6 +158,7 @@ test_that("switching threads on and off works without rebuild", {
   expect_equal(before_mtime, after_mtime)
 
   expect_warning(mod$compile(threads = TRUE, dry_run = TRUE), "deprecated")
+  cmdstan_make_local(cpp_options = backup, append = FALSE)
 })
 
 test_that("multiple cpp_options work", {
@@ -483,19 +487,19 @@ test_that("include_paths_stanc3_args() works", {
 
 test_that("cpp_options work with settings in make/local", {
   backup <- cmdstan_make_local()
+  no_threads <- grep("STAN_THREADS", backup, invert = TRUE, value = TRUE)
+  cmdstan_make_local(cpp_options = list(no_threads), append = FALSE)
 
   if (length(mod$exe_file()) > 0 && file.exists(mod$exe_file())) {
     file.remove(mod$exe_file())
   }
 
-  cmdstan_make_local(cpp_options = list(), append = TRUE)
   rebuild_cmdstan()
   mod <- cmdstan_model(stan_file = stan_program)
   expect_null(mod$cpp_options()$STAN_THREADS)
 
   file.remove(mod$exe_file())
 
-  cmdstan_make_local(cpp_options = backup, append = FALSE)
   cmdstan_make_local(cpp_options = list(stan_threads = TRUE), append = TRUE)
 
   file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")

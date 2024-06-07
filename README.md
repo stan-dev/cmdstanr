@@ -27,7 +27,7 @@ releases.
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
 
-* Flexible [BSD-3 license](https://opensource.org/license/bsd-3-clause/).
+* Flexible [BSD-3 license](https://opensource.org/license/bsd-3-clause).
 
 
 ### Installation
@@ -38,7 +38,7 @@ You can install the latest beta release of the **cmdstanr** R package with
 
 ```r
 # we recommend running this in a fresh R session or restarting your current session
-install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
 This does not install the vignettes, which take a long time to build, but they are always available
 online at https://mc-stan.org/cmdstanr/articles/.

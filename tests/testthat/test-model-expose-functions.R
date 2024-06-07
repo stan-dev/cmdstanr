@@ -346,18 +346,16 @@ test_that("rng functions can be exposed", {
   mod <- cmdstan_model(model, force_recompile = TRUE)
   fit <- mod$sample(data = data_list)
 
-  set.seed(10)
   fit$expose_functions(verbose = TRUE)
+  set.seed(10)
+  res1_1 <- fit$functions$wrap_normal_rng(5,10)
+  res2_1 <- fit$functions$wrap_normal_rng(5,10)
+  set.seed(10)
+  res1_2 <- fit$functions$wrap_normal_rng(5,10)
+  res2_2 <- fit$functions$wrap_normal_rng(5,10)
 
-  expect_equal(
-    fit$functions$wrap_normal_rng(5,10),
-    -4.5298764235381225873
-  )
-
-  expect_equal(
-    fit$functions$wrap_normal_rng(5,10),
-    8.1295902610102039887
-  )
+  expect_equal(res1_1, res1_2)
+  expect_equal(res2_1, res2_2)
 })
 
 test_that("Overloaded functions give meaningful errors", {
@@ -420,4 +418,18 @@ test_that("Exposing functions with precompiled model gives meaningful error", {
     "Exporting standalone functions is not possible with a pre-compiled Stan model!",
     fixed = TRUE
   )
+})
+
+test_that("Functions with SUNDIALS/KINSOL methods link correctly", {
+  modcode <- "
+    functions {
+      vector dummy_functor(vector guess, vector theta, data array[] real tails, data array[] int x_i) {
+        return [1, 1]';
+      }
+      vector call_solver(vector guess, vector theta, data array[] real tails, data array[] int x_i) {
+        return algebra_solver_newton(dummy_functor, guess, theta, tails, x_i);
+      }
+    }"
+  mod <- cmdstan_model(write_stan_file(modcode), force_recompile=TRUE)
+  expect_no_error(mod$expose_functions())
 })

@@ -3,13 +3,13 @@
 #include <stan/model/model_base.hpp>
 #include <stan/model/log_prob_grad.hpp>
 #include <stan/model/log_prob_propto.hpp>
-#include <boost/random/additive_combine.hpp>
 #ifdef CMDSTAN_JSON
 #include <cmdstan/io/json/json_data.hpp>
 #else
 #include <stan/io/json/json_data.hpp>
 #include <stan/io/empty_var_context.hpp>
 #endif
+#include <stan_rng.hpp>
 
 std::shared_ptr<stan::io::var_context> var_context(std::string file_path) {
   if (file_path == "") {
@@ -36,7 +36,7 @@ Rcpp::List model_ptr(std::string data_path, boost::uint32_t seed) {
   Rcpp::XPtr<stan::model::model_base> ptr(
     &new_model(*var_context(data_path), seed, &Rcpp::Rcout)
   );
-  Rcpp::XPtr<boost::ecuyer1988> base_rng(new boost::ecuyer1988(seed));
+  Rcpp::XPtr<stan::rng_t> base_rng(new stan::rng_t(seed));
   return Rcpp::List::create(
     Rcpp::Named("model_ptr") = ptr,
     Rcpp::Named("base_rng") = base_rng
@@ -127,15 +127,24 @@ Eigen::VectorXd unconstrain_variables(SEXP ext_model_ptr, Eigen::VectorXd variab
 }
 
 // [[Rcpp::export]]
-Eigen::MatrixXd unconstrain_draws(SEXP ext_model_ptr, Eigen::MatrixXd variables) {
+Rcpp::List unconstrain_draws(SEXP ext_model_ptr, Eigen::MatrixXd variables) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  Eigen::MatrixXd unconstrained_draws(variables.cols(), variables.rows());
+  // Need to do this for the first row to get the correct size of the unconstrained draws
+  Eigen::VectorXd unconstrained_draw1;
+  ptr->unconstrain_array(variables.row(0).transpose(), unconstrained_draw1, &Rcpp::Rcout);
+  std::vector<Eigen::VectorXd> unconstrained_draws(unconstrained_draw1.size());
+  for (auto&& unconstrained_par : unconstrained_draws) {
+    unconstrained_par.resize(variables.rows());
+  }
+  
   for (int i = 0; i < variables.rows(); i++) {
     Eigen::VectorXd unconstrained_variables;
     ptr->unconstrain_array(variables.transpose().col(i), unconstrained_variables, &Rcpp::Rcout);
-    unconstrained_draws.col(i) = unconstrained_variables;
+    for (int j = 0; j < unconstrained_variables.size(); j++) {
+      unconstrained_draws[j](i) = unconstrained_variables(j);
+    }
   }
-  return unconstrained_draws.transpose();
+  return Rcpp::wrap(unconstrained_draws);
 }
 
 // [[Rcpp::export]]
@@ -144,7 +153,7 @@ std::vector<double> constrain_variables(SEXP ext_model_ptr, SEXP base_rng,
                                     bool return_trans_pars,
                                     bool return_gen_quants) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  Rcpp::XPtr<boost::ecuyer1988> rng(base_rng);
+  Rcpp::XPtr<stan::rng_t> rng(base_rng);
   std::vector<int> params_i;
   std::vector<double> vars;
 
