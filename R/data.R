@@ -186,9 +186,12 @@ process_data <- function(data, model_variables = NULL) {
         # generating a decimal point in write_stan_json
         if (data_variables[[var_name]]$type == "int"
             && !is.integer(data[[var_name]])) {
-          if (!all(is_wholenumber(data[[var_name]]))) {
-            warning("A non-integer value was supplied for '", var_name, "'!",
-                    " It will be truncated to an integer.", call. = FALSE)
+          if (!isTRUE(all(is_wholenumber(data[[var_name]])))) {
+            # Don't warn for NULL/NA, as different warnings are used for those
+            if (!any(is.null(data[[var_name]]) || is.na(data[[var_name]]))) {
+              warning("A non-integer value was supplied for '", var_name, "'!",
+                      " It will be truncated to an integer.", call. = FALSE)
+            }
             mode(data[[var_name]]) <- "integer"
           } else {
             # Round before setting mode to integer to avoid floating point errors
