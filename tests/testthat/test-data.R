@@ -355,3 +355,32 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
     fixed = TRUE
   )
 })
+
+test_that("process_data warns on int coercion", {
+  stan_file <- write_stan_file("
+  data {
+    int a;
+    real b;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_warning(
+    process_data(list(a = 1.1, b = 2.1), model_variables = mod$variables()),
+    "A non-integer value was supplied for 'a'! It will be truncated to an integer."
+  )
+
+  stan_file <- write_stan_file("
+  data {
+    array[3] int a;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_warning(
+    process_data(list(a = c(1, 2.1, 3)), model_variables = mod$variables()),
+    "A non-integer value was supplied for 'a'! It will be truncated to an integer."
+  )
+
+  expect_no_warning(
+    process_data(list(a = c(1, 2, 3)), model_variables = mod$variables())
+  )
+})
