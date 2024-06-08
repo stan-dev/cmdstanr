@@ -310,3 +310,28 @@ test_that("Initial values for single-element containers treated correctly", {
     )
   )
 })
+
+test_that("Pathfinder inits do not drop dimensions", {
+  modcode <- "
+  data {
+    int N;
+    vector[N] y;
+  }
+
+  parameters {
+    matrix[N, 1] mu;
+    matrix[1, N] mu_2;
+    vector<lower=0>[N] sigma;
+  }
+
+  model {
+    target += normal_lupdf(y | mu[:, 1], sigma);
+    target += normal_lupdf(y | mu_2[1], sigma);
+  }
+  "
+  mod <- cmdstan_model(write_stan_file(modcode), force_recompile = TRUE)
+  data <- list(N = 100, y = rnorm(100))
+  pf <- mod$pathfinder(data = data, psis_resample = FALSE)
+  expect_no_error(fit <- mod$sample(data = data, init = pf, chains = 1,
+                                    iter_warmup = 100, iter_sampling = 100))
+})
