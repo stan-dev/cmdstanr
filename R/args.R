@@ -1317,13 +1317,13 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   # Calculate unique draws based on 'lw' using base R functions
   unique_draws = length(unique(draws_df$lw))
   if (num_procs > unique_draws) {
-    if (inherits(init, " CmdStanPathfinder ")) {
+    if (inherits(init, "CmdStanPathfinder")) {
       algo_name = " Pathfinder "
       extra_msg = " Try running Pathfinder with psis_resample=FALSE."
     } else if (inherits(init, "CmdStanVB")) {
       algo_name = " CmdStanVB "
       extra_msg = ""
-    } else if (inherits(init, " CmdStanLaplace ")) {
+    } else if (inherits(init, "CmdStanLaplace")) {
       algo_name = " CmdStanLaplace "
       extra_msg = ""
     } else {
