@@ -36,6 +36,10 @@ matching_variables <- function(variable_filters, variables) {
   )
 }
 
+is_wholenumber <- function(x, tol = sqrt(.Machine$double.eps)) {
+  abs(x - round(x)) < tol
+}
+
 # checks for OS and hardware ----------------------------------------------
 
 os_is_windows <- function() {
