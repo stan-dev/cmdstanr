@@ -188,7 +188,7 @@ process_data <- function(data, model_variables = NULL) {
             && !is.integer(data[[var_name]])) {
           if (!isTRUE(all(is_wholenumber(data[[var_name]])))) {
             # Don't warn for NULL/NA, as different warnings are used for those
-            if (!any(is.null(data[[var_name]]) || is.na(data[[var_name]]))) {
+            if (!isTRUE(any(is.na(data[[var_name]])))) {
               warning("A non-integer value was supplied for '", var_name, "'!",
                       " It will be truncated to an integer.", call. = FALSE)
             }
