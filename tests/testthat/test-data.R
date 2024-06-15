@@ -383,6 +383,9 @@ test_that("process_data warns on int coercion", {
   expect_no_warning(
     process_data(list(a = c(1, 2, 3)), model_variables = mod$variables())
   )
+  expect_no_warning(
+    process_data(list(a = factor(c("a", "b", "c"))), model_variables = mod$variables())
+  )
 })
 
 test_that("Floating-point differences do not cause truncation towards 0", {
