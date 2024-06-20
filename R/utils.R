@@ -868,6 +868,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
     unlink(hpp_path)
     hpp
   } else {
+    stop(status$stderr, call. = FALSE)
     invisible(NULL)
   }
 }

@@ -650,10 +650,11 @@ compile <- function(quiet = TRUE,
   if (stancflags_local != "") {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
   }
-  stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
+  stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
+  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stancflags_val, stancflags_combined))
+  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined))
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 
@@ -2337,20 +2338,27 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   cpp_built_options
 }
 
-include_paths_stanc3_args <- function(include_paths = NULL) {
+include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
     assert_dir_exists(include_paths, access = "r")
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
-    paths_w_space <- grep(" ", include_paths)
-    include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
+    # Calling stanc3 directly through processx::run does not need quoting
+    if (!isTRUE(standalone_call)) {
+      paths_w_space <- grep(" ", include_paths)
+      include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
+    }
     include_paths <- paste0(include_paths, collapse = ",")
     if (cmdstan_version() >= "2.24") {
       include_paths_flag <- "--include-paths="
     } else {
       include_paths_flag <- "--include_paths="
     }
-    stancflags <- paste0(stancflags, include_paths_flag, include_paths)
+    if (isTRUE(standalone_call)) {
+      stancflags <- c(stancflags, "--include-paths", include_paths)
+    } else {
+      stancflags <- paste0(stancflags, include_paths_flag, include_paths)
+    }
   }
   stancflags
 }
