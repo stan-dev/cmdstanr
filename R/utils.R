@@ -783,6 +783,7 @@ check_sundials_fpic <- function(verbose) {
 rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   check_sundials_fpic(verbose)
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
+  cppflags <- get_cmdstan_flags("CPPFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
@@ -790,11 +791,14 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
+  if (cmdstan_version() <= "2.30.1") {
+    cppflags <- paste0(cppflags, " -DCMDSTAN_JSON")
+  }
   withr::with_path(repair_path(file.path(cmdstan_path(),"stan/lib/stan_math/lib/tbb")),
     withr::with_makevars(
       c(
         USE_CXX14 = 1,
-        PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
+        PKG_CPPFLAGS = cppflags,
         PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, collapse = " "),
         PKG_LIBS = libs
       ),
