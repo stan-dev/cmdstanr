@@ -103,6 +103,9 @@
     <loc>https://mc-stan.org/cmdstanr/reference/as_mcmc.list.html</loc>
   </url>
   <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_coercion.html</loc>
+  </url>
+  <url>
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstan_default_install_path.html</loc>
   </url>
   <url>
@@ -119,6 +122,9 @@
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/cmdstanr_example.html</loc>
+  </url>
+  <url>
+    <loc>https://mc-stan.org/cmdstanr/reference/cmdstanr_global_options.html</loc>
   </url>
   <url>
     <loc>https://mc-stan.org/cmdstanr/reference/draws_to_csv.html</loc>
