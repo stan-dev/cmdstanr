@@ -36,6 +36,10 @@ matching_variables <- function(variable_filters, variables) {
   )
 }
 
+is_wholenumber <- function(x, tol = sqrt(.Machine$double.eps)) {
+  abs(x - round(x)) < tol
+}
+
 # checks for OS and hardware ----------------------------------------------
 
 os_is_windows <- function() {
@@ -83,6 +87,10 @@ is_rosetta2 <- function() {
   rosetta2
 }
 
+arch_is_aarch64 <- function() {
+  isTRUE(R.version$arch == "aarch64")
+}
+
 # Returns the type of make command to use to compile depending on the OS
 make_cmd <- function() {
   if (os_is_windows() && !os_is_wsl() && (Sys.getenv("CMDSTANR_USE_RTOOLS") == "")) {
@@ -102,6 +110,14 @@ stanc_cmd <- function() {
 }
 
 # paths and extensions ----------------------------------------------------
+
+short_path <- function(path) {
+  if (os_is_windows()) {
+    utils::shortPathName(path)
+  } else {
+    path
+  }
+}
 
 # Replace `\\` with `/` in a vector of paths
 # Needed for windows if CmdStan version is < 2.21:
@@ -688,11 +704,14 @@ assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 # Model methods & expose_functions helpers ------------------------------------------------------
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
-  flags <- wsl_compatible_run(
-    command = "make",
-    args = c("-s", paste0("print-", flag_name)),
-    wd = cmdstan_path
-  )$stdout
+  withr::with_envvar(
+    c("HOME" = short_path(Sys.getenv("HOME"))),
+    flags <- wsl_compatible_run(
+      command = "make",
+      args = c("-s", paste0("print-", flag_name)),
+      wd = cmdstan_path
+    )$stdout
+  )
 
   flags <- gsub("\n", "", flags, fixed = TRUE)
 
@@ -764,6 +783,7 @@ check_sundials_fpic <- function(verbose) {
 rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   check_sundials_fpic(verbose)
   cxxflags <- get_cmdstan_flags("CXXFLAGS")
+  cppflags <- get_cmdstan_flags("CPPFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
@@ -771,11 +791,14 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
+  if (cmdstan_version() <= "2.30.1") {
+    cppflags <- paste0(cppflags, " -DCMDSTAN_JSON")
+  }
   withr::with_path(repair_path(file.path(cmdstan_path(),"stan/lib/stan_math/lib/tbb")),
     withr::with_makevars(
       c(
         USE_CXX14 = 1,
-        PKG_CPPFLAGS = ifelse(cmdstan_version() <= "2.30.1", "-DCMDSTAN_JSON", ""),
+        PKG_CPPFLAGS = cppflags,
         PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, collapse = " "),
         PKG_LIBS = libs
       ),

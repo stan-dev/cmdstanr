@@ -650,10 +650,11 @@ compile <- function(quiet = TRUE,
   if (stancflags_local != "") {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
   }
-  stancflags_standalone <- c("--standalone-functions", stancflags_val, stancflags_combined)
+  stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
+  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stancflags_val, stancflags_combined))
+  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined))
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 
@@ -665,53 +666,56 @@ compile <- function(quiet = TRUE,
       expose_stan_functions(self$functions, !quiet)
     }
 
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      run_log <- wsl_compatible_run(
-        command = make_cmd(),
-        args = c(wsl_safe_path(repair_path(tmp_exe)),
-                cpp_options_to_compile_flags(cpp_options),
-                stancflags_val),
-        wd = cmdstan_path(),
-        echo = !quiet || is_verbose_mode(),
-        echo_cmd = is_verbose_mode(),
-        spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
-        stderr_callback = function(x, p) {
-          if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
-            message(x)
-          }
-          if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
-            warning(
-              "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
-              "If your model failed to compile please run rebuild_cmdstan().\n",
-              "If the issue persists please open a bug report.",
-              call. = FALSE
-            )
-          }
-          if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
-            warning(
-              "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
-              "See the above error for more details.",
-              call. = FALSE
-            )
-          }
-          if (os_is_macos()) {
-            if (R.version$arch == "aarch64"
-                && grepl("but the current translation unit is being compiled for target", x)) {
+    withr::with_envvar(
+      c("HOME" = short_path(Sys.getenv("HOME"))),
+      withr::with_path(
+        c(
+          toolchain_PATH_env_var(),
+          tbb_path()
+        ),
+        run_log <- wsl_compatible_run(
+          command = make_cmd(),
+          args = c(wsl_safe_path(repair_path(tmp_exe)),
+                  cpp_options_to_compile_flags(cpp_options),
+                  stancflags_val),
+          wd = cmdstan_path(),
+          echo = !quiet || is_verbose_mode(),
+          echo_cmd = is_verbose_mode(),
+          spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
+          stderr_callback = function(x, p) {
+            if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
+              message(x)
+            }
+            if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
               warning(
-                "The C++ compiler has errored due to incompatibility between the x86 and ",
-                "Apple Silicon architectures.\n",
-                "If you are running R inside an IDE (RStudio, VSCode, ...), ",
-                "make sure the IDE is a native Apple Silicon app.\n",
+                "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
+                "If your model failed to compile please run rebuild_cmdstan().\n",
+                "If the issue persists please open a bug report.",
                 call. = FALSE
               )
             }
-          }
-        },
-        error_on_status = FALSE
+            if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
+              warning(
+                "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
+                "See the above error for more details.",
+                call. = FALSE
+              )
+            }
+            if (os_is_macos()) {
+              if (R.version$arch == "aarch64"
+                  && grepl("but the current translation unit is being compiled for target", x)) {
+                warning(
+                  "The C++ compiler has errored due to incompatibility between the x86 and ",
+                  "Apple Silicon architectures.\n",
+                  "If you are running R inside an IDE (RStudio, VSCode, ...), ",
+                  "make sure the IDE is a native Apple Silicon app.\n",
+                  call. = FALSE
+                )
+              }
+            }
+          },
+          error_on_status = FALSE
+        )
       )
     )
     if (is.na(run_log$status) || run_log$status != 0) {
@@ -2334,20 +2338,27 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   cpp_built_options
 }
 
-include_paths_stanc3_args <- function(include_paths = NULL) {
+include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
     assert_dir_exists(include_paths, access = "r")
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
-    paths_w_space <- grep(" ", include_paths)
-    include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
+    # Calling stanc3 directly through processx::run does not need quoting
+    if (!isTRUE(standalone_call)) {
+      paths_w_space <- grep(" ", include_paths)
+      include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
+    }
     include_paths <- paste0(include_paths, collapse = ",")
     if (cmdstan_version() >= "2.24") {
       include_paths_flag <- "--include-paths="
     } else {
       include_paths_flag <- "--include_paths="
     }
-    stancflags <- paste0(stancflags, include_paths_flag, include_paths)
+    if (isTRUE(standalone_call)) {
+      stancflags <- c(stancflags, "--include-paths", include_paths)
+    } else {
+      stancflags <- paste0(stancflags, include_paths_flag, include_paths)
+    }
   }
   stancflags
 }
