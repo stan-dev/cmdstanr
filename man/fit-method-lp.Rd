@@ -24,8 +24,8 @@ the posterior is available via the \verb{$lp_approx()} method. For
 Laplace approximation the unnormalized density of the approximation to
 the posterior is available via the \verb{$lp_approx()} method.
 
-See the \href{https://mc-stan.org/docs/reference-manual/sampling-statements.html}{Log Probability Increment vs. Sampling Statement}
-section of the Stan Reference Manual for details on when normalizing
+See the \href{https://mc-stan.org/docs/reference-manual/statements.html}{Increment log density and Distribution Statements}
+sections of the Stan Reference Manual for details on when normalizing
 constants are dropped from log probability calculations.
 }
 \section{Details}{
