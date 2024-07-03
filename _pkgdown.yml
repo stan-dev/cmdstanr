@@ -76,12 +76,13 @@ articles:
       - articles-online-only/opencl
 
 reference:
-  - title: "Package description"
+  - title: "Package overview and global options"
     desc: >
       An overview of the package and how it differs from
       [RStan](https://mc-stan.org/rstan).
     contents:
       - cmdstanr-package
+      - cmdstanr_global_options
   - title: "Installing and setting the path to CmdStan"
     desc: >
       Install CmdStan, assuming the necessary C++ toolchain.
@@ -106,7 +107,7 @@ reference:
       - CmdStanGQ
       - CmdStanDiagnose
       - starts_with("fit-method")
-  - title: "Other tools for working with CmdStan"
+  - title: "Other tools"
     contents:
       - read_cmdstan_csv
       - write_stan_json
@@ -114,6 +115,7 @@ reference:
       - draws_to_csv
       - as_mcmc.list
       - as_draws.CmdStanMCMC
+      - cmdstan_coercion
   - title: "Using CmdStanR with knitr and R Markdown"
     contents:
       - register_knitr_engine

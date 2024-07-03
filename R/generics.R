@@ -4,8 +4,8 @@
 #' packages that interface with on CmdStanR. Developers can define methods on
 #' top of these generics to coerce objects into CmdStanR's fitted model objects.
 #'
-#' @param object to be coerced
-#' @param ... additional arguments
+#' @param object The object to be coerced.
+#' @param ... Additional arguments to pass to methods.
 #'
 #' @name cmdstan_coercion
 NULL
