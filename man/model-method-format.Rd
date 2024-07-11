@@ -47,26 +47,6 @@ model directly back to the file or prints it for inspection.
 \examples{
 \dontrun{
 
-# Example of fixing old syntax
-# real x[2] --> array[2] real x;
-file <- write_stan_file("
-parameters {
-  real x[2];
-}
-model {
-  x ~ std_normal();
-}
-")
-
-# set compile=FALSE then call format to fix old syntax
-mod <- cmdstan_model(file, compile = FALSE)
-mod$format(canonicalize = list("deprecations"))
-
-# overwrite the original file instead of just printing it
-mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
-mod$compile()
-
-
 # Example of removing unnecessary whitespace
 file <- write_stan_file("
 data {
@@ -81,8 +61,14 @@ model {
  poisson_lpmf(y | lambda);
 }
 ")
+
+# set compile=FALSE then call format to fix old syntax
 mod <- cmdstan_model(file, compile = FALSE)
-mod$format(canonicalize = TRUE)
+mod$format(canonicalize = list("deprecations"))
+
+# overwrite the original file instead of just printing it
+mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
+mod$compile()
 }
 
 }
