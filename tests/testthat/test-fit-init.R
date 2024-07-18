@@ -64,7 +64,8 @@ test_that("Multi Pathfinder method works as init", {
 test_that("Pathfinder method with psis_resample as false works as init", {
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1))
+    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1,
+    psis_resample = FALSE))
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
