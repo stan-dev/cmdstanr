@@ -394,7 +394,7 @@ CmdStanModel <- R6::R6Class(
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
-#'   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
+#'   section](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
 #'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
 #'   without compiling it or for a model that is already compiled the
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
