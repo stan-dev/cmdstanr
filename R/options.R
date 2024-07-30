@@ -18,6 +18,9 @@
 #' * `cmdstanr_max_rows`: The maximum number of rows of output to print when
 #' using the [`$print()`][fit-method-summary] method. The default is 10.
 #'
+#' * `cmdstanr_print_line_numbers`: Should line numbers be included when
+#' printing a Stan program? The default is `FALSE`.
+#'
 #' * `cmdstanr_no_ver_check`: Should the check for a more recent version of
 #' CmdStan be disabled? The default is `FALSE`.
 #'
