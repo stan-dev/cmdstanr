@@ -326,22 +326,6 @@ CmdStan itself provides a `diagnose` utility that can be called using
 the `$cmdstan_diagnose()` method. This method will print warnings but won't return anything.
 
 
-### Create a `stanfit` object
-
-If you have RStan installed then it is also possible to create a `stanfit`
-object from the csv output files written by CmdStan. This can be done by using
-`rstan::read_stan_csv()` in combination with the `$output_files()` method of the
-`CmdStanMCMC` object. This is only needed if you want to fit a model with
-CmdStanR but already have a lot of post-processing code that assumes a `stanfit`
-object. Otherwise we recommend using the post-processing functionality provided
-by CmdStanR itself.
-
-```{r stanfit, eval=FALSE}
-stanfit <- rstan::read_stan_csv(fit$output_files())
-```
-
-
-
 ## Running optimization and variational inference
 
 CmdStanR also supports running Stan's optimization algorithms and its algorithms
