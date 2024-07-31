@@ -296,11 +296,6 @@ as_draws_df(draws)
 # Plot posterior using bayesplot (ggplot2)
 mcmc_hist(fit_mcmc$draws("theta"))
 
-# For models fit using MCMC, if you like working with RStan's stanfit objects
-# then you can create one with rstan::read_stan_csv()
-# stanfit <- rstan::read_stan_csv(fit_mcmc$output_files())
-
-
 # Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
 # and also demonstrate specifying data as a path to a file instead of a list
 my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
