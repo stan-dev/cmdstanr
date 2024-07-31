@@ -17,6 +17,8 @@ even if there were no Stan code changes since last compiled?  See
 \link[=model-method-compile]{compile} for more details. The default is \code{FALSE}.
 \item \code{cmdstanr_max_rows}: The maximum number of rows of output to print when
 using the \code{\link[=fit-method-summary]{$print()}} method. The default is 10.
+\item \code{cmdstanr_print_line_numbers}: Should line numbers be included when
+printing a Stan program? The default is \code{FALSE}.
 \item \code{cmdstanr_no_ver_check}: Should the check for a more recent version of
 CmdStan be disabled? The default is \code{FALSE}.
 \item \code{cmdstanr_output_dir}: The directory where CmdStan should write its output
