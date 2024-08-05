@@ -127,3 +127,13 @@ test_that("error for runtime selection of OpenCL devices if version less than 2.
   )
   reset_cmdstan_version()
 })
+
+test_that("model from exe_file retains open_cl option", {
+  skip_if_not(Sys.getenv("CMDSTANR_OPENCL_TESTS") %in% c("1", "true"))
+  stan_file <- testing_stan_file("bernoulli")
+  mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE))
+  mod_from_exe <- cmdstan_model(exe_file = mod$exe_file())
+  expect_sample_output(
+    fit <- mod_from_exe$sample(data = testing_data("bernoulli"), opencl_ids = c(0, 0), chains = 1)
+  )
+})
