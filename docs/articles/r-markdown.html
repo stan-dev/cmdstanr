@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
       </span>
     </div>
 
@@ -229,13 +229,14 @@ code above would look like this:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All 4 chains finished successfully.</span></span>
 <span><span class="co">#&gt; Mean chain execution time: 0.0 seconds.</span></span>
-<span><span class="co">#&gt; Total execution time: 0.7 seconds.</span></span>
-<span></span>
+<span><span class="co">#&gt; Total execution time: 0.7 seconds.</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">#&gt;      lp__ -1.50  -1.17 1.24 0.96 -3.94 -0.18 1.00     1304     1536</span></span>
-<span><span class="co">#&gt;      y[1] -0.01  -0.01 0.99 0.99 -1.67  1.60 1.00     1993     2262</span></span>
-<span><span class="co">#&gt;      y[2] -0.07  -0.04 2.90 2.05 -4.79  4.54 1.00     2050     1420</span></span></code></pre></div>
+<span><span class="co">#&gt;      lp__ -1.55  -1.24 1.24 1.04 -4.07 -0.18 1.00     1509     1671</span></span>
+<span><span class="co">#&gt;      y[1] -0.03  -0.03 1.01 0.99 -1.69  1.68 1.00     1852     2195</span></span>
+<span><span class="co">#&gt;      y[2] -0.13  -0.07 2.92 2.14 -4.92  4.65 1.00     1855     1666</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document">Option 3: Using both RStan and CmdStanR in the same R Markdown
@@ -247,26 +248,26 @@ probably not using both RStan and CmdStanR in the same document or
 project, the option to use both exists. When registering CmdStanR’s
 knitr engine, set <code>override = FALSE</code> to register the engine
 as a <code>cmdstan</code> engine:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/register_knitr_engine.html">register_knitr_engine</a></span><span class="op">(</span>override <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>This will cause <code>stan</code> chunks to be processed by knitr’s
 built-in, RStan-based engine and only use CmdStanR’s knitr engine for
 <code>cmdstan</code> chunks:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>```{stan, output.var="model_obj1"}</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>// Results in a stanmodel object from RStan</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>```</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>```{r}</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>rstan::sampling(model_obj1)</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>```</span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>```{cmdstan, output.var="model_obj2"}</span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>// Results in a CmdStanModel object from CmdStanR</span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>```</span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a></span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>```{r}</span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>model_obj2$sample()</span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>```</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>```{stan, output.var="model_obj1"}</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>// Results in a stanmodel object from RStan</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>```</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>```{r}</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>rstan::sampling(model_obj1)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>```</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>```{cmdstan, output.var="model_obj2"}</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>// Results in a CmdStanModel object from CmdStanR</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>```</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>```{r}</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>model_obj2$sample()</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>```</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="caching-chunks">Caching chunks<a class="anchor" aria-label="anchor" href="#caching-chunks"></a>
@@ -304,12 +305,12 @@ for the Stan language, that syntax highlighting will be applied to
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Jonah Gabry, Rok Češnovar, Andrew Johnson.</p>
+<p>Developed by Jonah Gabry, Rok Češnovar, Andrew Johnson, Steve Bronder.</p>
 </div>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>

@@ -26,9 +26,9 @@ as.CmdStanGQ(object, ...)
 as.CmdStanDiagnose(object, ...)
 }
 \arguments{
-\item{object}{to be coerced}
+\item{object}{The object to be coerced.}
 
-\item{...}{additional arguments}
+\item{...}{Additional arguments to pass to methods.}
 }
 \description{
 These are generic functions intended to primarily be used by developers of

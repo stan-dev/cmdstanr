@@ -683,9 +683,9 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'   Laplace approximation the unnormalized density of the approximation to
 #'   the posterior is available via the `$lp_approx()` method.
 #'
-#'   See the [Log Probability Increment vs. Sampling
-#'   Statement](https://mc-stan.org/docs/reference-manual/sampling-statements.html)
-#'   section of the Stan Reference Manual for details on when normalizing
+#'   See the [Increment log density and Distribution
+#'   Statements](https://mc-stan.org/docs/reference-manual/statements.html)
+#'   sections of the Stan Reference Manual for details on when normalizing
 #'   constants are dropped from log probability calculations.
 #'
 #' @section Details:

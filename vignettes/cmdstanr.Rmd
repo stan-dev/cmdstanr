@@ -30,7 +30,7 @@ by running the following command in R.
 
 ```{r install, eval=FALSE}
 # we recommend running this is a fresh R session or restarting your current session
-install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
 
 We can now load the package like any other R package. We'll also load the
