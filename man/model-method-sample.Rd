@@ -296,7 +296,7 @@ using the \code{\link[=fit-method-summary]{$summary()}} method.}
 \item{save_metric}{(logical) When \code{TRUE}, call CmdStan with argument
 \code{"adaptation save_metric=1"} to save the adapted metric in separate JSON
 file with elements "stepsize", "metric_type" and "inv_metric". The default
-is \code{TRUE}. This option is only available in CmdStan 2.34.0 and later.}
+is \code{FALSE}. This option is only available in CmdStan 2.34.0 and later.}
 
 \item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
 with argument \code{"output save_config=1"} to save a json file which contains

@@ -399,3 +399,14 @@ test_that("metadata()$time has chains rowss", {
   expect_equal(nrow(fit_mcmc_2$metadata()$time), fit_mcmc_2$num_chains())
   expect_equal(nrow(fit_mcmc_3$metadata()$time), fit_mcmc_3$num_chains())
 })
+
+test_that("save_metric_files works and has clear error message when no files", {
+  expect_error(
+    fit_mcmc$save_metric_files(),
+    "No metric files found"
+  )
+  fit_save_metric <- testing_fit("logistic", save_metric = TRUE)
+  paths <- fit$save_metric_files()
+  checkmate::expect_file_exists(paths, extension = "json")
+  expect_true(all(file.size(paths) > 0))
+})

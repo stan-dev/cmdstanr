@@ -916,7 +916,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' For `$save_metric_files()` everything is the same as for
 #' `$save_output_files()` except `"-metric-"` is included in the new
-#' file name after `basename`.
+#' file name after `basename`. Make sure to set `save_metric=TRUE` when
+#' fitting the model.
 #'
 #' For `$save_config_files()` everything is the same as for
 #' `$save_output_files()` except `"-config-"` is included in the new
