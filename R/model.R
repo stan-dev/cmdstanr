@@ -2334,7 +2334,6 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
   variables
 }
 
-
 is_variables_method_supported <- function(mod) {
   cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
 }

@@ -496,7 +496,7 @@ test_that("cpp_options work with settings in make/local", {
 
   rebuild_cmdstan()
   mod <- cmdstan_model(stan_file = stan_program)
-  expect_null(mod$cpp_options()$STAN_THREADS)
+  expect_null(mod$cpp_options()$stan_threads)
 
   file.remove(mod$exe_file())
 
@@ -504,7 +504,7 @@ test_that("cpp_options work with settings in make/local", {
 
   file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   mod <- cmdstan_model(file)
-  expect_true(mod$cpp_options()$STAN_THREADS)
+  expect_true(mod$cpp_options()$stan_threads)
 
   file.remove(mod$exe_file())
 
@@ -789,6 +789,8 @@ test_that("overwrite_file works with format()", {
   }
   "
   stan_file_tmp <- write_stan_file(code)
+  on.exit(file.remove(stan_file_tmp))
+
   mod_1 <- cmdstan_model(stan_file_tmp, compile = FALSE)
   expect_false(
     any(

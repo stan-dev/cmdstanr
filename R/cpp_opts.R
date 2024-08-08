@@ -52,8 +52,17 @@ parse_exe_info_string <- function(ret_stdout) {
 model_compile_info <- function(exe_file, version) {
   info <- NULL
   if (version > "2.26.1") {
-    
-    ret <- run_info_cli(exe_file)
+    withr::with_path(
+      c(
+        toolchain_PATH_env_var(),
+        tbb_path()
+      ),
+      ret <- wsl_compatible_run(
+        command = wsl_safe_path(exe_file),
+        args = "info",
+        error_on_status = FALSE
+      )
+    )
     if (ret$status == 0) {
       info <- list()
       info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
@@ -64,7 +73,7 @@ model_compile_info <- function(exe_file, version) {
           if (!is.na(as.logical(val))) {
             val <- as.logical(val)
           }
-          info[[toupper(key_val[1])]] <- val
+          info[[tolower(key_val[1])]] <- val
         }
       }
       info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
