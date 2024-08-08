@@ -182,12 +182,12 @@ test_that("correct output when stan_threads not TRUE", {
 test_that('correct output when stan threads set via make local',{
   #TODO clean this up so no leftover changes to make local
   file.copy(
-    file.path(cmdstan_path(), 'make.local'),
-    file.path(cmdstan_path(), 'make.local.save')
+    file.path(cmdstan_path(), 'make', 'local'),
+    file.path(cmdstan_path(), 'make', 'local.save')
   )
   on.exit(file.rename(
-    file.path(cmdstan_path(), 'make.local.save'),
-    file.path(cmdstan_path(), 'make.local')
+    file.path(cmdstan_path(), 'make', 'local.save'),
+    file.path(cmdstan_path(), 'make', 'local')
   ), add = TRUE, after = FALSE)
   cmdstan_make_local(cpp_options = list(stan_threads = TRUE))
   mod <- cmdstan_model(stan_program, force_recompile = TRUE)
