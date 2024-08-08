@@ -406,7 +406,7 @@ test_that("save_metric_files works and has clear error message when no files", {
     "No metric files found"
   )
   fit_save_metric <- testing_fit("logistic", save_metric = TRUE)
-  paths <- fit$save_metric_files()
+  paths <- fit_save_metric$save_metric_files()
   checkmate::expect_file_exists(paths, extension = "json")
   expect_true(all(file.size(paths) > 0))
 })
