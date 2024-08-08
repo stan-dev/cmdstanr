@@ -109,7 +109,8 @@ file name after \code{basename}.
 
 For \verb{$save_metric_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-metric-"} is included in the new
-file name after \code{basename}.
+file name after \code{basename}. Make sure to set \code{save_metric=TRUE} when
+fitting the model.
 
 For \verb{$save_config_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-config-"} is included in the new
