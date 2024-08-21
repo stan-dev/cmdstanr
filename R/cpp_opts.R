@@ -49,7 +49,7 @@ parse_exe_info_string <- function(ret_stdout) {
 }
 
 # old (current) parser
-model_compile_info <- function(exe_file, version) {
+model_compile_info_legacy <- function(exe_file, version) {
   info <- NULL
   if(is.null(version)) return(NULL)
   if (version > "2.26.1") {
@@ -145,40 +145,86 @@ validate_cpp_options <- function(cpp_options) {
 # no type checking for opencl_ids
 # cpp_options must be a list
 # opencl_ids returned unchanged
-assert_valid_opencl <- function(opencl_ids, cpp_options) {
-  if (is.null(cpp_options[["stan_opencl"]])
-      && !is.null(opencl_ids)) {
+assert_valid_opencl <- function(
+  opencl_ids,
+  exe_info,
+  fallback_exe_info = list('stan_version' = '2.0.0', 'stan_opencl' = FALSE)
+) {
+  if (is.null(opencl_ids)) return(invisible(opencl_ids))
+  
+  fallback <- is.null(exe_info)
+  if(fallback) exe_info <- fallback_exe_info
+  # If we're unsure if this info is accurate, we shouldn't stop the user from attempting on that basis
+  # the user should have been warned about this in initialize(), so no need to re-warn here.
+  if(fallback) stop <- warning
+
+  if (exe_info[['stan_version']] < "2.26.0") {
+    stop("Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer.", call. = FALSE)
+  }
+
+  if (isFALSE(exe_info[["stan_opencl"]])) {
     stop("'opencl_ids' is set but the model was not compiled for use with OpenCL.",
          "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
          call. = FALSE)
   }
+  checkmate::assert_vector(opencl_ids, len = 2)
   invisible(opencl_ids)
 }
 
 # cpp_options must be a list
-assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
+assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_chains = FALSE) {
+
+  fallback <- is.null(exe_info)
+  if(fallback) exe_info <- fallback_exe_info
+  # If we're unsure if this info is accurate, we shouldn't stop the user from attempting on that basis
+  # the user should have been warned about this in initialize(), so no need to re-warn here.
+  if(fallback) stop <- warning
+
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)
-  if (is.null(cpp_options[["stan_threads"]]) || !isTRUE(cpp_options[["stan_threads"]])) {
-    if (!is.null(threads)) {
-      warning(
-        "'", threads_arg, "' is set but the model was not compiled with ",
-        "'cpp_options = list(stan_threads = TRUE)' ",
-        "so '", threads_arg, "' will have no effect!",
-        call. = FALSE
-      )
-      threads <- NULL
-    }
-  } else if (isTRUE(cpp_options[["stan_threads"]]) && is.null(threads)) {
+  if (isTRUE(exe_info[["stan_threads"]]) && is.null(threads)) {
     stop(
       "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-      "but '", threads_arg, "' was not set!",
+      "or equivalent, but '", threads_arg, "' was not set!",
       call. = FALSE
     )
+  } else if (!is.null(threads)) {
+    warning(
+      "'", threads_arg, "' is set but the model was not compiled with ",
+      "'cpp_options = list(stan_threads = TRUE)' or equivalent ",
+      "so '", threads_arg, "' will have no effect!",
+      call. = FALSE
+    )
+    if (!fallback) threads <- NULL
   }
   invisible(threads)
 }
+
+validate_precompile_cpp_options <- function(cpp_options) {
+  if(is.null(cpp_options) || length(cpp_options) == 0) return(list())
+
+  if (!is.null(cpp_options[["user_header"]]) && !is.null(cpp_options[['USER_HEADER']])) {
+    warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
+  }
+
+  names(cpp_options) <- tolower(names(cpp_options))
+  flags_set_if_defined <- c(
+    # cmdstan
+    "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks", "stan_cpp_optims",
+    # stan math
+   "integrated_opencl", "tbb_lib", "tbb_inc", "tbb_interface_new"
+  )
+  for (flag in flags_set_if_defined)   {
+    if (isFALSE(cpp_options[[flag]])) warning(
+      flag, " set to ", cpp_options[flag], " Since this is a non-empty value, ",
+      "it will result in the corresponding ccp option being turned ON. To turn this",
+      " option off, use cpp_options = list(", tolower(flag), " = NULL)."
+    )
+  }
+  cpp_options
+}
+
 
 # For two functions below
 # both styles are lists which should have flag names in lower case as names of the list
@@ -214,4 +260,18 @@ exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
     exe_info[overlap],
     cpp_options[overlap]
   )
+}
+
+# check for flags that an R user may interpret as false but will
+# be interpretted as true/set by compiler
+assert_no_falsy_flags <- function(cpp_options) {
+  names(cpp_options) <- toupper(names(cpp_options))
+  flags <- c("STAN_THREADS", "STAN_MPI", "STAN_OPENCL", "INTEGRATED_OPENCL")
+  for (flag in flags)   {
+    if (isFALSE(cpp_options[[flag]])) warning(
+      flag, " set to ", cpp_options[flag], " Since this is a non-empty value, ",
+      "it will result in the corresponding ccp option being turned ON. To turn this",
+      " option off, use cpp_options = list(", tolower(flag), " = NULL)."
+    )
+  }
 }

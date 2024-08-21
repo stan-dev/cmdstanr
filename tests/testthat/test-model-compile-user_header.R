@@ -154,10 +154,14 @@ test_that("wsl path conversion is done as expected", {
     }
   )
 
+  cpp_options <- expect_warning(
+    mod$cpp_options(),
+    'will be deprecated'
+  )
   # USER_HEADER is converted
   # user_header is NULL
-  expect_equal(mod$cpp_options()[['USER_HEADER']],  w_path(tmp_file))
-  expect_true(is.null(mod$cpp_options()[['user_header']]))
+  expect_equal(cpp_options[['USER_HEADER']],  w_path(tmp_file))
+  expect_true(is.null(cpp_options[['user_header']]))
 
   # Case 2: cpp opt USER_HEADER
   with_mocked_cli(
@@ -174,10 +178,14 @@ test_that("wsl path conversion is done as expected", {
     }
   )
 
+  cpp_options <- expect_warning(
+    mod$cpp_options(),
+    'will be deprecated'
+  )
   # USER_HEADER is converted
   # user_header is unconverted
-  expect_equal(mod$cpp_options()[['USER_HEADER']],  w_path(tmp_file))
-  expect_true(is.null(mod$cpp_options()[['user_header']]))
+  expect_equal(cpp_options[['USER_HEADER']],  w_path(tmp_file))
+  expect_true(is.null(cpp_options[['user_header']]))
 
   # Case # 3: only user_header opt
   with_mocked_cli(
@@ -195,10 +203,14 @@ test_that("wsl path conversion is done as expected", {
   )
 
 
+  cpp_options <- expect_warning(
+    mod$cpp_options(),
+    'will be deprecated'
+  )
   # In  other cases, in the *output* USER_HEADER is windows style user_header is not.
   # In this case, USER_HEADER is null.
-  expect_true(is.null(mod$cpp_options()[['USER_HEADER']]))
-  expect_equal(mod$cpp_options()[['user_header']],  w_path(tmp_file))
+  expect_true(is.null(cpp_options[['USER_HEADER']]))
+  expect_equal(cpp_options[['user_header']],  w_path(tmp_file))
 })
 
 test_that("user_header precedence order is correct", {
@@ -224,16 +236,20 @@ test_that("user_header precedence order is correct", {
       )
     }, "User header specified both")
   )
+  cpp_options <- expect_warning(
+    mod$cpp_options(),
+    'will be deprecated'
+  )
   # In this case:
   # cpp_options[['USER_HEADER']] == tmp_files[1] <- actually used
   # cpp_options[['user_header']] == tmp_files[3] <- ignored
   # tmp_files[2] is not stored
   expect_equal(
-    match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
+    match(cpp_options[['USER_HEADER']], w_path(tmp_files)),
     1
   )
   expect_equal(
-    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
+    match(cpp_options[['user_header']], tmp_files),
     3
   )
 
@@ -252,16 +268,20 @@ test_that("user_header precedence order is correct", {
       )
     }, "User header specified both")
   )
+  cpp_options <- expect_warning(
+    mod$cpp_options(),
+    'will be deprecated'
+  )
   # In this case:
   # cpp_options[['USER_HEADER']] == tmp_files[2]
   # cpp_options[['user_header']] == tmp_files[3]
   # tmp_files[2] is not stored
   expect_equal(
-    match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
+    match(cpp_options[['USER_HEADER']], w_path(tmp_files)),
     2
   )
   expect_equal(
-    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
+    match(cpp_options[['user_header']], tmp_files),
     3
   )
 
@@ -280,13 +300,17 @@ test_that("user_header precedence order is correct", {
       )
     }, "User header specified both")
   )
+  cpp_options <- expect_warning(
+    mod$cpp_options(),
+    'will be deprecated'
+  )
   # Same as Case #2
   expect_equal(
-    match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
+    match(cpp_options[['USER_HEADER']], w_path(tmp_files)),
     2
   )
   expect_equal(
-    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
+    match(cpp_options[['user_header']], tmp_files),
     3
   )
 })

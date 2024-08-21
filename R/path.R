@@ -234,9 +234,9 @@ unset_cmdstan_path <- function() {
 }
 
 # fake a cmdstan version (only used in tests)
-fake_cmdstan_version <- function(version, mod = NULL) {
+fake_cmdstan_version <- function(version, mod=NULL) {
   .cmdstanr$VERSION <- version
-  if (!is.null(mod)) {
+  if(!is.null(mod)) {
     if (!is.null(mod$.__enclos_env__$private$exe_info_)) {
       mod$.__enclos_env__$private$exe_info_$stan_version <- version
     }

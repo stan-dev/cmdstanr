@@ -14,6 +14,11 @@ cmdstan_example_file <- function() {
   file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
 }
 
+cmdstan_example_exe_file <- function() {
+  # stan program in different directory from the others
+  file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+}
+
 testing_model <- function(name) {
   cmdstan_model(stan_file = testing_stan_file(name))
 }
