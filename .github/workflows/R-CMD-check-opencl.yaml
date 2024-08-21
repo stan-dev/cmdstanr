@@ -1,0 +1,97 @@
+---
+# Github Actions workflow to check CmdStanR
+# yamllint disable rule:line-length
+
+name: Unit tests
+
+'on':
+  push:
+    branches:
+      - opencl-check
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  R-CMD-check:
+    if: "! contains(github.event.head_commit.message, '[ci skip]')"
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macOS-latest, r: 'release', rtools: ''}
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
+
+    steps:
+      - name: cmdstan env vars
+        run: |
+          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
+        shell: bash
+
+      - uses: n1hility/cancel-previous-runs@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
+
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2.10.1
+        with:
+          r-version: ${{ matrix.config.r }}
+          rtools-version: ${{ matrix.config.rtools }}
+
+      - uses: r-lib/actions/setup-pandoc@v2.10.1
+
+      - uses: r-lib/actions/setup-r-dependencies@v2.10.1
+        with:
+          extra-packages: any::rcmdcheck, local::.
+
+      - name: Install POCL
+        run: brew install pocl
+
+      - name: Install cmdstan
+        run: |
+          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          cmdstanr::install_cmdstan(cores = 2)
+        shell: Rscript {0}
+
+      - name: CmdStan Config OpenCL
+        run: |
+          brew_prefix <- system("brew --prefix", intern = TRUE)
+          cpp_opts <- list(
+            STAN_OPENCL = TRUE,
+            LDLIBS_OPENCL = paste0("-L", brew_prefix, "/opt/opencl-icd-loader/lib -lOpenCL")
+          )
+          cmdstanr::cmdstan_make_local(cpp_options = cpp_opts)
+          cmdstanr::rebuild_cmdstan(cores = 2)
+        shell: Rscript {0}
+
+      - name: Session info
+        run: |
+          options(width = 100)
+          pkgs <- installed.packages()[, "Package"]
+          sessioninfo::session_info(pkgs, include_base = TRUE)
+        shell: Rscript {0}
+
+      - uses: r-lib/actions/check-r-package@v2.10.1
+        env:
+          _R_CHECK_CRAN_INCOMING_: false
+
+      - name: Show testthat output
+        if: always()
+        run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
+        shell: bash
+
+      - name: Upload check results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-r${{ matrix.config.r }}-results
+          path: check
