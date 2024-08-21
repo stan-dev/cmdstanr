@@ -24,6 +24,9 @@ jobs:
       matrix:
         config:
           - {os: macOS-latest, r: 'release', rtools: ''}
+          - {os: ubuntu-latest, r: 'release', rtools: ''}
+          - {os: windows-latest, r: 'release', rtools: '44'}
+
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -35,11 +38,6 @@ jobs:
         run: |
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
-
-      - uses: n1hility/cancel-previous-runs@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-        if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
 
       - uses: actions/checkout@v4
 
@@ -54,8 +52,17 @@ jobs:
         with:
           extra-packages: any::rcmdcheck, local::.
 
-      - name: Install POCL
+      - name: Install POCL (MacOS)
+        if: matrix.config.os == 'macOS-latest'
         run: brew install pocl
+
+      - name: Install POCL (Ubuntu)
+        if: matrix.config.os == 'ubuntu-latest'
+        run: sudo apt-get install -y pocl-opencl-icd ocl-icd-opencl-dev
+
+      - name: Install POCL (Windows)
+        if: matrix.config.os == 'windows-latest'
+        run: choco install pocl
 
       - name: Install cmdstan
         run: |
@@ -65,10 +72,13 @@ jobs:
 
       - name: CmdStan Config OpenCL
         run: |
-          brew_prefix <- system("brew --prefix", intern = TRUE)
+          ocl_icd_lib <- ""
+          # MacOS
+          if (Sys.info()["sysname"] == "Darwin") {
+            ocl_icd_lib <- "-L/opt/homebrew/opt/opencl-icd-loader/lib"
+          }
           cpp_opts <- list(
-            STAN_OPENCL = TRUE,
-            LDLIBS_OPENCL = paste0("-L", brew_prefix, "/opt/opencl-icd-loader/lib -lOpenCL")
+            LDLIBS_OPENCL = paste0(ocl_icd_lib, " -lOpenCL")
           )
           cmdstanr::cmdstan_make_local(cpp_options = cpp_opts)
           cmdstanr::rebuild_cmdstan(cores = 2)
