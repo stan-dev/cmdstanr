@@ -738,7 +738,7 @@ compile <- function(quiet = TRUE,
   } # End - if(!dry_run)
 
   private$exe_file_ <- exe
-  private$cpp_options_ <- cpp_options
+  private$cpp_options_ <- model_compile_info(exe)
   private$precompile_cpp_options_ <- NULL
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
