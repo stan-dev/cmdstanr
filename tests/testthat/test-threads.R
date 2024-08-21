@@ -15,7 +15,7 @@ test_that("using threads_per_chain without stan_threads set in compile() warns",
       "Running MCMC with 4 sequential chains",
       fixed = TRUE
     ),
-    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent so 'threads_per_chain' will have no effect!",
     fixed = TRUE)
 })
 
@@ -175,10 +175,16 @@ test_that("correct output when stan_threads unset", {
   expect_output(
     expect_warning(
       mod$sample(data = data_file_json, threads_per_chain = 4),
-      "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+      "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent so 'threads_per_chain' will have no effect!",
       fixed = TRUE
     ),
     "Running MCMC with 4 sequential chains",
+    fixed = TRUE
+  )
+
+  expect_warning(
+    cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE), force_recompile = TRUE),
+    "STAN_THREADS set to FALSE Since this is a non-empty value, it will result in the corresponding ccp option being turned ON. To turn this option off, use cpp_options = list(stan_threads = NULL).",
     fixed = TRUE
   )
 })
