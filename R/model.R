@@ -398,10 +398,11 @@ CmdStanModel <- R6::R6Class(
 #'   program.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
 #'   to compile with the Stan model.
-#' @param cpp_options (list) Any makefile options to be used when compiling the
+#' @param cpp_options (list) Makefile options to be used when compiling the
 #'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
-#'   otherwise write in the `make/local` file. For an example of using threading
-#'   see the Stan case study
+#'   otherwise write in the `make/local` file. Setting a value to `NULL` or `""`
+#'   within the list unsets the flag.
+#'   For an example of using threading see the Stan case study.
 #'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
@@ -486,6 +487,8 @@ compile <- function(quiet = TRUE,
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
+  assert_no_falsy_flags(cpp_options)
+
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
@@ -2261,7 +2264,7 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
     if (!is.null(threads)) {
       warning(
         "'", threads_arg, "' is set but the model was not compiled with ",
-        "'cpp_options = list(stan_threads = TRUE)' ",
+        "'cpp_options = list(stan_threads = TRUE)' or equivalent ",
         "so '", threads_arg, "' will have no effect!",
         call. = FALSE
       )
@@ -2275,6 +2278,18 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
     )
   }
   invisible(threads)
+}
+
+assert_no_falsy_flags <- function(cpp_options) {
+  names(cpp_options) <- toupper(names(cpp_options))
+  flags <- c("STAN_THREADS", "STAN_MPI", "STAN_OPENCL", "INTEGRATED_OPENCL")
+  for (flag in flags)   {
+    if (isFALSE(cpp_options[[flag]])) warning(
+      flag, " set to ", cpp_options[flag], " Since this is a non-empty value, ",
+      "it will result in the corresponding ccp option being turned ON. To turn this",
+      " option off, use cpp_options = list(", tolower(flag), " = NULL)."
+    )
+  }
 }
 
 assert_valid_stanc_options <- function(stanc_options) {
