@@ -51,6 +51,7 @@ parse_exe_info_string <- function(ret_stdout) {
 # old (current) parser
 model_compile_info <- function(exe_file, version) {
   info <- NULL
+  if(is.null(version)) return(NULL)
   if (version > "2.26.1") {
     withr::with_path(
       c(
