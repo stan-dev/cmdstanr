@@ -94,5 +94,5 @@
 #' @param save_metric (logical) When `TRUE`, call CmdStan with argument
 #'   `"adaptation save_metric=1"` to save the adapted metric in separate JSON
 #'   file with elements "stepsize", "metric_type" and "inv_metric". The default
-#'   is `TRUE`. This option is only available in CmdStan 2.34.0 and later.
+#'    is `FALSE`. This option is only available in CmdStan 2.34.0 and later.
 #'
