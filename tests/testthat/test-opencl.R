@@ -121,7 +121,7 @@ test_that("error for runtime selection of OpenCL devices if version less than 2.
   mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE),
                        force_recompile = TRUE)
   expect_error(
-    mod$sample(data = testing_data("bernoulli"), chains = 1, refresh = 0, opencl_ids = c(1,1)),
+    mod$sample(data = testing_data("bernoulli"), chains = 1, refresh = 0, opencl_ids = c(0,0)),
     "Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer",
     fixed = TRUE
   )
