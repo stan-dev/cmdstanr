@@ -487,7 +487,7 @@ compile <- function(quiet = TRUE,
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
-  assert_no_falsy_flags(cpp_options)
+  assert_precompile_cpp_options_valid(cpp_options)
 
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
@@ -1088,7 +1088,11 @@ format <- function(overwrite_file = FALSE,
     }
     out_file <- self$stan_file()
   }
-  cat(run_log$stdout, file = out_file, sep = "\n")
+  # DONT MERGE WITH THIS COMMENT
+  # This line is showing up a lot for seemingly no reason
+  # not sure if it's an issue with the package or my debug 
+  # setup, but commenting out for now.
+  # cat(run_log$stdout, file = out_file, sep = "\n")
   if (isTRUE(overwrite_file)) {
     private$stan_code_ <- readLines(self$stan_file())
   }
@@ -2247,7 +2251,7 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 # internal ----------------------------------------------------------------
 
 assert_valid_opencl <- function(opencl_ids, cpp_options) {
-  if (is.null(cpp_options[["stan_opencl"]])
+  if ((is.null(cpp_options[["stan_opencl"]]) || isFALSE(cpp_options[["stan_opencl"]]))
       && !is.null(opencl_ids)) {
     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
          "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
@@ -2273,14 +2277,14 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
   } else if (isTRUE(cpp_options[["stan_threads"]]) && is.null(threads)) {
     stop(
       "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-      "but '", threads_arg, "' was not set!",
+      "or equivalent, but '", threads_arg, "' was not set!",
       call. = FALSE
     )
   }
   invisible(threads)
 }
 
-assert_no_falsy_flags <- function(cpp_options) {
+validate_precompile_cpp_options <- function(cpp_options) {
   names(cpp_options) <- toupper(names(cpp_options))
   flags <- c("STAN_THREADS", "STAN_MPI", "STAN_OPENCL", "INTEGRATED_OPENCL")
   for (flag in flags)   {
