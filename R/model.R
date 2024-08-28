@@ -231,7 +231,7 @@ CmdStanModel <- R6::R6Class(
     stanc_options_ = list(),
     include_paths_ = NULL,
     using_user_header_ = FALSE,
-    precompile_cpp_options_ = NULL,
+    precompile_cpp_options_ = list(),
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
     variables_ = NULL,
@@ -331,7 +331,7 @@ CmdStanModel <- R6::R6Class(
     },
     exe_info = function(update = FALSE) {
       if (update) {
-        ret <- run_info_cli(private$exe_file)
+        ret <- run_info_cli(private$exe_file_)
         # Above command will return non-zero if
         # - cmdstan version < "2.26.1"
         # - exe_file is not set
@@ -374,11 +374,11 @@ CmdStanModel <- R6::R6Class(
         exe_info_style_cpp_options(private$precompile_cpp_options_)
       )
     },
-    cmd_stan_version = function() {
+    cmdstan_version = function() {
       # this is intentionally not self$cmdstan_version_
       # because that value is only set if model has been recomplied
       # since CmdStanModel instantiation
-      exe_info()[['stan_version']]
+      self$exe_info()[['stan_version']]
     },
     cpp_options = function() {
       warning(
@@ -661,6 +661,7 @@ compile <- function(quiet = TRUE,
     private$precompile_include_paths_ <- NULL
     self$functions$existing_exe <- TRUE
     self$exe_file(exe)
+    self$exe_info(update=TRUE)
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
@@ -853,7 +854,7 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' }
 #'
 variables <- function() {
-  if (cmdstan_version() < "2.27.0") {
+  if (self$cmdstan_version() < "2.27.0") {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
   }
   if (length(self$stan_file()) == 0) {
@@ -1292,7 +1293,7 @@ sample <- function(data = NULL,
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
+    threads_per_proc = assert_valid_threads(threads_per_chain, self$exe_info(), self$exe_info_fallback(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -1586,7 +1587,7 @@ optimize <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, self$exe_info(), self$exe_info_fallback())
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1726,7 +1727,7 @@ laplace <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, self$exe_info(), self$exe_info_fallback())
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1876,7 +1877,7 @@ variational <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, self$exe_info(), self$exe_info_fallback())
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2021,7 +2022,7 @@ pathfinder <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(num_threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(num_threads, self$exe_info(), self$exe_info_fallback())
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2158,7 +2159,7 @@ generate_quantities <- function(fitted_params,
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
+    threads_per_proc = assert_valid_threads(threads_per_chain, self$exe_info(), self$exe_info_fallback(), multiple_chains = TRUE)
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2336,7 +2337,7 @@ assert_valid_opencl <- function(
          "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
          call. = FALSE)
   }
-  checkmate::assert_vector(self$opencl_ids, len = 2)
+  checkmate::assert_vector(opencl_ids, len = 2)
   invisible(opencl_ids)
 }
 
@@ -2370,7 +2371,7 @@ assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_
 }
 
 validate_precompile_cpp_options <- function(cpp_options) {
-  if(is.null(cpp_options) || length(cpp_options) == 0) return(cpp_options)
+  if(is.null(cpp_options) || length(cpp_options) == 0) return(list())
   names(cpp_options) <- tolower(names(cpp_options))
   flags_set_if_defined <- c(
     # cmdstan

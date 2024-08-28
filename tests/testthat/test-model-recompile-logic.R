@@ -153,3 +153,42 @@ test_that("$exe_info_fallback() logic works as expected with cpp_options",
     }
   )
 )
+
+test_that("$exe_info_fallback() logic works as expected without cpp_options",
+  with_mocked_cli(
+    compile_ret = list(status=0),
+    info_ret = list(
+      status = 1,
+      stdout = ""
+    ),
+    code = {
+      expect_warning(
+        expect_message({
+          mod <- cmdstan_model(
+            exe_file = file_that_exists
+          )
+        }, message = "mock-compile-was-called"),
+        "Recompiling is recommended."
+      )
+      expect_equal(
+        mod$exe_info(),
+        NULL
+      )
+      expect_equal_ignore_order(
+        mod$exe_info_fallback(),
+        list(
+          stan_version = cmdstan_version(),
+          stan_threads = FALSE,
+          stan_mpi = FALSE,
+          stan_opencl = FALSE,
+          stan_no_range_checks = FALSE,
+          stan_cpp_optims = FALSE
+        )
+      )
+      expect_equal_ignore_order(
+        mod$precompile_cpp_options(),
+        list()
+      )
+    }
+  )
+)
