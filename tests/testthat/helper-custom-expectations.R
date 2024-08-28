@@ -34,7 +34,7 @@ expect_call_compilation <- function(constructor_call) {
 #' @param ... arguments passed to mod$compile()
 expect_no_recompilation <- function(mod, ...) {
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
-    fail(sprint("Model executable '%s' does not exist, cannot test if recompilation is triggerred.", mod$exe_file()))
+      fail(sprint("Model executable '%s' does not exist, cannot test if recompilation is triggerred.", mod$exe_file()))
   }
 
   before_mtime <- file.mtime(mod$exe_file())
@@ -104,6 +104,5 @@ expect_noninteractive_silent <- function(object) {
 expect_equal_ignore_order <- function(object, expected, ...){
   object <- expected[sort(names(object))]
   expected <- expected[sort(names(expected))]
-  if('abcd' %in% names(expected)) browser()
   expect_equal(object, expected, ...)
 }
