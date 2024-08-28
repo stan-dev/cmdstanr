@@ -100,3 +100,10 @@ expect_noninteractive_silent <- function(object) {
   rlang::with_interactive(value = FALSE,
     expect_silent(object))
 }
+
+expect_equal_ignore_order <- function(object, expected, ...){
+  object <- expected[sort(names(object))]
+  expected <- expected[sort(names(expected))]
+  if('abcd' %in% names(expected)) browser()
+  expect_equal(object, expected, ...)
+}
