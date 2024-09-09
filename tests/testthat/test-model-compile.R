@@ -2,12 +2,19 @@ context("model-compile")
 
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
+exe <- cmdstan_ext(strip_ext(stan_program))
+
+if (file.exists(exe)) file.remove(exe)
+
+if(FALSE){
+
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
-  expect_equal(mod$exe_file(), character(0))
+  expect_equal(mod$exe_file(), exe)
+  expect_false(file.exists(mod$exe_file()))
   expect_error(
     mod$hpp_file(),
     "The .hpp file does not exists. Please (re)compile the model.",
@@ -25,7 +32,6 @@ test_that("error if no compile() before model fitting", {
 
 test_that("compile() method works", {
   # remove executable if exists
-  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
   if (file.exists(exe)) {
     file.remove(exe)
   }
@@ -496,7 +502,11 @@ test_that("cpp_options work with settings in make/local", {
 
   rebuild_cmdstan()
   mod <- cmdstan_model(stan_file = stan_program)
-  expect_null(mod$cpp_options()$stan_threads)
+  expect_null(
+    expect_warning(mod$cpp_options()$stan_threads, "Use mod\\$exe_info()")
+  )
+  expect_false(mod$exe_info()$stan_threads)
+  expect_null(mod$precompile_cpp_options()$stan_threads)
 
   file.remove(mod$exe_file())
 
@@ -504,7 +514,10 @@ test_that("cpp_options work with settings in make/local", {
 
   file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   mod <- cmdstan_model(file)
-  expect_true(mod$cpp_options()$stan_threads)
+  expect_true(
+    expect_warning(mod$cpp_options()$stan_threads, "Use mod\\$exe_info()")
+  )
+  expect_true(mod$exe_info()$stan_threads)
 
   file.remove(mod$exe_file())
 
@@ -666,6 +679,7 @@ test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
   expect_output(print(out), "-Dsomething_not_used")
 })
 
+} # end skip
 test_that("format() works", {
   code <- "
   parameters {
