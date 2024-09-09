@@ -272,8 +272,14 @@ CmdStanModel <- R6::R6Class(
           private$model_name_ <- sub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
       }
-      if (!is.null(stan_file) && compile) {
-        self$compile(...)
+      if (!is.null(stan_file)) {
+        compile_args <- list(...)
+
+        # exe_file_ and some other vals are set inside the compile method
+        # we want to set these even if compile=FALSE
+        # ideally that logic shoudl be isolated, but rigth now it's intertwined
+        compile_args$skip_compile <- isFALSE(compile)
+        do.call(self$compile, compile_args)
       } else {
         # exe_info is updated inside the compile method (if compile command is run)
         exe_info <- self$exe_info(update = TRUE)
@@ -331,6 +337,7 @@ CmdStanModel <- R6::R6Class(
     },
     exe_info = function(update = FALSE) {
       if (update) {
+        if (!file.exists(private$exe_file_)) return(NULL)
         ret <- run_info_cli(private$exe_file_)
         # Above command will return non-zero if
         # - cmdstan version < "2.26.1"
@@ -374,11 +381,15 @@ CmdStanModel <- R6::R6Class(
         exe_info_style_cpp_options(private$precompile_cpp_options_)
       )
     },
-    cmdstan_version = function() {
+    cmdstan_version = function(fallback = TRUE) {
       # this is intentionally not self$cmdstan_version_
       # because that value is only set if model has been recomplied
       # since CmdStanModel instantiation
-      self$exe_info()[['stan_version']]
+      if (!fallback) self$exe_info()[['stan_version']]
+      for (candidate in c(
+        self$exe_info()[['stan_version']],
+        self$exe_info_fallback()[['stan_version']]
+      )) if (!is.null(candidate)) return (candidate)
     },
     cpp_options = function() {
       warning(
@@ -536,6 +547,8 @@ compile <- function(quiet = TRUE,
                     compile_model_methods = FALSE,
                     compile_standalone = FALSE,
                     dry_run = FALSE,
+                    #used internally only
+                    skip_compile = FALSE,
                     #deprecated
                     compile_hessian_method = FALSE,
                     threads = FALSE) {
@@ -651,17 +664,18 @@ compile <- function(quiet = TRUE,
     force_recompile <- TRUE
   }
 
-  if (!force_recompile) {
-    if (rlang::is_interactive()) {
-      message("Model executable is up to date!")
-    }
+  if ((!force_recompile) && rlang::is_interactive()) {
+    message("Model executable is up to date!")
+  }
+  
+  if ((!force_recompile) || skip_compile) {
     private$cpp_options_ <- cpp_options
     private$precompile_cpp_options_ <- cpp_options
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
     self$functions$existing_exe <- TRUE
     self$exe_file(exe)
-    self$exe_info(update=TRUE)
+    self$exe_info(update = TRUE)
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
@@ -802,7 +816,6 @@ compile <- function(quiet = TRUE,
 
   private$cmdstan_version_ <- cmdstan_version()
   private$exe_file_ <- exe
-  private$cpp_options_ <- cpp_options # legacy
   private$precompile_cpp_options_ <- cpp_options
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL

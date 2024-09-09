@@ -54,6 +54,9 @@ expect_sample_output <- function(object, num_chains = NULL) {
       output <- paste(output, num_chains, "sequential chain")
     }
   }
+  # DONT MERGE WITH THIS LINE
+  cat <- base::cat
+  # ^ Workaround for: https://github.com/ManuelHentschel/vscDebugger/issues/196
   expect_output(object, output)
 }
 
