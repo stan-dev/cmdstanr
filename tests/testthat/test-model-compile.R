@@ -6,10 +6,11 @@ exe <- cmdstan_ext(strip_ext(stan_program))
 
 if (file.exists(exe)) file.remove(exe)
 
-if(FALSE){
 
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
+
+if(FALSE){
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
@@ -387,7 +388,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
     fixed = TRUE
   )
 })
-
+} #end skip
 test_that("check_syntax() works with include_paths", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
@@ -679,7 +680,6 @@ test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
   expect_output(print(out), "-Dsomething_not_used")
 })
 
-} # end skip
 test_that("format() works", {
   code <- "
   parameters {
