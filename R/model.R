@@ -258,6 +258,7 @@ CmdStanModel <- R6::R6Class(
             !is.null(args$cpp_options[["user_header"]])) {
           private$using_user_header_ <- TRUE
         }
+        browser()
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(stan_file)
         } else {
@@ -272,7 +273,7 @@ CmdStanModel <- R6::R6Class(
           private$model_name_ <- sub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
       }
-      if (!is.null(stan_file)) {
+      if (!is.null(stan_file) && compile) {
         compile_args <- list(...)
 
         # exe_file_ and some other vals are set inside the compile method
@@ -281,6 +282,26 @@ CmdStanModel <- R6::R6Class(
         compile_args$skip_compile <- isFALSE(compile)
         do.call(self$compile, compile_args)
       } else {
+        # set exe path, same logic as in compile9)
+        if(!is.null(private$dir_)){
+          dir <- repair_path(absolute_path(private$dir_))
+          assert_dir_exists(dir, access = "rw")
+          if (length(self$exe_file()) != 0) {
+            self$exe_file(file.path(dir, basename(self$exe_file())))
+          }
+        }
+        if (length(self$exe_file()) == 0) {
+          if (is.null(private$dir_)) {
+            exe_base <- self$stan_file()
+          } else {
+            exe_base <- file.path(private$dir_, basename(self$stan_file()))
+          }
+          self$exe_file(cmdstan_ext(strip_ext(exe_base)))
+          if (dir.exists(self$exe_file())) {
+            stop("There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.", call. = FALSE)
+          }
+        }
+
         # exe_info is updated inside the compile method (if compile command is run)
         exe_info <- self$exe_info(update = TRUE)
       }
@@ -290,9 +311,12 @@ CmdStanModel <- R6::R6Class(
       invisible(self)
     },
     include_paths = function() {
-      if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
+      # checks whether a compile has occurred since object creation
+      if (!is.null(self$cmdstan_version_)) {
+        # yes, compile occurred
         return(private$include_paths_)
       } else {
+        # no, compile did not occur
         return(private$precompile_include_paths_)
       }
     },
@@ -547,8 +571,6 @@ compile <- function(quiet = TRUE,
                     compile_model_methods = FALSE,
                     compile_standalone = FALSE,
                     dry_run = FALSE,
-                    #used internally only
-                    skip_compile = FALSE,
                     #deprecated
                     compile_hessian_method = FALSE,
                     threads = FALSE) {
@@ -945,6 +967,7 @@ check_syntax <- function(pedantic = FALSE,
                          include_paths = NULL,
                          stanc_options = list(),
                          quiet = FALSE) {
+  browser()                                 
   if (length(self$stan_file()) == 0) {
     stop("'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
@@ -1166,11 +1189,7 @@ format <- function(overwrite_file = FALSE,
     }
     out_file <- self$stan_file()
   }
-  # DONT MERGE WITH THIS COMMENT
-  # This line is showing up a lot for seemingly no reason
-  # not sure if it's an issue with the package or my debug 
-  # setup, but commenting out for now.
-  # cat(run_log$stdout, file = out_file, sep = "\n")
+  cat(run_log$stdout, file = out_file, sep = "\n")
   if (isTRUE(overwrite_file)) {
     private$stan_code_ <- readLines(self$stan_file())
   }
