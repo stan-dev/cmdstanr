@@ -3,14 +3,13 @@ context("model-compile")
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 exe <- cmdstan_ext(strip_ext(stan_program))
-
 if (file.exists(exe)) file.remove(exe)
 
-
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
-cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 
-if(FALSE){
+make_local_orig <- cmdstan_make_local()
+cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
+on.exit(cmdstan_make_local(cpp_options = make_local_orig, append = FALSE), add = TRUE, after = FALSE)
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
@@ -89,6 +88,9 @@ test_that("compile() method overwrites binaries", {
   expect_gt(file.mtime(mod$exe_file()), old_time)
 })
 
+
+# Test with Side Effect -----
+
 test_that("compilation works with include_paths", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
   exe <- cmdstan_ext(strip_ext(stan_program_w_include))
@@ -118,6 +120,8 @@ test_that("compilation works with include_paths", {
     cmdstan_ext(strip_ext(absolute_path(stan_program_w_include)))
   )
 })
+
+
 
 test_that("name in STANCFLAGS is set correctly", {
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
@@ -388,7 +392,6 @@ test_that("check_syntax() works with pedantic=TRUE", {
     fixed = TRUE
   )
 })
-} #end skip
 test_that("check_syntax() works with include_paths", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
@@ -398,14 +401,19 @@ test_that("check_syntax() works with include_paths", {
 
 })
 
+
+# Test Failing Due to Side effect -----
+
 test_that("check_syntax() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
   mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
-                                 include_paths = test_path("resources", "stan"))
+                                 include_paths = test_path("resources", "stan"),
+                                 force_recompile = TRUE)
   expect_true(mod_w_include$check_syntax())
 
 })
+
 
 test_that("check_syntax() works with pedantic=TRUE", {
   model_code <- "
@@ -775,7 +783,8 @@ test_that("format() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
   mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
-                                 include_paths = test_path("resources", "stan"))
+                                 include_paths = test_path("resources", "stan"),
+                                 force_recompile = TRUE)
   expect_output(
     mod_w_include$format(),
     "#include ",

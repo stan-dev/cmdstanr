@@ -1,5 +1,3 @@
-Sys.setenv(DEBUG=FALSE)
-Sys.setenv(DEBUG2=FALSE)
 stan_program <- cmdstan_example_file()
 file_that_exists <- 'placeholder_exists'
 file_that_doesnt_exists <- 'placeholder_doesnt_exists'
@@ -7,8 +5,8 @@ file.create(file_that_exists)
 on.exit(file.remove(file_that_exists))
 
 test_that("warning when no recompile and no info",
-  with_mocked_cli(compile_ret = list(), info_ret = list(), code = expect_warning({
-    mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
+  with_mocked_cli(compile_ret = list(), info_ret = list(status = 1), code = expect_warning({
+    mod <- cmdstan_model(stan_file = stan_program, exe_file = file_that_exists, compile = FALSE)
   }, "Recompiling is recommended."))
 )
 

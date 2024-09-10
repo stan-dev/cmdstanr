@@ -258,7 +258,6 @@ CmdStanModel <- R6::R6Class(
             !is.null(args$cpp_options[["user_header"]])) {
           private$using_user_header_ <- TRUE
         }
-        browser()
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(stan_file)
         } else {
@@ -274,13 +273,7 @@ CmdStanModel <- R6::R6Class(
         }
       }
       if (!is.null(stan_file) && compile) {
-        compile_args <- list(...)
-
-        # exe_file_ and some other vals are set inside the compile method
-        # we want to set these even if compile=FALSE
-        # ideally that logic shoudl be isolated, but rigth now it's intertwined
-        compile_args$skip_compile <- isFALSE(compile)
-        do.call(self$compile, compile_args)
+        self$compile(...)
       } else {
         # set exe path, same logic as in compile9)
         if(!is.null(private$dir_)){
@@ -312,7 +305,7 @@ CmdStanModel <- R6::R6Class(
     },
     include_paths = function() {
       # checks whether a compile has occurred since object creation
-      if (!is.null(self$cmdstan_version_)) {
+      if (!is.null(private$cmdstan_version_)) {
         # yes, compile occurred
         return(private$include_paths_)
       } else {
@@ -364,8 +357,7 @@ CmdStanModel <- R6::R6Class(
         if (!file.exists(private$exe_file_)) return(NULL)
         ret <- run_info_cli(private$exe_file_)
         # Above command will return non-zero if
-        # - cmdstan version < "2.26.1"
-        # - exe_file is not set
+        # cmdstan version < "2.26.1"
 
         cli_info_success <- !is.null(ret$status) && ret$status == 0
         exe_info <- if (cli_info_success) parse_exe_info_string(ret$stdout) else list()
@@ -574,7 +566,6 @@ compile <- function(quiet = TRUE,
                     #deprecated
                     compile_hessian_method = FALSE,
                     threads = FALSE) {
-
   if (length(self$stan_file()) == 0) {
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
@@ -638,6 +629,7 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
 
+  if(Sys.getenv('DEBUG') != '') browser()
   # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
   # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
   if (!is.null(user_header)) {
@@ -675,6 +667,7 @@ compile <- function(quiet = TRUE,
   # - the executable does not exist
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
+  if(Sys.getenv('DEBUG') != '') browser()
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
@@ -690,7 +683,7 @@ compile <- function(quiet = TRUE,
     message("Model executable is up to date!")
   }
   
-  if ((!force_recompile) || skip_compile) {
+  if ((!force_recompile)) {
     private$cpp_options_ <- cpp_options
     private$precompile_cpp_options_ <- cpp_options
     private$precompile_stanc_options_ <- NULL
@@ -967,7 +960,7 @@ check_syntax <- function(pedantic = FALSE,
                          include_paths = NULL,
                          stanc_options = list(),
                          quiet = FALSE) {
-  browser()                                 
+
   if (length(self$stan_file()) == 0) {
     stop("'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
