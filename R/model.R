@@ -570,10 +570,16 @@ compile <- function(quiet = TRUE,
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
+
+  if (!is.null(user_header) && (
+    !is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])
+  )) warning("User header specified both via user_header argument and via cpp_options arguments")
+
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
-  validate_precompile_cpp_options(cpp_options)
+  cpp_options <- validate_precompile_cpp_options(cpp_options)
+
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
@@ -629,31 +635,17 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
 
-  if(Sys.getenv('DEBUG') != '') browser()
   # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
   # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
   if (!is.null(user_header)) {
-    if (!is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])) {
-      warning("User header specified both via user_header argument and via cpp_options arguments")
-    }
-
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
+    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(user_header))
     stanc_options[["allow-undefined"]] <- TRUE
-    private$using_user_header_ <- TRUE
-  } else if (!is.null(cpp_options[["USER_HEADER"]])) {
-    if (!is.null(cpp_options[["user_header"]])) {
-      warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
-    }
-
-    user_header <- cpp_options[["USER_HEADER"]]
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
     private$using_user_header_ <- TRUE
   } else if (!is.null(cpp_options[["user_header"]])) {
     user_header <- cpp_options[["user_header"]]
     cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
     private$using_user_header_ <- TRUE
   }
-
 
   if (!is.null(user_header)) {
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
@@ -667,7 +659,6 @@ compile <- function(quiet = TRUE,
   # - the executable does not exist
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
-  if(Sys.getenv('DEBUG') != '') browser()
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
@@ -2397,6 +2388,11 @@ assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_
 
 validate_precompile_cpp_options <- function(cpp_options) {
   if(is.null(cpp_options) || length(cpp_options) == 0) return(list())
+
+  if (!is.null(cpp_options[["user_header"]]) && !is.null(cpp_options[['USER_HEADER']])) {
+    warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
+  }
+
   names(cpp_options) <- tolower(names(cpp_options))
   flags_set_if_defined <- c(
     # cmdstan
