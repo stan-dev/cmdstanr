@@ -371,7 +371,7 @@ CmdStanModel <- R6::R6Class(
             # info cli as source of truth
             exe_info,
             # use cpp_options for options not provided in info
-            cpp_options[names(cpp_options) %in% names(exe_info)]
+            cpp_options[!names(cpp_options) %in% names(exe_info)]
           )
         } else if (cli_info_success) {
           # no compile/recompile has occurred, we only trust info cli
@@ -659,6 +659,10 @@ compile <- function(quiet = TRUE,
   # - the executable does not exist
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
+
+  self$exe_file(exe)
+  self$exe_info(update = TRUE)
+
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
@@ -667,6 +671,8 @@ compile <- function(quiet = TRUE,
   } else if (!is.null(user_header)
              && file.exists(user_header)
              && file.mtime(exe) < file.mtime(user_header)) {
+    force_recompile <- TRUE
+  } else if (!isTRUE(exe_info_reflects_cpp_options(self$exe_info(), cpp_options))) {
     force_recompile <- TRUE
   }
 
@@ -680,8 +686,6 @@ compile <- function(quiet = TRUE,
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
     self$functions$existing_exe <- TRUE
-    self$exe_file(exe)
-    self$exe_info(update = TRUE)
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
@@ -737,7 +741,6 @@ compile <- function(quiet = TRUE,
   self$functions$existing_exe <- FALSE
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
-
   if (!dry_run) {
 
     if (compile_standalone) {
@@ -2374,7 +2377,7 @@ assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_
       "or equivalent, but '", threads_arg, "' was not set!",
       call. = FALSE
     )
-  } else if (!is.null(threads)) {
+  } else if (!exe_info[["stan_threads"]] && !is.null(threads)) {
     warning(
       "'", threads_arg, "' is set but the model was not compiled with ",
       "'cpp_options = list(stan_threads = TRUE)' or equivalent ",
@@ -2402,9 +2405,9 @@ validate_precompile_cpp_options <- function(cpp_options) {
   )
   for (flag in flags_set_if_defined)   {
     if (isFALSE(cpp_options[[flag]])) warning(
-      flag, " set to ", cpp_options[flag], " Since this is a non-empty value, ",
+      toupper(flag), " set to ", cpp_options[flag], " Since this is a non-empty value, ",
       "it will result in the corresponding ccp option being turned ON. To turn this",
-      " option off, use cpp_options = list(", tolower(flag), " = NULL)."
+      " option off, use cpp_options = list(", flag, " = NULL)."
     )
   }
   cpp_options
@@ -2420,6 +2423,11 @@ exe_info_style_cpp_options <- function(cpp_options) {
   }
   cpp_options
 }
+
+exe_info_reflects_cpp_options <- function(exe_info, cpp_options) all.equal(
+  exe_info[tolower(names(cpp_options))],
+  exe_info_style_cpp_options(cpp_options)[tolower(names(cpp_options))]
+)
 
 assert_valid_stanc_options <- function(stanc_options) {
   i <- 1
