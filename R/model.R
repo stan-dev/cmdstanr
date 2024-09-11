@@ -297,7 +297,7 @@ CmdStanModel <- R6::R6Class(
 
         # exe_info is updated inside the compile method (if compile command is run)
         exe_info <- self$exe_info(update = TRUE)
-        exe_info_reflects_cpp_options(self$exe_info(), args$cpp_options)
+        if(file.exists(self$exe_file())) exe_info_reflects_cpp_options(self$exe_info(), args$cpp_options)
       }
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
         private$cpp_options_ <- model_compile_info_legacy(self$exe_file())
