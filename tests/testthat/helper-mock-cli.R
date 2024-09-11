@@ -17,3 +17,6 @@ with_mocked_cli <- function(code, compile_ret, info_ret){
     }
   )
 }
+
+expect_mock_compile <- function(object, ...) expect_message(object, regexp = 'mock-compile-was-called' , ...)
+expect_no_mock_compile <- function(object, ...) expect_no_message(object, message = 'mock-compile-was-called' , ...)

@@ -36,7 +36,7 @@ test_that("cmdstan_model works with user_header with mock", {
       exe_file = file_that_exists,
       user_header = tmpfile
     )
-  }, message = 'mock-compile-was-called'))
+  }, 'mock-compile-was-called'))
 
   with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_message({
     mod_2 <- cmdstan_model(
@@ -45,7 +45,7 @@ test_that("cmdstan_model works with user_header with mock", {
       cpp_options=list(USER_HEADER=tmpfile),
       stanc_options = list("allow-undefined")
     )
-  }, message = 'mock-compile-was-called'))
+  }, 'mock-compile-was-called'))
 
   # Check recompilation upon changing header
   file.create(file_that_exists)
@@ -56,7 +56,7 @@ test_that("cmdstan_model works with user_header with mock", {
   Sys.setFileTime(tmpfile, Sys.time() + 1) #touch file to trigger recompile
   with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_message({
     mod$compile(quiet = TRUE, user_header = tmpfile)
-  }, message = 'mock-compile-was-called'))
+  }, 'mock-compile-was-called'))
 
   # Alternative spec of user header
   with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_no_message({

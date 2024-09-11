@@ -109,3 +109,5 @@ expect_equal_ignore_order <- function(object, expected, ...){
   expected <- expected[sort(names(expected))]
   expect_equal(object, expected, ...)
 }
+
+expect_not_true <- function(...) expect_false(isTRUE(...))
