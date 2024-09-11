@@ -684,7 +684,6 @@ DiagnoseArgs <- R6::R6Class(
 #' @param self A `CmdStanArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_cmdstan_args <- function(self) {
-  b()
   validate_exe_file(self$exe_file)
   assert_dir_exists(self$output_dir, access = "rw")
 
