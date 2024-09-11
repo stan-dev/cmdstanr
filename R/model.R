@@ -2425,7 +2425,6 @@ exe_info_style_cpp_options <- function(cpp_options) {
 }
 
 exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
-  b()
   if(length(exe_info) == 0) {
     warning('Recompiling is recommended due to missing exe_info.')
     return(TRUE)
