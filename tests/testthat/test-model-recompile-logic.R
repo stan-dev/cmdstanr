@@ -11,9 +11,9 @@ test_that("warning when no recompile and no info",
 )
 
 test_that("recompiles when force_recompile flag set", 
-  with_mocked_cli(compile_ret = list(status=0), info_ret = list(), code = expect_message({
+  with_mocked_cli(compile_ret = list(status=0), info_ret = list(), code = expect_mock_compile({
     mod <- cmdstan_model(stan_file = stan_program, force_recompile = TRUE)
-  }, "mock-compile-was-called"))
+  }))
 )
 
 test_that("No mismatch results in no recompile.", with_mocked_cli(
@@ -31,9 +31,9 @@ test_that("No mismatch results in no recompile.", with_mocked_cli(
       STAN_CPP_OPTIMS=false
     "
   ),
-  code = expect_no_message({
+  code = expect_no_mock_compile({
     mod <- cmdstan_model(stan_file = stan_program, exe_file = file_that_exists)
-  }, message = "mock-compile-was-called")
+  })
 ))
 
 test_that("Mismatch results in recompile.", with_mocked_cli(
@@ -51,9 +51,9 @@ test_that("Mismatch results in recompile.", with_mocked_cli(
       STAN_CPP_OPTIMS=false
     "
   ),
-  code = expect_message({
+  code = expect_mock_compile({
     mod <- cmdstan_model(stan_file = stan_program, exe_file = file_that_exists, cpp_options = list(stan_threads = TRUE))
-  }, "mock-compile-was-called")
+  })
 ))
 test_that("$exe_info(), $precompile_cpp_options() return expected data without recompile", 
   with_mocked_cli(
@@ -73,14 +73,14 @@ test_that("$exe_info(), $precompile_cpp_options() return expected data without r
     ),
     code = {
       file.create(file_that_exists)
-      expect_no_message({
+      expect_no_mock_compile({
         mod <- cmdstan_model(
           stan_file = stan_program,
           exe_file = file_that_exists,
           compile = FALSE,
           cpp_options = list(Stan_Threads = TRUE, stan_opencl = NULL, aBc = FALSE)
         )
-      }, message = "mock-compile-was-called")
+      })
       expect_equal_ignore_order(
         mod$exe_info(),
         list(
@@ -113,15 +113,28 @@ test_that("$exe_info_fallback() logic works as expected with cpp_options",
     ),
     code = {
       expect_warning(
-        expect_no_message({
+        expect_no_mock_compile({
           mod <- cmdstan_model(
             stan_file = stan_program,
             exe_file = file_that_exists,
             compile = FALSE,
             cpp_options = list(Stan_Threads = TRUE, stan_Opencl = NULL, aBc = FALSE, dEf = NULL)
           )
-        }, message = "mock-compile-was-called"),
-        'Recompiling is recommended.'
+        }),
+        'Retrieving exe_file info failed'
+      )
+      # cmdstan_model call same as above
+      # Because we use testthat 3e, cannot nest expect_warning() with itself
+      expect_warning(
+        expect_no_mock_compile({
+          mod <- cmdstan_model(
+            stan_file = stan_program,
+            exe_file = file_that_exists,
+            compile = FALSE,
+            cpp_options = list(Stan_Threads = TRUE, stan_Opencl = NULL, aBc = FALSE, dEf = NULL)
+          )
+        }),
+      'Recompiling is recommended'
       )
       expect_equal(
         mod$exe_info(),
@@ -162,12 +175,22 @@ test_that("$exe_info_fallback() logic works as expected without cpp_options",
     ),
     code = {
       expect_warning(
-        expect_no_message({
+        expect_no_mock_compile({
           mod <- cmdstan_model(
             exe_file = file_that_exists
           )
-        }, message = "mock-compile-was-called"),
-        "Recompiling is recommended."
+        }),
+        'Retrieving exe_file info failed'
+      )
+      # cmdstan_model call same as above
+      # Because we use testthat 3e, cannot nest expect_warning() with itself
+      expect_warning(
+        expect_no_mock_compile({
+          mod <- cmdstan_model(
+            exe_file = file_that_exists
+          )
+        }),
+        "Recompiling is recommended"
       )
       expect_equal(
         mod$exe_info(),
@@ -208,8 +231,8 @@ test_that("Recompile when cpp args don't match binary", {
         STAN_CPP_OPTIMS=false
       "
     ),
-    expect_message({
+    expect_mock_compile({
       mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), exe_file = file_that_exists, cpp_options = list(stan_threads = TRUE))
-    }, "mock-compile-was-called")
+    })
   )
 })
