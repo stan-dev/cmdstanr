@@ -34,7 +34,7 @@ expect_call_compilation <- function(constructor_call) {
 #' @param ... arguments passed to mod$compile()
 expect_no_recompilation <- function(mod, ...) {
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
-      fail(sprint("Model executable '%s' does not exist, cannot test if recompilation is triggerred.", mod$exe_file()))
+    fail(sprint("Model executable '%s' does not exist, cannot test if recompilation is triggerred.", mod$exe_file()))
   }
 
   before_mtime <- file.mtime(mod$exe_file())
@@ -54,9 +54,6 @@ expect_sample_output <- function(object, num_chains = NULL) {
       output <- paste(output, num_chains, "sequential chain")
     }
   }
-  # DONT MERGE WITH THIS LINE
-  cat <- base::cat
-  # ^ Workaround for: https://github.com/ManuelHentschel/vscDebugger/issues/196
   expect_output(object, output)
 }
 

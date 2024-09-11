@@ -41,4 +41,15 @@ test_that('exe_info cpp_options comparison works', {
   expect_true(exe_info_reflects_cpp_options(exe_info_all_flags_off, list()))
   expect_true(exe_info_reflects_cpp_options(list(stan_opencl = FALSE), list(stan_opencl = NULL)))
   expect_not_true(exe_info_reflects_cpp_options(list(stan_opencl = FALSE), list(stan_opencl = FALSE)))
+  expect_not_true(exe_info_reflects_cpp_options(list(stan_opencl = FALSE, stan_threads = FALSE), list(stan_opencl = NULL, stan_threads = TRUE)))
+  expect_not_true(exe_info_reflects_cpp_options(
+   list(stan_opencl = FALSE, stan_threads = FALSE),
+   list(stan_opencl = NULL, stan_threads = TRUE, EXTRA_ARG = TRUE)
+  ))
+
+  # no exe_info -> no recompile based on cpp info
+  expect_warning(
+    expect_true(exe_info_reflects_cpp_options(list(), list())),
+    'Recompiling is recommended'
+  )
 })
