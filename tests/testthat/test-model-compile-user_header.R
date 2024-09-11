@@ -30,41 +30,49 @@ test_that("cmdstan_model works with user_header with mock", {
   }"
   cat(hpp, file = tmpfile, sep = "\n")
 
-  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_message({
-    mod <- cmdstan_model(
-      stan_file = testing_stan_file("bernoulli_external"),
-      exe_file = file_that_exists,
-      user_header = tmpfile
+  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_mock_compile(
+    expect_warning(
+      expect_no_warning({
+        mod <- cmdstan_model(
+          stan_file = testing_stan_file("bernoulli_external"),
+          exe_file = file_that_exists,
+          user_header = tmpfile
+        )
+      }, message = 'Recompiling is recommended'), # this warning should not occur because recompile happens automatically
+      'Retrieving exe_file info failed' # this warning should occur
     )
-  }, 'mock-compile-was-called'))
+  ))
 
-  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_message({
+  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_mock_compile({
     mod_2 <- cmdstan_model(
       stan_file = testing_stan_file("bernoulli_external"),
       exe_file = file_that_doesnt_exist,
       cpp_options=list(USER_HEADER=tmpfile),
       stanc_options = list("allow-undefined")
     )
-  }, 'mock-compile-was-called'))
+  }))
 
   # Check recompilation upon changing header
   file.create(file_that_exists)
-  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_no_message({
+  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_no_mock_compile({
     mod$compile(quiet = TRUE, user_header = tmpfile)
-  }, message = 'mock-compile-was-called'))
+  }))
 
-  Sys.setFileTime(tmpfile, Sys.time() + 1) #touch file to trigger recompile
-  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_message({
+  Sys.setFileTime(tmpfile, Sys.time() + 1) # touch file to trigger recompile
+  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_mock_compile({
     mod$compile(quiet = TRUE, user_header = tmpfile)
-  }, 'mock-compile-was-called'))
+  }))
+
+  # mock does not automatically update file mtime
+  Sys.setFileTime(mod$exe_file(), Sys.time() + 1) # touch file to trigger recompile
 
   # Alternative spec of user header
-  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_no_message({
+  with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_no_mock_compile({
   mod$compile(
     quiet = TRUE,
     cpp_options = list(user_header = tmpfile),
     dry_run = TRUE
-  )}, message = 'mock-compile-was-called'))
+  )}))
 
   # Error/warning messages
   with_mocked_cli(compile_ret = list(status = 1), info_ret = list(), code = expect_error(

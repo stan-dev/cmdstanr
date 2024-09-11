@@ -275,7 +275,7 @@ CmdStanModel <- R6::R6Class(
       if (!is.null(stan_file) && compile) {
         self$compile(...)
       } else {
-        # set exe path, same logic as in compile9)
+        # set exe path, same logic as in compile
         if(!is.null(private$dir_)){
           dir <- repair_path(absolute_path(private$dir_))
           assert_dir_exists(dir, access = "rw")
@@ -297,6 +297,7 @@ CmdStanModel <- R6::R6Class(
 
         # exe_info is updated inside the compile method (if compile command is run)
         exe_info <- self$exe_info(update = TRUE)
+        exe_info_reflects_cpp_options(self$exe_info(), args$cpp_options)
       }
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
         private$cpp_options_ <- model_compile_info_legacy(self$exe_file())
@@ -380,7 +381,7 @@ CmdStanModel <- R6::R6Class(
         } else {
           # info cli failure + no compile/recompile has occurred
           warning(
-            'Retrieving exe_file info failed. Recompiling is recommended. ',
+            'Retrieving exe_file info failed. ',
             'This may be due to running a model that was compiled with pre-2.26.1 cmdstan.'
           )
           NULL
@@ -398,7 +399,7 @@ CmdStanModel <- R6::R6Class(
       )
     },
     cmdstan_version = function(fallback = TRUE) {
-      # this is intentionally not self$cmdstan_version_
+      # this is intentionally not private$cmdstan_version_
       # because that value is only set if model has been recomplied
       # since CmdStanModel instantiation
       if (!fallback) self$exe_info()[['stan_version']]
@@ -647,6 +648,7 @@ compile <- function(quiet = TRUE,
     private$using_user_header_ <- TRUE
   }
 
+
   if (!is.null(user_header)) {
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
     if (!file.exists(user_header)) {
@@ -659,7 +661,6 @@ compile <- function(quiet = TRUE,
   # - the executable does not exist
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
-
   self$exe_file(exe)
   self$exe_info(update = TRUE)
 
@@ -676,11 +677,11 @@ compile <- function(quiet = TRUE,
     force_recompile <- TRUE
   }
 
-  if ((!force_recompile) && rlang::is_interactive()) {
+  if (!force_recompile && rlang::is_interactive()) {
     message("Model executable is up to date!")
   }
   
-  if ((!force_recompile)) {
+  if (!force_recompile) {
     private$cpp_options_ <- cpp_options
     private$precompile_cpp_options_ <- cpp_options
     private$precompile_stanc_options_ <- NULL
@@ -2341,7 +2342,7 @@ assert_valid_opencl <- function(
 ) {
   if (is.null(opencl_ids)) return(invisible(opencl_ids))
   
-  fallback <- is.null(exe_info)
+  fallback <- length(exe_info) == 0 
   if(fallback) exe_info <- fallback_exe_info
   # If we're unsure if this info is accurate, we shouldn't stop the user from attempting on that basis
   # the user should have been warned about this in initialize(), so no need to re-warn here.
@@ -2361,8 +2362,7 @@ assert_valid_opencl <- function(
 }
 
 assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_chains = FALSE) {
-
-  fallback <- is.null(exe_info)
+  fallback <- length(exe_info) == 0 
   if(fallback) exe_info <- fallback_exe_info
   # If we're unsure if this info is accurate, we shouldn't stop the user from attempting on that basis
   # the user should have been warned about this in initialize(), so no need to re-warn here.
@@ -2424,10 +2424,22 @@ exe_info_style_cpp_options <- function(cpp_options) {
   cpp_options
 }
 
-exe_info_reflects_cpp_options <- function(exe_info, cpp_options) all.equal(
-  exe_info[tolower(names(cpp_options))],
-  exe_info_style_cpp_options(cpp_options)[tolower(names(cpp_options))]
-)
+exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
+  b()
+  if(length(exe_info) == 0) {
+    warning('Recompiling is recommended due to missing exe_info.')
+    return(TRUE)
+  }
+  if(is.null(cpp_options)) return(TRUE)
+
+  cpp_options <- exe_info_style_cpp_options(cpp_options)[tolower(names(cpp_options))]
+  overlap <- names(cpp_options)[names(cpp_options) %in% names(exe_info)]
+
+  if(length(overlap) == 0) TRUE else all.equal(
+    exe_info[overlap],
+    cpp_options[overlap]
+  )
+}
 
 assert_valid_stanc_options <- function(stanc_options) {
   i <- 1
