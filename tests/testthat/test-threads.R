@@ -24,7 +24,7 @@ test_that("threading works with sample()", {
 
   expect_error(
     mod$sample(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
 
@@ -57,7 +57,7 @@ test_that("threading works with optimize()", {
 
   expect_error(
     mod$optimize(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads' was not set!",
     fixed = TRUE
   )
 
@@ -91,7 +91,7 @@ test_that("threading works with variational()", {
 
   expect_error(
     mod$variational(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads' was not set!",
     fixed = TRUE
   )
 
@@ -130,7 +130,7 @@ test_that("threading works with generate_quantities()", {
   )
   expect_error(
     mod_gq$generate_quantities(fitted_params = f, data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
   expect_output(
@@ -168,7 +168,7 @@ test_that("correct output when stan_threads unset", {
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = "dummy string"), force_recompile = TRUE)
   expect_error(
     mod$sample(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = NULL), force_recompile = TRUE)

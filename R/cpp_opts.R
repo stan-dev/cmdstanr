@@ -152,7 +152,7 @@ assert_valid_opencl <- function(
 ) {
   if (is.null(opencl_ids)) return(invisible(opencl_ids))
   
-  fallback <- is.null(exe_info)
+  fallback <- length(exe_info) == 0 
   if(fallback) exe_info <- fallback_exe_info
   # If we're unsure if this info is accurate, we shouldn't stop the user from attempting on that basis
   # the user should have been warned about this in initialize(), so no need to re-warn here.
@@ -173,8 +173,7 @@ assert_valid_opencl <- function(
 
 # cpp_options must be a list
 assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_chains = FALSE) {
-
-  fallback <- is.null(exe_info)
+  fallback <- length(exe_info) == 0 
   if(fallback) exe_info <- fallback_exe_info
   # If we're unsure if this info is accurate, we shouldn't stop the user from attempting on that basis
   # the user should have been warned about this in initialize(), so no need to re-warn here.
@@ -189,7 +188,7 @@ assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_
       "or equivalent, but '", threads_arg, "' was not set!",
       call. = FALSE
     )
-  } else if (!is.null(threads)) {
+  } else if (!exe_info[["stan_threads"]] && !is.null(threads)) {
     warning(
       "'", threads_arg, "' is set but the model was not compiled with ",
       "'cpp_options = list(stan_threads = TRUE)' or equivalent ",
@@ -218,20 +217,18 @@ validate_precompile_cpp_options <- function(cpp_options) {
   )
   for (flag in flags_set_if_defined)   {
     if (isFALSE(cpp_options[[flag]])) warning(
-      flag, " set to ", cpp_options[flag], " Since this is a non-empty value, ",
+      toupper(flag), " set to ", cpp_options[flag], " Since this is a non-empty value, ",
       "it will result in the corresponding ccp option being turned ON. To turn this",
-      " option off, use cpp_options = list(", tolower(flag), " = NULL)."
+      " option off, use cpp_options = list(", flag, " = NULL)."
     )
   }
   cpp_options
 }
 
-
 # For two functions below
 # both styles are lists which should have flag names in lower case as names of the list
 # cpp_options style means is NULL or empty string
 # exe_info style means off is FALSE
-
 exe_info_style_cpp_options <- function(cpp_options) {
   if(is.null(cpp_options)) cpp_options <- list()
   names(cpp_options) <- tolower(names(cpp_options))

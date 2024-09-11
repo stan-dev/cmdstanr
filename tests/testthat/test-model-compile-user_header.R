@@ -2,7 +2,11 @@ skip_if(os_is_macos())
 
 file_that_exists <- "placeholder_exists"
 file_that_doesnt_exist <- "placeholder_doesnt_exist"
-withr::local_file(file_that_exists)
+file.create(file_that_exists)
+withr::defer(
+  if (file.exists(file_that_exists)) file.remove(file_that_exists),
+  teardown_env()
+)
 
 w_path <- function(f) {
   x <- sapply(f, function(fi) wsl_safe_path(absolute_path(fi)))
@@ -42,10 +46,15 @@ test_that("cmdstan_model works with user_header with mock", {
     compile_ret = list(status = 0),
     info_ret = list(),
     code = expect_mock_compile(
-      mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
-        exe_file = file_that_exists,
-        user_header = tmpfile
+      expect_warning(
+        expect_no_warning({
+          mod <- cmdstan_model(
+            stan_file = testing_stan_file("bernoulli_external"),
+            exe_file = file_that_exists,
+            user_header = tmpfile
+          )
+        }, message = 'Recompiling is recommended'), # this warning should not occur because recompile happens automatically
+        'Retrieving exe_file info failed' # this warning should occur
       )
     )
   )
@@ -67,7 +76,7 @@ test_that("cmdstan_model works with user_header with mock", {
   file.create(file_that_exists)
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(),
+    info_ret = list(status = 0, stdout = ""),
     code = expect_no_mock_compile({
       mod$compile(quiet = TRUE, user_header = tmpfile)
     })
@@ -76,7 +85,7 @@ test_that("cmdstan_model works with user_header with mock", {
   Sys.setFileTime(tmpfile, Sys.time() + 1) # touch file to trigger recompile
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(),
+    info_ret = list(status = 0, stdout = ""),
     code = expect_mock_compile({
       mod$compile(quiet = TRUE, user_header = tmpfile)
     })

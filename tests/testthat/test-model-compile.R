@@ -21,7 +21,6 @@ test_that("object initialized correctly", {
     fixed = TRUE
   )
 })
-
 test_that("error if no compile() before model fitting", {
   expect_error(
     mod$sample(),
@@ -88,9 +87,6 @@ test_that("compile() method overwrites binaries", {
   expect_gt(file.mtime(mod$exe_file()), old_time)
 })
 
-
-# Test with Side Effect -----
-
 test_that("compilation works with include_paths", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
   exe <- cmdstan_ext(strip_ext(stan_program_w_include))
@@ -120,8 +116,6 @@ test_that("compilation works with include_paths", {
     cmdstan_ext(strip_ext(absolute_path(stan_program_w_include)))
   )
 })
-
-
 
 test_that("name in STANCFLAGS is set correctly", {
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))

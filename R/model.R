@@ -275,7 +275,7 @@ CmdStanModel <- R6::R6Class(
       if (!is.null(stan_file) && compile) {
         self$compile(...)
       } else {
-        # set exe path, same logic as in compile9)
+        # set exe path, same logic as in compile
         if(!is.null(private$dir_)){
           dir <- repair_path(absolute_path(private$dir_))
           assert_dir_exists(dir, access = "rw")
@@ -297,13 +297,8 @@ CmdStanModel <- R6::R6Class(
 
         # exe_info is updated inside the compile method (if compile command is run)
         exe_info <- self$exe_info(update = TRUE)
+        if(file.exists(self$exe_file())) exe_info_reflects_cpp_options(self$exe_info(), args$cpp_options)
       }
-
-      # for now, set this based on current version
-      # at initialize so its never null
-      # in the future, will be set only if/when we have a binary
-      # as the version the model was compiled with
-      private$cmdstan_version_ <- cmdstan_version()
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
         private$cpp_options_ <- model_compile_info_legacy(self$exe_file(), self$cmdstan_version())
       }
@@ -366,6 +361,10 @@ CmdStanModel <- R6::R6Class(
         # cmdstan version < "2.26.1"
 
         cli_info_success <- !is.null(ret$status) && ret$status == 0
+        if(!cli_info_success) warning(
+          'Retrieving exe_file info failed. ',
+          'This may be due to running a model that was compiled with pre-2.26.1 cmdstan.'
+        )
         exe_info <- if (cli_info_success) parse_exe_info_string(ret$stdout) else list()
         cpp_options <- exe_info_style_cpp_options(private$precompile_cpp_options_)
         compiled_with_cpp_options <- !is.null(private$cmdstan_version_)
@@ -377,7 +376,7 @@ CmdStanModel <- R6::R6Class(
             # info cli as source of truth
             exe_info,
             # use cpp_options for options not provided in info
-            cpp_options[names(cpp_options) %in% names(exe_info)]
+            cpp_options[!names(cpp_options) %in% names(exe_info)]
           )
         } else if (cli_info_success) {
           # no compile/recompile has occurred, we only trust info cli
@@ -385,11 +384,7 @@ CmdStanModel <- R6::R6Class(
           exe_info
         } else {
           # info cli failure + no compile/recompile has occurred
-          warning(
-            'Retrieving exe_file info failed. Recompiling is recommended. ',
-            'This may be due to running a model that was compiled with pre-2.26.1 cmdstan.'
-          )
-          NULL
+          list()
         }
       }
       private$exe_info_
@@ -404,7 +399,7 @@ CmdStanModel <- R6::R6Class(
       )
     },
     cmdstan_version = function(fallback = TRUE) {
-      # this is intentionally not self$cmdstan_version_
+      # this is intentionally not private$cmdstan_version_
       # because that value is only set if model has been recomplied
       # since CmdStanModel instantiation
       if (!fallback) self$exe_info()[['stan_version']]
@@ -643,6 +638,7 @@ compile <- function(quiet = TRUE,
     private$using_user_header_ <- TRUE
   }
 
+
   if (!is.null(cpp_options[["user_header"]])) {
     # Transform back to non-wsl version to check for existance
     # this is needed for WSv1
@@ -665,6 +661,9 @@ compile <- function(quiet = TRUE,
   # - the executable does not exist
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
+  self$exe_file(exe)
+  self$exe_info(update = TRUE)
+
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
@@ -674,20 +673,20 @@ compile <- function(quiet = TRUE,
              && file.exists(user_header)
              && file.mtime(exe) < file.mtime(user_header)) {
     force_recompile <- TRUE
+  } else if (!isTRUE(exe_info_reflects_cpp_options(self$exe_info(), cpp_options))) {
+    force_recompile <- TRUE
   }
 
-  if ((!force_recompile) && rlang::is_interactive()) {
+  if (!force_recompile && rlang::is_interactive()) {
     message("Model executable is up to date!")
   }
   
-  if ((!force_recompile)) {
+  if (!force_recompile) {
     private$cpp_options_ <- cpp_options
     private$precompile_cpp_options_ <- cpp_options
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
     self$functions$existing_exe <- TRUE
-    self$exe_file(exe)
-    self$exe_info(update = TRUE)
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
@@ -743,7 +742,6 @@ compile <- function(quiet = TRUE,
   self$functions$existing_exe <- FALSE
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
-
   if (!dry_run) {
 
     if (compile_standalone) {
