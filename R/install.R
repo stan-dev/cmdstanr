@@ -204,7 +204,8 @@ install_cmdstan <- function(dir = NULL,
     untar_rc <- utils::untar(
       dest_file,
       exdir = dir_cmdstan,
-      extras = "--strip-components 1"
+      extras = "--strip-components 1",
+      tar = if (os_is_windows()) "tar.exe" else Sys.getenv("TAR")
     )
     if (untar_rc != 0) {
       stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
