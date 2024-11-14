@@ -203,8 +203,7 @@ install_cmdstan <- function(dir = NULL,
   } else {
     untar_rc <- utils::untar(
       dest_file,
-      exdir = dir_cmdstan,
-      extras = "--strip-components 1"
+      exdir = dir
     )
     if (untar_rc != 0) {
       stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
