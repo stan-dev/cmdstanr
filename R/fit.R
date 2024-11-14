@@ -1616,6 +1616,9 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #' }
 #'
 sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
+  if (isTRUE(private$metadata_$algorithm == "fixed_param")) {
+    stop("There are no sampler diagnostics when fixed_param = TRUE.", call. = FALSE)
+  }
   if (is.null(private$sampler_diagnostics_) &&
       !length(self$output_files(include_failed = FALSE))) {
     stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.", call. = FALSE)

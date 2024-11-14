@@ -19,6 +19,12 @@ fit_mcmc_3 <- testing_fit("logistic", method = "sample",
                           iter_sampling = 0,
                           save_warmup = 1,
                           refresh = 0, metric = "dense_e")
+fit_mcmc_fixed_param <- testing_fit("logistic", method = "sample",
+                                    seed = 1234, chains = 1,
+                                    iter_warmup = 100,
+                                    iter_sampling = 0,
+                                    save_warmup = 1,
+                                    refresh = 0, fixed_param = TRUE)
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
 test_that("draws() stops for unkown variables", {
@@ -398,4 +404,11 @@ test_that("metadata()$time has chains rowss", {
   expect_equal(nrow(fit_mcmc_1$metadata()$time), fit_mcmc_1$num_chains())
   expect_equal(nrow(fit_mcmc_2$metadata()$time), fit_mcmc_2$num_chains())
   expect_equal(nrow(fit_mcmc_3$metadata()$time), fit_mcmc_3$num_chains())
+})
+
+test_that("sampler_diagnostics() throws informative error when fixed_param=TRUE", {
+  expect_error(
+    fit_mcmc_fixed_param$sampler_diagnostics(),
+    "There are no sampler diagnostics when fixed_param = TRUE"
+  )
 })
