@@ -234,8 +234,16 @@ unset_cmdstan_path <- function() {
 }
 
 # fake a cmdstan version (only used in tests)
-fake_cmdstan_version <- function(version) {
+fake_cmdstan_version <- function(version, mod=NULL) {
   .cmdstanr$VERSION <- version
+  if(!is.null(mod)) {
+    if (!is.null(mod$.__enclos_env__$private$exe_info_)) {
+      mod$.__enclos_env__$private$exe_info_$stan_version <- version
+    }
+    if (!is.null(mod$.__enclos_env__$private$cmdstan_version_)) {
+      mod$.__enclos_env__$private$cmdstan_version_ <- version
+    }
+  }
 }
 reset_cmdstan_version <- function() {
   .cmdstanr$VERSION <- read_cmdstan_version(cmdstan_path())
