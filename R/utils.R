@@ -92,11 +92,8 @@ arch_is_aarch64 <- function() {
 }
 
 # Returns the type of make command to use to compile depending on the OS
-# First checks if $MAKE is set, otherwise falls back to system-specific default
 make_cmd <- function() {
-  if (Sys.getenv("MAKE") != "") {
-    Sys.getenv("MAKE")
-  } else if ((cmdstan_version() < "2.35.0") && os_is_windows() && !os_is_wsl() &&
+  if ((cmdstan_version() < "2.35.0") && os_is_windows() && !os_is_wsl() &&
       (Sys.getenv("CMDSTANR_USE_RTOOLS") == "")) {
     "mingw32-make.exe"
   } else {
