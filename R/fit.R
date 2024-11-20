@@ -108,6 +108,10 @@ CmdStanFit <- R6::R6Class(
 #'   read into R lazily (i.e., as needed), the `$save_object()` method is the
 #'   safest way to guarantee that everything has been read in before saving.
 #'
+#'   See the "Saving fitted model objects" section of the
+#'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
+#'   vignette for some suggestions on faster model saving for large models.
+#'
 #' @param file (string) Path where the file should be saved.
 #' @param ... Other arguments to pass to [base::saveRDS()] besides `object` and `file`.
 #'
