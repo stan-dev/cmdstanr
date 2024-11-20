@@ -128,8 +128,9 @@ repair_path <- function(path) {
   }
   path <- path.expand(path)
   path <- gsub("\\\\", "/", path)
-  # WSL cmdstan path is a network path and needs the leading //
-  path <- gsub("//(?!wsl)", "/", path, perl = TRUE)
+  # Network paths (such as the cmdstan path on WSL) need the leading //
+  # https://github.com/stan-dev/cmdstanr/issues/1026
+  path <- gsub("(?<!^)//", "/", path, perl = TRUE)
   # remove trailing "/"
   path <- gsub("/$","", path)
   path

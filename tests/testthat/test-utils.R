@@ -143,6 +143,8 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
 test_that("repair_path() fixes slashes", {
   # all slashes should be single "/", and no trailing slash
   expect_equal(repair_path("a//b\\c/"), "a/b/c")
+  # but leading double slash is needed for UNC paths on  (e.g. the cmdstan path on WSL)
+  expect_equal(repair_path("\\\\wsl//my-project//"), "//wsl/my-project")
 })
 
 test_that("repair_path works with zero length path or non-string path", {
