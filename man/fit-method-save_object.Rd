@@ -18,6 +18,10 @@ that all posterior draws and diagnostics are saved when saving a fitted
 model object. Because the contents of the CmdStan output CSV files are only
 read into R lazily (i.e., as needed), the \verb{$save_object()} method is the
 safest way to guarantee that everything has been read in before saving.
+
+See the "Saving fitted model objects" sections of the
+\href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
+vignette for some suggestions on faster model saving for large models.
 }
 \examples{
 \dontrun{
