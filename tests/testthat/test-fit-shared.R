@@ -462,7 +462,7 @@ test_that("sampling with inits works with include_paths", {
                                  include_paths = test_path("resources", "stan"))
 
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
-  expect_no_error(
+  expect_no_error(utils::capture.output(
     fit <- mod_w_include$sample(
       data = data_list,
       seed = 123,
@@ -474,7 +474,7 @@ test_that("sampling with inits works with include_paths", {
                   list(theta = 0.25),
                   list(theta = 0.25))
     )
-  )
+  ))
 })
 
 test_that("CmdStanModel created with exe_file works", {

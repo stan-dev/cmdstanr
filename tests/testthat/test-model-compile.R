@@ -837,7 +837,7 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
 
   mod_tmp <- cmdstan_model(stan_file, compile = FALSE)
   expect_true(mod_tmp$check_syntax())
-  expect_true(mod_tmp$format())
+  utils::capture.output(expect_true(mod_tmp$format()))
   expect_s3_class(mod_tmp$compile(), "CmdStanModel")
 })
 

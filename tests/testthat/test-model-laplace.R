@@ -36,7 +36,9 @@ test_that("laplace() method errors for any invalid argument before calling cmdst
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
-    expect_error(do.call(mod$laplace, args), regexp = nm, info = nm)
+    utils::capture.output(
+      expect_error(do.call(mod$laplace, args), regexp = nm, info = nm)
+    )
   }
   args <- ok_arg_values
   args$opt_args <- list(iter = "NOT_A_NUMBER")
@@ -129,14 +131,15 @@ test_that("laplace() errors with bad combinations of arguments", {
 
 test_that("laplace() errors if optimize() fails", {
   mod_schools <- testing_model("schools")
-  expect_error(
-    expect_warning(
-      expect_message(
-        mod_schools$laplace(data = testing_data("schools"), refresh = 0),
-        "Line search failed to achieve a sufficient decrease"
+  utils::capture.output(
+    expect_error(
+      expect_warning(
+        expect_message(
+          mod_schools$laplace(data = testing_data("schools"), refresh = 0),
+          "Line search failed to achieve a sufficient decrease"
+        ),
+        "Fitting finished unexpectedly"
       ),
-      "Fitting finished unexpectedly"
-    ),
-    "Optimization failed"
-  )
+      "Optimization failed"
+    ))
 })

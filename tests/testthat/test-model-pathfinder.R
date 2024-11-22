@@ -11,7 +11,7 @@ data_list <- testing_data("bernoulli")
 data_file_r <- test_path("resources", "data", "bernoulli.data.R")
 data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 
-# these are all valid for sample()
+# these are all valid for pathfinder()
 ok_arg_values <- list(
   data = data_list,
   output_dir = tempdir(),
@@ -32,9 +32,10 @@ ok_arg_values <- list(
   max_lbfgs_iters = 100,
   save_single_paths = FALSE,
   calculate_lp = TRUE,
-  psis_resample=TRUE)
+  psis_resample=TRUE
+)
 
-# using any one of these should cause sample() to error
+# using any one of these should cause pathfinder() to error
 bad_arg_values <- list(
   data = "NOT_A_FILE",
   output_dir = "NOT_A_DIRECTORY",

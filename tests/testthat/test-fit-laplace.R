@@ -1,4 +1,4 @@
-context("fitted-vb")
+context("fitted-laplace")
 
 set_cmdstan_path()
 fit_laplace <- testing_fit("logistic", method = "laplace", seed = 100)
