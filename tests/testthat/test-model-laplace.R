@@ -63,10 +63,12 @@ test_that("laplace() runs when all arguments specified validly", {
 })
 
 test_that("laplace() all valid 'mode' inputs give same results", {
-  mode <- mod$optimize(data = data_list, jacobian = TRUE, seed = 100, refresh = 0)
-  fit1 <- mod$laplace(data = data_list, mode = mode, seed = 100, refresh = 0)
-  fit2 <- mod$laplace(data = data_list, mode = mode$output_files(), seed = 100, refresh = 0)
-  fit3 <- mod$laplace(data = data_list, mode = NULL, seed = 100, refresh = 0)
+  utils::capture.output({
+    mode <- mod$optimize(data = data_list, jacobian = TRUE, seed = 100, refresh = 0)
+    fit1 <- mod$laplace(data = data_list, mode = mode, seed = 100, refresh = 0)
+    fit2 <- mod$laplace(data = data_list, mode = mode$output_files(), seed = 100, refresh = 0)
+    fit3 <- mod$laplace(data = data_list, mode = NULL, seed = 100, refresh = 0)
+  })
 
   expect_is(fit1, "CmdStanLaplace")
   expect_is(fit2, "CmdStanLaplace")
@@ -85,17 +87,22 @@ test_that("laplace() all valid 'mode' inputs give same results", {
 })
 
 test_that("laplace() allows choosing number of draws", {
-  fit <- mod$laplace(data = data_list, draws = 10, refresh = 0)
+  utils::capture.output({
+    fit <- mod$laplace(data = data_list, draws = 10, refresh = 0)
+    fit2 <- mod$laplace(data = data_list, draws = 100, refresh = 0)
+  })
+
   expect_equal(fit$metadata()$draws, 10)
   expect_equal(posterior::ndraws(fit$draws()), 10)
 
-  fit2 <- mod$laplace(data = data_list, draws = 100, refresh = 0)
   expect_equal(fit2$metadata()$draws, 100)
   expect_equal(posterior::ndraws(fit2$draws()), 100)
 })
 
 test_that("laplace() errors if jacobian arg doesn't match what optimize used", {
-  fit <- mod$optimize(data = data_list, jacobian = FALSE, refresh = 0)
+  utils::capture.output(
+    fit <- mod$optimize(data = data_list, jacobian = FALSE, refresh = 0)
+  )
   expect_error(
     mod$laplace(data = data_list, mode = fit, jacobian = TRUE),
     "'jacobian' argument to optimize and laplace must match"
@@ -107,7 +114,9 @@ test_that("laplace() errors if jacobian arg doesn't match what optimize used", {
 })
 
 test_that("laplace() errors with bad combinations of arguments", {
-  fit <- mod$optimize(data = data_list, jacobian = TRUE, refresh = 0)
+  utils::capture.output(
+    fit <- mod$optimize(data = data_list, jacobian = TRUE, refresh = 0)
+  )
   expect_error(
     mod$laplace(data = data_list, mode = mod, opt_args = list(iter = 10)),
     "Cannot specify both 'opt_args' and 'mode' arguments."

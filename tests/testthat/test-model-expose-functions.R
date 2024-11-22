@@ -80,11 +80,13 @@ stan_prog <- paste(function_decl,
 model <- write_stan_file(stan_prog)
 data_list <- testing_data("bernoulli")
 mod <- cmdstan_model(model, force_recompile = TRUE)
-fit <- mod$sample(data = data_list)
+utils::capture.output(
+  fit <- mod$sample(data = data_list)
+)
 
 
 test_that("Functions can be exposed in model object", {
-  expect_no_error(mod$expose_functions(verbose = TRUE))
+  expect_no_error(mod$expose_functions())
 })
 
 
@@ -260,7 +262,7 @@ test_that("Functions handle complex types correctly", {
 })
 
 test_that("Functions can be exposed in fit object", {
-  fit$expose_functions(verbose = TRUE)
+  fit$expose_functions()
 
   expect_equal(
     fit$functions$rtn_vec(c(1,2,3,4)),
@@ -284,7 +286,9 @@ test_that("Compiled functions can be copied to global environment", {
 
 test_that("Functions can be compiled with model", {
   mod <- cmdstan_model(model, force_recompile = TRUE, compile_standalone = TRUE)
-  fit <- mod$sample(data = data_list)
+  utils::capture.output(
+    fit <- mod$sample(data = data_list)
+  )
 
   expect_message(
     fit$expose_functions(),
@@ -344,9 +348,11 @@ test_that("rng functions can be exposed", {
   model <- write_stan_file(stan_prog)
   data_list <- testing_data("bernoulli")
   mod <- cmdstan_model(model, force_recompile = TRUE)
-  fit <- mod$sample(data = data_list)
+  utils::capture.output(
+    fit <- mod$sample(data = data_list)
+  )
 
-  fit$expose_functions(verbose = TRUE)
+  fit$expose_functions()
   set.seed(10)
   res1_1 <- fit$functions$wrap_normal_rng(5,10)
   res2_1 <- fit$functions$wrap_normal_rng(5,10)

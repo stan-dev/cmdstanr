@@ -303,10 +303,12 @@ test_that("Initial values for single-element containers treated correctly", {
   "
   mod <- cmdstan_model(write_stan_file(modcode), force_recompile = TRUE)
   expect_no_error(
-    fit <- mod$sample(
-      data = list(y_mean = 0),
-      init = list(list(y = c(0))),
-      chains = 1
+    utils::capture.output(
+      fit <- mod$sample(
+        data = list(y_mean = 0),
+        init = list(list(y = c(0))),
+        chains = 1
+      )
     )
   )
 })
@@ -331,7 +333,13 @@ test_that("Pathfinder inits do not drop dimensions", {
   "
   mod <- cmdstan_model(write_stan_file(modcode), force_recompile = TRUE)
   data <- list(N = 100, y = rnorm(100))
-  pf <- mod$pathfinder(data = data, psis_resample = FALSE)
-  expect_no_error(fit <- mod$sample(data = data, init = pf, chains = 1,
-                                    iter_warmup = 100, iter_sampling = 100))
+  utils::capture.output(
+    pf <- mod$pathfinder(data = data, psis_resample = FALSE)
+  )
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod$sample(data = data, init = pf, chains = 1,
+                        iter_warmup = 100, iter_sampling = 100)
+    )
+  )
 })

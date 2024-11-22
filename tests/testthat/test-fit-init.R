@@ -5,6 +5,7 @@ set_cmdstan_path()
 data_list_schools <- testing_data("schools")
 data_list_logistic <- testing_data("logistic")
 test_inits <- function(mod, fit_init, data_list = NULL) {
+ utils::capture.output({
   fit_sample <- mod$sample(data = data_list, chains = 1, init = fit_init,
     iter_sampling = 100, iter_warmup = 100, refresh = 0, seed = 1234)
   fit_sample_multi <- mod$sample(data = data_list, chains = 5, init = fit_init,
@@ -20,6 +21,7 @@ test_inits <- function(mod, fit_init, data_list = NULL) {
   draws = posterior::as_draws_rvars(fit_init$draws())
   fit_sample_draws <- mod$sample(data = data_list, chains = 1, init = draws,
     iter_sampling = 100, iter_warmup = 100, refresh = 0, seed = 1234)
+ })
   return(0)
 }
 
