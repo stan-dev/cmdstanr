@@ -2,19 +2,25 @@ context("model-compile")
 
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
+exe <- cmdstan_ext(strip_ext(stan_program))
+if (file.exists(exe)) file.remove(exe)
+
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
+
+make_local_orig <- cmdstan_make_local()
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
+on.exit(cmdstan_make_local(cpp_options = make_local_orig, append = FALSE), add = TRUE, after = FALSE)
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
-  expect_equal(mod$exe_file(), character(0))
+  expect_equal(mod$exe_file(), exe)
+  expect_false(file.exists(mod$exe_file()))
   expect_error(
     mod$hpp_file(),
     "The .hpp file does not exists. Please (re)compile the model.",
     fixed = TRUE
   )
 })
-
 test_that("error if no compile() before model fitting", {
   expect_error(
     mod$sample(),
@@ -25,7 +31,6 @@ test_that("error if no compile() before model fitting", {
 
 test_that("compile() method works", {
   # remove executable if exists
-  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
   if (file.exists(exe)) {
     file.remove(exe)
   }
@@ -381,7 +386,6 @@ test_that("check_syntax() works with pedantic=TRUE", {
     fixed = TRUE
   )
 })
-
 test_that("check_syntax() works with include_paths", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
@@ -391,14 +395,19 @@ test_that("check_syntax() works with include_paths", {
 
 })
 
+
+# Test Failing Due to Side effect -----
+
 test_that("check_syntax() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
   mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
-                                 include_paths = test_path("resources", "stan"))
+                                 include_paths = test_path("resources", "stan"),
+                                 force_recompile = TRUE)
   expect_true(mod_w_include$check_syntax())
 
 })
+
 
 test_that("check_syntax() works with pedantic=TRUE", {
   model_code <- "
@@ -496,7 +505,11 @@ test_that("cpp_options work with settings in make/local", {
 
   rebuild_cmdstan()
   mod <- cmdstan_model(stan_file = stan_program)
-  expect_null(mod$cpp_options()$STAN_THREADS)
+  expect_null(
+    expect_warning(mod$cpp_options()$stan_threads, "Use mod\\$exe_info()")
+  )
+  expect_false(mod$exe_info()$stan_threads)
+  expect_null(mod$precompile_cpp_options()$stan_threads)
 
   file.remove(mod$exe_file())
 
@@ -504,7 +517,10 @@ test_that("cpp_options work with settings in make/local", {
 
   file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   mod <- cmdstan_model(file)
-  expect_true(mod$cpp_options()$STAN_THREADS)
+  expect_true(
+    expect_warning(mod$cpp_options()$stan_threads, "Use mod\\$exe_info()")
+  )
+  expect_true(mod$exe_info()$stan_threads)
 
   file.remove(mod$exe_file())
 
@@ -761,7 +777,8 @@ test_that("format() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
   mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
-                                 include_paths = test_path("resources", "stan"))
+                                 include_paths = test_path("resources", "stan"),
+                                 force_recompile = TRUE)
   expect_output(
     mod_w_include$format(),
     "#include ",
@@ -789,6 +806,8 @@ test_that("overwrite_file works with format()", {
   }
   "
   stan_file_tmp <- write_stan_file(code)
+  on.exit(file.remove(stan_file_tmp))
+
   mod_1 <- cmdstan_model(stan_file_tmp, compile = FALSE)
   expect_false(
     any(

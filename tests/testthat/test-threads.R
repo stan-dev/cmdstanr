@@ -15,7 +15,7 @@ test_that("using threads_per_chain without stan_threads set in compile() warns",
       "Running MCMC with 4 sequential chains",
       fixed = TRUE
     ),
-    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent so 'threads_per_chain' will have no effect!",
     fixed = TRUE)
 })
 
@@ -24,7 +24,7 @@ test_that("threading works with sample()", {
 
   expect_error(
     mod$sample(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
 
@@ -57,7 +57,7 @@ test_that("threading works with optimize()", {
 
   expect_error(
     mod$optimize(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads' was not set!",
     fixed = TRUE
   )
 
@@ -91,7 +91,7 @@ test_that("threading works with variational()", {
 
   expect_error(
     mod$variational(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads' was not set!",
     fixed = TRUE
   )
 
@@ -130,7 +130,7 @@ test_that("threading works with generate_quantities()", {
   )
   expect_error(
     mod_gq$generate_quantities(fitted_params = f, data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
   expect_output(
@@ -158,23 +158,49 @@ test_that("threading works with generate_quantities()", {
   expect_equal(f_gq$metadata()$threads_per_chain, 4)
 })
 
-test_that("correct output when stan_threads not TRUE", {
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE), force_recompile = TRUE)
+test_that("correct output when stan_threads unset", {
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = NULL), force_recompile = TRUE)
   expect_output(
     mod$sample(data = data_file_json),
     "Running MCMC with 4 sequential chains",
     fixed = TRUE
   )
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = "dummy string"), force_recompile = TRUE)
-  expect_output(
+  expect_error(
     mod$sample(data = data_file_json),
-    "Running MCMC with 4 sequential chains",
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent, but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE), force_recompile = TRUE)
+
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = NULL), force_recompile = TRUE)
   expect_warning(
     mod$sample(data = data_file_json, threads_per_chain = 4),
-    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' or equivalent so 'threads_per_chain' will have no effect!",
+    fixed = TRUE
+  )
+
+  expect_warning(
+    cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE), force_recompile = TRUE),
+    "STAN_THREADS set to FALSE Since this is a non-empty value, it will result in the corresponding ccp option being turned ON. To turn this option off, use cpp_options = list(stan_threads = NULL).",
+    fixed = TRUE
+  )
+})
+
+test_that('correct output when stan threads set via make local',{
+  #TODO clean this up so no leftover changes to make local
+  file.copy(
+    file.path(cmdstan_path(), 'make', 'local'),
+    file.path(cmdstan_path(), 'make', 'local.save')
+  )
+  on.exit(file.rename(
+    file.path(cmdstan_path(), 'make', 'local.save'),
+    file.path(cmdstan_path(), 'make', 'local')
+  ), add = TRUE, after = FALSE)
+  cmdstan_make_local(cpp_options = list(stan_threads = TRUE))
+  mod <- cmdstan_model(stan_program, force_recompile = TRUE)
+  expect_output(
+    f <- mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
+    "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
     fixed = TRUE
   )
 })
