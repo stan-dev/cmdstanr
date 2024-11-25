@@ -786,6 +786,7 @@ read_csv_metadata <- function(csv_file) {
     }
   }
   if (csv_file_info$method != "diagnose" &&
+      !isTRUE(csv_file_info$algorithm == "fixed_param") &&
       length(csv_file_info$sampler_diagnostics) == 0 &&
       length(csv_file_info$variables) == 0) {
     stop("Supplied CSV file does not contain any variable names or data!", call. = FALSE)
