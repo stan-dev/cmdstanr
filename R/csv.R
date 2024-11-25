@@ -719,7 +719,7 @@ read_csv_metadata <- function(csv_file) {
         dense_inv_metric <- TRUE
       } else if (inv_metric_next) {
         inv_metric_split <- strsplit(gsub("# ", "", line), ",")
-        numeric_inv_metric_split <- rapply(inv_metric_split, as.numeric)
+        numeric_inv_metric_split <- suppressWarnings(rapply(inv_metric_split, as.numeric))
         if (inv_metric_rows == -1 && dense_inv_metric) {
           inv_metric_rows <- length(inv_metric_split[[1]])
           inv_metric_rows_to_read <- inv_metric_rows
