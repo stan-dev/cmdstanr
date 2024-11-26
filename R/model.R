@@ -1208,7 +1208,7 @@ sample <- function(data = NULL,
     }
   }
 
-  if (cmdstan_version() >= "2.27.0" && !fixed_param) {
+  if (cmdstan_version() >= "2.27.0" && cmdstan_version() < "2.36.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)

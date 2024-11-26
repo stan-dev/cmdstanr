@@ -307,7 +307,7 @@ test_that("seed works for multi chain sampling", {
   expect_false(all(chain_tdata_1 == chain_tdata_2))
 })
 
-test_that("fixed_param is set when the model has no parameters", {
+test_that("Correct behavior if fixed_param not set when the model has no parameters", {
   code <- "
   model {}
   generated quantities  {
@@ -316,10 +316,21 @@ test_that("fixed_param is set when the model has no parameters", {
   "
   stan_file <- write_stan_file(code)
   m <- cmdstan_model(stan_file)
+  fake_cmdstan_version("2.35.0")
   expect_error(
     m$sample(),
     "Model contains no parameters. Please use 'fixed_param = TRUE'."
   )
+
+  reset_cmdstan_version()
+  if (cmdstan_version() >= "2.36.0") {
+    # as of 2.36.0 we don't need fixed_param if no parameters
+    expect_no_error(
+      utils::capture.output(
+        fit <- m$sample(iter_warmup = 10, iter_sampling = 10, diagnostics = NULL)
+      )
+    )
+  }
 })
 
 test_that("sig_figs warning if version less than 2.25", {

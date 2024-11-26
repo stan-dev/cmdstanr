@@ -719,7 +719,7 @@ read_csv_metadata <- function(csv_file) {
         dense_inv_metric <- TRUE
       } else if (inv_metric_next) {
         inv_metric_split <- strsplit(gsub("# ", "", line), ",")
-        numeric_inv_metric_split <- rapply(inv_metric_split, as.numeric)
+        numeric_inv_metric_split <- suppressWarnings(rapply(inv_metric_split, as.numeric))
         if (inv_metric_rows == -1 && dense_inv_metric) {
           inv_metric_rows <- length(inv_metric_split[[1]])
           inv_metric_rows_to_read <- inv_metric_rows
@@ -786,6 +786,7 @@ read_csv_metadata <- function(csv_file) {
     }
   }
   if (csv_file_info$method != "diagnose" &&
+      !isTRUE(csv_file_info$algorithm == "fixed_param") &&
       length(csv_file_info$sampler_diagnostics) == 0 &&
       length(csv_file_info$variables) == 0) {
     stop("Supplied CSV file does not contain any variable names or data!", call. = FALSE)
