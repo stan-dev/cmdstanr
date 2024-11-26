@@ -110,7 +110,7 @@ test_that("$variables() errors on no stan_file", {
 })
 
 test_that("$variables() works with #includes, both pre and post compilation.", {
-  
+
   data_code <- "
     data {
       int N;

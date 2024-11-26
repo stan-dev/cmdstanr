@@ -454,23 +454,27 @@ test_that("draws are returned for model with spaces", {
 test_that("sampling with inits works with include_paths", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
   exe <- cmdstan_ext(strip_ext(stan_program_w_include))
-  if(file.exists(exe)) {
+  if (file.exists(exe)) {
     file.remove(exe)
   }
 
-    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = FALSE,
-                                   include_paths = test_path("resources", "stan"))
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include,
+                                 include_paths = test_path("resources", "stan"))
 
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
-
-  fit <- mod_w_include$sample(
-    data = data_list,
-    seed = 123,
-    chains = 4,
-    parallel_chains = 4,
-    refresh = 500,
-    init = list(list(theta = 0.25), list(theta = 0.25), list(theta = 0.25), list(theta = 0.25))
-  )
+  expect_no_error(utils::capture.output(
+    fit <- mod_w_include$sample(
+      data = data_list,
+      seed = 123,
+      chains = 4,
+      parallel_chains = 4,
+      refresh = 500,
+      init = list(list(theta = 0.25),
+                  list(theta = 0.25),
+                  list(theta = 0.25),
+                  list(theta = 0.25))
+    )
+  ))
 })
 
 test_that("CmdStanModel created with exe_file works", {
@@ -548,8 +552,12 @@ test_that("code() warns if model not created with Stan file", {
   stan_program <- testing_stan_file("bernoulli")
   mod <- testing_model("bernoulli")
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
-  fit_exe <- mod_exe$sample(data = list(N = 10, y = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1)),
-                            refresh = 0)
+  utils::capture.output(
+    fit_exe <- mod_exe$sample(
+      data = list(N = 10, y = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1)),
+      refresh = 0
+    )
+  )
   expect_warning(
     expect_null(fit_exe$code()),
     "'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file",

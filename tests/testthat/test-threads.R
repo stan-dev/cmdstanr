@@ -172,9 +172,13 @@ test_that("correct output when stan_threads not TRUE", {
     fixed = TRUE
   )
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE), force_recompile = TRUE)
-  expect_warning(
-    mod$sample(data = data_file_json, threads_per_chain = 4),
-    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+  expect_output(
+    expect_warning(
+      mod$sample(data = data_file_json, threads_per_chain = 4),
+      "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
+      fixed = TRUE
+    ),
+    "Running MCMC with 4 sequential chains",
     fixed = TRUE
   )
 })

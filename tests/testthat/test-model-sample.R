@@ -350,15 +350,17 @@ test_that("Errors are suppressed with show_exceptions", {
   "
   errmod <- cmdstan_model(write_stan_file(errmodcode), force_recompile = TRUE)
 
-  expect_message(
-    suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1)),
-    "Chain 1 Exception: vector[uni] assign: accessing element out of range",
-    fixed = TRUE
-  )
+  expect_sample_output(
+    expect_message(
+      suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1)),
+      "Chain 1 Exception: vector[uni] assign: accessing element out of range",
+      fixed = TRUE
+    ))
 
-  expect_no_message(
-    suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1, show_exceptions = FALSE))
-  )
+  expect_sample_output(
+    expect_no_message(
+      suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1, show_exceptions = FALSE))
+    ))
 })
 
 test_that("All output can be suppressed by show_messages", {
