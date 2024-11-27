@@ -179,9 +179,12 @@ test_that("gq chains error on wrong input CSV", {
   mod <- testing_model("bernoulli_ppc")
   data_list <- testing_data("bernoulli_ppc")
   suppressWarnings(
-    expect_message(
-      mod$generate_quantities(data = data_list, fitted_params = fit_logistic$output_files()),
-      "Mismatch between model and fitted_parameters csv"
+    expect_output(
+      expect_message(
+        mod$generate_quantities(data = data_list, fitted_params = fit_logistic$output_files()),
+        "Mismatch between model and fitted_parameters csv"
+      ),
+      "Running standalone generated quantities"
     )
   )
   expect_warning(
