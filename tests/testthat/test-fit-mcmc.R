@@ -276,6 +276,11 @@ test_that("loo method works if log_lik is available", {
   fit_bernoulli <- testing_fit("bernoulli_log_lik")
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(cores = 1, save_psis = TRUE)), "loo")
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = FALSE)), "loo")
+
+  expect_error(
+    fit_bernoulli$loo(variables = c("log_lik", "beta")),
+    "Only a single variable name is allowed"
+  )
 })
 
 test_that("loo method works with moment-matching", {

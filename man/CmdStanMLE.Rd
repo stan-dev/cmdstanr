@@ -6,6 +6,12 @@
 \description{
 A \code{CmdStanMLE} object is the fitted model object returned by the
 \code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object.
+The name "MLE" may be somewhat misleading because the \verb{$optimize()} method
+can compute either a penalized maximum likelihood estimate or a maximum a
+posteriori estimate, depending on the value of the \code{jacobian} argument when
+the model is fit. Additionally, for models without constrained parameters,
+the penalized MLE and the posterior mode are equivalent, as the Jacobian
+adjustment has no effect.
 }
 \section{Methods}{
  \code{CmdStanMLE} objects have the following associated methods,
@@ -13,7 +19,7 @@ all of which have their own (linked) documentation pages.
 \subsection{Extract contents of fitted model object}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{draws()}} \tab Return the point estimate as a 1-row \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
-   \code{\link[=fit-method-mle]{$mle()}} \tab Return the point estimate as a numeric vector. \cr
+   \code{\link[=fit-method-mode]{$mode()}} \tab Return the point estimate as a numeric vector. \cr
    \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}). \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr

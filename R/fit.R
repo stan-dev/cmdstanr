@@ -1497,10 +1497,10 @@ CmdStanMCMC <- R6::R6Class(
 #'   and the \pkg{loo} package [vignettes](https://mc-stan.org/loo/articles/)
 #'   for details.
 #'
-#' @param variables (character vector) The name(s) of the variable(s) in the
-#'   Stan program containing the pointwise log-likelihood. The default is to
-#'   look for `"log_lik"`. This argument is passed to the
-#'   [`$draws()`][fit-method-draws] method.
+#' @param variables (string) The name of the variable in the Stan program
+#'   containing the pointwise log-likelihood. The default is to look for
+#'   `"log_lik"`. This argument is passed to the [`$draws()`][fit-method-draws]
+#'   method.
 #' @param r_eff (multiple options) How to handle the `r_eff` argument for `loo()`:
 #'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
 #'   to compute the `r_eff` argument to pass to [loo::loo.array()].
@@ -1539,6 +1539,9 @@ CmdStanMCMC <- R6::R6Class(
 #'
 loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) {
   require_suggested_package("loo")
+  if (length(variables) != 1) {
+    stop("Only a single variable name is allowed for the 'variables' argument.", call. = FALSE)
+  }
   LLarray <- self$draws(variables, format = "draws_array")
   if (is.logical(r_eff)) {
     if (isTRUE(r_eff)) {
@@ -1805,6 +1808,12 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
+#'   The name "MLE" may be somewhat misleading because the `$optimize()` method
+#'   can compute either a penalized maximum likelihood estimate or a maximum a
+#'   posteriori estimate, depending on the value of the `jacobian` argument when
+#'   the model is fit. Additionally, for models without constrained parameters,
+#'   the penalized MLE and the posterior mode are equivalent, as the Jacobian
+#'   adjustment has no effect.
 #'
 #' @section Methods: `CmdStanMLE` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.
@@ -1814,7 +1823,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`draws()`][fit-method-draws]  |  Return the point estimate as a 1-row [`draws_matrix`][posterior::draws_matrix]. |
-#'  [`$mle()`][fit-method-mle]  |  Return the point estimate as a numeric vector. |
+#'  [`$mode()`][fit-method-mode]  |  Return the point estimate as a numeric vector. |
 #'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`). |
 #'  [`$init()`][fit-method-init]  |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
@@ -1874,17 +1883,23 @@ CmdStanMLE <- R6::R6Class(
   )
 )
 
-#' Extract (penalized) maximum likelihood estimate after optimization
+#' Extract point estimate after optimization
 #'
 #' @name fit-method-mle
 #' @aliases mle
-#' @description The `$mle()` method is only available for [`CmdStanMLE`] objects.
-#' It returns the penalized maximum likelihood estimate (posterior mode) as a
-#' numeric vector with one element per variable. The returned vector does *not*
-#' include `lp__`, the total log probability (`target`) accumulated in the
-#' model block of the Stan program, which is available via the
-#' [`$lp()`][fit-method-lp] method and also included in the
-#' [`$draws()`][fit-method-draws] method.
+#' @description The `$mle()` method is only available for [`CmdStanMLE`]
+#'   objects. It returns the point estimate as a numeric vector with one element
+#'   per variable. The returned vector does *not* include `lp__`, the total log
+#'   probability (`target`) accumulated in the model block of the Stan program,
+#'   which is available via the [`$lp()`][fit-method-lp] method and also
+#'   included in the [`$draws()`][fit-method-draws] method.
+#'
+#'   The name `mle` may be somewhat misleading because the `$optimize()` method
+#'   can compute either a penalized maximum likelihood estimate or a maximum a
+#'   posteriori estimate, depending on the value of the `jacobian` argument when
+#'   the model is fit. Additionally, for models without constrained parameters,
+#'   the penalized MLE and the posterior mode are equivalent, as the Jacobian
+#'   adjustment has no effect.
 #'
 #' @param variables (character vector) The variables (parameters, transformed
 #'   parameters, and generated quantities) to include. If NULL (the default)
@@ -1908,6 +1923,7 @@ mle <- function(variables = NULL) {
   stats::setNames(as.numeric(x), posterior::variables(x))
 }
 CmdStanMLE$set("public", name = "mle", value = mle)
+
 
 # CmdStanLaplace ---------------------------------------------------------------
 #' CmdStanLaplace objects

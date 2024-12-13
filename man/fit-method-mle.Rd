@@ -3,7 +3,7 @@
 \name{fit-method-mle}
 \alias{fit-method-mle}
 \alias{mle}
-\title{Extract (penalized) maximum likelihood estimate after optimization}
+\title{Extract point estimate after optimization}
 \usage{
 mle(variables = NULL)
 }
@@ -16,13 +16,19 @@ then all variables are included.}
 A numeric vector. See \strong{Examples}.
 }
 \description{
-The \verb{$mle()} method is only available for \code{\link{CmdStanMLE}} objects.
-It returns the penalized maximum likelihood estimate (posterior mode) as a
-numeric vector with one element per variable. The returned vector does \emph{not}
-include \code{lp__}, the total log probability (\code{target}) accumulated in the
-model block of the Stan program, which is available via the
-\code{\link[=fit-method-lp]{$lp()}} method and also included in the
-\code{\link[=fit-method-draws]{$draws()}} method.
+The \verb{$mle()} method is only available for \code{\link{CmdStanMLE}}
+objects. It returns the point estimate as a numeric vector with one element
+per variable. The returned vector does \emph{not} include \code{lp__}, the total log
+probability (\code{target}) accumulated in the model block of the Stan program,
+which is available via the \code{\link[=fit-method-lp]{$lp()}} method and also
+included in the \code{\link[=fit-method-draws]{$draws()}} method.
+
+The name \code{mle} may be somewhat misleading because the \verb{$optimize()} method
+can compute either a penalized maximum likelihood estimate or a maximum a
+posteriori estimate, depending on the value of the \code{jacobian} argument when
+the model is fit. Additionally, for models without constrained parameters,
+the penalized MLE and the posterior mode are equivalent, as the Jacobian
+adjustment has no effect.
 }
 \examples{
 \dontrun{
