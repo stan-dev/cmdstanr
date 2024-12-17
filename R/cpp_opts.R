@@ -19,7 +19,7 @@ run_info_cli <- function(exe_file) {
   ret
 }
 
-# new (future) parser
+# new parser
 # Parse the string output of <model> `info` into an R object (list)
 parse_exe_info_string <- function(ret_stdout) {
   info <- list()
