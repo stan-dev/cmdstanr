@@ -296,7 +296,7 @@ CmdStanModel <- R6::R6Class(
         }
 
         # exe_info is updated inside the compile method (if compile command is run)
-        exe_info <- self$exe_info(update = TRUE)
+        self$exe_info(update = TRUE)
         if(file.exists(self$exe_file())) exe_info_reflects_cpp_options(self$exe_info(), args$cpp_options)
       }
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
@@ -361,7 +361,7 @@ CmdStanModel <- R6::R6Class(
         # cmdstan version < "2.26.1"
 
         cli_info_success <- !is.null(ret$status) && ret$status == 0
-        exe_info <- if (cli_info_success) parse_exe_info_string(ret$stdout) else list()
+        info <- if (cli_info_success) parse_exe_info_string(ret$stdout) else list()
         cpp_options <- exe_info_style_cpp_options(private$precompile_cpp_options_)
         compiled_with_cpp_options <- !is.null(private$cmdstan_version_)
         
@@ -370,14 +370,14 @@ CmdStanModel <- R6::R6Class(
           # cpp_options as were used as configured
           c(
             # info cli as source of truth
-            exe_info,
+            info,
             # use cpp_options for options not provided in info
-            cpp_options[!names(cpp_options) %in% names(exe_info)]
+            cpp_options[!names(cpp_options) %in% names(info)]
           )
         } else if (cli_info_success) {
           # no compile/recompile has occurred, we only trust info cli
           # don't know if other cpp_options were applied, so skip them
-          exe_info
+          info
         } else {
           # info cli failure + no compile/recompile has occurred
           warning(
