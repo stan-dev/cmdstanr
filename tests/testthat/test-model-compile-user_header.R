@@ -7,27 +7,27 @@ on.exit(if(file.exists(file_that_exists)) file.remove(file_that_exists), add=TRU
 make_local_orig <- cmdstan_make_local()
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 on.exit(cmdstan_make_local(cpp_options = make_local_orig, append = FALSE), add = TRUE, after = FALSE)
+hpp <-
+"
+#include <stan/math.hpp>
+#include <boost/math/tools/promotion.hpp>
+#include <ostream>
+
+namespace bernoulli_external_model_namespace
+{
+    template <typename T0__,
+          stan::require_all_t<stan::is_stan_scalar<T0__>>* = nullptr>
+    inline typename boost::math::tools::promote_args<T0__>::type make_odds(const T0__ &
+                                                                                theta,
+                                                                            std::ostream *pstream__)
+    {
+        return theta / (1 - theta);
+    }
+}"
 
 test_that("cmdstan_model works with user_header with mock", {
   skip_if(os_is_macos())
   tmpfile <- tempfile(fileext = ".hpp")
-  hpp <-
-  "
-  #include <stan/math.hpp>
-  #include <boost/math/tools/promotion.hpp>
-  #include <ostream>
-
-  namespace bernoulli_external_model_namespace
-  {
-      template <typename T0__,
-            stan::require_all_t<stan::is_stan_scalar<T0__>>* = nullptr>
-      inline typename boost::math::tools::promote_args<T0__>::type make_odds(const T0__ &
-                                                                                 theta,
-                                                                             std::ostream *pstream__)
-      {
-          return theta / (1 - theta);
-      }
-  }"
   cat(hpp, file = tmpfile, sep = "\n")
 
   with_mocked_cli(compile_ret = list(status = 0), info_ret = list(), code = expect_mock_compile(
@@ -101,4 +101,46 @@ test_that("cmdstan_model works with user_header with mock", {
     ),
     "User header specified both"
   ))
+})
+
+test_that("user_header prescidence order is correct", {
+
+  tmp_files <- lapply(1:3, function(n) tempfile(fileext = ".hpp"))
+  lapply(tmp_files, function(filename) cat(hpp, file = filename, sep = "\n"))
+  on.exit(
+    {lapply(tmp_files, function(filename) file.remove(filename))},
+    add = TRUE
+  )
+
+  with_mocked_cli(compile_ret = list(status = 1), info_ret = list(), code = expect_warning(
+    {mod <- cmdstan_model(
+      stan_file = testing_stan_file("bernoulli_external"),
+      user_header = tmp_files[[1]],
+      cpp_options = list(USER_HEADER = tmp_files[[2]], user_header = tmp_files[[3]]),
+      dry_run = TRUE
+    )},
+    "User header specified both"
+  ))
+  expect_equal(mod$precompile_cpp_options()$user_header, tmp_files[[1]])
+
+  with_mocked_cli(compile_ret = list(status = 1), info_ret = list(), code = expect_warning(
+    {mod <- cmdstan_model(
+      stan_file = testing_stan_file("bernoulli_external"),
+      cpp_options = list(USER_HEADER = tmp_files[[2]], user_header = tmp_files[[3]]),
+      dry_run = TRUE
+    )},
+    "User header specified both"
+  ))
+  expect_equal(mod$precompile_cpp_options()$user_header, tmp_files[[2]])
+
+  with_mocked_cli(compile_ret = list(status = 1), info_ret = list(), code = expect_warning(
+    {mod <- cmdstan_model(
+      stan_file = testing_stan_file("bernoulli_external"),
+      cpp_options = list(user_header = tmp_files[[3]], USER_HEADER = tmp_files[[2]] ),
+      dry_run = TRUE
+    )},
+    "User header specified both"
+  ))
+  expect_equal(mod$precompile_cpp_options()$user_header, tmp_files[[3]])
+
 })
