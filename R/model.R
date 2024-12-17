@@ -231,11 +231,11 @@ CmdStanModel <- R6::R6Class(
     stanc_options_ = list(),
     include_paths_ = NULL,
     using_user_header_ = FALSE,
-    precompile_cpp_options_ = list(),
+    precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
     variables_ = NULL,
-    exe_info_ = list(),
+    exe_info_ = NULL,
     # intentionally only set at compile(), not initialize()
     cmdstan_version_ = NULL
   ),

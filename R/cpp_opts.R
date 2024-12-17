@@ -35,12 +35,7 @@ parse_exe_info_string <- function(ret_stdout) {
     }
   }
 
-  info[["stan_version"]] <- paste0(
-    info[["stan_version_major"]],
-    ".",
-    info[["stan_version_minor"]],
-    ".", info[["stan_version_patch"]]
-  )
+  info[["stan_version"]] <- paste0(info[["stan_version_major"]], ".", info[["stan_version_minor"]], ".", info[["stan_version_patch"]])
   info[["stan_version_major"]] <- NULL
   info[["stan_version_minor"]] <- NULL
   info[["stan_version_patch"]] <- NULL
@@ -74,13 +69,11 @@ model_compile_info_legacy <- function(exe_file, version) {
           if (!is.na(as.logical(val))) {
             val <- as.logical(val)
           }
-          info[[tolower(key_val[1])]] <- val
+          if (!is.logical(val) || isTRUE(val)) {
+            info[[tolower(key_val[1])]] <- val
+          }
         }
       }
-      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
-      info[["STAN_VERSION_MAJOR"]] <- NULL
-      info[["STAN_VERSION_MINOR"]] <- NULL
-      info[["STAN_VERSION_PATCH"]] <- NULL
     }
   }
   info
@@ -225,6 +218,7 @@ validate_precompile_cpp_options <- function(cpp_options) {
   cpp_options
 }
 
+
 # For two functions below
 # both styles are lists which should have flag names in lower case as names of the list
 # cpp_options style means is NULL or empty string
@@ -233,28 +227,25 @@ exe_info_style_cpp_options <- function(cpp_options) {
   if(is.null(cpp_options)) cpp_options <- list()
   names(cpp_options) <- tolower(names(cpp_options))
   flags_reported_in_exe_info <- c(
-    "stan_threads", "stan_mpi", "stan_opencl",
-    "stan_no_range_checks", "stan_cpp_optims"
+    "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks", "stan_cpp_optims"
   )
   for (flag in flags_reported_in_exe_info) {
-    cpp_options[[flag]] <- !(
-      is.null(cpp_options[[flag]]) || cpp_options[[flag]] == ""
-    )
+    cpp_options[[flag]] <- !(is.null(cpp_options[[flag]]) || cpp_options[[flag]] == '')
   }
   cpp_options
 }
 
 exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
-  if (length(exe_info) == 0) {
-    warning("Recompiling is recommended due to missing exe_info.")
+  if(length(exe_info) == 0) {
+    warning('Recompiling is recommended due to missing exe_info.')
     return(TRUE)
   }
-  if (is.null(cpp_options)) return(TRUE)
+  if(is.null(cpp_options)) return(TRUE)
 
   cpp_options <- exe_info_style_cpp_options(cpp_options)[tolower(names(cpp_options))]
   overlap <- names(cpp_options)[names(cpp_options) %in% names(exe_info)]
 
-  if (length(overlap) == 0) TRUE else all.equal(
+  if(length(overlap) == 0) TRUE else all.equal(
     exe_info[overlap],
     cpp_options[overlap]
   )
