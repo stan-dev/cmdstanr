@@ -404,7 +404,9 @@ CmdStanModel <- R6::R6Class(
       # this is intentionally not private$cmdstan_version_
       # because that value is only set if model has been recomplied
       # since CmdStanModel instantiation
-      if (!fallback) self$exe_info()[['stan_version']]
+      if (!fallback) {
+        return(self$exe_info()[['stan_version']])
+      }
       for (candidate in c(
         self$exe_info()[['stan_version']],
         self$exe_info_fallback()[['stan_version']]
