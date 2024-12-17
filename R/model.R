@@ -231,11 +231,11 @@ CmdStanModel <- R6::R6Class(
     stanc_options_ = list(),
     include_paths_ = NULL,
     using_user_header_ = FALSE,
-    precompile_cpp_options_ = list(),
+    precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
     variables_ = NULL,
-    exe_info_ = list(),
+    exe_info_ = NULL,
     # intentionally only set at compile(), not initialize()
     cmdstan_version_ = NULL
   ),
@@ -2414,6 +2414,7 @@ validate_precompile_cpp_options <- function(cpp_options) {
 }
 
 exe_info_style_cpp_options <- function(cpp_options) {
+  if(is.null(cpp_options)) cpp_options <- list()
   names(cpp_options) <- tolower(names(cpp_options))
   flags_reported_in_exe_info <- c(
     "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks", "stan_cpp_optims"
