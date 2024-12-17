@@ -2576,6 +2576,7 @@ run_info_cli <- function(exe_file) {
     ret <- wsl_compatible_run(
       command = wsl_safe_path(exe_file),
       args = "info",
+      echo = is_verbose_mode(),
       error_on_status = FALSE
     )
   )
