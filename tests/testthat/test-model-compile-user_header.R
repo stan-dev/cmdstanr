@@ -103,7 +103,7 @@ test_that("cmdstan_model works with user_header with mock", {
   ))
 })
 
-test_that("user_header prescidence order is correct", {
+test_that("user_header precedence order is correct", {
 
   tmp_files <- lapply(1:3, function(n) tempfile(fileext = ".hpp"))
   lapply(tmp_files, function(filename) cat(hpp, file = filename, sep = "\n"))
