@@ -297,7 +297,9 @@ CmdStanModel <- R6::R6Class(
 
         # exe_info is updated inside the compile method (if compile command is run)
         self$exe_info(update = TRUE)
-        if(file.exists(self$exe_file())) exe_info_reflects_cpp_options(self$exe_info(), args$cpp_options)
+        if(file.exists(self$exe_file())) {
+          exe_info_reflects_cpp_options(self$exe_info(), args$cpp_options)
+        }
       }
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
         private$cpp_options_ <- model_compile_info_legacy(self$exe_file(), self$cmdstan_version())
@@ -368,7 +370,10 @@ CmdStanModel <- R6::R6Class(
         info <- if (cli_info_success) parse_exe_info_string(ret$stdout) else list()
         cpp_options <- exe_info_style_cpp_options(private$precompile_cpp_options_)
         compiled_with_cpp_options <- !is.null(private$cmdstan_version_)
-        
+        if(!cli_info_success) warning(
+          'Retrieving exe_file info failed. ',
+          'This may be due to running a model that was compiled with pre-2.26.1 cmdstan.'
+        )
         private$exe_info_ <- if (compiled_with_cpp_options) {
           # recompile has occurred since the CmdStanModel was created
           # cpp_options as were used as configured
@@ -402,7 +407,9 @@ CmdStanModel <- R6::R6Class(
       # this is intentionally not private$cmdstan_version_
       # because that value is only set if model has been recomplied
       # since CmdStanModel instantiation
-      if (!fallback) self$exe_info()[['stan_version']]
+      if (!fallback) {
+        return(self$exe_info()[['stan_version']])
+      }
       for (candidate in c(
         self$exe_info()[['stan_version']],
         self$exe_info_fallback()[['stan_version']]
