@@ -1,4 +1,3 @@
-
 #' Create a new CmdStanModel object
 #'
 #' @description \if{html}{\figure{logo.png}{options: width=25}}
@@ -252,7 +251,7 @@ CmdStanModel <- R6::R6Class(
         private$stan_file_ <- absolute_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
-        private$precompile_cpp_options_ <- validate_precompile_cpp_options(args$cpp_options) %||% list()
+        private$precompile_cpp_options_ <- validate_cpp_options(args$cpp_options) %||% list()
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
         if (!is.null(args$user_header) || !is.null(args$cpp_options[["USER_HEADER"]]) ||
             !is.null(args$cpp_options[["user_header"]])) {
@@ -392,18 +391,20 @@ CmdStanModel <- R6::R6Class(
       # because that value is only set if model has been recomplied
       # since CmdStanModel instantiation
       if (!fallback) {
-        return(self$exe_info()[['stan_version']])
+        return(self$exe_info()[["stan_version"]])
       }
       for (candidate in c(
-        self$exe_info()[['stan_version']],
-        self$exe_info_fallback()[['stan_version']]
-      )) if (!is.null(candidate)) return (candidate)
+        self$exe_info()[["stan_version"]],
+        self$exe_info_fallback()[["stan_version"]]
+      )) if (!is.null(candidate)) return(candidate)
     },
     cpp_options = function() {
       warning(
-        'mod$cpp_options() will be deprecated in the next major version of cmdstanr. ',
-        'Use mod$exe_info() to see options from last compilation. ',
-        'Use mod$precompile_cpp_options() to see default options for next compilation.'
+        "mod$cpp_options() will be deprecated ",
+        "in the next major version of cmdstanr. ",
+        "Use mod$exe_info() to see options from last compilation. ",
+        "Use mod$precompile_cpp_options() ",
+        "to see default options for next compilation."
       )
       private$cpp_options_
     },
@@ -565,13 +566,16 @@ compile <- function(quiet = TRUE,
 
   if (!is.null(user_header) && (
     !is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])
-  )) warning("User header specified both via user_header argument and via cpp_options arguments")
+  )) warning(
+    "User header specified both via user_header argument ",
+    "and via cpp_options arguments"
+  )
 
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
   cpp_options_legacy <- cpp_options
-  cpp_options <- validate_precompile_cpp_options(cpp_options)
+  cpp_options <- validate_cpp_options(cpp_options)
 
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
@@ -810,7 +814,10 @@ compile <- function(quiet = TRUE,
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
   
-  # Must be run after private$cmdstan_version_, private$exe_file_, and private$precompiled_cpp_options_
+  # Must be run after
+  #  - private$cmdstan_version_
+  #  - private$exe_file_
+  #  - private$precompiled_cpp_options_
   # are all up to date
   self$exe_info(update=TRUE)
 
@@ -1340,7 +1347,11 @@ sample <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$exe_info(), self$exe_info_fallback()),
+    opencl_ids = assert_valid_opencl(
+      opencl_ids,
+      self$exe_info(),
+      self$exe_info_fallback()
+    ),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -1597,7 +1608,11 @@ optimize <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$exe_info(), self$exe_info_fallback())
+    threads_per_proc = assert_valid_threads(
+      threads,
+      self$exe_info(),
+      self$exe_info_fallback()
+    )
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1632,7 +1647,11 @@ optimize <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$exe_info(), self$exe_info_fallback()),
+    opencl_ids = assert_valid_opencl(
+      opencl_ids,
+      self$exe_info(),
+      self$exe_info_fallback()
+    ),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -1737,7 +1756,11 @@ laplace <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$exe_info(), self$exe_info_fallback())
+    threads_per_proc = assert_valid_threads(
+      threads,
+      self$exe_info(),
+      self$exe_info_fallback()
+    )
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1799,7 +1822,11 @@ laplace <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$exe_info(), self$exe_info_fallback()),
+    opencl_ids = assert_valid_opencl(
+      opencl_ids,
+      self$exe_info(),
+      self$exe_info_fallback()
+    ),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -1887,7 +1914,11 @@ variational <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$exe_info(), self$exe_info_fallback())
+    threads_per_proc = assert_valid_threads(
+      threads,
+      self$exe_info(),
+      self$exe_info_fallback()
+    )
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1922,7 +1953,11 @@ variational <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$exe_info(), self$exe_info_fallback()),
+    opencl_ids = assert_valid_opencl(
+      opencl_ids,
+      self$exe_info(),
+      self$exe_info_fallback()
+    ),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -2032,7 +2067,11 @@ pathfinder <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(num_threads, self$exe_info(), self$exe_info_fallback())
+    threads_per_proc = assert_valid_threads(
+      num_threads,
+      self$exe_info(),
+      self$exe_info_fallback()
+    )
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2072,7 +2111,11 @@ pathfinder <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$exe_info(), self$exe_info_fallback()),
+    opencl_ids = assert_valid_opencl(
+      opencl_ids,
+      self$exe_info(),
+      self$exe_info_fallback()
+    ),
     model_variables = model_variables,
     num_threads = num_threads,
     save_cmdstan_config = save_cmdstan_config
@@ -2169,7 +2212,12 @@ generate_quantities <- function(fitted_params,
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$exe_info(), self$exe_info_fallback(), multiple_chains = TRUE)
+    threads_per_proc = assert_valid_threads(
+      threads_per_chain,
+      self$exe_info(),
+      self$exe_info_fallback(),
+      multiple_chains = TRUE
+    )
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2190,7 +2238,11 @@ generate_quantities <- function(fitted_params,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$exe_info(), self$exe_info_fallback()),
+    opencl_ids = assert_valid_opencl(
+      opencl_ids,
+      self$exe_info(),
+      self$exe_info_fallback()
+    ),
     model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)
@@ -2407,7 +2459,9 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
 }
 
 is_variables_method_supported <- function(mod) {
-  cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
+  cmdstan_version() >= "2.27.0" &&
+    mod$has_stan_file() &&
+    file.exists(mod$stan_file())
 }
 
 resolve_exe_path <- function(

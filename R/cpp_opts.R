@@ -21,6 +21,7 @@ run_info_cli <- function(exe_file) {
 
 # new parser
 # Parse the string output of <model> `info` into an R object (list)
+
 parse_exe_info_string <- function(ret_stdout) {
   info <- list()
   info_raw <- strsplit(strsplit(ret_stdout, "\n")[[1]], "=")
@@ -35,7 +36,12 @@ parse_exe_info_string <- function(ret_stdout) {
     }
   }
 
-  info[["stan_version"]] <- paste0(info[["stan_version_major"]], ".", info[["stan_version_minor"]], ".", info[["stan_version_patch"]])
+  info[["stan_version"]] <- paste0(
+    info[["stan_version_major"]],
+    ".",
+    info[["stan_version_minor"]],
+    ".", info[["stan_version_patch"]]
+  )
   info[["stan_version_major"]] <- NULL
   info[["stan_version_minor"]] <- NULL
   info[["stan_version_patch"]] <- NULL
@@ -110,9 +116,10 @@ validate_cpp_options <- function(cpp_options) {
   ) {
     warning(
       "User header specified both via cpp_options[[\"USER_HEADER\"]] ",
-      "and cpp_options[[\"user_header\"]]. Please only specify your user header in one location",
+      "and cpp_options[[\"user_header\"]].",
       call. = FALSE
     )
+    cpp_options[["user_header"]] <- NULL
   }
 
   names(cpp_options) <- tolower(names(cpp_options))
@@ -141,18 +148,24 @@ validate_cpp_options <- function(cpp_options) {
 assert_valid_opencl <- function(
   opencl_ids,
   exe_info,
-  fallback_exe_info = list('stan_version' = '2.0.0', 'stan_opencl' = FALSE)
+  fallback_exe_info = list("stan_version" = "2.0.0", "stan_opencl" = FALSE)
 ) {
   if (is.null(opencl_ids)) return(invisible(opencl_ids))
-  
-  fallback <- length(exe_info) == 0 
-  if(fallback) exe_info <- fallback_exe_info
-  # If we're unsure if this info is accurate, we shouldn't stop the user from attempting on that basis
-  # the user should have been warned about this in initialize(), so no need to re-warn here.
-  if(fallback) stop <- warning
+
+  fallback <- length(exe_info) == 0
+  if (fallback) exe_info <- fallback_exe_info
+  # If we're unsure if this info is accurate,
+  # we shouldn't stop the user from attempting on that basis
+  # the user should have been warned about this in initialize(),
+  # so no need to re-warn here.
+  if (fallback) stop <- warning
 
   if (exe_info[['stan_version']] < "2.26.0") {
-    stop("Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer.", call. = FALSE)
+    stop(
+      "Runtime selection of OpenCL devices is only supported ",
+      "with CmdStan version 2.26 or newer.",
+      call. = FALSE
+    )
   }
 
   if (isFALSE(exe_info[["stan_opencl"]])) {
@@ -165,12 +178,19 @@ assert_valid_opencl <- function(
 }
 
 # cpp_options must be a list
-assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_chains = FALSE) {
-  fallback <- length(exe_info) == 0 
-  if(fallback) exe_info <- fallback_exe_info
-  # If we're unsure if this info is accurate, we shouldn't stop the user from attempting on that basis
-  # the user should have been warned about this in initialize(), so no need to re-warn here.
-  if(fallback) stop <- warning
+assert_valid_threads <- function(
+  threads,
+  exe_info,
+  fallback_exe_info,
+  multiple_chains = FALSE
+) {
+  fallback <- length(exe_info) == 0
+  if (fallback) exe_info <- fallback_exe_info
+  # If we're unsure if this info is accurate,
+  # we shouldn't stop the user from attempting on that basis
+  # the user should have been warned about this in initialize(),
+  # so no need to re-warn here.
+  if (fallback) stop <- warning
 
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
@@ -193,59 +213,39 @@ assert_valid_threads <- function(threads, exe_info, fallback_exe_info, multiple_
   invisible(threads)
 }
 
-validate_precompile_cpp_options <- function(cpp_options) {
-  if(is.null(cpp_options) || length(cpp_options) == 0) return(list())
-
-  if (!is.null(cpp_options[["user_header"]]) && !is.null(cpp_options[['USER_HEADER']])) {
-    warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
-    cpp_options[["user_header"]] <- NULL
-  }
-
-  names(cpp_options) <- tolower(names(cpp_options))
-  flags_set_if_defined <- c(
-    # cmdstan
-    "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks", "stan_cpp_optims",
-    # stan math
-   "integrated_opencl", "tbb_lib", "tbb_inc", "tbb_interface_new"
-  )
-  for (flag in flags_set_if_defined)   {
-    if (isFALSE(cpp_options[[flag]])) warning(
-      toupper(flag), " set to ", cpp_options[flag], " Since this is a non-empty value, ",
-      "it will result in the corresponding ccp option being turned ON. To turn this",
-      " option off, use cpp_options = list(", flag, " = NULL)."
-    )
-  }
-  cpp_options
-}
 
 
 # For two functions below
 # both styles are lists which should have flag names in lower case as names of the list
 # cpp_options style means is NULL or empty string
 # exe_info style means off is FALSE
+
 exe_info_style_cpp_options <- function(cpp_options) {
   if(is.null(cpp_options)) cpp_options <- list()
   names(cpp_options) <- tolower(names(cpp_options))
   flags_reported_in_exe_info <- c(
-    "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks", "stan_cpp_optims"
+    "stan_threads", "stan_mpi", "stan_opencl",
+    "stan_no_range_checks", "stan_cpp_optims"
   )
   for (flag in flags_reported_in_exe_info) {
-    cpp_options[[flag]] <- !(is.null(cpp_options[[flag]]) || cpp_options[[flag]] == '')
+    cpp_options[[flag]] <- !(
+      is.null(cpp_options[[flag]]) || cpp_options[[flag]] == ""
+    )
   }
   cpp_options
 }
 
 exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
-  if(length(exe_info) == 0) {
-    warning('Recompiling is recommended due to missing exe_info.')
+  if (length(exe_info) == 0) {
+    warning("Recompiling is recommended due to missing exe_info.")
     return(TRUE)
   }
-  if(is.null(cpp_options)) return(TRUE)
+  if (is.null(cpp_options)) return(TRUE)
 
   cpp_options <- exe_info_style_cpp_options(cpp_options)[tolower(names(cpp_options))]
   overlap <- names(cpp_options)[names(cpp_options) %in% names(exe_info)]
 
-  if(length(overlap) == 0) TRUE else all.equal(
+  if (length(overlap) == 0) TRUE else all.equal(
     exe_info[overlap],
     cpp_options[overlap]
   )

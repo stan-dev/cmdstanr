@@ -158,6 +158,10 @@ test_that("model from exe_file retains open_cl option", {
   mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE))
   mod_from_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_sample_output(
-    fit <- mod_from_exe$sample(data = testing_data("bernoulli"), opencl_ids = c(0, 0), chains = 1)
+    fit <- mod_from_exe$sample(
+      data = testing_data("bernoulli"),
+      opencl_ids = c(0, 0),
+      chains = 1
+    )
   )
 })

@@ -9,7 +9,11 @@ mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 
 make_local_orig <- cmdstan_make_local()
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
-on.exit(cmdstan_make_local(cpp_options = make_local_orig, append = FALSE), add = TRUE, after = FALSE)
+on.exit(
+  cmdstan_make_local(cpp_options = make_local_orig, append = FALSE),
+  add = TRUE,
+  after = FALSE
+)
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
@@ -21,6 +25,7 @@ test_that("object initialized correctly", {
     fixed = TRUE
   )
 })
+
 test_that("error if no compile() before model fitting", {
   expect_error(
     mod$sample(),
@@ -395,9 +400,6 @@ test_that("check_syntax() works with include_paths", {
 
 })
 
-
-# Test Failing Due to Side effect -----
-
 test_that("check_syntax() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
@@ -407,7 +409,6 @@ test_that("check_syntax() works with include_paths on compiled model", {
   expect_true(mod_w_include$check_syntax())
 
 })
-
 
 test_that("check_syntax() works with pedantic=TRUE", {
   model_code <- "

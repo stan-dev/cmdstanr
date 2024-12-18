@@ -53,8 +53,10 @@ test_that("cmdstan_model works with user_header with mock", {
             exe_file = file_that_exists,
             user_header = tmpfile
           )
-        }, message = 'Recompiling is recommended'), # this warning should not occur because recompile happens automatically
-        'Retrieving exe_file info failed' # this warning should occur
+        }, message = "Recompiling is recommended"),
+        # ^ this warning should not occur because recompile happens automatically
+        "Retrieving exe_file info failed"
+        # ^ this warning should occur
       )
     )
   )
