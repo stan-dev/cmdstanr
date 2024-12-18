@@ -101,7 +101,7 @@ expect_noninteractive_silent <- function(object) {
     expect_silent(object))
 }
 
-expect_equal_ignore_order <- function(object, expected, ...){
+expect_equal_ignore_order <- function(object, expected, ...) {
   object <- expected[sort(names(object))]
   expected <- expected[sort(names(expected))]
   expect_equal(object, expected, ...)
