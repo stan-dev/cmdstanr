@@ -275,25 +275,9 @@ CmdStanModel <- R6::R6Class(
       if (!is.null(stan_file) && compile) {
         self$compile(...)
       } else {
-        # set exe path, same logic as in compile
-        if(!is.null(private$dir_)){
-          dir <- repair_path(absolute_path(private$dir_))
-          assert_dir_exists(dir, access = "rw")
-          if (length(self$exe_file()) != 0) {
-            self$exe_file(file.path(dir, basename(self$exe_file())))
-          }
-        }
-        if (length(self$exe_file()) == 0) {
-          if (is.null(private$dir_)) {
-            exe_base <- self$stan_file()
-          } else {
-            exe_base <- file.path(private$dir_, basename(self$stan_file()))
-          }
-          self$exe_file(cmdstan_ext(strip_ext(exe_base)))
-          if (dir.exists(self$exe_file())) {
-            stop("There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.", call. = FALSE)
-          }
-        }
+        # resolve exe path with dir
+        exe <- resolve_exe_path(args$dir, private$dir_, self$exe_file(), self$stan_file())
+        self$exe_file(exe)
 
         # exe_info is updated inside the compile method (if compile command is run)
         self$exe_info(update = TRUE)
@@ -597,18 +581,6 @@ compile <- function(quiet = TRUE,
     include_paths <- private$precompile_include_paths_
   }
   private$include_paths_ <- include_paths
-  if (is.null(dir) && !is.null(private$dir_)) {
-    dir <- absolute_path(private$dir_)
-  } else if (!is.null(dir)) {
-    dir <- absolute_path(dir)
-  }
-  if (!is.null(dir)) {
-    dir <- repair_path(dir)
-    assert_dir_exists(dir, access = "rw")
-    if (length(self$exe_file()) != 0) {
-      private$exe_file_ <- file.path(dir, basename(self$exe_file()))
-    }
-  }
 
   # temporary deprecation warnings
   if (isTRUE(threads)) {
@@ -2437,6 +2409,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
 is_variables_method_supported <- function(mod) {
   cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
 }
+
 resolve_exe_path <- function(
   dir = NULL, private_dir = NULL, self_exe_file = NULL, self_stan_file = NULL
 ) {
