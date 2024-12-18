@@ -53,7 +53,10 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   )
 
   expect_call_compilation({
-    mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE))
+    mod_gq <- cmdstan_model(
+      testing_stan_file("bernoulli_ppc"),
+      cpp_options = list(stan_threads = TRUE)
+    )
   })
 
   expect_gq_output(
