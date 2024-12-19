@@ -353,9 +353,10 @@ CmdStanModel <- R6::R6Class(
         info <- if (cli_info_success) parse_exe_info_string(ret$stdout) else list()
         cpp_options <- exe_info_style_cpp_options(private$precompile_cpp_options_)
         compiled_with_cpp_options <- !is.null(private$cmdstan_version_)
-        if(!cli_info_success) warning(
-          'Retrieving exe_file info failed. ',
-          'This may be due to running a model that was compiled with pre-2.26.1 cmdstan.'
+        if (!cli_info_success) warning(
+          "Retrieving exe_file info failed. ",
+          "This may be due to running a model that was compiled ",
+          "with pre-2.26.1 cmdstan."
         )
         private$exe_info_ <- if (compiled_with_cpp_options) {
           # recompile has occurred since the CmdStanModel was created
