@@ -79,7 +79,7 @@ jobs:
         run: |
           brew install pocl
           # Set LDLIBS_OPENCL environment variable
-          echo "LDLIBS_OPENCL=\"-L'/opt/homebrew/opt/opencl-icd-loader/lib' -lOpenCL\"" >> $GITHUB_ENV
+          echo "LDLIBS_OPENCL=-L'/opt/homebrew/opt/opencl-icd-loader/lib' -lOpenCL" >> $GITHUB_ENV
         shell: bash
 
       - name: Install cmdstan
