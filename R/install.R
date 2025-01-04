@@ -103,6 +103,13 @@ install_cmdstan <- function(dir = NULL,
   } else {
     .cmdstanr$WSL <- FALSE
   }
+  if (os_is_windows() && !os_is_wsl() && version < "2.35.0") {
+    if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "") {
+      stop("CmdStan versions prior to 2.35.0 require additional toolchain configuration on Windows.\n",
+            "Please set the environment variable CMDSTANR_USE_MSYS_TOOLCHAIN to 'true' and \n",
+            "call `check_cmdstan_toolchain(fix = TRUE)` before installing CmdStan.", call. = FALSE)
+    }
+  }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
   }

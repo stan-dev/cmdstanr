@@ -98,7 +98,7 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.33.0/cmdstan-2.33.0.tar.gz",
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.33.0/cmdstan-2.35.0.tar.gz",
                       wsl = os_is_wsl()),
       "Compiling, linking C++ code",
       fixed = TRUE
@@ -110,7 +110,7 @@ test_that("install_cmdstan() works with version and release_url", {
     expect_message(
       expect_output(
         install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                        version = "2.33.0",
+                        version = "2.35.0",
                         # the URL is intentionally invalid to test that the version has higher priority
                         release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
                         wsl = os_is_wsl()),
@@ -254,10 +254,10 @@ test_that("Install from release file works", {
     dir <- tempdir(check = TRUE)
   }
 
-  destfile = file.path(dir, "cmdstan-2.33.1.tar.gz")
+  destfile = file.path(dir, "cmdstan-2.35.0.tar.gz")
 
   download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.33.1/cmdstan-2.33.1.tar.gz",
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz",
     destfile)
 
   expect_message(
