@@ -17,7 +17,7 @@ jobs:
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
     runs-on: windows-latest
 
-    name: windows-latest-WSLv1
+    name: windows-latest-WSL2
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -47,13 +47,12 @@ jobs:
       - uses: Vampire/setup-wsl@v4
         with:
             distribution: Ubuntu-22.04
-            use-cache: 'false'
+            wsl-version: 2
+            use-cache: 'true'
             set-as-default: 'true'
+
       - name: Install WSL Dependencies
         run: |
-          # Bugfix for current gzip (for unpacking apt packages) under WSLv1:
-          # https://github.com/microsoft/WSL/issues/8219#issuecomment-1110508016
-          echo -en '\x10' | sudo dd of=/usr/bin/gzip count=1 bs=1 conv=notrunc seek=$((0x189))
           sudo apt-get update
           sudo apt-get install -y build-essential libopenmpi-dev
         shell: wsl-bash {0}
