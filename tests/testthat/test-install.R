@@ -98,7 +98,7 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.33.0/cmdstan-2.35.0.tar.gz",
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz",
                       wsl = os_is_wsl()),
       "Compiling, linking C++ code",
       fixed = TRUE

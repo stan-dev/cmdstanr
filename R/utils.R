@@ -96,7 +96,7 @@ arch_is_aarch64 <- function() {
 make_cmd <- function() {
   if (Sys.getenv("MAKE") != "") {
     Sys.getenv("MAKE")
-  } else if (os_is_windows() && !os_is_wsl() && (rtools4x_version() < "44" || Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "")) {
+  } else if (os_is_windows() && !os_is_wsl() && (rtools4x_version() < "44" || Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "" || cmdstan_version() < "2.35.0")) {
     "mingw32-make.exe"
   } else {
     "make"

@@ -866,7 +866,7 @@ rtools4x_toolchain_path <- function() {
   if (arch_is_aarch64()) {
     toolchain <- "aarch64-w64-mingw32.static.posix"
   } else {
-    if (rtools4x_version() < "44" || Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "") {
+    if (rtools4x_version() < "44" || Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "" || cmdstan_version() < "2.35.0") {
       toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
     } else {
       toolchain <- "x86_64-w64-mingw32.static.posix"
