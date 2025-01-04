@@ -643,7 +643,8 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       call. = FALSE
     )
   }
-  if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
+  # No additional utilities/toolchains are needed with RTools44
+  if (rtools4x_version() >= "44" && Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "") {
     return(invisible(NULL))
   }
   if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
@@ -855,10 +856,11 @@ toolchain_PATH_env_var <- function() {
 }
 
 rtools4x_toolchain_path <- function() {
-  toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
-  if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
-    if (arch_is_aarch64()) {
-      toolchain <- "aarch64-w64-mingw32.static.posix"
+  if (arch_is_aarch64()) {
+    toolchain <- "aarch64-w64-mingw32.static.posix"
+  } else {
+    if (rtools4x_version() < "44" || Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "") {
+      toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
     } else {
       toolchain <- "x86_64-w64-mingw32.static.posix"
     }
