@@ -78,7 +78,8 @@ jobs:
         if: ${{ matrix.config.os == 'macOS-latest' }}
         run: |
           brew install pocl
-          # Set LDLIBS_OPENCL environment variable
+          # Set LDLIBS_OPENCL environment variable so that CPU OpenCL is found
+          # instead of Apple's GPU OpenCL - which does not support double precision
           echo "LDLIBS_OPENCL=-L'/opt/homebrew/opt/opencl-icd-loader/lib' -lOpenCL" >> $GITHUB_ENV
         shell: bash
 
