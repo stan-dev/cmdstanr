@@ -104,7 +104,9 @@ install_cmdstan <- function(dir = NULL,
     .cmdstanr$WSL <- FALSE
   }
   if (os_is_windows() && !os_is_wsl() && isTRUE(version < "2.35.0")) {
-    if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "") {
+    # RTools44 can be used unmodified with CmdStan 2.35+
+    # For new installs of older versions, users need to install mingw32-make and MSYS gcc
+    if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "" && rtools4x_version() == "44") {
       stop("CmdStan versions prior to 2.35.0 require additional toolchain configuration on Windows.\n",
             "Please set the environment variable CMDSTANR_USE_MSYS_TOOLCHAIN to 'true' and \n",
             "call `check_cmdstan_toolchain(fix = TRUE)` before installing CmdStan.", call. = FALSE)
