@@ -1,7 +1,7 @@
 context("cmdstanr_example")
 
 test_that("cmdstanr_example works", {
-  fit_mcmc <- cmdstanr_example("logistic", chains = 2)
+  fit_mcmc <- cmdstanr_example("logistic", chains = 2, force_recompile = TRUE)
   checkmate::expect_r6(fit_mcmc, "CmdStanMCMC")
   expect_equal(fit_mcmc$num_chains(), 2)
 
