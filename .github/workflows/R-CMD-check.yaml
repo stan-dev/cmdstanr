@@ -23,18 +23,19 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest, r: 'devel', rtools: ''}
-          - {os: macOS-latest, r: 'release', rtools: ''}
+          - {os: macOS-latest, r: 'devel', rtools: '', opencl: true}
+          - {os: macOS-latest, r: 'release', rtools: '', opencl: true}
           - {os: windows-latest, r: 'devel', rtools: '44'}
           - {os: windows-latest, r: 'release', rtools: '44'}
           - {os: windows-latest, r: 'oldrel', rtools: '43'}
-          - {os: ubuntu-latest, r: 'devel', rtools: ''}
-          - {os: ubuntu-latest, r: 'release', rtools: ''}
-          - {os: ubuntu-latest, r: 'oldrel', rtools: ''}
+          - {os: ubuntu-latest, r: 'devel', rtools: '', opencl: true}
+          - {os: ubuntu-latest, r: 'release', rtools: '', opencl: true}
+          - {os: ubuntu-latest, r: 'oldrel', rtools: '', opencl: true}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
+      CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
 
     steps:
       - name: cmdstan env vars
@@ -64,7 +65,23 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2.11.1
         with:
+          cache: "always"
           extra-packages: any::rcmdcheck, local::.
+
+      - name: Install POCL on Ubuntu Runners
+        if: ${{ matrix.config.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y ocl-icd-opencl-dev pocl-opencl-icd
+        shell: bash
+
+      - name: Install POCL on MacOS Runners
+        if: ${{ matrix.config.os == 'macOS-latest' }}
+        run: |
+          brew install pocl
+          # Set LDLIBS_OPENCL environment variable so that CPU OpenCL is found
+          # instead of Apple's GPU OpenCL - which does not support double precision
+          echo "LDLIBS_OPENCL=-L'/opt/homebrew/opt/opencl-icd-loader/lib' -lOpenCL" >> $GITHUB_ENV
+        shell: bash
 
       - name: Install cmdstan
         run: |

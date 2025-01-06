@@ -23,6 +23,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
+      CMDSTANR_OPENCL_TESTS: true
 
     steps:
       - name: cmdstan env vars
@@ -54,7 +55,7 @@ jobs:
       - name: Install WSL Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libopenmpi-dev
+          sudo apt-get install -y build-essential libopenmpi-dev ocl-icd-opencl-dev pocl-opencl-icd
         shell: wsl-bash {0}
 
       - name: Install cmdstan
