@@ -118,7 +118,19 @@ should typically be followed by calling \code{rebuild_cmdstan()}.
 
 The \code{check_cmdstan_toolchain()} function attempts to check for the required
 C++ toolchain. It is called internally by \code{install_cmdstan()} but can also
-be called directly by the user.
+be called directly by the user. On Windows only, calling the function with
+the \code{fix = TRUE} argument will attempt to install the necessary toolchain
+components if they are not found. For Windows users with RTools44 no additional
+toolchain configuration is required. For users with older versions of RTools,
+the function will install \code{mingw32-make} and \verb{g++} from MSYS using the
+RTools-provided \code{pacman} package manager. This can also be manually requested
+by setting the environment variable \code{CMDSTANR_USE_MSYS_TOOLCHAIN} to 'true'
+
+NOTE: When installing CmdStan on Windows with RTools44 and CmdStan versions
+prior to 2.35.0, the above additional toolchain configuration
+is still required. To enable this configuration, set the environment variable
+\code{CMDSTANR_USE_MSYS_TOOLCHAIN} to 'true' and call
+\code{check_cmdstan_toolchain(fix = TRUE)}.
 }
 \examples{
 \dontrun{

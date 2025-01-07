@@ -20,8 +20,19 @@
 #'
 #'   The `check_cmdstan_toolchain()` function attempts to check for the required
 #'   C++ toolchain. It is called internally by `install_cmdstan()` but can also
-#'   be called directly by the user.
+#'   be called directly by the user. On Windows only, calling the function with
+#'   the `fix = TRUE` argument will attempt to install the necessary toolchain
+#'   components if they are not found. For Windows users with RTools44 no additional
+#'   toolchain configuration is required. For users with older versions of RTools,
+#'   the function will install `mingw32-make` and `g++` from MSYS using the
+#'   RTools-provided `pacman` package manager. This can also be manually requested
+#'   by setting the environment variable `CMDSTANR_USE_MSYS_TOOLCHAIN` to 'true'
 #'
+#'   NOTE: When installing CmdStan on Windows with RTools44 and CmdStan versions
+#'   prior to 2.35.0, the above additional toolchain configuration
+#'   is still required. To enable this configuration, set the environment variable
+#'   `CMDSTANR_USE_MSYS_TOOLCHAIN` to 'true' and call
+#'   `check_cmdstan_toolchain(fix = TRUE)`.
 #'
 #' @export
 #' @param dir (string) The path to the directory in which to install CmdStan.
@@ -102,6 +113,15 @@ install_cmdstan <- function(dir = NULL,
     }
   } else {
     .cmdstanr$WSL <- FALSE
+  }
+  if (os_is_windows() && !os_is_wsl() && isTRUE(version < "2.35.0")) {
+    # RTools44 can be used unmodified with CmdStan 2.35+
+    # For new installs of older versions, users need to install mingw32-make and MSYS gcc
+    if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "" && rtools4x_version() == "44") {
+      stop("CmdStan versions prior to 2.35.0 require additional toolchain configuration on Windows.\n",
+            "Please set the environment variable CMDSTANR_USE_MSYS_TOOLCHAIN to 'true' and \n",
+            "call `check_cmdstan_toolchain(fix = TRUE)` before installing CmdStan.", call. = FALSE)
+    }
   }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
@@ -643,7 +663,8 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       call. = FALSE
     )
   }
-  if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
+  # No additional utilities/toolchains are needed with RTools44
+  if (rtools4x_version() >= "44" && Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "") {
     return(invisible(NULL))
   }
   if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
@@ -855,10 +876,12 @@ toolchain_PATH_env_var <- function() {
 }
 
 rtools4x_toolchain_path <- function() {
-  toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
-  if (Sys.getenv("CMDSTANR_USE_RTOOLS") != "") {
-    if (arch_is_aarch64()) {
-      toolchain <- "aarch64-w64-mingw32.static.posix"
+  if (arch_is_aarch64()) {
+    toolchain <- "aarch64-w64-mingw32.static.posix"
+  } else {
+    if (rtools4x_version() < "44" || Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "" ||
+        isTRUE(cmdstan_version(error_on_NA=FALSE) < "2.35.0")) {
+      toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
     } else {
       toolchain <- "x86_64-w64-mingw32.static.posix"
     }

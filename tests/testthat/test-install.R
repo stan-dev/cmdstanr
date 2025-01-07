@@ -1,6 +1,4 @@
 context("install")
-# Current tests need CmdStan 2.35 for stock rtools, but is not yet released
-skip_if(Sys.getenv("CMDSTANR_USE_RTOOLS") != "")
 
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
 if (!nzchar(cmdstan_test_tarball_url)) {
@@ -28,13 +26,13 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   install_dir <- cmdstan_default_install_path()
-  dir <- file.path(install_dir, "cmdstan-2.23.0")
+  dir <- file.path(install_dir, "cmdstan-2.35.0")
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    version = "2.23.0", wsl = FALSE),
+                    version = "2.35.0", wsl = FALSE),
     "An installation already exists",
     fixed = TRUE
   )
@@ -76,13 +74,13 @@ test_that("install_cmdstan() errors if it times out", {
 
 test_that("install_cmdstan() errors if invalid version or URL", {
   expect_error(
-    install_cmdstan(version = "2.23.2", wsl = os_is_wsl()),
-    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied version number is valid."
+    install_cmdstan(version = "2.35.5", wsl = os_is_wsl()),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied version number is valid."
   )
   expect_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz",
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz",
                     wsl = os_is_wsl()),
-    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.23.2/cmdstan-2.23.2.tar.gz'\nPlease check if the supplied release URL is valid."
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied release URL is valid."
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
@@ -100,9 +98,9 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.33.0/cmdstan-2.33.0.tar.gz",
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz",
                       wsl = os_is_wsl()),
-      "Compiling, linking C++ code",
+      "Compiling C++ code",
       fixed = TRUE
     ),
     "Finished installing CmdStan",
@@ -112,11 +110,11 @@ test_that("install_cmdstan() works with version and release_url", {
     expect_message(
       expect_output(
         install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                        version = "2.33.0",
+                        version = "2.35.0",
                         # the URL is intentionally invalid to test that the version has higher priority
                         release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
                         wsl = os_is_wsl()),
-        "Compiling, linking C++ code",
+        "Compiling C++ code",
         fixed = TRUE
       ),
       "Finished installing CmdStan",
@@ -125,7 +123,7 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.33.0")))
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.35.0")))
   set_cmdstan_path(cmdstan_default_path())
 })
 
@@ -256,10 +254,10 @@ test_that("Install from release file works", {
     dir <- tempdir(check = TRUE)
   }
 
-  destfile = file.path(dir, "cmdstan-2.33.1.tar.gz")
+  destfile = file.path(dir, "cmdstan-2.35.0.tar.gz")
 
   download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.33.1/cmdstan-2.33.1.tar.gz",
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz",
     destfile)
 
   expect_message(
@@ -267,7 +265,7 @@ test_that("Install from release file works", {
       install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
                       release_file = destfile,
                       wsl = os_is_wsl()),
-      "Compiling, linking C++ code",
+      "Compiling C++ code",
       fixed = TRUE
     ),
     "CmdStan path set",
