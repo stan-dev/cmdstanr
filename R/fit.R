@@ -1543,7 +1543,8 @@ loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) 
   if (is.logical(r_eff)) {
     if (isTRUE(r_eff)) {
       r_eff_cores <- list(...)[["cores"]] %||% getOption("mc.cores", 1)
-      r_eff <- loo::relative_eff(exp(LLarray + max(-LLarray)), cores = r_eff_cores)
+      r_eff <- loo::relative_eff(exp(sweep(LLarray, 3, apply(LLarray, 3, max), FUN = "-")),
+                                 cores = r_eff_cores)
     } else {
       r_eff <- NULL
     }
