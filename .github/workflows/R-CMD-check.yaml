@@ -58,13 +58,12 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2.11.1
 
       - uses: r-lib/actions/setup-r-dependencies@v2.11.1
-        env:
-          PAK_BUILD_VERBOSE: 1
-          PKGDEPENDS_DEBUG: 1
         with:
           cache: "always"
-          extra-packages: any::rcmdcheck, local::.
-          verbose: true
+          extra-packages: any::rcmdcheck  # Note: local::. is removed temporarily
+
+      - name: Manually build package for debugging
+        run: R CMD INSTALL --no-clean-on-error --verbose .
 
       - name: Install POCL on Ubuntu Runners
         if: ${{ matrix.config.os == 'ubuntu-latest' }}
