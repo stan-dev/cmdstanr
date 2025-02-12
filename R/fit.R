@@ -371,7 +371,6 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' @param unconstrained_variables (numeric) A vector of unconstrained parameters.
 #' @param jacobian (logical) Whether to include the log-density adjustments from
 #'   un/constraining variables.
-#' @param jacobian_adjustment Deprecated. Please use `jacobian` instead.
 #'
 #' @examples
 #' \dontrun{
@@ -383,11 +382,7 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
@@ -417,11 +412,7 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-grad_log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+grad_log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
@@ -452,11 +443,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-hessian <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+hessian <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",

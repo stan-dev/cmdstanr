@@ -16,9 +16,7 @@ compile(
   force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   compile_model_methods = FALSE,
   compile_standalone = FALSE,
-  dry_run = FALSE,
-  compile_hessian_method = FALSE,
-  threads = FALSE
+  dry_run = FALSE
 )
 }
 \arguments{
@@ -75,9 +73,6 @@ but skip the actual C++ compilation. Used to speedup tests.}
 
 \item{compile_hessian_method}{(logical) Should the (experimental) \code{hessian()} method be
 be compiled with the model methods?}
-
-\item{threads}{Deprecated and will be removed in a future release. Please
-turn on threading via \code{cpp_options = list(stan_threads = TRUE)} instead.}
 }
 \value{
 The \verb{$compile()} method is called for its side effect of creating the

@@ -423,9 +423,6 @@ CmdStanModel <- R6::R6Class(
 #' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
 #'   but skip the actual C++ compilation. Used to speedup tests.
 #'
-#' @param threads Deprecated and will be removed in a future release. Please
-#'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
-#'
 #' @return The `$compile()` method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
 #'   returns the [`CmdStanModel`] object invisibly.
@@ -474,10 +471,7 @@ compile <- function(quiet = TRUE,
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
                     compile_standalone = FALSE,
-                    dry_run = FALSE,
-                    #deprecated
-                    compile_hessian_method = FALSE,
-                    threads = FALSE) {
+                    dry_run = FALSE) {
 
   if (length(self$stan_file()) == 0) {
     stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
@@ -505,17 +499,6 @@ compile <- function(quiet = TRUE,
     if (length(self$exe_file()) != 0) {
       private$exe_file_ <- file.path(dir, basename(self$exe_file()))
     }
-  }
-
-  # temporary deprecation warnings
-  if (isTRUE(threads)) {
-    warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
-    cpp_options[["stan_threads"]] <- TRUE
-  }
-
-  # temporary deprecation warnings
-  if (isTRUE(compile_hessian_method)) {
-    warning("'compile_hessian_method' is deprecated. The hessian method is compiled with all models.")
   }
 
   if (length(self$exe_file()) == 0) {
@@ -1113,8 +1096,6 @@ CmdStanModel$set("public", name = "format", value = format)
 #'
 #' @template model-common-args
 #' @template model-sample-args
-#' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize,validate_csv
-#'   Deprecated and will be removed in a future release.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
@@ -1153,60 +1134,7 @@ sample <- function(data = NULL,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    save_metric = NULL,
-                   save_cmdstan_config = NULL,
-                   # deprecated
-                   cores = NULL,
-                   num_cores = NULL,
-                   num_chains = NULL,
-                   num_warmup = NULL,
-                   num_samples = NULL,
-                   validate_csv = NULL,
-                   save_extra_diagnostics = NULL,
-                   max_depth = NULL,
-                   stepsize = NULL) {
-  # temporary deprecation warnings
-  if (!is.null(cores)) {
-    warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
-    parallel_chains <- cores
-  }
-  if (!is.null(num_cores)) {
-    warning("'num_cores' is deprecated. Please use 'parallel_chains' instead.")
-    parallel_chains <- num_cores
-  }
-  if (!is.null(num_chains)) {
-    warning("'num_chains' is deprecated. Please use 'chains' instead.")
-    chains <- num_chains
-  }
-  if (!is.null(num_warmup)) {
-    warning("'num_warmup' is deprecated. Please use 'iter_warmup' instead.")
-    iter_warmup <- num_warmup
-  }
-  if (!is.null(num_samples)) {
-    warning("'num_samples' is deprecated. Please use 'iter_sampling' instead.")
-    iter_sampling <- num_samples
-  }
-  if (!is.null(max_depth)) {
-    warning("'max_depth' is deprecated. Please use 'max_treedepth' instead.")
-    max_treedepth <- max_depth
-  }
-  if (!is.null(stepsize)) {
-    warning("'stepsize' is deprecated. Please use 'step_size' instead.")
-    step_size <- stepsize
-  }
-  if (!is.null(save_extra_diagnostics)) {
-    warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
-    save_latent_dynamics <- save_extra_diagnostics
-  }
-  if (!is.null(validate_csv)) {
-    warning("'validate_csv' is deprecated. Please use 'diagnostics' instead.")
-    if (is.logical(validate_csv)) {
-      if (validate_csv) {
-        diagnostics <- c("divergences", "treedepth", "ebfmi")
-      } else {
-        diagnostics <- NULL
-      }
-    }
-  }
+                   save_cmdstan_config = NULL) {
 
   if (cmdstan_version() >= "2.27.0" && cmdstan_version() < "2.36.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
@@ -1318,7 +1246,6 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   processes. For example, `mpi_args = list("n" = 4)` launches the executable
 #'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
 #'   model executable.
-#' @param validate_csv Deprecated. Use `diagnostics` instead.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
@@ -1364,20 +1291,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = NULL,
-                       # deprecated
-                       validate_csv = TRUE) {
-
-  if (!is.null(validate_csv)) {
-    warning("'validate_csv' is deprecated. Please use 'diagnostics' instead.")
-    if (is.logical(validate_csv)) {
-      if (validate_csv) {
-        diagnostics <- c("divergences", "treedepth", "ebfmi")
-      } else {
-        diagnostics <- NULL
-      }
-    }
-  }
+                       save_cmdstan_config = NULL) {
 
   if (fixed_param) {
     chains <- 1
@@ -1767,10 +1681,8 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #' @param tol_rel_obj (positive real) Convergence tolerance on the relative norm
 #'   of the objective.
 #' @param eval_elbo (positive integer) Evaluate ELBO every Nth iteration.
-#' @param output_samples (positive integer) Use `draws` argument instead.
-#'   `output_samples` will be deprecated in the future.
-#' @param draws (positive integer) Number of approximate posterior
-#'   samples to draw and save.
+#' @param draws (positive integer) Number of approximate posterior samples to
+#'   draw and save.
 #'
 #' @return A [`CmdStanVB`] object.
 #'
@@ -1796,7 +1708,6 @@ variational <- function(data = NULL,
                         adapt_iter = NULL,
                         tol_rel_obj = NULL,
                         eval_elbo = NULL,
-                        output_samples = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
@@ -1821,7 +1732,7 @@ variational <- function(data = NULL,
     adapt_iter = adapt_iter,
     tol_rel_obj = tol_rel_obj,
     eval_elbo = eval_elbo,
-    output_samples = draws %||% output_samples
+    output_samples = draws
   )
   args <- CmdStanArgs$new(
     method_args = variational_args,

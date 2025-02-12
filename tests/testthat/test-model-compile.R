@@ -157,7 +157,6 @@ test_that("switching threads on and off works without rebuild", {
   after_mtime <- file.mtime(main_path_o)
   expect_equal(before_mtime, after_mtime)
 
-  expect_warning(mod$compile(threads = TRUE, dry_run = TRUE), "deprecated")
   cmdstan_make_local(cpp_options = backup, append = FALSE)
 })
 
