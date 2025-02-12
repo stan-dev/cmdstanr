@@ -58,9 +58,12 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2.11.1
 
       - uses: r-lib/actions/setup-r-dependencies@v2.11.1
+        env:
+          PAK_BUILD_VERBOSE: 1
         with:
           cache: "always"
           extra-packages: any::rcmdcheck, local::.
+          verbose: true
 
       - name: Install POCL on Ubuntu Runners
         if: ${{ matrix.config.os == 'ubuntu-latest' }}
