@@ -437,7 +437,7 @@ test_that("draws are returned for model with spaces", {
   )
   expect_equal(dim(fit_sample$draws()), c(1000, 1, 3))
   utils::capture.output(
-    fit <- mod$variational(seed = 123, output_samples = 1000)
+    fit <- mod$variational(seed = 123, draws = 1000)
   )
   expect_equal(dim(fit$draws()), c(1000, 4))
   utils::capture.output(
