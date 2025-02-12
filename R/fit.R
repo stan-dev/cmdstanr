@@ -1808,12 +1808,11 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
-#'   The name "MLE" may be somewhat misleading because the `$optimize()` method
-#'   can compute either a penalized maximum likelihood estimate or a maximum a
-#'   posteriori estimate, depending on the value of the `jacobian` argument when
-#'   the model is fit. Additionally, for models without constrained parameters,
-#'   the penalized MLE and the posterior mode are equivalent, as the Jacobian
-#'   adjustment has no effect.
+#'   This object will either contain a penalized maximum likelihood estimate
+#'   (MLE) or a maximum a posteriori estimate (MAP), depending on the value of
+#'   the `jacobian` argument when the model is fit (and whether the model has
+#'   constrained parameters). See [`$optimize()`][model-method-optimize] and the
+#'   CmdStan User's Guide for more details.
 #'
 #' @section Methods: `CmdStanMLE` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.
@@ -1894,12 +1893,11 @@ CmdStanMLE <- R6::R6Class(
 #'   which is available via the [`$lp()`][fit-method-lp] method and also
 #'   included in the [`$draws()`][fit-method-draws] method.
 #'
-#'   The name `mle` may be somewhat misleading because the `$optimize()` method
-#'   can compute either a penalized maximum likelihood estimate or a maximum a
-#'   posteriori estimate, depending on the value of the `jacobian` argument when
-#'   the model is fit. Additionally, for models without constrained parameters,
-#'   the penalized MLE and the posterior mode are equivalent, as the Jacobian
-#'   adjustment has no effect.
+#'   For models with constrained parameters that are fit with `jacobian=TRUE`,
+#'   the `$mle()` method actually returns the maximum a posteriori (MAP)
+#'   estimate (posterior mode) rather than the MLE. See
+#'   [`$optimize()`][model-method-optimize] and the CmdStan User's Guide for
+#'   more details.
 #'
 #' @param variables (character vector) The variables (parameters, transformed
 #'   parameters, and generated quantities) to include. If NULL (the default)

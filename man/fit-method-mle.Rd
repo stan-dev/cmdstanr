@@ -23,12 +23,11 @@ probability (\code{target}) accumulated in the model block of the Stan program,
 which is available via the \code{\link[=fit-method-lp]{$lp()}} method and also
 included in the \code{\link[=fit-method-draws]{$draws()}} method.
 
-The name \code{mle} may be somewhat misleading because the \verb{$optimize()} method
-can compute either a penalized maximum likelihood estimate or a maximum a
-posteriori estimate, depending on the value of the \code{jacobian} argument when
-the model is fit. Additionally, for models without constrained parameters,
-the penalized MLE and the posterior mode are equivalent, as the Jacobian
-adjustment has no effect.
+For models with constrained parameters that are fit with \code{jacobian=TRUE},
+the \verb{$mle()} method actually returns the maximum a posteriori (MAP)
+estimate (posterior mode) rather than the MLE. See
+\code{\link[=model-method-optimize]{$optimize()}} and the CmdStan User's Guide for
+more details.
 }
 \examples{
 \dontrun{
