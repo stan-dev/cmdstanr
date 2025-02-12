@@ -60,6 +60,7 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2.11.1
         env:
           PAK_BUILD_VERBOSE: 1
+          PKGDEPENDS_DEBUG: 1
         with:
           cache: "always"
           extra-packages: any::rcmdcheck, local::.
