@@ -1822,7 +1822,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`draws()`][fit-method-draws]  |  Return the point estimate as a 1-row [`draws_matrix`][posterior::draws_matrix]. |
-#'  [`$mode()`][fit-method-mode]  |  Return the point estimate as a numeric vector. |
+#'  [`$mle()`][fit-method-mle]  |  Return the point estimate as a numeric vector. |
 #'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`). |
 #'  [`$init()`][fit-method-init]  |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
