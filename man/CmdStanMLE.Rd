@@ -6,6 +6,11 @@
 \description{
 A \code{CmdStanMLE} object is the fitted model object returned by the
 \code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object.
+This object will either contain a penalized maximum likelihood estimate
+(MLE) or a maximum a posteriori estimate (MAP), depending on the value of
+the \code{jacobian} argument when the model is fit (and whether the model has
+constrained parameters). See \code{\link[=model-method-optimize]{$optimize()}} and the
+CmdStan User's Guide for more details.
 }
 \section{Methods}{
  \code{CmdStanMLE} objects have the following associated methods,

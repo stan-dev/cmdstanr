@@ -8,10 +8,10 @@
 loo(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...)
 }
 \arguments{
-\item{variables}{(character vector) The name(s) of the variable(s) in the
-Stan program containing the pointwise log-likelihood. The default is to
-look for \code{"log_lik"}. This argument is passed to the
-\code{\link[=fit-method-draws]{$draws()}} method.}
+\item{variables}{(string) The name of the variable in the Stan program
+containing the pointwise log-likelihood. The default is to look for
+\code{"log_lik"}. This argument is passed to the \code{\link[=fit-method-draws]{$draws()}}
+method.}
 
 \item{r_eff}{(multiple options) How to handle the \code{r_eff} argument for \code{loo()}:
 \itemize{

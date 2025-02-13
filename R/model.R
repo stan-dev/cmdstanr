@@ -1353,8 +1353,14 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer to obtain a (penalized) maximum likelihood estimate or a
-#'   maximum a posteriori estimate (if `jacobian=TRUE`). See the
+#'   Stan's optimizer to obtain a (penalized) maximum likelihood estimate (MLE)
+#'   or a maximum a posteriori estimate (MAP), depending on the value of the
+#'   `jacobian` argument. For models with constrained parameters, when the
+#'   Jacobian adjustment is *not* applied, the point estimate corresponds to a
+#'   penalized MLE, and when the Jacobian adjustment is applied the point
+#'   estimate corresponds to the MAP (posterior mode) of the model we would fit
+#'   if we were instead doing MCMC sampling. The Jacobian adjustment has no
+#'   affect if the model has only unconstrained parameters. See the
 #'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/index.html)
 #'   for more details.
 #'
@@ -1364,6 +1370,7 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   default arguments. The default values can also be obtained by checking the
 #'   metadata of an example model, e.g.,
 #'   `cmdstanr_example(method="optimize")$metadata()`.
+#'
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
