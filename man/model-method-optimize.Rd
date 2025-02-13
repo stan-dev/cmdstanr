@@ -210,8 +210,14 @@ A \code{\link{CmdStanMLE}} object.
 }
 \description{
 The \verb{$optimize()} method of a \code{\link{CmdStanModel}} object runs
-Stan's optimizer to obtain a (penalized) maximum likelihood estimate or a
-maximum a posteriori estimate (if \code{jacobian=TRUE}). See the
+Stan's optimizer to obtain a (penalized) maximum likelihood estimate (MLE)
+or a maximum a posteriori estimate (MAP), depending on the value of the
+\code{jacobian} argument. For models with constrained parameters, when the
+Jacobian adjustment is \emph{not} applied, the point estimate corresponds to a
+penalized MLE, and when the Jacobian adjustment is applied the point
+estimate corresponds to the MAP (posterior mode) of the model we would fit
+if we were instead doing MCMC sampling. The Jacobian adjustment has no
+affect if the model has only unconstrained parameters. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/index.html}{CmdStan User's Guide}
 for more details.
 
