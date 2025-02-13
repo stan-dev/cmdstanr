@@ -787,7 +787,7 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   invisible(NULL)
 }
 
-expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+expose_model_methods <- function(env, verbose = FALSE) {
   if (rlang::is_interactive()) {
     message("Compiling additional model methods...")
   }

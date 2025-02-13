@@ -413,8 +413,6 @@ CmdStanModel <- R6::R6Class(
 #' @param compile_model_methods (logical) Compile additional model methods
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
 #'   `unconstrain_variables()`).
-#' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
-#'   be compiled with the model methods?
 #' @param compile_standalone (logical) Should functions in the Stan model be
 #'   compiled for use in R? If `TRUE` the functions will be available via the
 #'   `functions` field in the compiled model object. This can also be done after
@@ -595,7 +593,6 @@ compile <- function(quiet = TRUE,
             call. = FALSE)
     compile_model_methods <- FALSE
     compile_standalone <- FALSE
-    compile_hessian_method <- FALSE
   }
 
   temp_stan_file <- tempfile(pattern = "model-", fileext = paste0(".", tools::file_ext(self$stan_file())))
@@ -728,9 +725,7 @@ compile <- function(quiet = TRUE,
 
   if(!dry_run) {
     if (compile_model_methods) {
-      expose_model_methods(env = private$model_methods_env_,
-                            verbose = !quiet,
-                            hessian = compile_hessian_method)
+      expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
     }
   }
   invisible(self)

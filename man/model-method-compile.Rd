@@ -70,9 +70,6 @@ compilation using the
 
 \item{dry_run}{(logical) If \code{TRUE}, the code will do all checks before compilation,
 but skip the actual C++ compilation. Used to speedup tests.}
-
-\item{compile_hessian_method}{(logical) Should the (experimental) \code{hessian()} method be
-be compiled with the model methods?}
 }
 \value{
 The \verb{$compile()} method is called for its side effect of creating the
