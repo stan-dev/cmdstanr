@@ -6,6 +6,7 @@
   - `model_params` element of `fit$metadata()` list (`variables` element)
   - `jacobian_adjustment` argument to `fit$log_prob()` and similar methods (`jacobian` argument)
   - `output_samples` argument to `model$variational()` (`draws` argument)
+  - `hessian` argument to `fit$init_model_methods()` (`hessian` method always compiled now)
   - several arguments to `model$compile()`:
     - `threads` (`cpp_options = list(stan_threads = TRUE)`)
     - `compile_hessian_method` (always compiled)
