@@ -6,7 +6,7 @@ fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", se
 fit_bernoulli_laplace <- testing_fit("bernoulli", method = "laplace", seed = 123)
 fit_logistic_optimize <- testing_fit("logistic", method = "optimize", seed = 123)
 fit_logistic_variational <- testing_fit("logistic", method = "variational", seed = 123)
-fit_logistic_variational_short <- testing_fit("logistic", method = "variational", output_samples = 100, seed = 123)
+fit_logistic_variational_short <- testing_fit("logistic", method = "variational", draws = 100, seed = 123)
 fit_logistic_laplace <- testing_fit("logistic", method = "laplace", seed = 123)
 
 fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",

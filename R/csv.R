@@ -321,8 +321,7 @@ read_cmdstan_csv <- function(files,
   model_param_dims <- variable_dims(metadata$variables)
   metadata$stan_variable_sizes <- model_param_dims
   metadata$stan_variables <- names(model_param_dims)
-  # $model_params is deprecated, remove for release 1.0
-  metadata$model_params <- metadata$variables
+
   if (metadata$method == "sample") {
     if (is.null(format)) {
       format <- "draws_array"
@@ -467,20 +466,6 @@ read_cmdstan_csv <- function(files,
   }
 }
 
-#' Read CmdStan CSV files from sampling into \R
-#'
-#' Deprecated. Use [read_cmdstan_csv()] instead.
-#' @keywords internal
-#' @export
-#' @param files,variables,sampler_diagnostics Deprecated. Use
-#'   [read_cmdstan_csv()] instead.
-#'
-read_sample_csv <- function(files,
-                            variables = NULL,
-                            sampler_diagnostics = NULL) {
-  warning("read_sample_csv() is deprecated. Please use read_cmdstan_csv().")
-  read_cmdstan_csv(files, variables, sampler_diagnostics)
-}
 
 #' @rdname read_cmdstan_csv
 #' @export
