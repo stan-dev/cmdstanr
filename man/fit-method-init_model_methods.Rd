@@ -21,13 +21,8 @@ available as methods of the fitted model object. This requires the
 additional \code{Rcpp} package, which are not required for fitting models using
 CmdStanR.
 
-Notes:
-\itemize{
-\item There may be many compiler warnings emitted during compilation but
+Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.
-\item The hessian method relies on higher-order autodiff, which is still
-experimental. Please report any compilation errors that you encounter.
-}
 }
 \examples{
 \dontrun{

@@ -320,11 +320,8 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   additional `Rcpp` package, which are not required for fitting models using
 #'   CmdStanR.
 #'
-#'   Notes:
-#'   * There may be many compiler warnings emitted during compilation but
+#'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
-#'   * The hessian method relies on higher-order autodiff, which is still
-#'   experimental. Please report any compilation errors that you encounter.
 #'
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
