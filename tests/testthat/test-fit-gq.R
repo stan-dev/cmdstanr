@@ -90,7 +90,7 @@ test_that("print() method works after gq", {
   # make sure the row order is correct
   out <- capture.output(fit_gq$print(c("y_rep[1]", "sum_y", "y_rep[3]")))
   expect_length(out, 4)
-  expect_match(out[1], " variable", out[1])
+  expect_match(out[1], " variable")
   expect_match(out[2], " y_rep[1]", fixed = TRUE)
   expect_match(out[3], " sum_y")
   expect_match(out[4], " y_rep[3]", fixed = TRUE)

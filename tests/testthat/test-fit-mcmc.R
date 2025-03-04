@@ -151,7 +151,7 @@ test_that("print() method works after mcmc", {
   # make sure the row order is correct
   out <- capture.output(fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")))
   expect_length(out, 5)
-  expect_match(out[1], " variable", out[1])
+  expect_match(out[1], " variable")
   expect_match(out[2], " theta[1]", fixed = TRUE)
   expect_match(out[3], " tau")
   expect_match(out[4], " mu")
