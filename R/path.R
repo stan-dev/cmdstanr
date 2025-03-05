@@ -39,7 +39,7 @@
 #'
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
-    path <- cmdstan_default_path() %||% cmdstan_default_path(old = TRUE)
+    path <- cmdstan_default_path()
   }
   if (dir.exists(path)) {
     path <- absolute_path(path)
@@ -105,20 +105,14 @@ stop_no_path <- function() {
 #' Path to where  [install_cmdstan()] with default settings installs CmdStan.
 #'
 #' @keywords internal
-#' @param old Should the old default path (.cmdstanr) be used instead of the new
-#'   one (.cmdstan)? Defaults to `FALSE` and may be removed in a future release.
 #' @param wsl Return the directory for WSL installations?
 #' @return The installation path.
 #' @export
-cmdstan_default_install_path <- function(old = FALSE, wsl = FALSE) {
+cmdstan_default_install_path <- function(wsl = FALSE) {
   if (wsl) {
     file.path(paste0(wsl_dir_prefix(wsl = TRUE), wsl_home_dir()), ".cmdstan")
   } else {
-    if (old) {
-      file.path(.home_path(), ".cmdstanr")
-    } else {
-      file.path(.home_path(), ".cmdstan")
-    }
+    file.path(.home_path(), ".cmdstan")
   }
 }
 
@@ -134,23 +128,22 @@ cmdstan_default_install_path <- function(old = FALSE, wsl = FALSE) {
 #'
 #' @export
 #' @keywords internal
-#' @param old See [cmdstan_default_install_path()].
 #' @param dir Path to a custom install folder with CmdStan installations.
 #' @return Path to the CmdStan installation with the most recent release
 #'   version, or `NULL` if no installation found.
 #'
-cmdstan_default_path <- function(old = FALSE, dir = NULL) {
+cmdstan_default_path <- function(dir = NULL) {
   if (!is.null(dir)) {
     installs_path <- dir
   } else {
-    installs_path <- cmdstan_default_install_path(old)
+    installs_path <- cmdstan_default_install_path()
   }
   wsl_installed <- wsl_installed()
   if (!isTRUE(wsl_installed)) {
     wsl_installs_path <- NULL
     wsl_path_exists <- FALSE
   } else {
-    wsl_installs_path <- cmdstan_default_install_path(old, wsl = TRUE)
+    wsl_installs_path <- cmdstan_default_install_path(wsl = TRUE)
     wsl_path_linux <- gsub(wsl_dir_prefix(wsl = TRUE), "", wsl_installs_path,
                           fixed=TRUE)
     wsl_path_exists <- isTRUE(.wsl_check_exists(wsl_path_linux))

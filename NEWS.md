@@ -1,6 +1,26 @@
 # cmdstanr 0.8.1.9000
 
-Items for next release go here
+* Removed deprecated items (replacements in parentheses): 
+  - `read_sample_csv()` (`read_cmdstan_csv()`)
+  - `write_stan_tempfile()` (`write_stan_file()`)
+  - `model_params` element of `fit$metadata()` list (`variables` element)
+  - `jacobian_adjustment` argument to `fit$log_prob()` and similar methods (`jacobian` argument)
+  - `output_samples` argument to `model$variational()` (`draws` argument)
+  - `hessian` argument to `fit$init_model_methods()` (`hessian` method always compiled now)
+  - several arguments to `model$compile()`:
+    - `threads` (`cpp_options = list(stan_threads = TRUE)`)
+    - `compile_hessian_method` (always compiled)
+  - several arguments to `model$sample()`:
+    - `cores` and `num_cores` (`parallel_chains`)
+    - `num_chains` (`chains`)
+    - `num_warmup` (`iter_warmup`)
+    - `num_samples` (`iter_sampling`)
+    - `validate_csv` (`diagnostics`)
+    - `save_extra_diagnostics` (`save_latent_dynamics`)
+    - `max_depth` (`max_treedepth`)
+    - `stepsize` (`step_size`)
+  
+  
 
 # cmdstanr 0.8.1
 

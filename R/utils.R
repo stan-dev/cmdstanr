@@ -252,32 +252,6 @@ generate_file_names <-
     new_names
   }
 
-# threading helpers (deprecated) ------------------------------------------
-
-
-#' Set or get the number of threads used to execute Stan models
-#'
-#' DEPRECATED. Please use the `threads_per_chain` argument when fitting the model.
-#' @keywords internal
-#' @name stan_threads
-NULL
-
-#' @rdname stan_threads
-#' @export
-#' @return The value of the environment variable `STAN_NUM_THREADS`.
-num_threads <- function() {
-  warning("'num_threads()' is deprecated. Please use the 'metadata()' method of the fit object to obtain the number of threads used.")
-  as.integer(Sys.getenv("STAN_NUM_THREADS"))
-}
-
-#' @rdname stan_threads
-#' @export
-#' @param num_threads (positive integer) The number of threads to set.
-set_num_threads <- function(num_threads) {
-  stop("Please use the 'threads_per_chain' argument in the $sample() method instead of set_num_threads().",
-       call. = FALSE)
-}
-
 
 # hmc diagnostics ------------------------------------------------------
 check_divergences <- function(post_warmup_sampler_diagnostics) {
@@ -813,7 +787,7 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   invisible(NULL)
 }
 
-expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+expose_model_methods <- function(env, verbose = FALSE) {
   if (rlang::is_interactive()) {
     message("Compiling additional model methods...")
   }

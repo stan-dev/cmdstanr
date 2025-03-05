@@ -314,10 +314,10 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @aliases init_model_methods
 #'
 #' @description The `$init_model_methods()` method compiles and initializes the
-#'   `log_prob`, `grad_log_prob`, `constrain_variables`, `unconstrain_variables`
-#'   and `unconstrain_draws` functions. These are then available as methods of
-#'   the fitted model object. This requires the additional `Rcpp` package,
-#'   which are not required for fitting models using
+#'   `log_prob`, `grad_log_prob`, `hessian`, `constrain_variables`,
+#'   `unconstrain_variables` and `unconstrain_draws` functions. These are then
+#'   available as methods of the fitted model object. This requires the
+#'   additional `Rcpp` package, which are not required for fitting models using
 #'   CmdStanR.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
@@ -325,17 +325,17 @@ CmdStanFit$set("public", name = "init", value = init)
 #'
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
-#' @param hessian (logical) Whether to expose the (experimental) hessian method.
 #'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
+#' # fit_mcmc$init_model_methods()
 #' }
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-init_model_methods <- function(seed = 1, verbose = FALSE, hessian = FALSE) {
+init_model_methods <- function(seed = 1, verbose = FALSE) {
   if (os_is_wsl()) {
     stop("Additional model methods are not currently available with ",
           "WSL CmdStan and will not be compiled",
@@ -346,13 +346,8 @@ init_model_methods <- function(seed = 1, verbose = FALSE, hessian = FALSE) {
     stop("Model methods cannot be used with a pre-compiled Stan executable, ",
           "the model must be compiled again", call. = FALSE)
   }
-  if (hessian) {
-    message("The hessian method relies on higher-order autodiff ",
-            "which is still experimental. Please report any compilation ",
-            "errors that you encounter")
-  }
   if (is.null(private$model_methods_env_$model_ptr)) {
-    expose_model_methods(private$model_methods_env_, verbose, hessian)
+    expose_model_methods(private$model_methods_env_, verbose)
   }
   if (!("model_ptr_" %in% ls(private$model_methods_env_))) {
     initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
@@ -371,7 +366,6 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' @param unconstrained_variables (numeric) A vector of unconstrained parameters.
 #' @param jacobian (logical) Whether to include the log-density adjustments from
 #'   un/constraining variables.
-#' @param jacobian_adjustment Deprecated. Please use `jacobian` instead.
 #'
 #' @examples
 #' \dontrun{
@@ -383,11 +377,7 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
@@ -417,11 +407,7 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-grad_log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+grad_log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
@@ -444,7 +430,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
-#' # fit_mcmc$init_model_methods(hessian = TRUE)
+#' # fit_mcmc$init_model_methods()
 #' # fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
 #'
@@ -452,11 +438,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-hessian <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+hessian <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
