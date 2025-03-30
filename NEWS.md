@@ -1,6 +1,34 @@
-# cmdstanr 0.8.1.9000
+# cmdstanr 0.9.0
 
-Items for next release go here
+## General Improvements/Changes
+
+ * Added compatibility for RTools45 (#1066)
+ * cmdstanr will now use RTools with no additional toolchain updates needed on Windows (CmdStan 2.35+ only; #1065, #1054)
+ * Improve error messages when calling `sampler_diagnostics()` with `fixed_param=TRUE`
+ * Improve numerical stability in calculation of effective sample size during `loo` method (#1057)
+ * Improve numerical stablity with very small log-ratios in calculation of effective sample size during `loo` method (#1015)
+ * Add warning if input data/inits have been coerced to ints (#994)
+
+## Bugfixes
+
+ * Don't require fixed_param for models with zero parameters (only GQs) for CmdStan >= 2.36 (#1046)
+ * Improve detection/handling of `make` (#1036)
+ * Fix saving of model objects to network drive (#1038, thanks to @bschneidr)
+ * Update usage of `untar` to fix installation errors (#1034)
+ * Respect compilation flags in `make/local` when exposing functions or model methods (#1003)
+ * Fix passing of include paths to CmdStan (#1000)
+ * Fix passing of factor data to CmdStan (#999)
+ * Fix extraction and passing of array data/parameters as model inits (#993)
+
+## Documentation Updates
+
+ * Clarifications to usage of `optimize` and `loo` methods (#1060)
+ * Add documentation for faster model saving with large models (#1042)
+ * Remove mentions of `rstan::read_stan_csv` due to incompatibility with newer CmdStan outputs (#1018)
+ * Document global option `cmdstanr_print_line_numbers` for printing line numbers (#1017)
+ * Change usage of 'chapter' to 'section' in documentation (#1014)
+ * Remove examples of updating removed array syntax as functionality no longer supported in CmdStan (#1008)
+ * Change usages of 'sampling statement' -> 'distribution statement' (#987)
 
 # cmdstanr 0.8.1
 
