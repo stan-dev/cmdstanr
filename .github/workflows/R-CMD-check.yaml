@@ -55,6 +55,12 @@ jobs:
           r-version: ${{ matrix.config.r }}
           rtools-version: ${{ matrix.config.rtools }}
 
+      - name: Install R Package Build Dependencies on MacOS
+        if: ${{ runner.os == 'macOS' }}
+        uses: r-hub/actions/setup-r-sysreqs@v1
+        with:
+          type: 'minimal'
+
       - uses: r-lib/actions/setup-pandoc@v2.11.3
 
       - uses: r-lib/actions/setup-r-dependencies@v2.11.3
