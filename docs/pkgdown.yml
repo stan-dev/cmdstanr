@@ -1,4 +1,4 @@
-pandoc: 3.1.11
+pandoc: '3.2'
 pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
@@ -8,7 +8,7 @@ articles:
   posterior: posterior.html
   profiling: profiling.html
   r-markdown: r-markdown.html
-last_built: 2024-07-02T21:30Z
+last_built: 2025-03-31T14:41Z
 urls:
   reference: https://mc-stan.org/cmdstanr/reference
   article: https://mc-stan.org/cmdstanr/articles

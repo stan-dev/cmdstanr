@@ -28,7 +28,7 @@ R rather than calling CmdStan's utilites."><meta property="og:image" content="ht
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -149,8 +149,6 @@ R rather than calling CmdStan's utilites.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">cmdstan_diagnose</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Processing csv files: /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/logistic-202407021533-1-42dde2.csv, /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/logistic-202407021533-2-42dde2.csv, /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/logistic-202407021533-3-42dde2.csv, /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/logistic-202407021533-4-42dde2.csv</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Checking sampler transitions treedepth.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Treedepth satisfactory for all transitions.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -160,137 +158,136 @@ R rather than calling CmdStan's utilites.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Checking E-BFMI - sampler transitions HMC potential energy.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> E-BFMI satisfactory.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Effective sample size satisfactory.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Rank-normalized split effective sample size satisfactory for all parameters.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Split R-hat values satisfactory all parameters.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Rank-normalized split R-hat values satisfactory for all parameters.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Processing complete, no problems detected.</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">cmdstan_summary</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Inference for Stan model: logistic_model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 chains: each with iter=(1000,1000,1000,1000); warmup=(0,0,0,0); thin=(1,1,1,1); 4000 iterations saved.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 chains: each with iter=1000; warmup=1000; thin=1; 1000 iterations saved.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Warmup took (0.043, 0.046, 0.042, 0.041) seconds, 0.17 seconds total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling took (0.15, 0.15, 0.16, 0.15) seconds, 0.61 seconds total</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Warmup took (0.023, 0.023, 0.022, 0.021) seconds, 0.089 seconds total</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling took (0.078, 0.073, 0.074, 0.072) seconds, 0.30 seconds total</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     Mean     MCSE  StdDev     5%       50%       95%  N_Eff  N_Eff/s    R_hat</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     Mean     MCSE  StdDev    MAD     5%       50%       95%  ESS_bulk  ESS_tail  R_hat</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lp__            -6.6e+01  3.3e-02     1.4    -69  -6.6e+01  -6.4e+01   1837     3007      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> accept_stat__       0.90    0.011    0.12   0.65      0.94       1.0    123      202  1.0e+00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> stepsize__          0.77    0.038   0.054   0.73      0.77      0.86    2.0      3.3  1.9e+13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> treedepth__          2.3     0.10    0.51    2.0       2.0       3.0     26       42  1.1e+00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> n_leapfrog__         4.9     0.35     2.0    3.0       3.0       7.0     34       55  1.0e+00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> divergent__         0.00      nan    0.00   0.00      0.00      0.00    nan      nan      nan</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> energy__              68    0.049     2.0     65        68        72   1652     2704  1.0e+00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lp__            -6.6e+01  3.1e-02     1.4    1.2    -69  -6.6e+01  -6.4e+01      2077      2863    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> accept_stat__       0.91  1.4e-03    0.10  0.072   0.71      0.95       1.0      5781      4282    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> stepsize__          0.72      nan   0.040  0.039   0.66      0.73      0.77       nan       nan    nan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> treedepth__          2.4  1.5e-02    0.53   0.00    2.0       2.0       3.0      1630      1360    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> n_leapfrog__         5.3  9.5e-02     2.0   0.00    3.0       7.0       7.0      3307       884    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> divergent__         0.00      nan    0.00   0.00   0.00      0.00      0.00       nan       nan    nan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> energy__              68  4.7e-02     2.0    1.8     65        68        72      1774      2711    1.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> alpha            3.8e-01  3.5e-03    0.22  0.023   3.8e-01   7.4e-01   3919     6414      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta[1]         -6.7e-01  3.8e-03    0.25   -1.1  -6.7e-01  -2.6e-01   4387     7180      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta[2]         -2.7e-01  3.5e-03    0.23  -0.64  -2.7e-01   1.1e-01   4209     6889     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta[3]          6.8e-01  4.3e-03    0.26   0.25   6.7e-01   1.1e+00   3682     6026     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[1]      -5.1e-01  1.5e-03   0.099  -0.69  -5.1e-01  -3.6e-01   4109     6725      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[2]      -4.0e-01  2.2e-03    0.15  -0.67  -3.8e-01  -2.0e-01   4736     7751      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[3]      -5.0e-01  3.4e-03    0.22  -0.90  -4.6e-01  -2.0e-01   4043     6617      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[4]      -4.5e-01  2.4e-03    0.15  -0.73  -4.3e-01  -2.4e-01   3941     6450      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[5]      -1.2e+00  4.5e-03    0.28   -1.7  -1.2e+00  -7.7e-01   3844     6291     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[6]      -5.9e-01  2.9e-03    0.19  -0.93  -5.7e-01  -3.2e-01   4123     6748     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[7]      -6.4e-01  1.9e-03    0.13  -0.87  -6.3e-01  -4.5e-01   4625     7569      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[8]      -2.8e-01  2.1e-03    0.13  -0.53  -2.5e-01  -1.1e-01   3984     6520     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[9]      -6.9e-01  2.6e-03    0.17  -0.99  -6.8e-01  -4.4e-01   4294     7028      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[10]     -7.4e-01  3.7e-03    0.23   -1.2  -7.1e-01  -4.0e-01   3964     6488      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[11]     -2.8e-01  2.1e-03    0.12  -0.51  -2.6e-01  -1.2e-01   3501     5729     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[12]     -5.0e-01  3.5e-03    0.23  -0.93  -4.6e-01  -1.9e-01   4348     7116      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[13]     -6.6e-01  3.2e-03    0.21   -1.0  -6.3e-01  -3.5e-01   4224     6914     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[14]     -3.6e-01  2.7e-03    0.17  -0.68  -3.3e-01  -1.3e-01   4013     6568      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[15]     -2.8e-01  1.8e-03    0.11  -0.47  -2.6e-01  -1.3e-01   3538     5790     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[16]     -2.8e-01  1.4e-03   0.086  -0.43  -2.7e-01  -1.5e-01   3558     5822     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[17]     -1.6e+00  4.8e-03    0.29   -2.1  -1.6e+00  -1.2e+00   3654     5981      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[18]     -4.8e-01  1.6e-03    0.11  -0.67  -4.7e-01  -3.1e-01   4457     7294     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[19]     -2.3e-01  1.2e-03   0.075  -0.37  -2.3e-01  -1.2e-01   3731     6107     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[20]     -1.1e-01  1.4e-03   0.080  -0.26  -9.3e-02  -2.7e-02   3471     5681      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[21]     -2.1e-01  1.5e-03   0.086  -0.37  -2.0e-01  -9.3e-02   3393     5554     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[22]     -5.7e-01  2.3e-03    0.15  -0.83  -5.6e-01  -3.5e-01   4157     6803     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[23]     -3.3e-01  2.1e-03    0.14  -0.60  -3.1e-01  -1.4e-01   4351     7120     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[24]     -1.4e-01  1.1e-03   0.066  -0.26  -1.2e-01  -5.2e-02   3635     5949     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[25]     -4.6e-01  1.8e-03    0.12  -0.68  -4.5e-01  -2.8e-01   4638     7591      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[26]     -1.5e+00  5.1e-03    0.34   -2.1  -1.5e+00  -1.0e+00   4383     7173     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[27]     -3.1e-01  2.0e-03    0.12  -0.52  -2.9e-01  -1.4e-01   3553     5815     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[28]     -4.4e-01  1.3e-03   0.083  -0.59  -4.4e-01  -3.2e-01   4086     6688      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[29]     -7.3e-01  3.4e-03    0.23   -1.1  -7.0e-01  -3.9e-01   4476     7326     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[30]     -6.9e-01  2.9e-03    0.19   -1.0  -6.8e-01  -4.1e-01   4511     7383      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[31]     -4.9e-01  2.6e-03    0.16  -0.78  -4.7e-01  -2.6e-01   3899     6381     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[32]     -4.2e-01  1.8e-03    0.11  -0.61  -4.1e-01  -2.7e-01   3671     6009     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[33]     -4.1e-01  1.9e-03    0.13  -0.65  -4.0e-01  -2.3e-01   4622     7564      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[34]     -6.4e-02  8.5e-04   0.050  -0.16  -5.0e-02  -1.3e-02   3474     5686     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[35]     -5.9e-01  2.6e-03    0.18  -0.92  -5.7e-01  -3.2e-01   4937     8080     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[36]     -3.2e-01  1.9e-03    0.13  -0.57  -3.1e-01  -1.5e-01   4737     7753     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[37]     -7.0e-01  3.5e-03    0.23   -1.1  -6.7e-01  -3.7e-01   4158     6805      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[38]     -3.1e-01  2.4e-03    0.15  -0.60  -2.9e-01  -1.2e-01   4035     6604     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[39]     -1.8e-01  1.8e-03    0.11  -0.39  -1.5e-01  -5.2e-02   3644     5964      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[40]     -6.8e-01  1.9e-03    0.13  -0.91  -6.7e-01  -4.8e-01   4470     7316      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[41]     -1.1e+00  4.1e-03    0.25   -1.6  -1.1e+00  -7.6e-01   3765     6162     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[42]     -9.3e-01  3.0e-03    0.20   -1.3  -9.1e-01  -6.3e-01   4354     7127      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[43]     -4.1e-01  3.7e-03    0.26  -0.91  -3.5e-01  -1.0e-01   4788     7836     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[44]     -1.2e+00  3.1e-03    0.19   -1.5  -1.2e+00  -8.9e-01   3623     5929      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[45]     -3.6e-01  1.8e-03    0.12  -0.57  -3.4e-01  -1.9e-01   4021     6581      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[46]     -5.8e-01  1.9e-03    0.13  -0.81  -5.7e-01  -3.9e-01   4786     7833      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[47]     -3.1e-01  2.0e-03    0.13  -0.55  -2.9e-01  -1.4e-01   4246     6949      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[48]     -3.2e-01  1.3e-03   0.082  -0.47  -3.2e-01  -2.0e-01   4166     6819     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[49]     -3.2e-01  1.3e-03   0.079  -0.46  -3.1e-01  -2.0e-01   3546     5804     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[50]     -1.3e+00  4.9e-03    0.33   -1.9  -1.3e+00  -8.0e-01   4492     7352     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[51]     -2.9e-01  1.4e-03   0.093  -0.46  -2.8e-01  -1.6e-01   4451     7284     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[52]     -8.4e-01  2.2e-03    0.14   -1.1  -8.3e-01  -6.2e-01   4245     6948      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[53]     -4.0e-01  2.1e-03    0.13  -0.63  -3.9e-01  -2.2e-01   3748     6134     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[54]     -3.7e-01  2.2e-03    0.14  -0.63  -3.5e-01  -1.7e-01   4130     6759      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[55]     -3.9e-01  2.0e-03    0.14  -0.64  -3.7e-01  -2.0e-01   4649     7608      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[56]     -3.2e-01  2.8e-03    0.19  -0.69  -2.8e-01  -9.5e-02   4610     7546     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[57]     -6.6e-01  1.8e-03    0.12  -0.86  -6.5e-01  -4.7e-01   4203     6879      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[58]     -9.5e-01  5.3e-03    0.36   -1.6  -9.0e-01  -4.4e-01   4498     7362     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[59]     -1.4e+00  5.4e-03    0.34   -2.0  -1.3e+00  -8.4e-01   4097     6706      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[60]     -9.8e-01  2.5e-03    0.16   -1.3  -9.7e-01  -7.3e-01   4050     6628      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[61]     -5.4e-01  1.5e-03   0.098  -0.71  -5.3e-01  -3.9e-01   4382     7171      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[62]     -8.8e-01  4.7e-03    0.31   -1.4  -8.4e-01  -4.4e-01   4166     6818     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[63]     -1.2e-01  1.2e-03   0.072  -0.25  -1.0e-01  -3.2e-02   3346     5477     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[64]     -9.0e-01  3.7e-03    0.25   -1.4  -8.8e-01  -5.3e-01   4389     7183     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[65]     -2.0e+00  9.9e-03    0.58   -3.0  -2.0e+00  -1.1e+00   3440     5629     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[66]     -5.1e-01  2.2e-03    0.14  -0.75  -5.0e-01  -3.1e-01   3804     6226     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[67]     -2.8e-01  1.3e-03   0.081  -0.42  -2.7e-01  -1.6e-01   4007     6558     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[68]     -1.1e+00  3.7e-03    0.24   -1.5  -1.0e+00  -7.0e-01   4155     6800     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[69]     -4.3e-01  1.4e-03   0.084  -0.58  -4.3e-01  -3.1e-01   3753     6142     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[70]     -6.4e-01  3.5e-03    0.24   -1.1  -6.1e-01  -3.1e-01   4500     7365     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[71]     -6.1e-01  3.0e-03    0.21  -0.99  -5.8e-01  -3.1e-01   4571     7481     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[72]     -4.6e-01  2.6e-03    0.17  -0.78  -4.4e-01  -2.2e-01   4261     6974     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[73]     -1.5e+00  5.8e-03    0.37   -2.1  -1.5e+00  -9.2e-01   4023     6585      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[74]     -9.5e-01  3.1e-03    0.20   -1.3  -9.4e-01  -6.5e-01   4106     6721     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[75]     -1.1e+00  5.9e-03    0.38   -1.9  -1.1e+00  -5.9e-01   4198     6870     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[76]     -3.7e-01  2.2e-03    0.14  -0.63  -3.5e-01  -1.8e-01   3982     6517      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[77]     -8.8e-01  2.2e-03    0.14   -1.1  -8.7e-01  -6.6e-01   4043     6618      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[78]     -4.8e-01  2.5e-03    0.17  -0.79  -4.6e-01  -2.5e-01   4533     7418     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[79]     -7.6e-01  3.0e-03    0.19   -1.1  -7.5e-01  -4.8e-01   4054     6635      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[80]     -5.4e-01  2.8e-03    0.19  -0.89  -5.2e-01  -2.7e-01   4782     7827      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[81]     -1.6e-01  1.6e-03    0.10  -0.37  -1.4e-01  -4.9e-02   4161     6810      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[82]     -2.2e-01  2.1e-03    0.14  -0.49  -1.9e-01  -6.5e-02   4340     7103      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[83]     -3.4e-01  1.3e-03   0.081  -0.48  -3.4e-01  -2.2e-01   3663     5996      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[84]     -2.7e-01  1.5e-03   0.092  -0.44  -2.6e-01  -1.5e-01   3524     5767     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[85]     -1.3e-01  1.3e-03   0.076  -0.28  -1.1e-01  -4.1e-02   3532     5780      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[86]     -1.1e+00  4.8e-03    0.32   -1.7  -1.1e+00  -6.6e-01   4283     7011      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[87]     -8.2e-01  1.9e-03    0.13   -1.0  -8.2e-01  -6.3e-01   4347     7115      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[88]     -7.8e-01  3.7e-03    0.24   -1.2  -7.5e-01  -4.3e-01   4170     6825     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[89]     -1.3e+00  5.0e-03    0.32   -1.8  -1.2e+00  -7.9e-01   4012     6566      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[90]     -2.6e-01  2.1e-03    0.14  -0.53  -2.4e-01  -9.3e-02   4313     7058     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[91]     -3.9e-01  1.9e-03    0.13  -0.63  -3.7e-01  -2.1e-01   4620     7562      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[92]     -1.5e+00  5.7e-03    0.34   -2.1  -1.5e+00  -9.8e-01   3518     5758     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[93]     -7.4e-01  3.5e-03    0.22   -1.1  -7.2e-01  -4.2e-01   3871     6336     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[94]     -3.2e-01  1.4e-03   0.088  -0.48  -3.1e-01  -1.9e-01   3732     6107      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[95]     -3.9e-01  1.8e-03    0.11  -0.58  -3.8e-01  -2.3e-01   3830     6269     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[96]     -1.6e+00  4.8e-03    0.28   -2.1  -1.6e+00  -1.1e+00   3457     5657      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[97]     -4.3e-01  1.5e-03    0.10  -0.61  -4.2e-01  -2.8e-01   4740     7758     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[98]     -1.0e+00  5.5e-03    0.37   -1.7  -1.0e+00  -5.1e-01   4582     7499     1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[99]     -6.9e-01  2.1e-03    0.14  -0.95  -6.8e-01  -4.8e-01   4565     7472      1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[100]    -3.9e-01  1.5e-03   0.096  -0.56  -3.8e-01  -2.5e-01   4243     6945      1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> alpha            3.7e-01  3.4e-03    0.22   0.22  0.028   3.7e-01   7.3e-01      4093      2683    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta[1]         -6.6e-01  3.9e-03    0.25   0.25   -1.1  -6.6e-01  -2.6e-01      4257      3329    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta[2]         -2.7e-01  3.6e-03    0.22   0.23  -0.64  -2.6e-01   9.8e-02      3945      3224    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta[3]          6.7e-01  4.3e-03    0.27   0.27   0.25   6.6e-01   1.1e+00      3898      2767   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[1]      -5.2e-01  1.5e-03   0.098  0.098  -0.69  -5.1e-01  -3.7e-01      4210      2902    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[2]      -4.0e-01  2.2e-03    0.14   0.14  -0.67  -3.9e-01  -2.0e-01      4291      2935    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[3]      -5.0e-01  3.3e-03    0.21   0.20  -0.90  -4.6e-01  -2.1e-01      4240      2834    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[4]      -4.5e-01  2.5e-03    0.16   0.15  -0.73  -4.3e-01  -2.4e-01      3795      3034    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[5]      -1.2e+00  4.4e-03    0.28   0.28   -1.7  -1.2e+00  -7.5e-01      4168      2944    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[6]      -5.9e-01  3.0e-03    0.19   0.19  -0.93  -5.8e-01  -3.3e-01      3850      2768   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[7]      -6.4e-01  1.9e-03    0.13   0.12  -0.87  -6.3e-01  -4.5e-01      4232      3044    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[8]      -2.8e-01  2.2e-03    0.13   0.12  -0.53  -2.6e-01  -1.1e-01      3612      3023    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[9]      -6.9e-01  2.6e-03    0.16   0.16  -0.98  -6.8e-01  -4.5e-01      4078      3164    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[10]     -7.4e-01  3.7e-03    0.23   0.23   -1.2  -7.1e-01  -4.0e-01      4026      2967    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[11]     -2.8e-01  2.1e-03    0.13   0.12  -0.52  -2.6e-01  -1.2e-01      3419      2597    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[12]     -5.0e-01  3.6e-03    0.24   0.22  -0.94  -4.7e-01  -1.9e-01      4359      3260    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[13]     -6.5e-01  3.3e-03    0.21   0.21   -1.0  -6.3e-01  -3.6e-01      4071      2663    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[14]     -3.6e-01  2.7e-03    0.17   0.16  -0.68  -3.3e-01  -1.4e-01      4196      2966    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[15]     -2.8e-01  1.7e-03    0.11   0.10  -0.47  -2.6e-01  -1.4e-01      4062      2457    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[16]     -2.8e-01  1.5e-03   0.087  0.085  -0.44  -2.7e-01  -1.5e-01      3304      2815    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[17]     -1.6e+00  4.8e-03    0.29   0.29   -2.1  -1.6e+00  -1.1e+00      3624      2964    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[18]     -4.8e-01  1.7e-03    0.10   0.10  -0.66  -4.8e-01  -3.2e-01      3932      2824    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[19]     -2.4e-01  1.3e-03   0.075  0.074  -0.37  -2.3e-01  -1.3e-01      3554      3085    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[20]     -1.1e-01  1.3e-03   0.079  0.061  -0.27  -9.5e-02  -3.0e-02      4170      3008    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[21]     -2.2e-01  1.5e-03   0.089  0.084  -0.38  -2.0e-01  -9.7e-02      3302      2740    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[22]     -5.7e-01  2.4e-03    0.14   0.14  -0.83  -5.6e-01  -3.6e-01      3779      3160    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[23]     -3.3e-01  2.2e-03    0.14   0.13  -0.58  -3.1e-01  -1.5e-01      3934      3316    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[24]     -1.4e-01  1.1e-03   0.067  0.061  -0.27  -1.3e-01  -5.4e-02      3656      3128    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[25]     -4.6e-01  1.9e-03    0.12   0.12  -0.68  -4.4e-01  -2.8e-01      4029      2992    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[26]     -1.5e+00  5.2e-03    0.34   0.33   -2.1  -1.5e+00  -9.9e-01      4325      3387    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[27]     -3.1e-01  2.1e-03    0.12   0.12  -0.54  -2.9e-01  -1.5e-01      3375      2563    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[28]     -4.5e-01  1.3e-03   0.082  0.082  -0.59  -4.4e-01  -3.2e-01      3776      2975    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[29]     -7.3e-01  3.3e-03    0.23   0.23   -1.1  -7.0e-01  -3.9e-01      4688      3192    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[30]     -7.0e-01  2.9e-03    0.18   0.18   -1.0  -6.8e-01  -4.2e-01      4197      3162    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[31]     -4.9e-01  2.7e-03    0.16   0.16  -0.79  -4.7e-01  -2.6e-01      3604      2908    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[32]     -4.3e-01  1.7e-03    0.11   0.11  -0.62  -4.2e-01  -2.7e-01      3793      2685    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[33]     -4.1e-01  2.0e-03    0.13   0.12  -0.65  -3.9e-01  -2.3e-01      4149      2968    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[34]     -6.6e-02  8.7e-04   0.052  0.038  -0.16  -5.2e-02  -1.3e-02      3571      2878    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[35]     -5.9e-01  2.8e-03    0.19   0.19  -0.92  -5.6e-01  -3.2e-01      4485      3033    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[36]     -3.3e-01  2.0e-03    0.13   0.12  -0.56  -3.1e-01  -1.5e-01      4361      3167   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[37]     -7.0e-01  3.4e-03    0.23   0.22   -1.1  -6.7e-01  -3.7e-01      4430      3268    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[38]     -3.2e-01  2.5e-03    0.15   0.14  -0.61  -2.9e-01  -1.2e-01      3889      3062    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[39]     -1.8e-01  1.7e-03    0.11  0.089  -0.38  -1.6e-01  -5.5e-02      4256      2773    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[40]     -6.8e-01  2.0e-03    0.12   0.12  -0.90  -6.7e-01  -4.9e-01      4119      3108    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[41]     -1.1e+00  4.3e-03    0.25   0.25   -1.6  -1.1e+00  -7.5e-01      3475      2646    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[42]     -9.3e-01  3.0e-03    0.19   0.19   -1.3  -9.2e-01  -6.3e-01      4203      3085    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[43]     -4.1e-01  3.9e-03    0.26   0.22  -0.91  -3.5e-01  -1.1e-01      4971      3223   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[44]     -1.2e+00  2.9e-03    0.18   0.18   -1.5  -1.2e+00  -8.9e-01      3992      2815    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[45]     -3.6e-01  1.8e-03    0.12   0.11  -0.57  -3.4e-01  -1.9e-01      4297      3077   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[46]     -5.8e-01  1.9e-03    0.13   0.12  -0.81  -5.7e-01  -3.9e-01      4228      3113    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[47]     -3.1e-01  2.1e-03    0.13   0.12  -0.55  -2.9e-01  -1.4e-01      3831      2919    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[48]     -3.3e-01  1.3e-03   0.082  0.081  -0.47  -3.2e-01  -2.1e-01      3891      3283    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[49]     -3.2e-01  1.3e-03   0.079  0.078  -0.46  -3.2e-01  -2.0e-01      3475      2682    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[50]     -1.3e+00  4.9e-03    0.32   0.32   -1.8  -1.3e+00  -7.9e-01      4610      3388    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[51]     -2.9e-01  1.4e-03   0.093  0.090  -0.46  -2.8e-01  -1.6e-01      4207      3215    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[52]     -8.3e-01  2.2e-03    0.14   0.14   -1.1  -8.3e-01  -6.1e-01      4205      3039    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[53]     -4.1e-01  2.2e-03    0.13   0.12  -0.64  -3.9e-01  -2.2e-01      3463      2821    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[54]     -3.7e-01  2.2e-03    0.14   0.13  -0.63  -3.5e-01  -1.8e-01      4357      3109   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[55]     -3.9e-01  2.1e-03    0.13   0.13  -0.63  -3.7e-01  -2.0e-01      4184      2870    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[56]     -3.2e-01  2.8e-03    0.19   0.17  -0.67  -2.8e-01  -9.4e-02      4725      2892    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[57]     -6.6e-01  1.8e-03    0.12   0.12  -0.86  -6.5e-01  -4.8e-01      4204      3006    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[58]     -9.5e-01  5.4e-03    0.36   0.35   -1.6  -9.0e-01  -4.5e-01      4724      2916    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[59]     -1.4e+00  5.4e-03    0.34   0.33   -2.0  -1.3e+00  -8.4e-01      4126      2944    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[60]     -9.8e-01  2.4e-03    0.16   0.16   -1.3  -9.7e-01  -7.3e-01      4237      3028    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[61]     -5.4e-01  1.5e-03   0.097  0.096  -0.71  -5.4e-01  -3.9e-01      4260      3064    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[62]     -8.8e-01  4.8e-03    0.31   0.31   -1.4  -8.5e-01  -4.4e-01      4420      3420    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[63]     -1.2e-01  1.3e-03   0.075  0.063  -0.26  -1.0e-01  -3.4e-02      3288      2867    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[64]     -9.0e-01  3.6e-03    0.24   0.23   -1.3  -8.7e-01  -5.5e-01      4286      3272    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[65]     -2.0e+00  1.0e-02    0.59   0.61   -3.0  -2.0e+00  -1.1e+00      3390      2645    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[66]     -5.1e-01  2.1e-03    0.14   0.13  -0.75  -5.0e-01  -3.1e-01      4289      2934    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[67]     -2.8e-01  1.3e-03   0.081  0.080  -0.42  -2.7e-01  -1.6e-01      3650      3029    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[68]     -1.1e+00  3.7e-03    0.23   0.22   -1.5  -1.0e+00  -7.1e-01      3844      3244    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[69]     -4.4e-01  1.4e-03   0.083  0.084  -0.58  -4.3e-01  -3.1e-01      3763      2707    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[70]     -6.4e-01  3.4e-03    0.23   0.21   -1.1  -6.1e-01  -3.2e-01      4692      3113    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[71]     -6.1e-01  3.3e-03    0.21   0.21  -0.99  -5.8e-01  -3.1e-01      4276      3089    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[72]     -4.6e-01  2.6e-03    0.17   0.16  -0.78  -4.4e-01  -2.3e-01      4326      3218    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[73]     -1.5e+00  6.0e-03    0.37   0.37   -2.1  -1.4e+00  -9.1e-01      3893      3087    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[74]     -9.5e-01  2.9e-03    0.19   0.20   -1.3  -9.3e-01  -6.5e-01      4399      2879    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[75]     -1.1e+00  5.8e-03    0.38   0.38   -1.8  -1.1e+00  -5.8e-01      4471      3388    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[76]     -3.7e-01  2.1e-03    0.14   0.13  -0.62  -3.5e-01  -1.8e-01      4223      2860   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[77]     -8.8e-01  2.2e-03    0.14   0.14   -1.1  -8.7e-01  -6.7e-01      3901      2655    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[78]     -4.9e-01  2.6e-03    0.17   0.16  -0.80  -4.6e-01  -2.5e-01      4623      3544   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[79]     -7.6e-01  3.0e-03    0.19   0.19   -1.1  -7.5e-01  -4.8e-01      4156      3125    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[80]     -5.4e-01  2.8e-03    0.19   0.18  -0.88  -5.2e-01  -2.7e-01      4708      3185    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[81]     -1.7e-01  1.7e-03    0.10  0.084  -0.37  -1.4e-01  -4.9e-02      4002      3125    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[82]     -2.2e-01  2.1e-03    0.14   0.11  -0.48  -1.9e-01  -6.6e-02      4234      2703    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[83]     -3.5e-01  1.3e-03   0.080  0.079  -0.49  -3.4e-01  -2.2e-01      3872      2864   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[84]     -2.8e-01  1.5e-03   0.091  0.087  -0.44  -2.7e-01  -1.5e-01      4033      2778    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[85]     -1.3e-01  1.2e-03   0.075  0.063  -0.28  -1.2e-01  -4.3e-02      4008      3071    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[86]     -1.1e+00  4.8e-03    0.31   0.30   -1.7  -1.1e+00  -6.7e-01      4424      2829    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[87]     -8.2e-01  1.9e-03    0.13   0.12   -1.0  -8.1e-01  -6.3e-01      4199      3091    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[88]     -7.7e-01  3.9e-03    0.24   0.24   -1.2  -7.4e-01  -4.3e-01      3979      2725   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[89]     -1.3e+00  5.0e-03    0.32   0.31   -1.8  -1.2e+00  -8.0e-01      4105      2643    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[90]     -2.7e-01  2.2e-03    0.14   0.12  -0.54  -2.4e-01  -9.4e-02      4059      3128    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[91]     -3.9e-01  2.0e-03    0.13   0.12  -0.63  -3.7e-01  -2.0e-01      4231      3276    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[92]     -1.5e+00  5.5e-03    0.34   0.34   -2.1  -1.5e+00  -9.7e-01      3905      2575    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[93]     -7.4e-01  3.5e-03    0.22   0.22   -1.1  -7.2e-01  -4.2e-01      3995      2990    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[94]     -3.2e-01  1.4e-03   0.087  0.084  -0.48  -3.1e-01  -1.9e-01      4054      2800   1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[95]     -3.9e-01  1.9e-03    0.11   0.11  -0.59  -3.8e-01  -2.3e-01      3454      2901    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[96]     -1.6e+00  4.6e-03    0.28   0.28   -2.1  -1.5e+00  -1.1e+00      3721      3096    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[97]     -4.3e-01  1.5e-03   0.098  0.095  -0.60  -4.2e-01  -2.8e-01      4401      3224    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[98]     -1.0e+00  5.7e-03    0.38   0.37   -1.7  -1.0e+00  -5.2e-01      4630      2912    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[99]     -6.9e-01  2.1e-03    0.14   0.13  -0.94  -6.8e-01  -4.8e-01      4146      3139    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log_lik[100]    -3.9e-01  1.5e-03   0.096  0.096  -0.56  -3.8e-01  -2.5e-01      4330      2963    1.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using hmc with nuts.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, N_Eff is a crude measure of effective sample size,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> and R_hat is the potential scale reduction factor on split chains (at </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> convergence, R_hat=1).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, ESS_bulk and ESS_tail measure the effective sample size for the entire sample (bulk) and for the .05 and .95 tails (tail), </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> and R_hat measures the potential scale reduction on split chains. At convergence R_hat will be very close to 1.00.</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

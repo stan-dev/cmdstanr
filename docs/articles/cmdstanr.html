@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -214,10 +214,10 @@ number you can use <code><a href="../reference/set_cmdstan_path.html">cmdstan_pa
 <code><a href="../reference/set_cmdstan_path.html">cmdstan_version()</a></code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.35.0"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.36.0"</code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/set_cmdstan_path.html">cmdstan_version</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "2.35.0"</code></pre>
+<pre><code>[1] "2.36.0"</code></pre>
 </div>
 <div class="section level2">
 <h2 id="compiling-a-model">Compiling a model<a class="anchor" aria-label="anchor" href="#compiling-a-model"></a>
@@ -254,7 +254,7 @@ model {
 <code>$exe_file()</code> method:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.35.0/examples/bernoulli/bernoulli"</code></pre>
+<pre><code>[1] "/Users/jgabry/.cmdstan/cmdstan-2.36.0/examples/bernoulli/bernoulli"</code></pre>
 </div>
 <div class="section level2">
 <h2 id="running-mcmc">Running MCMC<a class="anchor" aria-label="anchor" href="#running-mcmc"></a>
@@ -348,16 +348,16 @@ compute, whether to use multiple cores, etc.</p>
 <span>  extra_quantiles <span class="op">=</span> <span class="op">~</span><span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/quantile2.html" class="external-link">quantile2</a></span><span class="op">(</span><span class="va">.</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">.0275</span>, <span class="fl">.975</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code>  variable  mean median   sd  mad     q5   q95 rhat ess_bulk ess_tail
-1     lp__ -7.31  -7.01 0.81 0.34 -8.871 -6.75    1     1404     1631
-2    theta  0.26   0.24 0.13 0.13  0.079  0.49    1     1130     1314</code></pre>
+1     lp__ -7.30  -6.99 0.79 0.33 -8.927 -6.75    1     1769     1938
+2    theta  0.25   0.24 0.12 0.12  0.078  0.48    1     1228     1521</code></pre>
 <pre><code>  variable  mean   sd
-1    theta  0.26 0.13
-2     lp__ -7.31 0.81</code></pre>
+1    theta  0.25 0.12
+2     lp__ -7.30 0.79</code></pre>
 <pre><code>  variable pr_lt_half
 1    theta       0.96</code></pre>
 <pre><code>  variable  mean median   sd  mad     q5   q95  q2.75 q97.5
-1     lp__ -7.31  -7.01 0.81 0.34 -8.871 -6.75 -9.443 -6.75
-2    theta  0.26   0.24 0.13 0.13  0.079  0.49  0.063  0.54</code></pre>
+1     lp__ -7.30  -6.99 0.79 0.33 -8.927 -6.75 -9.429 -6.75
+2    theta  0.25   0.24 0.12 0.12  0.078  0.48  0.062  0.54</code></pre>
 </div>
 <div class="section level4">
 <h4 id="cmdstans-stansummary-utility">CmdStan’s stansummary utility<a class="anchor" aria-label="anchor" href="#cmdstans-stansummary-utility"></a>
@@ -491,7 +491,7 @@ $num_max_treedepth
 [1] 0 0 0 0
 
 $ebfmi
-[1] 1.11 0.80 1.05 0.95</code></pre>
+[1] 1.11 0.76 1.19 1.08</code></pre>
 <p>We see the number of divergences for each of the four chains, the
 number of times the maximum treedepth was hit for each chain, and the
 E-BFMI for each chain.</p>
@@ -500,7 +500,7 @@ warning messages we’ll use one of the CmdStanR example models that
 suffers from divergences.</p>
 <div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_with_warning</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"schools"</span><span class="op">)</span></span></code></pre></div>
-<pre><code>Warning: 374 of 4000 (9.0%) transitions ended with a divergence.
+<pre><code>Warning: 143 of 4000 (4.0%) transitions ended with a divergence.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
 <pre><code>Warning: 1 of 4 chains had an E-BFMI less than 0.3.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
@@ -509,24 +509,24 @@ regenerate this warning message later using
 <code>fit$diagnostic_summary()</code>.</p>
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">diagnostics</span> <span class="op">&lt;-</span> <span class="va">fit_with_warning</span><span class="op">$</span><span class="fu">diagnostic_summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>Warning: 374 of 4000 (9.0%) transitions ended with a divergence.
+<pre><code>Warning: 143 of 4000 (4.0%) transitions ended with a divergence.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
 <pre><code>Warning: 1 of 4 chains had an E-BFMI less than 0.3.
 See https://mc-stan.org/misc/warnings for details.</code></pre>
 <div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diagnostics</span><span class="op">)</span></span></code></pre></div>
 <pre><code>$num_divergent
-[1] 269  29  11  65
+[1]  1 37 75 30
 
 $num_max_treedepth
 [1] 0 0 0 0
 
 $ebfmi
-[1] 0.15 0.34 0.38 0.37</code></pre>
+[1] 0.17 0.35 0.34 0.42</code></pre>
 <div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># number of divergences reported in warning is the sum of the per chain values</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">diagnostics</span><span class="op">$</span><span class="va">num_divergent</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] 374</code></pre>
+<pre><code>[1] 143</code></pre>
 </div>
 <div class="section level4">
 <h4 id="cmdstans-diagnose-utility">CmdStan’s diagnose utility<a class="anchor" aria-label="anchor" href="#cmdstans-diagnose-utility"></a>
@@ -535,20 +535,6 @@ $ebfmi
 called using the <code>$cmdstan_diagnose()</code> method. This method
 will print warnings but won’t return anything.</p>
 </div>
-</div>
-<div class="section level3">
-<h3 id="create-a-stanfit-object">Create a <code>stanfit</code> object<a class="anchor" aria-label="anchor" href="#create-a-stanfit-object"></a>
-</h3>
-<p>If you have RStan installed then it is also possible to create a
-<code>stanfit</code> object from the csv output files written by
-CmdStan. This can be done by using <code><a href="https://mc-stan.org/rstan/reference/stan_csv.html" class="external-link">rstan::read_stan_csv()</a></code>
-in combination with the <code>$output_files()</code> method of the
-<code>CmdStanMCMC</code> object. This is only needed if you want to fit
-a model with CmdStanR but already have a lot of post-processing code
-that assumes a <code>stanfit</code> object. Otherwise we recommend using
-the post-processing functionality provided by CmdStanR itself.</p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">stanfit</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_csv.html" class="external-link">read_stan_csv</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -565,7 +551,7 @@ demonstrated above.</p>
 </h3>
 <p>We can find the (penalized) maximum likelihood estimate (MLE) using
 <a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a>.</p>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_mle</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></code></pre></div>
 <pre><code>Initial log joint probability = -16.144 
     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
@@ -573,18 +559,18 @@ demonstrated above.</p>
 Optimization terminated normally:  
   Convergence detected: relative gradient magnitude is below tolerance 
 Finished in  0.2 seconds.</code></pre>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span> <span class="co"># includes lp__ (log prob calculated by Stan program)</span></span></code></pre></div>
 <pre><code> variable estimate
     lp__     -5.00
     theta     0.20</code></pre>
-<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="va">theta</span> </span>
 <span>  <span class="fl">0.2</span> </span></code></pre>
 <p>Here’s a plot comparing the penalized MLE to the posterior
 distribution of <code>theta</code>.</p>
-<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">vline_at</a></span><span class="op">(</span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cmdstanr_files/figure-html/plot-mle-1.png" width="60%" style="display: block; margin: auto;"></p>
@@ -595,7 +581,7 @@ obtain a maximum a posteriori (MAP) estimate set
 <code>jacobian=TRUE</code>. See the <a href="https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html" class="external-link">Maximum
 Likelihood Estimation</a> section of the CmdStan User’s Guide for more
 details.</p>
-<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_map</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">data_list</span>,</span>
 <span>  jacobian <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -606,7 +592,7 @@ details.</p>
        5      -6.74802   0.000708195   1.43227e-05           1           1        8    
 Optimization terminated normally:  
   Convergence detected: relative gradient magnitude is below tolerance 
-Finished in  0.2 seconds.</code></pre>
+Finished in  0.1 seconds.</code></pre>
 </div>
 <div class="section level3">
 <h3 id="laplace-approximation">Laplace Approximation<a class="anchor" aria-label="anchor" href="#laplace-approximation"></a>
@@ -624,7 +610,7 @@ Sampling</a> chapter of the CmdStan User’s Guide for more details.</p>
 <code>mode</code> argument. If <code>mode</code> is omitted then
 optimization will be run internally before taking draws from the normal
 approximation.</p>
-<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_laplace</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">laplace</span><span class="op">(</span></span>
 <span>    mode <span class="op">=</span> <span class="va">fit_map</span>,</span>
 <span>    draws <span class="op">=</span> <span class="fl">4000</span>,</span>
@@ -640,11 +626,11 @@ iteration: 1000
 iteration: 2000 
 iteration: 3000 
 Finished in  0.1 seconds.</code></pre>
-<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
 <pre><code> variable mean median   sd  mad   q5  q95
     theta 0.27   0.25 0.12 0.12 0.10 0.51</code></pre>
-<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cmdstanr_files/figure-html/laplace-1.png" width="60%" style="display: block; margin: auto;"></p>
 </div>
@@ -655,7 +641,7 @@ Finished in  0.1 seconds.</code></pre>
 Inference (ADVI) using the <a href="https://mc-stan.org/cmdstanr/reference/model-method-variational.html"><code>$variational()</code></a>
 method. For details on the ADVI algorithm see the <a href="https://mc-stan.org/docs/cmdstan-guide/variational-inference-algorithm-advi.html" class="external-link">CmdStan
 User’s Guide</a>.</p>
-<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">variational</span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">data_list</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span>,</span>
@@ -666,8 +652,8 @@ EXPERIMENTAL ALGORITHM:
   This procedure has not been thoroughly tested and may be unstable 
   or buggy. The interface is subject to change. 
 ------------------------------------------------------------ 
-Gradient evaluation took 1.3e-05 seconds 
-1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds. 
+Gradient evaluation took 9e-06 seconds 
+1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds. 
 Adjust your expectations accordingly! 
 Begin eta adaptation. 
 Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -684,11 +670,11 @@ Begin stochastic gradient ascent.
 Drawing a sample of size 4000 from the approximate posterior...  
 COMPLETED. 
 Finished in  0.1 seconds.</code></pre>
-<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
 <pre><code> variable mean median   sd  mad   q5  q95
     theta 0.26   0.24 0.11 0.11 0.11 0.46</code></pre>
-<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cmdstanr_files/figure-html/variational-1.png" width="60%" style="display: block; margin: auto;"></p>
 </div>
@@ -700,7 +686,7 @@ Pathfinder, which is intended to be faster and more stable than ADVI.
 For details on how Pathfinder works see the section in the <a href="https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro" class="external-link">CmdStan
 User’s Guide</a>. Pathfinder is run using the <a href="https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html"><code>$pathfinder()</code></a>
 method.</p>
-<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_pf</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">pathfinder</span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">data_list</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span>,</span>
@@ -724,7 +710,7 @@ Path [4] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0 
 Path [4] :Best Iter: [5] ELBO (-6.197118) evaluations: (126) 
 Total log probability function evaluations:4379 
 Finished in  0.1 seconds.</code></pre>
-<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_pf</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
 <pre><code> variable mean median   sd  mad   q5  q95
     theta 0.25   0.24 0.12 0.12 0.08 0.47</code></pre>
@@ -732,22 +718,22 @@ Finished in  0.1 seconds.</code></pre>
 other algorithms, and compare them all. approximation, and compare them
 all. In this simple example the distributions are quite similar, but
 this will not always be the case for more challenging problems.</p>
-<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_pf</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>subtitle <span class="op">=</span> <span class="st">"Approximate posterior from pathfinder"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cmdstanr_files/figure-html/plot-compare-pf-1.png" width="60%" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>subtitle <span class="op">=</span> <span class="st">"Approximate posterior from variational"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cmdstanr_files/figure-html/plot-compare-vb-1.png" width="60%" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>subtitle <span class="op">=</span> <span class="st">"Approximate posterior from Laplace"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cmdstanr_files/figure-html/plot-compare-laplace-1.png" width="60%" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>subtitle <span class="op">=</span> <span class="st">"Posterior from MCMC"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
@@ -771,7 +757,7 @@ documentation pages.</p>
 method provided by CmdStanR is the most convenient way to save a fitted
 model object to disk and ensure that all of the contents are available
 when reading the object back into R.</p>
-<div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_object</span><span class="op">(</span>file <span class="op">=</span> <span class="st">"fit.RDS"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># can be read back in using readRDS</span></span>
@@ -783,7 +769,7 @@ object, and saves the object with <code><a href="https://rdrr.io/r/base/readRDS.
 the process, you can emulate <a href="http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html" class="external-link"><code>$save_object()</code></a>
 and replace <code>saveRDS</code> with the much faster
 <code>qsave()</code> function from the <a href="https://github.com/traversc/qs" class="external-link"><code>qs</code></a> package.</p>
-<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load CmdStan output files into the fitted model object.</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span> <span class="co"># Load posterior draws into the object.</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">sampler_diagnostics</span><span class="op">(</span><span class="op">)</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># Load sampler diagnostics.</span></span>
@@ -791,23 +777,23 @@ and replace <code>saveRDS</code> with the much faster
 <span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># Load profiling samples.</span></span>
 <span></span>
 <span><span class="co"># Save the object to a file.</span></span>
-<span><span class="fu">qs</span><span class="fu">::</span><span class="fu">qsave</span><span class="op">(</span>x <span class="op">=</span> <span class="va">fit</span>, file <span class="op">=</span> <span class="st">"fit.qs"</span><span class="op">)</span></span>
+<span><span class="fu">qs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/qs/man/qsave.html" class="external-link">qsave</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">fit</span>, file <span class="op">=</span> <span class="st">"fit.qs"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Read the object.</span></span>
-<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">qs</span><span class="fu">::</span><span class="fu">qread</span><span class="op">(</span><span class="st">"fit.qs"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">qs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/qs/man/qread.html" class="external-link">qread</a></span><span class="op">(</span><span class="st">"fit.qs"</span><span class="op">)</span></span></code></pre></div>
 <p>Storage is even faster if you discard results you do not need to
 save. The following example saves only posterior draws and discards
 sampler diagnostics, user-specified initial values, and profiling
 data.</p>
-<div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load posterior draws into the fitted model object and omit other output.</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Save the object to a file.</span></span>
-<span><span class="fu">qs</span><span class="fu">::</span><span class="fu">qsave</span><span class="op">(</span>x <span class="op">=</span> <span class="va">fit</span>, file <span class="op">=</span> <span class="st">"fit.qs"</span><span class="op">)</span></span>
+<span><span class="fu">qs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/qs/man/qsave.html" class="external-link">qsave</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">fit</span>, file <span class="op">=</span> <span class="st">"fit.qs"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Read the object.</span></span>
-<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">qs</span><span class="fu">::</span><span class="fu">qread</span><span class="op">(</span><span class="st">"fit.qs"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">qs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/qs/man/qread.html" class="external-link">qread</a></span><span class="op">(</span><span class="st">"fit.qs"</span><span class="op">)</span></span></code></pre></div>
 <p>See the vignette <a href="http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html" class="external-link"><em>How
 does CmdStanR work?</em></a> for more information about the composition
 of CmdStanR objects.</p>

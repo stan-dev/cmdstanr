@@ -19,7 +19,7 @@ model directly back to the file or prints it for inspection."><meta property="og
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -187,72 +187,6 @@ documentation and tutorials.</p>
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example of fixing old syntax</span></span></span>
-<span class="r-in"><span><span class="co"># real x[2] --&gt; array[2] real x;</span></span></span>
-<span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">"</span></span></span>
-<span class="r-in"><span><span class="st">parameters {</span></span></span>
-<span class="r-in"><span><span class="st">  real x[2];</span></span></span>
-<span class="r-in"><span><span class="st">}</span></span></span>
-<span class="r-in"><span><span class="st">model {</span></span></span>
-<span class="r-in"><span><span class="st">  x ~ std_normal();</span></span></span>
-<span class="r-in"><span><span class="st">}</span></span></span>
-<span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># set compile=FALSE then call format to fix old syntax</span></span></span>
-<span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">format</span><span class="op">(</span>canonicalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"deprecations"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Syntax error in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/model_1fc88c86300d78667dd3e476a636c279.stan', line 3, column 9 to column 10, parsing error:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>    -------------------------------------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      1:  </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      2:  parameters {</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      3:    real x[2];</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>                   ^</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      4:  }</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      5:  model {</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>    -------------------------------------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ";" expected after variable declaration.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> It looks like you are trying to use the old array syntax.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Please use the new syntax:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> array[2] real x;</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> Syntax error found! See the message above for more information.</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># overwrite the original file instead of just printing it</span></span></span>
-<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">format</span><span class="op">(</span>canonicalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"deprecations"</span><span class="op">)</span>, overwrite_file <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Syntax error in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/model_1fc88c86300d78667dd3e476a636c279.stan', line 3, column 9 to column 10, parsing error:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>    -------------------------------------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      1:  </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      2:  parameters {</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      3:    real x[2];</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>                   ^</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      4:  }</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      5:  model {</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>    -------------------------------------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ";" expected after variable declaration.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> It looks like you are trying to use the old array syntax.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Please use the new syntax:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> array[2] real x;</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> Syntax error found! See the message above for more information.</span>
-<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Syntax error in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/model-59c028cea1fd.stan', line 3, column 9 to column 10, parsing error:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>    -------------------------------------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      1:  </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      2:  parameters {</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      3:    real x[2];</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>                   ^</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      4:  }</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>      5:  model {</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>    -------------------------------------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ";" expected after variable declaration.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> It looks like you are trying to use the old array syntax.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Please use the new syntax:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> array[2] real x;</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> make: *** [/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/model-59c028cea1fd.hpp] Error 1</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> An error occured during compilation! See the message above for more information.</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Example of removing unnecessary whitespace</span></span></span>
 <span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">"</span></span></span>
 <span class="r-in"><span><span class="st">data {</span></span></span>
@@ -267,8 +201,10 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="st"> poisson_lpmf(y | lambda);</span></span></span>
 <span class="r-in"><span><span class="st">}</span></span></span>
 <span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># set compile=FALSE then call format to fix old syntax</span></span></span>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">format</span><span class="op">(</span>canonicalize <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">format</span><span class="op">(</span>canonicalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"deprecations"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> data {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int N;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int y;</span>
@@ -281,6 +217,11 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># overwrite the original file instead of just printing it</span></span></span>
+<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">format</span><span class="op">(</span>canonicalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"deprecations"</span><span class="op">)</span>, overwrite_file <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Old version of the model stored to /var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpWzIPg0/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20250331084850.</span>
+<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

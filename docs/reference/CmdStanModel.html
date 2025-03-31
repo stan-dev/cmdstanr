@@ -20,7 +20,7 @@ fitting the model using Stan's algorithms."><meta property="og:image" content="h
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -150,7 +150,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/">cmdstanr</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/posterior/" class="external-link">posterior</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/bayesplot/" class="external-link">bayesplot</a></span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> This is bayesplot version 1.11.1</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> This is bayesplot version 1.11.1.9000</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> - Online documentation and vignettes at mc-stan.org/bayesplot</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> - bayesplot theme set to bayesplot::theme_default()</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>    * Does _not_ affect other ggplot2 plots</span>
@@ -168,7 +168,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="co"># Otherwise use the `path` argument to specify the location of your</span></span></span>
 <span class="r-in"><span><span class="co"># CmdStan installation.)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="set_cmdstan_path.html">set_cmdstan_path</a></span><span class="op">(</span>path <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> CmdStan path set to: /Users/jgabry/.cmdstan/cmdstan-2.35.0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> CmdStan path set to: /Users/jgabry/.cmdstan/cmdstan-2.36.0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a CmdStanModel object from a Stan program,</span></span></span>
 <span class="r-in"><span><span class="co"># here using the example model that comes with CmdStan</span></span></span>
@@ -270,8 +270,8 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 10</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__     -<span style="color: #BB0000;">7.30</span>  -<span style="color: #BB0000;">7.00</span>  0.811 0.344 -<span style="color: #BB0000;">8.83</span>   -<span style="color: #BB0000;">6.75</span>   1.00     702.     776.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> theta     0.254  0.238 0.125 0.124  0.080<span style="text-decoration: underline;">7</span>  0.483  1.00     634.     580.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__     -<span style="color: #BB0000;">7.35</span>  -<span style="color: #BB0000;">7.01</span>  0.882 0.353 -<span style="color: #BB0000;">9.14</span>   -<span style="color: #BB0000;">6.75</span>   1.00     724.     896.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> theta     0.254  0.239 0.129 0.126  0.073<span style="text-decoration: underline;">7</span>  0.488  1.00     532.     657.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check sampling diagnostics</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">diagnostic_summary</span><span class="op">(</span><span class="op">)</span></span></span>
@@ -282,7 +282,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0 0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $ebfmi</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.1148699 0.8012192</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.1148479 0.7568734</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get posterior draws</span></span></span>
@@ -292,22 +292,22 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = lp__</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration    1     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -7.0  -6.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -7.9  -6.9</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -7.4  -6.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -6.7  -6.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -6.9 -10.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration    1    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -7.0 -8.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -7.9 -7.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -7.4 -7.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -6.7 -6.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -6.9 -6.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = theta</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration    1    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.17 0.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.46 0.18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.41 0.28</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.25 0.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.18 0.62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration    1     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.17 0.088</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.46 0.097</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.41 0.167</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.25 0.292</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.18 0.238</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 995 more iterations</span>
 <span class="r-in"><span></span></span>
@@ -333,11 +333,6 @@ documentation and tutorials.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="CmdStanModel-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># For models fit using MCMC, if you like working with RStan's stanfit objects</span></span></span>
-<span class="r-in"><span><span class="co"># then you can create one with rstan::read_stan_csv()</span></span></span>
-<span class="r-in"><span><span class="co"># stanfit &lt;- rstan::read_stan_csv(fit_mcmc$output_files())</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)</span></span></span>
 <span class="r-in"><span><span class="co"># and also demonstrate specifying data as a path to a file instead of a list</span></span></span>
 <span class="r-in"><span><span class="va">my_data_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"examples/bernoulli/bernoulli.data.json"</span><span class="op">)</span></span></span>
@@ -358,9 +353,9 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="co"># Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation</span></span></span>
 <span class="r-in"><span><span class="co"># to the posterior</span></span></span>
 <span class="r-in"><span><span class="va">fit_optim</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">my_data_file</span>, jacobian <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Initial log joint probability = -17.5579 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Initial log joint probability = -6.93289 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        5      -6.74802    0.00114604   2.88021e-05           1           1        8    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        4      -6.74802    0.00149466   1.90231e-05           1           1        7    </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Optimization terminated normally:  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Convergence detected: relative gradient magnitude is below tolerance </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
@@ -393,9 +388,9 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable      mean median    sd   mad     q5      q95</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">7.25</span>  -<span style="color: #BB0000;">6.96</span>  0.761 0.290 -<span style="color: #BB0000;">8.64</span>  -<span style="color: #BB0000;">6.75</span>   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp_approx__ -<span style="color: #BB0000;">0.505</span> -<span style="color: #BB0000;">0.216</span> 0.751 0.296 -<span style="color: #BB0000;">1.96</span>  -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">91</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.269  0.248 0.124 0.119  0.102  0.505  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">7.24</span>  -<span style="color: #BB0000;">6.96</span>  0.738 0.292 -<span style="color: #BB0000;">8.68</span>  -<span style="color: #BB0000;">6.75</span>   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp_approx__ -<span style="color: #BB0000;">0.494</span> -<span style="color: #BB0000;">0.213</span> 0.716 0.294 -<span style="color: #BB0000;">2.00</span>  -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">55</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.268  0.245 0.124 0.116  0.104  0.509  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Run 'variational' method to use ADVI to approximate posterior</span></span></span>
 <span class="r-in"><span><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">variational</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
@@ -404,8 +399,8 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   This procedure has not been thoroughly tested and may be unstable </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   or buggy. The interface is subject to change. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 1.6e-05 seconds </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds. </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 1.1e-05 seconds </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Adjust your expectations accordingly! </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Begin eta adaptation. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration:   1 / 250 [  0%]  (Adaptation) </span>
@@ -469,48 +464,47 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="va">fit_pf</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">pathfinder</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span>, num_paths<span class="op">=</span><span class="fl">10</span>, single_path_draws<span class="op">=</span><span class="fl">40</span>,</span></span>
 <span class="r-in"><span>                         history_size<span class="op">=</span><span class="fl">50</span>, max_lbfgs_iters<span class="op">=</span><span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Warning: Number of PSIS draws is larger than the total number of draws returned by the single Pathfinders. This is likely unintentional and leads to re-sampling from the same draws. </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] :Initial log joint density = -7.658980 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] :Initial log joint density = -7.264402 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.493e-04   7.219e-07    1.000e+00  1.000e+00       126 -6.255e+00 -6.255e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] :Best Iter: [3] ELBO (-6.118635) evaluations: (126) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [2] :Initial log joint density = -15.590813 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      3.293e-04   4.141e-07    1.000e+00  1.000e+00       126 -6.296e+00 -6.296e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] :Best Iter: [4] ELBO (-6.235406) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [2] :Initial log joint density = -11.117345 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [2] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.968e-03   5.939e-05    1.000e+00  1.000e+00       126 -6.158e+00 -6.158e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [2] :Best Iter: [5] ELBO (-6.157859) evaluations: (126) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [3] :Initial log joint density = -6.799846 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      9.672e-04   1.459e-05    1.000e+00  1.000e+00       126 -6.259e+00 -6.259e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [2] :Best Iter: [2] ELBO (-6.180823) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [3] :Initial log joint density = -7.495731 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [3] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               4      -6.748e+00      2.833e-04   1.189e-06    1.000e+00  1.000e+00       101 -6.196e+00 -6.196e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [3] :Best Iter: [4] ELBO (-6.196377) evaluations: (101) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [4] :Initial log joint density = -7.264152 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.114e-04   4.492e-07    1.000e+00  1.000e+00       126 -6.259e+00 -6.259e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [3] :Best Iter: [2] ELBO (-6.245533) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [4] :Initial log joint density = -7.770449 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [4] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               4      -6.748e+00      4.881e-03   1.363e-04    1.000e+00  1.000e+00       101 -6.246e+00 -6.246e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [4] :Best Iter: [4] ELBO (-6.246482) evaluations: (101) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [5] :Initial log joint density = -6.872687 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.750e-04   9.341e-07    1.000e+00  1.000e+00       126 -6.225e+00 -6.225e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [4] :Best Iter: [5] ELBO (-6.225361) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [5] :Initial log joint density = -14.218076 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [5] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               4      -6.748e+00      9.087e-04   8.299e-06    1.000e+00  1.000e+00       101 -6.154e+00 -6.154e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [5] :Best Iter: [4] ELBO (-6.153998) evaluations: (101) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [6] :Initial log joint density = -6.752169 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.997e-03   5.573e-05    1.000e+00  1.000e+00       126 -6.216e+00 -6.216e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [5] :Best Iter: [5] ELBO (-6.216169) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [6] :Initial log joint density = -7.472192 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [6] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               3      -6.748e+00      6.431e-04   9.017e-06    9.943e-01  9.943e-01        76 -6.254e+00 -6.254e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [6] :Best Iter: [2] ELBO (-6.219041) evaluations: (76) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [7] :Initial log joint density = -6.964028 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.059e-04   4.145e-07    1.000e+00  1.000e+00       126 -6.137e+00 -6.137e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [6] :Best Iter: [5] ELBO (-6.137426) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [7] :Initial log joint density = -8.723559 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [7] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               4      -6.748e+00      3.720e-04   7.938e-05    9.165e-01  9.165e-01       101 -6.157e+00 -6.157e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [7] :Best Iter: [2] ELBO (-6.124107) evaluations: (101) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [8] :Initial log joint density = -7.712025 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      3.317e-04   2.693e-06    1.000e+00  1.000e+00       126 -6.210e+00 -6.210e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [7] :Best Iter: [3] ELBO (-6.175877) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [8] :Initial log joint density = -9.460464 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [8] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      1.616e-04   8.207e-07    1.000e+00  1.000e+00       126 -6.193e+00 -6.193e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [8] :Best Iter: [2] ELBO (-6.154633) evaluations: (126) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [9] :Initial log joint density = -8.980186 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      4.598e-04   4.575e-06    1.000e+00  1.000e+00       126 -6.241e+00 -6.241e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [8] :Best Iter: [2] ELBO (-6.228285) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [9] :Initial log joint density = -18.781825 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [9] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      3.446e-04   2.899e-06    1.000e+00  1.000e+00       126 -6.172e+00 -6.172e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [9] :Best Iter: [5] ELBO (-6.172384) evaluations: (126) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [10] :Initial log joint density = -6.762839 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      4.081e-04   6.355e-06    1.000e+00  1.000e+00       126 -6.256e+00 -6.256e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [9] :Best Iter: [2] ELBO (-6.178423) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [10] :Initial log joint density = -7.492978 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [10] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               3      -6.748e+00      1.503e-03   8.368e-06    9.796e-01  9.796e-01        76 -6.234e+00 -6.234e+00                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Path [10] :Best Iter: [2] ELBO (-6.202358) evaluations: (76) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total log probability function evaluations:1210 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Pareto k value (0.74) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               5      -6.748e+00      8.830e-04   2.382e-06    1.000e+00  1.000e+00       126 -6.191e+00 -6.191e+00                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Path [10] :Best Iter: [5] ELBO (-6.191391) evaluations: (126) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total log probability function evaluations:1410 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specifying initial values as a function</span></span></span>

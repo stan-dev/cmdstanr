@@ -28,7 +28,7 @@ installed version of CmdStan."><meta property="og:image" content="https://mc-sta
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -384,13 +384,43 @@ documentation and tutorials.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">stan_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>N <span class="op">=</span> <span class="fl">10</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_mode</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span>, jacobian <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Initial log joint probability = -7.3571 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Initial log joint probability = -7.39766 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        5      -6.74802   0.000511122   9.02231e-07           1           1        8    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        5      -6.74802   8.90809e-05   3.13416e-07           1           1        8    </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Optimization terminated normally:  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Convergence detected: relative gradient magnitude is below tolerance </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.2 seconds.</span>
 <span class="r-in"><span><span class="va">fit_laplace</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">laplace</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span>, mode <span class="op">=</span> <span class="va">fit_mode</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Calculating Hessian </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Calculating inverse of Cholesky factor </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Generating draws </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 0 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 100 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 200 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 300 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 400 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 500 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 600 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 700 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 800 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 900 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.2 seconds.</span>
+<span class="r-in"><span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   variable      mean median    sd   mad      q5      q95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">7.26</span>  -<span style="color: #BB0000;">6.98</span>  0.724 0.319 -<span style="color: #BB0000;">8.80</span>   -<span style="color: #BB0000;">6.75</span>   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp_approx__ -<span style="color: #BB0000;">0.533</span> -<span style="color: #BB0000;">0.245</span> 0.740 0.330 -<span style="color: #BB0000;">2.10</span>   -<span style="color: #BB0000;">0.003</span><span style="color: #BB0000; text-decoration: underline;">00</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.262  0.240 0.125 0.120  0.094<span style="text-decoration: underline;">1</span>  0.503  </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># if mode isn't specified optimize is run internally first</span></span></span>
+<span class="r-in"><span><span class="va">fit_laplace</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">laplace</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Initial log joint probability = -7.50846 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        5      -6.74802   0.000114292   4.68497e-07           1           1        8    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Optimization terminated normally:  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Convergence detected: relative gradient magnitude is below tolerance </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Calculating Hessian </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Calculating inverse of Cholesky factor </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Generating draws </span>
@@ -409,39 +439,9 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable      mean median    sd   mad     q5      q95</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">7.24</span>  -<span style="color: #BB0000;">6.97</span>  0.734 0.309 -<span style="color: #BB0000;">8.50</span>  -<span style="color: #BB0000;">6.75</span>   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp_approx__ -<span style="color: #BB0000;">0.491</span> -<span style="color: #BB0000;">0.223</span> 0.698 0.309 -<span style="color: #BB0000;">1.80</span>  -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">00</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.271  0.250 0.123 0.123  0.103  0.487  </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># if mode isn't specified optimize is run internally first</span></span></span>
-<span class="r-in"><span><span class="va">fit_laplace</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">laplace</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Initial log joint probability = -11.0359 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        5      -6.74802   0.000945646   1.40836e-05           1           1        8    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Optimization terminated normally:  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Convergence detected: relative gradient magnitude is below tolerance </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Calculating Hessian </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Calculating inverse of Cholesky factor </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Generating draws </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 0 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 100 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 200 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 300 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 400 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 500 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 600 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 700 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 800 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration: 900 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
-<span class="r-in"><span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 7</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   variable      mean median    sd   mad     q5      q95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">7.26</span>  -<span style="color: #BB0000;">6.97</span>  0.744 0.306 -<span style="color: #BB0000;">8.73</span>  -<span style="color: #BB0000;">6.75</span>   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp_approx__ -<span style="color: #BB0000;">0.516</span> -<span style="color: #BB0000;">0.226</span> 0.742 0.306 -<span style="color: #BB0000;">1.93</span>  -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">78</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.270  0.250 0.126 0.121  0.103  0.513  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> lp__        -<span style="color: #BB0000;">7.23</span>  -<span style="color: #BB0000;">6.96</span>  0.773 0.291 -<span style="color: #BB0000;">8.49</span>  -<span style="color: #BB0000;">6.75</span>   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> lp_approx__ -<span style="color: #BB0000;">0.485</span> -<span style="color: #BB0000;">0.219</span> 0.744 0.303 -<span style="color: #BB0000;">1.81</span>  -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">63</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> theta        0.265  0.250 0.121 0.121  0.101  0.493  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># plot approximate posterior</span></span></span>
 <span class="r-in"><span><span class="fu">bayesplot</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span></span></span>
