@@ -21,7 +21,7 @@ for details."><meta property="og:image" content="https://mc-stan.org/cmdstanr/lo
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -122,10 +122,10 @@ for details.</p>
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>variables</dt>
-<dd><p>(character vector) The name(s) of the variable(s) in the
-Stan program containing the pointwise log-likelihood. The default is to
-look for <code>"log_lik"</code>. This argument is passed to the
-<code><a href="fit-method-draws.html">$draws()</a></code> method.</p></dd>
+<dd><p>(string) The name of the variable in the Stan program
+containing the pointwise log-likelihood. The default is to look for
+<code>"log_lik"</code>. This argument is passed to the <code><a href="fit-method-draws.html">$draws()</a></code>
+method.</p></dd>
 
 
 <dt>r_eff</dt>
@@ -184,7 +184,7 @@ supply the functions for the <code>log_lik_i</code>, <code>unconstrain_pars</cod
 <span class="r-out co"><span class="r-pr">#&gt;</span>          Estimate  SE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> elpd_loo    -63.7 4.1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> p_loo         3.9 0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> looic       127.4 8.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> looic       127.4 8.3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MCSE of elpd_loo is 0.0.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MCSE and ESS estimates assume MCMC draws (r_eff in [0.9, 1.4]).</span>

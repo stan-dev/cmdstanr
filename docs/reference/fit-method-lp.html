@@ -5,8 +5,8 @@ variational inference the log density of the variational approximation to
 the posterior is available via the $lp_approx() method. For
 Laplace approximation the unnormalized density of the approximation to
 the posterior is available via the $lp_approx() method.
-See the Log Probability Increment vs. Sampling Statement
-section of the Stan Reference Manual for details on when normalizing
+See the Increment log density and Distribution Statements
+sections of the Stan Reference Manual for details on when normalizing
 constants are dropped from log probability calculations."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -25,7 +25,7 @@ constants are dropped from log probability calculations."><meta property="og:ima
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -118,8 +118,8 @@ variational inference the log density of the variational approximation to
 the posterior is available via the <code>$lp_approx()</code> method. For
 Laplace approximation the unnormalized density of the approximation to
 the posterior is available via the <code>$lp_approx()</code> method.</p>
-<p>See the <a href="https://mc-stan.org/docs/reference-manual/sampling-statements.html" class="external-link">Log Probability Increment vs. Sampling Statement</a>
-section of the Stan Reference Manual for details on when normalizing
+<p>See the <a href="https://mc-stan.org/docs/reference-manual/statements.html" class="external-link">Increment log density and Distribution Statements</a>
+sections of the Stan Reference Manual for details on when normalizing
 constants are dropped from log probability calculations.</p>
     </div>
 
@@ -170,7 +170,7 @@ International Conference on Machine Learning</em>, PMLR 80:5581–5590.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">lp</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -64.8724 -65.7859 -65.2974 -66.5566 -66.7795 -67.0780</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -65.7069 -64.7742 -64.7082 -65.3051 -65.2394 -65.4373</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit_mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"optimize"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">lp</span><span class="op">(</span><span class="op">)</span></span></span>

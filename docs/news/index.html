@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -102,6 +102,40 @@
       <small>Source: <a href="https://github.com/stan-dev/cmdstanr/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.9.0" id="cmdstanr-090">cmdstanr 0.9.0<a class="anchor" aria-label="anchor" href="#cmdstanr-090"></a></h2>
+<div class="section level3">
+<h3 id="general-improvementschanges-0-9-0">General Improvements/Changes<a class="anchor" aria-label="anchor" href="#general-improvementschanges-0-9-0"></a></h3>
+<ul><li>Added compatibility for RTools45 (<a href="https://github.com/stan-dev/cmdstanr/issues/1066" class="external-link">#1066</a>)</li>
+<li>cmdstanr will now use RTools with no additional toolchain updates needed on Windows (CmdStan 2.35+ only; <a href="https://github.com/stan-dev/cmdstanr/issues/1065" class="external-link">#1065</a>, <a href="https://github.com/stan-dev/cmdstanr/issues/1054" class="external-link">#1054</a>)</li>
+<li>Improve error messages when calling <code><a href="../reference/fit-method-sampler_diagnostics.html">sampler_diagnostics()</a></code> with <code>fixed_param=TRUE</code>
+</li>
+<li>Improve numerical stability in calculation of effective sample size during <code>loo</code> method (<a href="https://github.com/stan-dev/cmdstanr/issues/1057" class="external-link">#1057</a>)</li>
+<li>Improve numerical stablity with very small log-ratios in calculation of effective sample size during <code>loo</code> method (<a href="https://github.com/stan-dev/cmdstanr/issues/1015" class="external-link">#1015</a>)</li>
+<li>Add warning if input data/inits have been coerced to ints (<a href="https://github.com/stan-dev/cmdstanr/issues/994" class="external-link">#994</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bugfixes-0-9-0">Bugfixes<a class="anchor" aria-label="anchor" href="#bugfixes-0-9-0"></a></h3>
+<ul><li>Don’t require fixed_param for models with zero parameters (only GQs) for CmdStan &gt;= 2.36 (<a href="https://github.com/stan-dev/cmdstanr/issues/1046" class="external-link">#1046</a>)</li>
+<li>Improve detection/handling of <code>make</code> (<a href="https://github.com/stan-dev/cmdstanr/issues/1036" class="external-link">#1036</a>)</li>
+<li>Fix saving of model objects to network drive (<a href="https://github.com/stan-dev/cmdstanr/issues/1038" class="external-link">#1038</a>, thanks to <a href="https://github.com/bschneidr" class="external-link">@bschneidr</a>)</li>
+<li>Update usage of <code>untar</code> to fix installation errors (<a href="https://github.com/stan-dev/cmdstanr/issues/1034" class="external-link">#1034</a>)</li>
+<li>Respect compilation flags in <code>make/local</code> when exposing functions or model methods (<a href="https://github.com/stan-dev/cmdstanr/issues/1003" class="external-link">#1003</a>)</li>
+<li>Fix passing of include paths to CmdStan (<a href="https://github.com/stan-dev/cmdstanr/issues/1000" class="external-link">#1000</a>)</li>
+<li>Fix passing of factor data to CmdStan (<a href="https://github.com/stan-dev/cmdstanr/issues/999" class="external-link">#999</a>)</li>
+<li>Fix extraction and passing of array data/parameters as model inits (<a href="https://github.com/stan-dev/cmdstanr/issues/993" class="external-link">#993</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-updates-0-9-0">Documentation Updates<a class="anchor" aria-label="anchor" href="#documentation-updates-0-9-0"></a></h3>
+<ul><li>Clarifications to usage of <code>optimize</code> and <code>loo</code> methods (<a href="https://github.com/stan-dev/cmdstanr/issues/1060" class="external-link">#1060</a>)</li>
+<li>Add documentation for faster model saving with large models (<a href="https://github.com/stan-dev/cmdstanr/issues/1042" class="external-link">#1042</a>)</li>
+<li>Remove mentions of <code><a href="https://mc-stan.org/rstan/reference/stan_csv.html" class="external-link">rstan::read_stan_csv</a></code> due to incompatibility with newer CmdStan outputs (<a href="https://github.com/stan-dev/cmdstanr/issues/1018" class="external-link">#1018</a>)</li>
+<li>Document global option <code>cmdstanr_print_line_numbers</code> for printing line numbers (<a href="https://github.com/stan-dev/cmdstanr/issues/1017" class="external-link">#1017</a>)</li>
+<li>Change usage of ‘chapter’ to ‘section’ in documentation (<a href="https://github.com/stan-dev/cmdstanr/issues/1014" class="external-link">#1014</a>)</li>
+<li>Remove examples of updating removed array syntax as functionality no longer supported in CmdStan (<a href="https://github.com/stan-dev/cmdstanr/issues/1008" class="external-link">#1008</a>)</li>
+<li>Change usages of ‘sampling statement’ -&gt; ‘distribution statement’ (<a href="https://github.com/stan-dev/cmdstanr/issues/987" class="external-link">#987</a>)</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.8.1" id="cmdstanr-081">cmdstanr 0.8.1<a class="anchor" aria-label="anchor" href="#cmdstanr-081"></a></h2>
 <div class="section level3">

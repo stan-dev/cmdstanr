@@ -31,7 +31,7 @@ $save_hpp_file(dir)."><meta property="og:image" content="https://mc-stan.org/cmd
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -171,7 +171,7 @@ same location as the Stan program.</p></dd>
 <dt>pedantic</dt>
 <dd><p>(logical) Should pedantic mode be turned on? The default is
 <code>FALSE</code>. Pedantic mode attempts to warn you about potential issues in your
-Stan program beyond syntax errors. For details see the <a href="https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html" class="external-link"><em>Pedantic mode</em> chapter</a> in
+Stan program beyond syntax errors. For details see the <a href="https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html" class="external-link"><em>Pedantic mode</em> section</a> in
 the Stan Reference Manual. <strong>Note:</strong> to do a pedantic check for a model
 without compiling it or for a model that is already compiled the
 <code><a href="model-method-check_syntax.html">$check_syntax()</a></code> method can be used instead.</p></dd>
@@ -286,12 +286,12 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/Users/jgabry/.cmdstan/cmdstan-2.35.0/examples/bernoulli/bernoulli"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/Users/jgabry/.cmdstan/cmdstan-2.36.0/examples/bernoulli/bernoulli"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># turn on threading support (for using functions that support within-chain parallelization)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span>force_recompile <span class="op">=</span> <span class="cn">TRUE</span>, cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>stan_threads <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/Users/jgabry/.cmdstan/cmdstan-2.35.0/examples/bernoulli/bernoulli"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/Users/jgabry/.cmdstan/cmdstan-2.36.0/examples/bernoulli/bernoulli"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># turn on pedantic mode (new in Stan v2.24)</span></span></span>
 <span class="r-in"><span><span class="va">file_pedantic</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">"</span></span></span>
@@ -303,7 +303,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="st">}</span></span></span>
 <span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file_pedantic</span>, pedantic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpiACQ3q/model-59c030d64420.stan', line 6, column 2: Parameter</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/var/folders/s0/zfzm55px2nd2v__zlw5xfj2h0000gn/T/RtmpWzIPg0/model-b9aa1e29138e.stan', line 6, column 2: Parameter</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     sigma is given a exponential distribution, which has strictly positive</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     support, but sigma was not constrained to be strictly positive.</span>
 <span class="r-in"><span></span></span>

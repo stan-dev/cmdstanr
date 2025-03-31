@@ -16,7 +16,15 @@ switches, changing the C++ compiler, etc. A change to the make/local file
 should typically be followed by calling rebuild_cmdstan().
 The check_cmdstan_toolchain() function attempts to check for the required
 C++ toolchain. It is called internally by install_cmdstan() but can also
-be called directly by the user."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
+be called directly by the user. On Windows only, calling the function with
+the fix = TRUE argument will attempt to install the necessary toolchain
+components if they are not found. For Windows users with RTools and CmdStan
+versions &amp;gt;= 2.35 no additional toolchain configuration is required.
+NOTE: When installing CmdStan on Windows with RTools and CmdStan versions
+prior to 2.35.0, the above additional toolchain configuration
+is still required. To enable this configuration, set the environment variable
+CMDSTANR_USE_MSYS_TOOLCHAIN to 'true' and call
+check_cmdstan_toolchain(fix = TRUE)."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.png"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
@@ -34,7 +42,7 @@ be called directly by the user."><meta property="og:image" content="https://mc-s
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -138,7 +146,15 @@ switches, changing the C++ compiler, etc. A change to the <code>make/local</code
 should typically be followed by calling <code>rebuild_cmdstan()</code>.</p>
 <p>The <code>check_cmdstan_toolchain()</code> function attempts to check for the required
 C++ toolchain. It is called internally by <code>install_cmdstan()</code> but can also
-be called directly by the user.</p>
+be called directly by the user. On Windows only, calling the function with
+the <code>fix = TRUE</code> argument will attempt to install the necessary toolchain
+components if they are not found. For Windows users with RTools and CmdStan
+versions &gt;= 2.35 no additional toolchain configuration is required.</p>
+<p>NOTE: When installing CmdStan on Windows with RTools and CmdStan versions
+prior to 2.35.0, the above additional toolchain configuration
+is still required. To enable this configuration, set the environment variable
+<code>CMDSTANR_USE_MSYS_TOOLCHAIN</code> to 'true' and call
+<code>check_cmdstan_toolchain(fix = TRUE)</code>.</p>
     </div>
 
     <div id="ref-usage">

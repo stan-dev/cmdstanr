@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cmdstanr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.9.0</span>
       </span>
     </div>
 
@@ -229,14 +229,13 @@ code above would look like this:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All 4 chains finished successfully.</span></span>
 <span><span class="co">#&gt; Mean chain execution time: 0.0 seconds.</span></span>
-<span><span class="co">#&gt; Total execution time: 0.7 seconds.</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
+<span><span class="co">#&gt; Total execution time: 0.7 seconds.</span></span>
+<span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">#&gt;      lp__ -1.55  -1.24 1.24 1.04 -4.07 -0.18 1.00     1509     1671</span></span>
-<span><span class="co">#&gt;      y[1] -0.03  -0.03 1.01 0.99 -1.69  1.68 1.00     1852     2195</span></span>
-<span><span class="co">#&gt;      y[2] -0.13  -0.07 2.92 2.14 -4.92  4.65 1.00     1855     1666</span></span></code></pre></div>
+<span><span class="co">#&gt;      lp__ -1.49  -1.15 1.25 0.98 -4.04 -0.17 1.00     1284     1327</span></span>
+<span><span class="co">#&gt;      y[1] -0.03  -0.02 1.01 1.02 -1.68  1.62 1.00     2086     1813</span></span>
+<span><span class="co">#&gt;      y[2] -0.01  -0.05 2.78 1.99 -4.55  4.62 1.00     2015     1281</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document">Option 3: Using both RStan and CmdStanR in the same R Markdown
@@ -248,26 +247,26 @@ probably not using both RStan and CmdStanR in the same document or
 project, the option to use both exists. When registering CmdStanR’s
 knitr engine, set <code>override = FALSE</code> to register the engine
 as a <code>cmdstan</code> engine:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/register_knitr_engine.html">register_knitr_engine</a></span><span class="op">(</span>override <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>This will cause <code>stan</code> chunks to be processed by knitr’s
 built-in, RStan-based engine and only use CmdStanR’s knitr engine for
 <code>cmdstan</code> chunks:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>```{stan, output.var="model_obj1"}</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>// Results in a stanmodel object from RStan</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>```</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>```{r}</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>rstan::sampling(model_obj1)</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>```</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>```{cmdstan, output.var="model_obj2"}</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>// Results in a CmdStanModel object from CmdStanR</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>```</span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a></span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>```{r}</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>model_obj2$sample()</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>```</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>```{stan, output.var="model_obj1"}</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>// Results in a stanmodel object from RStan</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>```</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>```{r}</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>rstan::sampling(model_obj1)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>```</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>```{cmdstan, output.var="model_obj2"}</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>// Results in a CmdStanModel object from CmdStanR</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>```</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>```{r}</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>model_obj2$sample()</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>```</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="caching-chunks">Caching chunks<a class="anchor" aria-label="anchor" href="#caching-chunks"></a>
