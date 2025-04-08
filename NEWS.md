@@ -1,3 +1,5 @@
+* Added links regarding `Contributing` to README.md 
+
 # cmdstanr 0.9.0
 
 ## General Improvements/Changes
