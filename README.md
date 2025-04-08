@@ -61,10 +61,9 @@ CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette.
 
 ### Contributing
 
-There is a lot of work still to be done and we welcome contributions from
-anyone! If you are interested in contributing please comment on an open issue or
-open a new one if none are applicable.
-
+There is a lot of work still to be done, and we welcome contributions from
+anyone! If you are interested in contributing, please [comment on an open issue or
+open a new one](https://github.com/stan-dev/cmdstanr/issues) on GitHub. For more details, please check [CONTRIBUTING.md](https://github.com/stan-dev/cmdstanr/blob/fe126708f53d89ecd889d2f122f6bd69c7404836/.github/CONTRIBUTING.md).
 ### License
 
 CmdStanR, like CmdStan and the core Stan C++ code, is licensed under the
