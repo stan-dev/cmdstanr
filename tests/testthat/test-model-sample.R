@@ -316,7 +316,7 @@ test_that("Correct behavior if fixed_param not set when the model has no paramet
   "
   stan_file <- write_stan_file(code)
   m <- cmdstan_model(stan_file)
-  fake_cmdstan_version("2.35.0")
+  fake_cmdstan_version("2.35.0", m)
   expect_error(
     m$sample(),
     "Model contains no parameters. Please use 'fixed_param = TRUE'."
