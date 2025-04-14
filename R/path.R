@@ -245,8 +245,8 @@ fake_cmdstan_version <- function(version, mod = NULL) {
     }
   }
 }
-reset_cmdstan_version <- function() {
-  .cmdstanr$VERSION <- read_cmdstan_version(cmdstan_path())
+reset_cmdstan_version <- function(mod = NULL) {
+  fake_cmdstan_version(read_cmdstan_version(cmdstan_path()), mod = mod)
 }
 
 .home_path <- function() {

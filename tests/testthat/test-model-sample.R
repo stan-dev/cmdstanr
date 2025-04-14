@@ -322,7 +322,7 @@ test_that("Correct behavior if fixed_param not set when the model has no paramet
     "Model contains no parameters. Please use 'fixed_param = TRUE'."
   )
 
-  reset_cmdstan_version()
+  reset_cmdstan_version(m)
   if (cmdstan_version() >= "2.36.0") {
     # as of 2.36.0 we don't need fixed_param if no parameters
     expect_no_error(
@@ -334,13 +334,13 @@ test_that("Correct behavior if fixed_param not set when the model has no paramet
 })
 
 test_that("sig_figs warning if version less than 2.25", {
-  fake_cmdstan_version("2.24.0")
+  fake_cmdstan_version("2.24.0", mod)
   expect_warning(
     expect_sample_output(mod$sample(data = data_list, chains = 1, refresh = 0, sig_figs = 3)),
     "The 'sig_figs' argument is only supported with cmdstan 2.25+ and will be ignored!",
     fixed = TRUE
   )
-  reset_cmdstan_version()
+  reset_cmdstan_version(mod)
 })
 
 test_that("Errors are suppressed with show_exceptions", {
