@@ -233,7 +233,8 @@ CmdStanModel <- R6::R6Class(
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
-    variables_ = NULL
+    variables_ = NULL,
+    cmdstan_version_ = cmdstan_version()
   ),
   public = list(
     functions = NULL,
@@ -272,7 +273,7 @@ CmdStanModel <- R6::R6Class(
         self$compile(...)
       }
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        cpp_options <- model_compile_info(self$exe_file())
+        cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
         for (cpp_option_name in names(cpp_options)) {
           if (cpp_option_name != "stan_version" &&
               (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
@@ -327,6 +328,9 @@ CmdStanModel <- R6::R6Class(
         private$exe_file_ <- path
       }
       private$exe_file_
+    },
+    cmdstan_version = function() {
+      private$cmdstan_version_
     },
     cpp_options = function() {
       private$cpp_options_
@@ -737,6 +741,7 @@ compile <- function(quiet = TRUE,
                con = wsl_safe_path(private$hpp_file_, revert = TRUE))
   } # End - if(!dry_run)
 
+  private$cmdstan_version_ <- cmdstan_version()
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
   private$precompile_cpp_options_ <- NULL
@@ -786,7 +791,7 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' }
 #'
 variables <- function() {
-  if (cmdstan_version() < "2.27.0") {
+  if (self$cmdstan_version() < "2.27.0") {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
   }
   if (length(self$stan_file()) == 0) {
@@ -993,6 +998,10 @@ format <- function(overwrite_file = FALSE,
                    backup = TRUE,
                    max_line_length = NULL,
                    quiet = FALSE) {
+  # querying current version here not model object version
+  # because this is pre-compile work based on the cmdstanr
+  # version that will be used to compile in teh future,
+  # not based on what was used to compile existing binary (if any)
   if (cmdstan_version() < "2.29.0" && !is.null(max_line_length)) {
     stop(
       "'max_line_length' is only supported with CmdStan 2.29.0 or newer.",
@@ -1208,7 +1217,7 @@ sample <- function(data = NULL,
     }
   }
 
-  if (cmdstan_version() >= "2.27.0" && cmdstan_version() < "2.36.0" && !fixed_param) {
+  if (self$cmdstan_version() >= "2.27.0" && self$cmdstan_version() < "2.36.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
@@ -1652,7 +1661,7 @@ laplace <- function(data = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
                     save_cmdstan_config = NULL) {
-  if (cmdstan_version() < "2.32") {
+  if (self$cmdstan_version() < "2.32") {
     stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
   }
   if (!is.null(mode) && !is.null(opt_args)) {
@@ -2382,9 +2391,9 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
   variables
 }
 
-model_compile_info <- function(exe_file) {
+model_compile_info <- function(exe_file, version) {
   info <- NULL
-  if (cmdstan_version() > "2.26.1") {
+  if (version > "2.26.1") {
     withr::with_path(
       c(
         toolchain_PATH_env_var(),
