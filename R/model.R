@@ -234,7 +234,7 @@ CmdStanModel <- R6::R6Class(
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
     variables_ = NULL,
-    cmdstan_version_ = cmdstan_version()
+    cmdstan_version_ = NULL
   ),
   public = list(
     functions = NULL,
@@ -272,6 +272,12 @@ CmdStanModel <- R6::R6Class(
       if (!is.null(stan_file) && compile) {
         self$compile(...)
       }
+
+      # for now, set this based on current version
+      # at initialize so its never null
+      # in the future, will be set only if/when we have a binary
+      # as the version the model was compiled with
+      private$cmdstan_version_ <- cmdstan_version()
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
         cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
         for (cpp_option_name in names(cpp_options)) {
