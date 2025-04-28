@@ -1,3 +1,4 @@
+skip_if(os_is_macos())
 
 file_that_exists <- "placeholder_exists"
 file_that_doesnt_exist <- "placeholder_doesnt_exist"
@@ -33,7 +34,6 @@ namespace bernoulli_external_model_namespace
 }"
 
 test_that("cmdstan_model works with user_header with mock", {
-  skip_if(os_is_macos())
   tmpfile <- tempfile(fileext = ".hpp")
   cat(hpp, file = tmpfile, sep = "\n")
 
@@ -140,7 +140,7 @@ test_that("cmdstan_model works with user_header with mock", {
 
 test_that("user_header precedence order is correct", {
 
-  tmp_files <- sapply(1:3, function(n) tempfile(fileext = ".hpp"))
+  tmp_files <- sapply(1:3, function(n) wsl_safe_path(absolute_path(tempfile(fileext = ".hpp"))))
   sapply(tmp_files, function(filename) cat(hpp, file = filename, sep = "\n"))
   withr::defer(lapply(tmp_files, function(filename) file.remove(filename)))
 
