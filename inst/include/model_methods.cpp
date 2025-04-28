@@ -140,7 +140,7 @@ RcppExport SEXP unconstrain_variables_(SEXP ext_model_ptr, SEXP variables_) {
   END_RCPP
 }
 
-RcppExport SEXP unconstrain_draws(SEXP ext_model_ptr, SEXP variables_) {
+RcppExport SEXP unconstrain_draws_(SEXP ext_model_ptr, SEXP variables_) {
   BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
   Eigen::MatrixXd variables = Rcpp::as<Eigen::MatrixXd>(variables_);
