@@ -48,7 +48,7 @@ parse_exe_info_string <- function(ret_stdout) {
 }
 
 # old (current) parser
-model_compile_info <- function(exe_file) {
+model_compile_info <- function(exe_file, version) {
   info <- NULL
   if (version > "2.26.1") {
     ret <- run_info_cli(exe_file)
