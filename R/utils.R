@@ -836,6 +836,8 @@ initialize_method_functions <- function(env, so_name) {
     function(...) { .Call("get_param_metadata_", ..., PACKAGE = so_name) }
   env$unconstrain_variables <-
     function(...) { .Call("unconstrain_variables_", ..., PACKAGE = so_name) }
+  env$unconstrain_draws <-
+    function(...) { .Call("unconstrain_draws_", ..., PACKAGE = so_name) }
   env$constrain_variables <-
     function(...) { .Call("constrain_variables_", ..., PACKAGE = so_name) }
   env$unconstrained_param_names <-
