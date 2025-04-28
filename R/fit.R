@@ -326,6 +326,7 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
 #' @param hessian (logical) Whether to expose the (experimental) hessian method.
+#' @param force_recompile (logical) Whether to recompile model methods, even if cached
 #'
 #' @examples
 #' \dontrun{
