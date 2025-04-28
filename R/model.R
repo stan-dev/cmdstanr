@@ -2264,41 +2264,6 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 
 
 # internal ----------------------------------------------------------------
-
-assert_valid_opencl <- function(opencl_ids, cpp_options) {
-  if (is.null(cpp_options[["stan_opencl"]])
-      && !is.null(opencl_ids)) {
-    stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
-         "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
-         call. = FALSE)
-  }
-  invisible(opencl_ids)
-}
-
-assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
-  threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
-  checkmate::assert_integerish(threads, .var.name = threads_arg,
-                               null.ok = TRUE, lower = 1, len = 1)
-  if (is.null(cpp_options[["stan_threads"]]) || !isTRUE(cpp_options[["stan_threads"]])) {
-    if (!is.null(threads)) {
-      warning(
-        "'", threads_arg, "' is set but the model was not compiled with ",
-        "'cpp_options = list(stan_threads = TRUE)' ",
-        "so '", threads_arg, "' will have no effect!",
-        call. = FALSE
-      )
-      threads <- NULL
-    }
-  } else if (isTRUE(cpp_options[["stan_threads"]]) && is.null(threads)) {
-    stop(
-      "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-      "but '", threads_arg, "' was not set!",
-      call. = FALSE
-    )
-  }
-  invisible(threads)
-}
-
 assert_valid_stanc_options <- function(stanc_options) {
   i <- 1
   names <- names(stanc_options)
@@ -2323,22 +2288,6 @@ assert_stan_file_exists <- function(stan_file) {
   if (!file.exists(stan_file)) {
     stop("The Stan file used to create the `CmdStanModel` object does not exist.", call. = FALSE)
   }
-}
-
-cpp_options_to_compile_flags <- function(cpp_options) {
-  if (length(cpp_options) == 0) {
-    return(NULL)
-  }
-  cpp_built_options <- c()
-  for (i in seq_along(cpp_options)) {
-    option_name <- names(cpp_options)[i]
-    if (is.null(option_name) || !nzchar(option_name)) {
-      cpp_built_options <- c(cpp_built_options, cpp_options[[i]])
-    } else {
-      cpp_built_options <- c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
-    }
-  }
-  cpp_built_options
 }
 
 include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
@@ -2397,41 +2346,6 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
   variables
 }
 
-model_compile_info <- function(exe_file, version) {
-  info <- NULL
-  if (version > "2.26.1") {
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      ret <- wsl_compatible_run(
-        command = wsl_safe_path(exe_file),
-        args = "info",
-        error_on_status = FALSE
-      )
-    )
-    if (ret$status == 0) {
-      info <- list()
-      info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
-      for (key_val in info_raw) {
-        if (length(key_val) > 1) {
-          key_val <- trimws(key_val)
-          val <- key_val[2]
-          if (!is.na(as.logical(val))) {
-            val <- as.logical(val)
-          }
-          info[[toupper(key_val[1])]] <- val
-        }
-      }
-      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
-      info[["STAN_VERSION_MAJOR"]] <- NULL
-      info[["STAN_VERSION_MINOR"]] <- NULL
-      info[["STAN_VERSION_PATCH"]] <- NULL
-    }
-  }
-  info
-}
 
 is_variables_method_supported <- function(mod) {
   cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
