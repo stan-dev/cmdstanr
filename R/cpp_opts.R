@@ -51,6 +51,7 @@ parse_exe_info_string <- function(ret_stdout) {
 model_compile_info <- function(exe_file, version) {
   info <- NULL
   if (version > "2.26.1") {
+    
     ret <- run_info_cli(exe_file)
     if (ret$status == 0) {
       info <- list()
@@ -62,11 +63,13 @@ model_compile_info <- function(exe_file, version) {
           if (!is.na(as.logical(val))) {
             val <- as.logical(val)
           }
-          if (!is.logical(val) || isTRUE(val)) {
-            info[[tolower(key_val[1])]] <- val
-          }
+          info[[toupper(key_val[1])]] <- val
         }
       }
+      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
+      info[["STAN_VERSION_MAJOR"]] <- NULL
+      info[["STAN_VERSION_MINOR"]] <- NULL
+      info[["STAN_VERSION_PATCH"]] <- NULL
     }
   }
   info
@@ -126,69 +129,37 @@ validate_cpp_options <- function(cpp_options) {
 }
 
 # check specific options for validity ---------------------------------
-assert_valid_opencl <- function(
-  opencl_ids,
-  exe_info,
-  fallback_exe_info = list("stan_version" = "2.0.0", "stan_opencl" = FALSE)
-) {
-  if (is.null(opencl_ids)) return(invisible(opencl_ids))
 
-  fallback <- length(exe_info) == 0
-  if (fallback) exe_info <- fallback_exe_info
-  # If we're unsure if this info is accurate,
-  # we shouldn't stop the user from attempting on that basis
-  # the user should have been warned about this in initialize(),
-  # so no need to re-warn here.
-  if (fallback) stop <- warning
-
-  if (exe_info[['stan_version']] < "2.26.0") {
-    stop(
-      "Runtime selection of OpenCL devices is only supported ",
-      "with CmdStan version 2.26 or newer.",
-      call. = FALSE
-    )
-  }
-
-  if (isFALSE(exe_info[["stan_opencl"]])) {
+assert_valid_opencl <- function(opencl_ids, cpp_options) {
+  if (is.null(cpp_options[["stan_opencl"]])
+      && !is.null(opencl_ids)) {
     stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
          "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
          call. = FALSE)
   }
-  checkmate::assert_vector(opencl_ids, len = 2)
   invisible(opencl_ids)
 }
 
-assert_valid_threads <- function(
-  threads,
-  exe_info,
-  fallback_exe_info,
-  multiple_chains = FALSE
-) {
-  fallback <- length(exe_info) == 0
-  if (fallback) exe_info <- fallback_exe_info
-  # If we're unsure if this info is accurate,
-  # we shouldn't stop the user from attempting on that basis
-  # the user should have been warned about this in initialize(),
-  # so no need to re-warn here.
-  if (fallback) stop <- warning
-
+assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)
-  if (isTRUE(exe_info[["stan_threads"]]) && is.null(threads)) {
+  if (is.null(cpp_options[["stan_threads"]]) || !isTRUE(cpp_options[["stan_threads"]])) {
+    if (!is.null(threads)) {
+      warning(
+        "'", threads_arg, "' is set but the model was not compiled with ",
+        "'cpp_options = list(stan_threads = TRUE)' ",
+        "so '", threads_arg, "' will have no effect!",
+        call. = FALSE
+      )
+      threads <- NULL
+    }
+  } else if (isTRUE(cpp_options[["stan_threads"]]) && is.null(threads)) {
     stop(
       "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-      "or equivalent, but '", threads_arg, "' was not set!",
+      "but '", threads_arg, "' was not set!",
       call. = FALSE
     )
-  } else if (!exe_info[["stan_threads"]] && !is.null(threads)) {
-    warning(
-      "'", threads_arg, "' is set but the model was not compiled with ",
-      "'cpp_options = list(stan_threads = TRUE)' or equivalent ",
-      "so '", threads_arg, "' will have no effect!",
-      call. = FALSE
-    )
-    if (!fallback) threads <- NULL
   }
   invisible(threads)
 }
