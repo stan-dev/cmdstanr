@@ -31,8 +31,10 @@ stan::model::model_base&
 new_model(stan::io::var_context& data_context, unsigned int seed,
           std::ostream* msg_stream);
 
-// [[Rcpp::export]]
-Rcpp::List model_ptr(std::string data_path, boost::uint32_t seed) {
+RcppExport SEXP model_ptr_(SEXP data_path_, SEXP seed_) {
+  BEGIN_RCPP
+  std::string data_path = Rcpp::as<std::string>(data_path_);
+  boost::uint32_t seed = Rcpp::as<boost::uint32_t>(seed_);
   Rcpp::XPtr<stan::model::model_base> ptr(
     &new_model(*var_context(data_path), seed, &Rcpp::Rcout)
   );
@@ -41,26 +43,31 @@ Rcpp::List model_ptr(std::string data_path, boost::uint32_t seed) {
     Rcpp::Named("model_ptr") = ptr,
     Rcpp::Named("base_rng") = base_rng
   );
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-double log_prob(SEXP ext_model_ptr, Eigen::VectorXd upars, bool jac_adjust) {
+RcppExport SEXP log_prob_(SEXP ext_model_ptr, SEXP upars_, SEXP jacobian_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  if (jac_adjust) {
-    return stan::model::log_prob_propto<true>(*ptr.get(), upars, &Rcpp::Rcout);
+  double rtn;
+  Eigen::VectorXd upars = Rcpp::as<Eigen::VectorXd>(upars_);
+  if (Rcpp::as<bool>(jacobian_)) {
+    rtn = stan::model::log_prob_propto<true>(*ptr.get(), upars, &Rcpp::Rcout);
   } else {
-    return stan::model::log_prob_propto<false>(*ptr.get(), upars, &Rcpp::Rcout);
+    rtn = stan::model::log_prob_propto<false>(*ptr.get(), upars, &Rcpp::Rcout);
   }
+  return Rcpp::wrap(rtn);
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-Rcpp::NumericVector grad_log_prob(SEXP ext_model_ptr, Eigen::VectorXd upars,
-                                  bool jac_adjust) {
+RcppExport SEXP grad_log_prob_(SEXP ext_model_ptr, SEXP upars_, SEXP jacobian_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
   Eigen::VectorXd gradients;
+  Eigen::VectorXd upars = Rcpp::as<Eigen::VectorXd>(upars_);
 
   double lp;
-  if (jac_adjust) {
+  if (Rcpp::as<bool>(jacobian_)) {
     lp = stan::model::log_prob_grad<true, true>(*ptr.get(), upars, gradients);
   } else {
     lp = stan::model::log_prob_grad<true, false>(*ptr.get(), upars, gradients);
@@ -68,14 +75,16 @@ Rcpp::NumericVector grad_log_prob(SEXP ext_model_ptr, Eigen::VectorXd upars,
   Rcpp::NumericVector grad_rtn(Rcpp::wrap(std::move(gradients)));
   grad_rtn.attr("log_prob") = lp;
   return grad_rtn;
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-Rcpp::List hessian(SEXP ext_model_ptr, Eigen::VectorXd upars, bool jacobian) {
+RcppExport SEXP hessian_(SEXP ext_model_ptr, SEXP upars_, SEXP jacobian_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  Eigen::VectorXd upars = Rcpp::as<Eigen::VectorXd>(upars_);
 
   auto hessian_functor = [&](auto&& x) {
-    if (jacobian) {
+    if (Rcpp::as<bool>(jacobian_)) {
       return ptr->log_prob<true, true>(x, 0);
     } else {
       return ptr->log_prob<true, false>(x, 0);
@@ -92,16 +101,18 @@ Rcpp::List hessian(SEXP ext_model_ptr, Eigen::VectorXd upars, bool jacobian) {
     Rcpp::Named("log_prob") = log_prob,
     Rcpp::Named("grad_log_prob") = grad,
     Rcpp::Named("hessian") = hessian);
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-size_t get_num_upars(SEXP ext_model_ptr) {
+RcppExport SEXP get_num_upars_(SEXP ext_model_ptr) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  return ptr->num_params_r();
+  return Rcpp::wrap(ptr->num_params_r());
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-Rcpp::List get_param_metadata(SEXP ext_model_ptr) {
+RcppExport SEXP get_param_metadata_(SEXP ext_model_ptr) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
   std::vector<std::string> param_names;
   std::vector<std::vector<size_t> > param_dims;
@@ -116,19 +127,23 @@ Rcpp::List get_param_metadata(SEXP ext_model_ptr) {
   }
 
   return param_metadata;
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-Eigen::VectorXd unconstrain_variables(SEXP ext_model_ptr, Eigen::VectorXd variables) {
+RcppExport SEXP unconstrain_variables_(SEXP ext_model_ptr, SEXP variables_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  Eigen::VectorXd variables = Rcpp::as<Eigen::VectorXd>(variables_);
   Eigen::VectorXd unconstrained_variables;
   ptr->unconstrain_array(variables, unconstrained_variables, &Rcpp::Rcout);
-  return unconstrained_variables;
+  return Rcpp::wrap(unconstrained_variables);
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-Rcpp::List unconstrain_draws(SEXP ext_model_ptr, Eigen::MatrixXd variables) {
+RcppExport SEXP unconstrain_draws(SEXP ext_model_ptr, SEXP variables_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  Eigen::MatrixXd variables = Rcpp::as<Eigen::MatrixXd>(variables_);
   // Need to do this for the first row to get the correct size of the unconstrained draws
   Eigen::VectorXd unconstrained_draw1;
   ptr->unconstrain_array(variables.row(0).transpose(), unconstrained_draw1, &Rcpp::Rcout);
@@ -136,7 +151,7 @@ Rcpp::List unconstrain_draws(SEXP ext_model_ptr, Eigen::MatrixXd variables) {
   for (auto&& unconstrained_par : unconstrained_draws) {
     unconstrained_par.resize(variables.rows());
   }
-  
+
   for (int i = 0; i < variables.rows(); i++) {
     Eigen::VectorXd unconstrained_variables;
     ptr->unconstrain_array(variables.transpose().col(i), unconstrained_variables, &Rcpp::Rcout);
@@ -145,36 +160,49 @@ Rcpp::List unconstrain_draws(SEXP ext_model_ptr, Eigen::MatrixXd variables) {
     }
   }
   return Rcpp::wrap(unconstrained_draws);
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-std::vector<double> constrain_variables(SEXP ext_model_ptr, SEXP base_rng,
-                                    std::vector<double> upars,
-                                    bool return_trans_pars,
-                                    bool return_gen_quants) {
+RcppExport SEXP constrain_variables_(SEXP ext_model_ptr, SEXP base_rng,
+                                      SEXP upars_,
+                                      SEXP return_trans_pars_,
+                                      SEXP return_gen_quants_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
   Rcpp::XPtr<stan::rng_t> rng(base_rng);
+  std::vector<double> upars = Rcpp::as<std::vector<double>>(upars_);
+  bool return_trans_pars = Rcpp::as<bool>(return_trans_pars_);
+  bool return_gen_quants = Rcpp::as<bool>(return_gen_quants_);
   std::vector<int> params_i;
   std::vector<double> vars;
 
   ptr->write_array(*rng.get(), upars, params_i, vars, return_trans_pars, return_gen_quants);
-  return vars;
+  return Rcpp::wrap(vars);
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-std::vector<std::string> unconstrained_param_names(SEXP ext_model_ptr, bool return_trans_pars, bool return_gen_quants) {
+RcppExport SEXP unconstrained_param_names_(SEXP ext_model_ptr,
+                                            SEXP return_trans_pars_,
+                                            SEXP return_gen_quants_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  bool return_trans_pars = Rcpp::as<bool>(return_trans_pars_);
+  bool return_gen_quants = Rcpp::as<bool>(return_gen_quants_);
   std::vector<std::string> rtn_names;
   ptr->unconstrained_param_names(rtn_names, return_trans_pars, return_gen_quants);
-  return rtn_names;
+  return Rcpp::wrap(rtn_names);
+  END_RCPP
 }
 
-// [[Rcpp::export]]
-std::vector<std::string> constrained_param_names(SEXP ext_model_ptr,
-                                    bool return_trans_pars,
-                                    bool return_gen_quants) {
+RcppExport SEXP constrained_param_names_(SEXP ext_model_ptr,
+                                          SEXP return_trans_pars_,
+                                          SEXP return_gen_quants_) {
+  BEGIN_RCPP
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
+  bool return_trans_pars = Rcpp::as<bool>(return_trans_pars_);
+  bool return_gen_quants = Rcpp::as<bool>(return_gen_quants_);
   std::vector<std::string> rtn_names;
   ptr->constrained_param_names(rtn_names, return_trans_pars, return_gen_quants);
-  return rtn_names;
+  return Rcpp::wrap(rtn_names);
+  END_RCPP
 }

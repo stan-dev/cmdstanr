@@ -494,6 +494,8 @@ build_cmdstan <- function(dir,
 clean_cmdstan <- function(dir = cmdstan_path(),
                           cores = getOption("mc.cores", 2),
                           quiet = FALSE) {
+  unlink(file.path(dir, "model_methods.o"))
+  unlink(file.path(dir, "model_methods.cpp"))
   withr::with_envvar(
     c("HOME" = short_path(Sys.getenv("HOME"))),
     withr::with_path(

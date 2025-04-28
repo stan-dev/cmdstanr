@@ -681,7 +681,7 @@ compile <- function(quiet = TRUE,
         run_log <- wsl_compatible_run(
           command = make_cmd(),
           args = c(wsl_safe_path(repair_path(tmp_exe)),
-                  cpp_options_to_compile_flags(cpp_options),
+                  cpp_options_to_compile_flags(c(cpp_options, list("KEEP_OBJECT"="true", "CXXFLAGS += -fPIC"))),
                   stancflags_val),
           wd = cmdstan_path(),
           echo = !quiet || is_verbose_mode(),
@@ -735,6 +735,7 @@ compile <- function(quiet = TRUE,
       file.remove(exe)
     }
     file.copy(tmp_exe, exe, overwrite = TRUE)
+    private$model_methods_env_$obj_file_ <- paste0(temp_file_no_ext, ".o")
     if (os_is_wsl()) {
       res <- processx::run(
         command = "wsl",
