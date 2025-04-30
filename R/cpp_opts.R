@@ -104,7 +104,7 @@ validate_cpp_options <- function(cpp_options) {
   ) {
     warning(
       "User header specified both via cpp_options[[\"USER_HEADER\"]] ",
-      "and cpp_options[[\"user_header\"]].",
+      "and cpp_options[[\"user_header\"]]. Please only specify your user header in one location",
       call. = FALSE
     )
   }
