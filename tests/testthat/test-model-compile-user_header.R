@@ -2,11 +2,13 @@ skip_if(os_is_macos())
 
 file_that_exists <- "placeholder_exists"
 file_that_doesnt_exist <- "placeholder_doesnt_exist"
-file.create(file_that_exists)
-withr::defer(
-  if (file.exists(file_that_exists)) file.remove(file_that_exists),
-  teardown_env()
-)
+withr::local_file(file_that_exists)
+
+w_path <- function(f) {
+  x <- sapply(f, function(fi) wsl_safe_path(absolute_path(fi)))
+  names(x) <- NULL
+  x
+}
 
 make_local_orig <- cmdstan_make_local()
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS" = "false"))
@@ -34,8 +36,7 @@ namespace bernoulli_external_model_namespace
 }"
 
 test_that("cmdstan_model works with user_header with mock", {
-  tmpfile <- tempfile(fileext = ".hpp")
-  cat(hpp, file = tmpfile, sep = "\n")
+  tmpfile <- withr::local_tempfile(lines = hpp, fileext = ".hpp")
 
   with_mocked_cli(
     compile_ret = list(status = 0),
@@ -138,12 +139,76 @@ test_that("cmdstan_model works with user_header with mock", {
   )
 })
 
+test_that("wsl path conversion is done as expected", {
+  tmp_file <- withr::local_tempfile(lines = hpp, fileext = ".hpp")
+ # Case 1: arg
+  with_mocked_cli(
+    compile_ret = list(status = 1),
+    info_ret = list(),
+    code = {
+      mod <- cmdstan_model(
+        stan_file = testing_stan_file("bernoulli_external"),
+        user_header = tmp_file,
+        dry_run = TRUE
+      )
+    }
+  )
+
+  # USER_HEADER is converted
+  # user_header is NULL
+  expect_equal(mod$cpp_options()[['USER_HEADER']],  w_path(tmp_file))
+  expect_true(is.null(mod$cpp_options()[['user_header']]))
+
+  # Case 2: cpp opt USER_HEADER
+  with_mocked_cli(
+    compile_ret = list(status = 1),
+    info_ret = list(),
+    code = {
+      mod <- cmdstan_model(
+        stan_file = testing_stan_file("bernoulli_external"),
+        cpp_options = list(
+          USER_HEADER = tmp_file
+        ),
+        dry_run = TRUE
+      )
+    }
+  )
+
+  # USER_HEADER is converted
+  # user_header is unconverted
+  expect_equal(mod$cpp_options()[['USER_HEADER']],  w_path(tmp_file))
+  expect_true(is.null(mod$cpp_options()[['user_header']]))
+
+  # Case # 3: only user_header opt
+  with_mocked_cli(
+    compile_ret = list(status = 1),
+    info_ret = list(),
+    code = {
+      mod <- cmdstan_model(
+        stan_file = testing_stan_file("bernoulli_external"),
+        cpp_options = list(
+          user_header = tmp_file
+        ),
+        dry_run = TRUE
+      )
+    }
+  )
+
+
+  # In  other cases, in the *output* USER_HEADER is windows style user_header is not.
+  # In this case, USER_HEADER is null.
+  expect_true(is.null(mod$cpp_options()[['USER_HEADER']]))
+  expect_equal(mod$cpp_options()[['user_header']],  w_path(tmp_file))
+})
+
 test_that("user_header precedence order is correct", {
+  tmp_files <- sapply(1:3, function(n) withr::local_tempfile(
+    lines = hpp,
+    fileext = ".hpp",
+    .local_envir = parent.frame(3)
+  ))
 
-  tmp_files <- sapply(1:3, function(n) wsl_safe_path(absolute_path(tempfile(fileext = ".hpp"))))
-  sapply(tmp_files, function(filename) cat(hpp, file = filename, sep = "\n"))
-  withr::defer(lapply(tmp_files, function(filename) file.remove(filename)))
-
+  # Case # 1: all 3 specified
   with_mocked_cli(
     compile_ret = list(status = 1),
     info_ret = list(),
@@ -159,20 +224,20 @@ test_that("user_header precedence order is correct", {
       )
     }, "User header specified both")
   )
-  
   # In this case:
   # cpp_options[['USER_HEADER']] == tmp_files[1] <- actually used
   # cpp_options[['user_header']] == tmp_files[3] <- ignored
   # tmp_files[2] is not stored
   expect_equal(
-    which(mod$cpp_options()[['USER_HEADER']] == tmp_files),
+    match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
     1
   )
   expect_equal(
-    which(mod$cpp_options()[['user_header']] == tmp_files),
+    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
     3
   )
 
+  # Case # 2: Both opts, but no arg
   with_mocked_cli(
     compile_ret = list(status = 1),
     info_ret = list(),
@@ -188,18 +253,19 @@ test_that("user_header precedence order is correct", {
     }, "User header specified both")
   )
   # In this case:
-  # cpp_options[['USER_HEADER']] == tmp_files[2] <- actually used
-  # cpp_options[['user_header']] == tmp_files[3] <- ignored
+  # cpp_options[['USER_HEADER']] == tmp_files[2]
+  # cpp_options[['user_header']] == tmp_files[3]
   # tmp_files[2] is not stored
   expect_equal(
-    which(mod$cpp_options()[["USER_HEADER"]] == tmp_files),
+    match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
     2
   )
   expect_equal(
-    which(mod$cpp_options()[["user_header"]] == tmp_files),
+    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
     3
   )
 
+  # Case # 3: Both opts, other order
   with_mocked_cli(
     compile_ret = list(status = 1),
     info_ret = list(),
@@ -214,14 +280,13 @@ test_that("user_header precedence order is correct", {
       )
     }, "User header specified both")
   )
-  # Same as above
+  # Same as Case #2
   expect_equal(
-    which(mod$cpp_options()[["USER_HEADER"]] == tmp_files),
+    match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
     2
   )
   expect_equal(
-    which(mod$cpp_options()[["user_header"]] == tmp_files),
+    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
     3
   )
-
 })
