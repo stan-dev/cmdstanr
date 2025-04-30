@@ -133,7 +133,7 @@ validate_cpp_options <- function(cpp_options) {
 assert_valid_opencl <- function(opencl_ids, cpp_options) {
   if (is.null(cpp_options[["stan_opencl"]])
       && !is.null(opencl_ids)) {
-    stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+    stop("'opencl_ids' is set but the model was not compiled for use with OpenCL.",
          "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
          call. = FALSE)
   }
