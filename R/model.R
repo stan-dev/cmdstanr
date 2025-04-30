@@ -528,19 +528,7 @@ compile <- function(quiet = TRUE,
     warning("'compile_hessian_method' is deprecated. The hessian method is compiled with all models.")
   }
 
-  if (length(self$exe_file()) == 0) {
-    if (is.null(dir)) {
-      exe_base <- self$stan_file()
-    } else {
-      exe_base <- file.path(dir, basename(self$stan_file()))
-    }
-    exe <- cmdstan_ext(strip_ext(exe_base))
-    if (dir.exists(exe)) {
-      stop("There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.", call. = FALSE)
-    }
-  } else {
-    exe <- self$exe_file()
-  }
+  exe <- resolve_exe_path(dir, private$dir_, self$exe_file(), self$stan_file())
 
   # Resolve stanc and cpp options
   if (pedantic) {
@@ -588,6 +576,7 @@ compile <- function(quiet = TRUE,
   # - the executable does not exist
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
+  self$exe_file(exe)
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
@@ -608,7 +597,6 @@ compile <- function(quiet = TRUE,
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
     self$functions$existing_exe <- TRUE
-    self$exe_file(exe)
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
@@ -2435,4 +2423,39 @@ model_compile_info <- function(exe_file, version) {
 
 is_variables_method_supported <- function(mod) {
   cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
+}
+resolve_exe_path <- function(
+  dir = NULL, private_dir = NULL, self_exe_file = NULL, self_stan_file = NULL
+) {
+  if (is.null(dir) && !is.null(private_dir)) {
+    dir <- absolute_path(private_dir)
+  } else if (!is.null(dir)) {
+    dir <- absolute_path(dir)
+  }
+  if (!is.null(dir)) {
+    dir <- repair_path(dir)
+    assert_dir_exists(dir, access = "rw")
+    if (length(self_exe_file) != 0) {
+      self_exe_file <- file.path(dir, basename(self_exe_file))
+    }
+  }
+  if (length(self_exe_file) == 0) {
+    if (is.null(dir)) {
+      exe_base <- self_stan_file
+    } else {
+      exe_base <- file.path(dir, basename(self_stan_file))
+    }
+    exe <- cmdstan_ext(strip_ext(exe_base))
+    if (dir.exists(exe)) {
+      stop(
+        "There is a subfolder matching the model name ",
+        "in the same folder as the model! ",
+        "Please remove or rename the subfolder and try again.",
+        call. = FALSE
+      )
+    }
+  } else {
+    exe <- self_exe_file
+  }
+  exe
 }
