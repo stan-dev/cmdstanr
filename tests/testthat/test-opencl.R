@@ -8,24 +8,24 @@ test_that("all methods error when opencl_ids is used with non OpenCL model", {
   mod <- cmdstan_model(stan_file = stan_file)
   expect_error(
     mod$sample(data = testing_data("bernoulli"), opencl_ids = c(0, 0), chains = 1),
-    "'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+    "'opencl_ids' is set but the model was not compiled for use with OpenCL.",
     fixed = TRUE
   )
   expect_error(
     mod$optimize(data = testing_data("bernoulli"), opencl_ids = c(0, 0)),
-    "'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+    "'opencl_ids' is set but the model was not compiled for use with OpenCL.",
     fixed = TRUE
   )
   expect_error(
     mod$variational(data = testing_data("bernoulli"), opencl_ids = c(0, 0)),
-    "'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+    "'opencl_ids' is set but the model was not compiled for use with OpenCL.",
     fixed = TRUE
   )
   stan_file_gq <- testing_stan_file("bernoulli_ppc")
   mod_gq <- cmdstan_model(stan_file = stan_file_gq)
   expect_error(
     mod_gq$generate_quantities(fitted_params = fit, data = testing_data("bernoulli"), opencl_ids = c(0, 0)),
-    "'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
+    "'opencl_ids' is set but the model was not compiled for use with OpenCL.",
     fixed = TRUE
   )
 })

@@ -2,6 +2,7 @@
 
 # running and parsing exe info --------------------------------
 # run <model> info command
+#' @example `.cmdstan/bin`
 run_info_cli <- function(exe_file) {
   withr::with_path(
     c(
@@ -76,6 +77,7 @@ model_compile_info <- function(exe_file, version) {
 }
 
 # convert to compile flags --------------------
+# from list(flag1=TRUE, flag2=FALSE) to "FLAG1=TRUE\nFLAG2=FALSE"
 cpp_options_to_compile_flags <- function(cpp_options) {
   if (length(cpp_options) == 0) {
     return(NULL)
@@ -94,7 +96,8 @@ cpp_options_to_compile_flags <- function(cpp_options) {
 
 
 # check options overall for validity ---------------------------------
-
+# takes list of options as input and returns list of options
+# returns list with names standardized to lowercase
 validate_cpp_options <- function(cpp_options) {
   if (is.null(cpp_options) || length(cpp_options) == 0) return(list())
 
@@ -129,7 +132,9 @@ validate_cpp_options <- function(cpp_options) {
 }
 
 # check specific options for validity ---------------------------------
-
+# no type checking for opencl_ids
+# cpp_options must be a list
+# opencl_ids returned unchanged
 assert_valid_opencl <- function(opencl_ids, cpp_options) {
   if (is.null(cpp_options[["stan_opencl"]])
       && !is.null(opencl_ids)) {
@@ -140,6 +145,7 @@ assert_valid_opencl <- function(opencl_ids, cpp_options) {
   invisible(opencl_ids)
 }
 
+# cpp_options must be a list
 assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
@@ -164,7 +170,11 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
   invisible(threads)
 }
 
-# compare exe info and cpp options to one another
+# For two functions below
+# both styles are lists which should have flag names in lower case as names of the list
+# cpp_options style means is NULL or empty string
+# exe_info style means off is FALSE
+
 exe_info_style_cpp_options <- function(cpp_options) {
   if(is.null(cpp_options)) cpp_options <- list()
   names(cpp_options) <- tolower(names(cpp_options))
