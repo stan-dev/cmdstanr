@@ -206,6 +206,7 @@ validate_precompile_cpp_options <- function(cpp_options) {
 
   if (!is.null(cpp_options[["user_header"]]) && !is.null(cpp_options[['USER_HEADER']])) {
     warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
+    cpp_options[["user_header"]] <- NULL
   }
 
   names(cpp_options) <- tolower(names(cpp_options))

@@ -153,15 +153,16 @@ test_that("wsl path conversion is done as expected", {
       )
     }
   )
-
-  cpp_options <- expect_warning(
-    mod$cpp_options(),
-    'will be deprecated'
-  )
+  # --Old Logic, not used--
   # USER_HEADER is converted
   # user_header is NULL
-  expect_equal(cpp_options[['USER_HEADER']],  w_path(tmp_file))
-  expect_true(is.null(cpp_options[['user_header']]))
+  legacy_cpp_options <- expect_warning(mod$cpp_options(), 'will be deprecated')
+  expect_equal(legacy_cpp_options[['USER_HEADER']],  w_path(tmp_file))
+  expect_true(is.null(legacy_cpp_options[['user_header']]))
+  # --New Logic, used --
+  # options are stored lowercase and converted
+  expect_equal(mod$precompile_cpp_options()[['user_header']],  w_path(tmp_file))
+  expect_true(is.null(mod$precompile_cpp_options()[['USER_HEADER']]))
 
   # Case 2: cpp opt USER_HEADER
   with_mocked_cli(
@@ -177,15 +178,16 @@ test_that("wsl path conversion is done as expected", {
       )
     }
   )
-
-  cpp_options <- expect_warning(
-    mod$cpp_options(),
-    'will be deprecated'
-  )
+  # --Old Logic, not used--
   # USER_HEADER is converted
   # user_header is unconverted
-  expect_equal(cpp_options[['USER_HEADER']],  w_path(tmp_file))
-  expect_true(is.null(cpp_options[['user_header']]))
+  legacy_cpp_options <- expect_warning(mod$cpp_options(), 'will be deprecated')
+  expect_equal(legacy_cpp_options[['USER_HEADER']],  w_path(tmp_file))
+  expect_true(is.null(legacy_cpp_options[['user_header']]))
+  # --New Logic, used --
+  # options are stored lowercase and converted
+  expect_equal(mod$precompile_cpp_options()[['user_header']],  w_path(tmp_file))
+  expect_true(is.null(mod$precompile_cpp_options()[['USER_HEADER']]))
 
   # Case # 3: only user_header opt
   with_mocked_cli(
@@ -201,16 +203,16 @@ test_that("wsl path conversion is done as expected", {
       )
     }
   )
-
-
-  cpp_options <- expect_warning(
-    mod$cpp_options(),
-    'will be deprecated'
-  )
+  # --Old Logic, not used--
   # In  other cases, in the *output* USER_HEADER is windows style user_header is not.
   # In this case, USER_HEADER is null.
-  expect_true(is.null(cpp_options[['USER_HEADER']]))
-  expect_equal(cpp_options[['user_header']],  w_path(tmp_file))
+  legacy_cpp_options <- expect_warning(mod$cpp_options(), 'will be deprecated')
+  expect_true(is.null(legacy_cpp_options[['USER_HEADER']]))
+  expect_equal(legacy_cpp_options[['user_header']],  w_path(tmp_file))
+  # --New Logic, used --
+  # options are stored lowercase and converted
+  expect_equal(mod$precompile_cpp_options()[['user_header']],  w_path(tmp_file))
+  expect_true(is.null(mod$precompile_cpp_options()[['USER_HEADER']]))
 })
 
 test_that("user_header precedence order is correct", {
@@ -236,21 +238,24 @@ test_that("user_header precedence order is correct", {
       )
     }, "User header specified both")
   )
-  cpp_options <- expect_warning(
-    mod$cpp_options(),
-    'will be deprecated'
-  )
+  # --Old Logic--
   # In this case:
-  # cpp_options[['USER_HEADER']] == tmp_files[1] <- actually used
-  # cpp_options[['user_header']] == tmp_files[3] <- ignored
+  # cpp_options[['USER_HEADER']] == tmp_files[1] <- previously actually used
+  # cpp_options[['user_header']] == tmp_files[3] <- always ignored
   # tmp_files[2] is not stored
+  legacy_cpp_options <- expect_warning(mod$cpp_options(), 'will be deprecated')
   expect_equal(
-    match(cpp_options[['USER_HEADER']], w_path(tmp_files)),
+    match(legacy_cpp_options[['USER_HEADER']], w_path(tmp_files)),
     1
   )
   expect_equal(
-    match(cpp_options[['user_header']], tmp_files),
+    match(legacy_cpp_options[['user_header']], tmp_files),
     3
+  )
+  # --New Logic--
+  expect_equal(
+    match(mod$precompile_cpp_options()[['user_header']], w_path(tmp_files)),
+    1
   )
 
   # Case # 2: Both opts, but no arg
@@ -268,7 +273,8 @@ test_that("user_header precedence order is correct", {
       )
     }, "User header specified both")
   )
-  cpp_options <- expect_warning(
+  # --Old Logic--
+  legacy_cpp_options <- expect_warning(
     mod$cpp_options(),
     'will be deprecated'
   )
@@ -277,12 +283,17 @@ test_that("user_header precedence order is correct", {
   # cpp_options[['user_header']] == tmp_files[3]
   # tmp_files[2] is not stored
   expect_equal(
-    match(cpp_options[['USER_HEADER']], w_path(tmp_files)),
+    match(legacy_cpp_options[['USER_HEADER']], w_path(tmp_files)),
     2
   )
   expect_equal(
-    match(cpp_options[['user_header']], tmp_files),
+    match(legacy_cpp_options[['user_header']], tmp_files),
     3
+  )
+  # --New Logic--
+  expect_equal(
+    match(mod$precompile_cpp_options()[['user_header']], tmp_files),
+    2
   )
 
   # Case # 3: Both opts, other order
@@ -300,17 +311,23 @@ test_that("user_header precedence order is correct", {
       )
     }, "User header specified both")
   )
-  cpp_options <- expect_warning(
+  legacy_cpp_options <- expect_warning(
     mod$cpp_options(),
     'will be deprecated'
   )
+  # --Old Logic--
   # Same as Case #2
   expect_equal(
-    match(cpp_options[['USER_HEADER']], w_path(tmp_files)),
+    match(legacy_cpp_options[['USER_HEADER']], w_path(tmp_files)),
     2
   )
   expect_equal(
-    match(cpp_options[['user_header']], tmp_files),
+    match(legacy_cpp_options[['user_header']], tmp_files),
     3
+  )
+  # --New Logic--
+  expect_equal(
+    match(mod$precompile_cpp_options()[['user_header']], tmp_files),
+    2
   )
 })
