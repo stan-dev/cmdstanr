@@ -24,7 +24,7 @@ test_that("warning when no recompile and no info",
 test_that("recompiles when force_recompile flag set",
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(),
+    info_ret = list(status = 0),
     code = expect_mock_compile({
       mod <- cmdstan_model(stan_file = stan_program, force_recompile = TRUE)
     })
