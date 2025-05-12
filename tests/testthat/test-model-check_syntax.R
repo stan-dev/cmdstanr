@@ -3,7 +3,7 @@ test_that("include_paths set on compiled model with mocks", {
   with_mocked_cli(expect_mock_compile({
     mod_w_include <- cmdstan_model(
       stan_file = stan_program_w_include,
-      compile = TRUE,
+      force_recompile = TRUE,
       include_paths = test_path("resources", "stan")
     )
   }))
