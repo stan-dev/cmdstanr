@@ -23,12 +23,12 @@ test_that("test parse_exe_info_string", {
   
 test_that("test validate_precompile_cpp_options", {
   expect_equal_ignore_order(
-    validate_precompile_cpp_options(list(Stan_Threads = TRUE, STAN_OPENCL = NULL, aBc = FALSE)),
+    validate_cpp_options(list(Stan_Threads = TRUE, STAN_OPENCL = NULL, aBc = FALSE)),
     list(
       stan_threads = TRUE,
       stan_opencl = NULL, 
       abc = FALSE
     )
   )
-  expect_warning(validate_precompile_cpp_options(list(STAN_OPENCL= FALSE)))
+  expect_warning(validate_cpp_options(list(STAN_OPENCL= FALSE)))
 })
