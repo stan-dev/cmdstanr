@@ -1,6 +1,10 @@
 real_wcr <- wsl_compatible_run
 
-with_mocked_cli <- function(code, compile_ret, info_ret) {
+with_mocked_cli <- function(
+  code,
+  compile_ret = list(status = 0),
+  info_ret = list(status = 0, stdout = "")
+) {
   with_mocked_bindings(
     code,
     wsl_compatible_run = function(command, args, ...) {
