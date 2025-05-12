@@ -9,7 +9,6 @@ withr::defer(
 
 test_that("warning when no recompile and no info",
   with_mocked_cli(
-    compile_ret = list(),
     info_ret = list(status = 1),
     code = expect_warning({
       mod <- cmdstan_model(
@@ -22,17 +21,12 @@ test_that("warning when no recompile and no info",
 )
 
 test_that("recompiles when force_recompile flag set",
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 0),
-    code = expect_mock_compile({
-      mod <- cmdstan_model(stan_file = stan_program, force_recompile = TRUE)
-    })
-  )
+  with_mocked_cli(expect_mock_compile({
+    cmdstan_model(stan_file = stan_program, force_recompile = TRUE)
+  }))
 )
 
 test_that("no mismatch results in no recompile", with_mocked_cli(
-  compile_ret = list(status = 0),
   info_ret = list(
     status = 0,
     stdout = "
@@ -52,7 +46,6 @@ test_that("no mismatch results in no recompile", with_mocked_cli(
 ))
 
 test_that("mismatch results in recompile.", with_mocked_cli(
-  compile_ret = list(status = 0),
   info_ret = list(
     status = 0,
     stdout = "
@@ -77,7 +70,6 @@ test_that("mismatch results in recompile.", with_mocked_cli(
 test_that(
   "$exe_info(), $precompile_cpp_options() return expected data without recompile",
   with_mocked_cli(
-    compile_ret = list(status = 0),
     info_ret = list(
       status = 0,
       stdout = "
@@ -126,7 +118,6 @@ test_that(
 
 test_that("$exe_info_fallback() logic works as expected with cpp_options",
   with_mocked_cli(
-    compile_ret = list(status = 0),
     info_ret = list(
       status = 1,
       stdout = ""
@@ -200,7 +191,6 @@ test_that("$exe_info_fallback() logic works as expected with cpp_options",
 
 test_that("$exe_info_fallback() logic works as expected without cpp_options",
   with_mocked_cli(
-    compile_ret = list(status = 0),
     info_ret = list(
       status = 1,
       stdout = ""
@@ -249,7 +239,6 @@ test_that("$exe_info_fallback() logic works as expected without cpp_options",
 
 test_that("Recompile when cpp args don't match binary", {
   with_mocked_cli(
-    compile_ret = list(status = 0),
     info_ret = list(
       status = 0,
       stdout = "

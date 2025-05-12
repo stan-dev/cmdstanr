@@ -644,18 +644,28 @@ compile <- function(quiet = TRUE,
   # - the user forced compilation,
   # - the executable does not exist
   # - the stan model was changed since last compilation
-  # - a user header is used and the user header changed since last compilation (#813)
+  # - a user header is used and (
+  #     the user header changed since last compilation (#813) OR
+  #     there is not record of having used user_header in past compilation OR
+  #     the user_header is a different file from last compilation)
   self$exe_file(exe)
   self$exe_info(update = TRUE)
 
   if (!file.exists(exe)) {
     force_recompile <- TRUE
-  } else if (file.exists(self$stan_file())
-             && file.mtime(exe) < file.mtime(self$stan_file())) {
+  } else if (
+    file.exists(self$stan_file()) &&
+      file.mtime(exe) < file.mtime(self$stan_file())
+  ) {
     force_recompile <- TRUE
-  } else if (!is.null(user_header)
-             && file.exists(user_header)
-             && file.mtime(exe) < file.mtime(user_header)) {
+  } else if (
+    !is.null(user_header) &&
+      file.exists(user_header) && (
+        file.mtime(exe) < file.mtime(user_header) ||
+          is.null(self$precompile_cpp_options()[["user_header"]]) ||
+          self$precompile_cpp_options()[["user_header"]] != user_header
+      )
+  ) {
     force_recompile <- TRUE
   } else if (!isTRUE(exe_info_reflects_cpp_options(self$exe_info(), cpp_options))) {
     force_recompile <- TRUE

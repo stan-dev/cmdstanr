@@ -1,10 +1,14 @@
 skip_if(os_is_macos())
+og_wd <- getwd()
 
-file_that_exists <- "placeholder_exists"
+file_that_exists <- function() {
+  name <- file.path(og_wd, "placeholder_exists")
+  if(! file.exists(name)) file.create(name)
+  name
+}
 file_that_doesnt_exist <- "placeholder_doesnt_exist"
-file.create(file_that_exists)
 withr::defer(
-  if (file.exists(file_that_exists)) file.remove(file_that_exists),
+  file.remove(file_that_exists()),
   teardown_env()
 )
 
@@ -42,15 +46,17 @@ namespace bernoulli_external_model_namespace
 test_that("cmdstan_model works with user_header with mock", {
   tmpfile <- withr::local_tempfile(lines = hpp, fileext = ".hpp")
 
+  # Note to reviewer: I'm actually unsure what we want the behavior
+  # to be in this situation. Please advise.
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(),
+    info_ret = list(status = 1),
     code = expect_mock_compile(
       expect_warning(
         expect_no_warning({
           mod <- cmdstan_model(
             stan_file = testing_stan_file("bernoulli_external"),
-            exe_file = file_that_exists,
+            exe_file = file_that_exists(),
             user_header = tmpfile
           )
         }, message = "Recompiling is recommended"),
@@ -62,8 +68,6 @@ test_that("cmdstan_model works with user_header with mock", {
   )
 
   with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(),
     code = expect_mock_compile({
       mod_2 <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -75,10 +79,8 @@ test_that("cmdstan_model works with user_header with mock", {
   )
 
   # Check recompilation upon changing header
-  file.create(file_that_exists)
+  file_that_exists()
   with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 0, stdout = ""),
     code = expect_no_mock_compile({
       mod$compile(quiet = TRUE, user_header = tmpfile)
     })
@@ -86,8 +88,6 @@ test_that("cmdstan_model works with user_header with mock", {
 
   Sys.setFileTime(tmpfile, Sys.time() + 1) # touch file to trigger recompile
   with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 0, stdout = ""),
     code = expect_mock_compile({
       mod$compile(quiet = TRUE, user_header = tmpfile)
     })
@@ -98,8 +98,6 @@ test_that("cmdstan_model works with user_header with mock", {
 
   # Alternative spec of user header
   with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(),
     code = expect_no_mock_compile({
       mod$compile(
         quiet = TRUE,
@@ -112,7 +110,6 @@ test_that("cmdstan_model works with user_header with mock", {
   # Error/warning messages
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(),
     code = expect_error(
       cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
