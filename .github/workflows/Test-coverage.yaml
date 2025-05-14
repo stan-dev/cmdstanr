@@ -59,6 +59,8 @@ jobs:
         if: runner.os == 'Linux'
         run: covr::codecov(type = "tests")
         shell: Rscript {0}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }} 
 
       - name: Test coverage (Windows)
         if: runner.os == 'Windows'
@@ -66,3 +68,5 @@ jobs:
           options(covr.gcov = 'C:/rtools44/mingw64/bin/gcov.exe');
           covr::codecov(type = "tests", function_exclusions = "sample_mpi")
         shell: Rscript {0}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }} 
