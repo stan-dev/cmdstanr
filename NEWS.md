@@ -1,4 +1,6 @@
-* Added links regarding `Contributing` to README.md 
+# cmdstanr (development version)
+
+
 
 # cmdstanr 0.9.0
 
