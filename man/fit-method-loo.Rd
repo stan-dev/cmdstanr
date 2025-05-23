@@ -13,13 +13,16 @@ containing the pointwise log-likelihood. The default is to look for
 \code{"log_lik"}. This argument is passed to the \code{\link[=fit-method-draws]{$draws()}}
 method.}
 
-\item{r_eff}{(multiple options) How to handle the \code{r_eff} argument for \code{loo()}:
+\item{r_eff}{(multiple options) How to handle the \code{r_eff} argument for
+\code{loo()}. \code{r_eff} measures the amount of autocorrelation in MCMC draws, and
+is used to compute more accurate ESS and MCSE estimates for pointwise and
+total ELPDs.
 \itemize{
 \item \code{TRUE} will call \code{\link[loo:relative_eff]{loo::relative_eff.array()}} to compute the \code{r_eff}
 argument to pass to \code{\link[loo:loo]{loo::loo.array()}}.
 \item \code{FALSE} (the default) or \code{NULL} will avoid computing \code{r_eff},
 which can be very slow. The reported ESS and MCSE estimates may be
-over-optimistic if the posterior draws are not near independent.
+over-optimistic if the posterior draws are far from independent.
 \item If \code{r_eff} is anything else, that object will be passed as the \code{r_eff}
 argument to \code{\link[loo:loo]{loo::loo.array()}}.
 }}
