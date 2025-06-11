@@ -54,17 +54,8 @@ model_compile_info_legacy <- function(exe_file, version) {
   info <- NULL
   if(is.null(version)) return(NULL)
   if (version > "2.26.1") {
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      ret <- wsl_compatible_run(
-        command = wsl_safe_path(exe_file),
-        args = "info",
-        error_on_status = FALSE
-      )
-    )
+
+    ret <- run_info_cli(exe_file)
     if (ret$status == 0) {
       info <- list()
       info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
@@ -116,7 +107,7 @@ validate_cpp_options <- function(cpp_options) {
   ) {
     warning(
       "User header specified both via cpp_options[[\"USER_HEADER\"]] ",
-      "and cpp_options[[\"user_header\"]].",
+      "and cpp_options[[\"user_header\"]]. Please only specify your user header in one location",
       call. = FALSE
     )
     cpp_options[["user_header"]] <- NULL
