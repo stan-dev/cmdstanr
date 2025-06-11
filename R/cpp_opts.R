@@ -64,13 +64,11 @@ model_compile_info <- function(exe_file, version) {
           if (!is.na(as.logical(val))) {
             val <- as.logical(val)
           }
-          info[[toupper(key_val[1])]] <- val
+          if (!is.logical(val) || isTRUE(val)) {
+            info[[tolower(key_val[1])]] <- val
+          }
         }
       }
-      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
-      info[["STAN_VERSION_MAJOR"]] <- NULL
-      info[["STAN_VERSION_MINOR"]] <- NULL
-      info[["STAN_VERSION_PATCH"]] <- NULL
     }
   }
   info
