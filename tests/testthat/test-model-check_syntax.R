@@ -1,0 +1,11 @@
+test_that("include_paths set on compiled model with mocks", {
+  stan_program_w_include <- testing_stan_file("bernoulli_include")
+  with_mocked_cli(expect_mock_compile({
+    mod_w_include <- cmdstan_model(
+      stan_file = stan_program_w_include,
+      force_recompile = TRUE,
+      include_paths = test_path("resources", "stan")
+    )
+  }))
+  expect_true(mod_w_include$check_syntax())
+})
