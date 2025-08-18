@@ -95,6 +95,7 @@ cmdstanr_knitr_env <- cmdstanr_knitr_env_function_generator(new.env())
 }
 
 .onLoad <- function(...) {
+  Sys.setenv(PROCESSX_NOTIFY_OLD_SIGCHLD = 1)
   if (requireNamespace("knitr", quietly = TRUE)) {
     cmdstanr_knitr_env(knitr::knit_global())
   }
