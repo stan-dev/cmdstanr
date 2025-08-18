@@ -36,6 +36,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
       CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
+      PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
 
     steps:
       - name: cmdstan env vars
