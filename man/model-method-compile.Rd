@@ -45,10 +45,11 @@ program.}
 \item{user_header}{(string) The path to a C++ file (with a .hpp extension)
 to compile with the Stan model.}
 
-\item{cpp_options}{(list) Any makefile options to be used when compiling the
+\item{cpp_options}{(list) Makefile options to be used when compiling the
 model (\code{STAN_THREADS}, \code{STAN_MPI}, \code{STAN_OPENCL}, etc.). Anything you would
-otherwise write in the \code{make/local} file. For an example of using threading
-see the Stan case study
+otherwise write in the \code{make/local} file. Setting a value to \code{NULL} or \code{""}
+within the list unsets the flag.
+For an example of using threading see the Stan case study.
 \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
