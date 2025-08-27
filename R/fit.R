@@ -1501,12 +1501,15 @@ CmdStanMCMC <- R6::R6Class(
 #'   containing the pointwise log-likelihood. The default is to look for
 #'   `"log_lik"`. This argument is passed to the [`$draws()`][fit-method-draws]
 #'   method.
-#' @param r_eff (multiple options) How to handle the `r_eff` argument for `loo()`:
-#'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
-#'   to compute the `r_eff` argument to pass to [loo::loo.array()].
-#'   * `FALSE` or `NULL` will avoid computing `r_eff` (which can sometimes be slow),
-#'   but the reported ESS and MCSE estimates can be over-optimistic if the
-#'   posterior draws are not (near) independent.
+#' @param r_eff (multiple options) How to handle the `r_eff` argument for
+#'   `loo()`. `r_eff` measures the amount of autocorrelation in MCMC draws, and
+#'   is used to compute more accurate ESS and MCSE estimates for pointwise and
+#'   total ELPDs.
+#'   * `TRUE` will call [loo::relative_eff.array()] to compute the `r_eff`
+#'   argument to pass to [loo::loo.array()].
+#'   * `FALSE` (the default) or `NULL` will avoid computing `r_eff`,
+#'   which can be very slow. The reported ESS and MCSE estimates may be
+#'   over-optimistic if the posterior draws are far from independent.
 #'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
 #'   argument to [loo::loo.array()].
 #' @param moment_match (logical) Whether to use a
@@ -1537,7 +1540,7 @@ CmdStanMCMC <- R6::R6Class(
 #' print(loo_result)
 #' }
 #'
-loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) {
+loo <- function(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...) {
   require_suggested_package("loo")
   if (length(variables) != 1) {
     stop("Only a single variable name is allowed for the 'variables' argument.", call. = FALSE)
