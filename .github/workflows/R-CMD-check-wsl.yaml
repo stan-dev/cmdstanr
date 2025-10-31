@@ -45,7 +45,7 @@ jobs:
         with:
           extra-packages: any::rcmdcheck, local::.
 
-      - uses: Vampire/setup-wsl@v5
+      - uses: Vampire/setup-wsl@v6
         with:
             distribution: Ubuntu-22.04
             wsl-version: 2
