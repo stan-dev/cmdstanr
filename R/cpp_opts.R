@@ -2,6 +2,7 @@
 
 # running and parsing exe info --------------------------------
 # run <model> info command
+#' @noRd
 #' @example `.cmdstan/bin`
 run_info_cli <- function(exe_file) {
   withr::with_path(
@@ -52,7 +53,7 @@ parse_exe_info_string <- function(ret_stdout) {
 model_compile_info <- function(exe_file, version) {
   info <- NULL
   if (version > "2.26.1") {
-    
+
     ret <- run_info_cli(exe_file)
     if (ret$status == 0) {
       info <- list()
