@@ -1812,11 +1812,13 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
-#'   This object will either contain a penalized maximum likelihood estimate
-#'   (MLE) or a maximum a posteriori estimate (MAP), depending on the value of
-#'   the `jacobian` argument when the model is fit (and whether the model has
-#'   constrained parameters). See [`$optimize()`][model-method-optimize] and the
-#'   CmdStan User's Guide for more details.
+#'   The name "MLE" (used for historical reasons) is a bit misleading since this
+#'   object will contain parameter estimates corresponding to either a mode in
+#'   the constrained parameter space _or_ the unconstrained parameter space,
+#'   depending on the value of the `jacobian` argument when the model is fit
+#'   (and whether the model has constrained parameters). See
+#'   [`$optimize()`][model-method-optimize] and the CmdStan User's Guide for
+#'   more details.
 #'
 #' @section Methods: `CmdStanMLE` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.
