@@ -32,7 +32,7 @@ jobs:
       NOT_CRAN: true
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install system dependencies
         if: runner.os == 'Linux'
         run: |
