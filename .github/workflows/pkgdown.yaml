@@ -20,6 +20,7 @@ jobs:
       cancel-in-progress: true
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: "true"
     permissions:
       contents: write
     steps:
@@ -33,17 +34,14 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::., any::withr, stan-dev/pkgdown-config
+          extra-packages: any::pkgdown, local::., stan-dev/pkgdown-config
 
       - name: Build site
         run: |
-          withr::with_envvar(
-            c("NOT_CRAN" = "true"), # this should already be set by setup-r@v2? keeping because vignettes don't build otherwise
-            pkgdown::build_site_github_pages(
-              lazy = FALSE, # change to TRUE if runner times out.
-              run_dont_run = TRUE,
-              new_process = TRUE
-            )
+          pkgdown::build_site_github_pages(
+            lazy = FALSE, # change to TRUE if runner times out.
+            run_dont_run = TRUE,
+            new_process = TRUE
           )
         shell: Rscript {0}
 

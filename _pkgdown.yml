@@ -1,6 +1,6 @@
 url: https://mc-stan.org/cmdstanr
 
-destination: .
+destination: "."
 
 development:
   mode: auto
