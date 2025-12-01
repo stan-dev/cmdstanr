@@ -1,0 +1,14 @@
+pandoc: 3.1.11
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  cmdstanr-internals: cmdstanr-internals.html
+  cmdstanr: cmdstanr.html
+  articles-online-only/opencl: articles-online-only/opencl.html
+  posterior: posterior.html
+  profiling: profiling.html
+  r-markdown: r-markdown.html
+last_built: 2025-12-01T23:28Z
+urls:
+  reference: https://mc-stan.org/cmdstanr/reference
+  article: https://mc-stan.org/cmdstanr/articles

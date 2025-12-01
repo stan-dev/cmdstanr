@@ -1,0 +1,4 @@
+# License
+
+    YEAR: 2019
+    COPYRIGHT HOLDER: Stan Developers and their Assignees

@@ -1,0 +1,148 @@
+# Running Stan on the GPU with OpenCL
+
+## Introduction
+
+This vignette demonstrates how to use the OpenCL capabilities of CmdStan
+with CmdStanR. The functionality described in this vignette requires
+CmdStan 2.26.1 or newer.
+
+As of version 2.26.1, users can expect speedups with OpenCL when using
+vectorized probability distribution functions (functions with the
+`_lpdf` or `_lpmf` suffix) and when the input variables contain at least
+20,000 elements.
+
+The actual speedup for a model will depend on the particular `lpdf/lpmf`
+functions used and whether the `lpdf/lpmf` functions are the bottlenecks
+of the model. The more computationally complex the function is, the
+larger the expected speedup. The biggest speedups are expected when
+using the specialized GLM functions.
+
+In order to establish the bottlenecks in your model we recommend using
+[profiling](https://mc-stan.org/cmdstanr/articles/profiling.html), which
+was introduced in Stan version 2.26.0.
+
+## OpenCL runtime
+
+OpenCL is supported on most modern CPUs and GPUs. In order to use OpenCL
+in CmdStanR, an OpenCL runtime for the target device must be installed.
+A guide for the most common devices is available in the CmdStan manual’s
+[chapter on
+parallelization](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl).
+
+In case of using Windows, CmdStan requires the `OpenCL.lib` to compile
+the model. If you experience issue compiling the model with OpenCL, run
+the below script and set `path_to_opencl_lib` to the path to the
+`OpenCL.lib` file on your system. If you are using CUDA, the path should
+be similar to the one listed here.
+
+``` r
+path_to_opencl_lib <- "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64"
+cpp_options = list(
+  paste0("LDFLAGS+= -L\"",path_to_opencl_lib,"\" -lOpenCL")
+)
+
+cmdstanr::cmdstan_make_local(cpp_options = cpp_options)
+cmdstanr::rebuild_cmdstan()
+```
+
+## Compiling a model with OpenCL
+
+By default, models in CmdStanR are compiled *without* OpenCL support.
+Once OpenCL support is enabled, a CmdStan model will make use of OpenCL
+if the functions in the model support it. Technically no changes to a
+model are required to support OpenCL since the choice of using OpenCL is
+handled by the compiler, but it can still be useful to rewrite a model
+to be more OpenCL-friendly by using vectorization as much as possible
+when using probability distributions.
+
+Consider a simple logistic regression with parameters `alpha` and
+`beta`, covariates `X`, and outcome `y`.
+
+    data {
+      int<lower=1> k;
+      int<lower=0> n;
+      matrix[n, k] X;
+      array[n] int y;
+    }
+    parameters {
+      vector[k] beta;
+      real alpha;
+    }
+    model {
+      target += std_normal_lpdf(beta);
+      target += std_normal_lpdf(alpha);
+      target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
+    }
+
+Some fake data will be useful to run this model:
+
+``` r
+library(cmdstanr)
+
+# Generate some fake data
+n <- 250000
+k <- 20
+X <- matrix(rnorm(n * k), ncol = k)
+y <- rbinom(n, size = 1, prob = plogis(3 * X[,1] - 2 * X[,2] + 1))
+mdata <- list(k = k, n = n, y = y, X = X)
+```
+
+In this model, most of the computation will be handled by the
+`bernoulli_logit_glm_lpmf` function. Because this is a supported GPU
+function, it should be possible to accelerate it with OpenCL. Check
+[here](https://mc-stan.org/math/md_doxygen_2parallelism__support_2opencl__support.html)
+for a list of functions with OpenCL support.
+
+To build the model with OpenCL support, add
+`cpp_options = list(stan_opencl = TRUE)` at the compilation step.
+
+``` r
+# Compile the model with STAN_OPENCL=TRUE
+mod_cl <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan",
+                        cpp_options = list(stan_opencl = TRUE))
+```
+
+## Running models with OpenCL
+
+Running models with OpenCL requires specifying the OpenCL platform and
+device on which to run the model (there can be multiple). If the system
+has one GPU and no OpenCL CPU runtime, the platform and device IDs of
+the GPU are typically both `0`, but the `clinfo` tool can be used to
+figure out for sure which devices are available.
+
+On an Ubuntu system with both CPU and GPU OpenCL support, `clinfo -l`
+outputs:
+
+    Platform #0: AMD Accelerated Parallel Processing
+     `-- Device #0: gfx906+sram-ecc
+    Platform #1: Intel(R) CPU Runtime for OpenCL(TM) Applications
+     `-- Device #0: Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz
+
+On this system the GPU is platform ID 0 and device ID 0, while the CPU
+is platform ID 1, device ID 0. These can be specified with the
+`opencl_ids` argument when running a model. The `opencl_ids` is supplied
+as a vector of length 2, where the first element is the platform ID and
+the second argument is the device ID.
+
+``` r
+fit_cl <- mod_cl$sample(data = mdata, chains = 4, parallel_chains = 4,
+                        opencl_ids = c(0, 0), refresh = 0)
+```
+
+We’ll also run a version without OpenCL and compare the run times.
+
+``` r
+# no OpenCL version
+mod <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan", force_recompile = TRUE)
+fit_cpu <- mod$sample(data = mdata, chains = 4, parallel_chains = 4, refresh = 0)
+```
+
+The speedup of the OpenCL model is:
+
+``` r
+fit_cpu$time()$total / fit_cl$time()$total
+```
+
+This speedup will be determined by the particular GPU/CPU used, the
+input problem sizes (data as well as parameters) and if the model uses
+functions that can be run on the GPU or other OpenCL devices.
