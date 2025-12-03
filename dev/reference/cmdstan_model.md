@@ -186,7 +186,7 @@ fit_mcmc <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.1 seconds.
 #> 
 
 # Use 'posterior' package for summaries
@@ -446,7 +446,7 @@ fit_mcmc_w_init_fun <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2 <- mod$sample(
   data = stan_data,
@@ -465,7 +465,7 @@ fit_mcmc_w_init_fun_2 <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2$init()
 #> [[1]]
@@ -497,7 +497,7 @@ fit_mcmc_w_init_list <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_optim_w_init_list <- mod$optimize(
   data = stan_data,
