@@ -451,7 +451,7 @@ fit_mcmc <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.1 seconds.
 #> 
 
 # Use 'posterior' package for summaries
