@@ -8,7 +8,7 @@
 \title{CmdStanR: the R interface to CmdStan}
 \description{
 \if{html}{
-   \figure{logo.png}{options: width="50" alt="https://mc-stan.org/about/logo/"}
+   \figure{logo.svg}{options: width="50" alt="https://mc-stan.org/about/logo/"}
    \emph{Stan Development Team}
 }
 
@@ -213,7 +213,7 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Jonah Gabry \email{jsg2201@columbia.edu}
+  \item Jonah Gabry \email{jgabry@gmail.com}
   \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
   \item Steve Bronder
 }

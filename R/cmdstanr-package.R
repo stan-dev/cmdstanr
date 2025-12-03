@@ -6,7 +6,7 @@
 #'
 #' @description
 #' \if{html}{
-#'    \figure{logo.png}{options: width="50" alt="https://mc-stan.org/about/logo/"}
+#'    \figure{logo.svg}{options: width="50" alt="https://mc-stan.org/about/logo/"}
 #'    \emph{Stan Development Team}
 #' }
 #'
@@ -35,4 +35,6 @@
 #'
 "_PACKAGE"
 
-if (getRversion() >= "2.15.1")  utils::globalVariables(c("self", "private", "super"))
+if (getRversion() >= "2.15.1") {
+  utils::globalVariables(c("self", "private", "super"))
+}
