@@ -95,6 +95,19 @@ test_that("read_cmdstan_csv() fails with the no params listed", {
                "Supplied CSV file does not contain any variable names or data!")
 })
 
+test_that("variable_dims works for standard Stan names", {
+  vars <- c("beta[1]", "beta[2]", "beta[3]", "sigma")
+  dims <- variable_dims(vars)
+  expect_equal(dims$beta, 3)
+  expect_equal(dims$sigma, 1)
+})
+
+test_that("variable_dims handles names with regex metacharacters", {
+  vars <- c('SIGMA(1,1)[1,2]', 'SIGMA(1,1)[2,2]')
+  dims <- variable_dims(vars)
+  expect_equal(dims[["SIGMA(1,1)"]], c(2, 2))
+})
+
 test_that("read_cmdstan_csv() matches utils::read.csv", {
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
                  test_path("resources", "csv", "model1-2-warmup.csv"))
