@@ -6,7 +6,7 @@
 #'
 #' @description
 #' \if{html}{
-#'    \figure{logo.png}{options: width="50" alt="https://mc-stan.org/about/logo/"}
+#'    \figure{logo.svg}{options: width="50" alt="https://mc-stan.org/about/logo/"}
 #'    \emph{Stan Development Team}
 #' }
 #'
