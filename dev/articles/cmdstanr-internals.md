@@ -164,7 +164,7 @@ compilation approach described above).
 
 ``` r
 mod_pedantic <- cmdstan_model(stan_file_pedantic, pedantic = TRUE)
-Warning in '/tmp/RtmpO7WrKI/model-369a555137c5.stan', line 11, column 14: A
+Warning in '/tmp/Rtmp6PSBgr/model-370941ae8cd.stan', line 11, column 14: A
     poisson distribution is given parameter lambda as a rate parameter
     (argument 1), but lambda was not constrained to be strictly positive.
 Warning: The parameter lambda has no priors. This means either no prior is
@@ -177,7 +177,7 @@ argument to the `$check_syntax()` method.
 
 ``` r
 mod_pedantic$check_syntax(pedantic = TRUE)
-Warning in '/tmp/RtmpO7WrKI/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14: A
+Warning in '/tmp/Rtmp6PSBgr/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14: A
     poisson distribution is given parameter lambda as a rate parameter
     (argument 1), but lambda was not constrained to be strictly positive.
 Warning: The parameter lambda has no priors. This means either no prior is
@@ -198,7 +198,7 @@ rm(mod_pedantic)
 
 mod_pedantic <- cmdstan_model(stan_file_pedantic, compile = FALSE)
 mod_pedantic$check_syntax(pedantic = TRUE)
-Warning in '/tmp/RtmpO7WrKI/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14: A
+Warning in '/tmp/Rtmp6PSBgr/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14: A
     poisson distribution is given parameter lambda as a rate parameter
     (argument 1), but lambda was not constrained to be strictly positive.
 Warning: The parameter lambda has no priors. This means either no prior is
@@ -427,10 +427,10 @@ CmdStan to CSV files in a temporary directory.
 fit$output_files()
 ```
 
-    [1] "/tmp/RtmpO7WrKI/bernoulli-202512031902-1-5be1d2.csv"
-    [2] "/tmp/RtmpO7WrKI/bernoulli-202512031902-2-5be1d2.csv"
-    [3] "/tmp/RtmpO7WrKI/bernoulli-202512031902-3-5be1d2.csv"
-    [4] "/tmp/RtmpO7WrKI/bernoulli-202512031902-4-5be1d2.csv"
+    [1] "/tmp/Rtmp6PSBgr/bernoulli-202512040232-1-5be241.csv"
+    [2] "/tmp/Rtmp6PSBgr/bernoulli-202512040232-2-5be241.csv"
+    [3] "/tmp/Rtmp6PSBgr/bernoulli-202512040232-3-5be241.csv"
+    [4] "/tmp/Rtmp6PSBgr/bernoulli-202512040232-4-5be241.csv"
 
 These files will be lost if you end your R session or if you remove the
 `fit` object and force (or wait for) garbage collection.
@@ -449,7 +449,7 @@ gc()
 
               used (Mb) gc trigger  (Mb) max used (Mb)
     Ncells 1217983 65.1    2504474 133.8  1589948 85.0
-    Vcells 2123409 16.3    8388608  64.0  4907307 37.5
+    Vcells 2123403 16.3    8388608  64.0  4907306 37.5
 
 ``` r
 file.exists(files)
@@ -645,7 +645,7 @@ str(csv_contents)
       ..$ stan_version_major  : num 2
       ..$ stan_version_minor  : num 37
       ..$ stan_version_patch  : num 0
-      ..$ start_datetime      : chr "2025-12-03 19:02:23 UTC"
+      ..$ start_datetime      : chr "2025-12-04 02:32:33 UTC"
       ..$ method              : chr "sample"
       ..$ save_warmup         : int 0
       ..$ thin                : num 1
@@ -666,7 +666,7 @@ str(csv_contents)
       ..$ seed                : num 31749990
       ..$ refresh             : num 100
       ..$ sig_figs            : num 8
-      ..$ profile_file        : chr "/tmp/RtmpO7WrKI/bernoulli-profile-202512031902-1-2c6da2.csv"
+      ..$ profile_file        : chr "/tmp/Rtmp6PSBgr/bernoulli-profile-202512040232-1-2c6e11.csv"
       ..$ save_cmdstan_config : int 0
       ..$ stanc_version       : chr "stanc3 v2.37.0"
       ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
@@ -683,8 +683,8 @@ str(csv_contents)
       ..$ time                :'data.frame':    4 obs. of  4 variables:
       .. ..$ chain_id: num [1:4] 1 2 3 4
       .. ..$ warmup  : num [1:4] 0.002 0.002 0.002 0.002
-      .. ..$ sampling: num [1:4] 0.004 0.005 0.004 0.004
-      .. ..$ total   : num [1:4] 0.006 0.007 0.006 0.006
+      .. ..$ sampling: num [1:4] 0.005 0.005 0.005 0.005
+      .. ..$ total   : num [1:4] 0.007 0.007 0.007 0.007
       ..$ stan_variable_sizes :List of 2
       .. ..$ lp__ : num 1
       .. ..$ theta: num 1
@@ -695,8 +695,8 @@ str(csv_contents)
       ..$ chains:'data.frame':  4 obs. of  4 variables:
       .. ..$ chain_id: num [1:4] 1 2 3 4
       .. ..$ warmup  : num [1:4] 0.002 0.002 0.002 0.002
-      .. ..$ sampling: num [1:4] 0.004 0.005 0.004 0.004
-      .. ..$ total   : num [1:4] 0.006 0.007 0.006 0.006
+      .. ..$ sampling: num [1:4] 0.005 0.005 0.005 0.005
+      .. ..$ total   : num [1:4] 0.007 0.007 0.007 0.007
      $ inv_metric                     :List of 4
       ..$ 1: num 0.588
       ..$ 2: num 0.545
@@ -753,10 +753,10 @@ fit <- mod$sample(data = data_list, save_latent_dynamics = TRUE)
 fit$latent_dynamics_files()
 ```
 
-    [1] "/tmp/RtmpO7WrKI/bernoulli-diagnostic-202512031902-1-057027.csv"
-    [2] "/tmp/RtmpO7WrKI/bernoulli-diagnostic-202512031902-2-057027.csv"
-    [3] "/tmp/RtmpO7WrKI/bernoulli-diagnostic-202512031902-3-057027.csv"
-    [4] "/tmp/RtmpO7WrKI/bernoulli-diagnostic-202512031902-4-057027.csv"
+    [1] "/tmp/Rtmp6PSBgr/bernoulli-diagnostic-202512040232-1-057096.csv"
+    [2] "/tmp/Rtmp6PSBgr/bernoulli-diagnostic-202512040232-2-057096.csv"
+    [3] "/tmp/Rtmp6PSBgr/bernoulli-diagnostic-202512040232-3-057096.csv"
+    [4] "/tmp/Rtmp6PSBgr/bernoulli-diagnostic-202512040232-4-057096.csv"
 
 ``` r
 # read one of the files in
@@ -842,18 +842,18 @@ options("cmdstanr_verbose"=TRUE)
 mod <- cmdstan_model(stan_file, force_recompile = TRUE)
 ```
 
-    Running make /tmp/RtmpO7WrKI/model-369a102736da \
+    Running make /tmp/Rtmp6PSBgr/model-37094af83906 \
       "STANCFLAGS +=  --name='bernoulli_model'"
 
     --- Translating Stan model to C++ code ---
-    bin/stanc --name='bernoulli_model' --o=/tmp/RtmpO7WrKI/model-369a102736da.hpp /tmp/RtmpO7WrKI/model-369a102736da.stan
+    bin/stanc --name='bernoulli_model' --o=/tmp/Rtmp6PSBgr/model-37094af83906.hpp /tmp/Rtmp6PSBgr/model-37094af83906.stan
 
     --- Compiling C++ code ---
-    g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS          -c -Wno-ignored-attributes   -x c++ -o /tmp/RtmpO7WrKI/model-369a102736da.o /tmp/RtmpO7WrKI/model-369a102736da.hpp
+    g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS          -c -Wno-ignored-attributes   -x c++ -o /tmp/Rtmp6PSBgr/model-37094af83906.o /tmp/Rtmp6PSBgr/model-37094af83906.hpp
 
     --- Linking model ---
-    g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS               -Wl,-L,"/home/runner/.cmdstan/cmdstan-2.37.0/stan/lib/stan_math/lib/tbb"   -Wl,-rpath,"/home/runner/.cmdstan/cmdstan-2.37.0/stan/lib/stan_math/lib/tbb"      /tmp/RtmpO7WrKI/model-369a102736da.o src/cmdstan/main.o       -ltbb   stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a  stan/lib/stan_math/lib/tbb/libtbb.so.2 -o /tmp/RtmpO7WrKI/model-369a102736da
-    rm /tmp/RtmpO7WrKI/model-369a102736da.hpp /tmp/RtmpO7WrKI/model-369a102736da.o
+    g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS               -Wl,-L,"/home/runner/.cmdstan/cmdstan-2.37.0/stan/lib/stan_math/lib/tbb"   -Wl,-rpath,"/home/runner/.cmdstan/cmdstan-2.37.0/stan/lib/stan_math/lib/tbb"      /tmp/Rtmp6PSBgr/model-37094af83906.o src/cmdstan/main.o       -ltbb   stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a  stan/lib/stan_math/lib/tbb/libtbb.so.2 -o /tmp/Rtmp6PSBgr/model-37094af83906
+    rm /tmp/Rtmp6PSBgr/model-37094af83906.o /tmp/Rtmp6PSBgr/model-37094af83906.hpp
     stan_version_major = 2
     stan_version_minor = 37
     stan_version_patch = 0
@@ -875,9 +875,9 @@ fit <- mod$sample(
     Running MCMC with 1 chain...
 
     Running ./bernoulli 'id=1' random 'seed=1376020223' data \
-      'file=/tmp/RtmpO7WrKI/standata-369a1b334188.json' output \
-      'file=/tmp/RtmpO7WrKI/bernoulli-202512031902-1-1e11f4.csv' \
-      'profile_file=/tmp/RtmpO7WrKI/bernoulli-profile-202512031902-1-3dc9cf.csv' \
+      'file=/tmp/Rtmp6PSBgr/standata-37094b7f9511.json' output \
+      'file=/tmp/Rtmp6PSBgr/bernoulli-202512040232-1-1e1263.csv' \
+      'profile_file=/tmp/Rtmp6PSBgr/bernoulli-profile-202512040232-1-3dca3e.csv' \
       'method=sample' 'num_samples=100' 'num_warmup=100' 'save_warmup=0' \
       'algorithm=hmc' 'engine=nuts' adapt 'engaged=1'
     Chain 1 method = sample (Default) 
@@ -908,16 +908,16 @@ fit <- mod$sample(
     Chain 1     num_chains = 1 (Default) 
     Chain 1 id = 1 (Default) 
     Chain 1 data 
-    Chain 1   file = /tmp/RtmpO7WrKI/standata-369a1b334188.json 
+    Chain 1   file = /tmp/Rtmp6PSBgr/standata-37094b7f9511.json 
     Chain 1 init = 2 (Default) 
     Chain 1 random 
     Chain 1   seed = 1376020223 
     Chain 1 output 
-    Chain 1   file = /tmp/RtmpO7WrKI/bernoulli-202512031902-1-1e11f4.csv 
+    Chain 1   file = /tmp/Rtmp6PSBgr/bernoulli-202512040232-1-1e1263.csv 
     Chain 1   diagnostic_file =  (Default) 
     Chain 1   refresh = 100 (Default) 
     Chain 1   sig_figs = 8 (Default) 
-    Chain 1   profile_file = /tmp/RtmpO7WrKI/bernoulli-profile-202512031902-1-3dc9cf.csv 
+    Chain 1   profile_file = /tmp/Rtmp6PSBgr/bernoulli-profile-202512040232-1-3dca3e.csv 
     Chain 1   save_cmdstan_config = false (Default) 
     Chain 1 num_threads = 1 (Default) 
     Chain 1 Gradient evaluation took 2e-06 seconds 

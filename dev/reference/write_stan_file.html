@@ -77,7 +77,7 @@ should ensure thread-safety in the rare cases when it is needed."><meta property
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Write Stan code to a file</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-logo/R/example.R" class="external-link"><code>R/example.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/example.R" class="external-link"><code>R/example.R</code></a></small>
       <div class="d-none name"><code>write_stan_file.Rd</code></div>
     </div>
 
@@ -160,7 +160,7 @@ determine the file name if <code>basename</code> is not set.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">write_stan_file</span><span class="op">(</span><span class="va">stan_program</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/Rtmpf5Zbzn/model_7f12fc190dd23b0e462f7d73040dd97e.stan"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpbyLqew/model_7f12fc190dd23b0e462f7d73040dd97e.stan"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">lines</span><span class="op">)</span></span></span>
