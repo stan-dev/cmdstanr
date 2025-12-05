@@ -489,8 +489,14 @@ read_sample_csv <- function(files,
 #'   `TRUE` but set to `FALSE` to avoid checking for problems with divergences
 #'   and treedepth.
 #'
-as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("cmdstanr_draws_format")) {
-  csv_contents <- read_cmdstan_csv(files, format = format)
+as_cmdstan_fit <- function(files,
+                           variables = NULL,
+                           check_diagnostics = TRUE,
+                           format = getOption("cmdstanr_draws_format")) {
+  csv_contents <- read_cmdstan_csv(files, variables = variables, format = format)
+  if (!is.null(variables)) {
+    csv_contents$metadata$variables <- posterior::variables(csv_contents$post_warmup_draws)
+  }
   switch(
     csv_contents$metadata$method,
     "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),

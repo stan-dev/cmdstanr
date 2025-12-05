@@ -14,6 +14,7 @@ read_cmdstan_csv(
 
 as_cmdstan_fit(
   files,
+  variables = NULL,
   check_diagnostics = TRUE,
   format = getOption("cmdstanr_draws_format")
 )
