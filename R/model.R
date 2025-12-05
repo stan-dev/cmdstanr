@@ -268,6 +268,10 @@ CmdStanModel <- R6::R6Class(
           assert_file_exists(private$exe_file_, access = "r", extension = ext)
           private$model_name_ <- sub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
+        if (!is.null(args$include_paths)) {
+          private$include_paths_ <- args$include_paths
+          private$precompile_include_paths_ <- args$include_paths
+        }
       }
       if (!is.null(stan_file) && compile) {
         self$compile(...)
