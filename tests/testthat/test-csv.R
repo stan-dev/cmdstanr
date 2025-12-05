@@ -8,6 +8,7 @@ fit_logistic_optimize <- testing_fit("logistic", method = "optimize", seed = 123
 fit_logistic_variational <- testing_fit("logistic", method = "variational", seed = 123)
 fit_logistic_variational_short <- testing_fit("logistic", method = "variational", output_samples = 100, seed = 123)
 fit_logistic_laplace <- testing_fit("logistic", method = "laplace", seed = 123)
+fit_logistic_pathfinder <- testing_fit("logistic", method = "pathfinder", seed = 123)
 
 fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
                                                seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
@@ -520,64 +521,6 @@ test_that("time from read_cmdstan_csv matches time from fit$time()", {
   )
 })
 
-test_that("as_cmdstan_fit creates fitted model objects from csv", {
-  fits <- list(
-    mle = as_cmdstan_fit(fit_logistic_optimize$output_files()),
-    vb = as_cmdstan_fit(fit_logistic_variational$output_files()),
-    laplace = as_cmdstan_fit(fit_logistic_laplace$output_files()),
-    mcmc = as_cmdstan_fit(fit_logistic_thin_1$output_files())
-  )
-  for (class in names(fits)) {
-    fit <- fits[[class]]
-    class_name <- if (class == "laplace") "Laplace" else toupper(class)
-    checkmate::expect_r6(fit, classes = paste0("CmdStan", class_name, "_CSV"))
-    expect_s3_class(fit$draws(), "draws")
-    checkmate::expect_numeric(fit$lp())
-    expect_output(fit$print(), "variable")
-    expect_length(fit$output_files(), if (class == "mcmc") fit$num_chains() else 1)
-    expect_s3_class(fit$summary(), "draws_summary")
-
-    if (class == "mcmc") {
-      expect_s3_class(fit$sampler_diagnostics(), "draws_array")
-      expect_type(fit$inv_metric(), "list")
-      expect_equal(fit$time()$total, NA_integer_)
-      expect_s3_class(fit$time()$chains, "data.frame")
-    }
-    if (class == "mle") {
-      checkmate::expect_numeric(fit$mle())
-    }
-    if (class == "vb") {
-      checkmate::expect_numeric(fit$lp_approx())
-    }
-    if (class == "laplace") {
-      checkmate::expect_numeric(fit$lp_approx())
-    }
-
-    for (method in unavailable_methods_CmdStanFit_CSV) {
-      if (!(method == "time" && class == "mcmc")) {
-        expect_error(fit[[method]](), "This method is not available")
-      }
-    }
-  }
-})
-
-test_that("as_cmdstan_fit can check MCMC diagnostics", {
-  fit_schools <- suppressMessages(
-    testing_fit("schools", chains = 2,
-                adapt_delta = 0.5, max_treedepth = 4,
-                show_messages = FALSE)
-  )
-  expect_message(
-    as_cmdstan_fit(fit_schools$output_files()),
-    "transitions ended with a divergence"
-  )
-  expect_message(
-    as_cmdstan_fit(fit_schools$output_files()),
-    "transitions hit the maximum treedepth"
-  )
-  expect_silent(as_cmdstan_fit(fit_schools$output_files(), check_diagnostics = FALSE))
-})
-
 test_that("read_cmdstan_csv reads seed correctly", {
   opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
@@ -895,4 +838,99 @@ test_that("read_cmdstan_csv() works with tilde expansion", {
   expect_no_error(read_cmdstan_csv(full_path))
   tildified_path <- file.path("~", fs::path_rel(full_path, "~"))
   expect_no_error(read_cmdstan_csv(tildified_path))
+})
+
+
+test_that("as_cmdstan_fit creates fitted model objects from csv", {
+  fits <- list(
+    mle = as_cmdstan_fit(fit_logistic_optimize$output_files()),
+    vb = as_cmdstan_fit(fit_logistic_variational$output_files()),
+    laplace = as_cmdstan_fit(fit_logistic_laplace$output_files()),
+    pathfinder = as_cmdstan_fit(fit_logistic_pathfinder$output_files()),
+    mcmc = as_cmdstan_fit(fit_logistic_thin_1$output_files())
+  )
+
+  for (class in names(fits)) {
+    fit <- fits[[class]]
+    if (class == "laplace") {
+      class_name <- "Laplace"
+    } else if (class == "pathfinder") {
+      class_name <- "Pathfinder"
+    } else {
+      class_name <- toupper(class)
+    }
+    checkmate::expect_r6(fit, classes = paste0("CmdStan", class_name, "_CSV"))
+    expect_s3_class(fit$draws(), "draws")
+    checkmate::expect_numeric(fit$lp())
+    expect_output(fit$print(), "variable")
+    expect_length(fit$output_files(), if (class == "mcmc") fit$num_chains() else 1)
+    expect_s3_class(fit$summary(), "draws_summary")
+
+    if (class == "mcmc") {
+      expect_s3_class(fit$sampler_diagnostics(), "draws_array")
+      expect_type(fit$inv_metric(), "list")
+      expect_equal(fit$time()$total, NA_integer_)
+      expect_s3_class(fit$time()$chains, "data.frame")
+    }
+    if (class == "mle") {
+      checkmate::expect_numeric(fit$mle())
+    }
+    if (class %in% c("vb", "laplace", "pathfinder")) {
+      checkmate::expect_numeric(fit$lp_approx())
+    }
+    for (method in unavailable_methods_CmdStanFit_CSV) {
+      if (!(method == "time" && class == "mcmc")) {
+        expect_error(fit[[method]](), "This method is not available", info = class)
+      }
+    }
+  }
+})
+
+test_that("as_cmdstan_fit can check MCMC diagnostics", {
+  fit_schools <- suppressMessages(
+    testing_fit("schools", chains = 2,
+                adapt_delta = 0.5, max_treedepth = 4,
+                show_messages = FALSE)
+  )
+  expect_message(
+    as_cmdstan_fit(fit_schools$output_files()),
+    "transitions ended with a divergence"
+  )
+  expect_message(
+    as_cmdstan_fit(fit_schools$output_files()),
+    "transitions hit the maximum treedepth"
+  )
+  expect_silent(as_cmdstan_fit(fit_schools$output_files(), check_diagnostics = FALSE))
+})
+
+test_that("as_cmdstan_fit filters variables across methods", {
+  mcmc_vars <- c("alpha", "beta[2]")
+  mcmc <- as_cmdstan_fit(fit_logistic_thin_1$output_files(), variables = mcmc_vars)
+  expect_equal(posterior::variables(mcmc$draws()), mcmc_vars)
+  expect_equal(mcmc$summary()$variable, mcmc_vars)
+  expect_equal(mcmc$metadata()$variables, mcmc_vars)
+
+  mle_vars <- c("beta[1]", "beta[3]")
+  mle <- as_cmdstan_fit(fit_logistic_optimize$output_files(), variables = mle_vars)
+  expect_equal(posterior::variables(mle$draws()), mle_vars)
+  expect_equal(mle$summary()$variable, mle_vars)
+  expect_equal(mle$metadata()$variables, mle_vars)
+
+  vb_vars <- "beta"
+  vb <- as_cmdstan_fit(fit_logistic_variational$output_files(), variables = vb_vars)
+  expect_equal(posterior::variables(vb$draws()), c("beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(vb$summary()$variable, c("beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(vb$metadata()$variables, c("beta[1]", "beta[2]", "beta[3]"))
+
+  laplace_vars <- "alpha"
+  laplace <- as_cmdstan_fit(fit_logistic_laplace$output_files(), variables = laplace_vars)
+  expect_equal(posterior::variables(laplace$draws()), laplace_vars)
+  expect_equal(laplace$summary()$variable, laplace_vars)
+  expect_equal(laplace$metadata()$variables, laplace_vars)
+
+  pathfinder_vars <- c("alpha", "beta[1]", "beta[3]")
+  pathfinder <- as_cmdstan_fit(fit_logistic_pathfinder$output_files(), variables = pathfinder_vars)
+  expect_equal(posterior::variables(pathfinder$draws()), pathfinder_vars)
+  expect_equal(pathfinder$summary()$variable, pathfinder_vars)
+  expect_equal(pathfinder$metadata()$variables, pathfinder_vars)
 })
