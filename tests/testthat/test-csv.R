@@ -914,7 +914,6 @@ test_that("as_cmdstan_fit handles parameter names with parentheses and indices",
   skip_on_cran()
 
   csv_file <- withr::local_tempfile(fileext = ".csv")
-
   lines <- c(
     "# model = norm_model",
     "# method = sample (Default)",
@@ -936,4 +935,30 @@ test_that("as_cmdstan_fit handles parameter names with parentheses and indices",
 
   dims <- fit$metadata()$stan_variable_sizes
   expect_equal(dims[["Sigma"]], c(2, 2))
+})
+
+test_that("as_cmdstan_fit handles variable names with parentheses", {
+  skip_on_cran()
+  csv_file <- withr::local_tempfile(fileext = ".csv")
+  writeLines(c(
+    "# model = norm_model",
+    "# method = sample (Default)",
+    "# id = 1",
+    "# thin = 1",
+    "# save_warmup = 0",
+    "THETA4,SIGMA(1,1)",
+    "2.00000E+00,2.00000E+00",
+    "2.00000E+00,2.00000E+00"
+  ), con = csv_file)
+
+  expect_no_error({
+    fit <- as_cmdstan_fit(csv_file, check_diagnostics = FALSE, format = "draws_matrix")
+  })
+
+  draws <- fit$draws()
+  vars  <- posterior::variables(draws)
+
+  expect_equal(posterior::ndraws(draws), 2L)
+  expect_true(any(grepl("THETA4", vars)))
+  expect_true(any(grepl("SIGMA", vars)))
 })
