@@ -697,7 +697,13 @@ read_csv_metadata <- function(csv_file) {
   for (line in metadata[[1]]) {
     if (!startsWith(line, "#") && is.null(csv_file_info[["variables"]])) {
       # if no # at the start of line, the line is the CSV header
-      all_names <- strsplit(line, ",")[[1]]
+      header_dt <- data.table::fread(
+        text = line,
+        header = FALSE,
+        check.names = FALSE,
+        data.table = FALSE
+      )
+      all_names <- as.character(header_dt[1, ])
       if (all(csv_file_info$algorithm != "fixed_param")) {
         csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
         csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__", "log_q__"))]
