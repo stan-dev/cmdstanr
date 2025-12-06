@@ -915,8 +915,10 @@ check_csv_metadata_matches <- function(csv_metadata) {
   NULL
 }
 
-# convert names like beta.1.1 to beta[1,1]
+# convert names like beta.1.1 or beta(1,1) to beta[1,1]
 repair_variable_names <- function(names) {
+  names <- sub("\\(", "[", names)
+  names <- gsub("\\)", "", names)
   names <- sub("\\.", "[", names)
   names <- gsub("\\.", ",", names)
   names[grep("\\[", names)] <-

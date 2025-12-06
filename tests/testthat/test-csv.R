@@ -909,3 +909,39 @@ test_that("read_cmdstan_csv() works with tilde expansion", {
   tildified_path <- file.path("~", fs::path_rel(full_path, "~"))
   expect_no_error(read_cmdstan_csv(tildified_path))
 })
+
+test_that("as_cmdstan_fit handles variable names with parentheses", {
+  csv_file <- tempfile(fileext = ".csv")
+  writeLines(c(
+    "# stan_version_major = 2",
+    "# stan_version_minor = 33",
+    "# stan_version_patch = 0",
+    "# model = norm_model",
+    "# method = sample (Default)",
+    "#   sample",
+    "#     num_samples = 2",
+    "#     num_warmup = 0",
+    "#     save_warmup = 0",
+    "#     thin = 1",
+    "#   random",
+    "#     seed = 123",
+    "#   algorithm = hmc",
+    "#     metric = diag_e",
+    "#     stepsize = 1",
+    "# id = 1",
+    "THETA4,SIGMA(1,1)",
+    "2.00000E+00,2.00000E+00",
+    "2.00000E+00,2.00000E+00"
+  ), con = csv_file)
+
+  expect_no_error({
+    fit <- as_cmdstan_fit(csv_file, check_diagnostics = FALSE, format = "draws_matrix")
+  })
+
+  draws <- fit$draws()
+  vars  <- posterior::variables(draws)
+
+  expect_equal(posterior::ndraws(draws), 2L)
+  expect_true(any(grepl("THETA4", vars)))
+  expect_true(any(grepl("SIGMA", vars)))
+})
