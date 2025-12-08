@@ -28,7 +28,7 @@ str(fit_mcmc$metadata())
 #>  $ stan_version_major  : num 2
 #>  $ stan_version_minor  : num 37
 #>  $ stan_version_patch  : num 0
-#>  $ start_datetime      : chr "2025-12-04 02:26:49 UTC"
+#>  $ start_datetime      : chr "2025-12-08 21:43:13 UTC"
 #>  $ method              : chr "sample"
 #>  $ save_warmup         : int 0
 #>  $ thin                : num 1
@@ -49,7 +49,7 @@ str(fit_mcmc$metadata())
 #>  $ seed                : num 2.02e+09
 #>  $ refresh             : num 100
 #>  $ sig_figs            : num 8
-#>  $ profile_file        : chr "/tmp/RtmpbyLqew/logistic-profile-202512040226-1-87418f.csv"
+#>  $ profile_file        : chr "/tmp/RtmpsxTeyM/logistic-profile-202512082143-1-8741c0.csv"
 #>  $ save_cmdstan_config : int 0
 #>  $ stanc_version       : chr "stanc3 v2.37.0"
 #>  $ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
@@ -82,7 +82,7 @@ str(fit_mle$metadata())
 #>  $ stan_version_major : num 2
 #>  $ stan_version_minor : num 37
 #>  $ stan_version_patch : num 0
-#>  $ start_datetime     : chr "2025-12-04 02:26:50 UTC"
+#>  $ start_datetime     : chr "2025-12-08 21:43:14 UTC"
 #>  $ method             : chr "optimize"
 #>  $ algorithm          : chr "lbfgs"
 #>  $ init_alpha         : num 0.001
@@ -100,7 +100,7 @@ str(fit_mle$metadata())
 #>  $ seed               : num 1.45e+09
 #>  $ refresh            : num 100
 #>  $ sig_figs           : num 8
-#>  $ profile_file       : chr "/tmp/RtmpbyLqew/logistic-profile-202512040226-1-059636.csv"
+#>  $ profile_file       : chr "/tmp/RtmpsxTeyM/logistic-profile-202512082143-1-059667.csv"
 #>  $ save_cmdstan_config: int 0
 #>  $ stanc_version      : chr "stanc3 v2.37.0"
 #>  $ sampler_diagnostics: chr(0) 
@@ -122,7 +122,7 @@ str(fit_vb$metadata())
 #>  $ stan_version_major : num 2
 #>  $ stan_version_minor : num 37
 #>  $ stan_version_patch : num 0
-#>  $ start_datetime     : chr "2025-12-04 02:26:50 UTC"
+#>  $ start_datetime     : chr "2025-12-08 21:43:14 UTC"
 #>  $ method             : chr "variational"
 #>  $ algorithm          : chr "meanfield"
 #>  $ iter               : num 50
@@ -137,7 +137,7 @@ str(fit_vb$metadata())
 #>  $ seed               : num 5.64e+08
 #>  $ refresh            : num 100
 #>  $ sig_figs           : num 8
-#>  $ profile_file       : chr "/tmp/RtmpbyLqew/logistic-profile-202512040226-1-3e0443.csv"
+#>  $ profile_file       : chr "/tmp/RtmpsxTeyM/logistic-profile-202512082143-1-3e0474.csv"
 #>  $ save_cmdstan_config: int 0
 #>  $ stanc_version      : chr "stanc3 v2.37.0"
 #>  $ sampler_diagnostics: chr(0) 

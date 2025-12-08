@@ -78,7 +78,7 @@ model {
 
 f <- write_stan_file(stan_program)
 print(f)
-#> [1] "/tmp/RtmpbyLqew/model_7f12fc190dd23b0e462f7d73040dd97e.stan"
+#> [1] "/tmp/RtmpsxTeyM/model_7f12fc190dd23b0e462f7d73040dd97e.stan"
 
 lines <- readLines(f)
 print(lines)
