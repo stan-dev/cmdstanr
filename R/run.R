@@ -705,7 +705,10 @@ CmdStanProcs <- R6::R6Class(
                           parallel_procs = NULL,
                           threads_per_proc = NULL,
                           show_stderr_messages = TRUE,
-                          show_stdout_messages = TRUE) {
+                          show_stdout_messages = TRUE,
+                          progress_bar = NULL,
+                          suppress_iteration_messages = NULL,
+                          refresh = 100 ) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
       checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
@@ -726,6 +729,19 @@ CmdStanProcs <- R6::R6Class(
       private$proc_total_time_ <- zeros
       private$show_stderr_messages_ <- show_stderr_messages
       private$show_stdout_messages_ <- show_stdout_messages
+      private$progress_bar_ <- progress_bar
+      # If 'progress_bar' is set, suppress iteration messages by default.
+      # If 'suppress_iteration_messages' is explicitly set, honour that setting.
+      # Do not suppress iteration messages by default.
+      if(!is.null(progress_bar)) {
+        private$suppress_iteration_messages_ <- TRUE
+      } else {
+        private$suppress_iteration_messages_ <- FALSE
+      }
+      if(!is.null(suppress_iteration_messages)) {
+        private$suppress_iteration_messages_ <- suppress_iteration_messages
+      }
+      private$refresh_ <- refresh
       invisible(self)
     },
     show_stdout_messages = function () {
@@ -733,6 +749,15 @@ CmdStanProcs <- R6::R6Class(
     },
     show_stderr_messages = function () {
       private$show_stderr_messages_
+    },
+    progress_bar = function() {
+      private$progress_bar_
+    },
+    suppress_iteration_messages = function () {
+      private$suppress_iteration_messages_
+    },
+    refresh = function () {
+      private$refresh_
     },
     num_procs = function() {
       private$num_procs_
@@ -750,6 +775,10 @@ CmdStanProcs <- R6::R6Class(
       lapply(private$processes_, function(p) {
         try(p$kill_tree(), silent = TRUE)
       })
+      # Ensure that the progress bar is closed, if created.
+      if(!is.null(private$progress_bar_)){
+        private$progress_bar_(type="finish")
+      }
       invisible(self)
     },
     poll = function(ms) { # time in milliseconds
@@ -973,7 +1002,10 @@ CmdStanProcs <- R6::R6Class(
     proc_error_ouput_ = list(),
     total_time_ = numeric(),
     show_stderr_messages_ = TRUE,
-    show_stdout_messages_ = TRUE
+    show_stdout_messages_ = TRUE,
+    progress_bar_ = NULL,
+    suppress_iteration_messages_ = NULL,
+    refresh_ = 100
   )
 )
 
@@ -1049,6 +1081,19 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("stanc_version", line, fixed = TRUE)
               || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
+          }
+          # Update progress bar for all lines reporting an iteration.
+          if (!ignore_line && !is.null(private$progress_bar_)) {
+            # Update progress bar on any sampling iteration lines
+            if(grepl("Iteration:", line, perl = TRUE)) {
+              private$progress_bar_( amount=private$refresh_ )
+            }
+          }
+          # Allow suppression of iteration messages
+          if (private$suppress_iteration_messages_) {
+            if(grepl("Iteration:", line, perl = TRUE)) {
+              ignore_line <- TRUE
+            }
           }
           if ((state > 1.5 && state < 5 && !ignore_line && private$show_stdout_messages_) || is_verbose_mode()) {
             if (state == 2) {

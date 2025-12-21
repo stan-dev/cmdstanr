@@ -1157,6 +1157,8 @@ sample <- function(data = NULL,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    save_metric = NULL,
                    save_cmdstan_config = NULL,
+                   show_progress_bar = FALSE,
+                   suppress_iteration_messages = NULL,
                    # deprecated
                    cores = NULL,
                    num_cores = NULL,
@@ -1221,12 +1223,42 @@ sample <- function(data = NULL,
   if (fixed_param) {
     save_warmup <- FALSE
   }
+  # Check for and create progressr::progressor object for progress reporting, if required.
+  # Pass default value for refresh
+  progress_bar <- NULL
+  if (show_progress_bar) {
+    if(require(progressr)) {
+      
+      # progressr only supports single-line progress bars at time of writing,
+      # so all chains must be combined into a single process bar.
+
+      # Calculate a total number of steps for progress as
+      # (chains*(iter_warmup+iter_sampling)). We will update the progress bar
+      # by 'refresh' steps each time.
+
+      # As all the arguments to CmdStan can be NULL, we need to reproduce the
+      # defaults here manually. 
+
+      n_samples <- ifelse(is.null(iter_sampling), 1000, iter_sampling)
+      n_warmup <- ifelse(is.null(iter_warmup), 1000, iter_warmup)
+      n_chains <- ifelse(is.null(chains), 1, chains)
+      n_steps <- (n_chains*(n_samples+n_warmup))
+
+      progress_bar <- progressr::progressor(steps=n_steps, auto_finish=FALSE)
+    }
+    else {
+      warning("'show_progress_bar=TRUE' requires the 'progressr' package. Please install 'progressr'.")
+    }
+  }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages
+    show_stdout_messages = show_messages,
+    progress_bar = progress_bar,
+    suppress_iteration_messages = suppress_iteration_messages,
+    refresh = ifelse(is.null(refresh), 100, refresh)
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
