@@ -1082,12 +1082,16 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          # Update progress bar for all lines reporting an iteration.
+          # Update progress bar 
           if (!ignore_line && !is.null(private$progress_bar_)) {
-            # Update progress bar on any sampling iteration lines
+            # Pass the current output line to the progress bar as a message,
+            # but only update the actual progress if the current line is an
+            # iteration message.
+            progress_amount <- 0
             if(grepl("Iteration:", line, perl = TRUE)) {
-              private$progress_bar_( amount=private$refresh_ )
+              progress_amount <- private$refresh_
             }
+            private$progress_bar_(amount=private$refresh_, message=line)
           }
           # Allow suppression of iteration messages
           if (private$suppress_iteration_messages_) {
