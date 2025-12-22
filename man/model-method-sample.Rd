@@ -39,6 +39,8 @@ sample(
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = NULL,
   save_cmdstan_config = NULL,
+  show_progress_bar = FALSE,
+  suppress_iteration_messages = NULL,
   cores = NULL,
   num_cores = NULL,
   num_chains = NULL,
