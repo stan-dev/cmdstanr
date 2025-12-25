@@ -1091,7 +1091,7 @@ CmdStanMCMCProcs <- R6::R6Class(
             if(grepl("Iteration:", line, perl = TRUE)) {
               progress_amount <- private$refresh_
             }
-            private$progress_bar_(amount=private$refresh_, message=line)
+            private$progress_bar_(amount=progress_amount, message=line)
           }
           # Allow suppression of iteration messages
           if (private$suppress_iteration_messages_) {
