@@ -108,12 +108,19 @@ CmdStanFit <- R6::R6Class(
 #'   read into R lazily (i.e., as needed), the `$save_object()` method is the
 #'   safest way to guarantee that everything has been read in before saving.
 #'
+#'   If you have a big object to save, use `format = "qs2"` to save using the
+#'   **qs2** package (with its fast preset).
+#'
 #'   See the "Saving fitted model objects" section of the
 #'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 #'   vignette for some suggestions on faster model saving for large models.
 #'
 #' @param file (string) Path where the file should be saved.
-#' @param ... Other arguments to pass to [base::saveRDS()] besides `object` and `file`.
+#' @param format (string) Serialization format for the object. The default is
+#'   `"rds"`. The `"qs2"` format uses `qs2::qsave()` with the `"fast"` preset and
+#'   requires the **qs2** package.
+#' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
+#'   or `qs2::qsave()` (for `format = "qs2"`).
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -129,12 +136,20 @@ CmdStanFit <- R6::R6Class(
 #' fit$summary()
 #' }
 #'
-save_object <- function(file, ...) {
+save_object <- function(file, format = c("rds", "qs2"), ...) {
   self$draws()
   try(self$sampler_diagnostics(), silent = TRUE)
   try(self$init(), silent = TRUE)
   try(self$profiles(), silent = TRUE)
-  saveRDS(self, file = file, ...)
+  format <- match.arg(format)
+  if (format == "rds") {
+    saveRDS(self, file = file, ...)
+  } else {
+    if (!requireNamespace("qs2", quietly = TRUE)) {
+      stop("The 'qs2' package is required for format = \"qs2\".", call. = FALSE)
+    }
+    qs2::qsave(x = self, file = file, preset = "fast", ...)
+  }
   invisible(self)
 }
 CmdStanFit$set("public", name = "save_object", value = save_object)

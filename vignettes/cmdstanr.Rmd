@@ -481,26 +481,16 @@ fit2 <- readRDS("fit.RDS")
 
 But if your model object is large, then
 [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
-could take a long time.
-[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
-reads the CmdStan results files into memory, stores them in the model object,
-and saves the object with `saveRDS()`. To speed up the process, you can emulate
-[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
-and replace `saveRDS` with the much faster `qsave()` function from the
-[`qs`](https://github.com/traversc/qs) package.
+could take a long time when saving in the default RDS format. For large objects,
+use the much faster [`qs2`](https://github.com/traversc/qs2) format, which uses
+the fast preset.
 
 ```{r save_object_qs_full, eval = FALSE}
-# Load CmdStan output files into the fitted model object.
-fit$draws() # Load posterior draws into the object.
-try(fit$sampler_diagnostics(), silent = TRUE) # Load sampler diagnostics.
-try(fit$init(), silent = TRUE) # Load user-defined initial values.
-try(fit$profiles(), silent = TRUE) # Load profiling samples.
-
-# Save the object to a file.
-qs::qsave(x = fit, file = "fit.qs")
+# Save the object to a file using qs2.
+fit$save_object(file = "fit.qs2", format = "qs2")
 
 # Read the object.
-fit2 <- qs::qread("fit.qs")
+fit2 <- qs2::qread("fit.qs2")
 ```
 
 Storage is even faster if you discard results you do not need to save.
@@ -512,10 +502,10 @@ sampler diagnostics, user-specified initial values, and profiling data.
 fit$draws()
 
 # Save the object to a file.
-qs::qsave(x = fit, file = "fit.qs")
+qs2::qsave(x = fit, file = "fit.qs2", preset = "fast")
 
 # Read the object.
-fit2 <- qs::qread("fit.qs")
+fit2 <- qs2::qread("fit.qs2")
 ```
 
 See the vignette [_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html)

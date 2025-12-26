@@ -5,12 +5,17 @@
 \alias{save_object}
 \title{Save fitted model object to a file}
 \usage{
-save_object(file, ...)
+save_object(file, format = c("rds", "qs2"), ...)
 }
 \arguments{
 \item{file}{(string) Path where the file should be saved.}
 
-\item{...}{Other arguments to pass to \code{\link[base:readRDS]{base::saveRDS()}} besides \code{object} and \code{file}.}
+\item{format}{(string) Serialization format for the object. The default is
+\code{"rds"}. The \code{"qs2"} format uses \code{qs2::qsave()} with the \code{"fast"} preset and
+requires the \strong{qs2} package.}
+
+\item{...}{Other arguments to pass to \code{\link[base:readRDS]{base::saveRDS()}} (for \code{format = "rds"})
+or \code{qs2::qsave()} (for \code{format = "qs2"}).}
 }
 \description{
 This method is a wrapper around \code{\link[base:readRDS]{base::saveRDS()}} that ensures
@@ -18,6 +23,9 @@ that all posterior draws and diagnostics are saved when saving a fitted
 model object. Because the contents of the CmdStan output CSV files are only
 read into R lazily (i.e., as needed), the \verb{$save_object()} method is the
 safest way to guarantee that everything has been read in before saving.
+
+If you have a big object to save, use \code{format = "qs2"} to save using the
+\strong{qs2} package (with its fast preset).
 
 See the "Saving fitted model objects" section of the
 \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
