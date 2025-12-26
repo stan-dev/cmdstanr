@@ -109,7 +109,7 @@ CmdStanFit <- R6::R6Class(
 #'   safest way to guarantee that everything has been read in before saving.
 #'
 #'   If you have a big object to save, use `format = "qs2"` to save using the
-#'   **qs2** package (with its fast preset).
+#'   **qs2** package.
 #'
 #'   See the "Saving fitted model objects" section of the
 #'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
@@ -117,8 +117,8 @@ CmdStanFit <- R6::R6Class(
 #'
 #' @param file (string) Path where the file should be saved.
 #' @param format (string) Serialization format for the object. The default is
-#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` with the `"fast"` preset and
-#'   requires the **qs2** package.
+#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the **qs2**
+#'   package.
 #' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
 #'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
@@ -148,7 +148,7 @@ save_object <- function(file, format = c("rds", "qs2"), ...) {
     if (!requireNamespace("qs2", quietly = TRUE)) {
       stop("The 'qs2' package is required for format = \"qs2\".", call. = FALSE)
     }
-    qs2::qs_save(x = self, file = file, preset = "fast", ...)
+    qs2::qs_save(x = self, file = file, ...)
   }
   invisible(self)
 }

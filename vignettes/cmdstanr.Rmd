@@ -482,8 +482,7 @@ fit2 <- readRDS("fit.RDS")
 But if your model object is large, then
 [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
 could take a long time when saving in the default RDS format. For large objects,
-use the much faster [`qs2`](https://github.com/traversc/qs2) format, which uses
-the fast preset.
+use the much faster [`qs2`](https://github.com/traversc/qs2) format.
 
 ```{r save_object_qs_full, eval = FALSE}
 # Save the object to a file using qs2.
@@ -502,7 +501,7 @@ sampler diagnostics, user-specified initial values, and profiling data.
 fit$draws()
 
 # Save the object to a file.
-qs2::qs_save(x = fit, file = "fit.qs2", preset = "fast")
+qs2::qs_save(x = fit, file = "fit.qs2")
 
 # Read the object.
 fit2 <- qs2::qs_read("fit.qs2")
