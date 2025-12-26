@@ -501,7 +501,7 @@ sampler diagnostics, user-specified initial values, and profiling data.
 fit$draws()
 
 # Save the object to a file.
-qs2::qs_save(x = fit, file = "fit.qs2")
+qs2::qs_save(fit, file = "fit.qs2")
 
 # Read the object.
 fit2 <- qs2::qs_read("fit.qs2")

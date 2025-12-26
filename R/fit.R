@@ -148,7 +148,7 @@ save_object <- function(file, format = c("rds", "qs2"), ...) {
     if (!requireNamespace("qs2", quietly = TRUE)) {
       stop("The 'qs2' package is required for format = \"qs2\".", call. = FALSE)
     }
-    qs2::qs_save(x = self, file = file, ...)
+    qs2::qs_save(self, file = file, ...)
   }
   invisible(self)
 }
