@@ -117,10 +117,10 @@ CmdStanFit <- R6::R6Class(
 #'
 #' @param file (string) Path where the file should be saved.
 #' @param format (string) Serialization format for the object. The default is
-#'   `"rds"`. The `"qs2"` format uses `qs2::qsave()` with the `"fast"` preset and
+#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` with the `"fast"` preset and
 #'   requires the **qs2** package.
 #' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
-#'   or `qs2::qsave()` (for `format = "qs2"`).
+#'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -148,7 +148,7 @@ save_object <- function(file, format = c("rds", "qs2"), ...) {
     if (!requireNamespace("qs2", quietly = TRUE)) {
       stop("The 'qs2' package is required for format = \"qs2\".", call. = FALSE)
     }
-    qs2::qsave(x = self, file = file, preset = "fast", ...)
+    qs2::qs_save(x = self, file = file, preset = "fast", ...)
   }
   invisible(self)
 }

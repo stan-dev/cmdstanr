@@ -490,7 +490,7 @@ the fast preset.
 fit$save_object(file = "fit.qs2", format = "qs2")
 
 # Read the object.
-fit2 <- qs2::qread("fit.qs2")
+fit2 <- qs2::qs_read("fit.qs2")
 ```
 
 Storage is even faster if you discard results you do not need to save.
@@ -502,10 +502,10 @@ sampler diagnostics, user-specified initial values, and profiling data.
 fit$draws()
 
 # Save the object to a file.
-qs2::qsave(x = fit, file = "fit.qs2", preset = "fast")
+qs2::qs_save(x = fit, file = "fit.qs2", preset = "fast")
 
 # Read the object.
-fit2 <- qs2::qread("fit.qs2")
+fit2 <- qs2::qs_read("fit.qs2")
 ```
 
 See the vignette [_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html)

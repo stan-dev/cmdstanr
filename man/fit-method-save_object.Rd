@@ -11,11 +11,11 @@ save_object(file, format = c("rds", "qs2"), ...)
 \item{file}{(string) Path where the file should be saved.}
 
 \item{format}{(string) Serialization format for the object. The default is
-\code{"rds"}. The \code{"qs2"} format uses \code{qs2::qsave()} with the \code{"fast"} preset and
+\code{"rds"}. The \code{"qs2"} format uses \code{qs2::qs_save()} with the \code{"fast"} preset and
 requires the \strong{qs2} package.}
 
 \item{...}{Other arguments to pass to \code{\link[base:readRDS]{base::saveRDS()}} (for \code{format = "rds"})
-or \code{qs2::qsave()} (for \code{format = "qs2"}).}
+or \code{qs2::qs_save()} (for \code{format = "qs2"}).}
 }
 \description{
 This method is a wrapper around \code{\link[base:readRDS]{base::saveRDS()}} that ensures
