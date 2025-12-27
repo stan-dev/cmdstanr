@@ -183,7 +183,7 @@ test_that("save_object() method works with qs2 format", {
   fit <- fits[["sample"]]
   temp_qs_file <- tempfile(fileext = ".qs2")
   fit$save_object(temp_qs_file, format = "qs2")
-  fit2 <- qs2::qread(temp_qs_file)
+  fit2 <- qs2::qs_read(temp_qs_file)
   expect_identical(fit2$summary(), fit$summary())
   expect_identical(fit2$return_codes(), fit$return_codes())
 })
