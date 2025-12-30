@@ -85,7 +85,8 @@ test_that("read_cmdstan_csv() fails with empty csv file", {
   file_path <- test_path("resources", "csv", "empty.csv")
   file.create(file_path)
   expect_error(read_cmdstan_csv(file_path),
-               "Supplied CSV file is corrupt!")
+               "External command failed",
+               fixed = TRUE)
   file.remove(file_path)
 })
 
