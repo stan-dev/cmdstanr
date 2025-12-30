@@ -11,13 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
-  window.MathJax = {
-    chtml: {
-      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
-    }
-  };
-</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/tex-mml-chtml.js" integrity="sha256-qoRlVrS5NAnXSSSiMfFXwK8C9obG11Iybe4h2+bQYR4=" crossorigin="anonymous">
+  </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/Source_Code_Pro-0.4.10/font.css" rel="stylesheet">
@@ -216,11 +211,11 @@ documentation</a>.</p>
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 140426340988736 0.004775891  0.003800167  0.000975724       35060
-2 likelihood 140426340988736 0.638124880  0.505060130  0.133064750       52590
+1 likelihood 140081129363264 0.636588150  0.503991590  0.132596560       52590
+2     priors 140081129363264 0.004074418  0.003118799  0.000955619       35060
   no_chain_stack autodiff_calls no_autodiff_calls
-1          35060          17530                 1
-2       35077530          17530                 1</code></pre>
+1       35077530          17530                 1
+2          35060          17530                 1</code></pre>
 <p>The <code>total_time</code> column is the total time spent inside a
 given profile statement. It is clear that the vast majority of time is
 spent in the likelihood function.</p>
@@ -263,11 +258,11 @@ like for the previous one.</p>
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 139853443036992 0.003495696  0.002651618  0.000844078       34246
-2 likelihood 139853443036992 0.416370980  0.415372570  0.000998416       51369
+1 likelihood 140039041460032 0.422991750  0.421797320  0.001194424       51369
+2     priors 140039041460032 0.003606732  0.002741275  0.000865457       34246
   no_chain_stack autodiff_calls no_autodiff_calls
-1          34246          17123                 1
-2          17123          17123                 1</code></pre>
+1          17123          17123                 1
+2          34246          17123                 1</code></pre>
 <p>We can see from the <code>total_time</code> column that this is much
 faster than the previous model.</p>
 </div>
@@ -290,7 +285,7 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span><span class="op">/</span><span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 2.724410e-07 3.640188e-05</code></pre>
+<pre><code>[1] 3.631421e-05 2.324254e-07</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
@@ -301,7 +296,7 @@ The paths of the profiling CSV files can be retrieved using
 <code>$profile_files()</code>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/RtmpkrtPs5/model_6580008f67848265f3dfd0e7ae3b0600-profile-202512082149-1-8067a7.csv"</code></pre>
+<pre><code>[1] "/tmp/RtmphgoQ32/model_6580008f67848265f3dfd0e7ae3b0600-profile-202512300141-1-806a80.csv"</code></pre>
 <p>These can be saved to a more permanent location with the
 <code>$save_profile_files()</code> method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">

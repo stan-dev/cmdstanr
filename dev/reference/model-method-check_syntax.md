@@ -105,7 +105,7 @@ mod$check_syntax()
 # pedantic mode will warn that lambda should be constrained to be positive
 # and that lambda has no prior distribution
 mod$check_syntax(pedantic = TRUE)
-#> Warning in '/tmp/RtmpsxTeyM/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14: A
+#> Warning in '/tmp/RtmphVHATg/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14: A
 #>     poisson distribution is given parameter lambda as a rate parameter
 #>     (argument 1), but lambda was not constrained to be strictly positive.
 #> Warning: The parameter lambda has no priors. This means either no prior is

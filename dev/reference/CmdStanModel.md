@@ -74,7 +74,7 @@ The Stan and CmdStan documentation:
 library(cmdstanr)
 library(posterior)
 library(bayesplot)
-#> This is bayesplot version 1.14.0
+#> This is bayesplot version 1.15.0
 #> - Online documentation and vignettes at mc-stan.org/bayesplot
 #> - bayesplot theme set to bayesplot::theme_default()
 #>    * Does _not_ affect other ggplot2 plots
@@ -497,7 +497,7 @@ fit_mcmc_w_init_list <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.5 seconds.
 #> 
 fit_optim_w_init_list <- mod$optimize(
   data = stan_data,
