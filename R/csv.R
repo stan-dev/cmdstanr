@@ -697,7 +697,13 @@ read_csv_metadata <- function(csv_file) {
   for (line in metadata[[1]]) {
     if (!startsWith(line, "#") && is.null(csv_file_info[["variables"]])) {
       # if no # at the start of line, the line is the CSV header
-      all_names <- strsplit(line, ",")[[1]]
+      header_dt <- data.table::fread(
+        text = line,
+        header = FALSE,
+        check.names = FALSE,
+        data.table = FALSE
+      )
+      all_names <- as.character(header_dt[1, ])
       if (all(csv_file_info$algorithm != "fixed_param")) {
         csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
         csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__", "log_q__"))]
@@ -915,8 +921,10 @@ check_csv_metadata_matches <- function(csv_metadata) {
   NULL
 }
 
-# convert names like beta.1.1 to beta[1,1]
+# convert names like beta.1.1 or beta(1,1) to beta[1,1]
 repair_variable_names <- function(names) {
+  names <- sub("\\(", "[", names)
+  names <- gsub("\\)", "", names)
   names <- sub("\\.", "[", names)
   names <- gsub("\\.", ",", names)
   names[grep("\\[", names)] <-
@@ -983,7 +991,9 @@ variable_dims <- function(variable_names = NULL) {
   uniq_variable_names <- unique(gsub("\\[.*\\]", "", variable_names))
   var_names <- gsub("\\]", "", variable_names)
   for (var in uniq_variable_names) {
-    pattern <- paste0("^", var, "\\[")
+    # escape regex symbols
+    esc_var <- gsub("([][{}()+*?.^$|\\\\])", "\\\\\\1", var)
+    pattern <- paste0("^", esc_var, "\\[")
     var_indices <- var_names[grep(pattern, var_names)]
     var_indices <- gsub(pattern, "", var_indices)
     if (length(var_indices)) {
