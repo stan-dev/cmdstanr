@@ -67,11 +67,11 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 1078114322
 #> output
-#>   file = /tmp/RtmpNMcPBJ/logistic-202512302158-1-4ec081.csv
+#>   file = /tmp/Rtmpaxzs2V/logistic-202512311800-1-4ec098.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpNMcPBJ/logistic-profile-202512302158-1-94dcfa.csv
+#>   profile_file = /tmp/Rtmpaxzs2V/logistic-profile-202512311800-1-94dd11.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -104,8 +104,8 @@ fit_mcmc$output(1)
 #> Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 0.02 seconds (Warm-up)
-#>                0.056 seconds (Sampling)
+#>  Elapsed Time: 0.019 seconds (Warm-up)
+#>                0.057 seconds (Sampling)
 #>                0.076 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 1549478816
 #> output
-#>   file = /tmp/RtmpNMcPBJ/logistic-202512302158-1-779cde.csv
+#>   file = /tmp/Rtmpaxzs2V/logistic-202512311800-1-779cf5.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpNMcPBJ/logistic-profile-202512302158-1-04d566.csv
+#>   profile_file = /tmp/Rtmpaxzs2V/logistic-profile-202512311800-1-04d57d.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 1243032231
 #> output
-#>   file = /tmp/RtmpNMcPBJ/logistic-202512302158-1-047f05.csv
+#>   file = /tmp/Rtmpaxzs2V/logistic-202512311800-1-047f1c.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpNMcPBJ/logistic-profile-202512302158-1-780aa7.csv
+#>   profile_file = /tmp/Rtmpaxzs2V/logistic-profile-202512311800-1-780abe.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -193,8 +193,8 @@ fit_vb$output()
 #> 
 #> 
 #> 
-#> Gradient evaluation took 7e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+#> Gradient evaluation took 1.2e-05 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
