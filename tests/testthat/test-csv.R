@@ -84,8 +84,12 @@ test_that("read_cmdstan_csv() fails if the file does not exist", {
 test_that("read_cmdstan_csv() fails with empty csv file", {
   file_path <- test_path("resources", "csv", "empty.csv")
   file.create(file_path)
-  expect_error(read_cmdstan_csv(file_path),
-               "Supplied CSV file is corrupt!")
+  error_msg <- if (utils::packageVersion("data.table") >= "1.18.0") {
+    "External command failed"
+  } else {
+    "Supplied CSV file is corrupt"
+  }
+  expect_error(read_cmdstan_csv(file_path), error_msg, fixed = TRUE)
   file.remove(file_path)
 })
 
