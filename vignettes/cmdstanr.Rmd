@@ -432,9 +432,9 @@ fit_pf$print("theta")
 
 
 Let's extract the draws, make the same plot we made after running the other
-algorithms, and compare them all. approximation, and compare them all. In this
-simple example the distributions are quite similar, but this will not always be
-the case for more challenging problems.
+algorithms, and compare them all. In this simple example the distributions are
+quite similar, but this will not always be the case for more challenging
+problems.
 
 ```{r plot-compare-pf, message = FALSE}
 mcmc_hist(fit_pf$draws("theta"), binwidth = 0.025) +
@@ -469,46 +469,29 @@ For more details on the `$optimize()`, `$laplace()`, `$variational()`, and
 ## Saving fitted model objects
 
 The [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
-method provided by CmdStanR is the most convenient way to save a fitted model object
-to disk and ensure that all of the contents are available when reading the object back into R.
+method provided by CmdStanR is the most convenient way to save a fitted model
+object to disk and ensure that all of the contents are available when reading
+the object back into R. By default, `fit$save_object()` will use the `RDS`
+format to save the object. The saved object can then be read back into R using
+`readRDS()`.
 
 ```{r save_object, eval=FALSE}
 fit$save_object(file = "fit.RDS")
 
-# can be read back in using readRDS
 fit2 <- readRDS("fit.RDS")
 ```
 
-But if your model object is large, then
-[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
-could take a long time when saving in the default RDS format. For large objects,
-use the much faster [`qs2`](https://github.com/traversc/qs2) format.
+But if your model object is large, then `fit$save_object()` can take a long time
+if saving in the default RDS format. For large objects, we recommend using the
+much faster [`qs2`](https://github.com/traversc/qs2) format. The saved object
+can then be read back into R using `qs2::qs_read()`.
 
 ```{r save_object_qs_full, eval = FALSE}
-# Save the object to a file using qs2.
 fit$save_object(file = "fit.qs2", format = "qs2")
 
-# Read the object.
 fit2 <- qs2::qs_read("fit.qs2")
 ```
 
-Storage is even faster if you discard results you do not need to save.
-The following example saves only posterior draws and discards
-sampler diagnostics, user-specified initial values, and profiling data.
-
-```{r save_object_qs_small, eval = FALSE}
-# Load posterior draws into the fitted model object and omit other output.
-fit$draws()
-
-# Save the object to a file.
-qs2::qs_save(fit, file = "fit.qs2")
-
-# Read the object.
-fit2 <- qs2::qs_read("fit.qs2")
-```
-
-See the vignette [_How does CmdStanR work?_](http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html)
-for more information about the composition of CmdStanR objects.
 
 ## Comparison with RStan
 
@@ -526,7 +509,8 @@ To ask a question please post on the Stan forums:
 
 * https://discourse.mc-stan.org/
 
-To report a bug, suggest a feature (including additions to these vignettes), or to start contributing to CmdStanR
-development (new contributors welcome!) please open an issue on GitHub:
+To report a bug, suggest a feature (including additions to these vignettes), or
+to start contributing to CmdStanR development (new contributors welcome!) please
+open an issue on GitHub:
 
 * https://github.com/stan-dev/cmdstanr/issues
