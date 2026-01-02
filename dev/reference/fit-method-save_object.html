@@ -5,6 +5,8 @@ that all posterior draws and diagnostics are saved when saving a fitted
 model object. Because the contents of the CmdStan output CSV files are only
 read into R lazily (i.e., as needed), the $save_object() method is the
 safest way to guarantee that everything has been read in before saving.
+If you have a big object to save, use format = "qs2" to save using the
+qs2 package.
 See the "Saving fitted model objects" section of the
 Getting started with CmdStanR
 vignette for some suggestions on faster model saving for large models.'><meta property="og:description" content='This method is a wrapper around base::saveRDS() that ensures
@@ -12,6 +14,8 @@ that all posterior draws and diagnostics are saved when saving a fitted
 model object. Because the contents of the CmdStan output CSV files are only
 read into R lazily (i.e., as needed), the $save_object() method is the
 safest way to guarantee that everything has been read in before saving.
+If you have a big object to save, use format = "qs2" to save using the
+qs2 package.
 See the "Saving fitted model objects" section of the
 Getting started with CmdStanR
 vignette for some suggestions on faster model saving for large models.'><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
@@ -82,6 +86,8 @@ that all posterior draws and diagnostics are saved when saving a fitted
 model object. Because the contents of the CmdStan output CSV files are only
 read into R lazily (i.e., as needed), the <code>$save_object()</code> method is the
 safest way to guarantee that everything has been read in before saving.</p>
+<p>If you have a big object to save, use <code>format = "qs2"</code> to save using the
+<strong>qs2</strong> package.</p>
 <p>See the "Saving fitted model objects" section of the
 <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html"><em>Getting started with CmdStanR</em></a>
 vignette for some suggestions on faster model saving for large models.</p>
@@ -89,7 +95,7 @@ vignette for some suggestions on faster model saving for large models.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">save_object</span><span class="op">(</span><span class="va">file</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">save_object</span><span class="op">(</span><span class="va">file</span>, format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rds"</span>, <span class="st">"qs2"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -100,8 +106,15 @@ vignette for some suggestions on faster model saving for large models.</p>
 <dd><p>(string) Path where the file should be saved.</p></dd>
 
 
+<dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
+<dd><p>(string) Serialization format for the object. The default is
+<code>"rds"</code>. The <code>"qs2"</code> format uses <code><a href="https://rdrr.io/pkg/qs2/man/qs_save.html" class="external-link">qs2::qs_save()</a></code> and requires the <strong>qs2</strong>
+package.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Other arguments to pass to <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">base::saveRDS()</a></code> besides <code>object</code> and <code>file</code>.</p></dd>
+<dd><p>Other arguments to pass to <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">base::saveRDS()</a></code> (for <code>format = "rds"</code>)
+or <code><a href="https://rdrr.io/pkg/qs2/man/qs_save.html" class="external-link">qs2::qs_save()</a></code> (for <code>format = "qs2"</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">

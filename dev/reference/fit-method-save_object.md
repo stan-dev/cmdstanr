@@ -8,6 +8,9 @@ only read into R lazily (i.e., as needed), the `$save_object()` method
 is the safest way to guarantee that everything has been read in before
 saving.
 
+If you have a big object to save, use `format = "qs2"` to save using the
+**qs2** package.
+
 See the "Saving fitted model objects" section of the [*Getting started
 with CmdStanR*](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 vignette for some suggestions on faster model saving for large models.
@@ -15,7 +18,7 @@ vignette for some suggestions on faster model saving for large models.
 ## Usage
 
 ``` r
-save_object(file, ...)
+save_object(file, format = c("rds", "qs2"), ...)
 ```
 
 ## Arguments
@@ -24,11 +27,20 @@ save_object(file, ...)
 
   (string) Path where the file should be saved.
 
+- format:
+
+  (string) Serialization format for the object. The default is `"rds"`.
+  The `"qs2"` format uses
+  [`qs2::qs_save()`](https://rdrr.io/pkg/qs2/man/qs_save.html) and
+  requires the **qs2** package.
+
 - ...:
 
   Other arguments to pass to
-  [`base::saveRDS()`](https://rdrr.io/r/base/readRDS.html) besides
-  `object` and `file`.
+  [`base::saveRDS()`](https://rdrr.io/r/base/readRDS.html) (for
+  `format = "rds"`) or
+  [`qs2::qs_save()`](https://rdrr.io/pkg/qs2/man/qs_save.html) (for
+  `format = "qs2"`).
 
 ## See also
 

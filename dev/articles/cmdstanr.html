@@ -682,9 +682,9 @@ Finished in  0.1 seconds.</code></pre>
 <pre><code> variable mean median   sd  mad   q5  q95
     theta 0.25   0.24 0.12 0.12 0.08 0.47</code></pre>
 <p>Let’s extract the draws, make the same plot we made after running the
-other algorithms, and compare them all. approximation, and compare them
-all. In this simple example the distributions are quite similar, but
-this will not always be the case for more challenging problems.</p>
+other algorithms, and compare them all. In this simple example the
+distributions are quite similar, but this will not always be the case
+for more challenging problems.</p>
 <div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit_pf</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, binwidth <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>subtitle <span class="op">=</span> <span class="st">"Approximate posterior from pathfinder"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -723,47 +723,24 @@ documentation pages.</p>
 <p>The <a href="http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html" class="external-link"><code>$save_object()</code></a>
 method provided by CmdStanR is the most convenient way to save a fitted
 model object to disk and ensure that all of the contents are available
-when reading the object back into R.</p>
+when reading the object back into R. By default,
+<code>fit$save_object()</code> will use the <code>RDS</code> format to
+save the object. The saved object can then be read back into R using
+<code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code>.</p>
 <div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_object</span><span class="op">(</span>file <span class="op">=</span> <span class="st">"fit.RDS"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># can be read back in using readRDS</span></span>
 <span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"fit.RDS"</span><span class="op">)</span></span></code></pre></div>
-<p>But if your model object is large, then <a href="http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html" class="external-link"><code>$save_object()</code></a>
-could take a long time. <a href="http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html" class="external-link"><code>$save_object()</code></a>
-reads the CmdStan results files into memory, stores them in the model
-object, and saves the object with <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>. To speed up
-the process, you can emulate <a href="http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html" class="external-link"><code>$save_object()</code></a>
-and replace <code>saveRDS</code> with the much faster
-<code>qsave()</code> function from the <a href="https://github.com/traversc/qs" class="external-link"><code>qs</code></a> package.</p>
+<p>But if your model object is large, then
+<code>fit$save_object()</code> can take a long time if saving in the
+default RDS format. For large objects, we recommend using the much
+faster <a href="https://github.com/traversc/qs2" class="external-link"><code>qs2</code></a>
+format. The saved object can then be read back into R using
+<code><a href="https://rdrr.io/pkg/qs2/man/qs_read.html" class="external-link">qs2::qs_read()</a></code>.</p>
 <div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load CmdStan output files into the fitted model object.</span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span> <span class="co"># Load posterior draws into the object.</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">sampler_diagnostics</span><span class="op">(</span><span class="op">)</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># Load sampler diagnostics.</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># Load user-defined initial values.</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># Load profiling samples.</span></span>
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_object</span><span class="op">(</span>file <span class="op">=</span> <span class="st">"fit.qs2"</span>, format <span class="op">=</span> <span class="st">"qs2"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Save the object to a file.</span></span>
-<span><span class="fu">qs</span><span class="fu">::</span><span class="fu">qsave</span><span class="op">(</span>x <span class="op">=</span> <span class="va">fit</span>, file <span class="op">=</span> <span class="st">"fit.qs"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Read the object.</span></span>
-<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">qs</span><span class="fu">::</span><span class="fu">qread</span><span class="op">(</span><span class="st">"fit.qs"</span><span class="op">)</span></span></code></pre></div>
-<p>Storage is even faster if you discard results you do not need to
-save. The following example saves only posterior draws and discards
-sampler diagnostics, user-specified initial values, and profiling
-data.</p>
-<div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load posterior draws into the fitted model object and omit other output.</span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Save the object to a file.</span></span>
-<span><span class="fu">qs</span><span class="fu">::</span><span class="fu">qsave</span><span class="op">(</span>x <span class="op">=</span> <span class="va">fit</span>, file <span class="op">=</span> <span class="st">"fit.qs"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Read the object.</span></span>
-<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">qs</span><span class="fu">::</span><span class="fu">qread</span><span class="op">(</span><span class="st">"fit.qs"</span><span class="op">)</span></span></code></pre></div>
-<p>See the vignette <a href="http://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html" class="external-link"><em>How
-does CmdStanR work?</em></a> for more information about the composition
-of CmdStanR objects.</p>
+<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">qs2</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/qs2/man/qs_read.html" class="external-link">qs_read</a></span><span class="op">(</span><span class="st">"fit.qs2"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="comparison-with-rstan">Comparison with RStan<a class="anchor" aria-label="anchor" href="#comparison-with-rstan"></a>

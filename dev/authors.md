@@ -33,14 +33,14 @@
 Source:
 [`DESCRIPTION`](https://github.com/stan-dev/cmdstanr/blob/master/DESCRIPTION)
 
-Gabry J, Češnovar R, Johnson A, Bronder S (2025). *cmdstanr: R Interface
+Gabry J, Češnovar R, Johnson A, Bronder S (2026). *cmdstanr: R Interface
 to 'CmdStan'*. R package version 0.9.0.9000,
 <https://mc-stan.org/cmdstanr/>.
 
     @Manual{,
       title = {cmdstanr: R Interface to 'CmdStan'},
       author = {Jonah Gabry and Rok Češnovar and Andrew Johnson and Steve Bronder},
-      year = {2025},
+      year = {2026},
       note = {R package version 0.9.0.9000},
       url = {https://mc-stan.org/cmdstanr/},
     }
