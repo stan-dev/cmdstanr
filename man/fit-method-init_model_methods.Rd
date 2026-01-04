@@ -6,7 +6,12 @@
 \title{Compile additional methods for accessing the model log-probability function
 and parameter constraining and unconstraining.}
 \usage{
-init_model_methods(seed = 1, verbose = FALSE, hessian = FALSE)
+init_model_methods(
+  seed = 1,
+  verbose = FALSE,
+  hessian = FALSE,
+  force_recompile = FALSE
+)
 }
 \arguments{
 \item{seed}{(integer) The random seed to use when initializing the model.}
@@ -14,6 +19,8 @@ init_model_methods(seed = 1, verbose = FALSE, hessian = FALSE)
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
 
 \item{hessian}{(logical) Whether to expose the (experimental) hessian method.}
+
+\item{force_recompile}{(logical) Whether to recompile model methods, even if cached}
 }
 \description{
 The \verb{$init_model_methods()} method compiles and initializes the
