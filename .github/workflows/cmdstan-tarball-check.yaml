@@ -64,10 +64,10 @@ jobs:
         run: |
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
           tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
-          if (tarball_url == "latest" || !nzchar(tarball_url)) {
-            cmdstanr::install_cmdstan(cores = 2)
-          } else {
+          if (nzchar(tarball_url) && tarball_url != "latest") {
             cmdstanr::install_cmdstan(cores = 2, release_url = tarball_url)
+          } else {
+            cmdstanr::install_cmdstan(cores = 2)
           }
         shell: Rscript {0}
 

@@ -9,7 +9,7 @@ To test cmdstanr with a custom CmdStan tarball (e.g., during CmdStan releases):
 1. Go to the [Actions tab](https://github.com/stan-dev/cmdstanr/actions)
 2. Select the "Unit tests" workflow
 3. Click "Run workflow"
-4. Enter the CmdStan tarball URL in the `tarball_url` input field
+4. Enter the CmdStan tarball URL in the `tarball_url` input field (or leave empty/enter "latest" for the latest release)
 5. Click "Run workflow"
 
 Example tarball URL:
@@ -17,7 +17,7 @@ Example tarball URL:
 https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz
 ```
 
-If you leave the `tarball_url` field empty, the workflow will use the latest CmdStan release.
+If you leave the `tarball_url` field empty or enter "latest", the workflow will use the latest CmdStan release.
 
 ### Legacy Workflow
 
