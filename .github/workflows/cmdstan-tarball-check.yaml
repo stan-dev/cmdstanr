@@ -13,7 +13,7 @@ name: Custom CmdStan tarball unit tests
     inputs:
       tarball_url:
         description: 'CmdStan tarball URL to test with.'
-        required: true
+        required: false
         default: 'latest'
 
 jobs:
