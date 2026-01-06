@@ -11,6 +11,12 @@ name: Unit tests
   pull_request:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      tarball_url:
+        description: 'CmdStan tarball URL to test with (optional, uses latest if not provided)'
+        required: false
+        default: ''
 
 jobs:
   R-CMD-check:
@@ -37,6 +43,7 @@ jobs:
       NOT_CRAN: true
       CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
       PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
+      CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
 
     steps:
       - name: cmdstan env vars
@@ -86,7 +93,12 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2)
+          tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+          if (nzchar(tarball_url)) {
+            cmdstanr::install_cmdstan(cores = 2, release_url = tarball_url)
+          } else {
+            cmdstanr::install_cmdstan(cores = 2)
+          }
         shell: Rscript {0}
 
       - name: Session info

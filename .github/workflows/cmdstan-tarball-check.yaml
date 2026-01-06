@@ -1,6 +1,10 @@
 ---
 # Github Actions workflow to check CmdStanR tarball
 # yamllint disable rule:line-length
+#
+# DEPRECATED: This workflow is maintained for backwards compatibility.
+# Please use the main R-CMD-check.yaml workflow instead, which now accepts
+# an optional tarball_url input via workflow_dispatch.
 
 name: Custom CmdStan tarball unit tests
 
@@ -22,9 +26,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest, r: 'release', rtools: ''}
-          - {os: windows-latest, r: 'release', rtools: '44'}
-          - {os: ubuntu-20.04, r: 'release', rtools: ''}
+          - {os: macOS-latest, r: 'release'}
+          - {os: windows-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'release'}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -32,46 +36,38 @@ jobs:
       NOT_CRAN: true
 
     steps:
-      - uses: actions/checkout@v6
-      - name: Install system dependencies
-        if: runner.os == 'Linux'
+      - name: cmdstan env vars
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev || true
-          sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev || true
+          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
+        shell: bash
 
-      - uses: r-lib/actions/setup-r@v2.11.3
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
-          rtools-version: ${{ matrix.config.rtools }}
 
-      - uses: r-lib/actions/setup-pandoc@v2.11.3
-
-      - name: Query dependencies
-        run: |
-          install.packages('remotes')
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-          writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
-        shell: Rscript {0}
-
-      - name: Cache R packages
-        if: runner.os != 'Windows'
-        uses: actions/cache@v5
+      - name: Install R Package Build Dependencies on MacOS
+        if: ${{ runner.os == 'macOS' }}
+        uses: r-hub/actions/setup-r-sysreqs@v1
         with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+          type: 'minimal'
 
-      - name: Install dependencies
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: "always"
+          extra-packages: any::rcmdcheck, local::.
+
+      - name: Install cmdstan
         run: |
-          remotes::install_deps(dependencies = TRUE)
-          remotes::install_cran("rcmdcheck")
-          remotes::install_local(path = ".", INSTALL_opts = "--no-test-load")
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          if (Sys.getenv("CMDSTAN_TEST_TARBALL_URL") == "latest") {
-            cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE)
+          tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+          if (tarball_url == "latest" || !nzchar(tarball_url)) {
+            cmdstanr::install_cmdstan(cores = 2)
           } else {
-            cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, release_url = "${{ github.event.inputs.tarball_url }}")
+            cmdstanr::install_cmdstan(cores = 2, release_url = tarball_url)
           }
         shell: Rscript {0}
 
@@ -82,11 +78,9 @@ jobs:
           sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
-      - name: Check
+      - uses: r-lib/actions/check-r-package@v2
         env:
           _R_CHECK_CRAN_INCOMING_: false
-        run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran", "--ignore-vignettes"), build_args = c("--no-build-vignettes"), error_on = "warning", check_dir = "check")
-        shell: Rscript {0}
 
       - name: Show testthat output
         if: always()
