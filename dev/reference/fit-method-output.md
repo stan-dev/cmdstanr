@@ -67,11 +67,11 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 1078114322
 #> output
-#>   file = /tmp/RtmpS74B50/logistic-202601022125-1-4ec179.csv
+#>   file = /tmp/RtmpUOZl7y/logistic-202601062206-1-4ec07e.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpS74B50/logistic-profile-202601022125-1-94ddf2.csv
+#>   profile_file = /tmp/RtmpUOZl7y/logistic-profile-202601062206-1-94dcf7.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -105,8 +105,8 @@ fit_mcmc$output(1)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
 #>  Elapsed Time: 0.019 seconds (Warm-up)
-#>                0.055 seconds (Sampling)
-#>                0.074 seconds (Total)
+#>                0.056 seconds (Sampling)
+#>                0.075 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
 #> List of 4
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 1549478816
 #> output
-#>   file = /tmp/RtmpS74B50/logistic-202601022125-1-779dd6.csv
+#>   file = /tmp/RtmpUOZl7y/logistic-202601062206-1-779cdb.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpS74B50/logistic-profile-202601022125-1-04d65e.csv
+#>   profile_file = /tmp/RtmpUOZl7y/logistic-profile-202601062206-1-04d563.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 1243032231
 #> output
-#>   file = /tmp/RtmpS74B50/logistic-202601022125-1-047ffd.csv
+#>   file = /tmp/RtmpUOZl7y/logistic-202601062206-1-047f02.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpS74B50/logistic-profile-202601022125-1-780b9f.csv
+#>   profile_file = /tmp/RtmpUOZl7y/logistic-profile-202601062206-1-780aa4.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -193,8 +193,8 @@ fit_vb$output()
 #> 
 #> 
 #> 
-#> Gradient evaluation took 8e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+#> Gradient evaluation took 7e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
