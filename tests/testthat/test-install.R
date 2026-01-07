@@ -91,6 +91,9 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 })
 
 test_that("install_cmdstan() works with version and release_url", {
+  # this test is irrelevant if tests are using a release candidate tarball URL so skip
+  skip_if(!is.null(cmdstan_test_tarball_url))
+
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -100,7 +103,7 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz",
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
                       wsl = os_is_wsl()),
       "Compiling C++ code",
       fixed = TRUE
@@ -112,7 +115,7 @@ test_that("install_cmdstan() works with version and release_url", {
     expect_message(
       expect_output(
         install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                        version = "2.35.0",
+                        version = "2.36.0",
                         # the URL is intentionally invalid to test that the version has higher priority
                         release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
                         wsl = os_is_wsl()),
@@ -125,7 +128,7 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.35.0")))
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.36.0")))
   set_cmdstan_path(cmdstan_default_path())
 })
 
@@ -256,10 +259,10 @@ test_that("Install from release file works", {
     dir <- tempdir(check = TRUE)
   }
 
-  destfile = file.path(dir, "cmdstan-2.35.0.tar.gz")
+  destfile <- file.path(dir, "cmdstan-2.36.0.tar.gz")
 
   download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz",
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
     destfile)
 
   expect_message(
