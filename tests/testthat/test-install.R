@@ -190,7 +190,7 @@ test_that("toolchain checks on Windows with RTools 3.5 work", {
 
 test_that("clean and rebuild works", {
   expect_output(
-    rebuild_cmdstan(),
+    rebuild_cmdstan(cores = 1),
     paste0("CmdStan v", cmdstan_version(), " built"),
     fixed = TRUE
   )
