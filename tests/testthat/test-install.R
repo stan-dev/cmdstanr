@@ -39,6 +39,8 @@ test_that("install_cmdstan() errors if installation already exists", {
 })
 
 test_that("install_cmdstan() errors if it times out", {
+  skip_if(!is.null(cmdstan_test_tarball_url))
+
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
