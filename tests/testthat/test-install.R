@@ -1,5 +1,8 @@
 context("install")
 
+# avoid parallel on Mac due to strange intermittent TBB errors on Github Actions
+CORES <- if (os_is_macos()) 1 else 2
+
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
 if (!nzchar(cmdstan_test_tarball_url)) {
   cmdstan_test_tarball_url <- NULL
