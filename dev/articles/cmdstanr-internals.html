@@ -239,7 +239,7 @@ and a prior for a parameter.</p>
 (or when calling the <code>$compile()</code> method directly if using
 the delayed compilation approach described above).</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>mod_pedantic <span class="ot">&lt;-</span> <span class="fu">cmdstan_model</span>(stan_file_pedantic, <span class="at">pedantic =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/tmp/Rtmpijn20T/model-39364dc4566b.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/tmp/RtmpwEruVB/model-3932444e07ef.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>    poisson distribution is given parameter lambda as a rate parameter</span>
 <span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>    (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
 <span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors. This means either no prior is</span>
@@ -249,7 +249,7 @@ the delayed compilation approach described above).</p>
 <code>pedantic</code> argument to the <code>$check_syntax()</code>
 method.</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>mod_pedantic<span class="sc">$</span><span class="fu">check_syntax</span>(<span class="at">pedantic =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/tmp/Rtmpijn20T/model_febb1e69c7387a0e64cf13583e078104.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/tmp/RtmpwEruVB/model_febb1e69c7387a0e64cf13583e078104.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>    poisson distribution is given parameter lambda as a rate parameter</span>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>    (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
 <span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors. This means either no prior is</span>
@@ -266,7 +266,7 @@ syntax checks themselves are much faster than compilation.</p>
 <span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a></span>
 <span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>mod_pedantic <span class="ot">&lt;-</span> <span class="fu">cmdstan_model</span>(stan_file_pedantic, <span class="at">compile =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>mod_pedantic<span class="sc">$</span><span class="fu">check_syntax</span>(<span class="at">pedantic =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/tmp/Rtmpijn20T/model_febb1e69c7387a0e64cf13583e078104.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="st">'/tmp/RtmpwEruVB/model_febb1e69c7387a0e64cf13583e078104.stan'</span>, line <span class="dv">11</span>, column <span class="dv">14</span><span class="sc">:</span> A</span>
 <span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>    poisson distribution is given parameter lambda as a rate parameter</span>
 <span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>    (argument <span class="dv">1</span>), but lambda was not constrained to be strictly positive.</span>
 <span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>Warning<span class="sc">:</span> The parameter lambda has no priors. This means either no prior is</span>
@@ -456,10 +456,10 @@ by <code>rstan::stan_rdump()</code>:</p>
 from CmdStan to CSV files in a temporary directory.</p>
 <div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/Rtmpijn20T/bernoulli-202601062212-1-5be46e.csv"
-[2] "/tmp/Rtmpijn20T/bernoulli-202601062212-2-5be46e.csv"
-[3] "/tmp/Rtmpijn20T/bernoulli-202601062212-3-5be46e.csv"
-[4] "/tmp/Rtmpijn20T/bernoulli-202601062212-4-5be46e.csv"</code></pre>
+<pre><code>[1] "/tmp/RtmpwEruVB/bernoulli-202601081942-1-5be46a.csv"
+[2] "/tmp/RtmpwEruVB/bernoulli-202601081942-2-5be46a.csv"
+[3] "/tmp/RtmpwEruVB/bernoulli-202601081942-3-5be46a.csv"
+[4] "/tmp/RtmpwEruVB/bernoulli-202601081942-4-5be46a.csv"</code></pre>
 <p>These files will be lost if you end your R session or if you remove
 the <code>fit</code> object and force (or wait for) garbage
 collection.</p>
@@ -471,8 +471,8 @@ collection.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/gc.html" class="external-link">gc</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>          used (Mb) gc trigger  (Mb) max used (Mb)
-Ncells 1220410 65.2    2510470 134.1  1591825 85.1
-Vcells 2122689 16.2    8388608  64.0  4904943 37.5</code></pre>
+Ncells 1220225 65.2    2509941 134.1  1591825 85.1
+Vcells 2122610 16.2    8388608  64.0  4904948 37.5</code></pre>
 <div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">files</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[1] FALSE FALSE FALSE FALSE</code></pre>
@@ -657,7 +657,7 @@ you can also call it directly.</p>
   ..$ stan_version_major  : num 2
   ..$ stan_version_minor  : num 37
   ..$ stan_version_patch  : num 0
-  ..$ start_datetime      : chr "2026-01-06 22:12:23 UTC"
+  ..$ start_datetime      : chr "2026-01-08 19:42:17 UTC"
   ..$ method              : chr "sample"
   ..$ save_warmup         : int 0
   ..$ thin                : num 1
@@ -678,7 +678,7 @@ you can also call it directly.</p>
   ..$ seed                : num 31749990
   ..$ refresh             : num 100
   ..$ sig_figs            : num 8
-  ..$ profile_file        : chr "/tmp/Rtmpijn20T/bernoulli-profile-202601062212-1-2c703e.csv"
+  ..$ profile_file        : chr "/tmp/RtmpwEruVB/bernoulli-profile-202601081942-1-2c703a.csv"
   ..$ save_cmdstan_config : int 0
   ..$ stanc_version       : chr "stanc3 v2.37.0"
   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
@@ -758,10 +758,10 @@ functions.</p>
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, save_latent_dynamics <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">latent_dynamics_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/Rtmpijn20T/bernoulli-diagnostic-202601062212-1-0572c3.csv"
-[2] "/tmp/Rtmpijn20T/bernoulli-diagnostic-202601062212-2-0572c3.csv"
-[3] "/tmp/Rtmpijn20T/bernoulli-diagnostic-202601062212-3-0572c3.csv"
-[4] "/tmp/Rtmpijn20T/bernoulli-diagnostic-202601062212-4-0572c3.csv"</code></pre>
+<pre><code>[1] "/tmp/RtmpwEruVB/bernoulli-diagnostic-202601081942-1-0572bf.csv"
+[2] "/tmp/RtmpwEruVB/bernoulli-diagnostic-202601081942-2-0572bf.csv"
+[3] "/tmp/RtmpwEruVB/bernoulli-diagnostic-202601081942-3-0572bf.csv"
+[4] "/tmp/RtmpwEruVB/bernoulli-diagnostic-202601081942-4-0572bf.csv"</code></pre>
 <div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># read one of the files in</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">latent_dynamics_files</span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, comment.char <span class="op">=</span> <span class="st">"#"</span><span class="op">)</span></span>
@@ -842,18 +842,18 @@ enabled for an entire R session by setting the option
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="st">"cmdstanr_verbose"</span><span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">stan_file</span>, force_recompile <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<pre><code>Running make /tmp/Rtmpijn20T/model-39361205cf97 \
+<pre><code>Running make /tmp/RtmpwEruVB/model-39324ad58853 \
   "STANCFLAGS +=  --name='bernoulli_model'"
 
 --- Translating Stan model to C++ code ---
-bin/stanc --name='bernoulli_model' --o=/tmp/Rtmpijn20T/model-39361205cf97.hpp /tmp/Rtmpijn20T/model-39361205cf97.stan
+bin/stanc --name='bernoulli_model' --o=/tmp/RtmpwEruVB/model-39324ad58853.hpp /tmp/RtmpwEruVB/model-39324ad58853.stan
 
 --- Compiling C++ code ---
-g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS          -c -Wno-ignored-attributes   -x c++ -o /tmp/Rtmpijn20T/model-39361205cf97.o /tmp/Rtmpijn20T/model-39361205cf97.hpp
+g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS          -c -Wno-ignored-attributes   -x c++ -o /tmp/RtmpwEruVB/model-39324ad58853.o /tmp/RtmpwEruVB/model-39324ad58853.hpp
 
 --- Linking model ---
-g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS               -Wl,-L,"/home/runner/.cmdstan/cmdstan-2.37.0/stan/lib/stan_math/lib/tbb"   -Wl,-rpath,"/home/runner/.cmdstan/cmdstan-2.37.0/stan/lib/stan_math/lib/tbb"      /tmp/Rtmpijn20T/model-39361205cf97.o src/cmdstan/main.o       -ltbb   stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a  stan/lib/stan_math/lib/tbb/libtbb.so.2 -o /tmp/Rtmpijn20T/model-39361205cf97
-rm /tmp/Rtmpijn20T/model-39361205cf97.o /tmp/Rtmpijn20T/model-39361205cf97.hpp
+g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS               -Wl,-L,"/home/runner/.cmdstan/cmdstan-2.37.0/stan/lib/stan_math/lib/tbb"   -Wl,-rpath,"/home/runner/.cmdstan/cmdstan-2.37.0/stan/lib/stan_math/lib/tbb"      /tmp/RtmpwEruVB/model-39324ad58853.o src/cmdstan/main.o       -ltbb   stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a  stan/lib/stan_math/lib/tbb/libtbb.so.2 -o /tmp/RtmpwEruVB/model-39324ad58853
+rm /tmp/RtmpwEruVB/model-39324ad58853.hpp /tmp/RtmpwEruVB/model-39324ad58853.o
 stan_version_major = 2
 stan_version_minor = 37
 stan_version_patch = 0
@@ -872,9 +872,9 @@ STAN_CPP_OPTIMS=false</code></pre>
 <pre><code>Running MCMC with 1 chain...
 
 Running ./bernoulli 'id=1' random 'seed=1376020223' data \
-  'file=/tmp/Rtmpijn20T/standata-39365f19fbdb.json' output \
-  'file=/tmp/Rtmpijn20T/bernoulli-202601062212-1-1e1490.csv' \
-  'profile_file=/tmp/Rtmpijn20T/bernoulli-profile-202601062212-1-3dcc6b.csv' \
+  'file=/tmp/RtmpwEruVB/standata-39327bab6ae.json' output \
+  'file=/tmp/RtmpwEruVB/bernoulli-202601081942-1-1e148c.csv' \
+  'profile_file=/tmp/RtmpwEruVB/bernoulli-profile-202601081942-1-3dcc67.csv' \
   'method=sample' 'num_samples=100' 'num_warmup=100' 'save_warmup=0' \
   'algorithm=hmc' 'engine=nuts' adapt 'engaged=1'
 Chain 1 method = sample (Default) 
@@ -905,16 +905,16 @@ Chain 1         stepsize_jitter = 0 (Default)
 Chain 1     num_chains = 1 (Default) 
 Chain 1 id = 1 (Default) 
 Chain 1 data 
-Chain 1   file = /tmp/Rtmpijn20T/standata-39365f19fbdb.json 
+Chain 1   file = /tmp/RtmpwEruVB/standata-39327bab6ae.json 
 Chain 1 init = 2 (Default) 
 Chain 1 random 
 Chain 1   seed = 1376020223 
 Chain 1 output 
-Chain 1   file = /tmp/Rtmpijn20T/bernoulli-202601062212-1-1e1490.csv 
+Chain 1   file = /tmp/RtmpwEruVB/bernoulli-202601081942-1-1e148c.csv 
 Chain 1   diagnostic_file =  (Default) 
 Chain 1   refresh = 100 (Default) 
 Chain 1   sig_figs = 8 (Default) 
-Chain 1   profile_file = /tmp/Rtmpijn20T/bernoulli-profile-202601062212-1-3dcc6b.csv 
+Chain 1   profile_file = /tmp/RtmpwEruVB/bernoulli-profile-202601081942-1-3dcc67.csv 
 Chain 1   save_cmdstan_config = false (Default) 
 Chain 1 num_threads = 1 (Default) 
 Chain 1 Gradient evaluation took 2e-06 seconds 
