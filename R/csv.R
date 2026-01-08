@@ -204,6 +204,7 @@ read_cmdstan_csv <- function(files,
       lp = lp
     ))
   }
+  user_variables_subset <- FALSE
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$variables
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
@@ -215,6 +216,7 @@ read_cmdstan_csv <- function(files,
             paste(res$not_found, collapse = ", "), call. = FALSE)
     }
     variables <- unrepair_variable_names(res$matching)
+    user_variables_subset <- TRUE
   }
   if (is.null(sampler_diagnostics)) {
     sampler_diagnostics <- metadata$sampler_diagnostics
@@ -281,8 +283,13 @@ read_cmdstan_csv <- function(files,
       draws_list_id <- length(draws) + 1
       warmup_draws_list_id <- length(warmup_draws) + 1
       if (metadata$method == "pathfinder") {
-        metadata$variables = union(metadata$sampler_diagnostics, metadata$variables)
-        variables = union(metadata$sampler_diagnostics, variables)
+        metadata$variables <- union(metadata$sampler_diagnostics, metadata$variables)
+        if (!user_variables_subset) {
+          # because for pathfinder variables and diagnostics are read in together,
+          # if user hasn't selected a custom subset of variables we need to include
+          # all diagnostics
+          variables <- union(metadata$sampler_diagnostics, variables)
+        }
       }
       suppressWarnings(
         draws[[draws_list_id]] <- data.table::fread(
@@ -489,10 +496,24 @@ read_sample_csv <- function(files,
 #'   `TRUE` but set to `FALSE` to avoid checking for problems with divergences
 #'   and treedepth.
 #'
-as_cmdstan_fit <- function(files, check_diagnostics = TRUE, format = getOption("cmdstanr_draws_format")) {
-  csv_contents <- read_cmdstan_csv(files, format = format)
+as_cmdstan_fit <- function(files,
+                           variables = NULL,
+                           check_diagnostics = TRUE,
+                           format = getOption("cmdstanr_draws_format")) {
+  csv_contents <- read_cmdstan_csv(files, variables = variables, format = format)
+  method <- csv_contents$metadata$method
+  if (!is.null(variables)) {
+    if (method == "sample") {
+      variables <- posterior::variables(csv_contents$post_warmup_draws)
+    } else if (method == "optimize") {
+      variables <- posterior::variables(csv_contents$point_estimates)
+    } else { # variational, laplace, pathfinder
+      variables <- posterior::variables(csv_contents$draws)
+    }
+    csv_contents$metadata$variables <- variables
+  }
   switch(
-    csv_contents$metadata$method,
+    method,
     "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
     "optimize" = CmdStanMLE_CSV$new(csv_contents, files),
     "variational" = CmdStanVB_CSV$new(csv_contents, files),
@@ -638,6 +659,7 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
   CmdStanMLE_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
   CmdStanVB_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
   CmdStanLaplace_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
+  CmdStanPathfinder_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
 }
 
 
