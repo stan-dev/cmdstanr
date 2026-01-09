@@ -99,6 +99,19 @@ test_that("read_cmdstan_csv() fails with the no params listed", {
                "Supplied CSV file does not contain any variable names or data!")
 })
 
+test_that("variable_dims works for standard Stan names", {
+  vars <- c("beta[1]", "beta[2]", "beta[3]", "sigma")
+  dims <- variable_dims(vars)
+  expect_equal(dims$beta, 3)
+  expect_equal(dims$sigma, 1)
+})
+
+test_that("variable_dims handles names with regex metacharacters", {
+  vars <- c('SIGMA(1,1)[1,2]', 'SIGMA(1,1)[2,2]')
+  dims <- variable_dims(vars)
+  expect_equal(dims[["SIGMA(1,1)"]], c(2, 2))
+})
+
 test_that("read_cmdstan_csv() matches utils::read.csv", {
   csv_files <- c(test_path("resources", "csv", "model1-1-warmup.csv"),
                  test_path("resources", "csv", "model1-2-warmup.csv"))
@@ -899,4 +912,57 @@ test_that("read_cmdstan_csv() works with tilde expansion", {
   expect_no_error(read_cmdstan_csv(full_path))
   tildified_path <- file.path("~", fs::path_rel(full_path, "~"))
   expect_no_error(read_cmdstan_csv(tildified_path))
+})
+
+test_that("as_cmdstan_fit handles parameter names with parentheses and indices", {
+  skip_on_cran()
+
+  csv_file <- withr::local_tempfile(fileext = ".csv")
+  lines <- c(
+    "# model = norm_model",
+    "# method = sample (Default)",
+    "# id = 1",
+    "# thin = 1",
+    "# save_warmup = 0",
+    'lp__,accept_stat__,stepsize__,treedepth__,n_leapfrog__,divergent__,energy__,"Sigma(1,1)","Sigma(1,2)","Sigma(2,1)","Sigma(2,2)"',
+    "-65.951579,0.92571393,0.77752825,3,7,0,67.391073,0.2808549,-0.95718644,0.080662461,0.58814086",
+    "-66.417297,0.89632515,0.77752825,2,3,0,68.026905,0.3014893,-0.97834703,0.069719538,0.89573157"
+  )
+  writeLines(lines, csv_file)
+
+  fit <- as_cmdstan_fit(csv_file, check_diagnostics = FALSE)
+
+  vars <- posterior::variables(fit$draws())
+  expect_true(all(
+    c("Sigma[1,1]", "Sigma[1,2]", "Sigma[2,1]", "Sigma[2,2]") %in% vars
+  ))
+
+  dims <- fit$metadata()$stan_variable_sizes
+  expect_equal(dims[["Sigma"]], c(2, 2))
+})
+
+test_that("as_cmdstan_fit handles variable names with parentheses", {
+  skip_on_cran()
+  csv_file <- withr::local_tempfile(fileext = ".csv")
+  writeLines(c(
+    "# model = norm_model",
+    "# method = sample (Default)",
+    "# id = 1",
+    "# thin = 1",
+    "# save_warmup = 0",
+    "THETA4,SIGMA(1,1)",
+    "2.00000E+00,2.00000E+00",
+    "2.00000E+00,2.00000E+00"
+  ), con = csv_file)
+
+  expect_no_error({
+    fit <- as_cmdstan_fit(csv_file, check_diagnostics = FALSE, format = "draws_matrix")
+  })
+
+  draws <- fit$draws()
+  vars  <- posterior::variables(draws)
+
+  expect_equal(posterior::ndraws(draws), 2L)
+  expect_true(any(grepl("THETA4", vars)))
+  expect_true(any(grepl("SIGMA", vars)))
 })
