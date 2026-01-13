@@ -98,13 +98,13 @@ and
 cmdstan_path()
 ```
 
-    [1] "/home/runner/.cmdstan/cmdstan-2.37.0"
+    [1] "/home/runner/.cmdstan/cmdstan-2.38.0"
 
 ``` r
 cmdstan_version()
 ```
 
-    [1] "2.37.0"
+    [1] "2.38.0"
 
 ## Compiling a model
 
@@ -156,7 +156,7 @@ method:
 mod$exe_file()
 ```
 
-    [1] "/home/runner/.cmdstan/cmdstan-2.37.0/examples/bernoulli/bernoulli"
+    [1] "/home/runner/.cmdstan/cmdstan-2.38.0/examples/bernoulli/bernoulli"
 
 ## Running MCMC
 
@@ -531,7 +531,7 @@ mcmc_hist(fit$draws("theta")) +
      [36mℹ [39m Please use `linewidth` instead.
      [36mℹ [39m The deprecated feature was likely used in the  [34mbayesplot [39m package.
       Please report the issue at  [3m [34m<https://github.com/stan-dev/bayesplot/issues/> [39m [23m.
-     [90mThis warning is displayed once every 8 hours. [39m
+     [90mThis warning is displayed once per session. [39m
      [90mCall `lifecycle::last_lifecycle_warnings()` to see where this warning was [39m
      [90mgenerated. [39m
 

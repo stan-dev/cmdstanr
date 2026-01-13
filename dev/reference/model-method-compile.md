@@ -186,12 +186,12 @@ file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(file, compile = FALSE)
 mod$compile()
 mod$exe_file()
-#> [1] "/home/runner/.cmdstan/cmdstan-2.37.0/examples/bernoulli/bernoulli"
+#> [1] "/home/runner/.cmdstan/cmdstan-2.38.0/examples/bernoulli/bernoulli"
 
 # turn on threading support (for using functions that support within-chain parallelization)
 mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 mod$exe_file()
-#> [1] "/home/runner/.cmdstan/cmdstan-2.37.0/examples/bernoulli/bernoulli"
+#> [1] "/home/runner/.cmdstan/cmdstan-2.38.0/examples/bernoulli/bernoulli"
 
 # turn on pedantic mode (new in Stan v2.24)
 file_pedantic <- write_stan_file("
@@ -203,9 +203,9 @@ model {
 }
 ")
 mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#> Warning in '/tmp/RtmpkrO3Tk/model-1d95427ea76d.stan', line 6, column 2: Parameter
-#>     sigma is given a exponential distribution, which has strictly positive
-#>     support, but sigma was not constrained to be strictly positive.
+#> Warning in '/tmp/Rtmp17Mk1I/model-20fff780c26.stan', line 6, column 2 to column 7:
+#>     Parameter sigma is given a exponential distribution, which has strictly
+#>     positive support, but sigma was not constrained to be strictly positive.
 
 # }
 ```

@@ -159,10 +159,6 @@ See https://mc-stan.org/misc/warnings for details.</code></pre>
 necessary to set explicitly set the variables argument, either to
 <code>NULL</code> or the full vector of variable names.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">metadata</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">model_params</span></span></code></pre></div>
-<pre><code> [1] "lp__"     "mu"       "tau"      "theta[1]" "theta[2]" "theta[3]"
- [7] "theta[4]" "theta[5]" "theta[6]" "theta[7]" "theta[8]"</code></pre>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, <span class="st">"mean"</span>, <span class="st">"median"</span><span class="op">)</span></span></code></pre></div>
 <pre><code>   variable       mean     median
 1      lp__ -58.320756 -58.622925
@@ -181,7 +177,7 @@ using a formula (or anything else supported by
 <code><a href="https://rlang.r-lib.org/reference/as_function.html" class="external-link">rlang::as_function()</a></code>). If these arguments are named, those
 names will be used in the tibble output. If the summary results are
 named they will take precedence.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_sd</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>My_SD <span class="op">=</span> <span class="fu">sd</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span>, </span>
@@ -196,14 +192,14 @@ named they will take precedence.</p>
 2      tau 5.329521 4.561805 3.392980 1.608897  9.942976   0.7203539</code></pre>
 <p>Arguments to all summary functions can also be specified with
 <code>.args</code>.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span>, <span class="va">quantile</span>, .args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">.05</span>, <span class="fl">.95</span>, <span class="fl">.975</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code>  variable      2.5%         5%      95%    97.5%
 1       mu -2.039372 -0.5815009 13.94432 15.33313
 2      tau  1.093560  1.2538663 11.88650 13.82409</code></pre>
 <p>The summary functions are applied to the array of sample values, with
 dimension <code>iter_sampling</code>x<code>chains</code>.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">dim</span>, <span class="va">colMeans</span><span class="op">)</span></span></code></pre></div>
 <pre><code>   variable dim.1 dim.2          1          2          3          4
 1      lp__  1000     4 -57.940185 -57.459900 -58.267713 -59.615226
@@ -222,14 +218,14 @@ dimension <code>iter_sampling</code>x<code>chains</code>.</p>
 matrix. An alternative is the <code><a href="https://pkg.mitchelloharawild.com/distributional/reference/variance.html" class="external-link">distributional::variance()</a></code>
 function, which can also be accessed via
 <code><a href="https://pkg.mitchelloharawild.com/distributional/reference/variance.html" class="external-link">posterior::variance()</a></code>.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mu"</span>, <span class="st">"tau"</span><span class="op">)</span>, <span class="fu">posterior</span><span class="fu">::</span><span class="va"><a href="https://pkg.mitchelloharawild.com/distributional/reference/variance.html" class="external-link">variance</a></span>, <span class="op">~</span><span class="fu">var</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="va">.x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code>  variable posterior::variance ~var(as.vector(.x))
 1       mu            20.04802            20.04802
 2      tau            11.51232            11.51232</code></pre>
 <p>Summary functions need not be numeric, but these won’t work with
 <code>$print()</code>.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">strict_pos</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="st">"yes"</span> <span class="kw">else</span> <span class="st">"no"</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, <span class="st">"Strictly Positive"</span> <span class="op">=</span> <span class="va">strict_pos</span><span class="op">)</span></span></code></pre></div>
 <pre><code>   variable Strictly Positive
@@ -244,7 +240,7 @@ function, which can also be accessed via
 9  theta[6]                no
 10 theta[7]                no
 11 theta[8]                no</code></pre>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># fit$print(variables = NULL, "Strictly Positive" = strict_pos)</span></span></code></pre></div>
 <p>For more information, see <code><a href="https://mc-stan.org/posterior/reference/draws_summary.html" class="external-link">posterior::summarise_draws()</a></code>,
 which is called by <code>$summary()</code>.</p>
@@ -258,7 +254,7 @@ the <a href="https://mc-stan.org/posterior/" class="external-link"><strong>poste
 package. Here we demonstrate only the <code>draws_array</code> and
 <code>draws_df</code> formats, but the <strong>posterior</strong>
 package supports other useful formats as well.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># default is a 3-D draws_array object from the posterior package</span></span>
 <span><span class="co"># iterations x chains x variables</span></span>
 <span><span class="va">draws_arr</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span> <span class="co"># or format="array"</span></span>
@@ -268,7 +264,7 @@ package supports other useful formats as well.</p>
   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
   ..$ chain    : chr [1:4] "1" "2" "3" "4"
   ..$ variable : chr [1:11] "lp__" "mu" "tau" "theta[1]" ...</code></pre>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># draws x variables data frame</span></span>
 <span><span class="va">draws_df</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span>format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">draws_df</span><span class="op">)</span></span></code></pre></div>
@@ -287,7 +283,7 @@ package supports other useful formats as well.</p>
  $ .chain    : int [1:4000] 1 1 1 1 1 1 1 1 1 1 ...
  $ .iteration: int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...
  $ .draw     : int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...</code></pre>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">draws_df</span><span class="op">)</span></span></code></pre></div>
 <pre><code># A draws_df: 1000 iterations, 4 chains, and 11 variables
    lp__   mu  tau theta[1] theta[2] theta[3] theta[4] theta[5]
@@ -323,7 +319,7 @@ it’s a <code>2 x 3</code> matrix and automatically applies operations
 over the many posterior draws of <code>x</code>. To instead directly
 access the draws of <code>x</code> while maintaining the structure of
 the matrix use <code><a href="https://mc-stan.org/posterior/reference/draws_of.html" class="external-link">posterior::draws_of()</a></code>. For example:</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_rvars.html" class="external-link">as_draws_rvars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">x_rvar</span> <span class="op">&lt;-</span> <span class="va">draws</span><span class="op">$</span><span class="va">x</span></span>
 <span><span class="va">x_array</span> <span class="op">&lt;-</span> <span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_of.html" class="external-link">draws_of</a></span><span class="op">(</span><span class="va">draws</span><span class="op">$</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>

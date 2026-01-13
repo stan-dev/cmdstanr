@@ -26,9 +26,9 @@ fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 str(fit_mcmc$metadata())
 #> List of 42
 #>  $ stan_version_major  : num 2
-#>  $ stan_version_minor  : num 37
+#>  $ stan_version_minor  : num 38
 #>  $ stan_version_patch  : num 0
-#>  $ start_datetime      : chr "2026-01-08 19:36:40 UTC"
+#>  $ start_datetime      : chr "2026-01-13 21:20:21 UTC"
 #>  $ method              : chr "sample"
 #>  $ save_warmup         : int 0
 #>  $ thin                : num 1
@@ -49,9 +49,9 @@ str(fit_mcmc$metadata())
 #>  $ seed                : num 2.02e+09
 #>  $ refresh             : num 100
 #>  $ sig_figs            : num 8
-#>  $ profile_file        : chr "/tmp/RtmpkrO3Tk/logistic-profile-202601081936-1-8743a8.csv"
+#>  $ profile_file        : chr "/tmp/Rtmp17Mk1I/logistic-profile-202601132120-1-874712.csv"
 #>  $ save_cmdstan_config : int 0
-#>  $ stanc_version       : chr "stanc3 v2.37.0"
+#>  $ stanc_version       : chr "stanc3 v2.38.0"
 #>  $ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
 #>  $ variables           : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
 #>  $ step_size_adaptation: num [1:4] 0.797 0.779 0.701 0.846
@@ -80,9 +80,9 @@ fit_mle <- cmdstanr_example("logistic", method = "optimize")
 str(fit_mle$metadata())
 #> List of 32
 #>  $ stan_version_major : num 2
-#>  $ stan_version_minor : num 37
+#>  $ stan_version_minor : num 38
 #>  $ stan_version_patch : num 0
-#>  $ start_datetime     : chr "2026-01-08 19:36:40 UTC"
+#>  $ start_datetime     : chr "2026-01-13 21:20:22 UTC"
 #>  $ method             : chr "optimize"
 #>  $ algorithm          : chr "lbfgs"
 #>  $ init_alpha         : num 0.001
@@ -100,9 +100,9 @@ str(fit_mle$metadata())
 #>  $ seed               : num 1.45e+09
 #>  $ refresh            : num 100
 #>  $ sig_figs           : num 8
-#>  $ profile_file       : chr "/tmp/RtmpkrO3Tk/logistic-profile-202601081936-1-05984f.csv"
+#>  $ profile_file       : chr "/tmp/Rtmp17Mk1I/logistic-profile-202601132120-1-059bb9.csv"
 #>  $ save_cmdstan_config: int 0
-#>  $ stanc_version      : chr "stanc3 v2.37.0"
+#>  $ stanc_version      : chr "stanc3 v2.38.0"
 #>  $ sampler_diagnostics: chr(0) 
 #>  $ variables          : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
 #>  $ model_name         : chr "logistic_model"
@@ -120,9 +120,9 @@ fit_vb <- cmdstanr_example("logistic", method = "variational")
 str(fit_vb$metadata())
 #> List of 30
 #>  $ stan_version_major : num 2
-#>  $ stan_version_minor : num 37
+#>  $ stan_version_minor : num 38
 #>  $ stan_version_patch : num 0
-#>  $ start_datetime     : chr "2026-01-08 19:36:41 UTC"
+#>  $ start_datetime     : chr "2026-01-13 21:20:22 UTC"
 #>  $ method             : chr "variational"
 #>  $ algorithm          : chr "meanfield"
 #>  $ iter               : num 50
@@ -137,9 +137,9 @@ str(fit_vb$metadata())
 #>  $ seed               : num 5.64e+08
 #>  $ refresh            : num 100
 #>  $ sig_figs           : num 8
-#>  $ profile_file       : chr "/tmp/RtmpkrO3Tk/logistic-profile-202601081936-1-3e065c.csv"
+#>  $ profile_file       : chr "/tmp/Rtmp17Mk1I/logistic-profile-202601132120-1-3e09c6.csv"
 #>  $ save_cmdstan_config: int 0
-#>  $ stanc_version      : chr "stanc3 v2.37.0"
+#>  $ stanc_version      : chr "stanc3 v2.38.0"
 #>  $ sampler_diagnostics: chr(0) 
 #>  $ variables          : chr [1:106] "lp__" "lp_approx__" "alpha" "beta[1]" ...
 #>  $ model_name         : chr "logistic_model"

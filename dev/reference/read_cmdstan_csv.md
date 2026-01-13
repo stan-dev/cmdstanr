@@ -20,6 +20,7 @@ read_cmdstan_csv(
 
 as_cmdstan_fit(
   files,
+  variables = NULL,
   check_diagnostics = TRUE,
   format = getOption("cmdstanr_draws_format")
 )
@@ -158,10 +159,10 @@ the returned list also includes the following components:
 fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
-#> [1] "/tmp/RtmpkrO3Tk/logistic-202601081941-1-3f0558.csv"
-#> [2] "/tmp/RtmpkrO3Tk/logistic-202601081941-2-3f0558.csv"
-#> [3] "/tmp/RtmpkrO3Tk/logistic-202601081941-3-3f0558.csv"
-#> [4] "/tmp/RtmpkrO3Tk/logistic-202601081941-4-3f0558.csv"
+#> [1] "/tmp/Rtmp17Mk1I/logistic-202601132125-1-3f08c2.csv"
+#> [2] "/tmp/Rtmp17Mk1I/logistic-202601132125-2-3f08c2.csv"
+#> [3] "/tmp/Rtmp17Mk1I/logistic-202601132125-3-3f08c2.csv"
+#> [4] "/tmp/Rtmp17Mk1I/logistic-202601132125-4-3f08c2.csv"
 
 # Creating fitting model objects
 
@@ -181,9 +182,9 @@ str(x)
 #> List of 8
 #>  $ metadata                       :List of 42
 #>   ..$ stan_version_major  : num 2
-#>   ..$ stan_version_minor  : num 37
+#>   ..$ stan_version_minor  : num 38
 #>   ..$ stan_version_patch  : num 0
-#>   ..$ start_datetime      : chr "2026-01-08 19:41:44 UTC"
+#>   ..$ start_datetime      : chr "2026-01-13 21:25:14 UTC"
 #>   ..$ method              : chr "sample"
 #>   ..$ save_warmup         : int 1
 #>   ..$ thin                : num 1
@@ -204,9 +205,9 @@ str(x)
 #>   ..$ seed                : num 1.85e+09
 #>   ..$ refresh             : num 100
 #>   ..$ sig_figs            : num 8
-#>   ..$ profile_file        : chr "/tmp/RtmpkrO3Tk/logistic-profile-202601081941-1-542ba4.csv"
+#>   ..$ profile_file        : chr "/tmp/Rtmp17Mk1I/logistic-profile-202601132125-1-542f0e.csv"
 #>   ..$ save_cmdstan_config : int 0
-#>   ..$ stanc_version       : chr "stanc3 v2.37.0"
+#>   ..$ stanc_version       : chr "stanc3 v2.38.0"
 #>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
 #>   ..$ variables           : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
 #>   ..$ step_size_adaptation: num [1:4] 0.713 0.558 0.784 0.788
@@ -221,8 +222,8 @@ str(x)
 #>   ..$ time                :'data.frame': 4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
 #>   .. ..$ warmup  : num [1:4] 0.055 0.055 0.055 0.055
-#>   .. ..$ sampling: num [1:4] 0.056 0.06 0.054 0.053
-#>   .. ..$ total   : num [1:4] 0.111 0.115 0.109 0.108
+#>   .. ..$ sampling: num [1:4] 0.056 0.059 0.054 0.053
+#>   .. ..$ total   : num [1:4] 0.111 0.114 0.109 0.108
 #>   ..$ stan_variable_sizes :List of 4
 #>   .. ..$ lp__   : num 1
 #>   .. ..$ alpha  : num 1
@@ -235,8 +236,8 @@ str(x)
 #>   ..$ chains:'data.frame':   4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
 #>   .. ..$ warmup  : num [1:4] 0.055 0.055 0.055 0.055
-#>   .. ..$ sampling: num [1:4] 0.056 0.06 0.054 0.053
-#>   .. ..$ total   : num [1:4] 0.111 0.115 0.109 0.108
+#>   .. ..$ sampling: num [1:4] 0.056 0.059 0.054 0.053
+#>   .. ..$ total   : num [1:4] 0.111 0.114 0.109 0.108
 #>  $ inv_metric                     :List of 4
 #>   ..$ 1: num [1:4] 0.057 0.0721 0.0526 0.0743
 #>   ..$ 2: num [1:4] 0.0454 0.0647 0.0502 0.0851

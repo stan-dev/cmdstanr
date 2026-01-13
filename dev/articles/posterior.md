@@ -77,13 +77,6 @@ to set explicitly set the variables argument, either to `NULL` or the
 full vector of variable names.
 
 ``` r
-fit$metadata()$model_params
-```
-
-     [1] "lp__"     "mu"       "tau"      "theta[1]" "theta[2]" "theta[3]"
-     [7] "theta[4]" "theta[5]" "theta[6]" "theta[7]" "theta[8]"
-
-``` r
 fit$summary(variables = NULL, "mean", "median")
 ```
 

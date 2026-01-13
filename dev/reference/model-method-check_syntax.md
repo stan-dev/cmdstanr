@@ -105,12 +105,13 @@ mod$check_syntax()
 # pedantic mode will warn that lambda should be constrained to be positive
 # and that lambda has no prior distribution
 mod$check_syntax(pedantic = TRUE)
-#> Warning in '/tmp/RtmpkrO3Tk/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14: A
-#>     poisson distribution is given parameter lambda as a rate parameter
-#>     (argument 1), but lambda was not constrained to be strictly positive.
-#> Warning: The parameter lambda has no priors. This means either no prior is
+#> Warning in '/tmp/Rtmp17Mk1I/model_febb1e69c7387a0e64cf13583e078104.stan', line 8, column 2 to column 14:
+#>     The parameter lambda has no priors. This means either no prior is
 #>     provided, or the prior(s) depend on data variables. In the later case,
 #>     this may be a false positive.
+#> Warning in '/tmp/Rtmp17Mk1I/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14 to column 20:
+#>     A poisson distribution is given parameter lambda as a rate parameter
+#>     (argument 1), but lambda was not constrained to be strictly positive.
 #> Stan program is syntactically correct
 # }
 ```
