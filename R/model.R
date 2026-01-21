@@ -279,13 +279,7 @@ CmdStanModel <- R6::R6Class(
       # as the version the model was compiled with
       private$cmdstan_version_ <- cmdstan_version()
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
-        for (cpp_option_name in names(cpp_options)) {
-          if (cpp_option_name != "stan_version" &&
-              (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
-            private$cpp_options_[[cpp_option_name]] <- cpp_options[[cpp_option_name]]
-          }
-        }
+        private$cpp_options_ <- model_compile_info(self$exe_file(), self$cmdstan_version())
       }
       invisible(self)
     },
