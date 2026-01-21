@@ -341,6 +341,7 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
 #' @param hessian (logical) Whether to expose the (experimental) hessian method.
+#' @param force_recompile (logical) Whether to recompile model methods, even if cached
 #'
 #' @examples
 #' \dontrun{
@@ -350,14 +351,16 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-init_model_methods <- function(seed = 1, verbose = FALSE, hessian = FALSE) {
+init_model_methods <- function(seed = 1, verbose = FALSE, hessian = FALSE, force_recompile = FALSE) {
   if (os_is_wsl()) {
     stop("Additional model methods are not currently available with ",
           "WSL CmdStan and will not be compiled",
           call. = FALSE)
   }
   require_suggested_package("Rcpp")
-  if (length(private$model_methods_env_$hpp_code_) == 0) {
+  if (length(private$model_methods_env_$hpp_code_) == 0 && (
+        is.null(private$model_methods_env_$obj_file_) ||
+        !file.exists(private$model_methods_env_$obj_file_))) {
     stop("Model methods cannot be used with a pre-compiled Stan executable, ",
           "the model must be compiled again", call. = FALSE)
   }
@@ -367,7 +370,7 @@ init_model_methods <- function(seed = 1, verbose = FALSE, hessian = FALSE) {
             "errors that you encounter")
   }
   if (is.null(private$model_methods_env_$model_ptr)) {
-    expose_model_methods(private$model_methods_env_, verbose, hessian)
+    expose_model_methods(private$model_methods_env_, verbose, hessian, force_recompile = FALSE)
   }
   if (!("model_ptr_" %in% ls(private$model_methods_env_))) {
     initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
