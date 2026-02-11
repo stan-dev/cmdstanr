@@ -1,5 +1,8 @@
 context("install")
 
+# avoid parallel on Mac due to strange intermittent TBB errors on Github Actions
+CORES <- if (os_is_macos()) 1 else 2
+
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
 if (!nzchar(cmdstan_test_tarball_url)) {
   cmdstan_test_tarball_url <- NULL
@@ -13,7 +16,7 @@ test_that("install_cmdstan() successfully installs cmdstan", {
   }
   expect_message(
     expect_output(
-      install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
+      install_cmdstan(dir = dir, cores = CORES, quiet = FALSE, overwrite = TRUE,
                       release_url = cmdstan_test_tarball_url,
                       wsl = os_is_wsl()),
       "Compiling C++ code",
@@ -39,6 +42,8 @@ test_that("install_cmdstan() errors if installation already exists", {
 })
 
 test_that("install_cmdstan() errors if it times out", {
+  skip_if(!is.null(cmdstan_test_tarball_url))
+
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -50,7 +55,7 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
-                      release_url = cmdstan_test_tarball_url, wsl = os_is_wsl()),
+                      cores = CORES, wsl = os_is_wsl()),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
@@ -62,8 +67,7 @@ test_that("install_cmdstan() errors if it times out", {
   expect_warning(
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
-                      release_url = cmdstan_test_tarball_url,
-                      wsl = os_is_wsl()),
+                      cores = CORES, wsl = os_is_wsl()),
       if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
       fixed = TRUE
     ),
@@ -89,6 +93,9 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 })
 
 test_that("install_cmdstan() works with version and release_url", {
+  # this test is irrelevant if tests are using a release candidate tarball URL so skip
+  skip_if(!is.null(cmdstan_test_tarball_url))
+
   if (getRversion() < '3.5.0') {
     dir <- tempdir()
   } else {
@@ -97,8 +104,8 @@ test_that("install_cmdstan() works with version and release_url", {
 
   expect_message(
     expect_output(
-      install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz",
+      install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
                       wsl = os_is_wsl()),
       "Compiling C++ code",
       fixed = TRUE
@@ -109,8 +116,8 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_warning(
     expect_message(
       expect_output(
-        install_cmdstan(dir = dir, overwrite = TRUE, cores = 4,
-                        version = "2.35.0",
+        install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
+                        version = "2.36.0",
                         # the URL is intentionally invalid to test that the version has higher priority
                         release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
                         wsl = os_is_wsl()),
@@ -123,7 +130,7 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.35.0")))
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.36.0")))
   set_cmdstan_path(cmdstan_default_path())
 })
 
@@ -185,7 +192,7 @@ test_that("toolchain checks on Windows with RTools 3.5 work", {
 
 test_that("clean and rebuild works", {
   expect_output(
-    rebuild_cmdstan(),
+    rebuild_cmdstan(cores = CORES),
     paste0("CmdStan v", cmdstan_version(), " built"),
     fixed = TRUE
   )
@@ -213,11 +220,11 @@ test_that("Downloads respect quiet argument", {
   # expect_message has trouble capturing the messages from download.file
   # so handle manually
   install_normal <- suppressWarnings(
-    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = FALSE),
+    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = FALSE, cores = CORES),
                    type = "message")
   )
   install_quiet <- suppressWarnings(
-    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = TRUE),
+    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = TRUE, cores = CORES),
                    type = "message")
   )
 
@@ -254,15 +261,15 @@ test_that("Install from release file works", {
     dir <- tempdir(check = TRUE)
   }
 
-  destfile = file.path(dir, "cmdstan-2.35.0.tar.gz")
+  destfile <- file.path(dir, "cmdstan-2.36.0.tar.gz")
 
   download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz",
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
     destfile)
 
   expect_message(
     expect_output(
-      install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
+      install_cmdstan(dir = dir, cores = CORES, quiet = FALSE, overwrite = TRUE,
                       release_file = destfile,
                       wsl = os_is_wsl()),
       "Compiling C++ code",
