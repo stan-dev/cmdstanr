@@ -511,6 +511,10 @@ check_target_exe <- function(exe) {
     }
     procs$check_finished()
   }
+  # Ensure that the progress bar is closed, if created.
+  if(!is.null(private$progress_bar_)){
+    private$progress_bar_(type="finish")
+  }
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
   procs$report_time()
 }
@@ -775,10 +779,6 @@ CmdStanProcs <- R6::R6Class(
       lapply(private$processes_, function(p) {
         try(p$kill_tree(), silent = TRUE)
       })
-      # Ensure that the progress bar is closed, if created.
-      if(!is.null(private$progress_bar_)){
-        private$progress_bar_(type="finish")
-      }
       invisible(self)
     },
     poll = function(ms) { # time in milliseconds
