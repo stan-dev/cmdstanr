@@ -451,7 +451,7 @@ fit_mcmc <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.1 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 
 # Use 'posterior' package for summaries
@@ -588,8 +588,8 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 #>   This procedure has not been thoroughly tested and may be unstable 
 #>   or buggy. The interface is subject to change. 
 #> ------------------------------------------------------------ 
-#> Gradient evaluation took 2e-06 seconds 
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
+#> Gradient evaluation took 1e-06 seconds 
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.01 seconds. 
 #> Adjust your expectations accordingly! 
 #> Begin eta adaptation. 
 #> Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -710,7 +710,7 @@ fit_mcmc_w_init_fun <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_mcmc_w_init_fun_2 <- mod$sample(
   data = stan_data,
@@ -729,7 +729,7 @@ fit_mcmc_w_init_fun_2 <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_mcmc_w_init_fun_2$init()
 #> [[1]]

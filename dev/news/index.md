@@ -739,7 +739,7 @@
 #### New features
 
 - CSV reading is now faster by using
-  [`data.table::fread()`](https://rdatatable.gitlab.io/data.table/reference/fread.html).
+  [`data.table::fread()`](https://rdrr.io/pkg/data.table/man/fread.html).
   ([\#318](https://github.com/stan-dev/cmdstanr/issues/318))
 
 - [`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)

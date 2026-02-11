@@ -159,10 +159,10 @@ the returned list also includes the following components:
 fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
-#> [1] "/tmp/Rtmp17Mk1I/logistic-202601132125-1-3f08c2.csv"
-#> [2] "/tmp/Rtmp17Mk1I/logistic-202601132125-2-3f08c2.csv"
-#> [3] "/tmp/Rtmp17Mk1I/logistic-202601132125-3-3f08c2.csv"
-#> [4] "/tmp/Rtmp17Mk1I/logistic-202601132125-4-3f08c2.csv"
+#> [1] "/tmp/RtmpqiZtfq/logistic-202602110020-1-3f06d2.csv"
+#> [2] "/tmp/RtmpqiZtfq/logistic-202602110020-2-3f06d2.csv"
+#> [3] "/tmp/RtmpqiZtfq/logistic-202602110020-3-3f06d2.csv"
+#> [4] "/tmp/RtmpqiZtfq/logistic-202602110020-4-3f06d2.csv"
 
 # Creating fitting model objects
 
@@ -184,7 +184,7 @@ str(x)
 #>   ..$ stan_version_major  : num 2
 #>   ..$ stan_version_minor  : num 38
 #>   ..$ stan_version_patch  : num 0
-#>   ..$ start_datetime      : chr "2026-01-13 21:25:14 UTC"
+#>   ..$ start_datetime      : chr "2026-02-11 00:20:55 UTC"
 #>   ..$ method              : chr "sample"
 #>   ..$ save_warmup         : int 1
 #>   ..$ thin                : num 1
@@ -205,7 +205,7 @@ str(x)
 #>   ..$ seed                : num 1.85e+09
 #>   ..$ refresh             : num 100
 #>   ..$ sig_figs            : num 8
-#>   ..$ profile_file        : chr "/tmp/Rtmp17Mk1I/logistic-profile-202601132125-1-542f0e.csv"
+#>   ..$ profile_file        : chr "/tmp/RtmpqiZtfq/logistic-profile-202602110020-1-542d1e.csv"
 #>   ..$ save_cmdstan_config : int 0
 #>   ..$ stanc_version       : chr "stanc3 v2.38.0"
 #>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...

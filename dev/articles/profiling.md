@@ -13,7 +13,7 @@ However, be aware that the statistical assumptions that go into a model
 are the most important factors in overall model performance. It is often
 not possible to make up for model problems with just brute force
 computation. For ideas on how to address performance of your model from
-a statistical perspective, see Gelman (2020).
+a statistical perspective, see Gelman et al. (2020).
 
 ``` r
 library(cmdstanr)
@@ -47,11 +47,11 @@ compared against the likelihood? To answer this we surround the prior
 and likelihood calculations with `profile` statements.
 
     profile("priors") {
-      target += std_normal_lpdf(beta);
-      target += std_normal_lpdf(alpha);
+      beta ~ std_normal();
+      alpha ~ std_normal();
     }
     profile("likelihood") {
-      target += bernoulli_logit_lpmf(y | X * beta + alpha);
+      y ~ bernoulli_logit(X * beta + alpha);
     }
 
 In general we recommend using a separate `.stan` file, but for
@@ -74,11 +74,11 @@ parameters {
 }
 model {
   profile("priors") {
-    target += std_normal_lpdf(beta);
-    target += std_normal_lpdf(alpha);
+    beta ~ std_normal();
+    alpha ~ std_normal();
   }
   profile("likelihood") {
-    target += bernoulli_logit_lpmf(y | X * beta + alpha);
+    y ~ bernoulli_logit(X * beta + alpha);
   }
 }
 ')
@@ -119,11 +119,11 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140345726998336 0.634377750   0.50136862  0.133009130       52590
-    2     priors 140345726998336 0.004248062   0.00322141  0.001026652       35060
+    1 likelihood 140367735928640 0.645619880  0.509525970   0.13609391       52356
+    2     priors 140367735928640 0.004106206  0.003166846   0.00093936       34904
       no_chain_stack autodiff_calls no_autodiff_calls
-    1       35077530          17530                 1
-    2          35060          17530                 1
+    1       34921452          17452                 1
+    2          34904          17452                 1
 
 The `total_time` column is the total time spent inside a given profile
 statement. It is clear that the vast majority of time is spent in the
@@ -134,7 +134,7 @@ likelihood function.
 Stan’s specialized glm functions can be used to make models like this
 faster. In this case the likelihood can be replaced with
 
-    target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
+    y ~ bernoulli_logit_glm(X, alpha, beta);
 
 We’ll keep the same [`profile()`](https://rdrr.io/r/stats/profile.html)
 statements so that the profiling information for the new model is
@@ -154,11 +154,11 @@ parameters {
 }
 model {
   profile("priors") {
-    target += std_normal_lpdf(beta);
-    target += std_normal_lpdf(alpha);
+    beta ~ std_normal();
+    alpha ~ std_normal();
   }
   profile("likelihood") {
-    target += bernoulli_logit_glm_lpmf(y | X, alpha, beta);
+    y ~ bernoulli_logit_glm(X, alpha, beta);
   }
 }
 ')
@@ -174,15 +174,15 @@ fit_glm$profiles()
 ```
 
     [[1]]
-            name       thread_id total_time forward_time reverse_time chain_stack
-    1 likelihood 139801615202112 0.42305951  0.421812150  0.001247363       51369
-    2     priors 139801615202112 0.00412434  0.003032132  0.001092208       34246
+            name       thread_id  total_time forward_time reverse_time chain_stack
+    1 likelihood 140139670579008 0.425716550  0.424718720  0.000997823       51321
+    2     priors 140139670579008 0.003657078  0.002760225  0.000896853       34214
       no_chain_stack autodiff_calls no_autodiff_calls
-    1          17123          17123                 1
-    2          34246          17123                 1
+    1          17107          17107                 1
+    2          34214          17107                 1
 
-We can see from the `total_time` column that this is much faster than
-the previous model.
+We can see from the `total_time` column that the likelihood computation
+is faster than in the previous model.
 
 ### Per-gradient timings, and memory usage
 
@@ -207,7 +207,7 @@ per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.618812e-05 2.423310e-07
+    [1] 3.699403e-05 2.352857e-07
 
 ### Accessing and saving the profile files
 
@@ -220,7 +220,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/Rtmpxjsd81/model_6580008f67848265f3dfd0e7ae3b0600-profile-202601132126-1-806c82.csv"
+    [1] "/tmp/RtmpgyqDui/model_580e4657b49f155a37081bdfaae83f92-profile-202602110022-1-806aa5.csv"
 
 These can be saved to a more permanent location with the
 `$save_profile_files()` method.
