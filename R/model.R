@@ -1233,8 +1233,8 @@ sample <- function(data = NULL,
       # so all chains must be combined into a single process bar.
 
       # Calculate a total number of steps for progress as
-      # (chains*(iter_warmup+iter_sampling)). We will update the progress bar
-      # by 'refresh' steps each time.
+      # (chains*(iter_warmup+iter_sampling)). 
+      # We will update the progress bar by 'refresh' steps each time.
 
       # As all the arguments to CmdStan can be NULL, we need to reproduce the
       # defaults here manually. 
@@ -1244,7 +1244,8 @@ sample <- function(data = NULL,
       n_chains <- ifelse(is.null(chains), 1, chains)
       n_steps <- (n_chains*(n_samples+n_warmup))
 
-      progress_bar <- progressr::progressor(steps=n_steps, auto_finish=FALSE)
+      progress_bar <- progressr::progressor(steps=n_steps, auto_finish=TRUE)
+
     }
     else {
       warning("'show_progress_bar=TRUE' requires the 'progressr' package. Please install 'progressr'.")
@@ -1252,13 +1253,15 @@ sample <- function(data = NULL,
   }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
+    iter_warmup = checkmate::assert_integerish(iter_warmup, lower = 1, len = 1),
+    iter_sampling = checkmate::assert_integerish(iter_sampling, lower = 1, len = 1),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
     progress_bar = progress_bar,
     suppress_iteration_messages = suppress_iteration_messages,
-    refresh = ifelse(is.null(refresh), 100, refresh)
+    refresh = refresh
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {

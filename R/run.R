@@ -511,7 +511,7 @@ check_target_exe <- function(exe) {
     }
     procs$check_finished()
   }
-  # Ensure that the progress bar is closed, if created.
+  # Ensure at this point that any created progress bar is closed.
   if(!is.null(private$progress_bar_)){
     private$progress_bar_(type="finish")
   }
@@ -706,17 +706,23 @@ CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
     initialize = function(num_procs,
+                          iter_warmup,
+                          iter_sampling,
                           parallel_procs = NULL,
                           threads_per_proc = NULL,
                           show_stderr_messages = TRUE,
                           show_stdout_messages = TRUE,
                           progress_bar = NULL,
                           suppress_iteration_messages = NULL,
-                          refresh = 100 ) {
+                          refresh = NULL ) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
+      checkmate::assert_integerish(iter_warmup, lower = 1, len = 1, any.missing = FALSE)
+      checkmate::assert_integerish(iter_sampling, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
       checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
+      private$iter_warmup_ <- as.integer(iter_warmup)
+      private$iter_sampling_ <- as.integer(iter_sampling)
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
       } else {
@@ -734,18 +740,26 @@ CmdStanProcs <- R6::R6Class(
       private$show_stderr_messages_ <- show_stderr_messages
       private$show_stdout_messages_ <- show_stdout_messages
       private$progress_bar_ <- progress_bar
-      # If 'progress_bar' is set, suppress iteration messages by default.
-      # If 'suppress_iteration_messages' is explicitly set, honour that setting.
-      # Do not suppress iteration messages by default.
-      if(!is.null(progress_bar)) {
-        private$suppress_iteration_messages_ <- TRUE
-      } else {
+     
+      # Defaults when enabling the progress bar:
+      # - If 'progress_bar' is set, suppress iteration messages;
+      # - if `progress_bar` is unset, do not suppress iteration messages;
+      # - if 'suppress_iteration_messages' is set explicitly, honour that setting.
+      if(is.null(progress_bar)) {
         private$suppress_iteration_messages_ <- FALSE
+      } else {
+        private$suppress_iteration_messages_ <- TRUE
       }
       if(!is.null(suppress_iteration_messages)) {
         private$suppress_iteration_messages_ <- suppress_iteration_messages
       }
-      private$refresh_ <- refresh
+
+      if(is.null(refresh)) {
+        # Default to Stan default of 100 if refresh not set explicitly.
+        private$refresh_ <- 100
+      } else {
+        private$refresh_ <- refresh
+      }
       invisible(self)
     },
     show_stdout_messages = function () {
@@ -765,6 +779,12 @@ CmdStanProcs <- R6::R6Class(
     },
     num_procs = function() {
       private$num_procs_
+    },
+    iter_warmup = function() {
+      privatea$iter_warmup_
+    },
+    iter_sampling = function() {
+      private$iter_sampling_
     },
     parallel_procs = function() {
       private$parallel_procs_
@@ -991,6 +1011,8 @@ CmdStanProcs <- R6::R6Class(
     processes_ = NULL, # will be list of processx::process objects
     proc_ids_ = integer(),
     num_procs_ = integer(),
+    iter_warmup_ = integer(),
+    iter_sampling_ = integer(),
     parallel_procs_ = integer(),
     active_procs_ = integer(),
     threads_per_proc_ = integer(),
@@ -1085,11 +1107,41 @@ CmdStanMCMCProcs <- R6::R6Class(
           # Update progress bar 
           if (!ignore_line && !is.null(private$progress_bar_)) {
             # Pass the current output line to the progress bar as a message,
-            # but only update the actual progress if the current line is an
+            # but only update the progress bar if the current line is an
             # iteration message.
             progress_amount <- 0
             if(grepl("Iteration:", line, perl = TRUE)) {
-              progress_amount <- private$refresh_
+              # Calculating the amount by which to increment the progress bar
+              # is more complicated than it initially seems, due to occasional
+              # extra or awkward iteration reporting messages when starting
+              # sampling, moving from warmup to sampling, reaching the end of
+              # sampling where the number of samples is not a multiple of the
+              # refresh_rate.
+
+              # Strategy: 
+              # If the line's iteration value is divisible by refresh_rate, or
+              # is the final sampling step, update the progress bar by
+              # refresh_rate.
+              
+              # Additionally, when moving from warmup to sampling, iterations
+              # are reported starting from a baseline of the number of warmup
+              # iterations. (For example, if refresh_rate is 12 and iter_warmup
+              # is 100, the first reported iteration for sampling will be 112,
+              # not 108.)
+              
+              # Get the current iteration count.
+              # Subtract iter_warmup if greater than that.
+              iter_current <- as.numeric(gsub( ".*Iteration:\\s*([0-9]+) \\/.*", "\\1", line, perl=TRUE ))
+              if( iter_current > private$iter_warmup_ ) {
+                iter_current <- iter_current - private$iter_warmup_
+              }
+
+              # Update progress bar if the iteration is a multiple of the
+              # refresh rate, or is the final sampling iteration.
+              if(((iter_current %% private$refresh_) == 0) |
+                 iter_current == private$iter_warmup_ + private$iter_sampling_) {
+                progress_amount <- private$refresh_
+              } 
             }
             private$progress_bar_(amount=progress_amount, message=line)
           }
