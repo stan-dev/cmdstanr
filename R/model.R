@@ -1253,8 +1253,8 @@ sample <- function(data = NULL,
   }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
-    iter_warmup = checkmate::assert_integerish(iter_warmup, lower = 1, len = 1),
-    iter_sampling = checkmate::assert_integerish(iter_sampling, lower = 1, len = 1),
+    iter_warmup = checkmate::assert_integerish(iter_warmup, lower = 1, len = 1, null.ok = TRUE),
+    iter_sampling = checkmate::assert_integerish(iter_sampling, lower = 1, len = 1, null.ok = TRUE),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,

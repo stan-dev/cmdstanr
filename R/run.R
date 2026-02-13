@@ -706,8 +706,8 @@ CmdStanProcs <- R6::R6Class(
   classname = "CmdStanProcs",
   public = list(
     initialize = function(num_procs,
-                          iter_warmup,
-                          iter_sampling,
+                          iter_warmup = NULL,
+                          iter_sampling = NULL,
                           parallel_procs = NULL,
                           threads_per_proc = NULL,
                           show_stderr_messages = TRUE,
@@ -716,13 +716,22 @@ CmdStanProcs <- R6::R6Class(
                           suppress_iteration_messages = NULL,
                           refresh = NULL ) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
-      checkmate::assert_integerish(iter_warmup, lower = 1, len = 1, any.missing = FALSE)
-      checkmate::assert_integerish(iter_sampling, lower = 1, len = 1, any.missing = FALSE)
+      checkmate::assert_integerish(iter_warmup, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE )
+      checkmate::assert_integerish(iter_sampling, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE )
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
       checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
-      private$iter_warmup_ <- as.integer(iter_warmup)
-      private$iter_sampling_ <- as.integer(iter_sampling)
+      if (is.null(iter_warmup)) {
+        private$iter_warmup_ <- 1000
+      } else {
+        private$iter_warmup_ <- as.integer(iter_warmup)
+      }
+      if (is.null(iter_sampling)) {
+        private$iter_sampling_ <- 1000
+      } else {
+        private$iter_sampling_ <- as.integer(iter_sampling)
+      }
+
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
       } else {
