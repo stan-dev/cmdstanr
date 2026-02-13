@@ -715,12 +715,6 @@ validate_cmdstan_args <- function(self) {
   }
   validate_init(self$init, num_inits)
   validate_seed(self$seed, num_procs)
-  if (!is.null(self$opencl_ids)) {
-    if (cmdstan_version() < "2.26") {
-      stop("Runtime selection of OpenCL devices is only supported with CmdStan version 2.26 or newer.", call. = FALSE)
-    }
-    checkmate::assert_vector(self$opencl_ids, len = 2)
-  }
   invisible(TRUE)
 }
 
