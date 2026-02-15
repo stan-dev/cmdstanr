@@ -1086,18 +1086,18 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
 #'
 register_default_progress_handler <- function(verbose=TRUE) {
   # Require both the progressr and cli packages.
-  if(requireNamespace("progressr", quietly = TRUE) & requireNamespace("cli", quietly = TRUE)) {
+  if(requireNamespace("progressr", quietly = TRUE) && requireNamespace("cli", quietly = TRUE)) {
 
     progressr::handlers(global=TRUE)
     progressr::handlers("cli")
 
     # Progress bar options
-    options( cli.spinner = "moon",
+    options(cli.spinner = "moon",
             cli.progress_show_after = 0,
             cli.progress_clear = FALSE )
 
     # Default informative progress output for sampling
-    progressr::handlers( progressr::handler_cli(
+    progressr::handlers(progressr::handler_cli(
                           format = "{cli::pb_spin} Progress: |{cli::pb_bar}| {cli::pb_current}/{cli::pb_total} | {cli::pb_percent} | ETA: {cli::pb_eta}",
                           clear = FALSE
                           ))

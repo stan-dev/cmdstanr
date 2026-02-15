@@ -35,4 +35,10 @@
 #'
 "_PACKAGE"
 
+## usethis namespace: start
+#' @importFrom progressr handlers
+#' @importFrom progressr handler_cli
+## usethis namespace: end
+NULL
+
 if (getRversion() >= "2.15.1")  utils::globalVariables(c("self", "private", "super"))

@@ -1121,7 +1121,7 @@ CmdStanModel$set("public", name = "format", value = format)
 #'   responsible for registering a handler to display the progress bar. A
 #'   default handler, using the `cli` package, can be registered via the
 #'   `cmdstanr::register_default_progress_handler()`. Default: FALSE.
-#' @param suppress_iteration_messages: Suppress CmdStan output lines reporting
+#' @param suppress_iteration_messages Suppress CmdStan output lines reporting
 #'   iterations, intended for use with the `show_progress_bar` argument. Defaults
 #'   to the value of `show_progress_bar`.
 #' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize,validate_csv

@@ -311,11 +311,11 @@ responsible for registering a handler to display the progress bar. A
 default handler, using the \code{cli} package, can be registered via the
 \code{cmdstanr::register_default_progress_handler()}. Default: FALSE.}
 
-\item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
-
-\item{suppress_iteration_messages:}{Suppress CmdStan output lines reporting
+\item{suppress_iteration_messages}{Suppress CmdStan output lines reporting
 iterations, intended for use with the \code{show_progress_bar} argument. Defaults
 to the value of \code{show_progress_bar}.}
+
+\item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

@@ -45,9 +45,11 @@ Imports:
     processx (>= 3.5.0),
     R6 (>= 2.4.0),
     withr (>= 2.5.0),
-    rlang (>= 0.4.7)
+    rlang (>= 0.4.7),
+    progressr
 Suggests:
     bayesplot,
+    cli,
     fs,
     ggplot2,
     knitr (>= 1.37),
