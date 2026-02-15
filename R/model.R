@@ -1116,6 +1116,14 @@ CmdStanModel$set("public", name = "format", value = format)
 #'
 #' @template model-common-args
 #' @template model-sample-args
+#' @param show_progress_bar (logical). If TRUE, registers a progress bar to
+#'   display sampling progress via the `progressr` framework. The user is
+#'   responsible for registering a handler to display the progress bar. A
+#'   default handler, using the `cli` package, can be registered via the
+#'   `cmdstanr::register_default_progress_handler()`. Default: FALSE.
+#' @param suppress_iteration_messages: Suppress CmdStan output lines reporting
+#'   iterations, intended for use with the `show_progress_bar` argument. Defaults
+#'   to the value of `show_progress_bar`.
 #' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize,validate_csv
 #'   Deprecated and will be removed in a future release.
 #'
@@ -1227,7 +1235,7 @@ sample <- function(data = NULL,
   # Pass default value for refresh
   progress_bar <- NULL
   if (show_progress_bar) {
-    if(require(progressr)) {
+    if(requireNamespace("progressr", quietly = TRUE)) {
       
       # progressr only supports single-line progress bars at time of writing,
       # so all chains must be combined into a single process bar.
