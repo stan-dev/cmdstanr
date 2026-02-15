@@ -1072,3 +1072,40 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
   }
   invisible(NULL)
 }
+
+#' Register a default progress bar handler for sampling
+#'
+#' Create a default progress bar for CmdStan sampling operations, and register
+#' it as the default global handler for progressr updates. Requires `progressr`
+#' for the progress framework, and `cli` for the default progress bar handler.
+#'
+#' @export
+#'
+#' @param verbose (logical) Report creation of progress bar to stdout?
+#' The default is `TRUE`. 
+#'
+register_default_progress_handler <- function(verbose=TRUE) {
+  # Require both the progressr and cli packages.
+  if(requireNamespace("progressr", quietly = TRUE) && requireNamespace("cli", quietly = TRUE)) {
+
+    progressr::handlers(global=TRUE)
+    progressr::handlers("cli")
+
+    # Progress bar options
+    options(cli.spinner = "moon",
+            cli.progress_show_after = 0,
+            cli.progress_clear = FALSE )
+
+    # Default informative progress output for sampling
+    progressr::handlers(progressr::handler_cli(
+                          format = "{cli::pb_spin} Progress: |{cli::pb_bar}| {cli::pb_current}/{cli::pb_total} | {cli::pb_percent} | ETA: {cli::pb_eta}",
+                          clear = FALSE
+                          ))
+    if(verbose) {
+      message("Default progress bar registered.")
+    }
+  } else {
+    warning("The 'progressr' library is required to enable a progress bar. The default progress bar uses the 'cli' library.")
+  }
+  invisible(NULL)
+}

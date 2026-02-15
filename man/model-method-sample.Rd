@@ -39,6 +39,8 @@ sample(
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = NULL,
   save_cmdstan_config = NULL,
+  show_progress_bar = FALSE,
+  suppress_iteration_messages = NULL,
   cores = NULL,
   num_cores = NULL,
   num_chains = NULL,
@@ -302,6 +304,16 @@ is \code{TRUE}. This option is only available in CmdStan 2.34.0 and later.}
 with argument \code{"output save_config=1"} to save a json file which contains
 the argument tree and extra information (equivalent to the output CSV file
 header). This option is only available in CmdStan 2.34.0 and later.}
+
+\item{show_progress_bar}{(logical). If TRUE, registers a progress bar to
+display sampling progress via the \code{progressr} framework. The user is
+responsible for registering a handler to display the progress bar. A
+default handler, using the \code{cli} package, can be registered via the
+\code{cmdstanr::register_default_progress_handler()}. Default: FALSE.}
+
+\item{suppress_iteration_messages}{Suppress CmdStan output lines reporting
+iterations, intended for use with the \code{show_progress_bar} argument. Defaults
+to the value of \code{show_progress_bar}.}
 
 \item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
 }

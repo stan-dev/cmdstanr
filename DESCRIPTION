@@ -48,10 +48,12 @@ Imports:
     rlang (>= 0.4.7)
 Suggests:
     bayesplot,
+    cli,
     fs,
     ggplot2,
     knitr (>= 1.37),
     loo (>= 2.0.0),
+    progressr,
     qs2,
     rmarkdown,
     testthat (>= 2.1.0),
