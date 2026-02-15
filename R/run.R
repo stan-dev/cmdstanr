@@ -716,8 +716,8 @@ CmdStanProcs <- R6::R6Class(
                           suppress_iteration_messages = NULL,
                           refresh = NULL ) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
-      checkmate::assert_integerish(iter_warmup, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE )
-      checkmate::assert_integerish(iter_sampling, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE )
+      checkmate::assert_integerish(iter_warmup, lower = 0, len = 1, any.missing = FALSE, null.ok = TRUE )
+      checkmate::assert_integerish(iter_sampling, lower = 0, len = 1, any.missing = FALSE, null.ok = TRUE )
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
       checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
       private$num_procs_ <- as.integer(num_procs)
