@@ -877,10 +877,15 @@ CmdStanProcs <- R6::R6Class(
     },
     mark_proc_start = function(id) {
       private$proc_state_[[id]] <- 1
+      private$proc_start_time_[[id]] <- as.double(Sys.time())
       private$proc_output_[[id]] <- c("")
       invisible(self)
     },
     mark_proc_stop = function(id) {
+      if (private$proc_start_time_[[id]] > 0) {
+        private$proc_total_time_[[id]] <-
+          as.double(Sys.time()) - private$proc_start_time_[[id]]
+      }
       if (private$proc_state_[[id]] == 5) {
         private$proc_state_[[id]] <- 6
       } else {
