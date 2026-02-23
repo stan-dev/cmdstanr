@@ -150,3 +150,10 @@ test_that("no error when checking estimates after failure", {
   expect_silent(fit$summary()) # no error
 })
 
+test_that("no output with show_messages = FALSE", {
+  output <- utils::capture.output(
+    fit <- mod$pathfinder(data = data_list, show_messages = FALSE, seed = 123)
+  )
+  expect_equal(length(output), 0)
+})
+

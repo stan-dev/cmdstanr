@@ -14,7 +14,9 @@ generate_quantities(
   sig_figs = NULL,
   parallel_chains = getOption("mc.cores", 1),
   threads_per_chain = NULL,
-  opencl_ids = NULL
+  opencl_ids = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE
 )
 }
 \arguments{
@@ -103,6 +105,19 @@ the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/r
 the OpenCL device to use for fitting. The model must be compiled with
 \code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
 effect.}
+
+\item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
+during the execution process, such as iteration numbers and elapsed times.
+If the output is silenced then the \code{\link[=fit-method-output]{$output()}} method
+of the resulting fit object can be used to display the silenced messages.}
+
+\item{show_exceptions}{(logical) When \code{TRUE} (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish to silence these messages, but this is not usually
+recommended unless you are very confident that the model is correct up to
+numerical error. If the messages are silenced then the
+\code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
+used to display the silenced messages.}
 }
 \value{
 A \code{\link{CmdStanGQ}} object.
