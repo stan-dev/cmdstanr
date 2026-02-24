@@ -88,9 +88,8 @@ makefile flags be appended to the end of the existing \code{make/local} file?
 The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
 
 \item{fix}{For \code{check_cmdstan_toolchain()}, should CmdStanR attempt to fix
-any detected toolchain problems? Currently this option is only available on
-Windows. The default is \code{FALSE}, in which case problems are only reported
-along with suggested fixes.}
+any detected toolchain problems? The default is \code{FALSE}.
+This argument is currently ignored and retained for compatibility.}
 }
 \value{
 For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
@@ -118,16 +117,12 @@ should typically be followed by calling \code{rebuild_cmdstan()}.
 
 The \code{check_cmdstan_toolchain()} function attempts to check for the required
 C++ toolchain. It is called internally by \code{install_cmdstan()} but can also
-be called directly by the user. On Windows only, calling the function with
-the \code{fix = TRUE} argument will attempt to install the necessary toolchain
-components if they are not found. For Windows users with RTools and CmdStan
-versions >= 2.35 no additional toolchain configuration is required.
+be called directly by the user.
 
-NOTE: When installing CmdStan on Windows with RTools and CmdStan versions
-prior to 2.35.0, the above additional toolchain configuration
-is still required. To enable this configuration, set the environment variable
-\code{CMDSTANR_USE_MSYS_TOOLCHAIN} to 'true' and call
-\code{check_cmdstan_toolchain(fix = TRUE)}.
+CmdStan versions older than 2.35.0 are no longer supported by cmdstanr.
+If you need to work with an older CmdStan version, install an older cmdstanr
+release from GitHub, e.g.
+\code{remotes::install_github("stan-dev/cmdstanr@v0.8.1")}.
 }
 \examples{
 \dontrun{

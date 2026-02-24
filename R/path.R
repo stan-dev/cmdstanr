@@ -43,8 +43,19 @@ set_cmdstan_path <- function(path = NULL) {
   }
   if (dir.exists(path)) {
     path <- absolute_path(path)
+    version <- read_cmdstan_version(path)
+    if (!is.null(version) && !is_supported_cmdstan_version(version)) {
+      warning(
+        "CmdStan path not set. CmdStan v", version, " is no longer supported. ",
+        "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer.",
+        call. = FALSE
+      )
+      .cmdstanr$PATH <- NULL
+      .cmdstanr$VERSION <- NULL
+      return(invisible(path))
+    }
     .cmdstanr$PATH <- path
-    .cmdstanr$VERSION <- read_cmdstan_version(path)
+    .cmdstanr$VERSION <- version
     .cmdstanr$WSL <- grepl("//wsl$", path, fixed = TRUE)
     message("CmdStan path set to: ", path)
   } else {
@@ -98,6 +109,21 @@ cmdstan_tempdir <- function() {
 stop_no_path <- function() {
   stop("CmdStan path has not been set yet. See ?set_cmdstan_path.",
        call. = FALSE)
+}
+
+cmdstan_min_version <- function() {
+  "2.35.0"
+}
+
+is_supported_cmdstan_version <- function(version) {
+  if (is.null(version)) {
+    return(FALSE)
+  }
+  cmp <- suppressWarnings(utils::compareVersion(as.character(version), cmdstan_min_version()))
+  if (is.na(cmp)) {
+    return(FALSE)
+  }
+  cmp >= 0
 }
 
 #' cmdstan_default_install_path

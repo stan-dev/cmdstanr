@@ -58,18 +58,6 @@ os_is_linux <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Linux")
 }
 
-is_rtools43_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "3.0"
-}
-
-is_rtools42_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0" && R.version$minor < "3.0"
-}
-
-is_rtools40_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor < "2.0"
-}
-
 is_ucrt_toolchain <- function() {
   os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0"
 }
@@ -94,14 +82,31 @@ arch_is_aarch64 <- function() {
 # Returns the type of make command to use to compile depending on the OS
 # First checks if $MAKE is set, otherwise falls back to system-specific default
 make_cmd <- function() {
+  warn_if_ignored_msys_toolchain_env()
   if (Sys.getenv("MAKE") != "") {
     Sys.getenv("MAKE")
-  } else if (os_is_windows() && !os_is_wsl() &&
-        (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "" || isTRUE(cmdstan_version(error_on_NA=FALSE) < "2.35.0"))) {
-    "mingw32-make.exe"
   } else {
     "make"
   }
+}
+
+warn_if_ignored_msys_toolchain_env <- function() {
+  if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "") {
+    return(invisible(NULL))
+  }
+  # Keep this warning to once per R session because this helper is called
+  # from high-frequency internal paths (e.g., make/toolchain resolution).
+  if (isTRUE(.cmdstanr$WARNED_IGNORED_MSYS_TOOLCHAIN)) {
+    return(invisible(NULL))
+  }
+  warning(
+    "Environment variable 'CMDSTANR_USE_MSYS_TOOLCHAIN' is deprecated and ignored. ",
+    "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer.\n",
+    "If you need legacy MSYS toolchain support, use an older cmdstanr release.",
+    call. = FALSE
+  )
+  .cmdstanr$WARNED_IGNORED_MSYS_TOOLCHAIN <- TRUE
+  invisible(NULL)
 }
 
 # Returns the stanc exe path depending on the OS

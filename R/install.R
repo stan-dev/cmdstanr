@@ -20,16 +20,11 @@
 #'
 #'   The `check_cmdstan_toolchain()` function attempts to check for the required
 #'   C++ toolchain. It is called internally by `install_cmdstan()` but can also
-#'   be called directly by the user. On Windows only, calling the function with
-#'   the `fix = TRUE` argument will attempt to install the necessary toolchain
-#'   components if they are not found. For Windows users with RTools and CmdStan
-#'   versions >= 2.35 no additional toolchain configuration is required.
+#'   be called directly by the user.
 #'
-#'   NOTE: When installing CmdStan on Windows with RTools and CmdStan versions
-#'   prior to 2.35.0, the above additional toolchain configuration
-#'   is still required. To enable this configuration, set the environment variable
-#'   `CMDSTANR_USE_MSYS_TOOLCHAIN` to 'true' and call
-#'   `check_cmdstan_toolchain(fix = TRUE)`.
+#'   CmdStan versions older than 2.35.0 are no longer supported. If you need to
+#'   work with an older CmdStan version we recommend installing an older
+#'   CmdStanR release from GitHub.
 #'
 #' @export
 #' @param dir (string) The path to the directory in which to install CmdStan.
@@ -57,11 +52,11 @@
 #' @param release_url (string) The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
 #'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
-#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"`.
+#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param release_file (string) A file path to a CmdStan release tar.gz file
 #'   downloaded from the releases page: <https://github.com/stan-dev/cmdstan/releases>.
-#'   For example: `release_file=""./cmdstan-2.33.1.tar.gz"`. If `release_file` is
+#'   For example: `release_file=""./cmdstan-2.35.0.tar.gz"`. If `release_file` is
 #'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
 #'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
@@ -98,6 +93,7 @@ install_cmdstan <- function(dir = NULL,
                             cpp_options = list(),
                             check_toolchain = TRUE,
                             wsl = FALSE) {
+  warn_if_ignored_msys_toolchain_env()
   # Use environment variable to record WSL usage throughout install,
   # post-installation will simply check for 'wsl-' prefix in cmdstan path
   if (isTRUE(wsl)) {
@@ -110,15 +106,6 @@ install_cmdstan <- function(dir = NULL,
     }
   } else {
     .cmdstanr$WSL <- FALSE
-  }
-  if (os_is_windows() && !os_is_wsl() && isTRUE(version < "2.35.0")) {
-    # RTools can be used unmodified with CmdStan 2.35+
-    # For new installs of older versions, users need to install mingw32-make and MSYS gcc
-    if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "") {
-      stop("CmdStan versions prior to 2.35.0 require additional toolchain configuration on Windows.\n",
-            "Please set the environment variable CMDSTANR_USE_MSYS_TOOLCHAIN to 'true' and \n",
-            "call `check_cmdstan_toolchain(fix = TRUE)` before installing CmdStan.", call. = FALSE)
-    }
   }
   if (check_toolchain) {
     check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
@@ -149,6 +136,7 @@ install_cmdstan <- function(dir = NULL,
     release_url <- release_file
   }
   if (!is.null(version) && is.null(release_file)) {
+    assert_supported_requested_cmdstan_version(version, source = "version")
     if (!is.null(release_url)) {
       warning("version and release_url shouldn't both be specified!",
               "\nrelease_url will be ignored.", call. = FALSE)
@@ -158,6 +146,10 @@ install_cmdstan <- function(dir = NULL,
                           version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
   }
   if (!is.null(release_url)) {
+    release_ver <- extract_cmdstan_version_from_archive_name(release_url)
+    if (!is.null(release_ver)) {
+      assert_supported_requested_cmdstan_version(release_ver, source = "release_url/release_file")
+    }
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
            "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
@@ -173,6 +165,7 @@ install_cmdstan <- function(dir = NULL,
     dest_file <- file.path(dir, tar_gz_file)
   } else {
     ver <- latest_released_version(quiet = quiet)
+    assert_supported_requested_cmdstan_version(ver, source = "latest release")
     message("* Latest CmdStan release is v", ver)
     cmdstan_ver <- paste0("cmdstan-", ver)
     tar_gz_file <- paste0(cmdstan_ver, cmdstan_arch_suffix(ver), ".tar.gz")
@@ -226,6 +219,10 @@ install_cmdstan <- function(dir = NULL,
       stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
     }
     file.remove(dest_file)
+  }
+  extracted_version <- suppressWarnings(read_cmdstan_version(dir_cmdstan))
+  if (!is.null(extracted_version)) {
+    assert_supported_requested_cmdstan_version(extracted_version, source = "archive")
   }
 
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
@@ -349,18 +346,16 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 #' @rdname install_cmdstan
 #' @export
 #' @param fix For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix
-#'   any detected toolchain problems? Currently this option is only available on
-#'   Windows. The default is `FALSE`, in which case problems are only reported
-#'   along with suggested fixes.
+#'   any detected toolchain problems? The default is `FALSE`.
+#'   This argument is currently ignored and retained for compatibility.
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
+  warn_if_ignored_msys_toolchain_env()
   if (os_is_windows()) {
     if (os_is_wsl()) {
       check_wsl_toolchain()
-    } else if (R.version$major >= "4") {
-      check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     } else {
-      check_rtools35_windows_toolchain(fix = fix, quiet = quiet)
+      check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
     }
   } else {
     check_unix_make()
@@ -575,36 +570,6 @@ build_status_ok <- function(process_log, quiet = FALSE) {
   TRUE
 }
 
-install_toolchain <- function(quiet = FALSE) {
-  rtools_usr_bin <- file.path(rtools4x_home_path(), "usr", "bin")
-  rtools_version <- paste0("Rtools", rtools4x_version())
-  if (is_ucrt_toolchain()) {
-    install_pkgs <- c("mingw-w64-ucrt-x86_64-make", "mingw-w64-ucrt-x86_64-gcc")
-    if (!quiet) message(paste0("Installing mingw32-make and g++ with ", rtools_version))
-  } else {
-    install_pkgs <- "mingw-w64-x86_64-make"
-    if (!quiet) message(paste0("Installing mingw32-make with ", rtools_version))
-  }
-  if (!checkmate::test_directory(rtools_usr_bin, access = "w")) {
-    warning("No write permissions in the RTools folder. This might prevent installing the toolchain.",
-            " Consider changing permissions or reinstalling RTools in a different folder.", call. = FALSE)
-  }
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var()
-    ),
-    processx::run(
-      "pacman",
-      args = c("-Sy", install_pkgs, "--noconfirm"),
-      wd = rtools_usr_bin,
-      error_on_status = TRUE,
-      echo_cmd = is_verbose_mode(),
-      echo = is_verbose_mode()
-    )
-  )
-  invisible(NULL)
-}
-
 check_wsl_toolchain <- function() {
   if (!wsl_installed()) {
     stop("\n", "A WSL distribution is not installed or is not accessible.",
@@ -638,9 +603,8 @@ check_wsl_toolchain <- function() {
 }
 
 check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
-  rtools_path <- rtools_home_path()
+  rtools_path <- rtools4x_home_path()
   rtools_version <- paste0("Rtools", rtools4x_version())
-  toolchain_path <- rtools4x_toolchain_path()
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
   # we assume that RTools 40 is not installed.
   if (!nzchar(rtools_path)) {
@@ -660,92 +624,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       call. = FALSE
     )
   }
-  # No additional utilities/toolchains are needed with RTools4
-  if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "") {
-    return(invisible(NULL))
-  }
-  if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
-      !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
-    if (!fix) {
-      stop(
-        "\n", rtools_version, " installation found but the toolchain was not installed.",
-        "\nRun cmdstanr::check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-        call. = FALSE
-      )
-    } else {
-      install_toolchain(quiet = quiet)
-      if (!is_toolchain_installed(app = "g++", path = toolchain_path) ||
-          !is_toolchain_installed(app = "mingw32-make", path = toolchain_path)) {
-        stop(
-          "\nInstallation of the toolchain failed. Try reinstalling RTools and trying again.",
-          "\nIf the issue persists, open a bug report at https://github.com/stan-dev/cmdstanr.",
-          call. = FALSE
-        )
-      }
-      return(invisible(NULL))
-    }
-  }
-}
-
-check_rtools35_windows_toolchain <- function(fix = FALSE,
-                                             quiet = FALSE,
-                                             paths = NULL) {
-  if (is.null(paths)) {
-    paths <- c(file.path("C:/", "Rtools"), file.path("C:/", "Rtools35"))
-  }
-  mingw32_make_path <- dirname(Sys.which("mingw32-make"))
-  gpp_path <- dirname(Sys.which("g++"))
-  # If mingw32-make and g++ are not found, we check typical RTools 3.5 folders.
-  # If found, we fix PATH, otherwise we recommend the user to install RTools 3.5.
-  if (!nzchar(mingw32_make_path) || !nzchar(gpp_path)) {
-    rtools_path <- Sys.getenv("RTOOLS35_HOME")
-    if (!nzchar(rtools_path)) {
-      found_rtools <- FALSE
-      for (p in paths) {
-        if (dir.exists(p)) {
-          if (found_rtools) {
-            stop(
-              "\nMultiple RTools 3.5 installations found. Please select the installation to use by running",
-              "\n\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
-              "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(fix = TRUE)'.",
-              call. = FALSE
-            )
-          } else {
-            rtools_path <- p
-            found_rtools <- TRUE
-          }
-        }
-      }
-    }
-    if (nzchar(rtools_path)) {
-      if (!fix) {
-        stop(
-          "\nRTools installation found but PATH was not properly set.",
-          "\nRun check_cmdstan_toolchain(fix = TRUE) to fix the issue.",
-          call. = FALSE
-        )
-      }
-      if (!quiet) {
-        message("Writing RTools path to ~/.Renviron ...")
-      }
-      if (!nzchar(Sys.getenv("RTOOLS35_HOME"))) {
-        write(paste0("RTOOLS35_HOME=", rtools_path), file = "~/.Renviron", append = TRUE)
-        Sys.setenv(RTOOLS35_HOME = rtools_path)
-      }
-      write('PATH="${RTOOLS35_HOME}\\bin;${RTOOLS35_HOME}\\mingw_64\\bin;${PATH}"', file = "~/.Renviron", append = TRUE)
-      Sys.setenv(PATH = paste0(Sys.getenv("RTOOLS35_HOME"), "\\mingw_64\\bin;", Sys.getenv("PATH")))
-      check_rtools35_windows_toolchain(fix = FALSE, quiet = quiet)
-      return(invisible(NULL))
-    } else {
-      stop(
-        "\nA toolchain was not found. Please install RTools 3.5 and run",
-        "\n\nwrite(\'RTOOLS35_HOME=rtools35/install/path/\', file = \"~/.Renviron\", append = TRUE)",
-        "\nreplacing 'rtools35/install/path/' with the actual install path of RTools 3.5.",
-        "\n\nThen restart R and run 'cmdstanr::check_cmdstan_toolchain(fix = TRUE)'.",
-        call. = FALSE
-      )
-    }
-  }
+  invisible(NULL)
 }
 
 check_unix_make <- function() {
@@ -827,61 +706,25 @@ cmdstan_arch_suffix <- function(version = NULL) {
   paste0("-linux-", selected_arch)
 }
 
-is_toolchain_installed <- function(app, path) {
-  res <- tryCatch({
-      withr::with_path(
-        c(
-          toolchain_PATH_env_var()
-        ),
-        processx::run(
-          app,
-          args = c("--version"),
-          wd = path,
-          error_on_status = FALSE,
-          echo_cmd = is_verbose_mode(),
-          echo = is_verbose_mode()
-        )
-      )
-      app_path <- withr::with_path(
-        c(
-          toolchain_PATH_env_var()
-        ),
-        repair_path(dirname(Sys.which(app)))
-      )
-      if (normalizePath(app_path) != normalizePath(rtools4x_toolchain_path())) {
-        return(FALSE)
-      }
-      return(TRUE)
-    },
-    error = function(cond) {
-      return(FALSE)
-    }
-  )
-  res
-}
-
 toolchain_PATH_env_var <- function() {
-  path <- NULL
-  if (R.version$major == "4") {
-    rtools_home <- rtools4x_home_path()
-    path <- paste0(
-      repair_path(file.path(rtools_home, "usr", "bin")), ";",
-      rtools4x_toolchain_path()
-    )
+  if (!os_is_windows()) {
+    return(NULL)
   }
-  path
+  rtools_home <- rtools4x_home_path()
+  if (!nzchar(rtools_home)) {
+    return(NULL)
+  }
+  paste0(
+    repair_path(file.path(rtools_home, "usr", "bin")), ";",
+    rtools4x_toolchain_path()
+  )
 }
 
 rtools4x_toolchain_path <- function() {
   if (arch_is_aarch64()) {
     toolchain <- "aarch64-w64-mingw32.static.posix"
   } else {
-    if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "" ||
-        isTRUE(cmdstan_version(error_on_NA=FALSE) < "2.35.0")) {
-      toolchain <- ifelse(is_ucrt_toolchain(), "ucrt64", "mingw64")
-    } else {
-      toolchain <- "x86_64-w64-mingw32.static.posix"
-    }
+    toolchain <- "x86_64-w64-mingw32.static.posix"
   }
   repair_path(file.path(rtools4x_home_path(), toolchain, "bin"))
 }
@@ -923,13 +766,29 @@ rtools4x_home_path <- function() {
   path
 }
 
-rtools_home_path <- function() {
-  path <- NULL
-  if (R.version$major == "3") {
-    path <- Sys.getenv("RTOOLS_HOME")
+assert_supported_requested_cmdstan_version <- function(version, source = "version") {
+  if (is_supported_cmdstan_version(version)) {
+    return(invisible(NULL))
   }
-  if (R.version$major == "4") {
-    path <- rtools4x_home_path()
+  stop(
+    "Requested CmdStan ", source, " (", version, ") is unsupported. ",
+    "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer. ",
+    "If you need an older CmdStan release, install an older cmdstanr version from GitHub.",
+    call. = FALSE
+  )
+}
+
+extract_cmdstan_version_from_archive_name <- function(path_or_url) {
+  archive <- basename(path_or_url)
+  archive <- sub("\\?.*$", "", archive)
+  matches <- regmatches(
+    archive,
+    regexec("^cmdstan-([0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?)(?:-linux-[a-z0-9_]+)?\\.tar\\.gz$",
+            archive,
+            perl = TRUE)
+  )[[1]]
+  if (length(matches) >= 2) {
+    return(matches[2])
   }
-  path
+  NULL
 }

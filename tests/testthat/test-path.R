@@ -44,6 +44,25 @@ test_that("Setting path from env var is detected", {
   Sys.unsetenv("CMDSTAN")
 })
 
+test_that("Unsupported CmdStan path from env var is rejected", {
+  unset_cmdstan_path()
+  parent_dir <- file.path(tempdir(check = TRUE), "cmdstan-env-parent")
+  old_install <- file.path(parent_dir, "cmdstan-2.34.0")
+  dir.create(old_install, recursive = TRUE, showWarnings = FALSE)
+  on.exit(unlink(parent_dir, recursive = TRUE), add = TRUE)
+  on.exit(Sys.unsetenv("CMDSTAN"), add = TRUE)
+  writeLines("CMDSTAN_VERSION := 2.34.0", con = file.path(old_install, "makefile"))
+
+  Sys.setenv(CMDSTAN = parent_dir)
+  expect_warning(
+    cmdstanr_initialize(),
+    "cmdstanr now requires CmdStan v2.35.0 or newer",
+    fixed = TRUE
+  )
+  expect_null(.cmdstanr$PATH)
+  expect_null(.cmdstanr$VERSION)
+})
+
 test_that("cmdstanr_initialize() also looks for default path", {
   unset_cmdstan_path()
   cmdstanr_initialize()
@@ -88,6 +107,28 @@ test_that("Warning message is thrown if can't detect version number", {
     set_cmdstan_path(path),
     "Can't find CmdStan makefile to detect version number"
   )
+})
+
+test_that("Setting path rejects unsupported CmdStan versions", {
+  old_path <- .cmdstanr$PATH
+  old_version <- .cmdstanr$VERSION
+  on.exit({
+    .cmdstanr$PATH <- old_path
+    .cmdstanr$VERSION <- old_version
+  })
+
+  path <- file.path(tempdir(check = TRUE), "cmdstan-2.34.0")
+  dir.create(path, recursive = TRUE, showWarnings = FALSE)
+  on.exit(unlink(path, recursive = TRUE), add = TRUE)
+  writeLines("CMDSTAN_VERSION := 2.34.0", con = file.path(path, "makefile"))
+
+  expect_warning(
+    set_cmdstan_path(path),
+    "cmdstanr now requires CmdStan v2.35.0 or newer",
+    fixed = TRUE
+  )
+  expect_null(.cmdstanr$PATH)
+  expect_null(.cmdstanr$VERSION)
 })
 
 test_that("cmdstan_ext() works", {
