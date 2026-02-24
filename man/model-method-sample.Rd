@@ -40,16 +40,7 @@ sample(
   save_metric = NULL,
   save_cmdstan_config = NULL,
   show_progress_bar = FALSE,
-  suppress_iteration_messages = NULL,
-  cores = NULL,
-  num_cores = NULL,
-  num_chains = NULL,
-  num_warmup = NULL,
-  num_samples = NULL,
-  validate_csv = NULL,
-  save_extra_diagnostics = NULL,
-  max_depth = NULL,
-  stepsize = NULL
+  suppress_iteration_messages = NULL
 )
 }
 \arguments{
@@ -314,8 +305,6 @@ default handler, using the \code{cli} package, can be registered via the
 \item{suppress_iteration_messages}{Suppress CmdStan output lines reporting
 iterations, intended for use with the \code{show_progress_bar} argument. Defaults
 to the value of \code{show_progress_bar}.}
-
-\item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
