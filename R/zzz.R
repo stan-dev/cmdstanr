@@ -65,7 +65,7 @@ cmdstanr_initialize <- function() {
     }
 
   } else { # environment variable not found
-    path <- cmdstan_default_path() %||% cmdstan_default_path(old = TRUE)
+    path <- cmdstan_default_path()
     if (!is.null(path)) {
       suppressMessages(set_cmdstan_path(path))
     }

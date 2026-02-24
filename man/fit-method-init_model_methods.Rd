@@ -6,21 +6,19 @@
 \title{Compile additional methods for accessing the model log-probability function
 and parameter constraining and unconstraining.}
 \usage{
-init_model_methods(seed = 1, verbose = FALSE, hessian = FALSE)
+init_model_methods(seed = 1, verbose = FALSE)
 }
 \arguments{
 \item{seed}{(integer) The random seed to use when initializing the model.}
 
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
-
-\item{hessian}{(logical) Whether to expose the (experimental) hessian method.}
 }
 \description{
 The \verb{$init_model_methods()} method compiles and initializes the
-\code{log_prob}, \code{grad_log_prob}, \code{constrain_variables}, \code{unconstrain_variables}
-and \code{unconstrain_draws} functions. These are then available as methods of
-the fitted model object. This requires the additional \code{Rcpp} package,
-which are not required for fitting models using
+\code{log_prob}, \code{grad_log_prob}, \code{hessian}, \code{constrain_variables},
+\code{unconstrain_variables} and \code{unconstrain_draws} functions. These are then
+available as methods of the fitted model object. This requires the
+additional \code{Rcpp} package, which are not required for fitting models using
 CmdStanR.
 
 Note: there may be many compiler warnings emitted during compilation but
@@ -29,6 +27,7 @@ these can be ignored so long as they are warnings and not errors.
 \examples{
 \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
+# fit_mcmc$init_model_methods()
 }
 }
 \seealso{
