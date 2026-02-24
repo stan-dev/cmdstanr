@@ -64,12 +64,12 @@ is \code{NULL}, which downloads the latest stable release from
 \item{release_url}{(string) The URL for the specific CmdStan release or
 release candidate to install. See \url{https://github.com/stan-dev/cmdstan/releases}.
 The URL should point to the tarball (\code{.tar.gz.} file) itself, e.g.,
-\code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"}.
+\code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"}.
 If both \code{version} and \code{release_url} are specified then \code{version} will be used.}
 
 \item{release_file}{(string) A file path to a CmdStan release tar.gz file
 downloaded from the releases page: \url{https://github.com/stan-dev/cmdstan/releases}.
-For example: \verb{release_file=""./cmdstan-2.33.1.tar.gz"}. If \code{release_file} is
+For example: \verb{release_file=""./cmdstan-2.35.0.tar.gz"}. If \code{release_file} is
 specified then both \code{release_url} and \code{version} will be ignored.}
 
 \item{cpp_options}{(list) Any makefile flags/variables to be written to
@@ -119,10 +119,9 @@ The \code{check_cmdstan_toolchain()} function attempts to check for the required
 C++ toolchain. It is called internally by \code{install_cmdstan()} but can also
 be called directly by the user.
 
-CmdStan versions older than 2.35.0 are no longer supported by cmdstanr.
-If you need to work with an older CmdStan version, install an older cmdstanr
-release from GitHub, e.g.
-\code{remotes::install_github("stan-dev/cmdstanr@v0.8.1")}.
+CmdStan versions older than 2.35.0 are no longer supported. If you need to
+work with an older CmdStan version we recommend installing an older
+CmdStanR release from GitHub.
 }
 \examples{
 \dontrun{
