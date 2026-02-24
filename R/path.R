@@ -119,11 +119,11 @@ is_supported_cmdstan_version <- function(version) {
   if (is.null(version)) {
     return(FALSE)
   }
-  cmp <- suppressWarnings(utils::compareVersion(as.character(version), cmdstan_min_version()))
-  if (is.na(cmp)) {
-    return(FALSE)
-  }
-  cmp >= 0
+  cmp <- tryCatch(
+    suppressWarnings(utils::compareVersion(as.character(version), cmdstan_min_version())),
+    error = function(e) NA_integer_
+  )
+  isTRUE(cmp >= 0)
 }
 
 #' cmdstan_default_install_path
