@@ -77,6 +77,9 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
 
   for (var_name in data_names) {
     var <- data[[var_name]]
+    if (is.null(var)) {
+      stop("Variable '", var_name, "' is NULL.", call. = FALSE)
+    }
     if (!(is.numeric(var) || is.factor(var) || is.logical(var) ||
           is.data.frame(var) || is.list(var))) {
       stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
@@ -176,7 +179,10 @@ process_data <- function(data, model_variables = NULL) {
           call. = FALSE
         )
       }
-      for(var_name in names(data_variables)) {
+      for (var_name in names(data_variables)) {
+        if (is.null(data[[var_name]])) {
+          stop("Variable '", var_name, "' is NULL.", call. = FALSE)
+        }
         # distinguish between scalars and arrays/vectors of length 1
         if (length(data[[var_name]]) == 1
             && data_variables[[var_name]]$dimensions == 1) {

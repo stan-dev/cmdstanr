@@ -1,6 +1,6 @@
 #' Create a new CmdStanModel object
 #'
-#' @description \if{html}{\figure{logo.png}{options: width=25}}
+#' @description \if{html}{\figure{logo.svg}{options: width=25}}
 #'   Create a new [`CmdStanModel`] object from a file containing a Stan program
 #'   or from an existing Stan executable. The [`CmdStanModel`] object stores the
 #'   path to a Stan program and compiled executable (once created), and provides
@@ -233,7 +233,8 @@ CmdStanModel <- R6::R6Class(
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
-    variables_ = NULL
+    variables_ = NULL,
+    cmdstan_version_ = NULL
   ),
   public = list(
     functions = NULL,
@@ -271,8 +272,14 @@ CmdStanModel <- R6::R6Class(
       if (!is.null(stan_file) && compile) {
         self$compile(...)
       }
+
+      # for now, set this based on current version
+      # at initialize so its never null
+      # in the future, will be set only if/when we have a binary
+      # as the version the model was compiled with
+      private$cmdstan_version_ <- cmdstan_version()
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        cpp_options <- model_compile_info(self$exe_file())
+        cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
         for (cpp_option_name in names(cpp_options)) {
           if (cpp_option_name != "stan_version" &&
               (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
@@ -327,6 +334,9 @@ CmdStanModel <- R6::R6Class(
         private$exe_file_ <- path
       }
       private$exe_file_
+    },
+    cmdstan_version = function() {
+      private$cmdstan_version_
     },
     cpp_options = function() {
       private$cpp_options_
@@ -499,19 +509,7 @@ compile <- function(quiet = TRUE,
     }
   }
 
-  if (length(self$exe_file()) == 0) {
-    if (is.null(dir)) {
-      exe_base <- self$stan_file()
-    } else {
-      exe_base <- file.path(dir, basename(self$stan_file()))
-    }
-    exe <- cmdstan_ext(strip_ext(exe_base))
-    if (dir.exists(exe)) {
-      stop("There is a subfolder matching the model name in the same folder as the model! Please remove or rename the subfolder and try again.", call. = FALSE)
-    }
-  } else {
-    exe <- self$exe_file()
-  }
+  exe <- resolve_exe_path(dir, private$dir_, self$exe_file(), self$stan_file())
 
   # Resolve stanc and cpp options
   if (pedantic) {
@@ -559,6 +557,7 @@ compile <- function(quiet = TRUE,
   # - the executable does not exist
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
+  self$exe_file(exe)
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
@@ -579,7 +578,6 @@ compile <- function(quiet = TRUE,
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
     self$functions$existing_exe <- TRUE
-    self$exe_file(exe)
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
@@ -717,6 +715,7 @@ compile <- function(quiet = TRUE,
                con = wsl_safe_path(private$hpp_file_, revert = TRUE))
   } # End - if(!dry_run)
 
+  private$cmdstan_version_ <- cmdstan_version()
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
   private$precompile_cpp_options_ <- NULL
@@ -764,7 +763,7 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' }
 #'
 variables <- function() {
-  if (cmdstan_version() < "2.27.0") {
+  if (self$cmdstan_version() < "2.27.0") {
     stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
   }
   if (length(self$stan_file()) == 0) {
@@ -971,6 +970,10 @@ format <- function(overwrite_file = FALSE,
                    backup = TRUE,
                    max_line_length = NULL,
                    quiet = FALSE) {
+  # querying current version here not model object version
+  # because this is pre-compile work based on the cmdstanr
+  # version that will be used to compile in teh future,
+  # not based on what was used to compile existing binary (if any)
   if (cmdstan_version() < "2.29.0" && !is.null(max_line_length)) {
     stop(
       "'max_line_length' is only supported with CmdStan 2.29.0 or newer.",
@@ -1131,7 +1134,7 @@ sample <- function(data = NULL,
                    save_metric = NULL,
                    save_cmdstan_config = NULL) {
 
-  if (cmdstan_version() >= "2.27.0" && cmdstan_version() < "2.36.0" && !fixed_param) {
+  if (self$cmdstan_version() >= "2.27.0" && self$cmdstan_version() < "2.36.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
@@ -1353,14 +1356,18 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer to obtain a (penalized) maximum likelihood estimate (MLE)
-#'   or a maximum a posteriori estimate (MAP), depending on the value of the
-#'   `jacobian` argument. For models with constrained parameters, when the
-#'   Jacobian adjustment is *not* applied, the point estimate corresponds to a
-#'   penalized MLE, and when the Jacobian adjustment is applied the point
-#'   estimate corresponds to the MAP (posterior mode) of the model we would fit
-#'   if we were instead doing MCMC sampling. The Jacobian adjustment has no
-#'   affect if the model has only unconstrained parameters. See the
+#'   Stan's optimizer to find a posterior mode. If the Jacobian adjustment is
+#'   not included (the default), the optimization returns parameter values that
+#'   correspond to a mode of the target in the constrained space (if such mode
+#'   exists). Thus this option is useful for any optimization where we want to
+#'   find the mode in the original constrained parameter space. If the Jacobian
+#'   adjustment is included, the optimization returns parameter values that
+#'   correspond to a mode in the unconstrained space. This is useful, for
+#'   example, if we want to make a distributional approximation of the posterior
+#'   at the mode (see, [Laplace sampling][model-method-laplace], for which the
+#'   Jacobian adjustment needs to be included for correct results). If the model
+#'   has only unconstrained parameters, there is no effect from including the
+#'   Jacobian. See the
 #'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/index.html)
 #'   for more details.
 #'
@@ -1383,13 +1390,12 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
 #' @param jacobian (logical) Whether or not to use the Jacobian adjustment for
-#'   constrained variables. For historical reasons, the default is `FALSE`, meaning optimization
-#'   yields the (regularized) maximum likelihood estimate. Setting it to `TRUE`
-#'   yields the maximum a posteriori estimate. See the
-#'   [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
-#'   section of the CmdStan User's Guide for more details.
-#'   For use later with [`$laplace()`][model-method-laplace] the `jacobian`
-#'   argument should typically be set to `TRUE`.
+#'   constrained variables. For historical reasons, the default is `FALSE`,
+#'   meaning optimization finds a mode of the target in the original constrained
+#'   parameter space. Setting it to `TRUE` finds a mode in the unconstrained
+#'   space. See the CmdStan User's Guide for more details. For use later with
+#'   [`$laplace()`][model-method-laplace] the `jacobian` argument should
+#'   typically be set to `TRUE`.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1561,7 +1567,7 @@ laplace <- function(data = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
                     save_cmdstan_config = NULL) {
-  if (cmdstan_version() < "2.32") {
+  if (self$cmdstan_version() < "2.32") {
     stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
   }
   if (!is.null(mode) && !is.null(opt_args)) {
@@ -2155,41 +2161,6 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 
 
 # internal ----------------------------------------------------------------
-
-assert_valid_opencl <- function(opencl_ids, cpp_options) {
-  if (is.null(cpp_options[["stan_opencl"]])
-      && !is.null(opencl_ids)) {
-    stop("'opencl_ids' is set but the model was not compiled with for use with OpenCL.",
-         "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
-         call. = FALSE)
-  }
-  invisible(opencl_ids)
-}
-
-assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
-  threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
-  checkmate::assert_integerish(threads, .var.name = threads_arg,
-                               null.ok = TRUE, lower = 1, len = 1)
-  if (is.null(cpp_options[["stan_threads"]]) || !isTRUE(cpp_options[["stan_threads"]])) {
-    if (!is.null(threads)) {
-      warning(
-        "'", threads_arg, "' is set but the model was not compiled with ",
-        "'cpp_options = list(stan_threads = TRUE)' ",
-        "so '", threads_arg, "' will have no effect!",
-        call. = FALSE
-      )
-      threads <- NULL
-    }
-  } else if (isTRUE(cpp_options[["stan_threads"]]) && is.null(threads)) {
-    stop(
-      "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-      "but '", threads_arg, "' was not set!",
-      call. = FALSE
-    )
-  }
-  invisible(threads)
-}
-
 assert_valid_stanc_options <- function(stanc_options) {
   i <- 1
   names <- names(stanc_options)
@@ -2214,22 +2185,6 @@ assert_stan_file_exists <- function(stan_file) {
   if (!file.exists(stan_file)) {
     stop("The Stan file used to create the `CmdStanModel` object does not exist.", call. = FALSE)
   }
-}
-
-cpp_options_to_compile_flags <- function(cpp_options) {
-  if (length(cpp_options) == 0) {
-    return(NULL)
-  }
-  cpp_built_options <- c()
-  for (i in seq_along(cpp_options)) {
-    option_name <- names(cpp_options)[i]
-    if (is.null(option_name) || !nzchar(option_name)) {
-      cpp_built_options <- c(cpp_built_options, cpp_options[[i]])
-    } else {
-      cpp_built_options <- c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
-    }
-  }
-  cpp_built_options
 }
 
 include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
@@ -2288,42 +2243,42 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
   variables
 }
 
-model_compile_info <- function(exe_file) {
-  info <- NULL
-  if (cmdstan_version() > "2.26.1") {
-    withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
-      ),
-      ret <- wsl_compatible_run(
-        command = wsl_safe_path(exe_file),
-        args = "info",
-        error_on_status = FALSE
-      )
-    )
-    if (ret$status == 0) {
-      info <- list()
-      info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
-      for (key_val in info_raw) {
-        if (length(key_val) > 1) {
-          key_val <- trimws(key_val)
-          val <- key_val[2]
-          if (!is.na(as.logical(val))) {
-            val <- as.logical(val)
-          }
-          info[[toupper(key_val[1])]] <- val
-        }
-      }
-      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
-      info[["STAN_VERSION_MAJOR"]] <- NULL
-      info[["STAN_VERSION_MINOR"]] <- NULL
-      info[["STAN_VERSION_PATCH"]] <- NULL
-    }
-  }
-  info
-}
 
 is_variables_method_supported <- function(mod) {
   cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
+}
+resolve_exe_path <- function(
+  dir = NULL, private_dir = NULL, self_exe_file = NULL, self_stan_file = NULL
+) {
+  if (is.null(dir) && !is.null(private_dir)) {
+    dir <- absolute_path(private_dir)
+  } else if (!is.null(dir)) {
+    dir <- absolute_path(dir)
+  }
+  if (!is.null(dir)) {
+    dir <- repair_path(dir)
+    assert_dir_exists(dir, access = "rw")
+    if (length(self_exe_file) != 0) {
+      self_exe_file <- file.path(dir, basename(self_exe_file))
+    }
+  }
+  if (length(self_exe_file) == 0) {
+    if (is.null(dir)) {
+      exe_base <- self_stan_file
+    } else {
+      exe_base <- file.path(dir, basename(self_stan_file))
+    }
+    exe <- cmdstan_ext(strip_ext(exe_base))
+    if (dir.exists(exe)) {
+      stop(
+        "There is a subfolder matching the model name ",
+        "in the same folder as the model! ",
+        "Please remove or rename the subfolder and try again.",
+        call. = FALSE
+      )
+    }
+  } else {
+    exe <- self_exe_file
+  }
+  exe
 }

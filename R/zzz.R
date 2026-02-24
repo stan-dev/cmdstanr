@@ -95,6 +95,8 @@ cmdstanr_knitr_env <- cmdstanr_knitr_env_function_generator(new.env())
 }
 
 .onLoad <- function(...) {
+  # avoid conflict between parallel and processx
+  Sys.setenv(PROCESSX_NOTIFY_OLD_SIGCHLD = 1)
   if (requireNamespace("knitr", quietly = TRUE)) {
     cmdstanr_knitr_env(knitr::knit_global())
   }

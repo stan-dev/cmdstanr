@@ -162,13 +162,12 @@ the CmdStan User's Guide. The default values can also be obtained by
 running \code{cmdstanr_example(method="optimize")$metadata()}.}
 
 \item{jacobian}{(logical) Whether or not to use the Jacobian adjustment for
-constrained variables. For historical reasons, the default is \code{FALSE}, meaning optimization
-yields the (regularized) maximum likelihood estimate. Setting it to \code{TRUE}
-yields the maximum a posteriori estimate. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html}{Maximum Likelihood Estimation}
-section of the CmdStan User's Guide for more details.
-For use later with \code{\link[=model-method-laplace]{$laplace()}} the \code{jacobian}
-argument should typically be set to \code{TRUE}.}
+constrained variables. For historical reasons, the default is \code{FALSE},
+meaning optimization finds a mode of the target in the original constrained
+parameter space. Setting it to \code{TRUE} finds a mode in the unconstrained
+space. See the CmdStan User's Guide for more details. For use later with
+\code{\link[=model-method-laplace]{$laplace()}} the \code{jacobian} argument should
+typically be set to \code{TRUE}.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 
@@ -210,14 +209,18 @@ A \code{\link{CmdStanMLE}} object.
 }
 \description{
 The \verb{$optimize()} method of a \code{\link{CmdStanModel}} object runs
-Stan's optimizer to obtain a (penalized) maximum likelihood estimate (MLE)
-or a maximum a posteriori estimate (MAP), depending on the value of the
-\code{jacobian} argument. For models with constrained parameters, when the
-Jacobian adjustment is \emph{not} applied, the point estimate corresponds to a
-penalized MLE, and when the Jacobian adjustment is applied the point
-estimate corresponds to the MAP (posterior mode) of the model we would fit
-if we were instead doing MCMC sampling. The Jacobian adjustment has no
-affect if the model has only unconstrained parameters. See the
+Stan's optimizer to find a posterior mode. If the Jacobian adjustment is
+not included (the default), the optimization returns parameter values that
+correspond to a mode of the target in the constrained space (if such mode
+exists). Thus this option is useful for any optimization where we want to
+find the mode in the original constrained parameter space. If the Jacobian
+adjustment is included, the optimization returns parameter values that
+correspond to a mode in the unconstrained space. This is useful, for
+example, if we want to make a distributional approximation of the posterior
+at the mode (see, \link[=model-method-laplace]{Laplace sampling}, for which the
+Jacobian adjustment needs to be included for correct results). If the model
+has only unconstrained parameters, there is no effect from including the
+Jacobian. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/index.html}{CmdStan User's Guide}
 for more details.
 

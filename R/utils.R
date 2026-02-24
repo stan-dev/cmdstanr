@@ -97,7 +97,7 @@ make_cmd <- function() {
   if (Sys.getenv("MAKE") != "") {
     Sys.getenv("MAKE")
   } else if (os_is_windows() && !os_is_wsl() &&
-        (rtools4x_version() < "44" || Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "" || isTRUE(cmdstan_version(error_on_NA=FALSE) < "2.35.0"))) {
+        (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "" || isTRUE(cmdstan_version(error_on_NA=FALSE) < "2.35.0"))) {
     "mingw32-make.exe"
   } else {
     "make"

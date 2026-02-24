@@ -108,12 +108,19 @@ CmdStanFit <- R6::R6Class(
 #'   read into R lazily (i.e., as needed), the `$save_object()` method is the
 #'   safest way to guarantee that everything has been read in before saving.
 #'
+#'   If you have a big object to save, use `format = "qs2"` to save using the
+#'   **qs2** package.
+#'
 #'   See the "Saving fitted model objects" section of the
 #'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 #'   vignette for some suggestions on faster model saving for large models.
 #'
 #' @param file (string) Path where the file should be saved.
-#' @param ... Other arguments to pass to [base::saveRDS()] besides `object` and `file`.
+#' @param format (string) Serialization format for the object. The default is
+#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the **qs2**
+#'   package.
+#' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
+#'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -129,12 +136,20 @@ CmdStanFit <- R6::R6Class(
 #' fit$summary()
 #' }
 #'
-save_object <- function(file, ...) {
+save_object <- function(file, format = c("rds", "qs2"), ...) {
   self$draws()
   try(self$sampler_diagnostics(), silent = TRUE)
   try(self$init(), silent = TRUE)
   try(self$profiles(), silent = TRUE)
-  saveRDS(self, file = file, ...)
+  format <- match.arg(format)
+  if (format == "rds") {
+    saveRDS(self, file = file, ...)
+  } else {
+    if (!requireNamespace("qs2", quietly = TRUE)) {
+      stop("The 'qs2' package is required for format = \"qs2\".", call. = FALSE)
+    }
+    qs2::qs_save(self, file = file, ...)
+  }
   invisible(self)
 }
 CmdStanFit$set("public", name = "save_object", value = save_object)
@@ -1483,12 +1498,15 @@ CmdStanMCMC <- R6::R6Class(
 #'   containing the pointwise log-likelihood. The default is to look for
 #'   `"log_lik"`. This argument is passed to the [`$draws()`][fit-method-draws]
 #'   method.
-#' @param r_eff (multiple options) How to handle the `r_eff` argument for `loo()`:
-#'   * `TRUE` (the default) will automatically call [loo::relative_eff.array()]
-#'   to compute the `r_eff` argument to pass to [loo::loo.array()].
-#'   * `FALSE` or `NULL` will avoid computing `r_eff` (which can sometimes be slow),
-#'   but the reported ESS and MCSE estimates can be over-optimistic if the
-#'   posterior draws are not (near) independent.
+#' @param r_eff (multiple options) How to handle the `r_eff` argument for
+#'   `loo()`. `r_eff` measures the amount of autocorrelation in MCMC draws, and
+#'   is used to compute more accurate ESS and MCSE estimates for pointwise and
+#'   total ELPDs.
+#'   * `TRUE` will call [loo::relative_eff.array()] to compute the `r_eff`
+#'   argument to pass to [loo::loo.array()].
+#'   * `FALSE` (the default) or `NULL` will avoid computing `r_eff`,
+#'   which can be very slow. The reported ESS and MCSE estimates may be
+#'   over-optimistic if the posterior draws are far from independent.
 #'   * If `r_eff` is anything else, that object will be passed as the `r_eff`
 #'   argument to [loo::loo.array()].
 #' @param moment_match (logical) Whether to use a
@@ -1519,7 +1537,7 @@ CmdStanMCMC <- R6::R6Class(
 #' print(loo_result)
 #' }
 #'
-loo <- function(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...) {
+loo <- function(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...) {
   require_suggested_package("loo")
   if (length(variables) != 1) {
     stop("Only a single variable name is allowed for the 'variables' argument.", call. = FALSE)
@@ -1791,11 +1809,13 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
-#'   This object will either contain a penalized maximum likelihood estimate
-#'   (MLE) or a maximum a posteriori estimate (MAP), depending on the value of
-#'   the `jacobian` argument when the model is fit (and whether the model has
-#'   constrained parameters). See [`$optimize()`][model-method-optimize] and the
-#'   CmdStan User's Guide for more details.
+#'   The name "MLE" (used for historical reasons) is a bit misleading since this
+#'   object will contain parameter estimates corresponding to either a mode in
+#'   the constrained parameter space _or_ the unconstrained parameter space,
+#'   depending on the value of the `jacobian` argument when the model is fit
+#'   (and whether the model has constrained parameters). See
+#'   [`$optimize()`][model-method-optimize] and the CmdStan User's Guide for
+#'   more details.
 #'
 #' @section Methods: `CmdStanMLE` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.

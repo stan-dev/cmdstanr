@@ -178,6 +178,16 @@ test_that("save_object() method works", {
   expect_identical(fit$summary(), s)
 })
 
+test_that("save_object() method works with qs2 format", {
+  skip_if_not_installed("qs2")
+  fit <- fits[["sample"]]
+  temp_qs_file <- tempfile(fileext = ".qs2")
+  fit$save_object(temp_qs_file, format = "qs2")
+  fit2 <- qs2::qs_read(temp_qs_file)
+  expect_identical(fit2$summary(), fit$summary())
+  expect_identical(fit2$return_codes(), fit$return_codes())
+})
+
 test_that("save_object() method works with profiles", {
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
