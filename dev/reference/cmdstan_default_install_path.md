@@ -7,16 +7,10 @@ with default settings installs CmdStan.
 ## Usage
 
 ``` r
-cmdstan_default_install_path(old = FALSE, wsl = FALSE)
+cmdstan_default_install_path(wsl = FALSE)
 ```
 
 ## Arguments
-
-- old:
-
-  Should the old default path (.cmdstanr) be used instead of the new one
-  (.cmdstan)? Defaults to `FALSE` and may be removed in a future
-  release.
 
 - wsl:
 

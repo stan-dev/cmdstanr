@@ -173,8 +173,7 @@ only define the number of processes. To use <code>n_procs</code> processes speci
 <span>  show_messages <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  show_exceptions <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  diagnostics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"divergences"</span>, <span class="st">"treedepth"</span>, <span class="st">"ebfmi"</span><span class="op">)</span>,</span>
-<span>  save_cmdstan_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  validate_csv <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  save_cmdstan_config <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -469,10 +468,6 @@ using the <code><a href="fit-method-summary.html">$summary()</a></code> method.<
 with argument <code>"output save_config=1"</code> to save a json file which contains
 the argument tree and extra information (equivalent to the output CSV file
 header). This option is only available in CmdStan 2.34.0 and later.</p></dd>
-
-
-<dt id="arg-validate-csv">validate_csv<a class="anchor" aria-label="anchor" href="#arg-validate-csv"></a></dt>
-<dd><p>Deprecated. Use <code>diagnostics</code> instead.</p></dd>
 
 </dl></div>
     <div class="section level2">

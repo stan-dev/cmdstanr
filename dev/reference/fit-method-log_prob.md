@@ -6,7 +6,7 @@ function.
 ## Usage
 
 ``` r
-log_prob(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL)
+log_prob(unconstrained_variables, jacobian = TRUE)
 ```
 
 ## Arguments
@@ -19,10 +19,6 @@ log_prob(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL)
 
   (logical) Whether to include the log-density adjustments from
   un/constraining variables.
-
-- jacobian_adjustment:
-
-  Deprecated. Please use `jacobian` instead.
 
 ## See also
 

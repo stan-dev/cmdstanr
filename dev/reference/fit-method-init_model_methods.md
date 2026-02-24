@@ -1,7 +1,7 @@
 # Compile additional methods for accessing the model log-probability function and parameter constraining and unconstraining.
 
 The `$init_model_methods()` method compiles and initializes the
-`log_prob`, `grad_log_prob`, `constrain_variables`,
+`log_prob`, `grad_log_prob`, `hessian`, `constrain_variables`,
 `unconstrain_variables` and `unconstrain_draws` functions. These are
 then available as methods of the fitted model object. This requires the
 additional `Rcpp` package, which are not required for fitting models
@@ -13,7 +13,7 @@ these can be ignored so long as they are warnings and not errors.
 ## Usage
 
 ``` r
-init_model_methods(seed = 1, verbose = FALSE, hessian = FALSE)
+init_model_methods(seed = 1, verbose = FALSE)
 ```
 
 ## Arguments
@@ -25,10 +25,6 @@ init_model_methods(seed = 1, verbose = FALSE, hessian = FALSE)
 - verbose:
 
   (logical) Whether to show verbose logging during compilation.
-
-- hessian:
-
-  (logical) Whether to expose the (experimental) hessian method.
 
 ## See also
 
@@ -45,5 +41,6 @@ init_model_methods(seed = 1, verbose = FALSE, hessian = FALSE)
 ``` r
 # \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
+# fit_mcmc$init_model_methods()
 # }
 ```

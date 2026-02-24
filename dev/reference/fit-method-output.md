@@ -67,11 +67,11 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 1078114322
 #> output
-#>   file = /tmp/RtmpWenB0D/logistic-202602241947-1-4ec24b.csv
+#>   file = /tmp/Rtmplchaef/logistic-202602242217-1-4ec158.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpWenB0D/logistic-profile-202602241947-1-94dec4.csv
+#>   profile_file = /tmp/Rtmplchaef/logistic-profile-202602242217-1-94ddd1.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 1549478816
 #> output
-#>   file = /tmp/RtmpWenB0D/logistic-202602241947-1-779ea8.csv
+#>   file = /tmp/Rtmplchaef/logistic-202602242217-1-779db5.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpWenB0D/logistic-profile-202602241947-1-04d730.csv
+#>   profile_file = /tmp/Rtmplchaef/logistic-profile-202602242217-1-04d63d.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 1243032231
 #> output
-#>   file = /tmp/RtmpWenB0D/logistic-202602241947-1-0480cf.csv
+#>   file = /tmp/Rtmplchaef/logistic-202602242217-1-047fdc.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpWenB0D/logistic-profile-202602241947-1-780c71.csv
+#>   profile_file = /tmp/Rtmplchaef/logistic-profile-202602242217-1-780b7e.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 

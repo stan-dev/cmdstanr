@@ -6,15 +6,10 @@ release version.
 ## Usage
 
 ``` r
-cmdstan_default_path(old = FALSE, dir = NULL)
+cmdstan_default_path(dir = NULL)
 ```
 
 ## Arguments
-
-- old:
-
-  See
-  [`cmdstan_default_install_path()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_default_install_path.md).
 
 - dir:
 

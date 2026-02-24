@@ -6,11 +6,7 @@ The `$grad_log_prob()` method provides access to the Stan model's
 ## Usage
 
 ``` r
-grad_log_prob(
-  unconstrained_variables,
-  jacobian = TRUE,
-  jacobian_adjustment = NULL
-)
+grad_log_prob(unconstrained_variables, jacobian = TRUE)
 ```
 
 ## Arguments
@@ -23,10 +19,6 @@ grad_log_prob(
 
   (logical) Whether to include the log-density adjustments from
   un/constraining variables.
-
-- jacobian_adjustment:
-
-  Deprecated. Please use `jacobian` instead.
 
 ## See also
 

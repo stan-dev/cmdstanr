@@ -6,7 +6,7 @@ its derivative, and its hessian.
 ## Usage
 
 ``` r
-hessian(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL)
+hessian(unconstrained_variables, jacobian = TRUE)
 ```
 
 ## Arguments
@@ -19,10 +19,6 @@ hessian(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL)
 
   (logical) Whether to include the log-density adjustments from
   un/constraining variables.
-
-- jacobian_adjustment:
-
-  Deprecated. Please use `jacobian` instead.
 
 ## See also
 
@@ -39,7 +35,7 @@ hessian(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL)
 ``` r
 # \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
-# fit_mcmc$init_model_methods(hessian = TRUE)
+# fit_mcmc$init_model_methods()
 # fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 # }
 ```

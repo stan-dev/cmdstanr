@@ -36,9 +36,7 @@ compile(
   force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
   compile_model_methods = FALSE,
   compile_standalone = FALSE,
-  dry_run = FALSE,
-  compile_hessian_method = FALSE,
-  threads = FALSE
+  dry_run = FALSE
 )
 ```
 
@@ -120,17 +118,6 @@ compile(
   (logical) If `TRUE`, the code will do all checks before compilation,
   but skip the actual C++ compilation. Used to speedup tests.
 
-- compile_hessian_method:
-
-  (logical) Should the (experimental)
-  [`hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md)
-  method be be compiled with the model methods?
-
-- threads:
-
-  Deprecated and will be removed in a future release. Please turn on
-  threading via `cpp_options = list(stan_threads = TRUE)` instead.
-
 ## Value
 
 The `$compile()` method is called for its side effect of creating the
@@ -203,7 +190,7 @@ model {
 }
 ")
 mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#> Warning in '/tmp/RtmpWenB0D/model-1f3a1f076ea4.stan', line 6, column 2 to column 7:
+#> Warning in '/tmp/Rtmplchaef/model-1e4732572b74.stan', line 6, column 2 to column 7:
 #>     Parameter sigma is given a exponential distribution, which has strictly
 #>     positive support, but sigma was not constrained to be strictly positive.
 

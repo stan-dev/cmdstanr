@@ -47,16 +47,7 @@ sample(
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = NULL,
-  save_cmdstan_config = NULL,
-  cores = NULL,
-  num_cores = NULL,
-  num_chains = NULL,
-  num_warmup = NULL,
-  num_samples = NULL,
-  validate_csv = NULL,
-  save_extra_diagnostics = NULL,
-  max_depth = NULL,
-  stepsize = NULL
+  save_cmdstan_config = NULL
 )
 ```
 
@@ -413,11 +404,6 @@ sample(
   `"output save_config=1"` to save a json file which contains the
   argument tree and extra information (equivalent to the output CSV file
   header). This option is only available in CmdStan 2.34.0 and later.
-
-- cores, num_cores, num_chains, num_warmup, num_samples,
-  save_extra_diagnostics, max_depth, stepsize, validate_csv:
-
-  Deprecated and will be removed in a future release.
 
 ## Value
 

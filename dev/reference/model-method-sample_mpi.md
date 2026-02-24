@@ -70,8 +70,7 @@ sample_mpi(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_cmdstan_config = NULL,
-  validate_csv = TRUE
+  save_cmdstan_config = NULL
 )
 ```
 
@@ -404,10 +403,6 @@ sample_mpi(
   `"output save_config=1"` to save a json file which contains the
   argument tree and extra information (equivalent to the output CSV file
   header). This option is only available in CmdStan 2.34.0 and later.
-
-- validate_csv:
-
-  Deprecated. Use `diagnostics` instead.
 
 ## Value
 

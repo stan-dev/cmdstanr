@@ -121,9 +121,7 @@ temporary directory. To save the C++ code to a non-temporary location use
 <span>  force_recompile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"cmdstanr_force_recompile"</span>, default <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
 <span>  compile_model_methods <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  compile_standalone <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  dry_run <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  compile_hessian_method <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  threads <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  dry_run <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -203,16 +201,6 @@ compilation using the
 <dd><p>(logical) If <code>TRUE</code>, the code will do all checks before compilation,
 but skip the actual C++ compilation. Used to speedup tests.</p></dd>
 
-
-<dt id="arg-compile-hessian-method">compile_hessian_method<a class="anchor" aria-label="anchor" href="#arg-compile-hessian-method"></a></dt>
-<dd><p>(logical) Should the (experimental) <code><a href="fit-method-hessian.html">hessian()</a></code> method be
-be compiled with the model methods?</p></dd>
-
-
-<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
-<dd><p>Deprecated and will be removed in a future release. Please
-turn on threading via <code>cpp_options = list(stan_threads = TRUE)</code> instead.</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -273,7 +261,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="st">}</span></span></span>
 <span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file_pedantic</span>, pedantic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/RtmpWenB0D/model-1f3a1f076ea4.stan', line 6, column 2 to column 7:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/Rtmplchaef/model-1e4732572b74.stan', line 6, column 2 to column 7:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     Parameter sigma is given a exponential distribution, which has strictly</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     positive support, but sigma was not constrained to be strictly positive.</span>
 <span class="r-in"><span></span></span>

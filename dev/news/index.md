@@ -2,6 +2,32 @@
 
 ## cmdstanr (development version)
 
+- Removed deprecated items (replacements in parentheses):
+  - `read_sample_csv()`
+    ([`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md))
+  - `write_stan_tempfile()`
+    ([`write_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_file.md))
+  - `model_params` element of `fit$metadata()` list (`variables`
+    element)
+  - `jacobian_adjustment` argument to `fit$log_prob()` and similar
+    methods (`jacobian` argument)
+  - `output_samples` argument to `model$variational()` (`draws`
+    argument)
+  - `hessian` argument to `fit$init_model_methods()` (`hessian` method
+    always compiled now)
+  - several arguments to `model$compile()`:
+    - `threads` (`cpp_options = list(stan_threads = TRUE)`)
+    - `compile_hessian_method` (always compiled)
+  - several arguments to `model$sample()`:
+    - `cores` and `num_cores` (`parallel_chains`)
+    - `num_chains` (`chains`)
+    - `num_warmup` (`iter_warmup`)
+    - `num_samples` (`iter_sampling`)
+    - `validate_csv` (`diagnostics`)
+    - `save_extra_diagnostics` (`save_latent_dynamics`)
+    - `max_depth` (`max_treedepth`)
+    - `stepsize` (`step_size`)
+
 ## cmdstanr 0.9.0
 
 ### General Improvements/Changes
@@ -777,11 +803,9 @@
   [\#273](https://github.com/stan-dev/cmdstanr/issues/273))
 
 - [`write_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_file.md)
-  replaces
-  [`write_stan_tempfile()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_tempfile.md),
-  which is now deprecated. With the addition of the `dir` argument, the
-  file written is not necessarily temporary.
-  ([\#267](https://github.com/stan-dev/cmdstanr/issues/267),
+  replaces `write_stan_tempfile()`, which is now deprecated. With the
+  addition of the `dir` argument, the file written is not necessarily
+  temporary. ([\#267](https://github.com/stan-dev/cmdstanr/issues/267),
   [\#272](https://github.com/stan-dev/cmdstanr/issues/272))
 
 ## cmdstanr 0.1.1

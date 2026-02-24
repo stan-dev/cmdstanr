@@ -118,7 +118,6 @@ installed version of CmdStan.</p>
 <span>  adapt_iter <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tol_rel_obj <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  eval_elbo <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  output_samples <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  draws <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  show_messages <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  show_exceptions <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -309,14 +308,9 @@ of the objective.</p></dd>
 <dd><p>(positive integer) Evaluate ELBO every Nth iteration.</p></dd>
 
 
-<dt id="arg-output-samples">output_samples<a class="anchor" aria-label="anchor" href="#arg-output-samples"></a></dt>
-<dd><p>(positive integer) Use <code>draws</code> argument instead.
-<code>output_samples</code> will be deprecated in the future.</p></dd>
-
-
 <dt id="arg-draws">draws<a class="anchor" aria-label="anchor" href="#arg-draws"></a></dt>
-<dd><p>(positive integer) Number of approximate posterior
-samples to draw and save.</p></dd>
+<dd><p>(positive integer) Number of approximate posterior samples to
+draw and save.</p></dd>
 
 
 <dt id="arg-show-messages">show_messages<a class="anchor" aria-label="anchor" href="#arg-show-messages"></a></dt>

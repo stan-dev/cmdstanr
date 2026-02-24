@@ -36,7 +36,6 @@ variational(
   adapt_iter = NULL,
   tol_rel_obj = NULL,
   eval_elbo = NULL,
-  output_samples = NULL,
   draws = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
@@ -254,11 +253,6 @@ variational(
 - eval_elbo:
 
   (positive integer) Evaluate ELBO every Nth iteration.
-
-- output_samples:
-
-  (positive integer) Use `draws` argument instead. `output_samples` will
-  be deprecated in the future.
 
 - draws:
 
