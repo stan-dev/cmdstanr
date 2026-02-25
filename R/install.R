@@ -624,6 +624,31 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       call. = FALSE
     )
   }
+  usr_bin <- repair_path(file.path(rtools_path, "usr", "bin"))
+  make_found <- any(file.exists(file.path(usr_bin, c("make.exe", "mingw32-make.exe"))))
+  if (!make_found) {
+    stop(
+      "\n", rtools_version, " is missing the required 'make' executable in ", usr_bin, ".",
+      "\nPlease reinstall ", rtools_version, " and run cmdstanr::check_cmdstan_toolchain().",
+      call. = FALSE
+    )
+  }
+  candidates <- rtools4x_toolchain_candidates()
+  has_usable_toolchain <- any(vapply(candidates, is_rtools4x_toolchain_usable, logical(1)))
+  if (!has_usable_toolchain) {
+    if (length(candidates) == 0) {
+      candidates_message <- "\n- <none>"
+    } else {
+      candidates_message <- paste0("\n- ", paste(candidates, collapse = "\n- "))
+    }
+    stop(
+      "\n", rtools_version, " does not contain a supported C++ toolchain.",
+      "\nChecked the following paths:",
+      candidates_message,
+      "\nPlease reinstall ", rtools_version, " and run cmdstanr::check_cmdstan_toolchain().",
+      call. = FALSE
+    )
+  }
   invisible(NULL)
 }
 
@@ -720,13 +745,38 @@ toolchain_PATH_env_var <- function() {
   )
 }
 
-rtools4x_toolchain_path <- function() {
-  if (arch_is_aarch64()) {
-    toolchain <- "aarch64-w64-mingw32.static.posix"
-  } else {
-    toolchain <- "x86_64-w64-mingw32.static.posix"
+rtools4x_toolchain_candidates <- function() {
+  rtools_home <- rtools4x_home_path()
+  if (!nzchar(rtools_home)) {
+    return(character())
   }
-  repair_path(file.path(rtools4x_home_path(), toolchain, "bin"))
+  toolchains <- if (arch_is_aarch64()) {
+    "aarch64-w64-mingw32.static.posix"
+  } else if (is_ucrt_toolchain()) {
+    c("x86_64-w64-mingw32.static.posix", "ucrt64", "mingw64")
+  } else {
+    c("x86_64-w64-mingw32.static.posix", "mingw64", "ucrt64")
+  }
+  repair_path(file.path(rtools_home, toolchains, "bin"))
+}
+
+is_rtools4x_toolchain_usable <- function(path) {
+  if (!nzchar(path) || !dir.exists(path)) {
+    return(FALSE)
+  }
+  any(file.exists(file.path(path, c("g++.exe", "g++"))))
+}
+
+rtools4x_toolchain_path <- function() {
+  candidates <- rtools4x_toolchain_candidates()
+  if (length(candidates) == 0) {
+    return("")
+  }
+  usable <- vapply(candidates, is_rtools4x_toolchain_usable, logical(1))
+  if (any(usable)) {
+    return(candidates[which(usable)[1]])
+  }
+  candidates[1]
 }
 
 rtools4x_version <- function() {

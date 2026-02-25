@@ -51,6 +51,8 @@ cmdstanr_initialize <- function() {
             call. = FALSE
           )
           .cmdstanr$PATH <- NULL
+          .cmdstanr$VERSION <- NULL
+          .cmdstanr$WSL <- FALSE
         } else {
           set_cmdstan_path(path)
         }
@@ -62,6 +64,8 @@ cmdstanr_initialize <- function() {
         call. = FALSE
       )
       .cmdstanr$PATH <- NULL
+      .cmdstanr$VERSION <- NULL
+      .cmdstanr$WSL <- FALSE
     }
 
   } else { # environment variable not found

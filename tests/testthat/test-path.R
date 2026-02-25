@@ -27,11 +27,16 @@ test_that("Setting bad path leads to warning (can't find directory)", {
 
 test_that("Setting bad path from env leads to warning (can't find directory)", {
   unset_cmdstan_path()
+  .cmdstanr$WSL <- TRUE
   Sys.setenv(CMDSTAN = "BAD_PATH")
   expect_warning(
     cmdstanr_initialize(),
     "Can't find directory specified by environment variable"
   )
+  expect_null(.cmdstanr$PATH)
+  expect_null(.cmdstanr$VERSION)
+  expect_false(isTRUE(.cmdstanr$WSL))
+  Sys.unsetenv("CMDSTAN")
 })
 
 test_that("Setting path from env var is detected", {
@@ -46,6 +51,7 @@ test_that("Setting path from env var is detected", {
 
 test_that("Unsupported CmdStan path from env var is rejected", {
   unset_cmdstan_path()
+  .cmdstanr$WSL <- TRUE
   parent_dir <- file.path(tempdir(check = TRUE), "cmdstan-env-parent")
   old_install <- file.path(parent_dir, "cmdstan-2.34.0")
   dir.create(old_install, recursive = TRUE, showWarnings = FALSE)
@@ -60,6 +66,7 @@ test_that("Unsupported CmdStan path from env var is rejected", {
   if (!is.null(.cmdstanr$VERSION)) {
     expect_true(is_supported_cmdstan_version(.cmdstanr$VERSION))
   }
+  expect_false(isTRUE(.cmdstanr$WSL))
 })
 
 test_that("cmdstanr_initialize() also looks for default path", {
@@ -111,9 +118,11 @@ test_that("Warning message is thrown if can't detect version number", {
 test_that("Setting path rejects unsupported CmdStan versions", {
   old_path <- .cmdstanr$PATH
   old_version <- .cmdstanr$VERSION
+  old_wsl <- .cmdstanr$WSL
   on.exit({
     .cmdstanr$PATH <- old_path
     .cmdstanr$VERSION <- old_version
+    .cmdstanr$WSL <- old_wsl
   })
 
   path <- file.path(tempdir(check = TRUE), "cmdstan-2.34.0")
@@ -128,6 +137,17 @@ test_that("Setting path rejects unsupported CmdStan versions", {
   )
   expect_null(.cmdstanr$PATH)
   expect_null(.cmdstanr$VERSION)
+  expect_false(isTRUE(.cmdstanr$WSL))
+})
+
+test_that("unset_cmdstan_path() also resets WSL state", {
+  .cmdstanr$PATH <- PATH
+  .cmdstanr$VERSION <- VERSION
+  .cmdstanr$WSL <- TRUE
+  unset_cmdstan_path()
+  expect_null(.cmdstanr$PATH)
+  expect_null(.cmdstanr$VERSION)
+  expect_false(isTRUE(.cmdstanr$WSL))
 })
 
 test_that("cmdstan_ext() works", {

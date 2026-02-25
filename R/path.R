@@ -52,6 +52,7 @@ set_cmdstan_path <- function(path = NULL) {
       )
       .cmdstanr$PATH <- NULL
       .cmdstanr$VERSION <- NULL
+      .cmdstanr$WSL <- FALSE
       return(invisible(path))
     }
     .cmdstanr$PATH <- path
@@ -99,6 +100,7 @@ cmdstan_version <- function(error_on_NA = TRUE) {
 .cmdstanr$PATH <- NULL
 .cmdstanr$VERSION <- NULL
 .cmdstanr$TEMP_DIR <- NULL
+.cmdstanr$WSL <- FALSE
 
 # path to temp directory
 cmdstan_tempdir <- function() {
@@ -250,6 +252,7 @@ is_release_candidate <- function(path) {
 unset_cmdstan_path <- function() {
   .cmdstanr$PATH <- NULL
   .cmdstanr$VERSION <- NULL
+  .cmdstanr$WSL <- FALSE
 }
 
 # fake a cmdstan version (only used in tests)

@@ -306,3 +306,118 @@ test_that("deprecated CMDSTANR_USE_MSYS_TOOLCHAIN is ignored with warning", {
     expect_silent(make_cmd())
   })
 })
+
+test_that("rtools4x_toolchain_path prefers static-posix when available", {
+  skip_if(arch_is_aarch64())
+  env_var <- paste0(
+    "RTOOLS", rtools4x_version(),
+    if (arch_is_aarch64()) "_AARCH64" else "",
+    "_HOME"
+  )
+  fake_rtools_home <- tempfile(pattern = "rtools-home-pref-", tmpdir = tempdir(check = TRUE))
+  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  dir.create(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin"),
+             recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
+             recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin", "g++.exe"))
+  file.create(file.path(fake_rtools_home, "mingw64", "bin", "g++.exe"))
+
+  withr::with_envvar(setNames(fake_rtools_home, env_var), {
+    expect_equal(
+      rtools4x_toolchain_path(),
+      repair_path(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin"))
+    )
+  })
+})
+
+test_that("rtools4x_toolchain_path falls back to mingw64 for legacy layouts", {
+  skip_if(arch_is_aarch64())
+  env_var <- paste0(
+    "RTOOLS", rtools4x_version(),
+    if (arch_is_aarch64()) "_AARCH64" else "",
+    "_HOME"
+  )
+  fake_rtools_home <- tempfile(pattern = "rtools-home-fallback-", tmpdir = tempdir(check = TRUE))
+  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
+             recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_rtools_home, "mingw64", "bin", "g++.exe"))
+
+  withr::with_envvar(setNames(fake_rtools_home, env_var), {
+    expect_equal(
+      rtools4x_toolchain_path(),
+      repair_path(file.path(fake_rtools_home, "mingw64", "bin"))
+    )
+  })
+})
+
+test_that("rtools4x_toolchain_path prefers ABI-compatible legacy fallback", {
+  skip_if(arch_is_aarch64())
+  env_var <- paste0(
+    "RTOOLS", rtools4x_version(),
+    if (arch_is_aarch64()) "_AARCH64" else "",
+    "_HOME"
+  )
+  fake_rtools_home <- tempfile(pattern = "rtools-home-abi-", tmpdir = tempdir(check = TRUE))
+  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
+             recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(fake_rtools_home, "ucrt64", "bin"),
+             recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_rtools_home, "mingw64", "bin", "g++.exe"))
+  file.create(file.path(fake_rtools_home, "ucrt64", "bin", "g++.exe"))
+
+  withr::with_envvar(setNames(fake_rtools_home, env_var), {
+    with_mocked_bindings(
+      {
+        expect_equal(
+          rtools4x_toolchain_path(),
+          repair_path(file.path(fake_rtools_home, "mingw64", "bin"))
+        )
+      },
+      is_ucrt_toolchain = function() FALSE
+    )
+    with_mocked_bindings(
+      {
+        expect_equal(
+          rtools4x_toolchain_path(),
+          repair_path(file.path(fake_rtools_home, "ucrt64", "bin"))
+        )
+      },
+      is_ucrt_toolchain = function() TRUE
+    )
+  })
+})
+
+test_that("check_rtools4x_windows_toolchain reports checked toolchain paths", {
+  env_var <- paste0(
+    "RTOOLS", rtools4x_version(),
+    if (arch_is_aarch64()) "_AARCH64" else "",
+    "_HOME"
+  )
+  fake_rtools_home <- tempfile(pattern = "rtools-home-invalid-", tmpdir = tempdir(check = TRUE))
+  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  dir.create(file.path(fake_rtools_home, "usr", "bin"),
+             recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_rtools_home, "usr", "bin", "make.exe"))
+  if (arch_is_aarch64()) {
+    dir.create(file.path(fake_rtools_home, "aarch64-w64-mingw32.static.posix", "bin"),
+               recursive = TRUE, showWarnings = FALSE)
+  } else {
+    dir.create(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin"),
+               recursive = TRUE, showWarnings = FALSE)
+    dir.create(file.path(fake_rtools_home, "ucrt64", "bin"),
+               recursive = TRUE, showWarnings = FALSE)
+    dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
+               recursive = TRUE, showWarnings = FALSE)
+  }
+
+  withr::with_envvar(setNames(fake_rtools_home, env_var), {
+    expect_error(
+      check_rtools4x_windows_toolchain(),
+      "Checked the following paths:",
+      fixed = TRUE
+    )
+  })
+})
