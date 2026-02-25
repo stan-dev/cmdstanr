@@ -237,15 +237,6 @@ install_cmdstan <- function(dir = NULL,
     )
   }
 
-  # Building fails on Apple silicon with < v2.31 due to a makefiles setting
-  # for stanc3, so manually implement the patch if needed from:
-  # https://github.com/stan-dev/cmdstan/pull/1127
-  stanc_makefile <- readLines(file.path(dir_cmdstan, "make", "stanc"))
-  stanc_makefile <- gsub("\\bxattr -d com.apple.quarantine bin/stanc",
-                          "-xattr -d com.apple.quarantine bin/stanc",
-                          stanc_makefile)
-  writeLines(stanc_makefile, con = file.path(dir_cmdstan, "make", "stanc"))
-
   if (is_ucrt_toolchain() && !wsl) {
     cmdstan_make_local(
       dir = dir_cmdstan,
@@ -625,6 +616,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     )
   }
   usr_bin <- repair_path(file.path(rtools_path, "usr", "bin"))
+  # Fail early with a clear message if the base make tool is missing
   make_found <- any(file.exists(file.path(usr_bin, c("make.exe", "mingw32-make.exe"))))
   if (!make_found) {
     stop(
@@ -634,6 +626,7 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     )
   }
   candidates <- rtools4x_toolchain_candidates()
+  # Validate candidate toolchains here so build errors later are not opaque
   has_usable_toolchain <- any(vapply(candidates, is_rtools4x_toolchain_usable, logical(1)))
   if (!has_usable_toolchain) {
     if (length(candidates) == 0) {
@@ -745,11 +738,20 @@ toolchain_PATH_env_var <- function() {
   )
 }
 
+#' Ordered candidate RTools toolchain bin paths
+#'
+#' On x86_64, candidate order is ABI-aware so legacy fallback paths are tried
+#' in an order compatible with the current R toolchain.
+#'
+#' @noRd
+#' @return A character vector of normalized candidate toolchain bin paths
 rtools4x_toolchain_candidates <- function() {
   rtools_home <- rtools4x_home_path()
   if (!nzchar(rtools_home)) {
     return(character())
   }
+  # Prefer the modern static toolchain first, then ABI-compatible legacy
+  # fallbacks for older Rtools layouts
   toolchains <- if (arch_is_aarch64()) {
     "aarch64-w64-mingw32.static.posix"
   } else if (is_ucrt_toolchain()) {
@@ -760,6 +762,7 @@ rtools4x_toolchain_candidates <- function() {
   repair_path(file.path(rtools_home, toolchains, "bin"))
 }
 
+# A candidate is usable if the directory exists and contains a g++ executable
 is_rtools4x_toolchain_usable <- function(path) {
   if (!nzchar(path) || !dir.exists(path)) {
     return(FALSE)
@@ -767,11 +770,19 @@ is_rtools4x_toolchain_usable <- function(path) {
   any(file.exists(file.path(path, c("g++.exe", "g++"))))
 }
 
+#' Resolve the preferred RTools toolchain bin path
+#'
+#' Returns the first usable path from `rtools4x_toolchain_candidates()`. If no
+#' candidate is usable, returns the first candidate for deterministic diagnostics.
+#'
+#' @noRd
+#' @return A single path string, or `""` if no candidates are available.
 rtools4x_toolchain_path <- function() {
   candidates <- rtools4x_toolchain_candidates()
   if (length(candidates) == 0) {
     return("")
   }
+  # Return the first usable candidate (ordered by preference above).
   usable <- vapply(candidates, is_rtools4x_toolchain_usable, logical(1))
   if (any(usable)) {
     return(candidates[which(usable)[1]])
