@@ -123,10 +123,10 @@ even with multiple MCMC chains the data file is the same.
 # \dontrun{
 fit <- cmdstanr_example()
 fit$output_files()
-#> [1] "/tmp/Rtmplchaef/logistic-202602242217-1-309bf5.csv"
-#> [2] "/tmp/Rtmplchaef/logistic-202602242217-2-309bf5.csv"
-#> [3] "/tmp/Rtmplchaef/logistic-202602242217-3-309bf5.csv"
-#> [4] "/tmp/Rtmplchaef/logistic-202602242217-4-309bf5.csv"
+#> [1] "/tmp/RtmpXMPIEs/logistic-202602251755-1-30996c.csv"
+#> [2] "/tmp/RtmpXMPIEs/logistic-202602251755-2-30996c.csv"
+#> [3] "/tmp/RtmpXMPIEs/logistic-202602251755-3-30996c.csv"
+#> [4] "/tmp/RtmpXMPIEs/logistic-202602251755-4-30996c.csv"
 fit$data_file()
 #> [1] "/home/runner/work/_temp/Library/cmdstanr/logistic.data.json"
 
@@ -134,21 +134,21 @@ fit$data_file()
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "banana")
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/Rtmplchaef/banana-202602242217-1-0f8b50.csv
-#> - /tmp/Rtmplchaef/banana-202602242217-2-0f8b50.csv
-#> - /tmp/Rtmplchaef/banana-202602242217-3-0f8b50.csv
-#> - /tmp/Rtmplchaef/banana-202602242217-4-0f8b50.csv
+#> - /tmp/RtmpXMPIEs/banana-202602251755-1-0f88c7.csv
+#> - /tmp/RtmpXMPIEs/banana-202602251755-2-0f88c7.csv
+#> - /tmp/RtmpXMPIEs/banana-202602251755-3-0f88c7.csv
+#> - /tmp/RtmpXMPIEs/banana-202602251755-4-0f88c7.csv
 fit$save_output_files(dir = my_dir, basename = "tomato", timestamp = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/Rtmplchaef/tomato-1-7a3418.csv
-#> - /tmp/Rtmplchaef/tomato-2-7a3418.csv
-#> - /tmp/Rtmplchaef/tomato-3-7a3418.csv
-#> - /tmp/Rtmplchaef/tomato-4-7a3418.csv
+#> - /tmp/RtmpXMPIEs/tomato-1-7a318f.csv
+#> - /tmp/RtmpXMPIEs/tomato-2-7a318f.csv
+#> - /tmp/RtmpXMPIEs/tomato-3-7a318f.csv
+#> - /tmp/RtmpXMPIEs/tomato-4-7a318f.csv
 fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/Rtmplchaef/lettuce-1.csv
-#> - /tmp/Rtmplchaef/lettuce-2.csv
-#> - /tmp/Rtmplchaef/lettuce-3.csv
-#> - /tmp/Rtmplchaef/lettuce-4.csv
+#> - /tmp/RtmpXMPIEs/lettuce-1.csv
+#> - /tmp/RtmpXMPIEs/lettuce-2.csv
+#> - /tmp/RtmpXMPIEs/lettuce-3.csv
+#> - /tmp/RtmpXMPIEs/lettuce-4.csv
 # }
 ```

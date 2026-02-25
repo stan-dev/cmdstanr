@@ -17,7 +17,9 @@ generate_quantities(
   sig_figs = NULL,
   parallel_chains = getOption("mc.cores", 1),
   threads_per_chain = NULL,
-  opencl_ids = NULL
+  opencl_ids = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE
 )
 ```
 
@@ -148,6 +150,26 @@ generate_quantities(
   device to use for fitting. The model must be compiled with
   `cpp_options = list(stan_opencl = TRUE)` for this argument to have an
   effect.
+
+- show_messages:
+
+  (logical) When `TRUE` (the default), prints all output during the
+  execution process, such as iteration numbers and elapsed times. If the
+  output is silenced then the
+  [`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md)
+  method of the resulting fit object can be used to display the silenced
+  messages.
+
+- show_exceptions:
+
+  (logical) When `TRUE` (the default), prints all informational
+  messages, for example rejection of the current proposal. Disable if
+  you wish to silence these messages, but this is not usually
+  recommended unless you are very confident that the model is correct up
+  to numerical error. If the messages are silenced then the
+  [`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md)
+  method of the resulting fit object can be used to display the silenced
+  messages.
 
 ## Value
 

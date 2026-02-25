@@ -83,7 +83,9 @@ based on previously fitted parameters.</p>
 <span>  sig_figs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  parallel_chains <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"mc.cores"</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  threads_per_chain <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  opencl_ids <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  opencl_ids <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  show_messages <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_exceptions <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -185,6 +187,23 @@ the Stan case study <a href="https://mc-stan.org/users/documentation/case-studie
 the OpenCL device to use for fitting. The model must be compiled with
 <code>cpp_options = list(stan_opencl = TRUE)</code> for this argument to have an
 effect.</p></dd>
+
+
+<dt id="arg-show-messages">show_messages<a class="anchor" aria-label="anchor" href="#arg-show-messages"></a></dt>
+<dd><p>(logical) When <code>TRUE</code> (the default), prints all output
+during the execution process, such as iteration numbers and elapsed times.
+If the output is silenced then the <code><a href="fit-method-output.html">$output()</a></code> method
+of the resulting fit object can be used to display the silenced messages.</p></dd>
+
+
+<dt id="arg-show-exceptions">show_exceptions<a class="anchor" aria-label="anchor" href="#arg-show-exceptions"></a></dt>
+<dd><p>(logical) When <code>TRUE</code> (the default), prints all
+informational messages, for example rejection of the current proposal.
+Disable if you wish to silence these messages, but this is not usually
+recommended unless you are very confident that the model is correct up to
+numerical error. If the messages are silenced then the
+<code><a href="fit-method-output.html">$output()</a></code> method of the resulting fit object can be
+used to display the silenced messages.</p></dd>
 
 </dl></div>
     <div class="section level2">

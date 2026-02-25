@@ -67,17 +67,17 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 1078114322
 #> output
-#>   file = /tmp/Rtmplchaef/logistic-202602242217-1-4ec158.csv
+#>   file = /tmp/RtmpXMPIEs/logistic-202602251755-1-4ebecf.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmplchaef/logistic-profile-202602242217-1-94ddd1.csv
+#>   profile_file = /tmp/RtmpXMPIEs/logistic-profile-202602251755-1-94db48.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
 #> 
-#> Gradient evaluation took 7e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+#> Gradient evaluation took 8e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -104,9 +104,9 @@ fit_mcmc$output(1)
 #> Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 0.019 seconds (Warm-up)
-#>                0.055 seconds (Sampling)
-#>                0.074 seconds (Total)
+#>  Elapsed Time: 0.018 seconds (Warm-up)
+#>                0.051 seconds (Sampling)
+#>                0.069 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
 #> List of 4
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 1549478816
 #> output
-#>   file = /tmp/Rtmplchaef/logistic-202602242217-1-779db5.csv
+#>   file = /tmp/RtmpXMPIEs/logistic-202602251755-1-779b2c.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmplchaef/logistic-profile-202602242217-1-04d63d.csv
+#>   profile_file = /tmp/RtmpXMPIEs/logistic-profile-202602251755-1-04d3b4.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 1243032231
 #> output
-#>   file = /tmp/Rtmplchaef/logistic-202602242217-1-047fdc.csv
+#>   file = /tmp/RtmpXMPIEs/logistic-202602251755-1-047d53.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmplchaef/logistic-profile-202602242217-1-780b7e.csv
+#>   profile_file = /tmp/RtmpXMPIEs/logistic-profile-202602251755-1-7808f5.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
