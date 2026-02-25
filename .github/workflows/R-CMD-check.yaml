@@ -81,7 +81,7 @@ jobs:
           rtools_home <- cmdstanr:::rtools4x_home_path()
           candidates <- cmdstanr:::rtools4x_toolchain_candidates()
           selected <- cmdstanr:::rtools4x_toolchain_path()
-          cat("R version: ", getRversion(), "\n", sep = "")
+          cat("R version: ", as.character(getRversion()), "\n", sep = "")
           cat("Rtools home: ", rtools_home, "\n", sep = "")
           cat("Toolchain candidates:\n")
           if (length(candidates) == 0) {
