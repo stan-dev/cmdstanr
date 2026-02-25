@@ -882,7 +882,8 @@ CmdStanProcs <- R6::R6Class(
       invisible(self)
     },
     mark_proc_stop = function(id) {
-      if (private$proc_start_time_[[id]] > 0) {
+      if (private$proc_start_time_[[id]] > 0
+          && private$proc_total_time_[[id]] == 0) {
         private$proc_total_time_[[id]] <-
           as.double(Sys.time()) - private$proc_start_time_[[id]]
       }
