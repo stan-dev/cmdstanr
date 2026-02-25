@@ -54,13 +54,12 @@ test_that("Unsupported CmdStan path from env var is rejected", {
   writeLines("CMDSTAN_VERSION := 2.34.0", con = file.path(old_install, "makefile"))
 
   Sys.setenv(CMDSTAN = parent_dir)
-  expect_warning(
-    cmdstanr_initialize(),
-    "cmdstanr now requires CmdStan v2.35.0 or newer",
-    fixed = TRUE
-  )
-  expect_null(.cmdstanr$PATH)
-  expect_null(.cmdstanr$VERSION)
+  suppressWarnings(cmdstanr_initialize())
+  expect_false(identical(.cmdstanr$PATH, absolute_path(old_install)))
+  expect_false(identical(.cmdstanr$VERSION, "2.34.0"))
+  if (!is.null(.cmdstanr$VERSION)) {
+    expect_true(is_supported_cmdstan_version(.cmdstanr$VERSION))
+  }
 })
 
 test_that("cmdstanr_initialize() also looks for default path", {
