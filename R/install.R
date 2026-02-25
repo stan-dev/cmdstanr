@@ -22,8 +22,8 @@
 #'   C++ toolchain. It is called internally by `install_cmdstan()` but can also
 #'   be called directly by the user.
 #'
-#'   CmdStan versions older than 2.35.0 are no longer supported. If you need to
-#'   work with an older CmdStan version we recommend installing an older
+#'   **CmdStan versions older than 2.35.0 are no longer supported.** If you need
+#'   to work with an older CmdStan version we recommend installing an older
 #'   CmdStanR release from GitHub.
 #'
 #' @export

@@ -119,8 +119,8 @@ The \code{check_cmdstan_toolchain()} function attempts to check for the required
 C++ toolchain. It is called internally by \code{install_cmdstan()} but can also
 be called directly by the user.
 
-CmdStan versions older than 2.35.0 are no longer supported. If you need to
-work with an older CmdStan version we recommend installing an older
+\strong{CmdStan versions older than 2.35.0 are no longer supported.} If you need
+to work with an older CmdStan version we recommend installing an older
 CmdStanR release from GitHub.
 }
 \examples{
