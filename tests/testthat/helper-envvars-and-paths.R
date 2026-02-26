@@ -23,3 +23,9 @@ delete_extensions <- function() {
     c("", ".o",".hpp")
   }
 }
+
+skip_if_legacy_win41_pareto <- function() {
+  if (tolower(Sys.getenv("CMDSTANR_SKIP_PARETO_SMOOTH_INIT_TESTS")) %in% c("1", "true")) {
+    skip("Skipping tests requiring posterior::pareto_smooth on windows-2022 R 4.1 CI.")
+  }
+}

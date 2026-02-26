@@ -163,18 +163,20 @@ cmdstan_default_install_path <- function(wsl = FALSE) {
 cmdstan_default_path <- function(dir = NULL) {
   if (!is.null(dir)) {
     installs_path <- dir
-  } else {
-    installs_path <- cmdstan_default_install_path()
-  }
-  wsl_installed <- wsl_installed()
-  if (!isTRUE(wsl_installed)) {
     wsl_installs_path <- NULL
     wsl_path_exists <- FALSE
   } else {
-    wsl_installs_path <- cmdstan_default_install_path(wsl = TRUE)
-    wsl_path_linux <- gsub(wsl_dir_prefix(wsl = TRUE), "", wsl_installs_path,
-                          fixed=TRUE)
-    wsl_path_exists <- isTRUE(.wsl_check_exists(wsl_path_linux))
+    installs_path <- cmdstan_default_install_path()
+    wsl_installed <- wsl_installed()
+    if (!isTRUE(wsl_installed)) {
+      wsl_installs_path <- NULL
+      wsl_path_exists <- FALSE
+    } else {
+      wsl_installs_path <- cmdstan_default_install_path(wsl = TRUE)
+      wsl_path_linux <- gsub(wsl_dir_prefix(wsl = TRUE), "", wsl_installs_path,
+                            fixed=TRUE)
+      wsl_path_exists <- isTRUE(.wsl_check_exists(wsl_path_linux))
+    }
   }
   if (dir.exists(installs_path) || wsl_path_exists) {
     latest_cmdstan <- ifelse(dir.exists(installs_path),

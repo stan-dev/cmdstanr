@@ -47,6 +47,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
       CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
+      CMDSTANR_SKIP_PARETO_SMOOTH_INIT_TESTS: ${{ matrix.config.os == 'windows-2022' && matrix.config.r == '4.1' }}
       CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
       PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
 
@@ -91,9 +92,7 @@ jobs:
             cat("\n")
           }
           cat("Selected toolchain: ", selected, "\n", sep = "")
-          selected_ok <- nzchar(selected) &&
-            dir.exists(selected) &&
-            any(file.exists(file.path(selected, c("g++.exe", "g++"))))
+          selected_ok <- cmdstanr:::is_rtools4x_toolchain_usable(selected)
           if (!selected_ok) {
             stop("Resolved Windows toolchain path is not usable.")
           }

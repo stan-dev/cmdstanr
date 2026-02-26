@@ -1,7 +1,6 @@
 context("fitted-inits")
 set_cmdstan_path()
 
-
 data_list_schools <- testing_data("schools")
 data_list_logistic <- testing_data("logistic")
 test_inits <- function(mod, fit_init, data_list = NULL) {
@@ -50,6 +49,7 @@ test_that("Subsets of parameters are allowed", {
 })
 
 test_that("Pathfinder works as init", {
+  skip_if_legacy_win41_pareto()
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
     seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1))
@@ -57,6 +57,7 @@ test_that("Pathfinder works as init", {
 })
 
 test_that("Multi Pathfinder method works as init", {
+  skip_if_legacy_win41_pareto()
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_path_init <- mod_logistic$pathfinder(seed=1234,
     data = data_list_logistic, refresh = 0, num_paths = 4))
@@ -64,6 +65,7 @@ test_that("Multi Pathfinder method works as init", {
 })
 
 test_that("Pathfinder method with psis_resample as false works as init", {
+  skip_if_legacy_win41_pareto()
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
     seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1,
@@ -73,6 +75,7 @@ test_that("Pathfinder method with psis_resample as false works as init", {
 
 
 test_that("Multi Pathfinder method with psis_resample as false works as init", {
+  skip_if_legacy_win41_pareto()
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
     seed=1234, data = data_list_logistic, refresh = 0, num_paths = 4,
@@ -98,6 +101,7 @@ test_that("Multi Pathfinder method with calculate_lp as false works as init", {
 })
 
 test_that("Variational method works as init", {
+  skip_if_legacy_win41_pareto()
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_vb_init <- mod_logistic$variational(
     data = data_list_logistic, seed=1234, refresh = 0))
