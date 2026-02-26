@@ -258,11 +258,10 @@ test_that("as_mcmc.list() works", {
 test_that("get_cmdstan_flags() can be used recursively in `make`", {
   mkfile <- normalizePath(test_path("testdata", "Makefile"))
   nonrecursive_flags <- get_cmdstan_flags("STANCFLAGS")
-  child_env <- c(
-    R_HOME = R.home(),
-    R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep),
-    R_LIBS_USER = Sys.getenv("R_LIBS_USER")
-  )
+  child_env <- Sys.getenv()
+  child_env["R_HOME"] <- R.home()
+  child_env["R_LIBS"] <- paste(.libPaths(), collapse = .Platform$path.sep)
+  child_env["R_LIBS_USER"] <- Sys.getenv("R_LIBS_USER")
   stdo <- processx::run(
     command = "make", args = sprintf("--file=%s", mkfile), env = child_env
   )$stdout
