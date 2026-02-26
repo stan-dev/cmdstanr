@@ -2,3 +2,4 @@
 
     YEAR: 2019
     COPYRIGHT HOLDER: Stan Developers and their Assignees
+    ORGANIZATION: Stan Development Team (stan-dev)

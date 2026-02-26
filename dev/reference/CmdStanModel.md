@@ -266,7 +266,7 @@ fit_optim <- mod$optimize(data = my_data_file, seed = 123)
 #>        6      -5.00402   0.000246518   8.73164e-07           1           1        9    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
-#> Finished in  0.1 seconds.
+#> Finished in  0.2 seconds.
 fit_optim$summary()
 #> # A tibble: 2 × 2
 #>   variable estimate
@@ -446,7 +446,7 @@ fit_mcmc_w_init_fun <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_mcmc_w_init_fun_2 <- mod$sample(
   data = stan_data,
@@ -465,7 +465,7 @@ fit_mcmc_w_init_fun_2 <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_mcmc_w_init_fun_2$init()
 #> [[1]]
@@ -497,7 +497,7 @@ fit_mcmc_w_init_list <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_optim_w_init_list <- mod$optimize(
   data = stan_data,

@@ -119,11 +119,11 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1     priors 140320269207360 0.003530002  0.002673001  0.000857001       34904
-    2 likelihood 140320269207360 0.632069050  0.509316220  0.122752830       52356
+    1 likelihood 139994229569344 0.647975260  0.510079600  0.137895660       52356
+    2     priors 139994229569344 0.004157698  0.002990145  0.001167553       34904
       no_chain_stack autodiff_calls no_autodiff_calls
-    1          34904          17452                 1
-    2       34921452          17452                 1
+    1       34921452          17452                 1
+    2          34904          17452                 1
 
 The `total_time` column is the total time spent inside a given profile
 statement. It is clear that the vast majority of time is spent in the
@@ -175,11 +175,11 @@ fit_glm$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1     priors 140032615233344 0.003273264   0.00246963  0.000803634       34214
-    2 likelihood 140032615233344 0.418174430   0.41735953  0.000814898       51321
+    1 likelihood 140374912771904 0.431774380  0.430745900  0.001028476       51321
+    2     priors 140374912771904 0.003647777  0.002751566  0.000896211       34214
       no_chain_stack autodiff_calls no_autodiff_calls
-    1          34214          17107                 1
-    2          17107          17107                 1
+    1          17107          17107                 1
+    2          34214          17107                 1
 
 We can see from the `total_time` column that the likelihood computation
 is faster than in the previous model.
@@ -207,7 +207,7 @@ per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 2.022692e-07 3.621757e-05
+    [1] 3.712900e-05 2.382362e-07
 
 ### Accessing and saving the profile files
 
@@ -220,7 +220,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/Rtmp6Vruwg/model_580e4657b49f155a37081bdfaae83f92-profile-202602251802-1-80674a.csv"
+    [1] "/tmp/RtmpBb5QVY/model_580e4657b49f155a37081bdfaae83f92-profile-202602262251-1-8067e5.csv"
 
 These can be saved to a more permanent location with the
 `$save_profile_files()` method.
