@@ -1094,14 +1094,14 @@ CmdStanModel$set("public", name = "format", value = format)
 #'
 #' @template model-common-args
 #' @template model-sample-args
-#' @param show_progress_bar (logical). If TRUE, registers a progress bar to
+#' @param show_progress_bar (logical). When `TRUE`, registers a progress bar to
 #'   display sampling progress via the `progressr` framework. The user is
 #'   responsible for registering a handler to display the progress bar. A
-#'   default handler, using the `cli` package, can be registered via the
-#'   `cmdstanr::register_default_progress_handler()`. Default: FALSE.
-#' @param suppress_iteration_messages Suppress CmdStan output lines reporting
-#'   iterations, intended for use with the `show_progress_bar` argument. Defaults
-#'   to the value of `show_progress_bar`.
+#'   default handler, using the `cli` package, can be registered via
+#'   [register_default_progress_handler()]. The default is `FALSE`.
+#' @param suppress_iteration_messages (logical) When `TRUE`, suppresses CmdStan
+#'   output lines reporting iterations, intended for use with the
+#'   `show_progress_bar` argument. Defaults to the value of `show_progress_bar`.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'

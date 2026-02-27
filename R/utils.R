@@ -1047,16 +1047,21 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
   invisible(NULL)
 }
 
+
+
+# Progress bar helpers  ---------------------------------------------------
+
 #' Register a default progress bar handler for sampling
 #'
 #' Create a default progress bar for CmdStan sampling operations, and register
-#' it as the default global handler for progressr updates. Requires `progressr`
-#' for the progress framework, and `cli` for the default progress bar handler.
+#' it as the default global handler for `progressr` updates. Requires
+#' `progressr` for the progress framework, and `cli` for the default progress
+#' bar handler.
 #'
 #' @export
 #'
 #' @param verbose (logical) Report creation of progress bar to stdout?
-#' The default is `TRUE`. 
+#' The default is `TRUE`.
 #'
 register_default_progress_handler <- function(verbose=TRUE) {
   # Require both the progressr and cli packages.
