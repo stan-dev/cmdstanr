@@ -12,6 +12,7 @@ The default is \code{TRUE}.}
 }
 \description{
 Create a default progress bar for CmdStan sampling operations, and register
-it as the default global handler for progressr updates. Requires \code{progressr}
-for the progress framework, and \code{cli} for the default progress bar handler.
+it as the default global handler for \code{progressr} updates. Requires
+\code{progressr} for the progress framework, and \code{cli} for the default progress
+bar handler.
 }

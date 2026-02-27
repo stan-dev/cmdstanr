@@ -296,15 +296,15 @@ with argument \code{"output save_config=1"} to save a json file which contains
 the argument tree and extra information (equivalent to the output CSV file
 header). This option is only available in CmdStan 2.34.0 and later.}
 
-\item{show_progress_bar}{(logical). If TRUE, registers a progress bar to
+\item{show_progress_bar}{(logical). When \code{TRUE}, registers a progress bar to
 display sampling progress via the \code{progressr} framework. The user is
 responsible for registering a handler to display the progress bar. A
-default handler, using the \code{cli} package, can be registered via the
-\code{cmdstanr::register_default_progress_handler()}. Default: FALSE.}
+default handler, using the \code{cli} package, can be registered via
+\code{\link[=register_default_progress_handler]{register_default_progress_handler()}}. The default is \code{FALSE}.}
 
-\item{suppress_iteration_messages}{Suppress CmdStan output lines reporting
-iterations, intended for use with the \code{show_progress_bar} argument. Defaults
-to the value of \code{show_progress_bar}.}
+\item{suppress_iteration_messages}{(logical) When \code{TRUE}, suppresses CmdStan
+output lines reporting iterations, intended for use with the
+\code{show_progress_bar} argument. Defaults to the value of \code{show_progress_bar}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
