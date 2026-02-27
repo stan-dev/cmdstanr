@@ -47,7 +47,6 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
       CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
-      CMDSTANR_SKIP_PARETO_SMOOTH_INIT_TESTS: ${{ matrix.config.os == 'windows-2022' && matrix.config.r == '4.1' }}
       CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
       PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
 

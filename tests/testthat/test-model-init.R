@@ -314,7 +314,6 @@ test_that("Initial values for single-element containers treated correctly", {
 })
 
 test_that("Pathfinder inits do not drop dimensions", {
-  skip_if_legacy_win41_pareto()
   modcode <- "
   data {
     int N;
