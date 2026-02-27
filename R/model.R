@@ -2034,12 +2034,16 @@ generate_quantities <- function(fitted_params,
                                 sig_figs = NULL,
                                 parallel_chains = getOption("mc.cores", 1),
                                 threads_per_chain = NULL,
-                                opencl_ids = NULL) {
+                                opencl_ids = NULL,
+                                show_messages = TRUE,
+                                show_exceptions = TRUE) {
   fitted_params_files <- process_fitted_params(fitted_params)
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
+    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
