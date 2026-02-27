@@ -1154,31 +1154,23 @@ sample <- function(data = NULL,
   if (fixed_param) {
     save_warmup <- FALSE
   }
-  # Check for and create progressr::progressor object for progress reporting, if required.
-  # Pass default value for refresh
+
   progress_bar <- NULL
   if (show_progress_bar) {
     if (!requireNamespace("progressr", quietly = TRUE)) {
-      stop("Please install the 'progressr' package to enable a progress bar. ", call. = FALSE)
+      stop("Please install the 'progressr' package to enable a progress bar. ",
+           call. = FALSE)
     }
-
-    # progressr only supports single-line progress bars at time of writing,
-    # so all chains must be combined into a single process bar.
-
-    # Calculate a total number of steps for progress as
-    # (chains*(iter_warmup+iter_sampling)).
-    # We will update the progress bar by 'refresh' steps each time.
-
-    # As all the arguments to CmdStan can be NULL, we need to reproduce the
-    # defaults here manually.
-
-    n_samples <- ifelse(is.null(iter_sampling), 1000, iter_sampling)
-    n_warmup <- ifelse(is.null(iter_warmup), 1000, iter_warmup)
-    n_chains <- ifelse(is.null(chains), 1, chains)
-    n_steps <- (n_chains*(n_samples+n_warmup))
-
+    # - progressr only supports single-line progress bars at time of writing,
+    #   so all chains must be combined into a single process bar.
+    # - The total number of steps for progress is the total number of iterations
+    #   (including warmup) across all chains.
+    # - We will update the progress bar by 'refresh' steps each time.
+    # - As 'iter_sampling' and 'iter_warmup' can be NULL, we need to reproduce the
+    #   defaults here manually.
+    chains <- checkmate::assert_integerish(chains, lower = 1, len = 1)
+    n_steps <- chains * (iter_sampling %||% 1000 + iter_warmup %||% 1000)
     progress_bar <- progressr::progressor(steps=n_steps, auto_finish=TRUE)
-
   }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
