@@ -512,8 +512,8 @@ check_target_exe <- function(exe) {
     procs$check_finished()
   }
   # Ensure at this point that any created progress bar is closed.
-  if(!is.null(private$progress_bar_)){
-    private$progress_bar_(type="finish")
+  if (!is.null(private$progress_bar_)) {
+    private$progress_bar_(type = "finish")
   }
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
   procs$report_time()
@@ -731,7 +731,6 @@ CmdStanProcs <- R6::R6Class(
       } else {
         private$iter_sampling_ <- as.integer(iter_sampling)
       }
-
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
       } else {
@@ -749,22 +748,21 @@ CmdStanProcs <- R6::R6Class(
       private$show_stderr_messages_ <- show_stderr_messages
       private$show_stdout_messages_ <- show_stdout_messages
       private$progress_bar_ <- progress_bar
-     
+
       # Defaults when enabling the progress bar:
       # - If 'progress_bar' is set, suppress iteration messages;
       # - if `progress_bar` is unset, do not suppress iteration messages;
       # - if 'suppress_iteration_messages' is set explicitly, honour that setting.
-      if(is.null(progress_bar)) {
+      if (is.null(progress_bar)) {
         private$suppress_iteration_messages_ <- FALSE
       } else {
         private$suppress_iteration_messages_ <- TRUE
       }
-      if(!is.null(suppress_iteration_messages)) {
+      if (!is.null(suppress_iteration_messages)) {
         private$suppress_iteration_messages_ <- suppress_iteration_messages
       }
 
-      if(is.null(refresh)) {
-        # Default to Stan default of 100 if refresh not set explicitly.
+      if (is.null(refresh)) {
         private$refresh_ <- 100
       } else {
         private$refresh_ <- refresh
@@ -1113,13 +1111,13 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          # Update progress bar 
+          # Update progress bar
           if (!ignore_line && !is.null(private$progress_bar_)) {
             # Pass the current output line to the progress bar as a message,
             # but only update the progress bar if the current line is an
             # iteration message.
             progress_amount <- 0
-            if(grepl("Iteration:", line, perl = TRUE)) {
+            if (grepl("Iteration:", line, perl = TRUE)) {
               # Calculating the amount by which to increment the progress bar
               # is more complicated than it initially seems, due to occasional
               # extra or awkward iteration reporting messages when starting
@@ -1127,36 +1125,36 @@ CmdStanMCMCProcs <- R6::R6Class(
               # sampling where the number of samples is not a multiple of the
               # refresh_rate.
 
-              # Strategy: 
+              # Strategy:
               # If the line's iteration value is divisible by refresh_rate, or
               # is the final sampling step, update the progress bar by
               # refresh_rate.
-              
+
               # Additionally, when moving from warmup to sampling, iterations
               # are reported starting from a baseline of the number of warmup
               # iterations. (For example, if refresh_rate is 12 and iter_warmup
               # is 100, the first reported iteration for sampling will be 112,
               # not 108.)
-              
+
               # Get the current iteration count.
               # Subtract iter_warmup if greater than that.
-              iter_current <- as.numeric(gsub( ".*Iteration:\\s*([0-9]+) \\/.*", "\\1", line, perl=TRUE ))
-              if( iter_current > private$iter_warmup_ ) {
+              iter_current <- as.numeric(gsub(".*Iteration:\\s*([0-9]+) \\/.*", "\\1", line, perl = TRUE))
+              if (iter_current > private$iter_warmup_) {
                 iter_current <- iter_current - private$iter_warmup_
               }
 
               # Update progress bar if the iteration is a multiple of the
               # refresh rate, or is the final sampling iteration.
-              if(((iter_current %% private$refresh_) == 0) |
-                 iter_current == private$iter_warmup_ + private$iter_sampling_) {
+              if (((iter_current %% private$refresh_) == 0) ||
+                  iter_current == private$iter_warmup_ + private$iter_sampling_) {
                 progress_amount <- private$refresh_
-              } 
+              }
             }
-            private$progress_bar_(amount=progress_amount, message=line)
+            private$progress_bar_(amount = progress_amount, message = line)
           }
           # Allow suppression of iteration messages
           if (private$suppress_iteration_messages_) {
-            if(grepl("Iteration:", line, perl = TRUE)) {
+            if (grepl("Iteration:", line, perl = TRUE)) {
               ignore_line <- TRUE
             }
           }
