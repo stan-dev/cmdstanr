@@ -1063,28 +1063,31 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
 #' @param verbose (logical) Report creation of progress bar to stdout?
 #' The default is `TRUE`.
 #'
-register_default_progress_handler <- function(verbose=TRUE) {
-  # Require both the progressr and cli packages.
-  if(requireNamespace("progressr", quietly = TRUE) && requireNamespace("cli", quietly = TRUE)) {
+register_default_progress_handler <- function(verbose = TRUE) {
+  if (!requireNamespace("progressr", quietly = TRUE)) {
+    stop("Please install the 'progressr' package to enable a progress bar. ", call. = FALSE)
+  }
+  if (!requireNamespace("cli", quietly = TRUE)) {
+    stop("Please install the 'cli' package to use the default progress bar.", call. = FALSE)
+  }
+  progressr::handlers(global = TRUE)
+  progressr::handlers("cli")
 
-    progressr::handlers(global=TRUE)
-    progressr::handlers("cli")
+  options(
+    cli.spinner = "moon",
+    cli.progress_show_after = 0,
+    cli.progress_clear = FALSE
+  )
 
-    # Progress bar options
-    options(cli.spinner = "moon",
-            cli.progress_show_after = 0,
-            cli.progress_clear = FALSE )
-
-    # Default informative progress output for sampling
-    progressr::handlers(progressr::handler_cli(
-                          format = "{cli::pb_spin} Progress: |{cli::pb_bar}| {cli::pb_current}/{cli::pb_total} | {cli::pb_percent} | ETA: {cli::pb_eta}",
-                          clear = FALSE
-                          ))
-    if(verbose) {
-      message("Default progress bar registered.")
-    }
-  } else {
-    warning("The 'progressr' library is required to enable a progress bar. The default progress bar uses the 'cli' library.")
+  # Default informative progress output for sampling
+  progressr::handlers(
+    progressr::handler_cli(
+      format = "{cli::pb_spin} Progress: |{cli::pb_bar}| {cli::pb_current}/{cli::pb_total} | {cli::pb_percent} | ETA: {cli::pb_eta}",
+      clear = FALSE
+    )
+  )
+  if (verbose) {
+    message("Default progress bar registered.")
   }
   invisible(NULL)
 }
