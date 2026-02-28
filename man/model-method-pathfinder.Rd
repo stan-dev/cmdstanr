@@ -365,6 +365,19 @@ fit_optim_w_init_list$init()
 }
 
 }
+\references{
+\itemize{
+\item Zhang, L., Carpenter, B., Gelman, A., and Vehtari, A. (2022).
+Pathfinder: parallel quasi-Newton variational inference.
+\emph{Journal of Machine Learning Research}, 23(306), 1-49.
+\item Stan Development Team. Stan Reference Manual (Algorithms section, Pathfinder):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
+}
+}
 \seealso{
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online

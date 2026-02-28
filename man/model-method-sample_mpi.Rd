@@ -320,6 +320,21 @@ only define the number of processes. To use \code{n_procs} processes specify
 }
 
 }
+\references{
+\itemize{
+\item Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+adaptively setting path lengths in Hamiltonian Monte Carlo.
+\emph{Journal of Machine Learning Research}, 15(47), 1593-1623.
+\item Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.
+\item Stan Development Team. Stan Reference Manual (Algorithms section):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
+}
+}
 \seealso{
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online

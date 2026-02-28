@@ -1097,6 +1097,19 @@ CmdStanModel$set("public", name = "format", value = format)
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
+#' @references
+#' * Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+#'   adaptively setting path lengths in Hamiltonian Monte Carlo.
+#'   *Journal of Machine Learning Research*, 15(47), 1593-1623.
+#' * Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+#'   arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.
+#' * Stan Development Team. Stan Reference Manual (Algorithms section):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
@@ -1246,6 +1259,19 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   model executable.
 #'
 #' @return A [`CmdStanMCMC`] object.
+#'
+#' @references
+#' * Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+#'   adaptively setting path lengths in Hamiltonian Monte Carlo.
+#'   *Journal of Machine Learning Research*, 15(47), 1593-1623.
+#' * Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+#'   arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.
+#' * Stan Development Team. Stan Reference Manual (Algorithms section):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
 #'
 #' @template seealso-docs
 #' @seealso The Stan Math Library's documentation
@@ -1407,6 +1433,14 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'
 #' @return A [`CmdStanMLE`] object.
 #'
+#' @references
+#' * Stan Development Team. Stan Reference Manual (Algorithms section, optimization):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
@@ -1528,6 +1562,14 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'   `jacobian` specified here is used when running optimization.
 #'
 #' @return A [`CmdStanLaplace`] object.
+#'
+#' @references
+#' * Stan Development Team. Stan Reference Manual (Algorithms section, Laplace approximation):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
 #'
 #' @template seealso-docs
 #' @examples
@@ -1694,6 +1736,17 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #'
 #' @return A [`CmdStanVB`] object.
 #'
+#' @references
+#' * Kucukelbir, A., Tran, D., Ranganath, R., Gelman, A., and Blei, D. M.
+#'   (2017). Automatic differentiation variational inference.
+#'   *Journal of Machine Learning Research*, 18(14), 1-45.
+#' * Stan Development Team. Stan Reference Manual (Algorithms section, variational inference):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
@@ -1833,6 +1886,17 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' @param save_single_paths (logical) Whether to save the results of single
 #'   pathfinder runs in multi-pathfinder.
 #' @return A [`CmdStanPathfinder`] object.
+#'
+#' @references
+#' * Zhang, L., Carpenter, B., Gelman, A., and Vehtari, A. (2022).
+#'   Pathfinder: parallel quasi-Newton variational inference.
+#'   *Journal of Machine Learning Research*, 23(306), 1-49.
+#' * Stan Development Team. Stan Reference Manual (Algorithms section, Pathfinder):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
 #'
 #' @template seealso-docs
 #' @inherit cmdstan_model examples

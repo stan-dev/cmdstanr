@@ -349,6 +349,16 @@ fit_optim_w_init_list$init()
 }
 
 }
+\references{
+\itemize{
+\item Stan Development Team. Stan Reference Manual (Algorithms section, optimization):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
+}
+}
 \seealso{
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
