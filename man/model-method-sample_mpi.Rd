@@ -336,16 +336,6 @@ https://mc-stan.org/docs/cmdstan-guide/
 }
 }
 \seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
-\itemize{
-\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
-\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
-}
-
 The Stan Math Library's documentation
 (\href{https://mc-stan.org/math/}{mc-stan.org/math}) for more
 details on MPI support in Stan.

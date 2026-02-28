@@ -1110,7 +1110,6 @@ CmdStanModel$set("public", name = "format", value = format)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 sample <- function(data = NULL,
@@ -1273,7 +1272,6 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @template seealso-docs
 #' @seealso The Stan Math Library's documentation
 #'   ([mc-stan.org/math](https://mc-stan.org/math/)) for more
 #'   details on MPI support in Stan.
@@ -1441,7 +1439,6 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 optimize <- function(data = NULL,
@@ -1571,7 +1568,6 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @template seealso-docs
 #' @examples
 #' \dontrun{
 #' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
@@ -1747,7 +1743,6 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 variational <- function(data = NULL,
@@ -1898,7 +1893,6 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @template seealso-docs
 #' @inherit cmdstan_model examples
 #'
 pathfinder <- function(data = NULL,
