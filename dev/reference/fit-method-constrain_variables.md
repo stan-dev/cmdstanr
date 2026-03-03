@@ -45,7 +45,8 @@ constrain_variables(
 # \dontrun{
 fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
-#> ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a
+#> ar: 
+#> creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a
 #> ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a
 #> ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a
 #> ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a
