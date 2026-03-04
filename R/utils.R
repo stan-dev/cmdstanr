@@ -80,7 +80,7 @@ arch_is_aarch64 <- function() {
 }
 
 # Returns the type of make command to use to compile depending on the OS
-# First checks if $MAKE is set, otherwise falls back to system-specific default
+# First checks if $MAKE is set, otherwise falls back to "make"
 make_cmd <- function() {
   warn_if_ignored_msys_toolchain_env()
   if (Sys.getenv("MAKE") != "") {
