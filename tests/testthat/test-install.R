@@ -421,3 +421,81 @@ test_that("check_rtools4x_windows_toolchain reports checked toolchain paths", {
     )
   })
 })
+
+test_that("toolchain_PATH_env_var() handles missing and configured Rtools homes", {
+  with_mocked_bindings(
+    expect_null(toolchain_PATH_env_var()),
+    os_is_windows = function() FALSE
+  )
+  with_mocked_bindings(
+    expect_null(toolchain_PATH_env_var()),
+    os_is_windows = function() TRUE,
+    rtools4x_home_path = function() ""
+  )
+  with_mocked_bindings(
+    expect_equal(
+      toolchain_PATH_env_var(),
+      "C:/rtools/usr/bin;C:/rtools/ucrt64/bin"
+    ),
+    os_is_windows = function() TRUE,
+    rtools4x_home_path = function() "C:/rtools",
+    rtools4x_toolchain_path = function() "C:/rtools/ucrt64/bin",
+    repair_path = function(path) path
+  )
+})
+
+test_that("check_rtools4x_windows_toolchain reports missing Rtools and make", {
+  fake_rtools_home <- tempfile(pattern = "rtools-home-missing-", tmpdir = tempdir(check = TRUE))
+  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+
+  with_mocked_bindings(
+    expect_error(
+      check_rtools4x_windows_toolchain(),
+      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
+      fixed = TRUE
+    ),
+    rtools4x_home_path = function() "",
+    rtools4x_version = function() "44"
+  )
+
+  dir.create(file.path(fake_rtools_home, "usr", "bin"),
+             recursive = TRUE, showWarnings = FALSE)
+  with_mocked_bindings(
+    expect_error(
+      check_rtools4x_windows_toolchain(),
+      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
+      fixed = TRUE
+    ),
+    rtools4x_home_path = function() fake_rtools_home,
+    rtools4x_version = function() "44"
+  )
+})
+
+test_that("check_rtools4x_windows_toolchain validates install path and empty candidates", {
+  with_mocked_bindings(
+    expect_error(
+      check_rtools4x_windows_toolchain(),
+      "Please reinstall the appropriate Rtools version for this R installation to a valid path",
+      fixed = TRUE
+    ),
+    rtools4x_home_path = function() "C:/Program Files/Rtools44",
+    rtools4x_version = function() "44"
+  )
+
+  fake_rtools_home <- tempfile(pattern = "rtools-home-empty-", tmpdir = tempdir(check = TRUE))
+  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  dir.create(file.path(fake_rtools_home, "usr", "bin"),
+             recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_rtools_home, "usr", "bin", "make.exe"))
+
+  with_mocked_bindings(
+    expect_error(
+      check_rtools4x_windows_toolchain(),
+      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
+      fixed = TRUE
+    ),
+    rtools4x_home_path = function() fake_rtools_home,
+    rtools4x_version = function() "44",
+    rtools4x_toolchain_candidates = function() character()
+  )
+})

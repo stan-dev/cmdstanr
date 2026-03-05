@@ -602,7 +602,8 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
     stop(
       "\n", rtools_version, " was not found but is required to run CmdStan with R version ",
       R.version$major, ".", R.version$minor, ".",
-      "\nPlease install ", rtools_version, " and run cmdstanr::check_cmdstan_toolchain().",
+      "\nPlease install or reinstall the appropriate Rtools version for this R installation,",
+      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
@@ -611,7 +612,8 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (grepl("\\(|)| ", rtools_path)) {
     stop(
       "\n", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall ", rtools_version, " to a valid path, restart R, and then run cmdstanr::check_cmdstan_toolchain().",
+      "\nPlease reinstall the appropriate Rtools version for this R installation to a valid path,",
+      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
@@ -621,7 +623,8 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (!make_found) {
     stop(
       "\n", rtools_version, " is missing the required 'make' executable in ", usr_bin, ".",
-      "\nPlease reinstall ", rtools_version, " and run cmdstanr::check_cmdstan_toolchain().",
+      "\nPlease reinstall the appropriate Rtools version for this R installation,",
+      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
   }
@@ -638,7 +641,8 @@ check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
       "\n", rtools_version, " does not contain a supported C++ toolchain.",
       "\nChecked the following paths:",
       candidates_message,
-      "\nPlease reinstall ", rtools_version, " and run cmdstanr::check_cmdstan_toolchain().",
+      "\nPlease reinstall the appropriate Rtools version for this R installation,",
+      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
   }

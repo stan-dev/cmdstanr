@@ -183,6 +183,9 @@ cmdstan_default_path <- function(dir = NULL) {
                              .latest_cmdstan_installed(installs_path), "")
     latest_wsl_cmdstan <- ifelse(wsl_path_exists,
                                  .latest_cmdstan_installed(wsl_installs_path), "")
+    if (!nzchar(latest_cmdstan) && !nzchar(latest_wsl_cmdstan)) {
+      return(NULL)
+    }
     if (latest_wsl_cmdstan >= latest_cmdstan) {
       return(file.path(wsl_installs_path, latest_wsl_cmdstan))
     } else {

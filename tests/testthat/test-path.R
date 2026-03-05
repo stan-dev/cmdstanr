@@ -69,6 +69,27 @@ test_that("Unsupported CmdStan path from env var is rejected", {
   expect_false(isTRUE(.cmdstanr$WSL))
 })
 
+test_that("Existing CMDSTAN env path with no install resets cached state", {
+  unset_cmdstan_path()
+  .cmdstanr$PATH <- PATH
+  .cmdstanr$VERSION <- VERSION
+  .cmdstanr$WSL <- TRUE
+  empty_parent <- file.path(tempdir(check = TRUE), "cmdstan-empty-parent")
+  dir.create(empty_parent, recursive = TRUE, showWarnings = FALSE)
+  on.exit(unlink(empty_parent, recursive = TRUE), add = TRUE)
+  on.exit(Sys.unsetenv("CMDSTAN"), add = TRUE)
+
+  Sys.setenv(CMDSTAN = empty_parent)
+  expect_warning(
+    cmdstanr_initialize(),
+    "No CmdStan installation found in the path specified by the environment variable 'CMDSTAN'.",
+    fixed = TRUE
+  )
+  expect_null(.cmdstanr$PATH)
+  expect_null(.cmdstanr$VERSION)
+  expect_false(isTRUE(.cmdstanr$WSL))
+})
+
 test_that("cmdstanr_initialize() also looks for default path", {
   unset_cmdstan_path()
   cmdstanr_initialize()
@@ -148,6 +169,32 @@ test_that("unset_cmdstan_path() also resets WSL state", {
   expect_null(.cmdstanr$PATH)
   expect_null(.cmdstanr$VERSION)
   expect_false(isTRUE(.cmdstanr$WSL))
+})
+
+test_that("cmdstan_default_path() respects custom install directories", {
+  installs <- file.path(tempdir(check = TRUE), "cmdstan-custom-installs")
+  dir.create(file.path(installs, "cmdstan-2.35.0"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(installs, "cmdstan-2.36.0"), recursive = TRUE, showWarnings = FALSE)
+  on.exit(unlink(installs, recursive = TRUE), add = TRUE)
+
+  expect_equal(
+    cmdstan_default_path(dir = installs),
+    file.path(installs, "cmdstan-2.36.0")
+  )
+})
+
+test_that("cmdstan_default_path() returns NULL for empty custom install directories", {
+  installs <- file.path(tempdir(check = TRUE), "cmdstan-empty-installs")
+  dir.create(installs, recursive = TRUE, showWarnings = FALSE)
+  on.exit(unlink(installs, recursive = TRUE), add = TRUE)
+
+  expect_null(cmdstan_default_path(dir = installs))
+})
+
+test_that("CmdStan version helpers handle invalid inputs", {
+  expect_identical(cmdstan_min_version(), "2.35.0")
+  expect_false(is_supported_cmdstan_version(NULL))
+  expect_false(is_supported_cmdstan_version("not-a-version"))
 })
 
 test_that("cmdstan_ext() works", {
