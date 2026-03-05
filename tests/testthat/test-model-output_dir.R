@@ -1,11 +1,7 @@
 context("model-output_dir-output-basename")
 
 set_cmdstan_path()
-if (getRversion() < '3.5.0') {
-  sandbox <- file.path(tempdir(), "sandbox")
-} else {
-  sandbox <- file.path(tempdir(check = TRUE), "sandbox")
-}
+sandbox <- file.path(tempdir(check = TRUE), "sandbox")
 if (!dir.exists(sandbox)) {
   dir.create(sandbox)
   on.exit(unlink(sandbox, recursive = TRUE))
