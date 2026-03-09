@@ -328,7 +328,7 @@ read_cmdstan_csv <- function(files,
   model_param_dims <- variable_dims(metadata$variables)
   metadata$stan_variable_sizes <- model_param_dims
   metadata$stan_variables <- names(model_param_dims)
-
+  metadata$model_params <- metadata$variables # for backwards compatibility
   if (metadata$method == "sample") {
     if (is.null(format)) {
       format <- "draws_array"
