@@ -109,8 +109,7 @@ implied by newly-constrained parameters (defaults to TRUE).</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span>, force_recompile <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">constrain_variables</span><span class="op">(</span>unconstrained_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1.2</span>, <span class="fl">1.1</span>, <span class="fl">2.2</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ar: </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a</span>

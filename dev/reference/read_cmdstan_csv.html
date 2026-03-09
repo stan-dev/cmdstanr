@@ -185,10 +185,10 @@ the generated quantities.</p></li>
 <span class="r-in"><span><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span>, save_warmup <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">csv_files</span> <span class="op">&lt;-</span> <span class="va">fit1</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">csv_files</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/Rtmp06FvG5/logistic-202603030244-1-3f04c6.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/Rtmp06FvG5/logistic-202603030244-2-3f04c6.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/Rtmp06FvG5/logistic-202603030244-3-3f04c6.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/Rtmp06FvG5/logistic-202603030244-4-3f04c6.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpytRKJf/logistic-202603091936-1-85b84e.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/RtmpytRKJf/logistic-202603091936-2-85b84e.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/RtmpytRKJf/logistic-202603091936-3-85b84e.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/RtmpytRKJf/logistic-202603091936-4-85b84e.csv"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Creating fitting model objects</span></span></span>
 <span class="r-in"><span></span></span>
@@ -196,9 +196,9 @@ the generated quantities.</p></li>
 <span class="r-in"><span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">as_cmdstan_fit</span><span class="op">(</span><span class="va">csv_files</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit2</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="st">"beta"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   beta[1] -0.67  -0.66 0.25 0.25 -1.08 -0.26 1.00     4956     2938</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   beta[2] -0.26  -0.26 0.22 0.22 -0.63  0.10 1.00     4261     3012</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   beta[3]  0.68   0.67 0.27 0.28  0.23  1.12 1.00     4392     3108</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   beta[1] -0.66  -0.65 0.24 0.24 -1.08 -0.28 1.00     4223     2641</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   beta[2] -0.28  -0.28 0.23 0.23 -0.67  0.10 1.00     3651     2933</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   beta[3]  0.68   0.67 0.28 0.28  0.24  1.16 1.00     3854     2782</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using read_cmdstan_csv</span></span></span>
 <span class="r-in"><span><span class="co">#</span></span></span>
@@ -206,11 +206,11 @@ the generated quantities.</p></li>
 <span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">read_cmdstan_csv</span><span class="op">(</span><span class="va">csv_files</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ metadata                       :List of 41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ metadata                       :List of 42</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_major  : num 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_minor  : num 38</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_patch  : num 0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ start_datetime      : chr "2026-03-03 02:44:10 UTC"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ start_datetime      : chr "2026-03-09 19:36:04 UTC"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ method              : chr "sample"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ save_warmup         : int 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ thin                : num 1</span>
@@ -228,15 +228,15 @@ the generated quantities.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ num_chains          : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ id                  : num [1:4] 1 2 3 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ init                : num [1:4] 2 2 2 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ seed                : num 1.85e+09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ seed                : num 1.07e+09</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ refresh             : num 100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ sig_figs            : num 8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ profile_file        : chr "/tmp/Rtmp06FvG5/logistic-profile-202603030244-1-542b12.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ profile_file        : chr "/tmp/RtmpytRKJf/logistic-profile-202603091936-1-82138a.csv"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ save_cmdstan_config : int 0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stanc_version       : chr "stanc3 v2.38.0"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ variables           : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ step_size_adaptation: num [1:4] 0.713 0.558 0.784 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ step_size_adaptation: num [1:4] 0.682 0.805 0.702 0.757</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ model_name          : chr "logistic_model"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ adapt_engaged       : int 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ adapt_delta         : num 0.8</span>
@@ -247,48 +247,49 @@ the generated quantities.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ threads_per_chain   : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ time                :'data.frame':	4 obs. of  4 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain_id: num [1:4] 1 2 3 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.054 0.055 0.055 0.055</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.055 0.059 0.055 0.053</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.109 0.114 0.11 0.108</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.055 0.054 0.055 0.054</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.058 0.054 0.057 0.056</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.113 0.108 0.112 0.11</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_variable_sizes :List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ lp__   : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ alpha  : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ beta   : num 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ log_lik: num 100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_variables      : chr [1:4] "lp__" "alpha" "beta" "log_lik"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ model_params        : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ time                           :List of 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ total : int NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ chains:'data.frame':	4 obs. of  4 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain_id: num [1:4] 1 2 3 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.054 0.055 0.055 0.055</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.055 0.059 0.055 0.053</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.109 0.114 0.11 0.108</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.055 0.054 0.055 0.054</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.058 0.054 0.057 0.056</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.113 0.108 0.112 0.11</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ inv_metric                     :List of 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 1: num [1:4] 0.057 0.0721 0.0526 0.0743</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 2: num [1:4] 0.0454 0.0647 0.0502 0.0851</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 3: num [1:4] 0.0474 0.0604 0.0543 0.0754</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 4: num [1:4] 0.0511 0.0625 0.0536 0.0821</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 1: num [1:4] 0.0522 0.0594 0.0496 0.0686</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 2: num [1:4] 0.049 0.0578 0.0524 0.0562</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 3: num [1:4] 0.0514 0.0644 0.0521 0.0647</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 4: num [1:4] 0.0448 0.0531 0.0515 0.0673</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ step_size                      :List of 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 1: num 0.713</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 2: num 0.558</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 3: num 0.784</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 4: num 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:105] -118.2 -118.2 -118.2 -78 -74.1 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 1: num 0.682</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 2: num 0.805</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 3: num 0.702</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 4: num 0.757</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:105] -64.3 -64.3 -64.3 -65.8 -66.6 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..- attr(*, "dimnames")=List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -64.5 -64.7 -64.9 -66.3 -66.9 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -68.3 -64.8 -64.9 -64.8 -64.8 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..- attr(*, "dimnames")=List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 4.15e-01 0.00 1.10e-30 1.00 1.00 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 1.00 0.00 9.49e-241 6.97e-01 9.63e-01 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..- attr(*, "dimnames")=List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.983 0.984 0.951 0.843 0.633 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.991 1 0.959 0.967 0.885 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..- attr(*, "dimnames")=List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"</span>

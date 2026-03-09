@@ -60,33 +60,29 @@ method
 ``` r
 # \dontrun{
 fit <- cmdstanr_example("schools")
-#> Warning: 99 of 4000 (2.0%) transitions ended with a divergence.
-#> See https://mc-stan.org/misc/warnings for details.
-#> Warning: 1 of 4 chains had an E-BFMI less than 0.3.
+#> Warning: 126 of 4000 (3.0%) transitions ended with a divergence.
 #> See https://mc-stan.org/misc/warnings for details.
 fit$diagnostic_summary()
-#> Warning: 99 of 4000 (2.0%) transitions ended with a divergence.
-#> See https://mc-stan.org/misc/warnings for details.
-#> Warning: 1 of 4 chains had an E-BFMI less than 0.3.
+#> Warning: 126 of 4000 (3.0%) transitions ended with a divergence.
 #> See https://mc-stan.org/misc/warnings for details.
 #> $num_divergent
-#> [1] 39 45  6  9
+#> [1] 28 34  4 60
 #> 
 #> $num_max_treedepth
 #> [1] 0 0 0 0
 #> 
 #> $ebfmi
-#> [1] 0.3101370 0.2370734 0.3389424 0.4800299
+#> [1] 0.3853404 0.3642792 0.3826401 0.3337103
 #> 
 fit$diagnostic_summary(quiet = TRUE)
 #> $num_divergent
-#> [1] 39 45  6  9
+#> [1] 28 34  4 60
 #> 
 #> $num_max_treedepth
 #> [1] 0 0 0 0
 #> 
 #> $ebfmi
-#> [1] 0.3101370 0.2370734 0.3389424 0.4800299
+#> [1] 0.3853404 0.3642792 0.3826401 0.3337103
 #> 
 # }
 ```

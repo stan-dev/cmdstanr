@@ -46,7 +46,7 @@ MCMC algorithm are `"accept_stat__"`, `"stepsize__"`, `"treedepth__"`,
 fit <- cmdstanr_example("logistic")
 sampler_diagnostics <- fit$sampler_diagnostics()
 str(sampler_diagnostics)
-#>  'draws_array' num [1:1000, 1:4, 1:6] 3 2 2 2 2 2 2 3 3 2 ...
+#>  'draws_array' num [1:1000, 1:4, 1:6] 3 3 3 3 3 2 2 3 2 3 ...
 #>  - attr(*, "dimnames")=List of 3
 #>   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   ..$ chain    : chr [1:4] "1" "2" "3" "4"
@@ -56,16 +56,16 @@ library(posterior)
 as_draws_df(sampler_diagnostics)
 #> # A draws_df: 1000 iterations, 4 chains, and 6 variables
 #>    treedepth__ divergent__ energy__ accept_stat__ stepsize__ n_leapfrog__
-#> 1            3           0       67          0.84       0.77            7
-#> 2            2           0       68          0.75       0.77            3
-#> 3            2           0       67          0.92       0.77            3
-#> 4            2           0       69          0.69       0.77            3
-#> 5            2           0       65          0.95       0.77            3
-#> 6            2           0       66          0.96       0.77            7
-#> 7            2           0       65          1.00       0.77            3
-#> 8            3           0       66          0.96       0.77            7
-#> 9            3           0       65          0.97       0.77            7
-#> 10           2           0       67          0.83       0.77            3
+#> 1            3           0       72          0.78       0.74            7
+#> 2            3           0       68          1.00       0.74            7
+#> 3            3           0       67          0.94       0.74            7
+#> 4            3           0       68          0.94       0.74            7
+#> 5            3           0       68          0.96       0.74            7
+#> 6            2           0       69          0.94       0.74            7
+#> 7            2           0       68          1.00       0.74            3
+#> 8            3           0       65          1.00       0.74            7
+#> 9            2           0       66          0.95       0.74            3
+#> 10           3           0       68          0.92       0.74            7
 #> # ... with 3990 more draws
 #> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 
@@ -73,16 +73,16 @@ as_draws_df(sampler_diagnostics)
 fit$sampler_diagnostics(format = "df")
 #> # A draws_df: 1000 iterations, 4 chains, and 6 variables
 #>    treedepth__ divergent__ energy__ accept_stat__ stepsize__ n_leapfrog__
-#> 1            3           0       67          0.84       0.77            7
-#> 2            2           0       68          0.75       0.77            3
-#> 3            2           0       67          0.92       0.77            3
-#> 4            2           0       69          0.69       0.77            3
-#> 5            2           0       65          0.95       0.77            3
-#> 6            2           0       66          0.96       0.77            7
-#> 7            2           0       65          1.00       0.77            3
-#> 8            3           0       66          0.96       0.77            7
-#> 9            3           0       65          0.97       0.77            7
-#> 10           2           0       67          0.83       0.77            3
+#> 1            3           0       72          0.78       0.74            7
+#> 2            3           0       68          1.00       0.74            7
+#> 3            3           0       67          0.94       0.74            7
+#> 4            3           0       68          0.94       0.74            7
+#> 5            3           0       68          0.96       0.74            7
+#> 6            2           0       69          0.94       0.74            7
+#> 7            2           0       68          1.00       0.74            3
+#> 8            3           0       65          1.00       0.74            7
+#> 9            2           0       66          0.95       0.74            3
+#> 10           3           0       68          0.92       0.74            7
 #> # ... with 3990 more draws
 #> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 # }

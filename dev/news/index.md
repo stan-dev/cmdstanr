@@ -7,8 +7,6 @@
     ([`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md))
   - `write_stan_tempfile()`
     ([`write_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_file.md))
-  - `model_params` element of `fit$metadata()` list (`variables`
-    element)
   - `jacobian_adjustment` argument to `fit$log_prob()` and similar
     methods (`jacobian` argument)
   - `output_samples` argument to `model$variational()` (`draws`
