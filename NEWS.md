@@ -3,7 +3,6 @@
 * Removed deprecated items (replacements in parentheses):
   - `read_sample_csv()` (`read_cmdstan_csv()`)
   - `write_stan_tempfile()` (`write_stan_file()`)
-  - `model_params` element of `fit$metadata()` list (`variables` element)
   - `jacobian_adjustment` argument to `fit$log_prob()` and similar methods (`jacobian` argument)
   - `output_samples` argument to `model$variational()` (`draws` argument)
   - `hessian` argument to `fit$init_model_methods()` (`hessian` method always compiled now)
