@@ -410,19 +410,26 @@ A
 [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md)
 object.
 
+## References
+
+- Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+  adaptively setting path lengths in Hamiltonian Monte Carlo. *Journal
+  of Machine Learning Research*, 15(47), 1593-1623.
+
+- Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte
+  Carlo. arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS
+  implementation.
+
+- Stan Development Team. Stan Reference Manual (Algorithms section):
+  https://mc-stan.org/docs/reference-manual/
+
+- Stan Development Team. Stan documentation:
+  https://mc-stan.org/users/documentation/
+
+- Stan Development Team. CmdStan User's Guide:
+  https://mc-stan.org/docs/cmdstan-guide/
+
 ## See also
-
-The CmdStanR website
-([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
-
-- Stan documentation:
-  [mc-stan.org/users/documentation](https://mc-stan.org/users/documentation/)
-
-- CmdStan User’s Guide:
-  [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 The Stan Math Library's documentation
 ([mc-stan.org/math](https://mc-stan.org/math/)) for more details on MPI

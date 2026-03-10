@@ -314,19 +314,18 @@ A
 [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
 object.
 
+## References
+
+- Stan Development Team. Stan Reference Manual (Algorithms section,
+  optimization): https://mc-stan.org/docs/reference-manual/
+
+- Stan Development Team. Stan documentation:
+  https://mc-stan.org/users/documentation/
+
+- Stan Development Team. CmdStan User's Guide:
+  https://mc-stan.org/docs/cmdstan-guide/
+
 ## See also
-
-The CmdStanR website
-([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
-
-- Stan documentation:
-  [mc-stan.org/users/documentation](https://mc-stan.org/users/documentation/)
-
-- CmdStan User’s Guide:
-  [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
 [`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),

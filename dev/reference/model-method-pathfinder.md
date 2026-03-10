@@ -335,19 +335,22 @@ A
 [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
 object.
 
+## References
+
+- Zhang, L., Carpenter, B., Gelman, A., and Vehtari, A. (2022).
+  Pathfinder: parallel quasi-Newton variational inference. *Journal of
+  Machine Learning Research*, 23(306), 1-49.
+
+- Stan Development Team. Stan Reference Manual (Algorithms section,
+  Pathfinder): https://mc-stan.org/docs/reference-manual/
+
+- Stan Development Team. Stan documentation:
+  https://mc-stan.org/users/documentation/
+
+- Stan Development Team. CmdStan User's Guide:
+  https://mc-stan.org/docs/cmdstan-guide/
+
 ## See also
-
-The CmdStanR website
-([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
-
-- Stan documentation:
-  [mc-stan.org/users/documentation](https://mc-stan.org/users/documentation/)
-
-- CmdStan User’s Guide:
-  [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
 [`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),
@@ -472,7 +475,7 @@ fit_mcmc <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.1 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 
 # Use 'posterior' package for summaries

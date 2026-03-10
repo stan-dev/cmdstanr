@@ -39,6 +39,17 @@ The `$summary()` method returns the tibble data frame created by
 The `$print()` method returns the fitted model object itself
 (invisibly), which is the standard behavior for print methods in R.
 
+## References
+
+- Vehtari, A., Gelman, A., Simpson, D., Carpenter, B., and Buerkner,
+  P.-C. (2021). Rank-normalization, folding, and localization: An
+  improved R-hat for assessing convergence of MCMC (with discussion).
+  *Bayesian Analysis*, 16(2), 667-718. doi:10.1214/20-BA1221.
+
+- Vehtari, A. (2021). Comparison of MCMC effective sample size
+  estimators. https://avehtari.github.io/rhat_ess/ess_comparison.html
+  (for ESS diagnostics such as `ess_bulk` and `ess_tail`).
+
 ## See also
 
 [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),

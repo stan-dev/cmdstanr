@@ -445,13 +445,23 @@ header). This option is only available in CmdStan 2.34.0 and later.</p></dd>
     <p>A <code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code> object.</p>
     </div>
     <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+
+<ul><li><p>Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+adaptively setting path lengths in Hamiltonian Monte Carlo.
+<em>Journal of Machine Learning Research</em>, 15(47), 1593-1623.</p></li>
+<li><p>Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.</p></li>
+<li><p>Stan Development Team. Stan Reference Manual (Algorithms section):
+https://mc-stan.org/docs/reference-manual/</p></li>
+<li><p>Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/</p></li>
+<li><p>Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/</p></li>
+</ul></div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>The CmdStanR website
-(<a href="https://mc-stan.org/cmdstanr/">mc-stan.org/cmdstanr</a>) for online
-documentation and tutorials.</p>
-<p>The Stan and CmdStan documentation:</p><ul><li><p>Stan documentation: <a href="https://mc-stan.org/users/documentation/" class="external-link">mc-stan.org/users/documentation</a></p></li>
-<li><p>CmdStan User’s Guide: <a href="https://mc-stan.org/docs/cmdstan-guide/" class="external-link">mc-stan.org/docs/cmdstan-guide</a></p></li>
-</ul><p>Other CmdStanModel methods:
+    <div class="dont-index"><p>Other CmdStanModel methods:
 <code><a href="model-method-check_syntax.html">model-method-check_syntax</a></code>,
 <code><a href="model-method-compile.html">model-method-compile</a></code>,
 <code><a href="model-method-diagnose.html">model-method-diagnose</a></code>,
@@ -833,7 +843,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>
@@ -852,7 +862,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span><span class="op">$</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
@@ -884,7 +894,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_optim_w_init_list</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>

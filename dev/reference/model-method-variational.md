@@ -291,19 +291,22 @@ variational(
 A [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md)
 object.
 
+## References
+
+- Kucukelbir, A., Tran, D., Ranganath, R., Gelman, A., and Blei, D. M.
+  (2017). Automatic differentiation variational inference. *Journal of
+  Machine Learning Research*, 18(14), 1-45.
+
+- Stan Development Team. Stan Reference Manual (Algorithms section,
+  variational inference): https://mc-stan.org/docs/reference-manual/
+
+- Stan Development Team. Stan documentation:
+  https://mc-stan.org/users/documentation/
+
+- Stan Development Team. CmdStan User's Guide:
+  https://mc-stan.org/docs/cmdstan-guide/
+
 ## See also
-
-The CmdStanR website
-([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
-
-- Stan documentation:
-  [mc-stan.org/users/documentation](https://mc-stan.org/users/documentation/)
-
-- CmdStan User’s Guide:
-  [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
 [`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),
@@ -687,7 +690,7 @@ fit_mcmc_w_init_fun <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_mcmc_w_init_fun_2 <- mod$sample(
   data = stan_data,
@@ -738,7 +741,7 @@ fit_mcmc_w_init_list <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_optim_w_init_list <- mod$optimize(
   data = stan_data,
