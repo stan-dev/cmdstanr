@@ -944,6 +944,32 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
   funs <- c(funs, length(env$hpp_code))
 
+  reserved_names <- unique(unlist(lapply(seq_len(length(funs) - 1), function(ind) {
+    fun_end <- funs[ind + 1]
+    fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
+    fun_signature <- sub("\\{.*", "", paste(env$hpp_code[(funs[ind] + 1):fun_end], collapse = " "))
+    sub(
+      "^_stan_",
+      "",
+      regmatches(
+        fun_signature,
+        gregexpr("_stan_[[:alnum:]_]+", fun_signature, perl = TRUE)
+      )[[1]]
+    )
+  }), use.names = FALSE))
+  if (length(reserved_names) > 0) {
+    warning(
+      paste0(
+        "expose_functions() can't expose this Stan function because the function ",
+        "name and/or one or more argument names use a reserved keyword ",
+        "(typically in the C++ toolchain used to compile Stan). Please rename ",
+        "the function/arguments in your Stan functions block and try again. ",
+        "Conflicting names: ", paste(reserved_names, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
   stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
     fun_end <- funs[ind + 1]
     fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
