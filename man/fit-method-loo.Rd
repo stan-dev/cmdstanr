@@ -61,6 +61,21 @@ print(loo_result)
 }
 
 }
+\references{
+\itemize{
+\item Vehtari, A., Gelman, A., and Gabry, J. (2017). Practical Bayesian model
+evaluation using leave-one-out cross-validation and WAIC.
+\emph{Statistics and Computing}, 27(5), 1413-1432.
+doi:10.1007/s11222-016-9696-4.
+\item Vehtari, A., Simpson, D., Gelman, A., Yao, Y., and Gabry, J. (2024).
+Pareto smoothed importance sampling.
+\emph{Journal of Machine Learning Research}, 25(72), 1-58.
+\item Paananen, T., Piironen, J., Buerkner, P.-C., and Vehtari, A. (2021).
+Implicitly adaptive importance sampling.
+\emph{Statistics and Computing}, 31, 16. doi:10.1007/s11222-020-09982-2
+(for \code{moment_match = TRUE}).
+}
+}
 \seealso{
 The \pkg{loo} package website with
 \href{https://mc-stan.org/loo/reference/index.html}{documentation} and

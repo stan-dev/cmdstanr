@@ -365,17 +365,20 @@ fit_optim_w_init_list$init()
 }
 
 }
-\seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
+\references{
 \itemize{
-\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
-\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
+\item Zhang, L., Carpenter, B., Gelman, A., and Vehtari, A. (2022).
+Pathfinder: parallel quasi-Newton variational inference.
+\emph{Journal of Machine Learning Research}, 23(306), 1-49.
+\item Stan Development Team. Stan Reference Manual (Algorithms section, Pathfinder):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
 }
-
+}
+\seealso{
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-compile}},
