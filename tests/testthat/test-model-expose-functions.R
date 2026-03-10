@@ -402,7 +402,7 @@ test_that("Reserved names in Stan code give the same error", {
   )
 
   funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
-  expect_warning(
+  expect_error(
     funmod$expose_functions(),
     reserved_names_msg(c("min", "max", "class")),
     fixed = TRUE
@@ -421,7 +421,7 @@ test_that("Multiple reserved C++ keywords in Stan code give the same error", {
   )
 
   funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
-  expect_warning(
+  expect_error(
     funmod$expose_functions(),
     reserved_names_msg(c("template", "class", "namespace", "private")),
     fixed = TRUE
@@ -432,7 +432,7 @@ test_that("Stan code with no reserved names exposes functions", {
   stan_file <- write_stan_file(
     "
   functions {
-    real add(real left, real right) {
+    real add_pair(real left, real right) {
       return left + right;
     }
   }
