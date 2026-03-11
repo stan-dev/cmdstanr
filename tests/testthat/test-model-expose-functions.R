@@ -428,6 +428,23 @@ test_that("Multiple reserved C++ keywords in Stan code give the same error", {
   )
 })
 
+test_that("Reserved keywords in Stan function bodies are allowed", {
+  stan_file <- write_stan_file(
+    "
+  functions {
+    real add_one(real x) {
+      real class = 1;
+      return x + class;
+    }
+  }
+  "
+  )
+
+  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  expect_no_error(funmod$expose_functions())
+  expect_equal(funmod$functions$add_one(2), 3)
+})
+
 test_that("Stan code with no reserved names exposes functions", {
   stan_file <- write_stan_file(
     "

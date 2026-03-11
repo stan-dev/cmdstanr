@@ -944,12 +944,22 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
   funs <- c(funs, length(env$hpp_code))
 
-  hpp_code <- paste(env$hpp_code, collapse = " ")
+  stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
+    fun_end <- funs[ind + 1]
+    fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
+    prep_fun_cpp(funs[ind], fun_end, env$hpp_code)
+  })
+
   reserved_names <- unique(
-    regmatches(
-      hpp_code,
-      gregexpr("(?<=_stan_)[[:alnum:]_]+", hpp_code, perl = TRUE)
-    )[[1]]
+    unlist(
+      lapply(stan_funs, function(stan_fun) {
+        regmatches(
+          stan_fun,
+          gregexpr("(?<=_stan_)[[:alnum:]_]+", stan_fun, perl = TRUE)
+        )[[1]]
+      }),
+      use.names = FALSE
+    )
   )
 
   if (length(reserved_names) > 0) {
@@ -965,12 +975,6 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
       call. = FALSE
     )
   }
-
-  stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
-    fun_end <- funs[ind + 1]
-    fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
-    prep_fun_cpp(funs[ind], fun_end, env$hpp_code)
-  })
 
   env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
     get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
