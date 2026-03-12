@@ -190,7 +190,7 @@ model {
 }
 ")
 mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#> Warning in '/tmp/RtmpT1NCFN/model-1c0070d88d7a.stan', line 6, column 2 to column 7:
+#> Warning in '/tmp/RtmpVH98UY/model-1d916c861668.stan', line 6, column 2 to column 7:
 #>     Parameter sigma is given a exponential distribution, which has strictly
 #>     positive support, but sigma was not constrained to be strictly positive.
 

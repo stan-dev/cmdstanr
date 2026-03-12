@@ -122,7 +122,7 @@ mod$format(canonicalize = list("deprecations"))
 
 # overwrite the original file instead of just printing it
 mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
-#> Old version of the model stored to /tmp/RtmpT1NCFN/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20260310002127.
+#> Old version of the model stored to /tmp/RtmpVH98UY/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20260312021600.
 mod$compile()
 # }
 ```
