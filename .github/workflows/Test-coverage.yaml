@@ -10,7 +10,9 @@ on:
 
 name: Test coverage
 
-permissions: read-all
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   test-coverage:
@@ -69,8 +71,6 @@ jobs:
           print(cov)
           covr::to_cobertura(cov)
         shell: Rscript {0}
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Test coverage (Windows)
         if: runner.os == 'Windows'
@@ -86,8 +86,6 @@ jobs:
           print(cov)
           covr::to_cobertura(cov)
         shell: Rscript {0}
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - uses: codecov/codecov-action@v5
         with:
@@ -96,7 +94,7 @@ jobs:
           files: ./cobertura.xml
           plugins: noop
           disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
 
       - name: Show testthat output
         if: always()
@@ -107,7 +105,7 @@ jobs:
 
       - name: Upload test results
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-test-failures
           path: ${{ runner.temp }}/package

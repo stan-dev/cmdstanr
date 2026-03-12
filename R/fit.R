@@ -768,6 +768,15 @@ lp_approx <- function() {
 #' The `$print()` method returns the fitted model object itself (invisibly),
 #' which is the standard behavior for print methods in \R.
 #'
+#' @references
+#' * Vehtari, A., Gelman, A., Simpson, D., Carpenter, B., and Buerkner, P.-C.
+#'   (2021). Rank-normalization, folding, and localization: An improved R-hat
+#'   for assessing convergence of MCMC (with discussion).
+#'   *Bayesian Analysis*, 16(2), 667-718. doi:10.1214/20-BA1221.
+#' * Vehtari, A. (2021). Comparison of MCMC effective sample size estimators.
+#'   https://avehtari.github.io/rhat_ess/ess_comparison.html
+#'   (for ESS diagnostics such as `ess_bulk` and `ess_tail`).
+#'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
 #' @examples
@@ -1523,6 +1532,19 @@ CmdStanMCMC <- R6::R6Class(
 #'
 #' @return The object returned by [loo::loo.array()] or
 #'   [loo::loo_moment_match.default()].
+#'
+#' @references
+#' * Vehtari, A., Gelman, A., and Gabry, J. (2017). Practical Bayesian model
+#'   evaluation using leave-one-out cross-validation and WAIC.
+#'   *Statistics and Computing*, 27(5), 1413-1432.
+#'   doi:10.1007/s11222-016-9696-4.
+#' * Vehtari, A., Simpson, D., Gelman, A., Yao, Y., and Gabry, J. (2024).
+#'   Pareto smoothed importance sampling.
+#'   *Journal of Machine Learning Research*, 25(72), 1-58.
+#' * Paananen, T., Piironen, J., Buerkner, P.-C., and Vehtari, A. (2021).
+#'   Implicitly adaptive importance sampling.
+#'   *Statistics and Computing*, 31, 16. doi:10.1007/s11222-020-09982-2
+#'   (for `moment_match = TRUE`).
 #'
 #' @seealso The \pkg{loo} package website with
 #'   [documentation](https://mc-stan.org/loo/reference/index.html) and

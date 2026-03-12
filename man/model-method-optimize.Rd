@@ -349,17 +349,17 @@ fit_optim_w_init_list$init()
 }
 
 }
-\seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
+\references{
 \itemize{
-\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
-\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
+\item Stan Development Team. Stan Reference Manual (Algorithms section, optimization):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
 }
-
+}
+\seealso{
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-compile}},

@@ -428,17 +428,22 @@ fit_optim_w_init_list$init()
 }
 
 }
-\seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
+\references{
 \itemize{
-\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
-\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
+\item Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+adaptively setting path lengths in Hamiltonian Monte Carlo.
+\emph{Journal of Machine Learning Research}, 15(47), 1593-1623.
+\item Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.
+\item Stan Development Team. Stan Reference Manual (Algorithms section):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
 }
-
+}
+\seealso{
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-compile}},
