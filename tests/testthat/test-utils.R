@@ -256,11 +256,28 @@ test_that("as_mcmc.list() works", {
 })
 
 test_that("get_cmdstan_flags() can be used recursively in `make`", {
-  mkfile <- normalizePath(test_path("testdata", "Makefile"))
+  mkfile <- normalizePath(test_path("resources", "recursive-cmdstan-flags.mk"))
   nonrecursive_flags <- get_cmdstan_flags("STANCFLAGS")
-  stdo <- processx::run(
-    command = "make", args = sprintf("--file=%s", mkfile)
-  )$stdout
+  recursive_run <- processx::run(
+    command = "make",
+    args = sprintf("--file=%s", mkfile),
+    error_on_status = FALSE
+  )
+  if (recursive_run$status != 0) {
+    fail(
+      paste(
+        "Recursive make failed.",
+        paste0("status: ", recursive_run$status),
+        "stdout:",
+        recursive_run$stdout,
+        "stderr:",
+        recursive_run$stderr,
+        sep = "\n"
+      )
+    )
+    return(invisible())
+  }
+  stdo <- recursive_run$stdout
   recursive_flags <- readLines(textConnection(stdo))
   expect_equal(nonrecursive_flags, recursive_flags)
 })
