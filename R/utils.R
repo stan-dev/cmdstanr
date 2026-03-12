@@ -950,6 +950,32 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     prep_fun_cpp(funs[ind], fun_end, env$hpp_code)
   })
 
+  reserved_names <- unique(
+    unlist(
+      lapply(stan_funs, function(stan_fun) {
+        regmatches(
+          stan_fun,
+          gregexpr("(?<=_stan_)[[:alnum:]_]+", stan_fun, perl = TRUE)
+        )[[1]]
+      }),
+      use.names = FALSE
+    )
+  )
+
+  if (length(reserved_names) > 0) {
+    stop(
+      paste0(
+        "expose_functions() can't expose this Stan function because the function ",
+        "name and/or one or more argument names use a reserved keyword ",
+        "(typically in the C++ toolchain used to compile Stan). Please rename ",
+        "the function/arguments in your Stan functions block and try again. ",
+        "Conflicting names: ",
+        paste(reserved_names, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
   env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
     get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
   })
