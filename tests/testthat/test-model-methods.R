@@ -149,6 +149,27 @@ test_that("Methods can be compiled with model", {
   expect_equal(unconstrained_variables, c(0.6))
 })
 
+test_that("Reloaded models recompile model methods lazily after saveRDS/readRDS", {
+  # Also tests that fitted model objects are returned without error after
+  # saveRDS/readRDS when model methods are compiled: https://github.com/stan-dev/cmdstanr/issues/1157
+  mod <- cmdstan_model(
+    testing_stan_file("bernoulli_log_lik"),
+    force_recompile = TRUE,
+    compile_model_methods = TRUE
+  )
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  saveRDS(mod, temp_rds_file)
+  mod2 <- readRDS(temp_rds_file)
+
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod2$optimize(data = data_list)
+    )
+  )
+  expect_equal(fit$log_prob(unconstrained_variables = c(0.1)),
+               -8.6327599208828509347)
+})
+
 test_that("unconstrain_variables correctly handles zero-length containers", {
   model_code <- "
   data {

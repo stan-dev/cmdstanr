@@ -792,6 +792,37 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   invisible(NULL)
 }
 
+# Detect serialized sourceCpp wrappers whose native symbol was lost after reload.
+source_cpp_native_symbol_is_null <- function(fun) {
+  if (!is.function(fun)) {
+    return(FALSE)
+  }
+  fun_body <- body(fun)
+  if (!rlang::is_call(fun_body, ".Call") || length(fun_body) < 2) {
+    return(FALSE)
+  }
+  # Rcpp::sourceCpp() wrappers call into a NativeSymbol via `.Call(...)`.
+  # After reloading a serialized object that symbol can degrade to `<pointer: 0x0>`.
+  symbol <- fun_body[[2]]
+  if (!inherits(symbol, "NativeSymbol")) {
+    return(FALSE)
+  }
+  symbol_text <- paste(capture.output(print(symbol)), collapse = "")
+  grepl("<pointer: (0x0+|\\(nil\\))>", symbol_text)
+}
+
+# Drop stale compiled bindings but keep the generated C++ so model methods
+# can be rebuilt lazily in the current session if they are later requested.
+# This avoids an error when a CmdStanModel object with compiled bindings is
+# loaded from an older session: https://github.com/stan-dev/cmdstanr/issues/1157
+drop_stale_model_methods <- function(env) {
+  if (is.null(env$model_ptr) || !source_cpp_native_symbol_is_null(env$model_ptr)) {
+    return(invisible(FALSE))
+  }
+  rm(list = setdiff(ls(env, all.names = TRUE), "hpp_code_"), envir = env)
+  invisible(TRUE)
+}
+
 expose_model_methods <- function(env, verbose = FALSE) {
   if (rlang::is_interactive()) {
     message("Compiling additional model methods...")

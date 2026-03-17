@@ -1,5 +1,9 @@
 # cmdstanr (development version)
 
+* CmdStanModel objects created using `compile_model_methods = TRUE` that are
+then saved and reloaded no longer error in model fitting methods. Model methods
+are recompiled lazily if needed.
+  
 * CmdStan versions older than 2.35.0 are no longer supported.
 * Minimum R version increased to 4.0.0.
 * Removed legacy Windows toolchain paths for older CmdStan releases.

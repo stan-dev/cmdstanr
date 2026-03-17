@@ -60,7 +60,11 @@ via a global \code{cmdstanr_force_recompile} option.}
 
 \item{compile_model_methods}{(logical) Compile additional model methods
 (\code{log_prob()}, \code{grad_log_prob()}, \code{constrain_variables()},
-\code{unconstrain_variables()}).}
+\code{unconstrain_variables()}). Note: the compiled model-method bindings are
+not preserved in a usable form when saving a model object. If you plan to
+save and reload the model object before model fitting, we recommend instead
+waiting to compile the model methods until after fitting via
+\code{\link[=fit-method-init_model_methods]{fit$init_model_methods()}}.}
 
 \item{compile_standalone}{(logical) Should functions in the Stan model be
 compiled for use in R? If \code{TRUE} the functions will be available via the

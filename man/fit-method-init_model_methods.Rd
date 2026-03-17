@@ -18,8 +18,11 @@ The \verb{$init_model_methods()} method compiles and initializes the
 \code{log_prob}, \code{grad_log_prob}, \code{hessian}, \code{constrain_variables},
 \code{unconstrain_variables} and \code{unconstrain_draws} functions. These are then
 available as methods of the fitted model object. This requires the
-additional \code{Rcpp} package, which are not required for fitting models using
-CmdStanR.
+additional \pkg{Rcpp} package.
+
+If a model or fit object was saved with \code{\link[base:readRDS]{base::saveRDS()}} and later
+reloaded, any previously compiled model-method bindings will be rebuilt in
+the current R session when this method is called.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.
