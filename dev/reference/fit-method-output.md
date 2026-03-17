@@ -67,17 +67,17 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 1702622625
 #> output
-#>   file = /tmp/Rtmpa2qvFv/logistic-202603170314-1-2db0d8.csv
+#>   file = /tmp/RtmpW3y0jc/logistic-202603172021-1-2db092.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpa2qvFv/logistic-profile-202603170314-1-07c77f.csv
+#>   profile_file = /tmp/RtmpW3y0jc/logistic-profile-202603172021-1-07c739.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
 #> 
-#> Gradient evaluation took 8e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+#> Gradient evaluation took 7e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 327235529
 #> output
-#>   file = /tmp/Rtmpa2qvFv/logistic-202603170314-1-1352c6.csv
+#>   file = /tmp/RtmpW3y0jc/logistic-202603172021-1-135280.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpa2qvFv/logistic-profile-202603170314-1-8f451a.csv
+#>   profile_file = /tmp/RtmpW3y0jc/logistic-profile-202603172021-1-8f44d4.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 1293992464
 #> output
-#>   file = /tmp/Rtmpa2qvFv/logistic-202603170314-1-5161d7.csv
+#>   file = /tmp/RtmpW3y0jc/logistic-202603172021-1-516191.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpa2qvFv/logistic-profile-202603170314-1-538e13.csv
+#>   profile_file = /tmp/RtmpW3y0jc/logistic-profile-202603172021-1-538dcd.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -193,8 +193,8 @@ fit_vb$output()
 #> 
 #> 
 #> 
-#> Gradient evaluation took 7e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+#> Gradient evaluation took 8e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 

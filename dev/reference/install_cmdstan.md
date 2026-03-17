@@ -22,17 +22,11 @@ file should typically be followed by calling `rebuild_cmdstan()`.
 
 The `check_cmdstan_toolchain()` function attempts to check for the
 required C++ toolchain. It is called internally by `install_cmdstan()`
-but can also be called directly by the user. On Windows only, calling
-the function with the `fix = TRUE` argument will attempt to install the
-necessary toolchain components if they are not found. For Windows users
-with RTools and CmdStan versions \>= 2.35 no additional toolchain
-configuration is required.
+but can also be called directly by the user.
 
-NOTE: When installing CmdStan on Windows with RTools and CmdStan
-versions prior to 2.35.0, the above additional toolchain configuration
-is still required. To enable this configuration, set the environment
-variable `CMDSTANR_USE_MSYS_TOOLCHAIN` to 'true' and call
-`check_cmdstan_toolchain(fix = TRUE)`.
+**CmdStan versions older than 2.35.0 are no longer supported.** If you
+need to work with an older CmdStan version we recommend installing an
+older CmdStanR release from GitHub.
 
 ## Usage
 
@@ -111,7 +105,7 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
   (string) The URL for the specific CmdStan release or release candidate
   to install. See <https://github.com/stan-dev/cmdstan/releases>. The
   URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
-  `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"`.
+  `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
   If both `version` and `release_url` are specified then `version` will
   be used.
 
@@ -119,7 +113,7 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
   (string) A file path to a CmdStan release tar.gz file downloaded from
   the releases page: <https://github.com/stan-dev/cmdstan/releases>. For
-  example: `release_file=""./cmdstan-2.33.1.tar.gz"`. If `release_file`
+  example: `release_file=""./cmdstan-2.35.0.tar.gz"`. If `release_file`
   is specified then both `release_url` and `version` will be ignored.
 
 - cpp_options:
@@ -148,9 +142,8 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 - fix:
 
   For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix any
-  detected toolchain problems? Currently this option is only available
-  on Windows. The default is `FALSE`, in which case problems are only
-  reported along with suggested fixes.
+  detected toolchain problems? The default is `FALSE`. This argument is
+  currently ignored and retained for compatibility.
 
 ## Value
 

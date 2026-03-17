@@ -63,7 +63,12 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="cmdstanr-development-version">cmdstanr (development version)<a class="anchor" aria-label="anchor" href="#cmdstanr-development-version"></a></h2>
-<ul><li>Removed deprecated items (replacements in parentheses):
+<ul><li><p>CmdStan versions older than 2.35.0 are no longer supported.</p></li>
+<li><p>Minimum R version increased to 4.0.0.</p></li>
+<li><p>Removed legacy Windows toolchain paths for older CmdStan releases.</p></li>
+<li><p><code>CMDSTANR_USE_MSYS_TOOLCHAIN</code> is now deprecated and ignored (with a warning).</p></li>
+<li>
+<p>Removed deprecated items (replacements in parentheses):</p>
 <ul><li>
 <code>read_sample_csv()</code> (<code><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv()</a></code>)</li>
 <li>

@@ -17,15 +17,10 @@ switches, changing the C++ compiler, etc. A change to the make/local file
 should typically be followed by calling rebuild_cmdstan().
 The check_cmdstan_toolchain() function attempts to check for the required
 C++ toolchain. It is called internally by install_cmdstan() but can also
-be called directly by the user. On Windows only, calling the function with
-the fix = TRUE argument will attempt to install the necessary toolchain
-components if they are not found. For Windows users with RTools and CmdStan
-versions &amp;gt;= 2.35 no additional toolchain configuration is required.
-NOTE: When installing CmdStan on Windows with RTools and CmdStan versions
-prior to 2.35.0, the above additional toolchain configuration
-is still required. To enable this configuration, set the environment variable
-CMDSTANR_USE_MSYS_TOOLCHAIN to 'true' and call
-check_cmdstan_toolchain(fix = TRUE)."><meta property="og:description" content="The install_cmdstan() function attempts to download and
+be called directly by the user.
+CmdStan versions older than 2.35.0 are no longer supported. If you need
+to work with an older CmdStan version we recommend installing an older
+CmdStanR release from GitHub."><meta property="og:description" content="The install_cmdstan() function attempts to download and
 install the latest release of CmdStan.
 Installing a previous release or a new release candidate is also possible
 by specifying the version or release_url argument.
@@ -42,15 +37,10 @@ switches, changing the C++ compiler, etc. A change to the make/local file
 should typically be followed by calling rebuild_cmdstan().
 The check_cmdstan_toolchain() function attempts to check for the required
 C++ toolchain. It is called internally by install_cmdstan() but can also
-be called directly by the user. On Windows only, calling the function with
-the fix = TRUE argument will attempt to install the necessary toolchain
-components if they are not found. For Windows users with RTools and CmdStan
-versions &amp;gt;= 2.35 no additional toolchain configuration is required.
-NOTE: When installing CmdStan on Windows with RTools and CmdStan versions
-prior to 2.35.0, the above additional toolchain configuration
-is still required. To enable this configuration, set the environment variable
-CMDSTANR_USE_MSYS_TOOLCHAIN to 'true' and call
-check_cmdstan_toolchain(fix = TRUE)."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
+be called directly by the user.
+CmdStan versions older than 2.35.0 are no longer supported. If you need
+to work with an older CmdStan version we recommend installing an older
+CmdStanR release from GitHub."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -130,15 +120,10 @@ switches, changing the C++ compiler, etc. A change to the <code>make/local</code
 should typically be followed by calling <code>rebuild_cmdstan()</code>.</p>
 <p>The <code>check_cmdstan_toolchain()</code> function attempts to check for the required
 C++ toolchain. It is called internally by <code>install_cmdstan()</code> but can also
-be called directly by the user. On Windows only, calling the function with
-the <code>fix = TRUE</code> argument will attempt to install the necessary toolchain
-components if they are not found. For Windows users with RTools and CmdStan
-versions &gt;= 2.35 no additional toolchain configuration is required.</p>
-<p>NOTE: When installing CmdStan on Windows with RTools and CmdStan versions
-prior to 2.35.0, the above additional toolchain configuration
-is still required. To enable this configuration, set the environment variable
-<code>CMDSTANR_USE_MSYS_TOOLCHAIN</code> to 'true' and call
-<code>check_cmdstan_toolchain(fix = TRUE)</code>.</p>
+be called directly by the user.</p>
+<p><strong>CmdStan versions older than 2.35.0 are no longer supported.</strong> If you need
+to work with an older CmdStan version we recommend installing an older
+CmdStanR release from GitHub.</p>
     </div>
 
     <div class="section level2">
@@ -217,14 +202,14 @@ is <code>NULL</code>, which downloads the latest stable release from
 <dd><p>(string) The URL for the specific CmdStan release or
 release candidate to install. See <a href="https://github.com/stan-dev/cmdstan/releases" class="external-link">https://github.com/stan-dev/cmdstan/releases</a>.
 The URL should point to the tarball (<code>.tar.gz.</code> file) itself, e.g.,
-<code>release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"</code>.
+<code>release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"</code>.
 If both <code>version</code> and <code>release_url</code> are specified then <code>version</code> will be used.</p></dd>
 
 
 <dt id="arg-release-file">release_file<a class="anchor" aria-label="anchor" href="#arg-release-file"></a></dt>
 <dd><p>(string) A file path to a CmdStan release tar.gz file
 downloaded from the releases page: <a href="https://github.com/stan-dev/cmdstan/releases" class="external-link">https://github.com/stan-dev/cmdstan/releases</a>.
-For example: <code>release_file=""./cmdstan-2.33.1.tar.gz"</code>. If <code>release_file</code> is
+For example: <code>release_file=""./cmdstan-2.35.0.tar.gz"</code>. If <code>release_file</code> is
 specified then both <code>release_url</code> and <code>version</code> will be ignored.</p></dd>
 
 
@@ -253,9 +238,8 @@ The default is <code>TRUE</code>. If <code>FALSE</code> the file is overwritten.
 
 <dt id="arg-fix">fix<a class="anchor" aria-label="anchor" href="#arg-fix"></a></dt>
 <dd><p>For <code>check_cmdstan_toolchain()</code>, should CmdStanR attempt to fix
-any detected toolchain problems? Currently this option is only available on
-Windows. The default is <code>FALSE</code>, in which case problems are only reported
-along with suggested fixes.</p></dd>
+any detected toolchain problems? The default is <code>FALSE</code>.
+This argument is currently ignored and retained for compatibility.</p></dd>
 
 </dl></div>
     <div class="section level2">
