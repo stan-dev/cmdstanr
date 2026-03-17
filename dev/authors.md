@@ -2,12 +2,11 @@
 
 ## Authors
 
-- **Jonah Gabry**. Author.
+- **Jonah Gabry**. Author, maintainer.
 
 - **Rok Češnovar**. Author.
 
-- **Andrew Johnson**. Author, maintainer.
-  [](https://orcid.org/0000-0001-7000-8065)
+- **Andrew Johnson**. Author. [](https://orcid.org/0000-0001-7000-8065)
 
 - **Steve Bronder**. Author.
 
@@ -27,6 +26,8 @@
 - **Martin Modrák**. Contributor.
 
 - **Ven Popov**. Contributor.
+
+- **Visruth Srimath Kandali**. Contributor.
 
 ## Citation
 
