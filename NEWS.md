@@ -1,5 +1,10 @@
 # cmdstanr (development version)
 
+* CmdStan versions older than 2.35.0 are no longer supported.
+* Minimum R version increased to 4.0.0.
+* Removed legacy Windows toolchain paths for older CmdStan releases.
+* `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a warning).
+
 * Removed deprecated items (replacements in parentheses):
   - `read_sample_csv()` (`read_cmdstan_csv()`)
   - `write_stan_tempfile()` (`write_stan_file()`)

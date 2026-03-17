@@ -37,12 +37,12 @@ RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE, r6 = FALSE)
 SystemRequirements: CmdStan (https://mc-stan.org/users/interfaces/cmdstan)
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.0.0)
 Imports:
     checkmate,
     data.table,
     jsonlite (>= 1.2.0),
-    posterior (>= 1.4.1),
+    posterior (>= 1.5.0),
     processx (>= 3.5.0),
     R6 (>= 2.4.0),
     withr (>= 2.5.0),
