@@ -179,6 +179,7 @@ test_that("save_object() method works", {
 })
 
 test_that("reloaded fits rebuild model methods lazily after save_object()", {
+  skip_if(os_is_wsl())
   mod <- cmdstan_model(
     testing_stan_file("bernoulli_log_lik"),
     force_recompile = TRUE,
