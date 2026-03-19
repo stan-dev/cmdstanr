@@ -89,14 +89,14 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Andrew Johnson <andrew.johnson@arjohnsonau.com>
-([ORCID](https://orcid.org/0000-0001-7000-8065))
+**Maintainer**: Jonah Gabry <jgabry@gmail.com>
 
 Authors:
 
-- Jonah Gabry <jgabry@gmail.com>
-
 - Rok Češnovar <rok.cesnovar@fri.uni-lj.si>
+
+- Andrew Johnson <andrew.johnson@arjohnsonau.com>
+  ([ORCID](https://orcid.org/0000-0001-7000-8065))
 
 - Steve Bronder
 
@@ -118,6 +118,8 @@ Other contributors:
 - Martin Modrák \[contributor\]
 
 - Ven Popov \[contributor\]
+
+- Visruth Srimath Kandali \[contributor\]
 
 ## Examples
 

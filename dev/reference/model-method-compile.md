@@ -103,6 +103,11 @@ compile(
   [`grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md),
   [`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
   [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md)).
+  Note: the compiled model-method bindings are not preserved in a usable
+  form when saving a model object. If you plan to save and reload the
+  model object before model fitting, we recommend instead waiting to
+  compile the model methods until after fitting via
+  [`fit$init_model_methods()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init_model_methods.md).
 
 - compile_standalone:
 
@@ -190,7 +195,7 @@ model {
 }
 ")
 mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#> Warning in '/tmp/RtmpW3y0jc/model-1e3e1ae35e02.stan', line 6, column 2 to column 7:
+#> Warning in '/tmp/RtmpyUS9gD/model-1fe6393c41b4.stan', line 6, column 2 to column 7:
 #>     Parameter sigma is given a exponential distribution, which has strictly
 #>     positive support, but sigma was not constrained to be strictly positive.
 
