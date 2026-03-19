@@ -422,7 +422,11 @@ CmdStanModel <- R6::R6Class(
 #'   via a global `cmdstanr_force_recompile` option.
 #' @param compile_model_methods (logical) Compile additional model methods
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
-#'   `unconstrain_variables()`).
+#'   `unconstrain_variables()`). Note: the compiled model-method bindings are
+#'   not preserved in a usable form when saving a model object. If you plan to
+#'   save and reload the model object before model fitting, we recommend instead
+#'   waiting to compile the model methods until after fitting via
+#'   [`fit$init_model_methods()`][fit-method-init_model_methods].
 #' @param compile_standalone (logical) Should functions in the Stan model be
 #'   compiled for use in R? If `TRUE` the functions will be available via the
 #'   `functions` field in the compiled model object. This can also be done after
