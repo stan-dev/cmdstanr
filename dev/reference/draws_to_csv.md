@@ -65,10 +65,10 @@ draws <- posterior::example_draws()
 
 draws_csv_files <- draws_to_csv(draws)
 print(draws_csv_files)
-#> [1] "/tmp/RtmpyUS9gD/fittedParams-202603190015-1-8d811e.csv"
-#> [2] "/tmp/RtmpyUS9gD/fittedParams-202603190015-2-8d811e.csv"
-#> [3] "/tmp/RtmpyUS9gD/fittedParams-202603190015-3-8d811e.csv"
-#> [4] "/tmp/RtmpyUS9gD/fittedParams-202603190015-4-8d811e.csv"
+#> [1] "/tmp/RtmpCMSCVz/fittedParams-202603202334-1-8d7fb9.csv"
+#> [2] "/tmp/RtmpCMSCVz/fittedParams-202603202334-2-8d7fb9.csv"
+#> [3] "/tmp/RtmpCMSCVz/fittedParams-202603202334-3-8d7fb9.csv"
+#> [4] "/tmp/RtmpCMSCVz/fittedParams-202603202334-4-8d7fb9.csv"
 
 # draws_csv_files <- draws_to_csv(draws,
 #                                 sampler_diagnostic = sampler_diagnostics,
