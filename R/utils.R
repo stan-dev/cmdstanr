@@ -807,7 +807,7 @@ source_cpp_native_symbol_is_null <- function(fun) {
   if (!inherits(symbol, "NativeSymbol")) {
     return(FALSE)
   }
-  symbol_text <- paste(capture.output(print(symbol)), collapse = "")
+  symbol_text <- paste(utils::capture.output(print(symbol)), collapse = "")
   grepl("<pointer: (0x0+|\\(nil\\))>", symbol_text)
 }
 
