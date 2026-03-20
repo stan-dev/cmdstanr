@@ -91,8 +91,8 @@
 #'   Diagnostics like R-hat and effective sample size are _not_ currently
 #'   available via the `diagnostics` argument but can be checked after fitting
 #'   using the [`$summary()`][fit-method-summary] method.
-#' @param save_metric (logical) When `TRUE`, call CmdStan with argument
-#'   `"adaptation save_metric=1"` to save the adapted metric in separate JSON
-#'   file with elements "stepsize", "metric_type" and "inv_metric". The default
-#'   is `TRUE`. This option is only available in CmdStan 2.34.0 and later.
+#' @param save_metric (logical) When `TRUE` (the default), call CmdStan with
+#'   argument `"adaptation save_metric=1"` to save the adapted metric in
+#'   separate JSON file with elements `"stepsize"`, `"metric_type"` and
+#'   `"inv_metric"`.
 #'

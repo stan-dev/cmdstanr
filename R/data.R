@@ -20,18 +20,15 @@
 #' The `list` to `array` conversion is intended to make it easier to prepare
 #' the data for certain Stan declarations involving arrays:
 #'
-#' * `vector[J] v[K]` (or equivalently `array[K] vector[J] v ` as of Stan 2.27)
-#' can be constructed in \R as a list with `K` elements where each element a
-#' vector of length `J`
-#' * `matrix[I,J] v[K]` (or equivalently `array[K] matrix[I,J] m ` as of Stan
-#' 2.27 ) can be constructed in \R as a list with `K` elements where each element
-#' an `IxJ` matrix
+#' * `array[K] vector[J] v ` can be constructed in \R as a list with `K`
+#' elements where each element a vector of length `J`
+#' * `array[K] matrix[I,J] m ` can be constructed in \R as a list with `K`
+#' elements where each element an `IxJ` matrix
 #'
 #' These can also be passed in from \R as arrays instead of lists but the list
 #' option is provided for convenience. Unfortunately for arrays with more than
-#' one dimension, e.g., `vector[J] v[K,L]` (or equivalently
-#' `array[K,L] vector[J] v ` as of Stan 2.27) it is not possible to use an \R
-#' list and an array must be used instead. For this example the array in \R
+#' one dimension (e.g. `array[K,L] vector[J] v `) it is not possible to use an
+#' \R list and an array must be used instead. For this example the array in \R
 #' should have dimensions `KxLxJ`.
 #'
 #' @examples
@@ -49,7 +46,7 @@
 #'
 #'
 #' # demonstrating list to array conversion
-#' # suppose x is declared as `vector[3] x[2]` (or equivalently `array[2] vector[3] x`)
+#' # suppose x is declared as `array[2] vector[3] x`
 #' # we can use a list of length 2 where each element is a vector of length 3
 #' data <- list(x = list(1:3, 4:6))
 #' file <- tempfile(fileext = ".json")
@@ -159,14 +156,6 @@ process_data <- function(data, model_variables = NULL) {
   } else if (is.character(data)) {
     path <- absolute_path(data)
   } else if (is.list(data) && !is.data.frame(data)) {
-    if (cmdstan_version() < "2.22" && any_zero_dims(data)) {
-      stop(
-        "Data includes 0-dimensional data structures. To use this data please ",
-        "either update your CmdStan installation with install_cmdstan() ",
-        "or specify data as a file created by rstan::stan_rdump().",
-        call. = FALSE
-      )
-    }
     if (!is.null(model_variables)) {
       data_variables <- model_variables$data
       is_data_supplied <- names(data_variables) %in%  names(data)

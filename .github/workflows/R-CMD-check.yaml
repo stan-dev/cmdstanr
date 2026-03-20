@@ -114,7 +114,7 @@ jobs:
 
       - name: Install cmdstan
         run: |
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          cmdstanr::check_cmdstan_toolchain()
           tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
           if (nzchar(tarball_url)) {
             cmdstanr::install_cmdstan(

@@ -775,9 +775,6 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
-  if (cmdstan_version() <= "2.30.1") {
-    cppflags <- paste0(cppflags, " -DCMDSTAN_JSON")
-  }
   withr::with_path(repair_path(file.path(cmdstan_path(),"stan/lib/stan_math/lib/tbb")),
     withr::with_makevars(
       c(
@@ -912,41 +909,6 @@ get_function_name <- function(fun_start, fun_end, model_lines) {
   sub("\\(.*", "", fun_name, perl = TRUE)
 }
 
-# Construct the plain return type for a standalone function by
-# looking up the return type of the functor declaration and replacing
-# the template types (i.e., T0__) with double
-get_plain_rtn <- function(fun_start, fun_end, model_lines) {
-  fun_name <- get_function_name(fun_start, fun_end, model_lines)
-
-  # Depending on the version of stanc3, the standalone functions
-  # with a plain return type can either be wrapped in a struct as a functor,
-  # or as a separate forward declaration
-  struct_name <- paste0("struct ", fun_name, "_functor")
-
-  if (any(grepl(struct_name, model_lines))) {
-    struct_start <- grep(struct_name, model_lines)
-    struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
-    rtn_type <- paste0(model_lines[struct_start:struct_op_start], collapse = " ")
-    rm_operator <- gsub("operator().*", "", rtn_type)
-    rm_prev <- gsub(".*\\{", "", rm_operator)
-  } else {
-    # Find first declaration of function (will be the forward declaration)
-    first_decl <- grep(paste0(fun_name,"\\("), model_lines)[1]
-
-    # The return type will be between the function name and the semicolon terminating
-    # the previous line
-    last_scolon <- grep(";", model_lines[1:first_decl])
-    last_scolon <- ifelse(last_scolon[length(last_scolon)] == first_decl,
-                          last_scolon[length(last_scolon) - 1],
-                          last_scolon[length(last_scolon)])
-    rtn_type_full <- paste0(model_lines[last_scolon:first_decl], collapse = " ")
-    rm_fun_name <- gsub(paste0(fun_name, ".*"), "", rtn_type_full)
-    rm_prev <- gsub(".*;", "", rm_fun_name)
-  }
-  rm_template <- gsub("template <typename(.*?)> ", "", rm_prev)
-  gsub("T([0-9])*__", "double", rm_template)
-}
-
 
 # Prepare the c++ code for a standalone function so that it can be exported to R:
 # - Replace the auto return type with the plain type
@@ -956,17 +918,10 @@ get_plain_rtn <- function(fun_start, fun_end, model_lines) {
 #     that instantiates an RNG
 prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   fun_body <- paste(model_lines[fun_start:fun_end], collapse = " ")
-  if (cmdstan_version() < "2.33") {
-    fun_body <- gsub("auto", get_plain_rtn(fun_start, fun_end, model_lines), fun_body)
-  }
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
-  if (grepl("(stan::rng_t|boost::ecuyer1988)", fun_body)) {
-    if (cmdstan_version() < "2.35.0") {
-      fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
-    } else {
-      fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
-    }
+  if (grepl("stan::rng_t", fun_body)) {
+    fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
     rng_seed <- "Rcpp::XPtr<stan::rng_t> base_rng(base_rng_ptr);base_rng->seed(Rcpp::as<int>(seed));"
     fun_body <- gsub("return", paste(rng_seed, "return"), fun_body)
     fun_body <- gsub("base_rng__,", "*(base_rng.get()),", fun_body, fixed = TRUE)
@@ -1077,10 +1032,6 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
   if (function_env$existing_exe) {
     stop("Exporting standalone functions is not possible with a pre-compiled Stan model!",
           call. = FALSE)
-  }
-  if (function_env$external && cmdstan_version() < "2.32") {
-    stop("Exporting standalone functions with external C++ is not available before CmdStan 2.32",
-         call. = FALSE)
   }
   if (!is.null(function_env$hpp_code) &&
       !any(grepl("[[stan::function]]", function_env$hpp_code, fixed = TRUE))) {

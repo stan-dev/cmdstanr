@@ -499,3 +499,11 @@ test_that("check_rtools4x_windows_toolchain validates install path and empty can
     rtools4x_toolchain_candidates = function() character()
   )
 })
+
+test_that("check_cmdstan_toolchain(fix = TRUE) is deprecated", {
+  expect_warning(
+    check_cmdstan_toolchain(fix = TRUE),
+    "The 'fix' argument is deprecated and will be removed in a future release",
+    fixed = TRUE
+  )
+})

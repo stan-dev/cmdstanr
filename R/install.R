@@ -108,7 +108,7 @@ install_cmdstan <- function(dir = NULL,
     .cmdstanr$WSL <- FALSE
   }
   if (check_toolchain) {
-    check_cmdstan_toolchain(fix = FALSE, quiet = quiet)
+    check_cmdstan_toolchain(quiet = quiet)
   }
   make_local_msg <- NULL
   if (!is.null(cmdstan_version(error_on_NA = FALSE))) {
@@ -336,17 +336,20 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 
 #' @rdname install_cmdstan
 #' @export
-#' @param fix For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix
-#'   any detected toolchain problems? The default is `FALSE`.
-#'   This argument is currently ignored and retained for compatibility.
+#' @param fix As of v1.0 this argument is deprecated and ignored and only
+#'   retained for compatibility.
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
+  if (isTRUE(fix)) {
+    warning("The 'fix' argument is deprecated and will be removed in a future release.",
+            call. = FALSE)
+  }
   warn_if_ignored_msys_toolchain_env()
   if (os_is_windows()) {
     if (os_is_wsl()) {
       check_wsl_toolchain()
     } else {
-      check_rtools4x_windows_toolchain(fix = fix, quiet = quiet)
+      check_rtools4x_windows_toolchain(quiet = quiet)
     }
   } else {
     check_unix_make()
@@ -593,7 +596,7 @@ check_wsl_toolchain <- function() {
   }
 }
 
-check_rtools4x_windows_toolchain <- function(fix = FALSE, quiet = FALSE) {
+check_rtools4x_windows_toolchain <- function(quiet = FALSE) {
   rtools_path <- rtools4x_home_path()
   rtools_version <- paste0("Rtools", rtools4x_version())
   # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
@@ -697,8 +700,7 @@ check_unix_cpp_compiler <- function() {
 
 cmdstan_arch_suffix <- function(version = NULL) {
   os_needs_arch <- os_is_linux() || os_is_wsl()
-  if ((!is.null(version) && version < "2.26") || !os_needs_arch) {
-    # pre-CmdStan 2.26, only the x86 tarball was provided
+  if (!os_needs_arch) {
     return(NULL)
   }
 

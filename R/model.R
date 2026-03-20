@@ -17,7 +17,7 @@
 #' @param exe_file (string) The path to an existing Stan model executable. Can
 #'   be provided instead of or in addition to `stan_file` (if `stan_file` is
 #'   omitted some `CmdStanModel` methods like `$code()` and `$print()` will not
-#'   work). This argument can only be used with CmdStan 2.27+.
+#'   work).
 #' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -154,11 +154,12 @@
 #' }
 #'
 cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...) {
-  if (cmdstan_version() < "2.27.0" && !is.null(exe_file)) {
-    stop("'exe_file' argument is only supported with CmdStan 2.27 and newer.", call. = FALSE)
-  }
   if (is.null(exe_file) && is.null(stan_file)) {
-    stop("Unable to create a `CmdStanModel` object. Both 'stan_file' and 'exe_file' are undefined.", call. = FALSE)
+    stop(
+      "Unable to create a `CmdStanModel` object. ",
+      "Both 'stan_file' and 'exe_file' are undefined.",
+      call. = FALSE
+    )
   }
   CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
 }
@@ -432,8 +433,8 @@ CmdStanModel <- R6::R6Class(
 #'   `functions` field in the compiled model object. This can also be done after
 #'   compilation using the
 #'   [`$expose_functions()`][model-method-expose_functions] method.
-#' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
-#'   but skip the actual C++ compilation. Used to speedup tests.
+#' @param dry_run (logical) If `TRUE`, the code will do all checks before
+#'   compilation, but skip the actual C++ compilation. Used to speedup tests.
 #'
 #' @return The `$compile()` method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
@@ -460,7 +461,7 @@ CmdStanModel <- R6::R6Class(
 #' mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 #' mod$exe_file()
 #'
-#' # turn on pedantic mode (new in Stan v2.24)
+#' # turn on pedantic mode
 #' file_pedantic <- write_stan_file("
 #' parameters {
 #'   real sigma;  // pedantic mode will warn about missing <lower=0>
@@ -484,9 +485,12 @@ compile <- function(quiet = TRUE,
                     compile_model_methods = FALSE,
                     compile_standalone = FALSE,
                     dry_run = FALSE) {
-
   if (length(self$stan_file()) == 0) {
-    stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop(
+      "'$compile()' cannot be used because the 'CmdStanModel' ",
+      "was not created with a Stan file.",
+      call. = FALSE
+    )
   }
   assert_stan_file_exists(self$stan_file())
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
@@ -767,11 +771,12 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' }
 #'
 variables <- function() {
-  if (self$cmdstan_version() < "2.27.0") {
-    stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
-  }
   if (length(self$stan_file()) == 0) {
-    stop("'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop(
+      "'$variables()' cannot be used because the 'CmdStanModel' ",
+      "was not created with a Stan file.",
+      call. = FALSE
+    )
   }
   assert_stan_file_exists(self$stan_file())
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
@@ -926,7 +931,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
 #'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
 #'   supply a list of strings which represent options. In that case the options
-#'   are passed to stanc (new in Stan 2.29). See the [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
+#'   are passed to `stanc`. See the
+#'   [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
 #' @param backup (logical) If `TRUE`, create stanfile.bak backups before
 #'   writing to the file. Disable this option if you're sure you have other
@@ -974,22 +980,6 @@ format <- function(overwrite_file = FALSE,
                    backup = TRUE,
                    max_line_length = NULL,
                    quiet = FALSE) {
-  # querying current version here not model object version
-  # because this is pre-compile work based on the cmdstanr
-  # version that will be used to compile in teh future,
-  # not based on what was used to compile existing binary (if any)
-  if (cmdstan_version() < "2.29.0" && !is.null(max_line_length)) {
-    stop(
-      "'max_line_length' is only supported with CmdStan 2.29.0 or newer.",
-      call. = FALSE
-    )
-  }
-  if (cmdstan_version() < "2.29.0" && !is.logical(canonicalize)) {
-    stop(
-      "A list can be supplied to the 'canonicalize' argument with CmdStan 2.29.0 or newer.",
-      call. = FALSE
-    )
-  }
   if (length(self$stan_file()) == 0) {
     stop(
       "'$format()' cannot be used because the 'CmdStanModel'",
@@ -1009,9 +999,6 @@ format <- function(overwrite_file = FALSE,
   }
   if (isTRUE(canonicalize)) {
     stanc_options["print-canonical"] <- TRUE
-    if (cmdstan_version() < "2.29.0") {
-      stanc_options["auto-format"] <- NULL
-    }
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
     stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
   }
@@ -1147,10 +1134,10 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = NULL,
-                   save_cmdstan_config = NULL) {
+                   save_metric = TRUE,
+                   save_cmdstan_config = TRUE) {
 
-  if (self$cmdstan_version() >= "2.27.0" && self$cmdstan_version() < "2.36.0" && !fixed_param) {
+  if (self$cmdstan_version() < "2.36.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
@@ -1317,7 +1304,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = NULL) {
+                       save_cmdstan_config = TRUE) {
 
   if (fixed_param) {
     chains <- 1
@@ -1467,7 +1454,7 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = NULL) {
+                     save_cmdstan_config = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1608,10 +1595,7 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = NULL) {
-  if (self$cmdstan_version() < "2.32") {
-    stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
-  }
+                    save_cmdstan_config = TRUE) {
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
   }
@@ -1771,7 +1755,7 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = NULL) {
+                        save_cmdstan_config = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1926,7 +1910,7 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = NULL) {
+                       save_cmdstan_config = TRUE) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -2264,11 +2248,7 @@ include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FA
       include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     }
     include_paths <- paste0(include_paths, collapse = ",")
-    if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- "--include-paths="
-    } else {
-      include_paths_flag <- "--include_paths="
-    }
+    include_paths_flag <- "--include-paths="
     if (isTRUE(standalone_call)) {
       stancflags <- c(stancflags, "--include-paths", include_paths)
     } else {
@@ -2311,11 +2291,12 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
 
 
 is_variables_method_supported <- function(mod) {
-  cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
+  mod$has_stan_file() && file.exists(mod$stan_file())
 }
-resolve_exe_path <- function(
-  dir = NULL, private_dir = NULL, self_exe_file = NULL, self_stan_file = NULL
-) {
+resolve_exe_path <- function(dir = NULL,
+                             private_dir = NULL,
+                             self_exe_file = NULL,
+                             self_stan_file = NULL) {
   if (is.null(dir) && !is.null(private_dir)) {
     dir <- absolute_path(private_dir)
   } else if (!is.null(dir)) {

@@ -28,7 +28,7 @@ optimize(
   history_size = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
-  save_cmdstan_config = NULL
+  save_cmdstan_config = TRUE
 )
 }
 \arguments{
@@ -202,7 +202,7 @@ used to display the silenced messages.}
 \item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
 with argument \code{"output save_config=1"} to save a json file which contains
 the argument tree and extra information (equivalent to the output CSV file
-header). This option is only available in CmdStan 2.34.0 and later.}
+header).}
 }
 \value{
 A \code{\link{CmdStanMLE}} object.

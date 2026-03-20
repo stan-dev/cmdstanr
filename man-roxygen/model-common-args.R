@@ -128,5 +128,5 @@
 #' @param save_cmdstan_config (logical) When `TRUE` (the default), call CmdStan
 #'   with argument `"output save_config=1"` to save a json file which contains
 #'   the argument tree and extra information (equivalent to the output CSV file
-#'   header). This option is only available in CmdStan 2.34.0 and later.
+#'   header).
 #'

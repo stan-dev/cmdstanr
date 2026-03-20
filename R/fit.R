@@ -1205,8 +1205,8 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'   profiling data if any profiling data was written to the profile CSV files.
 #'   See [save_profile_files()] to control where the files are saved.
 #'
-#'   Support for profiling Stan programs is available with CmdStan >= 2.26 and
-#'   requires adding profiling statements to the Stan program.
+#'   Profiling requires adding profiling statements to the Stan program. See
+#'   **Examples** for a demonstration.
 #'
 #' @return A list of data frames with profiling data if the profiling CSV files
 #'   were created.

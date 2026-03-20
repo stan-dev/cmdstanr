@@ -37,8 +37,8 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_metric = NULL,
-  save_cmdstan_config = NULL
+  save_metric = TRUE,
+  save_cmdstan_config = TRUE
 )
 }
 \arguments{
@@ -284,15 +284,15 @@ Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
-\item{save_metric}{(logical) When \code{TRUE}, call CmdStan with argument
-\code{"adaptation save_metric=1"} to save the adapted metric in separate JSON
-file with elements "stepsize", "metric_type" and "inv_metric". The default
-is \code{TRUE}. This option is only available in CmdStan 2.34.0 and later.}
+\item{save_metric}{(logical) When \code{TRUE} (the default), call CmdStan with
+argument \code{"adaptation save_metric=1"} to save the adapted metric in
+separate JSON file with elements \code{"stepsize"}, \code{"metric_type"} and
+\code{"inv_metric"}.}
 
 \item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
 with argument \code{"output save_config=1"} to save a json file which contains
 the argument tree and extra information (equivalent to the output CSV file
-header). This option is only available in CmdStan 2.34.0 and later.}
+header).}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

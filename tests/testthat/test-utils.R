@@ -256,7 +256,7 @@ test_that("as_mcmc.list() works", {
 })
 
 test_that("get_cmdstan_flags() can be used recursively in `make`", {
-  mkfile <- normalizePath(test_path("resources", "recursive-cmdstan-flags.mk"))
+  mkfile <- repair_path(test_path("resources", "recursive-cmdstan-flags.mk"))
   nonrecursive_flags <- get_cmdstan_flags("STANCFLAGS")
   recursive_run <- processx::run(
     command = "make",
