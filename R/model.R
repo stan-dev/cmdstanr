@@ -1134,8 +1134,8 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = TRUE,
-                   save_cmdstan_config = TRUE) {
+                   save_metric = getOption("cmdstanr_save_metric", FALSE),
+                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
   if (self$cmdstan_version() < "2.36.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
@@ -1304,7 +1304,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = TRUE) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
   if (fixed_param) {
     chains <- 1
@@ -1454,7 +1454,7 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = TRUE) {
+                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1595,7 +1595,7 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = TRUE) {
+                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
   }
@@ -1755,7 +1755,7 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = TRUE) {
+                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1910,7 +1910,7 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = TRUE) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,

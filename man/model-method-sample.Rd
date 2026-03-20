@@ -37,8 +37,8 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_metric = TRUE,
-  save_cmdstan_config = TRUE
+  save_metric = getOption("cmdstanr_save_metric", FALSE),
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
 )
 }
 \arguments{
@@ -284,15 +284,17 @@ Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
-\item{save_metric}{(logical) When \code{TRUE} (the default), call CmdStan with
+\item{save_metric}{(logical) When \code{TRUE}, call CmdStan with
 argument \code{"adaptation save_metric=1"} to save the adapted metric in
 separate JSON file with elements \code{"stepsize"}, \code{"metric_type"} and
-\code{"inv_metric"}.}
+\code{"inv_metric"}. The default is \code{FALSE} but can be set to \code{TRUE} for an
+entire \R session by \code{options(cmdstanr_save_metric = TRUE)}.}
 
-\item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
-with argument \code{"output save_config=1"} to save a json file which contains
-the argument tree and extra information (equivalent to the output CSV file
-header).}
+\item{save_cmdstan_config}{(logical) When \code{TRUE}, call CmdStan with argument
+\code{"output save_config=1"} to save a JSON file which contains the argument
+tree and extra information (equivalent to the output CSV file header). The
+default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
+\code{options(cmdstanr_save_config = TRUE)}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

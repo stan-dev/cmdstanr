@@ -1,15 +1,20 @@
 # cmdstanr (development version)
 
+* Informative error when exposing functions using names that are reserved 
+keywords (@VisruthSK, #1154)
+* `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
+set to `TRUE` for an entire R session via new global options. (#1159)
+
 * CmdStanModel objects created using `compile_model_methods = TRUE` that are
 then saved and reloaded no longer error in model fitting methods. Model methods
-are recompiled lazily if needed.
+are recompiled lazily if needed. (#1158)
   
-* CmdStan versions older than 2.35.0 are no longer supported.
-* Minimum R version increased to 4.0.0.
-* Removed legacy Windows toolchain paths for older CmdStan releases.
-* `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a warning).
+* CmdStan versions older than 2.35.0 are no longer supported. (#1144)
+* Minimum R version increased to 4.0.0. (#1144)
+* Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
+* `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a warning). (#1144)
 
-* Removed deprecated items (replacements in parentheses):
+* Removed deprecated items (replacements in parentheses). (#1061)
   - `read_sample_csv()` (`read_cmdstan_csv()`)
   - `write_stan_tempfile()` (`write_stan_file()`)
   - `jacobian_adjustment` argument to `fit$log_prob()` and similar methods (`jacobian` argument)

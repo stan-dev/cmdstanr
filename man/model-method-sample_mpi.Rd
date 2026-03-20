@@ -36,7 +36,7 @@ sample_mpi(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_cmdstan_config = TRUE
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
 )
 }
 \arguments{
@@ -270,10 +270,11 @@ Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
-\item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
-with argument \code{"output save_config=1"} to save a json file which contains
-the argument tree and extra information (equivalent to the output CSV file
-header).}
+\item{save_cmdstan_config}{(logical) When \code{TRUE}, call CmdStan with argument
+\code{"output save_config=1"} to save a JSON file which contains the argument
+tree and extra information (equivalent to the output CSV file header). The
+default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
+\code{options(cmdstanr_save_config = TRUE)}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

@@ -33,7 +33,7 @@ pathfinder(
   calculate_lp = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
-  save_cmdstan_config = TRUE
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
 )
 }
 \arguments{
@@ -219,10 +219,11 @@ numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
 
-\item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
-with argument \code{"output save_config=1"} to save a json file which contains
-the argument tree and extra information (equivalent to the output CSV file
-header).}
+\item{save_cmdstan_config}{(logical) When \code{TRUE}, call CmdStan with argument
+\code{"output save_config=1"} to save a JSON file which contains the argument
+tree and extra information (equivalent to the output CSV file header). The
+default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
+\code{options(cmdstanr_save_config = TRUE)}.}
 }
 \value{
 A \code{\link{CmdStanPathfinder}} object.
