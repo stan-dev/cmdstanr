@@ -460,26 +460,25 @@ test_that("Stan code with no reserved names exposes functions", {
   expect_no_error(funmod$expose_functions())
 })
 
-test_that("External c++ functions can be exposed", {
-  # Bug in exposing external, skip for now
-  # https://github.com/stan-dev/stanc3/issues/1424
-  skip()
-  tmpfile <- tempfile(fileext = ".hpp")
-  hpp <-
-  "
-  #include <ostream>
-  namespace standalone_external_model_namespace {
-    int rtn_int(int x, std::ostream *pstream__) { return x; }
-  }"
-  cat(hpp, file = tmpfile, sep = "\n")
-  stanfile <- file.path(tempdir(), "standalone_external.stan")
-  cat("functions { int rtn_int(int x); }\n", file = stanfile)
-  ext_mod <- cmdstan_model(stan_file = stanfile,
-                           user_header = tmpfile,
-                           force_recompile = TRUE)
-  ext_mod$expose_functions()
-  expect_equal(ext_mod$functions$rtn_int(10), 10)
-})
+# Bug in exposing external, skip for now
+# https://github.com/stan-dev/stanc3/issues/1424
+# test_that("External c++ functions can be exposed", {
+#   tmpfile <- tempfile(fileext = ".hpp")
+#   hpp <-
+#   "
+#   #include <ostream>
+#   namespace standalone_external_model_namespace {
+#     int rtn_int(int x, std::ostream *pstream__) { return x; }
+#   }"
+#   cat(hpp, file = tmpfile, sep = "\n")
+#   stanfile <- file.path(tempdir(), "standalone_external.stan")
+#   cat("functions { int rtn_int(int x); }\n", file = stanfile)
+#   ext_mod <- cmdstan_model(stan_file = stanfile,
+#                            user_header = tmpfile,
+#                            force_recompile = TRUE)
+#   ext_mod$expose_functions()
+#   expect_equal(ext_mod$functions$rtn_int(10), 10)
+# })
 
 test_that("Exposing functions with precompiled model gives meaningful error", {
   stan_file <- write_stan_file("
