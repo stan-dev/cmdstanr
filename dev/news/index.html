@@ -63,13 +63,15 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="cmdstanr-development-version">cmdstanr (development version)<a class="anchor" aria-label="anchor" href="#cmdstanr-development-version"></a></h2>
-<ul><li><p>CmdStanModel objects created using <code>compile_model_methods = TRUE</code> that are then saved and reloaded no longer error in model fitting methods. Model methods are recompiled lazily if needed.</p></li>
-<li><p>CmdStan versions older than 2.35.0 are no longer supported.</p></li>
-<li><p>Minimum R version increased to 4.0.0.</p></li>
-<li><p>Removed legacy Windows toolchain paths for older CmdStan releases.</p></li>
-<li><p><code>CMDSTANR_USE_MSYS_TOOLCHAIN</code> is now deprecated and ignored (with a warning).</p></li>
+<ul><li><p>Informative error when exposing functions using names that are reserved keywords (<a href="https://github.com/VisruthSK" class="external-link">@VisruthSK</a>, <a href="https://github.com/stan-dev/cmdstanr/issues/1154" class="external-link">#1154</a>)</p></li>
+<li><p><code>save_cmdstan_config</code> and <code>save_metric</code> default to <code>FALSE</code> but can be set to <code>TRUE</code> for an entire R session via new global options. (<a href="https://github.com/stan-dev/cmdstanr/issues/1159" class="external-link">#1159</a>)</p></li>
+<li><p>CmdStanModel objects created using <code>compile_model_methods = TRUE</code> that are then saved and reloaded no longer error in model fitting methods. Model methods are recompiled lazily if needed. (<a href="https://github.com/stan-dev/cmdstanr/issues/1158" class="external-link">#1158</a>)</p></li>
+<li><p>CmdStan versions older than 2.35.0 are no longer supported. (<a href="https://github.com/stan-dev/cmdstanr/issues/1144" class="external-link">#1144</a>)</p></li>
+<li><p>Minimum R version increased to 4.0.0. (<a href="https://github.com/stan-dev/cmdstanr/issues/1144" class="external-link">#1144</a>)</p></li>
+<li><p>Removed legacy Windows toolchain paths for older CmdStan releases. (<a href="https://github.com/stan-dev/cmdstanr/issues/1144" class="external-link">#1144</a>)</p></li>
+<li><p><code>CMDSTANR_USE_MSYS_TOOLCHAIN</code> is now deprecated and ignored (with a warning). (<a href="https://github.com/stan-dev/cmdstanr/issues/1144" class="external-link">#1144</a>)</p></li>
 <li>
-<p>Removed deprecated items (replacements in parentheses):</p>
+<p>Removed deprecated items (replacements in parentheses). (<a href="https://github.com/stan-dev/cmdstanr/issues/1061" class="external-link">#1061</a>)</p>
 <ul><li>
 <code>read_sample_csv()</code> (<code><a href="../reference/read_cmdstan_csv.html">read_cmdstan_csv()</a></code>)</li>
 <li>

@@ -98,17 +98,14 @@ file:</p><ul><li><p><code>logical</code> -&gt; <code>integer</code> (<code>TRUE<
 <li><p><code>list</code> -&gt; <code>array</code></p></li>
 <li><p><code>table</code> -&gt; <code>vector</code>, <code>matrix</code>, or <code>array</code> (depending on dimensions of table)</p></li>
 </ul><p>The <code>list</code> to <code>array</code> conversion is intended to make it easier to prepare
-the data for certain Stan declarations involving arrays:</p><ul><li><p><code>vector[J] v[K]</code> (or equivalently <code>array[K] vector[J] v </code> as of Stan 2.27)
-can be constructed in <span style="R">R</span> as a list with <code>K</code> elements where each element a
-vector of length <code>J</code></p></li>
-<li><p><code>matrix[I,J] v[K]</code> (or equivalently <code>array[K] matrix[I,J] m </code> as of Stan
-2.27 ) can be constructed in <span style="R">R</span> as a list with <code>K</code> elements where each element
-an <code>IxJ</code> matrix</p></li>
+the data for certain Stan declarations involving arrays:</p><ul><li><p><code>array[K] vector[J] v </code> can be constructed in <span style="R">R</span> as a list with <code>K</code>
+elements where each element a vector of length <code>J</code></p></li>
+<li><p><code>array[K] matrix[I,J] m </code> can be constructed in <span style="R">R</span> as a list with <code>K</code>
+elements where each element an <code>IxJ</code> matrix</p></li>
 </ul><p>These can also be passed in from <span style="R">R</span> as arrays instead of lists but the list
 option is provided for convenience. Unfortunately for arrays with more than
-one dimension, e.g., <code>vector[J] v[K,L]</code> (or equivalently
-<code>array[K,L] vector[J] v </code> as of Stan 2.27) it is not possible to use an <span style="R">R</span>
-list and an array must be used instead. For this example the array in <span style="R">R</span>
+one dimension (e.g. <code>array[K,L] vector[J] v </code>) it is not possible to use an
+<span style="R">R</span> list and an array must be used instead. For this example the array in <span style="R">R</span>
 should have dimensions <code>KxLxJ</code>.</p>
     </div>
 
@@ -141,7 +138,7 @@ should have dimensions <code>KxLxJ</code>.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># demonstrating list to array conversion</span></span></span>
-<span class="r-in"><span><span class="co"># suppose x is declared as `vector[3] x[2]` (or equivalently `array[2] vector[3] x`)</span></span></span>
+<span class="r-in"><span><span class="co"># suppose x is declared as `array[2] vector[3] x`</span></span></span>
 <span class="r-in"><span><span class="co"># we can use a list of length 2 where each element is a vector of length 3</span></span></span>
 <span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">4</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".json"</span><span class="op">)</span></span></span>

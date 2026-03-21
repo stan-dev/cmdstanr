@@ -34,7 +34,7 @@ cmdstan_model(stan_file = NULL, exe_file = NULL, compile = TRUE, ...)
   (string) The path to an existing Stan model executable. Can be
   provided instead of or in addition to `stan_file` (if `stan_file` is
   omitted some `CmdStanModel` methods like `$code()` and `$print()` will
-  not work). This argument can only be used with CmdStan 2.27+.
+  not work).
 
 - compile:
 
@@ -464,7 +464,7 @@ fit_mcmc_w_init_fun_2 <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2$init()
 #> [[1]]

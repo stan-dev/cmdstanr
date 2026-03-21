@@ -99,6 +99,10 @@ files in an explicitly defined directory are not automatically deleted.</p></li>
 <li><p><code>mc.cores</code>: The number of cores to use for various parallelization tasks
 (e.g. running MCMC chains, installing CmdStan). The default depends on the
 use case and is documented with the methods that make use of <code>mc.cores</code>.</p></li>
+<li><p><code>cmdstanr_save_metric</code>: Should the adapted metric be saved to a separate
+JSON file when running MCMC? The default is <code>FALSE</code>.</p></li>
+<li><p><code>cmdstanr_save_config</code>: Should a JSON file be saved containing the argument
+tree and extra information when running CmdStan? The default is <code>FALSE</code>.</p></li>
 </ul></div>
 
   </main></div>

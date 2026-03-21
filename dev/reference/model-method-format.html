@@ -97,7 +97,8 @@ to the input model file. The default is <code>FALSE</code>.</p></dd>
 should 'canonicalize' the Stan model, removing things like deprecated syntax.
 Default is <code>FALSE</code>. If <code>TRUE</code>, all canonicalizations are run. You can also
 supply a list of strings which represent options. In that case the options
-are passed to stanc (new in Stan 2.29). See the <a href="https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing" class="external-link">User's guide section</a>
+are passed to <code>stanc</code>. See the
+<a href="https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing" class="external-link">User's guide section</a>
 for available canonicalization options.</p></dd>
 
 
@@ -182,7 +183,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># overwrite the original file instead of just printing it</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">format</span><span class="op">(</span>canonicalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"deprecations"</span><span class="op">)</span>, overwrite_file <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Old version of the model stored to /tmp/RtmpCMSCVz/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20260320234359.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Old version of the model stored to /tmp/Rtmpj55LoF/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20260321143215.</span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

@@ -185,7 +185,7 @@ mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 mod$exe_file()
 #> [1] "/home/runner/.cmdstan/cmdstan-2.38.0/examples/bernoulli/bernoulli"
 
-# turn on pedantic mode (new in Stan v2.24)
+# turn on pedantic mode
 file_pedantic <- write_stan_file("
 parameters {
   real sigma;  // pedantic mode will warn about missing <lower=0>
@@ -195,7 +195,7 @@ model {
 }
 ")
 mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#> Warning in '/tmp/RtmpCMSCVz/model-1e8174e47679.stan', line 6, column 2 to column 7:
+#> Warning in '/tmp/Rtmpj55LoF/model-1f5a7ed8e079.stan', line 6, column 2 to column 7:
 #>     Parameter sigma is given a exponential distribution, which has strictly
 #>     positive support, but sigma was not constrained to be strictly positive.
 

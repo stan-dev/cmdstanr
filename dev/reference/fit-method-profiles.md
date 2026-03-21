@@ -5,8 +5,8 @@ data if any profiling data was written to the profile CSV files. See
 [`save_profile_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)
 to control where the files are saved.
 
-Support for profiling Stan programs is available with CmdStan \>= 2.26
-and requires adding profiling statements to the Stan program.
+Profiling requires adding profiling statements to the Stan program. See
+**Examples** for a demonstration.
 
 ## Usage
 
@@ -71,35 +71,35 @@ fit <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
 fit$profiles()
 #> [[1]]
 #>         name       thread_id  total_time forward_time reverse_time chain_stack
-#> 1         gq 139719160178496 0.000160370  0.000160370  0.000000000           0
-#> 2 likelihood 139719160178496 0.000718803  0.000513205  0.000205598        6721
+#> 1         gq 140563620628288 0.000166161  0.000166161  0.000000000           0
+#> 2 likelihood 140563620628288 0.000748031  0.000542363  0.000205668        6721
 #>   no_chain_stack autodiff_calls no_autodiff_calls
 #> 1              0              0              1000
 #> 2           6721           6721                 1
 #> 
 #> [[2]]
 #>         name       thread_id  total_time forward_time reverse_time chain_stack
-#> 1         gq 140703359899456 0.000161723  0.000161723  0.000000000           0
-#> 2 likelihood 140703359899456 0.000819567  0.000598873  0.000220694        6792
+#> 1         gq 140437280343872 0.000166447  0.000166447   0.00000000           0
+#> 2 likelihood 140437280343872 0.000737052  0.000529192   0.00020786        6792
 #>   no_chain_stack autodiff_calls no_autodiff_calls
 #> 1              0              0              1000
 #> 2           6792           6792                 1
 #> 
 #> [[3]]
 #>         name       thread_id  total_time forward_time reverse_time chain_stack
-#> 1         gq 140493928093504 0.000160324  0.000160324  0.000000000           0
-#> 2 likelihood 140493928093504 0.000741572  0.000518429  0.000223143        6797
+#> 1         gq 140252629624640 0.000163350  0.000163350  0.000000000           0
+#> 2 likelihood 140252629624640 0.000775294  0.000548825  0.000226469        6797
 #>   no_chain_stack autodiff_calls no_autodiff_calls
 #> 1              0              0              1000
 #> 2           6797           6797                 1
 #> 
 #> [[4]]
 #>         name       thread_id  total_time forward_time reverse_time chain_stack
-#> 1         gq 140058823239488 0.000168442  0.000168442  0.000000000           0
-#> 2 likelihood 140058823239488 0.000759151  0.000534295  0.000224856        6979
+#> 1 likelihood 139957587859264 0.000783884  0.000569103  0.000214781        6979
+#> 2         gq 139957587859264 0.000165679  0.000165679  0.000000000           0
 #>   no_chain_stack autodiff_calls no_autodiff_calls
-#> 1              0              0              1000
-#> 2           6979           6979                 1
+#> 1           6979           6979                 1
+#> 2              0              0              1000
 #> 
 # }
 ```

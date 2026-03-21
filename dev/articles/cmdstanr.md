@@ -69,7 +69,7 @@ automate this to avoid having to manually set the path every session:
 
 2.  If no environment variable is found when loaded but any directory in
     the form `".cmdstan/cmdstan-[version]"`, for example
-    `".cmdstan/cmdstan-2.23.0"`, exists in the user’s home directory
+    `".cmdstan/cmdstan-2.35.0"`, exists in the user’s home directory
     (`Sys.getenv("HOME")`, *not* the current working directory) then the
     path to the CmdStan with the largest version number will be set as
     the path to CmdStan for the R session. This is the same as the

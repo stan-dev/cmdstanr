@@ -173,7 +173,7 @@ only define the number of processes. To use <code>n_procs</code> processes speci
 <span>  show_messages <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  show_exceptions <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  diagnostics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"divergences"</span>, <span class="st">"treedepth"</span>, <span class="st">"ebfmi"</span><span class="op">)</span>,</span>
-<span>  save_cmdstan_config <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  save_cmdstan_config <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"cmdstanr_save_config"</span>, <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -464,10 +464,11 @@ using the <code><a href="fit-method-summary.html">$summary()</a></code> method.<
 
 
 <dt id="arg-save-cmdstan-config">save_cmdstan_config<a class="anchor" aria-label="anchor" href="#arg-save-cmdstan-config"></a></dt>
-<dd><p>(logical) When <code>TRUE</code> (the default), call CmdStan
-with argument <code>"output save_config=1"</code> to save a json file which contains
-the argument tree and extra information (equivalent to the output CSV file
-header). This option is only available in CmdStan 2.34.0 and later.</p></dd>
+<dd><p>(logical) When <code>TRUE</code>, call CmdStan with argument
+<code>"output save_config=1"</code> to save a JSON file which contains the argument
+tree and extra information (equivalent to the output CSV file header). The
+default is <code>FALSE</code> but can be set to <code>TRUE</code> for an entire <span style="R">R</span> session by
+<code>options(cmdstanr_save_config = TRUE)</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

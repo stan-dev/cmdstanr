@@ -52,3 +52,10 @@ session.
   tasks (e.g. running MCMC chains, installing CmdStan). The default
   depends on the use case and is documented with the methods that make
   use of `mc.cores`.
+
+- `cmdstanr_save_metric`: Should the adapted metric be saved to a
+  separate JSON file when running MCMC? The default is `FALSE`.
+
+- `cmdstanr_save_config`: Should a JSON file be saved containing the
+  argument tree and extra information when running CmdStan? The default
+  is `FALSE`.

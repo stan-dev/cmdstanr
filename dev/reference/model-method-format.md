@@ -30,8 +30,7 @@ format(
   'canonicalize' the Stan model, removing things like deprecated syntax.
   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can
   also supply a list of strings which represent options. In that case
-  the options are passed to stanc (new in Stan 2.29). See the [User's
-  guide
+  the options are passed to `stanc`. See the [User's guide
   section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
   for available canonicalization options.
 
@@ -122,7 +121,7 @@ mod$format(canonicalize = list("deprecations"))
 
 # overwrite the original file instead of just printing it
 mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
-#> Old version of the model stored to /tmp/RtmpCMSCVz/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20260320234359.
+#> Old version of the model stored to /tmp/Rtmpj55LoF/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20260321143215.
 mod$compile()
 # }
 ```

@@ -141,9 +141,8 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
 - fix:
 
-  For `check_cmdstan_toolchain()`, should CmdStanR attempt to fix any
-  detected toolchain problems? The default is `FALSE`. This argument is
-  currently ignored and retained for compatibility.
+  As of v1.0 this argument is deprecated and ignored and only retained
+  for compatibility.
 
 ## Value
 

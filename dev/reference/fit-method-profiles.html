@@ -3,12 +3,12 @@
   </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_3-0.4.10/font.css" rel="stylesheet"><link href="../deps/Source_Code_Pro-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- Font Awesome 7.0.1 for Bluesky icon --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" referrerpolicy="no-referrer"><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Return profiling data — fit-method-profiles"><meta name="description" content="The $profiles() method returns a list of data frames with
 profiling data if any profiling data was written to the profile CSV files.
 See save_profile_files() to control where the files are saved.
-Support for profiling Stan programs is available with CmdStan &amp;gt;= 2.26 and
-requires adding profiling statements to the Stan program."><meta property="og:description" content="The $profiles() method returns a list of data frames with
+Profiling requires adding profiling statements to the Stan program. See
+Examples for a demonstration."><meta property="og:description" content="The $profiles() method returns a list of data frames with
 profiling data if any profiling data was written to the profile CSV files.
 See save_profile_files() to control where the files are saved.
-Support for profiling Stan programs is available with CmdStan &amp;gt;= 2.26 and
-requires adding profiling statements to the Stan program."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
+Profiling requires adding profiling statements to the Stan program. See
+Examples for a demonstration."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -74,8 +74,8 @@ requires adding profiling statements to the Stan program."><meta property="og:im
     <p>The <code>$profiles()</code> method returns a list of data frames with
 profiling data if any profiling data was written to the profile CSV files.
 See <code><a href="fit-method-save_output_files.html">save_profile_files()</a></code> to control where the files are saved.</p>
-<p>Support for profiling Stan programs is available with CmdStan &gt;= 2.26 and
-requires adding profiling statements to the Stan program.</p>
+<p>Profiling requires adding profiling statements to the Stan program. See
+<strong>Examples</strong> for a demonstration.</p>
     </div>
 
     <div class="section level2">
@@ -138,35 +138,35 @@ were created.</p>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name       thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 139719160178496 0.000160370  0.000160370  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 139719160178496 0.000718803  0.000513205  0.000205598        6721</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140563620628288 0.000166161  0.000166161  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140563620628288 0.000748031  0.000542363  0.000205668        6721</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2           6721           6721                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name       thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140703359899456 0.000161723  0.000161723  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140703359899456 0.000819567  0.000598873  0.000220694        6792</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140437280343872 0.000166447  0.000166447   0.00000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140437280343872 0.000737052  0.000529192   0.00020786        6792</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2           6792           6792                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name       thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140493928093504 0.000160324  0.000160324  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140493928093504 0.000741572  0.000518429  0.000223143        6797</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140252629624640 0.000163350  0.000163350  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140252629624640 0.000775294  0.000548825  0.000226469        6797</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2           6797           6797                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[4]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name       thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140058823239488 0.000168442  0.000168442  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140058823239488 0.000759151  0.000534295  0.000224856        6979</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 likelihood 139957587859264 0.000783884  0.000569103  0.000214781        6979</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         gq 139957587859264 0.000165679  0.000165679  0.000000000           0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2           6979           6979                 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1           6979           6979                 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2              0              0              1000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

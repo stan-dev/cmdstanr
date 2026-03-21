@@ -2,8 +2,7 @@
 
 ### Introduction
 
-This vignette demonstrates how to use the new profiling functionality
-introduced in CmdStan 2.26.0.
+This vignette demonstrates how to use Stan’s profiling functionality.
 
 Profiling identifies which parts of a Stan program are taking the
 longest time to run and is therefore a useful guide when working on
@@ -17,7 +16,7 @@ a statistical perspective, see Gelman et al. (2020).
 
 ``` r
 library(cmdstanr)
-check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+check_cmdstan_toolchain(quiet = TRUE)
 ```
 
 ### Adding profiling statements to a Stan program
@@ -119,11 +118,11 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 139636820334400 0.648234630  0.512089210  0.136145420       52356
-    2     priors 139636820334400 0.004184048  0.003186437  0.000997611       34904
+    1     priors 139879516727104 0.004126231   0.00321484  0.000911391       34904
+    2 likelihood 139879516727104 0.649025900   0.51074814  0.138277760       52356
       no_chain_stack autodiff_calls no_autodiff_calls
-    1       34921452          17452                 1
-    2          34904          17452                 1
+    1          34904          17452                 1
+    2       34921452          17452                 1
 
 The `total_time` column is the total time spent inside a given profile
 statement. It is clear that the vast majority of time is spent in the
@@ -174,9 +173,9 @@ fit_glm$profiles()
 ```
 
     [[1]]
-            name       thread_id  total_time forward_time reverse_time chain_stack
-    1     priors 140699253663552 0.003691761  0.002801387  0.000890374       34214
-    2 likelihood 140699253663552 0.428504000  0.427484110  0.001019886       51321
+            name       thread_id total_time forward_time reverse_time chain_stack
+    1     priors 140013705115456 0.00369819  0.002722802  0.000975388       34214
+    2 likelihood 140013705115456 0.42639333  0.425199580  0.001193747       51321
       no_chain_stack autodiff_calls no_autodiff_calls
     1          34214          17107                 1
     2          17107          17107                 1
@@ -207,7 +206,7 @@ per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.714386e-05 2.397460e-07
+    [1] 2.364331e-07 3.718920e-05
 
 ### Accessing and saving the profile files
 
@@ -220,7 +219,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/RtmpC0sb8E/model_580e4657b49f155a37081bdfaae83f92-profile-202603202345-1-806a46.csv"
+    [1] "/tmp/RtmpAO1PMB/model_580e4657b49f155a37081bdfaae83f92-profile-202603211433-1-806abf.csv"
 
 These can be saved to a more permanent location with the
 `$save_profile_files()` method.

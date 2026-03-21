@@ -48,7 +48,7 @@ pathfinder(
   calculate_lp = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
-  save_cmdstan_config = NULL
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
 )
 ```
 
@@ -324,10 +324,11 @@ pathfinder(
 
 - save_cmdstan_config:
 
-  (logical) When `TRUE` (the default), call CmdStan with argument
-  `"output save_config=1"` to save a json file which contains the
+  (logical) When `TRUE`, call CmdStan with argument
+  `"output save_config=1"` to save a JSON file which contains the
   argument tree and extra information (equivalent to the output CSV file
-  header). This option is only available in CmdStan 2.34.0 and later.
+  header). The default is `FALSE` but can be set to `TRUE` for an entire
+  R session by `options(cmdstanr_save_config = TRUE)`.
 
 ## Value
 
@@ -735,7 +736,7 @@ fit_mcmc_w_init_fun <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2 <- mod$sample(
   data = stan_data,
@@ -754,7 +755,7 @@ fit_mcmc_w_init_fun_2 <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2$init()
 #> [[1]]
@@ -786,7 +787,7 @@ fit_mcmc_w_init_list <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_optim_w_init_list <- mod$optimize(
   data = stan_data,
