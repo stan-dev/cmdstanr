@@ -4,6 +4,8 @@
 keywords (@VisruthSK, #1154)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
 set to `TRUE` for an entire R session via new global options. (#1159)
+* `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing 
+output while reading `STANCFLAGS` from `make`. (#1163)
 
 * CmdStanModel objects created using `compile_model_methods = TRUE` that are
 then saved and reloaded no longer error in model fitting methods. Model methods

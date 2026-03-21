@@ -628,7 +628,7 @@ compile <- function(quiet = TRUE,
   }
   stancflags_combined <- stanc_built_options
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
-  if (stancflags_local != "") {
+  if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
@@ -730,7 +730,7 @@ compile <- function(quiet = TRUE,
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
 
-  if(!dry_run) {
+  if (!dry_run) {
     if (compile_model_methods) {
       expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
     }
