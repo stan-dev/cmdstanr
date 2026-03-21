@@ -72,8 +72,8 @@ compiled for use in R? If \code{TRUE} the functions will be available via the
 compilation using the
 \code{\link[=model-method-expose_functions]{$expose_functions()}} method.}
 
-\item{dry_run}{(logical) If \code{TRUE}, the code will do all checks before compilation,
-but skip the actual C++ compilation. Used to speedup tests.}
+\item{dry_run}{(logical) If \code{TRUE}, the code will do all checks before
+compilation, but skip the actual C++ compilation. Used to speedup tests.}
 }
 \value{
 The \verb{$compile()} method is called for its side effect of creating the
@@ -116,7 +116,7 @@ mod$exe_file()
 mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 mod$exe_file()
 
-# turn on pedantic mode (new in Stan v2.24)
+# turn on pedantic mode
 file_pedantic <- write_stan_file("
 parameters {
   real sigma;  // pedantic mode will warn about missing <lower=0>

@@ -87,9 +87,8 @@ Subsystem for Linux (WSL). The default is \code{FALSE}.}
 makefile flags be appended to the end of the existing \code{make/local} file?
 The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
 
-\item{fix}{For \code{check_cmdstan_toolchain()}, should CmdStanR attempt to fix
-any detected toolchain problems? The default is \code{FALSE}.
-This argument is currently ignored and retained for compatibility.}
+\item{fix}{As of v1.0 this argument is deprecated and ignored and only
+retained for compatibility.}
 }
 \value{
 For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
