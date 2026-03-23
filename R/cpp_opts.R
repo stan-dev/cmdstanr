@@ -174,7 +174,7 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
 # exe_info style means off is FALSE
 
 exe_info_style_cpp_options <- function(cpp_options) {
-  if(is.null(cpp_options)) cpp_options <- list()
+  if (is.null(cpp_options)) cpp_options <- list()
   names(cpp_options) <- tolower(names(cpp_options))
   flags_reported_in_exe_info <- c(
     "stan_threads", "stan_mpi", "stan_opencl",

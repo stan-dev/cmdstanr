@@ -561,7 +561,7 @@ wsl_installed <- function() {
     p <- processx::process$new("wsl", "uname")
     for(i in 1:50) {
       Sys.sleep(0.1)
-      if(!p$is_alive()) {
+      if (!p$is_alive()) {
         break
       }
     }
@@ -686,32 +686,55 @@ assert_dir_exists <- checkmate::makeAssertionFunction(check_dir_exists)
 assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 
 # Model methods & expose_functions helpers ------------------------------------------------------
+
+# Extract the requested make variable from `make print-<FLAG>` output while
+# ignoring unrelated lines
+parse_make_print_flag <- function(flag_name, stdout) {
+  lines <- strsplit(stdout, "\r?\n", perl = TRUE)[[1]]
+  pattern <- paste0("^\\s*", flag_name, "\\s*(=|\\+=)\\s*")
+  matches <- grep(pattern, lines, perl = TRUE)
+
+  if (length(matches) == 0) {
+    stop(
+      "Failed to parse `", flag_name, "` from `make print-", flag_name, "` output.\n",
+      "Output was:\n", stdout,
+      call. = FALSE
+    )
+  }
+  if (length(matches) > 1) {
+    stop(
+      "Found multiple `", flag_name, "` lines in `make print-", flag_name, "` output.\n",
+      "Output was:\n", stdout,
+      call. = FALSE
+    )
+  }
+
+  sub(pattern, "", trimws(lines[matches]), perl = TRUE)
+}
+
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
   withr::with_envvar(
     c("HOME" = short_path(Sys.getenv("HOME"))),
-    flags <- wsl_compatible_run(
+    flags_stdout <- wsl_compatible_run(
       command = "make",
       args = c("-s", paste0("print-", flag_name)),
       wd = cmdstan_path
     )$stdout
   )
-
-  flags <- gsub("\n", "", flags, fixed = TRUE)
-
-  flags <- gsub(
-    pattern = paste0(flag_name, "\\s(=|\\+=)(\\s|$)"),
-    replacement = "", x = flags
-  )
-
-  if (flags == "") {
-    return(flags)
-  }
+  flags <- parse_make_print_flag(flag_name, flags_stdout)
 
   if (flag_name == "STANCFLAGS") {
     # StanC flags need to be returned as a character vector
-    flags_vec <- strsplit(x = flags, split = " ", fixed = TRUE)[[1]]
-    return(flags_vec)
+    if (!nzchar(flags)) {
+      return(character())
+    }
+    flags_vec <- strsplit(x = trimws(flags), split = "\\s+", perl = TRUE)[[1]]
+    return(flags_vec[nzchar(flags_vec)])
+  }
+
+  if (!nzchar(flags)) {
+    return(flags)
   }
 
   if (flag_name %in% c("LDLIBS", "LDFLAGS_TBB")) {
@@ -753,9 +776,11 @@ check_sundials_fpic <- function(verbose) {
     return(invisible(NULL))
   }
   if (interactive()) {
-    message("SUNDIALS needs to be compiled with -fPIC when exposing functions or ",
-            "model methods on Linux.\n",
-            "Updating your make/local file to include -fPIC and rebuilding CmdStan now...")
+    message(
+      "SUNDIALS needs to be compiled with -fPIC when exposing functions or ",
+      "model methods on Linux.\n",
+      "Updating your make/local file to include -fPIC and rebuilding CmdStan now..."
+    )
   }
   cmdstan_make_local(cpp_options = list("CPPFLAGS_SUNDIALS += -fPIC"), append = TRUE)
   rebuild_cmdstan(quiet = !verbose)

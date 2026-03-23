@@ -831,15 +831,27 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
   expect_s3_class(mod_tmp$compile(), "CmdStanModel")
 })
 
-test_that("STANCFLAGS included from make/local", {
-  make_local_old <- cmdstan_make_local()
-  cmdstan_make_local(cpp_options = "STANCFLAGS += --O1", append = TRUE)
-  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
+test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", {
+  real_get_cmdstan_flags <- get_cmdstan_flags
+  out <- with_mocked_bindings(
+    utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE)),
+    get_cmdstan_flags = function(flag_name) {
+      if (identical(flag_name, "STANCFLAGS")) {
+        c("--O1", "--warn-pedantic")
+      } else {
+        real_get_cmdstan_flags(flag_name)
+      }
+    }
+  )
   if(os_is_windows() && !os_is_wsl()) {
-    out_w_flags <- "bin/stanc.exe --name='bernoulli_model'  --O1 --o"
+    out_w_flags <- "bin/stanc.exe --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   } else {
-    out_w_flags <- "bin/stanc --name='bernoulli_model'  --O1 --o"
+    out_w_flags <- "bin/stanc --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
-  cmdstan_make_local(cpp_options = make_local_old, append = FALSE)
+})
+
+test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {
+  withr::local_envvar(MAKEFLAGS = "-w -j 4")
+  expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
 })
