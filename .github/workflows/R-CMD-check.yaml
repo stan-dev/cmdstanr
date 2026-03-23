@@ -35,6 +35,7 @@ jobs:
         config:
           - {os: macOS-latest, r: 'devel', opencl: true}
           - {os: macOS-latest, r: 'release', opencl: true}
+          - {os: macos-26, r: 'release', opencl: false}
           - {os: macos-15-intel, r: 'release', opencl: false}
           - {os: windows-latest, r: 'devel' }
           - {os: windows-latest, r: 'release'}
