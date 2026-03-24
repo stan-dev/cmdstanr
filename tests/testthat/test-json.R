@@ -1,29 +1,22 @@
-expect_json_output <- function(json_output, file) {
-  expect_identical(json_output, readLines(file))
-}
-
 test_that("JSON output unboxing works", {
   temp_file <- tempfile()
   N <- 10
   write_stan_json(list(N = N), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-unboxing.json"))
+  expect_snapshot_file(temp_file, "json-unboxing.json")
 })
 
 test_that("JSON output for boolean is correct", {
   temp_file <- tempfile()
   N <- c(TRUE, FALSE, TRUE)
   write_stan_json(list(N = N), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-boolean.json"))
+  expect_snapshot_file(temp_file, "json-boolean.json")
 })
 
 test_that("JSON output for factors is correct", {
   temp_file <- tempfile()
   N <- factor(c(0,1,2,2,1,0), labels = c("c1", "c2", "c3"))
   write_stan_json(list(N = N), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-factor.json"))
+  expect_snapshot_file(temp_file, "json-factor.json")
 })
 
 test_that("JSON output for integer vector is correct", {
@@ -31,8 +24,7 @@ test_that("JSON output for integer vector is correct", {
   N <- c(1.0, 2.0, 3, 4)
 
   write_stan_json(list(N = N), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-integer.json"))
+  expect_snapshot_file(temp_file, "json-integer.json")
 })
 
 test_that("JSON output for data frame and matrix is correct", {
@@ -45,14 +37,12 @@ test_that("JSON output for data frame and matrix is correct", {
 
   write_stan_json(list(X = df), file = temp_file_df)
   write_stan_json(list(X = mat), file = temp_file_mat)
-  json_output_mat <- readLines(temp_file_df)
-  json_output_df <- readLines(temp_file_mat)
-  expect_identical(json_output_df, json_output_mat)
+  expect_identical(readLines(temp_file_df), readLines(temp_file_mat))
 
   # Floating-point error introduced in jsonlite 1.8.5
   # https://github.com/jeroen/jsonlite/issues/420
   if (packageVersion("jsonlite") != "1.8.5") {
-    expect_json_output(json_output_df, test_path("answers", "json-df-matrix.json"))
+    expect_snapshot_file(temp_file_df, "json-df-matrix.json")
   }
 })
 
@@ -61,8 +51,7 @@ test_that("JSON output for list of vectors is correct", {
   N <- list(c(1,2,3), c(4,5,6))
 
   write_stan_json(list(N = N), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-vector-lists.json"))
+  expect_snapshot_file(temp_file, "json-vector-lists.json")
 })
 
 test_that("JSON output for list of matrices is correct", {
@@ -72,8 +61,7 @@ test_that("JSON output for list of matrices is correct", {
     matrix(5:8, nrow = 2, byrow = TRUE)
   )
   write_stan_json(list(M = matrices), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-matrix-lists.json"))
+  expect_snapshot_file(temp_file, "json-matrix-lists.json")
 })
 
 test_that("JSON output for table is correct", {
@@ -81,16 +69,13 @@ test_that("JSON output for table is correct", {
   f <- factor(rep(1:4, each = 5))
 
   write_stan_json(list(x = table(f)), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-table-vector.json"))
+  expect_snapshot_file(temp_file, "json-table-vector.json")
 
   write_stan_json(list(x = table(f, f)), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-table-matrix.json"))
+  expect_snapshot_file(temp_file, "json-table-matrix.json")
 
   write_stan_json(list(x = table(f, f, f)), file = temp_file)
-  json_output <- readLines(temp_file)
-  expect_json_output(json_output, test_path("answers", "json-table-array.json"))
+  expect_snapshot_file(temp_file, "json-table-array.json")
 })
 
 test_that("write_stan_json errors if NAs", {

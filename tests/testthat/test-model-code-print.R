@@ -4,14 +4,14 @@ mod <- testing_model("bernoulli")
 
 
 test_that("code() and print() methods work", {
-  expect_identical(
-    utils::capture.output(mod$print()),
-    readLines(test_path("answers", "model-print-output.stan"))
-  )
-  expect_identical(
-    mod$code(),
-    readRDS(test_path("answers", "model-code-output.rds"))
-  )
+  print_file <- tempfile(fileext = ".stan")
+  code_file <- tempfile(fileext = ".stan")
+
+  writeLines(utils::capture.output(mod$print()), print_file)
+  writeLines(mod$code(), code_file)
+
+  expect_snapshot_file(print_file, "model-print-output.stan")
+  expect_snapshot_file(code_file, "model-code-output.stan")
 })
 
 test_that("code() and print() still work if file is removed", {
