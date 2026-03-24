@@ -5,7 +5,9 @@ expect_compilation <- function(mod, ...) {
   } else {
     before_mtime <- NULL
   }
-  expect_interactive_message(mod$compile(...), "Compiling Stan program...")
+  rlang::with_interactive(value = TRUE, {
+    expect_message(mod$compile(...), "Compiling Stan program...")
+  })
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
     fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
   }
@@ -20,8 +22,14 @@ expect_compilation <- function(mod, ...) {
 #' @param constructor_call a call returning a CmdStanModel object that should have been compiled
 #' @return the newly created model
 expect_call_compilation <- function(constructor_call) {
+  constructor_call <- substitute(constructor_call)
   before_time <- Sys.time()
-  mod <- expect_interactive_message(constructor_call, "Compiling Stan program...")
+  rlang::with_interactive(value = TRUE, {
+    expect_message(
+      mod <- rlang::eval_bare(constructor_call, parent.frame()),
+      "Compiling Stan program..."
+    )
+  })
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
     fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
   }
@@ -38,7 +46,9 @@ expect_no_recompilation <- function(mod, ...) {
   }
 
   before_mtime <- file.mtime(mod$exe_file())
-  expect_interactive_message(mod$compile(...), "Model executable is up to date!")
+  rlang::with_interactive(value = TRUE, {
+    expect_message(mod$compile(...), "Model executable is up to date!")
+  })
   after_mtime <- file.mtime(mod$exe_file())
   expect_true(before_mtime == after_mtime, sprintf("Model executable '%s' has changed, despite expecting no recompilation", mod$exe_file()))
   invisible(mod)

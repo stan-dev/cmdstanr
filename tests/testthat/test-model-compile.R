@@ -297,11 +297,9 @@ test_that("check_syntax() works", {
 
   stan_file <- testing_stan_file("bernoulli")
   mod_ok <- cmdstan_model(stan_file, compile = FALSE)
-  expect_true(
-    expect_message(
-      mod_ok$check_syntax(),
-      "Stan program is syntactically correct"
-    )
+  expect_message(
+    mod_ok$check_syntax(),
+    "Stan program is syntactically correct"
   )
   expect_message(
     mod_ok$check_syntax(quiet = TRUE),
