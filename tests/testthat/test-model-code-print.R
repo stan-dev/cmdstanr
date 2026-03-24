@@ -4,8 +4,14 @@ mod <- testing_model("bernoulli")
 
 
 test_that("code() and print() methods work", {
-  expect_known_output(mod$print(), file = test_path("answers", "model-print-output.stan"))
-  expect_known_value(mod$code(), file = test_path("answers", "model-code-output.rds"))
+  expect_identical(
+    utils::capture.output(mod$print()),
+    readLines(test_path("answers", "model-print-output.stan"))
+  )
+  expect_identical(
+    mod$code(),
+    readRDS(test_path("answers", "model-code-output.rds"))
+  )
 })
 
 test_that("code() and print() still work if file is removed", {

@@ -11,7 +11,7 @@ expect_compilation <- function(mod, ...) {
   }
   if(!is.null(before_mtime)) {
     after_mtime <- file.mtime(mod$exe_file())
-    expect(before_mtime != after_mtime, sprintf("Exe file '%s' has NOT changed, despite expecting (re)compilation", mod$exe_file()))
+    expect_true(before_mtime != after_mtime, sprintf("Exe file '%s' has NOT changed, despite expecting (re)compilation", mod$exe_file()))
   }
   invisible(mod)
 }
@@ -26,7 +26,7 @@ expect_call_compilation <- function(constructor_call) {
     fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
   }
   after_mtime <- file.mtime(mod$exe_file())
-  expect(before_time <= after_mtime, sprintf("Exe file '%s' has old timestamp, despite expecting (re)compilation", mod$exe_file()))
+  expect_true(before_time <= after_mtime, sprintf("Exe file '%s' has old timestamp, despite expecting (re)compilation", mod$exe_file()))
   invisible(mod)
 }
 
@@ -40,7 +40,7 @@ expect_no_recompilation <- function(mod, ...) {
   before_mtime <- file.mtime(mod$exe_file())
   expect_interactive_message(mod$compile(...), "Model executable is up to date!")
   after_mtime <- file.mtime(mod$exe_file())
-  expect(before_mtime == after_mtime, sprintf("Model executable '%s' has changed, despite expecting no recompilation", mod$exe_file()))
+  expect_true(before_mtime == after_mtime, sprintf("Model executable '%s' has changed, despite expecting no recompilation", mod$exe_file()))
   invisible(mod)
 }
 

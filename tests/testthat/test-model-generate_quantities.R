@@ -23,11 +23,11 @@ bad_arg_values <- list(
 test_that("generate_quantities() method runs when all arguments specified validly", {
   # specifying all arguments validly
   expect_gq_output(fit1 <- do.call(mod_gq$generate_quantities, ok_arg_values))
-  expect_is(fit1, "CmdStanGQ")
+  expect_s3_class(fit1, "CmdStanGQ")
 
   # leaving all at default (except 'data')
   expect_gq_output(fit2 <- mod_gq$generate_quantities(fitted_params = fit, data = data_list))
-  expect_is(fit2, "CmdStanGQ")
+  expect_s3_class(fit2, "CmdStanGQ")
 })
 
 test_that("generate_quantities() method errors for any invalid argument before calling cmdstan", {

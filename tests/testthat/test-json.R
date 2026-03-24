@@ -1,10 +1,13 @@
+expect_json_output <- function(json_output, file) {
+  expect_identical(json_output, readLines(file))
+}
+
 test_that("JSON output unboxing works", {
   temp_file <- tempfile()
   N <- 10
   write_stan_json(list(N = N), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-unboxing.json"))
+  expect_json_output(json_output, test_path("answers", "json-unboxing.json"))
 })
 
 test_that("JSON output for boolean is correct", {
@@ -12,8 +15,7 @@ test_that("JSON output for boolean is correct", {
   N <- c(TRUE, FALSE, TRUE)
   write_stan_json(list(N = N), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-boolean.json"))
+  expect_json_output(json_output, test_path("answers", "json-boolean.json"))
 })
 
 test_that("JSON output for factors is correct", {
@@ -21,8 +23,7 @@ test_that("JSON output for factors is correct", {
   N <- factor(c(0,1,2,2,1,0), labels = c("c1", "c2", "c3"))
   write_stan_json(list(N = N), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-factor.json"))
+  expect_json_output(json_output, test_path("answers", "json-factor.json"))
 })
 
 test_that("JSON output for integer vector is correct", {
@@ -31,8 +32,7 @@ test_that("JSON output for integer vector is correct", {
 
   write_stan_json(list(N = N), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-integer.json"))
+  expect_json_output(json_output, test_path("answers", "json-integer.json"))
 })
 
 test_that("JSON output for data frame and matrix is correct", {
@@ -52,8 +52,7 @@ test_that("JSON output for data frame and matrix is correct", {
   # Floating-point error introduced in jsonlite 1.8.5
   # https://github.com/jeroen/jsonlite/issues/420
   if (packageVersion("jsonlite") != "1.8.5") {
-    expect_known_output(cat(json_output_df, sep = "\n"),
-                        file = test_path("answers", "json-df-matrix.json"))
+    expect_json_output(json_output_df, test_path("answers", "json-df-matrix.json"))
   }
 })
 
@@ -63,8 +62,7 @@ test_that("JSON output for list of vectors is correct", {
 
   write_stan_json(list(N = N), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-vector-lists.json"))
+  expect_json_output(json_output, test_path("answers", "json-vector-lists.json"))
 })
 
 test_that("JSON output for list of matrices is correct", {
@@ -75,8 +73,7 @@ test_that("JSON output for list of matrices is correct", {
   )
   write_stan_json(list(M = matrices), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-matrix-lists.json"))
+  expect_json_output(json_output, test_path("answers", "json-matrix-lists.json"))
 })
 
 test_that("JSON output for table is correct", {
@@ -85,18 +82,15 @@ test_that("JSON output for table is correct", {
 
   write_stan_json(list(x = table(f)), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-table-vector.json"))
+  expect_json_output(json_output, test_path("answers", "json-table-vector.json"))
 
   write_stan_json(list(x = table(f, f)), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-table-matrix.json"))
+  expect_json_output(json_output, test_path("answers", "json-table-matrix.json"))
 
   write_stan_json(list(x = table(f, f, f)), file = temp_file)
   json_output <- readLines(temp_file)
-  expect_known_output(cat(json_output, sep = "\n"),
-                      file = test_path("answers", "json-table-array.json"))
+  expect_json_output(json_output, test_path("answers", "json-table-array.json"))
 })
 
 test_that("write_stan_json errors if NAs", {

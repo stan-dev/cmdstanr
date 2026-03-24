@@ -517,9 +517,10 @@ test_that("returning time works for read_cmdstan_csv", {
 
 test_that("time from read_cmdstan_csv matches time from fit$time()", {
   fit <- fit_bernoulli_thin_1
-  expect_equivalent(
+  expect_equal(
     read_cmdstan_csv(fit$output_files())$time$chains,
-    fit$time()$chains
+    fit$time()$chains,
+    ignore_attr = TRUE
   )
 })
 

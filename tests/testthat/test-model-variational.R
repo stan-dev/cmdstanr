@@ -44,11 +44,11 @@ bad_arg_values <- list(
 test_that("variational() method runs when all arguments specified validly", {
   # specifying all arguments validly
   expect_vb_output(fit1 <- do.call(mod$variational, ok_arg_values))
-  expect_is(fit1, "CmdStanVB")
+  expect_s3_class(fit1, "CmdStanVB")
 
   # leaving all at default (except data and seed)
   expect_vb_output(fit2 <- mod$variational(data = data_list, seed = 123))
-  expect_is(fit2, "CmdStanVB")
+  expect_s3_class(fit2, "CmdStanVB")
 })
 
 test_that("variational() warns if threads specified but not enabled", {

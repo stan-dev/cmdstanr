@@ -46,7 +46,7 @@ test_that("laplace() method errors for any invalid argument before calling cmdst
 test_that("laplace() runs when all arguments specified validly", {
   # specifying all arguments validly
   expect_laplace_output(fit1 <- do.call(mod$laplace, ok_arg_values))
-  expect_is(fit1, "CmdStanLaplace")
+  expect_s3_class(fit1, "CmdStanLaplace")
 
   # check that correct arguments were indeed passed to CmdStan
   expect_equal(fit1$metadata()$refresh, ok_arg_values$refresh)
@@ -59,7 +59,7 @@ test_that("laplace() runs when all arguments specified validly", {
 
   # leaving all at default (except 'data')
   expect_laplace_output(fit2 <- mod$laplace(data = data_list, seed = 123))
-  expect_is(fit2, "CmdStanLaplace")
+  expect_s3_class(fit2, "CmdStanLaplace")
 })
 
 test_that("laplace() all valid 'mode' inputs give same results", {
@@ -70,12 +70,12 @@ test_that("laplace() all valid 'mode' inputs give same results", {
     fit3 <- mod$laplace(data = data_list, mode = NULL, seed = 100, refresh = 0)
   })
 
-  expect_is(fit1, "CmdStanLaplace")
-  expect_is(fit2, "CmdStanLaplace")
-  expect_is(fit3, "CmdStanLaplace")
-  expect_is(fit1$mode(), "CmdStanMLE")
-  expect_is(fit2$mode(), "CmdStanMLE")
-  expect_is(fit3$mode(), "CmdStanMLE")
+  expect_s3_class(fit1, "CmdStanLaplace")
+  expect_s3_class(fit2, "CmdStanLaplace")
+  expect_s3_class(fit3, "CmdStanLaplace")
+  expect_s3_class(fit1$mode(), "CmdStanMLE")
+  expect_s3_class(fit2$mode(), "CmdStanMLE")
+  expect_s3_class(fit3$mode(), "CmdStanMLE")
   expect_equal(fit1$mode()$mle(), fit2$mode()$mle())
   expect_equal(fit1$mode()$mle(), fit3$mode()$mle())
   expect_equal(fit1$lp(), fit2$lp())
