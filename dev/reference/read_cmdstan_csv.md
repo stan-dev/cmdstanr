@@ -159,10 +159,10 @@ the returned list also includes the following components:
 fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
-#> [1] "/tmp/RtmpmHq1bK/logistic-202603231736-1-85bae8.csv"
-#> [2] "/tmp/RtmpmHq1bK/logistic-202603231736-2-85bae8.csv"
-#> [3] "/tmp/RtmpmHq1bK/logistic-202603231736-3-85bae8.csv"
-#> [4] "/tmp/RtmpmHq1bK/logistic-202603231736-4-85bae8.csv"
+#> [1] "/tmp/RtmpXW5Lj7/logistic-202603241556-1-85bc5a.csv"
+#> [2] "/tmp/RtmpXW5Lj7/logistic-202603241556-2-85bc5a.csv"
+#> [3] "/tmp/RtmpXW5Lj7/logistic-202603241556-3-85bc5a.csv"
+#> [4] "/tmp/RtmpXW5Lj7/logistic-202603241556-4-85bc5a.csv"
 
 # Creating fitting model objects
 
@@ -184,7 +184,7 @@ str(x)
 #>   ..$ stan_version_major  : num 2
 #>   ..$ stan_version_minor  : num 38
 #>   ..$ stan_version_patch  : num 0
-#>   ..$ start_datetime      : chr "2026-03-23 17:36:52 UTC"
+#>   ..$ start_datetime      : chr "2026-03-24 15:56:10 UTC"
 #>   ..$ method              : chr "sample"
 #>   ..$ save_warmup         : int 1
 #>   ..$ thin                : num 1
@@ -205,7 +205,7 @@ str(x)
 #>   ..$ seed                : num 1.07e+09
 #>   ..$ refresh             : num 100
 #>   ..$ sig_figs            : num 8
-#>   ..$ profile_file        : chr "/tmp/RtmpmHq1bK/logistic-profile-202603231736-1-821624.csv"
+#>   ..$ profile_file        : chr "/tmp/RtmpXW5Lj7/logistic-profile-202603241556-1-821796.csv"
 #>   ..$ save_cmdstan_config : int 0
 #>   ..$ stanc_version       : chr "stanc3 v2.38.0"
 #>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
@@ -222,8 +222,8 @@ str(x)
 #>   ..$ time                :'data.frame': 4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
 #>   .. ..$ warmup  : num [1:4] 0.055 0.055 0.055 0.055
-#>   .. ..$ sampling: num [1:4] 0.057 0.055 0.056 0.056
-#>   .. ..$ total   : num [1:4] 0.112 0.11 0.111 0.111
+#>   .. ..$ sampling: num [1:4] 0.057 0.055 0.057 0.056
+#>   .. ..$ total   : num [1:4] 0.112 0.11 0.112 0.111
 #>   ..$ stan_variable_sizes :List of 4
 #>   .. ..$ lp__   : num 1
 #>   .. ..$ alpha  : num 1
@@ -236,8 +236,8 @@ str(x)
 #>   ..$ chains:'data.frame':   4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
 #>   .. ..$ warmup  : num [1:4] 0.055 0.055 0.055 0.055
-#>   .. ..$ sampling: num [1:4] 0.057 0.055 0.056 0.056
-#>   .. ..$ total   : num [1:4] 0.112 0.11 0.111 0.111
+#>   .. ..$ sampling: num [1:4] 0.057 0.055 0.057 0.056
+#>   .. ..$ total   : num [1:4] 0.112 0.11 0.112 0.111
 #>  $ inv_metric                     :List of 4
 #>   ..$ 1: num [1:4] 0.0522 0.0594 0.0496 0.0686
 #>   ..$ 2: num [1:4] 0.049 0.0578 0.0524 0.0562
