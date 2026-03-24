@@ -1,4 +1,3 @@
-context("fitted-inits")
 set_cmdstan_path()
 
 data_list_schools <- testing_data("schools")

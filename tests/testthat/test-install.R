@@ -1,5 +1,3 @@
-context("install")
-
 # avoid parallel on Mac due to strange intermittent TBB errors on Github Actions
 CORES <- if (os_is_macos()) 1 else 2
 

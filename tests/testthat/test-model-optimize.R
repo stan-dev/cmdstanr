@@ -1,5 +1,3 @@
-context("model-optimize")
-
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")

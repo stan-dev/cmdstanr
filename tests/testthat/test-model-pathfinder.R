@@ -1,5 +1,3 @@
-context("model-pathfinder")
-
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -156,4 +154,3 @@ test_that("no output with show_messages = FALSE", {
   )
   expect_equal(length(output), 0)
 })
-

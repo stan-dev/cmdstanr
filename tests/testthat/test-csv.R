@@ -1,5 +1,3 @@
-context("read_cmdstan_csv")
-
 set_cmdstan_path()
 fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 1234)
 fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", seed = 123)

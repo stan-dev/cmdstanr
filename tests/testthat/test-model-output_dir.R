@@ -1,5 +1,3 @@
-context("model-output_dir-output-basename")
-
 set_cmdstan_path()
 sandbox <- file.path(tempdir(check = TRUE), "sandbox")
 if (!dir.exists(sandbox)) {

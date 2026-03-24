@@ -1,5 +1,3 @@
-context("fitted-gq")
-
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)

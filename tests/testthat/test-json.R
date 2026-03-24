@@ -1,5 +1,3 @@
-context("json")
-
 test_that("JSON output unboxing works", {
   temp_file <- tempfile()
   N <- 10

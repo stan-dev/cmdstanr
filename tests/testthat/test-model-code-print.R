@@ -1,5 +1,3 @@
-context("model-code-print")
-
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")

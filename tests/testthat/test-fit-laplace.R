@@ -1,5 +1,3 @@
-context("fitted-laplace")
-
 set_cmdstan_path()
 fit_laplace <- testing_fit("logistic", method = "laplace", seed = 100)
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")

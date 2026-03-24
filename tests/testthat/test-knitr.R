@@ -1,5 +1,3 @@
-context("knitr engine")
-
 test_that("eng_cmdstan throws correct errors", {
   skip_if_not_installed("knitr")
   expect_error(eng_cmdstan(list(output.var = 1)), "must be a character string")

@@ -1,4 +1,3 @@
-context("model-data")
 # see separate test-json for testing writing data to JSON
 
 set_cmdstan_path()

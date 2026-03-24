@@ -1,5 +1,3 @@
-context("paths")
-
 Sys.unsetenv("CMDSTAN")
 PATH <- absolute_path(set_cmdstan_path())
 VERSION <- cmdstan_version()

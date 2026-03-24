@@ -1,5 +1,3 @@
-context("model-compile")
-
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
