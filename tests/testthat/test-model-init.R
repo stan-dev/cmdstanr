@@ -238,7 +238,7 @@ test_that("error if init function specified incorrectly", {
 })
 
 test_that("print message if not all parameters are initialized", {
-  options(cmdstanr_warn_inits = NULL) # should default to TRUE
+  withr::local_options(list(cmdstanr_warn_inits = NULL)) # should default to TRUE
   init_list <- list(
     list(
       alpha = 1
@@ -271,7 +271,7 @@ test_that("print message if not all parameters are initialized", {
 })
 
 test_that("No message printed if options(cmdstanr_warn_inits=FALSE)", {
-  options(cmdstanr_warn_inits = FALSE)
+  withr::local_options(list(cmdstanr_warn_inits = FALSE))
   expect_message(
     utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = list(list(a = 0)), seed = 123)),
     regexp = NA
@@ -284,7 +284,6 @@ test_that("No message printed if options(cmdstanr_warn_inits=FALSE)", {
     utils::capture.output(mod_logistic$sample(data = data_list_logistic, init = list(list(alpha = 1),list(alpha = 1)), chains = 2, seed = 123)),
     regexp = NA
   )
-  options(cmdstanr_warn_inits = TRUE)
 })
 
 test_that("Initial values for single-element containers treated correctly", {

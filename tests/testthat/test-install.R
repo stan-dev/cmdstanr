@@ -122,8 +122,7 @@ test_that("install_cmdstan() works with version and release_url", {
 
 test_that("toolchain checks on Unix work", {
   skip_if(os_is_windows())
-  path_backup <- Sys.getenv("PATH")
-  Sys.setenv("PATH" = "")
+  withr::local_envvar(c("PATH" = ""))
   if (os_is_macos()) {
     err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
     err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
@@ -141,7 +140,6 @@ test_that("toolchain checks on Unix work", {
     err_msg_make,
     fixed = TRUE
   )
-  Sys.setenv("PATH" = path_backup)
 })
 
 test_that("clean and rebuild works", {

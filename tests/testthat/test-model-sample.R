@@ -177,14 +177,14 @@ test_that("sampling in parallel works", {
 })
 
 test_that("mc.cores option detected", {
-  options(mc.cores = 3)
+  withr::local_options(list(mc.cores = 3))
   expect_output(
     mod$sample(data = data_list, chains = 3),
     "Running MCMC with 3 parallel chains",
     fixed = TRUE
   )
 
-  options(mc.cores = NULL)
+  withr::local_options(list(mc.cores = NULL))
   expect_output(
     mod$sample(data = data_list, chains = 2),
     "Running MCMC with 2 sequential chains",
@@ -367,7 +367,7 @@ test_that("All output can be suppressed by show_messages", {
   stan_program <- testing_stan_file("bernoulli")
   data_list <- testing_data("bernoulli")
   mod <- cmdstan_model(stan_program, force_recompile = TRUE)
-  options("cmdstanr_verbose" = FALSE)
+  withr::local_options(list("cmdstanr_verbose" = FALSE))
   output <- capture.output(
     fit <- mod$sample(data = data_list, show_messages = FALSE)
   )

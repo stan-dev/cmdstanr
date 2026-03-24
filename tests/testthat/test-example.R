@@ -104,10 +104,11 @@ test_that("cmdstanr_write_stan_file_dir option works", {
   if (!dir.exists(test_dir)) {
     dir.create(test_dir)
   }
-  options("cmdstanr_write_stan_file_dir" = test_dir)
-  file <- write_stan_file(stan_program)
-  expect_equal(repair_path(dirname(file)), repair_path(test_dir))
-  options("cmdstanr_write_stan_file_dir" = NULL)
+  local({
+    withr::local_options(list("cmdstanr_write_stan_file_dir" = test_dir))
+    file <- write_stan_file(stan_program)
+    expect_equal(repair_path(dirname(file)), repair_path(test_dir))
+  })
   file <- write_stan_file(stan_program)
   expect_equal(repair_path(dirname(file)), repair_path(base_dir))
   if (!dir.exists(test_dir)) {

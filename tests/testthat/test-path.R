@@ -26,7 +26,7 @@ test_that("Setting bad path leads to warning (can't find directory)", {
 test_that("Setting bad path from env leads to warning (can't find directory)", {
   unset_cmdstan_path()
   .cmdstanr$WSL <- TRUE
-  Sys.setenv(CMDSTAN = "BAD_PATH")
+  withr::local_envvar(c(CMDSTAN = "BAD_PATH"))
   expect_warning(
     cmdstanr_initialize(),
     "Can't find directory specified by environment variable"
@@ -34,17 +34,15 @@ test_that("Setting bad path from env leads to warning (can't find directory)", {
   expect_null(.cmdstanr$PATH)
   expect_null(.cmdstanr$VERSION)
   expect_false(isTRUE(.cmdstanr$WSL))
-  Sys.unsetenv("CMDSTAN")
 })
 
 test_that("Setting path from env var is detected", {
   unset_cmdstan_path()
   expect_true(is.null(.cmdstanr$VERSION))
-  Sys.setenv(CMDSTAN = PATH)
+  withr::local_envvar(c(CMDSTAN = PATH))
   expect_silent(cmdstanr_initialize())
   expect_equal(cmdstan_path(), PATH)
   expect_false(is.null(.cmdstanr$VERSION))
-  Sys.unsetenv("CMDSTAN")
 })
 
 test_that("Unsupported CmdStan path from env var is rejected", {
@@ -54,10 +52,9 @@ test_that("Unsupported CmdStan path from env var is rejected", {
   old_install <- file.path(parent_dir, "cmdstan-2.34.0")
   dir.create(old_install, recursive = TRUE, showWarnings = FALSE)
   on.exit(unlink(parent_dir, recursive = TRUE), add = TRUE)
-  on.exit(Sys.unsetenv("CMDSTAN"), add = TRUE)
   writeLines("CMDSTAN_VERSION := 2.34.0", con = file.path(old_install, "makefile"))
 
-  Sys.setenv(CMDSTAN = parent_dir)
+  withr::local_envvar(c(CMDSTAN = parent_dir))
   suppressWarnings(cmdstanr_initialize())
   expect_false(identical(.cmdstanr$PATH, absolute_path(old_install)))
   expect_false(identical(.cmdstanr$VERSION, "2.34.0"))
@@ -75,9 +72,8 @@ test_that("Existing CMDSTAN env path with no install resets cached state", {
   empty_parent <- file.path(tempdir(check = TRUE), "cmdstan-empty-parent")
   dir.create(empty_parent, recursive = TRUE, showWarnings = FALSE)
   on.exit(unlink(empty_parent, recursive = TRUE), add = TRUE)
-  on.exit(Sys.unsetenv("CMDSTAN"), add = TRUE)
 
-  Sys.setenv(CMDSTAN = empty_parent)
+  withr::local_envvar(c(CMDSTAN = empty_parent))
   expect_warning(
     cmdstanr_initialize(),
     "No CmdStan installation found in the path specified by the environment variable 'CMDSTAN'.",
