@@ -51,8 +51,24 @@ testing_model_stan_file <- function(name) {
   model_file
 }
 
+with_testing_model_compile_lock <- function(code) {
+  if (!testthat::is_parallel()) {
+    return(code)
+  }
+
+  lock_dir <- file.path(cmdstan_path(), ".cmdstanr-test-compile-lock")
+  while (!dir.create(lock_dir, showWarnings = FALSE)) {
+    Sys.sleep(0.1)
+  }
+  on.exit(unlink(lock_dir, recursive = TRUE), add = TRUE)
+
+  code
+}
+
 testing_model <- function(name) {
-  cmdstan_model(stan_file = testing_model_stan_file(name))
+  with_testing_model_compile_lock(
+    cmdstan_model(stan_file = testing_model_stan_file(name))
+  )
 }
 
 testing_fit <-
