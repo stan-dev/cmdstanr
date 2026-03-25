@@ -175,25 +175,7 @@ test_that("write_stan_json() errors if bad names", {
 test_that("write_stan_json() works with always_decimal = TRUE", {
   test_file <- tempfile(fileext = ".json")
   write_stan_json(list(a = 1L, b = 2), test_file, always_decimal = FALSE)
-  expect_match(
-    "  \"a\": 1,",
-    readLines(test_file)[2],
-    fixed = TRUE
-  )
-  expect_match(
-    "  \"b\": 2",
-    readLines(test_file)[3],
-    fixed = TRUE
-  )
+  expect_snapshot_file(test_file, "json-always-decimal-false.json")
   write_stan_json(list(a = 1L, b = 2), test_file, always_decimal = TRUE)
-  expect_match(
-    "  \"a\": 1,",
-    readLines(test_file)[2],
-    fixed = TRUE
-  )
-  expect_match(
-    "  \"b\": 2.0",
-    readLines(test_file)[3],
-    fixed = TRUE
-  )
+  expect_snapshot_file(test_file, "json-always-decimal-true.json")
 })
