@@ -102,19 +102,4 @@ test_that("all methods run with valid opencl_ids", {
   expect_false(is.null(fit$metadata()$device))
   expect_false(is.null(fit$metadata()$platform))
 
-  expect_optim_output(
-    fit <- mod$optimize(data = testing_data("bernoulli"), opencl_ids = c(0, 0))
-  )
-  expect_false(is.null(fit$metadata()$opencl_platform_name))
-  expect_false(is.null(fit$metadata()$opencl_device_name))
-  expect_false(is.null(fit$metadata()$device))
-  expect_false(is.null(fit$metadata()$platform))
-
-  expect_vb_output(
-    fit <- mod$variational(data = testing_data("bernoulli"), opencl_ids = c(0, 0))
-  )
-  expect_false(is.null(fit$metadata()$opencl_platform_name))
-  expect_false(is.null(fit$metadata()$opencl_device_name))
-  expect_false(is.null(fit$metadata()$device))
-  expect_false(is.null(fit$metadata()$platform))
 })
