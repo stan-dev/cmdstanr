@@ -108,7 +108,7 @@ expect_interactive_message <- function(object, regexp = NULL) {
 
 expect_noninteractive_silent <- function(object) {
   rlang::with_interactive(value = FALSE,
-    expect_silent(object))
+    expect_no_condition(object))
 }
 
 expect_equal_ignore_order <- function(object, expected, ...) {

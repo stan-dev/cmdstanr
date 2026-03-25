@@ -3,6 +3,15 @@ stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 
+stanc_snapshot_variant <- function() {
+  if (os_is_windows() && !os_is_wsl()) "windows" else NULL
+}
+
+trim_stanc_invocations <- function(output) {
+  out <- grep("bin/stanc", output, value = TRUE, fixed = TRUE)
+  sub("( --o).*", "\\1", out)
+}
+
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
@@ -111,17 +120,19 @@ test_that("compilation works with include_paths", {
 })
 
 test_that("name in STANCFLAGS is set correctly", {
+  local_reproducible_output()
+  variant <- stanc_snapshot_variant()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
-  if(os_is_windows() && !os_is_wsl()) {
-    out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
-    out_name <- "bin/stanc.exe --name='bernoulli2_model' --o"
-  } else {
-    out_no_name <- "bin/stanc --name='bernoulli_model' --o"
-    out_name <- "bin/stanc --name='bernoulli2_model' --o"
-  }
-  expect_output(print(out), out_no_name)
-  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))
-  expect_output(print(out), out_name)
+  expect_snapshot(cat(trim_stanc_invocations(out), sep = "\n"), variant = variant)
+
+  out <- utils::capture.output(
+    mod$compile(
+      quiet = FALSE,
+      force_recompile = TRUE,
+      stanc_options = list(name = "bernoulli2_model")
+    )
+  )
+  expect_snapshot(cat(trim_stanc_invocations(out), sep = "\n"), variant = variant)
 })
 
 
@@ -828,9 +839,10 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
 })
 
 test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", {
+  local_reproducible_output()
+  variant <- stanc_snapshot_variant()
   real_get_cmdstan_flags <- get_cmdstan_flags
-  out <- with_mocked_bindings(
-    utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE)),
+  local_mocked_bindings(
     get_cmdstan_flags = function(flag_name) {
       if (identical(flag_name, "STANCFLAGS")) {
         c("--O1", "--warn-pedantic")
@@ -839,12 +851,8 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
       }
     }
   )
-  if(os_is_windows() && !os_is_wsl()) {
-    out_w_flags <- "bin/stanc.exe --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
-  } else {
-    out_w_flags <- "bin/stanc --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
-  }
-  expect_output(print(out), out_w_flags)
+  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
+  expect_snapshot(cat(trim_stanc_invocations(out), sep = "\n"), variant = variant)
 })
 
 test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {

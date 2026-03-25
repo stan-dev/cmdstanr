@@ -61,23 +61,12 @@ test_that("code() doesn't change when file changes (unless model is recreated)",
 
 test_that("code() warns and print() errors if only exe and no Stan file", {
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
-  expect_warning(
-    expect_null(mod_exe$code()),
-    "'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file",
-    fixed = TRUE
-  )
-  expect_error(
-    mod_exe$print(),
-    "'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
-    fixed = TRUE
-  )
+  expect_snapshot_warning(code <- mod_exe$code())
+  expect_null(code)
+  expect_snapshot_error(mod_exe$print())
 })
 
 test_that("check_syntax() errors if only exe and no Stan file", {
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
-  expect_error(
-    mod_exe$check_syntax(),
-    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
-    fixed = TRUE
-  )
+  expect_snapshot_error(mod_exe$check_syntax())
 })
