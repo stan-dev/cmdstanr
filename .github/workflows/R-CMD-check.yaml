@@ -75,11 +75,12 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache: "always"
-          extra-packages: any::rcmdcheck, local::.
+          extra-packages: any::rcmdcheck, any::pkgload
 
       - name: Debug Windows toolchain resolution
         if: ${{ runner.os == 'Windows' }}
         run: |
+          pkgload::load_all(export_all = FALSE, helpers = FALSE, quiet = TRUE)
           rtools_home <- cmdstanr:::rtools4x_home_path()
           candidates <- cmdstanr:::rtools4x_toolchain_candidates()
           selected <- cmdstanr:::rtools4x_toolchain_path()
@@ -116,6 +117,7 @@ jobs:
 
       - name: Install cmdstan
         run: |
+          pkgload::load_all(export_all = FALSE, helpers = FALSE, quiet = TRUE)
           cmdstanr::check_cmdstan_toolchain()
           tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
           if (nzchar(tarball_url)) {

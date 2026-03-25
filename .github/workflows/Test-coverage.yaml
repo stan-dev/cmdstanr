@@ -50,11 +50,12 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, local::., any::covr, any::gridExtra, any::xml2
+          extra-packages: any::rcmdcheck, any::pkgload, any::covr, any::gridExtra, any::xml2
           needs: coverage
 
       - name: Install cmdstan
         run: |
+          pkgload::load_all(export_all = FALSE, helpers = FALSE, quiet = TRUE)
           cmdstanr::check_cmdstan_toolchain()
           cmdstanr::install_cmdstan(cores = 2)
         shell: Rscript {0}
