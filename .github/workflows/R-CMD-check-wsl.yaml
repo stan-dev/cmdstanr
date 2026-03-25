@@ -42,7 +42,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::pkgload
+          extra-packages: any::rcmdcheck, local::.
 
       - uses: Vampire/setup-wsl@v6
         with:
@@ -59,7 +59,6 @@ jobs:
 
       - name: Install cmdstan
         run: |
-          pkgload::load_all(export_all = FALSE, helpers = FALSE, quiet = TRUE)
           cmdstanr::check_cmdstan_toolchain()
           cmdstanr::install_cmdstan(cores = 2, wsl = TRUE, overwrite = TRUE)
         shell: Rscript {0}
