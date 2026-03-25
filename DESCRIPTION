@@ -59,5 +59,3 @@ Suggests:
     Rcpp
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-Config/testthat/parallel: true
-Config/testthat/start-first: fit-mcmc, fit-init, fit-shared

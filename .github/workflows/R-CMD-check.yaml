@@ -33,7 +33,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest, r: 'devel', opencl: true, pak: 'devel', extra_packages: 'any::rcmdcheck', install_local: true}
+          - {os: macOS-latest, r: 'devel', opencl: true}
           - {os: macOS-latest, r: 'release', opencl: true}
           - {os: macos-26, r: 'release', opencl: false}
           - {os: macos-15-intel, r: 'release', opencl: false}
@@ -75,13 +75,7 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache: "always"
-          pak-version: ${{ matrix.config.pak || 'stable' }}
-          extra-packages: ${{ matrix.config.extra_packages || 'any::rcmdcheck, local::.' }}
-
-      - name: Install local package
-        if: ${{ matrix.config.install_local }}
-        run: install.packages(".", repos = NULL, type = "source")
-        shell: Rscript {0}
+          extra-packages: any::rcmdcheck, local::.
 
       - name: Debug Windows toolchain resolution
         if: ${{ runner.os == 'Windows' }}

@@ -2,31 +2,28 @@ real_wcr <- wsl_compatible_run
 
 with_mocked_cli <- function(code, compile_ret, info_ret) {
   code <- substitute(code)
-  mock_run <- function(command, args, ...) {
-    if (
-      !is.null(command)
-      && command == "make"
-      && !is.null(args)
-      && startsWith(basename(args[1]), "model-")
-    ) {
-      message("mock-compile-was-called")
-      compile_ret
-    } else if (!is.null(args) && args[1] == "info") {
-      info_ret
-    } else {
-      real_wcr(command = command, args = args, ...)
-    }
-  }
-
-  eval(
-    substitute(
+  rlang::eval_bare(
+    rlang::expr(
       with_mocked_bindings(
-        CODE,
-        wsl_compatible_run = MOCK_RUN
-      ),
-      list(CODE = code, MOCK_RUN = mock_run)
+        !!code,
+        wsl_compatible_run = !!function(command, args, ...) {
+          if (
+            !is.null(command)
+            && command == "make"
+            && !is.null(args)
+            && startsWith(basename(args[1]), "model-")
+          ) {
+            message("mock-compile-was-called")
+            compile_ret
+          } else if (!is.null(args) && args[1] == "info") {
+            info_ret
+          } else {
+            real_wcr(command = command, args = args, ...)
+          }
+        }
+      )
     ),
-    parent.frame()
+    env = parent.frame()
   )
 }
 
