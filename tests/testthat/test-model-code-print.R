@@ -3,6 +3,7 @@ stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
 
 write_snapshot_lines <- function(lines, path) {
+  lines <- sub("\r$", "", lines)
   con <- file(path, open = "wb")
   on.exit(close(con), add = TRUE)
   writeLines(lines, con = con, sep = "\n", useBytes = TRUE)

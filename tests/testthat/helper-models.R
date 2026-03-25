@@ -1,9 +1,11 @@
 local({
-  stan_files <- dir(test_path("resources", "stan"), pattern = "\\.stan$", full.names = TRUE)
-  exe_files <- cmdstanr:::cmdstan_ext(cmdstanr:::strip_ext(stan_files))
-  existing_exe_files <- exe_files[file.exists(exe_files)]
-  if (length(existing_exe_files) > 0) {
-    unlink(existing_exe_files, force = TRUE)
+  if (!testthat::is_parallel()) {
+    stan_files <- dir(test_path("resources", "stan"), pattern = "\\.stan$", full.names = TRUE)
+    exe_files <- cmdstanr:::cmdstan_ext(cmdstanr:::strip_ext(stan_files))
+    existing_exe_files <- exe_files[file.exists(exe_files)]
+    if (length(existing_exe_files) > 0) {
+      unlink(existing_exe_files, force = TRUE)
+    }
   }
 })
 
@@ -18,28 +20,39 @@ testing_stan_file <- function(name) {
   test_path("resources", "stan", paste0(name, ".stan"))
 }
 
-testing_stan_program <- function() {
-  "
-  data {
-    int<lower=0> N;
-    array[N] int<lower=0,upper=1> y;
-  }
-  parameters {
-    real<lower=0,upper=1> theta;
-  }
-  model {
-    y ~ bernoulli(theta);
-  }
-  "
+testing_stan_program <- "
+data {
+  int<lower=0> N;
+  array[N] int<lower=0,upper=1> y;
 }
+parameters {
+  real<lower=0,upper=1> theta;
+}
+model {
+  y ~ bernoulli(theta);
+}
+"
 
 cmdstan_example_file <- function() {
   # stan program in different directory from the others
   file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
 }
 
+testing_model_stan_file <- function(name) {
+  stan_file <- testing_stan_file(name)
+  if (!testthat::is_parallel()) {
+    return(stan_file)
+  }
+
+  model_dir <- tempfile(pattern = paste0(name, "-"))
+  dir.create(model_dir)
+  model_file <- file.path(model_dir, basename(stan_file))
+  file.copy(stan_file, model_file, overwrite = TRUE)
+  model_file
+}
+
 testing_model <- function(name) {
-  cmdstan_model(stan_file = testing_stan_file(name))
+  cmdstan_model(stan_file = testing_model_stan_file(name))
 }
 
 testing_fit <-

@@ -22,7 +22,7 @@ test_that("print_example_program outputs stay stable", {
 
 test_that("write_stan_file writes Stan file correctly", {
   skip_if_not_installed("rlang")
-  stan_program <- testing_stan_program()
+  stan_program <- testing_stan_program
   f1 <- write_stan_file(stan_program)
   checkmate::expect_file_exists(f1, extension = "stan")
   f1_lines <- readLines(f1)
@@ -35,7 +35,7 @@ test_that("write_stan_file writes Stan file correctly", {
 })
 
 test_that("write_stan_file writes to specified directory and filename", {
-  stan_program <- testing_stan_program()
+  stan_program <- testing_stan_program
   dir <- withr::local_tempdir()
   explicit_dir <- withr::local_tempdir()
   expect_equal(dirname(f1 <- write_stan_file(stan_program, dir = dir, basename = "pasta")),
@@ -49,7 +49,7 @@ test_that("write_stan_file writes to specified directory and filename", {
 })
 
 test_that("write_stan_file creates dir if necessary", {
-  stan_program <- testing_stan_program()
+  stan_program <- testing_stan_program
   expect_match(
     write_stan_file(stan_program, file.path(tempdir(), "foo"), basename = "bar"),
     "/foo/bar.stan"
@@ -58,7 +58,7 @@ test_that("write_stan_file creates dir if necessary", {
 
 test_that("write_stan_file by default creates the same file for the same Stan model", {
   skip_if_not_installed("rlang")
-  stan_program <- testing_stan_program()
+  stan_program <- testing_stan_program
   dir <- withr::local_tempdir()
 
   f1 <- write_stan_file(stan_program, dir = dir)
@@ -88,7 +88,7 @@ test_that("write_stan_file by default creates the same file for the same Stan mo
 })
 
 test_that("cmdstanr_write_stan_file_dir option works", {
-  stan_program <- testing_stan_program()
+  stan_program <- testing_stan_program
   base_dir <- tempdir()
   test_dir <- withr::local_tempdir(pattern = "option_test")
   local({
