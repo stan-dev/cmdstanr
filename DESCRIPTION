@@ -55,7 +55,7 @@ Suggests:
     loo (>= 2.0.0),
     qs2,
     rmarkdown,
-    testthat (>= 3.0.0),
+    testthat (>= 3.3.0),
     Rcpp
 VignetteBuilder: knitr
 Config/testthat/edition: 3
