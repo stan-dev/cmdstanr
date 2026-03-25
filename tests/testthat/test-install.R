@@ -118,9 +118,23 @@ test_that("install_cmdstan() works with version and release_url", {
 test_that("toolchain checks on Unix work", {
   skip_if(os_is_windows())
   withr::local_envvar(c("PATH" = ""))
-  variant <- if (os_is_macos()) "macos" else NULL
-  expect_snapshot_error(check_unix_cpp_compiler(), variant = variant)
-  expect_snapshot_error(check_unix_make(), variant = variant)
+  if (os_is_macos()) {
+    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+  } else {
+    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain()."
+  }
+  expect_error(
+    check_unix_cpp_compiler(),
+    err_msg_cpp,
+    fixed = TRUE
+  )
+  expect_error(
+    check_unix_make(),
+    err_msg_make,
+    fixed = TRUE
+  )
 })
 
 test_that("clean and rebuild works", {
@@ -430,7 +444,11 @@ test_that("check_rtools4x_windows_toolchain reports missing Rtools and make", {
       rtools4x_home_path = function() "",
       rtools4x_version = function() "44"
     )
-    expect_snapshot_error(check_rtools4x_windows_toolchain())
+    expect_error(
+      check_rtools4x_windows_toolchain(),
+      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
+      fixed = TRUE
+    )
   })
 
   dir.create(file.path(fake_rtools_home, "usr", "bin"),
