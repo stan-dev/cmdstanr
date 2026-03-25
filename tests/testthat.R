@@ -6,7 +6,7 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
   withr::local_options(list(mc.cores = 1L))
   withr::local_envvar(TESTTHAT_IS_CHECKING = "true")
 
-  sequential_files <- "example|model-compile|model-compile-user_header|model-methods|utils"
+  sequential_files <- "example|install|model-compile|model-compile-user_header|model-methods|path|utils"
 
   withr::with_envvar(
     c(TESTTHAT_PARALLEL = "false"),
