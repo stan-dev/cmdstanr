@@ -2,13 +2,19 @@ set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
 
+write_snapshot_lines <- function(lines, path) {
+  con <- file(path, open = "wb")
+  on.exit(close(con), add = TRUE)
+  writeLines(lines, con = con, sep = "\n", useBytes = TRUE)
+}
+
 
 test_that("code() and print() methods work", {
   print_file <- tempfile(fileext = ".stan")
   code_file <- tempfile(fileext = ".stan")
 
-  writeLines(utils::capture.output(mod$print()), print_file)
-  writeLines(mod$code(), code_file)
+  write_snapshot_lines(utils::capture.output(mod$print()), print_file)
+  write_snapshot_lines(mod$code(), code_file)
 
   expect_snapshot_file(print_file, "model-print-output.stan")
   expect_snapshot_file(code_file, "model-code-output.stan")
