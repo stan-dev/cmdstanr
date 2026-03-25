@@ -11,28 +11,18 @@ test_that("cmdstanr_example works", {
 
   fit_vb <- cmdstanr_example("logistic", method = "variational")
   checkmate::expect_r6(fit_vb, "CmdStanVB")
-
-  expect_output(print_example_program("schools"), "vector[J] theta", fixed=TRUE)
-  expect_output(print_example_program("schools_ncp"), "vector[J] theta_raw", fixed=TRUE)
 })
 
+test_that("print_example_program outputs stay stable", {
+  local_edition(3)
 
-# used in multiple tests below
-stan_program <- "
-  data {
-    int<lower=0> N;
-    array[N] int<lower=0,upper=1> y;
-  }
-  parameters {
-    real<lower=0,upper=1> theta;
-  }
-  model {
-    y ~ bernoulli(theta);
-  }
-  "
+  expect_snapshot(cat(print_example_program("schools")))
+  expect_snapshot(cat(print_example_program("schools_ncp")))
+})
 
 test_that("write_stan_file writes Stan file correctly", {
   skip_if_not_installed("rlang")
+  stan_program <- testing_stan_program()
   f1 <- write_stan_file(stan_program)
   checkmate::expect_file_exists(f1, extension = "stan")
   f1_lines <- readLines(f1)
@@ -45,20 +35,21 @@ test_that("write_stan_file writes Stan file correctly", {
 })
 
 test_that("write_stan_file writes to specified directory and filename", {
-  dir <- file.path(test_path(), "answers")
+  stan_program <- testing_stan_program()
+  dir <- withr::local_tempdir()
+  explicit_dir <- withr::local_tempdir()
   expect_equal(dirname(f1 <- write_stan_file(stan_program, dir = dir, basename = "pasta")),
                absolute_path(dir))
   expect_equal(f2 <- write_stan_file(stan_program, dir = dir, basename = "fruit.stan"),
                absolute_path(file.path(dir, "fruit.stan")))
   expect_equal(f3 <- write_stan_file(stan_program, dir = dir, basename = "vegetable"),
                absolute_path(file.path(dir, "vegetable.stan"))) # should add .stan extension if missing
-  expect_equal(f4 <- write_stan_file(stan_program, dir = tempdir(), basename = "test"),
-               absolute_path(file.path(tempdir(), "test.stan")))
-
-  try(file.remove(f1, f2, f3, f4), silent = TRUE)
+  expect_equal(f4 <- write_stan_file(stan_program, dir = explicit_dir, basename = "test"),
+               absolute_path(file.path(explicit_dir, "test.stan")))
 })
 
 test_that("write_stan_file creates dir if necessary", {
+  stan_program <- testing_stan_program()
   expect_match(
     write_stan_file(stan_program, file.path(tempdir(), "foo"), basename = "bar"),
     "/foo/bar.stan"
@@ -67,7 +58,8 @@ test_that("write_stan_file creates dir if necessary", {
 
 test_that("write_stan_file by default creates the same file for the same Stan model", {
   skip_if_not_installed("rlang")
-  dir <- file.path(test_path(), "answers")
+  stan_program <- testing_stan_program()
+  dir <- withr::local_tempdir()
 
   f1 <- write_stan_file(stan_program, dir = dir)
   mtime1 <- file.info(f1)$mtime
@@ -93,17 +85,12 @@ test_that("write_stan_file by default creates the same file for the same Stan mo
 
   mtime5 <- file.info(f5)$mtime
   expect_true(mtime1 < mtime5)
-
-
-  try(file.remove(f1, f2, f4), silent = TRUE)
 })
 
 test_that("cmdstanr_write_stan_file_dir option works", {
+  stan_program <- testing_stan_program()
   base_dir <- tempdir()
-  test_dir <- file.path(base_dir, "option_test")
-  if (!dir.exists(test_dir)) {
-    dir.create(test_dir)
-  }
+  test_dir <- withr::local_tempdir(pattern = "option_test")
   local({
     withr::local_options(list("cmdstanr_write_stan_file_dir" = test_dir))
     file <- write_stan_file(stan_program)
@@ -111,7 +98,4 @@ test_that("cmdstanr_write_stan_file_dir option works", {
   })
   file <- write_stan_file(stan_program)
   expect_equal(repair_path(dirname(file)), repair_path(base_dir))
-  if (!dir.exists(test_dir)) {
-    file.remove(test_dir)
-  }
 })

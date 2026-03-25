@@ -18,6 +18,21 @@ testing_stan_file <- function(name) {
   test_path("resources", "stan", paste0(name, ".stan"))
 }
 
+testing_stan_program <- function() {
+  "
+  data {
+    int<lower=0> N;
+    array[N] int<lower=0,upper=1> y;
+  }
+  parameters {
+    real<lower=0,upper=1> theta;
+  }
+  model {
+    y ~ bernoulli(theta);
+  }
+  "
+}
+
 cmdstan_example_file <- function() {
   # stan program in different directory from the others
   file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
