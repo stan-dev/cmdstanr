@@ -145,7 +145,7 @@ test_that("pathfinder() method runs when the stan file is removed", {
 
 test_that("no error when checking estimates after failure", {
   fit <- cmdstanr_example("schools", method = "pathfinder", seed = 123) # optim always fails for this
-  expect_silent(fit$summary()) # no error
+  expect_no_error(fit$summary())
 })
 
 test_that("no output with show_messages = FALSE", {

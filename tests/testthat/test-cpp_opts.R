@@ -34,7 +34,7 @@ test_that("validate_cpp_options works", {
       abc = FALSE
     )
   )
-  expect_warning(validate_cpp_options(list(STAN_OPENCL = FALSE)))
+  expect_snapshot_warning(validate_cpp_options(list(STAN_OPENCL = FALSE)))
 })
 
 
@@ -64,8 +64,5 @@ test_that("exe_info cpp_options comparison works", {
   ))
 
   # no exe_info -> no recompile based on cpp info
-  expect_warning(
-    expect_true(exe_info_reflects_cpp_options(list(), list())),
-    "Recompiling is recommended"
-  )
+  expect_snapshot_warning(expect_true(exe_info_reflects_cpp_options(list(), list())))
 })

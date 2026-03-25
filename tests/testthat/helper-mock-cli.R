@@ -2,29 +2,27 @@ real_wcr <- wsl_compatible_run
 
 with_mocked_cli <- function(code, compile_ret, info_ret) {
   code <- substitute(code)
-  rlang::eval_bare(
-    rlang::expr(
-      with_mocked_bindings(
-        !!code,
-        wsl_compatible_run = !!function(command, args, ...) {
-          if (
-            !is.null(command)
-            && command == "make"
-            && !is.null(args)
-            && startsWith(basename(args[1]), "model-")
-          ) {
-            message("mock-compile-was-called")
-            compile_ret
-          } else if (!is.null(args) && args[1] == "info") {
-            info_ret
-          } else {
-            real_wcr(command = command, args = args, ...)
-          }
-        }
-      )
-    ),
-    env = parent.frame()
+  caller <- parent.frame()
+  local_mocked_bindings(
+    wsl_compatible_run = function(command, args, ...) {
+      if (
+        !is.null(command)
+        && command == "make"
+        && !is.null(args)
+        && startsWith(basename(args[1]), "model-")
+      ) {
+        message("mock-compile-was-called")
+        compile_ret
+      } else if (!is.null(args) && args[1] == "info") {
+        info_ret
+      } else {
+        real_wcr(command = command, args = args, ...)
+      }
+    },
+    .package = "cmdstanr",
+    .env = caller
   )
+  rlang::eval_bare(code, env = caller)
 }
 
 ######## Mock Compile Expectations #######

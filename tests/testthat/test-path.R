@@ -34,7 +34,7 @@ test_that("Setting path from env var is detected", {
   unset_cmdstan_path()
   expect_true(is.null(.cmdstanr$VERSION))
   withr::local_envvar(c(CMDSTAN = PATH))
-  expect_no_condition(cmdstanr_initialize())
+  expect_silent(cmdstanr_initialize())
   expect_equal(cmdstan_path(), PATH)
   expect_false(is.null(.cmdstanr$VERSION))
 })

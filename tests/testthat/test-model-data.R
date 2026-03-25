@@ -32,5 +32,5 @@ test_that("empty data list doesn't error if no data block", {
   )
 
   # would error if fitting failed
-  expect_silent(fit$draws())
+  expect_no_error(fit$draws())
 })

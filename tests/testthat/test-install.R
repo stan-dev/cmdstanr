@@ -280,7 +280,7 @@ test_that("deprecated CMDSTANR_USE_MSYS_TOOLCHAIN is ignored with warning", {
       "CMDSTANR_USE_MSYS_TOOLCHAIN",
       fixed = TRUE
     )
-    expect_no_condition(make_cmd())
+    expect_silent(make_cmd())
   })
 })
 
