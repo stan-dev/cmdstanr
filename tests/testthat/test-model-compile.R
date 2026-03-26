@@ -3,13 +3,13 @@ stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 
-stanc_snapshot_variant <- function() {
-  if (os_is_windows() && !os_is_wsl()) "windows" else NULL
-}
-
 trim_stanc_invocations <- function(output) {
   out <- grep("bin/stanc", output, value = TRUE, fixed = TRUE)
   sub("( --o).*", "\\1", out)
+}
+
+stanc_snapshot_transform <- function(lines) {
+  sub("bin/stanc\\.exe", "bin/stanc", lines)
 }
 
 test_that("object initialized correctly", {
@@ -121,9 +121,11 @@ test_that("compilation works with include_paths", {
 
 test_that("name in STANCFLAGS is set correctly", {
   local_reproducible_output()
-  variant <- stanc_snapshot_variant()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
-  expect_snapshot(cat(trim_stanc_invocations(out), sep = "\n"), variant = variant)
+  expect_snapshot(
+    cat(trim_stanc_invocations(out), sep = "\n"),
+    transform = stanc_snapshot_transform
+  )
 
   out <- utils::capture.output(
     mod$compile(
@@ -132,7 +134,10 @@ test_that("name in STANCFLAGS is set correctly", {
       stanc_options = list(name = "bernoulli2_model")
     )
   )
-  expect_snapshot(cat(trim_stanc_invocations(out), sep = "\n"), variant = variant)
+  expect_snapshot(
+    cat(trim_stanc_invocations(out), sep = "\n"),
+    transform = stanc_snapshot_transform
+  )
 })
 
 
@@ -840,7 +845,6 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
 
 test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", {
   local_reproducible_output()
-  variant <- stanc_snapshot_variant()
   real_get_cmdstan_flags <- get_cmdstan_flags
   local_mocked_bindings(
     get_cmdstan_flags = function(flag_name) {
@@ -852,7 +856,10 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
     }
   )
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
-  expect_snapshot(cat(trim_stanc_invocations(out), sep = "\n"), variant = variant)
+  expect_snapshot(
+    cat(trim_stanc_invocations(out), sep = "\n"),
+    transform = stanc_snapshot_transform
+  )
 })
 
 test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {
