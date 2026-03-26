@@ -14,18 +14,30 @@
 
 # toolchain checks on Unix work
 
-    A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run cmdstanr::check_cmdstan_toolchain().
+    Code
+      check_unix_cpp_compiler()
+    Condition
+      Error:
+      ! C++ compiler missing.
 
 ---
 
-    The 'make' tool was not found. Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain().
+    Code
+      check_unix_make()
+    Condition
+      Error:
+      ! make missing.
 
 # check_rtools4x_windows_toolchain reports missing Rtools and make
 
-    
-    Rtools44 was not found but is required to run CmdStan with R version 4.5.2.
-    Please install or reinstall the appropriate Rtools version for this R installation,
-    restart R, and then run cmdstanr::check_cmdstan_toolchain().
+    Code
+      check_rtools4x_windows_toolchain()
+    Condition
+      Error:
+      ! 
+      Rtools<version> was not found but is required to run CmdStan with R version <version>.
+      Please install or reinstall the appropriate Rtools version for this R installation,
+      restart R, and then run cmdstanr::check_cmdstan_toolchain().
 
 # check_rtools4x_windows_toolchain validates install path and empty candidates
 

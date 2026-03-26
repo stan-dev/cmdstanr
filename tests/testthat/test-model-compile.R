@@ -4,12 +4,16 @@ mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 
 trim_stanc_invocations <- function(output) {
+  output <- gsub("\\\\", "/", output)
   out <- grep("bin/stanc", output, value = TRUE, fixed = TRUE)
+  out <- sub("^.*?(bin/stanc(?:\\.exe)?)\\b", "\\1", out, perl = TRUE)
   sub("( --o).*", "\\1", out)
 }
 
 stanc_snapshot_transform <- function(lines) {
-  sub("bin/stanc\\.exe", "bin/stanc", lines)
+  lines <- gsub("\\\\", "/", lines)
+  lines <- sub("^.*?(bin/stanc)(?:\\.exe)?\\b", "\\1", lines, perl = TRUE)
+  gsub("--name=(['\"])?([^ '\"=]+)\\1", "--name='\\2'", lines, perl = TRUE)
 }
 
 test_that("object initialized correctly", {
@@ -83,9 +87,10 @@ test_that("compile() method works with spaces in path", {
 
 test_that("compile() method overwrites binaries", {
   mod$compile(quiet = TRUE)
-  old_time = file.mtime(mod$exe_file())
+  old_time <- file.mtime(mod$exe_file()) - 10
+  Sys.setFileTime(mod$exe_file(), old_time)
+  old_time <- file.mtime(mod$exe_file())
   mod$compile(quiet = TRUE, force_recompile = TRUE)
-  new_time =
   expect_gt(file.mtime(mod$exe_file()), old_time)
 })
 
