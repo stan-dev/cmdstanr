@@ -380,31 +380,105 @@ test_that("Overloaded functions give meaningful errors", {
                "Overloaded functions are currently not able to be exposed to R! The following overloaded functions were found: fun1, fun3")
 })
 
-test_that("Exposing external functions errors before v2.32", {
-  fake_cmdstan_version("2.26.0")
+reserved_names_msg <- function(names) {
+  paste(
+    "expose_functions() can't expose this Stan function because the function",
+    "name and/or one or more argument names use a reserved keyword",
+    "(typically in the C++ toolchain used to compile Stan). Please rename",
+    "the function/arguments in your Stan functions block and try again.",
+    paste("Conflicting names:", paste(names, collapse = ", "))
+  )
+}
 
-  tmpfile <- tempfile(fileext = ".hpp")
-  hpp <-
+test_that("Reserved names in Stan code give the same error", {
+  stan_file <- write_stan_file(
+    "
+  functions {
+    real min(real max, real class) {
+      return max - class;
+    }
+  }
   "
-  #include <ostream>
-  namespace standalone_external_model_namespace {
-    int rtn_int(int x, std::ostream *pstream__) { return x; }
-  }"
-  cat(hpp, file = tmpfile, sep = "\n")
-  stanfile <- file.path(tempdir(), "standalone_external.stan")
-  cat("functions { int rtn_int(int x); }\n", file = stanfile)
-  expect_error({
-    cmdstan_model(
-      stan_file = stanfile,
-      user_header = tmpfile,
-      compile_standalone = TRUE
-    )
-  },
-  "Exporting standalone functions with external C++ is not available before CmdStan 2.32",
-  fixed = TRUE)
+  )
 
-  reset_cmdstan_version()
+  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  expect_error(
+    funmod$expose_functions(),
+    reserved_names_msg(c("min", "max", "class")),
+    fixed = TRUE
+  )
 })
+
+test_that("Multiple reserved C++ keywords in Stan code give the same error", {
+  stan_file <- write_stan_file(
+    "
+  functions {
+    real template(real class, real namespace, real private) {
+      return class + namespace + private;
+    }
+  }
+  "
+  )
+
+  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  expect_error(
+    funmod$expose_functions(),
+    reserved_names_msg(c("template", "class", "namespace", "private")),
+    fixed = TRUE
+  )
+})
+
+test_that("Reserved keywords in Stan function bodies are allowed", {
+  stan_file <- write_stan_file(
+    "
+  functions {
+    real add_one(real x) {
+      real class = 1;
+      return x + class;
+    }
+  }
+  "
+  )
+
+  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  expect_no_error(funmod$expose_functions())
+  expect_equal(funmod$functions$add_one(2), 3)
+})
+
+test_that("Stan code with no reserved names exposes functions", {
+  stan_file <- write_stan_file(
+    "
+  functions {
+    real add_pair(real left, real right) {
+      return left + right;
+    }
+  }
+  "
+  )
+
+  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  expect_no_error(funmod$expose_functions())
+})
+
+# Bug in exposing external, skip for now
+# https://github.com/stan-dev/stanc3/issues/1424
+# test_that("External c++ functions can be exposed", {
+#   tmpfile <- tempfile(fileext = ".hpp")
+#   hpp <-
+#   "
+#   #include <ostream>
+#   namespace standalone_external_model_namespace {
+#     int rtn_int(int x, std::ostream *pstream__) { return x; }
+#   }"
+#   cat(hpp, file = tmpfile, sep = "\n")
+#   stanfile <- file.path(tempdir(), "standalone_external.stan")
+#   cat("functions { int rtn_int(int x); }\n", file = stanfile)
+#   ext_mod <- cmdstan_model(stan_file = stanfile,
+#                            user_header = tmpfile,
+#                            force_recompile = TRUE)
+#   ext_mod$expose_functions()
+#   expect_equal(ext_mod$functions$rtn_int(10), 10)
+# })
 
 test_that("Exposing functions with precompiled model gives meaningful error", {
   stan_file <- write_stan_file("

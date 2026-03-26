@@ -92,3 +92,14 @@ test_that("generate_quantities() warns if threads specified but not enabled", {
     "'threads_per_chain' will have no effect"
   )
 })
+
+test_that("no output with show_messages = FALSE", {
+  output <- utils::capture.output(
+    fit_gq <- mod_gq$generate_quantities(
+      fitted_params = fit,
+      data = data_list,
+      show_messages = FALSE
+    )
+  )
+  expect_equal(length(output), 0)
+})

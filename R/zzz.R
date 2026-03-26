@@ -51,6 +51,8 @@ cmdstanr_initialize <- function() {
             call. = FALSE
           )
           .cmdstanr$PATH <- NULL
+          .cmdstanr$VERSION <- NULL
+          .cmdstanr$WSL <- FALSE
         } else {
           set_cmdstan_path(path)
         }
@@ -62,20 +64,18 @@ cmdstanr_initialize <- function() {
         call. = FALSE
       )
       .cmdstanr$PATH <- NULL
+      .cmdstanr$VERSION <- NULL
+      .cmdstanr$WSL <- FALSE
     }
 
   } else { # environment variable not found
-    path <- cmdstan_default_path() %||% cmdstan_default_path(old = TRUE)
+    path <- cmdstan_default_path()
     if (!is.null(path)) {
       suppressMessages(set_cmdstan_path(path))
     }
   }
 
-  if (getRversion() < "3.5.0") {
-    .cmdstanr$TEMP_DIR <- tempdir()
-  } else {
-    .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
-  }
+  .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
   invisible(TRUE)
 }
 

@@ -11,6 +11,16 @@ name: Unit tests
   pull_request:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      tarball_url:
+        description: 'CmdStan tarball URL to test with.'
+        required: false
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   R-CMD-check:
@@ -25,8 +35,11 @@ jobs:
         config:
           - {os: macOS-latest, r: 'devel', opencl: true}
           - {os: macOS-latest, r: 'release', opencl: true}
+          - {os: macos-26, r: 'release', opencl: false}
+          - {os: macos-15-intel, r: 'release', opencl: false}
           - {os: windows-latest, r: 'devel' }
           - {os: windows-latest, r: 'release'}
+          - {os: windows-2022, r: '4.1'}
           - {os: windows-latest, r: 'oldrel'}
           - {os: ubuntu-latest, r: 'devel', opencl: true}
           - {os: ubuntu-latest, r: 'release', opencl: true}
@@ -36,6 +49,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
       CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
+      CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
       PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
 
     steps:
@@ -43,11 +57,6 @@ jobs:
         run: |
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
-
-      - uses: n1hility/cancel-previous-runs@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-        if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
 
       - uses: actions/checkout@v6
 
@@ -68,6 +77,28 @@ jobs:
           cache: "always"
           extra-packages: any::rcmdcheck, local::.
 
+      - name: Debug Windows toolchain resolution
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          rtools_home <- cmdstanr:::rtools4x_home_path()
+          candidates <- cmdstanr:::rtools4x_toolchain_candidates()
+          selected <- cmdstanr:::rtools4x_toolchain_path()
+          cat("R version: ", as.character(getRversion()), "\n", sep = "")
+          cat("Rtools home: ", rtools_home, "\n", sep = "")
+          cat("Toolchain candidates:\n")
+          if (length(candidates) == 0) {
+            cat("  - <none>\n")
+          } else {
+            cat(paste0("  - ", candidates), sep = "\n")
+            cat("\n")
+          }
+          cat("Selected toolchain: ", selected, "\n", sep = "")
+          selected_ok <- cmdstanr:::is_rtools4x_toolchain_usable(selected)
+          if (!selected_ok) {
+            stop("Resolved Windows toolchain path is not usable.")
+          }
+        shell: Rscript {0}
+
       - name: Install POCL on Ubuntu Runners
         if: ${{ matrix.config.os == 'ubuntu-latest' }}
         run: |
@@ -85,8 +116,17 @@ jobs:
 
       - name: Install cmdstan
         run: |
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2)
+          cmdstanr::check_cmdstan_toolchain()
+          tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+          if (nzchar(tarball_url)) {
+            cmdstanr::install_cmdstan(
+              cores = 2,
+              overwrite = TRUE,
+              release_url = tarball_url
+            )
+          } else {
+            cmdstanr::install_cmdstan(cores = 2)
+          }
         shell: Rscript {0}
 
       - name: Session info
@@ -107,7 +147,7 @@ jobs:
 
       - name: Upload check results
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ runner.os }}-r${{ matrix.config.r }}-results
           path: check

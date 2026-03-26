@@ -28,7 +28,7 @@ methods work in a similar way under the hood.
 
 ```{r setup, message=FALSE}
 library(cmdstanr)
-check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+check_cmdstan_toolchain(quiet = TRUE)
 ```
 
 ## Compilation
@@ -90,11 +90,9 @@ mod$exe_file()
 
 ### Pedantic check
 
-If you are using CmdStan version 2.24 or later and CmdStanR version 0.2.1 or
-later, you can run a pedantic check for your model. CmdStanR will always check
-that your Stan program does not contain any invalid syntax but with pedantic
-mode enabled the check will also warn you about other potential issues in your
-model, for example:
+CmdStanR will always check that your Stan program does not contain any invalid
+syntax but with `pedantic` mode enabled the check will also warn you about other
+potential issues in your model, for example:
 
 - Distribution usages issues: distribution arguments do not match the
 distribution specification, or some specific distribution is used in an
@@ -169,10 +167,9 @@ mod_pedantic$check_syntax(pedantic = TRUE)
 
 ### Stan model variables
 
-If using CmdStan 2.27 or newer, you can obtain the names, types
-and dimensions of the data, parameters, transformed parameters
-and generated quantities variables of a Stan model using the
-`$variables()` method of the `CmdStanModel` object.
+You can obtain the names, types and dimensions of the data, parameters,
+transformed parameters and generated quantities variables of a Stan model using
+the `$variables()` method of the `CmdStanModel` object.
 
 ```{r stan_file_variables}
 stan_file_variables <- write_stan_file("

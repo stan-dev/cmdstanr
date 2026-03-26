@@ -6,8 +6,9 @@ fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", se
 fit_bernoulli_laplace <- testing_fit("bernoulli", method = "laplace", seed = 123)
 fit_logistic_optimize <- testing_fit("logistic", method = "optimize", seed = 123)
 fit_logistic_variational <- testing_fit("logistic", method = "variational", seed = 123)
-fit_logistic_variational_short <- testing_fit("logistic", method = "variational", output_samples = 100, seed = 123)
+fit_logistic_variational_short <- testing_fit("logistic", method = "variational", draws = 100, seed = 123)
 fit_logistic_laplace <- testing_fit("logistic", method = "laplace", seed = 123)
+fit_logistic_pathfinder <- testing_fit("logistic", method = "pathfinder", seed = 123)
 
 fit_bernoulli_diag_e_no_samples <- testing_fit("bernoulli", method = "sample",
                                                seed = 123, chains = 2, iter_sampling = 0, metric = "diag_e")
@@ -84,8 +85,12 @@ test_that("read_cmdstan_csv() fails if the file does not exist", {
 test_that("read_cmdstan_csv() fails with empty csv file", {
   file_path <- test_path("resources", "csv", "empty.csv")
   file.create(file_path)
-  expect_error(read_cmdstan_csv(file_path),
-               "Supplied CSV file is corrupt!")
+  error_msg <- if (utils::packageVersion("data.table") >= "1.18.0") {
+    "External command failed"
+  } else {
+    "Supplied CSV file is corrupt"
+  }
+  expect_error(read_cmdstan_csv(file_path), error_msg, fixed = TRUE)
   file.remove(file_path)
 })
 
@@ -531,64 +536,6 @@ test_that("time from read_cmdstan_csv matches time from fit$time()", {
     read_cmdstan_csv(fit$output_files())$time$chains,
     fit$time()$chains
   )
-})
-
-test_that("as_cmdstan_fit creates fitted model objects from csv", {
-  fits <- list(
-    mle = as_cmdstan_fit(fit_logistic_optimize$output_files()),
-    vb = as_cmdstan_fit(fit_logistic_variational$output_files()),
-    laplace = as_cmdstan_fit(fit_logistic_laplace$output_files()),
-    mcmc = as_cmdstan_fit(fit_logistic_thin_1$output_files())
-  )
-  for (class in names(fits)) {
-    fit <- fits[[class]]
-    class_name <- if (class == "laplace") "Laplace" else toupper(class)
-    checkmate::expect_r6(fit, classes = paste0("CmdStan", class_name, "_CSV"))
-    expect_s3_class(fit$draws(), "draws")
-    checkmate::expect_numeric(fit$lp())
-    expect_output(fit$print(), "variable")
-    expect_length(fit$output_files(), if (class == "mcmc") fit$num_chains() else 1)
-    expect_s3_class(fit$summary(), "draws_summary")
-
-    if (class == "mcmc") {
-      expect_s3_class(fit$sampler_diagnostics(), "draws_array")
-      expect_type(fit$inv_metric(), "list")
-      expect_equal(fit$time()$total, NA_integer_)
-      expect_s3_class(fit$time()$chains, "data.frame")
-    }
-    if (class == "mle") {
-      checkmate::expect_numeric(fit$mle())
-    }
-    if (class == "vb") {
-      checkmate::expect_numeric(fit$lp_approx())
-    }
-    if (class == "laplace") {
-      checkmate::expect_numeric(fit$lp_approx())
-    }
-
-    for (method in unavailable_methods_CmdStanFit_CSV) {
-      if (!(method == "time" && class == "mcmc")) {
-        expect_error(fit[[method]](), "This method is not available")
-      }
-    }
-  }
-})
-
-test_that("as_cmdstan_fit can check MCMC diagnostics", {
-  fit_schools <- suppressMessages(
-    testing_fit("schools", chains = 2,
-                adapt_delta = 0.5, max_treedepth = 4,
-                show_messages = FALSE)
-  )
-  expect_message(
-    as_cmdstan_fit(fit_schools$output_files()),
-    "transitions ended with a divergence"
-  )
-  expect_message(
-    as_cmdstan_fit(fit_schools$output_files()),
-    "transitions hit the maximum treedepth"
-  )
-  expect_silent(as_cmdstan_fit(fit_schools$output_files(), check_diagnostics = FALSE))
 })
 
 test_that("read_cmdstan_csv reads seed correctly", {

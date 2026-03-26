@@ -1,6 +1,6 @@
 #' Create a new CmdStanModel object
 #'
-#' @description \if{html}{\figure{logo.png}{options: width=25}}
+#' @description \if{html}{\figure{logo.svg}{options: width=25}}
 #'   Create a new [`CmdStanModel`] object from a file containing a Stan program
 #'   or from an existing Stan executable. The [`CmdStanModel`] object stores the
 #'   path to a Stan program and compiled executable (once created), and provides
@@ -17,7 +17,7 @@
 #' @param exe_file (string) The path to an existing Stan model executable. Can
 #'   be provided instead of or in addition to `stan_file` (if `stan_file` is
 #'   omitted some `CmdStanModel` methods like `$code()` and `$print()` will not
-#'   work). This argument can only be used with CmdStan 2.27+.
+#'   work).
 #' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -154,11 +154,12 @@
 #' }
 #'
 cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...) {
-  if (cmdstan_version() < "2.27.0" && !is.null(exe_file)) {
-    stop("'exe_file' argument is only supported with CmdStan 2.27 and newer.", call. = FALSE)
-  }
   if (is.null(exe_file) && is.null(stan_file)) {
-    stop("Unable to create a `CmdStanModel` object. Both 'stan_file' and 'exe_file' are undefined.", call. = FALSE)
+    stop(
+      "Unable to create a `CmdStanModel` object. ",
+      "Both 'stan_file' and 'exe_file' are undefined.",
+      call. = FALSE
+    )
   }
   CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
 }
@@ -422,19 +423,18 @@ CmdStanModel <- R6::R6Class(
 #'   via a global `cmdstanr_force_recompile` option.
 #' @param compile_model_methods (logical) Compile additional model methods
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
-#'   `unconstrain_variables()`).
-#' @param compile_hessian_method (logical) Should the (experimental) `hessian()` method be
-#'   be compiled with the model methods?
+#'   `unconstrain_variables()`). Note: the compiled model-method bindings are
+#'   not preserved in a usable form when saving a model object. If you plan to
+#'   save and reload the model object before model fitting, we recommend instead
+#'   waiting to compile the model methods until after fitting via
+#'   [`fit$init_model_methods()`][fit-method-init_model_methods].
 #' @param compile_standalone (logical) Should functions in the Stan model be
 #'   compiled for use in R? If `TRUE` the functions will be available via the
 #'   `functions` field in the compiled model object. This can also be done after
 #'   compilation using the
 #'   [`$expose_functions()`][model-method-expose_functions] method.
-#' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
-#'   but skip the actual C++ compilation. Used to speedup tests.
-#'
-#' @param threads Deprecated and will be removed in a future release. Please
-#'   turn on threading via `cpp_options = list(stan_threads = TRUE)` instead.
+#' @param dry_run (logical) If `TRUE`, the code will do all checks before
+#'   compilation, but skip the actual C++ compilation. Used to speedup tests.
 #'
 #' @return The `$compile()` method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
@@ -461,7 +461,7 @@ CmdStanModel <- R6::R6Class(
 #' mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 #' mod$exe_file()
 #'
-#' # turn on pedantic mode (new in Stan v2.24)
+#' # turn on pedantic mode
 #' file_pedantic <- write_stan_file("
 #' parameters {
 #'   real sigma;  // pedantic mode will warn about missing <lower=0>
@@ -484,13 +484,13 @@ compile <- function(quiet = TRUE,
                     force_recompile = getOption("cmdstanr_force_recompile", default = FALSE),
                     compile_model_methods = FALSE,
                     compile_standalone = FALSE,
-                    dry_run = FALSE,
-                    #deprecated
-                    compile_hessian_method = FALSE,
-                    threads = FALSE) {
-
+                    dry_run = FALSE) {
   if (length(self$stan_file()) == 0) {
-    stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop(
+      "'$compile()' cannot be used because the 'CmdStanModel' ",
+      "was not created with a Stan file.",
+      call. = FALSE
+    )
   }
   assert_stan_file_exists(self$stan_file())
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
@@ -515,17 +515,6 @@ compile <- function(quiet = TRUE,
     if (length(self$exe_file()) != 0) {
       private$exe_file_ <- file.path(dir, basename(self$exe_file()))
     }
-  }
-
-  # temporary deprecation warnings
-  if (isTRUE(threads)) {
-    warning("'threads' is deprecated. Please use 'cpp_options = list(stan_threads = TRUE)' instead.")
-    cpp_options[["stan_threads"]] <- TRUE
-  }
-
-  # temporary deprecation warnings
-  if (isTRUE(compile_hessian_method)) {
-    warning("'compile_hessian_method' is deprecated. The hessian method is compiled with all models.")
   }
 
   exe <- resolve_exe_path(dir, private$dir_, self$exe_file(), self$stan_file())
@@ -610,7 +599,6 @@ compile <- function(quiet = TRUE,
             call. = FALSE)
     compile_model_methods <- FALSE
     compile_standalone <- FALSE
-    compile_hessian_method <- FALSE
   }
 
   temp_stan_file <- tempfile(pattern = "model-", fileext = paste0(".", tools::file_ext(self$stan_file())))
@@ -640,7 +628,7 @@ compile <- function(quiet = TRUE,
   }
   stancflags_combined <- stanc_built_options
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
-  if (stancflags_local != "") {
+  if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
@@ -742,11 +730,9 @@ compile <- function(quiet = TRUE,
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
 
-  if(!dry_run) {
+  if (!dry_run) {
     if (compile_model_methods) {
-      expose_model_methods(env = private$model_methods_env_,
-                            verbose = !quiet,
-                            hessian = compile_hessian_method)
+      expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
     }
   }
   invisible(self)
@@ -785,11 +771,12 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' }
 #'
 variables <- function() {
-  if (self$cmdstan_version() < "2.27.0") {
-    stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
-  }
   if (length(self$stan_file()) == 0) {
-    stop("'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop(
+      "'$variables()' cannot be used because the 'CmdStanModel' ",
+      "was not created with a Stan file.",
+      call. = FALSE
+    )
   }
   assert_stan_file_exists(self$stan_file())
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
@@ -944,7 +931,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
 #'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
 #'   supply a list of strings which represent options. In that case the options
-#'   are passed to stanc (new in Stan 2.29). See the [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
+#'   are passed to `stanc`. See the
+#'   [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
 #' @param backup (logical) If `TRUE`, create stanfile.bak backups before
 #'   writing to the file. Disable this option if you're sure you have other
@@ -992,22 +980,6 @@ format <- function(overwrite_file = FALSE,
                    backup = TRUE,
                    max_line_length = NULL,
                    quiet = FALSE) {
-  # querying current version here not model object version
-  # because this is pre-compile work based on the cmdstanr
-  # version that will be used to compile in teh future,
-  # not based on what was used to compile existing binary (if any)
-  if (cmdstan_version() < "2.29.0" && !is.null(max_line_length)) {
-    stop(
-      "'max_line_length' is only supported with CmdStan 2.29.0 or newer.",
-      call. = FALSE
-    )
-  }
-  if (cmdstan_version() < "2.29.0" && !is.logical(canonicalize)) {
-    stop(
-      "A list can be supplied to the 'canonicalize' argument with CmdStan 2.29.0 or newer.",
-      call. = FALSE
-    )
-  }
   if (length(self$stan_file()) == 0) {
     stop(
       "'$format()' cannot be used because the 'CmdStanModel'",
@@ -1027,9 +999,6 @@ format <- function(overwrite_file = FALSE,
   }
   if (isTRUE(canonicalize)) {
     stanc_options["print-canonical"] <- TRUE
-    if (cmdstan_version() < "2.29.0") {
-      stanc_options["auto-format"] <- NULL
-    }
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
     stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
   }
@@ -1116,12 +1085,22 @@ CmdStanModel$set("public", name = "format", value = format)
 #'
 #' @template model-common-args
 #' @template model-sample-args
-#' @param cores,num_cores,num_chains,num_warmup,num_samples,save_extra_diagnostics,max_depth,stepsize,validate_csv
-#'   Deprecated and will be removed in a future release.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
-#' @template seealso-docs
+#' @references
+#' * Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+#'   adaptively setting path lengths in Hamiltonian Monte Carlo.
+#'   *Journal of Machine Learning Research*, 15(47), 1593-1623.
+#' * Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+#'   arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.
+#' * Stan Development Team. Stan Reference Manual (Algorithms section):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @inherit cmdstan_model examples
 #'
 sample <- function(data = NULL,
@@ -1155,63 +1134,10 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = NULL,
-                   save_cmdstan_config = NULL,
-                   # deprecated
-                   cores = NULL,
-                   num_cores = NULL,
-                   num_chains = NULL,
-                   num_warmup = NULL,
-                   num_samples = NULL,
-                   validate_csv = NULL,
-                   save_extra_diagnostics = NULL,
-                   max_depth = NULL,
-                   stepsize = NULL) {
-  # temporary deprecation warnings
-  if (!is.null(cores)) {
-    warning("'cores' is deprecated. Please use 'parallel_chains' instead.")
-    parallel_chains <- cores
-  }
-  if (!is.null(num_cores)) {
-    warning("'num_cores' is deprecated. Please use 'parallel_chains' instead.")
-    parallel_chains <- num_cores
-  }
-  if (!is.null(num_chains)) {
-    warning("'num_chains' is deprecated. Please use 'chains' instead.")
-    chains <- num_chains
-  }
-  if (!is.null(num_warmup)) {
-    warning("'num_warmup' is deprecated. Please use 'iter_warmup' instead.")
-    iter_warmup <- num_warmup
-  }
-  if (!is.null(num_samples)) {
-    warning("'num_samples' is deprecated. Please use 'iter_sampling' instead.")
-    iter_sampling <- num_samples
-  }
-  if (!is.null(max_depth)) {
-    warning("'max_depth' is deprecated. Please use 'max_treedepth' instead.")
-    max_treedepth <- max_depth
-  }
-  if (!is.null(stepsize)) {
-    warning("'stepsize' is deprecated. Please use 'step_size' instead.")
-    step_size <- stepsize
-  }
-  if (!is.null(save_extra_diagnostics)) {
-    warning("'save_extra_diagnostics' is deprecated. Please use 'save_latent_dynamics' instead.")
-    save_latent_dynamics <- save_extra_diagnostics
-  }
-  if (!is.null(validate_csv)) {
-    warning("'validate_csv' is deprecated. Please use 'diagnostics' instead.")
-    if (is.logical(validate_csv)) {
-      if (validate_csv) {
-        diagnostics <- c("divergences", "treedepth", "ebfmi")
-      } else {
-        diagnostics <- NULL
-      }
-    }
-  }
+                   save_metric = getOption("cmdstanr_save_metric", FALSE),
+                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
-  if (self$cmdstan_version() >= "2.27.0" && self$cmdstan_version() < "2.36.0" && !fixed_param) {
+  if (self$cmdstan_version() < "2.36.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
@@ -1321,11 +1247,22 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   processes. For example, `mpi_args = list("n" = 4)` launches the executable
 #'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
 #'   model executable.
-#' @param validate_csv Deprecated. Use `diagnostics` instead.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
-#' @template seealso-docs
+#' @references
+#' * Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+#'   adaptively setting path lengths in Hamiltonian Monte Carlo.
+#'   *Journal of Machine Learning Research*, 15(47), 1593-1623.
+#' * Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+#'   arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.
+#' * Stan Development Team. Stan Reference Manual (Algorithms section):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @seealso The Stan Math Library's documentation
 #'   ([mc-stan.org/math](https://mc-stan.org/math/)) for more
 #'   details on MPI support in Stan.
@@ -1367,20 +1304,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = NULL,
-                       # deprecated
-                       validate_csv = TRUE) {
-
-  if (!is.null(validate_csv)) {
-    warning("'validate_csv' is deprecated. Please use 'diagnostics' instead.")
-    if (is.logical(validate_csv)) {
-      if (validate_csv) {
-        diagnostics <- c("divergences", "treedepth", "ebfmi")
-      } else {
-        diagnostics <- NULL
-      }
-    }
-  }
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
   if (fixed_param) {
     chains <- 1
@@ -1498,7 +1422,14 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'
 #' @return A [`CmdStanMLE`] object.
 #'
-#' @template seealso-docs
+#' @references
+#' * Stan Development Team. Stan Reference Manual (Algorithms section, optimization):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @inherit cmdstan_model examples
 #'
 optimize <- function(data = NULL,
@@ -1523,7 +1454,7 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = NULL) {
+                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1620,7 +1551,14 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @return A [`CmdStanLaplace`] object.
 #'
-#' @template seealso-docs
+#' @references
+#' * Stan Development Team. Stan Reference Manual (Algorithms section, Laplace approximation):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @examples
 #' \dontrun{
 #' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
@@ -1657,10 +1595,7 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = NULL) {
-  if (self$cmdstan_version() < "2.32") {
-    stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
-  }
+                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
   }
@@ -1780,14 +1715,22 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #' @param tol_rel_obj (positive real) Convergence tolerance on the relative norm
 #'   of the objective.
 #' @param eval_elbo (positive integer) Evaluate ELBO every Nth iteration.
-#' @param output_samples (positive integer) Use `draws` argument instead.
-#'   `output_samples` will be deprecated in the future.
-#' @param draws (positive integer) Number of approximate posterior
-#'   samples to draw and save.
+#' @param draws (positive integer) Number of approximate posterior samples to
+#'   draw and save.
 #'
 #' @return A [`CmdStanVB`] object.
 #'
-#' @template seealso-docs
+#' @references
+#' * Kucukelbir, A., Tran, D., Ranganath, R., Gelman, A., and Blei, D. M.
+#'   (2017). Automatic differentiation variational inference.
+#'   *Journal of Machine Learning Research*, 18(14), 1-45.
+#' * Stan Development Team. Stan Reference Manual (Algorithms section, variational inference):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @inherit cmdstan_model examples
 #'
 variational <- function(data = NULL,
@@ -1809,11 +1752,10 @@ variational <- function(data = NULL,
                         adapt_iter = NULL,
                         tol_rel_obj = NULL,
                         eval_elbo = NULL,
-                        output_samples = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = NULL) {
+                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1834,7 +1776,7 @@ variational <- function(data = NULL,
     adapt_iter = adapt_iter,
     tol_rel_obj = tol_rel_obj,
     eval_elbo = eval_elbo,
-    output_samples = draws %||% output_samples
+    output_samples = draws
   )
   args <- CmdStanArgs$new(
     method_args = variational_args,
@@ -1928,7 +1870,17 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   pathfinder runs in multi-pathfinder.
 #' @return A [`CmdStanPathfinder`] object.
 #'
-#' @template seealso-docs
+#' @references
+#' * Zhang, L., Carpenter, B., Gelman, A., and Vehtari, A. (2022).
+#'   Pathfinder: parallel quasi-Newton variational inference.
+#'   *Journal of Machine Learning Research*, 23(306), 1-49.
+#' * Stan Development Team. Stan Reference Manual (Algorithms section, Pathfinder):
+#'   https://mc-stan.org/docs/reference-manual/
+#' * Stan Development Team. Stan documentation:
+#'   https://mc-stan.org/users/documentation/
+#' * Stan Development Team. CmdStan User's Guide:
+#'   https://mc-stan.org/docs/cmdstan-guide/
+#'
 #' @inherit cmdstan_model examples
 #'
 pathfinder <- function(data = NULL,
@@ -1958,7 +1910,7 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = NULL) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -2095,12 +2047,16 @@ generate_quantities <- function(fitted_params,
                                 sig_figs = NULL,
                                 parallel_chains = getOption("mc.cores", 1),
                                 threads_per_chain = NULL,
-                                opencl_ids = NULL) {
+                                opencl_ids = NULL,
+                                show_messages = TRUE,
+                                show_exceptions = TRUE) {
   fitted_params_files <- process_fitted_params(fitted_params)
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE)
+    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2292,11 +2248,7 @@ include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FA
       include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     }
     include_paths <- paste0(include_paths, collapse = ",")
-    if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- "--include-paths="
-    } else {
-      include_paths_flag <- "--include_paths="
-    }
+    include_paths_flag <- "--include-paths="
     if (isTRUE(standalone_call)) {
       stancflags <- c(stancflags, "--include-paths", include_paths)
     } else {
@@ -2339,11 +2291,12 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
 
 
 is_variables_method_supported <- function(mod) {
-  cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
+  mod$has_stan_file() && file.exists(mod$stan_file())
 }
-resolve_exe_path <- function(
-  dir = NULL, private_dir = NULL, self_exe_file = NULL, self_stan_file = NULL
-) {
+resolve_exe_path <- function(dir = NULL,
+                             private_dir = NULL,
+                             self_exe_file = NULL,
+                             self_stan_file = NULL) {
   if (is.null(dir) && !is.null(private_dir)) {
     dir <- absolute_path(private_dir)
   } else if (!is.null(dir)) {

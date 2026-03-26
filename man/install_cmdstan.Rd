@@ -64,12 +64,12 @@ is \code{NULL}, which downloads the latest stable release from
 \item{release_url}{(string) The URL for the specific CmdStan release or
 release candidate to install. See \url{https://github.com/stan-dev/cmdstan/releases}.
 The URL should point to the tarball (\code{.tar.gz.} file) itself, e.g.,
-\code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.25.0/cmdstan-2.25.0.tar.gz"}.
+\code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"}.
 If both \code{version} and \code{release_url} are specified then \code{version} will be used.}
 
 \item{release_file}{(string) A file path to a CmdStan release tar.gz file
 downloaded from the releases page: \url{https://github.com/stan-dev/cmdstan/releases}.
-For example: \verb{release_file=""./cmdstan-2.33.1.tar.gz"}. If \code{release_file} is
+For example: \verb{release_file=""./cmdstan-2.35.0.tar.gz"}. If \code{release_file} is
 specified then both \code{release_url} and \code{version} will be ignored.}
 
 \item{cpp_options}{(list) Any makefile flags/variables to be written to
@@ -87,10 +87,8 @@ Subsystem for Linux (WSL). The default is \code{FALSE}.}
 makefile flags be appended to the end of the existing \code{make/local} file?
 The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
 
-\item{fix}{For \code{check_cmdstan_toolchain()}, should CmdStanR attempt to fix
-any detected toolchain problems? Currently this option is only available on
-Windows. The default is \code{FALSE}, in which case problems are only reported
-along with suggested fixes.}
+\item{fix}{As of v1.0 this argument is deprecated and ignored and only
+retained for compatibility.}
 }
 \value{
 For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
@@ -118,16 +116,11 @@ should typically be followed by calling \code{rebuild_cmdstan()}.
 
 The \code{check_cmdstan_toolchain()} function attempts to check for the required
 C++ toolchain. It is called internally by \code{install_cmdstan()} but can also
-be called directly by the user. On Windows only, calling the function with
-the \code{fix = TRUE} argument will attempt to install the necessary toolchain
-components if they are not found. For Windows users with RTools and CmdStan
-versions >= 2.35 no additional toolchain configuration is required.
+be called directly by the user.
 
-NOTE: When installing CmdStan on Windows with RTools and CmdStan versions
-prior to 2.35.0, the above additional toolchain configuration
-is still required. To enable this configuration, set the environment variable
-\code{CMDSTANR_USE_MSYS_TOOLCHAIN} to 'true' and call
-\code{check_cmdstan_toolchain(fix = TRUE)}.
+\strong{CmdStan versions older than 2.35.0 are no longer supported.} If you need
+to work with an older CmdStan version we recommend installing an older
+CmdStanR release from GitHub.
 }
 \examples{
 \dontrun{

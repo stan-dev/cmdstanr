@@ -1,7 +1,6 @@
 context("fitted-inits")
 set_cmdstan_path()
 
-
 data_list_schools <- testing_data("schools")
 data_list_logistic <- testing_data("logistic")
 test_inits <- function(mod, fit_init, data_list = NULL) {

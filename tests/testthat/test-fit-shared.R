@@ -178,6 +178,37 @@ test_that("save_object() method works", {
   expect_identical(fit$summary(), s)
 })
 
+test_that("reloaded fits rebuild model methods lazily after save_object()", {
+  skip_if(os_is_wsl())
+  mod <- cmdstan_model(
+    testing_stan_file("bernoulli_log_lik"),
+    force_recompile = TRUE,
+    compile_model_methods = TRUE
+  )
+  utils::capture.output(
+    fit <- mod$optimize(data = testing_data("bernoulli"))
+  )
+
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  fit$save_object(temp_rds_file)
+  fit2 <- readRDS(temp_rds_file)
+
+  expect_no_error(
+    lp <- fit2$log_prob(unconstrained_variables = c(0.1))
+  )
+  expect_equal(lp, -8.6327599208828509347)
+})
+
+test_that("save_object() method works with qs2 format", {
+  skip_if_not_installed("qs2")
+  fit <- fits[["sample"]]
+  temp_qs_file <- tempfile(fileext = ".qs2")
+  fit$save_object(temp_qs_file, format = "qs2")
+  fit2 <- qs2::qs_read(temp_qs_file)
+  expect_identical(fit2$summary(), fit$summary())
+  expect_identical(fit2$return_codes(), fit$return_codes())
+})
+
 test_that("save_object() method works with profiles", {
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
@@ -437,7 +468,7 @@ test_that("draws are returned for model with spaces", {
   )
   expect_equal(dim(fit_sample$draws()), c(1000, 1, 3))
   utils::capture.output(
-    fit <- mod$variational(seed = 123, output_samples = 1000)
+    fit <- mod$variational(seed = 123, draws = 1000)
   )
   expect_equal(dim(fit$draws()), c(1000, 4))
   utils::capture.output(

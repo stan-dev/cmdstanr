@@ -23,6 +23,7 @@ CmdStanFit <- R6::R6Class(
           assign(n, get(n, runset$model_methods_env()), private$model_methods_env_)
         }
       }
+      drop_stale_model_methods(private$model_methods_env_)
 
       self$functions <- new.env()
       if (!is.null(runset$standalone_env())) {
@@ -108,12 +109,19 @@ CmdStanFit <- R6::R6Class(
 #'   read into R lazily (i.e., as needed), the `$save_object()` method is the
 #'   safest way to guarantee that everything has been read in before saving.
 #'
+#'   If you have a big object to save, use `format = "qs2"` to save using the
+#'   **qs2** package.
+#'
 #'   See the "Saving fitted model objects" section of the
 #'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 #'   vignette for some suggestions on faster model saving for large models.
 #'
 #' @param file (string) Path where the file should be saved.
-#' @param ... Other arguments to pass to [base::saveRDS()] besides `object` and `file`.
+#' @param format (string) Serialization format for the object. The default is
+#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the **qs2**
+#'   package.
+#' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
+#'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -129,12 +137,20 @@ CmdStanFit <- R6::R6Class(
 #' fit$summary()
 #' }
 #'
-save_object <- function(file, ...) {
+save_object <- function(file, format = c("rds", "qs2"), ...) {
   self$draws()
   try(self$sampler_diagnostics(), silent = TRUE)
   try(self$init(), silent = TRUE)
   try(self$profiles(), silent = TRUE)
-  saveRDS(self, file = file, ...)
+  format <- match.arg(format)
+  if (format == "rds") {
+    saveRDS(self, file = file, ...)
+  } else {
+    if (!requireNamespace("qs2", quietly = TRUE)) {
+      stop("The 'qs2' package is required for format = \"qs2\".", call. = FALSE)
+    }
+    qs2::qs_save(self, file = file, ...)
+  }
   invisible(self)
 }
 CmdStanFit$set("public", name = "save_object", value = save_object)
@@ -314,45 +330,44 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @aliases init_model_methods
 #'
 #' @description The `$init_model_methods()` method compiles and initializes the
-#'   `log_prob`, `grad_log_prob`, `constrain_variables`, `unconstrain_variables`
-#'   and `unconstrain_draws` functions. These are then available as methods of
-#'   the fitted model object. This requires the additional `Rcpp` package,
-#'   which are not required for fitting models using
-#'   CmdStanR.
+#'   `log_prob`, `grad_log_prob`, `hessian`, `constrain_variables`,
+#'   `unconstrain_variables` and `unconstrain_draws` functions. These are then
+#'   available as methods of the fitted model object. This requires the
+#'   additional \pkg{Rcpp} package.
+#'
+#'   If a model or fit object was saved with [base::saveRDS()] and later
+#'   reloaded, any previously compiled model-method bindings will be rebuilt in
+#'   the current R session when this method is called.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
 #'
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
-#' @param hessian (logical) Whether to expose the (experimental) hessian method.
 #'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
+#' # fit_mcmc$init_model_methods()
 #' }
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-init_model_methods <- function(seed = 1, verbose = FALSE, hessian = FALSE) {
+init_model_methods <- function(seed = 1, verbose = FALSE) {
   if (os_is_wsl()) {
     stop("Additional model methods are not currently available with ",
           "WSL CmdStan and will not be compiled",
           call. = FALSE)
   }
   require_suggested_package("Rcpp")
+  drop_stale_model_methods(private$model_methods_env_)
   if (length(private$model_methods_env_$hpp_code_) == 0) {
     stop("Model methods cannot be used with a pre-compiled Stan executable, ",
           "the model must be compiled again", call. = FALSE)
   }
-  if (hessian) {
-    message("The hessian method relies on higher-order autodiff ",
-            "which is still experimental. Please report any compilation ",
-            "errors that you encounter")
-  }
   if (is.null(private$model_methods_env_$model_ptr)) {
-    expose_model_methods(private$model_methods_env_, verbose, hessian)
+    expose_model_methods(private$model_methods_env_, verbose)
   }
   if (!("model_ptr_" %in% ls(private$model_methods_env_))) {
     initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
@@ -371,7 +386,6 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' @param unconstrained_variables (numeric) A vector of unconstrained parameters.
 #' @param jacobian (logical) Whether to include the log-density adjustments from
 #'   un/constraining variables.
-#' @param jacobian_adjustment Deprecated. Please use `jacobian` instead.
 #'
 #' @examples
 #' \dontrun{
@@ -383,11 +397,7 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
@@ -417,11 +427,7 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-grad_log_prob <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+grad_log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
@@ -444,7 +450,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
-#' # fit_mcmc$init_model_methods(hessian = TRUE)
+#' # fit_mcmc$init_model_methods()
 #' # fit_mcmc$hessian(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
 #'
@@ -452,11 +458,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-hessian <- function(unconstrained_variables, jacobian = TRUE, jacobian_adjustment = NULL) {
-  if (!is.null(jacobian_adjustment)) {
-    warning("'jacobian_adjustment' is deprecated. Please use 'jacobian' instead.", call. = FALSE)
-    jacobian <- jacobian_adjustment
-  }
+hessian <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
   if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
     stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
@@ -770,6 +772,15 @@ lp_approx <- function() {
 #'
 #' The `$print()` method returns the fitted model object itself (invisibly),
 #' which is the standard behavior for print methods in \R.
+#'
+#' @references
+#' * Vehtari, A., Gelman, A., Simpson, D., Carpenter, B., and Buerkner, P.-C.
+#'   (2021). Rank-normalization, folding, and localization: An improved R-hat
+#'   for assessing convergence of MCMC (with discussion).
+#'   *Bayesian Analysis*, 16(2), 667-718. doi:10.1214/20-BA1221.
+#' * Vehtari, A. (2021). Comparison of MCMC effective sample size estimators.
+#'   https://avehtari.github.io/rhat_ess/ess_comparison.html
+#'   (for ESS diagnostics such as `ess_bulk` and `ess_tail`).
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -1194,8 +1205,8 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'   profiling data if any profiling data was written to the profile CSV files.
 #'   See [save_profile_files()] to control where the files are saved.
 #'
-#'   Support for profiling Stan programs is available with CmdStan >= 2.26 and
-#'   requires adding profiling statements to the Stan program.
+#'   Profiling requires adding profiling statements to the Stan program. See
+#'   **Examples** for a demonstration.
 #'
 #' @return A list of data frames with profiling data if the profiling CSV files
 #'   were created.
@@ -1526,6 +1537,19 @@ CmdStanMCMC <- R6::R6Class(
 #'
 #' @return The object returned by [loo::loo.array()] or
 #'   [loo::loo_moment_match.default()].
+#'
+#' @references
+#' * Vehtari, A., Gelman, A., and Gabry, J. (2017). Practical Bayesian model
+#'   evaluation using leave-one-out cross-validation and WAIC.
+#'   *Statistics and Computing*, 27(5), 1413-1432.
+#'   doi:10.1007/s11222-016-9696-4.
+#' * Vehtari, A., Simpson, D., Gelman, A., Yao, Y., and Gabry, J. (2024).
+#'   Pareto smoothed importance sampling.
+#'   *Journal of Machine Learning Research*, 25(72), 1-58.
+#' * Paananen, T., Piironen, J., Buerkner, P.-C., and Vehtari, A. (2021).
+#'   Implicitly adaptive importance sampling.
+#'   *Statistics and Computing*, 31, 16. doi:10.1007/s11222-020-09982-2
+#'   (for `moment_match = TRUE`).
 #'
 #' @seealso The \pkg{loo} package website with
 #'   [documentation](https://mc-stan.org/loo/reference/index.html) and

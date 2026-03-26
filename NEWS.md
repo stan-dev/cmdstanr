@@ -1,6 +1,40 @@
 # cmdstanr (development version)
 
+* Informative error when exposing functions using names that are reserved 
+keywords (@VisruthSK, #1154)
+* `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
+set to `TRUE` for an entire R session via new global options. (#1159)
+* `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing 
+output while reading `STANCFLAGS` from `make`. (#1163)
 
+* CmdStanModel objects created using `compile_model_methods = TRUE` that are
+then saved and reloaded no longer error in model fitting methods. Model methods
+are recompiled lazily if needed. (#1158)
+  
+* CmdStan versions older than 2.35.0 are no longer supported. (#1144)
+* Minimum R version increased to 4.0.0. (#1144)
+* Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
+* `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a warning). (#1144)
+
+* Removed deprecated items (replacements in parentheses). (#1061)
+  - `read_sample_csv()` (`read_cmdstan_csv()`)
+  - `write_stan_tempfile()` (`write_stan_file()`)
+  - `jacobian_adjustment` argument to `fit$log_prob()` and similar methods (`jacobian` argument)
+  - `output_samples` argument to `model$variational()` (`draws` argument)
+  - `hessian` argument to `fit$init_model_methods()` (`hessian` method always compiled now)
+  - several arguments to `model$compile()`:
+    - `threads` (`cpp_options = list(stan_threads = TRUE)`)
+    - `compile_hessian_method` (always compiled)
+  - several arguments to `model$sample()`:
+    - `cores` and `num_cores` (`parallel_chains`)
+    - `num_chains` (`chains`)
+    - `num_warmup` (`iter_warmup`)
+    - `num_samples` (`iter_sampling`)
+    - `validate_csv` (`diagnostics`)
+    - `save_extra_diagnostics` (`save_latent_dynamics`)
+    - `max_depth` (`max_treedepth`)
+    - `stepsize` (`step_size`)
+  
 
 # cmdstanr 0.9.0
 

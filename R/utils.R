@@ -58,18 +58,6 @@ os_is_linux <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Linux")
 }
 
-is_rtools43_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "3.0"
-}
-
-is_rtools42_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0" && R.version$minor < "3.0"
-}
-
-is_rtools40_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor < "2.0"
-}
-
 is_ucrt_toolchain <- function() {
   os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0"
 }
@@ -92,16 +80,33 @@ arch_is_aarch64 <- function() {
 }
 
 # Returns the type of make command to use to compile depending on the OS
-# First checks if $MAKE is set, otherwise falls back to system-specific default
+# First checks if $MAKE is set, otherwise falls back to "make"
 make_cmd <- function() {
+  warn_if_ignored_msys_toolchain_env()
   if (Sys.getenv("MAKE") != "") {
     Sys.getenv("MAKE")
-  } else if (os_is_windows() && !os_is_wsl() &&
-        (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") != "" || isTRUE(cmdstan_version(error_on_NA=FALSE) < "2.35.0"))) {
-    "mingw32-make.exe"
   } else {
     "make"
   }
+}
+
+warn_if_ignored_msys_toolchain_env <- function() {
+  if (Sys.getenv("CMDSTANR_USE_MSYS_TOOLCHAIN") == "") {
+    return(invisible(NULL))
+  }
+  # Keep this warning to once per R session because this helper is called
+  # from high-frequency internal paths (e.g., make/toolchain resolution).
+  if (isTRUE(.cmdstanr$WARNED_IGNORED_MSYS_TOOLCHAIN)) {
+    return(invisible(NULL))
+  }
+  warning(
+    "Environment variable 'CMDSTANR_USE_MSYS_TOOLCHAIN' is deprecated and ignored. ",
+    "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer.\n",
+    "If you need legacy MSYS toolchain support, use an older cmdstanr release.",
+    call. = FALSE
+  )
+  .cmdstanr$WARNED_IGNORED_MSYS_TOOLCHAIN <- TRUE
+  invisible(NULL)
 }
 
 # Returns the stanc exe path depending on the OS
@@ -251,32 +256,6 @@ generate_file_names <-
     }
     new_names
   }
-
-# threading helpers (deprecated) ------------------------------------------
-
-
-#' Set or get the number of threads used to execute Stan models
-#'
-#' DEPRECATED. Please use the `threads_per_chain` argument when fitting the model.
-#' @keywords internal
-#' @name stan_threads
-NULL
-
-#' @rdname stan_threads
-#' @export
-#' @return The value of the environment variable `STAN_NUM_THREADS`.
-num_threads <- function() {
-  warning("'num_threads()' is deprecated. Please use the 'metadata()' method of the fit object to obtain the number of threads used.")
-  as.integer(Sys.getenv("STAN_NUM_THREADS"))
-}
-
-#' @rdname stan_threads
-#' @export
-#' @param num_threads (positive integer) The number of threads to set.
-set_num_threads <- function(num_threads) {
-  stop("Please use the 'threads_per_chain' argument in the $sample() method instead of set_num_threads().",
-       call. = FALSE)
-}
 
 
 # hmc diagnostics ------------------------------------------------------
@@ -582,7 +561,7 @@ wsl_installed <- function() {
     p <- processx::process$new("wsl", "uname")
     for(i in 1:50) {
       Sys.sleep(0.1)
-      if(!p$is_alive()) {
+      if (!p$is_alive()) {
         break
       }
     }
@@ -707,32 +686,55 @@ assert_dir_exists <- checkmate::makeAssertionFunction(check_dir_exists)
 assert_file_exists <- checkmate::makeAssertionFunction(check_file_exists)
 
 # Model methods & expose_functions helpers ------------------------------------------------------
+
+# Extract the requested make variable from `make print-<FLAG>` output while
+# ignoring unrelated lines
+parse_make_print_flag <- function(flag_name, stdout) {
+  lines <- strsplit(stdout, "\r?\n", perl = TRUE)[[1]]
+  pattern <- paste0("^\\s*", flag_name, "\\s*(=|\\+=)\\s*")
+  matches <- grep(pattern, lines, perl = TRUE)
+
+  if (length(matches) == 0) {
+    stop(
+      "Failed to parse `", flag_name, "` from `make print-", flag_name, "` output.\n",
+      "Output was:\n", stdout,
+      call. = FALSE
+    )
+  }
+  if (length(matches) > 1) {
+    stop(
+      "Found multiple `", flag_name, "` lines in `make print-", flag_name, "` output.\n",
+      "Output was:\n", stdout,
+      call. = FALSE
+    )
+  }
+
+  sub(pattern, "", trimws(lines[matches]), perl = TRUE)
+}
+
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
   withr::with_envvar(
     c("HOME" = short_path(Sys.getenv("HOME"))),
-    flags <- wsl_compatible_run(
+    flags_stdout <- wsl_compatible_run(
       command = "make",
       args = c("-s", paste0("print-", flag_name)),
       wd = cmdstan_path
     )$stdout
   )
-
-  flags <- gsub("\n", "", flags, fixed = TRUE)
-
-  flags <- gsub(
-    pattern = paste0(flag_name, "\\s(=|\\+=)(\\s|$)"),
-    replacement = "", x = flags
-  )
-
-  if (flags == "") {
-    return(flags)
-  }
+  flags <- parse_make_print_flag(flag_name, flags_stdout)
 
   if (flag_name == "STANCFLAGS") {
     # StanC flags need to be returned as a character vector
-    flags_vec <- strsplit(x = flags, split = " ", fixed = TRUE)[[1]]
-    return(flags_vec)
+    if (!nzchar(flags)) {
+      return(character())
+    }
+    flags_vec <- strsplit(x = trimws(flags), split = "\\s+", perl = TRUE)[[1]]
+    return(flags_vec[nzchar(flags_vec)])
+  }
+
+  if (!nzchar(flags)) {
+    return(flags)
   }
 
   if (flag_name %in% c("LDLIBS", "LDFLAGS_TBB")) {
@@ -774,9 +776,11 @@ check_sundials_fpic <- function(verbose) {
     return(invisible(NULL))
   }
   if (interactive()) {
-    message("SUNDIALS needs to be compiled with -fPIC when exposing functions or ",
-            "model methods on Linux.\n",
-            "Updating your make/local file to include -fPIC and rebuilding CmdStan now...")
+    message(
+      "SUNDIALS needs to be compiled with -fPIC when exposing functions or ",
+      "model methods on Linux.\n",
+      "Updating your make/local file to include -fPIC and rebuilding CmdStan now..."
+    )
   }
   cmdstan_make_local(cpp_options = list("CPPFLAGS_SUNDIALS += -fPIC"), append = TRUE)
   rebuild_cmdstan(quiet = !verbose)
@@ -796,9 +800,6 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
-  if (cmdstan_version() <= "2.30.1") {
-    cppflags <- paste0(cppflags, " -DCMDSTAN_JSON")
-  }
   withr::with_path(repair_path(file.path(cmdstan_path(),"stan/lib/stan_math/lib/tbb")),
     withr::with_makevars(
       c(
@@ -813,7 +814,38 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   invisible(NULL)
 }
 
-expose_model_methods <- function(env, verbose = FALSE, hessian = FALSE) {
+# Detect serialized sourceCpp wrappers whose native symbol was lost after reload.
+source_cpp_native_symbol_is_null <- function(fun) {
+  if (!is.function(fun)) {
+    return(FALSE)
+  }
+  fun_body <- body(fun)
+  if (!rlang::is_call(fun_body, ".Call") || length(fun_body) < 2) {
+    return(FALSE)
+  }
+  # Rcpp::sourceCpp() wrappers call into a NativeSymbol via `.Call(...)`.
+  # After reloading a serialized object that symbol can degrade to `<pointer: 0x0>`.
+  symbol <- fun_body[[2]]
+  if (!inherits(symbol, "NativeSymbol")) {
+    return(FALSE)
+  }
+  symbol_text <- paste(utils::capture.output(print(symbol)), collapse = "")
+  grepl("<pointer: (0x0+|\\(nil\\))>", symbol_text)
+}
+
+# Drop stale compiled bindings but keep the generated C++ so model methods
+# can be rebuilt lazily in the current session if they are later requested.
+# This avoids an error when a CmdStanModel object with compiled bindings is
+# loaded from an older session: https://github.com/stan-dev/cmdstanr/issues/1157
+drop_stale_model_methods <- function(env) {
+  if (is.null(env$model_ptr) || !source_cpp_native_symbol_is_null(env$model_ptr)) {
+    return(invisible(FALSE))
+  }
+  rm(list = setdiff(ls(env, all.names = TRUE), "hpp_code_"), envir = env)
+  invisible(TRUE)
+}
+
+expose_model_methods <- function(env, verbose = FALSE) {
   if (rlang::is_interactive()) {
     message("Compiling additional model methods...")
   }
@@ -902,41 +934,6 @@ get_function_name <- function(fun_start, fun_end, model_lines) {
   sub("\\(.*", "", fun_name, perl = TRUE)
 }
 
-# Construct the plain return type for a standalone function by
-# looking up the return type of the functor declaration and replacing
-# the template types (i.e., T0__) with double
-get_plain_rtn <- function(fun_start, fun_end, model_lines) {
-  fun_name <- get_function_name(fun_start, fun_end, model_lines)
-
-  # Depending on the version of stanc3, the standalone functions
-  # with a plain return type can either be wrapped in a struct as a functor,
-  # or as a separate forward declaration
-  struct_name <- paste0("struct ", fun_name, "_functor")
-
-  if (any(grepl(struct_name, model_lines))) {
-    struct_start <- grep(struct_name, model_lines)
-    struct_op_start <- grep("operator()", model_lines[-(1:struct_start)])[1] + struct_start
-    rtn_type <- paste0(model_lines[struct_start:struct_op_start], collapse = " ")
-    rm_operator <- gsub("operator().*", "", rtn_type)
-    rm_prev <- gsub(".*\\{", "", rm_operator)
-  } else {
-    # Find first declaration of function (will be the forward declaration)
-    first_decl <- grep(paste0(fun_name,"\\("), model_lines)[1]
-
-    # The return type will be between the function name and the semicolon terminating
-    # the previous line
-    last_scolon <- grep(";", model_lines[1:first_decl])
-    last_scolon <- ifelse(last_scolon[length(last_scolon)] == first_decl,
-                          last_scolon[length(last_scolon) - 1],
-                          last_scolon[length(last_scolon)])
-    rtn_type_full <- paste0(model_lines[last_scolon:first_decl], collapse = " ")
-    rm_fun_name <- gsub(paste0(fun_name, ".*"), "", rtn_type_full)
-    rm_prev <- gsub(".*;", "", rm_fun_name)
-  }
-  rm_template <- gsub("template <typename(.*?)> ", "", rm_prev)
-  gsub("T([0-9])*__", "double", rm_template)
-}
-
 
 # Prepare the c++ code for a standalone function so that it can be exported to R:
 # - Replace the auto return type with the plain type
@@ -946,17 +943,10 @@ get_plain_rtn <- function(fun_start, fun_end, model_lines) {
 #     that instantiates an RNG
 prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   fun_body <- paste(model_lines[fun_start:fun_end], collapse = " ")
-  if (cmdstan_version() < "2.33") {
-    fun_body <- gsub("auto", get_plain_rtn(fun_start, fun_end, model_lines), fun_body)
-  }
   fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
-  if (grepl("(stan::rng_t|boost::ecuyer1988)", fun_body)) {
-    if (cmdstan_version() < "2.35.0") {
-      fun_body <- gsub("boost::ecuyer1988&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
-    } else {
-      fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
-    }
+  if (grepl("stan::rng_t", fun_body)) {
+    fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
     rng_seed <- "Rcpp::XPtr<stan::rng_t> base_rng(base_rng_ptr);base_rng->seed(Rcpp::as<int>(seed));"
     fun_body <- gsub("return", paste(rng_seed, "return"), fun_body)
     fun_body <- gsub("base_rng__,", "*(base_rng.get()),", fun_body, fixed = TRUE)
@@ -975,6 +965,32 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
     prep_fun_cpp(funs[ind], fun_end, env$hpp_code)
   })
+
+  reserved_names <- unique(
+    unlist(
+      lapply(stan_funs, function(stan_fun) {
+        regmatches(
+          stan_fun,
+          gregexpr("(?<=_stan_)[[:alnum:]_]+", stan_fun, perl = TRUE)
+        )[[1]]
+      }),
+      use.names = FALSE
+    )
+  )
+
+  if (length(reserved_names) > 0) {
+    stop(
+      paste0(
+        "expose_functions() can't expose this Stan function because the function ",
+        "name and/or one or more argument names use a reserved keyword ",
+        "(typically in the C++ toolchain used to compile Stan). Please rename ",
+        "the function/arguments in your Stan functions block and try again. ",
+        "Conflicting names: ",
+        paste(reserved_names, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
 
   env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
     get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
@@ -1041,10 +1057,6 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
   if (function_env$existing_exe) {
     stop("Exporting standalone functions is not possible with a pre-compiled Stan model!",
           call. = FALSE)
-  }
-  if (function_env$external && cmdstan_version() < "2.32") {
-    stop("Exporting standalone functions with external C++ is not available before CmdStan 2.32",
-         call. = FALSE)
   }
   if (!is.null(function_env$hpp_code) &&
       !any(grepl("[[stan::function]]", function_env$hpp_code, fixed = TRUE))) {

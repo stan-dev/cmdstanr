@@ -37,17 +37,8 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_metric = NULL,
-  save_cmdstan_config = NULL,
-  cores = NULL,
-  num_cores = NULL,
-  num_chains = NULL,
-  num_warmup = NULL,
-  num_samples = NULL,
-  validate_csv = NULL,
-  save_extra_diagnostics = NULL,
-  max_depth = NULL,
-  stepsize = NULL
+  save_metric = getOption("cmdstanr_save_metric", FALSE),
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
 )
 }
 \arguments{
@@ -293,17 +284,17 @@ Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
-\item{save_metric}{(logical) When \code{TRUE}, call CmdStan with argument
-\code{"adaptation save_metric=1"} to save the adapted metric in separate JSON
-file with elements "stepsize", "metric_type" and "inv_metric". The default
-is \code{TRUE}. This option is only available in CmdStan 2.34.0 and later.}
+\item{save_metric}{(logical) When \code{TRUE}, call CmdStan with
+argument \code{"adaptation save_metric=1"} to save the adapted metric in
+separate JSON file with elements \code{"stepsize"}, \code{"metric_type"} and
+\code{"inv_metric"}. The default is \code{FALSE} but can be set to \code{TRUE} for an
+entire \R session by \code{options(cmdstanr_save_metric = TRUE)}.}
 
-\item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
-with argument \code{"output save_config=1"} to save a json file which contains
-the argument tree and extra information (equivalent to the output CSV file
-header). This option is only available in CmdStan 2.34.0 and later.}
-
-\item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
+\item{save_cmdstan_config}{(logical) When \code{TRUE}, call CmdStan with argument
+\code{"output save_config=1"} to save a JSON file which contains the argument
+tree and extra information (equivalent to the output CSV file header). The
+default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
+\code{options(cmdstanr_save_config = TRUE)}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
@@ -439,17 +430,22 @@ fit_optim_w_init_list$init()
 }
 
 }
-\seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
+\references{
 \itemize{
-\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
-\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
+\item Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+adaptively setting path lengths in Hamiltonian Monte Carlo.
+\emph{Journal of Machine Learning Research}, 15(47), 1593-1623.
+\item Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.
+\item Stan Development Team. Stan Reference Manual (Algorithms section):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
 }
-
+}
+\seealso{
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-compile}},

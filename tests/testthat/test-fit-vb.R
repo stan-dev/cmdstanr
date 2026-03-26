@@ -90,7 +90,7 @@ test_that("time is reported after vb", {
                     seed = 123,
                     elbo_samples = 1000,
                     iter = 2000,
-                    output_samples = 50
+                    draws = 50
                     ),
     "Finished in"
   )

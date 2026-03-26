@@ -116,6 +116,13 @@ test_that("write_stan_json errors if NAs", {
   )
 })
 
+test_that("write_stan_json errors if NULL variables", {
+  expect_error(
+    write_stan_json(list(N = NULL), tempfile()),
+    "Variable 'N' is NULL"
+  )
+})
+
 test_that("write_stan_json() errors if data is not a list", {
   expect_error(
     write_stan_json(1:10),

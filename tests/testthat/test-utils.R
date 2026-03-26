@@ -256,11 +256,136 @@ test_that("as_mcmc.list() works", {
 })
 
 test_that("get_cmdstan_flags() can be used recursively in `make`", {
-  mkfile <- normalizePath(test_path("testdata", "Makefile"))
+  mkfile <- repair_path(test_path("resources", "recursive-cmdstan-flags.mk"))
   nonrecursive_flags <- get_cmdstan_flags("STANCFLAGS")
-  stdo <- processx::run(
-    command = "make", args = sprintf("--file=%s", mkfile)
-  )$stdout
-  recursive_flags <- readLines(textConnection(stdo))
-  expect_equal(nonrecursive_flags, recursive_flags)
+  recursive_run <- processx::run(
+    command = "make",
+    args = sprintf("--file=%s", mkfile),
+    error_on_status = FALSE
+  )
+  if (recursive_run$status != 0) {
+    fail(
+      paste(
+        "Recursive make failed.",
+        paste0("status: ", recursive_run$status),
+        "stdout:",
+        recursive_run$stdout,
+        "stderr:",
+        recursive_run$stderr,
+        sep = "\n"
+      )
+    )
+    return(invisible())
+  }
+  expected_stdout <- paste(capture.output(cat(nonrecursive_flags)), collapse = "\n")
+  expect_equal(recursive_run$stdout, expected_stdout)
+})
+
+test_that("parse_make_print_flag() ignores unrelated make output", {
+  stdout <- paste(
+    "make: Entering directory '/tmp/cmdstan'",
+    "STANCFLAGS = --O1 --warn-pedantic --allow-undefined",
+    "make: Leaving directory '/tmp/cmdstan'",
+    sep = "\n"
+  )
+
+  expect_equal(
+    parse_make_print_flag("STANCFLAGS", stdout),
+    "--O1 --warn-pedantic --allow-undefined"
+  )
+})
+
+test_that("parse_make_print_flag() errors if no matching flag line is found", {
+  expect_error(
+    parse_make_print_flag("STANCFLAGS", "make: Entering directory '/tmp/cmdstan'"),
+    "Failed to parse `STANCFLAGS`",
+    fixed = TRUE
+  )
+})
+
+test_that("parse_make_print_flag() errors if multiple matching flag lines are found", {
+  stdout <- paste(
+    "STANCFLAGS = --O1",
+    "STANCFLAGS = --warn-pedantic",
+    sep = "\n"
+  )
+  expect_error(
+    parse_make_print_flag("STANCFLAGS", stdout),
+    "Found multiple `STANCFLAGS` lines",
+    fixed = TRUE
+  )
+})
+
+test_that("get_cmdstan_flags() returns empty STANCFLAGS as character(0)", {
+  with_mocked_bindings(
+    {
+      expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
+    },
+    wsl_compatible_run = function(...) {
+      list(stdout = "STANCFLAGS =\n")
+    }
+  )
+})
+
+test_that("get_cmdstan_flags() preserves empty non-STANCFLAGS values", {
+  with_mocked_bindings(
+    {
+      expect_equal(get_cmdstan_flags("CPPFLAGS"), "")
+    },
+    wsl_compatible_run = function(...) {
+      list(stdout = "CPPFLAGS =\n")
+    }
+  )
+})
+
+test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/local", {
+  tmpdir <- withr::local_tempdir()
+  # Build a minimal make setup so we can exercise real make line continuations.
+  writeLines(
+    c(
+      "print-%: ; @echo $* = $($*)",
+      "-include local"
+    ),
+    file.path(tmpdir, "Makefile")
+  )
+  writeLines(
+    c(
+      "STANCFLAGS += --O1 \\",
+      "  --warn-pedantic \\",
+      "  --allow-undefined"
+    ),
+    file.path(tmpdir, "local")
+  )
+  make_run <- processx::run(
+    command = "make",
+    args = c("-s", "print-STANCFLAGS"),
+    wd = tmpdir,
+    error_on_status = FALSE
+  )
+  if (make_run$status != 0) {
+    fail(
+      paste(
+        "Mini make failed.",
+        paste0("status: ", make_run$status),
+        "stdout:",
+        make_run$stdout,
+        "stderr:",
+        make_run$stderr,
+        sep = "\n"
+      )
+    )
+    return(invisible())
+  }
+
+  with_mocked_bindings(
+    {
+      expect_equal(
+        get_cmdstan_flags("STANCFLAGS"),
+        c("--O1", "--warn-pedantic", "--allow-undefined")
+      )
+    },
+    wsl_compatible_run = function(...) {
+      list(stdout = make_run$stdout)
+    }
+  )
 })

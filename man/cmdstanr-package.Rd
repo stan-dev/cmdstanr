@@ -8,7 +8,7 @@
 \title{CmdStanR: the R interface to CmdStan}
 \description{
 \if{html}{
-   \figure{logo.png}{options: width="50" alt="https://mc-stan.org/about/logo/"}
+   \figure{logo.svg}{options: width="50" alt="https://mc-stan.org/about/logo/"}
    \emph{Stan Development Team}
 }
 
@@ -209,12 +209,12 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Andrew Johnson \email{andrew.johnson@arjohnsonau.com} (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
+\strong{Maintainer}: Jonah Gabry \email{jgabry@gmail.com}
 
 Authors:
 \itemize{
-  \item Jonah Gabry \email{jsg2201@columbia.edu}
   \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
+  \item Andrew Johnson \email{andrew.johnson@arjohnsonau.com} (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
   \item Steve Bronder
 }
 
@@ -228,6 +228,7 @@ Other contributors:
   \item Jacob Socolar [contributor]
   \item Martin Modrák [contributor]
   \item Ven Popov [contributor]
+  \item Visruth Srimath Kandali [contributor]
 }
 
 }

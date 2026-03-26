@@ -15,7 +15,7 @@ it is more convenient to specify the Stan program as a string. If
 \item{exe_file}{(string) The path to an existing Stan model executable. Can
 be provided instead of or in addition to \code{stan_file} (if \code{stan_file} is
 omitted some \code{CmdStanModel} methods like \verb{$code()} and \verb{$print()} will not
-work). This argument can only be used with CmdStan 2.27+.}
+work).}
 
 \item{compile}{(logical) Do compilation? The default is \code{TRUE}. If \code{FALSE}
 compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}
@@ -31,7 +31,7 @@ more. See \code{\link[=model-method-compile]{$compile()}} for details.}
 A \code{\link{CmdStanModel}} object.
 }
 \description{
-\if{html}{\figure{logo.png}{options: width=25}}
+\if{html}{\figure{logo.svg}{options: width=25}}
 Create a new \code{\link{CmdStanModel}} object from a file containing a Stan program
 or from an existing Stan executable. The \code{\link{CmdStanModel}} object stores the
 path to a Stan program and compiled executable (once created), and provides
