@@ -453,6 +453,7 @@ read_cmdstan_csv <- function(files,
     }
     list(
       metadata = metadata,
+      time = list(total = NA_integer_, chains = metadata$time),
       generated_quantities = draws
     )
   } else if (metadata$method == "pathfinder") {
@@ -783,6 +784,10 @@ read_csv_metadata <- function(csv_file) {
           tmp <- gsub("seconds (Total)", "", tmp, fixed = TRUE)
           tmp <- trimws(gsub(" Elapsed Time: ", "", tmp, fixed = TRUE))
           total_time <- as.numeric(tmp)
+        } else if (grepl("(Generated Quantities)", tmp, fixed = TRUE)) {
+          tmp <- gsub("seconds (Generated Quantities)", "", tmp, fixed = TRUE)
+          tmp <- trimws(gsub("Elapsed Time:", "", tmp, fixed = TRUE))
+          total_time <- as.numeric(tmp)
         }
         if (!is.null(csv_file_info$method) &&
             csv_file_info$method == "diagnose" &&
@@ -822,6 +827,11 @@ read_csv_metadata <- function(csv_file) {
       chain_id = csv_file_info$id,
       warmup = warmup_time,
       sampling = sampling_time,
+      total = total_time
+    )
+  } else if (csv_file_info$method == "generate_quantities") {
+    csv_file_info$time <- data.frame(
+      chain_id = csv_file_info$id,
       total = total_time
     )
   }

@@ -118,6 +118,10 @@ test_that("time() works after gq", {
     nrows = fit_gq$runset$num_procs(),
     ncols = 2
   )
+  expect_named(run_times$chains, c("chain_id", "total"))
+  # per-chain times should be non-zero (parsed from CmdStan timing output)
+  expect_true(all(run_times$chains$total > 0))
+  expect_true(run_times$total > 0)
 })
 
 test_that("fitted_params_files() works", {
