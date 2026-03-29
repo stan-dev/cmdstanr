@@ -83,6 +83,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-get_cmdstan_args}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
