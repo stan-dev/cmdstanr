@@ -557,7 +557,13 @@ test_that("returning time works for gq read_cmdstan_csv from fit object", {
     ncols = 2
   )
   expect_named(gq_csv$time$chains, c("chain_id", "total"))
-  expect_true(all(gq_csv$time$chains$total > 0))
+  if (cmdstan_version() >= "2.39.0") {
+    # per-chain times should be non-zero (parsed from CmdStan timing output)
+    expect_true(all(gq_csv$time$chains$total > 0))
+  } else {
+    # for version < 2.39 per-chain times are reported as 0
+    expect_true(all(gq_csv$time$chains$total == 0))
+  }
 })
 
 test_that("gq time from read_cmdstan_csv matches time from fit_gq$time()", {

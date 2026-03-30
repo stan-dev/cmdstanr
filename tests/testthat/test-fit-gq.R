@@ -119,9 +119,15 @@ test_that("time() works after gq", {
     ncols = 2
   )
   expect_named(run_times$chains, c("chain_id", "total"))
-  # per-chain times should be non-zero (parsed from CmdStan timing output)
-  expect_true(all(run_times$chains$total > 0))
+  # total wall-clock time is always positive
   expect_true(run_times$total > 0)
+  if (cmdstan_version() >= "2.39.0") {
+    # CmdStan >= 2.39 reports per-chain timing for generated quantities
+    expect_true(all(run_times$chains$total > 0))
+  } else {
+    # for CmdStan < 2.39 per-chain times are reported as 0
+    expect_true(all(run_times$chains$total == 0))
+  }
 })
 
 test_that("fitted_params_files() works", {
