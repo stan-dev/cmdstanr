@@ -2275,7 +2275,9 @@ parse_cmdstan_args <- function(model_binary, method) {
     args = c(method, "help-all"),
     error_on_status = FALSE
   )
-  output <- strsplit(ret$stdout, "\n")[[1]]
+  # CmdStan may write help text to stdout or stderr depending on the platform
+  raw <- paste0(ret$stdout, ret$stderr)
+  output <- strsplit(raw, "\r?\n")[[1]]
 
   arguments <- map_cmdstan_to_cmdstanr(method)
   target_args <- vapply(arguments, function(p) {
