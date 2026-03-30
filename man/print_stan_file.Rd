@@ -2,17 +2,17 @@
 % Please edit documentation in R/file.R
 \name{print_stan_file}
 \alias{print_stan_file}
-\title{Print a Stan file with syntax highlighting in Quarto}
+\title{Print a Stan file with syntax highlighting in Quarto and R Markdown}
 \usage{
 print_stan_file(file, fold = FALSE, summary = "Stan model code")
 }
 \arguments{
 \item{file}{(string) Path to a \code{.stan} file.}
 
-\item{fold}{(logical) Whether to wrap the output in an HTML
-\verb{<details>} block so that the code is collapsed (folded) by
-default. Only has an effect when rendering with \code{output: asis}.
-Defaults to \code{FALSE}.}
+\item{fold}{(logical) Whether to wrap the output in an HTML \verb{<details>} block
+so that the code is collapsed (folded) by default. Only has an effect when
+rendering with \code{output: asis} and when outputting HTML. Defaults to
+\code{FALSE}.}
 
 \item{summary}{(string) The summary text shown in the fold toggle
 when \code{fold = TRUE}. Defaults to \code{"Stan model code"}.}

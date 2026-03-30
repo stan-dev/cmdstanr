@@ -95,7 +95,7 @@ write_stan_file <- function(code,
 }
 
 
-#' Print a Stan file with syntax highlighting in Quarto
+#' Print a Stan file with syntax highlighting in Quarto and R Markdown
 #'
 #' Prints the contents of a Stan file, optionally with syntax highlighting
 #' when used in a Quarto or R Markdown document. When called inside a
@@ -107,10 +107,10 @@ write_stan_file <- function(code,
 #'
 #' @export
 #' @param file (string) Path to a `.stan` file.
-#' @param fold (logical) Whether to wrap the output in an HTML
-#'   `<details>` block so that the code is collapsed (folded) by
-#'   default. Only has an effect when rendering with `output: asis`.
-#'   Defaults to `FALSE`.
+#' @param fold (logical) Whether to wrap the output in an HTML `<details>` block
+#'   so that the code is collapsed (folded) by default. Only has an effect when
+#'   rendering with `output: asis` and when outputting HTML. Defaults to
+#'   `FALSE`.
 #' @param summary (string) The summary text shown in the fold toggle
 #'   when `fold = TRUE`. Defaults to `"Stan model code"`.
 #' @return The file path (invisibly).
@@ -148,12 +148,6 @@ write_stan_file <- function(code,
 #' # Prints plain code at the console
 #' print_stan_file(stan_file)
 #'
-is_knitr_asis_output <- function() {
-  isTRUE(getOption("knitr.in.progress")) &&
-    requireNamespace("knitr", quietly = TRUE) &&
-    identical(knitr::opts_current$get("results"), "asis")
-}
-
 print_stan_file <- function(file, fold = FALSE, summary = "Stan model code") {
   code <- readLines(file)
   if (is_knitr_asis_output()) {
@@ -170,4 +164,10 @@ print_stan_file <- function(file, fold = FALSE, summary = "Stan model code") {
     writeLines(code)
   }
   invisible(file)
+}
+
+is_knitr_asis_output <- function() {
+  isTRUE(getOption("knitr.in.progress")) &&
+    requireNamespace("knitr", quietly = TRUE) &&
+    identical(knitr::opts_current$get("results"), "asis")
 }
