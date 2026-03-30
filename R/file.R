@@ -148,10 +148,15 @@ write_stan_file <- function(code,
 #' # Prints plain code at the console
 #' print_stan_file(stan_file)
 #'
+is_knitr_asis_output <- function() {
+  isTRUE(getOption("knitr.in.progress")) &&
+    requireNamespace("knitr", quietly = TRUE) &&
+    identical(knitr::opts_current$get("results"), "asis")
+}
+
 print_stan_file <- function(file, fold = FALSE, summary = "Stan model code") {
   code <- readLines(file)
-  if (isTRUE(getOption("knitr.in.progress")) &
-        identical(knitr::opts_current$get("results"), "asis")) {
+  if (is_knitr_asis_output()) {
     if (fold) {
       cat("<details><summary>", summary, "</summary>\n\n", sep = "")
     }
