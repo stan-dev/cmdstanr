@@ -74,9 +74,7 @@ test_that("compile() method works with spaces in path", {
 
 test_that("compile() method overwrites binaries", {
   mod$compile(quiet = TRUE)
-  old_time <- file.mtime(mod$exe_file()) - 10
-  Sys.setFileTime(mod$exe_file(), old_time)
-  old_time <- file.mtime(mod$exe_file())
+  old_time = file.mtime(mod$exe_file())
   mod$compile(quiet = TRUE, force_recompile = TRUE)
   expect_gt(file.mtime(mod$exe_file()), old_time)
 })
