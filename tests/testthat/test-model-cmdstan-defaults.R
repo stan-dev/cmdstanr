@@ -1,6 +1,82 @@
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 
+expected_cmdstan_defaults <- list(
+  sample = list(
+    iter_sampling = 1000L,
+    iter_warmup = 1000L,
+    save_warmup = FALSE,
+    thin = 1L,
+    adapt_engaged = TRUE,
+    adapt_delta = 0.8,
+    init_buffer = 75L,
+    term_buffer = 50L,
+    window = 25L,
+    save_metric = FALSE,
+    max_treedepth = 10L,
+    metric = "diag_e",
+    metric_file = "",
+    step_size = 1L,
+    chains = 1L
+  ),
+  optimize = list(
+    algorithm = "lbfgs",
+    init_alpha = 0.001,
+    tol_obj = 1e-12,
+    tol_rel_obj = 10000L,
+    tol_grad = 1e-08,
+    tol_rel_grad = 1e+07,
+    tol_param = 1e-08,
+    history_size = 5L,
+    jacobian = FALSE,
+    iter = 2000L
+  ),
+  variational = list(
+    algorithm = "meanfield",
+    iter = 10000L,
+    grad_samples = 1L,
+    elbo_samples = 100L,
+    eta = 1L,
+    adapt_engaged = TRUE,
+    adapt_iter = 50L,
+    tol_rel_obj = 0.01,
+    eval_elbo = 100L,
+    draws = 1000L
+  ),
+  pathfinder = list(
+    init_alpha = 0.001,
+    tol_obj = 1e-12,
+    tol_rel_obj = 10000L,
+    tol_grad = 1e-08,
+    tol_rel_grad = 1e+07,
+    tol_param = 1e-08,
+    history_size = 5L,
+    draws = 1000L,
+    num_paths = 4L,
+    save_single_paths = FALSE,
+    psis_resample = TRUE,
+    calculate_lp = TRUE,
+    max_lbfgs_iters = 1000L,
+    single_path_draws = 1000L,
+    num_elbo_draws = 25L
+  ),
+  laplace = list(
+    jacobian = TRUE,
+    draws = 1000L
+  )
+)
+
+expect_cmdstan_defaults <- function(method, expected) {
+  args <- mod$cmdstan_defaults(method)
+  expect_type(args, "list")
+  expect_named(args)
+  expect_setequal(names(args), names(expected))
+
+  for (name in names(expected)) {
+    expect_identical(args[[name]], expected[[name]], info = paste0(method, "$", name))
+  }
+}
+
 test_that("cmdstan_defaults() errors for uncompiled model", {
   mod_uncompiled <- cmdstan_model(
     stan_file = testing_stan_file("bernoulli"),
@@ -21,141 +97,10 @@ test_that("cmdstan_defaults() errors for invalid method", {
   )
 })
 
-test_that("cmdstan_defaults() returns named list for sample", {
-  args <- mod$cmdstan_defaults("sample")
-  expect_type(args, "list")
-  expect_named(args)
-  expected_names <- names(map_cmdstan_to_cmdstanr("sample"))
-  for (nm in expected_names) {
-    expect_true(nm %in% names(args), info = paste0("missing: ", nm))
+test_that("cmdstan_defaults() returns expected names and values", {
+  for (method in names(expected_cmdstan_defaults)) {
+    expect_cmdstan_defaults(method, expected_cmdstan_defaults[[method]])
   }
-})
-
-test_that("cmdstan_defaults() returns expected default types for sample", {
-  args <- mod$cmdstan_defaults("sample")
-  expect_type(args$iter_sampling, "integer")
-  expect_type(args$iter_warmup, "integer")
-  expect_type(args$thin, "integer")
-  expect_type(args$adapt_delta, "double")
-  expect_type(args$save_warmup, "logical")
-  expect_type(args$max_treedepth, "integer")
-})
-
-test_that("cmdstan_defaults() works for optimize", {
-  args <- mod$cmdstan_defaults("optimize")
-  expect_type(args, "list")
-  expect_named(args)
-  expected_names <- names(map_cmdstan_to_cmdstanr("optimize"))
-  for (nm in expected_names) {
-    expect_true(nm %in% names(args), info = paste0("missing: ", nm))
-  }
-  expect_type(args$jacobian, "logical")
-  expect_type(args$iter, "integer")
-})
-
-test_that("cmdstan_defaults() works for variational", {
-  args <- mod$cmdstan_defaults("variational")
-  expect_type(args, "list")
-  expect_named(args)
-  expected_names <- names(map_cmdstan_to_cmdstanr("variational"))
-  for (nm in expected_names) {
-    expect_true(nm %in% names(args), info = paste0("missing: ", nm))
-  }
-})
-
-test_that("cmdstan_defaults() works for pathfinder", {
-  args <- mod$cmdstan_defaults("pathfinder")
-  expect_type(args, "list")
-  expect_named(args)
-  expected_names <- names(map_cmdstan_to_cmdstanr("pathfinder"))
-  for (nm in expected_names) {
-    expect_true(nm %in% names(args), info = paste0("missing: ", nm))
-  }
-})
-
-test_that("cmdstan_defaults() works for laplace", {
-  args <- mod$cmdstan_defaults("laplace")
-  expect_type(args, "list")
-  expect_named(args)
-  expected_names <- names(map_cmdstan_to_cmdstanr("laplace"))
-  for (nm in expected_names) {
-    expect_true(nm %in% names(args), info = paste0("missing: ", nm))
-  }
-  expect_type(args$jacobian, "logical")
-  expect_type(args$draws, "integer")
-})
-
-# default values ----------------------------------------------------------
-
-test_that("cmdstan_defaults() returns expected default values for sample", {
-  args <- mod$cmdstan_defaults("sample")
-  expect_identical(args$iter_sampling, 1000L)
-  expect_identical(args$iter_warmup, 1000L)
-  expect_identical(args$save_warmup, FALSE)
-  expect_identical(args$thin, 1L)
-  expect_identical(args$adapt_engaged, TRUE)
-  expect_identical(args$adapt_delta, 0.8)
-  expect_identical(args$init_buffer, 75L)
-  expect_identical(args$term_buffer, 50L)
-  expect_identical(args$window, 25L)
-  expect_identical(args$save_metric, FALSE)
-  expect_identical(args$max_treedepth, 10L)
-  expect_identical(args$metric, "diag_e")
-  expect_identical(args$step_size, 1L)
-  expect_identical(args$chains, 1L)
-})
-
-test_that("cmdstan_defaults() returns expected default values for optimize", {
-  args <- mod$cmdstan_defaults("optimize")
-  expect_identical(args$algorithm, "lbfgs")
-  expect_identical(args$jacobian, FALSE)
-  expect_identical(args$iter, 2000L)
-  expect_identical(args$init_alpha, 0.001)
-  expect_identical(args$tol_obj, 1e-12)
-  expect_identical(args$tol_rel_obj, 10000L)
-  expect_identical(args$tol_grad, 1e-08)
-  expect_identical(args$tol_rel_grad, 1e+07)
-  expect_identical(args$tol_param, 1e-08)
-  expect_identical(args$history_size, 5L)
-})
-
-test_that("cmdstan_defaults() returns expected default values for variational", {
-  args <- mod$cmdstan_defaults("variational")
-  expect_identical(args$algorithm, "meanfield")
-  expect_identical(args$iter, 10000L)
-  expect_identical(args$grad_samples, 1L)
-  expect_identical(args$elbo_samples, 100L)
-  expect_identical(args$eta, 1L)
-  expect_identical(args$adapt_engaged, TRUE)
-  expect_identical(args$adapt_iter, 50L)
-  expect_identical(args$tol_rel_obj, 0.01)
-  expect_identical(args$eval_elbo, 100L)
-  expect_identical(args$draws, 1000L)
-})
-
-test_that("cmdstan_defaults() returns expected default values for pathfinder", {
-  args <- mod$cmdstan_defaults("pathfinder")
-  expect_identical(args$init_alpha, 0.001)
-  expect_identical(args$tol_obj, 1e-12)
-  expect_identical(args$tol_rel_obj, 10000L)
-  expect_identical(args$tol_grad, 1e-08)
-  expect_identical(args$tol_rel_grad, 1e+07)
-  expect_identical(args$tol_param, 1e-08)
-  expect_identical(args$history_size, 5L)
-  expect_identical(args$draws, 1000L)
-  expect_identical(args$num_paths, 4L)
-  expect_identical(args$save_single_paths, FALSE)
-  expect_identical(args$psis_resample, TRUE)
-  expect_identical(args$calculate_lp, TRUE)
-  expect_identical(args$max_lbfgs_iters, 1000L)
-  expect_identical(args$single_path_draws, 1000L)
-  expect_identical(args$num_elbo_draws, 25L)
-})
-
-test_that("cmdstan_defaults() returns expected default values for laplace", {
-  args <- mod$cmdstan_defaults("laplace")
-  expect_identical(args$jacobian, TRUE)
-  expect_identical(args$draws, 1000L)
 })
 
 # internal helpers --------------------------------------------------------
