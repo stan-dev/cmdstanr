@@ -123,7 +123,7 @@ test_that("cmdstan_version() behaves correctly when version is not set", {
 })
 
 test_that("Warning message is thrown if can't detect version number", {
-  path <- testthat::test_path("answers") # valid path but not cmdstan
+  path <- withr::local_tempdir() # valid path but not cmdstan
   expect_warning(
     set_cmdstan_path(path),
     "Can't find CmdStan makefile to detect version number"
