@@ -30,19 +30,17 @@ expect_compilation <- function(mod, ...) {
 #' @param constructor_call a call returning a CmdStanModel object that should have been compiled
 #' @return the newly created model
 expect_call_compilation <- function(constructor_call) {
-  constructor_call <- substitute(constructor_call)
-  before_time <- Sys.time() - 10
-  rlang::with_interactive(value = TRUE, {
-    expect_message(
-      mod <- rlang::eval_bare(constructor_call, parent.frame()),
-      "Compiling Stan program..."
-    )
-  })
+  before_time <- Sys.time()
+  mod <- expect_interactive_message(constructor_call, "Compiling Stan program...")
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
     fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
   }
   after_mtime <- file.mtime(mod$exe_file())
-  expect_true(before_time <= after_mtime, sprintf("Exe file '%s' has old timestamp, despite expecting (re)compilation", mod$exe_file()))
+  expect_gt(
+    after_mtime,
+    before_time,
+    sprintf("Exe file '%s' has old timestamp, despite expecting (re)compilation", mod$exe_file())
+  )
   invisible(mod)
 }
 
@@ -110,8 +108,19 @@ expect_gq_output <- function(object, num_chains = NULL) {
 }
 
 expect_interactive_message <- function(object, regexp = NULL) {
-  rlang::with_interactive(value = TRUE,
-    expect_message(object = object, regexp = regexp))
+  object <- substitute(object)
+  env <- parent.frame()
+  value <- NULL
+  rlang::with_interactive(value = TRUE, {
+    expect_message(
+      object = {
+        value <- rlang::eval_bare(object, env)
+        value
+      },
+      regexp = regexp
+    )
+  })
+  invisible(value)
 }
 
 expect_noninteractive_silent <- function(object) {
