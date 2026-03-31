@@ -2286,29 +2286,29 @@ parse_cmdstan_args <- function(model_binary, method) {
   output <- strsplit(raw, "\r?\n")[[1]]
 
   arguments <- map_cmdstan_to_cmdstanr(method)
-  argument_paths <- unname(arguments)
+  argument_keys <- unname(arguments)
   cmdstanr_names <- names(arguments)
 
   result <- list()
   n <- length(output)
-  # Track the current hierarchical path using indentation.
-  # Each entry in path_stack is list(indent, name) representing a section
+  # Track the current hierarchical argument key using indentation.
+  # Each entry in key_stack is list(indent, name) representing a section
   # at a given indentation level (e.g., "adapt" at indent 4).
-  path_stack <- list()
+  key_stack <- list()
 
   for (i in seq_len(n)) {
     line <- output[i]
     content <- trimws(line)
 
-    # Skip blank lines so they don't reset the path stack
+    # Skip blank lines so they don't reset the key stack
     if (!nzchar(content)) next
 
     indent <- nchar(sub("^(\\s*).*", "\\1", line))
 
-    # Pop path_stack entries at deeper or equal indentation
-    while (length(path_stack) > 0 &&
-           path_stack[[length(path_stack)]]$indent >= indent) {
-      path_stack[[length(path_stack)]] <- NULL
+    # Pop key_stack entries at deeper or equal indentation
+    while (length(key_stack) > 0 &&
+           key_stack[[length(key_stack)]]$indent >= indent) {
+      key_stack[[length(key_stack)]] <- NULL
     }
 
     # Match section headers like "adapt" or "algorithm" (bare names, no =)
@@ -2317,7 +2317,7 @@ parse_cmdstan_args <- function(model_binary, method) {
       regexec("^([a-z_][a-z0-9_]*)$", content)
     )[[1]]
     if (length(section_match) >= 2) {
-      path_stack[[length(path_stack) + 1]] <- list(
+      key_stack[[length(key_stack) + 1]] <- list(
         indent = indent,
         name = section_match[2]
       )
@@ -2333,12 +2333,12 @@ parse_cmdstan_args <- function(model_binary, method) {
     if (length(arg_match) >= 2) {
       arg_name <- arg_match[2]
 
-      # Build the full dotted path: method.section1.section2...arg_name
-      sections <- vapply(path_stack, `[[`, "name", FUN.VALUE = character(1))
-      full_path <- paste(c(sections, arg_name), collapse = ".")
+      # Build the full dotted argument key: method.section1.section2...arg_name
+      sections <- vapply(key_stack, `[[`, "name", FUN.VALUE = character(1))
+      full_key <- paste(c(sections, arg_name), collapse = ".")
 
-      # Check if this full path matches one of our target arguments
-      match_idx <- match(full_path, argument_paths, nomatch = 0L)
+      # Check if this full argument key matches one of our target arguments
+      match_idx <- match(full_key, argument_keys, nomatch = 0L)
 
       if (match_idx > 0L) {
         # Look ahead for "Defaults to" line
