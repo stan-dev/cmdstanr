@@ -74,6 +74,7 @@
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-sample_mpi.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-variables.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.html</loc></url>
+<url><loc>https://mc-stan.org/cmdstanr/dev/reference/print_stan_file.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/register_knitr_engine.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/set_cmdstan_path.html</loc></url>

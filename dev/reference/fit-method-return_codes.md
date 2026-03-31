@@ -28,7 +28,7 @@ CmdStan runs (number of chains for MCMC and one otherwise).
 # example with return codes all zero
 fit_mcmc <- cmdstanr_example("schools", method = "sample")
 #> Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
-#> Chain 1 Exception: normal_lpdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmppWgqDC/model-1fa227fb0511.stan', line 14, column 2 to column 41)
+#> Chain 1 Exception: normal_lpdf: Scale parameter is 0, but must be positive! (in '/tmp/Rtmp4hU51z/model-1e723a06e61f.stan', line 14, column 2 to column 41)
 #> Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
 #> Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
 #> Chain 1 

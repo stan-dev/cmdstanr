@@ -288,6 +288,9 @@ Run CmdStan from R.
 - [`write_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_file.md)
   : Write Stan code to a file
 
+- [`print_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/print_stan_file.md)
+  : Print a Stan file with syntax highlighting in Quarto and R Markdown
+
 - [`draws_to_csv()`](https://mc-stan.org/cmdstanr/dev/reference/draws_to_csv.md)
   : Write posterior draws objects to CSV files suitable for running
   standalone generated quantities with CmdStan.
