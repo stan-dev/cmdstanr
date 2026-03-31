@@ -2360,14 +2360,12 @@ map_cmdstan_to_cmdstanr <- function(method) {
       max_treedepth = "sample.algorithm.hmc.engine.nuts.max_depth",
       metric = "sample.algorithm.hmc.metric",
       metric_file = "sample.algorithm.hmc.metric_file",
-      step_size = "sample.algorithm.hmc.stepsize",
-      num_chains = "sample.num_chains"
+      step_size = "sample.algorithm.hmc.stepsize"
     ),
     optimize = c(
       algorithm = "optimize.algorithm",
       jacobian = "optimize.jacobian",
       iter = "optimize.iter",
-      save_iterations = "optimize.save_iterations",
       init_alpha = "optimize.algorithm.lbfgs.init_alpha",
       tol_obj = "optimize.algorithm.lbfgs.tol_obj",
       tol_rel_obj = "optimize.algorithm.lbfgs.tol_rel_obj",
@@ -2386,7 +2384,7 @@ map_cmdstan_to_cmdstanr <- function(method) {
       adapt_iter = "variational.adapt.iter",
       tol_rel_obj = "variational.tol_rel_obj",
       eval_elbo = "variational.eval_elbo",
-      output_samples = "variational.output_samples"
+      draws = "variational.output_samples"
     ),
     pathfinder = c(
       init_alpha = "pathfinder.init_alpha",
