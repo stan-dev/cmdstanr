@@ -2322,6 +2322,8 @@ parse_cmdstan_args <- function(model_binary, method) {
     if (!is.null(arg_name)) {
 
       # Build the full dotted argument key: method.section1.section2...arg_name
+      # The top-level method heading (e.g. "sample") is tracked as a section,
+      # so it becomes the first segment of the key.
       full_key <- paste(c(section_names, arg_name), collapse = ".")
 
       # Check if this full argument key matches one of our target arguments
