@@ -2270,10 +2270,16 @@ CmdStanModel$set("public", name = "get_cmdstan_args", value = get_cmdstan_args)
 #' @return A named list with cmdstanr-style argument names and default
 #'   values.
 parse_cmdstan_args <- function(model_binary, method) {
-  ret <- wsl_compatible_run(
-    command = wsl_safe_path(model_binary),
-    args = c(method, "help-all"),
-    error_on_status = FALSE
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    ret <- wsl_compatible_run(
+      command = wsl_safe_path(model_binary),
+      args = c(method, "help-all"),
+      error_on_status = FALSE
+    )
   )
   # CmdStan may write help text to stdout or stderr depending on the platform
   raw <- paste0(ret$stdout, ret$stderr)
