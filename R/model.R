@@ -2286,26 +2286,57 @@ parse_cmdstan_args <- function(model_binary, method) {
   output <- strsplit(raw, "\r?\n")[[1]]
 
   arguments <- map_cmdstan_to_cmdstanr(method)
-  target_args <- vapply(arguments, function(p) {
-    parts <- strsplit(p, "\\.")[[1]]
-    parts[length(parts)]
-  }, FUN.VALUE = character(1), USE.NAMES = TRUE)
 
   result <- list()
   n <- length(output)
+  # Track the current hierarchical path using indentation.
+  # Each entry in path_stack is list(indent, name) representing a section
+  # at a given indentation level (e.g., "adapt" at indent 4).
+  path_stack <- list()
 
   for (i in seq_len(n)) {
     line <- output[i]
     content <- trimws(line)
 
+    # Skip blank lines so they don't reset the path stack
+    if (!nzchar(content)) next
+
+    indent <- nchar(sub("^(\\s*).*", "\\1", line))
+
+    # Pop path_stack entries at deeper or equal indentation
+    while (length(path_stack) > 0 &&
+           path_stack[[length(path_stack)]]$indent >= indent) {
+      path_stack[[length(path_stack)]] <- NULL
+    }
+
+    # Match section headers like "adapt" or "algorithm" (bare names, no =)
+    section_match <- regmatches(
+      content,
+      regexec("^([a-z_][a-z0-9_]*)$", content)
+    )[[1]]
+    if (length(section_match) >= 2) {
+      path_stack[[length(path_stack) + 1]] <- list(
+        indent = indent,
+        name = section_match[2]
+      )
+      next
+    }
+
     # Match argument lines like "num_samples=<int>" or "t0=<double>"
-    arg_match <- regmatches(content, regexec("^([a-z_][a-z0-9_]*)=", content))[[1]]
+    arg_match <- regmatches(
+      content,
+      regexec("^([a-z_][a-z0-9_]*)=", content)
+    )[[1]]
 
     if (length(arg_match) >= 2) {
       arg_name <- arg_match[2]
 
-      # Check if this is one of our target arguments
-      matches <- which(target_args == arg_name)
+      # Build the full dotted path: method.section1.section2...arg_name
+      sections <- vapply(path_stack, `[[`, "name", FUN.VALUE = character(1))
+      full_path <- paste(c(sections, arg_name), collapse = ".")
+
+      # Check if this full path matches any of our target arguments
+      matches <- which(arguments == full_path)
 
       if (length(matches) > 0) {
         # Look ahead for "Defaults to" line
@@ -2322,7 +2353,7 @@ parse_cmdstan_args <- function(model_binary, method) {
 
         # Add to result for each matching cmdstanr argument name
         for (m in matches) {
-          cmdstanr_name <- names(target_args)[m]
+          cmdstanr_name <- names(arguments)[m]
           result[[cmdstanr_name]] <- default_value
         }
       }
@@ -2357,22 +2388,23 @@ map_cmdstan_to_cmdstanr <- function(method) {
       term_buffer = "sample.adapt.term_buffer",
       window = "sample.adapt.window",
       save_metric = "sample.adapt.save_metric",
-      max_treedepth = "sample.algorithm.hmc.engine.nuts.max_depth",
-      metric = "sample.algorithm.hmc.metric",
-      metric_file = "sample.algorithm.hmc.metric_file",
-      step_size = "sample.algorithm.hmc.stepsize"
+      max_treedepth = "sample.hmc.nuts.max_depth",
+      metric = "sample.hmc.metric",
+      metric_file = "sample.hmc.metric_file",
+      step_size = "sample.hmc.stepsize",
+      chains = "sample.num_chains"
     ),
     optimize = c(
       algorithm = "optimize.algorithm",
       jacobian = "optimize.jacobian",
       iter = "optimize.iter",
-      init_alpha = "optimize.algorithm.lbfgs.init_alpha",
-      tol_obj = "optimize.algorithm.lbfgs.tol_obj",
-      tol_rel_obj = "optimize.algorithm.lbfgs.tol_rel_obj",
-      tol_grad = "optimize.algorithm.lbfgs.tol_grad",
-      tol_rel_grad = "optimize.algorithm.lbfgs.tol_rel_grad",
-      tol_param = "optimize.algorithm.lbfgs.tol_param",
-      history_size = "optimize.algorithm.lbfgs.history_size"
+      init_alpha = "optimize.lbfgs.init_alpha",
+      tol_obj = "optimize.lbfgs.tol_obj",
+      tol_rel_obj = "optimize.lbfgs.tol_rel_obj",
+      tol_grad = "optimize.lbfgs.tol_grad",
+      tol_rel_grad = "optimize.lbfgs.tol_rel_grad",
+      tol_param = "optimize.lbfgs.tol_param",
+      history_size = "optimize.lbfgs.history_size"
     ),
     variational = c(
       algorithm = "variational.algorithm",
