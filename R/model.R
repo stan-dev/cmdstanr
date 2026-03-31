@@ -2286,6 +2286,8 @@ parse_cmdstan_args <- function(model_binary, method) {
   output <- strsplit(raw, "\r?\n")[[1]]
 
   arguments <- map_cmdstan_to_cmdstanr(method)
+  argument_paths <- unname(arguments)
+  cmdstanr_names <- names(arguments)
 
   result <- list()
   n <- length(output)
@@ -2335,10 +2337,10 @@ parse_cmdstan_args <- function(model_binary, method) {
       sections <- vapply(path_stack, `[[`, "name", FUN.VALUE = character(1))
       full_path <- paste(c(sections, arg_name), collapse = ".")
 
-      # Check if this full path matches any of our target arguments
-      matches <- which(arguments == full_path)
+      # Check if this full path matches one of our target arguments
+      match_idx <- match(full_path, argument_paths, nomatch = 0L)
 
-      if (length(matches) > 0) {
+      if (match_idx > 0L) {
         # Look ahead for "Defaults to" line
         default_value <- NULL
         for (j in (i + 1):min(i + 5, n)) {
@@ -2351,11 +2353,7 @@ parse_cmdstan_args <- function(model_binary, method) {
           if (grepl("^[a-z_][a-z0-9_]*=", next_content)) break
         }
 
-        # Add to result for each matching cmdstanr argument name
-        for (m in matches) {
-          cmdstanr_name <- names(arguments)[m]
-          result[[cmdstanr_name]] <- default_value
-        }
+        result[[cmdstanr_names[[match_idx]]]] <- default_value
       }
     }
   }
