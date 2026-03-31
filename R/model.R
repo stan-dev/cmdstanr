@@ -2291,24 +2291,24 @@ parse_cmdstan_args <- function(model_binary, method) {
 
   result <- list()
   n <- length(output)
-  # Track the current hierarchical argument key using indentation.
-  # Each entry in key_stack is list(indent, name) representing a section
-  # at a given indentation level (e.g., "adapt" at indent 4).
-  key_stack <- list()
+  # Track the current hierarchical argument key using section indentation.
+  section_indents <- integer(0)
+  section_names <- character(0)
 
   for (i in seq_len(n)) {
     line <- output[i]
     content <- trimws(line)
 
-    # Skip blank lines so they don't reset the key stack
+    # Skip blank lines so they don't reset the section stack
     if (!nzchar(content)) next
 
     indent <- nchar(sub("^(\\s*).*", "\\1", line))
 
-    # Pop key_stack entries at deeper or equal indentation
-    while (length(key_stack) > 0 &&
-           key_stack[[length(key_stack)]]$indent >= indent) {
-      key_stack[[length(key_stack)]] <- NULL
+    # Drop sections at deeper or equal indentation
+    while (length(section_indents) > 0 &&
+           section_indents[[length(section_indents)]] >= indent) {
+      section_indents <- section_indents[-length(section_indents)]
+      section_names <- section_names[-length(section_names)]
     }
 
     # Match section headers like "adapt" or "algorithm" (bare names, no =)
@@ -2317,10 +2317,8 @@ parse_cmdstan_args <- function(model_binary, method) {
       regexec("^([a-z_][a-z0-9_]*)$", content)
     )[[1]]
     if (length(section_match) >= 2) {
-      key_stack[[length(key_stack) + 1]] <- list(
-        indent = indent,
-        name = section_match[2]
-      )
+      section_indents <- c(section_indents, indent)
+      section_names <- c(section_names, section_match[2])
       next
     }
 
@@ -2334,8 +2332,7 @@ parse_cmdstan_args <- function(model_binary, method) {
       arg_name <- arg_match[2]
 
       # Build the full dotted argument key: method.section1.section2...arg_name
-      sections <- vapply(key_stack, `[[`, "name", FUN.VALUE = character(1))
-      full_key <- paste(c(sections, arg_name), collapse = ".")
+      full_key <- paste(c(section_names, arg_name), collapse = ".")
 
       # Check if this full argument key matches one of our target arguments
       match_idx <- match(full_key, argument_keys, nomatch = 0L)
