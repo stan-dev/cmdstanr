@@ -48,10 +48,9 @@ test_that("Setting path from env var is detected", {
 test_that("Unsupported CmdStan path from env var is rejected", {
   unset_cmdstan_path()
   .cmdstanr$WSL <- TRUE
-  parent_dir <- file.path(tempdir(check = TRUE), "cmdstan-env-parent")
+  parent_dir <- withr::local_tempdir(pattern = "cmdstan-env-parent")
   old_install <- file.path(parent_dir, "cmdstan-2.34.0")
   dir.create(old_install, recursive = TRUE, showWarnings = FALSE)
-  on.exit(unlink(parent_dir, recursive = TRUE), add = TRUE)
   writeLines("CMDSTAN_VERSION := 2.34.0", con = file.path(old_install, "makefile"))
 
   withr::local_envvar(c(CMDSTAN = parent_dir))
@@ -69,9 +68,7 @@ test_that("Existing CMDSTAN env path with no install resets cached state", {
   .cmdstanr$PATH <- PATH
   .cmdstanr$VERSION <- VERSION
   .cmdstanr$WSL <- TRUE
-  empty_parent <- file.path(tempdir(check = TRUE), "cmdstan-empty-parent")
-  dir.create(empty_parent, recursive = TRUE, showWarnings = FALSE)
-  on.exit(unlink(empty_parent, recursive = TRUE), add = TRUE)
+  empty_parent <- withr::local_tempdir(pattern = "cmdstan-empty-parent")
 
   withr::local_envvar(c(CMDSTAN = empty_parent))
   expect_warning(
@@ -140,9 +137,8 @@ test_that("Setting path rejects unsupported CmdStan versions", {
     .cmdstanr$WSL <- old_wsl
   })
 
-  path <- file.path(tempdir(check = TRUE), "cmdstan-2.34.0")
+  path <- file.path(withr::local_tempdir(pattern = "cmdstan-unsupported"), "cmdstan-2.34.0")
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
-  on.exit(unlink(path, recursive = TRUE), add = TRUE)
   writeLines("CMDSTAN_VERSION := 2.34.0", con = file.path(path, "makefile"))
 
   expect_warning(
@@ -166,10 +162,9 @@ test_that("unset_cmdstan_path() also resets WSL state", {
 })
 
 test_that("cmdstan_default_path() respects custom install directories", {
-  installs <- file.path(tempdir(check = TRUE), "cmdstan-custom-installs")
+  installs <- withr::local_tempdir(pattern = "cmdstan-custom-installs")
   dir.create(file.path(installs, "cmdstan-2.35.0"), recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(installs, "cmdstan-2.36.0"), recursive = TRUE, showWarnings = FALSE)
-  on.exit(unlink(installs, recursive = TRUE), add = TRUE)
 
   expect_equal(
     cmdstan_default_path(dir = installs),
@@ -178,9 +173,7 @@ test_that("cmdstan_default_path() respects custom install directories", {
 })
 
 test_that("cmdstan_default_path() returns NULL for empty custom install directories", {
-  installs <- file.path(tempdir(check = TRUE), "cmdstan-empty-installs")
-  dir.create(installs, recursive = TRUE, showWarnings = FALSE)
-  on.exit(unlink(installs, recursive = TRUE), add = TRUE)
+  installs <- withr::local_tempdir(pattern = "cmdstan-empty-installs")
 
   expect_null(cmdstan_default_path(dir = installs))
 })

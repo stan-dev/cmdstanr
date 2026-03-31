@@ -310,8 +310,7 @@ test_that("rtools4x_toolchain_path prefers static-posix when available", {
     if (arch_is_aarch64()) "_AARCH64" else "",
     "_HOME"
   )
-  fake_rtools_home <- tempfile(pattern = "rtools-home-pref-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-pref-")
   dir.create(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
@@ -334,8 +333,7 @@ test_that("rtools4x_toolchain_path falls back to mingw64 for legacy layouts", {
     if (arch_is_aarch64()) "_AARCH64" else "",
     "_HOME"
   )
-  fake_rtools_home <- tempfile(pattern = "rtools-home-fallback-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-fallback-")
   dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   file.create(file.path(fake_rtools_home, "mingw64", "bin", "g++.exe"))
@@ -355,8 +353,7 @@ test_that("rtools4x_toolchain_path prefers ABI-compatible legacy fallback", {
     if (arch_is_aarch64()) "_AARCH64" else "",
     "_HOME"
   )
-  fake_rtools_home <- tempfile(pattern = "rtools-home-abi-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-abi-")
   dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(fake_rtools_home, "ucrt64", "bin"),
@@ -388,8 +385,7 @@ test_that("check_rtools4x_windows_toolchain reports checked toolchain paths", {
     if (arch_is_aarch64()) "_AARCH64" else "",
     "_HOME"
   )
-  fake_rtools_home <- tempfile(pattern = "rtools-home-invalid-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-invalid-")
   dir.create(file.path(fake_rtools_home, "usr", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   file.create(file.path(fake_rtools_home, "usr", "bin", "make.exe"))
@@ -441,8 +437,7 @@ test_that("toolchain_PATH_env_var() handles missing and configured Rtools homes"
 })
 
 test_that("check_rtools4x_windows_toolchain reports missing Rtools and make", {
-  fake_rtools_home <- tempfile(pattern = "rtools-home-missing-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-missing-")
 
   local({
     local_mocked_bindings(
@@ -484,8 +479,7 @@ test_that("check_rtools4x_windows_toolchain validates install path and empty can
     )
   })
 
-  fake_rtools_home <- tempfile(pattern = "rtools-home-empty-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-empty-")
   dir.create(file.path(fake_rtools_home, "usr", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   file.create(file.path(fake_rtools_home, "usr", "bin", "make.exe"))
