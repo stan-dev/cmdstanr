@@ -2285,11 +2285,11 @@ parse_cmdstan_args <- function(model_binary, method) {
   raw <- paste0(ret$stdout, ret$stderr)
   output <- strsplit(raw, "\r?\n")[[1]]
 
-  arguments <- map_cmdstan_to_cmdstanr(method)
-  argument_keys <- unname(arguments)
-  cmdstanr_names <- names(arguments)
+  argument_map <- map_cmdstan_to_cmdstanr(method)
+  cmdstan_keys <- unname(argument_map)
+  public_names <- names(argument_map)
 
-  result <- list()
+  defaults <- list()
   n <- length(output)
   # Track the current hierarchical argument key using section indentation.
   section_indents <- integer(0)
@@ -2325,16 +2325,16 @@ parse_cmdstan_args <- function(model_binary, method) {
       full_key <- paste(c(section_names, arg_name), collapse = ".")
 
       # Check if this full argument key matches one of our target arguments
-      match_idx <- match(full_key, argument_keys, nomatch = 0L)
+      match_idx <- match(full_key, cmdstan_keys, nomatch = 0L)
 
       if (match_idx > 0L) {
         default_value <- find_cmdstan_default_value(output, i, n)
-        result[[cmdstanr_names[[match_idx]]]] <- default_value
+        defaults[[public_names[[match_idx]]]] <- default_value
       }
     }
   }
 
-  result
+  defaults
 }
 
 #' Parse CmdStan section name from a help-all line
