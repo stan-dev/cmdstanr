@@ -2311,25 +2311,15 @@ parse_cmdstan_args <- function(model_binary, method) {
       section_names <- section_names[-length(section_names)]
     }
 
-    # Match section headers like "adapt" or "algorithm" (bare names, no =)
-    section_match <- regmatches(
-      content,
-      regexec("^([a-z_][a-z0-9_]*)$", content)
-    )[[1]]
-    if (length(section_match) >= 2) {
+    section_name <- parse_cmdstan_section_name(content)
+    if (!is.null(section_name)) {
       section_indents <- c(section_indents, indent)
-      section_names <- c(section_names, section_match[2])
+      section_names <- c(section_names, section_name)
       next
     }
 
-    # Match argument lines like "num_samples=<int>" or "t0=<double>"
-    arg_match <- regmatches(
-      content,
-      regexec("^([a-z_][a-z0-9_]*)=", content)
-    )[[1]]
-
-    if (length(arg_match) >= 2) {
-      arg_name <- arg_match[2]
+    arg_name <- parse_cmdstan_arg_name(content)
+    if (!is.null(arg_name)) {
 
       # Build the full dotted argument key: method.section1.section2...arg_name
       full_key <- paste(c(section_names, arg_name), collapse = ".")
@@ -2338,24 +2328,45 @@ parse_cmdstan_args <- function(model_binary, method) {
       match_idx <- match(full_key, argument_keys, nomatch = 0L)
 
       if (match_idx > 0L) {
-        # Look ahead for "Defaults to" line
-        default_value <- NULL
-        for (j in (i + 1):min(i + 5, n)) {
-          next_content <- trimws(output[j])
-          if (grepl("^Defaults to", next_content)) {
-            default_value <- parse_default_value(next_content)
-            break
-          }
-          # Stop if we hit another argument
-          if (grepl("^[a-z_][a-z0-9_]*=", next_content)) break
-        }
-
+        default_value <- find_cmdstan_default_value(output, i, n)
         result[[cmdstanr_names[[match_idx]]]] <- default_value
       }
     }
   }
 
   result
+}
+
+#' Parse CmdStan section name from a help-all line
+#' @noRd
+parse_cmdstan_section_name <- function(line) {
+  match <- regmatches(line, regexec("^([a-z_][a-z0-9_]*)$", line))[[1]]
+  if (length(match) >= 2) match[2] else NULL
+}
+
+#' Parse CmdStan argument name from a help-all line
+#' @noRd
+parse_cmdstan_arg_name <- function(line) {
+  match <- regmatches(line, regexec("^([a-z_][a-z0-9_]*)=", line))[[1]]
+  if (length(match) >= 2) match[2] else NULL
+}
+
+#' Find CmdStan default value following a help-all argument line
+#' @noRd
+find_cmdstan_default_value <- function(output, line_idx, n_lines) {
+  default_value <- NULL
+
+  for (j in (line_idx + 1):min(line_idx + 5, n_lines)) {
+    next_content <- trimws(output[j])
+    if (grepl("^Defaults to", next_content)) {
+      default_value <- parse_default_value(next_content)
+      break
+    }
+    # Stop if we hit another argument
+    if (grepl("^[a-z_][a-z0-9_]*=", next_content)) break
+  }
+
+  default_value
 }
 
 #' Parse default value from "Defaults to ..." line
