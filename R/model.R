@@ -2255,7 +2255,128 @@ cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
 CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 
 
-# cmdstan_defaults helpers ------------------------------------------------
+
+# internal ----------------------------------------------------------------
+assert_valid_stanc_options <- function(stanc_options) {
+  i <- 1
+  names <- names(stanc_options)
+  for (s in stanc_options) {
+    if (!is.null(names[i]) && nzchar(names[i])) {
+      name <- names[i]
+    } else {
+      name <- s
+    }
+    if (startsWith(name, "--")) {
+      stop("No leading hyphens allowed in stanc options (", name, "). ",
+           "Use options without leading hyphens, for example ",
+           "`stanc_options = list('allow-undefined')`",
+           call. = FALSE)
+    }
+    i <- i + 1
+  }
+  invisible(stanc_options)
+}
+
+assert_stan_file_exists <- function(stan_file) {
+  if (!file.exists(stan_file)) {
+    stop("The Stan file used to create the `CmdStanModel` object does not exist.", call. = FALSE)
+  }
+}
+
+include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
+  stancflags <- NULL
+  if (!is.null(include_paths)) {
+    assert_dir_exists(include_paths, access = "r")
+    include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
+    # Calling stanc3 directly through processx::run does not need quoting
+    if (!isTRUE(standalone_call)) {
+      paths_w_space <- grep(" ", include_paths)
+      include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
+    }
+    include_paths <- paste0(include_paths, collapse = ",")
+    include_paths_flag <- "--include-paths="
+    if (isTRUE(standalone_call)) {
+      stancflags <- c(stancflags, "--include-paths", include_paths)
+    } else {
+      stancflags <- paste0(stancflags, include_paths_flag, include_paths)
+    }
+  }
+  stancflags
+}
+
+model_variables <- function(stan_file, include_paths = NULL, allow_undefined = FALSE) {
+  if (allow_undefined) {
+    allow_undefined_arg <- "--allow-undefined"
+  } else {
+    allow_undefined_arg <- NULL
+  }
+  out_file <- tempfile(fileext = ".json")
+  run_log <- wsl_compatible_run(
+    command = stanc_cmd(),
+    args = c(wsl_safe_path(stan_file),
+              "--info",
+              include_paths_stanc3_args(include_paths),
+              allow_undefined_arg),
+    wd = cmdstan_path(),
+    echo = FALSE,
+    echo_cmd = FALSE,
+    stdout = out_file,
+    error_on_status = TRUE
+  )
+  variables <- jsonlite::read_json(out_file, na = "null")
+  variables$data <- variables$inputs
+  variables$inputs <- NULL
+  variables$transformed_parameters <- variables[["transformed parameters"]]
+  variables[["transformed parameters"]] <- NULL
+  variables$generated_quantities <- variables[["generated quantities"]]
+  variables[["generated quantities"]] <- NULL
+  variables$functions <- NULL
+  variables$distributions <- NULL
+  variables
+}
+
+is_variables_method_supported <- function(mod) {
+  mod$has_stan_file() && file.exists(mod$stan_file())
+}
+
+resolve_exe_path <- function(dir = NULL,
+                             private_dir = NULL,
+                             self_exe_file = NULL,
+                             self_stan_file = NULL) {
+  if (is.null(dir) && !is.null(private_dir)) {
+    dir <- absolute_path(private_dir)
+  } else if (!is.null(dir)) {
+    dir <- absolute_path(dir)
+  }
+  if (!is.null(dir)) {
+    dir <- repair_path(dir)
+    assert_dir_exists(dir, access = "rw")
+    if (length(self_exe_file) != 0) {
+      self_exe_file <- file.path(dir, basename(self_exe_file))
+    }
+  }
+  if (length(self_exe_file) == 0) {
+    if (is.null(dir)) {
+      exe_base <- self_stan_file
+    } else {
+      exe_base <- file.path(dir, basename(self_stan_file))
+    }
+    exe <- cmdstan_ext(strip_ext(exe_base))
+    if (dir.exists(exe)) {
+      stop(
+        "There is a subfolder matching the model name ",
+        "in the same folder as the model! ",
+        "Please remove or rename the subfolder and try again.",
+        call. = FALSE
+      )
+    }
+  } else {
+    exe <- self_exe_file
+  }
+  exe
+}
+
+# cmdstan_defaults() helpers
 
 #' Parse CmdStan default argument values from model binary
 #'
@@ -2385,189 +2506,69 @@ parse_default_value <- function(line) {
 #' @noRd
 map_cmdstan_to_cmdstanr <- function(method) {
   switch(method,
-    sample = c(
-      iter_sampling = "sample.num_samples",
-      iter_warmup = "sample.num_warmup",
-      save_warmup = "sample.save_warmup",
-      thin = "sample.thin",
-      adapt_engaged = "sample.adapt.engaged",
-      adapt_delta = "sample.adapt.delta",
-      init_buffer = "sample.adapt.init_buffer",
-      term_buffer = "sample.adapt.term_buffer",
-      window = "sample.adapt.window",
-      save_metric = "sample.adapt.save_metric",
-      max_treedepth = "sample.hmc.nuts.max_depth",
-      metric = "sample.hmc.metric",
-      metric_file = "sample.hmc.metric_file",
-      step_size = "sample.hmc.stepsize",
-      chains = "sample.num_chains"
-    ),
-    optimize = c(
-      algorithm = "optimize.algorithm",
-      jacobian = "optimize.jacobian",
-      iter = "optimize.iter",
-      init_alpha = "optimize.lbfgs.init_alpha",
-      tol_obj = "optimize.lbfgs.tol_obj",
-      tol_rel_obj = "optimize.lbfgs.tol_rel_obj",
-      tol_grad = "optimize.lbfgs.tol_grad",
-      tol_rel_grad = "optimize.lbfgs.tol_rel_grad",
-      tol_param = "optimize.lbfgs.tol_param",
-      history_size = "optimize.lbfgs.history_size"
-    ),
-    variational = c(
-      algorithm = "variational.algorithm",
-      iter = "variational.iter",
-      grad_samples = "variational.grad_samples",
-      elbo_samples = "variational.elbo_samples",
-      eta = "variational.eta",
-      adapt_engaged = "variational.adapt.engaged",
-      adapt_iter = "variational.adapt.iter",
-      tol_rel_obj = "variational.tol_rel_obj",
-      eval_elbo = "variational.eval_elbo",
-      draws = "variational.output_samples"
-    ),
-    pathfinder = c(
-      init_alpha = "pathfinder.init_alpha",
-      tol_obj = "pathfinder.tol_obj",
-      tol_rel_obj = "pathfinder.tol_rel_obj",
-      tol_grad = "pathfinder.tol_grad",
-      tol_rel_grad = "pathfinder.tol_rel_grad",
-      tol_param = "pathfinder.tol_param",
-      history_size = "pathfinder.history_size",
-      draws = "pathfinder.num_psis_draws",
-      num_paths = "pathfinder.num_paths",
-      save_single_paths = "pathfinder.save_single_paths",
-      psis_resample = "pathfinder.psis_resample",
-      calculate_lp = "pathfinder.calculate_lp",
-      max_lbfgs_iters = "pathfinder.max_lbfgs_iters",
-      single_path_draws = "pathfinder.num_draws",
-      num_elbo_draws = "pathfinder.num_elbo_draws"
-    ),
-    laplace = c(
-      jacobian = "laplace.jacobian",
-      draws = "laplace.draws"
-    ),
-    character(0)
+         sample = c(
+           iter_sampling = "sample.num_samples",
+           iter_warmup = "sample.num_warmup",
+           save_warmup = "sample.save_warmup",
+           thin = "sample.thin",
+           adapt_engaged = "sample.adapt.engaged",
+           adapt_delta = "sample.adapt.delta",
+           init_buffer = "sample.adapt.init_buffer",
+           term_buffer = "sample.adapt.term_buffer",
+           window = "sample.adapt.window",
+           save_metric = "sample.adapt.save_metric",
+           max_treedepth = "sample.hmc.nuts.max_depth",
+           metric = "sample.hmc.metric",
+           metric_file = "sample.hmc.metric_file",
+           step_size = "sample.hmc.stepsize",
+           chains = "sample.num_chains"
+         ),
+         optimize = c(
+           algorithm = "optimize.algorithm",
+           jacobian = "optimize.jacobian",
+           iter = "optimize.iter",
+           init_alpha = "optimize.lbfgs.init_alpha",
+           tol_obj = "optimize.lbfgs.tol_obj",
+           tol_rel_obj = "optimize.lbfgs.tol_rel_obj",
+           tol_grad = "optimize.lbfgs.tol_grad",
+           tol_rel_grad = "optimize.lbfgs.tol_rel_grad",
+           tol_param = "optimize.lbfgs.tol_param",
+           history_size = "optimize.lbfgs.history_size"
+         ),
+         variational = c(
+           algorithm = "variational.algorithm",
+           iter = "variational.iter",
+           grad_samples = "variational.grad_samples",
+           elbo_samples = "variational.elbo_samples",
+           eta = "variational.eta",
+           adapt_engaged = "variational.adapt.engaged",
+           adapt_iter = "variational.adapt.iter",
+           tol_rel_obj = "variational.tol_rel_obj",
+           eval_elbo = "variational.eval_elbo",
+           draws = "variational.output_samples"
+         ),
+         pathfinder = c(
+           init_alpha = "pathfinder.init_alpha",
+           tol_obj = "pathfinder.tol_obj",
+           tol_rel_obj = "pathfinder.tol_rel_obj",
+           tol_grad = "pathfinder.tol_grad",
+           tol_rel_grad = "pathfinder.tol_rel_grad",
+           tol_param = "pathfinder.tol_param",
+           history_size = "pathfinder.history_size",
+           draws = "pathfinder.num_psis_draws",
+           num_paths = "pathfinder.num_paths",
+           save_single_paths = "pathfinder.save_single_paths",
+           psis_resample = "pathfinder.psis_resample",
+           calculate_lp = "pathfinder.calculate_lp",
+           max_lbfgs_iters = "pathfinder.max_lbfgs_iters",
+           single_path_draws = "pathfinder.num_draws",
+           num_elbo_draws = "pathfinder.num_elbo_draws"
+         ),
+         laplace = c(
+           jacobian = "laplace.jacobian",
+           draws = "laplace.draws"
+         ),
+         character(0)
   )
 }
 
-
-# internal ----------------------------------------------------------------
-assert_valid_stanc_options <- function(stanc_options) {
-  i <- 1
-  names <- names(stanc_options)
-  for (s in stanc_options) {
-    if (!is.null(names[i]) && nzchar(names[i])) {
-      name <- names[i]
-    } else {
-      name <- s
-    }
-    if (startsWith(name, "--")) {
-      stop("No leading hyphens allowed in stanc options (", name, "). ",
-           "Use options without leading hyphens, for example ",
-           "`stanc_options = list('allow-undefined')`",
-           call. = FALSE)
-    }
-    i <- i + 1
-  }
-  invisible(stanc_options)
-}
-
-assert_stan_file_exists <- function(stan_file) {
-  if (!file.exists(stan_file)) {
-    stop("The Stan file used to create the `CmdStanModel` object does not exist.", call. = FALSE)
-  }
-}
-
-include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
-  stancflags <- NULL
-  if (!is.null(include_paths)) {
-    assert_dir_exists(include_paths, access = "r")
-    include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
-    # Calling stanc3 directly through processx::run does not need quoting
-    if (!isTRUE(standalone_call)) {
-      paths_w_space <- grep(" ", include_paths)
-      include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
-    }
-    include_paths <- paste0(include_paths, collapse = ",")
-    include_paths_flag <- "--include-paths="
-    if (isTRUE(standalone_call)) {
-      stancflags <- c(stancflags, "--include-paths", include_paths)
-    } else {
-      stancflags <- paste0(stancflags, include_paths_flag, include_paths)
-    }
-  }
-  stancflags
-}
-
-model_variables <- function(stan_file, include_paths = NULL, allow_undefined = FALSE) {
-  if (allow_undefined) {
-    allow_undefined_arg <- "--allow-undefined"
-  } else {
-    allow_undefined_arg <- NULL
-  }
-  out_file <- tempfile(fileext = ".json")
-  run_log <- wsl_compatible_run(
-    command = stanc_cmd(),
-    args = c(wsl_safe_path(stan_file),
-              "--info",
-              include_paths_stanc3_args(include_paths),
-              allow_undefined_arg),
-    wd = cmdstan_path(),
-    echo = FALSE,
-    echo_cmd = FALSE,
-    stdout = out_file,
-    error_on_status = TRUE
-  )
-  variables <- jsonlite::read_json(out_file, na = "null")
-  variables$data <- variables$inputs
-  variables$inputs <- NULL
-  variables$transformed_parameters <- variables[["transformed parameters"]]
-  variables[["transformed parameters"]] <- NULL
-  variables$generated_quantities <- variables[["generated quantities"]]
-  variables[["generated quantities"]] <- NULL
-  variables$functions <- NULL
-  variables$distributions <- NULL
-  variables
-}
-
-
-is_variables_method_supported <- function(mod) {
-  mod$has_stan_file() && file.exists(mod$stan_file())
-}
-resolve_exe_path <- function(dir = NULL,
-                             private_dir = NULL,
-                             self_exe_file = NULL,
-                             self_stan_file = NULL) {
-  if (is.null(dir) && !is.null(private_dir)) {
-    dir <- absolute_path(private_dir)
-  } else if (!is.null(dir)) {
-    dir <- absolute_path(dir)
-  }
-  if (!is.null(dir)) {
-    dir <- repair_path(dir)
-    assert_dir_exists(dir, access = "rw")
-    if (length(self_exe_file) != 0) {
-      self_exe_file <- file.path(dir, basename(self_exe_file))
-    }
-  }
-  if (length(self_exe_file) == 0) {
-    if (is.null(dir)) {
-      exe_base <- self_stan_file
-    } else {
-      exe_base <- file.path(dir, basename(self_stan_file))
-    }
-    exe <- cmdstan_ext(strip_ext(exe_base))
-    if (dir.exists(exe)) {
-      stop(
-        "There is a subfolder matching the model name ",
-        "in the same folder as the model! ",
-        "Please remove or rename the subfolder and try again.",
-        call. = FALSE
-      )
-    }
-  } else {
-    exe <- self_exe_file
-  }
-  exe
-}
