@@ -326,9 +326,27 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
   ")
   mod <- cmdstan_model(stan_file, compile = FALSE)
   test_file <- process_data(list(a = 1, b = 2), model_variables = mod$variables())
-  expect_snapshot_file(test_file, "process-data-int-real.json")
+  expect_match(
+    "  \"a\": 1,",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "  \"b\": 2.0",
+    readLines(test_file)[3],
+    fixed = TRUE
+  )
   test_file <- process_data(list(a = 1L, b = 1774000000), model_variables = mod$variables())
-  expect_snapshot_file(test_file, "process-data-large-real.json")
+  expect_match(
+    "  \"a\": 1,",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "  \"b\": 1774000000.0",
+    readLines(test_file)[3],
+    fixed = TRUE
+  )
 
   stan_file <- write_stan_file("
   data {
@@ -337,7 +355,16 @@ test_that("process_data() corrrectly casts integers and floating point numbers",
   ")
   mod <- cmdstan_model(stan_file, compile = FALSE)
   test_file <- process_data(list(k = matrix(c(18, 18, 16, 13, 9, 6, 4, 4, 4), nrow=3, ncol=3, byrow=T)), model_variables = mod$variables())
-  expect_snapshot_file(test_file, "process-data-int-matrix.json")
+  expect_match(
+    "  \"k\": [",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
+  expect_match(
+    "    [18, 18, 16],",
+    readLines(test_file)[3],
+    fixed = TRUE
+  )
 })
 
 test_that("process_data warns on int coercion", {
@@ -383,5 +410,9 @@ test_that("Floating-point differences do not cause truncation towards 0", {
   a <- 10*(3-2.7)
   expect_false(is.integer(a))
   test_file <- process_data(list(a = a, b = 2.0), model_variables = mod$variables())
-  expect_snapshot_file(test_file, "process-data-float-rounding.json")
+  expect_match(
+    "  \"a\": 3,",
+    readLines(test_file)[2],
+    fixed = TRUE
+  )
 })

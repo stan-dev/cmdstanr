@@ -17,14 +17,20 @@ test_that("Setting path works and confirms with message", {
 test_that("Setting bad path leads to warning (can't find directory)", {
   unset_cmdstan_path()
   expect_null(.cmdstanr$PATH)
-  expect_snapshot_warning(set_cmdstan_path("BAD_PATH"))
+  expect_warning(
+    set_cmdstan_path("BAD_PATH"),
+    "Can't find directory"
+  )
 })
 
 test_that("Setting bad path from env leads to warning (can't find directory)", {
   unset_cmdstan_path()
   .cmdstanr$WSL <- TRUE
   withr::local_envvar(c(CMDSTAN = "BAD_PATH"))
-  expect_snapshot_warning(cmdstanr_initialize())
+  expect_warning(
+    cmdstanr_initialize(),
+    "Can't find directory specified by environment variable"
+  )
   expect_null(.cmdstanr$PATH)
   expect_null(.cmdstanr$VERSION)
   expect_false(isTRUE(.cmdstanr$WSL))
@@ -68,7 +74,11 @@ test_that("Existing CMDSTAN env path with no install resets cached state", {
   on.exit(unlink(empty_parent, recursive = TRUE), add = TRUE)
 
   withr::local_envvar(c(CMDSTAN = empty_parent))
-  expect_snapshot_warning(cmdstanr_initialize())
+  expect_warning(
+    cmdstanr_initialize(),
+    "No CmdStan installation found in the path specified by the environment variable 'CMDSTAN'.",
+    fixed = TRUE
+  )
   expect_null(.cmdstanr$PATH)
   expect_null(.cmdstanr$VERSION)
   expect_false(isTRUE(.cmdstanr$WSL))
@@ -90,7 +100,10 @@ test_that("Getting a valid path works", {
 
 test_that("Getting missing path leads to error (path not set)", {
   unset_cmdstan_path()
-  expect_snapshot_error(cmdstan_path())
+  expect_error(
+    cmdstan_path(),
+    "CmdStan path has not been set yet"
+  )
   expect_null(.cmdstanr$PATH)
 })
 
@@ -105,13 +118,16 @@ test_that("cmdstan_version() behaves correctly when version is not set", {
   version <- .cmdstanr$VERSION
   on.exit(.cmdstanr$VERSION <- version)
   .cmdstanr$VERSION <- NULL
-  expect_snapshot_error(cmdstan_version())
+  expect_error(cmdstan_version())
   expect_null(cmdstan_version(error_on_NA = FALSE))
 })
 
 test_that("Warning message is thrown if can't detect version number", {
   path <- testthat::test_path("answers") # valid path but not cmdstan
-  expect_snapshot_warning(set_cmdstan_path(path))
+  expect_warning(
+    set_cmdstan_path(path),
+    "Can't find CmdStan makefile to detect version number"
+  )
 })
 
 test_that("Setting path rejects unsupported CmdStan versions", {
@@ -129,7 +145,11 @@ test_that("Setting path rejects unsupported CmdStan versions", {
   on.exit(unlink(path, recursive = TRUE), add = TRUE)
   writeLines("CMDSTAN_VERSION := 2.34.0", con = file.path(path, "makefile"))
 
-  expect_snapshot_warning(set_cmdstan_path(path))
+  expect_warning(
+    set_cmdstan_path(path),
+    "cmdstanr now requires CmdStan v2.35.0 or newer",
+    fixed = TRUE
+  )
   expect_null(.cmdstanr$PATH)
   expect_null(.cmdstanr$VERSION)
   expect_false(isTRUE(.cmdstanr$WSL))

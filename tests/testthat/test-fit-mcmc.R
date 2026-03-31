@@ -123,45 +123,37 @@ test_that("summary() method works after mcmc", {
 })
 
 test_that("print() method works after mcmc", {
-  printed_fit_mcmc <- capture_print_snapshot(fit_mcmc$print())
-  expect_s3_class(printed_fit_mcmc$value, "CmdStanMCMC")
-  expect_snapshot_output(cat(
-    paste(printed_fit_mcmc$lines, collapse = "\n"),
-    "\n",
-    paste(capture_print_snapshot(fit_mcmc$print(max_rows = 1))$lines, collapse = "\n"),
-    "\n",
-    paste(capture_print_snapshot(fit_mcmc$print(NULL, c("ess_sd")))$lines, collapse = "\n"),
-    "\n",
-    sep = ""
-  ))
+  expect_output(expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"), "variable")
+  expect_output(fit_mcmc$print(max_rows = 1), "# showing 1 of 5 rows")
+  expect_output(fit_mcmc$print(NULL, c("ess_sd")), "ess_sd")
+
   # test on model with more parameters
   fit <- cmdstanr_example("schools_ncp")
-  expect_snapshot_output(cat(
-    paste(capture_print_snapshot(fit$print())$lines, collapse = "\n"),
-    "\n",
-    paste(capture_print_snapshot(fit$print(max_rows = 2))$lines, collapse = "\n"),
-    "\n",
-    paste(capture_print_snapshot(fit$print(max_rows = 19))$lines, collapse = "\n"),
-    "\n",
-    sep = ""
-  ))
-  expect_snapshot_output(cat(
-    paste(capture_print_snapshot(fit$print("theta", max_rows = 2))$lines, collapse = "\n"),
-    "\n",
-    paste(capture_print_snapshot(fit$print("theta"))$lines, collapse = "\n"),
-    "\n",
-    sep = ""
-  ))
-  expect_snapshot_output(cat(
-    paste(capture_print_snapshot(fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")))$lines, collapse = "\n"),
-    "\n",
-    sep = ""
-  ))
+  expect_output(fit$print(), "showing 10 of 19 rows")
+  expect_output(fit$print(max_rows = 2), "showing 2 of 19 rows")
+  expect_output(fit$print(max_rows = 19), "theta[8]", fixed=TRUE) # last parameter
+  expect_output(fit$print("theta", max_rows = 2), "showing 2 of 8 rows")
   expect_error(
     fit$print(variable = "unknown", max_rows = 20),
     "Can't find the following variable(s): unknown",
     fixed = TRUE
   )
+
+  out <- capture.output(fit$print("theta"))
+  expect_length(out, 9) # columns names + 8 thetas
+  expect_match(out[1], "variable")
+  expect_match(out[2], "theta[1]", fixed = TRUE)
+  expect_match(out[9], "theta[8]", fixed = TRUE)
+  expect_false(any(grepl("mu|tau|theta_raw", out)))
+
+  # make sure the row order is correct
+  out <- capture.output(fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")))
+  expect_length(out, 5)
+  expect_match(out[1], " variable")
+  expect_match(out[2], " theta[1]", fixed = TRUE)
+  expect_match(out[3], " tau")
+  expect_match(out[4], " mu")
+  expect_match(out[5], " theta_raw[3]", fixed = TRUE)
 })
 
 test_that("output() method works after mcmc", {

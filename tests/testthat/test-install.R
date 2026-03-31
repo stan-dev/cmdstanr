@@ -67,13 +67,18 @@ test_that("install_cmdstan() errors if it times out", {
 })
 
 test_that("install_cmdstan() errors if invalid version or URL", {
-  expect_snapshot_error(install_cmdstan(version = "2.35.5", wsl = os_is_wsl()))
-  expect_snapshot_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz",
-                    wsl = os_is_wsl())
+  expect_error(
+    install_cmdstan(version = "2.35.5", wsl = os_is_wsl()),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied version number is valid."
   )
-  expect_snapshot_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl())
+  expect_error(
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz",
+                    wsl = os_is_wsl()),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied release URL is valid."
+  )
+  expect_error(
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
+    "cmdstanr supports installing from .tar.gz archives only"
   )
 })
 
@@ -118,15 +123,22 @@ test_that("install_cmdstan() works with version and release_url", {
 test_that("toolchain checks on Unix work", {
   skip_if(os_is_windows())
   withr::local_envvar(c("PATH" = ""))
-  expect_snapshot(
+  if (os_is_macos()) {
+    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+  } else {
+    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain()."
+  }
+  expect_error(
     check_unix_cpp_compiler(),
-    error = TRUE,
-    transform = transform_unix_toolchain_snapshot
+    err_msg_cpp,
+    fixed = TRUE
   )
-  expect_snapshot(
+  expect_error(
     check_unix_make(),
-    error = TRUE,
-    transform = transform_unix_toolchain_snapshot
+    err_msg_make,
+    fixed = TRUE
   )
 })
 
@@ -437,10 +449,10 @@ test_that("check_rtools4x_windows_toolchain reports missing Rtools and make", {
       rtools4x_home_path = function() "",
       rtools4x_version = function() "44"
     )
-    expect_snapshot(
+    expect_error(
       check_rtools4x_windows_toolchain(),
-      error = TRUE,
-      transform = transform_r_version_snapshot
+      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
+      fixed = TRUE
     )
   })
 
@@ -465,7 +477,11 @@ test_that("check_rtools4x_windows_toolchain validates install path and empty can
       rtools4x_home_path = function() "C:/Program Files/Rtools44",
       rtools4x_version = function() "44"
     )
-    expect_snapshot_error(check_rtools4x_windows_toolchain())
+    expect_error(
+      check_rtools4x_windows_toolchain(),
+      "Please reinstall the appropriate Rtools version for this R installation to a valid path",
+      fixed = TRUE
+    )
   })
 
   fake_rtools_home <- tempfile(pattern = "rtools-home-empty-", tmpdir = tempdir(check = TRUE))
@@ -489,5 +505,9 @@ test_that("check_rtools4x_windows_toolchain validates install path and empty can
 })
 
 test_that("check_cmdstan_toolchain(fix = TRUE) is deprecated", {
-  expect_snapshot_warning(check_cmdstan_toolchain(fix = TRUE))
+  expect_warning(
+    check_cmdstan_toolchain(fix = TRUE),
+    "The 'fix' argument is deprecated and will be removed in a future release",
+    fixed = TRUE
+  )
 })

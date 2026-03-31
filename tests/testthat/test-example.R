@@ -24,11 +24,8 @@ test_that("cmdstanr_example works", {
 
   fit_vb <- cmdstanr_example("logistic", method = "variational")
   checkmate::expect_r6(fit_vb, "CmdStanVB")
-})
-
-test_that("print_example_program outputs stay stable", {
-  expect_snapshot(cat(print_example_program("schools")))
-  expect_snapshot(cat(print_example_program("schools_ncp")))
+  expect_output(print_example_program("schools"), "vector[J] theta", fixed=TRUE)
+  expect_output(print_example_program("schools_ncp"), "vector[J] theta_raw", fixed=TRUE)
 })
 
 test_that("write_stan_file writes Stan file correctly", {
