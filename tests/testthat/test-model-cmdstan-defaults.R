@@ -1,28 +1,28 @@
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 
-test_that("get_cmdstan_args() errors for uncompiled model", {
+test_that("cmdstan_defaults() errors for uncompiled model", {
   mod_uncompiled <- cmdstan_model(
     stan_file = testing_stan_file("bernoulli"),
     compile = FALSE
   )
   expect_error(
-    mod_uncompiled$get_cmdstan_args("sample"),
-    "'$get_cmdstan_args()' requires a compiled model",
+    mod_uncompiled$cmdstan_defaults("sample"),
+    "'$cmdstan_defaults()' requires a compiled model",
     fixed = TRUE
   )
 })
 
-test_that("get_cmdstan_args() errors for invalid method", {
+test_that("cmdstan_defaults() errors for invalid method", {
   expect_error(
-    mod$get_cmdstan_args("bogus"),
+    mod$cmdstan_defaults("bogus"),
     "'arg' should be one of",
     fixed = TRUE
   )
 })
 
-test_that("get_cmdstan_args() returns named list for sample", {
-  args <- mod$get_cmdstan_args("sample")
+test_that("cmdstan_defaults() returns named list for sample", {
+  args <- mod$cmdstan_defaults("sample")
   expect_type(args, "list")
   expect_named(args)
   expected_names <- names(map_cmdstan_to_cmdstanr("sample"))
@@ -31,8 +31,8 @@ test_that("get_cmdstan_args() returns named list for sample", {
   }
 })
 
-test_that("get_cmdstan_args() returns expected default types for sample", {
-  args <- mod$get_cmdstan_args("sample")
+test_that("cmdstan_defaults() returns expected default types for sample", {
+  args <- mod$cmdstan_defaults("sample")
   expect_type(args$iter_sampling, "integer")
   expect_type(args$iter_warmup, "integer")
   expect_type(args$thin, "integer")
@@ -41,8 +41,8 @@ test_that("get_cmdstan_args() returns expected default types for sample", {
   expect_type(args$max_treedepth, "integer")
 })
 
-test_that("get_cmdstan_args() works for optimize", {
-  args <- mod$get_cmdstan_args("optimize")
+test_that("cmdstan_defaults() works for optimize", {
+  args <- mod$cmdstan_defaults("optimize")
   expect_type(args, "list")
   expect_named(args)
   expected_names <- names(map_cmdstan_to_cmdstanr("optimize"))
@@ -53,8 +53,8 @@ test_that("get_cmdstan_args() works for optimize", {
   expect_type(args$iter, "integer")
 })
 
-test_that("get_cmdstan_args() works for variational", {
-  args <- mod$get_cmdstan_args("variational")
+test_that("cmdstan_defaults() works for variational", {
+  args <- mod$cmdstan_defaults("variational")
   expect_type(args, "list")
   expect_named(args)
   expected_names <- names(map_cmdstan_to_cmdstanr("variational"))
@@ -63,8 +63,8 @@ test_that("get_cmdstan_args() works for variational", {
   }
 })
 
-test_that("get_cmdstan_args() works for pathfinder", {
-  args <- mod$get_cmdstan_args("pathfinder")
+test_that("cmdstan_defaults() works for pathfinder", {
+  args <- mod$cmdstan_defaults("pathfinder")
   expect_type(args, "list")
   expect_named(args)
   expected_names <- names(map_cmdstan_to_cmdstanr("pathfinder"))
@@ -73,8 +73,8 @@ test_that("get_cmdstan_args() works for pathfinder", {
   }
 })
 
-test_that("get_cmdstan_args() works for laplace", {
-  args <- mod$get_cmdstan_args("laplace")
+test_that("cmdstan_defaults() works for laplace", {
+  args <- mod$cmdstan_defaults("laplace")
   expect_type(args, "list")
   expect_named(args)
   expected_names <- names(map_cmdstan_to_cmdstanr("laplace"))

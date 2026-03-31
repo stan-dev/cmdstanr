@@ -196,7 +196,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$hpp_file()`][model-method-compile] |  Return the file path to the `.hpp` file containing the generated C++ code. |
 #'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
 #'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
-#'  [`$get_cmdstan_args()`][model-method-get_cmdstan_args] |  Get CmdStan default argument values for a method. |
+#'  [`$cmdstan_defaults()`][model-method-cmdstan_defaults] |  Get CmdStan default argument values for a method. |
 #'
 #'  ## Diagnostics
 #'
@@ -2212,11 +2212,11 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 
 #' Get CmdStan default argument values
 #'
-#' @name model-method-get_cmdstan_args
-#' @aliases get_cmdstan_args
+#' @name model-method-cmdstan_defaults
+#' @aliases cmdstan_defaults
 #' @family CmdStanModel methods
 #'
-#' @description The `$get_cmdstan_args()` method of a [`CmdStanModel`]
+#' @description The `$cmdstan_defaults()` method of a [`CmdStanModel`]
 #'   object queries the compiled model binary for the default argument
 #'   values used by a given inference method. The returned list uses
 #'   cmdstanr-style argument names (e.g., `iter_sampling` instead of
@@ -2236,26 +2236,26 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 #' \dontrun{
 #' mod <- cmdstan_model(file.path(cmdstan_path(),
 #'                                "examples/bernoulli/bernoulli.stan"))
-#' mod$get_cmdstan_args("sample")
-#' mod$get_cmdstan_args("optimize")
+#' mod$cmdstan_defaults("sample")
+#' mod$cmdstan_defaults("optimize")
 #' }
 #'
-get_cmdstan_args <- function(method = c("sample", "optimize", "variational",
+cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
                                         "pathfinder", "laplace")) {
   method <- match.arg(method)
   if (length(self$exe_file()) == 0 || !file.exists(self$exe_file())) {
     stop(
-      "'$get_cmdstan_args()' requires a compiled model. ",
+      "'$cmdstan_defaults()' requires a compiled model. ",
       "Please compile the model first with '$compile()'.",
       call. = FALSE
     )
   }
   parse_cmdstan_args(self$exe_file(), method)
 }
-CmdStanModel$set("public", name = "get_cmdstan_args", value = get_cmdstan_args)
+CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 
 
-# get_cmdstan_args helpers ------------------------------------------------
+# cmdstan_defaults helpers ------------------------------------------------
 
 #' Parse CmdStan default argument values from model binary
 #'
