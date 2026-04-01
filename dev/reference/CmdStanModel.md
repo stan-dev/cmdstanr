@@ -33,6 +33,7 @@ which have their own (linked) documentation pages:
 | [`$hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)                  | Return the file path to the `.hpp` file containing the generated C++ code. |
 | [`$save_hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)             | Save the `.hpp` file containing the generated C++ code.                    |
 | [`$expose_functions()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md) | Expose Stan functions for use in R.                                        |
+| [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md) | Get CmdStan default argument values for a method.                          |
 
 ### Diagnostics
 

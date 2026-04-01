@@ -155,6 +155,7 @@ The Stan and CmdStan documentation:
 
 Other CmdStanModel methods:
 [`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md),
 [`model-method-diagnose`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md),
 [`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
@@ -195,7 +196,7 @@ model {
 }
 ")
 mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#> Warning in '/tmp/Rtmp4hU51z/model-1e72442d7a5e.stan', line 6, column 2 to column 7:
+#> Warning in '/tmp/Rtmpj2fUEb/model-1fd2402c8d95.stan', line 6, column 2 to column 7:
 #>     Parameter sigma is given a exponential distribution, which has strictly
 #>     positive support, but sigma was not constrained to be strictly positive.
 

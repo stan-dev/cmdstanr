@@ -66,6 +66,7 @@ The Stan and CmdStan documentation:
   [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md),
 [`model-method-compile`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md),
 [`model-method-diagnose`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md),
 [`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
@@ -105,11 +106,11 @@ mod$check_syntax()
 # pedantic mode will warn that lambda should be constrained to be positive
 # and that lambda has no prior distribution
 mod$check_syntax(pedantic = TRUE)
-#> Warning in '/tmp/Rtmp4hU51z/model_febb1e69c7387a0e64cf13583e078104.stan', line 8, column 2 to column 14:
+#> Warning in '/tmp/Rtmpj2fUEb/model_febb1e69c7387a0e64cf13583e078104.stan', line 8, column 2 to column 14:
 #>     The parameter lambda has no priors. This means either no prior is
 #>     provided, or the prior(s) depend on data variables. In the later case,
 #>     this may be a false positive.
-#> Warning in '/tmp/Rtmp4hU51z/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14 to column 20:
+#> Warning in '/tmp/Rtmpj2fUEb/model_febb1e69c7387a0e64cf13583e078104.stan', line 11, column 14 to column 20:
 #>     A poisson distribution is given parameter lambda as a rate parameter
 #>     (argument 1), but lambda was not constrained to be strictly positive.
 #> Stan program is syntactically correct

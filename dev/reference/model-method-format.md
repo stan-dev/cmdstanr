@@ -71,6 +71,7 @@ The Stan and CmdStan documentation:
 
 Other CmdStanModel methods:
 [`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md),
 [`model-method-compile`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md),
 [`model-method-diagnose`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md),
 [`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
@@ -121,7 +122,7 @@ mod$format(canonicalize = list("deprecations"))
 
 # overwrite the original file instead of just printing it
 mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
-#> Old version of the model stored to /tmp/Rtmp4hU51z/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20260331012927.
+#> Old version of the model stored to /tmp/Rtmpj2fUEb/model_39022cccc3fe5384fab5a52b791fead6.stan.bak-20260401165007.
 mod$compile()
 # }
 ```

@@ -118,8 +118,8 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 139879934388032 0.648480940  0.513018210  0.135462730       52356
-    2     priors 139879934388032 0.004833148  0.003624699  0.001208449       34904
+    1 likelihood 140318279092032 0.663442310  0.515357710  0.148084590       52356
+    2     priors 140318279092032 0.003883772  0.002898988  0.000984784       34904
       no_chain_stack autodiff_calls no_autodiff_calls
     1       34921452          17452                 1
     2          34904          17452                 1
@@ -173,9 +173,9 @@ fit_glm$profiles()
 ```
 
     [[1]]
-            name       thread_id total_time forward_time reverse_time chain_stack
-    1 likelihood 139877551920960 0.43165926  0.430480770  0.001178494       51321
-    2     priors 139877551920960 0.00368006  0.002703388  0.000976672       34214
+            name       thread_id  total_time forward_time reverse_time chain_stack
+    1 likelihood 139743749216064 0.431977850  0.430944840  0.001033017       51321
+    2     priors 139743749216064 0.003563722  0.002593615  0.000970107       34214
       no_chain_stack autodiff_calls no_autodiff_calls
     1          17107          17107                 1
     2          34214          17107                 1
@@ -206,7 +206,7 @@ per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.715797e-05 2.769395e-07
+    [1] 3.801526e-05 2.225402e-07
 
 ### Accessing and saving the profile files
 
@@ -219,7 +219,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/Rtmpsv9uxZ/model_580e4657b49f155a37081bdfaae83f92-profile-202603310131-1-8069ed.csv"
+    [1] "/tmp/RtmpdzS21T/model_580e4657b49f155a37081bdfaae83f92-profile-202604011651-1-806b5b.csv"
 
 These can be saved to a more permanent location with the
 `$save_profile_files()` method.

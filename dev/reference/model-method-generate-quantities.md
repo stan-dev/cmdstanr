@@ -192,6 +192,7 @@ The Stan and CmdStan documentation:
 
 Other CmdStanModel methods:
 [`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md),
 [`model-method-compile`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md),
 [`model-method-diagnose`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md),
 [`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
@@ -263,7 +264,7 @@ fit_gq <- mod_gq$generate_quantities(fit_mcmc, data = data, seed = 123)
 #> 
 #> All 4 chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.5 seconds.
+#> Total execution time: 0.4 seconds.
 str(fit_gq$draws())
 #>  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 1 1 0 1 1 0 1 ...
 #>  - attr(*, "dimnames")=List of 3

@@ -36,6 +36,8 @@ Run CmdStan from R.
   : CmdStanModel objects
 - [`check_syntax()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md)
   : Check syntax of a Stan program
+- [`cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
+  : Get CmdStan default argument values
 - [`compile()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
   : Compile a Stan program
 - [`diagnose()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md)
