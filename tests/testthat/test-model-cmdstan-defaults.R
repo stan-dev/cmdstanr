@@ -16,8 +16,7 @@ expected_cmdstan_defaults <- list(
     max_treedepth = 10L,
     metric = "diag_e",
     metric_file = "",
-    step_size = 1L,
-    chains = 1L
+    step_size = 1L
   ),
   optimize = list(
     algorithm = "lbfgs",
