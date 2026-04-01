@@ -2520,8 +2520,7 @@ map_cmdstan_to_cmdstanr <- function(method) {
            max_treedepth = "sample.hmc.nuts.max_depth",
            metric = "sample.hmc.metric",
            metric_file = "sample.hmc.metric_file",
-           step_size = "sample.hmc.stepsize",
-           chains = "sample.num_chains"
+           step_size = "sample.hmc.stepsize"
          ),
          optimize = c(
            algorithm = "optimize.algorithm",
