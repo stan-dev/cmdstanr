@@ -1,12 +1,3 @@
-local({
-  stan_files <- dir(test_path("resources", "stan"), pattern = "\\.stan$", full.names = TRUE)
-  exe_files <- cmdstanr:::cmdstan_ext(cmdstanr:::strip_ext(stan_files))
-  existing_exe_files <- exe_files[file.exists(exe_files)]
-  if (length(existing_exe_files) > 0) {
-    unlink(existing_exe_files, force = TRUE)
-  }
-})
-
 testing_data <- function(name) {
   if (file.exists(test_path("resources", "data", paste0(name, ".data.rds")))) {
     readRDS(test_path("resources", "data", paste0(name, ".data.rds")))

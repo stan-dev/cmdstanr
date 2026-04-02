@@ -15,7 +15,7 @@ expect_compilation <- function(mod, ...) {
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
     fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
   }
-  if(!is.null(before_mtime) && mtime_check_enabled) {
+  if(!is.null(before_mtime)) {
     after_mtime <- file.mtime(mod$exe_file())
     expect_gt(
       after_mtime,
@@ -135,43 +135,3 @@ expect_equal_ignore_order <- function(object, expected, ...) {
 }
 
 expect_not_true <- function(...) expect_false(isTRUE(...))
-
-transform_print_snapshot <- function(x) {
-  vapply(x, function(line) {
-    line <- trimws(line)
-    if (!nzchar(line)) {
-      return(line)
-    }
-    if (grepl("^variable\\b", line)) {
-      return(gsub("\\s+", " ", line))
-    }
-    if (grepl("^# showing", line) ||
-        grepl("^Can't find the following variable\\(s\\):", line)) {
-      return(line)
-    }
-    sub("\\s+.*$", "", line)
-  }, character(1))
-}
-
-transform_unix_toolchain_snapshot <- function(x) {
-  x <- gsub("A suitable C\\+\\+ compiler was not found\\..*", "C++ compiler missing.", x)
-  x <- gsub("A C\\+\\+ compiler was not found\\..*", "C++ compiler missing.", x)
-  gsub("The 'make' tool was not found\\..*", "make missing.", x)
-}
-
-transform_r_version_snapshot <- function(x) {
-  x <- gsub("Rtools[0-9]+", "Rtools<version>", x)
-  gsub("R version [0-9]+\\.[0-9]+\\.[0-9]+", "R version <version>", x)
-}
-
-capture_print_snapshot <- function(code) {
-  code <- substitute(code)
-  value <- NULL
-  lines <- utils::capture.output(
-    value <- rlang::eval_bare(code, parent.frame())
-  )
-  list(
-    value = value,
-    lines = transform_print_snapshot(lines)
-  )
-}
