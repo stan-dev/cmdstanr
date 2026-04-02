@@ -1,17 +1,11 @@
 #' @param ... arguments passed to mod$compile()
 expect_compilation <- function(mod, ...) {
-  mtime_check_enabled <- FALSE
   if(length(mod$exe_file()) > 0 && file.exists(mod$exe_file())) {
-    original_mtime <- file.mtime(mod$exe_file())
-    suppressWarnings(Sys.setFileTime(mod$exe_file(), original_mtime - 10))
     before_mtime <- file.mtime(mod$exe_file())
-    mtime_check_enabled <- before_mtime < original_mtime
   } else {
     before_mtime <- NULL
   }
-  rlang::with_interactive(value = TRUE, {
-    expect_message(mod$compile(...), "Compiling Stan program...")
-  })
+  expect_interactive_message(mod$compile(...), "Compiling Stan program...")
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
     fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
   }
@@ -52,9 +46,7 @@ expect_no_recompilation <- function(mod, ...) {
   }
 
   before_mtime <- file.mtime(mod$exe_file())
-  rlang::with_interactive(value = TRUE, {
-    expect_message(mod$compile(...), "Model executable is up to date!")
-  })
+  expect_interactive_message(mod$compile(...), "Model executable is up to date!")
   after_mtime <- file.mtime(mod$exe_file())
   expect_true(before_mtime == after_mtime, sprintf("Model executable '%s' has changed, despite expecting no recompilation", mod$exe_file()))
   invisible(mod)
