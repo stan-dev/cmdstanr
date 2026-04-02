@@ -42,13 +42,8 @@ test_that("JSON output for data frame and matrix is correct", {
   write_stan_json(list(X = df), file = temp_file_df)
   write_stan_json(list(X = mat), file = temp_file_mat)
   expect_identical(readLines(temp_file_df), readLines(temp_file_mat))
-  announce_snapshot_file(name = "json-df-matrix.json")
 
-  # Floating-point error introduced in jsonlite 1.8.5
-  # https://github.com/jeroen/jsonlite/issues/420
-  if (packageVersion("jsonlite") != "1.8.5") {
-    expect_json_snapshot(temp_file_df, "json-df-matrix.json")
-  }
+  expect_json_snapshot(temp_file_df, "json-df-matrix.json")
 })
 
 test_that("JSON output for list of vectors is correct", {
