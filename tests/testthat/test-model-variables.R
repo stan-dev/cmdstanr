@@ -1,5 +1,3 @@
-context("model-variables")
-
 set_cmdstan_path()
 
 test_that("$variables() work correctly with example models", {

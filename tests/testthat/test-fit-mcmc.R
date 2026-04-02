@@ -1,5 +1,3 @@
-context("fitted-mcmc")
-
 set_cmdstan_path()
 fit_mcmc <- testing_fit("logistic", method = "sample",
                         seed = 123, chains = 2)
@@ -139,7 +137,7 @@ test_that("print() method works after mcmc", {
     fit$print(variable = "unknown", max_rows = 20),
     "Can't find the following variable(s): unknown",
     fixed = TRUE
-  ) # unknown parameter
+  )
 
   out <- capture.output(fit$print("theta"))
   expect_length(out, 9) # columns names + 8 thetas
@@ -331,23 +329,20 @@ test_that("loo works for all draws storage formats", {
   skip_if_not_installed("loo")
   fit <- testing_fit("bernoulli_log_lik")
 
-  options(cmdstanr_draws_format = "draws_array")
+  withr::local_options(list(cmdstanr_draws_format = "draws_array"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_df")
+  withr::local_options(list(cmdstanr_draws_format = "draws_df"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_matrix")
+  withr::local_options(list(cmdstanr_draws_format = "draws_matrix"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_list")
+  withr::local_options(list(cmdstanr_draws_format = "draws_list"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_rvars")
+  withr::local_options(list(cmdstanr_draws_format = "draws_rvars"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
-
-  # reset option
-  options(cmdstanr_draws_format = NULL)
 })
 
 test_that("draws() works for different formats", {

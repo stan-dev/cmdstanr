@@ -1,5 +1,3 @@
-context("model-pathfinder")
-
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -103,15 +101,15 @@ expect_pathfinder_output <- function(object, num_chains = NULL) {
 
 test_that("Pathfinder Runs", {
   expect_pathfinder_output(fit <- mod$pathfinder(data=data_list, seed=1234, refresh = 0))
-  expect_is(fit, "CmdStanPathfinder")
+  expect_s3_class(fit, "CmdStanPathfinder")
 })
 
 test_that("pathfinder() method works with data files", {
   expect_pathfinder_output(fit_r <- mod$pathfinder(data = data_file_r))
-  expect_is(fit_r, "CmdStanPathfinder")
+  expect_s3_class(fit_r, "CmdStanPathfinder")
 
   expect_pathfinder_output(fit_json <- mod$pathfinder(data = data_file_json))
-  expect_is(fit_json, "CmdStanPathfinder")
+  expect_s3_class(fit_json, "CmdStanPathfinder")
 })
 
 test_that("pathfinder() method works with init file", {
@@ -132,7 +130,7 @@ test_that("pathfinder() method works with init function and default paths", {
 
 test_that("pathfinder() method runs when all arguments specified", {
   expect_pathfinder_output(fit <- do.call(mod$pathfinder, ok_arg_values))
-  expect_is(fit, "CmdStanPathfinder")
+  expect_s3_class(fit, "CmdStanPathfinder")
 })
 
 test_that("pathfinder() method runs when the stan file is removed", {
@@ -147,7 +145,8 @@ test_that("pathfinder() method runs when the stan file is removed", {
 
 test_that("no error when checking estimates after failure", {
   fit <- cmdstanr_example("schools", method = "pathfinder", seed = 123) # optim always fails for this
-  expect_silent(fit$summary()) # no error
+  expect_no_error(fit$summary())
+  expect_silent(fit$summary())
 })
 
 test_that("no output with show_messages = FALSE", {
@@ -156,4 +155,3 @@ test_that("no output with show_messages = FALSE", {
   )
   expect_equal(length(output), 0)
 })
-

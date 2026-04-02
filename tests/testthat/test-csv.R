@@ -1,5 +1,3 @@
-context("read_cmdstan_csv")
-
 set_cmdstan_path()
 fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 1234)
 fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", seed = 123)
@@ -519,9 +517,10 @@ test_that("returning time works for read_cmdstan_csv", {
 
 test_that("time from read_cmdstan_csv matches time from fit$time()", {
   fit <- fit_bernoulli_thin_1
-  expect_equivalent(
+  expect_equal(
     read_cmdstan_csv(fit$output_files())$time$chains,
-    fit$time()$chains
+    fit$time()$chains,
+    ignore_attr = TRUE
   )
 })
 

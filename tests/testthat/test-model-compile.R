@@ -1,5 +1,3 @@
-context("model-compile")
-
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
@@ -78,7 +76,6 @@ test_that("compile() method overwrites binaries", {
   mod$compile(quiet = TRUE)
   old_time = file.mtime(mod$exe_file())
   mod$compile(quiet = TRUE, force_recompile = TRUE)
-  new_time =
   expect_gt(file.mtime(mod$exe_file()), old_time)
 })
 
@@ -113,6 +110,7 @@ test_that("compilation works with include_paths", {
 })
 
 test_that("name in STANCFLAGS is set correctly", {
+  local_reproducible_output()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
     out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
@@ -122,7 +120,14 @@ test_that("name in STANCFLAGS is set correctly", {
     out_name <- "bin/stanc --name='bernoulli2_model' --o"
   }
   expect_output(print(out), out_no_name)
-  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))
+
+  out <- utils::capture.output(
+    mod$compile(
+      quiet = FALSE,
+      force_recompile = TRUE,
+      stanc_options = list(name = "bernoulli2_model")
+    )
+  )
   expect_output(print(out), out_name)
 })
 
@@ -299,11 +304,9 @@ test_that("check_syntax() works", {
 
   stan_file <- testing_stan_file("bernoulli")
   mod_ok <- cmdstan_model(stan_file, compile = FALSE)
-  expect_true(
-    expect_message(
-      mod_ok$check_syntax(),
-      "Stan program is syntactically correct"
-    )
+  expect_message(
+    mod_ok$check_syntax(),
+    "Stan program is syntactically correct"
   )
   expect_message(
     mod_ok$check_syntax(quiet = TRUE),
@@ -832,9 +835,9 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
 })
 
 test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", {
+  local_reproducible_output()
   real_get_cmdstan_flags <- get_cmdstan_flags
-  out <- with_mocked_bindings(
-    utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE)),
+  local_mocked_bindings(
     get_cmdstan_flags = function(flag_name) {
       if (identical(flag_name, "STANCFLAGS")) {
         c("--O1", "--warn-pedantic")
@@ -843,6 +846,7 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
       }
     }
   )
+  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
     out_w_flags <- "bin/stanc.exe --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   } else {

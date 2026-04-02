@@ -1,5 +1,3 @@
-context("model-sample")
-
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -85,15 +83,15 @@ bad_arg_values_3 <- list(
 
 test_that("sample() method works with data list", {
   expect_sample_output(fit <- mod$sample(data = data_list, chains = 1), 1)
-  expect_is(fit, "CmdStanMCMC")
+  expect_s3_class(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method works with data files", {
   expect_sample_output(fit_r <- mod$sample(data = data_file_r, chains = 1), 1)
-  expect_is(fit_r, "CmdStanMCMC")
+  expect_s3_class(fit_r, "CmdStanMCMC")
 
   expect_sample_output(fit_json <- mod$sample(data = data_file_json, chains = 1), 1)
-  expect_is(fit_json, "CmdStanMCMC")
+  expect_s3_class(fit_json, "CmdStanMCMC")
 })
 
 test_that("sample() method works with init file", {
@@ -109,7 +107,7 @@ test_that("sample() method works with init file", {
 
 test_that("sample() method runs when all arguments specified", {
   expect_sample_output(fit <- do.call(mod$sample, ok_arg_values), 2)
-  expect_is(fit, "CmdStanMCMC")
+  expect_s3_class(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method runs when the stan file is removed", {
@@ -179,14 +177,14 @@ test_that("sampling in parallel works", {
 })
 
 test_that("mc.cores option detected", {
-  options(mc.cores = 3)
+  withr::local_options(list(mc.cores = 3))
   expect_output(
     mod$sample(data = data_list, chains = 3),
     "Running MCMC with 3 parallel chains",
     fixed = TRUE
   )
 
-  options(mc.cores = NULL)
+  withr::local_options(list(mc.cores = NULL))
   expect_output(
     mod$sample(data = data_list, chains = 2),
     "Running MCMC with 2 sequential chains",
@@ -198,7 +196,7 @@ test_that("sample() method runs when fixed_param = TRUE", {
   mod_fp$compile()
 
   expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 4)
-  expect_is(fit_1000, "CmdStanMCMC")
+  expect_s3_class(fit_1000, "CmdStanMCMC")
   expect_equal(dim(fit_1000$draws()), c(1000,4,10))
 
   expect_sample_output(fit_500 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500), 4)
@@ -221,15 +219,15 @@ test_that("sample() method runs when adapt_engaged = FALSE", {
 test_that("chain_ids work with sample()", {
   mod$compile()
   expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
-  expect_is(fit12, "CmdStanMCMC")
+  expect_s3_class(fit12, "CmdStanMCMC")
   expect_equal(fit12$metadata()$id, c(10,12))
 
   expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100,7)))
-  expect_is(fit12, "CmdStanMCMC")
+  expect_s3_class(fit12, "CmdStanMCMC")
   expect_equal(fit12$metadata()$id, c(100,7))
 
   expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 1, chain_ids = c(6)))
-  expect_is(fit12, "CmdStanMCMC")
+  expect_s3_class(fit12, "CmdStanMCMC")
   expect_equal(fit12$metadata()$id, c(6))
 
   expect_error(mod$sample(data = data_list, chains = 1, chain_ids = c(0)),
@@ -369,7 +367,7 @@ test_that("All output can be suppressed by show_messages", {
   stan_program <- testing_stan_file("bernoulli")
   data_list <- testing_data("bernoulli")
   mod <- cmdstan_model(stan_program, force_recompile = TRUE)
-  options("cmdstanr_verbose" = FALSE)
+  withr::local_options(list("cmdstanr_verbose" = FALSE))
   output <- capture.output(
     fit <- mod$sample(data = data_list, show_messages = FALSE)
   )

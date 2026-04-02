@@ -1,8 +1,9 @@
 real_wcr <- wsl_compatible_run
 
 with_mocked_cli <- function(code, compile_ret, info_ret) {
-  with_mocked_bindings(
-    code,
+  code <- substitute(code)
+  caller <- parent.frame()
+  local_mocked_bindings(
     wsl_compatible_run = function(command, args, ...) {
       if (
         !is.null(command)
@@ -17,8 +18,11 @@ with_mocked_cli <- function(code, compile_ret, info_ret) {
       } else {
         real_wcr(command = command, args = args, ...)
       }
-    }
+    },
+    .package = "cmdstanr",
+    .env = caller
   )
+  rlang::eval_bare(code, env = caller)
 }
 
 ######## Mock Compile Expectations #######

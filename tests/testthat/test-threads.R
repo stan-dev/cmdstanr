@@ -1,5 +1,3 @@
-context("threading")
-
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 stan_gq_program <- testing_stan_file("bernoulli_ppc")

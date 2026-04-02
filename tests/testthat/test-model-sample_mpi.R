@@ -1,5 +1,3 @@
-context("model-sample_mpi")
-
 test_that("sample_mpi() works", {
   skip_if(!mpi_toolchain_present())
   mpi_file <- write_stan_file("
@@ -35,9 +33,11 @@ test_that("sample_mpi() works", {
   if (os_is_wsl()) {
     # Default GHA WSL install runs as root, which MPI discourages
     # Specify that this is safe to ignore for this test
-    Sys.setenv("OMPI_ALLOW_RUN_AS_ROOT"=1)
-    Sys.setenv("OMPI_ALLOW_RUN_AS_ROOT_CONFIRM"=1)
-    Sys.setenv("WSLENV"="OMPI_ALLOW_RUN_AS_ROOT/u:OMPI_ALLOW_RUN_AS_ROOT_CONFIRM/u")
+    withr::local_envvar(c(
+      "OMPI_ALLOW_RUN_AS_ROOT" = "1",
+      "OMPI_ALLOW_RUN_AS_ROOT_CONFIRM" = "1",
+      "WSLENV" = "OMPI_ALLOW_RUN_AS_ROOT/u:OMPI_ALLOW_RUN_AS_ROOT_CONFIRM/u"
+    ))
   }
 
   utils::capture.output(

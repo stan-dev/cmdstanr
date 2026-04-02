@@ -1,5 +1,3 @@
-context("fitted-gq")
-
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
@@ -78,7 +76,7 @@ test_that("print() method works after gq", {
     fit_gq$print(variable = "unknown", max_rows = 20),
     "Can't find the following variable(s): unknown",
     fixed = TRUE
-  ) # unknown parameter
+  )
 
   out <- capture.output(fit_gq$print("y_rep"))
   expect_length(out, 11) # columns names + 1 y_rep

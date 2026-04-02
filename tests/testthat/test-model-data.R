@@ -1,4 +1,3 @@
-context("model-data")
 # see separate test-json for testing writing data to JSON
 
 set_cmdstan_path()
@@ -33,5 +32,6 @@ test_that("empty data list doesn't error if no data block", {
   )
 
   # would error if fitting failed
+  expect_no_error(fit$draws())
   expect_silent(fit$draws())
 })
