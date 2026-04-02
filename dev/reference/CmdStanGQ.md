@@ -135,7 +135,7 @@ str(fit_gq$draws())
 #>   ..$ variable : chr [1:10] "y_rep[1]" "y_rep[2]" "y_rep[3]" "y_rep[4]" ...
 
 library(posterior)
-#> This is posterior version 1.6.1
+#> This is posterior version 1.7.0
 #> 
 #> Attaching package: ‘posterior’
 #> The following objects are masked from ‘package:stats’:

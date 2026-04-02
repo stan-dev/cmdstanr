@@ -211,8 +211,8 @@ documentation</a>.</p>
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1 likelihood 140318279092032 0.663442310  0.515357710  0.148084590       52356
-2     priors 140318279092032 0.003883772  0.002898988  0.000984784       34904
+1 likelihood 140597986838336 0.656061740  0.517351480  0.138710260       52356
+2     priors 140597986838336 0.004529447  0.003584491  0.000944956       34904
   no_chain_stack autodiff_calls no_autodiff_calls
 1       34921452          17452                 1
 2          34904          17452                 1</code></pre>
@@ -258,8 +258,8 @@ like for the previous one.</p>
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1 likelihood 139743749216064 0.431977850  0.430944840  0.001033017       51321
-2     priors 139743749216064 0.003563722  0.002593615  0.000970107       34214
+1 likelihood 140495697979200 0.437270850  0.436214530  0.001056318       51321
+2     priors 140495697979200 0.004046772  0.003094581  0.000952191       34214
   no_chain_stack autodiff_calls no_autodiff_calls
 1          17107          17107                 1
 2          34214          17107                 1</code></pre>
@@ -285,7 +285,7 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span><span class="op">/</span><span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 3.801526e-05 2.225402e-07</code></pre>
+<pre><code>[1] 3.759235e-05 2.595374e-07</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
@@ -296,7 +296,7 @@ The paths of the profiling CSV files can be retrieved using
 <code>$profile_files()</code>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/RtmpdzS21T/model_580e4657b49f155a37081bdfaae83f92-profile-202604011651-1-806b5b.csv"</code></pre>
+<pre><code>[1] "/tmp/Rtmpu8raFZ/model_580e4657b49f155a37081bdfaae83f92-profile-202604022124-1-806e20.csv"</code></pre>
 <p>These can be saved to a more permanent location with the
 <code>$save_profile_files()</code> method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
