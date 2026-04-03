@@ -22,8 +22,19 @@ test_that("summary method works after optimization", {
 })
 
 test_that("print() method works after optimization", {
-  expect_output(expect_s3_class(fit_mle$print(), "CmdStanMLE"), "estimate")
-  expect_output(fit_mle$print(max_rows = 1), "# showing 1 of 5 rows")
+  full_print <- NULL
+  expect_snapshot(
+    full_print <- fit_mle$print(),
+    transform = transform_print_snapshot,
+    cran = TRUE
+  )
+  expect_s3_class(full_print, "CmdStanMLE")
+  expect_snapshot(
+    fit_mle$print(max_rows = 1),
+    transform = transform_print_snapshot,
+    cran = TRUE
+  )
+
   expect_error(
     fit_mle$print(variable = "unknown", max_rows = 20),
     "Can't find the following variable(s): unknown",
