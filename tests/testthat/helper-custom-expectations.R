@@ -144,14 +144,3 @@ transform_print_snapshot <- function(x) {
     sub("\\s+.*$", "", line)
   }, character(1))
 }
-
-transform_unix_toolchain_snapshot <- function(x) {
-  x <- gsub("A suitable C\\+\\+ compiler was not found\\..*", "C++ compiler missing.", x)
-  x <- gsub("A C\\+\\+ compiler was not found\\..*", "C++ compiler missing.", x)
-  gsub("The 'make' tool was not found\\..*", "make missing.", x)
-}
-
-transform_r_version_snapshot <- function(x) {
-  x <- gsub("Rtools[0-9]+", "Rtools<version>", x)
-  gsub("R version [0-9]+\\.[0-9]+\\.[0-9]+", "R version <version>", x)
-}

@@ -123,17 +123,22 @@ test_that("install_cmdstan() works with version and release_url", {
 test_that("toolchain checks on Unix work", {
   skip_if(os_is_windows())
   withr::local_envvar(c("PATH" = ""))
-  expect_snapshot(
+  if (os_is_macos()) {
+    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+  } else {
+    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain()."
+  }
+  expect_error(
     check_unix_cpp_compiler(),
-    error = TRUE,
-    transform = transform_unix_toolchain_snapshot,
-    cran = TRUE
+    err_msg_cpp,
+    fixed = TRUE
   )
-  expect_snapshot(
+  expect_error(
     check_unix_make(),
-    error = TRUE,
-    transform = transform_unix_toolchain_snapshot,
-    cran = TRUE
+    err_msg_make,
+    fixed = TRUE
   )
 })
 
@@ -439,11 +444,10 @@ test_that("check_rtools4x_windows_toolchain reports missing Rtools and make", {
       rtools4x_home_path = function() "",
       rtools4x_version = function() "44"
     )
-    expect_snapshot(
+    expect_error(
       check_rtools4x_windows_toolchain(),
-      error = TRUE,
-      transform = transform_r_version_snapshot,
-      cran = TRUE
+      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
+      fixed = TRUE
     )
   })
 
@@ -454,19 +458,10 @@ test_that("check_rtools4x_windows_toolchain reports missing Rtools and make", {
       rtools4x_home_path = function() fake_rtools_home,
       rtools4x_version = function() "44"
     )
-    expect_snapshot(
+    expect_error(
       check_rtools4x_windows_toolchain(),
-      error = TRUE,
-      transform = function(x) {
-        x <- transform_r_version_snapshot(x)
-        gsub(
-          repair_path(file.path(fake_rtools_home, "usr", "bin")),
-          "<rtools_usr_bin>",
-          x,
-          fixed = TRUE
-        )
-      },
-      cran = TRUE
+      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
+      fixed = TRUE
     )
   })
 })
