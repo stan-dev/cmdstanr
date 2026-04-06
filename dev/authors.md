@@ -29,6 +29,8 @@
 
 - **Visruth Srimath Kandali**. Contributor.
 
+- **Aki Vehtari**. Contributor.
+
 ## Citation
 
 Source:
