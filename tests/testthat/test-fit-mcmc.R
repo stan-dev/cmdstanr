@@ -123,13 +123,11 @@ test_that("summary() method works after mcmc", {
 })
 
 test_that("print() method works after mcmc", {
-  basic_print <- NULL
   expect_snapshot(
-    basic_print <- fit_mcmc$print(),
+    expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"),
     transform = transform_print_snapshot,
     cran = TRUE
   )
-  expect_s3_class(basic_print, "CmdStanMCMC")
   expect_snapshot(
     fit_mcmc$print(max_rows = 1),
     transform = transform_print_snapshot,

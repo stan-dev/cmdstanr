@@ -64,13 +64,11 @@ test_that("summary() method works after gq", {
 })
 
 test_that("print() method works after gq", {
-  full_print <- NULL
   expect_snapshot(
-    full_print <- fit_gq$print(),
+    expect_s3_class(fit_gq$print(), "CmdStanGQ"),
     transform = transform_print_snapshot,
     cran = TRUE
   )
-  expect_s3_class(full_print, "CmdStanGQ")
 
   expect_snapshot(
     fit_gq$print(max_rows = 1),

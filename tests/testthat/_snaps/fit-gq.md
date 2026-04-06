@@ -1,7 +1,7 @@
 # print() method works after gq
 
     Code
-      full_print <- fit_gq$print()
+      expect_s3_class(fit_gq$print(), "CmdStanGQ")
     Output
       variable mean median sd mad q5 q95
       y_rep[1]

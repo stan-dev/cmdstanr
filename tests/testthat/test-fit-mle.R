@@ -22,13 +22,11 @@ test_that("summary method works after optimization", {
 })
 
 test_that("print() method works after optimization", {
-  full_print <- NULL
   expect_snapshot(
-    full_print <- fit_mle$print(),
+    expect_s3_class(fit_mle$print(), "CmdStanMLE"),
     transform = transform_print_snapshot,
     cran = TRUE
   )
-  expect_s3_class(full_print, "CmdStanMLE")
   expect_snapshot(
     fit_mle$print(max_rows = 1),
     transform = transform_print_snapshot,

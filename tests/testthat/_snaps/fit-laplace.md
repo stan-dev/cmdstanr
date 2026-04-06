@@ -1,7 +1,7 @@
 # summary() and print() methods works after laplace
 
     Code
-      full_print <- fit_laplace$print()
+      expect_s3_class(fit_laplace$print(), "CmdStanLaplace")
     Output
       variable mean median sd mad q5 q95
       lp__

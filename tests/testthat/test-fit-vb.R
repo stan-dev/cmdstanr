@@ -18,13 +18,11 @@ test_that("summary() method works after vb", {
 })
 
 test_that("print() method works after vb", {
-  basic_print <- NULL
   expect_snapshot(
-    basic_print <- fit_vb$print(),
+    expect_s3_class(fit_vb$print(), "CmdStanVB"),
     transform = transform_print_snapshot,
     cran = TRUE
   )
-  expect_s3_class(basic_print, "CmdStanVB")
 
   expect_snapshot(
     fit_vb$print(max_rows = 1),

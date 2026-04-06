@@ -1,7 +1,7 @@
 # print() method works after optimization
 
     Code
-      full_print <- fit_mle$print()
+      expect_s3_class(fit_mle$print(), "CmdStanMLE")
     Output
       variable estimate
       lp__

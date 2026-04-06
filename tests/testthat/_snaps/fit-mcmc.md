@@ -1,7 +1,7 @@
 # print() method works after mcmc
 
     Code
-      basic_print <- fit_mcmc$print()
+      expect_s3_class(fit_mcmc$print(), "CmdStanMCMC")
     Output
       variable mean median sd mad q5 q95 rhat ess_bulk ess_tail
       lp__

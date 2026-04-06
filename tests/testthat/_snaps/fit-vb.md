@@ -1,7 +1,7 @@
 # print() method works after vb
 
     Code
-      basic_print <- fit_vb$print()
+      expect_s3_class(fit_vb$print(), "CmdStanVB")
     Output
       variable mean median sd mad q5 q95
       lp__

@@ -1,11 +1,7 @@
 stan_program <- cmdstan_example_file()
-file_that_doesnt_exist <- "placeholder_doesnt_exist"
-file_that_exists <- "placeholder_exists"
+file_that_doesnt_exist <- withr::local_tempfile(pattern = "placeholder_doesnt_exist")
+file_that_exists <- withr::local_tempfile(pattern = "placeholder_exists")
 file.create(file_that_exists)
-withr::defer(
-  if (file.exists(file_that_exists)) file.remove(file_that_exists),
-  teardown_env()
-)
 
 skip_message <- "To be fixed in a later version."
 

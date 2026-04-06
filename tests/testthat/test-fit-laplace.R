@@ -13,13 +13,11 @@ test_that("summary() and print() methods works after laplace", {
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
   expect_equal(colnames(x), c("variable", "mean", "sd"))
 
-  full_print <- NULL
   expect_snapshot(
-    full_print <- fit_laplace$print(),
+    expect_s3_class(fit_laplace$print(), "CmdStanLaplace"),
     transform = transform_print_snapshot,
     cran = TRUE
   )
-  expect_s3_class(full_print, "CmdStanLaplace")
   expect_snapshot(
     fit_laplace$print(max_rows = 1),
     transform = transform_print_snapshot,
