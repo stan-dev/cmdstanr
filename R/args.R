@@ -1039,30 +1039,34 @@ validate_exe_file <- function(exe_file) {
 #'
 #' When a model has been created without a Stan file,
 #' `model$variables()` is unavailable. This helper infers parameter
-#' names and whether each is a scalar or container from
-#' `posterior::variables(as_draws_df(...))`. In that representation
-#' containers are expanded (e.g. `beta[1]`, `gamma[1,2]`) while
-#' scalars appear as bare names (e.g. `sigma`). A name without `[` is
-#' a scalar; a name with `[` is a container whose base name is
-#' extracted.
+#' names and dimensions from `posterior::variables(as_draws_df(...))`.
+#' In that representation containers are expanded (e.g. `beta[1]`,
+#' `gamma[1,2]`) while scalars appear as bare names (e.g. `sigma`).
+#' The number of dimensions is inferred from the index pattern:
+#' `mu[1]` has 1, `mu[1,2]` has 2, etc.
 #'
 #' @noRd
 #' @param draws A draws object (any format supported by posterior).
 #' @return A list with a `parameters` element in the same format as
-#'   `model$variables()`. The dimensions is stored as 0 for scalars
-#'   and 1 for containers, which is sufficient for `process_init.draws()`.
+#'   `model$variables()`.
 model_variables_from_draws <- function(draws) {
   df_vars <- posterior::variables(posterior::as_draws_df(draws))
   df_vars <- df_vars[!grepl("__$", df_vars)]
   has_bracket <- grepl("\\[", df_vars)
   scalars <- df_vars[!has_bracket]
-  containers <- unique(sub("\\[.*", "", df_vars[has_bracket]))
+  # For containers, extract base name and count dimensions from the
+  # index pattern of the first occurrence (e.g. "mu[1,2]" -> 2 dims)
+  container_vars <- df_vars[has_bracket]
+  container_names <- sub("\\[.*", "", container_vars)
+  container_indices <- sub("^[^\\[]*\\[(.*)\\]$", "\\1", container_vars)
   parameters <- list()
   for (var_name in scalars) {
     parameters[[var_name]] <- list(type = "real", dimensions = 0L)
   }
-  for (var_name in containers) {
-    parameters[[var_name]] <- list(type = "real", dimensions = 1L)
+  for (var_name in unique(container_names)) {
+    idx <- match(var_name, container_names)
+    ndims <- length(strsplit(container_indices[idx], ",")[[1]])
+    parameters[[var_name]] <- list(type = "real", dimensions = ndims)
   }
   list(parameters = parameters)
 }
