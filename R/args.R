@@ -1035,6 +1035,38 @@ validate_exe_file <- function(exe_file) {
 }
 
 
+#' Build a model_variables structure from a draws object
+#'
+#' When a model has been created without a Stan file,
+#' `model$variables()` is unavailable. This helper infers parameter
+#' names and whether each is a scalar or container from
+#' `posterior::variables(as_draws_df(...))`. In that representation
+#' containers are expanded (e.g. `beta[1]`, `gamma[1,2]`) while
+#' scalars appear as bare names (e.g. `sigma`). A name without `[` is
+#' a scalar; a name with `[` is a container whose base name is
+#' extracted.
+#'
+#' @noRd
+#' @param draws A draws object (any format supported by posterior).
+#' @return A list with a `parameters` element in the same format as
+#'   `model$variables()`. The dimensions is stored as 0 for scalars
+#'   and 1 for containers, which is sufficient for `process_init.draws()`.
+model_variables_from_draws <- function(draws) {
+  df_vars <- posterior::variables(posterior::as_draws_df(draws))
+  df_vars <- df_vars[!grepl("__$", df_vars)]
+  has_bracket <- grepl("\\[", df_vars)
+  scalars <- df_vars[!has_bracket]
+  containers <- unique(sub("\\[.*", "", df_vars[has_bracket]))
+  parameters <- list()
+  for (var_name in scalars) {
+    parameters[[var_name]] <- list(type = "real", dimensions = 0L)
+  }
+  for (var_name in containers) {
+    parameters[[var_name]] <- list(type = "real", dimensions = 1L)
+  }
+  list(parameters = parameters)
+}
+
 #' Generic for processing inits
 #' @noRd
 process_init <- function(init, ...) {
@@ -1080,12 +1112,11 @@ process_init.default <- function(init, ...) {
 process_init.draws <- function(init, num_procs, model_variables = NULL,
                                warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                ...) {
-  if (!is.null(model_variables)) {
-    variable_names = names(model_variables$parameters)
-  } else {
-    variable_names = colnames(draws)[!grepl("__", colnames(draws))]
-  }
   draws <- posterior::as_draws_df(init)
+  if (is.null(model_variables)) {
+    model_variables <- model_variables_from_draws(draws)
+  }
+  variable_names = names(model_variables$parameters)
   # Since all other process_init functions return `num_proc` inits
   # This will only happen if a raw draws object is passed
   if (nrow(draws) < num_procs) {
@@ -1266,9 +1297,6 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
                                      ...) {
   validate_fit_init(init, model_variables)
   draws_df = init$draws(format = "df")
-  if (is.null(model_variables)) {
-    model_variables = list(parameters = colnames(draws_df)[2:(length(colnames(draws_df)) - 3)])
-  }
   init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
                                             method = "simple_no_replace")
   init_draws_lst = process_init(init_draws_df,
@@ -1293,9 +1321,6 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   validate_fit_init(init, model_variables)
   # Convert from data.table to data.frame
   draws_df = init$draws(format = "df")
-  if (is.null(model_variables)) {
-    model_variables = list(parameters = colnames(draws_df)[3:(length(colnames(draws_df)) - 3)])
-  }
   draws_df$lw = draws_df$lp__ - draws_df$lp_approx__
   # Replace NaN and Inf with -Inf
   draws_df$lw[!is.finite(draws_df$lw)] <- -Inf
@@ -1326,14 +1351,15 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
       draws_df$weight = posterior::pareto_smooth(
         exp(draws_df$lw - max(draws_df$lw)), tail = "right", r_eff=1, return_k=FALSE)
   }
-  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
-                                            weights = draws_df$weight, method = "simple_no_replace")
-  init_draws_lst = process_init(init_draws_df,
-                                num_procs = num_procs, model_variables = model_variables, warn_partial)
-  return(init_draws_lst)
-}
-
-
+    init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
+                                              weights = draws_df$weight, method = "simple_no_replace")
+    init_draws_df = posterior::subset_draws(init_draws_df,
+      variable = setdiff(posterior::variables(init_draws_df), c("lw", "weight")))
+    init_draws_lst = process_init(init_draws_df,
+                                  num_procs = num_procs, model_variables = model_variables, warn_partial)
+    return(init_draws_lst)
+  }
+  
 #' Write initial values to files if provided as a `CmdStanPathfinder` class
 #' @noRd
 #' @param init A `CmdStanPathfinder` class
@@ -1352,12 +1378,11 @@ process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NU
     validate_fit_init(init, model_variables)
     # Convert from data.table to data.frame
     draws_df = init$draws(format = "df")
-    if (is.null(model_variables)) {
-      model_variables = list(parameters = colnames(draws_df)[3:(length(colnames(draws_df)) - 3)])
-    }
     draws_df$weight = rep(1.0, nrow(draws_df))
     init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
       weights = draws_df$weight, method = "simple_no_replace")
+    init_draws_df = posterior::subset_draws(init_draws_df,
+      variable = setdiff(posterior::variables(init_draws_df), "weight"))
     init_draws_lst = process_init(init_draws_df,
       num_procs = num_procs, model_variables = model_variables, warn_partial)
     return(init_draws_lst)
@@ -1418,9 +1443,6 @@ process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
   # Convert from data.table to data.frame
   validate_fit_init(init, model_variables)
   draws_df = init$draws(format = "df")
-  if (is.null(model_variables)) {
-    model_variables = list(parameters = colnames(draws_df)[2:(length(colnames(draws_df)) - 3)])
-  }
   init_draws_df = draws_df[rep(1, num_procs),]
   init_draws_lst_lst = process_init(init_draws_df,
                                     num_procs = num_procs, model_variables = model_variables, warn_partial)

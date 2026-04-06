@@ -318,12 +318,16 @@ test_that("Pathfinder inits do not drop dimensions", {
   }
 
   parameters {
+    real theta_scalar;
+    array[1] real theta_array1;
     matrix[N, 1] mu;
     matrix[1, N] mu_2;
     vector<lower=0>[N] sigma;
   }
 
   model {
+    target += normal_lupdf(theta_scalar | 0, 1);
+    target += normal_lupdf(theta_array1 | 0, 1);
     target += normal_lupdf(y | mu[:, 1], sigma);
     target += normal_lupdf(y | mu_2[1], sigma);
   }
@@ -337,6 +341,29 @@ test_that("Pathfinder inits do not drop dimensions", {
     utils::capture.output(
       fit <- mod$sample(data = data, init = pf, chains = 1,
                         iter_warmup = 100, iter_sampling = 100)
+    )
+  )
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod$sample(data = data, init = pf, chains = 2,
+                        iter_warmup = 100, iter_sampling = 100)
+    )
+  )
+
+  # Same test but with exe_file only (no Stan file)
+  tmp_exe <- tempfile(fileext = cmdstan_ext())
+  file.copy(mod$exe_file(), tmp_exe)
+  mod_nostan <- cmdstan_model(exe_file = tmp_exe)
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod_nostan$sample(data = data, init = pf, chains = 1,
+                               iter_warmup = 100, iter_sampling = 100)
+    )
+  )
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod_nostan$sample(data = data, init = pf, chains = 2,
+                               iter_warmup = 100, iter_sampling = 100)
     )
   )
 })
