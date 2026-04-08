@@ -138,7 +138,15 @@ read_cmdstan_csv <- function(files,
     files <- file.path(temp_storage, basename(files))
   }
   format <- assert_valid_draws_format(format)
-  assert_file_exists(files, access = "r", extension = "csv")
+  csv_file_exists <- check_file_exists(files, access = "r", extension = "csv")
+  if (!isTRUE(csv_file_exists)) {
+    if (isTRUE(getOption("knitr.in.progress")) &&
+          any(grepl("/tmp", files))) {
+      stop(paste0(csv_file_exists, "\n  To avoid this error when using Quarto cache,\n  see `cmdstanr_output_dir` in `?cmdstanr_global_options`"))
+    } else {
+        stop(csv_file_exists)
+    }
+  }
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()

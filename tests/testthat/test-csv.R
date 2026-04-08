@@ -73,11 +73,11 @@ test_that("read_cmdstan_csv() fails for different variables", {
 test_that("read_cmdstan_csv() fails if the file does not exist", {
   csv_files <- c(test_path("resources", "csv", "model1-1-doesntexist.csv"))
   expect_error(read_cmdstan_csv(csv_files),
-               "Assertion on 'files' failed: File does not exist: 'resources/csv/model1-1-doesntexist.csv'.")
+               "File does not exist: 'resources/csv/model1-1-doesntexist.csv'")
   expect_error(read_cmdstan_csv(NULL),
-               "Assertion on 'files' failed: No file provided.")
+               "No file provided")
   expect_error(read_cmdstan_csv(character(0)),
-               "Assertion on 'files' failed: No file provided.")
+               "No file provided")
 })
 
 test_that("read_cmdstan_csv() fails with empty csv file", {
