@@ -1096,37 +1096,77 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
                                        method ="simple_no_replace")
   }
   draws_rvar = posterior::as_draws_rvars(draws)
-  variable_names <- variable_names[variable_names %in% names(draws_rvar)]
-  draws_rvar <- posterior::subset_draws(draws_rvar, variable = variable_names)
+
+  # Separate tuple and non-tuple parameters. Tuple parameters use leaf names
+  # in draws (e.g., "b_tuple:1:1") rather than the Stan-level name ("b_tuple"),
+  # so they need special handling via build_tuple_init_value().
+  is_tuple <- if (!is.null(model_variables)) {
+    vapply(variable_names, function(nm) {
+      is_tuple_type(model_variables$parameters[[nm]])
+    }, logical(1))
+  } else {
+    rep(FALSE, length(variable_names))
+  }
+  tuple_names <- variable_names[is_tuple]
+  scalar_names <- variable_names[!is_tuple]
+
+  # Filter non-tuple names to those present in draws
+  scalar_names <- scalar_names[scalar_names %in% names(draws_rvar)]
+
+  # For tuple names, check that their leaf draws exist
+  rvar_names <- names(draws_rvar)
+  tuple_names <- tuple_names[vapply(tuple_names, function(nm) {
+    any(startsWith(rvar_names, paste0(nm, ":")))
+  }, logical(1))]
+
+  all_names <- c(scalar_names, tuple_names)
+
+  if (length(scalar_names) > 0) {
+    draws_rvar <- posterior::subset_draws(
+      draws_rvar,
+      variable = expand_stan_params_to_leaves(all_names, rvar_names)
+    )
+  }
+
   inits = lapply(1:num_procs, function(draw_iter) {
-    init_i = lapply(variable_names, function(var_name) {
-      x = .remove_leftmost_dim(posterior::draws_of(
-        posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter)))
+    bad_names <- character(0)
+
+    # Extract non-tuple parameters
+    init_i = lapply(scalar_names, function(var_name) {
+      x = .extract_draw_value(var_name, draws_rvar, draw_iter)
+      if (any(is.infinite(x)) || any(is.na(x))) {
+        bad_names[[length(bad_names) + 1L]] <<- var_name
+      }
       if (model_variables$parameters[[var_name]]$dimensions == 0) {
         return(as.double(x))
       } else {
         return(x)
       }
     })
-    bad_names = unlist(lapply(variable_names, function(var_name) {
-      x = drop(posterior::draws_of(drop(
-        posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
-      if (any(is.infinite(x)) || any(is.na(x))) {
-        return(var_name)
+    names(init_i) <- scalar_names
+
+    # Extract tuple parameters (build_tuple_init_value also validates)
+    for (var_name in tuple_names) {
+      tuple_result <- build_tuple_init_value(
+        var_name, model_variables$parameters[[var_name]],
+        draws_rvar, draw_iter
+      )
+      init_i[[var_name]] <- tuple_result$value
+      if (length(tuple_result$bad_leaves) > 0) {
+        bad_names <- c(bad_names, var_name)
       }
-      return("")
-    }))
-    any_na_or_inf = bad_names != ""
-    if (any(any_na_or_inf)) {
-      err_msg = paste0(paste(bad_names[any_na_or_inf], collapse = ", "), " contains NA or Inf values!")
-      if (length(any_na_or_inf) > 1) {
+    }
+
+    if (length(bad_names) > 0) {
+      err_msg = paste0(paste(bad_names, collapse = ", "), " contains NA or Inf values!")
+      if (length(bad_names) > 1) {
         err_msg = paste0("Variables: ", err_msg)
       } else {
         err_msg = paste0("Variable: ", err_msg)
       }
       stop(err_msg)
     }
-    names(init_i) = variable_names
+
     return(init_i)
   })
   return(process_init(inits, num_procs, model_variables, warn_partial))
@@ -1245,7 +1285,7 @@ validate_fit_init = function(init, model_variables) {
   # Convert from data.table to data.frame
   if (all(init$return_codes() == 1)) {
     stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
-  } else if (!is.null(model_variables) &&!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
+  } else if (!is.null(model_variables) && !any(stan_param_has_leaf(names(model_variables$parameters), init$metadata()$stan_variables))) {
     stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
   }
 }

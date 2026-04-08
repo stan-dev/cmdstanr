@@ -867,6 +867,94 @@ initialize_model_pointer <- function(env, datafile_path, seed = 0) {
   invisible(NULL)
 }
 
+# Check if Stan-level parameter names (which may include tuple names like
+# "b_tuple") have a match among leaf-level variable names (which use ":"
+# to separate tuple elements, e.g., "b_tuple:1:1", "b_tuple:1:2").
+# A Stan-level name matches if it appears directly in leaf_names, or if
+# any leaf name starts with "<name>:" (tuple expansion).
+stan_param_has_leaf <- function(stan_names, leaf_names) {
+  vapply(stan_names, function(nm) {
+    nm %in% leaf_names || any(startsWith(leaf_names, paste0(nm, ":")))
+  }, logical(1), USE.NAMES = FALSE)
+}
+
+# Check if a parameter's type info represents a tuple.
+# Tuples have $type as a list; non-tuples have $type as a string.
+is_tuple_type <- function(var_info) {
+  is.list(var_info$type)
+}
+
+# Reconstruct a tuple init value as a nested named list from flat leaf draws.
+# Also validates that no leaf values contain NA or Inf.
+#
+# @param path The accumulated `:` path (e.g., "b_tuple", "b_tuple:1")
+# @param var_info The type info at this level (from model_variables)
+# @param draws_rvar The draws_rvars object containing leaf entries
+# @param draw_iter Which draw iteration to extract
+# @return A list with two elements:
+#   - `value`: nested named list suitable for CmdStan JSON
+#   - `bad_leaves`: character vector of leaf names with NA/Inf values
+build_tuple_init_value <- function(path, var_info, draws_rvar, draw_iter) {
+  components <- var_info$type
+  result <- vector("list", length(components))
+  names(result) <- as.character(seq_along(components))
+  bad_leaves <- character(0)
+  for (i in seq_along(components)) {
+    child_path <- paste0(path, ":", i)
+    child_info <- components[[i]]
+    if (is_tuple_type(child_info)) {
+      child <- build_tuple_init_value(
+        child_path, child_info, draws_rvar, draw_iter
+      )
+      result[[i]] <- child$value
+      bad_leaves <- c(bad_leaves, child$bad_leaves)
+    } else {
+      x <- .extract_draw_value(child_path, draws_rvar, draw_iter)
+      if (any(is.infinite(x)) || any(is.na(x))) {
+        bad_leaves <- c(bad_leaves, child_path)
+      }
+      if (child_info$dimensions == 0) {
+        result[[i]] <- as.double(x)
+      } else {
+        result[[i]] <- x
+      }
+    }
+  }
+  list(value = result, bad_leaves = bad_leaves)
+}
+
+# Extract a single draw value from draws_rvar for a given variable name.
+# Handles the subset → draws_of → remove_leftmost_dim pipeline.
+.extract_draw_value <- function(var_name, draws_rvar, draw_iter) {
+  .remove_leftmost_dim(posterior::draws_of(
+    posterior::subset_draws(draws_rvar[[var_name]], draw = draw_iter)
+  ))
+}
+
+# Expand Stan-level parameter names to their leaf-level equivalents in
+# stan_variables. Non-tuple names pass through unchanged. Tuple names
+# (e.g., "b_tuple") are expanded to all matching leaf names
+# (e.g., "b_tuple:1:1", "b_tuple:1:2", "b_tuple:2").
+expand_stan_params_to_leaves <- function(stan_params, leaf_names) {
+  result <- character(0)
+  for (param in stan_params) {
+    if (param %in% leaf_names) {
+      result <- c(result, param)
+    } else {
+      # Find leaf-level names for this tuple parameter
+      prefix <- paste0(param, ":")
+      leaves <- leaf_names[startsWith(leaf_names, prefix)]
+      if (length(leaves) > 0) {
+        result <- c(result, leaves)
+      } else {
+        # No match found, include as-is (will be caught by subset_draws)
+        result <- c(result, param)
+      }
+    }
+  }
+  result
+}
+
 create_skeleton <- function(param_metadata, model_variables,
                             transformed_parameters, generated_quantities) {
   target_params <- names(model_variables$parameters)
@@ -878,7 +966,25 @@ create_skeleton <- function(param_metadata, model_variables,
     target_params <- c(target_params,
                        names(model_variables$generated_quantities))
   }
-  lapply(param_metadata[target_params], function(par_dims) {
+  # Expand target_params to match param_metadata leaf names.
+  # For tuple parameters, the Stan-level name (e.g., "b_tuple") maps to
+  # multiple leaf entries in param_metadata (e.g., "b_tuple.1.1",
+  # "b_tuple.1.2", "b_tuple.2"). We expand by matching the prefix.
+  meta_names <- names(param_metadata)
+  expanded_params <- character(0)
+  for (param in target_params) {
+    if (param %in% meta_names) {
+      expanded_params <- c(expanded_params, param)
+    } else {
+      # Find leaf entries with this prefix (tuple expansion)
+      prefix <- paste0(param, ".")
+      leaves <- meta_names[startsWith(meta_names, prefix)]
+      if (length(leaves) > 0) {
+        expanded_params <- c(expanded_params, leaves)
+      }
+    }
+  }
+  lapply(param_metadata[expanded_params], function(par_dims) {
     if ((length(par_dims) == 0)) {
       array(0, dim = 1)
     } else {
