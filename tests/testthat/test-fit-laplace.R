@@ -16,12 +16,12 @@ test_that("summary() and print() methods works after laplace", {
   expect_snapshot(
     expect_s3_class(fit_laplace$print(), "CmdStanLaplace"),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_laplace$print(max_rows = 1),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 })
 

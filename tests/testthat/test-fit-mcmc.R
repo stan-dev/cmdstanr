@@ -126,17 +126,17 @@ test_that("print() method works after mcmc", {
   expect_snapshot(
     expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_mcmc$print(max_rows = 1),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_mcmc$print(NULL, c("ess_sd")),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 
   # test on model with more parameters
@@ -144,32 +144,32 @@ test_that("print() method works after mcmc", {
   expect_snapshot(
     fit$print(),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit$print(max_rows = 2),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit$print(max_rows = 19),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit$print("theta", max_rows = 2),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit$print("theta"),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 
   expect_error(

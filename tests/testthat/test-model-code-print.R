@@ -3,8 +3,8 @@ stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
 
 test_that("code() and print() methods work", {
-  expect_snapshot_output(mod$print(), cran = TRUE)
-  expect_snapshot_value(mod$code(), style = "deparse", cran = TRUE)
+  expect_snapshot_output(mod$print(), cran = FALSE)
+  expect_snapshot_value(mod$code(), style = "deparse", cran = FALSE)
 })
 
 test_that("code() and print() still work if file is removed", {

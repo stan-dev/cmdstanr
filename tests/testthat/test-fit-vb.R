@@ -21,13 +21,13 @@ test_that("print() method works after vb", {
   expect_snapshot(
     expect_s3_class(fit_vb$print(), "CmdStanVB"),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 
   expect_snapshot(
     fit_vb$print(max_rows = 1),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 
   # test on model with more parameters
@@ -35,17 +35,17 @@ test_that("print() method works after vb", {
   expect_snapshot(
     fit$print(),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit$print(max_rows = 20),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit$print(c("theta", "tau", "lp__", "lp_approx__")),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 
   expect_error(

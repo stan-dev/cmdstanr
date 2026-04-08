@@ -25,12 +25,12 @@ test_that("print() method works after optimization", {
   expect_snapshot(
     expect_s3_class(fit_mle$print(), "CmdStanMLE"),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_mle$print(max_rows = 1),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 
   expect_error(

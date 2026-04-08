@@ -67,43 +67,43 @@ test_that("print() method works after gq", {
   expect_snapshot(
     expect_s3_class(fit_gq$print(), "CmdStanGQ"),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 
   expect_snapshot(
     fit_gq$print(max_rows = 1),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_gq$print(NULL, c("mad")),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_gq$print(max_rows = 2),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_gq$print(max_rows = 11),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_gq$print("y_rep", max_rows = 2),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_gq$print("y_rep"),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
   expect_snapshot(
     fit_gq$print(c("y_rep[1]", "sum_y", "y_rep[3]")),
     transform = transform_print_snapshot,
-    cran = TRUE
+    cran = FALSE
   )
 
   expect_error(
