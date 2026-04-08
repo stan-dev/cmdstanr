@@ -20,7 +20,8 @@ Authors@R:
       person(given = "Jacob", family = "Socolar", role = "ctb"),
       person(given = "Martin", family = "Modrák", role = "ctb"),
       person(given = "Ven", family = "Popov", role = "ctb"),
-      person("Visruth", "Srimath Kandali", role = "ctb")
+      person("Visruth", "Srimath Kandali", role = "ctb"),
+      person("Aki", "Vehtari", role = "ctb")
       )
 Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
     The 'CmdStanR' interface is an alternative to 'RStan' that calls the command

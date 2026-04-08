@@ -81,7 +81,7 @@ CmdStanArgs <- R6::R6Class(
       init <- process_init(init, num_inits, model_variables)
       self$init <- init
       self$opencl_ids <- opencl_ids
-      self$num_threads = NULL
+      self$num_threads <- NULL
       self$method_args$validate(num_procs = length(self$proc_ids))
       if (is.logical(self$save_cmdstan_config)) {
         self$save_cmdstan_config <- as.integer(self$save_cmdstan_config)
@@ -984,7 +984,7 @@ validate_pathfinder_args <- function(self) {
     self$num_elbo_draws <- as.integer(self$num_elbo_draws)
   }
   if (!is.null(self$save_single_paths) && is.logical(self$save_single_paths)) {
-    self$save_single_paths = as.integer(self$save_single_paths)
+    self$save_single_paths <- as.integer(self$save_single_paths)
   }
   checkmate::assert_integerish(self$save_single_paths, null.ok = TRUE,
                                lower = 0, upper = 1, len = 1)
@@ -992,12 +992,12 @@ validate_pathfinder_args <- function(self) {
     self$save_single_paths <- 0
   }
   if (!is.null(self$psis_resample) && is.logical(self$psis_resample)) {
-    self$psis_resample = as.integer(self$psis_resample)
+    self$psis_resample <- as.integer(self$psis_resample)
   }
   checkmate::assert_integerish(self$psis_resample, null.ok = TRUE,
                                lower = 0, upper = 1, len = 1)
   if (!is.null(self$calculate_lp) && is.logical(self$calculate_lp)) {
-    self$calculate_lp = as.integer(self$calculate_lp)
+    self$calculate_lp <- as.integer(self$calculate_lp)
   }
   checkmate::assert_integerish(self$calculate_lp, null.ok = TRUE,
                                lower = 0, upper = 1, len = 1)
@@ -1018,22 +1018,44 @@ validate_pathfinder_args <- function(self) {
 }
 
 
-# Validation helpers ------------------------------------------------------
 
-#' Validate exe file exists
+# Init helpers ------------------------------------------------------------
+
+#' Build a model_variables structure from a draws object
+#'
+#' When a model has been created without a Stan file,
+#' `model$variables()` is unavailable. This helper infers parameter
+#' names and dimensions from `posterior::variables(as_draws_df(...))`.
+#' In that representation containers are expanded (e.g. `beta[1]`,
+#' `gamma[1,2]`) while scalars appear as bare names (e.g. `sigma`).
+#' The number of dimensions is inferred from the index pattern:
+#' `mu[1]` has 1, `mu[1,2]` has 2, etc.
+#'
 #' @noRd
-#' @param exe_file Path to executable.
-#' @return Either throws an error or returns `invisible(TRUE)`
-validate_exe_file <- function(exe_file) {
-  if (!length(exe_file) ||
-      !nzchar(exe_file) ||
-      !file.exists(exe_file)) {
-    stop("Model not compiled. Try running the compile() method first.",
-         call. = FALSE)
+#' @param draws A draws object (any format supported by posterior).
+#' @return A list with a `parameters` element in the same format as
+#'   `model$variables()`.
+model_variables_from_draws <- function(draws) {
+  df_vars <- posterior::variables(posterior::as_draws_df(draws))
+  df_vars <- df_vars[!grepl("__$", df_vars)]
+  has_bracket <- grepl("\\[", df_vars)
+  scalars <- df_vars[!has_bracket]
+  # For containers, extract base name and count dimensions from the
+  # index pattern of the first occurrence (e.g. "mu[1,2]" -> 2 dims)
+  container_vars <- df_vars[has_bracket]
+  container_names <- sub("\\[.*", "", container_vars)
+  container_indices <- sub("^[^\\[]*\\[(.*)\\]$", "\\1", container_vars)
+  parameters <- list()
+  for (var_name in scalars) {
+    parameters[[var_name]] <- list(type = "real", dimensions = 0L)
   }
-  invisible(TRUE)
+  for (var_name in unique(container_names)) {
+    idx <- match(var_name, container_names)
+    ndims <- length(strsplit(container_indices[idx], ",")[[1]])
+    parameters[[var_name]] <- list(type = "real", dimensions = ndims)
+  }
+  list(parameters = parameters)
 }
-
 
 #' Generic for processing inits
 #' @noRd
@@ -1080,12 +1102,11 @@ process_init.default <- function(init, ...) {
 process_init.draws <- function(init, num_procs, model_variables = NULL,
                                warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                ...) {
-  if (!is.null(model_variables)) {
-    variable_names = names(model_variables$parameters)
-  } else {
-    variable_names = colnames(draws)[!grepl("__", colnames(draws))]
-  }
   draws <- posterior::as_draws_df(init)
+  if (is.null(model_variables)) {
+    model_variables <- model_variables_from_draws(draws)
+  }
+  variable_names <- names(model_variables$parameters)
   # Since all other process_init functions return `num_proc` inits
   # This will only happen if a raw draws object is passed
   if (nrow(draws) < num_procs) {
@@ -1095,7 +1116,7 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
     draws <- posterior::resample_draws(draws, ndraws = num_procs,
                                        method ="simple_no_replace")
   }
-  draws_rvar = posterior::as_draws_rvars(draws)
+  draws_rvar <- posterior::as_draws_rvars(draws)
 
   # Separate tuple and non-tuple parameters. Tuple parameters use leaf names
   # in draws (e.g., "b_tuple:1:1") rather than the Stan-level name ("b_tuple"),
@@ -1121,19 +1142,19 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
 
   all_names <- c(scalar_names, tuple_names)
 
-  if (length(scalar_names) > 0) {
+  if (length(all_names) > 0) {
     draws_rvar <- posterior::subset_draws(
       draws_rvar,
       variable = expand_stan_params_to_leaves(all_names, rvar_names)
     )
   }
 
-  inits = lapply(1:num_procs, function(draw_iter) {
+  inits <- lapply(1:num_procs, function(draw_iter) {
     bad_names <- character(0)
 
     # Extract non-tuple parameters
-    init_i = lapply(scalar_names, function(var_name) {
-      x = .extract_draw_value(var_name, draws_rvar, draw_iter)
+    init_i <- lapply(scalar_names, function(var_name) {
+      x <- .extract_draw_value(var_name, draws_rvar, draw_iter)
       if (any(is.infinite(x)) || any(is.na(x))) {
         bad_names[[length(bad_names) + 1L]] <<- var_name
       }
@@ -1158,11 +1179,11 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
     }
 
     if (length(bad_names) > 0) {
-      err_msg = paste0(paste(bad_names, collapse = ", "), " contains NA or Inf values!")
+      err_msg <- paste0(paste(bad_names, collapse = ", "), " contains NA or Inf values!")
       if (length(bad_names) > 1) {
-        err_msg = paste0("Variables: ", err_msg)
+        err_msg <- paste0("Variables: ", err_msg)
       } else {
-        err_msg = paste0("Variable: ", err_msg)
+        err_msg <- paste0("Variable: ", err_msg)
       }
       stop(err_msg)
     }
@@ -1281,8 +1302,7 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
 
 #' Validate a fit is a valid init
 #' @noRd
-validate_fit_init = function(init, model_variables) {
-  # Convert from data.table to data.frame
+validate_fit_init <- function(init, model_variables) {
   if (all(init$return_codes() == 1)) {
     stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
   } else if (!is.null(model_variables) && !any(stan_param_has_leaf(names(model_variables$parameters), init$metadata()$stan_variables))) {
@@ -1305,13 +1325,10 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
                                      warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                      ...) {
   validate_fit_init(init, model_variables)
-  draws_df = init$draws(format = "df")
-  if (is.null(model_variables)) {
-    model_variables = list(parameters = colnames(draws_df)[2:(length(colnames(draws_df)) - 3)])
-  }
-  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
+  draws_df <- init$draws(format = "df")
+  init_draws_df <- posterior::resample_draws(draws_df, ndraws = num_procs,
                                             method = "simple_no_replace")
-  init_draws_lst = process_init(init_draws_df,
+  init_draws_lst <- process_init(init_draws_df,
                                 num_procs = num_procs, model_variables = model_variables)
   return(init_draws_lst)
 }
@@ -1332,47 +1349,45 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
                                 ...) {
   validate_fit_init(init, model_variables)
   # Convert from data.table to data.frame
-  draws_df = init$draws(format = "df")
-  if (is.null(model_variables)) {
-    model_variables = list(parameters = colnames(draws_df)[3:(length(colnames(draws_df)) - 3)])
-  }
-  draws_df$lw = draws_df$lp__ - draws_df$lp_approx__
+  draws_df <- init$draws(format = "df")
+  draws_df$lw <- draws_df$lp__ - draws_df$lp_approx__
   # Replace NaN and Inf with -Inf
   draws_df$lw[!is.finite(draws_df$lw)] <- -Inf
   # Calculate unique draws based on 'lw' using base R functions
-  unique_draws = length(unique(draws_df$lw))
+  unique_draws <- length(unique(draws_df$lw))
   if (num_procs > unique_draws) {
     if (inherits(init, "CmdStanPathfinder")) {
-      algo_name = " Pathfinder "
-      extra_msg = " Try running Pathfinder with psis_resample=FALSE."
+      algo_name <- " Pathfinder "
+      extra_msg <- " Try running Pathfinder with psis_resample=FALSE."
     } else if (inherits(init, "CmdStanVB")) {
-      algo_name = " CmdStanVB "
-      extra_msg = ""
+      algo_name <- " CmdStanVB "
+      extra_msg <- ""
     } else if (inherits(init, "CmdStanLaplace")) {
-      algo_name = " CmdStanLaplace "
-      extra_msg = ""
+      algo_name <- " CmdStanLaplace "
+      extra_msg <- ""
     } else {
-      algo_name = ""
-      extra_msg = ""
+      algo_name <- ""
+      extra_msg <- ""
     }
     stop(paste0("Not enough distinct draws (", num_procs, ") in", algo_name ,
       "fit to create inits.", extra_msg))
   }
   if (unique_draws < (0.95 * nrow(draws_df))) {
-    temp_df = stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
-    draws_df = posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
-    draws_df$weight = exp(draws_df$lw - max(draws_df$lw))
+    temp_df <- stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
+    draws_df <- posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
+    draws_df$weight <- exp(draws_df$lw - max(draws_df$lw))
   } else {
-      draws_df$weight = posterior::pareto_smooth(
+      draws_df$weight <- posterior::pareto_smooth(
         exp(draws_df$lw - max(draws_df$lw)), tail = "right", r_eff=1, return_k=FALSE)
   }
-  init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
-                                            weights = draws_df$weight, method = "simple_no_replace")
-  init_draws_lst = process_init(init_draws_df,
-                                num_procs = num_procs, model_variables = model_variables, warn_partial)
-  return(init_draws_lst)
-}
-
+    init_draws_df <- posterior::resample_draws(draws_df, ndraws = num_procs,
+                                              weights = draws_df$weight, method = "simple_no_replace")
+    init_draws_df <- posterior::subset_draws(init_draws_df,
+      variable = setdiff(posterior::variables(init_draws_df), c("lw", "weight")))
+    init_draws_lst <- process_init(init_draws_df,
+                                  num_procs = num_procs, model_variables = model_variables, warn_partial)
+    return(init_draws_lst)
+  }
 
 #' Write initial values to files if provided as a `CmdStanPathfinder` class
 #' @noRd
@@ -1391,14 +1406,13 @@ process_init.CmdStanPathfinder <- function(init, num_procs, model_variables = NU
   if (!init$metadata()$calculate_lp) {
     validate_fit_init(init, model_variables)
     # Convert from data.table to data.frame
-    draws_df = init$draws(format = "df")
-    if (is.null(model_variables)) {
-      model_variables = list(parameters = colnames(draws_df)[3:(length(colnames(draws_df)) - 3)])
-    }
-    draws_df$weight = rep(1.0, nrow(draws_df))
-    init_draws_df = posterior::resample_draws(draws_df, ndraws = num_procs,
+    draws_df <- init$draws(format = "df")
+    draws_df$weight <- rep(1.0, nrow(draws_df))
+    init_draws_df <- posterior::resample_draws(draws_df, ndraws = num_procs,
       weights = draws_df$weight, method = "simple_no_replace")
-    init_draws_lst = process_init(init_draws_df,
+    init_draws_df <- posterior::subset_draws(init_draws_df,
+      variable = setdiff(posterior::variables(init_draws_df), "weight"))
+    init_draws_lst <- process_init(init_draws_df,
       num_procs = num_procs, model_variables = model_variables, warn_partial)
     return(init_draws_lst)
   } else {
@@ -1457,15 +1471,30 @@ process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
                                     ...) {
   # Convert from data.table to data.frame
   validate_fit_init(init, model_variables)
-  draws_df = init$draws(format = "df")
-  if (is.null(model_variables)) {
-    model_variables = list(parameters = colnames(draws_df)[2:(length(colnames(draws_df)) - 3)])
-  }
-  init_draws_df = draws_df[rep(1, num_procs),]
-  init_draws_lst_lst = process_init(init_draws_df,
+  draws_df <- init$draws(format = "df")
+  init_draws_df <- draws_df[rep(1, num_procs),]
+  init_draws_lst_lst <- process_init(init_draws_df,
                                     num_procs = num_procs, model_variables = model_variables, warn_partial)
   return(init_draws_lst_lst)
 }
+
+
+# Validation helpers ------------------------------------------------------
+
+#' Validate exe file exists
+#' @noRd
+#' @param exe_file Path to executable.
+#' @return Either throws an error or returns `invisible(TRUE)`
+validate_exe_file <- function(exe_file) {
+  if (!length(exe_file) ||
+      !nzchar(exe_file) ||
+      !file.exists(exe_file)) {
+    stop("Model not compiled. Try running the compile() method first.",
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 
 #' Validate initial values
 #'
