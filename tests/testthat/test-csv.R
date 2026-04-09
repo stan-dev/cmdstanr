@@ -78,6 +78,12 @@ test_that("read_cmdstan_csv() fails if the file does not exist", {
                "No file provided")
   expect_error(read_cmdstan_csv(character(0)),
                "No file provided")
+  # if knitr rendering and using temp directory, there is an additional message
+  old_opt <- options(knitr.in.progress = TRUE, cmdstanr_output_dir = NULL)
+  expect_error(read_cmdstan_csv(csv_files),
+               "File does not exist: 'resources/csv/model1-1-doesntexist.csv'\n  If this error happened when using Quarto cache,\n  see `cmdstanr_output_dir` in `?cmdstanr_global_options`",
+               fixed = TRUE)
+  options(old_opt)
 })
 
 test_that("read_cmdstan_csv() fails with empty csv file", {
