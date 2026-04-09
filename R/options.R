@@ -27,7 +27,9 @@
 #' * `cmdstanr_output_dir`: The directory where CmdStan should write its output
 #' CSV files when fitting models. The default is a temporary directory. Files in
 #' a temporary directory are removed as part of \R garbage collection, while
-#' files in an explicitly defined directory are not automatically deleted.
+#' files in an explicitly defined directory are not automatically deleted. Note
+#' that Rmarkdown / Quarto cache does not store files in temporary directory,
+#' and re-rendering with cache fails if explicit directory has not been defined.
 #'
 #' * `cmdstanr_verbose`: Should more information be printed
 #' when compiling or running models, including showing how CmdStan was called
