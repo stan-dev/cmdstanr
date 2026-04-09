@@ -1432,11 +1432,29 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(
-        files = self$output_files(include_failed = FALSE),
-        variables = variables,
-        sampler_diagnostics = sampler_diagnostics,
-        format = format
+      csv_contents <- tryCatch(
+        read_cmdstan_csv(
+          files = self$output_files(include_failed = FALSE),
+          variables = variables,
+          sampler_diagnostics = sampler_diagnostics,
+          format = format
+        ),
+        error = function(e) {
+          err_msg <- conditionMessage(e)
+          if (isTRUE(getOption("knitr.in.progress")) &&
+              isTRUE(self$runset$args$using_tempdir) &&
+              grepl("File does not exist:", err_msg, fixed = TRUE)) {
+            stop(
+              paste0(
+                err_msg,
+                "\n  If this error happened when using Quarto or Rmarkdown caching,\n",
+                "  see `cmdstanr_output_dir` in `?cmdstanr_global_options`"
+              ),
+              call. = FALSE
+            )
+          }
+          stop(e)
+        }
       )
       private$inv_metric_ <- csv_contents$inv_metric
       private$metadata_ <- csv_contents$metadata

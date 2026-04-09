@@ -90,6 +90,35 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_equal(posterior::variables(draws_beta_alpha), c("beta[1]", "beta[2]", "beta[3]", "alpha"))
 })
 
+test_that("draws() errors with quarto cache guidance for fits created with temp output", {
+  # https://github.com/stan-dev/cmdstanr/issues/1012
+  # https://github.com/stan-dev/cmdstanr/pull/1176
+
+  fit <- testing_fit("logistic", method = "sample", seed = 123, chains = 1)
+  csv_files <- fit$output_files()
+
+  # Simulate a later cached re-render: the fit object still points to the temp
+  # output files, which don't exist anymore
+  unlink(csv_files, force = TRUE)
+  withr::local_options(list(
+    # Even if cmdstanr_output_dir is now set to a non-temp directory,
+    # it was not set when the fit was created so we should still get the error message
+    # that mentions quarto caching
+    cmdstanr_output_dir = test_path("resources"),
+    knitr.in.progress = TRUE
+  ))
+
+  expect_error(
+    fit$draws(),
+    paste0(
+      "Assertion on 'files' failed: File does not exist: '", csv_files[[1]], "'.\n",
+      "  If this error happened when using Quarto or Rmarkdown caching,\n",
+      "  see `cmdstanr_output_dir` in `?cmdstanr_global_options`"
+    ),
+    fixed = TRUE
+  )
+})
+
 test_that("inv_metric() method works after mcmc", {
   x <- fit_mcmc_1$inv_metric()
   expect_length(x, fit_mcmc_1$num_chains())
