@@ -1,6 +1,7 @@
 skip_if(os_is_macos())
 
 file_that_exists <- withr::local_tempfile(pattern = "placeholder_exists")
+file.create(file_that_exists)
 file_that_doesnt_exist <- withr::local_tempfile(pattern = "placeholder_doesnt_exist")
 
 w_path <- function(f) {
