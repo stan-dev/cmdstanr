@@ -90,7 +90,7 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_equal(posterior::variables(draws_beta_alpha), c("beta[1]", "beta[2]", "beta[3]", "alpha"))
 })
 
-test_that("draws() errors with cached render guidance for fits created with temp output", {
+test_that("draws() errors with Quarto cache message when temp files are missing", {
   # https://github.com/stan-dev/cmdstanr/issues/1012
   # https://github.com/stan-dev/cmdstanr/pull/1176
 
