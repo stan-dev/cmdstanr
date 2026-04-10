@@ -90,7 +90,7 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_equal(posterior::variables(draws_beta_alpha), c("beta[1]", "beta[2]", "beta[3]", "alpha"))
 })
 
-test_that("draws() errors with quarto cache guidance for fits created with temp output", {
+test_that("draws() errors with cached render guidance for fits created with temp output", {
   # https://github.com/stan-dev/cmdstanr/issues/1012
   # https://github.com/stan-dev/cmdstanr/pull/1176
 
@@ -103,7 +103,7 @@ test_that("draws() errors with quarto cache guidance for fits created with temp 
   withr::local_options(list(
     # Even if cmdstanr_output_dir is now set to a non-temp directory,
     # it was not set when the fit was created so we should still get the error message
-    # that mentions quarto caching
+    # that mentions cached Quarto or R Markdown renders.
     cmdstanr_output_dir = test_path("resources"),
     knitr.in.progress = TRUE
   ))
@@ -112,7 +112,7 @@ test_that("draws() errors with quarto cache guidance for fits created with temp 
     fit$draws(),
     paste0(
       "Assertion on 'files' failed: File does not exist: '", csv_files[[1]], "'.\n",
-      "  If this error happened when using Quarto or Rmarkdown caching,\n",
+      "  If this error happened during a cached Quarto or R Markdown render,\n",
       "  see `cmdstanr_output_dir` in `?cmdstanr_global_options`"
     ),
     fixed = TRUE

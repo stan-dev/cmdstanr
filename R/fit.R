@@ -95,7 +95,28 @@ CmdStanFit <- R6::R6Class(
     init_ = NULL,
     profiles_ = NULL,
     model_methods_env_ = NULL,
-    return_codes_ = NULL
+    return_codes_ = NULL,
+    read_cmdstan_csv_with_cache_hint_ = function(...) {
+      tryCatch(
+        read_cmdstan_csv(...),
+        error = function(e) {
+          err_msg <- conditionMessage(e)
+          if (isTRUE(getOption("knitr.in.progress")) &&
+              isTRUE(self$runset$args$using_tempdir) &&
+              grepl("File does not exist:", err_msg, fixed = TRUE)) {
+            stop(
+              paste0(
+                err_msg,
+                "\n  If this error happened during a cached Quarto or R Markdown render,\n",
+                "  see `cmdstanr_output_dir` in `?cmdstanr_global_options`"
+              ),
+              call. = FALSE
+            )
+          }
+          stop(e)
+        }
+      )
+    }
   )
 )
 
@@ -1432,29 +1453,11 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- tryCatch(
-        read_cmdstan_csv(
-          files = self$output_files(include_failed = FALSE),
-          variables = variables,
-          sampler_diagnostics = sampler_diagnostics,
-          format = format
-        ),
-        error = function(e) {
-          err_msg <- conditionMessage(e)
-          if (isTRUE(getOption("knitr.in.progress")) &&
-              isTRUE(self$runset$args$using_tempdir) &&
-              grepl("File does not exist:", err_msg, fixed = TRUE)) {
-            stop(
-              paste0(
-                err_msg,
-                "\n  If this error happened when using Quarto or Rmarkdown caching,\n",
-                "  see `cmdstanr_output_dir` in `?cmdstanr_global_options`"
-              ),
-              call. = FALSE
-            )
-          }
-          stop(e)
-        }
+      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+        files = self$output_files(include_failed = FALSE),
+        variables = variables,
+        sampler_diagnostics = sampler_diagnostics,
+        format = format
       )
       private$inv_metric_ <- csv_contents$inv_metric
       private$metadata_ <- csv_contents$metadata
@@ -1922,7 +1925,10 @@ CmdStanMLE <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Optimization failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+        files = self$output_files(),
+        format = format
+      )
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2032,7 +2038,10 @@ CmdStanLaplace <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Laplace inference failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+        files = self$output_files(),
+        format = format
+      )
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2115,7 +2124,10 @@ CmdStanVB <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Variational inference failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+        files = self$output_files(),
+        format = format
+      )
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2183,7 +2195,10 @@ CmdStanPathfinder <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Pathfinder failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+        files = self$output_files(),
+        format = format
+      )
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2301,7 +2316,7 @@ CmdStanGQ <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(
+      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
         sampler_diagnostics = "",
