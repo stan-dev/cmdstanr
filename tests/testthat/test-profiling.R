@@ -1,5 +1,3 @@
-context("profiling")
-
 set_cmdstan_path()
 
 

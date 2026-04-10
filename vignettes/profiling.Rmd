@@ -18,8 +18,7 @@ vignette: >
 
 ## Introduction
 
-This vignette demonstrates how to use the new profiling functionality
-introduced in CmdStan 2.26.0.
+This vignette demonstrates how to use Stan's profiling functionality.
 
 Profiling identifies which parts of a Stan program are taking the longest time
 to run and is therefore a useful guide when working on optimizing the
@@ -33,7 +32,7 @@ perspective, see Gelman et al. (2020).
 
 ```{r library, message=FALSE}
 library(cmdstanr)
-check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+check_cmdstan_toolchain(quiet = TRUE)
 ```
 
 ## Adding profiling statements to a Stan program

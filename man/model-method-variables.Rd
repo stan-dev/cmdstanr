@@ -38,6 +38,7 @@ mod$variables()
 \seealso{
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
+\code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},

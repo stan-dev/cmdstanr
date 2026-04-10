@@ -1,8 +1,8 @@
 skip_if(os_is_macos())
 
-file_that_exists <- "placeholder_exists"
-file_that_doesnt_exist <- "placeholder_doesnt_exist"
-withr::local_file(file_that_exists)
+file_that_exists <- withr::local_tempfile(pattern = "placeholder_exists")
+file.create(file_that_exists)
+file_that_doesnt_exist <- withr::local_tempfile(pattern = "placeholder_doesnt_exist")
 
 w_path <- function(f) {
   x <- sapply(f, function(fi) wsl_safe_path(absolute_path(fi)))

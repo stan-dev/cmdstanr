@@ -21,7 +21,8 @@ to the input model file. The default is \code{FALSE}.}
 should 'canonicalize' the Stan model, removing things like deprecated syntax.
 Default is \code{FALSE}. If \code{TRUE}, all canonicalizations are run. You can also
 supply a list of strings which represent options. In that case the options
-are passed to stanc (new in Stan 2.29). See the \href{https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing}{User's guide section}
+are passed to \code{stanc}. See the
+\href{https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing}{User's guide section}
 for available canonicalization options.}
 
 \item{backup}{(logical) If \code{TRUE}, create stanfile.bak backups before
@@ -85,6 +86,7 @@ The Stan and CmdStan documentation:
 
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
+\code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},

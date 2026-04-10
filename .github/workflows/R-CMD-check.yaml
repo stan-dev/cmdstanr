@@ -35,8 +35,11 @@ jobs:
         config:
           - {os: macOS-latest, r: 'devel', opencl: true}
           - {os: macOS-latest, r: 'release', opencl: true}
+          - {os: macos-26, r: 'release', opencl: false}
+          - {os: macos-15-intel, r: 'release', opencl: false}
           - {os: windows-latest, r: 'devel' }
           - {os: windows-latest, r: 'release'}
+          - {os: windows-2022, r: '4.1'}
           - {os: windows-latest, r: 'oldrel'}
           - {os: ubuntu-latest, r: 'devel', opencl: true}
           - {os: ubuntu-latest, r: 'release', opencl: true}
@@ -74,6 +77,28 @@ jobs:
           cache: "always"
           extra-packages: any::rcmdcheck, local::.
 
+      - name: Debug Windows toolchain resolution
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          rtools_home <- cmdstanr:::rtools4x_home_path()
+          candidates <- cmdstanr:::rtools4x_toolchain_candidates()
+          selected <- cmdstanr:::rtools4x_toolchain_path()
+          cat("R version: ", as.character(getRversion()), "\n", sep = "")
+          cat("Rtools home: ", rtools_home, "\n", sep = "")
+          cat("Toolchain candidates:\n")
+          if (length(candidates) == 0) {
+            cat("  - <none>\n")
+          } else {
+            cat(paste0("  - ", candidates), sep = "\n")
+            cat("\n")
+          }
+          cat("Selected toolchain: ", selected, "\n", sep = "")
+          selected_ok <- cmdstanr:::is_rtools4x_toolchain_usable(selected)
+          if (!selected_ok) {
+            stop("Resolved Windows toolchain path is not usable.")
+          }
+        shell: Rscript {0}
+
       - name: Install POCL on Ubuntu Runners
         if: ${{ matrix.config.os == 'ubuntu-latest' }}
         run: |
@@ -91,7 +116,7 @@ jobs:
 
       - name: Install cmdstan
         run: |
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          cmdstanr::check_cmdstan_toolchain()
           tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
           if (nzchar(tarball_url)) {
             cmdstanr::install_cmdstan(

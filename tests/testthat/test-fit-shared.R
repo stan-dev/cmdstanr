@@ -1,5 +1,3 @@
-context("fitted-shared-methods")
-
 set_cmdstan_path()
 fits <- list()
 fits[["sample"]] <- testing_fit("logistic", method = "sample",
@@ -176,6 +174,27 @@ test_that("save_object() method works", {
   rm(fit); gc()
   fit <- readRDS(temp_rds_file)
   expect_identical(fit$summary(), s)
+})
+
+test_that("reloaded fits rebuild model methods lazily after save_object()", {
+  skip_if(os_is_wsl())
+  mod <- cmdstan_model(
+    testing_stan_file("bernoulli_log_lik"),
+    force_recompile = TRUE,
+    compile_model_methods = TRUE
+  )
+  utils::capture.output(
+    fit <- mod$optimize(data = testing_data("bernoulli"))
+  )
+
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  fit$save_object(temp_rds_file)
+  fit2 <- readRDS(temp_rds_file)
+
+  expect_no_error(
+    lp <- fit2$log_prob(unconstrained_variables = c(0.1))
+  )
+  expect_equal(lp, -8.6327599208828509347)
 })
 
 test_that("save_object() method works with qs2 format", {

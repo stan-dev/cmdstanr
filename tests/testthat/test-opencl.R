@@ -1,5 +1,3 @@
-context("opencl")
-
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
 
@@ -127,27 +125,4 @@ test_that("all methods run with valid opencl_ids", {
   expect_false(is.null(fit$metadata()$opencl_device_name))
   expect_false(is.null(fit$metadata()$device))
   expect_false(is.null(fit$metadata()$platform))
-})
-
-test_that("error for runtime selection of OpenCL devices if version less than 2.26", {
-  skip_if_not(Sys.getenv("CMDSTANR_OPENCL_TESTS") %in% c("1", "true"))
-
-  stan_file <- testing_stan_file("bernoulli")
-  mod <- cmdstan_model(stan_file = stan_file, cpp_options = list(stan_opencl = TRUE),
-                       force_recompile = TRUE)
-  fake_cmdstan_version("2.25.0", mod)
-  expect_error(
-    mod$sample(
-      data = testing_data("bernoulli"),
-      chains = 1,
-      refresh = 0,
-      opencl_ids = c(0, 0)
-    ),
-    paste0(
-      "Runtime selection of OpenCL devices ",
-      "is only supported with CmdStan version 2.26 or newer"
-    ),
-    fixed = TRUE
-  )
-  reset_cmdstan_version(mod)
 })

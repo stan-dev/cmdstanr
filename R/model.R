@@ -17,7 +17,7 @@
 #' @param exe_file (string) The path to an existing Stan model executable. Can
 #'   be provided instead of or in addition to `stan_file` (if `stan_file` is
 #'   omitted some `CmdStanModel` methods like `$code()` and `$print()` will not
-#'   work). This argument can only be used with CmdStan 2.27+.
+#'   work).
 #' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -154,11 +154,12 @@
 #' }
 #'
 cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...) {
-  if (cmdstan_version() < "2.27.0" && !is.null(exe_file)) {
-    stop("'exe_file' argument is only supported with CmdStan 2.27 and newer.", call. = FALSE)
-  }
   if (is.null(exe_file) && is.null(stan_file)) {
-    stop("Unable to create a `CmdStanModel` object. Both 'stan_file' and 'exe_file' are undefined.", call. = FALSE)
+    stop(
+      "Unable to create a `CmdStanModel` object. ",
+      "Both 'stan_file' and 'exe_file' are undefined.",
+      call. = FALSE
+    )
   }
   CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, compile = compile, ...)
 }
@@ -195,6 +196,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$hpp_file()`][model-method-compile] |  Return the file path to the `.hpp` file containing the generated C++ code. |
 #'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
 #'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$cmdstan_defaults()`][model-method-cmdstan_defaults] |  Get CmdStan default argument values for a method. |
 #'
 #'  ## Diagnostics
 #'
@@ -422,14 +424,18 @@ CmdStanModel <- R6::R6Class(
 #'   via a global `cmdstanr_force_recompile` option.
 #' @param compile_model_methods (logical) Compile additional model methods
 #'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
-#'   `unconstrain_variables()`).
+#'   `unconstrain_variables()`). Note: the compiled model-method bindings are
+#'   not preserved in a usable form when saving a model object. If you plan to
+#'   save and reload the model object before model fitting, we recommend instead
+#'   waiting to compile the model methods until after fitting via
+#'   [`fit$init_model_methods()`][fit-method-init_model_methods].
 #' @param compile_standalone (logical) Should functions in the Stan model be
 #'   compiled for use in R? If `TRUE` the functions will be available via the
 #'   `functions` field in the compiled model object. This can also be done after
 #'   compilation using the
 #'   [`$expose_functions()`][model-method-expose_functions] method.
-#' @param dry_run (logical) If `TRUE`, the code will do all checks before compilation,
-#'   but skip the actual C++ compilation. Used to speedup tests.
+#' @param dry_run (logical) If `TRUE`, the code will do all checks before
+#'   compilation, but skip the actual C++ compilation. Used to speedup tests.
 #'
 #' @return The `$compile()` method is called for its side effect of creating the
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
@@ -456,7 +462,7 @@ CmdStanModel <- R6::R6Class(
 #' mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 #' mod$exe_file()
 #'
-#' # turn on pedantic mode (new in Stan v2.24)
+#' # turn on pedantic mode
 #' file_pedantic <- write_stan_file("
 #' parameters {
 #'   real sigma;  // pedantic mode will warn about missing <lower=0>
@@ -480,9 +486,12 @@ compile <- function(quiet = TRUE,
                     compile_model_methods = FALSE,
                     compile_standalone = FALSE,
                     dry_run = FALSE) {
-
   if (length(self$stan_file()) == 0) {
-    stop("'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop(
+      "'$compile()' cannot be used because the 'CmdStanModel' ",
+      "was not created with a Stan file.",
+      call. = FALSE
+    )
   }
   assert_stan_file_exists(self$stan_file())
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
@@ -620,7 +629,7 @@ compile <- function(quiet = TRUE,
   }
   stancflags_combined <- stanc_built_options
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
-  if (stancflags_local != "") {
+  if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
@@ -722,7 +731,7 @@ compile <- function(quiet = TRUE,
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
 
-  if(!dry_run) {
+  if (!dry_run) {
     if (compile_model_methods) {
       expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
     }
@@ -763,11 +772,12 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #' }
 #'
 variables <- function() {
-  if (self$cmdstan_version() < "2.27.0") {
-    stop("$variables() is only supported for CmdStan 2.27 or newer.", call. = FALSE)
-  }
   if (length(self$stan_file()) == 0) {
-    stop("'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop(
+      "'$variables()' cannot be used because the 'CmdStanModel' ",
+      "was not created with a Stan file.",
+      call. = FALSE
+    )
   }
   assert_stan_file_exists(self$stan_file())
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
@@ -922,7 +932,8 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
 #'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
 #'   supply a list of strings which represent options. In that case the options
-#'   are passed to stanc (new in Stan 2.29). See the [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
+#'   are passed to `stanc`. See the
+#'   [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
 #' @param backup (logical) If `TRUE`, create stanfile.bak backups before
 #'   writing to the file. Disable this option if you're sure you have other
@@ -970,22 +981,6 @@ format <- function(overwrite_file = FALSE,
                    backup = TRUE,
                    max_line_length = NULL,
                    quiet = FALSE) {
-  # querying current version here not model object version
-  # because this is pre-compile work based on the cmdstanr
-  # version that will be used to compile in teh future,
-  # not based on what was used to compile existing binary (if any)
-  if (cmdstan_version() < "2.29.0" && !is.null(max_line_length)) {
-    stop(
-      "'max_line_length' is only supported with CmdStan 2.29.0 or newer.",
-      call. = FALSE
-    )
-  }
-  if (cmdstan_version() < "2.29.0" && !is.logical(canonicalize)) {
-    stop(
-      "A list can be supplied to the 'canonicalize' argument with CmdStan 2.29.0 or newer.",
-      call. = FALSE
-    )
-  }
   if (length(self$stan_file()) == 0) {
     stop(
       "'$format()' cannot be used because the 'CmdStanModel'",
@@ -1005,9 +1000,6 @@ format <- function(overwrite_file = FALSE,
   }
   if (isTRUE(canonicalize)) {
     stanc_options["print-canonical"] <- TRUE
-    if (cmdstan_version() < "2.29.0") {
-      stanc_options["auto-format"] <- NULL
-    }
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
     stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
   }
@@ -1151,12 +1143,12 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = NULL,
-                   save_cmdstan_config = NULL,
+                   save_metric = getOption("cmdstanr_save_metric", FALSE),
+                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
                    show_progress_bar = FALSE,
                    suppress_iteration_messages = NULL) {
 
-  if (self$cmdstan_version() >= "2.27.0" && self$cmdstan_version() < "2.36.0" && !fixed_param) {
+  if (self$cmdstan_version() < "2.36.0" && !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
@@ -1346,7 +1338,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = NULL) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
   if (fixed_param) {
     chains <- 1
@@ -1496,7 +1488,7 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = NULL) {
+                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1637,10 +1629,7 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = NULL) {
-  if (self$cmdstan_version() < "2.32") {
-    stop("This method is only available in cmdstan >= 2.32", call. = FALSE)
-  }
+                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
   }
@@ -1800,7 +1789,7 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = NULL) {
+                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1955,7 +1944,7 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = NULL) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -2254,6 +2243,51 @@ expose_functions = function(global = FALSE, verbose = FALSE) {
 CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 
 
+#' Get CmdStan default argument values
+#'
+#' @name model-method-cmdstan_defaults
+#' @aliases cmdstan_defaults
+#' @family CmdStanModel methods
+#'
+#' @description The `$cmdstan_defaults()` method of a [`CmdStanModel`]
+#'   object queries the compiled model binary for the default argument
+#'   values used by a given inference method. The returned list uses
+#'   cmdstanr-style argument names (e.g., `iter_sampling` instead of
+#'   CmdStan's `num_samples`).
+#'
+#'   The model must be compiled before calling this method.
+#'
+#' @param method (string) The inference method whose defaults to
+#'   retrieve. One of `"sample"`, `"optimize"`, `"variational"`,
+#'   `"pathfinder"`, or `"laplace"`.
+#' @return A named list of default argument values for the specified
+#'   method, with cmdstanr-style argument names.
+#'
+#' @template seealso-docs
+#'
+#' @examples
+#' \dontrun{
+#' mod <- cmdstan_model(file.path(cmdstan_path(),
+#'                                "examples/bernoulli/bernoulli.stan"))
+#' mod$cmdstan_defaults("sample")
+#' mod$cmdstan_defaults("optimize")
+#' }
+#'
+cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
+                                        "pathfinder", "laplace")) {
+  method <- match.arg(method)
+  if (length(self$exe_file()) == 0 || !file.exists(self$exe_file())) {
+    stop(
+      "'$cmdstan_defaults()' requires a compiled model. ",
+      "Please compile the model first with '$compile()'.",
+      call. = FALSE
+    )
+  }
+  parse_cmdstan_args(self$exe_file(), method)
+}
+CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
+
+
 
 # internal ----------------------------------------------------------------
 assert_valid_stanc_options <- function(stanc_options) {
@@ -2293,11 +2327,7 @@ include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FA
       include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     }
     include_paths <- paste0(include_paths, collapse = ",")
-    if (cmdstan_version() >= "2.24") {
-      include_paths_flag <- "--include-paths="
-    } else {
-      include_paths_flag <- "--include_paths="
-    }
+    include_paths_flag <- "--include-paths="
     if (isTRUE(standalone_call)) {
       stancflags <- c(stancflags, "--include-paths", include_paths)
     } else {
@@ -2338,13 +2368,14 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
   variables
 }
 
-
 is_variables_method_supported <- function(mod) {
-  cmdstan_version() >= "2.27.0" && mod$has_stan_file() && file.exists(mod$stan_file())
+  mod$has_stan_file() && file.exists(mod$stan_file())
 }
-resolve_exe_path <- function(
-  dir = NULL, private_dir = NULL, self_exe_file = NULL, self_stan_file = NULL
-) {
+
+resolve_exe_path <- function(dir = NULL,
+                             private_dir = NULL,
+                             self_exe_file = NULL,
+                             self_stan_file = NULL) {
   if (is.null(dir) && !is.null(private_dir)) {
     dir <- absolute_path(private_dir)
   } else if (!is.null(dir)) {
@@ -2376,4 +2407,199 @@ resolve_exe_path <- function(
     exe <- self_exe_file
   }
   exe
+}
+
+# cmdstan_defaults() helpers
+
+#' Parse CmdStan default argument values from model binary
+#'
+#' Runs a CmdStan model binary with `help-all` to extract valid arguments
+#' and their default values for a given inference method, returning them
+#' with cmdstanr argument names.
+#'
+#' @noRd
+#' @param model_binary Path to the CmdStan model binary.
+#' @param method Inference method: `"sample"`, `"optimize"`,
+#'   `"variational"`, `"pathfinder"`, or `"laplace"`.
+#' @return A named list with cmdstanr-style argument names and default
+#'   values.
+parse_cmdstan_args <- function(model_binary, method) {
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    ret <- wsl_compatible_run(
+      command = wsl_safe_path(model_binary),
+      args = c(method, "help-all"),
+      error_on_status = FALSE
+    )
+  )
+  # CmdStan may write help text to stdout or stderr depending on the platform
+  raw <- paste0(ret$stdout, ret$stderr)
+  output <- strsplit(raw, "\r?\n")[[1]]
+
+  argument_map <- map_cmdstan_to_cmdstanr(method)
+  cmdstan_keys <- unname(argument_map)
+  public_names <- names(argument_map)
+
+  defaults <- list()
+  n <- length(output)
+  # Track the current hierarchical argument key using section indentation.
+  section_indents <- integer(0)
+  section_names <- character(0)
+
+  for (i in seq_len(n)) {
+    line <- output[i]
+    content <- trimws(line)
+
+    # Skip blank lines so they don't reset the section stack
+    if (!nzchar(content)) next
+
+    indent <- nchar(sub("^(\\s*).*", "\\1", line))
+
+    # Drop sections at deeper or equal indentation
+    while (length(section_indents) > 0 &&
+           section_indents[[length(section_indents)]] >= indent) {
+      section_indents <- section_indents[-length(section_indents)]
+      section_names <- section_names[-length(section_names)]
+    }
+
+    section_name <- parse_cmdstan_section_name(content)
+    if (!is.null(section_name)) {
+      section_indents <- c(section_indents, indent)
+      section_names <- c(section_names, section_name)
+      next
+    }
+
+    arg_name <- parse_cmdstan_arg_name(content)
+    if (!is.null(arg_name)) {
+
+      # Build the full dotted argument key: method.section1.section2...arg_name
+      # The top-level method heading (e.g. "sample") is tracked as a section,
+      # so it becomes the first segment of the key.
+      full_key <- paste(c(section_names, arg_name), collapse = ".")
+
+      # Check if this full argument key matches one of our target arguments
+      match_idx <- match(full_key, cmdstan_keys, nomatch = 0L)
+
+      if (match_idx > 0L) {
+        default_value <- find_cmdstan_default_value(output, i, n)
+        defaults[[public_names[[match_idx]]]] <- default_value
+      }
+    }
+  }
+
+  defaults
+}
+
+#' Parse CmdStan section name from a help-all line
+#' @noRd
+parse_cmdstan_section_name <- function(line) {
+  match <- regmatches(line, regexec("^([a-z_][a-z0-9_]*)$", line))[[1]]
+  if (length(match) >= 2) match[2] else NULL
+}
+
+#' Parse CmdStan argument name from a help-all line
+#' @noRd
+parse_cmdstan_arg_name <- function(line) {
+  match <- regmatches(line, regexec("^([a-z_][a-z0-9_]*)=", line))[[1]]
+  if (length(match) >= 2) match[2] else NULL
+}
+
+#' Find CmdStan default value following a help-all argument line
+#' @noRd
+find_cmdstan_default_value <- function(output, line_idx, n_lines) {
+  default_value <- NULL
+
+  for (j in (line_idx + 1):min(line_idx + 5, n_lines)) {
+    next_content <- trimws(output[j])
+    if (grepl("^Defaults to", next_content)) {
+      default_value <- parse_default_value(next_content)
+      break
+    }
+    # Stop if we hit another argument
+    if (grepl("^[a-z_][a-z0-9_]*=", next_content)) break
+  }
+
+  default_value
+}
+
+#' Parse default value from "Defaults to ..." line
+#' @noRd
+parse_default_value <- function(line) {
+  val_str <- sub("^Defaults to\\s*", "", line)
+  if (val_str %in% c("true", "false")) return(val_str == "true")
+  if (grepl("^-?[0-9]+$", val_str)) return(as.integer(val_str))
+  if (grepl("^-?[0-9]*\\.?[0-9]+([eE][+-]?[0-9]+)?$", val_str)) return(as.numeric(val_str))
+  val_str
+}
+
+#' Map CmdStan argument names to CmdStanR argument names
+#' @noRd
+map_cmdstan_to_cmdstanr <- function(method) {
+  switch(method,
+         sample = c(
+           iter_sampling = "sample.num_samples",
+           iter_warmup = "sample.num_warmup",
+           save_warmup = "sample.save_warmup",
+           thin = "sample.thin",
+           adapt_engaged = "sample.adapt.engaged",
+           adapt_delta = "sample.adapt.delta",
+           init_buffer = "sample.adapt.init_buffer",
+           term_buffer = "sample.adapt.term_buffer",
+           window = "sample.adapt.window",
+           save_metric = "sample.adapt.save_metric",
+           max_treedepth = "sample.hmc.nuts.max_depth",
+           metric = "sample.hmc.metric",
+           metric_file = "sample.hmc.metric_file",
+           step_size = "sample.hmc.stepsize"
+         ),
+         optimize = c(
+           algorithm = "optimize.algorithm",
+           jacobian = "optimize.jacobian",
+           iter = "optimize.iter",
+           init_alpha = "optimize.lbfgs.init_alpha",
+           tol_obj = "optimize.lbfgs.tol_obj",
+           tol_rel_obj = "optimize.lbfgs.tol_rel_obj",
+           tol_grad = "optimize.lbfgs.tol_grad",
+           tol_rel_grad = "optimize.lbfgs.tol_rel_grad",
+           tol_param = "optimize.lbfgs.tol_param",
+           history_size = "optimize.lbfgs.history_size"
+         ),
+         variational = c(
+           algorithm = "variational.algorithm",
+           iter = "variational.iter",
+           grad_samples = "variational.grad_samples",
+           elbo_samples = "variational.elbo_samples",
+           eta = "variational.eta",
+           adapt_engaged = "variational.adapt.engaged",
+           adapt_iter = "variational.adapt.iter",
+           tol_rel_obj = "variational.tol_rel_obj",
+           eval_elbo = "variational.eval_elbo",
+           draws = "variational.output_samples"
+         ),
+         pathfinder = c(
+           init_alpha = "pathfinder.init_alpha",
+           tol_obj = "pathfinder.tol_obj",
+           tol_rel_obj = "pathfinder.tol_rel_obj",
+           tol_grad = "pathfinder.tol_grad",
+           tol_rel_grad = "pathfinder.tol_rel_grad",
+           tol_param = "pathfinder.tol_param",
+           history_size = "pathfinder.history_size",
+           draws = "pathfinder.num_psis_draws",
+           num_paths = "pathfinder.num_paths",
+           save_single_paths = "pathfinder.save_single_paths",
+           psis_resample = "pathfinder.psis_resample",
+           calculate_lp = "pathfinder.calculate_lp",
+           max_lbfgs_iters = "pathfinder.max_lbfgs_iters",
+           single_path_draws = "pathfinder.num_draws",
+           num_elbo_draws = "pathfinder.num_elbo_draws"
+         ),
+         laplace = c(
+           jacobian = "laplace.jacobian",
+           draws = "laplace.draws"
+         ),
+         character(0)
+  )
 }

@@ -30,6 +30,7 @@ methods, many of which have their own (linked) documentation pages:
    \code{\link[=model-method-compile]{$hpp_file()}} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
    \code{\link[=model-method-compile]{$save_hpp_file()}} \tab Save the \code{.hpp} file containing the generated C++ code. \cr
    \code{\link[=model-method-expose_functions]{$expose_functions()}} \tab Expose Stan functions for use in R. \cr
+   \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} \tab Get CmdStan default argument values for a method. \cr
 }
 
 }

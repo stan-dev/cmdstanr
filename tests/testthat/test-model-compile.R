@@ -1,5 +1,3 @@
-context("model-compile")
-
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
@@ -78,7 +76,6 @@ test_that("compile() method overwrites binaries", {
   mod$compile(quiet = TRUE)
   old_time = file.mtime(mod$exe_file())
   mod$compile(quiet = TRUE, force_recompile = TRUE)
-  new_time =
   expect_gt(file.mtime(mod$exe_file()), old_time)
 })
 
@@ -113,6 +110,7 @@ test_that("compilation works with include_paths", {
 })
 
 test_that("name in STANCFLAGS is set correctly", {
+  local_reproducible_output()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
     out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
@@ -122,7 +120,14 @@ test_that("name in STANCFLAGS is set correctly", {
     out_name <- "bin/stanc --name='bernoulli2_model' --o"
   }
   expect_output(print(out), out_no_name)
-  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")))
+
+  out <- utils::capture.output(
+    mod$compile(
+      quiet = FALSE,
+      force_recompile = TRUE,
+      stanc_options = list(name = "bernoulli2_model")
+    )
+  )
   expect_output(print(out), out_name)
 })
 
@@ -299,11 +304,9 @@ test_that("check_syntax() works", {
 
   stan_file <- testing_stan_file("bernoulli")
   mod_ok <- cmdstan_model(stan_file, compile = FALSE)
-  expect_true(
-    expect_message(
-      mod_ok$check_syntax(),
-      "Stan program is syntactically correct"
-    )
+  expect_message(
+    mod_ok$check_syntax(),
+    "Stan program is syntactically correct"
   )
   expect_message(
     mod_ok$check_syntax(quiet = TRUE),
@@ -539,15 +542,6 @@ test_that("cmdstan_model works with exe_file", {
     mod$exe_file(),
     repair_path(tmp_exe_file)
   )
-})
-
-test_that("cmdstan_model errors if exe_file specified and version less than 2.27", {
-  fake_cmdstan_version("2.26.0")
-  expect_error(
-    cmdstan_model(exe_file = "foo"),
-    "'exe_file' argument is only supported with CmdStan 2.27 and newer"
-  )
-  reset_cmdstan_version()
 })
 
 test_that("cmdstan_model created only with exe_file errors for check_syntax, code, ... ", {
@@ -840,15 +834,28 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
   expect_s3_class(mod_tmp$compile(), "CmdStanModel")
 })
 
-test_that("STANCFLAGS included from make/local", {
-  make_local_old <- cmdstan_make_local()
-  cmdstan_make_local(cpp_options = "STANCFLAGS += --O1", append = TRUE)
+test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", {
+  local_reproducible_output()
+  real_get_cmdstan_flags <- get_cmdstan_flags
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) {
+      if (identical(flag_name, "STANCFLAGS")) {
+        c("--O1", "--warn-pedantic")
+      } else {
+        real_get_cmdstan_flags(flag_name)
+      }
+    }
+  )
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
-    out_w_flags <- "bin/stanc.exe --name='bernoulli_model'  --O1 --o"
+    out_w_flags <- "bin/stanc.exe --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   } else {
-    out_w_flags <- "bin/stanc --name='bernoulli_model'  --O1 --o"
+    out_w_flags <- "bin/stanc --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
-  cmdstan_make_local(cpp_options = make_local_old, append = FALSE)
+})
+
+test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {
+  withr::local_envvar(MAKEFLAGS = "-w -j 4")
+  expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
 })

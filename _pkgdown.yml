@@ -95,6 +95,7 @@ reference:
       - read_cmdstan_csv
       - write_stan_json
       - write_stan_file
+      - print_stan_file
       - draws_to_csv
       - as_mcmc.list
       - as_draws.CmdStanMCMC

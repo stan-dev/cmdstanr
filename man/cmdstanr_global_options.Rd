@@ -37,5 +37,9 @@ files in an explicitly defined directory are not automatically deleted.
 \item \code{mc.cores}: The number of cores to use for various parallelization tasks
 (e.g. running MCMC chains, installing CmdStan). The default depends on the
 use case and is documented with the methods that make use of \code{mc.cores}.
+\item \code{cmdstanr_save_metric}: Should the adapted metric be saved to a separate
+JSON file when running MCMC? The default is \code{FALSE}.
+\item \code{cmdstanr_save_config}: Should a JSON file be saved containing the argument
+tree and extra information when running CmdStan? The default is \code{FALSE}.
 }
 }

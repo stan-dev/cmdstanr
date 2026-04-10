@@ -23,6 +23,7 @@ CmdStanFit <- R6::R6Class(
           assign(n, get(n, runset$model_methods_env()), private$model_methods_env_)
         }
       }
+      drop_stale_model_methods(private$model_methods_env_)
 
       self$functions <- new.env()
       if (!is.null(runset$standalone_env())) {
@@ -332,8 +333,11 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   `log_prob`, `grad_log_prob`, `hessian`, `constrain_variables`,
 #'   `unconstrain_variables` and `unconstrain_draws` functions. These are then
 #'   available as methods of the fitted model object. This requires the
-#'   additional `Rcpp` package, which are not required for fitting models using
-#'   CmdStanR.
+#'   additional \pkg{Rcpp} package.
+#'
+#'   If a model or fit object was saved with [base::saveRDS()] and later
+#'   reloaded, any previously compiled model-method bindings will be rebuilt in
+#'   the current R session when this method is called.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
@@ -357,6 +361,7 @@ init_model_methods <- function(seed = 1, verbose = FALSE) {
           call. = FALSE)
   }
   require_suggested_package("Rcpp")
+  drop_stale_model_methods(private$model_methods_env_)
   if (length(private$model_methods_env_$hpp_code_) == 0) {
     stop("Model methods cannot be used with a pre-compiled Stan executable, ",
           "the model must be compiled again", call. = FALSE)
@@ -1200,8 +1205,8 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'   profiling data if any profiling data was written to the profile CSV files.
 #'   See [save_profile_files()] to control where the files are saved.
 #'
-#'   Support for profiling Stan programs is available with CmdStan >= 2.26 and
-#'   requires adding profiling statements to the Stan program.
+#'   Profiling requires adding profiling statements to the Stan program. See
+#'   **Examples** for a demonstration.
 #'
 #' @return A list of data frames with profiling data if the profiling CSV files
 #'   were created.

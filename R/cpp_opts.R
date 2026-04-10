@@ -52,27 +52,24 @@ parse_exe_info_string <- function(ret_stdout) {
 # old (current) parser
 model_compile_info <- function(exe_file, version) {
   info <- NULL
-  if (version > "2.26.1") {
-
-    ret <- run_info_cli(exe_file)
-    if (ret$status == 0) {
-      info <- list()
-      info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
-      for (key_val in info_raw) {
-        if (length(key_val) > 1) {
-          key_val <- trimws(key_val)
-          val <- key_val[2]
-          if (!is.na(as.logical(val))) {
-            val <- as.logical(val)
-          }
-          info[[toupper(key_val[1])]] <- val
+  ret <- run_info_cli(exe_file)
+  if (ret$status == 0) {
+    info <- list()
+    info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
+    for (key_val in info_raw) {
+      if (length(key_val) > 1) {
+        key_val <- trimws(key_val)
+        val <- key_val[2]
+        if (!is.na(as.logical(val))) {
+          val <- as.logical(val)
         }
+        info[[toupper(key_val[1])]] <- val
       }
-      info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
-      info[["STAN_VERSION_MAJOR"]] <- NULL
-      info[["STAN_VERSION_MINOR"]] <- NULL
-      info[["STAN_VERSION_PATCH"]] <- NULL
     }
+    info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
+    info[["STAN_VERSION_MAJOR"]] <- NULL
+    info[["STAN_VERSION_MINOR"]] <- NULL
+    info[["STAN_VERSION_PATCH"]] <- NULL
   }
   info
 }
@@ -177,7 +174,7 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
 # exe_info style means off is FALSE
 
 exe_info_style_cpp_options <- function(cpp_options) {
-  if(is.null(cpp_options)) cpp_options <- list()
+  if (is.null(cpp_options)) cpp_options <- list()
   names(cpp_options) <- tolower(names(cpp_options))
   flags_reported_in_exe_info <- c(
     "stan_threads", "stan_mpi", "stan_opencl",

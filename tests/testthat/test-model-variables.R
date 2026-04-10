@@ -1,18 +1,4 @@
-context("model-variables")
-
 set_cmdstan_path()
-
-test_that("$variables() errors if version less than 2.27", {
-  mod <- testing_model("bernoulli")
-  ver <- cmdstan_version()
-  fake_cmdstan_version("2.26.0", mod = mod)
-  expect_error(
-    mod$variables(),
-    "$variables() is only supported for CmdStan 2.27 or newer",
-    fixed = TRUE
-  )
-  .cmdstanr$VERSION <- ver
-})
 
 test_that("$variables() work correctly with example models", {
   mod <- testing_model("bernoulli")
@@ -110,7 +96,6 @@ test_that("$variables() errors on no stan_file", {
 })
 
 test_that("$variables() works with #includes, both pre and post compilation.", {
-
   data_code <- "
     data {
       int N;

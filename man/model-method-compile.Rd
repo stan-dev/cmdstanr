@@ -60,7 +60,11 @@ via a global \code{cmdstanr_force_recompile} option.}
 
 \item{compile_model_methods}{(logical) Compile additional model methods
 (\code{log_prob()}, \code{grad_log_prob()}, \code{constrain_variables()},
-\code{unconstrain_variables()}).}
+\code{unconstrain_variables()}). Note: the compiled model-method bindings are
+not preserved in a usable form when saving a model object. If you plan to
+save and reload the model object before model fitting, we recommend instead
+waiting to compile the model methods until after fitting via
+\code{\link[=fit-method-init_model_methods]{fit$init_model_methods()}}.}
 
 \item{compile_standalone}{(logical) Should functions in the Stan model be
 compiled for use in R? If \code{TRUE} the functions will be available via the
@@ -68,8 +72,8 @@ compiled for use in R? If \code{TRUE} the functions will be available via the
 compilation using the
 \code{\link[=model-method-expose_functions]{$expose_functions()}} method.}
 
-\item{dry_run}{(logical) If \code{TRUE}, the code will do all checks before compilation,
-but skip the actual C++ compilation. Used to speedup tests.}
+\item{dry_run}{(logical) If \code{TRUE}, the code will do all checks before
+compilation, but skip the actual C++ compilation. Used to speedup tests.}
 }
 \value{
 The \verb{$compile()} method is called for its side effect of creating the
@@ -112,7 +116,7 @@ mod$exe_file()
 mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 mod$exe_file()
 
-# turn on pedantic mode (new in Stan v2.24)
+# turn on pedantic mode
 file_pedantic <- write_stan_file("
 parameters {
   real sigma;  // pedantic mode will warn about missing <lower=0>
@@ -142,6 +146,7 @@ The Stan and CmdStan documentation:
 
 Other CmdStanModel methods: 
 \code{\link{model-method-check_syntax}},
+\code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},

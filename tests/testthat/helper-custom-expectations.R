@@ -11,7 +11,11 @@ expect_compilation <- function(mod, ...) {
   }
   if(!is.null(before_mtime)) {
     after_mtime <- file.mtime(mod$exe_file())
-    expect(before_mtime != after_mtime, sprintf("Exe file '%s' has NOT changed, despite expecting (re)compilation", mod$exe_file()))
+    expect_gt(
+      after_mtime,
+      before_mtime,
+      sprintf("Exe file '%s' has NOT changed, despite expecting (re)compilation", mod$exe_file())
+    )
   }
   invisible(mod)
 }
@@ -26,7 +30,11 @@ expect_call_compilation <- function(constructor_call) {
     fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
   }
   after_mtime <- file.mtime(mod$exe_file())
-  expect(before_time <= after_mtime, sprintf("Exe file '%s' has old timestamp, despite expecting (re)compilation", mod$exe_file()))
+  expect_gt(
+    after_mtime,
+    before_time,
+    sprintf("Exe file '%s' has old timestamp, despite expecting (re)compilation", mod$exe_file())
+  )
   invisible(mod)
 }
 
@@ -40,7 +48,7 @@ expect_no_recompilation <- function(mod, ...) {
   before_mtime <- file.mtime(mod$exe_file())
   expect_interactive_message(mod$compile(...), "Model executable is up to date!")
   after_mtime <- file.mtime(mod$exe_file())
-  expect(before_mtime == after_mtime, sprintf("Model executable '%s' has changed, despite expecting no recompilation", mod$exe_file()))
+  expect_true(before_mtime == after_mtime, sprintf("Model executable '%s' has changed, despite expecting no recompilation", mod$exe_file()))
   invisible(mod)
 }
 
@@ -92,8 +100,19 @@ expect_gq_output <- function(object, num_chains = NULL) {
 }
 
 expect_interactive_message <- function(object, regexp = NULL) {
-  rlang::with_interactive(value = TRUE,
-    expect_message(object = object, regexp = regexp))
+  object <- substitute(object)
+  env <- parent.frame()
+  value <- NULL
+  rlang::with_interactive(value = TRUE, {
+    expect_message(
+      object = {
+        value <- rlang::eval_bare(object, env)
+        value
+      },
+      regexp = regexp
+    )
+  })
+  invisible(value)
 }
 
 expect_noninteractive_silent <- function(object) {
@@ -108,3 +127,22 @@ expect_equal_ignore_order <- function(object, expected, ...) {
 }
 
 expect_not_true <- function(...) expect_false(isTRUE(...))
+
+# strips numeric values (which may change slightly with different hardware or compilers) 
+# allowing us to still verify names, ordering, column headers, row counts, etc.
+transform_print_snapshot <- function(x) {
+  vapply(x, function(line) {
+    line <- trimws(line)
+    if (!nzchar(line)) {
+      return(line)
+    }
+    if (grepl("^variable\\b", line)) {
+      return(gsub("\\s+", " ", line))
+    }
+    if (grepl("^# showing", line) ||
+        grepl("^Can't find the following variable\\(s\\):", line)) {
+      return(line)
+    }
+    sub("\\s+.*$", "", line)
+  }, character(1))
+}
