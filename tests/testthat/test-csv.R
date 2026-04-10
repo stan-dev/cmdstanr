@@ -524,6 +524,64 @@ test_that("time from read_cmdstan_csv matches time from fit$time()", {
   )
 })
 
+test_that("returning time works for gq read_cmdstan_csv from static CSV", {
+  csv_files <- test_path("resources", "csv", "bernoulli_ppc-1-gq-with-timing.csv")
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = 1,
+    total = 0.123
+  ))
+
+  csv_files <- c(
+    test_path("resources", "csv", "bernoulli_ppc-1-gq-with-timing.csv"),
+    test_path("resources", "csv", "bernoulli_ppc-2-gq-with-timing.csv")
+  )
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = c(1, 2),
+    total = c(0.123, 0.456)
+  ))
+})
+
+test_that("returning time works for gq read_cmdstan_csv from fit object", {
+  gq_csv <- read_cmdstan_csv(fit_gq$output_files())
+  expect_equal(gq_csv$time$total, NA_integer_)
+  checkmate::expect_data_frame(
+    gq_csv$time$chains,
+    any.missing = FALSE,
+    types = c("numeric", "numeric"),
+    nrows = fit_gq$num_chains(),
+    ncols = 2
+  )
+  expect_named(gq_csv$time$chains, c("chain_id", "total"))
+  if (cmdstan_version() >= "2.39.0") {
+    # per-chain times should be non-zero (parsed from CmdStan timing output)
+    expect_true(all(gq_csv$time$chains$total > 0))
+  } else {
+    # for version < 2.39 per-chain times are reported as 0
+    expect_true(all(gq_csv$time$chains$total == 0))
+  }
+})
+
+test_that("gq time from read_cmdstan_csv matches time from fit_gq$time()", {
+  expect_equivalent(
+    read_cmdstan_csv(fit_gq$output_files())$time$chains,
+    fit_gq$time()$chains
+  )
+})
+
+test_that("returning time is NULL for gq CSV without timing", {
+  csv_files <- test_path("resources", "csv", "bernoulli_ppc-1-gq.csv")
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = 1,
+    total = 0
+  ))
+})
+
 test_that("read_cmdstan_csv reads seed correctly", {
   opt <- read_cmdstan_csv(fit_bernoulli_optimize$output_files())
   vi <- read_cmdstan_csv(fit_bernoulli_variational$output_files())
