@@ -227,6 +227,7 @@ test_that("sampling model with tuple and complex types produces no warnings", {
 })
 
 test_that("variable_skeleton works with tuple and complex parameters", {
+  skip_if(os_is_wsl())
   mod <- cmdstan_model(testing_stan_file("tuple_complex"), force_recompile = TRUE)
   utils::capture.output(
     fit <- mod$sample(seed = 123, chains = 2, iter_sampling = 100,
@@ -250,6 +251,7 @@ test_that("variable_skeleton works with tuple and complex parameters", {
 })
 
 test_that("unconstrain_draws works with tuple and complex parameters", {
+  skip_if(os_is_wsl())
   mod <- cmdstan_model(testing_stan_file("tuple_complex"), force_recompile = TRUE)
   utils::capture.output(
     fit <- mod$sample(seed = 123, chains = 2, iter_sampling = 100,
