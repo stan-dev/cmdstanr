@@ -13,8 +13,16 @@ test_that("summary() and print() methods works after laplace", {
   expect_equal(x$variable, c("lp__", "lp_approx__", PARAM_NAMES))
   expect_equal(colnames(x), c("variable", "mean", "sd"))
 
-  expect_output(expect_s3_class(fit_laplace$print(), "CmdStanLaplace"), "variable")
-  expect_output(fit_laplace$print(max_rows = 1), "# showing 1 of 6 rows")
+  expect_snapshot(
+    expect_s3_class(fit_laplace$print(), "CmdStanLaplace"),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_laplace$print(max_rows = 1),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
 })
 
 test_that("draws() method returns posterior sample (reading csv works)", {
@@ -61,4 +69,3 @@ test_that("draws() errors if invalid format", {
     "The supplied draws format is not valid"
   )
 })
-

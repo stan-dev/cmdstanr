@@ -127,3 +127,22 @@ expect_equal_ignore_order <- function(object, expected, ...) {
 }
 
 expect_not_true <- function(...) expect_false(isTRUE(...))
+
+# strips numeric values (which may change slightly with different hardware or compilers) 
+# allowing us to still verify names, ordering, column headers, row counts, etc.
+transform_print_snapshot <- function(x) {
+  vapply(x, function(line) {
+    line <- trimws(line)
+    if (!nzchar(line)) {
+      return(line)
+    }
+    if (grepl("^variable\\b", line)) {
+      return(gsub("\\s+", " ", line))
+    }
+    if (grepl("^# showing", line) ||
+        grepl("^Can't find the following variable\\(s\\):", line)) {
+      return(line)
+    }
+    sub("\\s+.*$", "", line)
+  }, character(1))
+}
