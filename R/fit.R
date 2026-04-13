@@ -96,7 +96,11 @@ CmdStanFit <- R6::R6Class(
     profiles_ = NULL,
     model_methods_env_ = NULL,
     return_codes_ = NULL,
-    read_cmdstan_csv_with_cache_hint_ = function(...) {
+    # wrapper around read_cmdstan_csv() that allows for more informative error
+    # messages. currently only used for a specific case of missing files when
+    # rendering with caching in R Markdown or Quarto, but could be extended to
+    # other cases in the future
+    read_cmdstan_csv_ = function(...) {
       tryCatch(
         read_cmdstan_csv(...),
         error = function(e) {
@@ -1453,7 +1457,7 @@ CmdStanMCMC <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+      csv_contents <- private$read_cmdstan_csv_(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
         sampler_diagnostics = sampler_diagnostics,
@@ -1925,7 +1929,7 @@ CmdStanMLE <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Optimization failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+      csv_contents <- private$read_cmdstan_csv_(
         files = self$output_files(),
         format = format
       )
@@ -2038,7 +2042,7 @@ CmdStanLaplace <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Laplace inference failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+      csv_contents <- private$read_cmdstan_csv_(
         files = self$output_files(),
         format = format
       )
@@ -2124,7 +2128,7 @@ CmdStanVB <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Variational inference failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+      csv_contents <- private$read_cmdstan_csv_(
         files = self$output_files(),
         format = format
       )
@@ -2195,7 +2199,7 @@ CmdStanPathfinder <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Pathfinder failed. Unable to retrieve the draws.", call. = FALSE)
       }
-      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+      csv_contents <- private$read_cmdstan_csv_(
         files = self$output_files(),
         format = format
       )
@@ -2316,7 +2320,7 @@ CmdStanGQ <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
-      csv_contents <- private$read_cmdstan_csv_with_cache_hint_(
+      csv_contents <- private$read_cmdstan_csv_(
         files = self$output_files(include_failed = FALSE),
         variables = variables,
         sampler_diagnostics = "",
