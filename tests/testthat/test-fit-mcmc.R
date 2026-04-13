@@ -91,6 +91,8 @@ test_that("draws() method returns draws_array (reading csv works)", {
 })
 
 test_that("draws() errors with Quarto cache message when temp files are missing", {
+  skip_if(os_is_wsl())
+
   # https://github.com/stan-dev/cmdstanr/issues/1012
   # https://github.com/stan-dev/cmdstanr/pull/1176
 
