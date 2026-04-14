@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: cmdstan env vars
         run: |
-          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
+          echo "CMDSTAN=${HOME}/.cmdstan" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/checkout@v6
