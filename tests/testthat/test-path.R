@@ -45,6 +45,31 @@ test_that("Setting path from env var is detected", {
   expect_false(is.null(.cmdstanr$VERSION))
 })
 
+test_that("set_cmdstan_path() uses CMDSTAN env var when path is omitted", {
+  unset_cmdstan_path()
+  withr::local_envvar(c(CMDSTAN = PATH))
+  expect_message(
+    set_cmdstan_path(),
+    paste("CmdStan path set to:", PATH),
+    fixed = TRUE
+  )
+  expect_equal(cmdstan_path(), PATH)
+})
+
+test_that("set_cmdstan_path() clears cached state when no path is detected", {
+  .cmdstanr$PATH <- PATH
+  .cmdstanr$VERSION <- VERSION
+  .cmdstanr$WSL <- TRUE
+  local_mocked_bindings(
+    resolve_cmdstan_path_from_env = function() NULL,
+    cmdstan_default_path = function(dir = NULL) NULL
+  )
+  expect_silent(set_cmdstan_path())
+  expect_null(.cmdstanr$PATH)
+  expect_null(.cmdstanr$VERSION)
+  expect_false(isTRUE(.cmdstanr$WSL))
+})
+
 test_that("Unsupported CmdStan path from env var is rejected", {
   unset_cmdstan_path()
   .cmdstanr$WSL <- TRUE
@@ -73,7 +98,7 @@ test_that("Existing CMDSTAN env path with no install resets cached state", {
   withr::local_envvar(c(CMDSTAN = empty_parent))
   expect_warning(
     cmdstanr_initialize(),
-    "No CmdStan installation found in the path specified by the environment variable 'CMDSTAN'.",
+    "CmdStan path not set. No CmdStan installation found in the path specified by the environment variable 'CMDSTAN'.",
     fixed = TRUE
   )
   expect_null(.cmdstanr$PATH)

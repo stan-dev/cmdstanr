@@ -9,7 +9,8 @@
 #' @export
 #'
 #' @param path (string) The full file path to the CmdStan installation. If
-#'   `NULL` (the default) then the path is set to the default path used by
+#'   `NULL` (the default) then the path is set using the `"CMDSTAN"`
+#'   environment variable when available, otherwise the default path used by
 #'   [install_cmdstan()] if it exists.
 #' @return A string. Either the file path to the CmdStan installation or the
 #'   CmdStan version number.
@@ -39,7 +40,20 @@
 #'
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
-    path <- cmdstan_default_path()
+    env_path <- resolve_cmdstan_path_from_env()
+    if (isTRUE(is.na(env_path))) {
+      unset_cmdstan_path()
+      return(invisible(NULL))
+    }
+    if (!is.null(env_path)) {
+      path <- env_path
+    } else {
+      path <- cmdstan_default_path()
+      if (is.null(path)) {
+        unset_cmdstan_path()
+        return(invisible(NULL))
+      }
+    }
   }
   if (dir.exists(path)) {
     path <- absolute_path(path)
@@ -50,9 +64,7 @@ set_cmdstan_path <- function(path = NULL) {
         "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer.",
         call. = FALSE
       )
-      .cmdstanr$PATH <- NULL
-      .cmdstanr$VERSION <- NULL
-      .cmdstanr$WSL <- FALSE
+      unset_cmdstan_path()
       return(invisible(path))
     }
     .cmdstanr$PATH <- path
@@ -60,7 +72,7 @@ set_cmdstan_path <- function(path = NULL) {
     .cmdstanr$WSL <- grepl("//wsl$", path, fixed = TRUE)
     message("CmdStan path set to: ", path)
   } else {
-    warning("Path not set. Can't find directory: ", path, call. = FALSE)
+    warning("CmdStan path not set. Can't find directory: ", path, call. = FALSE)
   }
   invisible(path)
 }
@@ -102,6 +114,12 @@ cmdstan_version <- function(error_on_NA = TRUE) {
 .cmdstanr$TEMP_DIR <- NULL
 .cmdstanr$WSL <- FALSE
 
+unset_cmdstan_path <- function() {
+  .cmdstanr$PATH <- NULL
+  .cmdstanr$VERSION <- NULL
+  .cmdstanr$WSL <- FALSE
+}
+
 # path to temp directory
 cmdstan_tempdir <- function() {
   .cmdstanr$TEMP_DIR
@@ -128,8 +146,36 @@ is_supported_cmdstan_version <- function(version) {
   isTRUE(cmp >= 0)
 }
 
-#' cmdstan_default_install_path
-#'
+resolve_cmdstan_path_from_env <- function() {
+  path <- Sys.getenv("CMDSTAN")
+  if (!nzchar(path)) {
+    return(NULL)
+  }
+  if (!dir.exists(path)) {
+    warning(
+      "CmdStan path not set. Can't find directory specified by environment ",
+      "variable 'CMDSTAN'.",
+      call. = FALSE
+    )
+    return(NA_character_)
+  }
+  path <- absolute_path(path)
+  version <- suppressWarnings(read_cmdstan_version(path))
+  if (!is.null(version)) {
+    return(path)
+  }
+  path <- cmdstan_default_path(dir = path)
+  if (is.null(path)) {
+    warning(
+      "CmdStan path not set. No CmdStan installation found in the path ",
+      "specified by the environment variable 'CMDSTAN'.",
+      call. = FALSE
+    )
+    return(NA_character_)
+  }
+  path
+}
+
 #' Path to where  [install_cmdstan()] with default settings installs CmdStan.
 #'
 #' @keywords internal
@@ -140,14 +186,24 @@ cmdstan_default_install_path <- function(wsl = FALSE) {
   if (wsl) {
     file.path(paste0(wsl_dir_prefix(wsl = TRUE), wsl_home_dir()), ".cmdstan")
   } else {
-    file.path(.home_path(), ".cmdstan")
+    file.path(home_path(), ".cmdstan")
   }
 }
 
-#' cmdstan_default_path
-#'
-#' Returns the path to the installation of CmdStan with the most recent release
-#' version.
+home_path <- function() {
+  home <- Sys.getenv("HOME")
+  if (os_is_windows()) {
+    userprofile <- Sys.getenv("USERPROFILE")
+    h_drivepath <- file.path(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"))
+    win_home <- ifelse(userprofile == "", h_drivepath, userprofile)
+    if (win_home != "") {
+      home <- win_home
+    }
+  }
+  home
+}
+
+#' Path to the installation of CmdStan with the most recent release version
 #'
 #' For Windows systems with WSL CmdStan installs, if there are side-by-side WSL
 #' and native installs with the same version then the WSL is preferred.
@@ -180,9 +236,9 @@ cmdstan_default_path <- function(dir = NULL) {
   }
   if (dir.exists(installs_path) || wsl_path_exists) {
     latest_cmdstan <- ifelse(dir.exists(installs_path),
-                             .latest_cmdstan_installed(installs_path), "")
+                             latest_cmdstan_installed(installs_path), "")
     latest_wsl_cmdstan <- ifelse(wsl_path_exists,
-                                 .latest_cmdstan_installed(wsl_installs_path), "")
+                                 latest_cmdstan_installed(wsl_installs_path), "")
     if (!nzchar(latest_cmdstan) && !nzchar(latest_wsl_cmdstan)) {
       return(NULL)
     }
@@ -195,7 +251,7 @@ cmdstan_default_path <- function(dir = NULL) {
   NULL
 }
 
-.latest_cmdstan_installed <- function(installs_path) {
+latest_cmdstan_installed <- function(installs_path) {
   cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
   # if installed in cmdstan folder with no version move to cmdstan-version folder
   if ("cmdstan" %in% cmdstan_installs) {
@@ -242,6 +298,7 @@ read_cmdstan_version <- function(path) {
   sub("CMDSTAN_VERSION := ", "", version_line)
 }
 
+
 #' Returns whether the supplied installation is a release candidate
 #' @noRd
 #' @param path Path to installation.
@@ -253,12 +310,6 @@ is_release_candidate <- function(path) {
   grepl(pattern = "-rc[0-9]*$", x = path)
 }
 
-# unset the path (only used in tests)
-unset_cmdstan_path <- function() {
-  .cmdstanr$PATH <- NULL
-  .cmdstanr$VERSION <- NULL
-  .cmdstanr$WSL <- FALSE
-}
 
 # fake a cmdstan version (only used in tests)
 fake_cmdstan_version <- function(version, mod = NULL) {
@@ -274,17 +325,4 @@ fake_cmdstan_version <- function(version, mod = NULL) {
 }
 reset_cmdstan_version <- function(mod = NULL) {
   fake_cmdstan_version(read_cmdstan_version(cmdstan_path()), mod = mod)
-}
-
-.home_path <- function() {
-  home <- Sys.getenv("HOME")
-  if (os_is_windows()) {
-    userprofile <- Sys.getenv("USERPROFILE")
-    h_drivepath <- file.path(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"))
-    win_home <- ifelse(userprofile == "", h_drivepath, userprofile)
-    if (win_home != "") {
-      home <- win_home
-    }
-  }
-  home
 }
