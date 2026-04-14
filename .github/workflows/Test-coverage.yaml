@@ -32,11 +32,6 @@ jobs:
       NOT_CRAN: true
 
     steps:
-      - name: cmdstan env vars
-        run: |
-          echo "CMDSTAN=${HOME}/.cmdstan" >> $GITHUB_ENV
-        shell: bash
-
       - uses: n1hility/cancel-previous-runs@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

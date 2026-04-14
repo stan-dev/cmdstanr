@@ -53,11 +53,6 @@ jobs:
       PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
 
     steps:
-      - name: cmdstan env vars
-        run: |
-          echo "CMDSTAN=${HOME}/.cmdstan" >> $GITHUB_ENV
-        shell: bash
-
       - uses: actions/checkout@v6
 
       - uses: r-lib/actions/setup-r@v2
