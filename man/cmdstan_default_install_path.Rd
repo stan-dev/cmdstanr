@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{cmdstan_default_install_path}
 \alias{cmdstan_default_install_path}
-\title{cmdstan_default_install_path}
+\title{Path to where  \code{\link[=install_cmdstan]{install_cmdstan()}} with default settings installs CmdStan.}
 \usage{
 cmdstan_default_install_path(wsl = FALSE)
 }
