@@ -327,11 +327,17 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
     }
     write(built_flags, file = make_local_path, append = append)
   }
-  if (file.exists(make_local_path)) {
-    return(trimws(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]]))
-  } else {
+  make_local_contents <- tryCatch(
+    suppressWarnings(readLines(make_local_path, warn = FALSE)),
+    error = function(e) NULL
+  )
+  if (is.null(make_local_contents)) {
     return(NULL)
   }
+  if (length(make_local_contents) == 0) {
+    return("")
+  }
+  trimws(strsplit(trimws(paste(make_local_contents, collapse = "\n")), "\n", fixed = TRUE)[[1]])
 }
 
 #' @rdname install_cmdstan
