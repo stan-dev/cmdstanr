@@ -224,7 +224,7 @@ test_that("CmdStan version helpers handle invalid inputs", {
 test_that("WSL UNC path helpers work", {
   wsl_path <- "//wsl$/Ubuntu-22.04/root/.cmdstan/cmdstan-2.38.0"
   expect_true(is_wsl_unc_path(wsl_path))
-  expect_false(is_wsl_unc_path(PATH))
+  expect_false(is_wsl_unc_path("C:/Users/runneradmin/.cmdstan/cmdstan-2.38.0"))
   expect_equal(wsl_unc_distro_name(wsl_path), "Ubuntu-22.04")
   expect_equal(
     wsl_unc_path_to_linux(file.path(wsl_path, "makefile")),
@@ -265,6 +265,35 @@ test_that("read_cmdstan_version() falls back to distro-aware WSL reads", {
     }
   )
   expect_equal(read_cmdstan_version(wsl_path), "2.38.0")
+})
+
+test_that("read_lines_via_wsl() tries plain wsl before distro-specific fallback", {
+  wsl_path <- "//wsl$/Ubuntu-22.04/root/.cmdstan/cmdstan-2.38.0/makefile"
+  calls <- list()
+  out <- with_mocked_bindings(
+    read_lines_via_wsl(wsl_path),
+    run = function(command, args, error_on_status = FALSE) {
+      calls[[length(calls) + 1]] <<- list(
+        command = command,
+        args = args,
+        error_on_status = error_on_status
+      )
+      if (length(calls) == 1) {
+        return(list(status = 1, stdout = ""))
+      }
+      list(status = 0, stdout = "CMDSTAN_VERSION := 2.38.0")
+    },
+    .package = "processx"
+  )
+
+  expect_equal(out, "CMDSTAN_VERSION := 2.38.0")
+  expect_length(calls, 2)
+  expect_equal(calls[[1]]$command, "wsl")
+  expect_equal(calls[[1]]$args, c("cat", "/root/.cmdstan/cmdstan-2.38.0/makefile"))
+  expect_equal(
+    calls[[2]]$args,
+    c("-d", "Ubuntu-22.04", "cat", "/root/.cmdstan/cmdstan-2.38.0/makefile")
+  )
 })
 
 test_that("cmdstan_ext() works", {

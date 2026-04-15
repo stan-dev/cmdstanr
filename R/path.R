@@ -293,12 +293,22 @@ read_lines_direct <- function(path) {
 
 # Fall back to reading through `wsl` when Windows R can't read a WSL UNC path.
 read_lines_via_wsl <- function(path) {
-  file_contents <- processx::run(
-    command = "wsl",
-    args = c("-d", wsl_unc_distro_name(path), "cat", wsl_unc_path_to_linux(path)),
-    error_on_status = FALSE
+  wsl_args <- list(
+    c("cat", wsl_unc_path_to_linux(path)),
+    c("-d", wsl_unc_distro_name(path), "cat", wsl_unc_path_to_linux(path))
   )
-  if (file_contents$status != 0) {
+  file_contents <- NULL
+  for (args in wsl_args) {
+    file_contents <- processx::run(
+      command = "wsl",
+      args = args,
+      error_on_status = FALSE
+    )
+    if (file_contents$status == 0) {
+      break
+    }
+  }
+  if (is.null(file_contents) || file_contents$status != 0) {
     return(NULL)
   }
   if (!nzchar(file_contents$stdout)) {
