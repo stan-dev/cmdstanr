@@ -267,6 +267,57 @@ latest_cmdstan_installed <- function(installs_path) {
   latest_cmdstan
 }
 
+is_wsl_unc_path <- function(path) {
+  is.character(path) &&
+    length(path) == 1 &&
+    !is.na(path) &&
+    startsWith(repair_path(path), "//wsl$/")
+}
+
+# Extract the distro name from a WSL UNC path like //wsl$/Ubuntu-22.04/...
+wsl_unc_distro_name <- function(path) {
+  sub("^//wsl\\$/([^/]+).*$", "\\1", repair_path(path))
+}
+
+# Convert a WSL UNC path to the corresponding Linux path within the distro.
+wsl_unc_path_to_linux <- function(path) {
+  sub("^//wsl\\$/[^/]+", "", repair_path(path))
+}
+
+read_lines_direct <- function(path) {
+  tryCatch(
+    suppressWarnings(readLines(path, warn = FALSE)),
+    error = function(e) NULL
+  )
+}
+
+# Fall back to reading through `wsl` when Windows R can't read a WSL UNC path.
+read_lines_via_wsl <- function(path) {
+  file_contents <- processx::run(
+    command = "wsl",
+    args = c("-d", wsl_unc_distro_name(path), "cat", wsl_unc_path_to_linux(path)),
+    error_on_status = FALSE
+  )
+  if (file_contents$status != 0) {
+    return(NULL)
+  }
+  if (!nzchar(file_contents$stdout)) {
+    return(character(0))
+  }
+  con <- textConnection(file_contents$stdout)
+  on.exit(close(con), add = TRUE)
+  readLines(con, warn = FALSE)
+}
+
+# Preserve existing direct reads and only use the WSL fallback when needed.
+read_lines_with_wsl_fallback <- function(path) {
+  file_contents <- read_lines_direct(path)
+  if (!is.null(file_contents) || !is_wsl_unc_path(path)) {
+    return(file_contents)
+  }
+  read_lines_via_wsl(path)
+}
+
 
 #' Find the version of CmdStan from makefile
 #' @noRd
@@ -274,10 +325,7 @@ latest_cmdstan_installed <- function(installs_path) {
 #' @return Version number as a string.
 read_cmdstan_version <- function(path) {
   makefile_path <- file.path(path, "makefile")
-  makefile <- tryCatch(
-    suppressWarnings(readLines(makefile_path, warn = FALSE)),
-    error = function(e) NULL
-  )
+  makefile <- read_lines_with_wsl_fallback(makefile_path)
   if (is.null(makefile)) {
     warning(
       "Can't find CmdStan makefile to detect version number. ",

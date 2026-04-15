@@ -221,6 +221,52 @@ test_that("CmdStan version helpers handle invalid inputs", {
   expect_false(is_supported_cmdstan_version("not-a-version"))
 })
 
+test_that("WSL UNC path helpers work", {
+  wsl_path <- "//wsl$/Ubuntu-22.04/root/.cmdstan/cmdstan-2.38.0"
+  expect_true(is_wsl_unc_path(wsl_path))
+  expect_false(is_wsl_unc_path(PATH))
+  expect_equal(wsl_unc_distro_name(wsl_path), "Ubuntu-22.04")
+  expect_equal(
+    wsl_unc_path_to_linux(file.path(wsl_path, "makefile")),
+    "/root/.cmdstan/cmdstan-2.38.0/makefile"
+  )
+})
+
+test_that("read_cmdstan_version() prefers direct reads for UNC paths", {
+  wsl_path <- "//wsl$/Ubuntu-22.04/root/.cmdstan/cmdstan-2.38.0"
+  local_mocked_bindings(
+    read_lines_direct = function(path) {
+      expect_equal(
+        path,
+        file.path(wsl_path, "makefile")
+      )
+      "CMDSTAN_VERSION := 2.38.0"
+    },
+    read_lines_via_wsl = function(path) {
+      stop("WSL fallback should not be used when direct reads succeed.")
+    }
+  )
+  expect_equal(read_cmdstan_version(wsl_path), "2.38.0")
+})
+
+test_that("read_cmdstan_version() falls back to distro-aware WSL reads", {
+  wsl_path <- "//wsl$/Ubuntu-22.04/root/.cmdstan/cmdstan-2.38.0"
+  local_mocked_bindings(
+    read_lines_direct = function(path) {
+      expect_equal(
+        path,
+        file.path(wsl_path, "makefile")
+      )
+      NULL
+    },
+    read_lines_via_wsl = function(path) {
+      expect_equal(path, file.path(wsl_path, "makefile"))
+      "CMDSTAN_VERSION := 2.38.0"
+    }
+  )
+  expect_equal(read_cmdstan_version(wsl_path), "2.38.0")
+})
+
 test_that("cmdstan_ext() works", {
   if (os_is_windows() && !os_is_wsl()) {
     expect_identical(cmdstan_ext(), ".exe")
