@@ -226,6 +226,8 @@ test_that("WSL UNC path helpers work", {
   expect_true(is_wsl_unc_path(wsl_path))
   expect_false(is_wsl_unc_path("C:/Users/runneradmin/.cmdstan/cmdstan-2.38.0"))
   expect_equal(wsl_unc_distro_name(wsl_path), "Ubuntu-22.04")
+  expect_equal(cmdstan_version_from_path(wsl_path), "2.38.0")
+  expect_null(cmdstan_version_from_path("//wsl$/Ubuntu-22.04/root/not-cmdstan"))
   expect_equal(
     wsl_unc_path_to_linux(file.path(wsl_path, "makefile")),
     "/root/.cmdstan/cmdstan-2.38.0/makefile"
@@ -262,6 +264,21 @@ test_that("read_cmdstan_version() falls back to distro-aware WSL reads", {
     read_lines_via_wsl = function(path) {
       expect_equal(path, file.path(wsl_path, "makefile"))
       "CMDSTAN_VERSION := 2.38.0"
+    }
+  )
+  expect_equal(read_cmdstan_version(wsl_path), "2.38.0")
+})
+
+test_that("read_cmdstan_version() can recover version from WSL install path", {
+  wsl_path <- "//wsl$/Ubuntu-22.04/root/.cmdstan/cmdstan-2.38.0"
+  local_mocked_bindings(
+    read_lines_direct = function(path) {
+      expect_equal(path, file.path(wsl_path, "makefile"))
+      NULL
+    },
+    read_lines_via_wsl = function(path) {
+      expect_equal(path, file.path(wsl_path, "makefile"))
+      NULL
     }
   )
   expect_equal(read_cmdstan_version(wsl_path), "2.38.0")

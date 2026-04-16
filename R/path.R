@@ -284,6 +284,14 @@ wsl_unc_path_to_linux <- function(path) {
   sub("^//wsl\\$/[^/]+", "", repair_path(path))
 }
 
+cmdstan_version_from_path <- function(path) {
+  dir_name <- basename(repair_path(path))
+  if (!grepl("^cmdstan-[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?$", dir_name)) {
+    return(NULL)
+  }
+  sub("^cmdstan-", "", dir_name)
+}
+
 read_lines_direct <- function(path) {
   tryCatch(
     suppressWarnings(readLines(path, warn = FALSE)),
@@ -337,6 +345,12 @@ read_cmdstan_version <- function(path) {
   makefile_path <- file.path(path, "makefile")
   makefile <- read_lines_with_wsl_fallback(makefile_path)
   if (is.null(makefile)) {
+    if (is_wsl_unc_path(path)) {
+      version_from_path <- cmdstan_version_from_path(path)
+      if (!is.null(version_from_path)) {
+        return(version_from_path)
+      }
+    }
     warning(
       "Can't find CmdStan makefile to detect version number. ",
       "Path may not point to valid installation.",
